@@ -25,10 +25,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -1298,7 +1295,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
       try {
         EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-        DataContext context = AnActionEvent.getInjectedDataContext(new CaretSpecificDataContext(myEditor.getDataContext(), this));
+        DataContext context = AnActionEvent.getInjectedDataContext(CaretSpecificDataContext.create(myEditor.getDataContext(), this));
         Caret caret = context.getData(CommonDataKeys.CARET);
         assert caret != null;
         handler.execute(caret.getEditor(), caret, context);
@@ -1546,11 +1543,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
             !Boolean.TRUE.equals(myEditor.getUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION)) &&
             needToShiftWhiteSpaces(e)) {
           int afterInserted = e.getOffset() + e.getNewLength();
-          setRange(TextRange.toScalarRange(afterInserted, afterInserted));
+          setRange(TextRangeScalarUtil.toScalarRange(afterInserted, afterInserted));
         }
         int offset = intervalStart();
         if (DocumentUtil.isInsideSurrogatePair(getDocument(), offset)) {
-          setRange(TextRange.toScalarRange(offset - 1, offset - 1));
+          setRange(TextRangeScalarUtil.toScalarRange(offset - 1, offset - 1));
         }
       }
       else {
@@ -1566,7 +1563,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
           }
         }
         newOffset = DocumentUtil.alignToCodePointBoundary(getDocument(), newOffset);
-        setRange(TextRange.toScalarRange(newOffset, newOffset));
+        setRange(TextRangeScalarUtil.toScalarRange(newOffset, newOffset));
       }
       myLogicalColumnAdjustment = 0;
       myVisualColumnAdjustment = 0;
@@ -1592,7 +1589,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     protected void onReTarget(@NotNull DocumentEvent e) {
       int offset = intervalStart();
       if (DocumentUtil.isInsideSurrogatePair(getDocument(), offset)) {
-        setRange(TextRange.toScalarRange(offset - 1, offset - 1));
+        setRange(TextRangeScalarUtil.toScalarRange(offset - 1, offset - 1));
       }
     }
   }
@@ -1641,7 +1638,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
 
     private void alignToSurrogatePairBoundaries() {
-      long alignedRange = TextRange.deltaScalarRange(toScalarRange(),
+      long alignedRange = TextRangeScalarUtil.shift(toScalarRange(),
       DocumentUtil.isInsideSurrogatePair(getDocument(), getStartOffset()) ? -1 : 0,
       DocumentUtil.isInsideSurrogatePair(getDocument(), getEndOffset()) ? -1 : 0);
       setRange(alignedRange);

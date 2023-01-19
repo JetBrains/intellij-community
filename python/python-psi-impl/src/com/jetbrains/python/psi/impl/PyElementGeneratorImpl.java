@@ -96,7 +96,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
 
   @Override
   public PyStringLiteralExpression createStringLiteral(@NotNull StringLiteralExpression oldElement, @NotNull String unescaped) {
-    Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(oldElement.getText());
+    Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(oldElement.getText());
     if (quotes != null) {
       return createStringLiteralAlreadyEscaped(quotes.first + unescaped + quotes.second);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.JavaTestUtil;
@@ -53,6 +53,8 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   public void testFromIfToDestructuringPattern() { doGotoTest(); }
 
   public void testToGuardedTypeTest() { doGotoTest(); }
+
+  public void testRecordPatternInForEach() { doGotoTest(); }
 
   private void doGotoTest() {
     String name = getTestName(false);
@@ -117,14 +119,15 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testToStringInAnonymous() {
-    configureFromFileText("A.java", "class A {{" +
-                                    "       final Object o = new Object() {\n" +
-                                    "            @Override\n" +
-                                    "            public String toString() {\n" +
-                                    "                return super.toString();\n" +
-                                    "            }\n" +
-                                    "        };\n" +
-                                    "        o.to<caret>String();\n }}");
+    configureFromFileText("A.java", """
+      class A {{       final Object o = new Object() {
+                  @Override
+                  public String toString() {
+                      return super.toString();
+                  }
+              };
+              o.to<caret>String();
+       }}""");
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
     assertInstanceOf(element, PsiMethod.class);
     PsiClass containingClass = ((PsiMethod)element).getContainingClass();
@@ -132,15 +135,16 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testToFieldFromQualifierInNew() {
-    configureFromFileText("A.java", "class A {Util myContext;\n" +
-                                    "    private class Util {\n" +
-                                    "        public class Filter {\n" +
-                                    "            public Filter() {\n" +
-                                    "            }\n" +
-                                    "        }}\n" +
-                                    "    private void method() {\n" +
-                                    "        Util.Filter filter = my<caret>Context.new Filter();\n" +
-                                    "    }}");
+    configureFromFileText("A.java", """
+      class A {Util myContext;
+          private class Util {
+              public class Filter {
+                  public Filter() {
+                  }
+              }}
+          private void method() {
+              Util.Filter filter = my<caret>Context.new Filter();
+          }}""");
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
     assertInstanceOf(element, PsiField.class);
   }

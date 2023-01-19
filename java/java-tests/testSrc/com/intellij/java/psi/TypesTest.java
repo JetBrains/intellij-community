@@ -16,9 +16,6 @@ import com.intellij.util.ref.GCWatcher;
 
 import java.io.File;
 
-/**
- *  @author dsl
- */
 public class TypesTest extends GenericsTestCase {
   @Override
   protected void setUp() throws Exception {

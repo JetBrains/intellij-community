@@ -45,6 +45,6 @@ public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Resul
   @Experimental
   @Override
   public @NotNull Query<Result> wrap(@NotNull QueryWrapper<Result> wrapper) {
-    return new ExecutorsQuery<Result, Parameter>(myParameters, ContainerUtil.map(myExecutors, e -> e.wrap(wrapper)));
+    return new ExecutorsQuery<>(myParameters, ContainerUtil.map(myExecutors, e -> e.wrap(wrapper)));
   }
 }

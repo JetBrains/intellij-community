@@ -15,7 +15,10 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.QualifiedName
 import com.intellij.ui.*
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.table.JBTable
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.xdebugger.XDebuggerManager
@@ -267,65 +270,84 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
   private inner class RendererSettings : JPanel(BorderLayout()), Disposable {
 
     private val myPanel: JPanel
-    private val myRendererNameTextField = JTextField()
-    private val myAppendDefaultChildrenCheckBox = JCheckBox(
-      PyBundle.message("form.debugger.variables.view.user.type.renderers.append.default.children"))
-    private val myRbDefaultValueRenderer = JRadioButton(
-      PyBundle.message("form.debugger.variables.view.user.type.renderers.use.default.renderer"))
-    private val myRbExpressionValueRenderer = JRadioButton(
-      PyBundle.message("form.debugger.variables.view.user.type.renderers.use.following.expression"))
-    private val myRbDefaultChildrenRenderer = JRadioButton(
-      PyBundle.message("form.debugger.variables.view.user.type.renderers.use.default.renderer"))
-    private val myRbListChildrenRenderer = JRadioButton(
-      PyBundle.message("form.debugger.variables.view.user.type.renderers.use.list.of.expressions"))
-    private val myTypeNameTextField: TextFieldWithCompletion = TextFieldWithCompletion(myProject, TypeNameCompletionProvider(myProject), "",
-                                                                                       true, true, true)
-    private val myNodeValueExpressionEditor: XDebuggerExpressionEditor
+    private lateinit var myRendererNameTextField: JTextField
+    private lateinit var myAppendDefaultChildrenCheckBox: JCheckBox
+    private lateinit var myRbDefaultValueRenderer: JRadioButton
+    private lateinit var myRbExpressionValueRenderer: JRadioButton
+    private lateinit var myRbDefaultChildrenRenderer: JRadioButton
+    private lateinit var myRbListChildrenRenderer: JRadioButton
+    private val myTypeNameTextField = TextFieldWithCompletion(myProject, TypeNameCompletionProvider(myProject), "",
+                                                              true, true, true)
+    private val myNodeValueExpressionEditor = XDebuggerExpressionEditor(myProject, PyDebuggerEditorsProvider(), "NodeValueExpression", null,
+                                                                        XExpressionImpl.EMPTY_EXPRESSION, false, false, true)
     private val myChildrenRenderersListEditor: JComponent
     private val myChildrenListEditorTableModel: ChildrenListEditorTableModel
     private val myChildrenListEditorTable: JBTable
 
     init {
-      myNodeValueExpressionEditor = XDebuggerExpressionEditor(myProject, PyDebuggerEditorsProvider(), "NodeValueExpression", null,
-                                                              XExpressionImpl.EMPTY_EXPRESSION, false, false, true)
       myChildrenListEditorTableModel = ChildrenListEditorTableModel()
       myChildrenListEditorTable = JBTable(myChildrenListEditorTableModel)
       myChildrenRenderersListEditor = createChildrenListEditor()
 
       setupTypeNameEditor()
-      setupPanelComponents()
       myPanel = createSettingsPanel()
+      setupPanelComponents()
       add(myPanel, BorderLayout.NORTH)
     }
 
     private fun createSettingsPanel(): JPanel {
       return panel {
         row(PyBundle.message("form.debugger.variables.view.user.type.renderers.name")) {
-          myRendererNameTextField()
+          myRendererNameTextField = textField()
+            .align(AlignX.FILL)
+            .component
         }
         row {
-          label(PyBundle.message("form.debugger.variables.view.user.type.renderers.apply.renderer.to.objects.of.type"))
+          cell(myTypeNameTextField)
+            .label(PyBundle.message("form.debugger.variables.view.user.type.renderers.apply.renderer.to.objects.of.type"), LabelPosition.TOP)
+            .align(AlignX.FILL)
         }
-        row {
-          myTypeNameTextField(CCFlags.growX)
-        }
-        row(PyBundle.message("form.debugger.variables.view.user.type.renderers.when.rendering.node")) {
-          buttonGroup {
-            row { myRbDefaultValueRenderer() }
-            row { myRbExpressionValueRenderer() }
+        buttonsGroup(PyBundle.message("form.debugger.variables.view.user.type.renderers.when.rendering.node")) {
+          row {
+            myRbDefaultValueRenderer = radioButton(
+              PyBundle.message("form.debugger.variables.view.user.type.renderers.use.default.renderer"))
+              .component
           }
           row {
-            row { myNodeValueExpressionEditor.component(CCFlags.growX, comment = PyBundle.message("form.debugger.variables.view.user.type.renderers.variable.name")) }
+            myRbExpressionValueRenderer = radioButton(
+              PyBundle.message("form.debugger.variables.view.user.type.renderers.use.following.expression"))
+              .component
+          }
+          indent {
+            row {
+              cell(myNodeValueExpressionEditor.component)
+                .align(AlignX.FILL)
+                .comment(PyBundle.message("form.debugger.variables.view.user.type.renderers.variable.name"))
+            }
           }
         }
-        row(PyBundle.message("form.debugger.variables.view.user.type.renderers.when.expanding.node")) {
-          buttonGroup {
-            row { myRbDefaultChildrenRenderer() }
-            row { myRbListChildrenRenderer() }
+        buttonsGroup(PyBundle.message("form.debugger.variables.view.user.type.renderers.when.expanding.node")) {
+          row {
+            myRbDefaultChildrenRenderer = radioButton(
+              PyBundle.message("form.debugger.variables.view.user.type.renderers.use.default.renderer"))
+              .component
           }
           row {
-            row { myChildrenRenderersListEditor(CCFlags.growX, comment = PyBundle.message("form.debugger.variables.view.user.type.renderers.variable.name")) }
-            row { myAppendDefaultChildrenCheckBox() }
+            myRbListChildrenRenderer = radioButton(
+              PyBundle.message("form.debugger.variables.view.user.type.renderers.use.list.of.expressions"))
+              .component
+          }
+          indent {
+            row {
+              cell(myChildrenRenderersListEditor)
+                .align(AlignX.FILL)
+                .comment(PyBundle.message("form.debugger.variables.view.user.type.renderers.variable.name"))
+            }
+            row {
+              myAppendDefaultChildrenCheckBox = checkBox(
+                PyBundle.message("form.debugger.variables.view.user.type.renderers.append.default.children"))
+                .component
+            }
           }
         }
       }

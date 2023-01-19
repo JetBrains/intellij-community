@@ -40,20 +40,14 @@ public enum Depth {
   }
 
   public @Nls @NotNull String getDisplayName() {
-    switch (this) {
-      case INFINITY:
-        return message("label.depth.infinity");
-      case IMMEDIATES:
-        return message("label.depth.immediates");
-      case FILES:
-        return message("label.depth.files");
-      case EMPTY:
-        return message("label.depth.empty");
-      case EXCLUDE:
-        return message("label.depth.exclude");
-      default:
-        return message("label.depth.unknown");
-    }
+    return message(switch (this) {
+      case INFINITY -> "label.depth.infinity";
+      case IMMEDIATES -> "label.depth.immediates";
+      case FILES -> "label.depth.files";
+      case EMPTY -> "label.depth.empty";
+      case EXCLUDE -> "label.depth.exclude";
+      default -> "label.depth.unknown";
+    });
   }
 
   @Override

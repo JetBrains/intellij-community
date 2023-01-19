@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.codereview.list.search
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.awt.RelativePoint
@@ -46,6 +47,9 @@ class ReviewListSearchTextFieldFactory(private val searchState: MutableStateFlow
         }
       }
     })
+
+
+    searchField.toolTipText = IdeBundle.message("tooltip.search.history.hotkey", KeymapUtil.getShortcutText("ShowSearchHistory"))
 
     DumbAwareAction.create {
       val point = createHistoryPoint(searchField)

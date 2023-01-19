@@ -7,18 +7,21 @@ import com.intellij.ide.plugins.advertiser.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.ui.EditorNotifications
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
 
 internal class PluginsAdvertiserStartupActivity : ProjectPostStartupActivity {
+
   suspend fun checkSuggestedPlugins(project: Project, includeIgnored: Boolean) {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode || application.isHeadlessEnvironment) {
@@ -32,17 +35,19 @@ internal class PluginsAdvertiserStartupActivity : ProjectPostStartupActivity {
     val extensionsService = PluginFeatureCacheService.getInstance()
     val oldExtensions = extensionsService.extensions
 
-    val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures.toMutableList()
-    unknownFeatures.addAll(PluginAdvertiserService.getInstance().collectDependencyUnknownFeatures(project, includeIgnored))
+    val pluginAdvertiserService = PluginAdvertiserService.getInstance(project)
+    pluginAdvertiserService.collectDependencyUnknownFeatures(includeIgnored)
+    val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
 
     if (oldExtensions != null && unknownFeatures.isEmpty()) {
       if (includeIgnored) {
         coroutineContext.ensureActive()
-        ApplicationManager.getApplication().invokeLater(Runnable {
+
+        withContext(Dispatchers.EDT) {
           notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
             .setDisplayId("advertiser.no.plugins")
             .notify(project)
-        }, ModalityState.NON_MODAL, project.disposed)
+        }
       }
     }
 
@@ -72,8 +77,7 @@ internal class PluginsAdvertiserStartupActivity : ProjectPostStartupActivity {
       coroutineContext.ensureActive()
 
       if (unknownFeatures.isNotEmpty()) {
-        PluginAdvertiserService.getInstance().run(
-          project = project,
+        pluginAdvertiserService.run(
           customPlugins = customPlugins,
           unknownFeatures = unknownFeatures,
           includeIgnored = includeIgnored

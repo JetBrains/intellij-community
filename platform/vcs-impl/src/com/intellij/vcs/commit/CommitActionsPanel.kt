@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionToolbar.NOWRAP_LAYOUT_POLICY
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.ui.components.JBOptionButton
@@ -44,6 +45,7 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
   private val primaryActionGroup = DefaultActionGroup()
   private val primaryCommitActionsToolbar =
     ActionManager.getInstance().createActionToolbar(COMMIT_BUTTONS_TOOLBAR, primaryActionGroup, true).apply {
+      component.putClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY, true)
       setReservePlaceAutoPopupIcon(false)
       layoutPolicy = NOWRAP_LAYOUT_POLICY
 
@@ -56,6 +58,7 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
     DefaultActionGroup(ActionManager.getInstance().getAction("ChangesView.ShowCommitOptions")),
     true
   ).apply {
+    component.putClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY, true)
     setReservePlaceAutoPopupIcon(false)
     layoutPolicy = NOWRAP_LAYOUT_POLICY
 
@@ -68,6 +71,7 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
     add(commitButton)
     add(primaryCommitActionsToolbar.component)
     add(commitOptionToolbar.component)
+    isOpaque = false
   }
 
   var isActive: Boolean = true
@@ -117,6 +121,10 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
       shortcutSet = DEFAULT_COMMIT_ACTION_SHORTCUT
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = isDefaultExecutorEnabled() && commitButton.isDefaultButton
     }
@@ -127,6 +135,10 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
   private inner class ShowCustomCommitActions : DumbAwareAction() {
     init {
       shortcutSet = getDefaultShowPopupShortcut()
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
     }
 
     override fun update(e: AnActionEvent) {

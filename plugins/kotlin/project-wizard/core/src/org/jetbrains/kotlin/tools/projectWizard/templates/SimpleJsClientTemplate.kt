@@ -30,7 +30,7 @@ object SimpleJsClientTemplate : JsClientTemplate() {
     private const val clientFileToCreate = "Client.kt"
     override val filesToOpenInEditor = listOf(clientFileToCreate)
 
-    val useKotlinxHtml by booleanSetting(
+    private val useKotlinxHtml by booleanSetting(
         KotlinNewProjectWizardBundle.message("module.template.simple.use.kotlinx.html"),
         GenerationPhase.PROJECT_GENERATION
     ) {

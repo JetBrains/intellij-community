@@ -277,7 +277,6 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
       semaphore.acquireOrThrow()
 
       dirtyScopeManager.markEverythingDirty()
-      clm.scheduleUpdate()
 
       markerSemaphore.acquireOrThrow()
       markerSemaphore.release()

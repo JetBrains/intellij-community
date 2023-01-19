@@ -9,10 +9,11 @@ import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -182,7 +183,7 @@ public final class PathManager {
         dir = dir.resolve(osSuffix);
         if (Files.isDirectory(dir)) {
           binDirs.add(dir);
-          if (SystemInfoRt.isLinux) {
+          if (SystemInfoRt.isWindows || SystemInfoRt.isLinux) {
             String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
             if (arch != null) {
               dir = dir.resolve(arch);
@@ -297,6 +298,11 @@ public final class PathManager {
     }
 
     return ourConfigPath;
+  }
+
+  @TestOnly
+  public static void setExplicitConfigPath(@Nullable String path) {
+    ourConfigPath = path;
   }
 
   public static @NotNull String getScratchPath() {
@@ -448,7 +454,7 @@ public final class PathManager {
    */
   public static @Nullable String getResourceRoot(@NotNull ClassLoader classLoader, @NotNull String resourcePath) {
     URL url = classLoader.getResource(resourcePath);
-    return url == null ? null : extractRoot(url, "/"+resourcePath);
+    return url == null ? null : extractRoot(url, "/" + resourcePath);
   }
 
   /**
@@ -566,7 +572,7 @@ public final class PathManager {
         continue;
       }
 
-      try (InputStream inputStream = Files.newInputStream(file)) {
+      try (Reader reader = Files.newBufferedReader(file)) {
         //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
         new Properties() {
           @Override
@@ -579,7 +585,7 @@ public final class PathManager {
             }
             return null;
           }
-        }.load(inputStream);
+        }.load(reader);
       }
       catch (NoSuchFileException | AccessDeniedException ignore) {
       }
@@ -589,7 +595,6 @@ public final class PathManager {
     }
 
     // Check and fix conflicting properties.
-    sysProperties.setProperty("disableJbScreenMenuBar", "true"); // a temporary key for bundled runtime (will be removed soon)
     if ("true".equals(sysProperties.getProperty("jbScreenMenuBar.enabled"))) {
       sysProperties.setProperty("apple.laf.useScreenMenuBar", "false");
     }
@@ -724,7 +729,7 @@ public final class PathManager {
     }
 
     Path outClassesDir = rootPath.getParent().getParent();
-    Path artifactsDir = outClassesDir.resolveSibling("project-artifacts");
+    Path artifactsDir = outClassesDir.resolveSibling("jps-artifacts");
     if (!Files.exists(artifactsDir)) {
       // running IDE or tests in IDE
       artifactsDir = outClassesDir.resolve("artifacts");

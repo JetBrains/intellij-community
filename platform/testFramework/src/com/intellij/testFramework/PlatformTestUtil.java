@@ -2,6 +2,8 @@
 package com.intellij.testFramework;
 
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -53,7 +55,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -80,6 +82,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.junit.AssumptionViolatedException;
 
 import javax.swing.*;
 import javax.swing.tree.TreeModel;
@@ -99,10 +102,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -305,7 +305,7 @@ public final class PlatformTestUtil {
     }
     else {
       assert !application.isWriteAccessAllowed() : "do not wait under write action to avoid possible deadlock";
-      assert application.isDispatchThread();
+      ApplicationManager.getApplication().assertIsDispatchThread();
     }
   }
 
@@ -805,21 +805,18 @@ public final class PlatformTestUtil {
     return null;
   }
 
-  private static void assertJarFilesEqual(@NotNull File file1, @NotNull File file2) throws IOException {
-    File tempDir = null;
+  private static void assertJarFilesEqual(File file1, File file2) throws IOException {
+    Path tempDir = Files.createTempDirectory("assert_jar_tmp_");
     try (JarFile jarFile1 = new JarFile(file1); JarFile jarFile2 = new JarFile(file2)) {
-      tempDir = FileUtilRt.createTempDirectory("assert_jar_tmp", null, false);
-      File tempDirectory1 = new File(tempDir, "tmp1");
-      File tempDirectory2 = new File(tempDir, "tmp2");
-      FileUtilRt.createDirectory(tempDirectory1);
-      FileUtilRt.createDirectory(tempDirectory2);
+      Path tempDirectory1 = Files.createDirectory(tempDir.resolve("tmp1"));
+      Path tempDirectory2 = Files.createDirectory(tempDir.resolve("tmp2"));
 
       new Decompressor.Zip(new File(jarFile1.getName())).extract(tempDirectory1);
       new Decompressor.Zip(new File(jarFile2.getName())).extract(tempDirectory2);
 
-      VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
+      VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDirectory1);
       assertNotNull(tempDirectory1.toString(), dirAfter);
-      VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
+      VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDirectory2);
       assertNotNull(tempDirectory2.toString(), dirBefore);
       ApplicationManager.getApplication().runWriteAction(() -> {
         dirAfter.refresh(false, true);
@@ -828,9 +825,7 @@ public final class PlatformTestUtil {
       assertDirectoriesEqual(dirAfter, dirBefore);
     }
     finally {
-      if (tempDir != null) {
-        FileUtilRt.delete(tempDir);
-      }
+      NioFiles.deleteRecursively(tempDir);
     }
   }
 
@@ -1011,9 +1006,11 @@ public final class PlatformTestUtil {
   public static void setLongMeaninglessFileIncludeTemplateTemporarilyFor(@NotNull Project project, @NotNull Disposable parentDisposable) {
     FileTemplateManagerImpl templateManager = (FileTemplateManagerImpl)FileTemplateManager.getInstance(project);
     templateManager.setDefaultFileIncludeTemplateTextTemporarilyForTest(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME,
-    "/**\n" +
-    " * Created by ${USER} on ${DATE}.\n" +
-    " */\n", parentDisposable);
+                                                                        """
+                                                                          /**
+                                                                           * Created by ${USER} on ${DATE}.
+                                                                           */
+                                                                          """, parentDisposable);
   }
 
   /**
@@ -1074,7 +1071,7 @@ public final class PlatformTestUtil {
     ProcessHandler processHandler = result.second.getProcessHandler();
     assertNotNull("Process handler must not be null!", processHandler);
     waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler,
-                              processHandler::isProcessTerminated, 60);
+                              processHandler::isProcessTerminated, Math.toIntExact(timeoutInSeconds));
     return result.first;
   }
 
@@ -1239,6 +1236,20 @@ public final class PlatformTestUtil {
     }
     finally {
       SystemProperties.setProperty(key, original);
+    }
+  }
+
+  /**
+   * throws if the CPU cores number is too low for parallel tests
+   */
+  public static void assumeEnoughParallelism() throws AssumptionViolatedException {
+    int N = Math.min(Runtime.getRuntime().availableProcessors(), Math.min(ForkJoinPool.getCommonPoolParallelism(), ForkJoinPool.commonPool().getParallelism()));
+    if (N < 4) {
+      throw new AssumptionViolatedException(
+        "not enough parallelism, couldn't test parallel performance: " +
+        "available CPU cores=" + Runtime.getRuntime().availableProcessors() +
+        "; FJP configured parallelism=" + ForkJoinPool.getCommonPoolParallelism() +
+        "; FJP actual common pool parallelism=" + ForkJoinPool.commonPool().getParallelism());
     }
   }
 }

@@ -17,7 +17,7 @@ class ConvertArrayParameterToVarargIntention : SelfTargetingIntention<KtParamete
 ) {
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
         val typeReference = element.getChildOfType<KtTypeReference>() ?: return false
-        if (element.parent.parent is KtFunctionLiteral) return false
+        if (element.isLambdaParameter) return false
         if (element.isVarArg) return false
 
         val type = element.descriptor?.type ?: return false
@@ -59,7 +59,7 @@ class ConvertArrayParameterToVarargIntention : SelfTargetingIntention<KtParamete
             ?: typeReference.typeElement?.typeArgumentsAsTypes?.firstOrNull()?.text
             ?: return
 
-        typeReference.replace(KtPsiFactory(element).createType(newType))
+        typeReference.replace(KtPsiFactory(element.project).createType(newType))
         element.addModifier(KtTokens.VARARG_KEYWORD)
     }
 }

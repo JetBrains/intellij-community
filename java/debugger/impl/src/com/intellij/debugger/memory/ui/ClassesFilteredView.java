@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.memory.ui;
 
@@ -77,18 +77,17 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
       public void classChanged(@NotNull String name, @NotNull TrackingType type) {
         ClassesTable table = getTable();
         TypeInfo typeInfo = table.getClassByName(name);
-        if (typeInfo == null)
+        if (typeInfo == null) {
           return;
-        ReferenceType ref = ((JavaTypeInfo) typeInfo).getReferenceType();
-        if (ref != null) {
-          final boolean activated = myIsTrackersActivated.get();
-          managerThread.schedule(new DebuggerCommandImpl() {
-            @Override
-            protected void action() {
-              trackClass(debugSession, debugProcess, ref, type, activated);
-            }
-          });
         }
+        ReferenceType ref = ((JavaTypeInfo)typeInfo).getReferenceType();
+        final boolean activated = myIsTrackersActivated.get();
+        managerThread.schedule(new DebuggerCommandImpl() {
+          @Override
+          protected void action() {
+            trackClass(debugSession, debugProcess, ref, type, activated);
+          }
+        });
         table.repaint();
       }
 
@@ -96,8 +95,9 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
       public void classRemoved(@NotNull String name) {
         ClassesTable table = getTable();
         TypeInfo ref = table.getClassByName(name);
-        if (ref == null)
+        if (ref == null) {
           return;
+        }
         JavaTypeInfo javaTypeInfo = (JavaTypeInfo) ref;
         if (myConstructorTrackedClasses.containsKey(javaTypeInfo.getReferenceType())) {
           ConstructorInstancesTracker removed = myConstructorTrackedClasses.remove(javaTypeInfo.getReferenceType());
@@ -154,7 +154,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         };
 
         final ClassPrepareRequest classPrepareRequest = process.getRequestsManager()
-                                                               .createClassPrepareRequest(request, className);
+          .createClassPrepareRequest(request, className);
         if (classPrepareRequest != null) {
           classPrepareRequest.enable();
         }
@@ -180,6 +180,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     table.addMouseListener(new MyOpenNewInstancesListener());
     new MyDoubleClickListener().installOn(table);
   }
+
   private void trackClass(@NotNull XDebugSession session,
                           @NotNull DebugProcessImpl debugProcess,
                           @NotNull ReferenceType ref,
@@ -210,14 +211,14 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
 
   @Override
   protected void scheduleUpdateClassesCommand(XSuspendContext context) {
-    SuspendContextImpl suspendContext = (SuspendContextImpl) context;
+    SuspendContextImpl suspendContext = (SuspendContextImpl)context;
     suspendContext.getDebugProcess().getManagerThread().schedule(new MyUpdateClassesCommand(suspendContext));
   }
 
   @Nullable
   @Override
   protected TrackerForNewInstances getStrategy(@NotNull TypeInfo ref) {
-    JavaTypeInfo javaTypeInfo = (JavaTypeInfo) ref;
+    JavaTypeInfo javaTypeInfo = (JavaTypeInfo)ref;
     return myConstructorTrackedClasses.getOrDefault(javaTypeInfo.getReferenceType(), null);
   }
 
@@ -298,7 +299,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
 
     final int modelRow = table.convertRowIndexToModel(row);
 
-    final JavaTypeInfo ref = (JavaTypeInfo) table.getModel().getValueAt(modelRow, CLASSNAME_COLUMN_INDEX);
+    final JavaTypeInfo ref = (JavaTypeInfo)table.getModel().getValueAt(modelRow, CLASSNAME_COLUMN_INDEX);
     final ConstructorInstancesTracker tracker = myConstructorTrackedClasses.getOrDefault(ref.getReferenceType(), null);
 
     return tracker != null && tracker.isReady() && tracker.getCount() > 0;
@@ -312,7 +313,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
       }
 
       TypeInfo selectedTypeInfo = getTable().getSelectedClass();
-      final ReferenceType ref = selectedTypeInfo != null ? ((JavaTypeInfo) selectedTypeInfo).getReferenceType(): null;
+      final ReferenceType ref = selectedTypeInfo != null ? ((JavaTypeInfo)selectedTypeInfo).getReferenceType() : null;
       final TrackerForNewInstances strategy = ref == null ? null : getStrategy(selectedTypeInfo);
       XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
       if (strategy != null && debugSession != null) {

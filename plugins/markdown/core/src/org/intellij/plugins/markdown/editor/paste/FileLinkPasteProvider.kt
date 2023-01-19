@@ -12,6 +12,7 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.util.PsiEditorUtil
 import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import java.awt.datatransfer.DataFlavor
 
 internal class FileLinkPasteProvider: PasteProvider {
@@ -38,6 +39,9 @@ internal class FileLinkPasteProvider: PasteProvider {
   }
 
   override fun isPasteEnabled(dataContext: DataContext): Boolean {
+    if (!MarkdownCodeInsightSettings.getInstance().state.enableFilesDrop) {
+      return false
+    }
     val file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return false
     if (file.fileType.isMarkdownType()) {
       return CopyPasteManager.getInstance().areDataFlavorsAvailable(DataFlavor.javaFileListFlavor)

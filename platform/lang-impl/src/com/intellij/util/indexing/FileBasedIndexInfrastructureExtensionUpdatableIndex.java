@@ -28,4 +28,6 @@ public interface FileBasedIndexInfrastructureExtensionUpdatableIndex<K, V, I, D>
   default void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable D fileIndexMetaData) {
     throw new IllegalStateException("not implemented");
   }
+
+  UpdatableIndex<K, V, FileContent, D> getBaseIndex();
 }

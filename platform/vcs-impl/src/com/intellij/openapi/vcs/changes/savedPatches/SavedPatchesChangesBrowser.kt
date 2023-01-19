@@ -117,7 +117,7 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
     return userObject.createDiffWithLocalRequestProducer(myProject, useBeforeVersion)
   }
 
-  fun setDiffPreviewInEditor(isInEditor: Boolean): SavedPatchesDiffPreview {
+  fun installDiffPreview(isInEditor: Boolean): SavedPatchesDiffPreview {
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
     val newProcessor = SavedPatchesDiffPreview(myProject, viewer, isInEditor, this)
     diffPreviewProcessor = newProcessor
@@ -178,6 +178,9 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
     }
     else if (SavedPatchesUi.SAVED_PATCH_SELECTED_CHANGES.`is`(dataId)) {
       return VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
+    }
+    else if (SavedPatchesUi.SAVED_PATCH_CHANGES.`is`(dataId)) {
+      return VcsTreeModelData.all(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
     }
     return super.getData(dataId)
   }

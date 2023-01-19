@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -27,6 +28,7 @@ class InlineClassDeprecatedFix(
     element: KtModifierListOwner
 ) : KotlinQuickFixAction<KtModifierListOwner>(element), CleanupFix {
 
+    @IntentionName
     private val text = KotlinBundle.message(
         "replace.with.0",
         (if (element.containingKtFile.hasJvmTarget()) "@JvmInline " else "") + "value"

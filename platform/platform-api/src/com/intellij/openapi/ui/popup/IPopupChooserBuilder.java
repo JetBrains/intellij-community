@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.popup;
 
-import com.intellij.openapi.ui.ListComponentUpdater;
+import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
@@ -75,6 +75,8 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setAdText(@PopupAdvertisement String ad, int alignment);
 
+  IPopupChooserBuilder<T> setAdvertiser(@Nullable JComponent advertiser);
+
   IPopupChooserBuilder<T> setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation);
 
   IPopupChooserBuilder<T> setSelectionMode(int selection);
@@ -91,7 +93,9 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setVisibleRowCount(int visibleRowCount);
 
+  IPopupChooserBuilder<T> withFixedRendererSize(@NotNull Dimension dimension);
+
   @NotNull JBPopup createPopup();
 
-  ListComponentUpdater getBackgroundUpdater();
+  GenericListComponentUpdater<T> getBackgroundUpdater();
 }

@@ -12,17 +12,29 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import java.util.function.Supplier
 
+
 fun TextFieldWithBrowseButton.addBrowseFolderListener(@NlsContexts.DialogTitle title: String,
                                                       project: Project?,
                                                       configuration: TargetEnvironmentConfiguration?,
                                                       fileChooserDescriptor: FileChooserDescriptor) {
+  addBrowseFolderListener(title, project, configuration, TargetBrowserHints(customFileChooserDescriptor = fileChooserDescriptor))
+
+}
+
+fun TextFieldWithBrowseButton.addBrowseFolderListener(@NlsContexts.DialogTitle title: String,
+                                                      project: Project?,
+                                                      configuration: TargetEnvironmentConfiguration?,
+                                                      targetBrowserHints: TargetBrowserHints = TargetBrowserHints(true)) {
   if (configuration == null) {
-    addBrowseFolderListener(title, null, project, fileChooserDescriptor)
+    addBrowseFolderListener(title, null, project, targetBrowserHints.customFileChooserDescriptor)
   }
   else {
     val targetType = configuration.getTargetType()
     if (targetType is BrowsableTargetEnvironmentType) {
-      withTargetBrowser(targetType, { configuration }, project, title)
+      withTargetBrowser(targetType, { configuration }, project, title, targetBrowserHints)
+    }
+    else {
+      setButtonVisible(false)
     }
   }
 }
@@ -30,12 +42,13 @@ fun TextFieldWithBrowseButton.addBrowseFolderListener(@NlsContexts.DialogTitle t
 fun TextFieldWithBrowseButton.withTargetBrowser(targetType: BrowsableTargetEnvironmentType,
                                                 targetSupplier: Supplier<TargetEnvironmentConfiguration>,
                                                 project: Project?,
-                                                @NlsContexts.DialogTitle title: String) {
+                                                @NlsContexts.DialogTitle title: String,
+                                                targetBrowserHints: TargetBrowserHints) {
   val browser = targetType.createBrowser(project ?: ProjectManager.getInstance().defaultProject,
                                          title,
                                          com.intellij.openapi.ui.TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
                                          textField,
                                          targetSupplier,
-                                         TargetBrowserHints(true))
+                                         targetBrowserHints)
   addActionListener(browser)
 }

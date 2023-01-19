@@ -49,7 +49,7 @@ fun logScriptingConfigurationErrors(file: VirtualFile, snapshot: ScriptConfigura
     if (snapshot.configuration == null) {
         scriptingWarnLog("Script configuration for file $file was not loaded")
         for (report in snapshot.reports) {
-            if (report.severity >= ScriptDiagnostic.Severity.ERROR) {
+            if (report.severity >= ScriptDiagnostic.Severity.WARNING) {
                 scriptingWarnLog(report.message, report.exception)
             }
         }

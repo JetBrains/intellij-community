@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -18,12 +17,15 @@ import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceLis
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class NullableVFUEntityImpl : NullableVFUEntity, WorkspaceEntityBase() {
+open class NullableVFUEntityImpl(val dataSource: NullableVFUEntityData) : NullableVFUEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -33,21 +35,21 @@ open class NullableVFUEntityImpl : NullableVFUEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  @JvmField
-  var _fileProperty: VirtualFileUrl? = null
   override val fileProperty: VirtualFileUrl?
-    get() = _fileProperty
+    get() = dataSource.fileProperty
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: NullableVFUEntityData?) : ModifiableWorkspaceEntityBase<NullableVFUEntity>(), NullableVFUEntity.Builder {
+  class Builder(result: NullableVFUEntityData?) : ModifiableWorkspaceEntityBase<NullableVFUEntity, NullableVFUEntityData>(
+    result), NullableVFUEntity.Builder {
     constructor() : this(NullableVFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -65,6 +67,9 @@ open class NullableVFUEntityImpl : NullableVFUEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       index(this, "fileProperty", this.fileProperty)
       // Process linked entities that are connected without a builder
@@ -89,11 +94,10 @@ open class NullableVFUEntityImpl : NullableVFUEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as NullableVFUEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
-      this.fileProperty = dataSource.fileProperty
-      if (parents != null) {
-      }
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.fileProperty != dataSource?.fileProperty) this.fileProperty = dataSource.fileProperty
+      updateChildToParentReferences(parents)
     }
 
 
@@ -101,7 +105,7 @@ open class NullableVFUEntityImpl : NullableVFUEntity, WorkspaceEntityBase() {
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -110,7 +114,7 @@ open class NullableVFUEntityImpl : NullableVFUEntity, WorkspaceEntityBase() {
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -118,13 +122,12 @@ open class NullableVFUEntityImpl : NullableVFUEntity, WorkspaceEntityBase() {
       get() = getEntityData().fileProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().fileProperty = value
+        getEntityData(true).fileProperty = value
         changedProperty.add("fileProperty")
         val _diff = diff
         if (_diff != null) index(this, "fileProperty", value)
       }
 
-    override fun getEntityData(): NullableVFUEntityData = result ?: super.getEntityData() as NullableVFUEntityData
     override fun getEntityClass(): Class<NullableVFUEntity> = NullableVFUEntity::class.java
   }
 }
@@ -135,26 +138,21 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
 
   fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<NullableVFUEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<NullableVFUEntity> {
     val modifiable = NullableVFUEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): NullableVFUEntity {
-    val entity = NullableVFUEntityImpl()
-    entity._data = data
-    entity._fileProperty = fileProperty
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = NullableVFUEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -180,7 +178,7 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as NullableVFUEntityData
 
@@ -192,7 +190,7 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as NullableVFUEntityData
 

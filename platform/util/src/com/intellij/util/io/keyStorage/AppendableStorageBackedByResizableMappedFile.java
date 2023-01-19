@@ -9,14 +9,20 @@ import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import com.intellij.util.lang.CompoundRuntimeException;
 import it.unimi.dsi.fastutil.bytes.ByteArrays;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.*;
 import java.nio.file.Path;
 import java.util.List;
 
 public class AppendableStorageBackedByResizableMappedFile<Data> extends ResizeableMappedFile implements AppendableObjectStorage<Data> {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static final int ourAppendBufferLength = 4096;
+
   private static final ThreadLocal<MyDataIS> ourReadStream = ThreadLocal.withInitial(() -> new MyDataIS());
 
   private volatile int myFileLength;
@@ -144,13 +150,16 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
 
     int currentLength = getCurrentLength();
 
-    if (size > AppendMemoryBuffer.ourAppendBufferLength) {
+    if (size > ourAppendBufferLength) {
       flushKeyStoreBuffer();
       put(currentLength, buffer, 0, size);
       myFileLength += size;
+      if (myAppendBuffer != null) {
+        myAppendBuffer = myAppendBuffer.rewind(myFileLength);
+      }
     }
     else {
-      if (size > AppendMemoryBuffer.ourAppendBufferLength - AppendMemoryBuffer.getBufferPosition(myAppendBuffer)) {
+      if (size > ourAppendBufferLength - AppendMemoryBuffer.getBufferPosition(myAppendBuffer)) {
         flushKeyStoreBuffer();
       }
       // myAppendBuffer will contain complete records
@@ -183,6 +192,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
     if (myFileLength <= addr) {
       comparer = new CheckerOutputStream() {
         int address = addr - myFileLength;
+
         @Override
         public void write(int b) {
           if (same) {
@@ -216,7 +226,6 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
           buffer.unlock();
         }
       };
-
     }
     return comparer;
   }
@@ -251,8 +260,6 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   };
 
   private static class AppendMemoryBuffer {
-    private static final int ourAppendBufferLength = 4096;
-
     private final byte[] myAppendBuffer;
     private int myBufferPosition;
 

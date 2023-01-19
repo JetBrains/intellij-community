@@ -3,7 +3,6 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.actions.OpenInRightSplitAction;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
-import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
@@ -16,8 +15,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +36,9 @@ import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public class NavBarPopup extends LightweightHint implements Disposable{
   private static final String JBLIST_KEY = "OriginalList";
   private static final String DISPOSED_OBJECTS = "DISPOSED_OBJECTS";
@@ -51,6 +54,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     myItemIndex = itemIndex;
     setFocusRequestor(getComponent());
     setForceShowAsPopup(true);
+    setCancelOnOtherWindowOpen(false);
     panel.installPopupHandler(getList(), selectedIndex);
     
     getList().addMouseListener(new MouseAdapter() {
@@ -89,8 +93,8 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       if (o instanceof JComponent) HintUpdateSupply.hideHint((JComponent)o);
     }
     //noinspection unchecked
-    for (Disposable disposable : (List<? extends Disposable>)getList().getClientProperty(DISPOSED_OBJECTS)) {
-      Disposer.dispose(disposable);
+    for (SelectablePanel selectablePanel : (List<SelectablePanel>)getList().getClientProperty(DISPOSED_OBJECTS)) {
+      Disposer.dispose(unwrapItem(selectablePanel));
     }
     Disposer.dispose(this);
   }
@@ -102,7 +106,10 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   private void show(final NavBarItem item, boolean checkRepaint) {
     UIEventLogger.NavBarShowPopup.log(myPanel.getProject());
 
-    int relativeY = ExperimentalUI.isNewUI() && UISettings.getInstance().getNavBarLocation() == NavBarLocation.BOTTOM
+    UISettings settings = UISettings.getInstance();
+    int relativeY = ExperimentalUI.isNewUI()
+                    && settings.getShowNavigationBarInBottom()
+                    && settings.getShowStatusBar()
                     ? -getComponent().getPreferredSize().height
                     : item.getHeight();
 
@@ -159,6 +166,41 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   }
 
   private static JComponent createPopupContent(@NotNull NavBarPanel panel, Object @NotNull [] siblings) {
+    class MyListRenderer implements ListCellRenderer<Object> {
+      final List<SelectablePanel> selectables = new ArrayList<>();
+
+      @Override
+      public Component getListCellRendererComponent(JList<?> list, Object obj, int index, boolean isSelected, boolean cellHasFocus) {
+        if (panel.isDisposed()) {
+          // Don't create new NavBarItem if panel is disposed. See: IDEA-306495
+          //noinspection MissingAccessibleContext
+          return new SelectablePanel();
+        }
+
+        SelectablePanel selectable = null;
+
+        for (SelectablePanel cachedSelectable : selectables) {
+          NavBarItem item = unwrapItem(cachedSelectable);
+          if (obj == item.getObject()) {
+            item.update();
+            selectable = cachedSelectable;
+          }
+        }
+
+        if (selectable == null) {
+          selectable = SelectablePanel.wrap(new NavBarItem(panel, obj, null, true));
+          if (ExperimentalUI.isNewUI()) {
+            selectable.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
+          }
+          selectables.add(selectable);
+        }
+
+        selectable.setBackground(null);
+        selectable.setSelectionColor(isSelected ? UIUtil.getListSelectionBackground(cellHasFocus) : null);
+        return selectable;
+      }
+    }
+
     class MyList<E> extends JBList<E> implements DependentTransientComponent, Queryable {
       @Override
       public void putInfo(@NotNull Map<? super String, ? super String> info) {
@@ -170,23 +212,15 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         return panel;
       }
     }
+
     JBList<Object> list = new MyList<>();
     list.setModel(new CollectionListModel<>(siblings));
     HintUpdateSupply.installSimpleHintUpdateSupply(list);
-    List<NavBarItem> items = new ArrayList<>();
-    list.putClientProperty(DISPOSED_OBJECTS, items);
-    list.installCellRenderer(obj -> {
-      for (NavBarItem item : items) {
-        if (obj == item.getObject()) {
-          item.update();
-          return item;
-        }
-      }
-      NavBarItem item = new NavBarItem(panel, obj, null, true);
-      items.add(item);
-      return item;
-    });
+    MyListRenderer renderer = new MyListRenderer();
+    list.putClientProperty(DISPOSED_OBJECTS, renderer.selectables);
+    list.setCellRenderer(renderer);
     list.setBorder(JBUI.Borders.empty(5));
+    list.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
     list.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -194,10 +228,17 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       }
     });
 
-    JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), o -> panel.getPresentation().getPresentableText(o, false));
+    NavBarListWrapper navBarListWrapper = new NavBarListWrapper(list);
+    ListWithFilter<?> component = (ListWithFilter<?>)ListWithFilter.wrap(list, navBarListWrapper, o -> panel.getPresentation().getPresentableText(o, false));
+    navBarListWrapper.updateViewportPreferredSizeIfNeeded();
+    component.setAutoPackHeight(!UISettings.getInstance().getShowNavigationBarInBottom());
     component.putClientProperty(JBLIST_KEY, list);
     OpenInRightSplitAction.Companion.overrideDoubleClickWithOneClick(component);
     return component;
+  }
+
+  private static NavBarItem unwrapItem(SelectablePanel panel) {
+    return (NavBarItem)panel.getComponent(0);
   }
 
   @NotNull

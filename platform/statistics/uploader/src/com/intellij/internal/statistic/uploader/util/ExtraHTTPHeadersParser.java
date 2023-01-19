@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ExtraHTTPHeadersParser {
+public final class ExtraHTTPHeadersParser {
   /**
    * Headers are serialized into a string to be passed as a program argument.
    * Key/value pairs are separated by ';', key and value are separated by '='

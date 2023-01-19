@@ -1,18 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.run.findActivateScript
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import java.io.File
@@ -59,20 +62,27 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
 
     // No need to escape path: conda can't have spaces
     return """
-        $condaPath shell.powershell hook | Out-String | Invoke-Expression ; 
-        try { conda activate ${sdkHomePath.parent.path} } catch { Write-Host('$errorMessage') }
-        """.trim()
+        & '${StringUtil.escapeChar(condaPath.toString(), '\'')}' shell.powershell hook | Out-String | Invoke-Expression ; 
+        try { 
+          conda activate '${StringUtil.escapeChar(sdkHomePath.parent.path, '\'')}' 
+        } catch { 
+          Write-Host('${StringUtil.escapeChar(errorMessage, '\'')}') 
+        }
+        """.trimIndent()
   }
 
   override fun customizeCommandAndEnvironment(project: Project,
                                               workingDirectory: String?,
                                               command: Array<out String>,
                                               envs: MutableMap<String, String>): Array<out String> {
-    var sdk: Sdk? = null
+    var sdkByDirectory: Sdk? = null
     if (workingDirectory != null) {
-      sdk = PySdkUtil.findSdkForDirectory(project, Paths.get(workingDirectory), false)
+      runReadAction {
+        sdkByDirectory = PySdkUtil.findSdkForDirectory(project, Paths.get(workingDirectory), false)
+      }
     }
 
+    val sdk = sdkByDirectory
     if (sdk != null &&
         (PythonSdkUtil.isVirtualEnv(sdk) || PythonSdkUtil.isConda(sdk)) &&
         PyVirtualEnvTerminalSettings.getInstance(project).virtualEnvActivate) {
@@ -88,7 +98,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
 
         if (isShellIntegrationAvailable(shellPath)) { //fish shell works only for virtualenv and not for conda
           //for bash we pass activate script to jediterm shell integration (see jediterm-bash.in) to source it there
-          //TODO: fix conda for fish
+          //TODO: fix conda for fish [also in fleet.language.python.PythonVirtualEnvTerminalPreprocessor#preprocess]
 
           findActivateScript(sdkHomePath.path, shellPath)?.let { activate ->
             envs.put("JEDITERM_SOURCE", activate.first)
@@ -97,7 +107,11 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         }
         else {
           //for other shells we read envs from activate script by the default shell and pass them to the process
-          envs.putAll(PySdkUtil.activateVirtualEnv(sdk))
+          val envVars = PySdkUtil.activateVirtualEnv(sdk)
+          if (envVars.isEmpty()) {
+            Logger.getInstance(PyVirtualEnvTerminalCustomizer::class.java).warn("No vars found to activate in ${sdk.homePath}")
+          }
+          envs.putAll(envVars)
         }
       }
     }
@@ -140,7 +154,7 @@ class SettingsState {
 
 @State(name = "PyVirtualEnvTerminalCustomizer", storages = [(Storage("python-terminal.xml"))])
 class PyVirtualEnvTerminalSettings : PersistentStateComponent<SettingsState> {
-  var myState: SettingsState = SettingsState()
+  private var myState: SettingsState = SettingsState()
 
   var virtualEnvActivate: Boolean
     get() = myState.virtualEnvActivate

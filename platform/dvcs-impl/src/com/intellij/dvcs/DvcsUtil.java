@@ -109,11 +109,8 @@ public final class DvcsUtil {
 
   /**
    * Returns the currently selected file, based on which VcsBranch or StatusBar components will identify the current repository root.
-   *
-   * @deprecated Prefer {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
    */
   @Nullable
-  @Deprecated
   @RequiresEdt
   public static VirtualFile getSelectedFile(@NotNull Project project) {
     FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor();
@@ -267,14 +264,32 @@ public final class DvcsUtil {
    * <p>
    * Note: Do not call directly, use per-vcs utility method that provides correct {@code recentRootPath}.
    *
-   * @param recentRootPath The last path that was shown in the widget
+   * @param recentRootPath The last repository root that was shown in the widget,
+   *                       see {@link com.intellij.dvcs.ui.DvcsStatusWidget#rememberRecentRoot(String)}.
+   * @param selectedFile   The file in context, see {@link #getSelectedFile(Project)}.
    */
   @Nullable
-  @RequiresEdt
+  @CalledInAny
   public static <T extends Repository> T guessWidgetRepository(@NotNull Project project,
                                                                @NotNull AbstractRepositoryManager<T> manager,
-                                                               @Nullable @NonNls @SystemIndependent String recentRootPath) {
-    VirtualFile file = getSelectedFile(project); // last active FileEditor
+                                                               @Nullable @NonNls @SystemIndependent String recentRootPath,
+                                                               @Nullable VirtualFile selectedFile) {
+    T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, selectedFile));
+    if (repository != null) return repository;
+
+    repository = manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), recentRootPath));
+    if (repository != null) return repository;
+
+    return null;
+  }
+
+  @Nullable
+  @CalledInAny
+  public static <T extends Repository> T guessWidgetRepository(@NotNull Project project,
+                                                               @NotNull AbstractRepositoryManager<T> manager,
+                                                               @Nullable @NonNls @SystemIndependent String recentRootPath,
+                                                               @NotNull DataContext dataContext) {
+    VirtualFile file = getSelectedFile(dataContext);
     T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
     if (repository != null) return repository;
 
@@ -401,7 +416,7 @@ public final class DvcsUtil {
     // get remembered last visited repository root
     if (defaultRootPathValue != null) {
       VirtualFile recentRoot = VcsUtil.getVirtualFile(defaultRootPathValue);
-      if (ArrayUtil.contains(vcsRoots, recentRoot)) {
+      if (ArrayUtil.contains(recentRoot, vcsRoots)) {
         LOG.debug("Returning the recent root: " + recentRoot);
         return recentRoot;
       }
@@ -427,8 +442,7 @@ public final class DvcsUtil {
 
   public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<? extends T> repositories) {
     List<T> validRepositories = ContainerUtil.filter(repositories, t -> t.getRoot().isValid());
-    validRepositories.sort(REPOSITORY_COMPARATOR);
-    return validRepositories;
+    return ContainerUtil.sorted(validRepositories, REPOSITORY_COMPARATOR);
   }
 
   /**

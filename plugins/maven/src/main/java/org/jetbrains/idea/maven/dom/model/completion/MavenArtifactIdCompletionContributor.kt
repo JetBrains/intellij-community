@@ -41,17 +41,19 @@ class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributo
   override fun fillResults(result: CompletionResultSet,
                            coordinates: MavenDomShortArtifactCoordinates,
                            cld: ConcurrentLinkedDeque<RepositoryArtifactData>,
-                           promise: Promise<Int>) {
+                           promise: Promise<Int>,
+                           completionPrefix: String) {
     val set = HashSet<String>()
     //todo hot spot - spin loop (see also parent and other child classes)
     while (promise.state == Promise.State.PENDING || !cld.isEmpty()) {
       ProgressManager.checkCanceled()
       val item = cld.poll()
       if (item is MavenRepositoryArtifactInfo && set.add(item.artifactId)) {
-        result
-          .addElement(
-            MavenDependencyCompletionUtil.lookupElement(item, item.artifactId).withInsertHandler(
-              MavenArtifactIdInsertionHandler.INSTANCE))
+        result.addElement(
+          MavenDependencyCompletionUtil.lookupElement(item, item.artifactId)
+            .withInsertHandler(MavenArtifactIdInsertionHandler.INSTANCE)
+            .also { it.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix) }
+        )
       }
     }
   }

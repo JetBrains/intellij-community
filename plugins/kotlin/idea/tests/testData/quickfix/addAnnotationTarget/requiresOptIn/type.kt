@@ -1,5 +1,4 @@
 // "Add annotation target" "false"
-// ACTION: Add 'const' modifier
 // ACTION: Convert property initializer to getter
 // ACTION: Convert to lazy property
 // ACTION: Introduce import alias

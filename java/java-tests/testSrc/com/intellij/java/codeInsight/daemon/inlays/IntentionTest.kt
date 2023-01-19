@@ -3,26 +3,15 @@ package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.java.codeInsight.completion.CompletionHintsTest
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
-class BlackListMethodIntentionTest : LightJavaCodeInsightFixtureTestCase() {
+class ExcludeListMethodIntentionTest : LightJavaCodeInsightFixtureTestCase() {
 
-  private var isParamHintsEnabledBefore = false
   private val default = ParameterNameHintsSettings()
-  
-  override fun setUp() {
-    super.setUp()
-
-    val settings = EditorSettingsExternalizable.getInstance()
-    isParamHintsEnabledBefore = settings.isShowParameterNameHints
-    settings.isShowParameterNameHints = true
-  }
 
   override fun tearDown() {
     try {
-      EditorSettingsExternalizable.getInstance().isShowParameterNameHints = isParamHintsEnabledBefore
       ParameterNameHintsSettings.getInstance().loadState(default.state)
     }
     catch (e: Throwable) {

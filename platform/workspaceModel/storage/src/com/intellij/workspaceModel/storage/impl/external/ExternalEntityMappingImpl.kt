@@ -19,9 +19,19 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal o
     } ?: emptyList()
   }
 
+  override fun getFirstEntity(data: T): WorkspaceEntity? {
+    return index.getKeysByValue(data)?.firstOrNull()?.let {
+      entityStorage.entityDataById(it)?.createEntity(entityStorage)
+    }
+  }
+
   override fun getDataByEntity(entity: WorkspaceEntity): T? {
     entity as WorkspaceEntityBase
-    return index[entity.id]
+    return getDataByEntityId(entity.id)
+  }
+
+  internal fun getDataByEntityId(entityId: EntityId): T? {
+    return index[entityId]
   }
 
   override fun size(): Int = index.size
@@ -38,11 +48,11 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal o
 internal class MutableExternalEntityMappingImpl<T> private constructor(
   // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
   override var index: BidirectionalMap<EntityId, T>,
-  private var indexLog: MutableList<IndexLogRecord>,
+  internal var indexLogBunches: IndexLog,
   private var freezed: Boolean
 ) : ExternalEntityMappingImpl<T>(index), MutableExternalEntityMapping<T> {
 
-  constructor() : this(BidirectionalMap<EntityId, T>(), mutableListOf(), false)
+  constructor() : this(BidirectionalMap<EntityId, T>(), IndexLog(mutableListOf()), false)
 
   override fun addMapping(entity: WorkspaceEntity, data: T) {
     startWrite()
@@ -53,7 +63,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   internal fun add(id: EntityId, data: T) {
     startWrite()
     index[id] = data
-    indexLog.add(IndexLogRecord.Add(id, data))
+    indexLogBunches.add(id, IndexLogRecord.Add(id, data))
     LOG.trace {
       try {
         "Adding to external index: ${id.asString()} -> $data. Data hash: ${data.hashCode()}"
@@ -93,42 +103,40 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   internal fun clearMapping() {
     startWrite()
     index.clear()
-    indexLog.add(IndexLogRecord.Clear)
+    indexLogBunches.clear()
   }
 
   internal fun remove(id: EntityId): T? {
     startWrite()
     LOG.trace { "Remove $id from external index" }
     val removed = index.remove(id)
-    indexLog.add(IndexLogRecord.Remove(id))
+    indexLogBunches.add(id, IndexLogRecord.Remove(id))
     return removed
   }
 
   fun applyChanges(other: MutableExternalEntityMappingImpl<*>,
                    replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>,
                    target: MutableEntityStorageImpl) {
-    val initialData = HashMap<EntityId, T>()
-    //todo there will be no need to remember initial data if we merge events like we do in WorkspaceBuilderChangeLog
-    other.indexLog.forEach { indexEntry ->
-      when (indexEntry) {
-        is IndexLogRecord.Add<*> -> getTargetId(replaceMap, target, indexEntry.id)?.let { entityId ->
-          val oldData = index[entityId]
-          if (oldData != null) {
-            initialData.putIfAbsent(entityId, oldData)
-          }
-          @Suppress("UNCHECKED_CAST")
-          add(entityId, indexEntry.data as T)
-        }
-        is IndexLogRecord.Remove -> getTargetId(replaceMap, target, indexEntry.id)?.let { entityId ->
-          val initialValue = initialData.remove(entityId)
-          if (initialValue != null) {
-            add(entityId, initialValue)
-          }
-          else {
-            remove(entityId)
+    other.indexLogBunches.chain.forEach { operation ->
+      when (operation) {
+        is IndexLogOperation.Changes -> {
+          operation.changes.values.forEach { record ->
+            when (record) {
+              is IndexLogRecord.Add<*> -> {
+                getTargetId(replaceMap, target, record.id)?.let { entityId ->
+                  @Suppress("UNCHECKED_CAST")
+                  add(entityId, record.data as T)
+                }
+              }
+              is IndexLogRecord.Remove -> {
+                remove(record.id)
+              }
+            }
           }
         }
-        IndexLogRecord.Clear -> clearMapping()
+        IndexLogOperation.Clear -> {
+          clearMapping()
+        }
       }
     }
   }
@@ -147,7 +155,9 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   private fun startWrite() {
     if (!freezed) return
     this.index = this.index.copy()
-    this.indexLog = this.indexLog.toMutableList()
+    this.indexLogBunches = IndexLog(this.indexLogBunches.chain.mapTo(ArrayList()) {
+      if (it is IndexLogOperation.Changes) IndexLogOperation.Changes(LinkedHashMap(it.changes)) else it
+    })
     this.freezed = false
   }
 
@@ -156,10 +166,49 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     return ExternalEntityMappingImpl(this.index)
   }
 
-  private sealed class IndexLogRecord {
+  internal sealed class IndexLogRecord {
     data class Add<T>(val id: EntityId, val data: T) : IndexLogRecord()
     data class Remove(val id: EntityId) : IndexLogRecord()
-    object Clear : IndexLogRecord()
+  }
+
+  internal sealed interface IndexLogOperation {
+    data class Changes(val changes: LinkedHashMap<EntityId, IndexLogRecord>) : IndexLogOperation
+    object Clear : IndexLogOperation
+  }
+
+  internal class IndexLog(
+    val chain: MutableList<IndexLogOperation>,
+  ) {
+    fun add(id: EntityId, operation: IndexLogRecord) {
+      var lastBunch = chain.lastOrNull()
+      if (lastBunch !is IndexLogOperation.Changes) {
+        chain.add(IndexLogOperation.Changes(LinkedHashMap()))
+        lastBunch = chain.last()
+      }
+      lastBunch as IndexLogOperation.Changes
+      val existing = lastBunch.changes[id]
+      if (existing != null) {
+        when (operation) {
+          is IndexLogRecord.Add<*> -> {
+            lastBunch.changes.remove(id)
+            lastBunch.changes[id] = operation
+          }
+          is IndexLogRecord.Remove -> {
+            if (existing is IndexLogRecord.Add<*>) {
+              lastBunch.changes.remove(id)
+            } else {
+              lastBunch.changes[id] = operation
+            }
+          }
+        }
+      } else {
+        lastBunch.changes[id] = operation
+      }
+    }
+
+    fun clear() {
+      chain.add(IndexLogOperation.Clear)
+    }
   }
 
   companion object {
@@ -167,7 +216,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
       val result = mutableMapOf<String, MutableExternalEntityMappingImpl<*>>()
       other.forEach { (identifier, index) ->
         if (index is MutableExternalEntityMappingImpl) index.freezed = true
-        result[identifier] = MutableExternalEntityMappingImpl(index.index, mutableListOf(), true)
+        result[identifier] = MutableExternalEntityMappingImpl(index.index, IndexLog(mutableListOf()), true)
       }
       return result
     }
@@ -186,6 +235,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
 
 internal object EmptyExternalEntityMapping : ExternalEntityMapping<Any> {
   override fun getEntities(data: Any): List<WorkspaceEntity> = emptyList()
+  override fun getFirstEntity(data: Any): WorkspaceEntity? = null
   override fun getDataByEntity(entity: WorkspaceEntity): Any? = null
   override fun forEach(action: (key: WorkspaceEntity, value: Any) -> Unit) {}
   override fun size(): Int = 0

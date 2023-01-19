@@ -112,11 +112,6 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   }
 
   @Override
-  public void setFont(EditorFontType key, Font font) {
-    myDelegate.setFont(key, font);
-  }
-
-  @Override
   public float getLineSpacing() {
     return myDelegate.getLineSpacing();
   }

@@ -7,5 +7,5 @@ public class Testing {
 }
 
 // EXIST: LibClass
-// EXIST: LibTrait
+// EXIST: LibInterface
 // EXIST: LibEnum

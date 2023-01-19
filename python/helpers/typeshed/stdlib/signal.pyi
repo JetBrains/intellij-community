@@ -1,9 +1,10 @@
 import sys
 from _typeshed import structseq
+from collections.abc import Callable, Iterable
 from enum import IntEnum
 from types import FrameType
-from typing import Any, Callable, Iterable, Optional, Union
-from typing_extensions import final
+from typing import Any, Union
+from typing_extensions import Final, Never, TypeAlias, final
 
 NSIG: int
 
@@ -60,10 +61,10 @@ class Handlers(IntEnum):
 SIG_DFL: Handlers
 SIG_IGN: Handlers
 
-_SIGNUM = Union[int, Signals]
-_HANDLER = Union[Callable[[int, Optional[FrameType]], Any], int, Handlers, None]
+_SIGNUM: TypeAlias = int | Signals
+_HANDLER: TypeAlias = Union[Callable[[int, FrameType | None], Any], int, Handlers, None]
 
-def default_int_handler(__signalnum: int, __frame: FrameType | None) -> None: ...
+def default_int_handler(__signalnum: int, __frame: FrameType | None) -> Never: ...
 
 if sys.version_info >= (3, 10):  # arguments changed in 3.10.2
     def getsignal(signalnum: _SIGNUM) -> _HANDLER: ...
@@ -148,6 +149,8 @@ else:
         SIGRTMIN: Signals
         @final
         class struct_siginfo(structseq[int], tuple[int, int, int, int, int, int, int]):
+            if sys.version_info >= (3, 10):
+                __match_args__: Final = ("si_signo", "si_code", "si_errno", "si_pid", "si_uid", "si_status", "si_band")
             @property
             def si_signo(self) -> int: ...
             @property
@@ -171,11 +174,7 @@ if sys.version_info >= (3, 8):
     def valid_signals() -> set[Signals]: ...
     def raise_signal(__signalnum: _SIGNUM) -> None: ...
 
-if sys.version_info >= (3, 7):
-    def set_wakeup_fd(fd: int, *, warn_on_full_buffer: bool = ...) -> int: ...
-
-else:
-    def set_wakeup_fd(fd: int) -> int: ...
+def set_wakeup_fd(fd: int, *, warn_on_full_buffer: bool = ...) -> int: ...
 
 if sys.version_info >= (3, 9):
     if sys.platform == "linux":

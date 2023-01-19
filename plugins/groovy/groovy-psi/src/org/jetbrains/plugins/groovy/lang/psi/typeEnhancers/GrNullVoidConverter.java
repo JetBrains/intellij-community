@@ -17,14 +17,10 @@ public class GrNullVoidConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {
-    switch (position) {
-      case RETURN_VALUE:
-      case ASSIGNMENT:
-      case METHOD_PARAMETER:
-        return true;
-      default:
-        return false;
-    }
+    return switch (position) {
+      case RETURN_VALUE, ASSIGNMENT, METHOD_PARAMETER -> true;
+      default -> false;
+    };
   }
 
   @Nullable
@@ -44,17 +40,17 @@ public class GrNullVoidConverter extends GrTypeConverter {
 
     if (PsiType.VOID.equals(actualType)) {
       switch (position) {
-        case RETURN_VALUE: {
+        case RETURN_VALUE -> {
           // We can return void values from method. But it's very suspicious.
           return WARNING;
         }
-        case ASSIGNMENT: {
+        case ASSIGNMENT -> {
           if (targetType.equals(PsiType.BOOLEAN)) return null;
           if (targetType.equals(PsiType.getJavaLangString(context.getManager(), context.getResolveScope()))) return WARNING;
           return isCompileStatic ? ERROR : WARNING;
         }
-        default:
-          break;
+        default -> {
+        }
       }
     }
     else if (actualType == PsiType.NULL) {

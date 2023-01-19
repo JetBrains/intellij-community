@@ -1,4 +1,4 @@
-class kjjk {
+class kjjk_ {
     void t() {
         new KJJK().getProperty();
     }

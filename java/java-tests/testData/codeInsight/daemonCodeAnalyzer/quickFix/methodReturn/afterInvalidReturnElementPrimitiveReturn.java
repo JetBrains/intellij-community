@@ -1,4 +1,4 @@
-// "Make 'm' return 'int'" "true-preview"
+// "Make 'm()' return 'int'" "true-preview"
 
 class Test {
 

@@ -39,38 +39,38 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
         String name = identifier.getText();
         PsiElement parent = identifier.getParent();
         switch (name) {
-          case PsiKeyword.ASSERT:
+          case PsiKeyword.ASSERT -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_1_4) &&
                 (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
               return JavaErrorBundle.message("assert.identifier.warn");
             }
-            break;
-          case PsiKeyword.ENUM:
+          }
+          case PsiKeyword.ENUM -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_1_5) &&
                 (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
               return JavaErrorBundle.message("enum.identifier.warn");
             }
-            break;
-          case "_":
+          }
+          case "_" -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_1_9)) {
               return JavaErrorBundle.message("underscore.identifier.warn");
             }
-            break;
-          case PsiKeyword.VAR:
+          }
+          case PsiKeyword.VAR -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_10) && parent instanceof PsiClass) {
               return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.VAR, 10);
             }
-            break;
-          case PsiKeyword.YIELD:
+          }
+          case PsiKeyword.YIELD -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_14) && parent instanceof PsiClass) {
               return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.YIELD, 14);
             }
-            break;
-          case PsiKeyword.RECORD:
+          }
+          case PsiKeyword.RECORD -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_16) && parent instanceof PsiClass) {
               return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.RECORD, 16);
             }
-            break;
+          }
         }
         return null;
       }

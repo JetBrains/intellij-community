@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'BBB.aaa'" "true"
 // WITH_STDLIB
 // ERROR: Unresolved reference: aaa
 

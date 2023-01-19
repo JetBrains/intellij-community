@@ -113,8 +113,7 @@ public class JSpecifyAnnotationOldTest extends LightJavaCodeInsightFixtureTestCa
 
     @Override
     protected void reportNullabilityProblems(ProblemReporter reporter,
-                                             List<NullabilityProblemKind.NullabilityProblem<?>> problems,
-                                             Map<PsiExpression, ConstantResult> expressions) {
+                                             List<NullabilityProblemKind.NullabilityProblem<?>> problems) {
       for (NullabilityProblemKind.NullabilityProblem<?> problem : problems) {
         PsiExpression expression = problem.getDereferencedExpression();
         if (expression != null) {

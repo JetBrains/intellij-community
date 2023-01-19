@@ -81,7 +81,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       }
     }
     putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
-    SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, this, false, selected);
+    SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, (SimpleColoredComponent)this, false, selected);
   }
 
   private void updateIcon(XDebuggerTreeNode node) {

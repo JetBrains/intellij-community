@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi.Companion.SAVED_PATCHES_UI_PLACE
 import com.intellij.openapi.vcs.changes.ui.*
+import org.jetbrains.annotations.Nls
 import java.beans.PropertyChangeListener
 import javax.swing.JTree
 
@@ -63,7 +64,7 @@ class SavedPatchesDiffPreview(project: Project,
 
   private inner class MyChangeWrapper(private val change: SavedPatchesProvider.ChangeObject) : Wrapper(), PresentableChange by change {
     override fun getUserObject(): Any = change
-    override fun getPresentableName(): String = change.filePath.name
+    override fun getPresentableName(): @Nls String = change.filePath.name
     override fun createProducer(project: Project?): DiffRequestProducer? = change.createDiffRequestProducer(project)
     override fun getTag(): ChangesBrowserNode.Tag? = change.tag
   }

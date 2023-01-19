@@ -1,0 +1,3 @@
+// "Specify return type explicitly" "true"
+interface I
+fun foo(): I? = if (false) object : I {} else null

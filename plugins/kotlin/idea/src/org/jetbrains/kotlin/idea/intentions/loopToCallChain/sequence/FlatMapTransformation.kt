@@ -56,7 +56,7 @@ class FlatMapTransformation(
                 // if nested loop range uses index, convert to "mapIndexed {...}.flatMap { it }"
                 val mapIndexedTransformation =
                     MapTransformation(state.outerLoop, state.inputVariable, state.indexVariable, transform, mapNotNull = false)
-                val inputVarExpression = KtPsiFactory(nestedLoop).createExpressionByPattern(
+                val inputVarExpression = KtPsiFactory(nestedLoop.project).createExpressionByPattern(
                     "$0", state.inputVariable.nameAsSafeName,
                     reformat = state.reformat
                 )
@@ -80,7 +80,7 @@ class FlatMapTransformation(
             return TransformationMatch.Sequence(transformation, newState)
         }
 
-        private fun KtExpression.asSequence(reformat: Boolean): KtExpression = KtPsiFactory(this).createExpressionByPattern(
+        private fun KtExpression.asSequence(reformat: Boolean): KtExpression = KtPsiFactory(project).createExpressionByPattern(
             "$0.asSequence()", this,
             reformat = reformat
         )

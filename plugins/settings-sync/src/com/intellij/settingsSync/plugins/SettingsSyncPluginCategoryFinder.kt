@@ -6,11 +6,11 @@ import com.intellij.openapi.components.SettingsCategory
 
 internal object SettingsSyncPluginCategoryFinder {
 
-  val UI_CATEGORIES = setOf(
+  private val UI_CATEGORIES = setOf(
     "Theme",
     "Editor Color Schemes")
 
-  val UI_EXTENSIONS = setOf(
+  private val UI_EXTENSIONS = setOf(
     "com.intellij.bundledColorScheme",
     "com.intellij.themeProvider"
   )

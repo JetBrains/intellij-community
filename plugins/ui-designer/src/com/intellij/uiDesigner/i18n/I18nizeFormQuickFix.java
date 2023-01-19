@@ -12,8 +12,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -96,8 +95,7 @@ public class I18nizeFormQuickFix extends QuickFix {
   }
 
   static String getBundleName(Project project, PropertiesFile aPropertiesFile) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    String packageName = fileIndex.getPackageNameByDirectory(aPropertiesFile.getVirtualFile().getParent());
+    String packageName = PackageIndex.getInstance(project).getPackageNameByDirectory(aPropertiesFile.getVirtualFile().getParent());
     if (packageName == null) return null;
     String bundleName;
     if (!packageName.isEmpty()) {

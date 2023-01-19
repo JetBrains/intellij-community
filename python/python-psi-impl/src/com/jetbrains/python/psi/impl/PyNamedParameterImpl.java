@@ -10,8 +10,8 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
@@ -200,7 +200,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   @Override
   @NotNull
   public Icon getIcon(final int flags) {
-    return PlatformIcons.PARAMETER_ICON;
+    return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter);
   }
 
   @Override

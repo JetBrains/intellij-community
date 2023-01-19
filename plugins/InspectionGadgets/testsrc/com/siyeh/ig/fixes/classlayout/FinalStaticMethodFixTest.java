@@ -17,21 +17,25 @@ public class FinalStaticMethodFixTest extends IGQuickFixesTestCase {
 
   public void testSimple() {
     doMemberTest(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
-                 "public static final/**/ boolean isPositive(int number) {\n" +
-                 "    return number > 0;\n" +
-                 "}",
-                 "public static boolean isPositive(int number) {\n" +
-                 "    return number > 0;\n" +
-                 "}"
+                 """
+                   public static final/**/ boolean isPositive(int number) {
+                       return number > 0;
+                   }""",
+                 """
+                   public static boolean isPositive(int number) {
+                       return number > 0;
+                   }"""
     );
   }
 
   public void testDoNotFixOnInstanceMethod() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
-                               "class X {\n" +
-                               "  public final boolean isPositive(int number) {\n" +
-                               "    return number > 0;\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   public final boolean isPositive(int number) {
+                                     return number > 0;
+                                   }
+                                 }
+                                 """);
   }
 }

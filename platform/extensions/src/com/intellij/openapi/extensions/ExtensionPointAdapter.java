@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @see ExtensionPointChangeListener
  */
-public abstract class ExtensionPointAdapter<T> implements ExtensionPointAndAreaListener<T> {
+public abstract class ExtensionPointAdapter<T> implements ExtensionPointListener<T> {
   @Override
   public final void extensionAdded(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
     extensionListChanged();

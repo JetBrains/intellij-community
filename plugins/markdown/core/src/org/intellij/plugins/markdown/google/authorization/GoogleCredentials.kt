@@ -10,7 +10,7 @@ class GoogleCredentials(
   override val expiresIn: Long,
   val tokenType: String,
   val scope: String,
-  val expirationTime: Date) : CredentialsWithRefresh {
+  private val expirationTime: Date) : CredentialsWithRefresh {
 
   /**
    * @return true if the token has not expired yet;

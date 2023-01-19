@@ -1,16 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SetInspectionOptionFix;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
@@ -31,7 +30,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.SmartList;
@@ -46,15 +44,15 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.WeakestTypeFinder;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class TypeMayBeWeakenedInspection extends BaseInspection {
   @SuppressWarnings({"PublicField", "WeakerAccess"})
@@ -76,10 +74,6 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
   public boolean doNotWeakenInferredVariableType;
 
   public OrderedSet<String> myStopClassSet = new OrderedSet<>();
-
-  private final ListWrappingTableModel myStopClassesModel =
-    new ListWrappingTableModel(myStopClassSet,
-                               InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table"));
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
@@ -180,7 +174,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (myCandidates.size() == 1) {
         addClass(myCandidates.get(0), descriptor.getPsiElement());
         return;
@@ -273,33 +267,20 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.ignore.option"),
-                             "useRighthandTypeAsWeakestTypeInAssignments");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.collection.method.option"),
-                             "useParameterizedTypeForCollectionMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.to.object.option"),
-                             "doNotWeakenToJavaLangObject");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.only.weaken.to.an.interface"),
-                             "onlyWeakentoInterface");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.return.type"),
-                             "doNotWeakenReturnType");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.inferred.variable.type"),
-                             "doNotWeakenInferredVariableType");
-
-    final ListTable stopClassesTable = new ListTable(myStopClassesModel);
-    final JPanel stopClassesPanel = UiUtils.createAddRemoveTreeClassChooserPanel(
-      InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table"),
-      InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table.label"),
-      stopClassesTable,
-      true,
-      CommonClassNames.JAVA_LANG_OBJECT);
-    optionsPanel.add(stopClassesPanel, "growx");
-
-    return ScrollPaneFactory.createScrollPane(optionsPanel, true);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("useRighthandTypeAsWeakestTypeInAssignments",
+               InspectionGadgetsBundle.message("inspection.type.may.be.weakened.ignore.option")),
+      checkbox("useParameterizedTypeForCollectionMethods",
+               InspectionGadgetsBundle.message("inspection.type.may.be.weakened.collection.method.option")),
+      checkbox("doNotWeakenToJavaLangObject",
+               InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.to.object.option")),
+      checkbox("onlyWeakentoInterface", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.only.weaken.to.an.interface")),
+      checkbox("doNotWeakenReturnType", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.return.type")),
+      checkbox("doNotWeakenInferredVariableType",
+               InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.inferred.variable.type")),
+      stringList("myStopClassSet", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table.label"),
+                 new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table"))));
   }
 
   private static class TypeMayBeWeakenedFix extends InspectionGadgetsFix {
@@ -322,7 +303,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiTypeElement typeElement;

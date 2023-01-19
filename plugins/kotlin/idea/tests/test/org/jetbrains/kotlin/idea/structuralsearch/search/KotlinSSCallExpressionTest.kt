@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
+import org.jetbrains.kotlin.idea.structuralsearch.filters.MatchCallSemanticsModifier
+import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
 
 class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
-    fun testConstrArgCall() { doTest("A(true, 0, 1)", """
+    fun testConstrArgCall() { doTest("'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})](true, 0, 1)", """
         class A(val b: Boolean, val c: Int, val d: Int)
 
         fun b() {
@@ -43,7 +45,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testConstrMixedSpreadVarargCall() { doTest("A(0, 1, 2, 3, 4)", """
+    fun testConstrMixedSpreadVarargCall() { doTest("'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})](0, 1, 2, 3, 4)", """
         class A(vararg val b: Int)
 
         fun b(): A {
@@ -51,7 +53,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testConstrMixedVarargCall() { doTest("A(0, *intArrayOf(1, 2, 3), 4)", """
+    fun testConstrMixedVarargCall() { doTest("'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})](0, *intArrayOf(1, 2, 3), 4)", """
         class A(vararg val b: Int)
 
         fun c(): A {
@@ -65,7 +67,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testConstrNamedArgsCall() { doTest("A(b = true, c = 0, d = 1)", """
+    fun testConstrNamedArgsCall() { doTest("'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})](b = true, c = 0, d = 1)", """
         class A(val b: Boolean, val c: Int, val d: Int)
 
         fun d() {
@@ -76,7 +78,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testConstrSpreadVarargCall() { doTest("A(1, 2, 3)", """
+    fun testConstrSpreadVarargCall() { doTest("'_:[regex(A) && _${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})](1, 2, 3)", """
         class A(vararg val b: Int)
 
         fun c(): A {
@@ -92,7 +94,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testConstrVarargCall() { doTest("A(*intArrayOf(1, 2, 3))", """
+    fun testConstrVarargCall() { doTest("'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})](*intArrayOf(1, 2, 3))", """
         class A(vararg val b: Int)
 
         fun c(): A {
@@ -132,7 +134,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testFunCallDefaultArg() { doTest("a('_)", """
+    fun testFunCallDefaultArg() { doTest("'_:[regex(a) && _${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]('_)", """
         fun a(b: Int = 0) { println(b) }
 
         fun c() {
@@ -142,7 +144,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testFunCallDefaultArgValue() { doTest("a(0)", """
+    fun testFunCallDefaultArgValue() { doTest("'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})](0)", """
         fun a(b: Int = 0) { println(b) }
 
         fun c() {
@@ -164,7 +166,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testFunCallDefaultArgMixed() { doTest("a('_{5,5})", """
+    fun testFunCallDefaultArgMixed() { doTest("'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]('_{5,5})", """
         fun a(k: Int, b: Int = 0, c: String = "Hello World!", d: Double, vararg t: String): String { return "${"$"}k ${"$"}b ${"$"}c ${"$"}d ${"$"}t" }
 
         fun c() {
@@ -175,7 +177,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testFunCallDefaultTrailingLambda() { doTest("a('_)", """
+    fun testFunCallDefaultTrailingLambda() { doTest("'_:[regex(a) && _${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]('_)", """
         fun a(b: (Int) -> Int = { it }) { b(0) }
 
         fun c() {
@@ -186,7 +188,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testFunCallNamedDefaultArg() { doTest("a('_, '_)", """
+    fun testFunCallNamedDefaultArg() { doTest("'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]('_, '_)", """
         fun a(b: Int, c: Int = 0) { println(b + c) }
 
         fun d() {
@@ -227,7 +229,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testFunMixedSpreadVarargCall() { doTest("a(0, 1, 2, 3, 4)", """
+    fun testFunMixedSpreadVarargCall() { doTest("'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})](0, 1, 2, 3, 4)", """
         fun a(vararg b: Int): List<Int> {
             return b.toList()
         }
@@ -237,7 +239,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testFunMixedVarargCall() { doTest("a(0, *intArrayOf(1, 2, 3), 4)", """
+    fun testFunMixedVarargCall() { doTest("'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})](0, *intArrayOf(1, 2, 3), 4)", """
         fun a(vararg b: Int): List<Int> {
             return b.toList()
         }
@@ -257,7 +259,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testFunSpreadVarargCall() { doTest("a(1, 2, 3)", """
+    fun testFunSpreadVarargCall() { doTest("'_:[regex(a) && _${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})](1, 2, 3)", """
         fun a(vararg b: Int): List<Int> {
             return b.toList()
         }
@@ -277,7 +279,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testFunVarargCall() { doTest("a(*intArrayOf(1, 2, 3))", """
+    fun testFunVarargCall() { doTest("'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})](*intArrayOf(1, 2, 3))", """
         fun a(vararg b: Int): List<Int> {
             return b.toList()
         }
@@ -320,7 +322,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testFunTrailingLambda() { doTest("'_('_+)", """
+    fun testFunTrailingLambda() { doTest("'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]('_+)", """
         fun a(b: () -> String) {
             b()
             <warning descr="SSR">a({"foo"})</warning>
@@ -328,7 +330,7 @@ class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testFunTrailingLambdaMultiArg() { doTest("'_('_{2,2})", """
+    fun testFunTrailingLambdaMultiArg() { doTest("'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]('_{2,2})", """
         fun a(i: Int, b: () -> String) {
             println(i)
             b()

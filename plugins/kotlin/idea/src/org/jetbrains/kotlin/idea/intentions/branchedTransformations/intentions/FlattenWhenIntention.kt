@@ -39,7 +39,7 @@ class FlattenWhenIntention : SelfTargetingIntention<KtWhenExpression>(
         val outerEntries = element.entries
         val innerEntries = nestedWhen.entries
 
-        val whenExpression = KtPsiFactory(element).buildExpression {
+        val whenExpression = KtPsiFactory(element.project).buildExpression {
             appendFixedText("when")
             if (subjectExpression != null) {
                 appendFixedText("(").appendExpression(subjectExpression).appendFixedText(")")

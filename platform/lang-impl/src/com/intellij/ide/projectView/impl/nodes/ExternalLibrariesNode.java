@@ -8,6 +8,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -102,7 +103,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
     List<ExternalLibrariesWorkspaceModelNodesProvider<?>> extensionList =
       ExternalLibrariesWorkspaceModelNodesProvider.EP.getExtensionList();
     if (!extensionList.isEmpty()) {
-      EntityStorage current = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+      EntityStorage current = WorkspaceModel.getInstance(project).getCurrentSnapshot();
       for (ExternalLibrariesWorkspaceModelNodesProvider<?> provider : extensionList) {
         handleProvider(provider, project, current, children);
       }
@@ -113,9 +114,10 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   private <T extends WorkspaceEntity> void handleProvider(ExternalLibrariesWorkspaceModelNodesProvider<T> provider,
                                                           @NotNull Project project,
                                                           EntityStorage storage,
-                                                          List<AbstractTreeNode<?>> children) {
+                                                          List<? super AbstractTreeNode<?>> children) {
     Sequence<T> sequence = storage.entities(provider.getWorkspaceClass());
     for (T entity : SequencesKt.asIterable(sequence)) {
+      ProgressManager.checkCanceled();
       AbstractTreeNode<?> node = provider.createNode(entity, project, getSettings());
       if (node != null) {
         children.add(node);

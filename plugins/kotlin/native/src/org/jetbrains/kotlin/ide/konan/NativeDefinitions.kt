@@ -77,7 +77,7 @@ class NativeDefinitionsParserDefinition : ParserDefinition {
 }
 
 class CLanguageInjector : LanguageInjector {
-    val cLanguage = Language.findLanguageByID("ObjectiveC")
+    private val cLanguage = Language.findLanguageByID("ObjectiveC")
 
     override fun getLanguagesToInject(host: PsiLanguageInjectionHost, registrar: InjectedLanguagePlaces) {
         if (!host.isValid) return

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.ide.IdeCoreBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,6 +33,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static com.intellij.openapi.util.Pair.pair;
 
 public final class VMOptions {
+
+  public static final String TEST_SCRIPT_FILE_NAME = "test_script.txt";
   private static final Logger LOG = Logger.getInstance(VMOptions.class);
   private static final ReadWriteLock ourUserFileLock = new ReentrantReadWriteLock();
 
@@ -40,20 +42,21 @@ public final class VMOptions {
     HEAP("Xmx", "", "change.memory.max.heap"),
     MIN_HEAP("Xms", "", "change.memory.min.heap"),
     METASPACE("XX:MaxMetaspaceSize", "=", "change.memory.metaspace"),
+    DIRECT_BUFFERS("XX:MaxDirectMemorySize", "=", "change.memory.direct.buffers"),
     CODE_CACHE("XX:ReservedCodeCacheSize", "=", "change.memory.code.cache");
 
     public final @NlsSafe String optionName;
     public final String option;
     private final String labelKey;
 
-    MemoryKind(String name, String separator, @PropertyKey(resourceBundle = "messages.IdeCoreBundle") String key) {
+    MemoryKind(String name, String separator, @PropertyKey(resourceBundle = "messages.IdeBundle") String key) {
       optionName = name;
       option = '-' + name + separator;
       labelKey = key;
     }
 
     public @NlsContexts.Label String label() {
-      return IdeCoreBundle.message(labelKey);
+      return IdeBundle.message(labelKey);
     }
   }
 
@@ -197,7 +200,7 @@ public final class VMOptions {
   /**
    * Sets or deletes multiple options in one pass. See {@link #setOption(String, String)} for details.
    */
-  public static void setOptions(@NotNull List<Pair<@NotNull String, @Nullable String>> _options) throws IOException {
+  public static void setOptions(@NotNull List<? extends Pair<@NotNull String, @Nullable String>> _options) throws IOException {
     Path file = getUserOptionsFile();
     if (file == null) {
       throw new IOException("The IDE is not configured for using custom VM options (jb.vmOptionsFile=" + System.getProperty("jb.vmOptionsFile") + ')');
@@ -298,17 +301,6 @@ public final class VMOptions {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated ignores write errors; please use {@link #setOption(MemoryKind, int)} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public static void writeOption(@NotNull MemoryKind option, int value) {
-    try {
-      setOption(option.option, value + "m");
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
-  }
 
   /** @deprecated ignores write errors; please use {@link #setProperty} instead */
   @Deprecated(forRemoval = true)
@@ -353,10 +345,5 @@ public final class VMOptions {
     return getUserOptionsFile();
   }
 
-  /** @deprecated the name is no longer accurate; please use {@link #getFileName()} instead */
-  @Deprecated(forRemoval = true)
-  public static @NotNull String getCustomVMOptionsFileName() {
-    return getFileName();
-  }
   //</editor-fold>
 }

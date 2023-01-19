@@ -9,6 +9,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -17,6 +18,7 @@ import com.intellij.presentation.FilePresentationService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.LeafState;
 import org.jetbrains.annotations.*;
 
@@ -65,11 +67,29 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   @Override
   protected void postprocess(@NotNull PresentationData presentation) {
+    setFileStatusErrors(presentation);
+    setForcedForeground(presentation);
+    appendInplaceComments(presentation);
+  }
+
+  private void setFileStatusErrors(@NotNull PresentationData presentation) {
     if (hasProblemFileBeneath() ) {
       presentation.setAttributesKey(FILESTATUS_ERRORS);
     }
+  }
 
-    setForcedForeground(presentation);
+  private void appendInplaceComments(@NotNull PresentationData presentation) {
+    appendInplaceComments(new PresentationDataInplaceCommentAppender(presentation));
+  }
+
+  /**
+   * Generates inplace comments and appends it to the given appender.
+   * <p>
+   *   The default implementation does nothing. Subclasses may override this method to append their inplace comments.
+   * </p>
+   * @param appender the appender to append comments to
+   */
+  protected void appendInplaceComments(@NotNull InplaceCommentAppender appender) {
   }
 
   private void setForcedForeground(@NotNull PresentationData presentation) {
@@ -308,4 +328,21 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     }
     return true; // any custom object can be contained somewhere in a tree
   }
+
+  private static class PresentationDataInplaceCommentAppender implements InplaceCommentAppender {
+
+    private final @NotNull PresentationData myPresentation;
+
+    PresentationDataInplaceCommentAppender(@NotNull PresentationData presentation) {
+      myPresentation = presentation;
+    }
+
+    @Override
+    public void append(@NotNull @NlsSafe String text, @NotNull SimpleTextAttributes attributes) {
+      myPresentation.ensureColoredTextIsUsed();
+      myPresentation.addText(text, attributes);
+    }
+
+  }
+
 }

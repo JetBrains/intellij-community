@@ -14,7 +14,7 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
     override val fileType: LanguageFileType
         get() = KotlinFileType.INSTANCE
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testNotAvailableWithSyntaxError() {
         doTest(

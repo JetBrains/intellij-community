@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
@@ -17,21 +16,20 @@ import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
   @NonNls private static final String AMP_ENTITY = "&amp;";
 
   @Override
-  public void registerErrorQuickFix(@NotNull final PsiErrorElement element, @NotNull final HighlightInfo highlightInfo) {
-    if (PsiTreeUtil.getParentOfType(element, XmlTag.class) != null) {
-      registerXmlErrorQuickFix(element,highlightInfo);
+  public void registerErrorQuickFix(@NotNull final PsiErrorElement element, @NotNull final HighlightInfo.Builder highlightInfo) {
+    if (PsiTreeUtil.getParentOfType(element, XmlTag.class) == null) {
+      return;
     }
-  }
-
-  private static void registerXmlErrorQuickFix(final PsiErrorElement element, final HighlightInfo highlightInfo) {
     final String text = element.getErrorDescription();
     if (text.equals(XmlPsiBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"))) {
       final int textOffset = element.getTextOffset();
-      QuickFixAction.registerQuickFixAction(highlightInfo, new IntentionAction() {
+      highlightInfo.registerFix(new IntentionAction() {
         @Override
         @NotNull
         public String getText() {
@@ -61,7 +59,7 @@ public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
         public boolean startInWriteAction() {
           return true;
         }
-      });
+      }, null, null, null, null);
     }
   }
 }

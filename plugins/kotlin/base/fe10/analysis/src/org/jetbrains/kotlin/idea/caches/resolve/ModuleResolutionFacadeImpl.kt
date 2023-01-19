@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.analyzer.ResolverForProject
@@ -42,6 +43,10 @@ internal class ModuleResolutionFacadeImpl(
     override fun analyze(element: KtElement, bodyResolveMode: BodyResolveMode): BindingContext {
         ResolveInDispatchThreadManager.assertNoResolveInDispatchThread()
 
+        if (usePerFileAnalysisCache) {
+            fetchWithAllCompilerChecks(element)?.takeUnless { it.isError() }?.let { return it.bindingContext }
+        }
+
         @OptIn(FrontendInternals::class)
         val resolveElementCache = getFrontendService(element, ResolveElementCache::class.java)
         return runWithCancellationCheck {
@@ -53,6 +58,12 @@ internal class ModuleResolutionFacadeImpl(
         ResolveInDispatchThreadManager.assertNoResolveInDispatchThread()
 
         if (elements.isEmpty()) return BindingContext.EMPTY
+
+        if (usePerFileAnalysisCache) {
+            elements.singleOrNull()?.let { element ->
+                fetchWithAllCompilerChecks(element)?.takeUnless { it.isError() }?.let { return it.bindingContext }
+            }
+        }
 
         @OptIn(FrontendInternals::class)
         val resolveElementCache = getFrontendService(elements.first(), ResolveElementCache::class.java)
@@ -77,6 +88,14 @@ internal class ModuleResolutionFacadeImpl(
 
         return runWithCancellationCheck {
             projectFacade.getAnalysisResultsForElements(elements, callback)
+        }
+    }
+
+    override fun fetchWithAllCompilerChecks(element: KtElement): AnalysisResult? {
+        ResolveInDispatchThreadManager.assertNoResolveInDispatchThread()
+
+        return runWithCancellationCheck {
+            projectFacade.fetchAnalysisResultsForElement(element)
         }
     }
 
@@ -122,6 +141,10 @@ internal class ModuleResolutionFacadeImpl(
 
     override fun getResolverForProject(): ResolverForProject<IdeaModuleInfo> {
         return projectFacade.getResolverForProject()
+    }
+
+    companion object {
+        private val usePerFileAnalysisCache = Registry.`is`("kotlin.resolve.cache.uses.perfile.cache", true)
     }
 }
 

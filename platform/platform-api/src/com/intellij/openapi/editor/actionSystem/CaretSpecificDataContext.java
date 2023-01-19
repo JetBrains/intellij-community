@@ -37,7 +37,7 @@ public final class CaretSpecificDataContext extends DataContextWrapper {
   }
 
   /** @deprecated Use {@link #create(DataContext, Caret)} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public CaretSpecificDataContext(@NotNull DataContext delegate, @NotNull Caret caret) {
     super(delegate);
     myCaret = caret;

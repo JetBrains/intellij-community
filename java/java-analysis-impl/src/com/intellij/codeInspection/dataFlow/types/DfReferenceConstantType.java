@@ -95,6 +95,11 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     return new DfGenericObjectType(
       Set.of(), myConstraint, DfaNullability.UNKNOWN, myMutability, myJvmSpecialField, mySpecialFieldType, false);
   }
+  
+  @Override
+  public @NotNull DfReferenceType convert(TypeConstraints.@NotNull TypeConstraintFactory factory) {
+    return new DfReferenceConstantType(getValue(), myConstraint.convert(factory), myDropConstantOnWiden);
+  }
 
   @NotNull
   @Override

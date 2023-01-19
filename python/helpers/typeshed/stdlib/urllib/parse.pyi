@@ -1,5 +1,7 @@
 import sys
-from typing import Any, AnyStr, Callable, Generic, Mapping, NamedTuple, Sequence, Union, overload
+from collections.abc import Callable, Mapping, Sequence
+from typing import Any, AnyStr, Generic, NamedTuple, overload
+from typing_extensions import TypeAlias
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
@@ -28,7 +30,7 @@ __all__ = [
     "SplitResultBytes",
 ]
 
-_Str = Union[bytes, str]
+_Str: TypeAlias = bytes | str
 
 uses_relative: list[str]
 uses_netloc: list[str]
@@ -37,7 +39,8 @@ non_hierarchical: list[str]
 uses_query: list[str]
 uses_fragment: list[str]
 scheme_chars: str
-MAX_CACHE_SIZE: int
+if sys.version_info < (3, 11):
+    MAX_CACHE_SIZE: int
 
 class _ResultMixinBase(Generic[AnyStr]):
     def geturl(self) -> AnyStr: ...
@@ -63,7 +66,11 @@ class _NetlocResultMixinBase(Generic[AnyStr]):
 class _NetlocResultMixinStr(_NetlocResultMixinBase[str], _ResultMixinStr): ...
 class _NetlocResultMixinBytes(_NetlocResultMixinBase[bytes], _ResultMixinBytes): ...
 
-class _DefragResultBase(tuple[Any, ...], Generic[AnyStr]):
+# Ideally this would be a generic fixed-length tuple,
+# but mypy doesn't support that yet: https://github.com/python/mypy/issues/685#issuecomment-992014179
+class _DefragResultBase(tuple[AnyStr, ...], Generic[AnyStr]):
+    if sys.version_info >= (3, 10):
+        __match_args__ = ("url", "fragment")
     @property
     def url(self) -> AnyStr: ...
     @property

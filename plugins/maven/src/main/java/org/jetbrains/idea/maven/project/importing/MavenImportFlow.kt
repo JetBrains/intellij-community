@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.launch
@@ -35,6 +36,7 @@ import org.jetbrains.idea.maven.utils.FileFinder
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 @IntellijInternalApi
 @ApiStatus.Internal
@@ -46,12 +48,12 @@ class MavenImportFlow {
                        importingSettings: MavenImportingSettings,
                        enabledProfiles: Collection<String>,
                        disabledProfiles: Collection<String>): MavenInitialImportContext {
-    val isVeryNewProject = project.getUserData<Boolean>(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == true
+    val isVeryNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == true
                            && ModuleManager.getInstance(project).modules.size == 0
     if (isVeryNewProject) {
       ExternalStorageConfigurationManager.getInstance(project).isEnabled = true
     }
-    val dummyModule = if (isVeryNewProject) createDummyModule(importPaths, project) else null
+    val previewModule = if (isVeryNewProject) createPreviewModule(importPaths, project) else null
 
     val manager = MavenProjectsManager.getInstance(project)
     val profiles = MavenExplicitProfiles(enabledProfiles, disabledProfiles)
@@ -63,16 +65,16 @@ class MavenImportFlow {
 
     return MavenInitialImportContext(project, importPaths, profiles, generalSettings, importingSettings, ignorePaths, ignorePatterns,
                                      importDisposable,
-                                     dummyModule, Exception())
+                                     previewModule, Exception())
   }
 
-  private fun createDummyModule(importPaths: ImportPaths, project: Project): Module? {
+  private fun createPreviewModule(importPaths: ImportPaths, project: Project): Module? {
     if (Registry.`is`("maven.create.dummy.module.on.first.import")) {
       val contentRoot = when (importPaths) {
         is FilesList -> ContainerUtil.getFirstItem(importPaths.poms).parent
         is RootPath -> importPaths.path
       }
-      return MavenImportUtil.createDummyModule(project, contentRoot)
+      return MavenImportUtil.createPreviewModule(project, contentRoot)
     }
     return null
   }
@@ -85,9 +87,12 @@ class MavenImportFlow {
     val ignorePatterns: List<String> = context.ignorePatterns
     val projectsTree = loadOrCreateProjectTree(projectManager)
     MavenProjectsManager.applyStateToTree(projectsTree, projectManager)
-    val rootFiles = MavenProjectsManager.getInstance(context.project).projectsTree.rootProjectsFiles
+    val managedFilesPath = MavenProjectsManager.getInstance(context.project).projectsTree.managedFilesPaths
+
     val pomFiles = LinkedHashSet<VirtualFile>()
-    rootFiles?.let { pomFiles.addAll(it.filterNotNull()) }
+    managedFilesPath.mapNotNull { LocalFileSystem.getInstance().findFileByPath(it) }.also {
+      pomFiles.addAll(it)
+    }
 
     val newPomFiles = when (context.paths) {
       is FilesList -> context.paths.poms
@@ -140,8 +145,8 @@ class MavenImportFlow {
 
   //TODO: Remove this. See StructureImportingTest.testProjectWithMavenConfigCustomUserSettingsXml
   private fun readDoubleUpdateToWorkaroundIssueWhenProjectToBeReadTwice(context: MavenInitialImportContext,
-                        projectsTree: MavenProjectsTree,
-                        indicator: MavenProgressIndicator) {
+                                                                        projectsTree: MavenProjectsTree,
+                                                                        indicator: MavenProgressIndicator) {
     context.generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
     projectsTree.updateAll(true, context.generalSettings, indicator)
   }
@@ -180,11 +185,11 @@ class MavenImportFlow {
     val resolver = MavenProjectResolver(context.projectsTree)
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
-    val resolveContext = ResolveContext()
+    val resolveContext = ResolveContext(context.projectsTree)
     val d = Disposer.newDisposable("MavenImportFlow:resolveDependencies:treeListener")
     Disposer.register(context.initialContext.importDisposable, d)
-    val projectsToImport = ArrayList(context.toResolve)
-    val nativeProjectStorage = ArrayList<kotlin.Pair<MavenProject, NativeMavenProjectHolder>>()
+    val projectsToImport = ConcurrentLinkedQueue(context.toResolve)
+    val nativeProjectStorage = ConcurrentLinkedQueue<kotlin.Pair<MavenProject, NativeMavenProjectHolder>>()
     context.projectsTree.addListener(object : MavenProjectsTree.Listener {
       override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
                                    nativeMavenProject: NativeMavenProjectHolder?) {
@@ -200,7 +205,7 @@ class MavenImportFlow {
                      resolveContext, context.initialContext.indicator)
     Disposer.dispose(d)
     return MavenResolvedContext(context.project, resolveContext.getUserData(MavenProjectResolver.UNRESOLVED_ARTIFACTS) ?: emptySet(),
-                                projectsToImport, nativeProjectStorage, context)
+                                projectsToImport.toList(), nativeProjectStorage.toList(), context)
   }
 
   fun resolvePlugins(context: MavenResolvedContext): MavenPluginResolvedContext {
@@ -286,8 +291,10 @@ class MavenImportFlow {
     val projectImporter = MavenProjectImporter.createImporter(context.project, context.readContext.projectsTree,
                                                               context.projectsToImport.map {
                                                                 it to MavenProjectChanges.ALL
-                                                              }.toMap(), false, modelsProvider, context.initialContext.importingSettings,
-                                                              context.initialContext.dummyModule, importingActivity)
+                                                              }.toMap(),
+                                                              context.initialContext.importingSettings.isCreateModuleGroups,
+                                                              modelsProvider, context.initialContext.importingSettings,
+                                                              context.initialContext.previewModule, importingActivity)
     val postImportTasks = projectImporter.importProject()
     val modulesCreated = projectImporter.createdModules()
     return MavenImportedContext(context.project, modulesCreated, postImportTasks, context.readContext, context)
@@ -296,7 +303,7 @@ class MavenImportFlow {
   fun updateProjectManager(context: MavenReadContext) {
     val projectManager = MavenProjectsManager.getInstance(context.project)
     projectManager.projectsTree = context.projectsTree
-    runLegacyListeners(context) { projectImportCompleted() }
+
   }
 
   fun runPostImportTasks(context: MavenImportedContext) {

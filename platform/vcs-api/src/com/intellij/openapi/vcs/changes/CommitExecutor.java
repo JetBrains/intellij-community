@@ -54,6 +54,16 @@ public interface CommitExecutor {
   }
 
   /**
+   * Whether pre-commit checks {@link com.intellij.openapi.vcs.checkin.CheckinHandler} and {@link com.intellij.openapi.vcs.checkin.CommitCheck}
+   * need to be fully completed before actual commit via {@link CommitSession#execute}.
+   *
+   * @see com.intellij.openapi.vcs.checkin.CommitCheck.ExecutionOrder#LATE
+   */
+  default boolean requiresSyncCommitChecks() {
+    return false;
+  }
+
+  /**
    * @deprecated Prefer overriding {@link #createCommitSession(CommitContext)}
    */
   @Deprecated

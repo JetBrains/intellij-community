@@ -12,6 +12,7 @@ import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler;
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
@@ -74,7 +75,7 @@ public abstract class DebuggerSupport {
     }
 
     @Override
-    public void provideBreakpointItems(Project project, Collection collection) {
+    public void provideBreakpointItems(Project project, Collection<? super BreakpointItem> collection) {
     }
   };
 

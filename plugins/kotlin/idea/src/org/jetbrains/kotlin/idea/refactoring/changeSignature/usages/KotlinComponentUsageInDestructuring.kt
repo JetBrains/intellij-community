@@ -29,7 +29,7 @@ class KotlinComponentUsageInDestructuring(element: KtDestructuringDeclarationEnt
         val currentEntries = declaration.entries
         val newParameterInfos = changeInfo.getNonReceiverParameters()
 
-        val newDestructuring = KtPsiFactory(element).buildDestructuringDeclaration {
+        val newDestructuring = KtPsiFactory(element.project).buildDestructuringDeclaration {
             val lastIndex = newParameterInfos.indexOfLast { it.oldIndex in currentEntries.indices }
             val nameValidator = CollectingNameValidator(
                 filter = Fe10KotlinNewDeclarationNameValidator(

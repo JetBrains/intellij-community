@@ -50,10 +50,11 @@ public class ExtractArtifactActionTest extends ArtifactEditorActionTestCase {
 
     selectNode("dir/b.txt");
     perform();
-    assertLayout("<root>\n" +
-                 " artifact:included\n" +
-                 " dir/\n" +
-                 "  artifact:b_txt");
+    assertLayout("""
+                   <root>
+                    artifact:included
+                    dir/
+                     artifact:b_txt""");
     applyChanges();
     assertLayout(ArtifactsTestUtil.findArtifact(myProject, "b_txt"), "<root>\n" +
                                                                    " file:" + getProjectBasePath() + "/b.txt");

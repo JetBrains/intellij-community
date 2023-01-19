@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ReturnSeparatedFromComputationInspection.class);
 

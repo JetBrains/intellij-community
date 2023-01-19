@@ -327,7 +327,7 @@ public final class UpdateRequestsQueue {
     }
   }
 
-  private static void runWaiters(List<Runnable> copy) {
+  private static void runWaiters(List<? extends Runnable> copy) {
     // do not run under lock
     for (Runnable runnable : copy) {
       try {

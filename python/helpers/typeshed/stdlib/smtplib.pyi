@@ -1,49 +1,35 @@
 import sys
 from _typeshed import Self
+from collections.abc import Sequence
 from email.message import Message as _Message
+from re import Pattern
 from socket import socket
 from ssl import SSLContext
 from types import TracebackType
-from typing import Any, Pattern, Protocol, Sequence, Union, overload
+from typing import Any, Protocol, overload
+from typing_extensions import TypeAlias
 
-if sys.version_info >= (3, 7):
-    __all__ = [
-        "SMTPException",
-        "SMTPNotSupportedError",
-        "SMTPServerDisconnected",
-        "SMTPResponseException",
-        "SMTPSenderRefused",
-        "SMTPRecipientsRefused",
-        "SMTPDataError",
-        "SMTPConnectError",
-        "SMTPHeloError",
-        "SMTPAuthenticationError",
-        "quoteaddr",
-        "quotedata",
-        "SMTP",
-        "SMTP_SSL",
-    ]
-else:
-    __all__ = [
-        "SMTPException",
-        "SMTPServerDisconnected",
-        "SMTPResponseException",
-        "SMTPSenderRefused",
-        "SMTPRecipientsRefused",
-        "SMTPDataError",
-        "SMTPConnectError",
-        "SMTPHeloError",
-        "SMTPAuthenticationError",
-        "quoteaddr",
-        "quotedata",
-        "SMTP",
-        "SMTP_SSL",
-    ]
+__all__ = [
+    "SMTPException",
+    "SMTPServerDisconnected",
+    "SMTPResponseException",
+    "SMTPSenderRefused",
+    "SMTPRecipientsRefused",
+    "SMTPDataError",
+    "SMTPConnectError",
+    "SMTPHeloError",
+    "SMTPAuthenticationError",
+    "quoteaddr",
+    "quotedata",
+    "SMTP",
+    "SMTP_SSL",
+    "SMTPNotSupportedError",
+]
 
-_Reply = tuple[int, bytes]
-_SendErrs = dict[str, _Reply]
+_Reply: TypeAlias = tuple[int, bytes]
+_SendErrs: TypeAlias = dict[str, _Reply]
 # Should match source_address for socket.create_connection
-_SourceAddress = tuple[Union[bytearray, bytes, str], int]
+_SourceAddress: TypeAlias = tuple[bytearray | bytes | str, int]
 
 SMTP_PORT: int
 SMTP_SSL_PORT: int

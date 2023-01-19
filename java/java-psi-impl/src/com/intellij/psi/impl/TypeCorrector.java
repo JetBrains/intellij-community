@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-/**
- * @author peter
- */
 class TypeCorrector extends PsiTypeMapper {
   private final Map<PsiClassType, PsiClassType> myResultMap = new IdentityHashMap<>();
   private final GlobalSearchScope myResolveScope;

@@ -38,12 +38,6 @@ class DummyMavenServerConnector(project: @NotNull Project,
     return DummyMavenServer(myProject)
   }
 
-  override fun addDownloadListener(listener: MavenServerDownloadListener?) {
-  }
-
-  override fun removeDownloadListener(listener: MavenServerDownloadListener?) {
-  }
-
   override fun stop(wait: Boolean) {
   }
 
@@ -52,6 +46,14 @@ class DummyMavenServerConnector(project: @NotNull Project,
   override fun getState() = State.RUNNING
 
   override fun checkConnected() = true
+
+  companion object {
+
+    @JvmStatic
+    fun MavenServerConnector.isDummy(): Boolean {
+      return this is DummyMavenServerConnector
+    }
+  }
 }
 
 class DummyMavenServer(val project: Project) : MavenServer {
@@ -126,7 +128,7 @@ class DummyIndexer : MavenServerIndexer {
     return 0
   }
 
-  override fun updateIndex(id: MavenIndexId, settings: MavenServerSettings?, indicator: MavenServerProgressIndicator?, token: MavenToken?) {
+  override fun updateIndex(id: MavenIndexId, indicator: MavenServerProgressIndicator?, token: MavenToken?) {
   }
 
   override fun processArtifacts(indexId: MavenIndexId, startFrom: Int, token: MavenToken?): List<IndexedMavenId>? = null
@@ -139,7 +141,7 @@ class DummyIndexer : MavenServerIndexer {
     return emptySet()
   }
 
-  override fun getArchetypes(token: MavenToken?): Collection<MavenArchetype> {
+  override fun getInternalArchetypes(token: MavenToken?): Collection<MavenArchetype> {
     return emptySet()
   }
 
@@ -185,6 +187,7 @@ class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
   override fun resolveProject(files: Collection<File>,
                               activeProfiles: Collection<String>,
                               inactiveProfiles: Collection<String>,
+                              forceResolveDependenciesSequentially: Boolean,
                               token: MavenToken?): Collection<MavenServerExecutionResult> {
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
       object : BuildIssue {

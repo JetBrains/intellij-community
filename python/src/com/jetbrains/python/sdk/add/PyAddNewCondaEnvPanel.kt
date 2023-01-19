@@ -22,13 +22,10 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl
 import com.jetbrains.python.packaging.PyCondaPackageService
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.associateWithModule
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.add.target.conda.condaSupportedLanguages
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.createSdkByGenerateTask
-import com.jetbrains.python.sdk.excludeInnerVirtualEnv
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
@@ -36,9 +33,6 @@ import javax.swing.Icon
 import javax.swing.JComboBox
 import javax.swing.event.DocumentEvent
 
-/**
- * @author vlan
- */
 open class PyAddNewCondaEnvPanel(
   private val project: Project?,
   private val module: Module?,
@@ -49,8 +43,8 @@ open class PyAddNewCondaEnvPanel(
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.new.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
 
-  protected val languageLevelsField: JComboBox<String>
-  protected val condaPathField = TextFieldWithBrowseButton().apply {
+  private val languageLevelsField: JComboBox<String>
+  private val condaPathField = TextFieldWithBrowseButton().apply {
     val path = PyCondaPackageService.getCondaExecutable(null)
     path?.let {
       text = it
@@ -79,9 +73,7 @@ open class PyAddNewCondaEnvPanel(
   init {
     layout = BorderLayout()
 
-    val supportedLanguageLevels = LanguageLevel.SUPPORTED_LEVELS
-      .asReversed()
-      .filter { it < LanguageLevel.PYTHON311 }
+    val supportedLanguageLevels = condaSupportedLanguages
       .map { it.toPythonVersion() }
 
     languageLevelsField = ComboBox(supportedLanguageLevels.toTypedArray()).apply {
@@ -129,6 +121,8 @@ open class PyAddNewCondaEnvPanel(
     }
     PyCondaPackageService.onCondaEnvCreated(condaPath)
     project.excludeInnerVirtualEnv(sdk)
+    // Old conda created, convert to new
+    fixPythonCondaSdk(sdk, sdk.getOrCreateAdditionalData(), condaPath)
     return sdk
   }
 

@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension property 'A.ext'" "true"
 // ERROR: Unresolved reference: ext
 
 import dep.TA

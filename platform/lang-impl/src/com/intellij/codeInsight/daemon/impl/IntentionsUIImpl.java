@@ -57,4 +57,13 @@ public class IntentionsUIImpl extends IntentionsUI {
     }
     myLastIntentionHint = null;
   }
+
+  @Override
+  public void hideForEditor(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    IntentionHintComponent hint = myLastIntentionHint;
+    if (hint != null && hint.hideIfDisplayedForEditor(editor)) {
+      myLastIntentionHint = null;
+    }
+  }
 }

@@ -29,16 +29,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  /** @deprecated please use {@link #openOptionOrPerformAction(Object, String, Project, Component, int)} instead */
-  @Deprecated(forRemoval = true)
-  public static void openOptionOrPerformAction(@NotNull Object element,
-                                               String enteredText,
-                                               @Nullable Project project,
-                                               @Nullable Component component) {
-    openOptionOrPerformAction(element, enteredText, project, component, 0);
+    return super.getActionUpdateThread();
   }
 
   public static void openOptionOrPerformAction(@NotNull Object element,

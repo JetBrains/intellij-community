@@ -339,6 +339,8 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
                          e.presentation,
                          e.place)
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
 
 }

@@ -100,7 +100,7 @@ object GitConflictsUtil {
     }
   }
 
-  internal fun isReversedRoot(project: Project, root: VirtualFile): Boolean {
+  private fun isReversedRoot(project: Project, root: VirtualFile): Boolean {
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root) ?: return false
     return GitMergeUtil.isReverseRoot(repository)
   }

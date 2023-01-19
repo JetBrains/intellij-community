@@ -33,7 +33,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.psi.search.GlobalSearchScope.*;
 import static com.intellij.psi.search.GlobalSearchScopesCore.projectProductionScope;
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
@@ -96,13 +95,7 @@ public abstract class MetaAnnotationUtil {
   }
 
   private static Collection<PsiClass> getChildLibraryAnnotations(@NotNull Module module, String annotation) {
-    return ContainerUtil.mapNotNull(getLibraryAnnotationClassesMap(module).get(annotation), pair -> {
-      // todo yuriy.artamonov remove temporary diagnostics
-      PsiUtilCore.ensureValid(pair.second); // please report EAs to yuriy.artamonov
-      PsiUtilCore.ensureValid(pair.first);
-
-      return pair.first;
-    });
+    return getLibraryAnnotationClassesMap(module).get(annotation);
   }
 
   private static @NotNull GlobalSearchScope getAnnotationSourceSearchScope(@NotNull Module module, boolean includeTests) {
@@ -113,9 +106,9 @@ public abstract class MetaAnnotationUtil {
     return getProjectAnnotationFilesScope(module).intersectWith(moduleScope);
   }
 
-  private static @NotNull Map<String, Collection<Pair<PsiClass, PsiFile>>> getLibraryAnnotationClassesMap(@NotNull Module module) {
+  private static @NotNull Map<String, Collection<PsiClass>> getLibraryAnnotationClassesMap(@NotNull Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
-      Map<String, Collection<Pair<PsiClass, PsiFile>>> map = ConcurrentFactoryMap.createMap(key -> {
+      Map<String, Collection<PsiClass>> map = ConcurrentFactoryMap.createMap(key -> {
         PsiClass annotationClass = JavaPsiFacade.getInstance(module.getProject()).findClass(key, moduleWithLibrariesScope(module));
         if (annotationClass == null || !annotationClass.isAnnotationType()) {
           return emptyList();
@@ -123,9 +116,8 @@ public abstract class MetaAnnotationUtil {
 
         GlobalSearchScope libsScope = moduleWithLibrariesScope(module)
           .intersectWith(ProjectScope.getLibrariesScope(module.getProject()));
-        Collection<PsiClass> classes = findAnnotationTypesWithChildren(List.of(annotationClass), libsScope);
 
-        return ContainerUtil.map(classes, cls -> Pair.pair(cls, cls.getContainingFile()));
+        return findAnnotationTypesWithChildren(List.of(annotationClass), libsScope);
       });
 
       return Result.create(map, JavaLibraryModificationTracker.getInstance(module.getProject()));
@@ -194,7 +186,7 @@ public abstract class MetaAnnotationUtil {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       GlobalSearchScope projectScope = module.getModuleWithDependenciesScope();
       GlobalSearchScope javaScope =
-        filesScope(module.getProject(), newHashSet(getJavaAnnotationInheritorIds(module.getProject(), projectScope)));
+        filesScope(module.getProject(), ContainerUtil.newHashSet(getJavaAnnotationInheritorIds(module.getProject(), projectScope)));
       GlobalSearchScope otherScope = searchForAnnotationInheritorsInOtherLanguages(module.getProject(), projectScope);
       return Result.createSingleDependency(
         javaScope.uniteWith(otherScope),

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
+import kotlin.math.min
 
 /**
  * Adapter between code [CodeVisionProvider] and [DaemonBoundCodeVisionProvider].
@@ -20,10 +21,6 @@ class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProv
 
   override fun preparePreview(editor: Editor, file: PsiFile) {
     delegate.preparePreview(editor, file)
-  }
-
-  override fun collectPlaceholders(editor: Editor): List<TextRange> {
-    return delegate.collectPlaceholders(editor)
   }
 
   override fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?): CodeVisionPlaceholderCollector? {
@@ -51,7 +48,7 @@ class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProv
       val range = it.first
       it.second.showInMorePopup = false
       if (document.textLength <= range.endOffset) {
-        TextRange(range.startOffset, document.textLength) to it.second
+        TextRange(min(document.textLength, range.startOffset), document.textLength) to it.second
       }
       else {
         it

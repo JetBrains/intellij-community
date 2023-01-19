@@ -18,6 +18,7 @@ package com.intellij.lang.ant.config.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.execution.AntBuildMessageView;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -46,6 +47,11 @@ public final class PauseOutputAction extends ToggleAction {
     super.update(event);
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(!myAntBuildMessageView.isStopped() || isSelected(event));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }
 

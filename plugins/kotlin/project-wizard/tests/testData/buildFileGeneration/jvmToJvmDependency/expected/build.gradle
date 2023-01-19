@@ -1,0 +1,11 @@
+group = 'testGroupId'
+version = '1.0-SNAPSHOT'
+
+allprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url 'KOTLIN_BOOTSTRAP_REPO' }
+        maven { url 'KOTLIN_REPO' }
+    }
+}

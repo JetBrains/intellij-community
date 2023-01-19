@@ -10,10 +10,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.PropertyKey
-import org.jetbrains.annotations.VisibleForTesting
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
+import org.jetbrains.annotations.*
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
@@ -95,11 +93,34 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   companion object {
-    @VisibleForTesting
-    const val ON_DEMAND_ENABLED_KEY = "idea.on.demand.plugins"
 
-    val isOnDemandEnabled
-      @ApiStatus.Experimental get() = java.lang.Boolean.getBoolean(ON_DEMAND_ENABLED_KEY)
+    private var _isOnDemandEnabled: Boolean? = null
+
+    @VisibleForTesting
+    const val ON_DEMAND_ENABLED_KEY: String = "ide.plugins.allow.on.demand"
+
+    @JvmStatic
+    var isOnDemandEnabled: Boolean
+      @ApiStatus.Experimental get() {
+        var result = _isOnDemandEnabled
+
+        if (result == null) {
+          synchronized(Companion::class.java) {
+            if (_isOnDemandEnabled == null) {
+              result = !AppMode.isHeadless()
+                       && EarlyAccessRegistryManager.getBoolean(ON_DEMAND_ENABLED_KEY)
+              _isOnDemandEnabled = result
+            }
+          }
+        }
+
+        return result!!
+      }
+      @TestOnly set(value) {
+        synchronized(Companion::class.java) {
+          _isOnDemandEnabled = value
+        }
+      }
   }
 
   @Transient @JvmField var jarFiles: List<Path>? = null
@@ -116,7 +137,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   @JvmField val content: PluginContentDescriptor = raw.contentModules?.let { PluginContentDescriptor(it) } ?: PluginContentDescriptor.EMPTY
   @JvmField val dependencies = raw.dependencies
-  @JvmField val modules: List<PluginId> = raw.modules ?: Collections.emptyList()
+  @JvmField var modules: List<PluginId> = raw.modules ?: Collections.emptyList()
 
   private val descriptionChildText = raw.description
 
@@ -203,6 +224,10 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
 
     if (!isSub) {
+      if (id == PluginManagerCore.CORE_ID) {
+        modules = modules + IdeaPluginPlatform.getHostPlatformModuleIds()
+      }
+
       if (context.isPluginDisabled(id)) {
         markAsIncomplete(disabledDependency = null, shortMessage = null)
       }

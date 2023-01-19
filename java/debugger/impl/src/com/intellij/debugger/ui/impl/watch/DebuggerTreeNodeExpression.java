@@ -33,10 +33,10 @@ public final class DebuggerTreeNodeExpression {
 
     if (thisClass != null) {
       PsiType type = howToEvaluateThis.getType();
-      if(type != null) {
-        if(type instanceof PsiClassType) {
-          PsiClass psiClass = ((PsiClassType) type).resolve();
-          if(psiClass != null && (psiClass == thisClass || psiClass.isInheritor(thisClass, true))) {
+      if (type != null) {
+        if (type instanceof PsiClassType) {
+          PsiClass psiClass = ((PsiClassType)type).resolve();
+          if (psiClass != null && (psiClass == thisClass || psiClass.isInheritor(thisClass, true))) {
             castNeeded = false;
           }
         }
@@ -53,7 +53,7 @@ public final class DebuggerTreeNodeExpression {
     ChangeContextUtil.encodeContextInfo(result, false);
     PsiExpression psiExpression;
     try {
-      psiExpression = (PsiExpression) ChangeContextUtil.decodeContextInfo(result, thisClass, howToEvaluateThis);
+      psiExpression = (PsiExpression)ChangeContextUtil.decodeContextInfo(result, thisClass, howToEvaluateThis);
     }
     catch (IncorrectOperationException e) {
       throw new EvaluateException(

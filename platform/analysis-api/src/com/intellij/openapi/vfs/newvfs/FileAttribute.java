@@ -18,7 +18,15 @@ public class FileAttribute {
   private static final int UNDEFINED_VERSION = -1;
   private final String myId;
   private final int myVersion;
+  /**
+   * Indicates that attribute content ({@link #writeAttributeBytes(VirtualFile, byte[])}) are of fixed size.
+   * This serves as a hint for storage allocation: for fixed-size attributes space could be allocated
+   * without reserve for future extension.
+   */
   private final boolean myFixedSize;
+  /**
+   * Intended for enumeration of all binary data, but not used/implemented for today
+   */
   private final boolean myShouldEnumerate;
 
   public FileAttribute(@NonNls @NotNull String id) {
@@ -114,5 +122,14 @@ public class FileAttribute {
 
   public static void resetRegisteredIds() {
     ourRegisteredIds.clear();
+  }
+
+  @Override
+  public String toString() {
+    return "FileAttribute[" + myId + "]{" +
+           ", version: " + myVersion +
+           ", fixedSize: " + myFixedSize +
+           ", shouldEnumerate: " + myShouldEnumerate +
+           '}';
   }
 }

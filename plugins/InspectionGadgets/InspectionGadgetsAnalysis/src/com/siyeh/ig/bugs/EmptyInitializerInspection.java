@@ -57,7 +57,7 @@ public class EmptyInitializerInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement codeBlock = element.getParent();
       assert codeBlock != null;

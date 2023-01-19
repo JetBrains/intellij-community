@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -21,7 +22,9 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
@@ -33,10 +36,7 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
-import git4idea.repo.GitBranchTrackInfo;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitSubmodule;
-import git4idea.repo.GitSubmoduleKt;
+import git4idea.repo.*;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -129,13 +129,13 @@ public final class GitUpdateProcess {
     if (checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles()) {
       return GitUpdateResult.NOT_READY;
     }
+
     Map<GitRepository, GitBranchPair> trackedBranches = myUpdateConfig != null ? myUpdateConfig : checkTrackedBranchesConfiguration();
     if (ContainerUtil.isEmpty(trackedBranches)) {
       return GitUpdateResult.NOT_READY;
     }
 
-    Collection<GitRepository> repositoriesToFetch = myUpdateConfig != null ? trackedBranches.keySet() : myRepositories;
-    if (!fetchAndNotify(repositoriesToFetch)) {
+    if (!fetchAndNotify(trackedBranches)) {
       return GitUpdateResult.NOT_READY;
     }
 
@@ -149,6 +149,7 @@ public final class GitUpdateProcess {
 
   @NotNull
   private GitUpdateResult updateImpl(@NotNull UpdateMethod updateMethod) {
+    // re-read after fetch, remote branch might have been deleted
     Map<GitRepository, GitBranchPair> trackedBranches = myUpdateConfig != null ? myUpdateConfig : checkTrackedBranchesConfiguration();
     if (trackedBranches == null) {
       return GitUpdateResult.NOT_READY;
@@ -334,9 +335,18 @@ public final class GitUpdateProcess {
     return compoundResult.join(result);
   }
 
-  // fetch all roots. If an error happens, return false and notify about errors.
-  private boolean fetchAndNotify(@NotNull Collection<GitRepository> repositories) {
-    return fetchSupport(myProject).fetchDefaultRemote(repositories)
+  private boolean fetchAndNotify(@NotNull Map<GitRepository, GitBranchPair> updateConfig) {
+    Collection<Pair<GitRepository, GitRemote>> remotes = ContainerUtil.mapNotNull(updateConfig.entrySet(), entry -> {
+      GitRepository repository = entry.getKey();
+      GitBranch target = entry.getValue().getTarget();
+      if (target instanceof GitRemoteBranch) {
+        return new Pair<>(repository, ((GitRemoteBranch)target).getRemote());
+      }
+      else {
+        return null; // No need to fetch non-remote branches. Shouldn't happen, but typesafe fix breaks binary compatibility.
+      }
+    });
+    return fetchSupport(myProject).fetchRemotes(remotes)
       .showNotificationIfFailed(GitBundle.message("notification.title.update.failed"));
   }
 

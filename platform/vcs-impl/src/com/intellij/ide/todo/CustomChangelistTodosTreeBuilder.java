@@ -3,10 +3,6 @@ package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.checkin.TodoCheckinHandlerWorker;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
@@ -18,113 +14,68 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author irengrig
- */
-public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
+public abstract class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   public static final TodoItem[] EMPTY_ITEMS = new TodoItem[0];
 
-  private final PsiTodoSearchHelper myPsiTodoSearchHelper = new MyPsiTodoSearchHelper();
-  private final MultiMap<PsiFile, TodoItem> myMap = new MultiMap<>();
-
-  private final Set<PsiFile> myIncludedFiles;
-  @Nullable private final Set<String> myIncludedChangeListsIds;
+  private final PsiTodoSearchHelper myCustomPsiTodoSearchHelper;
 
   public CustomChangelistTodosTreeBuilder(@NotNull JTree tree,
                                           @NotNull Project project,
-                                          @NotNull Collection<Change> changes,
-                                          @NotNull Collection<? extends TodoItem> todoItems) {
+                                          @NotNull Collection<? extends TodoItem> initialTodoItems) {
     super(tree, project);
 
-    myIncludedFiles = collectIncludedFiles(todoItems);
-    myIncludedChangeListsIds = collectIncludedChangeListsIds(project, changes);
-
-    buildMap(todoItems);
+    myCustomPsiTodoSearchHelper = new MyPsiTodoSearchHelper(initialTodoItems);
   }
 
   @Override
   protected @NotNull PsiTodoSearchHelper getSearchHelper() {
-    return myPsiTodoSearchHelper;
+    return myCustomPsiTodoSearchHelper;
   }
 
   @NotNull
-  private static Set<PsiFile> collectIncludedFiles(@NotNull Collection<? extends TodoItem> todoItems) {
-    HashSet<PsiFile> files = new HashSet<>();
-    for (TodoItem item : todoItems) {
-      files.add(item.getFile());
-    }
-    return files;
-  }
+  protected abstract Set<TodoItem> doFindAllTodoItems(@Nullable TodoFilter todoFilter);
 
-  @Nullable
-  private static Set<String> collectIncludedChangeListsIds(@NotNull Project project, @NotNull Collection<Change> changes) {
-    if (!ChangeListManager.getInstance(project).areChangeListsEnabled()) return null;
-
-    HashSet<String> ids = new HashSet<>();
-    for (Change change : changes) {
-      if (change instanceof ChangeListChange) {
-        ChangeListChange changeListChange = (ChangeListChange)change;
-        ids.add(changeListChange.getChangeListId());
-      }
-      else {
-        return null; // Show all changelists
-      }
-    }
-    return ids;
-  }
-
-  private void buildMap(Collection<? extends TodoItem> todoItems) {
-    myMap.clear();
-    for (TodoItem todoItem : todoItems) {
-      myMap.putValue(todoItem.getFile(), todoItem);
-    }
-  }
+  @NotNull
+  protected abstract Set<TodoItem> doFindTodoForFile(@NotNull PsiFile file, @Nullable TodoFilter todoFilter);
 
   private class MyPsiTodoSearchHelper implements PsiTodoSearchHelper {
-    @Override
-    public PsiFile @NotNull [] findFilesWithTodoItems() {
-      MultiMap<VirtualFile, Change> allChanges = new MultiMap<>();
-      if (myIncludedChangeListsIds == null) {
-        putChangesForLocalFiles(allChanges, ChangeListManager.getInstance(myProject).getAllChanges());
-      }
-      else {
-        for (String changeListId : myIncludedChangeListsIds) {
-          LocalChangeList changeList = ChangeListManager.getInstance(myProject).getChangeList(changeListId);
-          if (changeList != null) {
-            putChangesForLocalFiles(allChanges, changeList.getChanges());
-          }
+    private final MultiMap<PsiFile, TodoItem> myMap = new MultiMap<>();
+
+    private MyPsiTodoSearchHelper(@NotNull Collection<? extends TodoItem> todoItems) {
+      buildMap(todoItems);
+    }
+
+    private void buildMap(@NotNull Collection<? extends TodoItem> todoItems) {
+      synchronized (myMap) {
+        myMap.clear();
+        for (TodoItem todoItem : todoItems) {
+          myMap.putValue(todoItem.getFile(), todoItem);
         }
       }
+    }
 
-      List<Change> changes = new ArrayList<>();
-      for (PsiFile next : myIncludedFiles) {
-        changes.addAll(allChanges.get(next.getVirtualFile()));
-      }
-
+    @Override
+    public PsiFile @NotNull [] findFilesWithTodoItems() {
       // a hack here with _todo filter
-      final TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, changes, getTodoTreeStructure().getTodoFilter());
-      worker.execute();
-      buildMap(worker.inOneList());
+      TodoFilter todoFilter = getTodoTreeStructure().getTodoFilter();
 
-      final Set<PsiFile> files = myMap.keySet();
-      return files.toArray(PsiFile.EMPTY_ARRAY);
+      Set<TodoItem> todoItems = doFindAllTodoItems(todoFilter);
+      buildMap(todoItems);
+
+      synchronized (myMap) {
+        final Set<PsiFile> files = myMap.keySet();
+        return files.toArray(PsiFile.EMPTY_ARRAY);
+      }
     }
 
     @Override
     public boolean processFilesWithTodoItems(@NotNull Processor<? super PsiFile> processor) {
       return ContainerUtil.process(findFilesWithTodoItems(), processor);
-    }
-
-    private void putChangesForLocalFiles(@NotNull MultiMap<VirtualFile, Change> changesMap, @NotNull Collection<Change> changes) {
-      for (Change change : changes) {
-        FilePath afterPath = ChangesUtil.getAfterPath(change);
-        VirtualFile file = afterPath != null ? afterPath.getVirtualFile() : null;
-        if (file != null) {
-          changesMap.putValue(file, change);
-        }
-      }
     }
 
     @Override
@@ -169,33 +120,27 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
       filter.addTodoPattern(pattern);
       return findPatternedTodoItems(file, filter).length;
     }
-  }
 
-  private TodoItem[] findPatternedTodoItems(PsiFile file, final TodoFilter todoFilter) {
-    if (! myIncludedFiles.contains(file)) return EMPTY_ITEMS;
-    if (myDirtyFileSet.contains(file.getVirtualFile())) {
-      myMap.remove(file);
-      final Change change = ChangeListManager.getInstance(myProject).getChange(file.getVirtualFile());
-      if (change != null) {
-        final TodoCheckinHandlerWorker
-          worker = new TodoCheckinHandlerWorker(myProject, Collections.singletonList(change), todoFilter);
-        worker.execute();
-        final Collection<TodoItem> todoItems = worker.inOneList();
-        if (todoItems != null && ! todoItems.isEmpty()) {
+    private TodoItem[] findPatternedTodoItems(PsiFile file, final TodoFilter todoFilter) {
+      if (myDirtyFileSet.contains(file.getVirtualFile())) {
+        Set<TodoItem> todoItems = doFindTodoForFile(file, todoFilter);
+        synchronized (myMap) {
+          myMap.remove(file);
           for (TodoItem todoItem : todoItems) {
             myMap.putValue(file, todoItem);
           }
         }
       }
+
+      synchronized (myMap) {
+        final Collection<TodoItem> todoItems = myMap.get(file);
+        return todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[0]);
+      }
     }
-    final Collection<TodoItem> todoItems = myMap.get(file);
-    return todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[0]);
   }
 
-  @NotNull
   @Override
-  protected TodoTreeStructure createTreeStructure() {
-    return new CustomChangelistTodoTreeStructure(myProject, myPsiTodoSearchHelper);
+  protected @NotNull TodoTreeStructure createTreeStructure() {
+    return new CustomChangelistTodoTreeStructure(myProject, myCustomPsiTodoSearchHelper);
   }
-
 }

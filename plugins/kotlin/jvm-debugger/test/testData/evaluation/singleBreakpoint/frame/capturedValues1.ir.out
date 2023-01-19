@@ -5,9 +5,9 @@ capturedValues1.kt:17
 KotlinStackFrame (capturedValues1.kt:17)
     JavaValue this (@place1) = x
     JavaValue this (@foo) = 1000
-    JavaValue b = 2
-    JavaValue c2 = 3
-    JavaValue args: String[0]@uniqueID = [...]
+    JavaValue[field] b = 2
+    JavaValue[field] c2 = 3
+    JavaValue[field] args: String[0]@uniqueID = [...]
     JavaValue[local] this: java.lang.String = y
 Disconnected from the target VM
 

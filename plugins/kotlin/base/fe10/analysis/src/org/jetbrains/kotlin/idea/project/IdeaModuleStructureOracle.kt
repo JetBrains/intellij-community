@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.project
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
@@ -30,12 +31,13 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
                 yieldPathsFromSubgraph(
                     root,
                     currentPath,
-                    getChilds = {
+                    getChildren = {
                         with(DependsOnGraphHelper) { it.unwrapModuleSourceInfo()?.predecessorsInDependsOnGraph() ?: emptyList() }
                     }
                 )
             }
         }.map {
+            ProgressManager.checkCanceled()
             it.toModulePath()
         }.toList()
     }
@@ -49,12 +51,13 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
                 yieldPathsFromSubgraph(
                     root,
                     currentPath,
-                    getChilds = {
+                    getChildren = {
                         with(DependsOnGraphHelper) { it.unwrapModuleSourceInfo()?.successorsInDependsOnGraph() ?: emptyList() }
                     }
                 )
             }
         }.map {
+            ProgressManager.checkCanceled()
             it.toModulePath()
         }.toList()
     }
@@ -62,16 +65,18 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
     private suspend fun SequenceScope<ModuleInfoPath>.yieldPathsFromSubgraph(
         root: ModuleInfo,
         currentPath: Stack<ModuleInfo>,
-        getChilds: (ModuleInfo) -> List<ModuleInfo>
+        getChildren: (ModuleInfo) -> List<ModuleInfo>
     ) {
+        ProgressManager.checkCanceled()
+
         currentPath.push(root)
 
-        val childs = getChilds(root)
-        if (childs.isEmpty()) {
+        val children = getChildren(root)
+        if (children.isEmpty()) {
             yield(ModuleInfoPath(currentPath.toList()))
         } else {
-            childs.forEach {
-                yieldPathsFromSubgraph(it, currentPath, getChilds)
+            children.forEach {
+                yieldPathsFromSubgraph(it, currentPath, getChildren)
             }
         }
 
@@ -81,14 +86,20 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
     private class ModuleInfoPath(val nodes: List<ModuleInfo>)
 
     private fun ModuleInfoPath.toModulePath(): ModulePath =
-        ModulePath(nodes.mapNotNull { it.unwrapModuleSourceInfo()?.toDescriptor() })
+        ModulePath(nodes.mapNotNull {
+            ProgressManager.checkCanceled()
+            it.unwrapModuleSourceInfo()?.toDescriptor()
+        })
 }
 
 object DependsOnGraphHelper {
     fun ModuleDescriptor.predecessorsInDependsOnGraph(): List<ModuleDescriptor> {
         return moduleSourceInfo
             ?.predecessorsInDependsOnGraph()
-            ?.mapNotNull { it.toDescriptor() }
+            ?.mapNotNull {
+                ProgressManager.checkCanceled()
+                it.toDescriptor()
+            }
             ?: emptyList()
     }
 
@@ -97,25 +108,30 @@ object DependsOnGraphHelper {
         return this.module.predecessorsInDependsOnGraph().mapNotNull { it.getModuleInfo(sourceRootType) }
     }
 
-    fun Module.predecessorsInDependsOnGraph(): List<Module> {
+    private fun Module.predecessorsInDependsOnGraph(): List<Module> {
         return implementingModules
     }
 
     fun ModuleDescriptor.successorsInDependsOnGraph(): List<ModuleDescriptor> {
         return moduleSourceInfo
             ?.successorsInDependsOnGraph()
-            ?.mapNotNull { it.toDescriptor() }
+            ?.mapNotNull {
+                ProgressManager.checkCanceled()
+                it.toDescriptor()
+            }
             ?: emptyList()
     }
 
     fun ModuleSourceInfo.successorsInDependsOnGraph(): List<ModuleSourceInfo> {
         return module.successorsInDependsOnGraph().mapNotNull { module ->
+            ProgressManager.checkCanceled()
+
             val sourceRootType = module.kotlinSourceRootType ?: return@mapNotNull null
             module.getModuleInfo(sourceRootType)
         }
     }
 
-    fun Module.successorsInDependsOnGraph(): List<Module> {
+    private fun Module.successorsInDependsOnGraph(): List<Module> {
         return implementedModules
     }
 }

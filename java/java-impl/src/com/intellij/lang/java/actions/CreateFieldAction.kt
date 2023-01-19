@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
+import com.intellij.codeInsight.CodeInsightUtil.positionCursor
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.positionCursor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
 import com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHelper
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
@@ -13,7 +14,6 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateFieldActionGroup
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.JvmActionGroup
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -29,10 +29,6 @@ internal class CreateFieldAction(target: PsiClass, request: CreateFieldRequest) 
 
   override fun getText(): String = message("create.element.in.class", JavaElementKind.FIELD.`object`(),
                                            request.fieldName, getNameForClass(target, false))
-
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    JavaFieldRenderer(project, false, target, request).doRender()
-  }
 }
 
 internal val constantModifiers = setOf(
@@ -71,11 +67,11 @@ internal class JavaFieldRenderer(
 
   fun doRender() {
     var field = renderField()
-    field = insertField(field)
+    field = insertField(field, javaUsage?.anchor)
     startTemplate(field)
   }
 
-  private fun renderField(): PsiField {
+  fun renderField(): PsiField {
     val field = JavaPsiFacade.getElementFactory(project).createField(request.fieldName, PsiType.INT)
 
     // clean template modifiers
@@ -104,11 +100,11 @@ internal class JavaFieldRenderer(
     return field
   }
 
-  private fun insertField(field: PsiField): PsiField {
-    return helper.insertFieldImpl(targetClass, field, javaUsage?.anchor)
+  internal fun insertField(field: PsiField, anchor: PsiElement?): PsiField {
+    return helper.insertFieldImpl(targetClass, field, anchor)
   }
 
-  private fun startTemplate(field: PsiField) {
+  internal fun startTemplate(field: PsiField) {
     val targetFile = targetClass.containingFile ?: return
     val newEditor = positionCursor(field.project, targetFile, field) ?: return
     val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
@@ -124,7 +120,7 @@ private class MyTemplateListener(val project: Project, val editor: Editor, val f
     PsiDocumentManager.getInstance(project).commitDocument(editor.document)
     val offset = editor.caretModel.offset
     val psiField = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiField::class.java, false) ?: return
-    runWriteAction {
+    IntentionPreviewUtils.write<RuntimeException> {
       CodeStyleManager.getInstance(project).reformat(psiField)
     }
     editor.caretModel.moveToOffset(psiField.textRange.endOffset - 1)

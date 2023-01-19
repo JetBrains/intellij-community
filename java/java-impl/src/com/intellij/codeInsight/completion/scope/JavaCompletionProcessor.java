@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.daemon.impl.analysis.PsiMethodReferenceHighlightingUtil;
@@ -25,7 +25,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.siyeh.ig.psiutils.SealedUtils;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -369,27 +368,14 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
 
   @Override
   public boolean shouldProcess(@NotNull DeclarationKind kind) {
-    switch (kind) {
-      case CLASS:
-        return myFilter.isClassAcceptable(PsiClass.class);
-
-      case FIELD:
-        return myFilter.isClassAcceptable(PsiField.class);
-
-      case METHOD:
-        return myFilter.isClassAcceptable(PsiMethod.class);
-
-      case PACKAGE:
-        return myFilter.isClassAcceptable(PsiPackage.class);
-
-      case VARIABLE:
-        return myFilter.isClassAcceptable(PsiVariable.class);
-
-      case ENUM_CONST:
-        return myFilter.isClassAcceptable(PsiEnumConstant.class);
-    }
-
-    return false;
+    return switch (kind) {
+      case CLASS -> myFilter.isClassAcceptable(PsiClass.class);
+      case FIELD -> myFilter.isClassAcceptable(PsiField.class);
+      case METHOD -> myFilter.isClassAcceptable(PsiMethod.class);
+      case PACKAGE -> myFilter.isClassAcceptable(PsiPackage.class);
+      case VARIABLE -> myFilter.isClassAcceptable(PsiVariable.class);
+      case ENUM_CONST -> myFilter.isClassAcceptable(PsiEnumConstant.class);
+    };
   }
 
   @Override

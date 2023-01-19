@@ -5,68 +5,71 @@ package org.jetbrains.kotlin.nj2k.conversions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.*
-
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
+import org.jetbrains.kotlin.nj2k.tree.Modality.*
+import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
 
 class ModalityConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
-            is JKClass -> processClass(element)
-            is JKMethod -> processMethod(element)
-            is JKField -> processField(element)
+            is JKClass -> element.process()
+            is JKMethod -> element.process()
+            is JKField -> element.process()
         }
         return recurse(element)
     }
 
-    private fun processClass(klass: JKClass) {
-        klass.modality = when {
-            klass.classKind == JKClass.ClassKind.ENUM -> Modality.FINAL
-            klass.classKind == JKClass.ClassKind.INTERFACE -> Modality.OPEN
-            klass.modality == Modality.OPEN
-                    && context.converter.settings.openByDefault -> Modality.OPEN
-            klass.modality == Modality.OPEN
-                    && !context.converter.converterServices.oldServices.referenceSearcher.hasInheritors(klass.psi as PsiClass) ->
-                Modality.FINAL
-
-            else -> klass.modality
+    private fun JKClass.process() {
+        modality = when {
+            classKind == ENUM || classKind == RECORD -> FINAL
+            classKind == INTERFACE -> OPEN
+            modality == OPEN && context.converter.settings.openByDefault -> OPEN
+            modality == OPEN && !hasInheritors(psi as PsiClass) -> FINAL
+            else -> modality
         }
     }
 
-    private fun processMethod(method: JKMethod) {
-        val psi = method.psi<PsiMethod>() ?: return
-        val containingClass = method.parentOfType<JKClass>() ?: return
+    private fun hasInheritors(psiClass: PsiClass): Boolean =
+        context.converter.converterServices.oldServices.referenceSearcher.hasInheritors(psiClass)
+
+    private fun JKMethod.process() {
+        val psiMethod = psi<PsiMethod>() ?: return
+        val containingClass = parentOfType<JKClass>() ?: return
         when {
-            method.visibility == Visibility.PRIVATE -> {
-                method.modality = Modality.FINAL
-            }
-            method.modality != Modality.ABSTRACT
-                    && psi.findSuperMethods().isNotEmpty() -> {
-                method.modality = Modality.FINAL
-                if (!method.hasOtherModifier(OtherModifier.OVERRIDE)) {
-                    method.otherModifierElements += JKOtherModifierElement(OtherModifier.OVERRIDE)
+            visibility == PRIVATE -> modality = FINAL
+
+            modality != ABSTRACT && psiMethod.findSuperMethods().isNotEmpty() -> {
+                modality = FINAL
+                if (!hasOtherModifier(OtherModifier.OVERRIDE)) {
+                    otherModifierElements += JKOtherModifierElement(OtherModifier.OVERRIDE)
                 }
             }
-            method.modality == Modality.OPEN
+
+            modality == OPEN
                     && context.converter.settings.openByDefault
-                    && containingClass.modality == Modality.OPEN
-                    && method.visibility != Visibility.PRIVATE -> {
-                method.modality = Modality.OPEN
+                    && containingClass.modality == OPEN
+                    && visibility != PRIVATE -> {
+                modality = OPEN
             }
 
-            method.modality == Modality.OPEN
-                    && containingClass.classKind != JKClass.ClassKind.INTERFACE
-                    && !context.converter.converterServices.oldServices.referenceSearcher.hasOverrides(psi) -> {
-                method.modality = Modality.FINAL
+            modality == OPEN
+                    && containingClass.classKind != INTERFACE
+                    && !hasOverrides(psiMethod) -> {
+                modality = FINAL
             }
-            else -> method.modality = method.modality
+
+            else -> modality = modality
         }
     }
 
-    private fun processField(field: JKField) {
-        val containingClass = field.parentOfType<JKClass>() ?: return
-        if (containingClass.classKind == JKClass.ClassKind.INTERFACE) {
-            field.modality = Modality.FINAL
-        }
+    private fun hasOverrides(psiMethod: PsiMethod): Boolean =
+        context.converter.converterServices.oldServices.referenceSearcher.hasOverrides(psiMethod)
+
+    private fun JKField.process() {
+        val containingClass = parentOfType<JKClass>() ?: return
+        if (containingClass.classKind == INTERFACE) modality = FINAL
     }
 }

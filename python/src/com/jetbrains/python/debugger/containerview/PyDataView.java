@@ -300,6 +300,11 @@ public final class PyDataView implements DumbAware {
         panel.setColored(state);
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   public void changeAutoResize(boolean autoResize) {

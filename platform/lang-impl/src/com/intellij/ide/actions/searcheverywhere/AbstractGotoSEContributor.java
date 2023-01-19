@@ -11,8 +11,9 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.*;
-import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.ide.util.scopeChooser.Option;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
+import com.intellij.ide.util.scopeChooser.ScopeModel;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.*;
@@ -26,7 +27,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +37,6 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -47,6 +46,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,7 +63,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   );
 
   protected final Project myProject;
-  protected boolean myEverywhere;
   protected ScopeDescriptor myScopeDescriptor;
 
   private final GlobalSearchScope myEverywhereScope;
@@ -105,15 +105,9 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     });
   }
 
-  private List<ScopeDescriptor> createScopes() {
+  protected List<ScopeDescriptor> createScopes() {
     DataContext context = createContext(myProject, myPsiContext);
-    List<ScopeDescriptor> res = new ArrayList<>();
-    ScopeChooserCombo.processScopes(
-      myProject, context,
-      ScopeChooserCombo.OPT_LIBRARIES | ScopeChooserCombo.OPT_EMPTY_SCOPES,
-      new CommonProcessors.CollectProcessor<>(res));
-
-    return res;
+    return ScopeModel.getScopeDescriptors(myProject, context, EnumSet.of(Option.LIBRARIES, Option.EMPTY_SCOPES));
   }
 
   @NotNull
@@ -138,15 +132,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   @Override
   public boolean isShownInSeparateTab() {
     return true;
-  }
-
-  /** @deprecated override {@link #doGetActions(PersistentSearchEverywhereContributorFilter, ElementsChooser.StatisticsCollector, Runnable)} instead**/
-  @Deprecated(forRemoval = true)
-  @NotNull
-  protected List<AnAction> doGetActions(@NotNull @NlsContexts.Checkbox String ignored,
-                                            @Nullable PersistentSearchEverywhereContributorFilter<?> filter,
-                                            @NotNull Runnable onChanged) {
-    return doGetActions(filter, null, onChanged);
   }
 
   @NotNull
@@ -311,7 +296,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
   @Override
   public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
-    return Collections.emptyList();
+    return WeightedSearchEverywhereContributor.super.getSupportedCommands();
   }
 
   @NotNull
@@ -351,14 +336,24 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         return true;
       }
 
-      PsiElement psiElement = preparePsi((PsiElement)selected, modifiers, searchText);
-      Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
-      if (extNavigatable != null && extNavigatable.canNavigate()) {
-        extNavigatable.navigate(true);
-        return true;
-      }
+      calcAsyncAndProcess(
+        () -> {
+          PsiElement psiElement = preparePsi((PsiElement)selected, modifiers, searchText);
+          Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
+          return new Pair<>(psiElement, extNavigatable);
+        },
+        pair -> {
+          Navigatable extNavigatable = pair.second;
+          PsiElement psiElement = pair.first;
+          if (extNavigatable != null && extNavigatable.canNavigate()) {
+            extNavigatable.navigate(true);
+          }
+          else {
+            NavigationUtil.activateFileWithPsiElement(psiElement, true);
+          }
+        }
+      );
 
-      NavigationUtil.activateFileWithPsiElement(psiElement, true);
     }
     else {
       EditSourceUtil.navigate(((NavigationItem)selected), true, false);
@@ -437,6 +432,18 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     }
 
     return new Pair<>(line, column);
+  }
+
+  private static <T> void calcAsyncAndProcess(Callable<T> task, Consumer<T> processor) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        T res = task.call();
+        SwingUtilities.invokeLater(() -> processor.accept(res));
+      }
+      catch (Exception e) {
+        LOG.error("Cannot process item", e);
+      }
+    });
   }
 
   private static int getLineAndColumnRegexpGroup(String text, int groupNumber) {

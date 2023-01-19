@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -29,9 +30,14 @@ public interface Toggleable {
    * A property for the presentation to hold the state of the toggleable action.
    * Normally, you should not use this directly.
    * Use {@link #isSelected(Presentation)} and {@link #setSelected(Presentation, boolean)} methods instead.
+   * @deprecated Use SELECTED_KEY instead
    */
   @ApiStatus.Internal
+  @Deprecated
   @NonNls String SELECTED_PROPERTY = "selected";
+
+  @ApiStatus.Internal
+  Key<Boolean> SELECTED_KEY = Key.create("selected");
 
   /**
    * Checks whether given presentation is in the "selected" state
@@ -40,11 +46,7 @@ public interface Toggleable {
    */
   @Contract(pure = true)
   static boolean isSelected(@NotNull Presentation presentation) {
-    Object property = presentation.getClientProperty(SELECTED_PROPERTY);
-    if (property != null && !(property instanceof Boolean)) {
-      throw new IllegalStateException("Unexpected value for '" + SELECTED_PROPERTY + "': " + property + "; presentation=" + presentation);
-    }
-    return property != null && (Boolean)property;
+    return Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_KEY));
   }
 
   /**
@@ -53,6 +55,6 @@ public interface Toggleable {
    * @param selected whether the state should be "selected" or "not selected".
    */
   static void setSelected(@NotNull Presentation presentation, boolean selected) {
-    presentation.putClientProperty(SELECTED_PROPERTY, selected);
+    presentation.putClientProperty(SELECTED_KEY, selected);
   }
 }

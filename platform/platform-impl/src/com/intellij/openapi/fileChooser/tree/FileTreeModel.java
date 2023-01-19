@@ -330,7 +330,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       return getLocalAndWslRoots(distributions);
     }
 
-    private static @NotNull List<VirtualFile> getLocalAndWslRoots(@NotNull List<WSLDistribution> distributions) {
+    private static @NotNull List<VirtualFile> getLocalAndWslRoots(@NotNull List<? extends WSLDistribution> distributions) {
       return toVirtualFiles(ContainerUtil.concat(ContainerUtil.newArrayList(FileSystems.getDefault().getRootDirectories()),
                                                  ContainerUtil.map(distributions, WSLDistribution::getUNCRootPath)));
     }
@@ -357,7 +357,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
 
     private void removeRoots(@NotNull List<Root> roots, int[] indicesToRemove) {
       if (indicesToRemove.length > 0) {
-        List<Root> rootsToRemove = Arrays.stream(indicesToRemove).mapToObj(ind -> roots.get(ind)).collect(Collectors.toList());
+        List<Root> rootsToRemove = Arrays.stream(indicesToRemove).mapToObj(ind -> roots.get(ind)).toList();
         if (LOG.isDebugEnabled()) {
           LOG.debug("Removing " + toRootFiles(rootsToRemove));
         }
@@ -386,7 +386,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       return newIndices.toIntArray();
     }
 
-    private static @NotNull List<VirtualFile> toVirtualFiles(@NotNull List<Path> paths) {
+    private static @NotNull List<VirtualFile> toVirtualFiles(@NotNull List<? extends Path> paths) {
       return paths.stream().map(root -> LocalFileSystem.getInstance().findFileByNioFile(root)).filter(State::isValid).collect(
         Collectors.toList());
     }

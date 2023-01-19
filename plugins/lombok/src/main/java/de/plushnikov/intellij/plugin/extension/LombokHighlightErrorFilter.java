@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 
 public class LombokHighlightErrorFilter implements HighlightInfoFilter {
 
-  private static class Holder {
+  private static final class Holder {
     static final Pattern LOMBOK_ANY_ANNOTATION_REQUIRED =
       Pattern.compile(JavaErrorBundle.message("incompatible.types", "lombok.*AnyAnnotation\\[\\]", "__*"));
 
@@ -115,7 +115,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
       private final Pattern pattern2 = preparePattern(2);
 
       @NotNull
-      private Pattern preparePattern(int count) {
+      private static Pattern preparePattern(int count) {
         return Pattern.compile(JavaErrorBundle.message("unhandled.exceptions", ".*", count));
       }
 

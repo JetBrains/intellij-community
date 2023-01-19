@@ -37,12 +37,6 @@ public class JsonParserDefinition implements ParserDefinition {
 
   @NotNull
   @Override
-  public TokenSet getWhitespaceTokens() {
-    return JsonTokenSets.WHITE_SPACES;
-  }
-
-  @NotNull
-  @Override
   public TokenSet getCommentTokens() {
     return JsonTokenSets.JSON_COMMENTARIES;
   }

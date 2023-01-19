@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
@@ -12,7 +11,6 @@ import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.*;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -40,6 +38,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
@@ -52,6 +51,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
@@ -282,7 +282,18 @@ public final class PluginManagerConfigurable
         }
       }
     });
-    actions.add(new InstallFromDiskAction());
+
+    actions.add(new InstallFromDiskAction(myPluginModel,
+                                          myPluginModel,
+                                          myCardPanel) {
+
+      @RequiresEdt
+      @Override
+      protected void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData,
+                                               @Nullable Project project) {
+        PluginManagerConfigurable.this.onPluginInstalledFromDisk(callbackData);
+      }
+    });
     actions.addSeparator();
     actions.add(new ChangePluginStateAction(false));
     actions.add(new ChangePluginStateAction(true));
@@ -443,6 +454,20 @@ public final class PluginManagerConfigurable
               }
               myMarketplacePanel.doLayout();
               myMarketplacePanel.initialSelection();
+
+              if (PluginDetailsPageComponent.isMultiTabs()) {
+                myPluginUpdatesService.calculateUpdates(updates -> {
+                  if (ContainerUtil.isEmpty(updates)) {
+                    clearUpdates(myMarketplacePanel);
+                    clearUpdates(myMarketplaceSearchPanel.getPanel());
+                  }
+                  else {
+                    applyUpdates(myMarketplacePanel, updates);
+                    applyUpdates(myMarketplaceSearchPanel.getPanel(), updates);
+                  }
+                  selectionListener.accept(myMarketplacePanel);
+                });
+              }
             }, ModalityState.any());
           }
         };
@@ -489,8 +514,8 @@ public final class PluginManagerConfigurable
           protected List<String> getValues(@NotNull String attribute) {
             SearchWords word = SearchWords.find(attribute);
             if (word == null) return null;
-            switch (word) {
-              case TAG:
+            return switch (word) {
+              case TAG -> {
                 if (myTagsSorted == null || myTagsSorted.isEmpty()) {
                   Set<String> allTags = new HashSet<>();
                   for (PluginNode descriptor : CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins()) {
@@ -509,10 +534,10 @@ public final class PluginManagerConfigurable
                   }
                   myTagsSorted = ContainerUtil.sorted(allTags, String::compareToIgnoreCase);
                 }
-                return myTagsSorted;
-              case SORT_BY:
-                return Arrays.asList("downloads", "name", "rating", "updated");
-              case ORGANIZATION:
+                yield myTagsSorted;
+              }
+              case SORT_BY -> Arrays.asList("downloads", "name", "rating", "updated");
+              case ORGANIZATION -> {
                 if (myVendorsSorted == null || myVendorsSorted.isEmpty()) {
                   LinkedHashSet<String> vendors = new LinkedHashSet<>();
                   try {
@@ -525,11 +550,10 @@ public final class PluginManagerConfigurable
                   }
                   myVendorsSorted = new ArrayList<>(vendors);
                 }
-                return myVendorsSorted;
-              case REPOSITORY:
-                return UpdateSettings.getInstance().getPluginHosts();
-            }
-            return null;
+                yield myVendorsSorted;
+              }
+              case REPOSITORY -> UpdateSettings.getInstance().getPluginHosts();
+            };
           }
 
           @Override
@@ -711,7 +735,7 @@ public final class PluginManagerConfigurable
                   return;
                 }
 
-                List<PluginNode> pluginsFromMarketplace = MarketplaceRequests.getInstance().searchPlugins(parser.getUrlQuery(), 10000);
+                List<PluginNode> pluginsFromMarketplace = MarketplaceRequests.getInstance().searchPlugins(parser.getUrlQuery(), 10000, true);
                 // compare plugin versions between marketplace & custom repositories
                 List<PluginNode> customPlugins = ContainerUtil.flatten(customRepositoriesMap.values());
                 Collection<PluginNode> plugins = RepositoryHelper.mergePluginsFromRepositories(pluginsFromMarketplace,
@@ -1551,19 +1575,13 @@ public final class PluginManagerConfigurable
 
     @Nullable
     public String getQuery() {
-      switch (myOption) {
-        case Downloads:
-          return "/sortBy:downloads";
-        case Name:
-          return "/sortBy:name";
-        case Rating:
-          return "/sortBy:rating";
-        case Updated:
-          return "/sortBy:updated";
-        case Relevance:
-        default:
-          return null;
-      }
+      return switch (myOption) {
+        case Downloads -> "/sortBy:downloads";
+        case Name -> "/sortBy:name";
+        case Rating -> "/sortBy:rating";
+        case Updated -> "/sortBy:updated";
+        case Relevance -> null;
+      };
     }
   }
 
@@ -1611,26 +1629,14 @@ public final class PluginManagerConfigurable
         return;
       }
 
-      switch (myOption) {
-        case Enabled:
-          myState = parser.enabled;
-          break;
-        case Disabled:
-          myState = parser.disabled;
-          break;
-        case Downloaded:
-          myState = parser.downloaded;
-          break;
-        case Bundled:
-          myState = parser.bundled;
-          break;
-        case Invalid:
-          myState = parser.invalid;
-          break;
-        case NeedUpdate:
-          myState = parser.needUpdate;
-          break;
-      }
+      myState = switch (myOption) {
+        case Enabled -> parser.enabled;
+        case Disabled -> parser.disabled;
+        case Downloaded -> parser.downloaded;
+        case Bundled -> parser.bundled;
+        case Invalid -> parser.invalid;
+        case NeedUpdate -> parser.needUpdate;
+      };
     }
 
     @NotNull
@@ -1880,34 +1886,20 @@ public final class PluginManagerConfigurable
     }
   }
 
-  private final class InstallFromDiskAction extends DumbAwareAction {
-    private InstallFromDiskAction() {
-      super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"));
-    }
+  @RequiresEdt
+  private void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
+    myPluginModel.pluginInstalledFromDisk(callbackData);
 
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      if (!PluginManagerFilters.getInstance().allowInstallFromDisk()) {
-        Messages.showErrorDialog(e.getProject(), IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"), IdeBundle.message("action.InstallFromDiskAction.text"));
-        return;
-      }
+    boolean select = myInstalledPanel == null;
+    updateSelectionTab(INSTALLED_TAB);
 
-      PluginInstaller.chooseAndInstall(e.getProject(), myCardPanel, (file, parent) ->
-        PluginInstaller.installFromDisk(myPluginModel, myPluginModel, file, parent, callbackData -> {
-          myPluginModel.pluginInstalledFromDisk(callbackData);
+    myInstalledTab.clearSearchPanel("");
 
-          boolean select = myInstalledPanel == null;
-          updateSelectionTab(INSTALLED_TAB);
-
-          myInstalledTab.clearSearchPanel("");
-
-          ListPluginComponent component = select ?
-                                          findInstalledPluginById(callbackData.getPluginDescriptor().getPluginId()) :
-                                          null;
-          if (component != null) {
-            myInstalledPanel.setSelection(component);
-          }
-        }));
+    ListPluginComponent component = select ?
+                                    findInstalledPluginById(callbackData.getPluginDescriptor().getPluginId()) :
+                                    null;
+    if (component != null) {
+      myInstalledPanel.setSelection(component);
     }
   }
 

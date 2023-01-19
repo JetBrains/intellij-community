@@ -95,7 +95,7 @@ final class JaxenCompiled<T> extends AbstractXPathCompiled<T> implements Namespa
    * the wrapped Namespace instances.
    */
   private static List<Object> unWrap(List<?> results) {
-    final ArrayList<Object> ret = new ArrayList<Object>(results.size());
+    final ArrayList<Object> ret = new ArrayList<>(results.size());
     for (Object result : results) {
       ret.add(unWrapNS(result));
     }
@@ -210,6 +210,6 @@ final class JaxenCompiled<T> extends AbstractXPathCompiled<T> implements Namespa
     // we have a couple of final variables on this class that we cannot share
     // between instances, and the Jaxen xpath variable is pretty complicated to reconstruct
     // anyway. Easier to just reconstruct it.
-    return new JaxenCompiled<T>(this);
+    return new JaxenCompiled<>(this);
   }
 }

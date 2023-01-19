@@ -65,7 +65,7 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
        *   list.remove(list.size() - 1);
        * }}</pre>
        */
-      private boolean isRemoveInWhileLoop(PsiLoopStatement loop, PsiExpression listExpression, PsiExpression arg) {
+      private static boolean isRemoveInWhileLoop(PsiLoopStatement loop, PsiExpression listExpression, PsiExpression arg) {
         if (!(loop instanceof PsiWhileStatement)) return false;
         PsiBinaryExpression condition =
           tryCast(PsiUtil.skipParenthesizedExprDown(((PsiWhileStatement)loop).getCondition()), PsiBinaryExpression.class);
@@ -74,16 +74,11 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
         if (relationType == null) return false;
         PsiExpression sizeExpression;
         switch (relationType) {
-          case GE:
-          case GT:
-            sizeExpression = condition.getLOperand();
-            break;
-          case LE:
-          case LT:
-            sizeExpression = condition.getROperand();
-            break;
-          default:
+          case GE, GT -> sizeExpression = condition.getLOperand();
+          case LE, LT -> sizeExpression = condition.getROperand();
+          default -> {
             return false;
+          }
         }
         PsiMethodCallExpression sizeCall = tryCast(PsiUtil.skipParenthesizedExprDown(sizeExpression), PsiMethodCallExpression.class);
         if (!LIST_SIZE.test(sizeCall)) return false;
@@ -187,24 +182,25 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
         if (right == null) return null;
         String start, end;
         switch (relationType) {
-          case GE:
+          case GE -> {
             start = JavaPsiMathUtil.add(right, -1, ct);
             end = ct.text(left);
-            break;
-          case GT:
+          }
+          case GT -> {
             start = ct.text(right);
             end = ct.text(left);
-            break;
-          case LE:
+          }
+          case LE -> {
             start = JavaPsiMathUtil.add(left, -1, ct);
             end = ct.text(right);
-            break;
-          case LT:
+          }
+          case LT -> {
             start = ct.text(left);
             end = ct.text(right);
-            break;
-          default:
+          }
+          default -> {
             return null;
+          }
         }
         return Couple.of(start, end);
       }

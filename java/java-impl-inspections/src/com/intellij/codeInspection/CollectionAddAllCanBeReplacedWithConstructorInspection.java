@@ -6,6 +6,8 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TextRange;
@@ -25,7 +27,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
@@ -47,10 +48,14 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
     mySettings.writeSettings(node);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return mySettings.createOptionsPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return mySettings.getOptionPane();
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return mySettings.getOptionController();
   }
 
   @Override
@@ -108,25 +113,22 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
         PsiType type = assignmentExpression.getType();
         PsiClass collectionType = Objects.requireNonNull(PsiUtil.resolveClassInClassTypeOnly(type));
         String name = Objects.requireNonNull(collectionType.getQualifiedName());
-        switch (name) {
-          case "java.util.TreeSet":
-          case "java.util.concurrent.ConcurrentSkipListSet":
+        return switch (name) {
+          case "java.util.TreeSet", "java.util.concurrent.ConcurrentSkipListSet" ->
             // If declared arg type inherits SortedSet, the (SortedSet) copy constructor will be invoked, which inherits the comparator
-            return InheritanceUtil.isInheritor(argType, "java.util.SortedSet");
-          case "java.util.TreeMap":
-          case "java.util.concurrent.ConcurrentSkipListMap":
+            InheritanceUtil.isInheritor(argType, "java.util.SortedSet");
+          case "java.util.TreeMap", "java.util.concurrent.ConcurrentSkipListMap" ->
             // If declared arg type inherits SortedMap, the (SortedMap) copy constructor will be invoked, which inherits the comparator
-            return InheritanceUtil.isInheritor(argType, "java.util.SortedMap");
-          case "java.util.PriorityQueue":
-          case "java.util.concurrent.PriorityBlockingQueue":
+            InheritanceUtil.isInheritor(argType, "java.util.SortedMap");
+          case "java.util.PriorityQueue", "java.util.concurrent.PriorityBlockingQueue" -> {
             // Here even (Collection) copy constructor inherits the comparator using runtime type checks, so we should be more conservative
             TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(args[0]));
             PsiClassType sortedSet = JavaPsiFacade.getElementFactory(holder.getProject()).createTypeByFQClassName("java.util.SortedSet");
-            return constraint.meet(TypeConstraints.instanceOf(sortedSet)) != TypeConstraints.BOTTOM ||
-                   constraint.meet(TypeConstraints.instanceOf(type)) != TypeConstraints.BOTTOM;
-          default:
-            return false;
-        }
+            yield constraint.meet(TypeConstraints.instanceOf(sortedSet)) != TypeConstraints.BOTTOM ||
+                  constraint.meet(TypeConstraints.instanceOf(type)) != TypeConstraints.BOTTOM;
+          }
+          default -> false;
+        };
       }
     };
   }

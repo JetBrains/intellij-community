@@ -13,7 +13,7 @@
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.sam-with-receiver-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="kotlin.base.plugin" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" />

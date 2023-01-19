@@ -39,7 +39,7 @@ public abstract class DvcsQuickListContentProvider implements VcsQuickListConten
     return actions;
   }
 
-  protected void customizeActions(@NotNull ActionManager manager, @NotNull List<AnAction> actions) {
+  protected void customizeActions(@NotNull ActionManager manager, @NotNull List<? super AnAction> actions) {
     List<AnAction> providerActions = collectVcsSpecificActions(manager);
     actions.removeAll(providerActions);
     actions.add(Separator.getInstance());

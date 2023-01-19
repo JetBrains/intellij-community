@@ -35,7 +35,7 @@ public class ReplaceExplicitTypeWithVarIntentionAction extends AbstractReplaceEx
     return typeElement != null && !typeElement.isInferredType() && isNotFinal(psiParameter);
   }
 
-  private boolean isNotFinal(@NotNull PsiVariable variable) {
+  private static boolean isNotFinal(@NotNull PsiVariable variable) {
     PsiModifierList modifierList = variable.getModifierList();
     return modifierList == null || !modifierList.hasExplicitModifier(FINAL);
   }

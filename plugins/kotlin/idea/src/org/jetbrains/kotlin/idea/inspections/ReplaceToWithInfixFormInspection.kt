@@ -52,7 +52,7 @@ class ReplaceToWithInfixFormQuickfix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as KtDotQualifiedExpression
         element.replace(
-            KtPsiFactory(element).createExpressionByPattern(
+            KtPsiFactory(project).createExpressionByPattern(
                 "$0 to $1", element.receiverExpression,
                 element.callExpression?.valueArguments?.get(0)?.getArgumentExpression() ?: return
             )

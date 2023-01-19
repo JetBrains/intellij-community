@@ -30,9 +30,6 @@ import java.util.regex.Pattern;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-/**
- * @author dsl
- */
 public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
@@ -409,6 +406,17 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     }
     catch (Exception e) {
       assertEquals("Error message:Cannot perform refactoring.\nUnknown expression type.", e.getMessage());
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+
+  public void testPatternUsedInSubsequentConditionCannotExtract() {
+    try {
+      doTest("input", false, false, false, "Object", false);
+    }
+    catch (Exception e) {
+      assertEquals("Error message:Cannot perform refactoring.\nThe expression refers to the pattern variable 's' declared outside", e.getMessage());
       return;
     }
     fail("Should not be able to perform refactoring");

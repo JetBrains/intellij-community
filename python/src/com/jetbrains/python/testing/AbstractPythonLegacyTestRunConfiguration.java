@@ -217,28 +217,21 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
 
     if (getTestType() != cfg.getTestType()) return false;
 
-    switch (getTestType()) {
-      case TEST_FOLDER:
-        return getFolderName().equals(cfg.getFolderName());
-      case TEST_SCRIPT:
-        return getScriptName().equals(cfg.getScriptName()) &&
-               getWorkingDirectory().equals(cfg.getWorkingDirectory());
-      case TEST_CLASS:
-        return getScriptName().equals(cfg.getScriptName()) &&
-               getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
-               getClassName().equals(cfg.getClassName());
-      case TEST_METHOD:
-        return getScriptName().equals(cfg.getScriptName()) &&
-               getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
-               getClassName().equals(cfg.getClassName()) &&
-               getMethodName().equals(cfg.getMethodName());
-      case TEST_FUNCTION:
-        return getScriptName().equals(cfg.getScriptName()) &&
-               getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
-               getMethodName().equals(cfg.getMethodName());
-      default:
-        throw new IllegalStateException("Unknown test type: " + getTestType());
-    }
+    return switch (getTestType()) {
+      case TEST_FOLDER -> getFolderName().equals(cfg.getFolderName());
+      case TEST_SCRIPT -> getScriptName().equals(cfg.getScriptName()) &&
+                          getWorkingDirectory().equals(cfg.getWorkingDirectory());
+      case TEST_CLASS -> getScriptName().equals(cfg.getScriptName()) &&
+                         getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
+                         getClassName().equals(cfg.getClassName());
+      case TEST_METHOD -> getScriptName().equals(cfg.getScriptName()) &&
+                          getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
+                          getClassName().equals(cfg.getClassName()) &&
+                          getMethodName().equals(cfg.getMethodName());
+      case TEST_FUNCTION -> getScriptName().equals(cfg.getScriptName()) &&
+                            getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
+                            getMethodName().equals(cfg.getMethodName());
+    };
   }
 
   public static void copyParams(AbstractPythonTestRunConfigurationParams source, AbstractPythonTestRunConfigurationParams target) {
@@ -260,23 +253,20 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
 
   @Override
   public String suggestedName() {
-    switch (myTestType) {
-      case TEST_CLASS:
-        return PyBundle.message("runcfg.unittest.suggest.name.in.class", getPluralTitle(), myClassName);
-      case TEST_METHOD:
-        return getTitle() + " " + myClassName + "." + myMethodName;
-      case TEST_SCRIPT:
+    return switch (myTestType) {
+      case TEST_CLASS -> PyBundle.message("runcfg.unittest.suggest.name.in.class", getPluralTitle(), myClassName);
+      case TEST_METHOD -> getTitle() + " " + myClassName + "." + myMethodName;
+      case TEST_SCRIPT -> {
         String name = new File(getScriptName()).getName();
         name = StringUtil.trimEnd(name, ".py");
-        return PyBundle.message("runcfg.unittest.suggest.name.in.script", getPluralTitle(), name);
-      case TEST_FOLDER:
+        yield PyBundle.message("runcfg.unittest.suggest.name.in.script", getPluralTitle(), name);
+      }
+      case TEST_FOLDER -> {
         String folderName = new File(myFolderName).getName();
-        return PyBundle.message("runcfg.unittest.suggest.name.in.folder", getPluralTitle(), folderName);
-      case TEST_FUNCTION:
-        return getTitle() + " " + myMethodName;
-      default:
-        throw new IllegalStateException("Unknown test type: " + myTestType);
-    }
+        yield PyBundle.message("runcfg.unittest.suggest.name.in.folder", getPluralTitle(), folderName);
+      }
+      case TEST_FUNCTION -> getTitle() + " " + myMethodName;
+    };
   }
 
   @Nullable

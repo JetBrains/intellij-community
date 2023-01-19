@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class QualifyCallByClassFromDefaultPackageTest extends LightJavaCodeInsightFixtureTestCase {
-  private static final String QUALIFY_METHOD_FIX_TEXT = "Qualify static call 'Util.staticMethod'";
+  private static final String QUALIFY_METHOD_FIX_TEXT = "Qualify static call 'Util.staticMethod()'";
   private static final String QUALIFY_CONST_FIX_TEXT = "Qualify static constant access 'Util.STATIC_FIELD'";
 
   @Override

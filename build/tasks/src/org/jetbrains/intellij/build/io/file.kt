@@ -1,6 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
+import com.intellij.openapi.util.text.Formats
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.file.*
@@ -9,8 +14,7 @@ import java.util.*
 import java.util.function.Predicate
 import java.util.regex.Pattern
 
-@PublishedApi
-internal val W_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING)
+val W_CREATE_NEW: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
 
 fun copyFileToDir(file: Path, targetDir: Path) {
   doCopyFile(file, targetDir.resolve(file.fileName), targetDir)
@@ -187,12 +191,23 @@ fun substituteTemplatePlaceholders(inputFile: Path,
 }
 
 inline fun transformFile(file: Path, task: (tempFile: Path) -> Unit) {
-  val tempFile = file.parent.resolve("${file.fileName}.tmp")
-  try {
-    task(tempFile)
-    Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
+  synchronized(file.toString().intern()) {
+    val tempFile = file.parent.resolve("${file.fileName}.tmp")
+    try {
+      task(tempFile)
+      Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
+    }
+    finally {
+      Files.deleteIfExists(tempFile)
+    }
   }
-  finally {
-    Files.deleteIfExists(tempFile)
-  }
+}
+
+@Internal
+fun logFreeDiskSpace(dir: Path, phase: String) {
+  Span.current().addEvent("free disk space", Attributes.of(
+    AttributeKey.stringKey("phase"), phase,
+    AttributeKey.stringKey("usableSpace"), Formats.formatFileSize(Files.getFileStore(dir).usableSpace),
+    AttributeKey.stringKey("dir"), dir.toString(),
+  ))
 }

@@ -1,14 +1,18 @@
-# see platform/build-scripts/.../LinuxDistributionBuilder.groovy
+# see platform/build-scripts/.../LinuxDistributionBuilder.kt
 
 name: $NAME$
 version: '$VERSION$'
-summary: $SUMMARY$
-description: $DESCRIPTION$
+summary: |-
+  $SUMMARY$
+description: |-
+  $DESCRIPTION$
 grade: $GRADE$
 confinement: classic
 base: core18
 compression: lzo
-architectures: [amd64]
+architectures:
+  - build-on: [amd64, arm64]
+    run-on: amd64
 
 apps:
   $NAME$:

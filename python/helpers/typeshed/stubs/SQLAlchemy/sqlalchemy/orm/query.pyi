@@ -1,5 +1,6 @@
 from _typeshed import Self
-from typing import Any, Generic, Iterator, TypeVar
+from collections.abc import Iterator
+from typing import Any, Generic, TypeVar
 
 from ..sql.annotation import SupportsCloneAnnotations
 from ..sql.base import Executable

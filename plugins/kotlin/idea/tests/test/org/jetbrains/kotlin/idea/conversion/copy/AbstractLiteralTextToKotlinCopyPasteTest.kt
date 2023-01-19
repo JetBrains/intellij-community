@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import java.io.File
 
 abstract class AbstractLiteralTextToKotlinCopyPasteTest : AbstractCopyPasteTest() {
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun doTest(unused: String) {
         val fileName = fileName()

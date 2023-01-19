@@ -108,7 +108,7 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : UElement> convertElement(element: PsiElement, parent: UElement?, expectedTypes: Array<out Class<out T>>): T? {
+    private fun <T : UElement> convertElement(element: PsiElement, parent: UElement?, expectedTypes: Array<out Class<out T>>): T? {
         val nonEmptyExpectedTypes = expectedTypes.nonEmptyOr(DEFAULT_TYPES_LIST)
         return if (!canConvert(element, nonEmptyExpectedTypes) || !element.isJvmElement) null
         else convertDeclarationOrElement(element, parent, nonEmptyExpectedTypes) as? T
@@ -142,7 +142,7 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
         when (uastTypes.size) {
             0 -> getPossibleSourceTypes(UElement::class.java)
             1 -> getPossibleSourceTypes(uastTypes.single())
-            else -> ClassSetsWrapper<PsiElement>(Array(uastTypes.size) { getPossibleSourceTypes(uastTypes[it]) })
+            else -> ClassSetsWrapper(Array(uastTypes.size) { getPossibleSourceTypes(uastTypes[it]) })
         }
 
     override val analysisPlugin: UastAnalysisPlugin?

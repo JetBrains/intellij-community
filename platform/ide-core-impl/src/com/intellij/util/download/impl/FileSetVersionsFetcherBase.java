@@ -79,5 +79,5 @@ public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetD
 
   protected abstract F createFileDescription(ArtifactItem item, String url, @Nullable String prefix);
 
-  protected abstract FS createVersion(Artifact version, List<F> files);
+  protected abstract FS createVersion(Artifact version, List<? extends F> files);
 }

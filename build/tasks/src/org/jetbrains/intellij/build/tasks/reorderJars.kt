@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.tasks
 
 import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.context.Context
 import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.collections.immutable.PersistentList
@@ -44,10 +43,9 @@ private val sourceToNames: Map<String, MutableList<String>> by lazy {
   sourceToNames
 }
 
-internal fun reorderJar(relativePath: String, file: Path, traceContext: Context) {
+fun reorderJar(relativePath: String, file: Path) {
   val orderedNames = sourceToNames.get(relativePath) ?: return
   tracer.spanBuilder("reorder jar")
-    .setParent(traceContext)
     .setAttribute("relativePath", relativePath)
     .setAttribute("file", file.toString())
     .use {
@@ -92,7 +90,7 @@ fun generateClasspath(homeDir: Path, mainJarName: String, antTargetFile: Path?):
         }
       }
     }
-  reorderJar("lib/app.jar", appFile, Context.current())
+  reorderJar("lib/app.jar", appFile)
 
   tracer.spanBuilder("generate classpath")
     .setAttribute("dir", homeDir.toString())

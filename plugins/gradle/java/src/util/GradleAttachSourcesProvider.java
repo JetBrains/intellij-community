@@ -160,7 +160,7 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
           new TaskCallback() {
             @Override
             public void onSuccess() {
-              VirtualFile classesFile = libraryOrderEntry.getFiles(OrderRootType.CLASSES)[0];
+              VirtualFile classesFile = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES)[0];
               File sourceJar = getSourceFile(artifactCoordinates, classesFile, project, settings.getExternalProjectPath());
               if (sourceJar == null) {
                 try {

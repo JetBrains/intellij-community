@@ -21,8 +21,6 @@ import java.lang.annotation.RetentionPolicy;
 /**
  * Specifies that the annotated method return value ({@link DomElement}) should have
  * a non-null XML element under itself. And some other connected properties.
- *
- * @author peter
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Required {

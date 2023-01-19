@@ -42,6 +42,7 @@ abstract class KotlinStructuralReplaceTest : KotlinLightCodeInsightFixtureTestCa
         val matcher = Matcher(project, matchOptions)
         val sink = CollectingMatchResultSink()
         matcher.findMatches(sink)
+        assert(sink.matches.size > 0) { "No matches found to replace." }
         val replaceOptions = ReplaceConfiguration(searchConfiguration).replaceOptions.apply {
             isToReformatAccordingToStyle = reformat
             isToShortenFQN = shortenFqNames

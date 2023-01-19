@@ -3,10 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiClass
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.declarationList
-import org.jetbrains.kotlin.nj2k.getCompanion
-import org.jetbrains.kotlin.nj2k.psi
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 
 
@@ -25,6 +22,7 @@ class ClassToObjectPromotionConversion(context: NewJ2kConverterContext) : Recurs
                                 else -> false
                             }
                         }
+
                     is JKClass -> true
                     else -> false
                 }

@@ -7,25 +7,36 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.intentions.*
+import org.jetbrains.kotlin.idea.intentions.callExpression
+import org.jetbrains.kotlin.idea.intentions.calleeName
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ReplaceInvokeIntention : SelfTargetingRangeIntention<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java,
     KotlinBundle.lazyMessage("replace.invoke.with.direct.call")
 ), HighPriorityAction {
     override fun applicabilityRange(element: KtDotQualifiedExpression): TextRange? {
-        if (element.calleeName != OperatorNameConventions.INVOKE.asString() ||
-            element.callExpression?.typeArgumentList != null ||
-            (element.toResolvedCall(BodyResolveMode.PARTIAL)?.resultingDescriptor as? FunctionDescriptor)?.isOperator != true
-        ) return null
-        return element.callExpression?.calleeExpression?.textRange
+        return if (element.isExplicitInvokeCall()) element.callExpression?.calleeExpression?.textRange else null
     }
 
     override fun applyTo(element: KtDotQualifiedExpression, editor: Editor?) {
-        OperatorToFunctionIntention.replaceExplicitInvokeCallWithImplicit(element)
+        OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(element)
+    }
+
+    private fun KtDotQualifiedExpression.isExplicitInvokeCall(): Boolean {
+        val callExpression = this.callExpression ?: return false
+        if (calleeName != OperatorNameConventions.INVOKE.asString() || callExpression.typeArgumentList != null) return false
+
+        val context = analyze(BodyResolveMode.PARTIAL)
+        val referenceTarget = context[BindingContext.REFERENCE_TARGET, callExpression.referenceExpression()]
+        return referenceTarget.safeAs<FunctionDescriptor>()?.isOperator == true
     }
 }

@@ -2,37 +2,40 @@
 package com.intellij.workspaceModel.storage.propertyBased
 
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.entities.test.addChildEntity
 import com.intellij.workspaceModel.storage.entities.test.addChildWithOptionalParentEntity
 import com.intellij.workspaceModel.storage.entities.test.addParentEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
-import com.intellij.workspaceModel.storage.impl.assertConsistency
-import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
-import com.intellij.workspaceModel.storage.impl.toClassId
+import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.exceptions.SymbolicIdAlreadyExistsException
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.junit.Assert
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
-internal fun getEntityManipulation(workspace: MutableEntityStorageImpl): Generator<ImperativeCommand>? {
+internal fun getEntityManipulation(workspace: MutableEntityStorageImpl,
+                                   detachedEntities: MutableList<WorkspaceEntity> = ArrayList()): Generator<ImperativeCommand>? {
   return Generator.anyOf(
     RemoveSomeEntity.create(workspace),
     EntityManipulation.addManipulations(workspace),
     EntityManipulation.modifyManipulations(workspace),
+    EntityManipulation.createDetachedEntities(workspace, detachedEntities),
     ChangeEntitySource.create(workspace),
     EntitiesBySource.create(workspace),
+    AddDetachedToStorage.create(workspace, detachedEntities)
   )
 }
 
 internal interface EntityManipulation {
   fun addManipulation(storage: MutableEntityStorageImpl): AddEntity
-  fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>>
+  fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out WorkspaceEntity.Builder<out WorkspaceEntity>>
+  fun addDetachedManipulation(storage: MutableEntityStorageImpl, detachedEntities: MutableList<WorkspaceEntity>): AddEntity {
+    return addManipulation(storage)
+  }
 
   companion object {
     fun addManipulations(storage: MutableEntityStorageImpl): Generator<AddEntity> {
@@ -41,6 +44,10 @@ internal interface EntityManipulation {
 
     fun modifyManipulations(storage: MutableEntityStorageImpl): Generator<ModifyEntity<*, *>> {
       return Generator.sampledFrom(manipulations.map { it.modifyManipulation(storage) })
+    }
+
+    fun createDetachedEntities(storage: MutableEntityStorageImpl, detachedEntities: MutableList<WorkspaceEntity>): Generator<AddEntity> {
+      return Generator.sampledFrom(manipulations.map { it.addDetachedManipulation(storage, detachedEntities) })
     }
 
     private val manipulations = listOf(
@@ -57,7 +64,7 @@ internal interface EntityManipulation {
       AbstractEntities.Left,
       AbstractEntities.Right,
 
-      // Do not enable at the moment. A lot of issues about entities with persistentId
+      // Do not enable at the moment. A lot of issues about entities with symbolicId
       //NamedEntityManipulation
     )
   }
@@ -77,6 +84,26 @@ private class EntitiesBySource(private val storage: MutableEntityStorageImpl) : 
   }
 }
 
+private class AddDetachedToStorage(private val storage: MutableEntityStorageImpl, private val entities: MutableList<WorkspaceEntity>) : ImperativeCommand {
+  override fun performCommand(env: ImperativeCommand.Environment) {
+    if (entities.isEmpty()) return
+    val entityIndex = env.generateValue(Generator.integers(0, entities.size - 1), null)
+    val someEntity = entities.removeAt(entityIndex)
+    if (someEntity is ModifiableWorkspaceEntityBase<*, *> && someEntity.diff == null) {
+      storage.addEntity(someEntity)
+      env.logMessage("Added ${someEntity.id.asString()} to storage")
+    } else {
+      env.logMessage("Cannot add an entity to storage")
+    }
+  }
+
+  companion object {
+    fun create(workspace: MutableEntityStorageImpl, entities: MutableList<WorkspaceEntity>): Generator<AddDetachedToStorage> {
+      return Generator.constant(AddDetachedToStorage(workspace, entities))
+    }
+  }
+}
+
 // Common for all entities
 private class RemoveSomeEntity(private val storage: MutableEntityStorageImpl) : ImperativeCommand {
   override fun performCommand(env: ImperativeCommand.Environment) {
@@ -86,7 +113,7 @@ private class RemoveSomeEntity(private val storage: MutableEntityStorageImpl) : 
     }
     storage.removeEntity(storage.entityDataByIdOrDie(id).createEntity(storage))
     Assert.assertNull(storage.entityDataById(id))
-    env.logMessage("Entity removed. Id: $id")
+    env.logMessage("Entity removed. Id: ${id.asString()}")
   }
 
   companion object {
@@ -103,7 +130,7 @@ private class ChangeEntitySource(private val storage: MutableEntityStorageImpl) 
     val newSource = env.generateValue(sources, null)
     val entity = storage.entityDataByIdOrDie(id).createEntity(storage)
     val oldEntitySource = entity.entitySource
-    storage.modifyEntity(ModifiableWorkspaceEntity::class.java, entity) {
+    storage.modifyEntity(WorkspaceEntity.Builder::class.java, entity) {
       this.entitySource = newSource
     }
 
@@ -119,10 +146,10 @@ private class ChangeEntitySource(private val storage: MutableEntityStorageImpl) 
 }
 
 internal abstract class AddEntity(protected val storage: MutableEntityStorageImpl,
-                                  private val entityDescription: String) : ImperativeCommand {
+                                  protected val entityDescription: String) : ImperativeCommand {
   abstract fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String>
 
-  final override fun performCommand(env: ImperativeCommand.Environment) {
+  override fun performCommand(env: ImperativeCommand.Environment) {
     val property = env.generateValue(randomNames, null)
     val source = env.generateValue(sources, null)
     val (createdEntity, description) = makeEntity(source, property, env)
@@ -137,8 +164,28 @@ internal abstract class AddEntity(protected val storage: MutableEntityStorageImp
   }
 }
 
-internal abstract class ModifyEntity<E : WorkspaceEntity, M : ModifiableWorkspaceEntity<E>>(private val entityClass: KClass<E>,
-                                                                                            protected val storage: MutableEntityStorageImpl) : ImperativeCommand {
+internal abstract class CreateDetachedEntity(storage: MutableEntityStorageImpl,
+                                             entityDescription: String,
+                                             private val detachedEntities: MutableList<WorkspaceEntity>) : AddEntity(storage, entityDescription) {
+  override fun performCommand(env: ImperativeCommand.Environment) {
+    val property = env.generateValue(randomNames, null)
+    val source = env.generateValue(sources, null)
+    val (createdEntity, description) = makeEntity(source, property, env)
+    if (createdEntity != null) {
+      createdEntity as WorkspaceEntityBase
+      if (createdEntity is ModifiableWorkspaceEntityBase<*, *> && createdEntity.diff == null) {
+        detachedEntities.add(createdEntity)
+      }
+      env.logMessage("New detached entity created: $createdEntity. Source: ${createdEntity.entitySource}. $description")
+    }
+    else {
+      env.logMessage("Tried to add $entityDescription but failed because: $description")
+    }
+  }
+}
+
+internal abstract class ModifyEntity<E : WorkspaceEntity, M : WorkspaceEntity.Builder<E>>(private val entityClass: KClass<E>,
+                                                                          protected val storage: MutableEntityStorageImpl) : ImperativeCommand {
   abstract fun modifyEntity(env: ImperativeCommand.Environment): List<M.() -> Unit>
 
   final override fun performCommand(env: ImperativeCommand.Environment) {
@@ -158,7 +205,7 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : ModifiableWorkspac
         storage.modifyEntity(modifiableClass, entity, modifications)
         env.logMessage("$entity modified")
       }
-      catch (e: PersistentIdAlreadyExistsException) {
+      catch (e: SymbolicIdAlreadyExistsException) {
         env.logMessage("Cannot modify ${entityClass.simpleName} entity. Persistent id ${e.id} already exists")
       }
     }
@@ -180,18 +227,18 @@ private object NamedEntityManipulation : EntityManipulation {
         return try {
           storage.addNamedEntity(someProperty, source = source) to "Set property for NamedEntity: $someProperty"
         }
-        catch (e: PersistentIdAlreadyExistsException) {
-          val persistentId = e.id as NameId
-          assert(storage.entities(NamedEntity::class.java).any { it.persistentId == persistentId }) {
-            "$persistentId reported as existing, but it's not found"
+        catch (e: SymbolicIdAlreadyExistsException) {
+          val symbolicId = e.id as NameId
+          assert(storage.entities(NamedEntity::class.java).any { it.symbolicId == symbolicId }) {
+            "$symbolicId reported as existing, but it's not found"
           }
-          null to "NamedEntity with this property isn't added because this persistent id already exists"
+          null to "NamedEntity with this property isn't added because this symbolic id already exists"
         }
       }
     }
   }
 
-  override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+  override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out WorkspaceEntity.Builder<out WorkspaceEntity>> {
     return object : ModifyEntity<NamedEntity, NamedEntity.Builder>(NamedEntity::class, storage) {
       override fun modifyEntity(env: ImperativeCommand.Environment): List<NamedEntity.Builder.() -> Unit> {
         return listOf(modifyStringProperty(NamedEntity.Builder::myName, env))
@@ -241,10 +288,17 @@ private object OoParentManipulation : EntityManipulation {
     }
   }
 
-  override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+  override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out WorkspaceEntity.Builder<out WorkspaceEntity>> {
     return object : ModifyEntity<OoParentEntity, OoParentEntity.Builder>(OoParentEntity::class, storage) {
       override fun modifyEntity(env: ImperativeCommand.Environment): List<OoParentEntity.Builder.() -> Unit> {
-        return listOf(modifyStringProperty(OoParentEntity.Builder::parentProperty, env))
+        return listOf(
+          modifyStringProperty(OoParentEntity.Builder::parentProperty, env),
+          modifyNullableProperty(OoParentEntity.Builder::child,
+                                 Generator.sampledFrom(
+                                   OoChildEntity(env.generateValue(randomNames, null), env.generateValue(sources, null))
+                                 ),
+                                 env),
+        )
       }
     }
   }
@@ -257,12 +311,15 @@ private object OoChildManipulation : EntityManipulation {
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val parentEntity = selectParent(storage, env) ?: return null to "Cannot select parent"
-        return storage.addOoChildEntity(parentEntity, someProperty, source) to "Selected parent: $parentEntity"
+        val newChild =  storage addEntity OoChildEntity(someProperty, source) {
+          this.parentEntity = parentEntity
+        }
+        return newChild to "Selected parent: $parentEntity"
       }
     }
   }
 
-  override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+  override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out WorkspaceEntity.Builder<out WorkspaceEntity>> {
     return object : ModifyEntity<OoChildEntity, OoChildEntity.Builder>(OoChildEntity::class, storage) {
       override fun modifyEntity(env: ImperativeCommand.Environment): List<OoChildEntity.Builder.() -> Unit> {
         return listOf(modifyStringProperty(OoChildEntity.Builder::childProperty, env))
@@ -290,7 +347,7 @@ private object OoChildWithNullableParentManipulation : EntityManipulation {
     }
   }
 
-  override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+  override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out WorkspaceEntity.Builder<out WorkspaceEntity>> {
     return object : ModifyEntity<OoChildWithNullableParentEntity, OoChildWithNullableParentEntity.Builder>(
       OoChildWithNullableParentEntity::class, storage) {
       override fun modifyEntity(env: ImperativeCommand.Environment): List<OoChildWithNullableParentEntity.Builder.() -> Unit> {
@@ -318,7 +375,7 @@ private object MiddleEntityManipulation : EntityManipulation {
     }
   }
 
-  override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+  override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out WorkspaceEntity.Builder<out WorkspaceEntity>> {
     return object : ModifyEntity<MiddleEntity, MiddleEntity.Builder>(MiddleEntity::class, storage) {
       override fun modifyEntity(env: ImperativeCommand.Environment): List<MiddleEntity.Builder.() -> Unit> {
         return listOf(modifyStringProperty(MiddleEntity.Builder::property, env))
@@ -335,12 +392,12 @@ private object AbstractEntities {
                                 someProperty: String,
                                 env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
           val children = selectChildren(env, storage).asSequence()
-          return storage.addLeftEntity(children, source) to ""
+          return storage.addLeftEntity(children, source) to "Children: ${children.toList()}"
         }
       }
     }
 
-    override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+    override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out WorkspaceEntity.Builder<out WorkspaceEntity>> {
       return object : ModifyEntity<LeftEntity, LeftEntity.Builder>(LeftEntity::class, storage) {
         override fun modifyEntity(env: ImperativeCommand.Environment): List<LeftEntity.Builder.() -> Unit> {
           return listOf(
@@ -364,7 +421,7 @@ private object AbstractEntities {
       }
     }
 
-    override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+    override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out WorkspaceEntity.Builder<out WorkspaceEntity>> {
       return object : ModifyEntity<RightEntity, RightEntity.Builder>(RightEntity::class, storage) {
         override fun modifyEntity(env: ImperativeCommand.Environment): List<RightEntity.Builder.() -> Unit> {
           return listOf(
@@ -468,9 +525,22 @@ private object SampleEntityManipulation : EntityManipulation {
       }
     }
   }
+
+  override fun addDetachedManipulation(storage: MutableEntityStorageImpl, detachedEntities: MutableList<WorkspaceEntity>): AddEntity {
+    return object : CreateDetachedEntity(storage, "Sample", detachedEntities) {
+      override fun makeEntity(source: EntitySource,
+                              someProperty: String,
+                              env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+        val virtualFileManager = VirtualFileUrlManagerImpl()
+        return SampleEntity(false, someProperty, emptyList(), emptyMap(), virtualFileManager.fromUrl("file:///tmp"), source) {
+          this.children = emptyList()
+        } to "property: $someProperty"
+      }
+    }
+  }
 }
 
-private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNotNullProperty(
+private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> modifyNotNullProperty(
   property: KMutableProperty1<A, T>,
   takeFrom: Generator<T?>,
   env: ImperativeCommand.Environment
@@ -484,7 +554,7 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNot
   }
 }
 
-private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNullableProperty(
+private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> modifyNullableProperty(
   property: KMutableProperty1<A, T?>,
   takeFrom: Generator<T?>,
   env: ImperativeCommand.Environment
@@ -496,19 +566,19 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNul
   }
 }
 
-private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>> modifyStringProperty(property: KMutableProperty1<A, String>,
-                                                                                         env: ImperativeCommand.Environment): A.() -> Unit {
+private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>> modifyStringProperty(property: KMutableProperty1<A, String>,
+                                                                       env: ImperativeCommand.Environment): A.() -> Unit {
   return modifyNotNullProperty(property, randomNames, env)
 }
 
-private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>> modifyBooleanProperty(property: KMutableProperty1<A, Boolean>,
-                                                                                          env: ImperativeCommand.Environment): A.() -> Unit {
+private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>> modifyBooleanProperty(property: KMutableProperty1<A, Boolean>,
+                                                                        env: ImperativeCommand.Environment): A.() -> Unit {
   return modifyNotNullProperty(property, Generator.booleans(), env)
 }
 
-private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> addOrRemoveInList(property: KMutableProperty1<A, MutableList<T>>,
-                                                                                         takeFrom: Generator<T>,
-                                                                                         env: ImperativeCommand.Environment): A.() -> Unit {
+private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> addOrRemoveInList(property: KMutableProperty1<A, MutableList<T>>,
+                                                                                       takeFrom: Generator<T>,
+                                                                                       env: ImperativeCommand.Environment): A.() -> Unit {
   return {
     val removeValue = env.generateValue(Generator.booleans(), null)
     val value = property.getter.call(this)
@@ -526,8 +596,8 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> addOrRemo
   }
 }
 
-private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> swapElementsInSequence(property: KMutableProperty1<A, Sequence<T>>,
-                                                                                              env: ImperativeCommand.Environment): A.() -> Unit {
+private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> swapElementsInSequence(property: KMutableProperty1<A, Sequence<T>>,
+                                                                                            env: ImperativeCommand.Environment): A.() -> Unit {
   return {
     val propertyList = property.getter.call(this).toMutableList()
     if (propertyList.size > 2) {
@@ -541,8 +611,8 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> swapEleme
   }
 }
 
-private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> swapElementsInList(property: KMutableProperty1<A, List<T>>,
-                                                                                              env: ImperativeCommand.Environment): A.() -> Unit {
+private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> swapElementsInList(property: KMutableProperty1<A, List<T>>,
+                                                                                        env: ImperativeCommand.Environment): A.() -> Unit {
   return {
     val propertyList = property.getter.call(this).toMutableList()
     if (propertyList.size > 2) {
@@ -556,8 +626,8 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> swapEleme
   }
 }
 
-private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> removeInSequence(property: KMutableProperty1<A, Sequence<T>>,
-                                                                                        env: ImperativeCommand.Environment): A.() -> Unit {
+private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> removeInSequence(property: KMutableProperty1<A, Sequence<T>>,
+                                                                                      env: ImperativeCommand.Environment): A.() -> Unit {
   return {
     val value = property.getter.call(this)
     if (value.any()) {
@@ -570,8 +640,8 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> removeInS
   }
 }
 
-private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> removeInList(property: KMutableProperty1<A, List<T>>,
-                                                                                        env: ImperativeCommand.Environment): A.() -> Unit {
+private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> removeInList(property: KMutableProperty1<A, List<T>>,
+                                                                  env: ImperativeCommand.Environment): A.() -> Unit {
   return {
     val value = property.getter.call(this)
     if (value.any()) {

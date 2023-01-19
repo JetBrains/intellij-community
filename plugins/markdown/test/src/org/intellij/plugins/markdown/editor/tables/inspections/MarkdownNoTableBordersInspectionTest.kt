@@ -3,10 +3,13 @@ package org.intellij.plugins.markdown.editor.tables.inspections
 
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.editor.tables.TableTestUtils
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
 
+@RunWith(JUnit4::class)
+@Suppress("MarkdownIncorrectTableFormatting", "MarkdownNoTableBorders")
 class MarkdownNoTableBordersInspectionTest: LightPlatformCodeInsightFixture4TestCase() {
   private val description
     get() = MarkdownBundle.message("markdown.no.table.borders.inspection.description")
@@ -44,11 +47,46 @@ class MarkdownNoTableBordersInspectionTest: LightPlatformCodeInsightFixture4Test
     doTest(expected)
   }
 
+  @Test
+  fun `no inspection for top level indented table`() {
+    // language=Markdown
+    val expected = """
+       | none | none |
+       |------|------|
+       | some | some |
+
+    trimIndent marker
+    """.trimIndent()
+    doTest(expected)
+  }
+
+  @Test
+  fun `no inspection for indented table inside list`() {
+    // language=Markdown
+    val expected = """
+    * Some list item with a table
+      
+      | none | none |
+      |------|------|
+      | some | some |
+    """.trimIndent()
+    doTest(expected)
+  }
+
+  @Test
+  fun `no inspection for table inside block quote`() {
+    // language=Markdown
+    val expected = """
+    > | none | none |
+    > |------|------|
+    > | some | some |
+    """.trimIndent()
+    doTest(expected)
+  }
+
   private fun doTest(expected: String) {
-    TableTestUtils.runWithChangedSettings(myFixture.project) {
-      myFixture.configureByText("some.md", expected)
-      myFixture.enableInspections(MarkdownNoTableBordersInspection())
-      myFixture.checkHighlighting()
-    }
+    myFixture.configureByText("some.md", expected)
+    myFixture.enableInspections(MarkdownNoTableBordersInspection())
+    myFixture.checkHighlighting()
   }
 }

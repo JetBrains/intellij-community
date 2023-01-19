@@ -3,11 +3,12 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.executors.ExecutorGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 
-internal class RunToolbarAdditionAction(val executorGroup: ExecutorGroup<*>,
+internal class RunToolbarAdditionAction(private val executorGroup: ExecutorGroup<*>,
                                         val process: RunToolbarProcess, val selectedAction: () -> AnAction?) : AnAction() {
 
   init {
@@ -21,6 +22,8 @@ internal class RunToolbarAdditionAction(val executorGroup: ExecutorGroup<*>,
       e.presentation.isEnabled = !e.isActiveProcess()
     }
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   private fun updateAndGetVisibility(presentation: Presentation): Boolean {
     val action = selectedAction()

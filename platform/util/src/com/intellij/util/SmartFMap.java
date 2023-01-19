@@ -11,7 +11,6 @@ import java.util.function.BiConsumer;
 /**
  * An immutable map optimized for storing few entries with relatively rare updates.
  *
- * @author peter
  * @see com.intellij.util.fmap.FMap
  */
 public final class SmartFMap<K,V> implements Map<K,V> {

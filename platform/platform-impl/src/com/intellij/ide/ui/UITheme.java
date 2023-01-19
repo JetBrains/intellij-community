@@ -26,6 +26,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.*;
@@ -110,6 +111,7 @@ public final class UITheme {
     }
 
     initializeNamedColors(theme);
+    PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
 
     if (theme.iconColorsOnSelection != null && !theme.iconColorsOnSelection.isEmpty()) {
       Map<String, String> colors = new HashMap<>(theme.iconColorsOnSelection.size());
@@ -122,7 +124,19 @@ public final class UITheme {
       theme.selectionColorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
         @Override
         public SVGLoader.@Nullable SvgElementColorPatcher forPath(@Nullable String path) {
-          return SVGLoader.newPatcher(null, colors, alpha);
+          MessageDigest hasher = DigestUtil.sha512();
+          PaletteScope scope = paletteScopeManager.getScopeByPath(path);
+          if (scope != null) hasher.update(scope.digest());
+          for (Map.Entry<String, String> entry : colors.entrySet()) {
+            hasher.update(entry.getKey().getBytes(StandardCharsets.UTF_8));
+            hasher.update(entry.getValue().getBytes(StandardCharsets.UTF_8));
+          }
+          for (Map.Entry<String, Integer> entry : alpha.entrySet()) {
+            hasher.update(entry.getKey().getBytes(StandardCharsets.UTF_8));
+            hasher.update(ByteBuffer.allocate(4).putInt(entry.getValue()).array());
+          }
+
+          return SVGLoader.newPatcher(hasher.digest(), colors, alpha);
         }
       };
     }
@@ -160,7 +174,6 @@ public final class UITheme {
       if (palette instanceof Map) {
         @SuppressWarnings("rawtypes")
         Map colors = (Map)palette;
-        PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
         for (Object o : colors.keySet()) {
           String colorKey = o.toString();
           PaletteScope scope = paletteScopeManager.getScope(colorKey);
@@ -478,12 +491,15 @@ public final class UITheme {
   public static Object parseValue(String key, @NotNull String value, @NotNull ClassLoader classLoader) {
     try {
       switch (value) {
-        case "null":
+        case "null" -> {
           return null;
-        case "true":
+        }
+        case "true" -> {
           return Boolean.TRUE;
-        case "false":
+        }
+        case "false" -> {
           return Boolean.FALSE;
+        }
       }
 
       if (value.endsWith(".png") || value.endsWith(".svg")) {

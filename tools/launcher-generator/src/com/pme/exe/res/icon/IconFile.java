@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@
 package com.pme.exe.res.icon;
 
 import com.pme.exe.Bin;
-import com.pme.exe.res.Level;
-import com.pme.exe.res.LevelEntry;
 
 import java.io.*;
 
@@ -29,48 +27,54 @@ import java.io.*;
  * Time: 12:52:09 PM
  */
 public class IconFile extends Bin.Structure {
-  private Level myImages = new Level();
-  private File myFile;
+  private final IconHeader myHeader;
+  private final ArrayOfBins<IconDirectory> myIcons;
 
   public static class IconWrongFormat extends IOException {
-    public IconWrongFormat( File file ) {
+    public IconWrongFormat(File file) {
       super("Icon file has wrong format:" + file.getPath());
     }
   }
 
-  public IconFile(File file) {
-    super(file.getName());
-    myFile = file;
-    addMember(new IconHeader());
+  public IconFile() {
+    super("IconFile");
+    myHeader = addMember(new IconHeader());
+    Word idCount = myHeader.getCount();
+    myIcons = addMember(new ArrayOfBins<>("Icon directories", IconDirectory.class, idCount));
+    myIcons.setCountHolder(idCount);
   }
 
-  public void read() throws IOException {
-    RandomAccessFile stream = null;
-    try {
-      stream = new RandomAccessFile(myFile, "r");
+  public IconHeader getHeader() {
+    return myHeader;
+  }
+
+  public ArrayOfBins<IconDirectory> getIcons() {
+    return myIcons;
+  }
+
+  public void read(File file) throws IOException {
+    setName(file.getName());
+    try (RandomAccessFile stream = new RandomAccessFile(file, "r")) {
       read(stream);
-    } finally {
-      if (stream != null) {
-        stream.close();
-      }
-    }
-  }
-
-  public void read(DataInput stream) throws IOException {
-    try {
-      super.read(stream);
-      Word idCount = (Word) ((Bin.Structure) getMember("Header")).getMember("idCount");
-      ArrayOfBins<IconDirectory> iconDirs = new ArrayOfBins<IconDirectory>("Icon directories", IconDirectory.class, idCount);
-      iconDirs.setCountHolder(idCount);
-      addMember(myImages);
-      Bin[] array = iconDirs.getArray();
-      for (Bin bin : array) {
-        myImages.addLevelEntry((LevelEntry) bin);
-      }
-      myImages.read(stream);
     }
     catch (IOException exception) {
-      throw new IconWrongFormat(myFile);
+      throw new IconWrongFormat(file);
+    }
+  }
+
+  @Override
+  public void read(DataInput stream) throws IOException {
+    super.read(stream);
+    for (IconDirectory icon : myIcons) {
+      icon.getBytes().read(stream);
+    }
+  }
+
+  @Override
+  public void write(DataOutput stream) throws IOException {
+    super.write(stream);
+    for (IconDirectory icon : myIcons) {
+      icon.getBytes().write(stream);
     }
   }
 }

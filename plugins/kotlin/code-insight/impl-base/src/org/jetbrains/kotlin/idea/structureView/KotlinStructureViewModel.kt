@@ -10,8 +10,9 @@ import com.intellij.ide.util.treeView.smartTree.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
-import com.intellij.util.PlatformIcons
-import org.jetbrains.kotlin.idea.KotlinCodeInsightBundle
+import com.intellij.ui.IconManager
+import com.intellij.ui.PlatformIcons
+import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
@@ -24,11 +25,14 @@ open class KotlinStructureViewModel(ktFile: KtFile, editor: Editor?, rootElement
         withSorters(KotlinVisibilitySorter, Sorter.ALPHA_SORTER)
     }
 
-    override fun isSuitable(element: PsiElement?): Boolean = element is KtDeclaration &&
+    override fun isSuitable(element: PsiElement?): Boolean =
+        element is KtDeclaration &&
             element !is KtPropertyAccessor &&
             element !is KtFunctionLiteral &&
-            !(element is KtProperty && element.parent !is KtFile && element.containingClassOrObject !is KtNamedDeclaration) &&
-            !(element is KtFunction && element.parent !is KtFile && element.containingClassOrObject !is KtNamedDeclaration)
+            !((element is KtProperty || element is KtFunction) && !element.topLevelDeclaration && element.containingClassOrObject !is KtNamedDeclaration)
+
+    private val KtDeclaration.topLevelDeclaration: Boolean
+        get() = parent is KtFile || parent is KtBlockExpression && parent.parent is KtScript
 
     override fun getFilters() = FILTERS
 
@@ -63,7 +67,11 @@ object PublicElementsFilter : Filter {
     }
 
     override fun getPresentation(): ActionPresentation {
-        return ActionPresentationData(KotlinCodeInsightBundle.message("show.non.public"), null, PlatformIcons.PRIVATE_ICON)
+        return ActionPresentationData(
+            KotlinCodeInsightBundle.message("show.non.public"),
+            null,
+            IconManager.getInstance().getPlatformIcon(PlatformIcons.Private)
+        )
     }
 
     override fun getName() = ID
@@ -81,7 +89,7 @@ object PropertiesFilter : Filter {
     }
 
     override fun getPresentation(): ActionPresentation {
-        return ActionPresentationData(KotlinCodeInsightBundle.message("show.properties"), null, PlatformIcons.PROPERTY_ICON)
+        return ActionPresentationData(KotlinCodeInsightBundle.message("show.properties"), null, IconManager.getInstance().getPlatformIcon(PlatformIcons.Property))
     }
 
     override fun getName() = ID

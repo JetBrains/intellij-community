@@ -25,8 +25,8 @@ class WslPathBrowserTest {
 
   @Test
   fun correctPath() {
-    val winPath = getBestWindowsPathFromLinuxPath(wslRule.wsl, "/bin/sh")!!
-    Assert.assertEquals("file:////wsl$/${wslRule.wsl.msId}/bin/sh", winPath.toString())
+    val winPath = getBestWindowsPathFromLinuxPath(wslRule.wsl, "/bin")!!
+    Assert.assertEquals("file:////wsl$/${wslRule.wsl.msId}/bin", winPath.toString())
   }
 
   @Test
@@ -50,10 +50,11 @@ class WslPathBrowserTest {
   @Test
   fun fileDescriptorWithWindows() {
     val rootDrives = FileSystems.getDefault().rootDirectories
+    wslRule.wsl.executeOnWsl(20_000, "ls").exitCode // To reanimate wsl in case of failure
     val roots = createFileChooserDescriptor(wslRule.wsl, true).roots.map { it.toNioPath() }
-    Assert.assertEquals("Wrong number of roots", rootDrives.count() + 1, roots.size)
+    Assert.assertEquals("Wrong number of roots: ${roots.joinToString(",")}", rootDrives.count() + 1, roots.size)
     for (root in roots) {
-      if (root != wslRule.wsl.uncRootPath && root !in rootDrives) {
+      if (root != wslRule.wsl.getUNCRootPath() && root !in rootDrives) {
         Assert.fail("Unexpected root $root")
       }
     }
@@ -62,6 +63,6 @@ class WslPathBrowserTest {
   @Test
   fun fileDescriptorNoWindows() {
     val roots = createFileChooserDescriptor(wslRule.wsl, false).roots.map { it.toNioPath() }
-    Assert.assertEquals(roots.toList(), listOf(wslRule.wsl.uncRootPath))
+    Assert.assertEquals(roots.toList(), listOf(wslRule.wsl.getUNCRootPath()))
   }
 }

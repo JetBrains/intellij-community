@@ -70,8 +70,6 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
 
     if (selectedText == null && editor != null) {
       expressionTextPromise = getExpressionText(evaluator, CommonDataKeys.PROJECT.getData(dataContext), editor);
-    } else if (editor != null) {
-      expressionTextPromise = evaluator.getWhenDataIsReady(editor, selectedText);
     }
 
     EvaluationMode finalMode = mode;

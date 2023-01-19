@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -35,7 +35,7 @@ class ModuleRootComponentBridge(
     { moduleBridge.entityStorage },
     CachedValue { storage ->
       RootModelBridgeImpl(
-        moduleEntity = storage.findModuleEntity(moduleBridge),
+        moduleEntity = moduleBridge.findModuleEntity(storage),
         storage = moduleBridge.entityStorage,
         itemUpdater = null,
         // TODO

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -59,7 +60,7 @@ public class ScopesOrderDialog extends DialogWrapper {
           myOptionsTable.moveUp();
         }
       })
-      .addExtraAction(new AnActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.text.edit.scopes"), AllIcons.Actions.Edit) {
+      .addExtraAction(new AnAction(CodeInsightBundle.messagePointer("action.AnActionButton.text.edit.scopes"), AllIcons.Actions.Edit) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           ShowSettingsUtil.getInstance().editConfigurable(project, new ScopeChooserConfigurable(project));

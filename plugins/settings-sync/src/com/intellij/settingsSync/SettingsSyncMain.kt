@@ -8,7 +8,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -16,7 +15,7 @@ private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
 
 @ApiStatus.Internal
 fun isSettingsSyncEnabledByKey(): Boolean =
-  SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
+  SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, true)
 
 internal fun isSettingsSyncEnabledInSettings(): Boolean =
   SettingsSyncSettings.getInstance().syncEnabled
@@ -47,28 +46,6 @@ class SettingsSyncMain : Disposable {
 
   internal fun getRemoteCommunicator(): SettingsSyncRemoteCommunicator = controls.remoteCommunicator
 
-  @RequiresBackgroundThread
-  internal fun syncSettings() {
-    when (controls.remoteCommunicator.checkServerState()) {
-      is ServerState.UpdateNeeded -> {
-        LOG.info("Updating from server")
-        controls.updateChecker.scheduleUpdateFromServer()
-        // the push will happen automatically after updating and merging (if there is anything to merge)
-      }
-      ServerState.FileNotExists -> {
-        LOG.info("No file on server, we must push")
-        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.MustPushRequest)
-      }
-      ServerState.UpToDate -> {
-        LOG.info("Updating settings is not needed, will check if push is needed")
-        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.PingRequest)
-      }
-      is ServerState.Error -> {
-        // error already logged in checkServerState, we schedule update
-      }
-    }
-  }
-
   fun disableSyncing() {
     controls.ideMediator.removeStreamProvider()
   }
@@ -89,7 +66,7 @@ class SettingsSyncMain : Disposable {
                       remoteCommunicator: SettingsSyncRemoteCommunicator,
                       ideMediator: SettingsSyncIdeMediator): SettingsSyncControls {
       val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable,
-                                       ideMediator.collectFilesToExportFromSettings(appConfigPath))
+        initialSnapshotProvider = { currentSnapshot -> ideMediator.getInitialSnapshot(appConfigPath, currentSnapshot) })
       val updateChecker = SettingsSyncUpdateChecker(remoteCommunicator)
       val bridge = SettingsSyncBridge(parentDisposable, appConfigPath, settingsLog, ideMediator, remoteCommunicator, updateChecker)
       return SettingsSyncControls(ideMediator, updateChecker, bridge, remoteCommunicator, settingsSyncStorage)

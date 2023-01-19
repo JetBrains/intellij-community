@@ -267,6 +267,11 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.canGoBack());
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     ActionUtil.copyFrom(backAction, IdeActions.ACTION_GOTO_BACK);
     group.add(backAction);
@@ -280,6 +285,11 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.canGoForward());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
     ActionUtil.copyFrom(forwardAction, IdeActions.ACTION_GOTO_FORWARD);

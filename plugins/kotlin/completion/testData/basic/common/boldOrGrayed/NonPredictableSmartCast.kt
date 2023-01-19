@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 
 fun String.forString(){}
 fun Any.forAny(){}
@@ -10,9 +12,9 @@ fun f(pair: Pair<out Any, out Any>) {
 }
 
 // EXIST: { lookupString: "length", attributes: "grayed", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg"}
-// EXIST: { lookupString: "hashCode", attributes: "bold", icon: "nodes/method.svg"}
-// EXIST: { lookupString: "forString", attributes: "grayed", icon: "nodes/function.svg"}
-// EXIST: { lookupString: "forAny", attributes: "bold", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "hashCode", attributes: "bold", icon: "Method"}
+// EXIST: { lookupString: "forString", attributes: "grayed", icon: "Function"}
+// EXIST: { lookupString: "forAny", attributes: "bold", icon: "Function"}
 
 /*TODO: { lookupString: "forT", attributes: "" }*/
-// EXIST: { lookupString: "forT", attributes: "grayed", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "forT", attributes: "grayed", icon: "Function"}

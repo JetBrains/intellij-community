@@ -1,4 +1,4 @@
-// "Make 'm' return 'java.util.AbstractList<java.lang.Object>' or predecessor" "true-preview"
+// "Make 'm()' return 'java.util.AbstractList<java.lang.Object>' or ancestor" "true-preview"
 import java.util.*;
 
 class Test {

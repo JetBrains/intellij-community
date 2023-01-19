@@ -16,6 +16,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -83,6 +84,10 @@ public final class IndexingStamp {
     private Timestamps(@Nullable DataInputStream stream) throws IOException {
       if (stream != null) {
         int[] outdatedIndices = null;
+        //'header' is either timestamp (dominatingIndexStamp), or, if timestamp is small enough
+        // (<MAX_SHORT), it is really a number of 'outdatedIndices', followed by actual indices
+        // ints (which is index id from ID class), and followed by another timestamp=dominatingIndexStamp
+        // value
         long dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
         long diff = dominatingIndexStamp - DataInputOutputUtil.timeBase;
         if (diff > 0 && diff < ID.MAX_NUMBER_OF_INDICES) {
@@ -94,6 +99,7 @@ public final class IndexingStamp {
           dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
         }
 
+        //and after is just a set of ints -- Index IDs from ID class
         while(stream.available() > 0) {
           ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
           if (id != null && !(id instanceof StubIndexKey)) {
@@ -215,26 +221,36 @@ public final class IndexingStamp {
   @TestOnly
   public static void dropIndexingTimeStamps(int fileId) throws IOException {
     ourTimestampsCache.remove(fileId);
-    try (DataOutputStream out =  FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
+    try (DataOutputStream out = FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
       new Timestamps(null).writeToStream(out);
     }
   }
 
   @NotNull
   private static Timestamps createOrGetTimeStamp(int id) {
+    return getTimestamp(id, true);
+  }
+
+  @Contract("_, true->!null")
+  private static Timestamps getTimestamp(int id, boolean createIfNoneSaved) {
     assert id > 0;
     Timestamps timestamps = ourTimestampsCache.get(id);
     if (timestamps == null) {
       try (final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE)) {
+        if (stream == null && !createIfNoneSaved) return null;
         timestamps = new Timestamps(stream);
       }
       catch (IOException e) {
-        FSRecords.handleError(e);
-        throw new RuntimeException(e);
+        throw FSRecords.handleError(e);
       }
       ourTimestampsCache.cacheOrGet(id, timestamps);
     }
     return timestamps;
+  }
+
+  @TestOnly
+  public static boolean hasIndexingTimeStamp(int fileId) {
+    return getTimestamp(fileId, false) != null;
   }
 
   public static void update(int fileId, @NotNull ID<?, ?> indexName, final long indexCreationStamp) {

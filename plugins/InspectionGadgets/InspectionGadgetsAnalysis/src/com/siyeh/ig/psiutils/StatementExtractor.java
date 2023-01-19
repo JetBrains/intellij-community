@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -210,11 +210,12 @@ public final class StatementExtractor {
 
     public String toString() {
       if (myAnchor instanceof PsiInstanceOfExpression) {
-        List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariables(myAnchor);
+        var patternVariableWrappers = JavaPsiPatternUtil.collectPatternVariableWrappers(myAnchor);
         StringBuilder sb = new StringBuilder();
-        for (PsiPatternVariable variable : variables) {
-          String initializer = JavaPsiPatternUtil.getEffectiveInitializerText(variable);
+        for (var patternVariableWrapper : patternVariableWrappers) {
+          String initializer = patternVariableWrapper.getEffectiveInitializerText();
           if (initializer != null) {
+            PsiPatternVariable variable = patternVariableWrapper.getVariable();
             sb.append(variable.getTypeElement().getText()).append(" ").append(variable.getName()).append("=")
               .append(initializer).append(";");
           }

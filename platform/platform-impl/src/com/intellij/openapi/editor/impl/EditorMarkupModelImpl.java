@@ -56,6 +56,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +74,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class EditorMarkupModelImpl extends MarkupModelImpl
       implements EditorMarkupModel, CaretListener, BulkAwareDocumentListener.Simple, VisibleAreaListener {
@@ -205,7 +207,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       @Override
       protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action, ActionButtonLook look,
                                                           @NotNull String place, @NotNull Presentation presentation,
-                                                          @NotNull Dimension minimumSize) {
+                                                          Supplier<? extends @NotNull Dimension> minimumSize) {
 
         ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
           @Override
@@ -324,7 +326,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() && analyzerStatus.getController().enableToolbar();
+        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() && analyzerStatus.getController().isToolbarEnabled();
 
         updateTrafficLightVisibility();
       }
@@ -474,7 +476,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     myStatusUpdates.queue(Update.create("icon", () -> {
       if (myErrorStripeRenderer != null) {
         AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus();
-        if (!newStatus.equals(analyzerStatus)) {
+        if (!newStatus.equalsTo(analyzerStatus)) {
           changeStatus(newStatus);
         }
       }
@@ -489,9 +491,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     analyzerStatus = newStatus;
     smallIconLabel.setIcon(analyzerStatus.getIcon());
 
-    if (showToolbar != analyzerStatus.getController().enableToolbar()) {
+    if (showToolbar != analyzerStatus.getController().isToolbarEnabled()) {
       showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
-                    analyzerStatus.getController().enableToolbar();
+                    analyzerStatus.getController().isToolbarEnabled();
       updateTrafficLightVisibility();
     }
 
@@ -851,8 +853,31 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     return !myEditor.shouldScrollBarBeOpaque();
   }
 
+  @ApiStatus.Internal
+  ScrollBarUI createMacHorizontalScrollBarUI() {
+    return new EditorScrollBarUI();
+  }
+
+  private class EditorScrollBarUI extends ButtonlessScrollBarUI {
+    @Override
+    public boolean alwaysShowTrack() {
+      return !transparent();
+    }
+
+    @Override
+    protected int getThumbOffset(int value) {
+      if (SystemInfo.isMac || Registry.is("editor.full.width.scrollbar")) return getMinMarkHeight() + JBUIScale.scale(2);
+      return super.getThumbOffset(value);
+    }
+
+    @Override
+    protected int getThickness() {
+      return SCROLLBAR_WIDTH.get() + getThinGap() + getMinMarkHeight();
+    }
+  }
+
   @DirtyUI
-  private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
+  private class MyErrorPanel extends EditorScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
     private PopupHandler myHandler;
     private @Nullable BufferedImage myCachedTrack;
     private int myCachedHeight = -1;
@@ -860,12 +885,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     public void dropCache() {
       myCachedTrack = null;
       myCachedHeight = -1;
-    }
-
-    @Override
-    public boolean alwaysShowTrack() {
-      if (scrollbar.getOrientation() == Adjustable.VERTICAL) return !transparent();
-      return super.alwaysShowTrack();
     }
 
     @Override
@@ -934,12 +953,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
 
     @Override
-    protected int getThumbOffset(int value) {
-      if (SystemInfo.isMac || Registry.is("editor.full.width.scrollbar")) return getMinMarkHeight() + JBUIScale.scale(2);
-      return super.getThumbOffset(value);
-    }
-
-    @Override
     protected boolean isDark() {
       return myEditor.isDarkEnough();
     }
@@ -957,11 +970,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       bounds.x = getThinGap() + getMinMarkHeight() + SCROLLBAR_WIDTH.get() / 2 - b2;
 
       return bounds;
-    }
-
-    @Override
-    protected int getThickness() {
-      return SCROLLBAR_WIDTH.get() + getThinGap() + getMinMarkHeight();
     }
 
     @Override
@@ -1474,7 +1482,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
       Icon newIcon = analyzerStatus.getIcon();
 
-      presentation.setVisible(!AnalyzerStatus.isEmpty(analyzerStatus));
+      presentation.setVisible(!analyzerStatus.isEmpty());
 
       if (!hasAnalyzed || analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
         List<StatusItem> adjusted = newStatus.isEmpty() ? Collections.singletonList(new StatusItem("", newIcon)) : newStatus;
@@ -1845,7 +1853,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(analyzerStatus.getController().enableToolbar());
+      e.getPresentation().setEnabled(analyzerStatus.getController().isToolbarEnabled());
     }
 
     @Override

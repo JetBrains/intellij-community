@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("unused")
 class ConstraintBuilder(
-  private val inferenceContext: InferenceContext,
-  private val boundTypeCalculator: BoundTypeCalculator,
-  private val constraintBoundProvider: ConstraintBoundProvider
+    private val inferenceContext: InferenceContext,
+    private val boundTypeCalculator: BoundTypeCalculator,
+    private val constraintBoundProvider: ConstraintBoundProvider
 ) : BoundTypeCalculator by boundTypeCalculator, ConstraintBoundProvider by constraintBoundProvider {
     private val constraints = mutableListOf<Constraint>()
 
@@ -50,17 +50,17 @@ class ConstraintBuilder(
     }
 
     fun TypeVariable.isTheSameTypeAs(
-      other: TypeVariable,
-      priority: ConstraintPriority,
-      ignoreTypeVariables: Set<TypeVariable> = emptySet()
+        other: TypeVariable,
+        priority: ConstraintPriority,
+        ignoreTypeVariables: Set<TypeVariable> = emptySet()
     ) {
         asBoundType().isTheSameTypeAs(other.asBoundType(), priority, ignoreTypeVariables)
     }
 
     fun KtTypeElement.isTheSameTypeAs(
-      other: KtTypeElement,
-      priority: ConstraintPriority,
-      ignoreTypeVariables: Set<TypeVariable> = emptySet()
+        other: KtTypeElement,
+        priority: ConstraintPriority,
+        ignoreTypeVariables: Set<TypeVariable> = emptySet()
     ) {
         inferenceContext.typeElementToTypeVariable[this]
             ?.asBoundType()
@@ -72,9 +72,9 @@ class ConstraintBuilder(
     }
 
     fun TypeVariable.isTheSameTypeAs(
-      other: KtTypeElement,
-      priority: ConstraintPriority,
-      ignoreTypeVariables: Set<TypeVariable> = emptySet()
+        other: KtTypeElement,
+        priority: ConstraintPriority,
+        ignoreTypeVariables: Set<TypeVariable> = emptySet()
     ) {
         asBoundType().isTheSameTypeAs(
             inferenceContext.typeElementToTypeVariable[other]?.asBoundType() ?: return,
@@ -84,9 +84,9 @@ class ConstraintBuilder(
     }
 
     fun BoundType.isTheSameTypeAs(
-      other: KtTypeElement,
-      priority: ConstraintPriority,
-      ignoreTypeVariables: Set<TypeVariable> = emptySet()
+        other: KtTypeElement,
+        priority: ConstraintPriority,
+        ignoreTypeVariables: Set<TypeVariable> = emptySet()
     ) {
         isTheSameTypeAs(
             inferenceContext.typeElementToTypeVariable[other]?.asBoundType() ?: return,
@@ -95,10 +95,10 @@ class ConstraintBuilder(
         )
     }
 
-    fun BoundType.isTheSameTypeAs(
-      other: BoundType,
-      priority: ConstraintPriority,
-      ignoreTypeVariables: Set<TypeVariable> = emptySet()
+    private fun BoundType.isTheSameTypeAs(
+        other: BoundType,
+        priority: ConstraintPriority,
+        ignoreTypeVariables: Set<TypeVariable> = emptySet()
     ) {
         (typeParameters zip other.typeParameters).forEach { (left, right) ->
             left.boundType.isTheSameTypeAs(right.boundType, priority, ignoreTypeVariables)

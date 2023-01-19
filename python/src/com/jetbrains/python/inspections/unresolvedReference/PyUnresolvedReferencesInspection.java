@@ -5,7 +5,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -43,14 +43,14 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 /**
  * Marks references that fail to resolve. Also tracks unused imports and provides "optimize imports" support.
- * User: dcheryasov
  */
 public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInspectionBase {
   public static final Key<PyUnresolvedReferencesInspection> SHORT_NAME_KEY =
@@ -70,11 +70,8 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final ListEditForm form = new ListEditForm(PyPsiBundle.message("INSP.unresolved.refs.column.name.ignore.references"),
-                                               PyPsiBundle.message("INSP.unresolved.refs.ignore.references.label"),
-                                               ignoredIdentifiers);
-    return form.getContentPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return pane(OptPane.stringList("ignoredIdentifiers", PyPsiBundle.message("INSP.unresolved.refs.ignore.references.label")));
   }
 
   public static class Visitor extends PyUnresolvedReferencesVisitor {
@@ -97,7 +94,7 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
           final String packageName = components.get(0);
           final Module module = ModuleUtilCore.findModuleForPsiElement(node);
           final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-          if (module != null && sdk != null && PyPackageUtil.packageManagementEnabled(sdk)) {
+          if (module != null && sdk != null && PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
             return StreamEx
               .of(packageName)
               .append(PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, Collections.emptyList()))

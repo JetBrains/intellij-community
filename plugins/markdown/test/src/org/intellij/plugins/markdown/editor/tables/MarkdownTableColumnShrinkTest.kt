@@ -2,10 +2,14 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.ui.scale.TestScaleHelper
-import org.junit.AfterClass
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+@RunWith(JUnit4::class)
+@Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
+  @Test
   fun `test right after cell content`() {
     // language=Markdown
     doTest(
@@ -22,6 +26,7 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test between spaces on the right side`() {
     // language=Markdown
     doTest(
@@ -38,6 +43,7 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test just before right pipe`() {
     // language=Markdown
     doTest(
@@ -54,6 +60,7 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test right before cell content`() {
     // language=Markdown
     doTest(
@@ -70,6 +77,7 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test just after left pipe`() {
     // language=Markdown
     doTest(
@@ -86,6 +94,7 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test in separator`() {
     doTest(
       """
@@ -101,6 +110,7 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test in separator with colon`() {
     doTest(
       """
@@ -116,13 +126,60 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
+  fun `test typing to single character width cell`() {
+    doTest(
+      """
+      |     |
+      |-----|
+      | 123<caret> |
+      """.trimIndent(),
+      """
+      | |
+      |-|
+      |<caret> |
+      """.trimIndent(),
+      count = 4
+    )
+  }
+
+  @Test
+  fun `test typing to empty cell`() {
+    doTest(
+      """
+      | |
+      |-|
+      | <caret>|
+      """.trimIndent(),
+      """
+      | |
+      |-|
+      |<caret>|
+      """.trimIndent()
+    )
+  }
+
+  @Test
+  fun `test typing to empty cell with non empty header`() {
+    doTest(
+      """
+      |a|
+      |-|
+      | <caret>|
+      """.trimIndent(),
+      """
+      |a|
+      |-|
+      |<caret>|
+      """.trimIndent()
+    )
+  }
+
   private fun doTest(content: String, expected: String, count: Int = 1) {
-    TableTestUtils.runWithChangedSettings(project) {
-      configureFromFileText("some.md", content)
-      repeat(count) {
-        backspace()
-      }
-      checkResultByText(expected)
+    configureFromFileText("some.md", content)
+    repeat(count) {
+      backspace()
     }
+    checkResultByText(expected)
   }
 }

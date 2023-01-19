@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -10,7 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
+import com.intellij.openapi.actionSystem.impl.FieldInplaceActionButtonLook;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -59,11 +58,6 @@ import static javax.swing.ScrollPaneConstants.*;
 
 public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyChangeListener {
 
-  private static final JBColor BUTTON_SELECTED_BACKGROUND = JBColor.namedColor("SearchOption.selectedBackground", 0xDAE4ED, 0x5C6164);
-  private static final JBColor BUTTON_SELECTED_PRESSED_BACKGROUND =
-    JBColor.namedColor("SearchOption.selectedPressedBackground", JBUI.CurrentTheme.ActionButton.pressedBackground());
-  private static final JBColor BUTTON_SELECTED_HOVERED_BACKGROUND =
-    JBColor.namedColor("SearchOption.selectedHoveredBackground", JBUI.CurrentTheme.ActionButton.pressedBackground());
   private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Editor.SearchField.background", UIUtil.getTextFieldBackground());
   public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
   public static final KeyStroke NEW_LINE_KEYSTROKE
@@ -77,46 +71,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
                                          IconManager.getInstance().getIcon("expui/general/closeSmallHovered.svg", AllIcons.class) :
                                          AllIcons.Actions.CloseHovered;
 
-  private static final ActionButtonLook FIELD_INPLACE_LOOK = new IdeaActionButtonLook() {
-    @Override
-    public void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
-      if (component.isFocusOwner() && component.isEnabled()) {
-        Rectangle rect = new Rectangle(component.getSize());
-        JBInsets.removeFrom(rect, component.getInsets());
-        SYSTEM_LOOK.paintLookBorder(g, rect, JBUI.CurrentTheme.ActionButton.focusedBorder());
-      }
-      else {
-        super.paintBorder(g, component, ActionButtonComponent.NORMAL);
-      }
-    }
-
-    @Override
-    public void paintBackground(Graphics g, JComponent component, int state) {
-      MyActionButton actionButton = (MyActionButton)component;
-      if (actionButton.isRolloverState()) {
-        super.paintBackground(g, component, state);
-      }
-      else if (state == ActionButtonComponent.SELECTED && component.isEnabled()) {
-        Rectangle rect = new Rectangle(component.getSize());
-        JBInsets.removeFrom(rect, component.getInsets());
-        if (!ExperimentalUI.isNewUI() || actionButton.isSelected()) {
-          paintLookBackground(g, rect, BUTTON_SELECTED_BACKGROUND);
-        }
-      }
-    }
-
-    @Override
-    protected Color getStateBackground(JComponent component, int state) {
-      if (ExperimentalUI.isNewUI()) {
-        MyActionButton actionButton = (MyActionButton)component;
-        if (state == ActionButtonComponent.SELECTED) {
-          return actionButton.isMouseDownState() ? BUTTON_SELECTED_PRESSED_BACKGROUND : BUTTON_SELECTED_HOVERED_BACKGROUND;
-        }
-      }
-
-      return super.getStateBackground(component, state);
-    }
-  };
+  private static final ActionButtonLook FIELD_INPLACE_LOOK = new FieldInplaceActionButtonLook();
 
   private static final Border EMPTY_SCROLL_BORDER = JBUI.Borders.empty(2, 0, 2, 2);
 
@@ -392,7 +347,6 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (myPopupState.isRecentlyHidden() || project == null) return; // do not show new popup
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
       FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(project);
       String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
                                      : findInProjectSettings.getRecentReplaceStrings();
@@ -443,14 +397,6 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     @Override
     public int getPopState() {
       return isSelected() ? SELECTED : super.getPopState();
-    }
-
-    boolean isRolloverState() {
-      return super.isRollover();
-    }
-
-    boolean isMouseDownState() {
-      return super.isMouseDown();
     }
 
     @Override

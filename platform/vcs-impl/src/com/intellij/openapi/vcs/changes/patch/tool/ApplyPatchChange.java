@@ -205,30 +205,20 @@ class ApplyPatchChange {
   @NotNull
   @NlsContexts.Tooltip
   private String getStatusText() {
-    switch (myStatus) {
-      case ALREADY_APPLIED:
-        return VcsBundle.message("patch.apply.already.applied.status");
-      case EXACTLY_APPLIED:
-        return VcsBundle.message("patch.apply.automatically.applied.status");
-      case NOT_APPLIED:
-        return VcsBundle.message("patch.apply.not.applied.status");
-      default:
-        throw new IllegalStateException();
-    }
+    return VcsBundle.message(switch (myStatus) {
+      case ALREADY_APPLIED -> "patch.apply.already.applied.status";
+      case EXACTLY_APPLIED -> "patch.apply.automatically.applied.status";
+      case NOT_APPLIED -> "patch.apply.not.applied.status";
+    });
   }
 
   @NotNull
   private Color getStatusColor() {
-    switch (myStatus) {
-      case ALREADY_APPLIED:
-        return JBColor.YELLOW.darker();
-      case EXACTLY_APPLIED:
-        return new JBColor(new Color(0, 180, 5), new Color(0, 147, 5));
-      case NOT_APPLIED:
-        return JBColor.RED.darker();
-      default:
-        throw new IllegalStateException();
-    }
+    return switch (myStatus) {
+      case ALREADY_APPLIED -> JBColor.YELLOW.darker();
+      case EXACTLY_APPLIED -> new JBColor(new Color(0, 180, 5), new Color(0, 147, 5));
+      case NOT_APPLIED -> JBColor.RED.darker();
+    };
   }
 
   //

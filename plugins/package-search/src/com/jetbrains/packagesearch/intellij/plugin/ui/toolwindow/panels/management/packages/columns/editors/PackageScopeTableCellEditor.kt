@@ -21,8 +21,8 @@ import com.intellij.util.ui.AbstractTableCellEditor
 import com.jetbrains.packagesearch.intellij.plugin.ui.components.ComboBoxTableCellEditorComponent
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PopupMenuListItemCellRenderer
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.computeColors
 import java.awt.Component
 import javax.swing.JTable
 
@@ -38,16 +38,15 @@ internal object PackageScopeTableCellEditor : AbstractTableCellEditor() {
                 val scopeViewModels = item.allScopes
                     .map { item.copy(uiPackageModel = item.uiPackageModel.copy(selectedScope = it)) }
 
-                createComboBoxEditor(table, scopeViewModels, item.uiPackageModel.selectedScope)
+                createComboBoxEditor(table, scopeViewModels, item.uiPackageModel.selectedScope, isSelected, false)
             }
             is PackagesTableItem.InstallablePackage -> {
                 val scopeViewModels = item.allScopes
                     .map { item.copy(uiPackageModel = item.uiPackageModel.copy(selectedScope = it)) }
 
-                createComboBoxEditor(table, scopeViewModels, item.uiPackageModel.selectedScope)
+                createComboBoxEditor(table, scopeViewModels, item.uiPackageModel.selectedScope, isSelected, true)
             }
         }.apply {
-            table.colors.applyTo(this, isSelected = true)
             setCell(row, column)
         }
 
@@ -58,20 +57,24 @@ internal object PackageScopeTableCellEditor : AbstractTableCellEditor() {
     private fun createComboBoxEditor(
         table: JTable,
         scopeViewModels: List<PackagesTableItem<*>>,
-        selectedScope: PackageScope
+        selectedScope: PackageScope,
+        isSelected: Boolean,
+        isSearchResult: Boolean
     ): ComboBoxTableCellEditorComponent<*> {
         require(table is JBTable) { "The packages list table is expected to be a JBTable, but was a ${table::class.qualifiedName}" }
 
         val selectedViewModel = scopeViewModels.find { it.uiPackageModel.selectedScope == selectedScope }
-        val cellRenderer = PopupMenuListItemCellRenderer(selectedViewModel, table.colors) {
+        val cellRenderer = PopupMenuListItemCellRenderer(selectedViewModel) {
             it.uiPackageModel.selectedScope.displayName
         }
 
+        val colors = computeColors(isSelected, isHover = false, isSearchResult)
         return ComboBoxTableCellEditorComponent(table, cellRenderer).apply {
-            options = scopeViewModels
+            setOptions(*scopeViewModels.toTypedArray())
             value = selectedViewModel
             isShowBelowCell = false
             isForcePopupMatchCellWidth = false
+            colors.applyTo(this)
         }
     }
 }

@@ -6,10 +6,11 @@ import pickle
 
 from _pydev_bundle.pydev_imports import quote
 from _pydev_imps._pydev_saved_modules import thread
-from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES, NUMPY_FLOATING_POINT_TYPES
+from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES, NUMPY_FLOATING_POINT_TYPES, IS_ASYNCIO_DEBUGGER_ENV
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
+from _pydevd_asyncio_util.pydevd_asyncio_utils import eval_async_expression, eval_async_expression_in_context
 
 try:
     from StringIO import StringIO
@@ -26,7 +27,7 @@ from _pydev_imps._pydev_saved_modules import threading
 import traceback
 from _pydevd_bundle import pydevd_save_locals
 from _pydev_bundle.pydev_imports import Exec, execfile
-from _pydevd_bundle.pydevd_utils import VariableWithOffset
+from _pydevd_bundle.pydevd_utils import VariableWithOffset, eval_expression
 
 SENTINEL_VALUE = []
 DEFAULT_DF_FORMAT = "s"
@@ -397,40 +398,44 @@ def custom_operation(thread_id, frame_id, scope, attrs, style, code_or_file, ope
         traceback.print_exc()
 
 
-def eval_in_context(expression, globals, locals):
-    result = None
+def get_eval_exception_msg(expression, locals):
+    s = StringIO()
+    traceback.print_exc(file=s)
+    result = s.getvalue()
+
     try:
-        result = eval(expression, globals, locals)
+        try:
+            etype, value, tb = sys.exc_info()
+            result = value
+        finally:
+            etype = value = tb = None
+    except:
+        pass
+
+    result = ExceptionOnEvaluate(result)
+
+    # Ok, we have the initial error message, but let's see if we're dealing with a name mangling error...
+    try:
+        if '__' in expression:
+            # Try to handle '__' name mangling...
+            split = expression.split('.')
+            curr = locals.get(split[0])
+            for entry in split[1:]:
+                if entry.startswith('__') and not hasattr(curr, entry):
+                    entry = '_%s%s' % (curr.__class__.__name__, entry)
+                curr = getattr(curr, entry)
+
+            result = curr
+    except:
+        pass
+    return result
+
+
+def eval_in_context(expression, globals, locals):
+    try:
+        result = eval_expression(expression, globals, locals)
     except Exception:
-        s = StringIO()
-        traceback.print_exc(file=s)
-        result = s.getvalue()
-
-        try:
-            try:
-                etype, value, tb = sys.exc_info()
-                result = value
-            finally:
-                etype = value = tb = None
-        except:
-            pass
-
-        result = ExceptionOnEvaluate(result)
-
-        # Ok, we have the initial error message, but let's see if we're dealing with a name mangling error...
-        try:
-            if '__' in expression:
-                # Try to handle '__' name mangling...
-                split = expression.split('.')
-                curr = locals.get(split[0])
-                for entry in split[1:]:
-                    if entry.startswith('__') and not hasattr(curr, entry):
-                        entry = '_%s%s' % (curr.__class__.__name__, entry)
-                    curr = getattr(curr, entry)
-
-                result = curr
-        except:
-            pass
+        result = get_eval_exception_msg(expression, locals)
     return result
 
 
@@ -451,6 +456,9 @@ def evaluate_expression(thread_id, frame_id, expression, doExec):
 
     try:
         expression = str(expression.replace('@LINE@', '\n'))
+
+        if IS_ASYNCIO_DEBUGGER_ENV:
+            return eval_async_expression(expression, updated_globals, frame, doExec, get_eval_exception_msg)
 
         if doExec:
             try:
@@ -766,7 +774,7 @@ def array_data_to_xml(rows, cols, get_row, format):
 
 def slice_to_xml(slice, rows, cols, format, type, bounds):
     return '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
-           (slice, rows, cols, quote(format), type, bounds[1], bounds[0])
+           (slice, rows, cols, quote(format), type, quote(str(bounds[1])), quote(str(bounds[0])))
 
 
 def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
@@ -776,7 +784,7 @@ def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
         bounds = col_bounds[col]
         col_format = "%" + col_to_format(dtypes[col])
         xml += '<colheader index=\"%s\" label=\"%s\" type=\"%s\" format=\"%s\" max=\"%s\" min=\"%s\" />\n' % \
-               (str(col), col_label, dtypes[col], col_to_format(dtypes[col]), col_format % bounds[1], col_format % bounds[0])
+               (str(col), col_label, dtypes[col], col_to_format(dtypes[col]), quote(str(col_format % bounds[1])), quote(str(col_format % bounds[0])))
     for row in range(rows):
         xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % (str(row), quote(get_label(df.axes[0][row])))
     xml += "</headerdata>\n"

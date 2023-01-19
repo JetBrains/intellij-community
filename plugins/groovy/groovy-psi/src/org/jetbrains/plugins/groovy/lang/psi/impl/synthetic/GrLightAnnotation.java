@@ -227,7 +227,7 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
         buffer.append(attribute.getText());
         buffer.append(',');
       }
-      if (!myAttributes.isEmpty()) buffer.deleteCharAt(buffer.length() - 1);
+      buffer.deleteCharAt(buffer.length() - 1);
       buffer.append(')');
       return buffer.toString();
     }

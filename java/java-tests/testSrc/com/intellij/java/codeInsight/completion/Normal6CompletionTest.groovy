@@ -4,9 +4,6 @@ package com.intellij.java.codeInsight.completion
 import com.intellij.testFramework.NeedsIndex
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class Normal6CompletionTest extends NormalCompletionTestCase {
 

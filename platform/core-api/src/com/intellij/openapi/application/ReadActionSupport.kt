@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.project.Project
@@ -12,7 +12,12 @@ interface ReadActionSupport {
 
   fun committedDocumentsConstraint(project: Project): ReadConstraint
 
-  suspend fun <X> executeReadAction(constraints: List<ReadConstraint>, blocking: Boolean, action: () -> X): X
+  suspend fun <X> executeReadAction(
+    constraints: List<ReadConstraint>,
+    undispatched: Boolean = false,
+    blocking: Boolean = false,
+    action: () -> X,
+  ): X
 
   fun <X, E : Throwable> computeCancellable(action: ThrowableComputable<X, E>): X
 }

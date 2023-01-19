@@ -12,9 +12,6 @@ import com.intellij.util.Processor;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 final class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
   private static final Logger LOG = Logger.getInstance(LimitedAccessibleClassPreprocessor.class);
   private final PsiElement myContext;

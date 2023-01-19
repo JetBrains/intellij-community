@@ -9,7 +9,6 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -18,8 +17,8 @@ import java.util.Locale;
 
 
 public class ChooseLocaleAction extends ComboBoxAction {
-  private GuiEditor myLastEditor;
-  private Presentation myPresentation;
+
+  private static final String PRESENTATION = "ChooseLocaleAction.presentation";
 
   public ChooseLocaleAction() {
     getTemplatePresentation().setText("");
@@ -29,53 +28,53 @@ public class ChooseLocaleAction extends ComboBoxAction {
 
   @NotNull
   @Override public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    myPresentation = presentation;
-    return super.createCustomComponent(presentation, place);
+    JComponent component = super.createCustomComponent(presentation, place);
+    component.putClientProperty(PRESENTATION, presentation);
+    return component;
   }
 
   @Override
-  @NotNull
-  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext dataContext) {
+    Presentation presentation = (Presentation)button.getClientProperty(PRESENTATION);
     DefaultActionGroup group = new DefaultActionGroup();
-    GuiEditor editor = myLastEditor;
+    GuiEditor editor = FormEditingUtil.getActiveEditor(dataContext);
     if (editor != null) {
       Locale[] locales = FormEditingUtil.collectUsedLocales(editor.getModule(), editor.getRootContainer());
-      if (locales.length > 1 || (locales.length == 1 && locales [0].getDisplayName().length() > 0)) {
+      if (locales.length > 1 || (locales.length == 1 && locales[0].getDisplayName().length() > 0)) {
         Arrays.sort(locales, Comparator.comparing(Locale::getDisplayName));
-        for(Locale locale: locales) {
-          group.add(new SetLocaleAction(editor, locale, true));
+        for (Locale locale : locales) {
+          group.add(new SetLocaleAction(editor, locale) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+              super.actionPerformed(e);
+              presentation.setText(getTemplatePresentation().getText());
+            }
+          });
         }
       }
       else {
-        group.add(new SetLocaleAction(editor, new Locale(""), false));
+        group.add(new SetLocaleAction(editor, new Locale("")));
       }
     }
     return group;
   }
 
-  @Nullable private GuiEditor getEditor(final AnActionEvent e) {
-    myLastEditor = FormEditingUtil.getActiveEditor(e.getDataContext());
-    return myLastEditor;
-  }
-
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setVisible(getEditor(e) != null);
+    e.getPresentation().setVisible(FormEditingUtil.getActiveEditor(e.getDataContext()) != null);
   }
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+    return ActionUpdateThread.BGT;
   }
 
-  private class SetLocaleAction extends AnAction {
-    private final GuiEditor myEditor;
-    private final Locale myLocale;
-    private final boolean myUpdateText;
+  private static class SetLocaleAction extends AnAction {
+    final GuiEditor myEditor;
+    final Locale myLocale;
 
-    SetLocaleAction(final GuiEditor editor, final Locale locale, final boolean updateText) {
-      super(getLocaleText(locale));
-      myUpdateText = updateText;
+    SetLocaleAction(GuiEditor editor, Locale locale) {
+      getTemplatePresentation().setText(getLocaleText(locale), false);
       myEditor = editor;
       myLocale = locale;
     }
@@ -83,9 +82,6 @@ public class ChooseLocaleAction extends ComboBoxAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myEditor.setStringDescriptorLocale(myLocale);
-      if (myUpdateText) {
-        myPresentation.setText(getTemplatePresentation().getText());
-      }
     }
   }
 

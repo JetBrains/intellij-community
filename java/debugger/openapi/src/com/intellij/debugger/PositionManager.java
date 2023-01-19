@@ -57,7 +57,7 @@ public interface PositionManager {
   /**
    * Returns the list of bytecode locations in a specific class corresponding to the specified position in the source code.
    *
-   * @param type a Java class (one of the list returned by {@link #getAllClasses}).
+   * @param type     a Java class (one of the list returned by {@link #getAllClasses}).
    * @param position the position in the source code.
    * @return the list of corresponding bytecode locations.
    * @throws NoDataException if the location is not in the code managed by this {@code PositionManager}
@@ -72,15 +72,17 @@ public interface PositionManager {
    * {@link com.intellij.debugger.requests.RequestManager#createClassPrepareRequest} to create the request.
    *
    * @param requestor the object to receive the notification from the JVM.
-   * @param position the location of a breakpoint.
+   * @param position  the location of a breakpoint.
    * @return the prepare request, or null if the code is managed by this {@code PositionManager} but no class prepare notification is needed
    * @throws NoDataException if the position is not in the code managed by this {@code PositionManager}
    */
   @Nullable
-  ClassPrepareRequest createPrepareRequest(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) throws NoDataException;
+  ClassPrepareRequest createPrepareRequest(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position)
+    throws NoDataException;
 
   /**
    * Return file types this position manager accepts
+   *
    * @return set of accepted file types, or null if it accepts all
    */
   @Nullable

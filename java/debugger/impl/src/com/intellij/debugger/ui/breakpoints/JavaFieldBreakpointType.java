@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.CommonBundle;
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.HelpID;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -85,18 +86,25 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
 
   @Override
   public String getShortText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
-    return getText(breakpoint);
+    return getText(breakpoint, true);
   }
 
   @Nls
   public String getText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
-    //if(!isValid()) {
+    return getText(breakpoint, false);
+  }
+
+  @Nls
+  private static String getText(XBreakpoint<JavaFieldBreakpointProperties> breakpoint, boolean simple) {
+    //if (!isValid()) {
     //  return JavaDebuggerBundle.message("status.breakpoint.invalid");
     //}
 
     JavaFieldBreakpointProperties properties = breakpoint.getProperties();
-    final String className = properties.myClassName;
-    return className != null && !className.isEmpty() ? className + "." + properties.myFieldName : properties.myFieldName;
+    String className = properties.myClassName;
+    if (className == null || className.isEmpty()) return properties.myFieldName;
+    String displayedClassName = simple ? ClassUtil.extractClassName(className) : className;
+    return displayedClassName + "." + properties.myFieldName;
   }
 
   @Nullable
@@ -119,56 +127,68 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
 
   @Nullable
   @Override
-  public XLineBreakpoint<JavaFieldBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
-    final Ref<XLineBreakpoint<JavaFieldBreakpointProperties>> result = Ref.create(null);
+  public XLineBreakpoint<JavaFieldBreakpointProperties> addBreakpoint(Project project, JComponent parentComponent) {
+    Ref<XLineBreakpoint<JavaFieldBreakpointProperties>> result = Ref.create(null);
     AddFieldBreakpointDialog dialog = new AddFieldBreakpointDialog(project) {
       @Override
       protected boolean validateData() {
-        final String className = getClassName();
-        if (className.length() == 0) {
-          Messages.showMessageDialog(project, JavaDebuggerBundle.message("error.field.breakpoint.class.name.not.specified"),
-                                     JavaDebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
+        String className = getClassName();
+        if (className.isEmpty()) {
+          Messages.showMessageDialog(
+            project,
+            JavaDebuggerBundle.message("error.field.breakpoint.class.name.not.specified"),
+            JavaDebuggerBundle.message("add.field.breakpoint.dialog.title"),
+            Messages.getErrorIcon()
+          );
           return false;
         }
-        final String fieldName = getFieldName();
-        if (fieldName.length() == 0) {
-          Messages.showMessageDialog(project, JavaDebuggerBundle.message("error.field.breakpoint.field.name.not.specified"),
-                                     JavaDebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
+        String fieldName = getFieldName();
+        if (fieldName.isEmpty()) {
+          Messages.showMessageDialog(
+            project,
+            JavaDebuggerBundle.message("error.field.breakpoint.field.name.not.specified"),
+            JavaDebuggerBundle.message("add.field.breakpoint.dialog.title"),
+            Messages.getErrorIcon()
+          );
           return false;
         }
         PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
-        if (psiClass != null) {
-          final PsiFile psiFile  = psiClass.getContainingFile();
-          Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-          if(document != null) {
-            PsiField field = psiClass.findFieldByName(fieldName, false);
-            if(field != null) {
-              final int line = document.getLineNumber(field.getTextOffset());
-              WriteAction.run(() -> {
-                XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint = XDebuggerManager.getInstance(project).getBreakpointManager()
-                  .addLineBreakpoint(JavaFieldBreakpointType.this, psiFile.getVirtualFile().getUrl(), line, new JavaFieldBreakpointProperties(fieldName, className));
-                result.set(fieldBreakpoint);
-              });
-              return true;
-            }
-            else {
-              Messages.showMessageDialog(project,
-                                         JavaDebuggerBundle
-                                           .message("error.field.breakpoint.field.not.found", className, fieldName, fieldName),
-                                         CommonBundle.getErrorTitle(),
-                                         Messages.getErrorIcon()
-              );
-            }
-          }
-        } else {
-          Messages.showMessageDialog(project,
-                                     JavaDebuggerBundle
-                                       .message("error.field.breakpoint.class.sources.not.found", className, fieldName, className),
-                                     CommonBundle.getErrorTitle(),
-                                     Messages.getErrorIcon()
+        if (psiClass == null) {
+          Messages.showMessageDialog(
+            project,
+            JavaDebuggerBundle.message("error.field.breakpoint.class.sources.not.found", className, fieldName, className),
+            CommonBundle.getErrorTitle(),
+            Messages.getErrorIcon()
           );
+          return false;
         }
-        return false;
+        PsiFile psiFile = psiClass.getContainingFile();
+        Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+        if (document == null) {
+          return false;
+        }
+        PsiField field = psiClass.findFieldByName(fieldName, false);
+        if (field == null) {
+          Messages.showMessageDialog(
+            project,
+            JavaDebuggerBundle.message("error.field.breakpoint.field.not.found", className, fieldName, fieldName),
+            CommonBundle.getErrorTitle(),
+            Messages.getErrorIcon()
+          );
+          return false;
+        }
+        int line = document.getLineNumber(field.getTextOffset());
+        WriteAction.run(() -> {
+          XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint =
+            XDebuggerManager.getInstance(project).getBreakpointManager().addLineBreakpoint(
+              JavaFieldBreakpointType.this,
+              psiFile.getVirtualFile().getUrl(),
+              line,
+              new JavaFieldBreakpointProperties(fieldName, className)
+            );
+          result.set(fieldBreakpoint);
+        });
+        return true;
       }
     };
     dialog.show();

@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI.Panels;
 import com.intellij.util.ui.MouseEventHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,6 +21,12 @@ import java.util.Objects;
 import static com.intellij.icons.AllIcons.General.ArrowDown;
 import static com.intellij.icons.AllIcons.General.ArrowRight;
 
+/**
+ * @deprecated This component confuses users, because it's not obvious that it allows to change size like by a splitter.
+ * Commit form (the only place it's used) is going to be revised/removed in the future. After that this component will be removed
+ */
+@Deprecated
+@ApiStatus.Internal
 public abstract class SplitterWithSecondHideable {
   public interface OnOffListener {
     void on(int hideableHeight);

@@ -1,5 +1,3 @@
-_msi.MSI[A-Z_]+
-_msi.PID_[A-Z_]+
 ctypes.GetLastError  # Is actually a pointer
 distutils.archive_util.getgrnam
 distutils.archive_util.getpwnam
@@ -7,19 +5,28 @@ distutils.msvccompiler.HKEYS
 locale.[A-Z0-9_]+  # Constants that should be moved to _locale and re-exported conditionally
 locale.nl_langinfo  # Function that should be moved to _locale and re-exported conditionally
 mmap.PAGESIZE
-# alias for a class defined elsewhere, 
+# alias for a class defined elsewhere,
 # mypy infers the variable has type `(*args) -> DupHandle` but stubtest infers the runtime type as <class DupHandle>
 multiprocessing.reduction.AbstractReducer.DupHandle
-msilib.MSI[A-Z_]+
 msilib.text.dirname
-msilib.PID_[A-Z_]+
 msvcrt.CRT_ASSEMBLY_VERSION
-msvcrt.SEM_[A-Z]+
 selectors.KqueueSelector
 signal.SIGEMT
 signal.SIGINFO
 winsound.SND_APPLICATION
 xmlrpc.server.fcntl
+
+# Exists at runtime, but missing from stubs
+_msi.MSIError
+distutils.msvccompiler.MSVCCompiler.manifest_get_embed_info
+distutils.msvccompiler.MSVCCompiler.manifest_setup_ldargs
+distutils.msvccompiler.OldMSVCCompiler
+msvcrt.SetErrorMode
+ssl.SSLSocket.recvmsg
+ssl.SSLSocket.recvmsg_into
+ssl.SSLSocket.sendmsg
+winreg.HKEYType.handle
+
 
 # ==========
 # Allowlist entries that cannot or should not be fixed
@@ -62,16 +69,7 @@ tty
 # pathlib functions that rely on modules that don't exist on Windows
 pathlib.Path.owner
 pathlib.Path.group
-
-# Exists at runtime, but missing from stubs
-_msi.MSIError
-distutils.msvccompiler.MSVCCompiler.manifest_get_embed_info
-distutils.msvccompiler.MSVCCompiler.manifest_setup_ldargs
-distutils.msvccompiler.OldMSVCCompiler
-msvcrt.SetErrorMode
-socket.MsgFlag.MSG_BCAST
-socket.MsgFlag.MSG_MCAST
-ssl.SSLSocket.recvmsg
-ssl.SSLSocket.recvmsg_into
-ssl.SSLSocket.sendmsg
-winreg.HKEYType.handle
+# pathlib methods that exist on Windows, but always raise NotImplementedError,
+# so are omitted from the stub
+pathlib.Path.is_mount
+pathlib.WindowsPath.is_mount

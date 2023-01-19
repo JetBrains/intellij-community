@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class Xsd2InstanceUtils {
+public final class Xsd2InstanceUtils {
     public static String generate(String[] args) {
         Set flags = new HashSet();
         Set opts = new HashSet();
@@ -170,7 +170,7 @@ public class Xsd2InstanceUtils {
         }
       }
 
-      @Override public void visitXmlAttribute(XmlAttribute xmlAttribute) {
+      @Override public void visitXmlAttribute(@NotNull XmlAttribute xmlAttribute) {
         boolean replaced = false;
 
         if (xmlAttribute.isNamespaceDeclaration()) {

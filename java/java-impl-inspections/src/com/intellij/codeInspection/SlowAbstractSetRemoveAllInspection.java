@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -51,10 +51,10 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
         final LongRangeSet listSizeRange = getSizeRangeOfCollection(arg);
         if (listSizeRange.isEmpty() || listSizeRange.max() <= 2) return;
         if (setSizeRange.min() > listSizeRange.max()) return;
-        final String replacement;
         final LocalQuickFix fix;
         if (PsiUtil.isLanguageLevel8OrHigher(call) && ExpressionUtils.isVoidContext(call)) {
-          replacement = ParenthesesUtils.getText(arg, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".forEach(" + qualifier.getText() + "::remove)";
+          final String replacement =
+            ParenthesesUtils.getText(arg, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".forEach(" + qualifier.getText() + "::remove)";
           fix = new ReplaceWithListForEachFix(replacement);
         } else {
           fix = null;

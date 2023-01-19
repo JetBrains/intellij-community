@@ -79,9 +79,7 @@ class SavedPatchesTree(project: Project,
   }
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
-    return object : ChangesGroupingSupport(myProject, this, false) {
-      override fun isAvailable(groupingKey: String): Boolean = false
-    }
+    return ChangesGroupingSupport.Disabled(myProject, this)
   }
 
   override fun getData(dataId: String): Any? {
@@ -166,7 +164,7 @@ class SavedPatchesTree(project: Project,
   }
 
   private class MySpeedSearch(tree: JTree) :
-    TreeSpeedSearch(tree, ChangesBrowserNode.TO_TEXT_CONVERTER, true) {
+    TreeSpeedSearch(tree, true, ChangesBrowserNode.TO_TEXT_CONVERTER.asFunction()) {
     override fun isMatchingElement(element: Any?, pattern: String?): Boolean {
       val isMatching = super.isMatchingElement(element, pattern)
       if (isMatching) return true

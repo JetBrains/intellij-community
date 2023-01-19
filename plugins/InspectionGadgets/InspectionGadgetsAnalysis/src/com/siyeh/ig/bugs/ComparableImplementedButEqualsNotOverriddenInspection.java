@@ -54,7 +54,7 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiClass aClass = (PsiClass)descriptor.getPsiElement().getParent();
       final @NonNls StringBuilder methodText = new StringBuilder();
       if (PsiUtil.isLanguageLevel5OrHigher(aClass)) {
@@ -87,7 +87,7 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiClass aClass = (PsiClass)descriptor.getPsiElement().getParent();
       final PsiDocComment comment = aClass.getDocComment();
       if (comment == null) {

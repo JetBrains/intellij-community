@@ -129,15 +129,12 @@ public final class ProgramRunnerUtil {
   }
 
   private static ShortenCommandLine getShortenerFromLink(@NotNull String eventDescription) {
-    switch (eventDescription) {
-      case "args":
-        return ShortenCommandLine.ARGS_FILE;
-      case "jar":
-        return ShortenCommandLine.MANIFEST;
-      case "classpath":
-        return ShortenCommandLine.CLASSPATH_FILE;
-    }
-    return null;
+    return switch (eventDescription) {
+      case "args" -> ShortenCommandLine.ARGS_FILE;
+      case "jar" -> ShortenCommandLine.MANIFEST;
+      case "classpath" -> ShortenCommandLine.CLASSPATH_FILE;
+      default -> null;
+    };
   }
 
   private static boolean noShortenerConfigured(ConfigurationWithCommandLineShortener configuration) {

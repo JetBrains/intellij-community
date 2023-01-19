@@ -62,7 +62,7 @@ class PsiElementDocumentationTarget private constructor(
 
   override fun createPointer(): Pointer<out DocumentationTarget> = pointer
 
-  override val presentation: TargetPresentation get() = targetPresentation(targetElement)
+  override fun presentation(): TargetPresentation = targetPresentation(targetElement)
 
   override val navigatable: Navigatable? get() = targetElement as? Navigatable
 
@@ -152,7 +152,7 @@ class PsiElementDocumentationTarget private constructor(
     })
 
     val imageResolver: DocumentationImageResolver = DocumentationImageResolver { url ->
-      SlowOperations.allowSlowOperations("old API fallback").use {
+      SlowOperations.allowSlowOperations(SlowOperations.GENERIC).use {  // old API fallback
         dereference()?.targetElement?.let { targetElement ->
           DocumentationManager.getElementImage(targetElement, url)
         }

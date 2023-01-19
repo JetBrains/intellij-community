@@ -2,15 +2,17 @@
 
 package org.jetbrains.kotlin.gradle
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.util.JpsPathUtil
@@ -148,7 +150,7 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
 
     fun targetPlatform(vararg platforms: TargetPlatform) {
         val expected = platforms.flatMap { it.componentPlatforms }.toSet()
-        val actual = module.platform?.componentPlatforms
+        val actual = runReadAction { module.platform?.componentPlatforms }
 
         if (actual == null) {
             report("Actual target platform is null")
@@ -425,14 +427,10 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
     }
 
     fun assertNoDependencyInBuildClasses() {
-        val dependenciesInBuildDirectory = module.rootManager.orderEntries
-            .flatMap { orderEntry ->
-                orderEntry.getFiles(OrderRootType.SOURCES).toList().map { it.toIoFile() } +
-                        orderEntry.getFiles(OrderRootType.CLASSES).toList().map { it.toIoFile() } +
-                        orderEntry.getUrls(OrderRootType.CLASSES).toList().map { File(it) } +
-                        orderEntry.getUrls(OrderRootType.SOURCES).toList().map { File(it) }
-            }
-            .map { file -> file.systemIndependentPath }
+        val librariesOnly = OrderEnumerator.orderEntries(module).recursively().librariesOnly()
+        val rootUrls = librariesOnly.classes().urls + librariesOnly.sources().urls
+        val dependenciesInBuildDirectory = rootUrls
+            .map { url -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(url)) }
             .filter { path -> "/build/classes/" in path }
 
         if (dependenciesInBuildDirectory.isNotEmpty()) {

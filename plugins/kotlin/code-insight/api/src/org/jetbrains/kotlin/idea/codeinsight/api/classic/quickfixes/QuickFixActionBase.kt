@@ -58,6 +58,13 @@ abstract class QuickFixActionBase<out T : PsiElement>(element: T) : IntentionAct
         if (super.getFileModifierForPreview(target) !== this) return null
         val oldElement: PsiElement? = element
         if (oldElement == null) return null
+        if (target.originalFile != oldElement.containingFile) {
+            throw IllegalStateException("Intention action ${this::class} ($familyName) refers to the element from another source file. " +
+                                                "It's likely that it's going to modify a file not opened in the editor, " +
+                                                "so default preview strategy won't work. Also, if another file is modified, " +
+                                                "getElementToMakeWritable() must be properly implemented to denote the actual file " +
+                                                "to be modified.")
+        }
         val newElement = PsiTreeUtil.findSameElementInCopy(oldElement, target)
         val clone = try {
             super.clone() as QuickFixActionBase<*>

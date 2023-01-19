@@ -42,7 +42,7 @@ class CommandLineDialog(
     }
   }
 
-  fun clearSelectionWhenSelected(tableToUpdate: JTable, tableToListen: JTable) {
+  private fun clearSelectionWhenSelected(tableToUpdate: JTable, tableToListen: JTable) {
     tableToListen.selectionModel.addListSelectionListener {
       selectRecursionGuard.doPreventingRecursion(this, false) {
         tableToUpdate.clearSelection()

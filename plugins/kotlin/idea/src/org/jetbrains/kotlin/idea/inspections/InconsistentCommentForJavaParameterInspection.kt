@@ -29,7 +29,7 @@ class InconsistentCommentForJavaParameterInspection: AbstractKotlinInspection() 
         private fun KtCallElement.check() {
             val valueDescriptorByValueArgument = AddNamesInCommentToJavaCallArgumentsIntention.resolveValueParameterDescriptors(
                 this,
-                anyBlockCommentsWithName = false
+                canAddNameComments = false
             ) ?: return
 
             for ((argument, descriptor)  in valueDescriptorByValueArgument) {

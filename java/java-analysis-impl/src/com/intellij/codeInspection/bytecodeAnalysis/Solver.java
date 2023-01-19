@@ -203,14 +203,11 @@ final class Solver {
   }
 
   Value negate(Value value) {
-    switch (value) {
-      case True:
-        return Value.False;
-      case False:
-        return Value.True;
-      default:
-        return value;
-    }
+    return switch (value) {
+      case True -> Value.False;
+      case False -> Value.True;
+      default -> value;
+    };
   }
 
   Map<EKey, Value> solve() {

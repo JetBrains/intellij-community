@@ -2,9 +2,11 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleTypeManager;
@@ -16,7 +18,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
@@ -30,6 +34,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -123,13 +128,26 @@ public final class MavenImportUtil {
     String mavenProjectReleaseLevel = useReleaseCompilerProp
                                       ? isTest ? mavenProject.getTestReleaseLevel() : mavenProject.getReleaseLevel()
                                       : null;
-    LanguageLevel level = LanguageLevel.parse(mavenProjectReleaseLevel);
-    if (level == null) {
-      String mavenProjectLanguageLevel = getMavenLanguageLevel(mavenProject, isTest, isSource);
-      level = LanguageLevel.parse(mavenProjectLanguageLevel);
-      if (level == null && (StringUtil.isNotEmpty(mavenProjectLanguageLevel) || StringUtil.isNotEmpty(mavenProjectReleaseLevel))) {
-        level = LanguageLevel.HIGHEST;
+      LanguageLevel level = LanguageLevel.parse(mavenProjectReleaseLevel);
+      if (level == null) {
+        String mavenProjectLanguageLevel = getMavenLanguageLevel(mavenProject, isTest, isSource);
+        level = LanguageLevel.parse(mavenProjectLanguageLevel);
+        if (level == null && (StringUtil.isNotEmpty(mavenProjectLanguageLevel) || StringUtil.isNotEmpty(mavenProjectReleaseLevel))) {
+          level = LanguageLevel.HIGHEST;
+        }
       }
+      return level;
+    }
+
+  @NotNull
+  public static LanguageLevel adjustLevelAndNotify(@NotNull Project project, @NotNull LanguageLevel level) {
+    if (!AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(level)) {
+      LanguageLevel highestAcceptedLevel = AcceptedLanguageLevelsSettings.getHighestAcceptedLevel();
+      if (highestAcceptedLevel.isLessThan(level)) {
+        MavenProjectsManager.getInstance(project).getSyncConsole()
+          .addBuildIssue(new NonAcceptedJavaLevelIssue(level), MessageEvent.Kind.WARNING);
+      }
+      level = highestAcceptedLevel.isAtLeast(level) ? LanguageLevel.HIGHEST : highestAcceptedLevel;
     }
     return level;
   }
@@ -163,8 +181,8 @@ public final class MavenImportUtil {
       Element compilerArgs = compilerConfiguration.getChild("compilerArgs");
       if (compilerArgs != null) {
         if (isPreviewText(compilerArgs) ||
-            compilerArgs.getChildren("arg").stream().anyMatch(MavenImportUtil::isPreviewText) ||
-            compilerArgs.getChildren("compilerArg").stream().anyMatch(MavenImportUtil::isPreviewText)) {
+            ContainerUtil.exists(compilerArgs.getChildren("arg"), MavenImportUtil::isPreviewText) ||
+            ContainerUtil.exists(compilerArgs.getChildren("compilerArg"), MavenImportUtil::isPreviewText)) {
           try {
             return LanguageLevel.valueOf(level.name() + "_PREVIEW");
           }
@@ -211,15 +229,21 @@ public final class MavenImportUtil {
     return moduleName;
   }
 
+  /**
+   * @deprecated only used for experimental tree importer. Not used in Workpsace import
+   */
   @NotNull
-  @Deprecated // only user for experimental tree importer. Not used in Workpsace import
+  @Deprecated
   public static String getModuleName(@NotNull MavenProject mavenProject, @NotNull Project project) {
     MavenProjectsTree projectsTree = MavenProjectsManager.getInstance(project).getProjectsTree();
-    return projectsTree != null ? getModuleName(mavenProject, projectsTree, new HashMap<>()) : StringUtils.EMPTY;
+    return getModuleName(mavenProject, projectsTree, new HashMap<>());
   }
 
+  /**
+   * @deprecated only used for experimental tree importer. Not used in Workpsace import
+   */
   @NotNull
-  @Deprecated // only user for experimental tree importer. Not used in Workpsace import
+  @Deprecated
   public static String getModuleName(@NotNull MavenProject project,
                                       @NotNull MavenProjectsTree projectsTree,
                                       @NotNull Map<MavenProject, String> moduleNameMap) {
@@ -240,16 +264,16 @@ public final class MavenImportUtil {
     return moduleName;
   }
 
-  public static Module createDummyModule(Project project, VirtualFile contentRoot) {
+  public static Module createPreviewModule(Project project, VirtualFile contentRoot) {
     return WriteAction.compute(() -> {
+      Path modulePath = contentRoot.toNioPath().resolve(project.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
       Module module = ModuleManager.getInstance(project)
-        .newModule(contentRoot.toNioPath(), ModuleTypeManager.getInstance().getDefaultModuleType().getId());
+        .newModule(modulePath, ModuleTypeManager.getInstance().getDefaultModuleType().getId());
       ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
       modifiableModel.addContentEntry(contentRoot);
       modifiableModel.commit();
 
-      //this is needed to ensure that dummy module created here will be correctly replaced by real ModuleEntity when import finishes
-      ExternalSystemModulePropertyManager.getInstance(module).setMavenized(true);
+      ExternalSystemUtil.markModuleAsMaven(module, true);
 
       return module;
     });

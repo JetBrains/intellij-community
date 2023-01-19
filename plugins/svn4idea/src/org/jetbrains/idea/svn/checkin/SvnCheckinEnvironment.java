@@ -31,8 +31,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.util.List;
 import java.util.*;
@@ -48,7 +46,7 @@ public final class SvnCheckinEnvironment implements CheckinEnvironment {
   @NotNull
   @Override
   public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
-    return new KeepLocksComponent();
+    return new KeepLocksComponent(mySvnVcs);
   }
 
   @Override
@@ -231,48 +229,5 @@ public final class SvnCheckinEnvironment implements CheckinEnvironment {
   @Override
   public boolean isRefreshAfterCommitNeeded() {
     return true;
-  }
-
-  private class KeepLocksComponent implements RefreshableOnComponent {
-
-    @NotNull private final JCheckBox myKeepLocksBox;
-    @NotNull private final JPanel myPanel;
-    @NotNull private final JCheckBox myAutoUpdate;
-
-    KeepLocksComponent() {
-      myPanel = new JPanel(new BorderLayout());
-      myKeepLocksBox = new JCheckBox(SvnBundle.message("checkbox.checkin.keep.files.locked"));
-      myAutoUpdate = new JCheckBox(SvnBundle.message("checkbox.checkin.auto.update.after.commit"));
-
-      myPanel.add(myAutoUpdate, BorderLayout.NORTH);
-      myPanel.add(myKeepLocksBox, BorderLayout.CENTER);
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return myPanel;
-    }
-
-    public boolean isKeepLocks() {
-      return myKeepLocksBox.isSelected();
-    }
-
-    public boolean isAutoUpdate() {
-      return myAutoUpdate.isSelected();
-    }
-
-    @Override
-    public void saveState() {
-      final SvnConfiguration configuration = mySvnVcs.getSvnConfiguration();
-      configuration.setKeepLocks(isKeepLocks());
-      configuration.setAutoUpdateAfterCommit(isAutoUpdate());
-    }
-
-    @Override
-    public void restoreState() {
-      final SvnConfiguration configuration = mySvnVcs.getSvnConfiguration();
-      myKeepLocksBox.setSelected(configuration.isKeepLocks());
-      myAutoUpdate.setSelected(configuration.isAutoUpdateAfterCommit());
-    }
   }
 }

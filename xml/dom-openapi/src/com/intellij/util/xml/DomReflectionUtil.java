@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,8 @@ public final class DomReflectionUtil {
       methods[i] = getter;
       aClass = getter.getReturnType();
       if (List.class.isAssignableFrom(aClass)) {
-        aClass = ReflectionUtil.getRawType(Objects.requireNonNull(extractCollectionElementType(getter.getGenericReturnType())));
+        @NotNull Type type = Objects.requireNonNull(extractCollectionElementType(getter.getGenericReturnType()));
+        aClass = ClassUtil.getRawType(type);
       }
     }
     return methods;
@@ -106,7 +108,7 @@ public final class DomReflectionUtil {
       return null;
     }
 
-    final Type[] arguments = ReflectionUtil.getActualTypeArguments(parameterizedType);
+    final Type[] arguments = parameterizedType.getActualTypeArguments();
     if (arguments.length == 1) {
       final Type argument = arguments[0];
       if (argument instanceof WildcardType) {

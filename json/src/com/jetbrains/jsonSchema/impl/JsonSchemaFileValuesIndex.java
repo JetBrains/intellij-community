@@ -111,21 +111,9 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
                 || token == JsonElementTypes.IDENTIFIER)) {
         // We are looking for two special properties at the root level.
         switch (lexer.getTokenText()) {
-          case "$id":
-          case "\"$id\"":
-          case "'$id'":
-            idFound |= captureValueIfString(lexer, map, JsonCachedValues.ID_CACHE_KEY);
-            break;
-          case "id":
-          case "\"id\"":
-          case "'id'":
-            obsoleteIdFound |= captureValueIfString(lexer, map, JsonCachedValues.OBSOLETE_ID_CACHE_KEY);
-            break;
-          case "$schema":
-          case "\"$schema\"":
-          case "'$schema'":
-            schemaFound |= captureValueIfString(lexer, map, JsonCachedValues.URL_CACHE_KEY);
-            break;
+          case "$id", "\"$id\"", "'$id'" -> idFound |= captureValueIfString(lexer, map, JsonCachedValues.ID_CACHE_KEY);
+          case "id", "\"id\"", "'id'" -> obsoleteIdFound |= captureValueIfString(lexer, map, JsonCachedValues.OBSOLETE_ID_CACHE_KEY);
+          case "$schema", "\"$schema\"", "'$schema'" -> schemaFound |= captureValueIfString(lexer, map, JsonCachedValues.URL_CACHE_KEY);
         }
       }
       lexer.advance();

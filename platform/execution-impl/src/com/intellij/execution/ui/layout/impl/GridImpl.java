@@ -11,6 +11,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +66,9 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   public void addNotify() {
     super.addNotify();
 
-    processAddToUi(true);
+    if (UIUtil.getParentOfType(JBRunnerTabs.class, this) != null) {
+      processAddToUi(true);
+    }
   }
 
   @Override
@@ -244,7 +247,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
             Content[] contents = myContentProvider.getContents();
             if (contents != null && contents.length > 0) {
               Component preferred = contents[first ? 0 : contents.length - 1].getPreferredFocusableComponent();
-              if (preferred != null && accept(preferred)) {
+              if (preferred != null && preferred.isShowing() && accept(preferred)) {
                 return preferred;
               }
             }

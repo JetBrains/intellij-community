@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -382,13 +383,14 @@ public final class GitMergeUtil {
       }
     }
 
-    String[] addParameters = GitVersionSpecialty.ADD_REJECTS_SPARSE_FILES_FOR_CONFLICTS.existsIn(project)
-                             ? new String[]{"--sparse"} : ArrayUtil.EMPTY_STRING_ARRAY;
-    GitFileUtils.addPaths(project, root, toAdd, true, false, addParameters);
-    GitFileUtils.deletePaths(project, root, toDelete);
+    String[] parameters = GitVersionSpecialty.ADD_REJECTS_SPARSE_FILES_FOR_CONFLICTS.existsIn(project)
+                          ? new String[]{"--sparse"} : ArrayUtil.EMPTY_STRING_ARRAY;
+    GitFileUtils.addPaths(project, root, toAdd, true, false, parameters);
+    GitFileUtils.deletePaths(project, root, toDelete, parameters);
   }
 
   public static boolean isReverseRoot(@NotNull GitRepository repository) {
+    if (Registry.is("git.do.not.swap.merge.conflict.sides")) return false;
     return repository.getState().equals(GitRepository.State.REBASING);
   }
 }

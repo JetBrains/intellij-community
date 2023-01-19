@@ -16,8 +16,8 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.util.ArrayUtil;
@@ -31,9 +31,10 @@ import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class PublicMethodNotExposedInInterfaceInspection extends BaseInspection {
 
@@ -43,15 +44,13 @@ public class PublicMethodNotExposedInInterfaceInspection extends BaseInspection 
   public boolean onlyWarnIfContainingClassImplementsAnInterface = false;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-        ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-
-    panel.add(annotationsListControl, "growx, wrap");
-    panel.addCheckbox(InspectionGadgetsBundle.message("public.method.not.in.interface.option"), "onlyWarnIfContainingClassImplementsAnInterface");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()),
+      checkbox("onlyWarnIfContainingClassImplementsAnInterface",
+               InspectionGadgetsBundle.message("public.method.not.in.interface.option"))
+    );
   }
 
   @Override

@@ -10,27 +10,31 @@ import com.siyeh.ipp.IPPTestCase;
 public class ReplaceOperatorAssignmentWithPostfixExpressionIntentionTest extends IPPTestCase {
 
   public void testSimple() {
-    doTest("class X {{\n" +
-           "    int i = 10;\n" +
-           "    i /*_*/+= (1);\n" +
-           "}}",
+    doTest("""
+             class X {{
+                 int i = 10;
+                 i /*_*/+= (1);
+             }}""",
 
-           "class X {{\n" +
-           "    int i = 10;\n" +
-           "    i++;\n" +
-           "}}");
+           """
+             class X {{
+                 int i = 10;
+                 i++;
+             }}""");
   }
 
   public void testBoxed() {
-    doTest("class X {{\n" +
-           "    Integer i = 10;\n" +
-           "    i /*_*/+= 1;\n" +
-           "}}",
+    doTest("""
+             class X {{
+                 Integer i = 10;
+                 i /*_*/+= 1;
+             }}""",
 
-           "class X {{\n" +
-           "    Integer i = 10;\n" +
-           "    i++;\n" +
-           "}}");
+           """
+             class X {{
+                 Integer i = 10;
+                 i++;
+             }}""");
   }
 
   public void testString() {

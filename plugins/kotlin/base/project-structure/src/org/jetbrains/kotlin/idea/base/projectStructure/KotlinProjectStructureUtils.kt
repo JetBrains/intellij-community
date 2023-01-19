@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinProjectStructureUtils")
+
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -32,6 +34,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.runWithAlternativeResolveEnabled
 import org.jetbrains.kotlin.psi.UserDataProperty
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Frontend10ApiUsage
 val KtModule.moduleInfo: IdeaModuleInfo
@@ -53,9 +56,9 @@ fun Module.getMainKtSourceModule(): KtSourceModule? {
 }
 
 val ModuleInfo.kotlinSourceRootType: KotlinSourceRootType?
-    get() = when {
-        this is ModuleProductionSourceInfo -> SourceKotlinRootType
-        this is ModuleTestSourceInfo -> TestSourceKotlinRootType
+    get() = when (this) {
+        is ModuleProductionSourceInfo -> SourceKotlinRootType
+        is ModuleTestSourceInfo -> TestSourceKotlinRootType
         else -> null
     }
 
@@ -82,7 +85,8 @@ private fun Module.hasRootsOfType(rootTypes: Set<JpsModuleSourceRootType<*>>): B
     return rootManager.contentEntries.any { it.getSourceFolders(rootTypes).isNotEmpty() }
 }
 
-var @Suppress("unused") PsiFile.forcedModuleInfo: ModuleInfo? by UserDataProperty(Key.create("FORCED_MODULE_INFO"))
+@Suppress("UnusedReceiverParameter")
+var PsiFile.forcedModuleInfo: ModuleInfo? by UserDataProperty(Key.create("FORCED_MODULE_INFO"))
     @ApiStatus.Internal get
     @ApiStatus.Internal set
 
@@ -113,10 +117,12 @@ fun FileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSourceRoo
         return null
     }
 
-    return when {
-        isUnderSourceRootOfType(virtualFile, testRootTypes) -> TestSourceKotlinRootType
-        isInSourceContent(virtualFile) -> SourceKotlinRootType
-        else -> null
+    return runReadAction {
+        when {
+            isUnderSourceRootOfType(virtualFile, testRootTypes) -> TestSourceKotlinRootType
+            isInSourceContent(virtualFile) -> SourceKotlinRootType
+            else -> null
+        }
     }
 }
 
@@ -133,7 +139,7 @@ fun GlobalSearchScope.hasKotlinJvmRuntime(project: Project): Boolean {
 }
 
 fun ModuleInfo.findSdkAcrossDependencies(): SdkInfo? {
-    val project = (this as? IdeaModuleInfo)?.project ?: return null
+    val project = this.safeAs<IdeaModuleInfo>()?.project ?: return null
     return SdkInfoCache.getInstance(project).findOrGetCachedSdk(this)
 }
 
@@ -146,11 +152,6 @@ fun IdeaModuleInfo.supportsFeature(project: Project, feature: LanguageFeature): 
     return IDELanguageSettingsProvider
         .getLanguageVersionSettings(this, project)
         .supportsFeature(feature)
-}
-
-@ApiStatus.Internal
-fun IdeaModuleInfo.supportsAdditionalBuiltInsMembers(project: Project): Boolean {
-    return supportsFeature(project, LanguageFeature.AdditionalBuiltInsMembers)
 }
 
 @ApiStatus.Internal

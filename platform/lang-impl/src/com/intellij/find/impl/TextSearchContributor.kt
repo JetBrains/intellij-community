@@ -12,8 +12,9 @@ import com.intellij.ide.actions.SearchEverywhereClassifier
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.createContext
 import com.intellij.ide.util.RunOnceUtil
-import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
+import com.intellij.ide.util.scopeChooser.Option
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
+import com.intellij.ide.util.scopeChooser.ScopeModel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -23,14 +24,13 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.Key
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.reference.SoftReference
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
-import com.intellij.util.CommonProcessors
 import com.intellij.util.PlatformUtils
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
@@ -43,6 +43,7 @@ internal class TextSearchContributor(
   val event: AnActionEvent
 ) : WeightedSearchEverywhereContributor<SearchEverywhereItem>,
     SearchFieldActionsContributor,
+    PossibleSlowContributor,
     DumbAware, ScopeSupporting, Disposable {
 
   private val project = event.getRequiredData(CommonDataKeys.PROJECT)
@@ -103,7 +104,7 @@ internal class TextSearchContributor(
       }
       else {
         SearchEverywhereItem(usage, usagePresentation(project, scope, usage)).also {
-          consumer.process(FoundItemDescriptor(it, 0))
+         if (!consumer.process(FoundItemDescriptor(it, 0))) return@findUsages false
         }
       }
       recentItemRef.set(WeakReference(newItem))
@@ -159,10 +160,8 @@ internal class TextSearchContributor(
     model.isCustomScope = true
   }
 
-  private fun createScopes() = mutableListOf<ScopeDescriptor>().also {
-    ScopeChooserCombo.processScopes(project, createContext(project, psiContext),
-                                    ScopeChooserCombo.OPT_LIBRARIES or ScopeChooserCombo.OPT_EMPTY_SCOPES,
-                                    CommonProcessors.CollectProcessor(it))
+  private fun createScopes() = mutableListOf<ScopeDescriptor>().apply {
+    addAll(ScopeModel.getScopeDescriptors(project, createContext(project, psiContext), setOf(Option.LIBRARIES, Option.EMPTY_SCOPES)))
   }
 
   override fun getScope() = selectedScopeDescriptor
@@ -222,8 +221,8 @@ internal class TextSearchContributor(
       }
     }
 
-    class TextSearchActivity : StartupActivity.DumbAware {
-      override fun runActivity(project: Project) {
+    internal class TextSearchActivity : ProjectPostStartupActivity {
+      override suspend fun execute(project: Project) {
         RunOnceUtil.runOnceForApp(ADVANCED_OPTION_ID) {
           AdvancedSettings.setBoolean(ADVANCED_OPTION_ID, PlatformUtils.isRider())
         }

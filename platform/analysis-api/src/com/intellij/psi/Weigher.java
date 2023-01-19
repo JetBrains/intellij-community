@@ -13,8 +13,6 @@ import org.jetbrains.annotations.Nullable;
  * <li> "completion" ({@link com.intellij.codeInsight.completion.CompletionService#RELEVANCE_KEY}) - to compare lookup elements by relevance and move preferred items to the top
  * <p>
  * Your weigher should return {@link Comparable} instances of the same type.
- *
- * @author peter
  */
 public abstract class Weigher<T, Location> {
   private String myDebugName;

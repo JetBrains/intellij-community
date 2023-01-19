@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public abstract class BaseOccurrenceManager implements OccurrenceManager {
   private PsiExpression[] myOccurrences;
   private PsiElement myAnchorStatement;
@@ -93,7 +90,7 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
     for (PsiExpression occurrence : occurrences) {
       PsiElement parent = occurrence.getUserData(ElementToWorkOn.PARENT);
       if (parent == null) parent = occurrence;
-      while (!parent.equals(scopeToDeclare)) {
+      while (parent != null && !parent.equals(scopeToDeclare)) {
         parent = parent.getParent();
         if (parent instanceof PsiClass) {
           return !PsiUtil.isLanguageLevel8OrHigher(parent);

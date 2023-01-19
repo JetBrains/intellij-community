@@ -11,13 +11,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class DeploymentConfigurationManager {
-  @NotNull
-  public static DeploymentConfigurationManager getInstance(@NotNull Project project) {
+  
+  public static @NotNull DeploymentConfigurationManager getInstance(@NotNull Project project) {
     return project.getService(DeploymentConfigurationManager.class);
   }
 
-  @NotNull
-  public abstract List<RunnerAndConfigurationSettings> getDeploymentConfigurations(@NotNull ServerType<?> serverType);
+  public abstract @NotNull List<RunnerAndConfigurationSettings> getDeploymentConfigurations(@NotNull ServerType<?> serverType);
 
   public abstract void createAndRunConfiguration(@NotNull ServerType<?> serverType,
                                                  @Nullable RemoteServer<?> remoteServer,

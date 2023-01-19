@@ -61,32 +61,35 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     VirtualFile foo = createProjectSubDir("foo");
     createProjectSubFile("foo/build.gradle", "apply plugin: 'java'");
     createProjectSubFile("foo/.idea/modules.xml",
-                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                         "<project version=\"4\">\n" +
-                         "  <component name=\"ProjectModuleManager\">\n" +
-                         "    <modules>\n" +
-                         "      <module fileurl=\"file://$PROJECT_DIR$/foo.iml\" filepath=\"$PROJECT_DIR$/foo.iml\" />\n" +
-                         "      <module fileurl=\"file://$PROJECT_DIR$/bar.iml\" filepath=\"$PROJECT_DIR$/bar.iml\" />\n" +
-                         "    </modules>\n" +
-                         "  </component>\n" +
-                         "</project>");
+                         """
+                           <?xml version="1.0" encoding="UTF-8"?>
+                           <project version="4">
+                             <component name="ProjectModuleManager">
+                               <modules>
+                                 <module fileurl="file://$PROJECT_DIR$/foo.iml" filepath="$PROJECT_DIR$/foo.iml" />
+                                 <module fileurl="file://$PROJECT_DIR$/bar.iml" filepath="$PROJECT_DIR$/bar.iml" />
+                               </modules>
+                             </component>
+                           </project>""");
     createProjectSubFile("foo/foo.iml",
-                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                         "<module type=\"JAVA_MODULE\" version=\"4\">\n" +
-                         "  <component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
-                         "    <content url=\"file://$MODULE_DIR$\">\n" +
-                         "    </content>\n" +
-                         "  </component>\n" +
-                         "</module>");
+                         """
+                           <?xml version="1.0" encoding="UTF-8"?>
+                           <module type="JAVA_MODULE" version="4">
+                             <component name="NewModuleRootManager" inherit-compiler-output="true">
+                               <content url="file://$MODULE_DIR$">
+                               </content>
+                             </component>
+                           </module>""");
     createProjectSubFile("foo/bar.iml",
-                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                         "<module type=\"JAVA_MODULE\" version=\"4\">\n" +
-                         "  <component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
-                         "  </component>\n" +
-                         "</module>");
+                         """
+                           <?xml version="1.0" encoding="UTF-8"?>
+                           <module type="JAVA_MODULE" version="4">
+                             <component name="NewModuleRootManager" inherit-compiler-output="true">
+                             </component>
+                           </module>""");
 
     Project fooProject = PlatformTestUtil.loadAndOpenProject(foo.toNioPath(), getTestRootDisposable());
-    AutoImportProjectTracker.getInstance(fooProject).enableAutoImportInTests();
+    AutoImportProjectTracker.enableAutoReloadInTests(getTestRootDisposable());
 
     try {
       edt(() -> UIUtil.dispatchAllInvocationEvents());
@@ -159,20 +162,22 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     VirtualFile foo = createProjectSubDir("foo");
     createProjectSubFile("foo/build.gradle", "apply plugin: 'java'");
     createProjectSubFile("foo/.idea/inspectionProfiles/myInspections.xml",
-                         "<component name=\"InspectionProjectProfileManager\">\n" +
-                         "  <profile version=\"1.0\">\n" +
-                         "    <option name=\"myName\" value=\"myInspections\" />\n" +
-                         "    <option name=\"myLocal\" value=\"true\" />\n" +
-                         "    <inspection_tool class=\"MultipleRepositoryUrls\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"true\" />\n" +
-                         "  </profile>\n" +
-                         "</component>");
+                         """
+                           <component name="InspectionProjectProfileManager">
+                             <profile version="1.0">
+                               <option name="myName" value="myInspections" />
+                               <option name="myLocal" value="true" />
+                               <inspection_tool class="MultipleRepositoryUrls" enabled="true" level="ERROR" enabled_by_default="true" />
+                             </profile>
+                           </component>""");
     createProjectSubFile("foo/.idea/inspectionProfiles/profiles_settings.xml",
-                         "<component name=\"InspectionProjectProfileManager\">\n" +
-                         "  <settings>\n" +
-                         "    <option name=\"PROJECT_PROFILE\" value=\"myInspections\" />\n" +
-                         "    <version value=\"1.0\" />\n" +
-                         "  </settings>\n" +
-                         "</component>");
+                         """
+                           <component name="InspectionProjectProfileManager">
+                             <settings>
+                               <option name="PROJECT_PROFILE" value="myInspections" />
+                               <version value="1.0" />
+                             </settings>
+                           </component>""");
     FileUtil.copyDir(new File(getProjectPath(), "gradle"), new File(getProjectPath(), "foo/gradle"));
 
     Project fooProject = null;

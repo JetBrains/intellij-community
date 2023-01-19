@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ByLine {
+public final class ByLine {
   @NotNull
   public static FairDiffIterable compare(@NotNull List<? extends CharSequence> lines1,
                                          @NotNull List<? extends CharSequence> lines2,

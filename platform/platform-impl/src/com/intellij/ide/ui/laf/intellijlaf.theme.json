@@ -182,7 +182,10 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI"
     },
 
-    "ComboBoxButton.background": "contentBackground",
+    "ComboBoxButton": {
+      "background": "contentBackground",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI"
+    },
 
     "CompletionPopup": {
       "foreground": "foreground",
@@ -300,7 +303,7 @@
       "borderColor": "grey05",
       "foreground": "foreground",
       "linkForeground": "linkForeground",
-      "shortcutForeground": "infoPanelForeground"
+      "shortcutForeground": "foreground"
     },
 
     "Group.disabledSeparatorColor": "border",
@@ -647,10 +650,7 @@
     },
 
     "SpeedSearch": {
-      "background": "contentBackground",
-      "borderColor": "grey02",
-      "errorForeground": "#ff0000",
-      "foreground": "foreground"
+      "background": "contentBackground"
     },
 
     "Spinner": {
@@ -764,6 +764,12 @@
         "os.windows": "#eecaca"
       },
       "disabledBackground": "panel"
+    },
+
+    "SearchFieldWithExtension": {
+      "background": "contentBackground",
+      "border": "com.intellij.ui.components.DarculaSearchBorder",
+      "UI": "com.intellij.ui.components.DarculaSearchFieldWithExtensionUI"
     },
 
     "TitledBorder.titleColor": "black",
@@ -953,6 +959,50 @@
 
     "TipOfTheDay": {
       "Image.borderColor": "border"
+    },
+
+    "PackageSearch": {
+      "SearchResult": {
+        "background": "#e4faff",
+        "hoverBackground": "#d0e2ee",
+        "PackageTag": {
+          "background": "#d2e6eb",
+          "foreground": "black",
+          "hoverBackground": "#bfd0db",
+          "selectedBackground": "#4395e2",
+          "selectedForeground": "white"
+        }
+      },
+      "PackageTag": {
+        "background": "grey14",
+        "foreground": "black",
+        "hoverBackground": "#c9d2db",
+        "selectedBackground": "#4395e2",
+        "selectedForeground": "white"
+      },
+      "PackageTagSelected.background": "#4395e2",
+      "PackageTagSelected.foreground": "white"
+    },
+    "RunWidget" : {
+      "foreground": "#ffffff",
+      "disabledForeground": "#FFFFFF66",
+      "background": "#3369d6",
+      "runningBackground": "#599e5e",
+      "hoverBackground": "#00000019",
+      "pressedBackground": "#00000028",
+      "separatorColor": "#FFFFFF40"
+    },
+
+    "MainWindow.Tab" : {
+      "selectedForeground": "black",
+      "selectedBackground": "grey15",
+      "selectedInactiveBackground": "grey15",
+      "foreground": "grey02",
+      "background": "grey12",
+      "hoverForeground": "grey03",
+      "hoverBackground": "grey13",
+      "separatorColor": "grey09",
+      "borderColor": "grey09"
     }
   }
 }

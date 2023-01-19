@@ -39,9 +39,14 @@ class CachedValue<R>(val source: (EntityStorage) -> R)
  */
 class CachedValueWithParameter<P, R>(val source: (EntityStorage, P) -> R)
 
+/**
+ * Change containing set of changes.
+ *
+ * As this is not a list of change operations, but a list of changes, order of events is not defined.
+ */
 abstract class VersionedStorageChange(versionedStorage: VersionedEntityStorage) : EventObject(versionedStorage) {
-  abstract val storageBefore: EntityStorage
-  abstract val storageAfter: EntityStorage
+  abstract val storageBefore: EntityStorageSnapshot
+  abstract val storageAfter: EntityStorageSnapshot
 
   abstract fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>>
 

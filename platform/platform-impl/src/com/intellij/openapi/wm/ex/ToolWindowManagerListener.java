@@ -4,7 +4,9 @@ package com.intellij.openapi.wm.ex;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 import java.util.List;
@@ -41,6 +43,14 @@ public interface ToolWindowManagerListener extends EventListener {
     stateChanged(toolWindowManager);
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  default void stateChanged(@NotNull ToolWindowManager toolWindowManager,
+                            @NotNull ToolWindow toolWindow,
+                            @NotNull ToolWindowManagerListener.ToolWindowManagerEventType changeType) {
+    stateChanged(toolWindowManager, changeType);
+  }
+
   /**
    * Invoked when tool window is shown.
    *
@@ -68,6 +78,6 @@ public interface ToolWindowManagerListener extends EventListener {
   enum ToolWindowManagerEventType {
     ActivateToolWindow, HideToolWindow, RegisterToolWindow, SetContentUiType, SetLayout, SetShowStripeButton,
     SetSideTool, SetSideToolAndAnchor, SetToolWindowAnchor, SetToolWindowAutoHide, SetToolWindowType, SetVisibleOnLargeStripe,
-    ShowToolWindow, UnregisterToolWindow, ToolWindowAvailable, ToolWindowUnavailable, Resized
+    ShowToolWindow, UnregisterToolWindow, ToolWindowAvailable, ToolWindowUnavailable, MovedOrResized
   }
 }

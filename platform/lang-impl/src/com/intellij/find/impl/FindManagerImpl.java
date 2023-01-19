@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -41,6 +41,7 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StringPattern;
@@ -203,7 +204,6 @@ public final class FindManagerImpl extends FindManager {
     myFindInProjectModel.setFromCursor(false);
     myFindInProjectModel.setForward(true);
     myFindInProjectModel.setGlobal(true);
-    myFindInProjectModel.setMultiline(true);
     myFindInProjectModel.setSearchInProjectFiles(false);
     return myFindInProjectModel;
   }
@@ -451,7 +451,7 @@ public final class FindManagerImpl extends FindManager {
 
       if (findmodel.isRegularExpressions()) {
         newStringToFind = StringUtil.replace(s, "\\n", "\n"); // temporary convert back escaped symbols
-        newStringToFind = newStringToFind.replaceAll( "\n", "\\\\n");
+        newStringToFind = StringUtil.replace(newStringToFind, "\n", "\\n");
       } else {
         newStringToFind = StringUtil.escapeToRegexp(s);
         model.setRegularExpressions(true);
@@ -604,7 +604,7 @@ public final class FindManagerImpl extends FindManager {
 
       try {
         SyntaxHighlighterOverEditorHighlighter highlighterAdapter =
-          new SyntaxHighlighterOverEditorHighlighter(highlighter, file, myProject);
+          ReadAction.compute(() -> new SyntaxHighlighterOverEditorHighlighter(highlighter, file, myProject));
         currentThreadData =
           new CommentsLiteralsSearchData(file, relevantLanguages, highlighterAdapter, tokensOfInterest, searcher, matcher, model.clone());
         currentThreadData.highlighter.restart(text);
@@ -790,15 +790,17 @@ public final class FindManagerImpl extends FindManager {
 
   @Override
   public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
-                                   int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException{
-    String toReplace = model.getStringToReplace();
+                                   int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException {
+    String replacement = model.getStringToReplace();
     if (model.isRegularExpressions()) {
-      return getStringToReplaceByRegexp(model, documentText, startOffset);
+      replacement = getStringToReplaceByRegexp(model, documentText, startOffset);
     }
     if (model.isPreserveCase()) {
-      return replaceWithCaseRespect (toReplace, foundString);
+      replacement = Registry.is("ide.find.word.based.preserve.case")
+                  ? PreserveCaseUtil.applyCase(foundString, replacement)
+                  : PreserveCaseUtil.replaceWithCaseRespect(replacement, foundString);
     }
-    return toReplace;
+    return replacement;
   }
 
   private static String getStringToReplaceByRegexp(@NotNull final FindModel model, @NotNull CharSequence text, int startOffset) throws MalformedReplacementStringException {
@@ -846,63 +848,6 @@ public final class FindManagerImpl extends FindManager {
     return new MalformedReplacementStringException(FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()), e);
   }
 
-  private static String replaceWithCaseRespect(String toReplace, String foundString) {
-    if (foundString.isEmpty() || toReplace.isEmpty()) return toReplace;
-    StringBuilder buffer = new StringBuilder();
-
-    char firstChar = foundString.charAt(0);
-    if (Character.isUpperCase(firstChar)) {
-      buffer.append(Character.toUpperCase(toReplace.charAt(0)));
-    }
-    else {
-      buffer.append(Character.toLowerCase(toReplace.charAt(0)));
-    }
-
-    if (toReplace.length() == 1) return buffer.toString();
-
-    if (foundString.length() == 1) {
-      buffer.append(toReplace.substring(1));
-      return buffer.toString();
-    }
-
-    boolean isReplacementLowercase = true;
-    boolean isReplacementUppercase = true;
-    for (int i = 1; i < toReplace.length(); i++) {
-      char replacementChar = toReplace.charAt(i);
-      if (!Character.isLetter(replacementChar)) continue;
-      isReplacementLowercase &= Character.isLowerCase(replacementChar);
-      isReplacementUppercase &= Character.isUpperCase(replacementChar);
-      if (!isReplacementLowercase && !isReplacementUppercase) break;
-    }
-
-    boolean isTailUpper = true;
-    boolean isTailLower = true;
-    boolean isTailChecked = false;
-    for (int i = 1; i < foundString.length(); i++) {
-      char foundChar = foundString.charAt(i);
-      if (!Character.isLetter(foundChar)) continue;
-      isTailUpper &= Character.isUpperCase(foundChar);
-      isTailLower &= Character.isLowerCase(foundChar);
-      isTailChecked = true;
-      if (!isTailUpper && !isTailLower) break;
-    }
-    if (!isTailChecked) {
-      isTailUpper = Character.isLetter(firstChar) && Character.isUpperCase(firstChar);
-      isTailLower = Character.isLetter(firstChar) && Character.isLowerCase(firstChar);
-    }
-
-    if (isTailUpper && (isReplacementLowercase || isReplacementUppercase)) {
-      buffer.append(StringUtil.toUpperCase(toReplace.substring(1)));
-    }
-    else if (isTailLower && (isReplacementLowercase || isReplacementUppercase)) {
-      buffer.append(StringUtil.toLowerCase(toReplace.substring(1)));
-    }
-    else {
-      buffer.append(toReplace.substring(1));
-    }
-    return buffer.toString();
-  }
-
   @Override
   public boolean canFindUsages(@NotNull PsiElement element) {
     return element.isValid() && myFindUsagesManager.canFindUsages(element);
@@ -935,8 +880,7 @@ public final class FindManagerImpl extends FindManager {
 
   @Override
   public void findUsagesInEditor(@NotNull PsiElement element, @NotNull FileEditor fileEditor) {
-    if (fileEditor instanceof TextEditor) {
-      TextEditor textEditor = (TextEditor)fileEditor;
+    if (fileEditor instanceof TextEditor textEditor) {
       Editor editor = textEditor.getEditor();
       Document document = editor.getDocument();
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);

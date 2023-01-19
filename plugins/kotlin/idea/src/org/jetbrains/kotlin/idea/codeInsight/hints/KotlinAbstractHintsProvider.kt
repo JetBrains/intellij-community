@@ -3,11 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.*
-import com.intellij.codeInsight.hints.presentation.InlayPresentation
-import com.intellij.codeInsight.hints.presentation.InsetPresentation
-import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
-import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
+import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -33,6 +29,8 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
     open val hintsArePlacedAtTheEndOfLine = false
 
+    open val hintsPriority = 100
+
     /**
      * Check if specified setting is enabled for the provider.
      * It has to return false when [#isHintSupported] returns `false`
@@ -55,7 +53,7 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
             override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
                 val project = editor.project ?: element.project
                 if (DumbService.isDumb(project)) return true
-                val resolved = HintType.resolve(element).takeIf { it.isNotEmpty() } ?: return true
+                val resolved = HintType.resolve(element).ifEmpty { return true }
                 val f = factory
                 resolved.forEach { hintType ->
                     if (isElementSupported(hintType, settings)) {
@@ -65,7 +63,8 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
                                 details.inlayInfo.offset,
                                 details.inlayInfo.relatesToPrecedingText
                             )
-                            sink.addInlineElement(p.offset, p.relatesToPrecedingText, p.presentation, hintsArePlacedAtTheEndOfLine)
+                            val horizontalConstraints = HorizontalConstraints(hintsPriority, p.relatesToPrecedingText, hintsArePlacedAtTheEndOfLine)
+                            sink.addInlineElement(p.offset, RecursivelyUpdatingRootPresentation(p.presentation), horizontalConstraints)
                         }
                     }
                 }
@@ -181,5 +180,4 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
 internal fun refreshHints() {
     InlayHintsPassFactory.forceHintsUpdateOnNextPass()
-    InlayHintsConfigurable.updateInlayHintsUI()
 }

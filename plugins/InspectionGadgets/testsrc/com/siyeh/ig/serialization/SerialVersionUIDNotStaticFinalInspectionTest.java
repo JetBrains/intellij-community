@@ -8,34 +8,39 @@ import org.jetbrains.annotations.Nullable;
 public class SerialVersionUIDNotStaticFinalInspectionTest extends LightJavaInspectionTestCase {
 
   public void testClassRightReturnType() {
-    doTest("import java.io.*;\n" +
-           "class C implements Serializable {\n" +
-           "  static final long <warning descr=\"'serialVersionUID' field of a Serializable class is not declared 'private static final long'\"><caret>serialVersionUID</warning> = 1;\n" +
-           "}");
+    doTest("""
+             import java.io.*;
+             class C implements Serializable {
+               static final long <warning descr="'serialVersionUID' field of a Serializable class is not declared 'private static final long'"><caret>serialVersionUID</warning> = 1;
+             }""");
     checkQuickFix("Make serialVersionUID 'private static final'",
-                  "import java.io.*;\n" +
-                  "class C implements Serializable {\n" +
-                  "  private static final long serialVersionUID = 1;\n" +
-                  "}");
+                  """
+                    import java.io.*;
+                    class C implements Serializable {
+                      private static final long serialVersionUID = 1;
+                    }""");
   }
 
   public void testRecordComponent() {
-    doTest("import java.io.*;\n" +
-           "record R(long <warning descr=\"'serialVersionUID' field of a Serializable class is not declared 'private static final long'\"><caret>serialVersionUID</warning>) implements Serializable {\n" +
-           "}");
+    doTest("""
+             import java.io.*;
+             record R(long <warning descr="'serialVersionUID' field of a Serializable class is not declared 'private static final long'"><caret>serialVersionUID</warning>) implements Serializable {
+             }""");
     assertQuickFixNotAvailable("Make serialVersionUID 'private static final'");
   }
 
   public void testRecordStaticField() {
-    doTest("import java.io.*;\n" +
-           "record R() implements Serializable {\n" +
-           "  static long <warning descr=\"'serialVersionUID' field of a Serializable class is not declared 'private static final long'\"><caret>serialVersionUID</warning> = 1;\n" +
-           "}");
+    doTest("""
+             import java.io.*;
+             record R() implements Serializable {
+               static long <warning descr="'serialVersionUID' field of a Serializable class is not declared 'private static final long'"><caret>serialVersionUID</warning> = 1;
+             }""");
     checkQuickFix("Make serialVersionUID 'private static final'",
-                  "import java.io.*;\n" +
-                  "record R() implements Serializable {\n" +
-                  "  private static final long serialVersionUID = 1;\n" +
-                  "}");
+                  """
+                    import java.io.*;
+                    record R() implements Serializable {
+                      private static final long serialVersionUID = 1;
+                    }""");
   }
 
   @Override

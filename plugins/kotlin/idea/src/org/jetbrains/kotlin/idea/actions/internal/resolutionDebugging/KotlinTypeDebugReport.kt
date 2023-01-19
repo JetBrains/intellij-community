@@ -12,10 +12,10 @@ internal data class KotlinTypeReference(val instanceString: String, val fqn: Str
 }
 
 internal class KotlinTypeDebugReport(
-    val typeReference: KotlinTypeReference,
-    val fqn: String?,
-    val containingModule: ModuleReference,
-    val supertypesReferences: Collection<KotlinTypeReference>
+  val typeReference: KotlinTypeReference,
+  val fqn: String?,
+  private val containingModule: ModuleReference,
+  private val supertypesReferences: Collection<KotlinTypeReference>
 ) {
     fun render(printer: Printer): Unit = with(printer) {
         println("Instance = $typeReference")

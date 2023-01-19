@@ -14,8 +14,8 @@ import java.nio.file.Path
 
 interface RuntimeChooserItemWithFixedLocation {
   val homeDir: String
-  @get:NlsSafe val version: String?
-  @get:NlsSafe val displayName: String?
+  val version: @NlsSafe String?
+  val displayName: @NlsSafe String?
 }
 
 data class RuntimeChooserCurrentItem(

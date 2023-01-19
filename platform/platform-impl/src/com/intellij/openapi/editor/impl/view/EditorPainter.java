@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.*;
@@ -754,8 +754,9 @@ public final class EditorPainter implements TextDrawingCallback {
 
       boolean restoreStroke = false;
       Stroke defaultStroke = myGraphics.getStroke();
-      Color color = myEditor.getColorsScheme().getColor(EditorColors.WHITESPACES_COLOR);
-
+      Color whitespacesColor = myEditor.getColorsScheme().getColor(EditorColors.WHITESPACES_COLOR);
+      Color tabsColor = myEditor.getColorsScheme().getColor(EditorColors.TABS_COLOR);
+      
       boolean isRtl = fragment.isRtl();
       int baseStartOffset = fragment.getStartOffset();
       int startOffset = isRtl ? baseStartOffset - start : baseStartOffset + start;
@@ -775,19 +776,19 @@ public final class EditorPainter implements TextDrawingCallback {
             myTextDrawingTasks.add(g -> {
               CachingPainter.paint(g, dotX, dotY, scale, scale,
                                    _g -> {
-                                     _g.setColor(color);
+                                     _g.setColor(whitespacesColor);
                                      _g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                                      _g.fill(new Ellipse2D.Float(0, 0, scale, scale));
-                                   }, ourCachedDot, color);
+                                   }, ourCachedDot, whitespacesColor);
             });
           }
           else if (c == '\t') {
             double strokeWidth = Math.max(scale, PaintUtil.devPixel(myGraphics));
             switch (AdvancedSettings.getEnum(EDITOR_TAB_PAINTING, TabCharacterPaintMode.class)) {
-              case LONG_ARROW: {
+              case LONG_ARROW -> {
                 int tabEndX = endX - (int)(myView.getPlainSpaceWidth() / 4);
                 int height = myView.getCharHeight();
-                Color tabColor = color == null ? null : ColorUtil.mix(myBackgroundColor, color, 0.7);
+                Color tabColor = tabsColor == null ? null : ColorUtil.mix(myBackgroundColor, tabsColor, 0.7);
                 myTextDrawingTasks.add(g -> {
                   int halfHeight = height / 2;
                   int yMid = yToUse - halfHeight;
@@ -797,14 +798,13 @@ public final class EditorPainter implements TextDrawingCallback {
                   LinePainter2D.paint(g, tabEndX, yToUse, tabEndX, yTop, LinePainter2D.StrokeType.INSIDE, strokeWidth);
                   g.fillPolygon(new int[]{tabEndX - halfHeight, tabEndX - halfHeight, tabEndX}, new int[]{yToUse, yTop, yMid}, 3);
                 });
-                break;
               }
-              case ARROW: {
+              case ARROW -> {
                 int tabLineHeight = calcFeatureSize(4, scale);
                 int tabLineWidth = Math.min(endX - startX, calcFeatureSize(3, scale));
                 int xToUse = Math.min(endX - tabLineWidth, startX + tabLineWidth);
                 myTextDrawingTasks.add(g -> {
-                  g.setColor(color);
+                  g.setColor(tabsColor);
                   g.setStroke(stroke);
                   Object oldHint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
                   g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -813,13 +813,12 @@ public final class EditorPainter implements TextDrawingCallback {
                   g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldHint);
                 });
                 restoreStroke = true;
-                break;
               }
-              default: {
+              default -> {
                 int yMid = yToUse - myView.getCharHeight() / 2;
                 int tabEndX = Math.max(startX + 1, endX - getTabGap(scale));
                 myTextDrawingTasks.add(g -> {
-                  g.setColor(color);
+                  g.setColor(tabsColor);
                   LinePainter2D.paint(g, startX, yMid, tabEndX, yMid, LinePainter2D.StrokeType.INSIDE, strokeWidth);
                 });
               }
@@ -829,7 +828,7 @@ public final class EditorPainter implements TextDrawingCallback {
             int charHeight = myView.getCharHeight();
             int strokeWidth = Math.round(stroke.getLineWidth());
             myTextDrawingTasks.add(g -> {
-              g.setColor(color);
+              g.setColor(whitespacesColor);
               g.setStroke(stroke);
               g.drawRect(startX + JBUIScale.scale(2) + strokeWidth / 2, yToUse - charHeight + strokeWidth / 2,
                                   endX - startX - JBUIScale.scale(4) - (strokeWidth - 1), charHeight - (strokeWidth - 1));
@@ -1313,7 +1312,7 @@ public final class EditorPainter implements TextDrawingCallback {
 
         CaretVisualAttributes.Shape shape = attr.getShape();
         switch (shape) {
-          case DEFAULT:
+          case DEFAULT -> {
             if (myEditor.isInsertMode() != settings.isBlockCursor()) {
               int lineWidth = JBUIScale.scale(attr.getWidth(settings.getLineCursorWidth()));
               // fully cover extra character's pixel which can appear due to antialiasing
@@ -1325,12 +1324,12 @@ public final class EditorPainter implements TextDrawingCallback {
               paintCaretBlock(g, startX, y, width, nominalLineHeight);
               paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
             }
-            break;
-          case BLOCK:
+          }
+          case BLOCK -> {
             paintCaretBlock(g, startX, y, width, nominalLineHeight);
             paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
-            break;
-          case BAR:
+          }
+          case BAR -> {
             // Don't draw if thickness is zero. This allows a plugin to "hide" carets, e.g. to visually emulate a block selection as a
             // selection rather than as multiple carets with discrete selections
             if (attr.getThickness() > 0) {
@@ -1342,8 +1341,8 @@ public final class EditorPainter implements TextDrawingCallback {
               paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
               g.setClip(savedClip);
             }
-            break;
-          case UNDERSCORE:
+          }
+          case UNDERSCORE -> {
             if (attr.getThickness() > 0) {
               int underscoreHeight = Math.max((int)(nominalLineHeight * attr.getThickness()), 1);
               paintCaretUnderscore(g, startX, y + nominalLineHeight - underscoreHeight, width, underscoreHeight);
@@ -1352,10 +1351,8 @@ public final class EditorPainter implements TextDrawingCallback {
               paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
               g.setClip(oldClip);
             }
-            break;
-          case BOX:
-            paintCaretBox(g, startX, y, width, nominalLineHeight);
-            break;
+          }
+          case BOX -> paintCaretBox(g, startX, y, width, nominalLineHeight);
         }
       }
     }

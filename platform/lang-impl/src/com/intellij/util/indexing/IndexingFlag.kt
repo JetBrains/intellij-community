@@ -3,7 +3,6 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly

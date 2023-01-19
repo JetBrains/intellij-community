@@ -2,11 +2,16 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.nio.file.Path;
 import java.util.Collections;
+
+import static org.junit.Assert.assertEquals;
 
 public class PathMappingSettingsTest {
 
@@ -58,7 +63,14 @@ public class PathMappingSettingsTest {
     Assert.assertEquals("/opt/bfms/myapp", myMappingSettings.convertToRemote("V:/bfms/django_root/myapp"));
     Assert.assertEquals("V:/bfms/django_root/myapp", myMappingSettings.convertToLocal("/opt/bfms/myapp"));
   }
-
+  @Test
+  public void testRootDriveMapping() {
+    Assume.assumeTrue("Windows only test", SystemInfoRt.isWindows);
+    myMappingSettings.addMapping("C:\\", "/mnt/c");
+    assertEquals("Incorrect mapping",
+                 Path.of("Windows"),
+                 Path.of(myMappingSettings.convertToLocal("/mnt/c")).relativize(Path.of("c:\\Windows")));
+  }
   @Test
   public void testConvertToLocalPathWithSeveralRemotePrefixInclusions() {
     myMappingSettings.addMapping("C:/testPrj/src", "/management");

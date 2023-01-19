@@ -84,7 +84,7 @@ class MavenImportBadConfigEventParser : MavenImportLoggedEventParser {
   }
 }
 
-class MavenConfigOpenQuickFix(val mavenConfig: VirtualFile, val errorMessage: String) : BuildIssueQuickFix {
+class MavenConfigOpenQuickFix(private val mavenConfig: VirtualFile, val errorMessage: String) : BuildIssueQuickFix {
 
   override val id: String = "open_maven_config_quick_fix"
 

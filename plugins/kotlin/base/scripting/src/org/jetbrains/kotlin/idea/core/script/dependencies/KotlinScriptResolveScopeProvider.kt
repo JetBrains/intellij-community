@@ -13,7 +13,7 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ucache.getScriptDependenciesClassFilesScope
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -82,7 +82,7 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
         if (scriptDefinition is ScriptDefinition.FromConfigurationsBase ||
             scriptDefinition.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>() != null
         ) {
-            val dependenciesScope = ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(file)
+            val dependenciesScope = getScriptDependenciesClassFilesScope(project, ktFile)
             return KotlinScriptSearchScope(project, GlobalSearchScope.fileScope(project, file).uniteWith(dependenciesScope))
         }
 

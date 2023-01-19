@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import junit.framework.AssertionFailedError
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.util.function.Consumer
@@ -35,12 +36,37 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
   }
 
   @Test
+  fun `test buildSrc project with custom compiler out and not disabled delegation is imported`() {
+    currentExternalProjectSettings.delegatedBuild = false
+    createProjectSubFile("buildSrc/build.gradle",
+                         """
+                           apply plugin: 'idea'
+
+                           idea.module {
+                             outputDir = file("build/foo")
+                             testOutputDir = file("build/bar")
+                           }
+                            """.trimIndent())
+    importProject("apply plugin: 'java'\n")
+
+    assertModuleOutput("project.buildSrc.main", projectPath + "/buildSrc/build/foo", "");
+    assertModuleOutput("project.buildSrc.test", "", projectPath + "/buildSrc/build/bar");
+  }
+
+
+  @Test
   fun `test buildSrc project level dependencies are imported`() {
-    createProjectSubFile("buildSrc/build.gradle", createBuildScriptBuilder().withJUnit4().generate())
+    val dependency = "junit:junit:4.12"
+    val dependencyName = "Gradle: junit:junit:4.12"
+
+    createBuildFile("buildSrc") {
+      withMavenCentral()
+      addTestImplementationDependency(dependency)
+    }
     importProject("")
     assertModules("project",
                   "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test")
-    val moduleLibDeps = getModuleLibDeps("project.buildSrc.test", "Gradle: junit:junit:4.12")
+    val moduleLibDeps = getModuleLibDeps("project.buildSrc.test", dependencyName)
     assertThat(moduleLibDeps).hasSize(1).allSatisfy(Consumer {
       assertThat(it.libraryLevel).isEqualTo("project")
     })

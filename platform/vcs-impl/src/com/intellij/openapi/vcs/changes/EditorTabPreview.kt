@@ -36,7 +36,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
-abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcessor) :
+abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor) :
   EditorTabPreviewBase(diffProcessor.project!!, diffProcessor) {
 
   override val previewFile: VirtualFile = EditorTabDiffPreviewVirtualFile(diffProcessor, ::getCurrentName)
@@ -124,7 +124,7 @@ abstract class EditorTabPreviewBase(protected val project: Project,
       updatePreviewQueue
     )
 
-  protected abstract fun getCurrentName(): String?
+  protected abstract fun getCurrentName(): @Nls String?
 
   protected abstract fun hasContent(): Boolean
 
@@ -142,7 +142,7 @@ abstract class EditorTabPreviewBase(protected val project: Project,
   protected fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpenWithRemotes(previewFile)
 
   override fun closePreview() {
-    FileEditorManager.getInstance(project).closeFile(previewFile)
+    DiffPreview.closePreviewFile(project, previewFile)
     updatePreviewProcessor.clear()
   }
 
@@ -167,7 +167,7 @@ abstract class EditorTabPreviewBase(protected val project: Project,
 
     if (ExternalDiffTool.isEnabled()) {
       val processorWithProducers = updatePreviewProcessor as? DiffRequestProcessorWithProducers
-      if (processorWithProducers != null ) {
+      if (processorWithProducers != null) {
         var diffProducers = processorWithProducers.collectDiffProducers(true)
         if (diffProducers != null && diffProducers.isEmpty) {
           diffProducers = processorWithProducers.collectDiffProducers(false)?.list?.firstOrNull()
@@ -182,7 +182,7 @@ abstract class EditorTabPreviewBase(protected val project: Project,
     return openPreviewEditor(true)
   }
 
-  internal class EditorTabDiffPreviewVirtualFile(diffProcessor: DiffRequestProcessor, tabNameProvider: () -> String?)
+  internal class EditorTabDiffPreviewVirtualFile(diffProcessor: DiffRequestProcessor, tabNameProvider: () -> @Nls String?)
     : PreviewDiffVirtualFile(EditorTabDiffPreviewProvider(diffProcessor, tabNameProvider)) {
     init {
       // EditorTabDiffPreviewProvider does not create new processor, so general assumptions of DiffVirtualFile are violated
@@ -214,7 +214,7 @@ internal class EditorTabPreviewEscapeAction(private val escapeHandler: Runnable)
 
 private class EditorTabDiffPreviewProvider(
   private val diffProcessor: DiffRequestProcessor,
-  private val tabNameProvider: () -> String?
+  private val tabNameProvider: () -> @Nls String?
 ) : ChainBackedDiffPreviewProvider {
   override fun createDiffRequestProcessor(): DiffRequestProcessor {
     IJSwingUtilities.updateComponentTreeUI(diffProcessor.component)

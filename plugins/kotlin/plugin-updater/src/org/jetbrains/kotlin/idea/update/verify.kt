@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.update
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginUpdateStatus
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.idea.PluginUpdateStatus
 
 // Do an additional verification with PluginUpdateVerifier. Enabled only in AS 3.2+
 fun verify(updateStatus: PluginUpdateStatus.Update): PluginUpdateStatus {

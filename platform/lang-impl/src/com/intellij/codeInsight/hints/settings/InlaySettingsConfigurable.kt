@@ -8,7 +8,6 @@ import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import java.util.function.Predicate
 import javax.swing.JComponent
 
@@ -55,14 +54,11 @@ class InlaySettingsConfigurable(val project: Project) : Configurable, Searchable
 
 class InlaySettingsConfigurableProvider(val project: Project): ConfigurableProvider() {
   override fun createConfigurable(): Configurable {
-    return if (useNewSettings()) InlaySettingsConfigurable(project) else InlayHintsConfigurable(project)
+    return InlaySettingsConfigurable(project)
   }
 }
 
-private fun useNewSettings() = Registry.`is`("new.inlay.settings", true)
-
-fun showNewSettings(project: Project, language: Language, selector: Predicate<InlayProviderSettingsModel>?): Boolean {
-  if (!useNewSettings()) return false
+fun showInlaySettings(project: Project, language: Language, selector: Predicate<InlayProviderSettingsModel>?): Boolean {
   ShowSettingsUtil.getInstance().showSettingsDialog(project, InlaySettingsConfigurable::class.java) {
     if (selector != null) {
       it.selectModel(language, selector)

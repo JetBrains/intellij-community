@@ -10,11 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
-import org.jetbrains.kotlin.idea.refactoring.getLineNumber
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -68,7 +67,7 @@ private class RemoveRedundantElseFix : LocalQuickFix {
 
         val elseStartLine = (elseExpression as? KtBlockExpression)?.statements?.firstOrNull()?.getLineNumber()
         if (elseStartLine == null || elseKeywordLineNumber == lastThenEndLine && elseKeywordLineNumber == elseStartLine) {
-            parent.addAfter(KtPsiFactory(ifExpression).createNewLine(), ifExpression)
+            parent.addAfter(KtPsiFactory(project).createNewLine(), ifExpression)
         }
 
         elseExpression.parent.delete()

@@ -24,20 +24,18 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
-import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
-import org.jetbrains.idea.maven.server.MavenServerDownloadListener;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import static org.jetbrains.idea.maven.indices.MavenArchetypeManager.loadUserArchetypes;
 
 /**
  * Main api class for work with maven indices.
@@ -53,7 +51,6 @@ public final class MavenIndicesManager implements Disposable {
   private final IndexFixer myIndexFixer = new IndexFixer();
   private final MavenIndexUpdateManager myIndexUpdateManager;
 
-  private volatile Path myTestIndicesDir;
 
   public static MavenIndicesManager getInstance(@NotNull Project project) {
     return project.getService(MavenIndicesManager.class);
@@ -63,11 +60,10 @@ public final class MavenIndicesManager implements Disposable {
     myProject = project;
     myIndexerWrapper = MavenServerManager.getInstance().createIndexer(myProject);
     myIndexUpdateManager = new MavenIndexUpdateManager();
-    myMavenIndices = new MavenIndices(myIndexerWrapper, getIndicesDir().toFile(), new MavenSearchIndexListener(this));
+    myMavenIndices = myIndexerWrapper.getOrCreateIndices();
 
     initListeners();
 
-    Disposer.register(this, myMavenIndices);
     Disposer.register(this, myIndexUpdateManager);
   }
 
@@ -75,10 +71,6 @@ public final class MavenIndicesManager implements Disposable {
   public void dispose() {
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
       PathKt.delete(getIndicesDir());
-    }
-    MavenServerManager mavenServerManager = MavenServerManager.getInstanceIfCreated();
-    if (mavenServerManager != null) {
-      mavenServerManager.removeDownloadListener(myDownloadListener);
     }
   }
 
@@ -105,7 +97,12 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   private void initListeners() {
-    MavenServerManager.getInstance().addDownloadListener(myDownloadListener);
+
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC, myDownloadListener);
+
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(MavenIndex.INDEX_IS_BROKEN, new MavenSearchIndexListener(this));
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       MavenProjectsManager.getInstance(myProject).addProjectsTreeListener(new MavenProjectsTree.Listener() {
@@ -135,16 +132,9 @@ public final class MavenIndicesManager implements Disposable {
     }, this);
   }
 
-  @TestOnly
-  public void setTestIndexDir(Path indicesDir) {
-    myTestIndicesDir = indicesDir;
-  }
-
   @NotNull
   Path getIndicesDir() {
-    return myTestIndicesDir == null
-           ? MavenUtil.getPluginSystemDir("Indices")
-           : myTestIndicesDir;
+    return MavenIndexerWrapper.getIndicesDir();
   }
 
   public void addArchetype(@NotNull MavenArchetype archetype) {
@@ -211,27 +201,6 @@ public final class MavenIndicesManager implements Disposable {
     return myIndexUpdateManager.getUpdatingState(index);
   }
 
-  /**
-   * @deprecated use {@link MavenArchetypeManager#getArchetypes()}
-   */
-  @Deprecated
-  public Set<MavenArchetype> getArchetypes() {
-    Set<MavenArchetype> result = new HashSet<>(myIndexerWrapper.getArchetypes());
-    result.addAll(loadUserArchetypes(getIndicesDir().resolve("UserArchetypes.xml")));
-    if (myMavenIndices.isNotInit()) {
-      myMavenIndices.updateIndicesList(myProject);
-    }
-    MavenIndexHolder indexHolder = myMavenIndices.getIndexHolder();
-    for (MavenIndex index : indexHolder.getIndices()) {
-      result.addAll(index.getArchetypes());
-    }
-
-    for (MavenArchetypesProvider each : MavenArchetypesProvider.EP_NAME.getExtensionList()) {
-      result.addAll(each.getArchetypes());
-    }
-    return result;
-  }
-
   @NotNull
   private Path getUserArchetypesFile() {
     return getIndicesDir().resolve("UserArchetypes.xml");
@@ -258,7 +227,17 @@ public final class MavenIndicesManager implements Disposable {
       AsyncPromise<Void> result = new AsyncPromise<>();
 
       queueToAdd.add(new Pair<>(file, result));
-      myMergingUpdateQueue.queue(Update.create(this, taskConsumer));
+      myMergingUpdateQueue.queue(new Update(IndexFixer.this) {
+        @Override
+        public void run() {
+          ((Runnable)taskConsumer).run();
+        }
+
+        @Override
+        public boolean isDisposed() {
+          return myMavenIndices.isDisposed();
+        }
+      });
       return result;
     }
 
@@ -317,5 +296,10 @@ public final class MavenIndicesManager implements Disposable {
         myManager.myIndexUpdateManager.scheduleUpdateContent(myManager.myProject, List.of(index.getRepositoryPathOrUrl()), false);
       }
     }
+  }
+
+  @TestOnly
+  public void waitForBackgroundTasksInTests() {
+    myIndexUpdateManager.waitForBackgroundTasksInTests();
   }
 }

@@ -44,6 +44,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
@@ -204,7 +205,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
       @Override
       public void update(@NotNull AnActionEvent e) {
         TreePath[] selectionPaths = tree.getSelectionPaths();
-        if (selectionPaths == null || selectionPaths.length <= 0) return;
+        if (selectionPaths == null || selectionPaths.length == 0) return;
         TaintNode[] roots = tree.getSelectedNodes(TaintNode.class, null);
         Deque<TaintNode> nodes = new ArrayDeque<>(Arrays.asList(roots));
         boolean enable = false;
@@ -221,10 +222,15 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
         e.getPresentation().setEnabled(enable);
       }
 
-      private Stream<TaintNode> nodes(TaintNode[] roots) {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        // getSelectedNodes used
+        return ActionUpdateThread.EDT;
+      }
+
+      private static Stream<TaintNode> nodes(TaintNode[] roots) {
         return StreamEx.of(roots)
-          .flatMap(
-            root -> StreamEx.ofTree(root, n -> StreamEx.of(n.myCachedChildren == null ? Collections.emptyList() : n.myCachedChildren)));
+          .flatMap(root -> StreamEx.ofTree(root, n -> n.myCachedChildren == null ? null : StreamEx.of(n.myCachedChildren)));
       }
 
       @Override
@@ -492,7 +498,8 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
         int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
         setIcon(ReadAction.compute(() -> psiElement.getIcon(flags)));
         int style = taintNode.isExcluded() ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN;
-        Color color = taintNode.myTaintValue == TaintValue.TAINTED ? UIUtil.getErrorForeground() : null;
+        Color color;
+        color = taintNode.myTaintValue == TaintValue.TAINTED ? NamedColorUtil.getErrorForeground() : null;
         SimpleTextAttributes attributes = new SimpleTextAttributes(style, color);
         PsiMethod psiMethod = ObjectUtils.tryCast(psiElement, PsiMethod.class);
         if (psiMethod != null) {

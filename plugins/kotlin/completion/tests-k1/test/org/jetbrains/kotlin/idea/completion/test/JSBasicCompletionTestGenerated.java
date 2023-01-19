@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
@@ -201,6 +201,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/autoPopup/AutopopupInFunExtensionReceiver.kt");
             }
 
+            @TestMetadata("FunInterface.kt")
+            public void testFunInterface() throws Exception {
+                runTest("../testData/basic/common/autoPopup/FunInterface.kt");
+            }
+
             @TestMetadata("GenericExtensionFunTypeArgument.kt")
             public void testGenericExtensionFunTypeArgument() throws Exception {
                 runTest("../testData/basic/common/autoPopup/GenericExtensionFunTypeArgument.kt");
@@ -273,6 +278,29 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/basic/common/backticked")
+        public static class Backticked extends AbstractJSBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("NameWithDollars.kt")
+            public void testNameWithDollars() throws Exception {
+                runTest("../testData/basic/common/backticked/NameWithDollars.kt");
+            }
+
+            @TestMetadata("PropertyAfterBacktick1.kt")
+            public void testPropertyAfterBacktick1() throws Exception {
+                runTest("../testData/basic/common/backticked/PropertyAfterBacktick1.kt");
+            }
+
+            @TestMetadata("PropertyAfterBacktick2.kt")
+            public void testPropertyAfterBacktick2() throws Exception {
+                runTest("../testData/basic/common/backticked/PropertyAfterBacktick2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/boldOrGrayed")
         public static class BoldOrGrayed extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -282,6 +310,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("AfterNullable.kt")
             public void testAfterNullable() throws Exception {
                 runTest("../testData/basic/common/boldOrGrayed/AfterNullable.kt");
+            }
+
+            @TestMetadata("AfterNullable2.kt")
+            public void testAfterNullable2() throws Exception {
+                runTest("../testData/basic/common/boldOrGrayed/AfterNullable2.kt");
             }
 
             @TestMetadata("AfterNullableAutoCast.kt")
@@ -407,19 +440,29 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/callableReference/HigherOrderFunction.kt");
             }
 
+            @TestMetadata("JavaSyntheticPropertyReference1.kt")
+            public void testJavaSyntheticPropertyReference1() throws Exception {
+                runTest("../testData/basic/common/callableReference/JavaSyntheticPropertyReference1.kt");
+            }
+
+            @TestMetadata("JavaSyntheticPropertyReference2.kt")
+            public void testJavaSyntheticPropertyReference2() throws Exception {
+                runTest("../testData/basic/common/callableReference/JavaSyntheticPropertyReference2.kt");
+            }
+
+            @TestMetadata("JavaSyntheticPropertyReferenceTrueNegative1.kt")
+            public void testJavaSyntheticPropertyReferenceTrueNegative1() throws Exception {
+                runTest("../testData/basic/common/callableReference/JavaSyntheticPropertyReferenceTrueNegative1.kt");
+            }
+
+            @TestMetadata("JavaSyntheticPropertyReferenceTrueNegative2.kt")
+            public void testJavaSyntheticPropertyReferenceTrueNegative2() throws Exception {
+                runTest("../testData/basic/common/callableReference/JavaSyntheticPropertyReferenceTrueNegative2.kt");
+            }
+
             @TestMetadata("NonEmptyQualifier.kt")
             public void testNonEmptyQualifier() throws Exception {
                 runTest("../testData/basic/common/callableReference/NonEmptyQualifier.kt");
-            }
-
-            @TestMetadata("SyntheticExtensions.kt")
-            public void testSyntheticExtensions() throws Exception {
-                runTest("../testData/basic/common/callableReference/SyntheticExtensions.kt");
-            }
-
-            @TestMetadata("SyntheticExtensions2.kt")
-            public void testSyntheticExtensions2() throws Exception {
-                runTest("../testData/basic/common/callableReference/SyntheticExtensions2.kt");
             }
         }
 
@@ -1247,6 +1290,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/namedArguments/OnlyNamedArguments.kt");
             }
 
+            @TestMetadata("ParamsFromSingleUnapplicableOverload.kt")
+            public void testParamsFromSingleUnapplicableOverload() throws Exception {
+                runTest("../testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
+            }
+
             @TestMetadata("WithParameterExpression.kt")
             public void testWithParameterExpression() throws Exception {
                 runTest("../testData/basic/common/namedArguments/WithParameterExpression.kt");
@@ -1442,6 +1490,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/parameterNameAndType/NoFromFileAndFromClassesDuplication.kt");
             }
 
+            @TestMetadata("NoObjects.kt")
+            public void testNoObjects() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/NoObjects.kt");
+            }
+
             @TestMetadata("NotForAnnnotationTypeConstructor.kt")
             public void testNotForAnnnotationTypeConstructor() throws Exception {
                 runTest("../testData/basic/common/parameterNameAndType/NotForAnnnotationTypeConstructor.kt");
@@ -1502,6 +1555,21 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/parameterNameAndType/ParametersInFileInaccessibleType2.kt");
             }
 
+            @TestMetadata("ParametersInFileNoDuplication.kt")
+            public void testParametersInFileNoDuplication() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/ParametersInFileNoDuplication.kt");
+            }
+
+            @TestMetadata("ParametersInFileNoLocalTypes.kt")
+            public void testParametersInFileNoLocalTypes() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/ParametersInFileNoLocalTypes.kt");
+            }
+
+            @TestMetadata("ParametersInFileNoTypeAnnotations.kt")
+            public void testParametersInFileNoTypeAnnotations() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/ParametersInFileNoTypeAnnotations.kt");
+            }
+
             @TestMetadata("ParametersInFileTypeParameter1.kt")
             public void testParametersInFileTypeParameter1() throws Exception {
                 runTest("../testData/basic/common/parameterNameAndType/ParametersInFileTypeParameter1.kt");
@@ -1520,6 +1588,21 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("Simple.kt")
             public void testSimple() throws Exception {
                 runTest("../testData/basic/common/parameterNameAndType/Simple.kt");
+            }
+
+            @TestMetadata("TypeAlias.kt")
+            public void testTypeAlias() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/TypeAlias.kt");
+            }
+
+            @TestMetadata("TypeParameter1.kt")
+            public void testTypeParameter1() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/TypeParameter1.kt");
+            }
+
+            @TestMetadata("TypeParameter2.kt")
+            public void testTypeParameter2() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/TypeParameter2.kt");
             }
 
             @TestMetadata("URLConnection.kt")
@@ -2249,6 +2332,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/EnumItemsThroughSingleTypeAlias.kt");
             }
 
+            @TestMetadata("EnumValuesMethodLowerPriority.kt")
+            public void testEnumValuesMethodLowerPriority() throws Exception {
+                runTest("../testData/basic/common/EnumValuesMethodLowerPriority.kt");
+            }
+
+            @TestMetadata("EnumValuesMethodUsualPriorityWhenFeatureDisabled.kt")
+            public void testEnumValuesMethodUsualPriorityWhenFeatureDisabled() throws Exception {
+                runTest("../testData/basic/common/EnumValuesMethodUsualPriorityWhenFeatureDisabled.kt");
+            }
+
             @TestMetadata("ExtendClassName.kt")
             public void testExtendClassName() throws Exception {
                 runTest("../testData/basic/common/ExtendClassName.kt");
@@ -2632,11 +2725,6 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("LocalMultideclarationValues.kt")
             public void testLocalMultideclarationValues() throws Exception {
                 runTest("../testData/basic/common/LocalMultideclarationValues.kt");
-            }
-
-            @TestMetadata("NameWithDollars.kt")
-            public void testNameWithDollars() throws Exception {
-                runTest("../testData/basic/common/NameWithDollars.kt");
             }
 
             @TestMetadata("NamedObject.kt")

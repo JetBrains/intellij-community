@@ -2,48 +2,46 @@
 package com.intellij.psi
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
-import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.Language
 import com.intellij.model.search.SearchService
-import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.impl.CancellationCheck
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.uast.UExpressionPattern
 import com.intellij.patterns.uast.injectionHostUExpression
-import com.intellij.psi.impl.cache.CacheManager
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.UastPatternAdapter.Companion.getOrCreateCachedElement
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.search.LocalSearchScope
-import com.intellij.psi.search.PsiSearchHelper
-import com.intellij.psi.search.PsiSearchHelper.SearchCostResult
-import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ProcessingContext
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
+import org.jetbrains.uast.expressions.UInjectionHost
 
-internal class UastReferenceByUsageAdapter(private val usagePattern: ElementPattern<out UElement>,
-                                           private val provider: UastReferenceProvider) : UastReferenceProvider(UExpression::class.java) {
+class UastReferenceByUsageAdapter(
+  val expressionPattern: ElementPattern<out UElement>,
+  val usagePattern: ElementPattern<out UElement>,
+  val provider: UastReferenceProvider
+) : PsiReferenceProvider() {
+
+  val supportedUElementTypes: List<Class<UExpression>> = listOf(UExpression::class.java)
 
   override fun acceptsTarget(target: PsiElement): Boolean {
     return provider.acceptsTarget(target)
   }
 
-  override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
-    val parentVariable = when (val uastParent = getOriginalUastParent(element)) {
-      is UVariable -> uastParent
-      is UPolyadicExpression -> uastParent.uastParent as? UVariable // support .withUastParentOrSelf() patterns
-      else -> null
-    }
+  override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
+    val uElement = getOrCreateCachedElement(element, context, supportedUElementTypes) ?: return PsiReference.EMPTY_ARRAY
+    return CancellationCheck.runWithCancellationCheck { getReferencesByElement(uElement, context) }
+  }
 
-    if (parentVariable == null
-        || parentVariable.name.isNullOrEmpty()
-        || !parentVariable.type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-      return PsiReference.EMPTY_ARRAY
-    }
+  internal fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
+    val parentVariable = getUsageVariableTargetForInitializer(element) ?: return PsiReference.EMPTY_ARRAY
 
     val usage = getDirectVariableUsages(parentVariable).find { usage ->
       val refExpression = getUsageReferenceExpressionWithCache(usage, context)
@@ -58,9 +56,79 @@ internal class UastReferenceByUsageAdapter(private val usagePattern: ElementPatt
   override fun toString(): String = "uastReferenceByUsageAdapter($provider)"
 }
 
+private fun getUsageVariableTargetForInitializer(element: UElement): UVariable? {
+  val parentVariable = when (val uastParent = getOriginalUastParent(element)) {
+    is UVariable -> uastParent
+    is UPolyadicExpression -> uastParent.uastParent as? UVariable // support .withUastParentOrSelf() patterns
+    else -> null
+  }
+
+  if (parentVariable == null
+      || parentVariable.name.isNullOrEmpty()
+      || !parentVariable.type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+    return null
+  }
+
+  return parentVariable
+}
+
+/**
+ * Find usages of variable or constant in the scope of module.
+ *
+ * @param element initializer of variable, String literal
+ * @param targetHint target hint, usually POM target element
+ * @return references that are supposed to be created in usage places
+ */
+@ApiStatus.Internal
+fun getReferencesForDirectUsagesOfVariable(element: PsiElement, targetHint: PsiElement?): Array<PsiReference> {
+  val uElement = element.toUElementOfType<UInjectionHost>() ?: return PsiReference.EMPTY_ARRAY
+  val originalElement = CompletionUtilCoreImpl.getOriginalElement(element) ?: element
+  val uParentVariable = getUsageVariableTargetForInitializer(uElement) ?: return PsiReference.EMPTY_ARRAY
+
+  val registrar = ReferenceProvidersRegistry.getInstance().getRegistrar(Language.findLanguageByID("UAST")!!)
+  val providerInfos = (registrar as PsiReferenceRegistrarImpl).getPairsByElement(originalElement, PsiReferenceService.Hints(targetHint, null))
+
+  // by-usage providers must implement acceptsTarget correctly, we rely on fact that they accept targetHint
+  val suitableProviders = providerInfos.asSequence()
+    .map { it.provider }
+    .filterIsInstance<UastReferenceByUsageAdapter>()
+    .toList()
+
+  val usages = getDirectVariableUsagesWithNonLocal(uParentVariable)
+  for (usage in usages) {
+    val refExpression = usage.toUElementOfType<UReferenceExpression>()
+
+    if (refExpression != null) {
+      val context = ProcessingContext()
+      context.put(USAGE_PSI_ELEMENT, usage)
+      context.put(REQUESTED_PSI_ELEMENT, originalElement)
+
+      for (provider in suitableProviders) {
+        if (provider.usagePattern.accepts(refExpression, context)) {
+          val references = provider.provider.getReferencesByElement(refExpression, context)
+
+          if (references.isNotEmpty()) {
+            return references
+          }
+        }
+      }
+    }
+  }
+
+  return PsiReference.EMPTY_ARRAY
+}
+
+internal val STRICT_CONSTANT_NAME_PATTERN: Regex = Regex("[\\p{Upper}_0-9]+")
+
 @ApiStatus.Experimental
 fun uInjectionHostInVariable(): UExpressionPattern<*, *> = injectionHostUExpression().filter {
   it.uastParent is UVariable
+}
+
+@ApiStatus.Experimental
+fun uInjectionHostInStrictConstant(): UExpressionPattern<*, *> = injectionHostUExpression().filter {
+  val uastParent = it.uastParent
+  uastParent is UVariable && uastParent.name?.matches(STRICT_CONSTANT_NAME_PATTERN) == true
 }
 
 @ApiStatus.Experimental
@@ -96,61 +164,22 @@ private fun getDirectVariableUsages(uVar: UVariable): Sequence<PsiElement> {
   if (DumbService.isDumb(project)) return emptySequence() // do not try to search in dumb mode
 
   val cachedValue = CachedValuesManager.getManager(project).getCachedValue(variablePsi, CachedValueProvider {
-    val anchors = findDirectVariableUsages(variablePsi).map(PsiAnchor::create)
+    val anchors = findLocalDirectVariableUsages(variablePsi).map(PsiAnchor::create)
     Result.createSingleDependency(anchors, PsiModificationTracker.MODIFICATION_COUNT)
   })
   return cachedValue.asSequence().mapNotNull(PsiAnchor::retrieve)
 }
 
-private const val MAX_FILES_TO_FIND_USAGES: Int = 5
-private val STRICT_CONSTANT_NAME_PATTERN: Regex = Regex("[\\p{Upper}_0-9]+")
-
-private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiElement> {
+private fun findLocalDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiElement> {
   val uVariable = variablePsi.toUElementOfType<UVariable>()
   val variableName = uVariable?.name
   if (variableName.isNullOrEmpty()) return emptyList()
   val currentFile = variablePsi.containingFile ?: return emptyList()
 
-  val localUsages = findVariableUsages(variablePsi, variableName, arrayOf(currentFile))
-
-  // non-local searches are limited for real-life use cases, we do not try to find all possible usages
-  if (uVariable is ULocalVariable
-      || (variablePsi is PsiModifierListOwner && variablePsi.hasModifier(JvmModifier.PRIVATE))
-      || !STRICT_CONSTANT_NAME_PATTERN.matches(variableName)) {
-    return localUsages
-  }
-
-  val module = ModuleUtilCore.findModuleForPsiElement(variablePsi) ?: return localUsages
-  val uastScope = getUastScope(module.moduleScope)
-
-  val searchHelper = PsiSearchHelper.getInstance(module.project)
-  if (searchHelper.isCheapEnoughToSearch(variableName, uastScope, currentFile, null) != SearchCostResult.FEW_OCCURRENCES) {
-    return localUsages
-  }
-
-  val cacheManager = CacheManager.getInstance(variablePsi.project)
-  val containingFiles = cacheManager.getVirtualFilesWithWord(
-    variableName,
-    UsageSearchContext.IN_CODE,
-    uastScope,
-    true)
-  val useScope = variablePsi.useScope
-
-  val psiManager = PsiManager.getInstance(module.project)
-  val filesToSearch = containingFiles.asSequence()
-    .filter { useScope.contains(it) && it != currentFile.virtualFile }
-    .mapNotNull { psiManager.findFile(it) }
-    .sortedBy { it.virtualFile.canonicalPath }
-    .take(MAX_FILES_TO_FIND_USAGES)
-    .toList()
-    .toTypedArray()
-
-  val nonLocalUsages = findVariableUsages(variablePsi, variableName, filesToSearch)
-
-  return ContainerUtil.concat(localUsages, nonLocalUsages)
+  return findReferencedVariableUsages(variablePsi, variableName, arrayOf(currentFile))
 }
 
-private fun findVariableUsages(variablePsi: PsiElement, variableName: String, files: Array<PsiFile>): List<PsiElement> {
+internal fun findReferencedVariableUsages(variablePsi: PsiElement, variableName: String, files: Array<PsiFile>): List<PsiElement> {
   if (files.isEmpty()) return emptyList()
 
   return SearchService.getInstance()
@@ -170,9 +199,4 @@ private fun findVariableUsages(variablePsi: PsiElement, variableName: String, fi
     }
     .findAll()
     .sortedWith(compareBy({ it.containingFile?.virtualFile?.canonicalPath ?: "" }, { it.textOffset }))
-}
-
-private fun getUastScope(originalScope: GlobalSearchScope): GlobalSearchScope {
-  val fileTypes = UastLanguagePlugin.getInstances().map { it.language.associatedFileType }.toTypedArray()
-  return GlobalSearchScope.getScopeRestrictedByFileTypes(originalScope, *fileTypes)
 }

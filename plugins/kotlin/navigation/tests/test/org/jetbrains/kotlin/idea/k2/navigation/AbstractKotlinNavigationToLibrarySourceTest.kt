@@ -24,7 +24,7 @@ abstract class AbstractKotlinNavigationToLibrarySourceTest : AbstractReferenceRe
     override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
     override fun performAdditionalResolveChecks(results: List<PsiElement>) {
         for (result in results) {

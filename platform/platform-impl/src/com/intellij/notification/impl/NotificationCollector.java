@@ -40,9 +40,7 @@ public final class NotificationCollector {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(DISPLAY_TYPE.with(displayType));
     NotificationSeverity severity = getType(notification);
-    if (severity != null) {
-      data.add(SEVERITY.with(severity));
-    }
+    data.add(SEVERITY.with(severity));
     data.add(IS_EXPANDABLE.with(isExpandable));
     SHOWN.log(project, data);
   }
@@ -52,33 +50,24 @@ public final class NotificationCollector {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(DISPLAY_TYPE.with(NotificationDisplayType.TOOL_WINDOW));
     NotificationSeverity severity = getType(notification);
-    if (severity != null) {
-      data.add(SEVERITY.with(severity));
-    }
+    data.add(SEVERITY.with(severity));
     SHOWN.log(project, data);
   }
 
   public void logNotificationLoggedInEventLog(@NotNull Project project, @NotNull Notification notification) {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     NotificationSeverity severity = getType(notification);
-    if (severity != null) {
-      data.add(SEVERITY.with(severity));
-    }
+    data.add(SEVERITY.with(severity));
     LOGGED.log(project, data);
   }
 
-  private static @Nullable NotificationSeverity getType(@NotNull Notification notification) {
+  private static @NotNull NotificationSeverity getType(@NotNull Notification notification) {
     NotificationType type = notification.getType();
-    switch (type) {
-      case ERROR:
-        return NotificationSeverity.ERROR;
-      case WARNING:
-        return NotificationSeverity.WARNING;
-      case INFORMATION:
-      case IDE_UPDATE:
-        return NotificationSeverity.INFORMATION;
-    }
-    return null;
+    return switch (type) {
+      case ERROR -> NotificationSeverity.ERROR;
+      case WARNING -> NotificationSeverity.WARNING;
+      case INFORMATION, IDE_UPDATE -> NotificationSeverity.INFORMATION;
+    };
   }
 
   public void logNotificationBalloonClosedByUser(@Nullable Project project,

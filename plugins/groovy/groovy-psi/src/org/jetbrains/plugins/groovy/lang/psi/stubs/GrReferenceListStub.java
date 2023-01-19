@@ -21,9 +21,6 @@ import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 
-/**
- * @author ilyas
- */
 public class GrReferenceListStub extends StubBase<GrReferenceList> implements StubElement<GrReferenceList> {
 
   private final String[] myRefNames;

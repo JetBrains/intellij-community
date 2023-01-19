@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.i18n;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -31,6 +32,7 @@ public class PluginXmlI18nInspectionTest extends JavaCodeInsightFixtureTestCase 
     moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
       .resolveSibling("intellij.platform.resources").toString());
     moduleBuilder.addLibrary("ide-core", PathUtil.getJarPathForClass(Configurable.class));
+    moduleBuilder.addLibrary("ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP.class));
   }
 
   @Override
@@ -52,30 +54,31 @@ public class PluginXmlI18nInspectionTest extends JavaCodeInsightFixtureTestCase 
     myFixture.addClass("package foo.bar; public class Inspection1 extends com.intellij.codeInspection.LocalInspectionTool { }");
     myFixture.addFileToProject("messages/FooBundle.properties", "");
 
-    myFixture.configureByText("plugin.xml", "<idea-plugin>\n" +
-                                            "  <resource-bundle>messages.FooBundle</resource-bundle>" +
-                                            "  <extensions defaultExtensionNs=\"com.intellij\">\n" +
-                                            "    <localInspection hasStaticDescription=\"true\"\n" +
-                                            "                      shortName=\"bar\"\n" +
-                                            "                      displayName=\"Foo<caret> bar\"\n" +
-                                            "                      groupName=\"Group\"\n" +
-                                            "                      enabledByDefault=\"true\"\n" +
-                                            "                      implementationClass=\"foo.bar.Inspection1\"/>\n" +
-                                            "  </extension>\n" +
-                                            "</idea-plugin>");
+    myFixture.configureByText("plugin.xml", """
+      <idea-plugin>
+        <resource-bundle>messages.FooBundle</resource-bundle>  <extensions defaultExtensionNs="com.intellij">
+          <localInspection hasStaticDescription="true"
+                            shortName="bar"
+                            displayName="Foo<caret> bar"
+                            groupName="Group"
+                            enabledByDefault="true"
+                            implementationClass="foo.bar.Inspection1"/>
+        </extension>
+      </idea-plugin>""");
     IntentionAction action =
       myFixture.getAvailableIntention(DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "displayName"));
     assertNotNull(action);
     myFixture.launchAction(action);
-    myFixture.checkResult("<idea-plugin>\n" +
-                          "  <resource-bundle>messages.FooBundle</resource-bundle>  <extensions defaultExtensionNs=\"com.intellij\">\n" +
-                          "    <localInspection hasStaticDescription=\"true\"\n" +
-                          "                     shortName=\"bar\"\n" +
-                          "                     groupName=\"Group\"\n" +
-                          "                     enabledByDefault=\"true\"\n" +
-                          "                     implementationClass=\"foo.bar.Inspection1\" key=\"inspection.bar.display.name\"/>\n" +
-                          "  </extension>\n" +
-                          "</idea-plugin>");
+    myFixture.checkResult("""
+                            <idea-plugin>
+                              <resource-bundle>messages.FooBundle</resource-bundle>  <extensions defaultExtensionNs="com.intellij">
+                                <localInspection hasStaticDescription="true"
+                                                 shortName="bar"
+                                                 groupName="Group"
+                                                 enabledByDefault="true"
+                                                 implementationClass="foo.bar.Inspection1" key="inspection.bar.display.name"/>
+                              </extension>
+                            </idea-plugin>""");
   }
 
   private void setupPlatformLibraries202() {

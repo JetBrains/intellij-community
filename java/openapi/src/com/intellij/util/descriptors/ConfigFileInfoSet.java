@@ -18,9 +18,11 @@ package com.intellij.util.descriptors;
 
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface ConfigFileInfoSet extends JDOMExternalizable {
   void addConfigFile(ConfigFileInfo descriptor);
@@ -31,9 +33,11 @@ public interface ConfigFileInfoSet extends JDOMExternalizable {
 
   void replaceConfigFile(ConfigFileMetaData metaData, @NonNls String newUrl);
 
+  void updateConfigFile(ConfigFile configFile);
+
   void removeConfigFiles(ConfigFileMetaData... metaData);
 
-  ConfigFileInfo[] getConfigFileInfos();
+  List<ConfigFileInfo> getConfigFileInfos();
 
   void setConfigFileInfos(Collection<? extends ConfigFileInfo> descriptors);
 
@@ -41,4 +45,6 @@ public interface ConfigFileInfoSet extends JDOMExternalizable {
 
   @Nullable
   ConfigFileInfo getConfigFileInfo(ConfigFileMetaData metaData);
+
+  void setContainer(@NotNull ConfigFileContainer container);
 }

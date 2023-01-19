@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.test
 
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbService
@@ -21,7 +22,6 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import java.io.File
@@ -71,7 +71,7 @@ fun Project.waitIndexingComplete(indexingReason: String? = null) {
         // TODO: [VD] a dirty hack to reindex created android project
         IndexingFlag.cleanupProcessedFlag()
         with(DumbService.getInstance(project)) {
-            queueTask(UnindexedFilesUpdater(project, indexingReason))
+            UnindexedFilesUpdater(project, indexingReason).queue()
             completeJustSubmittedTasks()
         }
         UIUtil.dispatchAllInvocationEvents()

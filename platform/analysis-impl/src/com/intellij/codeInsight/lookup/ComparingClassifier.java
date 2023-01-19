@@ -14,9 +14,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
 
-/**
- * @author peter
- */
 public abstract class ComparingClassifier<T> extends Classifier<T> {
   private final boolean myNegated;
 

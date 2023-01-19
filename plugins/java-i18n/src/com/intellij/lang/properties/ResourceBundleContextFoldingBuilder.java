@@ -38,7 +38,7 @@ public class ResourceBundleContextFoldingBuilder extends FoldingBuilderEx {
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     if (!PropertiesFoldingSettings.getInstance().isFoldPlaceholdersToContext()) {
-      return FoldingDescriptor.EMPTY;
+      return FoldingDescriptor.EMPTY_ARRAY;
     }
     List<FoldingDescriptor> result = new ArrayList<>();
     for (IProperty property : ((PropertiesFile)root).getProperties()) {
@@ -47,7 +47,7 @@ public class ResourceBundleContextFoldingBuilder extends FoldingBuilderEx {
         fold(property, result);
       }
     }
-    return result.toArray(FoldingDescriptor.EMPTY);
+    return result.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
   private static void fold(@NotNull IProperty property, @NotNull List<? super FoldingDescriptor> result) {

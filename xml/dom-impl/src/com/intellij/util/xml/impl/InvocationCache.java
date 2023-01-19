@@ -29,9 +29,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author peter
- */
 class InvocationCache {
   private static final Map<JavaMethodSignature, Invocation> ourCoreInvocations = new HashMap<>();
   private final Map<Method, Invocation> myInvocations =

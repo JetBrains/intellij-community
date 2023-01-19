@@ -38,31 +38,16 @@ public final class HelpIdAwareLinkListener extends BrowserHyperlinkListener {
         final ApplicationNamesInfo nameInfo = ApplicationNamesInfo.getInstance();
         final String editionName = nameInfo.getEditionName();
 
-        final String productWebPath;
 
         final String productName = StringUtil.toLowerCase(nameInfo.getProductName());
-        switch (productName) {
-
-          case "rubymine":
-          case "ruby":
-            productWebPath = "ruby";
-            break;
-          case "intellij idea":
-          case "idea":
-            productWebPath = "idea";
-            break;
-          case "goland":
-            productWebPath = "go";
-            break;
-          case "appcode":
-            productWebPath = "objc";
-            break;
-          case "pycharm":
-            productWebPath = editionName != null && "edu".equals(StringUtil.toLowerCase(editionName)) ? "pycharm-edu" : "pycharm";
-            break;
-          default:
-            productWebPath = productName;
-        }
+        final String productWebPath = switch (productName) {
+          case "rubymine", "ruby" -> "ruby";
+          case "intellij idea", "idea" -> "idea";
+          case "goland" -> "go";
+          case "appcode" -> "objc";
+          case "pycharm" -> editionName != null && "edu".equals(StringUtil.toLowerCase(editionName)) ? "pycharm-edu" : "pycharm";
+          default -> productName;
+        };
 
         BrowserUtil.browse(String.format(URL_TEMPLATE, productWebPath, wouldBeHelpId, ApplicationInfo.getInstance().getShortVersion()));
         return;

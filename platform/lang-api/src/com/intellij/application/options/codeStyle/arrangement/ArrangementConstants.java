@@ -3,9 +3,6 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author Denis Zhdanov
- */
 public final class ArrangementConstants {
 
   @NonNls public static final String ACTION_GROUP_GROUPING_RULES_CONTROL_TOOLBAR = "Arrangement.Rule.Group.Control.ToolBar";

@@ -39,8 +39,6 @@ import java.util.List;
 
 /**
  * @author Alexander Lobas
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public abstract class AbstractQuickFixManager {
   protected DesignerEditorPanel myDesigner;
@@ -93,6 +91,11 @@ public abstract class AbstractQuickFixManager {
           showHint();
           showPopup();
         }
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override

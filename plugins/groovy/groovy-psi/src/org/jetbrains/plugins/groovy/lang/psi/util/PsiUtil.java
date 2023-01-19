@@ -18,12 +18,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntStack;
 import com.intellij.util.containers.Stack;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.ext.newify.NewifyMemberContributor;
@@ -96,9 +93,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
 
-/**
- * @author ven
- */
 public final class PsiUtil {
   private static final Logger LOG = Logger.getInstance(PsiUtil.class);
 
@@ -346,8 +340,9 @@ public final class PsiUtil {
     return new Iterable<>() {
       @Override
       public Iterator<PsiClass> iterator() {
+        //noinspection SSBasedInspection
         return new Iterator<>() {
-          final IntStack indices = new IntStack();
+          final IntArrayList indices = new IntArrayList();
           final Stack<PsiClassType[]> superTypesStack = new Stack<>();
           final Set<PsiClass> visited = new HashSet<>();
           PsiClass current;
@@ -377,9 +372,9 @@ public final class PsiUtil {
 
             nextObtained = true;
             while (!superTypesStack.empty()) {
-              assert indices.size() > 0;
+              assert !indices.isEmpty();
 
-              int i = indices.pop();
+              int i = indices.popInt();
               PsiClassType[] superTypes = superTypesStack.peek();
               while (i < superTypes.length) {
                 PsiClass clazz = superTypes[i].resolve();
@@ -1257,9 +1252,10 @@ public final class PsiUtil {
     return false;
   }
 
+  @Unmodifiable
   public static @NotNull List<@NotNull PsiAnnotation> getAllAnnotations(@NotNull PsiElement element, @NotNull String annotationNameFq) {
     List<PsiModifierListOwner> parents = PsiTreeUtil.collectParents(element, PsiModifierListOwner.class, true, __ -> false);
-    SmartList<PsiAnnotation> annotations = new SmartList<>();
+    List<PsiAnnotation> annotations = new SmartList<>();
     for (PsiModifierListOwner parent : parents) {
       PsiAnnotation annotation = parent.getAnnotation(annotationNameFq);
       if (annotation != null) {

@@ -18,9 +18,6 @@ import java.util.List;
 
 import static com.jetbrains.python.PyStringFormatParser.*;
 
-/**
- * @author vlan
- */
 public final class PyInjectionUtil {
 
   public static class InjectionResult {
@@ -149,9 +146,7 @@ public final class PyInjectionUtil {
                                  .toList();
           }
           else {
-            subsRanges = StreamEx.of(((PyFormattedStringElement)stringElem).getFragments())
-                                 .map(PsiElement::getTextRangeInParent)
-                                 .toList();
+            subsRanges = ContainerUtil.map(((PyFormattedStringElement)stringElem).getFragments(), PsiElement::getTextRangeInParent);
           }
           if (!subsRanges.isEmpty()) {
             strict = false;

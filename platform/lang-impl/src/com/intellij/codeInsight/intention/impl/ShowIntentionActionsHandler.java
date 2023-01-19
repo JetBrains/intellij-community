@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -33,9 +32,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -54,6 +54,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
+  private static final Logger LOG = Logger.getInstance(ShowIntentionActionsHandler.class);
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -121,12 +122,12 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
   @NotNull
   @ApiStatus.Internal
-  public static ShowIntentionsPass.IntentionsInfo calcIntentions(@NotNull Project project,
-                                                                  @NotNull Editor editor,
-                                                                  @NotNull PsiFile file) {
-    ShowIntentionsPass.IntentionsInfo intentions = ActionUtil.underModalProgress(project,
-                                                                                 CodeInsightBundle.message("progress.title.searching.for.context.actions"), () ->
-      ShowIntentionsPass.getActionsToShow(editor, file, false));
+  public static ShowIntentionsPass.IntentionsInfo calcIntentions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    ShowIntentionsPass.IntentionsInfo intentions = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.searching.for.context.actions"), () -> {
+        DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+        return ShowIntentionsPass.getActionsToShow(editor, file, false);
+      });
 
     ShowIntentionsPass.getActionsToShowSync(editor, file, intentions);
     return intentions;
@@ -176,7 +177,15 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       return false;
     }
     catch (IntentionPreviewUnsupportedOperationException e) {
-      //check action availability can be invoked on a mock editor and may produce exceptions
+      // check action availability can be invoked on a mock editor and may produce exceptions
+      return false;
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      // avoid breaking highlighting when an exception is thrown from an intention
+      LOG.error(e);
       return false;
     }
     return true;
@@ -221,19 +230,16 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                               @NotNull IntentionAction action,
                                               @NotNull @NlsContexts.Command String commandName) {
     Project project = hostFile.getProject();
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
-    if (pair == null) return false;
-
-    CommandProcessor.getInstance().executeCommand(project, () ->
-      invokeIntention(action, pair.second, pair.first), commandName, null);
-
-    checkPsiTextConsistency(hostFile);
-
+    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
+      if (pair == null) return false;
+      CommandProcessor.getInstance().executeCommand(project, () ->
+        invokeIntention(action, pair.second, pair.first), commandName, null);
+      checkPsiTextConsistency(hostFile);
+    }
     return true;
   }
 
@@ -257,9 +263,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       WriteAction.run(() -> action.invoke(file.getProject(), editor, file));
     }
     else {
-      try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
-        action.invoke(file.getProject(), editor, file);
-      }
+      action.invoke(file.getProject(), editor, file);
     }
   }
 
@@ -275,7 +279,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     PsiFile injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostEditor.getCaretModel().getOffset());
     return chooseBetweenHostAndInjected(
       hostFile, hostEditor, injectedFile,
-      (psiFile, editor) -> SlowOperations.allowSlowOperations(() -> availableFor(psiFile, editor, action))
+      (psiFile, editor) -> availableFor(psiFile, editor, action)
     );
   }
 }

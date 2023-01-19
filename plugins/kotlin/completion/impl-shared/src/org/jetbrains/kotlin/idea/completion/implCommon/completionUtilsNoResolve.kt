@@ -2,11 +2,12 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.psi.PsiElement
+import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.lookup.*
 import com.intellij.openapi.util.Key
+import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.StandardPatterns
+import com.intellij.psi.PsiElement
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
@@ -16,14 +17,29 @@ import org.jetbrains.kotlin.load.java.javaToKotlinNameMap
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.renderer.render
 
 @ApiStatus.Internal
 val KOTLIN_CAST_REQUIRED_COLOR = JBColor(0x4E4040, 0x969696)
+
+tailrec fun <T : Any> LookupElement.putUserDataDeep(key: Key<T>, value: T?) {
+    if (this is LookupElementDecorator<*>) {
+        delegate.putUserDataDeep(key, value)
+    } else {
+        putUserData(key, value)
+    }
+}
+
+tailrec fun <T : Any> LookupElement.getUserDataDeep(key: Key<T>): T? {
+    return if (this is LookupElementDecorator<*>) {
+        getDelegate().getUserDataDeep(key)
+    } else {
+        getUserData(key)
+    }
+}
 
 val PsiElement.isInsideKtTypeReference: Boolean
     get() = getNonStrictParentOfType<KtTypeReference>() != null
@@ -40,29 +56,6 @@ fun createKeywordElement(
         element = element.withTailText(tail, false)
     }
     return element
-}
-
-fun breakOrContinueExpressionItems(position: KtElement, breakOrContinue: String): Collection<LookupElement> {
-    val result = ArrayList<LookupElement>()
-
-    parentsLoop@
-    for (parent in position.parentsWithSelf) {
-        when (parent) {
-            is KtLoopExpression -> {
-                if (result.isEmpty()) {
-                    result.add(createKeywordElement(breakOrContinue))
-                }
-
-                val label = (parent.parent as? KtLabeledExpression)?.getLabelNameAsName()
-                if (label != null) {
-                    result.add(createKeywordElement(breakOrContinue, tail = label.labelNameToTail()))
-                }
-            }
-
-            is KtDeclarationWithBody -> break@parentsLoop //TODO: support non-local break's&continue's when they are supported by compiler
-        }
-    }
-    return result
 }
 
 fun createKeywordElementWithSpace(
@@ -179,3 +172,35 @@ fun referenceScope(declaration: KtNamedDeclaration): KtElement? = when (val pare
 
 fun FqName.isJavaClassNotToBeUsedInKotlin(): Boolean =
     JavaToKotlinClassMap.isJavaPlatformClass(this) || javaToKotlinNameMap[this] != null
+
+fun findValueArgument(expression: KtExpression): KtValueArgument? {
+    // Search for value argument among parent and grandparent to avoid parsing errors like KTIJ-18231
+    return expression.parent as? KtValueArgument
+        ?: expression.parent.parent as? KtValueArgument
+}
+
+infix fun <T> ElementPattern<T>.and(rhs: ElementPattern<T>) = StandardPatterns.and(this, rhs)
+fun <T> ElementPattern<T>.andNot(rhs: ElementPattern<T>) = StandardPatterns.and(this, StandardPatterns.not(rhs))
+infix fun <T> ElementPattern<T>.or(rhs: ElementPattern<T>) = StandardPatterns.or(this, rhs)
+
+fun singleCharPattern(char: Char) = StandardPatterns.character().equalTo(char)
+
+fun kotlinIdentifierStartPattern(): ElementPattern<Char> =
+    StandardPatterns.character().javaIdentifierStart().andNot(singleCharPattern('$'))
+
+fun kotlinIdentifierPartPattern(): ElementPattern<Char> =
+    StandardPatterns.character().javaIdentifierPart().andNot(singleCharPattern('$')) or singleCharPattern('@')
+
+
+fun LookupElementPresentation.prependTailText(text: String, grayed: Boolean) {
+    val tails = tailFragments.toList()
+    clearTail()
+    appendTailText(text, grayed)
+    tails.forEach { appendTailText(it.text, it.isGrayed) }
+}
+
+fun PrefixMatcher.asNameFilter(): (Name) -> Boolean {
+    return { name -> !name.isSpecial && prefixMatches(name.identifier) }
+}
+
+infix fun <T> ((T) -> Boolean).exclude(otherFilter: (T) -> Boolean): (T) -> Boolean = { this(it) && !otherFilter(it) }

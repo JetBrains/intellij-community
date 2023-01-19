@@ -6,7 +6,6 @@ public final class ClassA {
     public final fun setWritebleProp(<set-?>: int) : void = UastEmptyExpression
     public final fun getParamAndProp() : java.lang.String = UastEmptyExpression
     public fun ClassA(@org.jetbrains.annotations.NotNull justParam: int, @org.jetbrains.annotations.NotNull paramAndProp: java.lang.String) = UastEmptyExpression
-    @kotlin.jvm.JvmStatic
     public static final fun foo() : void {
     }
     public static final class Companion {

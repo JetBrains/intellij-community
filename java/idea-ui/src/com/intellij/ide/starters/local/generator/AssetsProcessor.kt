@@ -1,42 +1,45 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.starters.local.generator
 
+import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.starters.local.*
-import com.intellij.ide.starters.local.GeneratorContext
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.util.io.*
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-
+import java.nio.file.Path
+import kotlin.io.path.writeBytes
+import kotlin.io.path.writeText
 
 @ApiStatus.Experimental
-class AssetsProcessor {
+@ApiStatus.NonExtendable
+interface AssetsProcessor {
 
-  private val LOG = logger<AssetsProcessor>()
-
-  internal fun generateSources(context: GeneratorContext, templateProperties: Map<String, Any>) {
-    val outputDir = VfsUtil.createDirectoryIfMissing(context.outputDirectory.fileSystem, context.outputDirectory.path)
-                    ?: throw IllegalStateException("Unable to create directory ${context.outputDirectory.path}")
-    generateSources(outputDir, context.assets, templateProperties + ("context" to context))
-  }
-
+  @RequiresWriteLock
   fun generateSources(
-    outputDirectory: String,
+    outputDirectory: Path,
     assets: List<GeneratorAsset>,
     templateProperties: Map<String, Any>
-  ): List<VirtualFile> {
-    val outputDir = VfsUtil.createDirectoryIfMissing(LocalFileSystem.getInstance(), outputDirectory)
-                    ?: throw IllegalStateException("Unable to create directory ${outputDirectory}")
-    return generateSources(outputDir, assets, templateProperties)
-  }
+  ): List<Path>
 
-  fun generateSources(
-    outputDirectory: VirtualFile,
+  companion object {
+
+    @JvmStatic
+    fun getInstance(): AssetsProcessor = service()
+  }
+}
+
+@ApiStatus.Internal
+open class AssetsProcessorImpl : AssetsProcessor {
+
+  override fun generateSources(
+    outputDirectory: Path,
     assets: List<GeneratorAsset>,
     templateProperties: Map<String, Any>
-  ): List<VirtualFile> {
+  ): List<Path> {
     return assets.map { asset ->
       when (asset) {
         is GeneratorTemplateFile -> generateSources(outputDirectory, asset, templateProperties)
@@ -46,49 +49,59 @@ class AssetsProcessor {
     }
   }
 
-  private fun createFile(outputDirectory: VirtualFile, relativePath: String): VirtualFile {
-    val subPath = if (relativePath.contains("/"))
-      "/" + relativePath.substringBeforeLast("/")
-    else
-      ""
-
-    val fileDirectory = if (subPath.isEmpty()) {
-      outputDirectory
+  private fun generateSources(outputDirectory: Path, asset: GeneratorTemplateFile, properties: Map<String, Any>): Path {
+    try {
+      val templateManager = FileTemplateManager.getDefaultInstance()
+      val defaultProperties = templateManager.defaultProperties
+      val content = asset.template.getText(defaultProperties + properties)
+      val file = findOrCreateFile(outputDirectory, asset.targetFileName)
+      writeText(file, content)
+      return file
     }
-    else {
-      VfsUtil.createDirectoryIfMissing(outputDirectory, subPath)
-      ?: throw IllegalStateException("Unable to create directory ${subPath} in ${outputDirectory.path}")
-    }
-
-    val fileName = relativePath.substringAfterLast("/")
-    LOG.info("Creating file $fileName in ${fileDirectory.path}")
-    return fileDirectory.findOrCreateChildData(this, fileName)
-  }
-
-  private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorTemplateFile, templateProps: Map<String, Any>): VirtualFile {
-    val sourceCode = try {
-      asset.template.getText(templateProps)
-    }
-    catch (e: Exception) {
+    catch (e: Throwable) {
       throw TemplateProcessingException(e)
     }
-    val file = createFile(outputDirectory, asset.targetFileName)
-    VfsUtil.saveText(file, sourceCode)
-    return file
   }
 
-  private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorResourceFile): VirtualFile {
-    val file = createFile(outputDirectory, asset.targetFileName)
-    asset.resource.openStream().use {
-      file.setBinaryContent(it.readBytes())
+  private fun generateSources(outputDirectory: Path, asset: GeneratorResourceFile): Path {
+    try {
+      val content = asset.resource.openStream().use { it.readBytes() }
+      val file = findOrCreateFile(outputDirectory, asset.targetFileName)
+      writeBytes(file, content)
+      return file
     }
-    return file
+    catch (e: Throwable) {
+      throw ResourceProcessingException(e)
+    }
   }
 
-  private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorEmptyDirectory): VirtualFile {
-    LOG.info("Creating empty directory ${asset.targetFileName} in ${outputDirectory.path}")
-    return VfsUtil.createDirectoryIfMissing(outputDirectory, asset.targetFileName)
+  private fun generateSources(outputDirectory: Path, asset: GeneratorEmptyDirectory): Path {
+    return findOrCreateDirectory(outputDirectory, asset.targetFileName)
   }
 
-  private class TemplateProcessingException(t: Throwable) : IOException("Unable to process template", t)
+  protected open fun writeText(file: Path, content: String) {
+    file.writeText(content)
+  }
+
+  protected open fun writeBytes(file: Path, content: ByteArray) {
+    file.writeBytes(content)
+  }
+
+  protected open fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path {
+    LOG.info("Creating file $relativePath in $outputDirectory")
+    return outputDirectory.findOrCreateFile(relativePath)
+  }
+
+  protected open fun findOrCreateDirectory(outputDirectory: Path, relativePath: String): Path {
+    LOG.info("Creating directory $relativePath in $outputDirectory")
+    return outputDirectory.findOrCreateDirectory(relativePath)
+  }
+
+  companion object {
+
+    private val LOG: Logger = logger<AssetsProcessor>()
+  }
 }
+
+private class TemplateProcessingException(t: Throwable) : IOException("Unable to process template", t)
+private class ResourceProcessingException(t: Throwable) : IOException("Unable to process resource", t)

@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -244,7 +243,7 @@ public final class MoveClassesOrPackagesUtil {
     PsiFile file = aClass.getContainingFile();
     Project project = moveDestination.getProject();
     VirtualFile dstDir = moveDestination.getVirtualFile();
-    String pkgName = ProjectRootManager.getInstance(project).getFileIndex().getPackageNameByDirectory(dstDir);
+    String pkgName = PackageIndex.getInstance(project).getPackageNameByDirectory(dstDir);
     PsiPackage newPackage = pkgName == null ? null
                                             : findPackage(moveDestination.getManager(), moveDestination.getResolveScope(), pkgName);
 

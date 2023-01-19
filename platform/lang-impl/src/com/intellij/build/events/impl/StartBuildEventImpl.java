@@ -20,12 +20,9 @@ import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.events.BuildEventsNls;
 import com.intellij.build.events.StartBuildEvent;
-import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.filters.Filter;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,25 +49,6 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
   @Override
   public DefaultBuildDescriptor getBuildDescriptor() {
     return myBuildDescriptor;
-  }
-
-  /**
-   * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
-   */
-  @Deprecated(forRemoval = true)
-  public StartBuildEventImpl withProcessHandler(@Nullable BuildProcessHandler processHandler,
-                                                @Nullable Consumer<? super ConsoleView> attachedConsoleConsumer) {
-    myBuildDescriptor.withProcessHandler(processHandler, attachedConsoleConsumer);
-    return this;
-  }
-
-  /**
-   * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
-   */
-  @Deprecated(forRemoval = true)
-  public StartBuildEventImpl withRestartAction(@NotNull AnAction anAction) {
-    myBuildDescriptor.withRestartAction(anAction);
-    return this;
   }
 
   /**

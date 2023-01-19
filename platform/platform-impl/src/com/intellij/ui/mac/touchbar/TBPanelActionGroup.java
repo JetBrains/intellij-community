@@ -180,7 +180,7 @@ class TBPanelActionGroup extends TBPanel {
   private static final String ourLargeSeparatorText = "type.large";
   private static final String ourFlexibleSeparatorText = "type.flexible";
 
-  private void _rebuildButtons(@NotNull List<AnAction> actions) {
+  private void _rebuildButtons(@NotNull List<? extends AnAction> actions) {
     //
     // clear all items
     //

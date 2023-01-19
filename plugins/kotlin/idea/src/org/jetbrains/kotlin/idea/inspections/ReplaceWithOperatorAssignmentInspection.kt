@@ -115,7 +115,7 @@ class ReplaceWithOperatorAssignmentInspection : AbstractApplicabilityBasedInspec
         val assignedExpression = element.right as? KtBinaryExpression ?: return null
 
         val replacement = buildOperatorAssignmentText(variableExpression, assignedExpression, "")
-        return KtPsiFactory(element).createExpression(replacement) as KtBinaryExpression
+        return KtPsiFactory(element.project).createExpression(replacement) as KtBinaryExpression
     }
 
     private tailrec fun buildOperatorAssignmentText(

@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.editor.Caret
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlin.math.abs
@@ -28,8 +27,7 @@ internal object SelectionUtil {
   @JvmStatic
   @RequiresBackgroundThread
   fun obtainCaretSnapshots(action: AnAction, event: AnActionEvent): Collection<CaretSnapshot>? {
-    val session = Utils.getOrCreateUpdateSession(event)
-    return session.compute(action, "obtainCaretSnapshot", ActionUpdateThread.EDT) {
+    return event.updateSession.compute(action, "obtainCaretSnapshot", ActionUpdateThread.EDT) {
       val editor = event.getData(CommonDataKeys.EDITOR) ?: return@compute null
       return@compute editor.caretModel.allCarets.map { it.toSnapshot() }
     }
@@ -41,8 +39,7 @@ internal object SelectionUtil {
   @JvmStatic
   @RequiresBackgroundThread
   fun obtainPrimaryCaretSnapshot(action: AnAction, event: AnActionEvent): CaretSnapshot? {
-    val session = Utils.getOrCreateUpdateSession(event)
-    return session.compute(action, "obtainPrimaryCaretSnapshot", ActionUpdateThread.EDT) {
+    return event.updateSession.compute(action, "obtainPrimaryCaretSnapshot", ActionUpdateThread.EDT) {
       val editor = event.getData(CommonDataKeys.EDITOR) ?: return@compute null
       return@compute editor.caretModel.primaryCaret.toSnapshot()
     }

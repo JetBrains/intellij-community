@@ -22,9 +22,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class PomDescriptionProvider implements ElementDescriptionProvider{
   @Override
   @Nullable

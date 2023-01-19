@@ -24,10 +24,12 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
 public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
-    doMemberTest("void foo() {\n" +
-                 "  final RuntimeException x = new RuntimeException();\n" +
-                 "  System.out.println(/*'Throwable' argument 'x' to 'System.out.println()' call*/x/**/);\n" +
-                 "}\n");
+    doMemberTest("""
+                   void foo() {
+                     final RuntimeException x = new RuntimeException();
+                     System.out.println(/*'Throwable' argument 'x' to 'System.out.println()' call*/x/**/);
+                   }
+                   """);
   }
 
   public void testEvenSimpler() {

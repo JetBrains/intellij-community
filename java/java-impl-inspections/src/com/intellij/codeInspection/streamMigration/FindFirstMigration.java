@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -17,15 +17,16 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 class FindFirstMigration extends BaseStreamApiMigration {
-  FindFirstMigration(boolean shouldWarn) {super(shouldWarn, "findFirst()");}
+  FindFirstMigration(boolean shouldWarn) {
+    super(shouldWarn, "findFirst");
+  }
 
   @Override
   PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     PsiStatement statement = tb.getSingleStatement();
     PsiStatement loopStatement = tb.getStreamSourceStatement();
     CommentTracker ct = new CommentTracker();
-    if (statement instanceof PsiReturnStatement) {
-      PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
+    if (statement instanceof PsiReturnStatement returnStatement) {
       PsiExpression value = returnStatement.getReturnValue();
       if (value == null) return null;
       PsiReturnStatement nextReturnStatement = ControlFlowUtils.getNextReturnStatement(loopStatement);

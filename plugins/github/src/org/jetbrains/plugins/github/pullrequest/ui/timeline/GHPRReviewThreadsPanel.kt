@@ -1,39 +1,24 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.util.ui.SingleComponentCenteringLayout
-import com.intellij.util.ui.UIUtil
+import com.intellij.collaboration.ui.VerticalListPanel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.ListModel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
 object GHPRReviewThreadsPanel {
 
-  fun create(model: GHPRReviewThreadsModel, threadComponentFactory: (GHPRReviewThreadModel) -> JComponent): JComponent {
-    val panel = JPanel(VerticalLayout(12)).apply {
-      isOpaque = false
-    }
-
-    val loadingPanel = JPanel(SingleComponentCenteringLayout()).apply {
-      isOpaque = false
-      add(JLabel(ApplicationBundle.message("label.loading.page.please.wait")).apply {
-        foreground = UIUtil.getContextHelpForeground()
-      })
-    }
-
-    Controller(model, panel, loadingPanel, threadComponentFactory)
-
+  fun create(model: ListModel<GHPRReviewThreadModel>, threadComponentFactory: (GHPRReviewThreadModel) -> JComponent): JComponent {
+    val panel = VerticalListPanel()
+    Controller(model, panel, threadComponentFactory)
     return panel
   }
 
-  private class Controller(private val model: GHPRReviewThreadsModel,
+  private class Controller(private val model: ListModel<GHPRReviewThreadModel>,
                            private val panel: JPanel,
-                           private val loadingPanel: JPanel,
                            private val threadComponentFactory: (GHPRReviewThreadModel) -> JComponent) {
     init {
       model.addListDataListener(object : ListDataListener {
@@ -56,17 +41,13 @@ object GHPRReviewThreadsPanel {
         }
 
         override fun contentsChanged(e: ListDataEvent) {
-          if (model.loaded) panel.remove(loadingPanel)
           updateVisibility()
           panel.validate()
           panel.repaint()
         }
       })
 
-      if (!model.loaded) {
-        panel.add(loadingPanel)
-      }
-      else for (i in 0 until model.size) {
+      for (i in 0 until model.size) {
         panel.add(threadComponentFactory(model.getElementAt(i)), i)
       }
       updateVisibility()

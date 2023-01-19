@@ -18,7 +18,7 @@ public abstract class TrySurrounder extends GroovyManyStatementsSurrounder {
     GrTryCatchStatement tryCatchStatement = (GrTryCatchStatement) element;
 
     GrCatchClause[] catchClauses = tryCatchStatement.getCatchClauses();
-    if (catchClauses != null && catchClauses.length > 0) {
+    if (catchClauses.length > 0) {
       GrParameter parameter = catchClauses[0].getParameter();
       if (parameter == null) {
         GrOpenBlock block = catchClauses[0].getBody();

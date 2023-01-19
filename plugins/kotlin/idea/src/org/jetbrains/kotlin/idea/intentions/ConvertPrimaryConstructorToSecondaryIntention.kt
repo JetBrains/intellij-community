@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.idea.base.psi.mustHaveOnlyPropertiesInPrimaryConstructor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -31,13 +32,7 @@ class ConvertPrimaryConstructorToSecondaryIntention : SelfTargetingRangeIntentio
         val primaryCtor = element.primaryConstructor ?: return null
         val startOffset =
             (if (primaryCtor.getConstructorKeyword() != null) primaryCtor else element.nameIdentifier)?.startOffset ?: return null
-        if (element.isAnnotation() ||
-            element.isData() ||
-            element.isData() ||
-            element.isInline() ||
-            element.isValue() ||
-            element.superTypeListEntries.any { it is KtDelegatedSuperTypeEntry }
-        ) {
+        if (element.mustHaveOnlyPropertiesInPrimaryConstructor() || element.superTypeListEntries.any { it is KtDelegatedSuperTypeEntry }) {
             return null
         }
         if (primaryCtor.valueParameters.any { it.hasValOrVar() && (it.name == null || it.annotationEntries.isNotEmpty()) }) return null
@@ -64,7 +59,7 @@ class ConvertPrimaryConstructorToSecondaryIntention : SelfTargetingRangeIntentio
         val primaryCtor = element.primaryConstructor ?: return
         if (element.isAnnotation()) return
         val context = element.analyze()
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         val commentSaver = CommentSaver(primaryCtor)
         val initializerMap = mutableMapOf<KtProperty, String>()
         for (property in element.getProperties()) {
@@ -81,7 +76,7 @@ class ConvertPrimaryConstructorToSecondaryIntention : SelfTargetingRangeIntentio
             initializer.delete()
             property.equalsToken!!.delete()
         }
-        val constructor = factory.createSecondaryConstructor(
+        val constructor = psiFactory.createSecondaryConstructor(
             CallableBuilder(CONSTRUCTOR).apply {
                 primaryCtor.modifierList?.let { modifier(it.text) }
                 typeParams()
@@ -98,7 +93,7 @@ class ConvertPrimaryConstructorToSecondaryIntention : SelfTargetingRangeIntentio
                 for (superTypeEntry in element.superTypeListEntries) {
                     if (superTypeEntry is KtSuperTypeCallEntry) {
                         superDelegation(superTypeEntry.valueArgumentList?.text ?: "")
-                        superTypeEntry.replace(factory.createSuperTypeEntry(superTypeEntry.typeReference!!.text))
+                        superTypeEntry.replace(psiFactory.createSuperTypeEntry(superTypeEntry.typeReference!!.text))
                     }
                 }
                 val valueParameterInitializers =
@@ -135,9 +130,9 @@ class ConvertPrimaryConstructorToSecondaryIntention : SelfTargetingRangeIntentio
             lastEnumEntry?.let { element.addDeclarationAfter(constructor, it) } ?: element.addDeclarationBefore(constructor, null)
         commentSaver.restore(secondaryConstructor)
 
-        convertValueParametersToProperties(primaryCtor, element, factory, lastEnumEntry)
+        convertValueParametersToProperties(primaryCtor, element, psiFactory, lastEnumEntry)
         if (element.isEnum()) {
-            addSemicolonIfNotExist(element, factory, lastEnumEntry)
+            addSemicolonIfNotExist(element, psiFactory, lastEnumEntry)
         }
 
         for (anonymousInitializer in element.getAnonymousInitializers()) {

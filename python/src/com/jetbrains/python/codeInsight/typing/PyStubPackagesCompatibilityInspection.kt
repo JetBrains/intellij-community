@@ -5,7 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.ui.ListEditForm
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -15,14 +15,13 @@ import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
-import com.jetbrains.python.inspections.quickfix.sdk.InterpreterSettingsQuickFix
+import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkUtil
-import javax.swing.JComponent
 
 class PyStubPackagesCompatibilityInspection : PyInspection() {
 
@@ -52,9 +51,8 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
   @Suppress("MemberVisibilityCanBePrivate")
   var ignoredStubPackages: MutableList<String> = mutableListOf()
 
-  override fun createOptionsPanel(): JComponent = ListEditForm(PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages"),
-                                                               PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label"),
-                                                               ignoredStubPackages).contentPanel
+  override fun getOptionsPane() =
+    OptPane.pane(OptPane.stringList("ignoredStubPackages", PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label")))
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
@@ -97,7 +95,7 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
                                               runtimePkgName, specsToString)
             registerProblem(node,
                             message,
-                            InterpreterSettingsQuickFix(module),
+                            PyInterpreterInspection.InterpreterSettingsQuickFix(module),
                             createIgnoreStubPackageQuickFix(stubPkgName, ignoredStubPackages))
           }
         }

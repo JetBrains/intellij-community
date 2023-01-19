@@ -5,5 +5,8 @@
 @file:MyExperimentalAPI<caret>
 
 @RequiresOptIn
-@Target(AnnotationTarget.FIELD)
+@Target(AnnotationTarget.CLASS)
 annotation class MyExperimentalAPI
+
+@MyExperimentalAPI
+class Some

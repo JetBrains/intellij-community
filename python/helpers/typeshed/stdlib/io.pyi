@@ -2,54 +2,35 @@ import builtins
 import codecs
 import sys
 from _typeshed import ReadableBuffer, Self, StrOrBytesPath, WriteableBuffer
+from collections.abc import Callable, Iterable, Iterator
 from os import _Opener
 from types import TracebackType
-from typing import IO, Any, BinaryIO, Callable, Iterable, Iterator, TextIO
+from typing import IO, Any, BinaryIO, TextIO
 from typing_extensions import Literal
 
+__all__ = [
+    "BlockingIOError",
+    "open",
+    "IOBase",
+    "RawIOBase",
+    "FileIO",
+    "BytesIO",
+    "StringIO",
+    "BufferedIOBase",
+    "BufferedReader",
+    "BufferedWriter",
+    "BufferedRWPair",
+    "BufferedRandom",
+    "TextIOBase",
+    "TextIOWrapper",
+    "UnsupportedOperation",
+    "SEEK_SET",
+    "SEEK_CUR",
+    "SEEK_END",
+]
+
 if sys.version_info >= (3, 8):
-    __all__ = [
-        "BlockingIOError",
-        "open",
-        "open_code",
-        "IOBase",
-        "RawIOBase",
-        "FileIO",
-        "BytesIO",
-        "StringIO",
-        "BufferedIOBase",
-        "BufferedReader",
-        "BufferedWriter",
-        "BufferedRWPair",
-        "BufferedRandom",
-        "TextIOBase",
-        "TextIOWrapper",
-        "UnsupportedOperation",
-        "SEEK_SET",
-        "SEEK_CUR",
-        "SEEK_END",
-    ]
-else:
-    __all__ = [
-        "BlockingIOError",
-        "open",
-        "IOBase",
-        "RawIOBase",
-        "FileIO",
-        "BytesIO",
-        "StringIO",
-        "BufferedIOBase",
-        "BufferedReader",
-        "BufferedWriter",
-        "BufferedRWPair",
-        "BufferedRandom",
-        "TextIOBase",
-        "TextIOWrapper",
-        "UnsupportedOperation",
-        "SEEK_SET",
-        "SEEK_CUR",
-        "SEEK_END",
-    ]
+    __all__ += ["open_code"]
 
 DEFAULT_BUFFER_SIZE: Literal[8192]
 
@@ -72,7 +53,7 @@ class IOBase:
     def __enter__(self: Self) -> Self: ...
     def __exit__(
         self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
-    ) -> bool | None: ...
+    ) -> None: ...
     def close(self) -> None: ...
     def fileno(self) -> int: ...
     def flush(self) -> None: ...
@@ -108,7 +89,7 @@ class BufferedIOBase(IOBase):
     def read(self, __size: int | None = ...) -> bytes: ...
     def read1(self, __size: int = ...) -> bytes: ...
 
-class FileIO(RawIOBase, BinaryIO):  # type: ignore # argument disparities between the base classes
+class FileIO(RawIOBase, BinaryIO):
     mode: str
     name: StrOrBytesPath | int  # type: ignore[assignment]
     def __init__(
@@ -120,7 +101,7 @@ class FileIO(RawIOBase, BinaryIO):  # type: ignore # argument disparities betwee
     def read(self, __size: int = ...) -> bytes: ...
     def __enter__(self: Self) -> Self: ...
 
-class BytesIO(BufferedIOBase, BinaryIO):  # type: ignore # argument disparities between the base classes
+class BytesIO(BufferedIOBase, BinaryIO):
     def __init__(self, initial_bytes: bytes = ...) -> None: ...
     # BytesIO does not contain a "name" field. This workaround is necessary
     # to allow BytesIO sub-classes to add this field, as it is defined
@@ -129,21 +110,15 @@ class BytesIO(BufferedIOBase, BinaryIO):  # type: ignore # argument disparities 
     def __enter__(self: Self) -> Self: ...
     def getvalue(self) -> bytes: ...
     def getbuffer(self) -> memoryview: ...
-    if sys.version_info >= (3, 7):
-        def read1(self, __size: int | None = ...) -> bytes: ...
-    else:
-        def read1(self, __size: int | None) -> bytes: ...  # type: ignore[override]
+    def read1(self, __size: int | None = ...) -> bytes: ...
 
-class BufferedReader(BufferedIOBase, BinaryIO):  # type: ignore # argument disparities between base classes
+class BufferedReader(BufferedIOBase, BinaryIO):
     def __enter__(self: Self) -> Self: ...
     def __init__(self, raw: RawIOBase, buffer_size: int = ...) -> None: ...
     def peek(self, __size: int = ...) -> bytes: ...
-    if sys.version_info >= (3, 7):
-        def read1(self, __size: int = ...) -> bytes: ...
-    else:
-        def read1(self, __size: int) -> bytes: ...  # type: ignore[override]
+    def read1(self, __size: int = ...) -> bytes: ...
 
-class BufferedWriter(BufferedIOBase, BinaryIO):  # type: ignore # argument disparities between base classes
+class BufferedWriter(BufferedIOBase, BinaryIO):
     def __enter__(self: Self) -> Self: ...
     def __init__(self, raw: RawIOBase, buffer_size: int = ...) -> None: ...
     def write(self, __buffer: ReadableBuffer) -> int: ...
@@ -152,10 +127,7 @@ class BufferedRandom(BufferedReader, BufferedWriter):
     def __enter__(self: Self) -> Self: ...
     def __init__(self, raw: RawIOBase, buffer_size: int = ...) -> None: ...
     def seek(self, __target: int, __whence: int = ...) -> int: ...
-    if sys.version_info >= (3, 7):
-        def read1(self, __size: int = ...) -> bytes: ...
-    else:
-        def read1(self, __size: int) -> bytes: ...  # type: ignore[override]
+    def read1(self, __size: int = ...) -> bytes: ...
 
 class BufferedRWPair(BufferedIOBase):
     def __init__(self, reader: RawIOBase, writer: RawIOBase, buffer_size: int = ...) -> None: ...
@@ -175,7 +147,7 @@ class TextIOBase(IOBase):
     def read(self, __size: int | None = ...) -> str: ...
     def tell(self) -> int: ...
 
-class TextIOWrapper(TextIOBase, TextIO):  # type: ignore # argument disparities between base classes
+class TextIOWrapper(TextIOBase, TextIO):
     def __init__(
         self,
         buffer: IO[bytes],
@@ -191,18 +163,17 @@ class TextIOWrapper(TextIOBase, TextIO):  # type: ignore # argument disparities 
     def closed(self) -> bool: ...
     @property
     def line_buffering(self) -> bool: ...
-    if sys.version_info >= (3, 7):
-        @property
-        def write_through(self) -> bool: ...
-        def reconfigure(
-            self,
-            *,
-            encoding: str | None = ...,
-            errors: str | None = ...,
-            newline: str | None = ...,
-            line_buffering: bool | None = ...,
-            write_through: bool | None = ...,
-        ) -> None: ...
+    @property
+    def write_through(self) -> bool: ...
+    def reconfigure(
+        self,
+        *,
+        encoding: str | None = ...,
+        errors: str | None = ...,
+        newline: str | None = ...,
+        line_buffering: bool | None = ...,
+        write_through: bool | None = ...,
+    ) -> None: ...
     # These are inherited from TextIOBase, but must exist in the stub to satisfy mypy.
     def __enter__(self: Self) -> Self: ...
     def __iter__(self) -> Iterator[str]: ...  # type: ignore[override]

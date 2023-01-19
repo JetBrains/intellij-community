@@ -77,28 +77,27 @@ public class XMLColorsPage implements ColorSettingsPage {
   @Override
   @NotNull
   public String getDemoText() {
-    return "<?xml version='1.0' encoding='ISO-8859-1'  ?>\n" +
-           "<!DOCTYPE index>\n" +
-           "<!-- Some xml example -->\n" +
-           "<index version=\"1.0\" xmlns:<bg><np>pf</np></bg>=\"http://test\">\n" +
-           "   <name>Main Index</name>\n" +
-           "   <indexitem text=\"rename\" target=\"refactoring.rename\"/>\n" +
-           "   <indexitem text=\"move\" target=\"refactoring.move\"/>\n" +
-           "   <indexitem text=\"migrate\" target=\"refactoring.migrate\"/>\n" +
-           "   <indexitem text=\"usage search\" target=\"find.findUsages\"/>\n" +
-           "   <<matched>indexitem</matched>>Matched tag name</<matched>indexitem</matched>>\n" +
-           "   <someTextWithEntityRefs>&amp; &#x00B7;</someTextWithEntityRefs>\n" +
-           "   <withCData><![CDATA[\n" +
-           "          <object class=\"MyClass\" key=\"constant\">\n" +
-           "          </object>\n" +
-           "        ]]>\n" +
-           "   </withCData>\n" +
-           "   <indexitem text=\"project\" target=\"project.management\"/>\n" +
-           "   <<custom_tag_name>custom-tag</custom_tag_name>>" +
-           "hello" +
-           "</<custom_tag_name>custom_tag</custom_tag_name>>\n" +
-           "   <<bg><np>pf</np></bg>:foo <bg><np>pf</np></bg>:bar=\"bar\"/>\n" +
-           "</index>";
+    return """
+      <?xml version='1.0' encoding='ISO-8859-1'  ?>
+      <!DOCTYPE index>
+      <!-- Some xml example -->
+      <index version="1.0" xmlns:<bg><np>pf</np></bg>="http://test">
+         <name>Main Index</name>
+         <indexitem text="rename" target="refactoring.rename"/>
+         <indexitem text="move" target="refactoring.move"/>
+         <indexitem text="migrate" target="refactoring.migrate"/>
+         <indexitem text="usage search" target="find.findUsages"/>
+         <<matched>indexitem</matched>>Matched tag name</<matched>indexitem</matched>>
+         <someTextWithEntityRefs>&amp; &#x00B7;</someTextWithEntityRefs>
+         <withCData><![CDATA[
+                <object class="MyClass" key="constant">
+                </object>
+              ]]>
+         </withCData>
+         <indexitem text="project" target="project.management"/>
+         <<custom_tag_name>custom-tag</custom_tag_name>>hello</<custom_tag_name>custom_tag</custom_tag_name>>
+         <<bg><np>pf</np></bg>:foo <bg><np>pf</np></bg>:bar="bar"/>
+      </index>""";
   }
 
   @Override

@@ -17,7 +17,6 @@ import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
-import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
@@ -29,6 +28,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
@@ -129,7 +129,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     Touchbar.setActions(mainPanel, touchbarActionGroup)
 
     updateAvailableDiffTools()
-    diffToolChooser = MyDiffToolChooser(mainPanel)
+    diffToolChooser = MyDiffToolChooser()
 
     leftToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, leftToolbarGroup, true)
     context.putUserData(DiffUserDataKeysEx.LEFT_TOOLBAR, leftToolbar)
@@ -227,10 +227,10 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     collectToolbarActions(viewerActions)
     (leftToolbar as ActionToolbarImpl).clearPresentationCache()
     leftToolbar.updateActionsImmediately()
-    TextDiffViewerUtil.recursiveRegisterShortcutSet(leftToolbarGroup, mainPanel, null)
+    DiffUtil.recursiveRegisterShortcutSet(leftToolbarGroup, mainPanel, null)
     (rightToolbar as ActionToolbarImpl).clearPresentationCache()
     rightToolbar.updateActionsImmediately()
-    TextDiffViewerUtil.recursiveRegisterShortcutSet(rightToolbarGroup, mainPanel, null)
+    DiffUtil.recursiveRegisterShortcutSet(rightToolbarGroup, mainPanel, null)
   }
 
   private fun collectToolbarActions(viewerActions: List<AnAction?>?) {
@@ -347,17 +347,17 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     private fun calculateTotalDifferences(): Int = loadedDifferences.values.sum()
   }
 
-  private inner class MyDiffToolChooser(targetComponent: JComponent?) : DiffToolChooser(targetComponent) {
+  private inner class MyDiffToolChooser : DiffToolChooser(context.project) {
     private val availableTools = arrayListOf<CombinedDiffTool>().apply {
       addAll(DiffManagerEx.getInstance().diffTools.filterIsInstance<CombinedDiffTool>())
     }
 
     private var activeTool: CombinedDiffTool = combinedToolOrder.firstOrNull() ?: availableTools.first()
 
-    override fun onSelected(e: AnActionEvent, diffTool: DiffTool) {
+    override fun onSelected(project: Project, diffTool: DiffTool) {
       val combinedDiffTool = diffTool as? CombinedDiffTool ?: return
 
-      DiffUsageTriggerCollector.logToggleDiffTool(e.project, diffTool, context.getUserData(DiffUserDataKeys.PLACE))
+      DiffUsageTriggerCollector.logToggleDiffTool(project, diffTool, context.getUserData(DiffUserDataKeys.PLACE))
       activeTool = combinedDiffTool
 
       moveToolOnTop(diffTool)
@@ -404,6 +404,10 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   private inner class ShowActionGroupPopupAction : DumbAwareAction() {
     init {
       ActionUtil.copyFrom(this, "Diff.ShowSettingsPopup")
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
     }
 
     override fun update(e: AnActionEvent) {

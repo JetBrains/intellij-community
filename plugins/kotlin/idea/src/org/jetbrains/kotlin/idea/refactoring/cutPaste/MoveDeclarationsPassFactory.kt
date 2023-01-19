@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.*
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -38,31 +37,36 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
         private val editor: Editor
     ) : TextEditorHighlightingPass(project, editor.document, true) {
 
-        override fun doCollectInformation(progress: ProgressIndicator) {}
+        @Volatile
+        private var myInfo: HighlightInfo? = null
 
-        override fun doApplyInformationToEditor() {
-            val info = buildHighlightingInfo()
-            UpdateHighlightersUtil.setHighlightersToEditor(project, myDocument!!, 0, file.textLength, listOfNotNull(info), colorsScheme, id)
+        override fun doCollectInformation(progress: ProgressIndicator) {
+            myInfo = buildHighlightingInfo(file)
         }
 
-        private fun buildHighlightingInfo(): HighlightInfo? {
+        override fun doApplyInformationToEditor() {
+            val info = myInfo
+            if (info != null) {
+                UpdateHighlightersUtil.setHighlightersToEditor(project, myDocument, 0, file.textLength, listOf(info), colorsScheme, id)
+            }
+        }
+
+        private fun buildHighlightingInfo(file: PsiFile): HighlightInfo? {
             val cookie = editor.getUserData(MoveDeclarationsEditorCookie.KEY) ?: return null
 
             if (cookie.modificationCount != PsiModificationTracker.getInstance(project).modificationCount) return null
 
-            val processor = MoveDeclarationsProcessor.build(editor, cookie)
+            val processor = MoveDeclarationsProcessor.build(file, cookie)
 
             if (processor == null) {
                 editor.putUserData(MoveDeclarationsEditorCookie.KEY, null)
                 return null
             }
 
-            val info = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
                 .range(cookie.bounds.range!!)
+                .registerFix(MoveDeclarationsIntentionAction(processor, cookie.bounds, cookie.modificationCount), null, null, null, null)
                 .createUnconditionally()
-            QuickFixAction.registerQuickFixAction(info, MoveDeclarationsIntentionAction(processor, cookie.bounds, cookie.modificationCount))
-
-            return info
         }
     }
 }

@@ -24,9 +24,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 class CustomFileTypeTokenizer extends Tokenizer<PsiElement> {
   private final SyntaxTable mySyntaxTable;
 
@@ -35,7 +32,7 @@ class CustomFileTypeTokenizer extends Tokenizer<PsiElement> {
   }
 
   @Override
-  public void tokenize(@NotNull PsiElement element, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiElement element, @NotNull TokenConsumer consumer) {
     CustomFileTypeLexer lexer = new CustomFileTypeLexer(mySyntaxTable);
     String text = element.getText();
     lexer.start(text);

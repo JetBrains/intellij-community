@@ -1,8 +1,8 @@
 import datetime
 import sys
+from collections.abc import Iterable, Sequence
 from time import struct_time
-from typing import Any, Iterable, Optional, Sequence
-from typing_extensions import Literal
+from typing_extensions import Literal, TypeAlias
 
 __all__ = [
     "IllegalMonthError",
@@ -31,7 +31,10 @@ __all__ = [
     "weekheader",
 ]
 
-_LocaleType = tuple[Optional[str], Optional[str]]
+if sys.version_info >= (3, 10):
+    __all__ += ["FRIDAY", "MONDAY", "SATURDAY", "SUNDAY", "THURSDAY", "TUESDAY", "WEDNESDAY"]
+
+_LocaleType: TypeAlias = tuple[str | None, str | None]
 
 class IllegalMonthError(ValueError):
     def __init__(self, month: int) -> None: ...
@@ -59,9 +62,8 @@ class Calendar:
     def yeardatescalendar(self, year: int, width: int = ...) -> list[list[int]]: ...
     def yeardays2calendar(self, year: int, width: int = ...) -> list[list[tuple[int, int]]]: ...
     def yeardayscalendar(self, year: int, width: int = ...) -> list[list[int]]: ...
-    if sys.version_info >= (3, 7):
-        def itermonthdays3(self, year: int, month: int) -> Iterable[tuple[int, int, int]]: ...
-        def itermonthdays4(self, year: int, month: int) -> Iterable[tuple[int, int, int, int]]: ...
+    def itermonthdays3(self, year: int, month: int) -> Iterable[tuple[int, int, int]]: ...
+    def itermonthdays4(self, year: int, month: int) -> Iterable[tuple[int, int, int, int]]: ...
 
 class TextCalendar(Calendar):
     def prweek(self, theweek: int, width: int) -> None: ...
@@ -94,19 +96,18 @@ class HTMLCalendar(Calendar):
     def formatmonth(self, theyear: int, themonth: int, withyear: bool = ...) -> str: ...
     def formatyear(self, theyear: int, width: int = ...) -> str: ...
     def formatyearpage(self, theyear: int, width: int = ..., css: str | None = ..., encoding: str | None = ...) -> str: ...
-    if sys.version_info >= (3, 7):
-        cssclasses: list[str]
-        cssclass_noday: str
-        cssclasses_weekday_head: list[str]
-        cssclass_month_head: str
-        cssclass_month: str
-        cssclass_year: str
-        cssclass_year_head: str
+    cssclasses: list[str]
+    cssclass_noday: str
+    cssclasses_weekday_head: list[str]
+    cssclass_month_head: str
+    cssclass_month: str
+    cssclass_year: str
+    cssclass_year_head: str
 
 class different_locale:
     def __init__(self, locale: _LocaleType) -> None: ...
     def __enter__(self) -> None: ...
-    def __exit__(self, *args: Any) -> None: ...
+    def __exit__(self, *args: object) -> None: ...
 
 class LocaleTextCalendar(TextCalendar):
     def __init__(self, firstweekday: int = ..., locale: _LocaleType | None = ...) -> None: ...

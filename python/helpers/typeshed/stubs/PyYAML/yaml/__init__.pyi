@@ -1,5 +1,7 @@
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
-from typing import Any, Pattern, TypeVar, overload
+from re import Pattern
+from typing import Any, TypeVar, overload
+from typing_extensions import TypeAlias
 
 from . import resolver as resolver  # Help mypy a bit; this is implied by loader and dumper
 from .constructor import BaseConstructor
@@ -16,7 +18,7 @@ from .resolver import BaseResolver
 from .tokens import *
 
 # FIXME: the functions really return str if encoding is None, otherwise bytes. Waiting for python/mypy#5621
-_Yaml = Any
+_Yaml: TypeAlias = Any
 
 __with_libyaml__: Any
 __version__: str

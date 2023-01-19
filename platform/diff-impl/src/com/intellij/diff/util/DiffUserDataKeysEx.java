@@ -4,7 +4,6 @@ package com.intellij.diff.util;
 import com.intellij.diff.DiffEditorTitleCustomizer;
 import com.intellij.diff.DiffTool;
 import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.editor.DiffEditorTabFilesManager;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.MergeTool;
@@ -97,15 +96,6 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<Boolean> LAST_REVISION_WITH_LOCAL = Key.create("Diff.LastWithLocal");
 
   Key<Float> TWO_SIDE_SPLITTER_PROPORTION = Key.create("Diff.TwoSideSplitterProportion");
-
-  /**
-   * Marker flag for viewers embedded into FileEditor tab.
-   * Ex: such viewers might encounter conflicting shortcuts.
-   *
-   * @deprecated use {@link DiffEditorTabFilesManager#isEditorDiffAvailable} instead
-   */
-  @Deprecated(forRemoval = true)
-  Key<Boolean> DIFF_IN_EDITOR = Key.create("Diff.DiffInEditor");
 
   /**
    * Marker flag for viewers embedded into FileEditor tab, that should not be disposed on tab close.

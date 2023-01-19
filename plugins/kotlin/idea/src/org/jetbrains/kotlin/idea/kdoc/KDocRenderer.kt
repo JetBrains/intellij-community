@@ -153,6 +153,7 @@ object KDocRenderer {
     fun generateJavadoc(psiMethod: PsiMethod): String {
         val javaDocInfoGenerator = JavaDocInfoGeneratorFactory.create(psiMethod.project, psiMethod)
         val builder = StringBuilder()
+        @Suppress("HardCodedStringLiteral")
         if (javaDocInfoGenerator.generateDocInfoCore(builder, false)) {
             val renderedJava = builder.toString()
             return renderedJava.removeRange(
@@ -546,7 +547,7 @@ object KDocRenderer {
     }
 
     private fun StringBuilder.trimEnd() {
-        while (length > 0 && this[length - 1] == ' ') {
+        while (isNotEmpty() && this[length - 1] == ' ') {
             deleteCharAt(length - 1)
         }
     }

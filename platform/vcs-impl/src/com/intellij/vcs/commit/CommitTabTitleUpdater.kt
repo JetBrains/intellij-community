@@ -12,10 +12,11 @@ import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown
+import org.jetbrains.annotations.Nls
 
 open class CommitTabTitleUpdater(val tree: ChangesTree,
                                  val tabName: String,
-                                 val defaultTitle: () -> String?,
+                                 val defaultTitle: () -> @Nls String?,
                                  pathsProvider: () -> Iterable<FilePath>) : Disposable {
   private val branchComponent = CurrentBranchComponent(tree, pathsProvider).also {
     Disposer.register(this, it)
@@ -35,7 +36,10 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
 
     val branch = branchComponent.text
     tab.displayName = when {
-      ExperimentalUI.isNewUI() -> message("tab.title.commit")
+      ExperimentalUI.isNewUI() -> {
+        val contentsCount = ChangesViewContentManager.getToolWindowFor(project, tabName)?.contentManager?.contentCount ?: 0
+        if (contentsCount == 1) null else message("tab.title.commit")
+      }
       branch?.isNotBlank() == true -> message("tab.title.commit.to.branch", branch)
       else -> message("tab.title.commit")
     }
@@ -43,7 +47,7 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
     tab.description = branchComponent.toolTipText
   }
 
-  fun setDefaultTitle() {
+  private fun setDefaultTitle() {
     val tab = getTab() ?: return
 
     tab.displayName = defaultTitle()

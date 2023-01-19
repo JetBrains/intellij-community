@@ -1,4 +1,4 @@
-// "Make 'I.foo' static" "true-preview"
+// "Make 'I.foo()' static" "true-preview"
 interface I {
   default void foo() {
     System.out.println();

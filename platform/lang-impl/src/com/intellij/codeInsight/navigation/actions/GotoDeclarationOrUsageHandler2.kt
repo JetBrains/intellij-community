@@ -7,20 +7,22 @@ import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyHandler2.gotoDeclaration
 import com.intellij.codeInsight.navigation.impl.*
-import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.find.actions.ShowUsagesAction.showUsages
 import com.intellij.find.actions.TargetVariant
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.Callable
 
 object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
 
@@ -44,7 +46,6 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration")
     if (navigateToLookupItem(project)) {
       return
     }
@@ -111,5 +112,14 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
       is GTDUActionResult.GTD -> GTDUOutcome.GTD
       is GTDUActionResult.SU -> GTDUOutcome.SU
     }
+  }
+
+  @TestOnly
+  @JvmStatic
+  fun testGTDUOutcomeInNonBlockingReadAction(editor: Editor, file: PsiFile, offset: Int): GTDUOutcome? {
+    val callable = Callable {
+      testGTDUOutcome(editor, file, offset)
+    }
+    return ReadAction.nonBlocking(callable).submit(AppExecutorUtil.getAppExecutorService()).get()
   }
 }

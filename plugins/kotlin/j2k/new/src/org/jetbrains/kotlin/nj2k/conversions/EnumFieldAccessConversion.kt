@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiEnumConstant
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.*
 
@@ -29,10 +30,13 @@ class EnumFieldAccessConversion(context: NewJ2kConverterContext) : RecursiveAppl
         return when {
             this is JKMultiverseFieldSymbol && target is PsiEnumConstant ->
                 symbolProvider.provideDirectSymbol(target.containingClass ?: return null) as? JKClassSymbol
+
             this is JKMultiverseKtEnumEntrySymbol ->
                 symbolProvider.provideDirectSymbol(target.containingClass() ?: return null) as? JKClassSymbol
+
             this is JKUniverseFieldSymbol && target is JKEnumConstant ->
                 symbolProvider.provideUniverseSymbol(target.parentOfType<JKClass>() ?: return null)
+
             else -> null
         }
     }

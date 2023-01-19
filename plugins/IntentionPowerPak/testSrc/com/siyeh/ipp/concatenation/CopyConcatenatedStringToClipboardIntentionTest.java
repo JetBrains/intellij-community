@@ -25,11 +25,13 @@ public class CopyConcatenatedStringToClipboardIntentionTest extends IPPTestCase 
     myFixture.launchAction(myFixture.findSingleIntention(
       IntentionPowerPackBundle.message("copy.concatenated.string.to.clipboard.intention.name")));
     final Object result = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-    assertEquals("<html>\n" +
-                 "  <body>\n" +
-                 "?\n" +
-                 "  </body>\n" +
-                 "</html>\n", result);
+    assertEquals("""
+                   <html>
+                     <body>
+                   ?
+                     </body>
+                   </html>
+                   """, result);
   }
 
   @Override

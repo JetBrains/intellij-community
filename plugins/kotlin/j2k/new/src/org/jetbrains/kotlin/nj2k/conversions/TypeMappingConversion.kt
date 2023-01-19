@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.j2k.toKotlinMutableTypesMap
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUniverseClassSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -25,6 +26,7 @@ class TypeMappingConversion(
                     element.type = element.type.mapType(element)
                 }
             }
+
             is JKNewExpression -> {
                 val newClassSymbol = element.classSymbol.mapClassSymbol()
                 return recurse(
@@ -63,8 +65,10 @@ class TypeMappingConversion(
             is JKIsExpression ->
                 addTypeParametersToRawProjectionType(JKStarProjectionTypeImpl)
                     .updateNullability(Nullability.NotNull)
+
             is JKInheritanceInfo ->
                 addTypeParametersToRawProjectionType(typeFactory.types.nullableAny)
+
             else ->
                 addTypeParametersToRawProjectionType(JKStarProjectionTypeImpl)
         }
@@ -81,17 +85,20 @@ class TypeMappingConversion(
                     if (type is JKJavaPrimitiveType) emptyList() else listOf(type.mapType(typeElement)),
                     nullability
                 )
+
             is JKVarianceTypeParameterType ->
                 JKVarianceTypeParameterType(
                     variance,
                     boundType.mapType(null)
                 )
+
             is JKCapturedType -> {
                 JKCapturedType(
                     wildcardType.mapType(null) as JKWildCardType,
                     nullability
                 )
             }
+
             else -> this
         }.fixRawType(typeElement)
 

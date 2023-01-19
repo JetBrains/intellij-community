@@ -10,31 +10,33 @@ public class EncapsulateVariableFixTest extends LightJavaCodeInsightFixtureTestC
   public void testIntentionPreview() {
     myFixture.enableInspections(new PublicFieldInspection());
     myFixture.configureByText("Test.java",
-                              "class A {\n" +
-                              "    public String name<caret>;\n" +
-                              "}\n" +
-                              "class B {\n" +
-                              "    void foo(A a) {\n" +
-                              "        System.out.println(a.name);\n" +
-                              "    }\n" +
-                              "}");
+                              """
+                                class A {
+                                    public String name<caret>;
+                                }
+                                class B {
+                                    void foo(A a) {
+                                        System.out.println(a.name);
+                                    }
+                                }""");
     IntentionAction action = myFixture.findSingleIntention("Encapsulate field 'name'");
     String text = myFixture.getIntentionPreviewText(action);
-    assertEquals("class A {\n" +
-                 "    private String name;\n" +
-                 "\n" +
-                 "    public String getName() {\n" +
-                 "        return name;\n" +
-                 "    }\n" +
-                 "\n" +
-                 "    public void setName(String name) {\n" +
-                 "        this.name = name;\n" +
-                 "    }\n" +
-                 "}\n" +
-                 "class B {\n" +
-                 "    void foo(A a) {\n" +
-                 "        System.out.println(a.getName());\n" +
-                 "    }\n" +
-                 "}", text);
+    assertEquals("""
+                   class A {
+                       private String name;
+
+                       public String getName() {
+                           return name;
+                       }
+
+                       public void setName(String name) {
+                           this.name = name;
+                       }
+                   }
+                   class B {
+                       void foo(A a) {
+                           System.out.println(a.getName());
+                       }
+                   }""", text);
   }
 }

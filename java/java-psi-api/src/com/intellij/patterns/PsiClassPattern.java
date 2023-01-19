@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.StandardPatterns.string;
 
-/**
- * @author peter
- */
 public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>{
   protected PsiClassPattern() {
     super(PsiClass.class);

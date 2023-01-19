@@ -26,7 +26,11 @@ class MavenRepositoriesDataServiceTest: LightIdeaTestCase() {
       val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(getProject())
       repositoriesConfiguration.resetToDefault()
       myModelsProvider.dispose()
-    } finally {
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
       super.tearDown()
     }
   }

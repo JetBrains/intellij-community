@@ -23,7 +23,7 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.util.text.NameUtilCore
 import java.io.File
@@ -878,7 +878,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       .asSequence()
       .mapNotNull { (id, data) ->
         data.get("__compat")
-          ?.castSafelyTo<JsonObject>()
+          ?.asSafely<JsonObject>()
           ?.getAsJsonObject("support")
           ?.entrySet()
           ?.asSequence()
@@ -967,7 +967,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
           .find { it.memberName.equals(member, true) })
           ?.memberSource
           ?.singleElement
-          ?.castSafelyTo<JSPsiElementBase>()
+          ?.asSafely<JSPsiElementBase>()
           ?.qualifiedName
           ?.takeIf { !it.equals(symbolName, true) }
           ?.lowercase(Locale.US)

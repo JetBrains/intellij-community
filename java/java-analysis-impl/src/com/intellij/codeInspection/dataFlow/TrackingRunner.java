@@ -176,7 +176,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
             initialStates = Collections.singletonList(createMemoryState());
           }
           else {
-            initialStates = StreamEx.of(endOfInitializerStates).map(DfaMemoryState::createCopy).toList();
+            initialStates = ContainerUtil.map(endOfInitializerStates, DfaMemoryState::createCopy);
           }
           return analyzeBlockRecursively(ctorBody, initialStates, interceptor) == RunnerResult.OK;
         }
@@ -965,8 +965,8 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       }
     }
     if (relationType == RelationType.NE) {
-      SpecialField leftField = SpecialField.fromQualifier(leftValue);
-      SpecialField rightField = SpecialField.fromQualifier(rightValue);
+      SpecialField leftField = SpecialField.fromQualifierType(leftValue.getDfType());
+      SpecialField rightField = SpecialField.fromQualifierType(rightValue.getDfType());
       if (leftField != null && leftField == rightField) {
         DfaValue leftSpecial = leftField.createValue(getFactory(), leftValue);
         DfaValue rightSpecial = rightField.createValue(getFactory(), rightValue);
@@ -1153,16 +1153,11 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       CauseItem causeItem = fromMemberNullability(nullability, method, JavaElementKind.METHOD,
                                                   call.getMethodExpression().getReferenceNameElement());
       if (causeItem == null) {
-        switch (nullability) {
-          case NULL:
-          case NULLABLE:
-            causeItem = fromCallContract(factUse, call, ContractReturnValue.returnNull());
-            break;
-          case NOT_NULL:
-            causeItem = fromCallContract(factUse, call, ContractReturnValue.returnNotNull());
-            break;
-          default:
-        }
+        causeItem = switch (nullability) {
+          case NULL, NULLABLE -> fromCallContract(factUse, call, ContractReturnValue.returnNull());
+          case NOT_NULL -> fromCallContract(factUse, call, ContractReturnValue.returnNotNull());
+          default -> null;
+        };
       }
       if (causeItem != null) {
         return causeItem;
@@ -1497,13 +1492,17 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       VariableDescriptor descriptor = ((DfaVariableValue)value).getDescriptor();
       if (descriptor instanceof SpecialField && range.equals(JvmPsiRangeSetUtil.indexRange())) {
         switch (((SpecialField)descriptor)) {
-          case ARRAY_LENGTH:
+          case ARRAY_LENGTH -> {
             return new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.array.length.is.always.non.negative"), factUse);
-          case STRING_LENGTH:
+          }
+          case STRING_LENGTH -> {
             return new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.string.length.is.always.non.negative"), factUse);
-          case COLLECTION_SIZE:
+          }
+          case COLLECTION_SIZE -> {
             return new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.collection.size.is.always.non.negative"), factUse);
-          default:
+          }
+          default -> {
+          }
         }
       }
     }

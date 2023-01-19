@@ -24,29 +24,28 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scrollbarWidth
-import kotlinx.coroutines.Deferred
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import javax.swing.JLabel
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class HeaderPanel(
-    onUpdateAllLinkClicked: (Deferred<List<PackageSearchOperation<*>>>) -> Unit
+    onUpdateAllLinkClicked: (PackageManagementOperationExecutor.() -> Unit) -> Unit
 ) : BorderLayoutPanel() {
 
     private val titleLabel = JLabel().apply {
-        border = emptyBorder(right = 20)
+        border = emptyBorder(right = 10)
         font = RelativeFont.BOLD.derive(font)
     }
 
     private val countLabel = JLabel().apply {
-        foreground = PackageSearchUI.GRAY_COLOR
+        foreground = PackageSearchUI.Colors.infoLabelForeground
         border = emptyBorder(right = 8)
     }
 
@@ -63,15 +62,15 @@ internal class HeaderPanel(
         insets.top = 3.scaled()
     }
 
-    private var updateAllOperations: Deferred<List<PackageSearchOperation<*>>>? = null
+    private var updateAllOperations: PackageManagementOperationExecutor.() -> Unit = {  }
 
     init {
-        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.SmallHeaderHeight.get())
+        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.smallHeaderHeight.get())
         border = emptyBorder(top = 5, left = 5, right = 1 + scrollbarWidth())
-        background = PackageSearchUI.SectionHeaderBackgroundColor
+        background = PackageSearchUI.Colors.sectionHeaderBackground
 
         add(
-            PackageSearchUI.flowPanel(PackageSearchUI.SectionHeaderBackgroundColor) {
+            PackageSearchUI.flowPanel(PackageSearchUI.Colors.sectionHeaderBackground) {
                 layout = FlowLayout(FlowLayout.LEFT, 6.scaled(), 0)
 
                 add(titleLabel)
@@ -82,7 +81,7 @@ internal class HeaderPanel(
         )
 
         add(
-            PackageSearchUI.flowPanel(PackageSearchUI.SectionHeaderBackgroundColor) {
+            PackageSearchUI.flowPanel(PackageSearchUI.Colors.sectionHeaderBackground) {
                 layout = FlowLayout(FlowLayout.RIGHT, 6.scaled(), 0)
                 add(updateAllLink)
             },
@@ -90,7 +89,7 @@ internal class HeaderPanel(
         )
 
         updateAllLink.addHyperlinkListener {
-            updateAllOperations?.let { onUpdateAllLinkClicked(it) }
+            onUpdateAllLinkClicked(updateAllOperations)
             PackageSearchEventsLogger.logUpgradeAll()
         }
     }
@@ -111,7 +110,7 @@ internal class HeaderPanel(
         countLabel.isVisible = true
         countLabel.text = viewModel.count.toString()
 
-        updateAllOperations = viewModel.updateOperations
+        updateAllOperations = viewModel.upgradeOperations
         if (viewModel.availableUpdatesCount > 0) {
             updateAllLink.setHyperlinkText(
                 PackageSearchBundle.message(
@@ -135,4 +134,6 @@ internal class HeaderPanel(
         border = emptyBorder(top = 5, left = 5, right = rightBorder)
         updateAndRepaint()
     }
+
+    override fun getBackground() = PackageSearchUI.Colors.sectionHeaderBackground
 }

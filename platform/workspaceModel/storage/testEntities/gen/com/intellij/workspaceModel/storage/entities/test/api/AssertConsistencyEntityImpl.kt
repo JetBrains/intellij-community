@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -14,12 +13,15 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntityBase() {
+open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityData) : AssertConsistencyEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -29,13 +31,17 @@ open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntit
 
   }
 
-  override var passCheck: Boolean = false
+  override val passCheck: Boolean get() = dataSource.passCheck
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: AssertConsistencyEntityData?) : ModifiableWorkspaceEntityBase<AssertConsistencyEntity>(), AssertConsistencyEntity.Builder {
+  class Builder(result: AssertConsistencyEntityData?) : ModifiableWorkspaceEntityBase<AssertConsistencyEntity, AssertConsistencyEntityData>(
+    result), AssertConsistencyEntity.Builder {
     constructor() : this(AssertConsistencyEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -53,6 +59,9 @@ open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntit
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -73,10 +82,9 @@ open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntit
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as AssertConsistencyEntity
-      this.entitySource = dataSource.entitySource
-      this.passCheck = dataSource.passCheck
-      if (parents != null) {
-      }
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.passCheck != dataSource.passCheck) this.passCheck = dataSource.passCheck
+      updateChildToParentReferences(parents)
     }
 
 
@@ -84,7 +92,7 @@ open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntit
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -93,11 +101,10 @@ open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntit
       get() = getEntityData().passCheck
       set(value) {
         checkModificationAllowed()
-        getEntityData().passCheck = value
+        getEntityData(true).passCheck = value
         changedProperty.add("passCheck")
       }
 
-    override fun getEntityData(): AssertConsistencyEntityData = result ?: super.getEntityData() as AssertConsistencyEntityData
     override fun getEntityClass(): Class<AssertConsistencyEntity> = AssertConsistencyEntity::class.java
   }
 }
@@ -106,25 +113,21 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
   var passCheck: Boolean = false
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<AssertConsistencyEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<AssertConsistencyEntity> {
     val modifiable = AssertConsistencyEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): AssertConsistencyEntity {
-    val entity = AssertConsistencyEntityImpl()
-    entity.passCheck = passCheck
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = AssertConsistencyEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -149,7 +152,7 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as AssertConsistencyEntityData
 
@@ -160,7 +163,7 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as AssertConsistencyEntityData
 

@@ -116,7 +116,7 @@ class VariantableTag<Settings : FragmentedSettings, V : Any>(
 
   override fun build(): SettingsEditorFragment<Settings, TagButton> {
     val getter: (Settings) -> V = { s -> myVariants.values.first { it.getter(s) }.key }
-    val setter: (Settings, V) -> Unit = { s, v -> myVariants.forEach { e -> e.value.setter(s, v == e.key) } }
+    val setter: (Settings, V?) -> Unit = { s, v -> myVariants.forEach { e -> e.value.setter(s, v == e.key) } }
     val array = Array<Any>(myVariants.size) { myVariants.keys.elementAt(it) }
 
     return VariantTagFragment.createFragment(id, name, group, {
@@ -330,7 +330,7 @@ interface FragmentsDslBuilderExtender<Settings : FragmentedSettings> {
 
 @ApiStatus.Experimental
 inline fun <reified Settings : FragmentedSettings> fragments(
-  @Nls title: String? = null,
+  title: @Nls String? = null,
   id: String,
   extenders: List<FragmentsDslBuilderExtender<Settings>> = FragmentsDslBuilderExtender.getExtenders(id),
   setup: FragmentsBuilder<Settings>.() -> Unit

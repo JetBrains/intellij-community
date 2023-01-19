@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 public class StringUtil extends StringUtilRt {
   public static final String ELLIPSIS = "\u2026";
   public static final String THREE_DOTS = "...";
+  public static final String NON_BREAK_SPACE = "\u00A0";
 
   private static final class Splitters {
     private static final Pattern EOL_SPLIT_KEEP_SEPARATORS = Pattern.compile("(?<=(\r\n|\n))|(?<=\r)(?=[^\n])");
@@ -596,8 +597,10 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static boolean isPrintableUnicode(char c) {
     int t = Character.getType(c);
+    Character.UnicodeBlock block = Character.UnicodeBlock.of(c);
     return t != Character.UNASSIGNED && t != Character.LINE_SEPARATOR && t != Character.PARAGRAPH_SEPARATOR &&
-           t != Character.CONTROL && t != Character.FORMAT && t != Character.PRIVATE_USE && t != Character.SURROGATE;
+           t != Character.CONTROL && t != Character.FORMAT && t != Character.PRIVATE_USE && t != Character.SURROGATE &&
+           block != Character.UnicodeBlock.VARIATION_SELECTORS && block != Character.UnicodeBlock.VARIATION_SELECTORS_SUPPLEMENT;
   }
 
   @Contract(pure = true)
@@ -1259,26 +1262,31 @@ public class StringUtil extends StringUtilRt {
 
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<String> split(@NotNull String s, @NotNull String separator) {
     return split(s, separator, true);
   }
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator) {
     return split(s, separator, true, true);
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator) {
     return split(s, separator, excludeSeparator, true);
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
     //noinspection unchecked,rawtypes
     return (List)split((CharSequence)s, separator, excludeSeparator, excludeEmptyStrings);
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
     if (separator.length() == 0) {
       return Collections.singletonList(s);
@@ -2209,16 +2217,28 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  private static boolean isJavaIdentifierStart(int cp) {
+    return cp >= 'a' && cp <= 'z' || cp >= 'A' && cp <= 'Z' || Character.isJavaIdentifierStart(cp);
+  }
+
+  @Contract(pure = true)
+  private static boolean isJavaIdentifierPart(int cp) {
+    return cp >= '0' && cp <= '9' || cp >= 'a' && cp <= 'z' || cp >= 'A' && cp <= 'Z' || Character.isJavaIdentifierPart(cp);
+  }
+
+  @Contract(pure = true)
   public static boolean isJavaIdentifier(@NotNull String text) {
     int len = text.length();
     if (len == 0) return false;
+    int point = text.codePointAt(0);
+    if (!isJavaIdentifierStart(point)) return false;
+    int i = Character.charCount(point);
 
-    if (!isJavaIdentifierStart(text.charAt(0))) return false;
-
-    for (int i = 1; i < len; i++) {
-      if (!isJavaIdentifierPart(text.charAt(i))) return false;
+    while (i < len) {
+      point = text.codePointAt(i);
+      if (!isJavaIdentifierPart(point)) return false;
+      i += Character.charCount(point);
     }
-
     return true;
   }
 

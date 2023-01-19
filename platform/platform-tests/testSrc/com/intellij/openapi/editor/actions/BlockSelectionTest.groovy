@@ -20,9 +20,6 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 import java.awt.datatransfer.StringSelection
-/**
- * @author peter
- */
 class BlockSelectionTest extends BasePlatformTestCase {
 
   void "test paste tabs into block selection"() {

@@ -17,17 +17,6 @@ public class PublicMethodBasedOptionDescription extends BooleanOptionDescription
   private final String mySetterName;
   private final Supplier<Object> instanceProducer;
 
-  /**
-   * @deprecated Use {@link #PublicMethodBasedOptionDescription(String, String, String, String, Supplier)}
-   */
-  @Deprecated(forRemoval = true)
-  public PublicMethodBasedOptionDescription(@NlsContexts.Label String option, String configurableId, String getterName, String setterName) {
-    super(option, configurableId);
-    myGetterName = getterName;
-    mySetterName = setterName;
-    instanceProducer = null;
-  }
-
   public PublicMethodBasedOptionDescription(@NlsContexts.Label String option,
                                             String configurableId,
                                             String getterName,

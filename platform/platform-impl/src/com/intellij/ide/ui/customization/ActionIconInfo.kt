@@ -4,6 +4,8 @@ package com.intellij.ide.ui.customization
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionStubBase
+import com.intellij.openapi.util.CachedImageIcon
 import com.intellij.openapi.util.IconLoader
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Nls
@@ -14,7 +16,7 @@ internal val NONE = ActionIconInfo(null, IdeBundle.message("default.icons.none.t
 internal val SEPARATOR = ActionIconInfo(null, "", "", null)
 
 /**
- * @param actionId id of the action that use this icon.
+ * @param actionId id of the action that uses this icon.
  * @param iconPath path or URL of the icon.
  * @param text template presentation text of the action or file name.
  */
@@ -47,19 +49,23 @@ internal fun getDefaultIcons(): List<ActionIconInfo> {
 }
 
 private fun getIconInfo(icon: Icon, @Nls text: String): ActionIconInfo? {
-  val iconUrl = (icon as? IconLoader.CachedImageIcon)?.url
-  return iconUrl?.let { ActionIconInfo(icon, text, null, it.toString()) }
+  val iconUrl = (icon as? CachedImageIcon)?.url
+  return iconUrl?.let { ActionIconInfo(icon = icon, text = text, actionId = null, iconPath = it.toString()) }
 }
 
 internal fun getAvailableIcons(): List<ActionIconInfo> {
   val actionManager = ActionManager.getInstance()
   return actionManager.getActionIdList("").mapNotNull { actionId ->
     val action = actionManager.getActionOrStub(actionId) ?: return@mapNotNull null
-    val presentation = action.templatePresentation
-    val icon = presentation.getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON)
-               ?: presentation.icon
-               ?: return@mapNotNull null
-    ActionIconInfo(icon, action.templateText.nullize() ?: actionId, actionId, null)
+    val icon = if (action is ActionStubBase) {
+      val path = action.iconPath ?: return@mapNotNull null
+      IconLoader.findIcon(path, action.plugin.classLoader)
+    }
+    else {
+      val presentation = action.templatePresentation
+      presentation.getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON) ?: presentation.icon
+    }
+    icon?.let { ActionIconInfo(icon = it, text = action.templateText.nullize() ?: actionId, actionId = actionId, iconPath = null) }
   }
 }
 

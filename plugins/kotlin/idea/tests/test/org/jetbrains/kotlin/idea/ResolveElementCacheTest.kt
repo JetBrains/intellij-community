@@ -70,7 +70,7 @@ class ResolveElementCacheTest : AbstractResolveElementCacheTest() {
 
     fun testNonPhysicalFileFullResolveCaching() {
         doTest {
-            val nonPhysicalFile = KtPsiFactory(project).createAnalyzableFile("NonPhysical.kt", FILE_TEXT, file)
+            val nonPhysicalFile = KtPsiFactory.contextual(file).createFile("NonPhysical.kt", FILE_TEXT)
             val nonPhysicalData = extractData(nonPhysicalFile)
             nonPhysicalData.testResolveCaching()
 
@@ -182,7 +182,7 @@ class ResolveElementCacheTest : AbstractResolveElementCacheTest() {
 
     fun testNonPhysicalFilePartialResolveCaching() {
         doTest {
-            val nonPhysicalFile = KtPsiFactory(project).createAnalyzableFile("NonPhysical.kt", FILE_TEXT, file)
+            val nonPhysicalFile = KtPsiFactory.contextual(file).createFile("NonPhysical.kt", FILE_TEXT)
             val nonPhysicalData = extractData(nonPhysicalFile)
             nonPhysicalData.testPartialResolveCaching(BodyResolveMode.PARTIAL)
         }

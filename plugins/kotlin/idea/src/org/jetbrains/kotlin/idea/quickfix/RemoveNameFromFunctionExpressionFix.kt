@@ -40,7 +40,7 @@ class RemoveNameFromFunctionExpressionFix(element: KtNamedFunction) : KotlinQuic
             function.nameIdentifier?.delete()
 
             if (wereAutoLabelUsages) {
-                val psiFactory = KtPsiFactory(function)
+                val psiFactory = KtPsiFactory(function.project)
                 val newFunction = psiFactory.createExpressionByPattern("$0@ $1", name, function)
                 function.replace(newFunction)
             }

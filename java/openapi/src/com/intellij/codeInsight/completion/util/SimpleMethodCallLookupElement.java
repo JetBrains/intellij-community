@@ -11,9 +11,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class SimpleMethodCallLookupElement extends LookupElement {
   private final PsiMethod myMethod;
 

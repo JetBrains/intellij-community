@@ -15,11 +15,13 @@
  */
 package com.siyeh.ig.classmetrics;
 
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.NlsContexts;
 import com.siyeh.ig.BaseInspection;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public abstract class ClassMetricInspection extends BaseInspection {
 
@@ -37,9 +39,9 @@ public abstract class ClassMetricInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final String label = getConfigurationLabel();
-    return new SingleIntegerFieldOptionsPanel(label,
-                                              this, "m_limit");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", getConfigurationLabel(), 0, Integer.MAX_VALUE)
+    );
   }
 }

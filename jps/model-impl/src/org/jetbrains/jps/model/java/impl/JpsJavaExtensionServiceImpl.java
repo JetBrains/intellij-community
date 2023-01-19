@@ -221,7 +221,7 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
 
   @Override
   protected JpsJavaDependenciesEnumerator enumerateDependencies(JpsModule module) {
-    return new JpsJavaDependenciesEnumeratorImpl(Collections.singletonList(module));
+    return new JpsJavaDependenciesEnumeratorImpl(Collections.singleton(module));
   }
 
   @NotNull

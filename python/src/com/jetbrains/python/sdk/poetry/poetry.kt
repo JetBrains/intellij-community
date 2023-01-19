@@ -13,8 +13,6 @@ import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
@@ -65,6 +63,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.modules
 import icons.PythonIcons
 import org.apache.tuweni.toml.Toml
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemDependent
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -408,7 +407,7 @@ class PoetryInstallQuickFix : LocalQuickFix {
 class PyProjectTomlWatcher : EditorFactoryListener {
   private val changeListenerKey = Key.create<DocumentListener>("PyProjectToml.change.listener")
   private val notificationActive = Key.create<Boolean>("PyProjectToml.notification.active")
-  private val content: String = if (poetryVersion?.let { it < "1.1.1" } == true) {
+  private val content: @Nls String = if (poetryVersion?.let { it < "1.1.1" } == true) {
     PyBundle.message("python.sdk.poetry.pip.file.notification.content")
   }
   else {
@@ -497,7 +496,7 @@ private val Document.virtualFile: VirtualFile?
 private fun VirtualFile.getModule(project: Project): Module? =
   ModuleUtil.findModuleForFile(this, project)
 
-private val LOCK_NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("pyproject.toml Watcher")
+private val LOCK_NOTIFICATION_GROUP by lazy { NotificationGroupManager.getInstance().getNotificationGroup("pyproject.toml Watcher") }
 
 private val Module.poetryLock: VirtualFile?
   get() = baseDir?.findChild(POETRY_LOCK)

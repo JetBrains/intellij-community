@@ -4,8 +4,10 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.ListenableProgressIndicator
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.progress.ProgressIndicator
@@ -18,8 +20,6 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
-import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -50,7 +50,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFact
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.awt.Component
 import java.awt.Container
@@ -102,18 +101,18 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       { model ->
         with(model) {
           val branch = baseBranch ?: return@with null
-          val headRepoPath = headRepo?.ghRepositoryCoordinates?.repositoryPath
-          val baseRepoPath = baseRepo.ghRepositoryCoordinates.repositoryPath
+          val headRepoPath = headRepo?.repository?.repositoryPath
+          val baseRepoPath = baseRepo.repository.repositoryPath
           val showOwner = headRepoPath != null && baseRepoPath != headRepoPath
-          baseRepo.ghRepositoryCoordinates.repositoryPath.toString(showOwner) + ":" + branch.name
+          baseRepo.repository.repositoryPath.toString(showOwner) + ":" + branch.name
         }
       },
 
       { model ->
         with(model) {
           val branch = headBranch ?: return@with null
-          val headRepoPath = headRepo?.ghRepositoryCoordinates?.repositoryPath ?: return@with null
-          val baseRepoPath = baseRepo.ghRepositoryCoordinates.repositoryPath
+          val headRepoPath = headRepo?.repository?.repositoryPath ?: return@with null
+          val baseRepoPath = baseRepo.repository.repositoryPath
           val showOwner = baseRepoPath != headRepoPath
           headRepoPath.toString(showOwner) + ":" + branch.name
         }
@@ -165,12 +164,12 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     }
     val createButton = JBOptionButton(createAction, arrayOf(createDraftAction))
     val cancelButton = JButton(cancelAction)
-    val actionsPanel = JPanel(HorizontalLayout(JBUIScale.scale(8))).apply {
+    val actionsPanel = HorizontalListPanel(8).apply {
       add(createButton)
       add(cancelButton)
     }
     val statusPanel = JPanel().apply {
-      layout = MigLayout(LC().gridGap("0", "${JBUIScale.scale(8)}").insets("0").fill().flowY().hideMode(3))
+      layout = MigLayout(LC().gridGap("0", "8").insets("0").fill().flowY().hideMode(3))
       border = JBUI.Borders.empty(8)
 
       add(createNoChangesWarningLabel(directionModel, commitsCountModel, createLoadingModel), CC().minWidth("0"))
@@ -240,7 +239,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       val headBranch = directionModel.headBranch ?: return null
       if (headBranch is GitRemoteBranch) return headBranch
       else headBranch as GitLocalBranch
-      val gitRemote = headRepo.gitRemoteUrlCoordinates
+      val gitRemote = headRepo.remote
       return findPushTarget(gitRemote.repository, gitRemote.remote, headBranch)?.branch
     }
   }
@@ -270,11 +269,11 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
           GithubBundle.message("pull.request.create.input.remote.branch.title"),
           GithubBundle.message("pull.request.create.input.remote.branch.name"),
           GithubBundle.message("pull.request.create.input.remote.branch.comment", (headBranch as GitLocalBranch).name,
-                               headRepo.gitRemoteUrlCoordinates.remote.name))
+                               headRepo.remote.remote.name))
         findOrPushRemoteBranch(project,
                                progressIndicator,
-                               headRepo.gitRemoteUrlCoordinates.repository,
-                               headRepo.gitRemoteUrlCoordinates.remote,
+                               headRepo.remote.repository,
+                               headRepo.remote.remote,
                                headBranch,
                                dialogMessages)
       }.thenCompose { remoteHeadBranch ->
@@ -287,7 +286,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
           .successOnEdt {
             if (!progressIndicator.isCanceled) {
               viewController.viewPullRequest(it)
-              settings.recentNewPullRequestHead = headRepo.ghRepositoryCoordinates
+              settings.recentNewPullRequestHead = headRepo.repository
               viewController.resetNewPullRequestView()
             }
             it

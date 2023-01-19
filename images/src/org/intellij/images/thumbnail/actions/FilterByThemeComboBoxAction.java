@@ -19,6 +19,7 @@ package org.intellij.images.thumbnail.actions;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
@@ -52,7 +53,7 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction {
 
     @NotNull
     @Override
-    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
         DefaultActionGroup group = new DefaultActionGroup();
         group.add(new FilterImagesAction(new ThemeFilter() {
             @Override

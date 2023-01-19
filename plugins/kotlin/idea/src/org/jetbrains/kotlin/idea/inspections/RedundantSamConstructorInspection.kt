@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.*
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.codegen.SamCodegenUtil
@@ -105,7 +106,8 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
         fun replaceSamConstructorCall(callExpression: KtCallExpression): KtLambdaExpression {
             val functionalArgument = callExpression.samConstructorValueArgument()?.getArgumentExpression()
                 ?: throw AssertionError("SAM-constructor should have a FunctionLiteralExpression as single argument: ${callExpression.getElementTextWithContext()}")
-            return callExpression.getQualifiedExpressionForSelectorOrThis().replace(functionalArgument) as KtLambdaExpression
+            val ktExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
+            return runWriteAction { ktExpression.replace(functionalArgument) as KtLambdaExpression }
         }
 
         private fun canBeReplaced(
@@ -153,7 +155,7 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
             private val newArguments: List<ValueArgument>
 
             init {
-                val factory = KtPsiFactory(callElement)
+                val factory = KtPsiFactory(callElement.project)
                 newArguments = original.valueArguments.map { argument ->
                     val call = callArgumentMapToConvert[argument]
                     val newExpression = call?.samConstructorValueArgument()?.getArgumentExpression() ?: return@map argument

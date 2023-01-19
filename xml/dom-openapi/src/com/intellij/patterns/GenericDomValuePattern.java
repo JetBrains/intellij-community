@@ -21,9 +21,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue<T>, GenericDomValuePattern<T>>{
   private static final InitialPatternCondition CONDITION = new InitialPatternCondition(GenericDomValue.class) {
     @Override

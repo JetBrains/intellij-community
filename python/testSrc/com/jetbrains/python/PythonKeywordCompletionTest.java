@@ -113,9 +113,10 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   }
 
   public void testNoElseBeforeExcept() {
-    final List<String> lookupElementStrings = doTestByText("try:\n" +
-                                                           "  a = 1\n" +
-                                                           "<caret>");
+    final List<String> lookupElementStrings = doTestByText("""
+                                                             try:
+                                                               a = 1
+                                                             <caret>""");
     assertNotNull(lookupElementStrings);
     assertDoesntContain(lookupElementStrings, "else");
   }
@@ -146,27 +147,30 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   }
 
   public void testAsInExcept() {  // PY-1846
-    assertTrue(doTestByText("try:\n" +
-                            "    pass\n" +
-                            "except IOError <caret>").contains("as"));
+    assertTrue(doTestByText("""
+                              try:
+                                  pass
+                              except IOError <caret>""").contains("as"));
   }
 
   // PY-13323
   public void testAsInComment() {
     assertDoesntContain(
       doTestByText(
-        "import foo\n" +
-        "# bar baz\n" +
-        "# <caret>"
+        """
+          import foo
+          # bar baz
+          # <caret>"""
       ),
       "as"
     );
   }
 
   public void testElseInFor() {  // PY-6755
-    assertTrue(doTestByText("for item in range(10):\n" +
-                            "    pass\n" +
-                            "el<caret>").contains("else"));
+    assertTrue(doTestByText("""
+                              for item in range(10):
+                                  pass
+                              el<caret>""").contains("else"));
   }
 
   public void testFinallyInElse() {  // PY-6755
@@ -211,21 +215,25 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   }
 
   public void testExceptAfterElse() {
-    assertDoesntContain(doTestByText("try:\n" +
-                                     "    pass\n" +
-                                     "except ArithmeticError:\n" +
-                                     "    pass\n" +
-                                     "else:\n" +
-                                     "    pass\n<caret>"), "except");
+    assertDoesntContain(doTestByText("""
+                                       try:
+                                           pass
+                                       except ArithmeticError:
+                                           pass
+                                       else:
+                                           pass
+                                       <caret>"""), "except");
   }
 
   public void testExceptAfterFinally() {
-    assertDoesntContain(doTestByText("try:\n" +
-                                     "    pass\n" +
-                                     "except ArithmeticError:\n" +
-                                     "    pass\n" +
-                                     "finally:\n" +
-                                     "    pass\n<caret>"), "except");
+    assertDoesntContain(doTestByText("""
+                                       try:
+                                           pass
+                                       except ArithmeticError:
+                                           pass
+                                       finally:
+                                           pass
+                                       <caret>"""), "except");
   }
 
   // PY-15075

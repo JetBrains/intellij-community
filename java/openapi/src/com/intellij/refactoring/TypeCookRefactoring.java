@@ -19,9 +19,6 @@ import com.intellij.psi.PsiElement;
 
 import java.util.List;
 
-/**
- * @author dsl
- */
 public interface TypeCookRefactoring extends Refactoring {
   List<PsiElement> getElements();
 }

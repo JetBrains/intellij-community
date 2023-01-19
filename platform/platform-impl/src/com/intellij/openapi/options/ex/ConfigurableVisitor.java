@@ -95,28 +95,6 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
     }
   }
 
-  /**
-   * @deprecated Use {@link #findById}
-   */
-  @Deprecated(forRemoval = true)
-  public static final class ByID extends ConfigurableVisitor {
-    private final String id;
-
-    public ByID(@NotNull String id) {
-      this.id = id;
-    }
-
-    @Override
-    protected boolean accept(@NotNull Configurable configurable) {
-      return id.equals(getId(configurable));
-    }
-
-    @Nullable
-    public Configurable find(@NotNull List<? extends ConfigurableGroup> groups) {
-      return find(this, groups);
-    }
-  }
-
   @NotNull
   public static String getId(@NotNull Configurable configurable) {
     return configurable instanceof SearchableConfigurable

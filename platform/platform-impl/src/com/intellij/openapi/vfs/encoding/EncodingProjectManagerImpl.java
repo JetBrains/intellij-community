@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -77,15 +76,6 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public EncodingProjectManagerImpl(@NotNull Project project) {
     myProject = project;
     myIdeEncodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
-  }
-
-  static final class EncodingProjectManagerStartUpActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments();
-      }, project.getDisposed());
-    }
   }
 
   @Override
@@ -164,7 +154,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     myModificationTracker.incModificationCount();
   }
 
-  private void reloadAlreadyLoadedDocuments() {
+  void reloadAlreadyLoadedDocuments() {
     if (myMapping.isEmpty()) {
       return;
     }
@@ -289,7 +279,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   }
 
   public void setMapping(@NotNull Map<? extends VirtualFile, ? extends Charset> mapping) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
     final Map<VirtualFilePointer, Charset> newMap = new HashMap<>(mapping.size());
 
@@ -318,7 +308,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
 
   public void setPointerMapping(@NotNull Map<? extends VirtualFilePointer, ? extends Charset> mapping) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
     final Map<VirtualFilePointer, Charset> newMap = new HashMap<>(mapping.size());
 
@@ -599,15 +589,10 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   @Override
   public boolean shouldAddBOMForNewUtf8File() {
-    switch (myBomForNewUtf8Files) {
-      case ALWAYS:
-        return true;
-      case NEVER:
-        return false;
-      case WINDOWS_ONLY:
-        return SystemInfo.isWindows;
-      default:
-        throw new IllegalStateException(myBomForNewUtf8Files.toString());
-    }
+    return switch (myBomForNewUtf8Files) {
+      case ALWAYS -> true;
+      case NEVER -> false;
+      case WINDOWS_ONLY -> SystemInfo.isWindows;
+    };
   }
 }

@@ -6,8 +6,8 @@ package com.intellij.debugger.mockJDI.types;
 
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
 import com.intellij.psi.PsiClass;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
-import one.util.streamex.StreamEx;
 
 import java.util.List;
 
@@ -18,9 +18,7 @@ public class MockPsiInterfaceType extends MockPsiReferenceType implements Interf
 
   @Override
   public List<InterfaceType> superinterfaces() {
-    return StreamEx.of(myClass.getInterfaces())
-      .map(iFace -> (InterfaceType)myVirtualMachine.createReferenceType(iFace))
-      .toList();
+    return ContainerUtil.map(myClass.getInterfaces(), iFace -> (InterfaceType)myVirtualMachine.createReferenceType(iFace));
   }
 
   @Override

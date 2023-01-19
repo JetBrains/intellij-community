@@ -49,10 +49,9 @@ public final class JetBrainsNotNullInstrumentationExceptionInfo extends Exceptio
     if (!element.getText().equals(myMethodName)) return null;
     PsiReferenceExpression ref = ObjectUtils.tryCast(element.getParent(), PsiReferenceExpression.class);
     if (ref == null) return null;
-    PsiCallExpression call = ObjectUtils.tryCast(ref.getParent(), PsiMethodCallExpression.class);
+    PsiMethodCallExpression call = ObjectUtils.tryCast(ref.getParent(), PsiMethodCallExpression.class);
     if (call == null) return null;
     PsiExpressionList argumentList = call.getArgumentList();
-    if (argumentList == null) return null;
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
     PsiClass psiClass = method.getContainingClass();
@@ -80,17 +79,18 @@ public final class JetBrainsNotNullInstrumentationExceptionInfo extends Exceptio
   @Override
   public ExceptionInfo consumeStackLine(String line) {
     switch (myWantLines) {
-      case 2:
-        if (line.contains(myClassName+".$$$reportNull$$$0")) {
+      case 2 -> {
+        if (line.contains(myClassName + ".$$$reportNull$$$0")) {
           return new JetBrainsNotNullInstrumentationExceptionInfo(getClassNameOffset(), getExceptionClassName(), getExceptionMessage(),
                                                                   myParameterName, myFullClassName, myMethodName, 1);
         }
-        break;
-      case 1:
-        if (line.contains(myClassName+"."+myMethodName)) {
+      }
+      case 1 -> {
+        if (line.contains(myClassName + "." + myMethodName)) {
           return new JetBrainsNotNullInstrumentationExceptionInfo(getClassNameOffset(), getExceptionClassName(), getExceptionMessage(),
                                                                   myParameterName, myFullClassName, myMethodName, 0);
         }
+      }
     }
     return null;
   }

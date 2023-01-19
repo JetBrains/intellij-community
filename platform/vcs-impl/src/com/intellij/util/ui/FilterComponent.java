@@ -22,7 +22,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
-import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -33,13 +32,13 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
   protected static final int BORDER_SIZE = 2;
   protected static final int ARC_SIZE = 10;
 
-  @NotNull private final Supplier<@NlsContexts.Label String> myDisplayName;
+  @NotNull private final Supplier<@NlsContexts.Label @NotNull String> myDisplayName;
   @Nullable private JLabel myNameLabel;
   @NotNull private JLabel myValueLabel;
   @NotNull private InlineIconButton myFilterActionButton;
   @Nullable private Runnable myShowPopupAction;
 
-  protected FilterComponent(@NotNull Supplier<@NlsContexts.Label String> displayName) {
+  protected FilterComponent(@NotNull Supplier<@NlsContexts.Label @NotNull String> displayName) {
     super(null);
     myDisplayName = displayName;
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY);
@@ -67,11 +66,9 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     add(Box.createHorizontalStrut(GAP_BEFORE_ARROW));
     add(myFilterActionButton);
 
-    Runnable resetAction = createResetAction();
-
     myFilterActionButton.setActionListener(e -> {
       if (isValueSelected()) {
-        resetAction.run();
+        resetFilter();
       }
       else {
         showPopup();
@@ -106,7 +103,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     myFilterActionButton.setFocusable(selected);
   }
 
-  public abstract String getCurrentText();
+  public abstract @NotNull @Nls String getCurrentText();
 
   /**
    * @return text that shows when filter value not selected (e.g. "All")
@@ -162,7 +159,12 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     ClickListener clickListener = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        showPopup();
+        if (UIUtil.isCloseClick(event, MouseEvent.MOUSE_RELEASED)) {
+          resetFilter();
+        }
+        else {
+          showPopup();
+        }
         return true;
       }
     };
@@ -199,11 +201,15 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     myValueLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextFieldForeground());
   }
 
-  private void showPopup() {
-    if (myShowPopupAction == null) {
-      return;
+  private void resetFilter() {
+    Runnable resetAction = createResetAction();
+    if (resetAction != null) {
+      resetAction.run();
     }
-    else {
+  }
+
+  private void showPopup() {
+    if (myShowPopupAction != null) {
       myShowPopupAction.run();
     }
   }
@@ -273,13 +279,14 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
   }
 
   private static final class DynamicLabel extends JLabel {
-    private final Supplier<@NlsContexts.Label String> myText;
+    private final @NotNull Supplier<@NlsContexts.Label String> myText;
 
     private DynamicLabel(@NotNull Supplier<@NlsContexts.Label String> text) { myText = text; }
 
     @Override
     @NlsContexts.Label
     public String getText() {
+      //noinspection ConstantValue -- can be called during superclass initialization
       if (myText == null) return "";
       return myText.get();
     }
@@ -306,7 +313,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
 
     @Override
     public String getAccessibleName() {
-      return VcsLogBundle.message("vcs.log.filter.accessible.name", myNameLabel.getText(), myValueLabel.getText());
+      return VcsLogBundle.message("vcs.log.filter.accessible.name", myDisplayName.get(), getCurrentText());
     }
 
     @Override

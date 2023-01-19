@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.jvmDecompiler
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -14,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem
 import org.jetbrains.kotlin.idea.highlighter.isKotlinDecompiledFile
 import org.jetbrains.kotlin.idea.internal.DecompileFailedException
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinBytecodeDecompilerTask(private val file: KtFile) : Task.Backgroundable(

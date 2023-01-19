@@ -17,22 +17,28 @@ public class EmptySynchronizedStatementFixTest extends IGQuickFixesTestCase {
 
   public void testRemoveSynchronizedStatement() {
     doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "synchronized"),
-                 "  public void printName(String lock) {\n" +
-                 "    synchronized/**/(lock) {}\n" +
-                 "}\n",
-                 "  public void printName(String lock) {\n" +
-                 "}\n"
+                 """
+                     public void printName(String lock) {
+                       synchronized/**/(lock) {}
+                   }
+                   """,
+                 """
+                     public void printName(String lock) {
+                   }
+                   """
     );
   }
 
   public void testDoNotFixUsedSynchronizedStatement() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "synchronized"),
-                               "class X {\n" +
-                               "  public void printName(String lock) {\n" +
-                               "    synchronized(lock) {\n" +
-                               "      System.out.println(lock);\n" +
-                               "    }\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   public void printName(String lock) {
+                                     synchronized(lock) {
+                                       System.out.println(lock);
+                                     }
+                                   }
+                                 }
+                                 """);
   }
 }

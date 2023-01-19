@@ -20,7 +20,6 @@ import com.intellij.ide.CopyProvider
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.TreeUIHelper
@@ -28,11 +27,9 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -44,7 +41,7 @@ import javax.swing.tree.TreeSelectionModel
 
 internal class RepositoryTree(
     private val project: Project
-) : Tree(), DataProvider, CopyProvider, Displayable<KnownRepositories.All> {
+) : Tree(), DataProvider, CopyProvider {
 
     private val rootNode: DefaultMutableTreeNode
         get() = (model as DefaultTreeModel).root as DefaultMutableTreeNode
@@ -99,39 +96,50 @@ internal class RepositoryTree(
     private fun openFile(repositoryModuleItem: RepositoryTreeItem.Module, focusEditor: Boolean = false) {
         if (!PackageSearchGeneralConfiguration.getInstance(project).autoScrollToSource) return
 
-        val file = repositoryModuleItem.usageInfo.projectModule.buildFile ?: return
+        val file = repositoryModuleItem.module.buildFile ?: return
         FileEditorManager.getInstance(project).openFile(file, focusEditor, true)
     }
 
-    override suspend fun display(viewModel: KnownRepositories.All) = withContext(Dispatchers.EDT) {
+    fun display(
+        repositoriesDeclarationsByModule: Map<PackageSearchModule, List<RepositoryModel>>,
+        allKnownRepositories: List<RepositoryModel>
+    ) {
         val previouslySelectedItem = getSelectedRepositoryItem()
 
         clearSelection()
         rootNode.removeAllChildren()
 
-        val sortedRepositories = viewModel.sortedBy { it.displayName }
-        for (repository in sortedRepositories) {
-            if (repository.usageInfo.isEmpty()) continue
-
-            val repoItem = RepositoryTreeItem.Repository(repository)
-            val repoNode = DefaultMutableTreeNode(repoItem)
-
-            for (usageInfo in repository.usageInfo) {
-                val moduleItem = RepositoryTreeItem.Module(usageInfo)
-                val treeNode = DefaultMutableTreeNode(moduleItem)
-                repoNode.add(treeNode)
-
-                if (previouslySelectedItem == moduleItem) {
-                    selectionModel.selectionPath = TreePath(treeNode)
+        val repoUsages: Map<RepositoryModel, MutableList<PackageSearchModule>> = buildMap {
+            repositoriesDeclarationsByModule.forEach { (module, repos) ->
+                repos.forEach { repo ->
+                    getOrPut(repo) { mutableListOf() }.add(module)
                 }
             }
-
-            rootNode.add(repoNode)
-
-            if (previouslySelectedItem == repoItem) {
-                selectionModel.selectionPath = TreePath(repoNode)
-            }
         }
+
+        allKnownRepositories.asSequence()
+            .filter { it in repoUsages }
+            .sortedBy { it.displayName }
+            .forEach { repository ->
+                val repoItem = RepositoryTreeItem.Repository(repository)
+                val repoNode = DefaultMutableTreeNode(repoItem)
+
+                repoUsages.getValue(repository).forEach { module ->
+                    val moduleItem = RepositoryTreeItem.Module(module)
+                    val treeNode = DefaultMutableTreeNode(moduleItem)
+                    repoNode.add(treeNode)
+
+                    if (previouslySelectedItem == moduleItem) {
+                        selectionModel.selectionPath = TreePath(treeNode)
+                    }
+                }
+
+                rootNode.add(repoNode)
+
+                if (previouslySelectedItem == repoItem) {
+                    selectionModel.selectionPath = TreePath(repoNode)
+                }
+            }
 
         TreeUtil.expandAll(this@RepositoryTree)
         updateUI()

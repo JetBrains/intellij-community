@@ -14,7 +14,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,8 +38,7 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
         clearCache();
       }
     });
-    WorkspaceModelTopics.getInstance(module.getProject()).subscribeImmediately(connection, new WorkspaceListener(module));
-
+    connection.subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceListener(module));
     connection.subscribe(PyPackageManager.PACKAGE_MANAGER_TOPIC, sdk -> {
       final Sdk moduleSdk = PythonSdkUtil.findPythonSdk(module);
       if (sdk == moduleSdk) {

@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.PositionTracker
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
@@ -40,7 +39,7 @@ interface EditorCodePreview: Disposable {
       return codePreview
     }
 
-    fun getActivePreview(editor: Editor): EditorCodePreview? {
+    private fun getActivePreview(editor: Editor): EditorCodePreview? {
       return editor.getUserData(EDITOR_PREVIEW_KEY)
     }
   }
@@ -57,9 +56,6 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
       updatePopupPositions()
     }
   }
-
-  var editorVisibleArea: Rectangle = editor.scrollingModel.visibleArea
-  private set
 
   init {
     addPositionListener(this, editor.component) { updatePopupPositions() }
@@ -79,20 +75,27 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
   private fun updatePopupPositions() {
     if (editor.isDisposed) return
     var visibleArea = editor.scrollingModel.visibleArea
-    var positions = popups.reversed()
-      .map { popup ->
-        val linesArea = findLinesArea(editor, popup.lines)
-        val position = visibleArea.relativePositionOf(linesArea)
-        visibleArea = visibleArea.subtracted(linesArea, position)
-        position
-      }
-      .reversed()
-    if (visibleArea.height < 0) {
-      positions = popups.map { RelativePosition.Inside }
-      editorVisibleArea = editor.scrollingModel.visibleArea
-    } else {
-      editorVisibleArea = visibleArea
+    val positions: Array<RelativePosition> = Array(popups.size) { RelativePosition.Inside }
+    for (i in popups.indices) {
+      val linesArea = findLinesArea(editor, popups[i].lines)
+      val position = visibleArea.relativePositionOf(linesArea)
+      if (position != RelativePosition.Top) break
+      visibleArea = visibleArea.subtracted(linesArea, position)
+      positions[i] = position
     }
+    for (i in popups.indices.reversed()) {
+      val linesArea = findLinesArea(editor, popups[i].lines)
+      val position = visibleArea.relativePositionOf(linesArea)
+      if (position != RelativePosition.Bottom) break
+      visibleArea = visibleArea.subtracted(linesArea, position)
+      positions[i] = position
+    }
+
+    if (visibleArea.height < 0) {
+      popups.forEach { popup -> popup.hide() }
+      return
+    }
+
     val popupsAndPositions = popups.zip(positions)
 
     popupsAndPositions
@@ -104,23 +107,21 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
     var position = Point(-3, -3)
     popupsAndPositions.filter { (_, position) -> position == RelativePosition.Top }
       .forEach { (popup, _) ->
-        popup.window.location = RelativePoint(editor.component, position).screenPoint
-        position.translate(0, popup.window.height)
+        popup.setLocation(RelativePoint(editor.component, position).screenPoint)
+        position.translate(0, popup.size.height)
       }
     position = Point(-3, editor.scrollingModel.visibleArea.height)
     popupsAndPositions
       .filter { (_, position) -> position == RelativePosition.Bottom }
       .reversed()
       .forEach { (popup, _) ->
-        position.translate(0, -popup.window.height)
-        popup.window.location = RelativePoint(editor.component, position).screenPoint
+        position.translate(0, -popup.size.height)
+        popup.setLocation(RelativePoint(editor.component, position).screenPoint)
       }
     popupsAndPositions
       .filterNot { (_, position) -> position == RelativePosition.Inside }
       .forEach { (popup, _) ->
         popup.show()
-        popup.window.size = Dimension(editor.component.width, popup.window.preferredSize.height)
-        popup.window.validate()
       }
   }
 

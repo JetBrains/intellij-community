@@ -13,9 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
-/**
- * @author ven
- */
 @CompileStatic
 class CreateMethodFromUsageTemplateTest extends LightJavaCodeInsightFixtureTestCase {
 

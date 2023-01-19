@@ -14,10 +14,6 @@ import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ShrinkSelectionAction extends AnAction{
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

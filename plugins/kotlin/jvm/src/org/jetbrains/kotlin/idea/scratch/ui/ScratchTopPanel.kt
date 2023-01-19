@@ -79,6 +79,8 @@ class ScratchTopPanel(val scratchFile: ScratchFile) {
         override fun setSelected(e: AnActionEvent, isMakeBeforeRun: Boolean) {
             scratchFile.saveOptions { copy(isMakeBeforeRun = isMakeBeforeRun) }
         }
+
+        override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
 
     private inner class IsInteractiveCheckboxAction : SmallBorderCheckboxAction(
@@ -92,6 +94,8 @@ class ScratchTopPanel(val scratchFile: ScratchFile) {
         override fun setSelected(e: AnActionEvent, isInteractiveMode: Boolean) {
             scratchFile.saveOptions { copy(isInteractiveMode = isInteractiveMode) }
         }
+
+        override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
 
     private inner class IsReplCheckboxAction : SmallBorderCheckboxAction(
@@ -113,5 +117,7 @@ class ScratchTopPanel(val scratchFile: ScratchFile) {
                 scratchFile.replScratchExecutor?.stop()
             }
         }
+
+        override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
 }

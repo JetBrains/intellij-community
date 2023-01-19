@@ -33,9 +33,9 @@ public abstract class FormatOnSaveActionInfoBase<Options extends FormatOnSaveOpt
   private final @NotNull @NlsContexts.Checkbox String myActionOnSaveName;
   private final @NotNull Options myCurrentUiState;
 
-  public FormatOnSaveActionInfoBase(@NotNull ActionOnSaveContext context,
-                                    @NotNull @NlsContexts.Checkbox String actionOnSaveName,
-                                    @NotNull Key<Options> currentUiStateKey) {
+  FormatOnSaveActionInfoBase(@NotNull ActionOnSaveContext context,
+                             @NotNull @NlsContexts.Checkbox String actionOnSaveName,
+                             @NotNull Key<Options> currentUiStateKey) {
     super(context);
     myActionOnSaveName = actionOnSaveName;
 
@@ -53,7 +53,7 @@ public abstract class FormatOnSaveActionInfoBase<Options extends FormatOnSaveOpt
 
   protected abstract @NotNull Options getOptionsFromStoredState();
 
-  protected @NotNull Options getCurrentUiState() {
+  @NotNull Options getCurrentUiState() {
     return myCurrentUiState;
   }
 
@@ -88,13 +88,8 @@ public abstract class FormatOnSaveActionInfoBase<Options extends FormatOnSaveOpt
     return List.of(createFileTypesDropDownLink());
   }
 
-  protected @NotNull DropDownLink<String> createFileTypesDropDownLink() {
-    Function1<DropDownLink<String>, JBPopup> popupBuilder = new Function1<>() {
-      @Override
-      public JBPopup invoke(DropDownLink<String> link) {
-        return createFileTypesPopup(link);
-      }
-    };
+  @NotNull DropDownLink<String> createFileTypesDropDownLink() {
+    Function1<DropDownLink<String>, JBPopup> popupBuilder = link -> createFileTypesPopup(link);
 
     return new DropDownLink<>(getFileTypesLinkText(), popupBuilder);
   }
@@ -144,13 +139,13 @@ public abstract class FormatOnSaveActionInfoBase<Options extends FormatOnSaveOpt
       .createPopup();
   }
 
-  protected abstract void addApplicableFileTypes(@NotNull Collection<FileType> result);
+  protected abstract void addApplicableFileTypes(@NotNull Collection<? super FileType> result);
 
   private @NotNull CheckboxTree createFileTypesCheckboxTree(@NotNull CheckedTreeNode root) {
     CheckboxTree tree = new CheckboxTree(createFileTypesRenderer(), root) {
       @Override
       protected void installSpeedSearch() {
-        new TreeSpeedSearch(this, path -> {
+        new TreeSpeedSearch(this, false, path -> {
           final CheckedTreeNode node = (CheckedTreeNode)path.getLastPathComponent();
           final Object userObject = node.getUserObject();
           if (userObject instanceof FileType) {
@@ -221,13 +216,13 @@ public abstract class FormatOnSaveActionInfoBase<Options extends FormatOnSaveOpt
         }
         if (userObject instanceof FileType) {
           getTextRenderer().setIcon(((FileType)userObject).getIcon());
-          getTextRenderer().append(getFileTypePresentableName(((FileType)userObject)));
+          getTextRenderer().append(getFileTypePresentableName((FileType)userObject));
         }
       }
     };
   }
 
-  protected static @NotNull @Nls String getFileTypePresentableName(@NotNull FileType fileType) {
+  private static @NotNull @Nls String getFileTypePresentableName(@NotNull FileType fileType) {
     // in fact, the following is always true for file types handled here
     if (fileType instanceof LanguageFileType) {
       return ((LanguageFileType)fileType).getLanguage().getDisplayName();

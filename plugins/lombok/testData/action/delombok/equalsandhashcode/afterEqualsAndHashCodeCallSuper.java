@@ -54,7 +54,7 @@ class EqualsAndHashCodeCallSuper extends java.util.Date {
     }
 
     protected boolean canEqual(final Object other) {
-      return other instanceof EqualsAndHashCodeCallSuper;
+        return other instanceof EqualsAndHashCodeCallSuper;
     }
 
     public int hashCode() {

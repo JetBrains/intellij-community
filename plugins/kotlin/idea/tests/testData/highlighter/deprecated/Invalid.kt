@@ -1,6 +1,6 @@
-@Deprecated(<error>)</error>
+@Deprecated<error descr="[NO_VALUE_FOR_PARAMETER] No value passed for parameter 'message'">()</error>
 fun foo() {}
-@Deprecated(<error>false</error>)
+@Deprecated(<error descr="[CONSTANT_EXPECTED_TYPE_MISMATCH] The boolean literal does not conform to the expected type String">false</error>)
 fun boo() {}
 
 fun far() = <warning descr="[DEPRECATION] 'foo(): Unit' is deprecated. ">foo</warning>()

@@ -60,12 +60,14 @@ public class JavaReparseTest extends AbstractReparseTestCase {
 
   public void testSCR5665() {
     setFileType(JavaFileType.INSTANCE);
-    final String text2 = " \"and then insert it again\"}\n" +
-                         "  };\n" +
-                         "}";
-    final String text1 = "class RedTest {\n" +
-                         "  String[][] test = {\n" +
-                         "    {\"remove the comma >\",";
+    final String text2 = """
+       "and then insert it again"}
+        };
+      }""";
+    final String text1 = """
+      class RedTest {
+        String[][] test = {
+          {"remove the comma >",""";
     prepareFile(text1, text2);
     remove(1);
     insert(",");
@@ -92,10 +94,44 @@ public class JavaReparseTest extends AbstractReparseTestCase {
 
   public void testReparseAfterReformatReplacesWhitespaceNodesOnly() {
     @NonNls final String text =
-      "class  RedTest   {   \n\n\n\n\n\n\n\n   " +
-      "String  [  ]  [  ]   test    =    {       { \n\n\n\n\n {    \"\"}  \n\n\n\n\n };   " +
-      "String  [  ]  [  ]   test    =    {       { \n\n\n\n\n {    \"\"}  \n\n\n\n\n };   " +
-      "                      \n\n\n\n\n\n\n\n  }  ";
+      """
+        class  RedTest   {  \s
+
+
+
+
+
+
+
+           String  [  ]  [  ]   test    =    {       {\s
+
+
+
+
+         {    ""} \s
+
+
+
+
+         };   String  [  ]  [  ]   test    =    {       {\s
+
+
+
+
+         {    ""} \s
+
+
+
+
+         };                        \s
+
+
+
+
+
+
+
+          } \s""";
 
     final PsiFile file = myFixture.addFileToProject("aaa.java", text);
     final int[] added = {0};
@@ -156,14 +192,15 @@ public class JavaReparseTest extends AbstractReparseTestCase {
 
   public void testInsertXMLSubTagProducesAddEvents() {
     @NonNls @Language("XML")
-    final String text = "<preface>\n" +
-                        "     <para>\n" +
-                        "         TODO\n" +
-                        "     </para>\n" +
-                        "\n" +
-                        "\n" +
-                        "</preface>\n" +
-                        "";
+    final String text = """
+      <preface>
+           <para>
+               TODO
+           </para>
+
+
+      </preface>
+      """;
 
     final PsiFile file = myFixture.addFileToProject("aaa.xml", text);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();

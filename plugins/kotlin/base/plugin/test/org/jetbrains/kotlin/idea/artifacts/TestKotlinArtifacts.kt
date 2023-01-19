@@ -2,22 +2,33 @@
 package org.jetbrains.kotlin.idea.base.plugin.artifacts
 
 import com.intellij.openapi.application.PathManager
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader.downloadArtifactForIdeFromSources
+import com.intellij.platform.testFramework.io.ExternalResourcesChecker
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.downloadFile
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.unpackPrebuildArchive
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion
+import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_DEV_CDN_URL
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
+import org.jetbrains.kotlin.konan.target.HostManager
 import java.io.File
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Paths
+
+const val kotlincStdlibFileName = "kotlinc_kotlin_stdlib.xml"
 
 object TestKotlinArtifacts {
     private fun getLibraryFile(groupId: String, artifactId: String, libraryFileName: String): File {
         val version = KotlinMavenUtils.findLibraryVersion(libraryFileName)
-            ?: error("Cannot find library version for library $libraryFileName")
-
         return KotlinMavenUtils.findArtifactOrFail(groupId, artifactId, version).toFile()
     }
 
-    private fun getJar(artifactId: String) =
-        downloadArtifactForIdeFromSources("kotlinc_kotlin_stdlib.xml", artifactId)
-    private fun getSourcesJar(artifactId: String) =
-        downloadArtifactForIdeFromSources("kotlinc_kotlin_stdlib.xml", artifactId, suffix = "-sources.jar")
+    private fun getJar(artifactId: String): File =
+        downloadOrReportUnavailability(artifactId, KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName))
+
+    private fun getSourcesJar(artifactId: String): File {
+        val version = KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName)
+        return downloadOrReportUnavailability(artifactId, version, suffix = "-sources.jar")
             .copyTo(                                       // Some tests hardcode jar names in their test data
                 File(PathManager.getCommunityHomePath())   // (KotlinReferenceTypeHintsProviderTestGenerated).
                     .resolve("out")                        // That's why we need to strip version from the jar name
@@ -25,6 +36,7 @@ object TestKotlinArtifacts {
                     .resolve("$artifactId-sources.jar"),
                 overwrite = true
             )
+    }
 
     @JvmStatic val androidExtensionsRuntime: File by lazy { getJar("android-extensions-compiler-plugin-for-ide") }
     @JvmStatic val kotlinAnnotationsJvm: File by lazy { getJar("kotlin-annotations-jvm") }
@@ -51,10 +63,14 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinTestJunit: File by lazy { getJar("kotlin-test-junit") }
     @JvmStatic val parcelizeRuntime: File by lazy { getJar("parcelize-compiler-plugin-for-ide") }
 
-    @JvmStatic val trove4j: File by lazy { getLibraryFile("org.jetbrains.intellij.deps", "trove4j", "Trove4j.xml") }
+    @JvmStatic val trove4j: File by lazy {
+        PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("gnu.trove.THashMap"))!!.toFile()
+    }
     @JvmStatic val jetbrainsAnnotations: File by lazy { getLibraryFile("org.jetbrains", "annotations", "jetbrains_annotations.xml") }
     @JvmStatic val jsr305: File by lazy { getLibraryFile("com.google.code.findbugs", "jsr305", "jsr305.xml") }
     @JvmStatic val junit3: File by lazy { getLibraryFile("junit", "junit", "JUnit3.xml") }
+
+    @JvmStatic val kotlinStdlibNative: File by lazy { getNativeLib(library = "klib/common/stdlib") }
 
     @JvmStatic
     val compilerTestDataDir: File by lazy {
@@ -81,9 +97,9 @@ object TestKotlinArtifacts {
 
     @JvmStatic
     val jsIrRuntimeDir: File by lazy {
-        downloadArtifactForIdeFromSources(
-            libraryFileName = "kotlinc_kotlin_jps_plugin_tests.xml",
-            artifactId = "js-ir-runtime-for-ide",
+        downloadOrReportUnavailability(
+            "js-ir-runtime-for-ide",
+            KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_jps_plugin_tests.xml"),
             suffix = ".klib"
         )
     }
@@ -94,7 +110,38 @@ object TestKotlinArtifacts {
     }
 
     private fun downloadAndUnpack(libraryFileName: String, artifactId: String, dirName: String): File {
-        val jar = downloadArtifactForIdeFromSources(libraryFileName, artifactId)
+        val jar = downloadOrReportUnavailability(artifactId, KotlinMavenUtils.findLibraryVersion(libraryFileName))
         return LazyZipUnpacker(File(PathManager.getCommunityHomePath()).resolve("out").resolve(dirName)).lazyUnpack(jar)
     }
+
+    private fun getNativeLib(
+        version: String = KotlinNativeVersion.resolvedKotlinNativeVersion,
+        platform: String = HostManager.platformName(),
+        library: String
+    ): File {
+        val baseDir = File(PathManager.getCommunityHomePath()).resolve("out")
+        if (!baseDir.exists()) {
+            baseDir.mkdirs()
+        }
+        val prebuilt = "kotlin-native-prebuilt-$platform-$version"
+        val archiveName =  if (HostManager.hostIsMingw) "$prebuilt.zip" else "$prebuilt.tar.gz"
+        val downloadUrl = "$NATIVE_PREBUILT_DEV_CDN_URL/$version/$platform/$archiveName"
+        val downloadOut = "${baseDir.absolutePath}/$archiveName"
+        val libPath = "${baseDir.absolutePath}/$prebuilt/$prebuilt/$library"
+        val libFile = File(libPath)
+
+        if (!libFile.exists()) {
+            val archiveFilePath = Paths.get(downloadOut)
+            downloadFile(downloadUrl, Paths.get(downloadOut))
+            unpackPrebuildArchive(archiveFilePath, Paths.get("$baseDir/$prebuilt"))
+            Files.deleteIfExists(archiveFilePath)
+        }
+        return if (libFile.exists()) libFile else
+            throw IOException("Library doesn't exist: $libPath")
+    }
 }
+
+@JvmOverloads
+fun downloadOrReportUnavailability(artifactId: String, version: String, suffix: String = ".jar"): File =
+    KotlinArtifactsDownloader.downloadArtifactForIdeFromSources(artifactId, version, suffix)
+        ?: ExternalResourcesChecker.reportUnavailability<Nothing>(KotlinArtifactsDownloader::downloadArtifactForIdeFromSources.name, null)

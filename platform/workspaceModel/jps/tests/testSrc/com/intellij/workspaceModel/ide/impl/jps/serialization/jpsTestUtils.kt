@@ -1,11 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.configurationStore.StoreUtil.saveDocumentsAndProjectsAndApp
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
@@ -13,8 +18,13 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.testFramework.replaceService
+import com.intellij.util.LineSeparator
+import com.intellij.util.io.assertMatches
+import com.intellij.util.io.directoryContentOf
+import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
+import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -27,6 +37,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Supplier
 
@@ -36,6 +47,7 @@ internal val sampleFileBasedProjectFile = File(PathManagerEx.getCommunityHomePat
 
 internal data class LoadedProjectData(
   val storage: EntityStorageSnapshot,
+  val unloadedEntitiesStorage: EntityStorageSnapshot,
   val serializers: JpsProjectSerializersImpl,
   val configLocation: JpsProjectConfigLocation,
   val originalProjectDir: File
@@ -46,36 +58,49 @@ internal data class LoadedProjectData(
     get() = File(VfsUtilCore.urlToPath(configLocation.baseDirectoryUrlString))
 }
 
-internal fun copyAndLoadProject(originalProjectFile: File, virtualFileManager: VirtualFileUrlManager): LoadedProjectData {
+internal fun copyAndLoadProject(originalProjectFile: File,
+                                virtualFileManager: VirtualFileUrlManager,
+                                unloadedModuleNames: Set<String> = emptySet(),
+                                checkConsistencyAfterLoading: Boolean = true,
+                                externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): LoadedProjectData {
   val (projectDir, originalProjectDir) = copyProjectFiles(originalProjectFile)
   val originalBuilder = MutableEntityStorage.create()
   val projectFile = if (originalProjectFile.isFile) File(projectDir, originalProjectFile.name) else projectDir
   val configLocation = toConfigLocation(projectFile.toPath(), virtualFileManager)
-  val serializers = loadProject(configLocation, originalBuilder, virtualFileManager) as JpsProjectSerializersImpl
-  val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), serializers, configLocation, originalProjectDir)
-  serializers.checkConsistency(loadedProjectData.configLocation, loadedProjectData.storage, virtualFileManager)
+  val unloadedEntitiesBuilder = MutableEntityStorage.create()
+  val serializers = loadProject(configLocation, originalBuilder, virtualFileManager, externalStorageConfigurationManager = externalStorageConfigurationManager,
+                                unloadedModuleNames = unloadedModuleNames,
+                                unloadedEntitiesBuilder = unloadedEntitiesBuilder) as JpsProjectSerializersImpl
+  val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(), serializers, configLocation, 
+                                            originalProjectDir)
+  if (checkConsistencyAfterLoading) {
+    serializers.checkConsistency(loadedProjectData.configLocation, loadedProjectData.storage, loadedProjectData.unloadedEntitiesStorage, virtualFileManager)
+  }
   return loadedProjectData
 }
 
 internal fun copyProjectFiles(originalProjectFile: File): Pair<File, File> {
-  val projectDir = FileUtil.createTempDirectory("jpsProjectTest", null)
+  val projectDir = Files.createTempDirectory("jpsProjectTest").toFile()
   val originalProjectDir = if (originalProjectFile.isFile) originalProjectFile.parentFile else originalProjectFile
   FileUtil.copyDir(originalProjectDir, projectDir)
   return projectDir to originalProjectDir
 }
 
 internal fun loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: MutableEntityStorage, virtualFileManager: VirtualFileUrlManager,
+                         unloadedModuleNames: Set<String> = emptySet(),
+                         unloadedEntitiesBuilder: MutableEntityStorage = MutableEntityStorage.create(),
                          fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
-                         externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {
+                         externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null,
+                         errorReporter: ErrorReporter = TestErrorReporter): JpsProjectSerializers {
   val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache")
   return runUnderModalProgressIfIsEdt {
     JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(),
-                                         TestErrorReporter, virtualFileManager, fileInDirectorySourceNames,
+                                         errorReporter, virtualFileManager, unloadedModuleNames, unloadedEntitiesBuilder, fileInDirectorySourceNames,
                                          externalStorageConfigurationManager)
   }
 }
 
-internal fun JpsProjectSerializersImpl.saveAllEntities(storage: EntityStorage, configLocation: JpsProjectConfigLocation) {
+fun JpsProjectSerializersImpl.saveAllEntities(storage: EntityStorage, configLocation: JpsProjectConfigLocation) {
   val writer = JpsFileContentWriterImpl(configLocation)
   saveAllEntities(storage, writer)
   writer.writeFiles()
@@ -112,18 +137,23 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
   UsefulTestCase.assertEmpty(expectedFiles.keys - actualFiles.keys)
 }
 
-internal fun createProjectSerializers(projectDir: File,
-                                      virtualFileManager: VirtualFileUrlManager): Pair<JpsProjectSerializersImpl, JpsProjectConfigLocation> {
+internal fun createProjectSerializers(
+  projectDir: File,
+  virtualFileManager: VirtualFileUrlManager,
+  externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null
+): Pair<JpsProjectSerializersImpl, JpsProjectConfigLocation> {
   val configLocation = toConfigLocation(projectDir.toPath(), virtualFileManager)
   val reader = CachingJpsFileContentReader(configLocation)
   val externalStoragePath = projectDir.toPath().resolve("cache")
   val serializer = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, reader, externalStoragePath,
-                                                                     virtualFileManager) as JpsProjectSerializersImpl
+                                                                     virtualFileManager,
+                                                                     externalStorageConfigurationManager) as JpsProjectSerializersImpl
   return serializer to configLocation
 }
 
 fun JpsProjectSerializersImpl.checkConsistency(configLocation: JpsProjectConfigLocation,
                                                storage: EntityStorage,
+                                               unloadedEntitiesStorage: EntityStorage,
                                                virtualFileManager: VirtualFileUrlManager) {
   fun getNonNullActualFileUrl(source: EntitySource): String {
     return getActualFileUrl(source) ?: throw AssertionFailedError("file name is not registered for $source")
@@ -159,8 +189,9 @@ fun JpsProjectSerializersImpl.checkConsistency(configLocation: JpsProjectConfigL
 
   fun <E : WorkspaceEntity> isSerializerWithoutEntities(serializer: JpsFileEntitiesSerializer<E>) =
     serializer is JpsFileEntityTypeSerializer<E> && storage.entities(serializer.mainEntityClass).none { serializer.entityFilter(it) }
+    && unloadedEntitiesStorage.entities(serializer.mainEntityClass).none { serializer.entityFilter(it) } 
 
-  val allSources = storage.entitiesBySource { true }
+  val allSources = storage.entitiesBySource { true } + unloadedEntitiesStorage.entitiesBySource { true }
   val urlsFromSources = allSources.keys.filterIsInstance<JpsFileEntitySource>().mapTo(HashSet()) { getNonNullActualFileUrl(it) }
   assertEquals(urlsFromSources.sorted(), fileSerializersByUrl.keys.associateWith { fileSerializersByUrl.getValues(it) }
     .filterNot { entry -> entry.value.all { isSerializerWithoutEntities(it)} }.map { it.key }.sorted())
@@ -186,7 +217,8 @@ internal fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlMana
 }
 
 internal class JpsFileContentWriterImpl(private val configLocation: JpsProjectConfigLocation) : JpsFileContentWriter {
-  val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element?>>()
+  private val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element?>>()
+  private val XML_PROLOG = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
 
   override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
     urlToComponents.computeIfAbsent(fileUrl) { LinkedHashMap() }[componentName] = componentTag
@@ -250,7 +282,13 @@ internal class JpsFileContentWriterImpl(private val configLocation: JpsProjectCo
       if (rootElement != null) {
         replaceMacroMap.substitute(rootElement, true, true)
         FileUtil.createParentDirs(file)
-        JDOMUtil.write(rootElement, file)
+        file.outputStream().use {
+          if (isModuleFile(file)) {
+            it.write(XML_PROLOG)
+            it.write(LineSeparator.LF.separatorBytes)
+          }
+          JDOMUtil.write(rootElement, it)
+        }
       }
       else {
         FileUtil.delete(file)
@@ -266,4 +304,98 @@ internal object TestErrorReporter : ErrorReporter {
   override fun reportError(message: String, file: VirtualFileUrl) {
     throw AssertionFailedError("Failed to load ${file.url}: $message")
   }
+}
+
+internal object SilentErrorReporter : ErrorReporter {
+  override fun reportError(message: String, file: VirtualFileUrl) {
+    // Nothing here
+  }
+}
+
+internal class CollectingErrorReporter : ErrorReporter {
+  val messages = ArrayList<String>()
+  override fun reportError(message: String, file: VirtualFileUrl) {
+    RuntimeException(message).printStackTrace()
+    messages += message
+  }
+}
+
+internal fun checkSaveProjectAfterChange(originalProjectFile: File,
+                                         changedFilesDirectoryName: String?,
+                                         change: (MutableEntityStorage, MutableEntityStorage, JpsProjectConfigLocation) -> Unit,
+                                         unloadedModuleNames: Set<String>,
+                                         virtualFileManager: VirtualFileUrlManager,
+                                         testDir: String,
+                                         checkConsistencyAfterLoading: Boolean = true,
+                                         externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null) {
+  val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager, unloadedModuleNames, checkConsistencyAfterLoading, externalStorageConfigurationManager)
+  val builder = MutableEntityStorage.from(projectData.storage)
+  val unloadedEntitiesBuilder = MutableEntityStorage.from(projectData.unloadedEntitiesStorage)
+  change(builder, unloadedEntitiesBuilder, projectData.configLocation)
+  val changesList = builder.collectChanges(projectData.storage).values + unloadedEntitiesBuilder.collectChanges(projectData.unloadedEntitiesStorage).values  
+  val changedSources = changesList.flatMapTo(HashSet()) { changes ->
+    changes.flatMap { change ->
+      when (change) {
+        is EntityChange.Added -> listOf(change.entity)
+        is EntityChange.Removed -> listOf(change.entity)
+        is EntityChange.Replaced -> listOf(change.oldEntity, change.newEntity)
+      }
+    }.map { it.entitySource }
+  }
+  val writer = JpsFileContentWriterImpl(projectData.configLocation)
+  projectData.serializers.saveEntities(builder.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(), changedSources, writer)
+  writer.writeFiles()
+  if (checkConsistencyAfterLoading) {
+    projectData.serializers.checkConsistency(projectData.configLocation, builder.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(), virtualFileManager)
+  }
+
+  val expectedDir = FileUtil.createTempDirectory("jpsProjectTest", "expected")
+  FileUtil.copyDir(projectData.originalProjectDir, expectedDir)
+  if (changedFilesDirectoryName != null) {
+    val changedDir = PathManagerEx.findFileUnderCommunityHome(
+      "platform/workspaceModel/jps/tests/testData/$testDir/$changedFilesDirectoryName")
+    FileUtil.copyDir(changedDir, expectedDir)
+  }
+  expectedDir.walk().filter { it.isFile && it.readText().trim() == "<delete/>" }.forEach {
+    FileUtil.delete(it)
+  }
+
+  assertDirectoryMatches(projectData.projectDir, expectedDir, emptySet(), emptyList())
+}
+
+internal fun copyAndLoadGlobalEntities(originalFile: String? = null, expectedFile: String? = null, testDir: File, parentDisposable: Disposable, action: (JpsFileEntitySource.ExactGlobalFile) -> Unit) {
+  val optionsFolder = testDir.resolve("options")
+  PathManager.setExplicitConfigPath(testDir.absolutePath)
+  ApplicationManager.getApplication().stateStore.setPath(testDir.toPath())
+  ApplicationManager.getApplication().stateStore.clearCaches()
+  JpsGlobalEntitiesSerializers.enableGlobalEntitiesLoading()
+  // Copy original file before loading
+  if (originalFile != null) {
+    val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
+                                    "platform/workspaceModel/jps/tests/testData/serialization/globalLibraries/$originalFile")
+    FileUtil.copyDir(globalEntitiesFolder, optionsFolder)
+  }
+
+  // Reinitialize application level services
+  val application = ApplicationManager.getApplication()
+  ApplicationManager.getApplication().replaceService(JpsGlobalModelSynchronizer::class.java, JpsGlobalModelSynchronizerImpl(), parentDisposable)
+  ApplicationManager.getApplication().replaceService(GlobalWorkspaceModel::class.java, GlobalWorkspaceModel(), parentDisposable)
+
+  // Entity source for global entities
+  val virtualFileManager = VirtualFileUrlManager.getGlobalInstance()
+  val globalLibrariesFile = virtualFileManager.fromUrl("$testDir/options/applicationLibraries.xml")
+  val entitySource = JpsFileEntitySource.ExactGlobalFile(globalLibrariesFile)
+
+  action(entitySource)
+
+  // Save current state and check it's expected
+  if (expectedFile != null) {
+    application.invokeAndWait { saveDocumentsAndProjectsAndApp(true) }
+    val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(), "platform/workspaceModel/jps/tests/testData/serialization/globalLibraries/$expectedFile")
+    optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()), filePathFilter = { it.contains("applicationLibraries.xml") })
+  }
+
+  JpsGlobalEntitiesSerializers.disableGlobalEntitiesLoading()
+  ApplicationManager.getApplication().stateStore.clearCaches()
+  PathManager.setExplicitConfigPath(null)
 }

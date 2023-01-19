@@ -32,9 +32,6 @@ import java.util.stream.Collectors;
 import static com.jetbrains.python.PyStringFormatParser.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyStringFormatInspection extends PyInspection {
 
   @NotNull

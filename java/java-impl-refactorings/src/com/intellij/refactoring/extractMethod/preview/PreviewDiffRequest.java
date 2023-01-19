@@ -23,9 +23,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * @author Pavel.Dolgov
- */
 class PreviewDiffRequest extends SimpleDiffRequest {
   private static final Logger LOG = Logger.getInstance(PreviewDiffRequest.class);
 
@@ -44,7 +41,7 @@ class PreviewDiffRequest extends SimpleDiffRequest {
   }
 
   public void setViewer(FrameDiffTool.DiffViewer viewer) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread(), "EDT only");
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (viewer instanceof UnifiedDiffViewer) {
       myCaretTracker = new UnifiedCaretTracker((UnifiedDiffViewer)viewer);
@@ -58,7 +55,7 @@ class PreviewDiffRequest extends SimpleDiffRequest {
   }
 
   public void onNodeSelected(@NotNull FragmentNode node) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread(), "EDT only");
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     Couple<TextRange> bounds = myLinesBounds.get(node);
     if (bounds != null && myCaretTracker != null) {
@@ -67,7 +64,7 @@ class PreviewDiffRequest extends SimpleDiffRequest {
   }
 
   public void onInitialized() {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread(), "EDT only");
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     myInitialized = true;
   }

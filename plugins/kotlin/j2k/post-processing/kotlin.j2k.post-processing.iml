@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="kotlin.j2k.old" />
     <orderEntry type="module" module-name="kotlin.j2k.new" />
     <orderEntry type="module" module-name="kotlin.j2k.idea" />
+    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
     <orderEntry type="module" module-name="kotlin.jvm" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
@@ -32,6 +33,6 @@
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" />
   </component>
 </module>

@@ -40,11 +40,12 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
     myProjectJdkConfigurable = ProjectJdkConfigurable(modulesConfigurator.projectStructureConfigurable, model)
 
     myLanguageLevelCombo = object : LanguageLevelCombo(JavaPsiBundle.message("default.language.level.description")) {
-      override fun getDefaultLevel(): LanguageLevel? {
-        val sdk = myProjectJdkConfigurable.selectedProjectJdk ?: return null
-        val version = JavaSdk.getInstance().getVersion(sdk)
-        return version?.maxLanguageLevel
-      }
+      override val defaultLevel: LanguageLevel?
+        get() {
+          val sdk = myProjectJdkConfigurable.selectedProjectJdk ?: return null
+          val version = JavaSdk.getInstance().getVersion(sdk)
+          return version?.maxLanguageLevel
+        }
     }
 
     buildPanel()

@@ -12,3 +12,6 @@ abstract class Test1 extends Super {
     System.out.println(Super.CONST);
   }
 }
+abstract class Test2{
+  System.out.println(Super.CONST);
+}

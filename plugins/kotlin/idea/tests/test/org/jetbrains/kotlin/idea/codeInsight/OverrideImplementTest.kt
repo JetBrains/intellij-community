@@ -3,6 +3,10 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.generation.ClassMember
+import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter
+import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
@@ -18,6 +22,14 @@ class OldOverrideImplementTest : OverrideImplementTest<OverrideMemberChooserObje
 abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplementTest<T>() {
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("codeInsight/overrideImplement")
+
+    open fun testNoCallToAbstractSuper() {
+        doOverrideFileTest()
+    }
+
+    open fun testNoCallToAbstractSuper2() {
+        doOverrideFileTest()
+    }
 
    open fun testAndroidxNotNull() {
         doOverrideDirectoryTest("foo")
@@ -55,8 +67,8 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doImplementDirectoryTest()
     }
 
-   open fun testFunctionFromTraitInJava() {
-        doImplementJavaDirectoryTest("foo.KotlinTrait", "bar")
+   open fun testFunctionFromInterfaceInJava() {
+        doImplementJavaDirectoryTest("foo.KotlinInterface", "bar")
     }
 
    open fun testGenericMethod() {
@@ -71,7 +83,7 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doImplementFileTest()
     }
 
-   open fun testTraitGenericImplement() {
+   open fun testInterfaceGenericImplement() {
         doImplementFileTest()
     }
 
@@ -87,7 +99,7 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doMultiImplementFileTest()
     }
 
-   open fun testTraitNullableFunction() {
+   open fun testInterfaceNullableFunction() {
         doImplementFileTest()
     }
 
@@ -195,7 +207,15 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doMultiOverrideFileTest()
     }
 
-   open fun testLocalClass() {
+    open fun testNoAnyMembersInValueClass() {
+        doMultiOverrideFileTest()
+    }
+
+    open fun testNoAnyMembersInValueClassWithGenerics() {
+        doMultiOverrideFileTest()
+    }
+
+    open fun testLocalClass() {
         doImplementFileTest()
     }
 
@@ -291,6 +311,20 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         withCustomLanguageAndApiVersion(project, module, LanguageVersion.KOTLIN_1_3, ApiVersion.KOTLIN_1_3) {
             doOverrideFileTest("targetFun")
         }
+    }
+
+   open fun testDropAnnotations() {
+        doOverrideFileTest()
+    }
+
+   open fun testCopyAnnotationsAllowedByExtension() {
+       val filterExtension = object : OverrideImplementsAnnotationsFilter {
+           override fun getAnnotations(file: PsiFile) = arrayOf("AllowedAnnotation")
+       }
+
+       OverrideImplementsAnnotationsFilter.EP_NAME.point.registerExtension(filterExtension, testRootDisposable)
+
+       doOverrideFileTest()
     }
 
    open fun testUnresolvedType() {

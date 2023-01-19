@@ -6,10 +6,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.CustomFoldRegion;
-import com.intellij.openapi.editor.CustomFoldRegionRenderer;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -139,9 +136,12 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
     if (hostRange.getLength() < 2) return null;
     FoldRegion hostRegion = myDelegate.createFoldRegion(hostRange.getStartOffset(), hostRange.getEndOffset(), placeholder, group, neverExpands);
     if (hostRegion == null) return null;
-    int startShift = Math.max(0, myDocumentWindow.hostToInjected(hostRange.getStartOffset()) - startOffset);
-    int endShift = Math.max(0, endOffset - myDocumentWindow.hostToInjected(hostRange.getEndOffset()) - startShift);
-    FoldingRegionWindow window = new FoldingRegionWindow(myDocumentWindow, myEditorWindow, hostRegion, startShift, endShift);
+    FoldingRegionWindow window = new FoldingRegionWindow(myDocumentWindow, myEditorWindow, startOffset, endOffset){
+      @Override
+      @NotNull RangeMarker createHostRangeMarkerToTrack(@NotNull TextRange hostRange, boolean surviveOnExternalChange) {
+        return hostRegion;
+      }
+    };
     hostRegion.putUserData(FOLD_REGION_WINDOW, window);
     return window;
   }
@@ -189,7 +189,7 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
     return getWindowRegions(hostRegions);
   }
 
-  private @NotNull List<FoldRegion> getWindowRegions(@NotNull List<FoldRegion> hostRegions) {
+  private @NotNull List<FoldRegion> getWindowRegions(@NotNull List<? extends FoldRegion> hostRegions) {
     List<FoldRegion> result = new ArrayList<>();
     hostRegions.forEach(hr -> {
       FoldingRegionWindow wr = getWindowRegion(hr);

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -18,6 +17,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryValue;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +27,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
   private static final String KEY = "editor.distraction.free.mode";
   private static final String BEFORE = "BEFORE.DISTRACTION.MODE.";
   private static final String AFTER = "AFTER.DISTRACTION.MODE.";
+  private static final String LAST_ENTER_VALUE = "DISTRACTION.MODE.ENTER.VALUE";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -58,6 +59,8 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
       return;
     }
 
+    PropertiesComponent.getInstance().setValue(LAST_ENTER_VALUE, String.valueOf(enter));
+
     applyAndSave(PropertiesComponent.getInstance(),
                  UISettings.getInstance(),
                  ToolbarSettings.getInstance(),
@@ -67,10 +70,11 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
                  enter ? AFTER : BEFORE,
                  !enter);
     if (enter) {
-      TogglePresentationModeAction.storeToolWindows(project);
+      TogglePresentationModeAction.storeToolWindows(project, false);
     }
 
-    UISettings.getInstance().fireUISettingsChanged();
+    UISettings uiSettings = UISettings.getInstance();
+    uiSettings.fireUISettingsChanged();
     LafManager.getInstance().updateUI();
     EditorUtil.reinitSettings();
     DaemonCodeAnalyzer.getInstance(project).settingsChanged();
@@ -109,8 +113,14 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
     // @formatter:on
   }
 
+  public static boolean shouldMinimizeCustomHeader() {
+    return PropertiesComponent.getInstance().getBoolean(LAST_ENTER_VALUE, false);
+  }
+
   public static int getStandardTabPlacement() {
-    if (!isDistractionFreeModeEnabled()) return UISettings.getInstance().getEditorTabPlacement();
+    if (!isDistractionFreeModeEnabled()) {
+      return UISettings.getInstance().getEditorTabPlacement();
+    }
     return PropertiesComponent.getInstance().getInt(BEFORE + "EDITOR_TAB_PLACEMENT", SwingConstants.TOP);
   }
 

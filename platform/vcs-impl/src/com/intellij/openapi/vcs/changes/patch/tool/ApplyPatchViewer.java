@@ -175,8 +175,6 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     if (myDisposed) return;
     myDisposed = true;
 
-    myFoldingModel.destroy();
-
     Disposer.dispose(myModel);
 
     Disposer.dispose(myResultHolder);
@@ -493,6 +491,11 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private abstract class ApplySelectedChangesActionBase extends DumbAwareAction {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
         // consume shortcut even if there are nothing to do - avoid calling some other action
@@ -557,6 +560,11 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   private class ApplyNonConflictsAction extends DumbAwareAction {
     ApplyNonConflictsAction() {
       ActionUtil.copyFrom(this, "Diff.ApplyNonConflicts"); //NON-NLS
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

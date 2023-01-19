@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.*
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -15,6 +17,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.core.unwrapIfFakeOverride
@@ -37,8 +40,6 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findFirstClassifierWithDeprecat
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.JComponent
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-
 class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     /**
      * In order to detect that `foo()` and `GrandBase.foo()` point to the same method,
@@ -48,12 +49,8 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), Clean
      */
     var unwrapFakeOverrides: Boolean = false
 
-    override fun createOptionsPanel(): JComponent =
-        SingleCheckboxOptionsPanel(
-            KotlinBundle.message("redundant.qualifier.unnecessary.non.direct.parent.class.qualifier"),
-            this,
-            ::unwrapFakeOverrides.name
-        )
+  override fun getOptionsPane() = pane(
+    checkbox(::unwrapFakeOverrides.name, KotlinBundle.message("redundant.qualifier.unnecessary.non.direct.parent.class.qualifier")))
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : KtVisitorVoid() {
@@ -92,7 +89,9 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), Clean
                 } ?: return
 
                 val applicableExpression = expressionForAnalyze.firstApplicableExpression(
-                    validator = { applicableExpression(originalExpression, context, originalDescriptor, unwrapFakeOverrides) },
+                    validator = {
+                        applicableExpression(originalExpression, context, originalDescriptor, receiverReference, unwrapFakeOverrides)
+                    },
                     generator = { firstChild as? KtDotQualifiedExpression }
                 ) ?: return
 
@@ -134,6 +133,7 @@ private fun KtDotQualifiedExpression.applicableExpression(
     originalExpression: KtExpression,
     oldContext: BindingContext,
     originalDescriptor: DeclarationDescriptor,
+    receiverReference: DeclarationDescriptor?,
     unwrapFakeOverrides: Boolean
 ): KtDotQualifiedExpression? {
     if (!receiverExpression.isApplicableReceiver(oldContext) || !ShortenReferences.canBePossibleToDropReceiver(this, oldContext)) {
@@ -141,7 +141,7 @@ private fun KtDotQualifiedExpression.applicableExpression(
     }
 
     val expressionText = originalExpression.text.substring(lastChild.startOffset - originalExpression.startOffset)
-    val newExpression = KtPsiFactory(originalExpression).createExpressionIfPossible(expressionText) ?: return null
+    val newExpression = KtPsiFactory(project).createExpressionIfPossible(expressionText) ?: return null
     val newContext = newExpression.analyzeAsReplacement(originalExpression, oldContext)
     val newDescriptor = newExpression.selector()?.declarationDescriptor(newContext) ?: return null
 
@@ -152,6 +152,13 @@ private fun KtDotQualifiedExpression.applicableExpression(
     val originalDescriptorFqName = originalDescriptor.unwrapFakeOverrideIfNecessary().fqNameSafe
     val newDescriptorFqName = newDescriptor.unwrapFakeOverrideIfNecessary().fqNameSafe
     if (originalDescriptorFqName != newDescriptorFqName) return null
+
+    if (newExpression is KtQualifiedExpression && !compareDescriptors(
+            project,
+            newExpression.receiverExpression.declarationDescriptor(newContext)?.containingDeclaration,
+            receiverReference?.containingDeclaration
+        )
+    ) return null
 
     return this.takeIf {
         if (newDescriptor is ImportedFromObjectCallableDescriptor<*>)

@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
@@ -46,8 +46,6 @@ import java.util.List;
  * utility methods built on top of subcomponents API.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener,
@@ -159,7 +157,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     }
     Project project = myEditor.getProject();
     Document document = myEditor.getDocument();
-    if (project != null && PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) {
+    if (project != null && PostprocessReformattingAspect.getInstance(project).isDocumentLocked(document)) {
       // Disable checking for files in intermediate states - e.g., for files during refactoring.
       return false;
     }
@@ -612,9 +610,12 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   @NonNls
   @Override
   public String dumpState() {
-    return String.format("\nuse soft wraps: %b, tab width: %d, additional columns: %b, " +
-                         "update in progress: %b, bulk update in progress: %b, dirty: %b, deferred regions: %s" +
-                         "\nappliance manager state: %s\nsoft wraps mapping info: %s\nsoft wraps: %s",
+    return String.format("""
+
+                           use soft wraps: %b, tab width: %d, additional columns: %b, update in progress: %b, bulk update in progress: %b, dirty: %b, deferred regions: %s
+                           appliance manager state: %s
+                           soft wraps mapping info: %s
+                           soft wraps: %s""",
                          myUseSoftWraps, myTabWidth, myForceAdditionalColumns, myUpdateInProgress, myBulkUpdateInProgress,
                          myDirty, myDeferredFoldRegions,
                          myApplianceManager.dumpState(), myDataMapper.dumpState(), myStorage.dumpState());

@@ -6,11 +6,13 @@ import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
+import com.intellij.codeInsight.options.JavaInspectionButtons
+import com.intellij.codeInsight.options.JavaInspectionControls
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -35,22 +37,26 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
+import org.jetbrains.kotlin.idea.base.psi.mustHaveNonEmptyPrimaryConstructor
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
+import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindClassUsagesHandler
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.project.implementingDescriptors
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
-import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindClassUsagesHandler
 import org.jetbrains.kotlin.idea.intentions.isFinalizeMethod
 import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.isMainFunction
@@ -62,7 +68,6 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOpt
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.idea.search.usagesSearch.getClassNameForCompanionObject
-import org.jetbrains.kotlin.idea.search.usagesSearch.isDataClassProperty
 import org.jetbrains.kotlin.idea.util.hasActualsFor
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -77,14 +82,6 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyPublicApi
 import org.jetbrains.kotlin.resolve.isInlineClass
 import org.jetbrains.kotlin.resolve.isInlineClassType
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
-import java.awt.Insets
-import javax.swing.JComponent
-import javax.swing.JPanel
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
 class UnusedSymbolInspection : AbstractKotlinInspection() {
     companion object {
@@ -186,7 +183,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                 else -> emptyList()
             }
 
-        fun listOfParameterAccessorNames(parameter: KtParameter): List<String> {
+        private fun listOfParameterAccessorNames(parameter: KtParameter): List<String> {
             val accessors = mutableListOf<String>()
             if (parameter.hasValOrVar()) {
                 parameter.name?.let {
@@ -198,7 +195,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             return accessors
         }
 
-        fun listOfPropertyAccessorNames(property: KtProperty): List<String> {
+        private fun listOfPropertyAccessorNames(property: KtProperty): List<String> {
             val accessors = mutableListOf<String>()
             val propertyName = property.name ?: return accessors
             accessors.add(property.getter?.let { getCustomAccessorName(it) } ?: JvmAbi.getterName(propertyName))
@@ -285,7 +282,9 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             if (declaration is KtProperty && declaration.isSerializationImplicitlyUsedField()) return
             if (declaration is KtNamedFunction && declaration.isSerializationImplicitlyUsedMethod()) return
             // properties can be referred by component1/component2, which is too expensive to search, don't mark them as unused
-            if (declaration is KtParameter && (declaration.isDataClassProperty() || declaration.isInlineClassProperty())) return
+            if (declaration.isConstructorDeclaredProperty() &&
+                declaration.containingClass()?.mustHaveNonEmptyPrimaryConstructor() == true
+            ) return
             // experimental annotations
             if (descriptor is ClassDescriptor && descriptor.kind == ClassKind.ANNOTATION_CLASS) {
                 val fqName = descriptor.fqNameSafe.asString()
@@ -506,12 +505,16 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
 
     private fun hasBuiltInEnumFunctionReference(reference: PsiReference): Boolean {
         val parent = reference.element.getParentOfTypes(
-            true,
+            strict = true,
             KtTypeReference::class.java,
             KtQualifiedExpression::class.java,
-            KtCallableReferenceExpression::class.java
-        ) ?: return false
-        return parent.isReferenceToBuiltInEnumFunction()
+            KtCallableReferenceExpression::class.java,
+            KtImportDirective::class.java
+        )
+
+        return parent?.getStrictParentOfType<KtImportDirective>()?.isReferenceToBuiltInEnumFunction()
+            ?: parent?.isReferenceToBuiltInEnumFunction()
+            ?: false
     }
 
     private fun checkPrivateDeclaration(declaration: KtNamedDeclaration, descriptor: DeclarationDescriptor?): Boolean {
@@ -590,11 +593,8 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                 commonModuleDescriptor.hasActualsFor(descriptor)
     }
 
-    override fun createOptionsPanel(): JComponent = JPanel(GridBagLayout()).apply {
-        add(
-            EntryPointsManagerImpl.createConfigureAnnotationsButton(),
-            GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, Insets(0, 0, 0, 0), 0, 0)
-        )
+    override fun getOptionsPane(): OptPane {
+        return OptPane.pane(JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.ENTRY_POINT_ANNOTATIONS))
     }
 
     private fun createQuickFixes(declaration: KtNamedDeclaration): List<LocalQuickFix> {
@@ -620,12 +620,6 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         }
 
         return list
-    }
-
-    private fun KtParameter.isInlineClassProperty(): Boolean {
-        if (!hasValOrVar()) return false
-        return containingClassOrObject?.hasModifier(KtTokens.INLINE_KEYWORD) == true ||
-                containingClassOrObject?.hasModifier(KtTokens.VALUE_KEYWORD) == true
     }
 }
 

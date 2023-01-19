@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.platform.js.isJs
+import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
@@ -83,22 +83,22 @@ class AddThrowsAnnotationIntention : SelfTargetingIntention<KtThrowExpression>(
 
             containingDeclaration.addAnnotation(annotationFqName, annotationArgumentText, whiteSpaceText)
         } else {
-            val factory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
             val argument = annotationEntry.valueArguments.firstOrNull()
             val expression = argument?.getArgumentExpression()
             val added = when {
                 argument?.getArgumentName() == null ->
-                    annotationEntry.valueArgumentList?.addArgument(factory.createArgument(annotationArgumentText))
+                    annotationEntry.valueArgumentList?.addArgument(psiFactory.createArgument(annotationArgumentText))
                 expression is KtCallExpression ->
-                    expression.valueArgumentList?.addArgument(factory.createArgument(annotationArgumentText))
+                    expression.valueArgumentList?.addArgument(psiFactory.createArgument(annotationArgumentText))
                 expression is KtClassLiteralExpression -> {
                     expression.replaced(
-                        factory.createCollectionLiteral(listOf(expression), annotationArgumentText)
+                        psiFactory.createCollectionLiteral(listOf(expression), annotationArgumentText)
                     ).getInnerExpressions().lastOrNull()
                 }
                 expression is KtCollectionLiteralExpression -> {
                     expression.replaced(
-                        factory.createCollectionLiteral(expression.getInnerExpressions(), annotationArgumentText)
+                        psiFactory.createCollectionLiteral(expression.getInnerExpressions(), annotationArgumentText)
                     ).getInnerExpressions().lastOrNull()
                 }
                 else -> null

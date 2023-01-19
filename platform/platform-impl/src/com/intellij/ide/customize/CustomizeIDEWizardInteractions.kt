@@ -13,7 +13,7 @@ object CustomizeIDEWizardInteractions {
   /**
    * Featured plugins group which are suggested in IDE Customization Wizard.
    */
-  val featuredPluginGroups = AtomicReference<PluginGroups>()
+  val featuredPluginGroups = AtomicReference<Set<PluginId>>()
 
   var skippedOnPage = -1
   val interactions = mutableListOf<CustomizeIDEWizardInteraction>()
@@ -66,16 +66,6 @@ internal class CustomizeIDEWizardCollectorActivity : ApplicationInitializedListe
   }
 }
 
-private class CustomizeIDEWizardFeaturedPluginsProvider(private val pluginGroups: PluginGroups?) : FeaturedPluginsInfoProvider {
-  private val validatedPlugins: Set<PluginId> by lazy {
-    if (pluginGroups != null) {
-      val fromRepository = pluginGroups.pluginsFromRepository
-      if (fromRepository.isNotEmpty()) {
-        return@lazy fromRepository.map { it.pluginId }.toSet()
-      }
-    }
-    return@lazy emptySet()
-  }
-
-  override fun getFeaturedPluginsFromMarketplace(): Set<PluginId> = validatedPlugins
+private class CustomizeIDEWizardFeaturedPluginsProvider(private val pluginGroups: Set<PluginId>) : FeaturedPluginsInfoProvider {
+  override fun getFeaturedPluginsFromMarketplace(): Set<PluginId> = pluginGroups
 }

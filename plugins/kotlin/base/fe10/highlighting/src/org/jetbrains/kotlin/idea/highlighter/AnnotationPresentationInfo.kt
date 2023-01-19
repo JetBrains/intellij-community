@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter
 
@@ -6,11 +6,12 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.SuppressableProblemGroup
+import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
@@ -33,58 +34,86 @@ class AnnotationPresentationInfo(
 ) {
     companion object {
         private const val KOTLIN_COMPILER_WARNING_ID = "KotlinCompilerWarningOptions"
-        private const val KOTLIN_COMPILER_ERROR_ID = "KotlinCompilerErrorOptions"
     }
 
     fun processDiagnostics(
         holder: HighlightInfoHolder,
         diagnostics: Collection<Diagnostic>,
-        highlightInfoBuilderByDiagnostic: MutableMap<Diagnostic, HighlightInfo>? = null,
-        highlightInfoByTextRange: MutableMap<TextRange, HighlightInfo>?,
-        fixesMap: MultiMap<Diagnostic, IntentionAction>?,
-        calculatingInProgress: Boolean
+        diagnosticHighlighted: MutableSet<Diagnostic>,
+        fixesMap: MultiMap<Diagnostic, IntentionAction>
     ) {
         for (range in ranges) {
             for (diagnostic in diagnostics) {
-                create(diagnostic, range) { info ->
-                    holder.add(info)
-                    highlightInfoBuilderByDiagnostic?.put(diagnostic, info)
-                    if (fixesMap != null) {
-                        applyFixes(fixesMap, diagnostic, info)
-                    }
-                    if (calculatingInProgress && highlightInfoByTextRange?.containsKey(range) == false) {
-                        highlightInfoByTextRange[range] = info
-                        QuickFixAction.registerQuickFixAction(info, CalculatingIntentionAction())
-                    }
+                val group = if (diagnostic.severity == Severity.WARNING) {
+                    KotlinSuppressableWarningProblemGroup(diagnostic.factory)
+                } else {
+                    null
                 }
+                val builder = create(diagnostic, range, group)
+                diagnosticHighlighted.add(diagnostic)
+                applyFixes(fixesMap, diagnostic, builder, group)
+                holder.add(builder.createUnconditionally())
             }
         }
     }
 
-    internal fun applyFixes(
+    private fun create(
+        diagnostic: Diagnostic,
+        range: TextRange,
+        group: KotlinSuppressableWarningProblemGroup?
+    ): HighlightInfo.Builder {
+        val message = nonDefaultMessage ?: getDefaultMessage(diagnostic)
+        val textAttributesToApply = if (textAttributes != null) {
+            textAttributes
+        } else {
+            convertSeverityTextAttributes(highlightType, diagnostic.severity)
+        }
+        return HighlightInfo
+            .newHighlightInfo(toHighlightInfoType(highlightType, diagnostic.severity))
+            .range(range)
+            .description(message)
+            .escapedToolTip(getMessage(diagnostic))
+            .also {
+                if (textAttributesToApply != null) {
+                    it.textAttributes(textAttributesToApply)
+                }
+            }
+            .also {
+                if (group != null) {
+                    it.problemGroup(group)
+                }
+            }
+    }
+
+    private fun applyFixes(
         quickFixes: MultiMap<Diagnostic, IntentionAction>,
         diagnostic: Diagnostic,
-        info: HighlightInfo
+        builder: HighlightInfo.Builder,
+        problemGroup: ProblemGroup?
     ) {
-        val warning = diagnostic.severity == Severity.WARNING
-        val error = diagnostic.severity == Severity.ERROR
+        val isWarning = diagnostic.severity == Severity.WARNING
+
+        val element = diagnostic.psiElement
 
         val fixes = quickFixes[diagnostic].takeIf { it.isNotEmpty() }
-            ?: if (warning) listOf(CompilerWarningIntentionAction(diagnostic.factory.name)) else emptyList()
+            ?: if (isWarning) listOf(CompilerWarningIntentionAction(diagnostic.factory.name)) else emptyList()
 
-        val keyForSuppressOptions = when {
-            error -> HighlightDisplayKey.findOrRegister(
-                KOTLIN_COMPILER_ERROR_ID,
-                KotlinBaseFe10HighlightingBundle.message("kotlin.compiler.error")
-            )
-            else -> HighlightDisplayKey.findOrRegister(
+        val keyForSuppressOptions = if (isWarning) {
+            HighlightDisplayKey.findOrRegister(
                 KOTLIN_COMPILER_WARNING_ID,
                 KotlinBaseFe10HighlightingBundle.message("kotlin.compiler.warning")
             )
-        }
+        } else null
 
         for (fix in fixes) {
             if (fix !is IntentionAction) {
+                continue
+            }
+
+            if (fix == RegisterQuickFixesLaterIntentionAction) {
+                element.reference?.let {
+                    UnresolvedReferenceQuickFixUpdater.getInstance(element.project).registerQuickFixesLater(it, builder)
+                }
                 continue
             }
 
@@ -94,31 +123,14 @@ class AnnotationPresentationInfo(
                 options += fix.options
             }
 
-            val problemGroup = info.problemGroup
             if (problemGroup is SuppressableProblemGroup) {
-                options += problemGroup.getSuppressActions(diagnostic.psiElement).mapNotNull { it as IntentionAction }
+                options += problemGroup.getSuppressActions(element).mapNotNull { it as IntentionAction }
             }
 
-            val message = KotlinBaseFe10HighlightingBundle.message(if (error) "kotlin.compiler.error" else "kotlin.compiler.warning")
-            info.registerFix(fix, options, message, null, keyForSuppressOptions)
+            val isError = diagnostic.severity == Severity.ERROR
+            val message = KotlinBaseFe10HighlightingBundle.message(if (isError) "kotlin.compiler.error" else "kotlin.compiler.warning")
+            builder.registerFix(fix, options, message, null, keyForSuppressOptions)
         }
-    }
-
-    private fun create(diagnostic: Diagnostic, range: TextRange, consumer: (HighlightInfo) -> Unit) {
-        val message = nonDefaultMessage ?: getDefaultMessage(diagnostic)
-        HighlightInfo
-            .newHighlightInfo(toHighlightInfoType(highlightType, diagnostic.severity))
-            .range(range)
-            .description(message)
-            .escapedToolTip(getMessage(diagnostic))
-            .also { builder -> textAttributes?.let(builder::textAttributes) ?: convertSeverityTextAttributes(highlightType, diagnostic.severity)?.let(builder::textAttributes) }
-            .also {
-                if (diagnostic.severity == Severity.WARNING) {
-                    it.problemGroup(KotlinSuppressableWarningProblemGroup(diagnostic.factory))
-                }
-            }
-            .createUnconditionally()
-            .also(consumer)
     }
 
     @NlsContexts.Tooltip
@@ -174,11 +186,7 @@ class AnnotationPresentationInfo(
             null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING ->
                 when (severity) {
                     Severity.ERROR -> CodeInsightColors.ERRORS_ATTRIBUTES
-                    Severity.WARNING -> {
-                        if (highlightType == ProblemHighlightType.WEAK_WARNING) {
-                            CodeInsightColors.WEAK_WARNING_ATTRIBUTES
-                        } else CodeInsightColors.WARNINGS_ATTRIBUTES
-                    }
+                    Severity.WARNING -> CodeInsightColors.WARNINGS_ATTRIBUTES
                     Severity.INFO -> CodeInsightColors.WARNINGS_ATTRIBUTES
                     else -> null
                 }

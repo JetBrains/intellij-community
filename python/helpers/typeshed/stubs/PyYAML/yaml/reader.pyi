@@ -1,9 +1,10 @@
 from _typeshed import SupportsRead
 from typing import Any
+from typing_extensions import TypeAlias
 
 from yaml.error import YAMLError
 
-_ReadStream = str | bytes | SupportsRead[str] | SupportsRead[bytes]
+_ReadStream: TypeAlias = str | bytes | SupportsRead[str] | SupportsRead[bytes]
 
 class ReaderError(YAMLError):
     name: Any

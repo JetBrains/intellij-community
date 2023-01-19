@@ -14,6 +14,7 @@ object Services {
         CoreKotlinVersionProviderService(),
         CoreJvmTargetVersionsProviderService(),
         RunConfigurationsServiceImpl(),
+        EmptyInspectionWizardService(),
         SettingSavingWizardServiceImpl(),
         VelocityTemplateEngineServiceImpl()
     )

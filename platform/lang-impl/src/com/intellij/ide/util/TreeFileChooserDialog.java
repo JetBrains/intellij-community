@@ -2,12 +2,10 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
-import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
@@ -23,7 +21,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -36,6 +33,8 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -50,7 +49,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
@@ -60,21 +58,17 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class TreeFileChooserDialog extends DialogWrapper implements TreeFileChooser {
+
   private Tree myTree;
   private PsiFile mySelectedFile = null;
-  @NotNull
-  private final Project myProject;
-  private BaseProjectTreeBuilder myBuilder;
+  private final @NotNull Project myProject;
+  private StructureTreeModel<? extends ProjectAbstractTreeStructureBase> myModel;
   private TabbedPaneWrapper myTabbedPane;
   private ChooseByNamePanel myGotoByNamePanel;
-  @Nullable private final PsiFile myInitialFile;
-  @Nullable private final PsiFileFilter myFilter;
-  @Nullable private final FileType myFileType;
+  private final @Nullable PsiFile myInitialFile;
+  private final @Nullable PsiFileFilter myFilter;
+  private final @Nullable FileType myFileType;
 
   private final boolean myDisableStructureProviders;
   private final boolean myShowLibraryContents;
@@ -82,7 +76,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
   public TreeFileChooserDialog(@NotNull Project project,
                                @NlsContexts.DialogTitle String title,
-                               @Nullable final PsiFile initialFile,
+                               final @Nullable PsiFile initialFile,
                                @Nullable FileType fileType,
                                @Nullable PsiFileFilter filter,
                                final boolean disableStructureProviders,
@@ -106,17 +100,14 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
   @Override
   protected JComponent createCenterPanel() {
-    final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode());
-    myTree = new Tree(model);
-
-    final ProjectAbstractTreeStructureBase treeStructure = new AbstractProjectTreeStructure(myProject) {
+    ProjectAbstractTreeStructureBase treeStructure = new AbstractProjectTreeStructure(myProject) {
       @Override
       public boolean isHideEmptyMiddlePackages() {
         return true;
       }
 
       @Override
-      public Object @NotNull [] getChildElements(@NotNull final Object element) {
+      public Object @NotNull [] getChildElements(final @NotNull Object element) {
         return filterFiles(super.getChildElements(element));
       }
 
@@ -135,8 +126,10 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         return myDisableStructureProviders ? null : super.getProviders();
       }
     };
-    myBuilder = new ProjectTreeBuilder(myProject, myTree, model, AlphaComparator.INSTANCE, treeStructure);
 
+    myModel = new StructureTreeModel<>(treeStructure, getDisposable());
+    myModel.setComparator(AlphaComparator.INSTANCE);
+    myTree = new Tree(new AsyncTreeModel(myModel, getDisposable()));
     myTree.setRootVisible(false);
     myTree.expandRow(0);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -264,11 +257,12 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   }
 
   @Override
-  public void selectFile(@NotNull final PsiFile file) {
+  public void selectFile(@NotNull PsiFile file) {
     // Select element in the tree
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (myBuilder != null) {
-        myBuilder.selectAsync(file, file.getVirtualFile(), true);
+      if (myModel != null) {
+        myModel.select(file, myTree, path -> {
+        });
       }
     }, ModalityState.stateForComponent(getWindow()));
   }
@@ -298,16 +292,6 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
   }
 
-
-  @Override
-  public void dispose() {
-    if (myBuilder != null) {
-      Disposer.dispose(myBuilder);
-      myBuilder = null;
-    }
-    super.dispose();
-  }
-
   @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.ide.util.TreeFileChooserDialog";
@@ -320,8 +304,9 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
   private final class MyGotoFileModel implements ChooseByNameModel, DumbAware {
     private final int myMaxSize = WindowManagerEx.getInstanceEx().getFrame(myProject).getSize().width;
+
     @Override
-    public Object @NotNull [] getElementsByName(@NotNull final String name, final boolean checkBoxState, @NotNull final String pattern) {
+    public Object @NotNull [] getElementsByName(final @NotNull String name, final boolean checkBoxState, final @NotNull String pattern) {
       GlobalSearchScope scope = myShowLibraryContents ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.projectScope(myProject);
       final PsiFile[] psiFiles = FilenameIndex.getFilesByName(myProject, name, scope);
       return filterFiles(psiFiles);
@@ -338,15 +323,13 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
 
-    @NotNull
     @Override
-    public String getNotInMessage() {
+    public @NotNull String getNotInMessage() {
       return "";
     }
 
-    @NotNull
     @Override
-    public String getNotFoundMessage() {
+    public @NotNull String getNotFoundMessage() {
       return "";
     }
 
@@ -359,9 +342,8 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     public void saveInitialCheckBoxState(final boolean state) {
     }
 
-    @NotNull
     @Override
-    public PsiElementListCellRenderer getListCellRenderer() {
+    public @NotNull PsiElementListCellRenderer getListCellRenderer() {
       return new GotoFileCellRenderer(myMaxSize);
     }
 
@@ -389,14 +371,13 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
     @Override
-    public String getElementName(@NotNull final Object element) {
+    public String getElementName(final @NotNull Object element) {
       if (!(element instanceof PsiFile)) return null;
       return ((PsiFile)element).getName();
     }
 
     @Override
-    @Nullable
-    public String getFullName(@NotNull final Object element) {
+    public @Nullable String getFullName(final @NotNull Object element) {
       if (element instanceof PsiFile) {
         final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
         return virtualFile != null ? virtualFile.getPath() : null;

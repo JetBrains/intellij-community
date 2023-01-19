@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
+@Deprecated(forRemoval = true)
 public class FileGroupingProjectNode extends ProjectViewNodeWithChildrenList<File> {
   private VirtualFile myVirtualFile;
 

@@ -27,16 +27,6 @@ private var isNativeDebugSuggestionEnabled: Boolean
         service.state.dontShowAgainKotlinNativeDebuggerPluginSuggestion = !value
     }
 
-private var isKotlinJSInspectionsPackSuggestionEnabled: Boolean
-    get() {
-        val service = DontShowAgainKotlinAdditionPluginSuggestionService.getInstance()
-        return !service.state.dontShowAgainKotlinJSInspectionPackSuggestion
-    }
-    set(value) {
-        val service = DontShowAgainKotlinAdditionPluginSuggestionService.getInstance()
-        service.state.dontShowAgainKotlinJSInspectionPackSuggestion = !value
-    }
-
 fun suggestNativeDebug(projectPath: String) {
     if (!isNativeDebugSuggestionEnabled) return
     suggestPluginInstall(
@@ -46,17 +36,6 @@ fun suggestNativeDebug(projectPath: String) {
         pluginId = PluginId.getId("com.intellij.nativeDebug"),
         onDontShowAgainActionPerformed = { isNativeDebugSuggestionEnabled = false },
         onlyForUltimate = true,
-    )
-}
-
-fun suggestKotlinJsInspectionPackPlugin(projectPath: String) {
-    if (!isKotlinJSInspectionsPackSuggestionEnabled) return
-    suggestPluginInstall(
-        projectPath = projectPath,
-        notificationContent = KotlinIdeaGradleBundle.message("notification.text.kotlin.js.inspections.pack.provides.inspections.and.quick.fixes.for.kotlin.js"),
-        displayId = "kotlin.js",
-        pluginId = PluginId.getId("org.jetbrains.kotlin-js-inspection-pack-plugin"),
-        onDontShowAgainActionPerformed = { isKotlinJSInspectionsPackSuggestionEnabled = false }
     )
 }
 

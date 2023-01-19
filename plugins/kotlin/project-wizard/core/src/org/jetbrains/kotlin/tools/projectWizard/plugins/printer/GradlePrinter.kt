@@ -92,6 +92,10 @@ class GradlePrinter(val dsl: GradleDsl, override val indent: Int = 4) : BuildFil
         body()
     }
 
+    fun String.dependsOn(@NonNls dependency: String) {
+        +"$this.dependsOn($dependency)"
+    }
+
     val String.identifier
         get() = when (dsl) {
             GradleDsl.KOTLIN -> if (this in KOTLIN_KEYWORDS) "`$this`" else this

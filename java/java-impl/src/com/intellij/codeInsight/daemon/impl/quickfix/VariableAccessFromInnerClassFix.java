@@ -38,8 +38,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   @FixType
   private final int myFixType;
   private static final int MAKE_FINAL = 0;
-  private static final int MAKE_ARRAY = 1;
-  private static final int COPY_TO_FINAL = 2;
+  private static final int COPY_TO_FINAL = 1;
+  private static final int MAKE_ARRAY = 2;
   private static final int UNKNOWN = -1;
   @MagicConstant(intValues = {MAKE_FINAL, COPY_TO_FINAL, MAKE_ARRAY, UNKNOWN})
   @interface FixType { }
@@ -69,21 +69,20 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    switch (myFixType) {
-      case MAKE_FINAL: {
+    return switch (myFixType) {
+      case MAKE_FINAL -> {
         Collection<PsiVariable> vars = getVariablesToFix();
-        return JavaBundle.message("intention.name.make.variable.final", myVariable.getName(), vars.size() == 1 ? 0 : 1);
+        yield JavaBundle.message("intention.name.make.variable.final", myVariable.getName(), vars.size() == 1 ? 0 : 1);
       }
-      case MAKE_ARRAY:
+      case MAKE_ARRAY -> {
         Collection<PsiVariable> vars = getVariablesToFix();
-        return JavaBundle.message("intention.name.transform.variables.into.final.one.element.array", myVariable.getName(),
-                                  vars.size() == 1 ? 0 : 1);
-      case COPY_TO_FINAL:
-        return JavaBundle.message("intention.name.copy.to.final.temp.variable", myVariable.getName(),
-                                  !PsiUtil.isLanguageLevel8OrHigher(myContext) ? 0 : 1);
-      default:
-        return "";
-    }
+        yield JavaBundle.message("intention.name.transform.variables.into.final.one.element.array", myVariable.getName(),
+                                 vars.size() == 1 ? 0 : 1);
+      }
+      case COPY_TO_FINAL -> JavaBundle.message("intention.name.copy.to.final.temp.variable", myVariable.getName(),
+                               !PsiUtil.isLanguageLevel8OrHigher(myContext) ? 0 : 1);
+      default -> "";
+    };
   }
 
   @Override
@@ -110,15 +109,9 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     try {
       switch (myFixType) {
-        case MAKE_FINAL:
-          makeFinal();
-          break;
-        case MAKE_ARRAY:
-          makeArray();
-          break;
-        case COPY_TO_FINAL:
-          copyToFinal(myVariable, myContext);
-          break;
+        case MAKE_FINAL -> makeFinal();
+        case MAKE_ARRAY -> makeArray();
+        case COPY_TO_FINAL -> copyToFinal(myVariable, myContext);
       }
     }
     catch (IncorrectOperationException e) {
@@ -242,7 +235,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
       }
       PsiElement element = statement;
       while (element != declarationScope && !(element instanceof PsiFile)) {
-        if (element instanceof PsiClass || element instanceof PsiLambdaExpression) {
+        if (element instanceof PsiClass || element instanceof PsiLambdaExpression || element instanceof PsiSwitchLabelStatementBase) {
           statement = statement.getParent();
           continue nextInnerClass;
         }
@@ -306,7 +299,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     int type = MAKE_FINAL;
     for (PsiReferenceExpression expression : outerReferences) {
       // if it happens that variable referenced from another inner class, make sure it can be make final from there
-      PsiElement innerScope = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, expression);
+      PsiElement innerScope = HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, expression);
 
       if (innerScope != null) {
         @FixType int thisType = MAKE_FINAL;
@@ -330,7 +323,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new HashMap<>();
     for (PsiReferenceExpression expression : references) {
       if (ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) return false;
-      HighlightInfo highlightInfo = HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems,
+      HighlightInfo.Builder highlightInfo = HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems,
                                                                                                  variable.getContainingFile());
       if (highlightInfo != null) return false;
       highlightInfo = HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, finalVarProblems);
@@ -371,15 +364,9 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     int type = getQuickFixType(variable);
     if (type == UNKNOWN) return;
     switch (type) {
-      case MAKE_FINAL:
-        PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
-        break;
-      case MAKE_ARRAY:
-        makeArray(variable, context);
-        break;
-      case COPY_TO_FINAL:
-        copyToFinal(variable, context);
-        break;
+      case MAKE_FINAL -> PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
+      case MAKE_ARRAY -> makeArray(variable, context);
+      case COPY_TO_FINAL -> copyToFinal(variable, context);
     }
   }
 }

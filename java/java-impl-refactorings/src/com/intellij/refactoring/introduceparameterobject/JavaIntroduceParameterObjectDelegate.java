@@ -194,15 +194,9 @@ public class JavaIntroduceParameterObjectDelegate
          if (refElement instanceof PsiReferenceExpression) {
            final PsiReferenceExpression paramUsage = (PsiReferenceExpression)refElement;
            switch (detector.getExpressionAccess(refElement)) {
-             case Read:
-               readUsages.add(paramUsage);
-               break;
-             case ReadWrite:
-                 readWriteUsages.add(paramUsage);
-                 break;
-             case Write:
-                 writeUsages.add(paramUsage);
-                 break;
+             case Read -> readUsages.add(paramUsage);
+             case ReadWrite -> readWriteUsages.add(paramUsage);
+             case Write -> writeUsages.add(paramUsage);
            }
          }
          return true;

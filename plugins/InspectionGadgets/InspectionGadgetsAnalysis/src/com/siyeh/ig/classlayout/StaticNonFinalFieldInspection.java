@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class StaticNonFinalFieldInspection extends BaseInspection {
 
@@ -46,10 +49,10 @@ public class StaticNonFinalFieldInspection extends BaseInspection {
     return MakeFieldFinalFix.buildFix(field);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("static.non.final.field.option"), this, "ignoreNonPublicFields");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreNonPublicFields", InspectionGadgetsBundle.message("static.non.final.field.option")));
   }
 
   @Override

@@ -8,9 +8,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public abstract class BasicAttributeValueReference implements PsiReference {
   protected final PsiElement myElement;
   protected final TextRange myRange;

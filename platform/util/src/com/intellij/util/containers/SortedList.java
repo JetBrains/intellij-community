@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public class SortedList<T> extends AbstractList<T>{
   private final SortedMap<T, List<T>> myMap;
   private final Comparator<? super T> myComparator;

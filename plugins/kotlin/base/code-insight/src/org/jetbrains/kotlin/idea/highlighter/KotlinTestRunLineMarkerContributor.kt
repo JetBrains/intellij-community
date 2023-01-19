@@ -8,8 +8,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinBaseCodeInsightBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.PsiOnlyKotlinMainFunctionDetector
+import org.jetbrains.kotlin.idea.base.codeInsight.hasMain
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
@@ -55,7 +56,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
             return getTestStateIcon(state, isClass)
         }
 
-        fun SimplePlatform.providesRunnableTests(): Boolean {
+        private fun SimplePlatform.providesRunnableTests(): Boolean {
             if (this is NativePlatformWithTarget) {
                 return when {
                     HostManager.hostIsMac -> target in listOf(
@@ -113,19 +114,15 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
     }
 
     private fun getOrder(declaration: KtNamedDeclaration): Int {
-        val mainFunctionDetector = KotlinMainFunctionDetector.getInstance()
-
-        if (declaration is KtClassOrObject && mainFunctionDetector.hasMain(declaration.companionObjects)) {
+        if (declaration is KtClass && declaration.companionObjects.any { PsiOnlyKotlinMainFunctionDetector.hasMain(it) }) {
             return 1
         }
-        
+
         if (declaration is KtNamedFunction) {
-            val declarations = declaration.containingClassOrObject?.declarations ?: return 0
-            if (mainFunctionDetector.hasMain(declarations)) return 1
-            return 0
+            val containingClass = declaration.containingClassOrObject
+            return if (containingClass != null && PsiOnlyKotlinMainFunctionDetector.hasMain(containingClass)) 1 else 0
         }
 
-        val file = declaration.containingFile
-        return if (file is KtFile && mainFunctionDetector.hasMain(file.declarations)) 1 else 0
+        return if (PsiOnlyKotlinMainFunctionDetector.hasMain(declaration.containingKtFile)) 1 else 0
     }
 }

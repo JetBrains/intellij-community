@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.NumericMnemonicItem;
 import com.intellij.ui.scale.JBUIScale;
@@ -26,6 +27,7 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.Collections;
 
 public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
@@ -124,14 +126,12 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     JBEmptyBorder valueBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0, JBUIScale.scale(8), 1, 0);
     myValueLabel.setBorder(valueBorder);
     myValueLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
-    myValueLabel.setOpaque(false);
     panel.add(myValueLabel, BorderLayout.CENTER);
 
     myShortcutLabel = new JLabel();
     JBEmptyBorder shortcutBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0,0,1,3);
     myShortcutLabel.setBorder(shortcutBorder);
     myShortcutLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
-    myShortcutLabel.setOpaque(false);
     panel.add(myShortcutLabel, BorderLayout.EAST);
 
     myMnemonicLabel = new JLabel();
@@ -146,7 +146,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     else {
       myMnemonicLabel.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.ActionsList.mnemonicInsets()));
       myMnemonicLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-
+      //noinspection HardCodedStringLiteral
       Dimension preferredSize = new JLabel("W").getPreferredSize();
       JBInsets.addTo(preferredSize, JBUI.insetsLeft(4));
       myMnemonicLabel.setPreferredSize(preferredSize);
@@ -170,13 +170,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   @Override
   protected JComponent layoutComponent(JComponent middleItemComponent) {
     myNextStepLabel = new JLabel();
-    myNextStepLabel.setOpaque(false);
 
     JPanel left = new JPanel(new BorderLayout());
     left.add(middleItemComponent, BorderLayout.CENTER);
 
     JPanel right = new JPanel(new GridBagLayout());
-    int leftRightInset = (ListPopupImpl.NEXT_STEP_AREA_WIDTH - AllIcons.Icons.Ide.MenuArrow.getIconWidth()) / 2;
 
     myButtonsSeparator = createButtonsSeparator();
     left.add(myButtonsSeparator, BorderLayout.EAST);
@@ -185,13 +183,14 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       left.add(myIconBar, BorderLayout.WEST);
     }
 
-    JPanel result = new JPanel();
+    JPanel result;
     if (ExperimentalUI.isNewUI()) {
       result = new SelectablePanel();
       result.setOpaque(false);
-      PopupUtil.configSelectablePanel(((SelectablePanel)result));
+      PopupUtil.configListRendererFixedHeight(((SelectablePanel)result));
     }
     else {
+      result = new JPanel();
       result.setBorder(JBUI.Borders.empty());
     }
     result.setLayout(new GridBagLayout());
@@ -201,8 +200,9 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       left.setBorder(JBUI.Borders.empty());
       right.setBorder(JBUI.Borders.empty());
     } else {
-      left.setBorder(new EmptyBorder(insets.top, insets.left, insets.bottom, 0));
-      right.setBorder(new EmptyBorder(insets.top, leftRightInset, insets.bottom, insets.right));
+      int leftRightInset = (ListPopupImpl.NEXT_STEP_AREA_WIDTH - AllIcons.Icons.Ide.MenuArrow.getIconWidth()) / 2;
+      left.setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, 0));
+      right.setBorder(JBUI.Borders.empty(insets.top, leftRightInset, insets.bottom, insets.right));
     }
 
     GridBag gbc = new GridBag()
@@ -239,7 +239,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   protected static JComponent createButtonsSeparator() {
     SeparatorComponent separator = new SeparatorComponent(JBUI.CurrentTheme.List.buttonSeparatorColor(), SeparatorOrientation.VERTICAL);
     separator.setHGap(1);
-    separator.setVGap(0);
+    separator.setVGap(JBUI.CurrentTheme.List.buttonSeparatorInset());
     return separator;
   }
 
@@ -256,14 +256,17 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     myMainPane.setOpaque(false);
     myButtonPane.setOpaque(false);
 
-    updateExtraButtons(list, value, step, isSelected);
 
     boolean nextStepButtonSelected = false;
-    if (step.hasSubstep(value)) {
+    boolean showNextStepLabel = step.hasSubstep(value) && !myInlineActionsSupport.hasExtraButtons(value);
+    if (showNextStepLabel) {
       myNextStepLabel.setVisible(isSelectable);
       myNextStepLabel.setIcon(isSelectable && isSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
-      if (!ExperimentalUI.isNewUI() ) {
-        myComponent.setBackground(calcBackground(isSelected && isSelectable, false));
+      if (ExperimentalUI.isNewUI()) {
+        myNextStepLabel.setBorder(JBUI.Borders.emptyLeft(20));
+      }
+      else {
+        myComponent.setBackground(calcBackground(isSelected && isSelectable));
       }
       setForegroundSelected(myTextLabel, isSelected && isSelectable);
     }
@@ -271,15 +274,17 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       myNextStepLabel.setVisible(false);
     }
 
+    boolean hasNextIcon = myNextStepLabel.isVisible();
+    boolean hasInlineButtons = updateExtraButtons(list, value, step, isSelected, hasNextIcon);
+
     if (ExperimentalUI.isNewUI() && myComponent instanceof SelectablePanel) {
       ((SelectablePanel)myComponent).setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
 
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
       Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
-      boolean hasNextIcon = myNextStepLabel.getIcon() != null && myNextStepLabel.isVisible();
       //noinspection UseDPIAwareBorders
       myComponent.setBorder(
-        new EmptyBorder(0, innerInsets.left + leftRightInset, 0, hasNextIcon ? leftRightInset : leftRightInset + leftRightInset));
+        new EmptyBorder(0, innerInsets.left + leftRightInset, 0, hasNextIcon || hasInlineButtons ? leftRightInset : leftRightInset + leftRightInset));
     }
 
     if (step instanceof BaseListPopupStep) {
@@ -299,12 +304,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (myMnemonicLabel != null && value instanceof NumericMnemonicItem && ((NumericMnemonicItem)value).digitMnemonicsEnabled()) {
       Character mnemonic = ((NumericMnemonicItem)value).getMnemonicChar();
       myMnemonicLabel.setText(mnemonic != null ? String.valueOf(mnemonic) : "");
-      if (ExperimentalUI.isNewUI() && mnemonic == null) {
-        //noinspection HardCodedStringLiteral
-        Dimension preferredSize = new JLabel("W").getPreferredSize();
-        JBInsets.addTo(preferredSize, JBUI.CurrentTheme.ActionsList.mnemonicInsets());
-        myMnemonicLabel.setText("  ");
-      }
       Color foreground =
         ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.mnemonicForeground() : JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND;
       myMnemonicLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected ? getSelectionForeground() : foreground);
@@ -343,7 +342,12 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
             shortcutText = ((UserDataHolder)action).getUserData(CUSTOM_KEY_STROKE_TEXT);
           }
         }
-        if (shortcutText != null) myShortcutLabel.setText("     " + shortcutText);
+        if (shortcutText != null) {
+          myShortcutLabel.setText("     " + shortcutText);
+          if (ExperimentalUI.isNewUI()) {
+            myNextStepLabel.setBorder(JBUI.Borders.emptyLeft(6));
+          }
+        }
       }
       myShortcutLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected
                                     ? UIManager.getColor("MenuItem.acceleratorSelectionForeground")
@@ -351,7 +355,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
 
     if (myValueLabel != null) {
-      myValueLabel.setText(step instanceof ListPopupStepEx<?> ? ((ListPopupStepEx<E>)step).getValueFor(value) : null);
+      String valueLabelText = step instanceof ListPopupStepEx<?> ? ((ListPopupStepEx<E>)step).getValueFor(value) : null;
+      myValueLabel.setText(valueLabelText);
+      if (ExperimentalUI.isNewUI()) {
+        myValueLabel.setBorder(JBUI.Borders.emptyLeft(Strings.isEmpty(valueLabelText) ? 0 : 6));
+      }
       boolean selected = isSelected && isSelectable && !nextStepButtonSelected;
       setForegroundSelected(myValueLabel, selected);
     }
@@ -362,7 +370,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
   }
 
-  private void updateExtraButtons(JList<? extends E> list, E value, ListPopupStep<Object> step, boolean isSelected) {
+  private boolean updateExtraButtons(JList<? extends E> list, E value, ListPopupStep<Object> step, boolean isSelected, boolean hasNextIcon) {
     myButtonPane.removeAll();
     GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.BOTH)
       .setDefaultAnchor(GridBagConstraints.CENTER)
@@ -370,21 +378,36 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       .setDefaultWeightY(1.0);
 
     boolean isSelectable = step.isSelectable(value);
+    java.util.List<JComponent> extraButtons;
     if (!isSelected || !isSelectable) {
-      myButtonsSeparator.setVisible(false);
-      myButtonPane.add(myNextStepLabel, gb.next());
-      return;
+      extraButtons = Collections.emptyList();
+    } else {
+      extraButtons = myInlineActionsSupport.getExtraButtons(list, value, true);
     }
 
-    java.util.List<JComponent> extraButtons = myInlineActionsSupport.getExtraButtons(list, value, isSelected);
     if (!extraButtons.isEmpty()) {
       myButtonsSeparator.setVisible(true);
       extraButtons.forEach(comp -> myButtonPane.add(comp, gb.next()));
+      Integer activeButtonIndex = myInlineActionsSupport.getActiveButtonIndex(list);
+      // We ONLY need to update the tooltip if there's an active inline action button.
+      // Otherwise, it's set earlier from the main action.
+      // If there is an active button without a tooltip, we still need to set the tooltip
+      // to null, otherwise it'll look ugly, as if the inline action button has the same
+      // tooltip as the main action.
+      if (activeButtonIndex != null) {
+        myRendererComponent.setToolTipText(myInlineActionsSupport.getActiveExtraButtonToolTipText(list, value));
+      }
+    }
+    else if (!hasNextIcon && myInlineActionsSupport.hasExtraButtons(value)){
+      myButtonsSeparator.setVisible(false);
+      myButtonPane.add(Box.createHorizontalStrut(InlineActionsUtilKt.buttonWidth()), gb.next());
     }
     else {
       myButtonsSeparator.setVisible(false);
       myButtonPane.add(myNextStepLabel, gb.next());
     }
+
+    return !extraButtons.isEmpty();
   }
 
   protected JComponent createIconBar() {
@@ -404,11 +427,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     return res;
   }
 
-  private Color calcBackground(boolean selected, boolean hovered) {
-    if (selected) return getSelectionBackground();
-    if (hovered) return JBUI.CurrentTheme.Table.Hover.background(true);
-
-    return getBackground();
+  private Color calcBackground(boolean selected) {
+    return selected ? getSelectionBackground() : getBackground();
   }
 
   @NotNull

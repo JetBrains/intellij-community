@@ -173,13 +173,13 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       ShowDiffAction.showDiffForChange(myProject, changes, index, new ShowDiffContext(DiffDialogHints.FRAME));
     }
 
-    private Iterable<DirectoryChange> iterFileChanges() {
-      return ContainerUtil.iterate(getChanges(), each -> each.canShowFileDifference());
+    private List<DirectoryChange> iterFileChanges() {
+      return ContainerUtil.filter(getChanges(), each -> each.canShowFileDifference());
     }
 
     @Override
     protected boolean isEnabledFor(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> changes) {
-      return iterFileChanges().iterator().hasNext();
+      return ContainerUtil.exists(getChanges(), each -> each.canShowFileDifference());
     }
   }
 
@@ -215,6 +215,10 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     protected abstract void doPerform(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> selected);
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return super.getActionUpdateThread();
+    }
 
     @Override
     protected boolean isEnabled(DirectoryHistoryDialogModel model) {

@@ -31,7 +31,7 @@ internal class LibraryUsageCollector : ProjectUsagesCollector() {
   }
 
   private object Holder {
-    val GROUP = EventLogGroup("libraryUsage", 3)
+    val GROUP = EventLogGroup("libraryUsage", 4)
 
     val libraryNameField = EventFields.StringValidatedByCustomRule("library_name", LibraryNameValidationRule::class.java)
     val versionField = EventFields.Version

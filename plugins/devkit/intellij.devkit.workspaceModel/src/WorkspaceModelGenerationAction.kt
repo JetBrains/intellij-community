@@ -2,6 +2,7 @@
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.openapi.actionSystem.*
+import org.jetbrains.idea.devkit.util.PsiUtil
 
 class WorkspaceModelGenerationAction: AnAction() {
 
@@ -15,6 +16,11 @@ class WorkspaceModelGenerationAction: AnAction() {
   }
 
   override fun update(event: AnActionEvent) {
+    if (!PsiUtil.isIdeaProject(event.project)) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
+
     if (event.place == ActionPlaces.ACTION_SEARCH) {
       event.presentation.isEnabledAndVisible = true
     } else {

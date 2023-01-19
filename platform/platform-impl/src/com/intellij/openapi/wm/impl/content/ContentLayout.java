@@ -16,7 +16,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Objects;
 
-abstract class ContentLayout {
+public abstract class ContentLayout {
   ToolWindowContentUi ui;
   BaseLabel idLabel;
 
@@ -70,21 +70,19 @@ abstract class ContentLayout {
 
   private String getTitleSuffix() {
     ContentManager manager = ui.getContentManager();
-    switch (manager.getContentCount()) {
-      case 0:
-        return null;
-      case 1:
+    return switch (manager.getContentCount()) {
+      case 0 -> null;
+      case 1 -> {
         Content content = manager.getContent(0);
-        if (content == null) return null;
-
+        if (content == null) yield null;
         final String text = content.getDisplayName();
         if (text != null && text.trim().length() > 0 && manager.canCloseContents()) {
-          return ":";
+          yield ":";
         }
-        return null;
-      default:
-        return ":";
-    }
+        yield null;
+      }
+      default -> ":";
+    };
   }
 
   public abstract void showContentPopup(ListPopup listPopup);

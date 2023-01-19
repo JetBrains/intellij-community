@@ -14,7 +14,7 @@ Reports type parameters that can have <code>in</code> or <code>out</code> varian
       consumeCharSequence(box) // Compilation error
   }
 </code></pre>
-<p>A quick-fix adds the matching variance modifier:</p>
+<p>The quick-fix adds the matching variance modifier:</p>
 <pre><code>
   class Box&lt;out T&gt;(val obj: T)
 

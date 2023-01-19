@@ -9,8 +9,8 @@ import com.intellij.stats.completion.storage.FilePathProvider
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.replaceService
 import org.assertj.core.api.Assertions.assertThat
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.io.File
 
 class StatisticsSenderTest: LightPlatformTestCase() {
@@ -37,13 +37,16 @@ class StatisticsSenderTest: LightPlatformTestCase() {
     }
 
     override fun tearDown() {
-        try {
-            firstFile.delete()
-            secondFile.delete()
-        }
-        finally {
-            super.tearDown()
-        }
+      try {
+        firstFile.delete()
+        secondFile.delete()
+      }
+      catch (e: Throwable) {
+        addSuppressedException(e)
+      }
+      finally {
+        super.tearDown()
+      }
     }
 
     fun `test removed if every file send response was ok`() {

@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.caches.resolve
 
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
@@ -18,6 +19,8 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTraceContext
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
+import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 fun KtElement.getResolutionFacade(): ResolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(this)
@@ -85,6 +88,9 @@ fun KtParameter.resolveToParameterDescriptorIfAny(bodyResolveMode: BodyResolveMo
  */
 fun KtElement.resolveToCall(bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL) =
     resolveToCall(getResolutionFacade(), bodyResolveMode)
+
+fun ResolvedCall<out CallableDescriptor>.variableCallOrThis(): ResolvedCall<out CallableDescriptor> =
+    (this as? VariableAsFunctionResolvedCall)?.variableCall ?: this
 
 fun KtFile.resolveImportReference(fqName: FqName): Collection<DeclarationDescriptor> {
     val facade = getResolutionFacade()

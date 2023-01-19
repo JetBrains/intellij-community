@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindUsagesCollector;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -17,7 +16,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -26,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,11 +52,8 @@ public final class RegExHelpPopup extends JPanel {
     }
     editorPane.setText(text.replace("LABEL_BACKGROUND", ColorUtil.toHtmlColor(UIUtil.getLabelBackground())));
 
-    editorPane.addHyperlinkListener(new HyperlinkListener() {
-      @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        if (HyperlinkEvent.EventType.ACTIVATED == e.getEventType()) BrowserUtil.browse(e.getURL());
-      }
+    editorPane.addHyperlinkListener(e -> {
+      if (HyperlinkEvent.EventType.ACTIVATED == e.getEventType()) BrowserUtil.browse(e.getURL());
     });
 
     editorPane.setCaretPosition(0);
@@ -71,15 +65,7 @@ public final class RegExHelpPopup extends JPanel {
   }
 
   public static LinkLabel<?> createRegExLink(@NotNull @NlsContexts.LinkLabel String title, @Nullable Component owner) {
-    return createRegExLink(title, owner, (String)null);
-  }
-
-  /**
-   * @deprecated Use {@link #createRegExLink(String, Component)}
-   */
-  @Deprecated(forRemoval = true)
-  public static LinkLabel createRegExLink(@NotNull @NlsContexts.LinkLabel String title, @Nullable Component owner, @SuppressWarnings("unused") @Nullable Logger logger) {
-    return createRegExLink(title, owner, (String)null);
+    return createRegExLink(title, owner, null);
   }
 
   @NotNull
@@ -87,12 +73,9 @@ public final class RegExHelpPopup extends JPanel {
                                              @Nullable Component owner,
                                              @Nullable String place) {
     Runnable action = createRegExLinkRunnable(owner);
-    return new LinkLabel<>(title, null, new LinkListener<>() {
-      @Override
-      public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
-        FindUsagesCollector.triggerRegexHelpClicked(place);
-        action.run();
-      }
+    return new LinkLabel<>(title, null, (aSource, aLinkData) -> {
+      FindUsagesCollector.triggerRegexHelpClicked(place);
+      action.run();
     });
   }
 
@@ -117,12 +100,7 @@ public final class RegExHelpPopup extends JPanel {
           .setResizable(true)
           .setCancelOnOtherWindowOpen(false).setCancelButton(new MinimizeButton(LangBundle.message("tooltip.hide")))
           .setTitle(LangBundle.message("popup.title.regular.expressions.syntax")).setDimensionServiceKey(null, "RegExHelpPopup", true).createPopup();
-        Disposer.register(helpPopup, new Disposable() {
-          @Override
-          public void dispose() {
-            destroyPopup();
-          }
-        });
+        Disposer.register(helpPopup, () -> destroyPopup());
         if (owner != null) {
           helpPopup.showInCenterOf(owner);
         }

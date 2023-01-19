@@ -29,7 +29,7 @@ class HeaderAnchorLinkDestinationReference(
   }
 
   override fun getCompletionVariants(): Collection<LookupElement> {
-    val headers = file.firstChild?.childrenOfType<MarkdownHeader>().orEmpty()
+    val headers = file.childrenOfType<MarkdownHeader>().orEmpty()
     val anchors = headers.mapNotNull { header -> header.anchorText?.let { it to header.level } }
     return anchors.mapTo(ArrayList()) { (anchorText, level) ->
       LookupElementBuilder.create(anchorText)

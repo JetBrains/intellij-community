@@ -28,9 +28,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author Irina.Chernushina on 8/29/2015.
- */
 public class JsonSchemaReadTest extends BasePlatformTestCase {
   @NotNull
   @Override

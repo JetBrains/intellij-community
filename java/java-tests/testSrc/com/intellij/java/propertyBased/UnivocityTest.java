@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleManager;
@@ -35,7 +36,7 @@ public class UnivocityTest extends BaseUnivocityTest {
   public void setUp() throws Exception {
     super.setUp();
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).disableBackgroundCommit(getTestRootDisposable());
-    MadTestingUtil.enableAllInspections(myProject);
+    MadTestingUtil.enableAllInspections(myProject, JavaLanguage.INSTANCE);
   }
 
   @Override
@@ -94,6 +95,7 @@ public class UnivocityTest extends BaseUnivocityTest {
   public void testRandomActivity() {
     RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
     Generator<PsiJavaFile> javaFiles = psiJavaFiles();
+    initCompiler();
     PropertyChecker.customized()
       .withIterationCount(30).checkScenarios(() -> env ->
       MadTestingUtil.changeAndRevert(myProject, () ->

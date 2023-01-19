@@ -20,7 +20,6 @@ interface UFile : UElement, UAnnotated {
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiFile
 
-  @JvmDefault
   @Suppress("DEPRECATION")
   override val sourcePsi: PsiFile
     get() = psi
@@ -35,8 +34,7 @@ interface UFile : UElement, UAnnotated {
    * Returns the import statements for this file.
    */
   val imports: List<UImportStatement>
-  
-  @JvmDefault
+
   @Suppress("DEPRECATION")
   val implicitImports: List<String>
     get() = emptyList()

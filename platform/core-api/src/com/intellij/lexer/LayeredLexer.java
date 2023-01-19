@@ -3,6 +3,7 @@ package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,10 +162,7 @@ public class LayeredLexer extends DelegateLexer {
   private boolean isStopToken(Lexer lexer, IElementType tokenType) {
     final IElementType[] stopTokens = myStopTokens.get(lexer);
     if (stopTokens == null) return false;
-    for (IElementType stopToken : stopTokens) {
-      if (stopToken == tokenType) return true;
-    }
-    return false;
+    return ArrayUtil.indexOfIdentity(stopTokens, tokenType) != -1;
   }
 
   protected boolean isLayerActive() {

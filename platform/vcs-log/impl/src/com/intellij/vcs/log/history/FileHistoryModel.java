@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -17,9 +17,9 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class FileHistoryModel {
-  @NotNull private final VcsLogData myLogData;
-  @NotNull private final VcsLogDiffHandler myDiffHandler;
-  @NotNull private final VirtualFile myRoot;
+  private final @NotNull VcsLogData myLogData;
+  private final @NotNull VcsLogDiffHandler myDiffHandler;
+  private final @NotNull VirtualFile myRoot;
 
   public FileHistoryModel(@NotNull VcsLogData data, @NotNull VcsLogDiffHandler handler, @NotNull VirtualFile root) {
     myLogData = data;
@@ -27,16 +27,14 @@ public abstract class FileHistoryModel {
     myRoot = root;
   }
 
-  @NotNull
-  protected abstract VisiblePack getVisiblePack();
+  protected abstract @NotNull VisiblePack getVisiblePack();
 
   @NotNull
   VcsLogDiffHandler getDiffHandler() {
     return myDiffHandler;
   }
 
-  @Nullable
-  public VcsFileRevision createRevision(@Nullable VcsCommitMetadata commit) {
+  public @Nullable VcsFileRevision createRevision(@Nullable VcsCommitMetadata commit) {
     if (commit == null) return null;
     if (isFileDeletedInCommit(commit.getId())) return VcsFileRevision.NULL;
     FilePath path = getPathInCommit(commit.getId());
@@ -44,8 +42,7 @@ public abstract class FileHistoryModel {
     return new VcsLogFileRevision(commit, myDiffHandler.createContentRevision(path, commit.getId()), path, false);
   }
 
-  @Nullable
-  public FilePath getPathInCommit(@NotNull Hash hash) {
+  public @Nullable FilePath getPathInCommit(@NotNull Hash hash) {
     int commitIndex = myLogData.getStorage().getCommitIndex(hash, myRoot);
     return FileHistoryPaths.filePath(getVisiblePack(), commitIndex);
   }
@@ -55,15 +52,14 @@ public abstract class FileHistoryModel {
     return FileHistoryPaths.isDeletedInCommit(getVisiblePack(), commitIndex);
   }
 
-  @Nullable
-  public Change getSelectedChange(int @NotNull [] rows) {
+  public @Nullable Change getSelectedChange(int @NotNull [] rows) {
     if (rows.length == 0) return null;
 
     int row = rows[0];
     VisiblePack visiblePack = getVisiblePack();
     List<Integer> parentRows;
     if (rows.length == 1) {
-      if (FileHistoryFilterer.NO_PARENTS_INFO.get(visiblePack, false) &&
+      if (VisiblePack.NO_GRAPH_INFORMATION.get(visiblePack, false) &&
           row + 1 < visiblePack.getVisibleGraph().getVisibleCommitCount()) {
         parentRows = Collections.singletonList(row + 1);
       }
@@ -75,5 +71,26 @@ public abstract class FileHistoryModel {
       parentRows = Collections.singletonList(rows[rows.length - 1]);
     }
     return FileHistoryUtil.createChangeToParents(row, parentRows, visiblePack, myDiffHandler, myLogData);
+  }
+
+  public @NotNull FileHistoryModel createSnapshot() {
+    return new Snapshot(myLogData, myDiffHandler, myRoot, getVisiblePack());
+  }
+
+  private static class Snapshot extends FileHistoryModel {
+    private final @NotNull VisiblePack myVisiblePack;
+
+    private Snapshot(@NotNull VcsLogData data,
+                     @NotNull VcsLogDiffHandler handler,
+                     @NotNull VirtualFile root,
+                     @NotNull VisiblePack visiblePack) {
+      super(data, handler, root);
+      myVisiblePack = visiblePack;
+    }
+
+    @Override
+    protected @NotNull VisiblePack getVisiblePack() {
+      return myVisiblePack;
+    }
   }
 }

@@ -122,7 +122,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
         val leafToBeExcluded = last.lastPathComponent
 
         @Suppress("UNCHECKED_CAST")
-        fun <T : Any?> castHack(processor: ExclusionHandler<T>): Boolean {
+        fun <T : Any> castHack(processor: ExclusionHandler<T>): Boolean {
           return processor.isNodeExclusionAvailable(leafToBeExcluded as T) && processor.isNodeExcluded(leafToBeExcluded as T)
         }
         castHack(exclusionProcessor)
@@ -171,8 +171,6 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
       previous.ui?.isShowing != true
     }
   }
-
-  override val suitableTips = listOf("Rename")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("rename.help.link"),

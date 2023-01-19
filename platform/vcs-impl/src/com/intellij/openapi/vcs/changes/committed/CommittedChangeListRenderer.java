@@ -46,13 +46,22 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
 
   @Contract(pure = true)
   public static @NotNull String truncateDescription(@NotNull String initDescription, @NotNull FontMetrics fontMetrics, int maxWidth) {
-    String description = initDescription;
-    int descWidth = fontMetrics.stringWidth(description);
-    while (description.length() > 0 && (descWidth > maxWidth)) {
-      description = trimLastWord(description);
-      descWidth = fontMetrics.stringWidth(description + " ");
+    int low = 0;
+    int high = initDescription.length() - 1;
+
+    while (low <= high) {
+      int mid = low + (high - low) / 2;
+      String iteration = initDescription.substring(0, mid);
+      int stringWidth = fontMetrics.stringWidth(iteration);
+      if (stringWidth > maxWidth) {
+        high = mid - 1;
+      } else {
+        low = mid + 1;
+      }
     }
-    return description;
+
+    int lastSpaceIndex = initDescription.lastIndexOf(" ", low - 1);
+    return lastSpaceIndex == -1 ? initDescription.substring(0, maxWidth) : initDescription.substring(0, lastSpaceIndex);
   }
 
   @Override
@@ -161,14 +170,6 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     if (changeList.getCommitDate() != null) {
       append(", " + formatPrettyDateTime(changeList.getCommitDate()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-  }
-
-  private static String trimLastWord(final String description) {
-    int pos = description.trim().lastIndexOf(' ');
-    if (pos >= 0) {
-      return description.substring(0, pos).trim();
-    }
-    return description.substring(0, description.length()-1);
   }
 
   public static int getRowX(JTree tree, int depth) {

@@ -1,6 +1,11 @@
 package com.intellij.settingsSync.config
 
+import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
@@ -10,13 +15,17 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
+import com.intellij.settingsSync.UpdateResult.*
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBColor
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.and
+import com.intellij.ui.layout.not
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JLabel
@@ -88,12 +97,25 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     val authService = SettingsSyncAuthService.getInstance()
     configPanel = panel {
       val isSyncEnabled = LoggedInPredicate().and(EnabledPredicate())
+      if (settingsRepositoryIsEnabled()) {
+        row {
+          label(message("settings.warning.sync.cannot.be.enabled.label")).applyToComponent {
+            icon = AllIcons.General.Warning
+          }
+          bottomGap(BottomGap.MEDIUM)
+        }
+      }
+
       row {
         val statusCell = label("")
-        statusCell.visibleIf(LoggedInPredicate())
+        statusCell
+          .visibleIf(LoggedInPredicate())
+          .enabled(!settingsRepositoryIsEnabled())
         statusLabel = statusCell.component
         updateStatusInfo()
-        label(message("sync.status.login.message")).visibleIf(LoggedInPredicate().not())
+        label(message("sync.status.login.message"))
+          .visibleIf(LoggedInPredicate().not())
+          .enabled(!settingsRepositoryIsEnabled())
       }
       row {
         comment(message("settings.sync.info.message"), 80)
@@ -102,7 +124,9 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       row {
         button(message("config.button.login")) {
           authService.login()
-        }.visibleIf(LoggedInPredicate().not()).enabled(authService.isLoginAvailable())
+        }.visibleIf(LoggedInPredicate().not())
+         .enabled(authService.isLoginAvailable() && !settingsRepositoryIsEnabled())
+
         label(message("error.label.login.not.available")).component.apply {
           isVisible = !authService.isLoginAvailable()
           icon = AllIcons.General.Error
@@ -110,19 +134,52 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         }
         enableButton = button(message("config.button.enable")) {
           syncEnabler.checkServerState()
-        }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not())).enabledIf(SyncEnablerRunning().not())
+        }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not()))
+         .enabledIf(SyncEnablerRunning().not())
+         .enabled(!settingsRepositoryIsEnabled())
+
         button(message("config.button.disable")) {
           LoggedInPredicate().and(EnabledPredicate())
           disableSync()
         }.visibleIf(isSyncEnabled)
+        bottomGap(BottomGap.MEDIUM)
       }
       row {
         cell(categoriesPanel)
           .visibleIf(LoggedInPredicate().and(EnabledPredicate()))
-          .onApply { categoriesPanel.apply() }
+          .onApply {
+            categoriesPanel.apply()
+            SettingsSyncEvents.getInstance().fireCategoriesChanged()
+          }
           .onReset { categoriesPanel.reset() }
           .onIsModified { categoriesPanel.isModified() }
       }
+
+      panel {
+        row {
+          topGap(TopGap.MEDIUM)
+          label(message("settings.cross.product.sync"))
+        }
+        indent {
+          buttonsGroup {
+            row {
+              val edition = ApplicationNamesInfo.getInstance().editionName
+              val suffix = if (edition != null) " " + edition.removeSuffix(" Edition") else ""
+              val productName = ApplicationNamesInfo.getInstance().fullProductName + suffix
+              radioButton(message("settings.cross.product.sync.choice.only.this.product", productName), false)
+            }
+            row {
+              radioButton(message("settings.cross.product.sync.choice.all.products"), true)
+            }
+          }.bind({ SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled },
+                 {
+                   SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = it
+
+                   SettingsSyncEvents.getInstance().fireSettingsChanged(
+                     SyncSettingsEvent.CrossIdeSyncStateChanged(SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled))
+                 })
+        }
+      }.visibleIf(LoggedInPredicate().and(EnabledPredicate()))
     }
     SettingsSyncAuthService.getInstance().addListener(object : SettingsSyncAuthService.Listener {
       override fun stateChanged() {
@@ -134,13 +191,18 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     return configPanel
   }
 
-  override fun serverStateCheckFinished(state: ServerState) {
-    when (state) {
-      ServerState.FileNotExists -> showEnableSyncDialog(false)
-      ServerState.UpToDate, ServerState.UpdateNeeded -> showEnableSyncDialog(true)
-      is ServerState.Error -> {
-        if (state != SettingsSyncEnabler.State.CANCELLED) {
-          showError(message("notification.title.update.error"), state.message)
+  private fun settingsRepositoryIsEnabled(): Boolean {
+    return !SettingsSyncSettings.getInstance().syncEnabled &&
+           (ApplicationManager.getApplication().stateStore.storageManager as StateStorageManagerImpl).compoundStreamProvider.isExclusivelyEnabled
+  }
+
+  override fun serverStateCheckFinished(updateResult: UpdateResult) {
+    when (updateResult) {
+      NoFileOnServer, FileDeletedFromServer -> showEnableSyncDialog(false)
+      is Success -> showEnableSyncDialog(true)
+      is Error -> {
+        if (updateResult != SettingsSyncEnabler.State.CANCELLED) {
+          showError(message("notification.title.update.error"), updateResult.message)
         }
       }
     }
@@ -148,13 +210,14 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   override fun updateFromServerFinished(result: UpdateResult) {
     when (result) {
-      is UpdateResult.Success -> {
+      is Success -> {
+        reset()
         SettingsSyncSettings.getInstance().syncEnabled = true
       }
-      UpdateResult.NoFileOnServer -> {
+      NoFileOnServer, FileDeletedFromServer -> {
         showError(message("notification.title.update.error"), message("notification.title.update.no.such.file"))
       }
-      is UpdateResult.Error -> {
+      is Error -> {
         showError(message("notification.title.update.error"), result.message)
       }
     }
@@ -162,15 +225,28 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   }
 
   private fun showEnableSyncDialog(remoteSettingsFound: Boolean) {
-    EnableSettingsSyncDialog.showAndGetResult(configPanel, remoteSettingsFound)?.let {
+    val dialogResult = EnableSettingsSyncDialog.showAndGetResult(configPanel, remoteSettingsFound)
+    if (dialogResult != null) {
       reset()
-      when (it) {
-        EnableSettingsSyncDialog.Result.GET_FROM_SERVER -> syncEnabler.getSettingsFromServer()
+      when (dialogResult) {
+        EnableSettingsSyncDialog.Result.GET_FROM_SERVER -> {
+          syncEnabler.getSettingsFromServer()
+          SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.GET_FROM_SERVER)
+        }
         EnableSettingsSyncDialog.Result.PUSH_LOCAL -> {
           SettingsSyncSettings.getInstance().syncEnabled = true
           syncEnabler.pushSettingsToServer()
+          if (remoteSettingsFound) {
+            SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.PUSH_LOCAL)
+          }
+          else {
+            SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.PUSH_LOCAL_WAS_ONLY_WAY)
+          }
         }
       }
+    }
+    else {
+      SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.CANCELED)
     }
   }
 
@@ -204,26 +280,39 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       RESULT_DISABLE -> {
         SettingsSyncSettings.getInstance().syncEnabled = false
         updateStatusInfo()
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
       }
-      RESULT_REMOVE_DATA_AND_DISABLE -> disableAndRemoveData()
+      RESULT_REMOVE_DATA_AND_DISABLE -> {
+        disableAndRemoveData()
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(
+          SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
+      }
+      RESULT_CANCEL -> {
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.CANCEL)
+      }
     }
   }
 
   private fun disableAndRemoveData() {
-    val remoteCommunicator = SettingsSyncMain.getInstance().getRemoteCommunicator()
     object : Task.Modal(null, message("disable.remove.data.title"), false) {
-
       override fun run(indicator: ProgressIndicator) {
-        SettingsSyncSettings.getInstance().syncEnabled = false
-        remoteCommunicator.delete()
-      }
-
-      override fun onThrowable(error: Throwable) {
-        showError(message("disable.remove.data.failure"), error.localizedMessage)
-      }
-
-      override fun onSuccess() {
-        updateStatusInfo()
+        val cdl = CountDownLatch(1)
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData { result ->
+          cdl.countDown()
+          when (result) {
+            is DeleteServerDataResult.Error -> {
+              runInEdt {
+                showError(message("disable.remove.data.failure"), result.error)
+              }
+            }
+            DeleteServerDataResult.Success -> {
+              runInEdt {
+                updateStatusInfo()
+              }
+            }
+          }
+        })
+        cdl.await(1, TimeUnit.MINUTES)
       }
     }.queue()
   }
@@ -248,7 +337,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
             .append(message("sync.status.enabled"))
           if (statusTracker.isSynced()) {
             messageBuilder
-              .append(' ')
+              .append(". ")
               .append(message("sync.status.last.sync.message", getReadableSyncTime(), getUserName()))
           }
         }
@@ -282,6 +371,8 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     super.disposeUIResources()
     SettingsSyncStatusTracker.getInstance().removeListener(this)
   }
+
+  override fun getHelpTopic(): String = "cloud-config.plugin-dialog"
 }
 
 class SettingsSyncConfigurableProvider : ConfigurableProvider() {

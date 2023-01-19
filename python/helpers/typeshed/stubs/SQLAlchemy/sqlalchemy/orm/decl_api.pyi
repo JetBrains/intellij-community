@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from typing import Any, ClassVar, TypeVar, overload
+from typing_extensions import TypeAlias
 
 from ..engine.interfaces import Connectable
 from ..sql.schema import MetaData
@@ -21,7 +22,7 @@ class _DeclarativeBase(Any):  # super classes are dynamic
     __class_getitem__: ClassVar[Any]
 
 # Meta class (or function) that creates a _DeclarativeBase class.
-_DeclarativeBaseMeta = Callable[[str, tuple[type[Any], ...], dict[str, Any]], _DeclT]
+_DeclarativeBaseMeta: TypeAlias = Callable[[str, tuple[type[Any], ...], dict[str, Any]], _DeclT]
 
 def has_inherited_table(cls: type[Any]) -> bool: ...
 
@@ -112,17 +113,29 @@ class registry:
     def mapped(self, cls: _ClsT) -> _ClsT: ...
     # Return type of the callable is a _DeclarativeBase class with the passed in class as base.
     # This could be better approximated with Intersection[PassedInClass, _DeclarativeBase].
+    @overload
+    def as_declarative_base(self, *, mapper: Any | None = ...) -> Callable[[_ClsT], _ClsT | DeclarativeMeta | Any]: ...
+    @overload
     def as_declarative_base(
-        self, *, mapper: Any | None = ..., metaclass: _DeclarativeBaseMeta[_DeclT] = ...
+        self, *, mapper: Any | None = ..., metaclass: _DeclarativeBaseMeta[_DeclT]
     ) -> Callable[[_ClsT], _ClsT | _DeclT | Any]: ...
     def map_declaratively(self, cls): ...
     def map_imperatively(self, class_, local_table: Any | None = ..., **kw): ...
 
+@overload
 def as_declarative(
     *,
     bind: Connectable | None = ...,
     metadata: MetaData | None = ...,
     class_registry: dict[str, type[Any]] | None = ...,
     mapper: Any | None = ...,
-    metaclass: _DeclarativeBaseMeta[_DeclT] = ...,
+) -> Callable[[_ClsT], _ClsT | DeclarativeMeta | Any]: ...
+@overload
+def as_declarative(
+    *,
+    bind: Connectable | None = ...,
+    metadata: MetaData | None = ...,
+    class_registry: dict[str, type[Any]] | None = ...,
+    mapper: Any | None = ...,
+    metaclass: _DeclarativeBaseMeta[_DeclT],
 ) -> Callable[[_ClsT], _ClsT | _DeclT | Any]: ...

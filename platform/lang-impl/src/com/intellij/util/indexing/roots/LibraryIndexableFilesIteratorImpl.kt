@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.application.runReadAction
@@ -11,23 +11,22 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.openapi.vfs.impl.LightFilePointer
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.LibraryOriginImpl
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.annotations.Nls
 
 class LibraryIndexableFilesIteratorImpl
 private constructor(private val libraryName: @NlsSafe String?,
                     private val presentableLibraryName: @Nls String,
-                    private val classRootUrls: List<VirtualFilePointer>,
-                    private val sourceRootUrls: List<VirtualFilePointer>) : LibraryIndexableFilesIterator {
+                    private val classRoots: List<VirtualFile>,
+                    private val sourceRoots: List<VirtualFile>) : LibraryIndexableFilesIterator {
 
   override fun getDebugName() = "Library ${presentableLibraryName} " +
-                                "(#${classRootUrls.validCount()} class roots, " +
-                                "#${sourceRootUrls.validCount()} source roots)"
+                                "(#${classRoots.validCount()} class roots, " +
+                                "#${sourceRoots.validCount()} source roots)"
 
   override fun getIndexingProgressText(): String = IndexingBundle.message("indexable.files.provider.indexing.library.name",
                                                                           presentableLibraryName)
@@ -40,7 +39,7 @@ private constructor(private val libraryName: @NlsSafe String?,
   }
 
   override fun getOrigin(): LibraryOrigin {
-    return LibraryOriginImpl(classRootUrls, sourceRootUrls)
+    return LibraryOriginImpl(classRoots, sourceRoots)
   }
 
   override fun iterateFiles(
@@ -49,24 +48,24 @@ private constructor(private val libraryName: @NlsSafe String?,
     fileFilter: VirtualFileFilter
   ): Boolean {
     val roots = runReadAction {
-      (classRootUrls.asSequence() + sourceRootUrls.asSequence()).mapNotNull { it.file }.toSet()
+      (classRoots.asSequence() + sourceRoots.asSequence()).filter { it.isValid }.toSet()
     }
     return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, fileFilter)
   }
 
   override fun getRootUrls(project: Project): Set<String> {
-    return (classRootUrls + sourceRootUrls).map { it.url }.toSet()
+    return (classRoots + sourceRoots).map { it.url }.toSet()
   }
 
   companion object {
-    private fun collectPointers(library: Library, rootType: OrderRootType, rootsToFilter: List<VirtualFile>? = null): List<LightFilePointer> {
+    fun collectFiles(library: Library, rootType: OrderRootType, rootsToFilter: List<VirtualFile>? = null): List<VirtualFile> {
       val libraryRoots = library.rootProvider.getFiles(rootType)
       val rootsToIterate: List<VirtualFile> = rootsToFilter?.filter { root ->
         libraryRoots.find { libraryRoot ->
           VfsUtil.isAncestor(libraryRoot, root, false)
         } != null
       } ?: libraryRoots.toList()
-      return rootsToIterate.map { LightFilePointer(it) }
+      return rootsToIterate
     }
 
     @RequiresReadLock
@@ -76,13 +75,23 @@ private constructor(private val libraryName: @NlsSafe String?,
         null
       else
         LibraryIndexableFilesIteratorImpl(library.name, library.presentableName,
-                                          collectPointers(library, OrderRootType.CLASSES, roots),
-                                          collectPointers(library, OrderRootType.SOURCES, roots))
+                                          collectFiles(library, OrderRootType.CLASSES, roots),
+                                          collectFiles(library, OrderRootType.SOURCES, roots))
+
+    @RequiresReadLock
+    @JvmStatic
+    fun createIterator(entity: WorkspaceEntity,
+                       roots: List<VirtualFile>,
+                       sourceRoots: List<VirtualFile>): LibraryIndexableFilesIteratorImpl =
+      if (entity is Library)
+        LibraryIndexableFilesIteratorImpl(entity.name, entity.presentableName, roots, sourceRoots)
+      else
+        LibraryIndexableFilesIteratorImpl(null, entity.toString(), roots, sourceRoots)
 
     @JvmStatic
     fun createIteratorList(library: Library): List<IndexableFilesIterator> =
       createIterator(library)?.run { listOf(this) } ?: emptyList()
   }
 
-  private fun List<VirtualFilePointer>.validCount(): Int = filter { it.isValid }.size
+  private fun List<VirtualFile>.validCount(): Int = filter { it.isValid }.size
 }

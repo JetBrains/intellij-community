@@ -1,5 +1,5 @@
 class A():
-    def some_method(self) -> "return value":
+    def some_method(self) -> int:
         pass
 
 class B(A):

@@ -56,7 +56,7 @@ fun JBCefBrowser.executeJavaScriptAsync(@Language("JavaScript") javaScriptExpres
  *
  * @see [executeJavaScriptAsync]
  */
-class JBCefBrowserJsCall(val javaScriptExpression: JsExpression, val browser: JBCefBrowser) {
+class JBCefBrowserJsCall(private val javaScriptExpression: JsExpression, val browser: JBCefBrowser) {
 
   // TODO: Ensure the related JBCefClient has a sufficient number of slots in the pool
 

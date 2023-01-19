@@ -14,3 +14,12 @@ abstract class NoUtilityClass {
 class ConcreteNoUtilityClass {
   public static void foo() {}
 }
+
+class NonFinalClass {
+  public NonFinalClass() {}
+  public static void foo() {}
+}
+
+class TestClass extends NonFinalClass {
+  public TestClass() {}
+}

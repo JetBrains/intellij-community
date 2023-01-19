@@ -4,6 +4,7 @@ package com.intellij.ide.bookmark.ui.tree
 import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.bookmark.BookmarkGroup
 import com.intellij.ide.bookmark.BookmarkType
+import com.intellij.ide.bookmark.ui.BookmarksView
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ProjectViewSettings.Immutable.DEFAULT
@@ -21,10 +22,10 @@ import javax.swing.Icon
 abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B)
   : BackgroundSupplier, ProjectViewNode<B>(project, bookmark, DEFAULT) {
 
-  val bookmarksView
+  val bookmarksView: BookmarksView?
     get() = parentRootNode?.value
 
-  val bookmarkType
+  private val bookmarkType
     get() = bookmarksManager?.getType(value)
 
   val bookmarkDescription

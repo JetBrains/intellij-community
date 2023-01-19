@@ -7,6 +7,7 @@ import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.notification.LogModel.StatusMessage;
 import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
@@ -31,7 +32,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.BalloonLayoutData;
@@ -43,7 +47,6 @@ import com.intellij.util.Function;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -145,14 +148,14 @@ public final class EventLog {
     getProjectService(project).doClear();
   }
 
-  public static @Nullable Trinity<Notification, @NlsContexts.StatusBarText String, Long> getStatusMessage(@Nullable Project project) {
+  public static @Nullable StatusMessage getStatusMessage(@Nullable Project project) {
     return getLogModel(project).getStatusMessage();
   }
 
   public static LogEntry formatForLog(final @NotNull Notification notification, final String indent) {
     DocumentImpl logDoc = new DocumentImpl("",true);
     AtomicBoolean showMore = new AtomicBoolean(false);
-    Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<>();
+    Map<RangeMarker, HyperlinkInfo> links = new java.util.LinkedHashMap<>();
     List<RangeMarker> lineSeparators = new ArrayList<>();
 
     String title = notification.getTitle();
@@ -195,6 +198,9 @@ public final class EventLog {
           Project project = null;
           if (context != null) {
             project = context.getData(CommonDataKeys.PROJECT);
+          }
+          if (source instanceof JComponent component) {
+            Notification.setDataProvider(notification, component);
           }
           NotificationCollector.getInstance()
             .logNotificationActionInvoked(project, notification, action, NotificationCollector.NotificationPlace.EVENT_LOG);
@@ -296,7 +302,7 @@ public final class EventLog {
     return removeCallback;
   }
 
-  private static void highlightTags(List<RangeMarker> markers, @NotNull EditorEx editor, int fontType) {
+  private static void highlightTags(List<? extends RangeMarker> markers, @NotNull EditorEx editor, int fontType) {
     if (!markers.isEmpty()) {
       MarkupModelEx model = editor.getMarkupModel();
       TextAttributes attributes = new TextAttributes(null, null, null, null, fontType);
@@ -389,8 +395,8 @@ public final class EventLog {
                                           AtomicBoolean showMore,
                                           Map<RangeMarker, HyperlinkInfo> links,
                                           List<RangeMarker> lineSeparators,
-                                          List<RangeMarker> boldMarkers,
-                                          List<RangeMarker> italicMarkers) {
+                                          List<? super RangeMarker> boldMarkers,
+                                          List<? super RangeMarker> italicMarkers) {
     String content = StringUtil.convertLineSeparators(text);
 
     int initialLen = document.getTextLength();
@@ -451,7 +457,7 @@ public final class EventLog {
     return hasHtml;
   }
 
-  private static String parseTag(List<RangeMarker> markers,
+  private static String parseTag(List<? super RangeMarker> markers,
                                  Document document,
                                  String content,
                                  Matcher tagMatcher,

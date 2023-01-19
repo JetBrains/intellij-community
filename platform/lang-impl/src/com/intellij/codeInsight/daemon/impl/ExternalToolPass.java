@@ -40,14 +40,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * @author ven
- */
 public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(ExternalToolPass.class);
 
   private final AnnotationHolderImpl myAnnotationHolder;
-  private final ExternalToolPassFactory myExternalToolPassFactory;
   private final boolean myMainHighlightingPass;
   private final List<MyData<?,?>> myAnnotationData = new ArrayList<>();
 
@@ -57,23 +53,14 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     final K collectedInfo;
     volatile V annotationResult;
 
-    MyData(ExternalAnnotator<K,V> annotator, PsiFile psiRoot, K collectedInfo) {
+    MyData(@NotNull ExternalAnnotator<K,V> annotator, @NotNull PsiFile psiRoot, @NotNull K collectedInfo) {
       this.annotator = annotator;
       this.psiRoot = psiRoot;
       this.collectedInfo = collectedInfo;
     }
   }
 
-  ExternalToolPass(@NotNull ExternalToolPassFactory factory,
-                   @NotNull PsiFile file,
-                   @NotNull Editor editor,
-                   int startOffset,
-                   int endOffset) {
-    this(factory, file, editor.getDocument(), editor, startOffset, endOffset, new DefaultHighlightInfoProcessor(), false);
-  }
-
-  ExternalToolPass(@NotNull ExternalToolPassFactory factory,
-                   @NotNull PsiFile file,
+  ExternalToolPass(@NotNull PsiFile file,
                    @NotNull Document document,
                    @Nullable Editor editor,
                    int startOffset,
@@ -82,7 +69,6 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
                    boolean mainHighlightingPass) {
     super(file.getProject(), document, LangBundle.message("pass.external.annotators"), file, editor, new TextRange(startOffset, endOffset), false, processor);
     myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), false);
-    myExternalToolPassFactory = factory;
     myMainHighlightingPass = mainHighlightingPass;
   }
 
@@ -242,7 +228,8 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
   }
 
-  private @NotNull List<HighlightInfo> getHighlights() {
+  @NotNull
+  private List<HighlightInfo> getHighlights() {
     List<HighlightInfo> infos = new ArrayList<>(myAnnotationHolder.size());
     for (Annotation annotation : myAnnotationHolder) {
       infos.add(HighlightInfo.fromAnnotation(annotation));
@@ -250,10 +237,10 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     return infos;
   }
 
-  private void doFinish(List<? extends HighlightInfo> highlights, long modificationStampBefore) {
+  private void doFinish(@NotNull List<? extends HighlightInfo> highlights, long modificationStampBefore) {
     Editor editor = getEditor();
     ModalityState modalityState =
-      editor != null ? ModalityState.stateForComponent(editor.getComponent()) : ModalityState.defaultModalityState();
+      editor == null ? ModalityState.defaultModalityState() : ModalityState.stateForComponent(editor.getComponent());
     ApplicationManager.getApplication().invokeLater(() -> {
       if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
         int start = myRestrictRange.getStartOffset();
@@ -261,10 +248,10 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
         UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, start, end, highlights, getColorsScheme(), getId());
         DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getId());
       }
-    }, modalityState, x -> !myFile.isValid());
+    }, modalityState, __ -> !myFile.isValid());
   }
 
-  private static void processError(Throwable t, ExternalAnnotator<?,?> annotator, PsiFile root) {
+  private static void processError(@NotNull Throwable t, @NotNull ExternalAnnotator<?,?> annotator, @NotNull PsiFile root) {
     if (t instanceof ProcessCanceledException) throw (ProcessCanceledException)t;
 
     VirtualFile file = root.getVirtualFile();

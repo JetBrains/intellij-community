@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.module.Module
@@ -25,7 +25,10 @@ class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeMo
 
       MODULE_CACHE.getValue(cachingRoot)[module]?.let { return it }
 
-      ChangesBrowserModuleNode(module).let {
+      val moduleNode = ChangesBrowserModuleNode.create(module)
+      if (moduleNode == null) return nextPolicyParent
+
+      moduleNode.let {
         it.markAsHelperNode()
 
         model.insertNodeInto(it, grandParent, grandParent.childCount)
@@ -48,7 +51,7 @@ class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeMo
 
   companion object {
     private val MODULE_CACHE: NotNullLazyKey<MutableMap<Module?, ChangesBrowserNode<*>>, ChangesBrowserNode<*>> =
-      NotNullLazyKey.create("ChangesTree.ModuleCache") { mutableMapOf() }
+      NotNullLazyKey.createLazyKey("ChangesTree.ModuleCache") { mutableMapOf() }
     private val HIDE_EXCLUDED_FILES: Boolean = Registry.`is`("ide.hide.excluded.files")
   }
 }

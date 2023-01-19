@@ -22,7 +22,7 @@ import java.util.Collection;
  * @author max
  */
 public abstract class HighlightManager {
-  public static HighlightManager getInstance(Project project) {
+  public static HighlightManager getInstance(@NotNull Project project) {
     return project.getService(HighlightManager.class);
   }
 

@@ -6,8 +6,9 @@ import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.NamedFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
 import java.nio.file.Paths
+import kotlin.io.path.absolute
 
-data class Config internal constructor(
+data class Config private constructor(
   val projectPath: String,
   val language: String,
   val outputDir: String,
@@ -125,7 +126,7 @@ data class Config internal constructor(
     }
 
     fun build(): Config = Config(
-      projectPath,
+      Paths.get(projectPath).absolute().toString(),
       language,
       outputDir,
       ActionsGeneration(

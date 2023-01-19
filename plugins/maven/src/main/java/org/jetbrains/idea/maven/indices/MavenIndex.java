@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -11,6 +12,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.io.VersionUpdatedException;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -36,6 +38,8 @@ import static com.intellij.openapi.util.text.StringUtil.split;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 public final class MavenIndex implements MavenSearchIndex {
+  public static final Topic<IndexListener> INDEX_IS_BROKEN =
+    new Topic<>("Maven Index Broken Listener", IndexListener.class);
   private static final String DATA_DIR_PREFIX = "data";
 
   private static final String ARTIFACT_IDS_MAP_FILE = "artifactIds-map.dat";
@@ -60,14 +64,11 @@ public final class MavenIndex implements MavenSearchIndex {
   private volatile boolean isClose;
 
   private String myDataDirName;
-  private final IndexListener myListener;
   private final Lock indexUpdateLock = new ReentrantLock();
 
   public MavenIndex(MavenIndexerWrapper indexer,
-                    MavenIndexUtils.IndexPropertyHolder propertyHolder,
-                    IndexListener listener) throws MavenIndexException {
+                    MavenIndexUtils.IndexPropertyHolder propertyHolder) throws MavenIndexException {
     myNexusIndexer = indexer;
-    myListener = listener;
 
     myDir = propertyHolder.dir;
     myKind = propertyHolder.kind;
@@ -369,7 +370,7 @@ public final class MavenIndex implements MavenSearchIndex {
           }
         }
       };
-      myNexusIndexer.processArtifacts(data.mavenIndexId, mavenIndicesProcessor);
+      myNexusIndexer.processArtifacts(data.mavenIndexId, mavenIndicesProcessor, progress);
 
       persist(groupToArtifactMap, data.groupToArtifactMap);
       persist(groupWithArtifactToVersionMap, data.groupWithArtifactToVersionMap);
@@ -424,6 +425,7 @@ public final class MavenIndex implements MavenSearchIndex {
       if (!locked) return false;
       try {
         IndexData indexData = myData;
+        if (indexData == null) return false;
         IndexedMavenId id = indexData.addArtifact(artifactFile);
         if (id == null) return true;
 
@@ -507,22 +509,27 @@ public final class MavenIndex implements MavenSearchIndex {
     return doIndexAndRecoveryTask(() -> {
       Set<MavenArchetype> archetypes = new HashSet<>();
       IndexData indexData = myData;
-      for (String ga : indexData.archetypeIdToDescriptionMap.getAllKeysWithExistingMapping()) {
+      indexData.archetypeIdToDescriptionMap.consumeKeysWithExistingMapping(ga -> {
         List<String> gaParts = split(ga, ":");
 
         String groupId = gaParts.get(0);
         String artifactId = gaParts.get(1);
 
-        for (String vd : indexData.archetypeIdToDescriptionMap.get(ga)) {
-          int index = vd.indexOf(':');
-          if (index == -1) continue;
+        try {
+          for (String vd : indexData.archetypeIdToDescriptionMap.get(ga)) {
+            int index = vd.indexOf(':');
+            if (index == -1) continue;
 
-          String version = vd.substring(0, index);
-          String description = vd.substring(index + 1);
+            String version = vd.substring(0, index);
+            String description = vd.substring(index + 1);
 
-          archetypes.add(new MavenArchetype(groupId, artifactId, version, myRepositoryPathOrUrl, description));
+            archetypes.add(new MavenArchetype(groupId, artifactId, version, myRepositoryPathOrUrl, description));
+          }
         }
-      }
+        catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      });
       return archetypes;
     }, Collections.emptySet());
   }
@@ -571,7 +578,7 @@ public final class MavenIndex implements MavenSearchIndex {
     if (isClose) return;
     if (!isBroken) {
       MavenLog.LOG.info("index is broken " + this);
-      myListener.indexIsBroken(this);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(INDEX_IS_BROKEN).indexIsBroken(this);
     }
     isBroken = true;
   }
@@ -654,15 +661,6 @@ public final class MavenIndex implements MavenSearchIndex {
     CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>();
     myData.groupToArtifactMap.processKeysWithExistingMapping(processor);
     return processor.getResults();
-  }
-
-  /**
-   * @deprecated use {@link MavenIndexUtils#normalizePathOrUrl(String)}
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public static String normalizePathOrUrl(@NotNull String pathOrUrl) {
-    return MavenIndexUtils.normalizePathOrUrl(pathOrUrl);
   }
 
   private static class SetDescriptor implements DataExternalizer<Set<String>> {

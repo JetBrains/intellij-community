@@ -23,9 +23,6 @@ import java.util.Map;
 import static com.intellij.codeInsight.ExpectedTypeInfo.*;
 import static com.intellij.util.containers.ContainerUtil.map;
 
-/**
- * @author ven
-  */
 public class GuessTypeParameters {
 
   private static final Logger LOG = Logger.getInstance(GuessTypeParameters.class);
@@ -244,22 +241,15 @@ public class GuessTypeParameters {
   }
 
   private static boolean matches(@NotNull PsiType type, @NotNull PsiType expectedType, @Type int kind) {
-    switch (kind) {
-      case TYPE_STRICTLY:
-        return type.equals(expectedType);
-      case TYPE_OR_SUBTYPE:
-        return expectedType.isAssignableFrom(type);
-      case TYPE_OR_SUPERTYPE:
-        return type.isAssignableFrom(expectedType);
-      default:
-        return false;
-    }
+    return switch (kind) {
+      case TYPE_STRICTLY -> type.equals(expectedType);
+      case TYPE_OR_SUBTYPE -> expectedType.isAssignableFrom(type);
+      case TYPE_OR_SUPERTYPE -> type.isAssignableFrom(expectedType);
+      default -> false;
+    };
   }
 
   private static boolean hasNullSubstitutions(@NotNull PsiSubstitutor substitutor) {
-    for (PsiType type : substitutor.getSubstitutionMap().values()) {
-      if (type == null) return true;
-    }
-    return false;
+    return substitutor.getSubstitutionMap().containsValue(null);
   }
 }

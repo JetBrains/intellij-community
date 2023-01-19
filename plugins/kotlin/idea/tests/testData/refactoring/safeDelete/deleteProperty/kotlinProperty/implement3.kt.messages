@@ -1,1 +1,1 @@
-var foo: String in final class B : A implements var foo: String in interface A.
+property B.foo implements property A.foo.

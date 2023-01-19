@@ -29,9 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class JavaReplaceHandler extends StructuralReplaceHandler {
   private final PsiElement[] patternElements;
   @NotNull private final Project myProject;
@@ -254,23 +251,12 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       return;
     }
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(replacementClass.getProject());
-    final PsiClass aClass;
-    switch (type) {
-      case ANNOTATION:
-        aClass = factory.createAnnotationType("X");
-        break;
-      case ENUM:
-        aClass = factory.createEnum("X");
-        break;
-      case INTERFACE:
-        aClass = factory.createInterface("X");
-        break;
-      case RECORD:
-        aClass = factory.createRecord("X");
-        break;
-      default:
-        throw new AssertionError();
-    }
+    final PsiClass aClass = switch (type) {
+      case ANNOTATION -> factory.createAnnotationType("X");
+      case ENUM -> factory.createEnum("X");
+      case INTERFACE -> factory.createInterface("X");
+      case RECORD -> factory.createRecord("X");
+    };
     final PsiIdentifier identifier = aClass.getNameIdentifier();
     final PsiKeyword newKeyword = PsiTreeUtil.getPrevSiblingOfType(identifier, PsiKeyword.class);
     assert newKeyword != null;

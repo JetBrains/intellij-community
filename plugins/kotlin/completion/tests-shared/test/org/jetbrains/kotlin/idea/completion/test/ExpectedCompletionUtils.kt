@@ -19,13 +19,14 @@ import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.test.AstAccessControl
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.js.JsPlatforms
-import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
+import javax.swing.Icon
 
 /**
  * Extract a number of statements about completion from the given text. Those statements
@@ -337,7 +338,7 @@ object ExpectedCompletionUtils {
             }
             presentation.typeText?.let { map[CompletionProposal.PRESENTATION_TYPE_TEXT] = it }
             presentation.icon?.let { map[CompletionProposal.PRESENTATION_ICON] =
-                (it.safeAs<RowIcon>()?.allIcons?.firstOrNull() ?: it).toString()
+                iconToString(it)
             }
             presentation.tailText?.let { map[CompletionProposal.PRESENTATION_TAIL_TEXT] = it }
             item.moduleName?.let { map.put(CompletionProposal.MODULE_NAME, it) }
@@ -347,9 +348,15 @@ object ExpectedCompletionUtils {
         return result
     }
 
+    private fun iconToString(it: Icon): String {
+        return (it.safeAs<RowIcon>()?.allIcons?.firstOrNull() ?: it).toString()
+            //todo check how do we get not a dummy icon?
+            .replace("nodes/property.svg", "Property")
+    }
+
     private val LookupElement.moduleName: String?
         get() {
-            return (`object` as? DeclarationLookupObject)?.psiElement?.module?.name
+            return psiElement?.module?.name
         }
 
     private fun textAttributes(presentation: LookupElementPresentation): String {

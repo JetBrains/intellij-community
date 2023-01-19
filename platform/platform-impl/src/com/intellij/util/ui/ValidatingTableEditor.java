@@ -205,7 +205,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     myRemoveButton.setShortcut(CustomShortcutSet.fromString("alt DELETE")); //NON-NLS
     decorator.addExtraAction(myRemoveButton);
 
-    if (extraButtons != null &&  extraButtons.length != 0) {
+    if (extraButtons != null) {
       for (AnActionButton extraButton : extraButtons) {
         decorator.addExtraAction(extraButton);
       }

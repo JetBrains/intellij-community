@@ -14,6 +14,7 @@ import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.ExecutionException
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
@@ -77,6 +78,8 @@ class MavenSyncConsole(private val myProject: Project) {
           MavenProjectsManager.getInstance(it).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
         }
       }
+
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
     started = true
     finished = false
@@ -476,7 +479,7 @@ class MavenSyncConsole(private val myProject: Project) {
       }
     }
     catch (e: Exception) {
-      completeTask(mySyncId, taskName, FailureResultImpl(e))
+      MavenProjectsManager.getInstance(myProject).showServerException(e)
       throw e
     }
     finally {

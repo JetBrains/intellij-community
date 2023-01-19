@@ -9,5 +9,5 @@ open class <lineMarker>C</lineMarker>(b : B) : B by b, A {
 }
 
 class D(b : B) : C(b) {
-    override val <lineMarker descr="Overrides property in 'A'">f</lineMarker>: Int = 2
+    override val <lineMarker descr="Overrides property in A Press ... to navigate">f</lineMarker>: Int = 2
 }

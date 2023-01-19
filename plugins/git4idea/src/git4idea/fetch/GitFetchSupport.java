@@ -2,6 +2,7 @@
 package git4idea.fetch;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.CalledInAny;
@@ -33,6 +34,12 @@ public interface GitFetchSupport {
    */
   @NotNull
   GitFetchResult fetch(@NotNull GitRepository repository, @NotNull GitRemote remote);
+
+  /**
+   * Fetches the given remotes.
+   */
+  @NotNull
+  GitFetchResult fetchRemotes(@NotNull Collection<Pair<GitRepository, GitRemote>> remotes);
 
   /**
    * Fetches the given remote using provided refspec.

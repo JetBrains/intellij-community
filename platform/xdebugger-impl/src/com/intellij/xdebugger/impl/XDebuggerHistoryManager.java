@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -120,6 +121,15 @@ public final class XDebuggerHistoryManager implements PersistentStateComponent<E
                                  Language.findLanguageByID(myLanguageId),
                                  myCustomInfo,
                                  myEvaluationMode);
+    }
+  }
+
+  public static class XDebuggerHistoryPathMacroFilter extends PathMacroFilter {
+    @Override
+    public boolean skipPathMacros(@NotNull Element element) {
+      return "expression-string".equals(element.getName()) &&
+             (element.getParent() instanceof Element parent) && EXPRESSION_TAG.equals(parent.getName()) &&
+             (parent.getParent() instanceof Element grandParent) && EXPRESSIONS_TAG.equals(grandParent.getName());
     }
   }
 }

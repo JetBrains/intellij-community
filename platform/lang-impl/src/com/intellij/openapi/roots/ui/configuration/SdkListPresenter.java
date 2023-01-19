@@ -33,9 +33,9 @@ import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
   private static final Icon EMPTY_ICON = EmptyIcon.create(1, 16);
 
-  private final @NotNull Producer<SdkListModel> myGetModel;
+  private final @NotNull Producer<? extends SdkListModel> myGetModel;
 
-  public SdkListPresenter(@NotNull Producer<SdkListModel> getSdkListModel) {
+  public SdkListPresenter(@NotNull Producer<? extends SdkListModel> getSdkListModel) {
     myGetModel = getSdkListModel;
   }
 
@@ -157,17 +157,14 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
       //this is a sub-menu item
       SdkType sdkType = item.action.getSdkType();
       if (item.group != null) {
-        switch (item.role) {
-          case ADD:
+        setIcon(switch (item.role) {
+          case ADD -> {
             //we already have the (+) in the parent node, thus showing original icon
             Icon icon = sdkType.getIcon();
-            if (icon == null) icon = AllIcons.General.Add;
-            setIcon(icon);
-            break;
-          case DOWNLOAD:
-            setIcon(template.getIcon());
-            break;
-        }
+            yield icon != null ? icon : AllIcons.General.Add;
+          }
+          case DOWNLOAD -> template.getIcon();
+        });
         append(item.action.getListSubItemText());
       }
       else {

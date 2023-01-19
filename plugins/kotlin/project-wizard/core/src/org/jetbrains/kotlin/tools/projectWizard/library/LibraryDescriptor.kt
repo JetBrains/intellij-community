@@ -8,10 +8,20 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 sealed class LibraryArtifact
 
 data class MavenArtifact(
-    val repository: Repository,
+    val repositories: List<Repository>,
     @NonNls val groupId: String,
     @NonNls val artifactId: String
-) : LibraryArtifact()
+) : LibraryArtifact() {
+    constructor(
+        repository: Repository,
+        groupId: String,
+        artifactId: String
+    ) : this(
+        listOf(repository),
+        groupId,
+        artifactId
+    )
+}
 
 data class NpmArtifact(
     @NonNls val name: String

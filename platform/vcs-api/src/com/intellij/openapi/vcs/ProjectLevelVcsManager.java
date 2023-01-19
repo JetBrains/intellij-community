@@ -141,13 +141,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract @NotNull VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
                                                                              AbstractVcs vcs);
 
-  /**
-   * @param vcsActionName is used both in interface and as a key in settings.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull @NonNls String vcsActionName,
-                                                                        @NotNull AbstractVcs vcs);
-
   @RequiresEdt
   public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, @Nls String displayActionName);
 
@@ -243,7 +236,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract void scrollConsoleToTheEnd();
 
   /**
-   * Executes task on pooled thread, delayed until core vcs services are initialized.
+   * Execute the task on pooled thread, delayed until core vcs services are initialized.
    */
   public abstract void runAfterInitialization(@NotNull Runnable runnable);
 
@@ -256,7 +249,7 @@ public abstract class ProjectLevelVcsManager {
    * Whether vcs mappings were already processed after opening the project.
    * ie: if true, one can assume that {@link #hasActiveVcss()} and {@link #hasAnyMappings()} match if the mappings are correct.
    * <p>
-   * See {@link #VCS_ACTIVATED} listener that will be notified when this value changes.
+   * See {@link com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx#VCS_ACTIVATED} listener that will be notified when this value changes.
    */
   public boolean areVcsesActivated() {
     return false;

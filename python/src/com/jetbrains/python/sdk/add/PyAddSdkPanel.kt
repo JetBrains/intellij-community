@@ -42,9 +42,6 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-/**
- * @author vlan
- */
 abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   override val actions: Map<PyAddSdkDialogFlowAction, Boolean>
     get() = mapOf(OK.enabled())

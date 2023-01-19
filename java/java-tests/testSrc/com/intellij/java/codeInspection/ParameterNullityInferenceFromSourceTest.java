@@ -154,12 +154,13 @@ public class ParameterNullityInferenceFromSourceTest extends LightJavaCodeInsigh
 
   public void testSwitchWithPattern() {
     assertNullity("-",
-                  "void test(String r) {\n" +
-                  "        switch (r) {\n" +
-                  "            case null:\n" +
-                  "                break;\n" +
-                  "        }\n" +
-                  "    }");
+                  """
+                    void test(String r) {
+                            switch (r) {
+                                case null:
+                                    break;
+                            }
+                        }""");
   }
 
   public void testSwitchExpression() {

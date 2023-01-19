@@ -7,7 +7,7 @@ class HTML5TreeBuilder(HTMLTreeBuilder):
     features: Any
     TRACKS_LINE_NUMBERS: bool
     user_specified_encoding: Any
-    def prepare_markup(  # type: ignore  # user_specified_encoding doesn't have a default
+    def prepare_markup(  # type: ignore[override]  # user_specified_encoding doesn't have a default
         self, markup, user_specified_encoding, document_declared_encoding: Any | None = ..., exclude_encodings: Any | None = ...
     ) -> None: ...
     def feed(self, markup) -> None: ...
@@ -15,7 +15,7 @@ class HTML5TreeBuilder(HTMLTreeBuilder):
     def create_treebuilder(self, namespaceHTMLElements): ...
     def test_fragment_to_document(self, fragment): ...
 
-class TreeBuilderForHtml5lib(Any):  # type: ignore # html5lib.treebuilders.base.TreeBuilder
+class TreeBuilderForHtml5lib(Any):  # html5lib.treebuilders.base.TreeBuilder
     soup: Any
     parser: Any
     store_line_numbers: Any
@@ -42,7 +42,7 @@ class AttrList:
     def __getitem__(self, name): ...
     def __contains__(self, name): ...
 
-class Element(Any):  # type: ignore  # html5lib.treebuilders.base.Node
+class Element(Any):  # html5lib.treebuilders.base.Node
     element: Any
     soup: Any
     namespace: Any
@@ -58,7 +58,8 @@ class Element(Any):  # type: ignore  # html5lib.treebuilders.base.Node
     def cloneNode(self): ...
     def hasContent(self): ...
     def getNameTuple(self): ...
-    nameTuple: Any
+    @property
+    def nameTuple(self): ...
 
 class TextNode(Element):
     element: Any

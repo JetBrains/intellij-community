@@ -1,5 +1,6 @@
 {
   "type": "JAVA_CLASS",
   "classId": "Banana",
-  "newName": "Banana2"
+  "newName": "Banana2",
+  "enabledInK2": true
 }

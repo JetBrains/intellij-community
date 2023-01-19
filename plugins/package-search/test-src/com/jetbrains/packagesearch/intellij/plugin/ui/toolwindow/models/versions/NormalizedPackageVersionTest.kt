@@ -20,12 +20,11 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchTestUtils
 import com.jetbrains.packagesearch.intellij.plugin.asNullable
 import com.jetbrains.packagesearch.intellij.plugin.assertThat
 import com.jetbrains.packagesearch.intellij.plugin.isEqualTo
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.aGarbageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.aNamedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.aSemanticVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.aTimestampLikeVersion
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -149,36 +148,34 @@ internal class NormalizedPackageVersionTest {
     @Nested
     inner class RealWorldExamples {
 
-        val normalizer = PackageVersionNormalizer()
-
         @Test
-        internal fun `should sort apache commons-io versions correctly`() {
+        internal fun `should sort apache commons-io versions correctly`() = runTest {
             val expectedVersions = loadFromRes("versions_list/commons-io.csv")
-                .map { NormalizedPackageVersion.parseFromBlocking(it, normalizer) }
+                .map { PackageVersionNormalizer().parse(it) }
 
             assertThat(expectedVersions.shuffled().sortedDescending()).isEqualTo(expectedVersions)
         }
 
         @Test
-        internal fun `should sort scala-compiler versions correctly`() {
+        internal fun `should sort scala-compiler versions correctly`() = runTest {
             val expectedVersions = loadFromRes("versions_list/scala-compiler.csv")
-                .map { NormalizedPackageVersion.parseFromBlocking(it, normalizer) }
+                .map { PackageVersionNormalizer().parse(it) }
 
             assertThat(expectedVersions.shuffled().sortedDescending()).isEqualTo(expectedVersions)
         }
 
         @Test
-        internal fun `should sort postgresql versions correctly`() {
+        internal fun `should sort postgresql versions correctly`() = runTest {
             val expectedVersions = loadFromRes("versions_list/postgresql.csv")
-                .map { NormalizedPackageVersion.parseFromBlocking(it, normalizer) }
+                .map { PackageVersionNormalizer().parse(it) }
 
             assertThat(expectedVersions.shuffled().sortedDescending()).isEqualTo(expectedVersions)
         }
 
         @Test
-        internal fun `should sort compose-full versions correctly`() {
+        internal fun `should sort compose-full versions correctly`() = runTest {
             val expectedVersions = loadFromRes("versions_list/compose-full.csv")
-                .map { NormalizedPackageVersion.parseFromBlocking(it, normalizer) }
+                .map { PackageVersionNormalizer().parse(it) }
 
             assertThat(expectedVersions.shuffled().sortedDescending()).isEqualTo(expectedVersions)
         }
@@ -188,5 +185,3 @@ internal class NormalizedPackageVersionTest {
     }
 }
 
-internal fun NormalizedPackageVersion.Companion.parseFromBlocking(version: PackageVersion.Named, normalizer: PackageVersionNormalizer) =
-    runBlocking { normalizer.parse(version) }

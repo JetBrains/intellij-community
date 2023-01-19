@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.performance
 
-import com.intellij.diagnostic.opentelemetry.TraceManager
+import com.intellij.diagnostic.telemetry.TraceManager
 import io.opentelemetry.api.metrics.LongCounter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit

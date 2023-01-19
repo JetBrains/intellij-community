@@ -91,10 +91,11 @@ public abstract class ImportLayoutPanel extends JPanel {
     ActionGroup addGroup = new DefaultActionGroup(new AddPackageAction(), new AddBlankLineAction());
     addGroup.getTemplatePresentation().setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
     addGroup.getTemplatePresentation().setText(JavaBundle.messagePointer("button.add"));
+    addGroup.getTemplatePresentation().setPopupGroup(true);
     addGroup.registerCustomShortcutSet(CommonShortcuts.getNewForDialogs(), null);
 
     JPanel importLayoutPanel = ToolbarDecorator.createDecorator(myImportLayoutTable = createTableForPackageEntries(myImportLayoutList, this))
-      .addExtraAction(new AnActionButton.GroupPopupWrapper(addGroup))
+      .addExtraAction(addGroup)
       .setRemoveAction(button -> removeEntryFromImportLayouts())
       .setMoveUpAction(button -> moveRowUp())
       .setMoveDownAction(button -> moveRowDown())

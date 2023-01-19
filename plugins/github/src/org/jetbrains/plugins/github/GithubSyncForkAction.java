@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,6 +26,8 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
+import git4idea.remote.hosting.GitHostingUrlUtil;
+import git4idea.remote.hosting.HostedGitRepositoriesManagerKt;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -32,10 +35,13 @@ import git4idea.update.GitUpdateResult;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.*;
+import org.jetbrains.plugins.github.api.GHRepositoryPath;
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
+import org.jetbrains.plugins.github.api.GithubApiRequests;
+import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
@@ -45,6 +51,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
@@ -96,8 +103,9 @@ public class GithubSyncForkAction extends DumbAwareAction {
       return;
     }
 
-    GHGitRepositoryMapping originMapping = ContainerUtil.find(ghRepositoriesManager.getKnownRepositories(), mapping ->
-      mapping.getGitRemoteUrlCoordinates().getRemote().getName().equals(ORIGIN_REMOTE_NAME));
+    Set<GHGitRepositoryMapping> repositories = HostedGitRepositoriesManagerKt.getKnownRepositories(ghRepositoriesManager);
+    GHGitRepositoryMapping originMapping = ContainerUtil.find(repositories, mapping ->
+      mapping.getRemote().getRemote().getName().equals(ORIGIN_REMOTE_NAME));
     if (originMapping == null) {
       GithubNotifications.showError(project,
                                     GithubNotificationIdsHolder.REBASE_REMOTE_ORIGIN_NOT_FOUND,
@@ -106,12 +114,13 @@ public class GithubSyncForkAction extends DumbAwareAction {
       return;
     }
 
-    GithubAuthenticationManager authManager = GithubAuthenticationManager.getInstance();
-    GithubServerPath serverPath = originMapping.getGhRepositoryCoordinates().getServerPath();
+    GHAccountManager accountManager = ApplicationManager.getApplication().getService(GHAccountManager.class);
+    GithubServerPath serverPath = originMapping.getRepository().getServerPath();
     GithubAccount githubAccount;
-    List<GithubAccount> accounts = ContainerUtil.filter(authManager.getAccounts(), account -> serverPath.equals(account.getServer()));
+    List<GithubAccount> accounts = ContainerUtil.filter(accountManager.getAccountsState().getValue(),
+                                                        account -> serverPath.equals(account.getServer()));
     if (accounts.size() == 0) {
-      githubAccount = authManager.requestNewAccountForServer(serverPath, project);
+      githubAccount = GHCompatibilityUtil.requestNewAccountForServer(serverPath, project);
     }
     else if (accounts.size() == 1) {
       githubAccount = accounts.get(0);
@@ -143,15 +152,9 @@ public class GithubSyncForkAction extends DumbAwareAction {
       return;
     }
 
-    GithubApiRequestExecutor executor = GithubApiRequestExecutorManager.getInstance().getExecutor(githubAccount, project);
-    if (executor == null) {
-      LOG.warn("Unable to perform the GitHub Sync Fork action. Unable to get GithubApiRequestExecutor");
-      return;
-    }
-
-    new SyncForkTask(project, executor, Git.getInstance(), githubAccount.getServer(),
-                     originMapping.getGitRemoteUrlCoordinates().getRepository(),
-                     originMapping.getGhRepositoryCoordinates().getRepositoryPath()).queue();
+    new SyncForkTask(project, Git.getInstance(), githubAccount,
+                     originMapping.getRemote().getRepository(),
+                     originMapping.getRepository().getRepositoryPath()).queue();
   }
 
   private static boolean isEnabledAndVisible(@NotNull AnActionEvent e) {
@@ -161,35 +164,37 @@ public class GithubSyncForkAction extends DumbAwareAction {
     GHHostedRepositoriesManager repositoriesManager = project.getServiceIfCreated(GHHostedRepositoriesManager.class);
     if (repositoriesManager == null) return false;
 
-    return !repositoriesManager.getKnownRepositories().isEmpty();
+    Set<GHGitRepositoryMapping> repositories = HostedGitRepositoriesManagerKt.getKnownRepositories(repositoriesManager);
+    return !repositories.isEmpty();
   }
 
   private static class SyncForkTask extends Task.Backgroundable {
-    @NotNull private final GithubApiRequestExecutor myRequestExecutor;
     @NotNull private final Git myGit;
-    @NotNull private final GithubServerPath myServer;
+    @NotNull private final GithubAccount myAccount;
     @NotNull private final GitRepository myRepository;
     @NotNull private final GHRepositoryPath myRepoPath;
 
     SyncForkTask(@NotNull Project project,
-                 @NotNull GithubApiRequestExecutor requestExecutor,
                  @NotNull Git git,
-                 @NotNull GithubServerPath server,
+                 @NotNull GithubAccount account,
                  @NotNull GitRepository repository,
                  @NotNull GHRepositoryPath repoPath) {
       super(project, GithubBundle.message("rebase.process"));
-      myRequestExecutor = requestExecutor;
       myGit = git;
-      myServer = server;
+      myAccount = account;
       myRepository = repository;
       myRepoPath = repoPath;
     }
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
+      String token = GHCompatibilityUtil.getOrRequestToken(myAccount, myProject);
+      if (token == null) return;
+      GithubApiRequestExecutor executor = GithubApiRequestExecutor.Factory.getInstance().create(token);
+
       myRepository.update();
 
-      GithubRepo parentRepo = validateRepoAndLoadParent(indicator);
+      GithubRepo parentRepo = validateRepoAndLoadParent(executor, indicator);
       if (parentRepo == null) return;
 
       GitRemote parentRemote = configureParentRemote(indicator, parentRepo.getFullPath());
@@ -212,10 +217,11 @@ public class GithubSyncForkAction extends DumbAwareAction {
     }
 
     @Nullable
-    private GithubRepo validateRepoAndLoadParent(@NotNull ProgressIndicator indicator) {
+    private GithubRepo validateRepoAndLoadParent(@NotNull GithubApiRequestExecutor executor, @NotNull ProgressIndicator indicator) {
       try {
         GithubRepoDetailed repositoryInfo =
-          myRequestExecutor.execute(indicator, GithubApiRequests.Repos.get(myServer, myRepoPath.getOwner(), myRepoPath.getRepository()));
+          executor.execute(indicator,
+                           GithubApiRequests.Repos.get(myAccount.getServer(), myRepoPath.getOwner(), myRepoPath.getRepository()));
         if (repositoryInfo == null) {
           GithubNotifications.showError(myProject,
                                         GithubNotificationIdsHolder.REBASE_REPO_NOT_FOUND,
@@ -257,7 +263,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
 
       LOG.info("Adding GitHub parent as a remote host");
       indicator.setText(GithubBundle.message("rebase.process.adding.github.parent.as.remote.host"));
-      String parentRepoUrl = GithubGitHelper.getInstance().getRemoteUrl(myServer, parentRepoPath);
+      String parentRepoUrl = GithubGitHelper.getInstance().getRemoteUrl(myAccount.getServer(), parentRepoPath);
       try {
         myGit.addRemote(myRepository, UPSTREAM_REMOTE_NAME, parentRepoUrl).throwOnError();
       }
@@ -283,7 +289,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
     private GitRemote findRemote(@NotNull GHRepositoryPath repoPath) {
       return ContainerUtil.find(myRepository.getRemotes(), remote -> {
         String url = remote.getFirstUrl();
-        if (url == null || !myServer.matches(url)) return false;
+        if (url == null || !GitHostingUrlUtil.match(myAccount.getServer().toURI(), url)) return false;
 
         GHRepositoryPath remotePath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url);
         return repoPath.equals(remotePath);

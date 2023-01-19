@@ -23,11 +23,17 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class UnselectWordAtCaretAction extends EditorAction implements DumbAware {
   public UnselectWordAtCaretAction() {
     super(new Handler());
     setInjectedContext(true);
+  }
+
+  @Override
+  protected @Nullable Editor getEditor(@NotNull DataContext dataContext) {
+    return TextComponentEditorAction.getEditorFromContext(dataContext);
   }
 
   private static class Handler extends EditorActionHandler.ForEachCaret {

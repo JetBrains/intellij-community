@@ -7,9 +7,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author dsl
- */
 public final class ReturnStatementReturnValue implements ReturnValue {
   public static final ReturnStatementReturnValue INSTANCE = new ReturnStatementReturnValue();
 

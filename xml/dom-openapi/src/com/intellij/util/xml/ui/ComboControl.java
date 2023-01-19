@@ -40,9 +40,6 @@ import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author peter
- */
 public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, Icon>>, String> {
   private static final Pair<String, Icon> EMPTY = new ComboBoxItem(" ", null);
   private final Factory<? extends List<Pair<String, Icon>>> myDataFactory;

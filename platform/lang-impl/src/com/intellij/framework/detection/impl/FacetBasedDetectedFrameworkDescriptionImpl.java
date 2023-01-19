@@ -33,8 +33,9 @@ public class FacetBasedDetectedFrameworkDescriptionImpl<F extends Facet, C exten
   private final Module myModule;
 
   public FacetBasedDetectedFrameworkDescriptionImpl(@NotNull Module module,
-                                                    FacetBasedFrameworkDetector<F, C> detector, @NotNull C configuration,
-                                                    Set<VirtualFile> files) {
+                                                    FacetBasedFrameworkDetector<F, C> detector,
+                                                    @NotNull C configuration,
+                                                    Set<? extends VirtualFile> files) {
     super(detector, configuration, files);
     myModule = module;
   }

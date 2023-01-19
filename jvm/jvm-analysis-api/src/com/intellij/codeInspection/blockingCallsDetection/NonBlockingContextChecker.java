@@ -4,7 +4,6 @@ package com.intellij.codeInspection.blockingCallsDetection;
 import com.intellij.codeInspection.blockingCallsDetection.ContextType.Blocking;
 import com.intellij.codeInspection.blockingCallsDetection.ContextType.NonBlocking;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,19 +27,6 @@ public interface NonBlockingContextChecker {
    * {@link Blocking#INSTANCE} otherwise
    */
   default ContextType computeContextType(@NotNull ElementContext elementContext) {
-    if (isContextNonBlockingFor(elementContext.getElement())) {
-      return NonBlocking.INSTANCE;
-    }
-    else {
-      return Blocking.INSTANCE;
-    }
-  }
-
-  /**
-   * @deprecated Override {@link #computeContextType(ElementContext)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  default boolean isContextNonBlockingFor(@NotNull PsiElement element) {
-    return false;
+    return Blocking.INSTANCE;
   }
 }

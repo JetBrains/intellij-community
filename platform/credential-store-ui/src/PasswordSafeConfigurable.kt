@@ -13,6 +13,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
 import com.intellij.ide.passwordSafe.impl.getDefaultKeePassDbFile
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -28,10 +29,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
-import com.intellij.util.io.exists
+import com.intellij.ui.layout.chooseFile
+import com.intellij.ui.layout.selected
 import com.intellij.util.io.isDirectory
 import com.intellij.util.text.nullize
 import java.io.File
@@ -39,6 +38,7 @@ import java.nio.file.Paths
 import javax.swing.JCheckBox
 import javax.swing.JPanel
 import javax.swing.JRadioButton
+import kotlin.io.path.exists
 
 class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
                                                                                                              CredentialStoreBundle.message("password.safe.configurable"),
@@ -214,7 +214,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
                                                         return@textFieldWithBrowseButton File(path).path
                                                       })
               .resizableColumn()
-              .horizontalAlign(HorizontalAlign.FILL)
+              .align(AlignX.FILL)
               .gap(RightGap.SMALL)
               .apply {
                 if (!SystemInfo.isWindows) comment(CredentialStoreBundle.message("passwordSafeConfigurable.weak.encryption"))
@@ -232,8 +232,8 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
               .gap(RightGap.SMALL)
               .component
 
-            pgpKeyCombo = comboBox<PgpKey>(pgpListModel, renderer = listCellRenderer { value, _, _ ->
-              setText("${value.userId} (${value.keyId})")
+            pgpKeyCombo = comboBox<PgpKey>(pgpListModel, renderer = listCellRenderer {
+              text = "${it.userId} (${it.keyId})"
             }).bindItem({ getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
                         { settings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null })
               .columns(COLUMNS_MEDIUM)
@@ -295,6 +295,8 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = getNewDbFile()?.exists() ?: false
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
   }
 
   private inner class ImportKeePassDatabaseAction : DumbAwareAction(CredentialStoreBundle.message("action.text.password.safe.import")) {
@@ -327,6 +329,8 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = getNewDbFileAsString() != null
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
   }
 }
 

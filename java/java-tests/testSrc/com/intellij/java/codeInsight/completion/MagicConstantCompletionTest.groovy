@@ -23,9 +23,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.Language
 
-/**
- * @author peter
- */
 @CompileStatic
 class MagicConstantCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 

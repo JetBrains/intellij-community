@@ -47,9 +47,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
 
-/**
- * @author ilyas
- */
 public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
 
   private final CachedValue<DeclarationHolder> myAnnotationsCache;

@@ -38,7 +38,10 @@ internal class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializ
 
   override fun serialize(o: Any, context: Any?, filter: SerializationFilter?): Any {
     val element = Element("state")
-    element.addContent(CDATA(json.encodeToString(serializer, o)))
+    val json = json.encodeToString(serializer, o)
+    if (!json.isEmpty() && json != "{\n}") {
+      element.addContent(CDATA(json))
+    }
     return element
   }
 

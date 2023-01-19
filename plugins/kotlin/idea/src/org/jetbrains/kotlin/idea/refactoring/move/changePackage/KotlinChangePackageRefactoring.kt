@@ -2,18 +2,19 @@
 
 package org.jetbrains.kotlin.idea.refactoring.move.changePackage
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
+import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.move.ContainerChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.move.ContainerInfo
 import org.jetbrains.kotlin.idea.refactoring.move.getInternalReferencesToUpdateOnPackageNameChange
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
 import org.jetbrains.kotlin.idea.refactoring.move.postProcessMoveUsages
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -29,7 +30,9 @@ class KotlinChangePackageRefactoring(val file: KtFile) {
                 project = project,
                 moveSource = MoveSource(file),
                 moveTarget = KotlinDirectoryMoveTarget(newFqName, file.containingDirectory!!.virtualFile),
-                delegate = MoveDeclarationsDelegate.TopLevel
+                delegate = MoveDeclarationsDelegate.TopLevel,
+                searchInCommentsAndStrings = KotlinRefactoringSettings.instance.MOVE_SEARCH_IN_COMMENTS,
+                searchInNonCode = KotlinRefactoringSettings.instance.MOVE_SEARCH_FOR_TEXT,
             )
         )
 

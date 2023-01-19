@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public abstract class BinaryOutputReader extends BaseDataReader {
   @NotNull private final InputStream myStream;
   private final byte @NotNull [] myBuffer = new byte[8192];

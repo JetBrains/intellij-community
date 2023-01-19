@@ -28,9 +28,9 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   private boolean myFilteredTargets = false;
   private static final Comparator<AntBuildTarget> ourTargetComparator = (target1, target2) -> {
     final String name1 = target1.getDisplayName();
-    if (name1 == null) return Integer.MIN_VALUE;
+    if (name1 == null) return -1;
     final String name2 = target2.getDisplayName();
-    if (name2 == null) return Integer.MAX_VALUE;
+    if (name2 == null) return 1;
     return name1.compareToIgnoreCase(name2);
   };
 

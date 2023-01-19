@@ -50,8 +50,8 @@ sealed class MoveDeclarationsDelegate {
     }
 
     class NestedClass(
-        val newClassName: String? = null,
-        val outerInstanceParameterName: String? = null
+      val newClassName: String? = null,
+      private val outerInstanceParameterName: String? = null
     ) : MoveDeclarationsDelegate() {
         override fun getContainerChangeInfo(originalDeclaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): ContainerChangeInfo {
             val originalInfo = ContainerInfo.Class(originalDeclaration.containingClassOrObject!!.fqName!!)

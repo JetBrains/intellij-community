@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.concat;
-import static com.intellij.util.containers.ContainerUtil.toCollection;
 
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public final class ModuleDependencyDataService extends AbstractDependencyDataService<ModuleDependencyData, ModuleOrderEntry> {
@@ -117,7 +116,7 @@ public final class ModuleDependencyDataService extends AbstractDependencyDataSer
     }
 
     if (!toRemove.isEmpty() || !duplicatesToRemove.isEmpty()) {
-      Collection<ModuleOrderEntry> orderEntries = toCollection(concat(duplicatesToRemove, toRemove.values()));
+      Collection<ModuleOrderEntry> orderEntries = ContainerUtil.toCollection(concat(duplicatesToRemove, toRemove.values()));
       removeData(orderEntries, module, modelsProvider);
     }
     return orderEntryDataMap;

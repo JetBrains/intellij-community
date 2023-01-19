@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -26,11 +25,11 @@ import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
-import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
+import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +42,8 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
   public void testIndexingModule() throws Exception {
     doTest(this::createModuleAndSourceRoot, this::removeModule,
            pair -> IndexableEntityProviderMethods.INSTANCE.createIterators(pair.getFirst(),
-                                                                           Collections.singletonList(pair.getSecond())));
+                                                                           Collections.singletonList(pair.getSecond())
+           ));
   }
 
   @NotNull
@@ -136,7 +136,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
   }
 
   public void testIndexingSdk() throws Exception {
-    doTest(this::createSdk, this::removeSdk, IndexableEntityProviderMethods.INSTANCE::createIterators);
+    doTest(this::createSdk, this::removeSdk, sdk -> IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
   }
 
   @NotNull
@@ -162,8 +162,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
                           Function<T, Collection<IndexableFilesIterator>> expectedIteratorsProducer)
     throws Exception {
     MyWorkspaceModelChangeListener listener = new MyWorkspaceModelChangeListener();
-    WorkspaceModelTopics.getInstance(getProject())
-      .subscribeAfterModuleLoading(getProject().getMessageBus().connect(getTestRootDisposable()), listener);
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(WorkspaceModelTopics.CHANGED, listener);
     T createdEntities = WriteAction.compute(generator);
 
     List<IndexableFilesIterator> iterators;
@@ -185,7 +184,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
       WriteAction.run(() -> remover.consume(createdEntities));
     }
 
-    DumbService.getInstance(getProject()).queueTask(new UnindexedFilesUpdater(getProject(), iterators, null, getTestName(false)));
+    new UnindexedFilesUpdater(getProject(), iterators, null, getTestName(false)).queue();
   }
 
 
@@ -208,11 +207,6 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
 
   private static class MyWorkspaceModelChangeListener implements WorkspaceModelChangeListener {
     final List<VersionedStorageChange> myEvents = new ArrayList<>();
-
-    @Override
-    public void beforeChanged(@NotNull VersionedStorageChange event) {
-      //ignore
-    }
 
     @Override
     public void changed(@NotNull VersionedStorageChange event) {

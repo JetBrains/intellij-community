@@ -164,7 +164,9 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of(), myFixture.getLookupElementStrings());
+    // Options contributed by TypoTolerantMatcher; these classes contain nested public classes,
+    // so we allow them, as they may potentially contain string constants
+    assertEquals(List.of("ForkJoinPool", "ThreadPoolExecutor"), myFixture.getLookupElementStrings());
   }
 
   @NeedsIndex.Full
@@ -191,6 +193,34 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
                                 }
                               }
                             }""");
+  }
+
+  public void testPatternInTypePosition() {
+    myFixture.configureByText("a.java", """
+      class X {
+        final class StrIncompatible {}
+        record MyRecord(CharSequence comp) {}
+        void test(Object o) {
+          int StrVar = 1;
+          if (o instanceof MyRecord(Str<caret> s))
+        }
+      }""");
+    myFixture.completeBasic();
+    myFixture.assertPreferredCompletionItems(0, "StrIncompatible", "String", "StrictMath", "StringBuffer", "StringBuilder");
+  }
+
+  public void testPatternInTypePosition2() {
+    myFixture.configureByText("a.java", """
+      class X {
+        final class StrIncompatible {}
+        record MyRecord(CharSequence comp) {}
+        void test(Object o) {
+          int StrVar = 1;
+          if (o instanceof MyRecord(Str<caret>))
+        }
+      }""");
+    myFixture.completeBasic();
+    myFixture.assertPreferredCompletionItems(0, "StrIncompatible", "String", "StrictMath", "StringBuffer", "StringBuilder");
   }
 
   private void selectItem(int index) {

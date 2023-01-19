@@ -35,9 +35,9 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.suppress
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 
 /**
- * @author vlan
+ * @see [PyConfigureSdkOnWslTest]
  */
-internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
+class PythonSdkConfigurator : DirectoryProjectConfigurator {
   companion object {
     private val LOGGER = Logger.getInstance(PythonSdkConfigurator::class.java)
 
@@ -85,7 +85,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe { it.getIntention(module) != null }
   }
 
-  private fun configureSdk(project: Project,
+  fun configureSdk(project: Project,
                            module: Module,
                            extension: PyProjectSdkConfigurationExtension?,
                            indicator: ProgressIndicator) {
@@ -155,15 +155,6 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
       indicator.text = PyBundle.message("looking.for.shared.conda.environment")
       guardIndicator(indicator) { mostPreferred(filterSharedCondaEnvs(module, existingSdks)) }?.let {
         setReadyToUseSdk(project, module, it)
-        return
-      }
-
-      guardIndicator(indicator) { detectCondaEnvs(module, existingSdks, context).firstOrNull() }?.let {
-        val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
-        runInEdt {
-          SdkConfigurationUtil.addSdk(newSdk)
-          setReadyToUseSdk(project, module, newSdk)
-        }
         return
       }
 

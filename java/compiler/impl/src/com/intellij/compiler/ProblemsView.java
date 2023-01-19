@@ -73,6 +73,10 @@ public abstract class ProblemsView {
     addMessage(type, text, groupName, navigatable, message.getExportTextPrefix(), message.getRenderTextPrefix(), sessionId);
   }
 
+  public void buildStarted(@NotNull UUID sessionId) {
+    clearProgress();
+  }
+
   public abstract void setProgress(String text, float fraction);
 
   public abstract void setProgress(String text);

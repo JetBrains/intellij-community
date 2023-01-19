@@ -18,7 +18,7 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/kdoc/inCompletion")
 @RunWith(JUnit38ClassRunner::class)
 class QuickDocInCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testSimple() {
         val element = getElementFromLookup()

@@ -17,6 +17,7 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.LightColors
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.addPropertyChangeListener
 import kotlinx.coroutines.CoroutineScope
@@ -192,7 +193,7 @@ internal class SearchModel(ui: DocumentationUI) : Disposable {
     }
     else {
       searchField.textEditor.background = LightColors.RED
-      matchLabel.foreground = UIUtil.getErrorForeground()
+      matchLabel.foreground = NamedColorUtil.getErrorForeground()
       matchLabel.text = ApplicationBundle.message("editorsearch.matches", matches)
     }
   }

@@ -2,8 +2,10 @@
 package org.jetbrains.tools.model.updater
 
 import org.jdom.Document
-import org.jetbrains.tools.model.updater.GeneratorPreferences.ArtifactMode
-import org.jetbrains.tools.model.updater.impl.*
+import org.jetbrains.tools.model.updater.impl.JpsLibrary
+import org.jetbrains.tools.model.updater.impl.Preferences
+import org.jetbrains.tools.model.updater.impl.readXml
+import org.jetbrains.tools.model.updater.impl.xml
 import java.io.File
 import java.util.*
 
@@ -59,8 +61,8 @@ fun main(args: Array<String>) {
     }
 
     processRoot(communityRoot, isCommunity = true)
-    patchGitignore(communityRoot, preferences.kotlincArtifactsMode)
     updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginVersion)
+    updateKGPVersionForKotlinNativeTests(communityRoot, preferences.kotlinGradlePluginVersion)
 }
 
 private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary>) {
@@ -70,17 +72,6 @@ private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary
     for (library in libraries) {
         val libraryFileName = library.name.replace("\\W".toRegex(), "_") + ".xml"
         librariesDir.resolve(libraryFileName).writeText(library.render())
-    }
-}
-
-private fun patchGitignore(dotIdea: File, kotlincArtifactsMode: ArtifactMode) {
-    val gitignoreFile = dotIdea.resolve("..").resolve(".gitignore")
-    val ignoreRule = "**/build"
-    val normalizedContent = gitignoreFile.readLines().filter { it != ignoreRule }.joinToString("\n")
-
-    when (kotlincArtifactsMode) {
-        ArtifactMode.MAVEN -> gitignoreFile.writeText(normalizedContent)
-        ArtifactMode.BOOTSTRAP -> gitignoreFile.writeText("$normalizedContent\n$ignoreRule")
     }
 }
 
@@ -120,17 +111,35 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
 }
 
 /**
- * Updates the `KotlinGradlePluginVersions.kt` source file to contain the latest [kotlinGradlePluginVersion] in the source code.
- * The `KotlinGradlePluginVersions` source file can't directly read the `model.properties` file directly, since
+ * Updates the `KotlinGradlePluginVersions.kt` source file to contain the latest [kotlinGradlePluginVersion]
+ * in the source code. The `KotlinGradlePluginVersions` source file can't directly read the `model.properties` file directly, since
  * the project model can be overwritten by the [main] args (see also [GeneratorPreferences.parse])
  */
 private fun updateLatestGradlePluginVersion(communityRoot: File, kotlinGradlePluginVersion: String) {
-    val sourceFile = communityRoot.resolve(
+    val kotlinGradlePluginVersionsKt = communityRoot.resolve(
         "plugins/kotlin/gradle/gradle-java/tests/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
     )
+    updateFile(
+        kotlinGradlePluginVersionsKt,
+        """val latest = .*""",
+        "val latest = KotlinToolingVersion(\"$kotlinGradlePluginVersion\")"
+    )
+}
 
+private fun updateKGPVersionForKotlinNativeTests(communityRoot: File, kotlinGradlePluginVersion: String) {
+    val kotlinNativeVersionsKt = communityRoot.resolve(
+        "plugins/kotlin/base/plugin/test/org/jetbrains/kotlin/idea/artifacts/KotlinNativeVersion.kt"
+    )
+    updateFile(
+        kotlinNativeVersionsKt,
+        """private const val kotlinGradlePluginVersion: String =.*""",
+        "private const val kotlinGradlePluginVersion: String = \"$kotlinGradlePluginVersion\""
+    )
+}
+
+private fun updateFile(sourceFile: File, regexp: String, replacement: String) {
     val updatedFileContent = sourceFile.readText().replace(
-        Regex("""val latest = .*"""), "val latest = KotlinToolingVersion(\"$kotlinGradlePluginVersion\")"
+        Regex(regexp), replacement
     )
 
     sourceFile.writeText(updatedFileContent)

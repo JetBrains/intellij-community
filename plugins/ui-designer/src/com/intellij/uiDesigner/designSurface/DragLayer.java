@@ -6,10 +6,6 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class DragLayer extends PassiveDecorationLayer {
   DragLayer(final GuiEditor editor) {
     super(editor);

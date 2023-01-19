@@ -33,9 +33,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 class CheckInitialized implements ElementFilter {
   private final Set<PsiField> myNonInitializedFields;
   private final boolean myInsideConstructorCall;

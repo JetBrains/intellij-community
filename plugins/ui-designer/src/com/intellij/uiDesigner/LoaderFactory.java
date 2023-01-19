@@ -30,10 +30,6 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class LoaderFactory implements Disposable {
   private final Project myProject;
 

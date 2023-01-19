@@ -48,7 +48,7 @@
   </projectListeners>
 
   <applicationListeners>
-    <listener class="com.intellij.filePrediction.features.history.FilePredictionProjectListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.filePrediction.features.history.FilePredictionProjectListener" topic="com.intellij.openapi.project.ProjectCloseListener"/>
   </applicationListeners>
 
   <actions>

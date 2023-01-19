@@ -17,15 +17,19 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -128,6 +132,14 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
     if (PlatformDataKeys.MODALITY_STATE.is(dataId)) {
       return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
     }
+    if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId) ||
+        PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId)) {
+      SpeedSearchSupply supply = component instanceof JComponent ? SpeedSearchSupply.getSupply((JComponent)component) : null;
+      Object result = supply == null ? null :
+                      PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId) ? supply.getEnteredPrefix() :
+                      supply instanceof SpeedSearchBase ? ((SpeedSearchBase<?>)supply).getSearchField() : null;
+      if (result != null) return result;
+    }
     Object answer = cacheable ? myCachedData.get(dataId) : null;
     if (answer != null) {
       return answer;
@@ -144,7 +156,7 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
 
   private @Nullable Object calcData(@NotNull String dataId, @Nullable Component component) {
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
-      for (Component c = component; c != null; c = c.getParent()) {
+      for (Component c = component; c != null; c = UIUtil.getParent(c)) {
         DataProvider dataProvider = getDataProviderEx(c);
         if (dataProvider == null) continue;
         Object data = myDataManager.getDataFromProviderAndRules(dataId, GetDataRuleType.PROVIDER, dataProvider);

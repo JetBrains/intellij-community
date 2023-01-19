@@ -1,4 +1,3 @@
-// ALLOW_AST_ACCESS
 @file: JvmName("Util")
 
 package a

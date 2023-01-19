@@ -16,9 +16,11 @@ import com.intellij.xdebugger.attach.*;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -63,7 +65,7 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
     final List<XAttachDebugger> result = PythonSdkUtil.getAllLocalCPythons()
       .stream()
       .filter(sdk -> sdk != selectedSdk)
-      .filter(sdk -> !PythonSdkUtil.isInvalid(sdk))
+      .filter(sdk -> PySdkExtKt.getSdkSeemsValid(sdk))
       .sorted(PreferredSdkComparator.INSTANCE)
       .map(PyLocalAttachDebugger::new)
       .collect(Collectors.toList());
@@ -102,15 +104,18 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
 
   private static class PyLocalAttachDebugger implements XAttachDebugger {
     private final String mySdkHome;
+    @Nullable private final Sdk mySdk;
     @NotNull @NlsSafe private final String myName;
 
     PyLocalAttachDebugger(@NotNull Sdk sdk) {
       mySdkHome = sdk.getHomePath();
+      mySdk = sdk;
       myName = PythonSdkType.getInstance().getVersionString(sdk) + " (" + mySdkHome + ")";
     }
 
     PyLocalAttachDebugger(@NotNull String sdkHome) {
       mySdkHome = sdkHome;
+      mySdk = PythonSdkUtil.findSdkByPath(mySdkHome);
       myName = "Python Debugger";
     }
 
@@ -124,7 +129,7 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
     public void attachDebugSession(@NotNull Project project,
                                    @NotNull XAttachHost attachHost,
                                    @NotNull ProcessInfo processInfo) throws ExecutionException {
-      PyAttachToProcessDebugRunner runner = new PyAttachToProcessDebugRunner(project, processInfo.getPid(), mySdkHome);
+      PyAttachToProcessDebugRunner runner = new PyAttachToProcessDebugRunner(project, processInfo.getPid(), mySdk);
       runner.launch();
     }
   }

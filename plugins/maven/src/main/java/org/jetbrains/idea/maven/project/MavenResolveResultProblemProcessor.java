@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.build.issue.BuildIssue;
@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @ApiStatus.Internal
-public class MavenResolveResultProblemProcessor {
+public final class MavenResolveResultProblemProcessor {
 
   private static final String BLOCKED_MIRROR_FOR_REPOSITORIES = "Blocked mirror for repositories:";
 

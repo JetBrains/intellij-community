@@ -82,6 +82,9 @@ class RankingProvidersTest : LightPlatformTestCase() {
     try {
       testLanguage.unregisterLanguage(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!)
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }

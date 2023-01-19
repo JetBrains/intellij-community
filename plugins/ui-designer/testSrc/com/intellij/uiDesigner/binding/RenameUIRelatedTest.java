@@ -26,9 +26,6 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class RenameUIRelatedTest extends MultiFileTestCase {
   @NotNull
   @Override

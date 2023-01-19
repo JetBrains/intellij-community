@@ -10,6 +10,7 @@ import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.StdModuleTypes
@@ -27,10 +28,10 @@ import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.jetbrains.annotations.Nls
 import java.io.File
 import javax.swing.JComponent
@@ -47,8 +48,8 @@ abstract class CommonStarterInitialStep(
 
   protected val propertyGraph: PropertyGraph = PropertyGraph()
   protected val entityNameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestName)
-  protected val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestLocationByName)
-  protected val canonicalPathProperty = locationProperty.joinCanonicalPath(entityNameProperty)
+  private val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestLocationByName)
+  private val canonicalPathProperty = locationProperty.joinCanonicalPath(entityNameProperty)
   protected val groupIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { starterContext.group }
   protected val artifactIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { entityName }
   protected val sdkProperty: GraphProperty<Sdk?> = propertyGraph.lazyProperty { null }
@@ -65,7 +66,7 @@ abstract class CommonStarterInitialStep(
   }
   protected val exampleCodeProperty: GraphProperty<Boolean> = propertyGraph.lazyProperty { starterContext.includeExamples }
   protected val gitProperty: GraphProperty<Boolean> = propertyGraph.property(false)
-    .bindBooleanStorage("NewProjectWizard.gitState")
+    .bindBooleanStorage(GIT_PROPERTY_NAME)
 
   protected var entityName: String by entityNameProperty.trim()
   protected var location: String by locationProperty
@@ -92,7 +93,7 @@ abstract class CommonStarterInitialStep(
 
     val locationRow = row(UIBundle.message("label.project.wizard.new.project.location")) {
       val commentLabel = projectLocationField(locationProperty, wizardContext)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR)
         .comment(getLocationComment(), 100)
         .comment!!
@@ -103,7 +104,7 @@ abstract class CommonStarterInitialStep(
 
     if (wizardContext.isCreatingNewProject) {
       // Git should not be enabled for single module
-      row(EMPTY_LABEL) {
+      row("") {
         checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
           .bindSelected(gitProperty)
       }.bottomGap(BottomGap.SMALL)
@@ -184,7 +185,7 @@ abstract class CommonStarterInitialStep(
   protected fun <T : JComponent> Cell<T>.withSpecialValidation(vararg errorValidationUnits: TextValidationFunction): Cell<T> =
     withValidation(this, errorValidationUnits.asList(), null, validatedTextComponents, parentDisposable)
 
-  protected fun <T : JComponent> Cell<T>.withSpecialValidation(
+  private fun <T : JComponent> Cell<T>.withSpecialValidation(
     errorValidationUnits: List<TextValidationFunction>,
     warningValidationUnit: TextValidationFunction?
   ): Cell<T> {
@@ -193,11 +194,13 @@ abstract class CommonStarterInitialStep(
 
   private fun Row.projectLocationField(locationProperty: GraphProperty<String>,
                                        wizardContext: WizardContext): Cell<TextFieldWithBrowseButton> {
-    val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
-    val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
+    val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+      .withFileFilter { it.isDirectory }
+      .withPathToTextConvertor(::getPresentablePath)
+      .withTextToPathConvertor(::getCanonicalPath)
     val title = IdeBundle.message("title.select.project.file.directory", wizardContext.presentationName)
     val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
-    return this.textFieldWithBrowseButton(title, wizardContext.project, fileChooserDescriptor, fileChosen)
+    return textFieldWithBrowseButton(title, wizardContext.project, fileChooserDescriptor)
       .bindText(property)
   }
 }

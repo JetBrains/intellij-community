@@ -34,11 +34,10 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
   override var isAmendCommitMode: Boolean
     get() = commitContext.isAmendCommitMode
     set(value) {
-      val oldValue = isAmendCommitMode
-      commitContext.isAmendCommitMode = value
-
-      if (oldValue == value) return
-      amendCommitModeToggled()
+      if (commitContext.isAmendCommitMode != value) {
+        commitContext.isAmendCommitMode = value
+        amendCommitModeToggled()
+      }
     }
 
   protected open fun amendCommitModeToggled() {

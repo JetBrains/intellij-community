@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.RemoteFilePath
@@ -31,7 +32,6 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.IconManager
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.PlatformIcons
@@ -78,7 +78,7 @@ object RepositoryBrowser {
   }
 
   private fun getIcon(): Icon? = when {
-    ExperimentalUI.isNewUI() -> IconManager.getInstance().getIcon("expui/toolwindow/repositories.svg", AllIcons::class.java)
+    ExperimentalUI.isNewUI() -> IconLoader.getIcon("expui/toolwindow/repositories.svg", AllIcons::class.java)
     else -> null
   }
 }
@@ -86,7 +86,7 @@ object RepositoryBrowser {
 class RepositoryBrowserPanel(
   val project: Project,
   val root: AbstractVcsVirtualFile,
-  val localRoot: VirtualFile
+  private val localRoot: VirtualFile
 ) : JPanel(BorderLayout()), DataProvider, Disposable {
   companion object {
     val REPOSITORY_BROWSER_DATA_KEY = DataKey.create<RepositoryBrowserPanel>("com.intellij.openapi.vcs.impl.RepositoryBrowserPanel")
@@ -111,8 +111,6 @@ class RepositoryBrowserPanel(
       }
     }
     fileSystemTree = object : FileSystemTreeImpl(project, fileChooserDescriptor) {
-      @Suppress("OverridingDeprecatedMember")
-      override fun useNewAsyncModel() = true
     }
     fileSystemTree.addOkAction {
       val files = fileSystemTree.selectedFiles

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -50,8 +51,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
@@ -131,8 +132,6 @@ public class MavenUtil {
     Pair.create(Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar"), "org/apache/maven/project/" + MavenConstants.SUPER_POM_XML),
     Pair.create(Pattern.compile("maven-model-builder-\\d+\\.\\d+\\.\\d+\\.jar"), "org/apache/maven/model/" + MavenConstants.SUPER_POM_XML)
   };
-
-  public static final String MAVEN_NEW_PROJECT_MODEL_KEY = "maven.new.project.model";
 
   private static volatile Map<String, String> ourPropertiesFromMvnOpts;
 
@@ -232,26 +231,6 @@ public class MavenUtil {
     }
   }
 
-
-  public static void smartInvokeAndWait(final Project p, final ModalityState state, final Runnable r) {
-    startTestRunnable(r);
-    if (isNoBackgroundMode() || ApplicationManager.getApplication().isDispatchThread()) {
-      runAndFinishTestRunnable(r);
-    }
-    else {
-      final Semaphore semaphore = new Semaphore();
-      semaphore.down();
-      DumbService.getInstance(p).smartInvokeLater(() -> {
-        try {
-          runAndFinishTestRunnable(r);
-        }
-        finally {
-          semaphore.up();
-        }
-      }, state);
-      semaphore.waitFor();
-    }
-  }
 
   public static void invokeAndWaitWriteAction(@NotNull Project p, @NotNull Runnable r) {
     startTestRunnable(r);
@@ -898,11 +877,11 @@ public class MavenUtil {
     }
   }
 
-  @NotNull
+  @Nullable
   public static File getRepositoryFile(@NotNull Project project,
-                                              @NotNull MavenId id,
-                                              @NotNull String extension,
-                                              @Nullable String classifier) {
+                                       @NotNull MavenId id,
+                                       @NotNull String extension,
+                                       @Nullable String classifier) {
     if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
       return null;
     }
@@ -911,7 +890,7 @@ public class MavenUtil {
   }
 
   @NotNull
-  private static File makeLocalRepositoryFile(MavenId id,
+  public static File makeLocalRepositoryFile(MavenId id,
                                               File localRepository,
                                               @NotNull String extension,
                                               @Nullable String classifier) {
@@ -1175,10 +1154,6 @@ public class MavenUtil {
     return res;
   }
 
-  public static boolean newModelEnabled(Project project) {
-    return Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY, false);
-  }
-
   public static boolean isProjectTrustedEnoughToImport(Project project) {
     return ExternalSystemUtil.confirmLoadingUntrustedProject(project, SYSTEM_ID);
   }
@@ -1190,14 +1165,7 @@ public class MavenUtil {
    * @param condition only connectors satisfied for this predicate will be restarted
    */
   public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<MavenServerConnector> condition) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      MavenServerManager.getInstance().getAllConnectors().forEach(it -> {
-        if (it.getProject().equals(project) && condition.test(it)) {
-          MavenServerManager.getInstance().shutdownConnector(it, wait);
-        }
-      });
-      MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
-    }, SyncBundle.message("maven.sync.restarting"), false, project);
+    MavenServerManager.getInstance().restartMavenConnectors(project, wait, condition);
   }
 
   public static void restartMavenConnectors(@NotNull Project project, boolean wait) {
@@ -1367,11 +1335,19 @@ public class MavenUtil {
   }
 
   public static String getArtifactName(String packaging, Module module, boolean exploded) {
-    return module.getName() + ":" + packaging + (exploded ? " exploded" : "");
+    return getArtifactName(packaging, module.getName(), exploded);
+  }
+
+  public static String getArtifactName(String packaging, String moduleName, boolean exploded) {
+    return moduleName + ":" + packaging + (exploded ? " exploded" : "");
   }
 
   public static String getEjbClientArtifactName(Module module, boolean exploded) {
-    return module.getName() + ":ejb" + (exploded ? CLIENT_EXPLODED_ARTIFACT_SUFFIX : CLIENT_ARTIFACT_SUFFIX);
+    return getEjbClientArtifactName(module.getName(), exploded);
+  }
+
+  public static String getEjbClientArtifactName(String moduleName, boolean exploded) {
+    return moduleName + ":ejb" + (exploded ? CLIENT_EXPLODED_ARTIFACT_SUFFIX : CLIENT_ARTIFACT_SUFFIX);
   }
 
   public static String getIdeaVersionToPassToMavenProcess() {
@@ -1587,10 +1563,13 @@ public class MavenUtil {
     Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
     MavenEmbeddersManager embeddersManager = projectsManager.getEmbeddersManager();
 
-    String baseDir = EMPTY;
+    String baseDir = project.getBasePath();
     List<MavenProject> projects = projectsManager.getRootProjects();
     if (!projects.isEmpty()) {
       baseDir = getBaseDir(projects.get(0).getDirectoryFile()).toString();
+    }
+    if (null == baseDir) {
+      baseDir = EMPTY;
     }
 
     MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir, baseDir);
@@ -1605,6 +1584,14 @@ public class MavenUtil {
       embeddersManager.release(embedderWrapper);
     }
     return repositories;
+  }
+
+  public static boolean isMavenizedModule(@NotNull Module m) {
+    try {
+      return !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized();
+    } catch (AlreadyDisposedException e) {
+      return false;
+    }
   }
 
   public static boolean isLinearImportEnabled() {

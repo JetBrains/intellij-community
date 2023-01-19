@@ -18,14 +18,21 @@ interface TaskSupport {
 
   fun modalTaskOwner(component: Component): ModalTaskOwner
 
-  suspend fun <T> withBackgroundProgressIndicatorInternal(
+  suspend fun <T> withBackgroundProgressInternal(
     project: Project,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T
   ): T
 
-  suspend fun <T> withModalProgressIndicatorInternal(
+  suspend fun <T> withModalProgressInternal(
+    owner: ModalTaskOwner,
+    title: @ProgressTitle String,
+    cancellation: TaskCancellation,
+    action: suspend CoroutineScope.() -> T,
+  ): T
+
+  fun <T> runBlockingModalInternal(
     owner: ModalTaskOwner,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,

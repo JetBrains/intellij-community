@@ -72,29 +72,23 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
       }
       row("Select Placeholder:") {
         comboBox(PlaceholderComponent.values().toList())
-          .applyToComponent {
-            addItemListener {
-              if (it.stateChange == ItemEvent.SELECTED) {
-                val type = it?.item as? PlaceholderComponent
-                if (type == null) {
-                  placeholder.component = null
-                }
-                else {
-                  placeholder.component = createPlaceholderComponent(type)
-                }
-              }
+          .onChanged {
+            val type = it.item
+            if (type == null) {
+              placeholder.component = null
+            }
+            else {
+              placeholder.component = createPlaceholderComponent(type)
             }
           }
         checkBox("enabled")
           .applyToComponent {
             isSelected = true
-            addItemListener { placeholder.enabled(this.isSelected) }
-          }
+          }.onChanged { placeholder.enabled(it.isSelected) }
         checkBox("visible")
           .applyToComponent {
             isSelected = true
-            addItemListener { placeholder.visible(this.isSelected) }
-          }
+          }.onChanged { placeholder.visible(it.isSelected) }
       }
       row("Placeholder:") {
         placeholder = placeholder()

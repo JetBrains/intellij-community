@@ -24,10 +24,6 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class Utils {
   public static final String FORM_NAMESPACE = "http://www.intellij.com/uidesigner/form/";
   private static final SAXParser SAX_PARSER = createParser();

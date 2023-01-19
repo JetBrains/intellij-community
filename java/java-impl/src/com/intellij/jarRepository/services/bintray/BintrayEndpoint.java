@@ -33,7 +33,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
 /**
- * @author ibessonov
  * @deprecated since Bintray service is scheduled for sunsetting in May 2021
  */
 @Deprecated(forRemoval = true)

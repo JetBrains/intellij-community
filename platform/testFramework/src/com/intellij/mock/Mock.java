@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -11,17 +10,18 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtilRt;
+import kotlinx.coroutines.flow.StateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,11 +31,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 //[kirillk] - this class looks to be an overkill but IdeDocumentHistory is highly coupled
-// with all of that stuff below, so it's not possible to test it's back/forward capabilities
+// with all of that stuff below, so it's not possible to test its back/forward capabilities
 // w/o making mocks for all of them. perhaps later we will decouple those things
-public class Mock {
+public final class Mock {
   public static class MyFileEditor extends UserDataHolderBase implements DocumentsEditor {
     private final Document @NotNull [] DOCUMENTS;
 
@@ -52,8 +53,7 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
       throw new UnsupportedOperationException();
     }
 
@@ -63,18 +63,12 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return "";
     }
 
     @Override
     public void dispose() {
-    }
-
-    @Override
-    public StructureViewBuilder getStructureViewBuilder() {
-      return null;
     }
 
     @Override
@@ -106,30 +100,9 @@ public class Mock {
       return null;
     }
 
-    @NotNull
     @Override
-    public ActionCallback notifyPublisher(@NotNull Runnable runnable) {
+    public void notifyPublisher(@NotNull Runnable runnable) {
       runnable.run();
-      return ActionCallback.DONE;
-    }
-
-    @NotNull
-    @Override
-    public ActionCallback getReady(@NotNull Object requestor) {
-      return ActionCallback.DONE;
-    }
-
-    @NotNull
-    @Override
-    public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                          boolean focusEditor,
-                                                                          @NotNull EditorWindow window) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isInsideChange() {
-      return false;
     }
 
     @Override
@@ -138,36 +111,34 @@ public class Mock {
     }
 
     @Override
-    public EditorsSplitters getSplittersFor(Component c) {
+    public EditorsSplitters getSplittersFor(@NotNull Component component) {
       return null;
     }
 
-    @NotNull
     @Override
-    public EditorsSplitters getSplitters() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public Promise<EditorWindow> getActiveWindow() {
+    public @NotNull EditorsSplitters getSplitters() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    public @NotNull CompletableFuture<EditorWindow> getActiveWindow() {
+      throw new UnsupportedOperationException();
     }
 
     @Override
-    public void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    public void addTopComponent(final @NotNull FileEditor editor, final @NotNull JComponent component) {
     }
 
     @Override
-    public void addBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    public void removeTopComponent(final @NotNull FileEditor editor, final @NotNull JComponent component) {
     }
 
     @Override
-    public void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    public void addBottomComponent(final @NotNull FileEditor editor, final @NotNull JComponent component) {
+    }
+
+    @Override
+    public void removeBottomComponent(final @NotNull FileEditor editor, final @NotNull JComponent component) {
     }
 
     @Override
@@ -176,8 +147,12 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
+    public @NotNull Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public @Nullable EditorComposite getComposite(@NotNull VirtualFile file) {
       throw new UnsupportedOperationException();
     }
 
@@ -195,18 +170,11 @@ public class Mock {
     }
 
     @Override
-    public VirtualFile getFile(@NotNull FileEditor editor) {
-      return null;
-    }
-
-    @Override
     public void unsplitWindow() {
-
     }
 
     @Override
     public void unsplitAllWindow() {
-
     }
 
     @Override
@@ -215,18 +183,16 @@ public class Mock {
     }
 
     @Override
-    public VirtualFile @NotNull [] getSiblings(@NotNull VirtualFile file) {
-      return VirtualFile.EMPTY_ARRAY;
+    public @NotNull List<VirtualFile> getSiblings(@NotNull VirtualFile file) {
+      return Collections.emptyList();
     }
 
     @Override
     public void createSplitter(int orientation, @Nullable EditorWindow window) {
-
     }
 
     @Override
     public void changeSplitterOrientation() {
-
     }
 
     @Override
@@ -269,11 +235,8 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                          boolean focusEditor,
-                                                                          boolean searchForSplitter) {
-      return Pair.create(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
+    public @NotNull StateFlow<FileEditor> getCurrentFileEditorFlow() {
+      return StateFlowKt.MutableStateFlow(null);
     }
 
     @Override
@@ -310,6 +273,11 @@ public class Mock {
     }
 
     @Override
+    public @NotNull List<VirtualFile> getOpenFilesWithRemotes() {
+      return Collections.emptyList();
+    }
+
+    @Override
     public VirtualFile @NotNull [] getSelectedFiles() {
       return VirtualFile.EMPTY_ARRAY;
     }
@@ -317,11 +285,6 @@ public class Mock {
     @Override
     public FileEditor @NotNull [] getSelectedEditors() {
       return FileEditor.EMPTY_ARRAY;
-    }
-
-    @Override
-    public FileEditor getSelectedEditor(@NotNull VirtualFile file) {
-      return null;
     }
 
     @Override
@@ -340,14 +303,12 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor) {
+    public @NotNull List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor) {
       return Collections.emptyList();
     }
 
     @Override
-    @NotNull
-    public Project getProject() {
+    public @NotNull Project getProject() {
       throw new UnsupportedOperationException();
     }
 
@@ -363,6 +324,11 @@ public class Mock {
     @Override
     public void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId) {
     }
+
+    @Override
+    public @NotNull FileEditorComposite openFile(@NotNull VirtualFile file, @Nullable EditorWindow window, @NotNull FileEditorOpenOptions options) {
+      return FileEditorComposite.Companion.fromPair(new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
+    }
   }
 
   public static class MyVirtualFile extends VirtualFile {
@@ -370,20 +336,17 @@ public class Mock {
     public boolean myValid = true;
 
     @Override
-    @NotNull
-    public VirtualFileSystem getFileSystem() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public String getPath() {
+    public @NotNull VirtualFileSystem getFileSystem() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getPath() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public @NotNull String getName() {
       throw new UnsupportedOperationException();
     }
 
@@ -416,15 +379,13 @@ public class Mock {
       return VirtualFile.EMPTY_ARRAY;
     }
 
-    @NotNull
     @Override
-    public VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
+    public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
       throw new IOException(name);
     }
 
-    @NotNull
     @Override
-    public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
+    public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
       throw new IOException(name);
     }
 
@@ -442,8 +403,7 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
+    public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
       throw new UnsupportedOperationException();
     }
 
@@ -479,8 +439,7 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
       throw new UnsupportedOperationException();
     }
 
@@ -489,20 +448,17 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+    public @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    @NotNull
-    public String getEditorTypeId() {
+    public @NotNull String getEditorTypeId() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    @NotNull
-    public FileEditorPolicy getPolicy() {
+    public @NotNull FileEditorPolicy getPolicy() {
       throw new UnsupportedOperationException();
     }
   }

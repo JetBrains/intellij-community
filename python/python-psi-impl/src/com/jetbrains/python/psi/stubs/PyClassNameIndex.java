@@ -39,29 +39,20 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
   /**
    * @deprecated use {@link com.jetbrains.python.psi.PyPsiFacade#createClassByQName(String, PsiElement)} or skeleton may be found
    */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public static PyClass findClass(@NotNull String qName, Project project, GlobalSearchScope scope) {
-    int pos = qName.lastIndexOf(".");
-    String shortName = pos > 0 ? qName.substring(pos+1) : qName;
-    for (PyClass pyClass : find(shortName, project, scope)) {
-      if (qName.equals(pyClass.getQualifiedName())) {
-        return pyClass;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * @deprecated use {@link com.jetbrains.python.psi.PyPsiFacade#createClassByQName(String, PsiElement)} or skeleton may be found
-   */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @Nullable
   public static PyClass findClass(@Nullable String qName, Project project) {
     if (qName == null) {
       return null;
     }
-    return findClass(qName, project, ProjectScope.getAllScope(project));
+    int pos = qName.lastIndexOf(".");
+    String shortName = pos > 0 ? qName.substring(pos + 1) : qName;
+    for (PyClass pyClass : find(shortName, project, ProjectScope.getAllScope(project))) {
+      if (qName.equals(pyClass.getQualifiedName())) {
+        return pyClass;
+      }
+    }
+    return null;
   }
 
   public static Collection<String> allKeys(Project project) {

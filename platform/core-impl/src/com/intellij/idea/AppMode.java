@@ -15,23 +15,19 @@ import java.util.List;
 public final class AppMode {
   public static final String DISABLE_NON_BUNDLED_PLUGINS = "disableNonBundledPlugins";
   public static final String DONT_REOPEN_PROJECTS = "dontReopenProjects";
-
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
-
   public static final String CWM_HOST_COMMAND = "cwmHost";
   public static final String CWM_HOST_NO_LOBBY_COMMAND = "cwmHostNoLobby";
 
   static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
+
   private static final String AWT_HEADLESS = "java.awt.headless";
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
   private static boolean isLightEdit;
-
   private static boolean disableNonBundledPlugins;
-
   private static boolean dontReopenProjects;
-
   private static boolean isRemoteDevHost;
 
   public static boolean isDisableNonBundledPlugins() {
@@ -54,6 +50,12 @@ public final class AppMode {
     return isHeadless;
   }
 
+  public static boolean isRemoteDevHost() {
+    return isRemoteDevHost;
+  }
+
+  /** @deprecated please use {@link #isRemoteDevHost()} */
+  @Deprecated
   public static boolean isIsRemoteDevHost() {
     return isRemoteDevHost;
   }
@@ -122,10 +124,19 @@ public final class AppMode {
 
     @SuppressWarnings("SpellCheckingInspection")
     List<String> headlessCommands = Arrays.asList(
-      "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
-      "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme",
+      "ant", "duplocate", "dataSources", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
+      "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "invalidateCaches", "warmup", "buildEventsScheme",
       "inspectopedia-generator", "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler",
-      "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit");
+      "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit", "qodanaExcludedPlugins");
     return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
+  }
+
+  public static boolean isDevServer() {
+    return Boolean.getBoolean("idea.use.dev.build.server");
+  }
+
+  public static String getDevBuildRunDirName(@NotNull String platformPrefix) {
+    String result = System.getProperty("dev.build.dir");
+    return result != null ? result : platformPrefix.equals("Idea") ? "idea-community" : platformPrefix;
   }
 }

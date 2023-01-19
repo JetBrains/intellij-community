@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class SkippingHandler extends MatchingHandler implements DelegatingHandler {
 
   private final MatchingHandler myDelegate;

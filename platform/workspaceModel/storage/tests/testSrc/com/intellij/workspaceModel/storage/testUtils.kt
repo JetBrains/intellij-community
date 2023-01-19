@@ -74,7 +74,7 @@ object SerializationRoundTripChecker {
 
     // Assert indexes
     assertBiLongMultiMap(expected.indexes.softLinks.index, actual.indexes.softLinks.index)
-    assertBiMap(expected.indexes.persistentIdIndex.index, actual.indexes.persistentIdIndex.index)
+    assertBiMap(expected.indexes.symbolicIdIndex.index, actual.indexes.symbolicIdIndex.index)
     // External index should not be persisted
     assertTrue(actual.indexes.externalMappings.isEmpty())
     // Just checking that all properties have been asserted
@@ -153,4 +153,11 @@ object SerializationRoundTripChecker {
       Assert.fail("No mappings found for the following keys: " + local.keys)
     }
   }
+}
+
+/**
+ * Return same entity, but in different entity storage. Fail if no entity
+ */
+internal fun <T : WorkspaceEntity> T.from(storage: EntityStorage): T {
+  return this.createReference<T>().resolve(storage)!!
 }

@@ -1,37 +1,53 @@
 package com.intellij.codeInspection.tests.test
 
 import com.intellij.codeInspection.test.TestFailedLineInspection
+import com.intellij.codeInspection.tests.ULanguage
 import com.intellij.codeInspection.tests.UastInspectionTestBase
+import com.intellij.codeInspection.tests.test.junit.addHamcrestLibrary
+import com.intellij.codeInspection.tests.test.junit.addJUnit3Library
+import com.intellij.codeInspection.tests.test.junit.addJUnit5Library
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
 import com.intellij.execution.testframework.sm.runner.ui.TestStackTraceParser
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.LightProjectDescriptor
 import java.util.*
 
 abstract class TestFailedLineInspectionTestBase : UastInspectionTestBase() {
   override val inspection = TestFailedLineInspection()
 
-  override fun setUp() {
-    super.setUp()
-    myFixture.addClass("package junit.framework; public class TestCase {}")
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(sdkLevel)
+
+  protected open class JUnitProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {
+    override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
+      super.configureModule(module, model, contentEntry)
+      model.addJUnit3Library()
+      model.addHamcrestLibrary()
+      model.addJUnit5Library()
+    }
   }
 
-  protected fun doTest(fileName: String, fileExt: String, methodName: String, errorLn: Int, errorMessage: String) {
-    val url = "java:test://$fileName/$methodName"
-    val pair = TestStackTraceParser(url, """	
-      |${'\t'}at junit.framework.Assert.fail(Assert.java:47)
-      |${'\t'}at $fileName.assertEquals(Assert.java:207)
-      |${'\t'}at $fileName.$methodName($fileName.$fileExt:$errorLn)""".trimMargin(), errorMessage, JavaTestLocator.INSTANCE, project)
-    assertEquals(errorLn, pair.failedLine)
-    assertEquals("assertEquals", pair.failedMethodName)
+  protected fun doTest(
+    lang: ULanguage,
+    text: String,
+    fileName: String = generateFileName(),
+    url: String,
+    stackTrace: String,
+    errorMessage: String
+  ) {
+    val pair = TestStackTraceParser(url, stackTrace, errorMessage, JavaTestLocator.INSTANCE, project)
     val record = TestStateStorage.Record(
       TestStateInfo.Magnitude.FAILED_INDEX.value, Date(), 0,
       pair.failedLine, pair.failedMethodName, pair.errorMessage, pair.topLocationLine
     )
     TestStateStorage.getInstance(project).writeState(url, record)
-    myFixture.testHighlighting("$fileName.$fileExt")
+    myFixture.testHighlighting(lang, text, fileName)
     val infos = myFixture.doHighlighting(HighlightSeverity.WARNING)
     assertEquals(1, infos.size)
     val attributes = infos.first().forcedTextAttributes

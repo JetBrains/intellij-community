@@ -73,7 +73,7 @@ sealed class ModuleDependencyType(
     )
 
     object AndroidSinglePlatformToMPP : ModuleDependencyType(
-        from = AndroidSinglePlatformModuleConfigurator::class,
+        from = AndroidSinglePlatformModuleConfiguratorBase::class,
         to = MppModuleConfigurator::class
     )
 
@@ -101,7 +101,7 @@ sealed class ModuleDependencyType(
         from,
         MppModuleConfigurator::class
     ) {
-        protected fun Writer.updateReference(from: Module, to: Module) = inContextOfModuleConfigurator(from) {
+        private fun Writer.updateReference(from: Module, to: Module) = inContextOfModuleConfigurator(from) {
             IOSSinglePlatformModuleConfigurator.dependentModule.reference.update {
                 IOSSinglePlatformModuleConfiguratorBase.DependentModuleReference(to).asSuccess()
             }

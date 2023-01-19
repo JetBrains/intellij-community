@@ -9,9 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
@@ -30,13 +28,12 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
         }
     }
 
-    fun KtAnalysisSession.collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> {
-        val classOrObjectSymbol = classOrObject.getClassOrObjectSymbol()
-        return getOverridableMembers(classOrObjectSymbol).map { (symbol, bodyType, containingSymbol) ->
+    private fun KtAnalysisSession.collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> =
+        classOrObject.getClassOrObjectSymbol()?.let { getOverridableMembers(it) }.orEmpty().map { (symbol, bodyType, containingSymbol) ->
             KtClassMember(
-                KtClassMemberInfo(
+                KtClassMemberInfo.create(
                     symbol,
-                    symbol.render(renderOption),
+                    symbol.render(renderer),
                     getIcon(symbol),
                     containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString(),
                     containingSymbol?.let { getIcon(it) },
@@ -45,9 +42,7 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
                 preferConstructorParameter = false,
             )
         }
-    }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun KtAnalysisSession.getOverridableMembers(classOrObjectSymbol: KtClassOrObjectSymbol): List<OverrideMember> {
         return buildList {
             classOrObjectSymbol.getMemberScope().getCallableSymbols().forEach { symbol ->
@@ -69,8 +64,8 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
 
                 val hasNoSuperTypesExceptAny = classOrObjectSymbol.superTypes.singleOrNull()?.isAny == true
                 for (symbolToProcess in symbolsToProcess) {
-                    val originalOverriddenSymbol = symbolToProcess.originalOverriddenSymbol
-                    val containingSymbol = originalOverriddenSymbol?.originalContainingClassForOverride
+                    val originalOverriddenSymbol = symbolToProcess.unwrapFakeOverrides
+                    val containingSymbol = originalOverriddenSymbol.originalContainingClassForOverride
 
                     val bodyType = when {
                         classOrObjectSymbol.classKind == KtClassKind.INTERFACE && containingSymbol?.classIdIfNonLocal == StandardClassIds.Any -> {
@@ -80,6 +75,14 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
                                 continue
                             } else {
                                 BodyType.NoBody
+                            }
+                        }
+                        (classOrObjectSymbol as? KtNamedClassOrObjectSymbol)?.isInline == true &&
+                                containingSymbol?.classIdIfNonLocal == StandardClassIds.Any -> {
+                            if ((symbolToProcess as? KtFunctionSymbol)?.name?.asString() in listOf("equals", "hashCode")) {
+                                continue
+                            } else {
+                                BodyType.Super
                             }
                         }
                         (originalOverriddenSymbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT ->

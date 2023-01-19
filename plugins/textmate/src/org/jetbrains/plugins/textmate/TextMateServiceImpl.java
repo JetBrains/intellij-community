@@ -8,7 +8,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProgressManager;
@@ -59,9 +58,9 @@ public final class TextMateServiceImpl extends TextMateService {
   private final PlistReader myPlistReader = new CompositePlistReader();
   private final BundleFactory myBundleFactory = new BundleFactory(myPlistReader);
   private final TextMateSyntaxTable mySyntaxTable = new TextMateSyntaxTable();
-  private final SnippetsRegistry mySnippetsRegistry = new SnippetsRegistry();
-  private final PreferencesRegistry myPreferencesRegistry = new PreferencesRegistry();
-  private final ShellVariablesRegistry myShellVariablesRegistry = new ShellVariablesRegistry();
+  private final SnippetsRegistryImpl mySnippetsRegistry = new SnippetsRegistryImpl();
+  private final PreferencesRegistryImpl myPreferencesRegistry = new PreferencesRegistryImpl();
+  private final ShellVariablesRegistryImpl myShellVariablesRegistry = new ShellVariablesRegistryImpl();
   private final Interner<CharSequence> myInterner = Interner.createWeakInterner();
 
   public TextMateServiceImpl() {
@@ -173,11 +172,10 @@ public final class TextMateServiceImpl extends TextMateService {
     return myCustomHighlightingColors;
   }
 
-  @Nullable
   @Override
-  public TextMateShellVariable getVariable(@NotNull String name, @NotNull EditorEx editor) {
+  public @NotNull ShellVariablesRegistry getShellVariableRegistry() {
     ensureInitialized();
-    return myShellVariablesRegistry.getVariableValue(name, TextMateEditorUtils.getCurrentScopeSelector(editor));
+    return myShellVariablesRegistry;
   }
 
   @NotNull

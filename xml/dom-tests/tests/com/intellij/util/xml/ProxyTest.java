@@ -13,9 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class ProxyTest extends TestCase {
 
   public void testExtendClass() throws Throwable {

@@ -1,4 +1,5 @@
-from typing import Any, ClassVar, Iterator, Protocol
+from collections.abc import Iterator
+from typing import Any, ClassVar, Protocol
 
 from jsonschema._format import FormatChecker
 from jsonschema._types import TypeChecker
@@ -9,6 +10,7 @@ class Validator(Protocol):
     META_SCHEMA: ClassVar[dict[Any, Any]]
     VALIDATORS: ClassVar[dict[Any, Any]]
     TYPE_CHECKER: ClassVar[TypeChecker]
+    FORMAT_CHECKER: ClassVar[FormatChecker]
     schema: dict[Any, Any] | bool
     def __init__(
         self, schema: dict[Any, Any] | bool, resolver: RefResolver | None = ..., format_checker: FormatChecker | None = ...

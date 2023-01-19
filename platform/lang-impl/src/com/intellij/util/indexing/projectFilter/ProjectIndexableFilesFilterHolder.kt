@@ -6,20 +6,18 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IdFilter
+import com.intellij.util.indexing.UnindexedFilesScanner
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 internal enum class FileAddStatus {
@@ -45,10 +43,10 @@ internal sealed class ProjectIndexableFilesFilterHolder {
 }
 
 internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder() {
-  private val myProjectFilters: ConcurrentMap<Project, IncrementalProjectIndexableFilesFilter> = ConcurrentFactoryMap.createMap { IncrementalProjectIndexableFilesFilter() }
+  private val myProjectFilters: ConcurrentMap<Project, IncrementalProjectIndexableFilesFilter> = ConcurrentHashMap()
 
   init {
-    ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosed(project: Project) {
         myProjectFilters.remove(project)
       }
@@ -56,22 +54,26 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   override fun getProjectIndexableFiles(project: Project): IdFilter? {
-    if (!UnindexedFilesUpdater.isProjectContentFullyScanned(project) || UnindexedFilesUpdater.isIndexUpdateInProgress(project)) {
+    if (!UnindexedFilesScanner.isProjectContentFullyScanned(project) || UnindexedFilesUpdater.isIndexUpdateInProgress(project)) {
       return null
     }
-    return myProjectFilters[project]
+    return getFilter(project)
   }
 
   override fun entireProjectUpdateStarted(project: Project) {
     assert(UnindexedFilesUpdater.isIndexUpdateInProgress(project))
 
-    myProjectFilters[project]?.memoizeAndResetFileIds()
+    getFilter(project)?.memoizeAndResetFileIds()
   }
 
   override fun entireProjectUpdateFinished(project: Project) {
     assert(UnindexedFilesUpdater.isIndexUpdateInProgress(project))
 
-    myProjectFilters[project]?.resetPreviousFileIds()
+    getFilter(project)?.resetPreviousFileIds()
+  }
+
+  private fun getFilter(project: Project) = myProjectFilters.computeIfAbsent(project) {
+    if (it.isDisposed) null else IncrementalProjectIndexableFilesFilter()
   }
 
   override fun addFileId(fileId: Int, projects: () -> Set<Project>): FileAddStatus {
@@ -88,7 +90,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   override fun addFileId(fileId: Int, project: Project): FileAddStatus {
-    return myProjectFilters.get(project)!!.ensureFileIdPresent(fileId) { true }
+    return myProjectFilters[project]?.ensureFileIdPresent(fileId) { true } ?: FileAddStatus.SKIPPED
   }
 
   override fun removeFile(fileId: Int) {

@@ -19,9 +19,6 @@ import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
 
-/**
- * @author Denis Fokin
- */
 public final class MacFileSaverDialog implements FileSaverDialog {
   private FileDialog myFileDialog;
   private final FileSaverDescriptor myDescriptor;

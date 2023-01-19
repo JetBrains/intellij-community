@@ -6,8 +6,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SourceForBinaryModuleInfo
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptDependenciesSourcesScope
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -26,7 +26,7 @@ sealed class ScriptDependenciesSourceInfo(override val project: Project) : IdeaM
     // include project sources because script dependencies sources may contain roots from project
     // the main example is buildSrc for *.gradle.kts files
     override fun sourceScope(): GlobalSearchScope = KotlinSourceFilterScope.projectAndLibrarySources(
-        ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSourcesScope(), project
+        getAllScriptDependenciesSourcesScope(project), project
     )
 
     override fun hashCode() = project.hashCode()

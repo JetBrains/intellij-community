@@ -15,7 +15,6 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
-import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -25,7 +24,7 @@ import javax.swing.table.TableCellRenderer
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-internal class ExternalToolsTablePanel(private val models: ExternalToolsModels) : BorderLayoutPanel() {
+internal class ExternalToolsTablePanel(private val models: ExternalToolsModels) {
   val component: JComponent
 
   private val model: ListTableModel<ExternalToolConfiguration> = models.tableModel

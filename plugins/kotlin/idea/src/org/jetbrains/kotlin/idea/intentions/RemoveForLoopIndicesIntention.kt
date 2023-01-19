@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -31,6 +32,8 @@ class RemoveForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpressio
         sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$WITH_INDEX_NAME" }.toSet()
     }
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun applicabilityRange(element: KtForExpression): TextRange? {
         val loopRange = element.loopRange as? KtDotQualifiedExpression ?: return null
         val multiParameter = element.destructuringDeclaration ?: return null
@@ -50,9 +53,11 @@ class RemoveForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpressio
         val loopRange = element.loopRange as KtDotQualifiedExpression
 
         val elementVar = multiParameter.entries[1]
-        val loop = KtPsiFactory(element).createExpressionByPattern("for ($0 in _) {}", elementVar.text) as KtForExpression
-        element.loopParameter!!.replace(loop.loopParameter!!)
+        val loop = KtPsiFactory(element.project).createExpressionByPattern("for ($0 in _) {}", elementVar.text) as KtForExpression
+        runWriteAction {
+            element.loopParameter!!.replace(loop.loopParameter!!)
 
-        loopRange.replace(loopRange.receiverExpression)
+            loopRange.replace(loopRange.receiverExpression)
+        }
     }
 }

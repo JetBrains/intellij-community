@@ -171,9 +171,9 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
     }
 
     inner class CoroutineContainer(
-        val suspendContext: SuspendContextImpl,
-        val groupName: String,
-        val coroutines: List<CoroutineInfoData>?
+      val suspendContext: SuspendContextImpl,
+      private val groupName: String,
+      val coroutines: List<CoroutineInfoData>?
     ) : RendererContainer(renderer.renderGroup(groupName)) {
         override fun computeChildren(node: XCompositeNode) {
             val children = XValueChildrenList()

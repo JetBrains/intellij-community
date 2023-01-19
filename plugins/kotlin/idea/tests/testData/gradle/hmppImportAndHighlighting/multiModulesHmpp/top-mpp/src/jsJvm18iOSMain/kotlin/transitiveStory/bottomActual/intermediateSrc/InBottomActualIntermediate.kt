@@ -20,11 +20,11 @@ class Subclass : Outer() {
     // b, c and d are visible
     // Nested and e are visible
 
-    override val <!LINE_MARKER("descr='Overrides property in 'Outer''")!>b<!> = 5   // 'b' is protected
+    override val <!LINE_MARKER("descr='Overrides property in Outer (transitiveStory.bottomActual.mppBeginning) Press ... to navigate'")!>b<!> = 5   // 'b' is protected
 }
 
 class ChildOfCommonInShared : Outer() {
-    override val <!LINE_MARKER("descr='Overrides property in 'Outer''")!>b<!>: Int
+    override val <!LINE_MARKER("descr='Overrides property in Outer (transitiveStory.bottomActual.mppBeginning) Press ... to navigate'")!>b<!>: Int
         get() = super.b + 243
 //    val callAlso = super.c // internal in Outer
 

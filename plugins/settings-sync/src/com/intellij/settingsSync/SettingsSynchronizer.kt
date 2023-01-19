@@ -2,19 +2,20 @@ package com.intellij.settingsSync
 
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationActivationListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
+import com.intellij.settingsSync.migration.SettingsRepositoryToSettingsSyncMigration
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-internal class SettingsSynchronizer : ApplicationInitializedListener, ApplicationActivationListener, SettingsSyncEnabledStateListener {
+internal class SettingsSynchronizer : ApplicationInitializedListener, ApplicationActivationListener, SettingsSyncEnabledStateListener, SettingsSyncCategoriesChangeListener {
 
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("Settings Sync Update", 1)
   private val autoSyncDelay get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
@@ -22,11 +23,10 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   private var scheduledFuture: ScheduledFuture<*>? = null // accessed only from the EDT
 
   override suspend fun execute(asyncScope: CoroutineScope) {
-    if (!isSettingsSyncEnabledByKey()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment || !isSettingsSyncEnabledByKey()) {
       return
     }
 
-    SettingsSyncPluginManager.getInstance()
     SettingsSyncEvents.getInstance().addEnabledStateChangeListener(this)
 
     if (isSettingsSyncEnabledInSettings()) {
@@ -35,15 +35,15 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     }
 
     if (!SettingsSyncSettings.getInstance().migrationFromOldStorageChecked) {
-      val migration = MIGRATION_EP.extensionList.firstOrNull()
+      SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
+      val migration = MIGRATION_EP.extensionList.firstOrNull { it.isLocalDataAvailable(PathManager.getConfigDir()) }
       if (migration != null) {
-        val migrationPossible = migration.isLocalDataAvailable(PathManager.getConfigDir())
-        LOG.info("Found migration from an old storage: ${migration.javaClass.name}, migration possible: $migrationPossible")
-        SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
-        if (migrationPossible) {
-          SettingsSyncSettings.getInstance().syncEnabled = true
-          executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration)), 0, TimeUnit.SECONDS)
-        }
+        LOG.info("Found migration from an old storage via ${migration.javaClass.simpleName}")
+        executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration)), 0, TimeUnit.SECONDS)
+        SettingsSyncEventsStatistics.MIGRATED_FROM_OLD_PLUGIN.log()
+      }
+      else {
+        SettingsRepositoryToSettingsSyncMigration.migrateIfNeeded(executorService)
       }
     }
   }
@@ -58,7 +58,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     }
 
     if (Registry.`is`("settingsSync.autoSync.on.focus", true)) {
-      scheduleSyncing("Syncing settings on app focus")
+      syncSettings()
     }
   }
 
@@ -70,30 +70,33 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     LOG.info("Initializing settings sync")
     val settingsSyncMain = SettingsSyncMain.getInstance()
     settingsSyncMain.controls.bridge.initialize(initMode)
-    settingsSyncMain.syncSettings()
+    SettingsSyncEvents.getInstance().addCategoriesChangeListener(this)
+    syncSettings()
+    LocalHostNameProvider.initialize()
   }
 
   override fun enabledStateChanged(syncEnabled: Boolean) {
-    // syncEnabled part is handled inside SettingsSyncEnabler
-    if (!syncEnabled) {
+    if (syncEnabled) {
+      SettingsSyncEvents.getInstance().addCategoriesChangeListener(this)
+      // actual start of the sync is handled inside SettingsSyncEnabler
+    }
+    else {
+      SettingsSyncEvents.getInstance().removeCategoriesChangeListener(this)
       stopSyncingByTimer()
       SettingsSyncMain.getInstance().disableSyncing()
     }
   }
 
-  private fun scheduleSyncing(logMessage: String) {
-    executorService.schedule(Runnable {
-      LOG.info(logMessage)
-      SettingsSyncMain.getInstance().syncSettings()
-    }, 0, TimeUnit.SECONDS)
+  override fun categoriesStateChanged() {
+    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.LogCurrentSettings)
   }
 
   @RequiresEdt
   private fun setupSyncingByTimer(): ScheduledFuture<*> {
     val delay = autoSyncDelay
     return executorService.scheduleWithFixedDelay(Runnable {
-      LOG.info("Syncing settings by timer")
-      SettingsSyncMain.getInstance().syncSettings()
+      LOG.debug("Syncing settings by timer")
+      syncSettings()
     }, delay, delay, TimeUnit.SECONDS)
   }
 
@@ -109,5 +112,13 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     private val LOG = logger<SettingsSynchronizer>()
 
     private val MIGRATION_EP = ExtensionPointName.create<SettingsSyncMigration>("com.intellij.settingsSyncMigration")
+
+    internal fun syncSettings() {
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+    }
   }
 }
+
+internal const val CROSS_IDE_SYNC_MARKER_FILE = "cross-ide-sync-enabled"
+
+internal fun enabledOrDisabled(value: Boolean?) = if (value == null) "null" else if (value) "enabled" else "disabled"

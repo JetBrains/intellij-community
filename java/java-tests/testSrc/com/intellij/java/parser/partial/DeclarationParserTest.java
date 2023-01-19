@@ -22,9 +22,13 @@ public class DeclarationParserTest extends JavaParsingTestCase {
 
   public void testEnumSmartTypeCompletion() {
     doParserTest(
-      "{ @Preliminary(A.B\n#) public class TimeTravel {}\n" +
-      "  @Preliminary(a=A.B\n#) public class TimeTravel {}\n" +
-      "  @Preliminary(a=A.B\n#, b=c) public class TimeTravel {} }");
+      """
+        { @Preliminary(A.B
+        #) public class TimeTravel {}
+          @Preliminary(a=A.B
+        #) public class TimeTravel {}
+          @Preliminary(a=A.B
+        #, b=c) public class TimeTravel {} }""");
   }
 
   public void testEnumBody0() { doParserTest("{ ; }", false, true); }
@@ -50,14 +54,16 @@ public class DeclarationParserTest extends JavaParsingTestCase {
 
   public void testTypeAnno() {
     doParserTest(
-      "{ class C<@D T extends @F Object> extends @F Object {\n" +
-      "  @F int @F[] method() throws @F Exception {\n" +
-      "    a = this instanceof @F C;\n" +
-      "    C<@F @G C> c = new @Q C<@F C>();\n" +
-      "    c = (@F Object)c;\n" +
-      "    Class c = @TA String.class;\n" +
-      "    @F C.field++;\n" +
-      "  }\n} }");
+      """
+        { class C<@D T extends @F Object> extends @F Object {
+          @F int @F[] method() throws @F Exception {
+            a = this instanceof @F C;
+            C<@F @G C> c = new @Q C<@F C>();
+            c = (@F Object)c;
+            Class c = @TA String.class;
+            @F C.field++;
+          }
+        } }""");
   }
 
   public void testReceiver() {
@@ -100,9 +106,10 @@ public class DeclarationParserTest extends JavaParsingTestCase {
 
   public void testGenericMethod() {
     doParserTest(
-      "{ public static <E> test();\n" +
-      " <E> void test1();\n" +
-      " <E1 extends Integer, E2 extends Runnable> String test2(); }");
+      """
+        { public static <E> test();
+         <E> void test1();
+         <E1 extends Integer, E2 extends Runnable> String test2(); }""");
   }
 
   public void testGenericMethodErrors() { doParserTest("{ <Error sss /> test <error>(); }"); }

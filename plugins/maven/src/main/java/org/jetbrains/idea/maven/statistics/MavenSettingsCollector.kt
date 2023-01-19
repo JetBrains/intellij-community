@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollec
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
+import com.intellij.project.isDirectoryBased
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.resolveMavenHome
 import org.jetbrains.idea.maven.execution.MavenRunner
@@ -69,6 +70,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(USE_WORKSPACE_IMPORT.metric(importingSettings.isWorkspaceImportEnabled))
     usages.add(DEDICATED_MODULE_DIR.metric(importingSettings.dedicatedModuleDir.isNotBlank()))
     usages.add(STORE_PROJECT_FILES_EXTERNALLY.metric(ExternalStorageConfigurationManager.getInstance(project).isEnabled))
+    usages.add(IS_DIRECTORY_BASED_PROJECT.metric(project.isDirectoryBased))
     usages.add(AUTO_DETECT_COMPILER.metric(importingSettings.isAutoDetectCompiler))
     usages.add(CREATE_MODULES_FOR_AGGREGATORS.metric(importingSettings.isCreateModulesForAggregators))
     usages.add(CREATE_MODULE_GROUPS.metric(importingSettings.isCreateModuleGroups))
@@ -113,7 +115,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("build.maven.state", 5)
+    private val GROUP = EventLogGroup("build.maven.state", 7)
     private val HAS_MAVEN_PROJECT = GROUP.registerEvent("hasMavenProject", EventFields.Enabled)
     private val ALWAYS_UPDATE_SNAPSHOTS = GROUP.registerEvent("alwaysUpdateSnapshots", EventFields.Enabled)
     private val NON_RECURSIVE = GROUP.registerEvent("nonRecursive", EventFields.Enabled)
@@ -126,6 +128,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     private val USE_WORKSPACE_IMPORT = GROUP.registerEvent("useWorkspaceImport", EventFields.Enabled)
     private val DEDICATED_MODULE_DIR = GROUP.registerEvent("dedicatedModuleDir", EventFields.Enabled)
     private val STORE_PROJECT_FILES_EXTERNALLY = GROUP.registerEvent("storeProjectFilesExternally", EventFields.Enabled)
+    private val IS_DIRECTORY_BASED_PROJECT = GROUP.registerEvent("useDirectoryBasedProject", EventFields.Enabled)
     private val AUTO_DETECT_COMPILER = GROUP.registerEvent("autoDetectCompiler", EventFields.Enabled)
     private val CREATE_MODULES_FOR_AGGREGATORS = GROUP.registerEvent("createModulesForAggregators", EventFields.Enabled)
     private val CREATE_MODULE_GROUPS = GROUP.registerEvent("createModuleGroups", EventFields.Enabled)

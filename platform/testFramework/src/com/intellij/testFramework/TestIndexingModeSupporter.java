@@ -45,7 +45,7 @@ public interface TestIndexingModeSupporter {
         DumbServiceImpl dumbService = DumbServiceImpl.getInstance(project);
         ApplicationManager.getApplication().invokeAndWait(() -> {
           dumbService.setDumb(false);
-          dumbService.queueTask(new UnindexedFilesUpdater(project));
+          new UnindexedFilesUpdater(project).queue();
           dumbService.setDumb(true);
         });
       }
@@ -87,7 +87,7 @@ public interface TestIndexingModeSupporter {
       DumbServiceImpl dumbService = DumbServiceImpl.getInstance(project);
       ApplicationManager.getApplication().invokeAndWait(() -> {
         dumbService.setDumb(false);
-        dumbService.queueTask(new UnindexedFilesUpdater(project));
+        new UnindexedFilesUpdater(project).queue();
         dumbService.setDumb(true);
       });
     }

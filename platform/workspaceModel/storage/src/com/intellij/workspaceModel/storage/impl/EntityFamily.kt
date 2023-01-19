@@ -117,8 +117,8 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
   /**
    * Get entity data that can be modified in a save manne
    */
-  fun getEntityDataForModification(arrayId: Int): WorkspaceEntityData<E> {
-    val entity = entities.getOrNull(arrayId) ?: error("Nothing to modify")
+  fun getEntityDataForModificationOrNull(arrayId: Int): WorkspaceEntityData<E>? {
+    val entity = entities.getOrNull(arrayId) ?: return null
     if (arrayId in copiedToModify) return entity
     startWrite()
 
@@ -126,6 +126,10 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
     entities[arrayId] = clonedEntity
     copiedToModify.add(arrayId)
     return clonedEntity
+  }
+
+  fun getEntityDataForModification(arrayId: Int): WorkspaceEntityData<E> {
+    return getEntityDataForModificationOrNull(arrayId) ?: error("Nothing to modify")
   }
 
   fun set(position: Int, value: WorkspaceEntityData<E>) {
@@ -171,6 +175,7 @@ internal sealed class EntityFamily<E : WorkspaceEntity> {
   internal abstract val entities: List<WorkspaceEntityData<E>?>
 
   operator fun get(idx: Int) = entities.getOrNull(idx)
+  fun getOrFail(idx: Int) = entities[idx]
   fun exists(id: Int) = get(id) != null
   fun all() = entities.asSequence().filterNotNull()
   abstract fun size(): Int

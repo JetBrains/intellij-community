@@ -176,11 +176,13 @@ public interface PopupComponent {
 
     @Override
     public void hide(boolean dispose) {
-      myPopup.hide();
-      if (!dispose) return;
-
       Window window = getWindow();
+      if (!dispose) {
+        if (window != null) window.setVisible(false);
+        return;
+      }
       JRootPane rootPane = window instanceof RootPaneContainer ? ((RootPaneContainer)window).getRootPane() : null;
+      myPopup.hide();
       DialogWrapper.cleanupRootPane(rootPane);
       DialogWrapper.cleanupWindowListeners(window);
     }

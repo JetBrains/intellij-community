@@ -158,7 +158,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
         }
         else if (provider != null && provider.isApplicable(storage.fileSpec, storage.roamingType)) {
           // we should use standard line-separator (\n) - stream provider can share file content on any OS
-          provider.write(storage.fileSpec, writer!!.toBufferExposingByteArray(), storage.roamingType)
+          provider.write(storage.fileSpec, writer!!.toBufferExposingByteArray().toByteArray(), storage.roamingType)
         }
         else {
           isSavedLocally = true

@@ -46,18 +46,18 @@ public interface InjectedFileViewProvider extends FileViewProvider, FreeThreaded
   }
 
   default FileViewProvider cloneImpl() {
-    final DocumentWindow oldDocumentWindow = ((VirtualFileWindow)getVirtualFile()).getDocumentWindow();
+    DocumentWindow oldDocumentWindow = ((VirtualFileWindow)getVirtualFile()).getDocumentWindow();
     Document hostDocument = oldDocumentWindow.getDelegate();
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
     PsiFile hostFile = documentManager.getPsiFile(hostDocument);
     Language language = getBaseLanguage();
     PsiFile file = getPsi(language);
-    final Language hostFileLanguage = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file).getLanguage();
+    Language hostFileLanguage = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file).getLanguage();
     PsiFile hostPsiFileCopy = (PsiFile)hostFile.copy();
     Segment firstTextRange = oldDocumentWindow.getHostRanges()[0];
     PsiElement hostElementCopy = hostPsiFileCopy.getViewProvider().findElementAt(firstTextRange.getStartOffset(), hostFileLanguage);
     assert hostElementCopy != null;
-    final Ref<FileViewProvider> provider = new Ref<>();
+    Ref<FileViewProvider> provider = new Ref<>();
     PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
       Document document = documentManager.getCachedDocument(injectedPsi);
       if (document instanceof DocumentWindowImpl && oldDocumentWindow.areRangesEqual((DocumentWindowImpl)document)) {

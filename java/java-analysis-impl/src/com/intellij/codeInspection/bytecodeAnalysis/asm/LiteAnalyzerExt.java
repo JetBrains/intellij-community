@@ -12,8 +12,6 @@ import java.util.List;
 /**
  * Extended version of {@link LiteAnalyzer}.
  * It handles frames <b>and</b> additional data.
- *
- * @author lambdamix
  */
 public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interpreter<V> & InterpreterExt<Data>> implements Opcodes {
   private final MyInterpreter interpreter;

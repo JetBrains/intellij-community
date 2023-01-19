@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -15,16 +16,16 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.refactoring.CallableRefactoring
@@ -33,7 +34,6 @@ import org.jetbrains.kotlin.idea.refactoring.getAffectedCallables
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.searchReferencesOrMethodReferences
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -42,8 +42,8 @@ import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunctionDescriptor
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getArgumentByParameterIndex
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -58,7 +58,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
         callableDeclaration: KtCallableDeclaration,
     ) {
         private val declarationPointer = callableDeclaration.createSmartPointer()
-        val callableDeclaration: KtCallableDeclaration? get() = declarationPointer.element
+        private val callableDeclaration: KtCallableDeclaration? get() = declarationPointer.element
         val functionDescriptor by lazy { callableDeclaration.unsafeResolveToDescriptor() as CallableDescriptor }
 
         fun functionType(declaration: KtCallableDeclaration? = callableDeclaration): KtFunctionType? {
@@ -113,6 +113,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
             val newParameterName = Fe10KotlinNameSuggester.suggestNamesByType(data.lambdaReceiverType, validator, "p").first()
             val newParameterRefExpression = psiFactory.createExpression(newParameterName)
 
+            val replacementFunctions = mutableListOf<() -> Unit>()
             lambda.accept(object : KtTreeVisitorVoid() {
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                     super.visitSimpleNameExpression(expression)
@@ -124,13 +125,17 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
                         val parent = expression.parent
                         if (parent is KtCallExpression && expression == parent.calleeExpression) {
                             if ((parent.parent as? KtQualifiedExpression)?.receiverExpression !is KtThisExpression) {
-                                parent.replace(psiFactory.createExpressionByPattern("$0.$1", newParameterName, parent))
+                                replacementFunctions.add {
+                                    parent.replace(psiFactory.createExpressionByPattern("$0.$1", newParameterName, parent))
+                                }
                             }
                         } else if (parent is KtQualifiedExpression && parent.receiverExpression is KtThisExpression) {
                             // do nothing
                         } else {
                             val referencedName = expression.getReferencedName()
-                            expression.replace(psiFactory.createExpressionByPattern("$newParameterName.$referencedName"))
+                            replacementFunctions.add {
+                                expression.replace(psiFactory.createExpressionByPattern("$newParameterName.$referencedName"))
+                            }
                         }
                     }
                 }
@@ -140,10 +145,13 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
                     if (resolvedCall.resultingDescriptor == lambdaDispatchReceiver ||
                         resolvedCall.resultingDescriptor == lambdaExtensionReceiver
                     ) {
-                        expression.replace(newParameterRefExpression.copy())
+                        replacementFunctions.add {
+                            expression.replace(newParameterRefExpression.copy())
+                        }
                     }
                 }
             })
+            replacementFunctions.forEach { it() }
 
             val lambdaParameterList = lambda.getOrCreateParameterList()
             if (lambda.valueParameters.isEmpty() && lambdaDescriptor.valueParameters.isNotEmpty()) {
@@ -310,7 +318,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
         val elementBefore = data.functionType() ?: return null
         val elementAfter = elementBefore.copied().apply {
             parameterList?.addParameterBefore(
-                KtPsiFactory(element).createFunctionTypeParameter(element),
+                KtPsiFactory(project).createFunctionTypeParameter(element),
                 parameterList?.parameters?.firstOrNull()
             )
             setReceiverTypeReference(null)

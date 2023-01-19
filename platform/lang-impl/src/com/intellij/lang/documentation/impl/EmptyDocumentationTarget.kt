@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.impl
 
 import com.intellij.lang.documentation.DocumentationResult
@@ -12,9 +12,9 @@ internal object EmptyDocumentationTarget : DocumentationTarget, Pointer<EmptyDoc
 
   override fun dereference(): EmptyDocumentationTarget = this
 
-  override val presentation: TargetPresentation = TargetPresentation.builder("").presentation()
+  override fun presentation(): TargetPresentation = TargetPresentation.builder("").presentation()
 
   override fun computeDocumentation(): DocumentationResult? = null
 
-  val request: DocumentationRequest = DocumentationRequest(this, presentation)
+  val request: DocumentationRequest = DocumentationRequest(this, presentation())
 }

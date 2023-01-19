@@ -87,7 +87,7 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
                 val targetElement = element as TElement
 
                 var problemRange: TextRange? = null
-                var fixes: SmartList<LocalQuickFix>? = null
+                val fixes = SmartList<LocalQuickFix>()
 
                 val additionalChecker = intentionInfo.additionalChecker
                 run {
@@ -98,26 +98,22 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
                     }
 
                     if (range != null && additionalChecker(targetElement, this@IntentionBasedInspection)) {
-                        problemRange = problemRange?.union(range) ?: range
-                        if (fixes == null) {
-                            fixes = SmartList()
-                        }
-                        fixes!!.add(createQuickFix(intention, additionalChecker, targetElement))
+                        problemRange = range
+                        fixes.add(createQuickFix(intention, additionalChecker, targetElement))
                     }
                 }
 
                 val range = inspectionTarget(targetElement)?.toRange(element) ?: problemRange
                 if (range != null) {
-                    val allFixes = fixes ?: SmartList()
-                    additionalFixes(targetElement)?.let { allFixes.addAll(it) }
-                    if (!allFixes.isEmpty()) {
+                    additionalFixes(targetElement)?.let { fixes.addAll(it) }
+                    if (!fixes.isEmpty()) {
                         holder.registerProblemWithoutOfflineInformation(
                             targetElement,
-                            inspectionProblemText(element) ?: problemText ?: allFixes.first().name,
+                            inspectionProblemText(element) ?: problemText ?: fixes.first().name,
                             isOnTheFly,
                             problemHighlightType(targetElement),
                             range,
-                            *allFixes.toTypedArray()
+                            *fixes.toTypedArray()
                         )
                     }
                 }
@@ -154,7 +150,7 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
 
         override fun startInWriteAction() = intention.startInWriteAction()
 
-        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = isAvailable()
+        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = isAvailable
 
         override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
             assert(startElement == endElement)

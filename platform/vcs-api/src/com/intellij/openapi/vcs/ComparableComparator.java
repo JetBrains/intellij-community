@@ -17,9 +17,6 @@ package com.intellij.openapi.vcs;
 
 import java.util.Comparator;
 
-/**
-* @author irengrig
-*/
 public class ComparableComparator<T extends Comparable<T>> implements Comparator<T> {
   @Override
   public int compare(final T o1, final T o2) {

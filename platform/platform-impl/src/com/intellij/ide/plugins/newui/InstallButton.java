@@ -27,7 +27,15 @@ public class InstallButton extends ColorButton {
 
   private static final Color BorderColor = JBColor.namedColor("Plugins.Button.installBorderColor", GreenColor);
 
+  private final boolean myIsUpgradeRequired;
+
   public InstallButton(boolean fill) {
+    this(fill, false);
+  }
+
+  public InstallButton(boolean fill, boolean isUpgradeRequired) {
+    myIsUpgradeRequired = isUpgradeRequired;
+
     setButtonColors(fill);
   }
 
@@ -50,7 +58,9 @@ public class InstallButton extends ColorButton {
   }
 
   protected void setTextAndSize() {
-    setText(IdeBundle.message("action.AnActionButton.text.install"));
+    setText(myIsUpgradeRequired
+            ? IdeBundle.message("action.AnActionButton.text.upgrade")
+            : IdeBundle.message("action.AnActionButton.text.install"));
     setWidth72(this);
   }
 

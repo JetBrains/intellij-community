@@ -4,6 +4,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -14,13 +16,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author ven
- */
 public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
 
   public void testAnonymousClass() { doSingleTest(); }
@@ -89,5 +89,24 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
   @Override
   protected ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents) {
     return ActionHint.parse(file, contents, false);
+  }
+
+  public static class PreviewTest extends LightJavaCodeInsightFixtureTestCase {
+    public void testAnotherFile() {
+      myFixture.addClass("class Another { }");
+      myFixture.configureByText("Test.java", """
+        class Test {
+          void test() {
+            Another.fo<caret>o;
+          }
+        }""");
+      IntentionAction action = myFixture.findSingleIntention("Create field 'foo' in 'Another'");
+      assertNotNull(action);
+      String text = IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor());
+      assertEquals("""
+      class Another {
+          public static Object foo;
+      }""", text);
+    }
   }
 }

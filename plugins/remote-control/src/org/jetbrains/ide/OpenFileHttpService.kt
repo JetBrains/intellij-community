@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.ui.AppUIUtil
-import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
@@ -29,6 +28,7 @@ import java.nio.file.Paths
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.regex.Pattern
 import javax.swing.SwingUtilities
+import kotlin.io.path.exists
 
 private val NOT_FOUND = createError("not found")
 private val LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$")

@@ -12,20 +12,20 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import java.io.File
 
 fun descriptorByFileDirective(testDataFile: File, languageLevel: LanguageLevel = LanguageLevel.JDK_1_8): LightProjectDescriptor {
     val fileText = FileUtil.loadFile(testDataFile, true)
     val descriptor = when {
         InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_FULL_JDK") ->
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
         InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_STDLIB_JDK8") ->
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_STDLIB_JDK8
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk8()
 
-        else -> KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        else -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     return object : KotlinWithJdkAndRuntimeLightProjectDescriptor(descriptor.libraryFiles, descriptor.librarySourceFiles) {

@@ -6,9 +6,6 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.StaticallyImportable
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author peter
- */
 class GroovySmartCompletionTest extends GroovyCompletionTestBase {
   @Override
   protected String getBasePath() {

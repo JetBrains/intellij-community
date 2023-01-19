@@ -6,8 +6,8 @@ import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.EventDispatcher
 import javax.swing.JComponent
 
@@ -47,7 +47,7 @@ class EvaluateHereSettingsDialog(
         ConfigFactory.defaultConfig(project.basePath!!)
       }
       configurators.forEach {
-        row { cell(it.createPanel(previousState)).horizontalAlign(HorizontalAlign.FILL) }
+        row { cell(it.createPanel(previousState)).align(AlignX.FILL) }
       }
     }
   }

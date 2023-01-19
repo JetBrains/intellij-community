@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test;
 
@@ -241,6 +241,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/stepInto/inlineOnly.kt");
         }
 
+        @TestMetadata("interfaces.kt")
+        public void testInterfaces() throws Exception {
+            runTest("testData/stepping/stepInto/interfaces.kt");
+        }
+
         @TestMetadata("oneLineSuspendFunWithInline.kt")
         public void testOneLineSuspendFunWithInline() throws Exception {
             runTest("testData/stepping/stepInto/oneLineSuspendFunWithInline.kt");
@@ -314,11 +319,6 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
         @TestMetadata("syntheticMethodsSkip.kt")
         public void testSyntheticMethodsSkip() throws Exception {
             runTest("testData/stepping/stepInto/syntheticMethodsSkip.kt");
-        }
-
-        @TestMetadata("traits.kt")
-        public void testTraits() throws Exception {
-            runTest("testData/stepping/stepInto/traits.kt");
         }
 
         @TestMetadata("whenExpr.kt")
@@ -426,6 +426,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             @TestMetadata("asIterableInFor.kt")
             public void testAsIterableInFor() throws Exception {
                 runTest("testData/stepping/stepOver/asIterableInFor.kt");
+            }
+
+            @TestMetadata("breakpointOnMultilineLambda.kt")
+            public void testBreakpointOnMultilineLambda() throws Exception {
+                runTest("testData/stepping/stepOver/breakpointOnMultilineLambda.kt");
             }
 
             @TestMetadata("ifCapturedVariableKt9118.kt")
@@ -1365,6 +1370,21 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoInterfaceImpl.kt");
         }
 
+        @TestMetadata("smartStepIntoJavaSyntheticPropertySetter.kt")
+        public void testSmartStepIntoJavaSyntheticPropertySetter() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoJavaSyntheticPropertySetter.kt");
+        }
+
+        @TestMetadata("smartStepIntoJavaSyntheticPropetyGetter.kt")
+        public void testSmartStepIntoJavaSyntheticPropetyGetter() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoJavaSyntheticPropetyGetter.kt");
+        }
+
+        @TestMetadata("smartStepIntoLambdaWithparametersDestructuring.kt")
+        public void testSmartStepIntoLambdaWithparametersDestructuring() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoLambdaWithparametersDestructuring.kt");
+        }
+
         @TestMetadata("smartStepIntoLambdasOnManyLines.kt")
         public void testSmartStepIntoLambdasOnManyLines() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoLambdasOnManyLines.kt");
@@ -1390,6 +1410,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoPropertyGetterReference.kt");
         }
 
+        @TestMetadata("smartStepIntoPropertySetter.kt")
+        public void testSmartStepIntoPropertySetter() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoPropertySetter.kt");
+        }
+
         @TestMetadata("smartStepIntoSamLambdaFromJavaFunInterface.kt")
         public void testSmartStepIntoSamLambdaFromJavaFunInterface() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoSamLambdaFromJavaFunInterface.kt");
@@ -1408,6 +1433,16 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
         @TestMetadata("smartStepIntoSubClass.kt")
         public void testSmartStepIntoSubClass() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoSubClass.kt");
+        }
+
+        @TestMetadata("smartStepIntoSuspendFunInterface.kt")
+        public void testSmartStepIntoSuspendFunInterface() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoSuspendFunInterface.kt");
+        }
+
+        @TestMetadata("smartStepIntoSuspendLambda.kt")
+        public void testSmartStepIntoSuspendLambda() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoSuspendLambda.kt");
         }
 
         @TestMetadata("smartStepIntoToLambdaParameter.kt")

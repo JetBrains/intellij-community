@@ -8,14 +8,17 @@ import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.ide.util.PsiClassListCellRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ParametersFolder
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.areSame
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
@@ -32,31 +35,24 @@ import java.util.concurrent.CompletableFuture
 
 object ExtractMethodPipeline {
 
-  fun remap(extractOptions: ExtractOptions,
-            variableData: Array<VariableData>,
-            methodName: String,
-            isStatic: Boolean,
-            visibility: String,
-            isConstructor: Boolean,
-            returnType: PsiType
-  ): ExtractOptions {
+  fun withDialogParameters(extractOptions: ExtractOptions, extractDialog: ExtractMethodDialog): ExtractOptions {
     val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
-    var options = withMappedName(extractOptions, methodName)
-    if (isStatic && ! options.isStatic) {
+    var options = withMappedName(extractOptions, extractDialog.chosenMethodName)
+    if (extractDialog.isMakeStatic && !options.isStatic) {
       options = withForcedStatic(analyzer, options) ?: options
     }
-    options = withMappedParametersInput(options, variableData.toList())
+    options = withMappedParametersInput(options, extractDialog.chosenParameters.toList())
     val targetClass = extractOptions.anchor.containingClass!!
     options = if (targetClass.isInterface) {
       adjustModifiersForInterface(options.copy(visibility = PsiModifier.PRIVATE))
     } else {
-      options.copy(visibility = visibility)
+      options.copy(visibility = extractDialog.visibility)
     }
 
-    if (isConstructor) {
+    if (extractDialog.isChainedConstructor) {
       options = asConstructor(analyzer, options) ?: options
     } else {
-      options = options.copy(dataOutput = extractOptions.dataOutput.withType(returnType))
+      options = options.copy(dataOutput = extractOptions.dataOutput.withType(extractDialog.returnType))
     }
     return options
   }
@@ -100,7 +96,7 @@ object ExtractMethodPipeline {
     return extractOptions.copy(inputParameters = parameters)
   }
 
-  fun withMappedParametersInput(extractOptions: ExtractOptions, variablesData: List<VariableData>): ExtractOptions {
+  private fun withMappedParametersInput(extractOptions: ExtractOptions, variablesData: List<VariableData>): ExtractOptions {
     fun findMappedParameter(variableData: VariableData): InputParameter? {
       return extractOptions.inputParameters
         .find { parameter -> parameter.name == variableData.variable.name }
@@ -126,7 +122,7 @@ object ExtractMethodPipeline {
     return options.copy(visibility = visibility, isStatic = isStatic)
   }
 
-  fun withMappedName(extractOptions: ExtractOptions, methodName: String) = if (extractOptions.isConstructor) extractOptions else extractOptions.copy(methodName = methodName)
+  private fun withMappedName(extractOptions: ExtractOptions, methodName: String) = if (extractOptions.isConstructor) extractOptions else extractOptions.copy(methodName = methodName)
 
   fun withDefaultStatic(extractOptions: ExtractOptions): ExtractOptions {
     val expression = extractOptions.elements.singleOrNull() as? PsiExpression
@@ -138,7 +134,7 @@ object ExtractMethodPipeline {
     return extractOptions.copy(isStatic = shouldBeStatic)
   }
 
-  fun findDefaultTargetCandidate(candidates: List<PsiClass>): PsiClass {
+  private fun findDefaultTargetCandidate(candidates: List<PsiClass>): PsiClass {
     return AnonymousTargetClassPreselectionUtil.getPreselection(candidates, candidates.first()) ?: candidates.first()
   }
 
@@ -226,22 +222,23 @@ object ExtractMethodPipeline {
   fun withForcedStatic(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {
     val targetClass = PsiTreeUtil.getParentOfType(extractOptions.anchor, PsiClass::class.java)!!
     if (PsiUtil.isLocalOrAnonymousClass(targetClass) || PsiUtil.isInnerClass(targetClass)) return null
-    val localUsages = analyzer.findInstanceMemberUsages(targetClass, extractOptions.elements)
-    val (violatedUsages, fieldUsages) = localUsages
-      .partition { localUsage -> PsiUtil.isAccessedForWriting(localUsage.reference) || localUsage.member !is PsiField }
-
-    if (violatedUsages.isNotEmpty()) return null
-
-    val fieldInputParameters =
-      fieldUsages.groupBy { it.member }.entries.map { (field, fieldUsages) ->
-        field as PsiField
-        InputParameter(
-          references = fieldUsages.map { it.reference },
-          name = field.name,
-          type = field.type
-        )
+    val memberUsages = analyzer.findInstanceMemberUsages(targetClass, extractOptions.elements)
+    if (memberUsages.any { usage -> PsiUtil.isAccessedForWriting(usage.reference)}) return null
+    val addedParameters = memberUsages.groupBy(MemberUsage::member).entries
+      .map { (member: PsiMember, usages: List<MemberUsage>) ->
+        createInputParameter(member, usages.map(MemberUsage::reference)) ?: return null
       }
-    return extractOptions.copy(inputParameters = extractOptions.inputParameters + fieldInputParameters, isStatic = true)
+    return extractOptions.copy(inputParameters = extractOptions.inputParameters + addedParameters, isStatic = true)
+  }
+
+  private fun createInputParameter(member: PsiMember, usages: List<PsiExpression>): InputParameter? {
+    val name = member.name ?: return null
+    val type = when (member) {
+      is PsiField -> member.type
+      is PsiClass -> PsiTypesUtil.getClassType(member)
+      else -> return null
+    }
+    return InputParameter(usages, StringUtil.decapitalize(name), type)
   }
 
   fun canBeConstructor(analyzer: CodeFragmentAnalyzer): Boolean {

@@ -54,7 +54,7 @@ class PluginCertificateManager :
     }
   }
 
-  val myEmptyPanel = panel {
+  private val myEmptyPanel = panel {
     row {
       label(IdeBundle.message("settings.certificate.no.certificate.selected"))
     }

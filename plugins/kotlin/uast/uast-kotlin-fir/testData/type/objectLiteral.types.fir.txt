@@ -2,8 +2,8 @@ UFile (package = ) [public final class ObjectLiteralKt {...]
     UClass (name = ObjectLiteralKt) [public final class ObjectLiteralKt {...}]
         UMethod (name = box) [public static final fun box() : int {...}]
             UBlockExpression [{...}] : PsiType:Void
-                UDeclarationsExpression [var o: A = anonymous object : I, A() {...    }]
-                    ULocalVariable (name = o) [var o: A = anonymous object : I, A() {...    }]
+                UDeclarationsExpression [var o: java.lang.Object = anonymous object : I, A() {...    }]
+                    ULocalVariable (name = o) [var o: java.lang.Object = anonymous object : I, A() {...    }]
                         UObjectLiteralExpression [anonymous object : I, A() {...    }] : PsiType:A
                             UClass (name = null) [final class null : I, A {...}]
                                 UMethod (name = foo) [public fun foo() : int {...}]
@@ -17,7 +17,7 @@ UFile (package = ) [public final class ObjectLiteralKt {...]
                                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
                 UReturnExpression [return o.foo()] : PsiType:Void
                     UQualifiedReferenceExpression [o.foo()] : PsiType:int
-                        USimpleNameReferenceExpression (identifier = o) [o] : PsiType:A
+                        USimpleNameReferenceExpression (identifier = o) [o] : PsiType:Object
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : PsiType:int
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                             USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:int

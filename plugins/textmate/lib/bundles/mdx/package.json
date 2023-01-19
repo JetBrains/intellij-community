@@ -1,6 +1,6 @@
 {
   "name": "mdx",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Provides syntax highlighting and bracket matching for MDX (JSX in Markdown) files.",
   "license": "SEE LICENSE IN license",
   "contributes": {

@@ -1,0 +1,25 @@
+MODULES
+    wasm20221114
+    wasm20221114.commonMain
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+    wasm20221114.commonTest
+        wasm20221114.commonMain (friend, TEST)
+        wasm20221114.wasmMain (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}} (TEST)
+    wasm20221114.wasmMain
+        wasm20221114.commonMain (refines, COMPILE)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (COMPILE)
+    wasm20221114.wasmTest
+        wasm20221114.commonMain (friend, TEST)
+        wasm20221114.commonTest (refines, TEST)
+        wasm20221114.wasmMain (friend, TEST)
+        wasm20221114.wasmMain (friend, RUNTIME)
+        Gradle: org.jetbrains.kotlin:kotlin-test-wasm:klib:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-test-annotations-wasm:{{KGP_VERSION}} (TEST)
+
+Test configuration:
+- hiding following standard dependencies: Kotlin/Native distribution, sdk, self

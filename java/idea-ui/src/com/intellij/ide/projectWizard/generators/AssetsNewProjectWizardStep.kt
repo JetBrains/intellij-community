@@ -7,19 +7,19 @@ import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.starters.local.GeneratorAsset
 import com.intellij.ide.starters.local.GeneratorTemplateFile
 import com.intellij.ide.starters.local.generator.AssetsProcessor
-import com.intellij.ide.wizard.AbstractNewProjectWizardStep
-import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.ide.wizard.*
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.util.io.*
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findVirtualFile
 import com.intellij.psi.PsiManager
+import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
-import java.io.IOException
-import java.util.StringJoiner
+import java.nio.file.Path
+import java.util.*
 
 @ApiStatus.Experimental
 abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
@@ -27,7 +27,12 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
   lateinit var outputDirectory: String
   private val assets = ArrayList<GeneratorAsset>()
   private val templateProperties = HashMap<String, Any>()
-  private val filesToOpen = HashSet<String>()
+  private val filesToOpen = HashSet<Path>()
+
+  @ApiStatus.Internal
+  internal fun getTemplateProperties(): Map<String, Any> {
+    return templateProperties
+  }
 
   fun addAssets(vararg assets: GeneratorAsset) =
     addAssets(assets.toList())
@@ -36,54 +41,50 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
     this.assets.addAll(assets)
   }
 
-  fun addTemplateProperties(vararg properties: Pair<String, Any>) =
-    addTemplateProperties(properties.toMap())
+  fun addTemplateAsset(sourcePath: String, templateName: String, vararg properties: Pair<String, Any>) {
+    addTemplateAsset(sourcePath, templateName, properties.toMap())
+  }
 
-  fun addTemplateProperties(properties: Map<String, Any>) {
+  fun addTemplateAsset(sourcePath: String, templateName: String, properties: Map<String, Any>) {
+    val templateManager = FileTemplateManager.getDefaultInstance()
+    val template = templateManager.getInternalTemplate(templateName)
+    addAssets(GeneratorTemplateFile(sourcePath, template))
     templateProperties.putAll(properties)
   }
 
   fun addFilesToOpen(vararg relativeCanonicalPaths: String) =
     addFilesToOpen(relativeCanonicalPaths.toList())
 
-  fun addFilesToOpen(relativeCanonicalPaths: Iterable<String>) {
-    filesToOpen.addAll(relativeCanonicalPaths.map { "$outputDirectory/$it" })
+  private fun addFilesToOpen(relativeCanonicalPaths: Iterable<String>) {
+    for (relativePath in relativeCanonicalPaths) {
+      filesToOpen.add(outputDirectory.getResolvedNioPath(relativePath))
+    }
   }
 
   abstract fun setupAssets(project: Project)
 
   override fun setupProject(project: Project) {
-    setupAssets(project)
+    setupProjectSafe(project, UIBundle.message("error.project.wizard.new.project.sample.code", context.isCreatingNewProjectInt)) {
+      setupAssets(project)
 
-    WriteAction.runAndWait<Throwable> {
-      try {
-        val generatedFiles = AssetsProcessor().generateSources(outputDirectory, assets, templateProperties)
-        runWhenCreated(project) { //IDEA-244863
-          reformatCode(project, generatedFiles)
-          openFilesInEditor(project, generatedFiles.filter { it.path in filesToOpen })
+      val generatedFiles = invokeAndWaitIfNeeded {
+        runWriteAction {
+          AssetsProcessor.getInstance().generateSources(outputDirectory.toNioPath(), assets, templateProperties)
         }
       }
-      catch (e: IOException) {
-        logger<NewProjectWizardStep>().error("Unable generating sources", e)
-      }
-    }
-  }
 
-  private fun runWhenCreated(project: Project, action: () -> Unit) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      action()
-    }
-    else {
-      StartupManager.getInstance(project).runAfterOpened {
-        ApplicationManager.getApplication().invokeLater(action, project.disposed)
+      whenProjectCreated(project) { //IDEA-244863
+        reformatCode(project, generatedFiles.mapNotNull { it.findVirtualFile() })
+        openFilesInEditor(project, filesToOpen.mapNotNull { it.findVirtualFile() })
       }
     }
   }
 
   private fun reformatCode(project: Project, files: List<VirtualFile>) {
     val psiManager = PsiManager.getInstance(project)
-    val generatedPsiFiles = files.mapNotNull { psiManager.findFile(it) }
-    ReformatCodeProcessor(project, generatedPsiFiles.toTypedArray(), null, false).run()
+    val psiFiles = files.mapNotNull { psiManager.findFile(it) }
+
+    ReformatCodeProcessor(project, psiFiles.toTypedArray(), null, false).run()
   }
 
   private fun openFilesInEditor(project: Project, files: List<VirtualFile>) {
@@ -92,27 +93,6 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
     for (file in files) {
       fileEditorManager.openFile(file, true)
       projectView.select(null, file, false)
-    }
-  }
-
-  companion object {
-    fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, aPackage: String) {
-      val templateManager = FileTemplateManager.getDefaultInstance()
-      val template = templateManager.getInternalTemplate("SampleCode")
-      val packageDirectory = aPackage.replace('.', '/')
-      val pathJoiner = StringJoiner("/")
-      if (sourceRootPath.isNotEmpty()) {
-        pathJoiner.add(sourceRootPath)
-      }
-      if (packageDirectory.isNotEmpty()) {
-        pathJoiner.add(packageDirectory)
-      }
-      pathJoiner.add("Main.java")
-      val path = pathJoiner.toString()
-
-      addAssets(GeneratorTemplateFile(path, template))
-      addFilesToOpen(path)
-      addTemplateProperties("PACKAGE_NAME" to aPackage)
     }
   }
 }

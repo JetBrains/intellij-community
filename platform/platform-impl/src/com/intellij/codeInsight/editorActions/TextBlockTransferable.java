@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,12 +73,7 @@ public class TextBlockTransferable implements Transferable, Sizeable {
   @Override
   public boolean isDataFlavorSupported(DataFlavor flavor) {
     DataFlavor[] flavors = getTransferDataFlavors();
-    for (DataFlavor flavor1 : flavors) {
-      if (flavor.equals(flavor1)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(flavor, flavors);
   }
 
   @Override

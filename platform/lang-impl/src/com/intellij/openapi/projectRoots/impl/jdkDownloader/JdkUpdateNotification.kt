@@ -42,7 +42,8 @@ private val LOG = logger<JdkUpdateNotification>()
 class JdkUpdateNotification(val jdk: Sdk,
                             val oldItem: JdkItem,
                             val newItem: JdkItem,
-                            private val whenComplete: (JdkUpdateNotification) -> Unit
+                            private val whenComplete: (JdkUpdateNotification) -> Unit,
+                            private val showVendorVersion: Boolean = false,
 ) {
   private val lock = ReentrantLock()
 
@@ -127,7 +128,10 @@ class JdkUpdateNotification(val jdk: Sdk,
     val jdkUpdateNotification = this@JdkUpdateNotification
 
     init {
-      templatePresentation.text = ProjectBundle.message("action.title.jdk.update.found", jdk.name, newItem.fullPresentationText, oldItem.versionPresentationText)
+      templatePresentation.text = ProjectBundle.message("action.title.jdk.update.found",
+                                                        jdk.name,
+                                                        if (showVendorVersion) newItem.fullPresentationWithVendorText else newItem.fullPresentationText,
+                                                        oldItem.versionPresentationText)
       templatePresentation.description = ProjectBundle.message("action.description.jdk.update.found", jdk.name, newItem.fullPresentationText, oldItem.versionPresentationText)
     }
 

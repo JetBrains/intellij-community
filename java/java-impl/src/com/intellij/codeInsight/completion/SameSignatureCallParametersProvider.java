@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypesProvider;
@@ -15,10 +15,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Consumer;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,9 +27,6 @@ import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
-* @author peter
-*/
 class SameSignatureCallParametersProvider {
   static final PsiElementPattern.Capture<PsiElement> IN_CALL_ARGUMENT =
     psiElement().afterLeaf("(").withParent(
@@ -71,10 +68,10 @@ class SameSignatureCallParametersProvider {
     final PsiParameter[] parameters = takeParametersFrom.getParameterList().getParameters();
     final String lookupString = StringUtil.join(parameters, PsiNamedElement::getName, ", ");
 
-    final int w = PlatformIcons.PARAMETER_ICON.getIconWidth();
+    final int w = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter).getIconWidth();
     LayeredIcon icon = new LayeredIcon(2);
-    icon.setIcon(PlatformIcons.PARAMETER_ICON, 0, 2*w/5, 0);
-    icon.setIcon(PlatformIcons.PARAMETER_ICON, 1);
+    icon.setIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter), 0, 2 * w / 5, 0);
+    icon.setIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter), 1);
 
     LookupElementBuilder element = LookupElementBuilder.create(lookupString).withIcon(icon);
     boolean makeFinalIfNeeded = PsiTreeUtil.isAncestor(takeParametersFrom, call, true);

@@ -48,12 +48,12 @@ class GroovySliceTreeGroupingTest : DaemonAnalyzerTestCase() {
     }
     Disposer.register(project, panel)
 
-    return panel.builder.treeStructure as SliceTreeStructure
+    return panel.builder.treeStructure
   }
 
   fun testSimple() {
     val treeStructure = loadTreeStructure()
-    val root = treeStructure.rootElement as SliceNode
+    val root = treeStructure.rootElement
     val analyzer = GroovySliceProvider.getInstance().createLeafAnalyzer()
     val leaf = analyzer.calcLeafExpressions(root, treeStructure, analyzer.createMap()).single()
     TestCase.assertEquals(1234567, (leaf as GrLiteral).value)
@@ -61,7 +61,7 @@ class GroovySliceTreeGroupingTest : DaemonAnalyzerTestCase() {
 
   fun testGroovyJavaGroovy() {
     val treeStructure = loadTreeStructure { listOf("$it.groovy", "$it.java") }
-    val root = treeStructure.rootElement as SliceNode
+    val root = treeStructure.rootElement
     val analyzer = GroovySliceProvider.getInstance().createLeafAnalyzer()
     val leaves = analyzer.calcLeafExpressions(root, treeStructure, analyzer.createMap()).toList()
     UsefulTestCase.assertSize(2, leaves)
@@ -71,7 +71,7 @@ class GroovySliceTreeGroupingTest : DaemonAnalyzerTestCase() {
 
   fun testJavaGroovy() {
     val treeStructure = loadTreeStructure { listOf("$it.java", "$it.groovy") }
-    val root = treeStructure.rootElement as SliceNode
+    val root = treeStructure.rootElement
     val analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer()
     val leaves = analyzer.calcLeafExpressions(root, treeStructure, analyzer.createMap()).toList()
     UsefulTestCase.assertSize(2, leaves)

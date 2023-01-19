@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated duplicate behaviour with {@link com.intellij.externalSystem.JavaModuleDataService}
  */
-@Deprecated(forRemoval = true)
+@Deprecated
 @SuppressWarnings("DeprecatedIsStillUsed")
 public class ModuleDataServiceJavaExtension implements ModuleDataServiceExtension {
   private static final Logger LOG = Logger.getInstance(ModuleDataServiceJavaExtension.class);

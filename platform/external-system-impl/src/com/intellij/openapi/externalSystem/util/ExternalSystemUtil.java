@@ -22,22 +22,19 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
@@ -61,6 +58,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ContentRootDat
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
@@ -70,13 +68,13 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -108,6 +106,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -291,7 +290,8 @@ public final class ExternalSystemUtil {
     ExternalProjectRefreshCallback callback = importSpec.getCallback();
     boolean isPreviewMode = importSpec.isPreviewMode();
     ProgressExecutionMode progressExecutionMode = importSpec.getProgressExecutionMode();
-    boolean reportRefreshError = importSpec.isReportRefreshError();
+    boolean isActivateBuildToolWindowOnStart = importSpec.isActivateBuildToolWindowOnStart();
+    boolean isActivateBuildToolWindowOnFailure = importSpec.isActivateBuildToolWindowOnFailure();
     ThreeState isNavigateToError = importSpec.isNavigateToError();
 
     File projectFile = new File(externalProjectPath);
@@ -318,16 +318,16 @@ public final class ExternalSystemUtil {
       localSettings.getProjectSyncType().get(externalProjectPath) == PREVIEW ? IMPORT : RE_IMPORT;
     localSettings.getProjectSyncType().put(externalProjectPath, syncType);
 
-    ExternalSystemResolveProjectTask resolveProjectTask = new ExternalSystemResolveProjectTask(project, externalProjectPath, importSpec);
+    ExternalSystemResolveProjectTask resolveProjectTask = new ExternalSystemResolveProjectTask(project, projectName, externalProjectPath, importSpec);
 
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
 
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+
         StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(project, externalSystemId, null);
         try {
-          DumbService.getInstance(project).suspendIndexingAndRun(title, () -> executeImpl(indicator));
+          executeImpl(indicator);
         }
         finally {
           activity.finished();
@@ -398,6 +398,11 @@ public final class ExternalSystemUtil {
                 }
 
                 @Override
+                public @NotNull ActionUpdateThread getActionUpdateThread() {
+                  return ActionUpdateThread.EDT;
+                }
+
+                @Override
                 public void actionPerformed(@NotNull AnActionEvent e) {
                   Presentation p = e.getPresentation();
                   p.setEnabled(false);
@@ -423,14 +428,14 @@ public final class ExternalSystemUtil {
                 .withRestartAction(rerunImportAction)
                 .withContentDescriptor(() -> {
                   if (consoleView == null) return null;
-                  boolean activateToolWindow = isNewProject(project);
-                  BuildContentDescriptor contentDescriptor =
-                    new BuildContentDescriptor(consoleView, processHandler, consoleView.getComponent(),
-                                               ExternalSystemBundle.message("build.event.title.sync"));
-                  contentDescriptor.setActivateToolWindowWhenAdded(activateToolWindow);
-                  contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
+                  BuildContentDescriptor contentDescriptor = new BuildContentDescriptor(
+                    consoleView, processHandler, consoleView.getComponent(),
+                    ExternalSystemBundle.message("build.event.title.sync")
+                  );
+                  contentDescriptor.setActivateToolWindowWhenAdded(isActivateBuildToolWindowOnStart);
+                  contentDescriptor.setActivateToolWindowWhenFailed(isActivateBuildToolWindowOnFailure);
                   contentDescriptor.setNavigateToError(isNavigateToError);
-                  contentDescriptor.setAutoFocusContent(reportRefreshError);
+                  contentDescriptor.setAutoFocusContent(isActivateBuildToolWindowOnFailure);
                   return contentDescriptor;
                 })
                 .withActions(consoleManager.getCustomActions(project, resolveProjectTask, null))
@@ -587,10 +592,8 @@ public final class ExternalSystemUtil {
 
     final String title;
     switch (progressExecutionMode) {
-      case NO_PROGRESS_SYNC:
-      case NO_PROGRESS_ASYNC:
-        throw new ExternalSystemException("Please, use progress for the project import!");
-      case MODAL_SYNC:
+      case NO_PROGRESS_SYNC, NO_PROGRESS_ASYNC -> throw new ExternalSystemException("Please, use progress for the project import!");
+      case MODAL_SYNC -> {
         title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
         new Task.Modal(project, title, true) {
           @Override
@@ -603,8 +606,8 @@ public final class ExternalSystemUtil {
             refreshProjectStructureTask.execute(indicator);
           }
         }.queue();
-        break;
-      case IN_BACKGROUND_ASYNC:
+      }
+      case IN_BACKGROUND_ASYNC -> {
         title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
         new Task.Backgroundable(project, title) {
           @Override
@@ -617,8 +620,8 @@ public final class ExternalSystemUtil {
             refreshProjectStructureTask.execute(indicator);
           }
         }.queue();
-        break;
-      case START_IN_FOREGROUND_ASYNC:
+      }
+      case START_IN_FOREGROUND_ASYNC -> {
         title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
         new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
           @Override
@@ -631,29 +634,42 @@ public final class ExternalSystemUtil {
             refreshProjectStructureTask.execute(indicator);
           }
         }.queue();
+      }
     }
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog} instead
+   */
+  @Deprecated
+  public static boolean confirmLinkingUntrustedProject(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
+    @NotNull Path projectRoot
+  ) {
+    return ExternalSystemTrustedProjectDialog.confirmLinkingUntrustedProject(project, systemId, projectRoot);
+  }
+
+  /**
+   * @deprecated Use {@link com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog} instead
+   */
+  @Deprecated
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
     @NotNull ProjectSystemId systemId
   ) {
-    return confirmLoadingUntrustedProject(project, Collections.singletonList(systemId));
+    return ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, systemId);
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog} instead
+   */
+  @Deprecated
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
     @NotNull Collection<ProjectSystemId> systemIds
   ) {
-    String systemsPresentation = naturalJoinSystemIds(systemIds);
-    return TrustedProjects.isTrusted(project) ||
-           TrustedProjects.confirmLoadingUntrustedProject(
-             project,
-             IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size()),
-             IdeBundle.message("untrusted.project.dialog.text", systemsPresentation, systemIds.size()),
-             IdeBundle.message("untrusted.project.dialog.trust.button"),
-             IdeBundle.message("untrusted.project.dialog.distrust.button")
-           );
+    return ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, systemIds);
   }
 
   public static @NotNull @Nls String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
@@ -666,6 +682,26 @@ public final class ExternalSystemUtil {
   public static boolean isNewProject(Project project) {
     return project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE ||
            project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE;
+  }
+
+  // To be used only in internal New Project Wizard/Project Opening machinery
+  @ApiStatus.Internal
+  public static void configureNewModule(@NotNull Module module, boolean isCreatingNewProject, boolean isMavenModule) {
+    Project project = module.getProject();
+
+    // Postpone project refresh, disable unwanted notifications
+    project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, isCreatingNewProject ? Boolean.TRUE : null);
+    project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, isCreatingNewProject ? Boolean.TRUE : null);
+
+    markModuleAsMaven(module, isMavenModule);
+  }
+
+  // To be used only in internal New Project Wizard/Project Opening machinery
+  @ApiStatus.Internal
+  public static void markModuleAsMaven(@NotNull Module module, boolean isMavenModule) {
+    // This module will be replaced after import
+    // Make sure the .iml file is not created under the project dir, if 'Store generated project files externally' setting is on.
+    ExternalSystemModulePropertyManager.getInstance(module).setMavenized(isMavenModule);
   }
 
   @ApiStatus.Internal
@@ -926,35 +962,26 @@ public final class ExternalSystemUtil {
 
     final String title = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
     switch (progressExecutionMode) {
-      case NO_PROGRESS_SYNC:
-        task.execute(new EmptyProgressIndicator());
-        break;
-      case MODAL_SYNC:
-        new Task.Modal(project, title, true) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            task.execute(indicator);
-          }
-        }.queue();
-        break;
-      case NO_PROGRESS_ASYNC:
-        ApplicationManager.getApplication().executeOnPooledThread(() -> task.execute(new EmptyProgressIndicator()));
-        break;
-      case IN_BACKGROUND_ASYNC:
-        new Task.Backgroundable(project, title) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            task.execute(indicator);
-          }
-        }.queue();
-        break;
-      case START_IN_FOREGROUND_ASYNC:
-        new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            task.execute(indicator);
-          }
-        }.queue();
+      case NO_PROGRESS_SYNC -> task.execute(new EmptyProgressIndicator());
+      case MODAL_SYNC -> new Task.Modal(project, title, true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          task.execute(indicator);
+        }
+      }.queue();
+      case NO_PROGRESS_ASYNC -> ApplicationManager.getApplication().executeOnPooledThread(() -> task.execute(new EmptyProgressIndicator()));
+      case IN_BACKGROUND_ASYNC -> new Task.Backgroundable(project, title) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          task.execute(indicator);
+        }
+      }.queue();
+      case START_IN_FOREGROUND_ASYNC -> new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          task.execute(indicator);
+        }
+      }.queue();
     }
   }
 
@@ -1007,6 +1034,15 @@ public final class ExternalSystemUtil {
     return RUNNER_IDS.get(executorId);
   }
 
+  @SuppressWarnings("unused")
+  public static void registerRunnerId(@NotNull String executorId, @NotNull String externalSystemRunnerId)  {
+    if (!RUNNER_IDS.containsKey(executorId)) {
+      RUNNER_IDS.put(executorId, externalSystemRunnerId);
+    } else {
+      throw new ExternalSystemException("Executor with ID " + executorId + " is already registered");
+    }
+  }
+
   /**
    * Tries to obtain external project info implied by the given settings and link that external project to the given ide project.
    *
@@ -1042,7 +1078,7 @@ public final class ExternalSystemUtil {
           }
           return;
         }
-        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project, true);
+        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project);
         if (importResultCallback != null) {
           importResultCallback.consume(true);
         }
@@ -1158,7 +1194,7 @@ public final class ExternalSystemUtil {
       if (externalProject == null) {
         return;
       }
-      ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject, true);
+      ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject);
     }
 
     @Override

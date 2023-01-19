@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -11,10 +11,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
@@ -468,7 +465,7 @@ public class SystemBuilder {
                       system.addSubtypeConstraint(pv, exType);
                     }
 
-                    return Util.createArrayType(pv, level);
+                    return PsiTypesUtil.createArrayType(pv, level);
                   }
 
                   final Map<PsiTypeParameter, PsiType> substitutionMap = result.getSubstitutor().getSubstitutionMap();
@@ -536,10 +533,10 @@ public class SystemBuilder {
                     }
                   }
 
-                  return Util.createArrayType(JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, theSubst), level);
+                  return PsiTypesUtil.createArrayType(JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, theSubst), level);
                 }
 
-                return Util.createArrayType(type, level);
+                return PsiTypesUtil.createArrayType(type, level);
               }
             }.introduceAdditionalTypeVariables(paramType, qualifierSubstitutor, supertypeSubstitutor);
 

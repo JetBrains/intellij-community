@@ -22,14 +22,16 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.readText
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.AbstractWorkspaceModelCache
+import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntityStorageSerializer
 import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +49,7 @@ import kotlin.io.path.name
 class DelayedProjectSynchronizerTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   @Rule
   @JvmField
@@ -64,7 +66,7 @@ class DelayedProjectSynchronizerTest {
   fun setUp() {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
-    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager)
+    serializer = EntityStorageSerializerImpl(AbstractWorkspaceModelCache.PluginAwareEntityTypesResolver, virtualFileManager)
     registerFacetType(MockFacetType(), disposableRule.disposable)
     registerFacetType(AnotherMockFacetType(), disposableRule.disposable)
   }
@@ -88,9 +90,10 @@ class DelayedProjectSynchronizerTest {
   }
 
   private fun checkSerializersConsistency(project: Project) {
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val serializers = JpsProjectModelSynchronizer.getInstance(project).getSerializers()
-    serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, VirtualFileUrlManager.getInstance(project))
+    val unloadedEntitiesStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
+    serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, unloadedEntitiesStorage, VirtualFileUrlManager.getInstance(project))
   }
 
   @Test
@@ -131,7 +134,7 @@ class DelayedProjectSynchronizerTest {
           LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("foo")
         }
       }
-      val storage = WorkspaceModel.getInstance(project).entityStorage.current
+      val storage = WorkspaceModel.getInstance(project).currentSnapshot
       JpsProjectModelSynchronizer.getInstance(project).getSerializers().saveAllEntities(storage, projectData.configLocation)
     }
     val librariesFolder = projectData.projectDir.toPath().resolve(".idea/libraries/")
@@ -151,10 +154,12 @@ class DelayedProjectSynchronizerTest {
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(projectData.storage)
 
     val originalBuilder = MutableEntityStorage.create()
+    val unloadedEntitiesBuilder = MutableEntityStorage.create()
     val configLocation = toConfigLocation(projectData.projectDir.toPath(), virtualFileManager)
-    val serializers = loadProject(configLocation, originalBuilder, virtualFileManager, fileInDirectorySourceNames) as JpsProjectSerializersImpl
-    val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), serializers, configLocation, projectFile)
-    serializers.checkConsistency(configLocation, loadedProjectData.storage, virtualFileManager)
+    val serializers = loadProject(configLocation, originalBuilder, virtualFileManager, emptySet(), unloadedEntitiesBuilder, fileInDirectorySourceNames) as JpsProjectSerializersImpl
+    val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(), serializers, 
+                                              configLocation, projectFile)
+    serializers.checkConsistency(configLocation, loadedProjectData.storage, loadedProjectData.unloadedEntitiesStorage, virtualFileManager)
 
     assertThat(projectData.storage.entities(ModuleEntity::class.java).map {
       assertTrue(it.entitySource is JpsFileEntitySource.FileInDirectory)

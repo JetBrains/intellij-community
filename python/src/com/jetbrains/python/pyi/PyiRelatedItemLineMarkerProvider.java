@@ -20,9 +20,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author vlan
- */
 public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvider {
   // TODO: Create an icon for a related Python stub item
   public static final Icon ICON = AllIcons.Gutter.Unique;

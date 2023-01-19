@@ -564,7 +564,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   @Override
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull final Collection<File> files,
                                                                @NotNull Collection<String> activeProfiles,
-                                                               @NotNull Collection<String> inactiveProfiles, MavenToken token)
+                                                               @NotNull Collection<String> inactiveProfiles,
+                                                               boolean forceResolveDependenciesSequentially, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     final DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);

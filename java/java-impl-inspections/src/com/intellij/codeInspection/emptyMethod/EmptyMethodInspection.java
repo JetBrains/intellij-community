@@ -4,12 +4,12 @@ package com.intellij.codeInspection.emptyMethod;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,10 +29,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   private static final @NonNls String SHORT_NAME = "EmptyMethod";
@@ -266,15 +267,11 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaBundle.message("checkbox.comments.and.javadoc.count.as.content"),  "commentsAreContent");
-
-    final JPanel listPanel = SpecialAnnotationsUtil
-      .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, JavaBundle.message("special.annotations.annotations.list"));
-
-    panel.add(listPanel, "growx, wrap");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("commentsAreContent", JavaBundle.message("checkbox.comments.and.javadoc.count.as.content")),
+      stringList("EXCLUDE_ANNOS", JavaBundle.message("special.annotations.annotations.list"),
+                 new JavaClassValidator().annotationsOnly()));
   }
 
   private static class DeleteMethodIntention implements LocalQuickFix {

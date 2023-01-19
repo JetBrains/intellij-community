@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import property 'RegObject.regularProperty'" "true"
 package p
 
 open class Reg {

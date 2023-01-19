@@ -30,7 +30,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
   fun turnOff() {
     val app = ApplicationManager.getApplication()
-    LOG.assertTrue(app.isDispatchThread)
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(!app.isWriteAccessAllowed)
     try {
       if (nestedLevelCount == 0) {
@@ -40,6 +40,14 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
           dumbModeSemaphore.down()
           if (wasUp) {
             for (project in ProjectUtil.getOpenProjects()) {
+              val scannerExecutor = project.getService(UnindexedFilesScannerExecutor::class.java)
+              scannerExecutor.suspendQueue()
+              scannerExecutor.cancelAllTasksAndWait()
+
+              val perProjectIndexingQueue = project.getService(PerProjectIndexingQueue::class.java)
+              perProjectIndexingQueue.cancelAllTasksAndWait()
+              perProjectIndexingQueue.clear()
+
               val dumbService = DumbService.getInstance(project)
               dumbService.cancelAllTasksAndWait()
               MyDumbModeTask(dumbModeSemaphore).queue(project)
@@ -71,7 +79,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
   @JvmOverloads
   fun turnOn(beforeIndexTasksStarted: Runnable? = null) {
-    LOG.assertTrue(ApplicationManager.getApplication().isWriteThread)
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired)
     nestedLevelCount--
     if (nestedLevelCount == 0) {
       try {
@@ -81,6 +89,10 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
           fileBasedIndex.waitUntilIndicesAreInitialized()
         }
         if (!headless) {
+          for (project in ProjectUtil.getOpenProjects()) {
+            project.getService(UnindexedFilesScannerExecutor::class.java).resumeQueue()
+            project.getService(PerProjectIndexingQueue::class.java).resumeQueue()
+          }
           dumbModeSemaphore.up()
         }
 
@@ -91,7 +103,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
           beforeIndexTasksStarted?.run()
           cleanupProcessedFlag()
           for (project in ProjectUtil.getOpenProjects()) {
-            UnindexedFilesUpdater(project, reason).queue(project)
+            UnindexedFilesUpdater(project, reason).queue()
           }
           LOG.info("Index rescanning has been started after `$reason`")
         }

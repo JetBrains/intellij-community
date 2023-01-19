@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.migration
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class CodeMigrationAction : CodeInspectionAction(
+class CodeMigrationAction : CodeInspectionMigrationAction(
     KotlinMigrationBundle.message("inspection.migration.title"),
     KotlinMigrationBundle.message("inspection.migration.title")
 ) {

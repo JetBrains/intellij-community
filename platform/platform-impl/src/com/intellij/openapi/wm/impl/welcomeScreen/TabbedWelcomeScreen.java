@@ -35,7 +35,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
          new TreeWelcomeScreenLeftPanel(), true, true);
   }
 
-  public TabbedWelcomeScreen(List<WelcomeTabFactory> welcomeTabFactories, WelcomeScreenLeftPanel leftSidebar, boolean addLogo, boolean addQuickAccessPanel) {
+  public TabbedWelcomeScreen(List<? extends WelcomeTabFactory> welcomeTabFactories, WelcomeScreenLeftPanel leftSidebar, boolean addLogo, boolean addQuickAccessPanel) {
     setBackground(WelcomeScreenUIManager.getMainTabListBackground());
 
     mainPanel = createCardPanel();
@@ -83,14 +83,14 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     WelcomeScreenEventCollector.logWelcomeScreenHide();
   }
 
-  public void addSelectionListener(@NotNull Disposable disposable, @NotNull Consumer<WelcomeScreenTab> action) {
+  public void addSelectionListener(@NotNull Disposable disposable, @NotNull Consumer<? super WelcomeScreenTab> action) {
     myLeftSidebar.addSelectionListener(disposable, action);
   }
 
   /**
    * Prefer to use addSelectionListener(Disposable, Consumer)
    */
-  public void addSelectionListener(@NotNull Consumer<WelcomeScreenTab> action) {
+  public void addSelectionListener(@NotNull Consumer<? super WelcomeScreenTab> action) {
     myLeftSidebar.addSelectionListener(this, action);
   }
 
@@ -98,7 +98,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     loadTabs(WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList());
   }
 
-  private void loadTabs(List<WelcomeTabFactory> welcomeTabFactories) {
+  private void loadTabs(List<? extends WelcomeTabFactory> welcomeTabFactories) {
     myLeftSidebar.removeAllTabs();
     if (currentDisposable != null) {
       Disposer.dispose(currentDisposable);

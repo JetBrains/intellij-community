@@ -8,8 +8,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
- *
  * @see MetaDataRegistrar#registerMetaData(com.intellij.psi.filters.ElementFilter, Class)
  * @see PsiMetaOwner#getMetaData()
  */

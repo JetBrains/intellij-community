@@ -172,13 +172,18 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         return files
     }
 
-    protected inline fun <reified T : Any> buildGradleModel(): BuiltGradleModel<T> =
-        buildGradleModel(T::class)
+    protected inline fun <reified T : Any> buildGradleModel(debuggerOptions: BuildGradleModelDebuggerOptions? = null): BuiltGradleModel<T> =
+        buildGradleModel(T::class, debuggerOptions)
 
-    protected fun <T : Any> buildGradleModel(clazz: KClass<T>): BuiltGradleModel<T> =
-        buildGradleModel(myProjectRoot.toNioPath().toFile(), GradleVersion.version(gradleVersion), findJdkPath(), clazz)
+    protected fun <T : Any> buildGradleModel(
+        clazz: KClass<T>,
+        debuggerOptions: BuildGradleModelDebuggerOptions? = null
+    ): BuiltGradleModel<T> =
+        buildGradleModel(myProjectRoot.toNioPath().toFile(), GradleVersion.version(gradleVersion), findJdkPath(), clazz, debuggerOptions)
 
-    protected fun buildKotlinMPPGradleModel(): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel()
+    protected fun buildKotlinMPPGradleModel(
+        debuggerOptions: BuildGradleModelDebuggerOptions? = null
+    ): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel(debuggerOptions)
 
     protected fun getSourceRootInfos(moduleName: String): List<Pair<String, JpsModuleSourceRootType<*>>> {
         return ModuleRootManager.getInstance(getModule(moduleName)).contentEntries.flatMap { contentEntry ->
@@ -291,11 +296,11 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         const val MINIMAL_SUPPORTED_GRADLE_PLUGIN_VERSION = "1.3.0"
         const val LATEST_STABLE_GRADLE_PLUGIN_VERSION = "1.3.70"
 
-        val SUPPORTED_GRADLE_VERSIONS: List<Array<Any>> = listOf(arrayOf("4.9"), arrayOf("5.6.4"), arrayOf("6.0.1"))
+        val SUPPORTED_GRADLE_VERSIONS = arrayOf("4.9", "5.6.4", "6.0.1")
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
         @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
-        fun data(): Collection<Array<Any>> = SUPPORTED_GRADLE_VERSIONS
+        fun data(): Collection<Array<Any>> = SUPPORTED_GRADLE_VERSIONS.map { arrayOf(it) }
     }
 }

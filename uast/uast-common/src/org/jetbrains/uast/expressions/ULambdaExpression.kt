@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiType
@@ -30,7 +30,6 @@ interface ULambdaExpression : UExpression {
    * Returns the list of all lambda parameters including this, it and e.t.c.
    * It is more preferable than [valueParameters], because this parameters corresponds to parameters of functional interface method, which can be retrieved from [getExpressionType]
    */
-  @JvmDefault
   val parameters: List<UParameter>
     get() = valueParameters
 

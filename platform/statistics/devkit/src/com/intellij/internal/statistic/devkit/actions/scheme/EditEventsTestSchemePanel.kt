@@ -15,7 +15,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import java.awt.BorderLayout
 import java.awt.CardLayout
@@ -64,7 +64,7 @@ class EditEventsTestSchemePanel(private val project: Project,
     layout = BorderLayout()
 
     val emptyLabel = JLabel(StatisticsBundle.message("stats.select.group.to.view.or.edit.details"), SwingConstants.CENTER)
-    emptyLabel.foreground = UIUtil.getInactiveTextColor()
+    emptyLabel.foreground = NamedColorUtil.getInactiveTextColor()
     val emptyPanel = JPanel(BorderLayout())
     emptyPanel.add(emptyLabel)
     detailsComponent.add(EMPTY_KEY, emptyPanel)

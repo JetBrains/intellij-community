@@ -14,7 +14,7 @@ import java.nio.file.Path
 import java.util.zip.GZIPOutputStream
 
 abstract class FileReportGenerator(
-  protected val featuresStorages: List<FeaturesStorage>,
+  private val featuresStorages: List<FeaturesStorage>,
   private val dirs: GeneratorDirectories,
   private val filterName: String,
   private val comparisonFilterName: String
@@ -58,6 +58,7 @@ abstract class FileReportGenerator(
 
   private fun HTML.createHead(reportTitle: String, resourcePath: Path) {
     head {
+      meta(charset = "UTF-8")
       title(reportTitle)
       script { src = "../res/pako.min.js" }
       script { src = dirs.filesDir.relativize(resourcePath).toString() }

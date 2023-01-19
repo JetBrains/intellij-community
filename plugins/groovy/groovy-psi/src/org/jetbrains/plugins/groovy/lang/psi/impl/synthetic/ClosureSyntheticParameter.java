@@ -18,9 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
 import java.util.Objects;
 import java.util.function.Function;
 
-/**
- * @author ven
- */
 public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrRenameableLightElement {
   private static final Function<ClosureSyntheticParameter,PsiType> TYPES_CALCULATOR = parameter -> {
     PsiType typeGroovy = GrVariableEnhancer.getEnhancedType(parameter);
@@ -107,8 +104,8 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ClosureSyntheticParameter)) return false;
-    if (!super.equals(o)) return false;
     ClosureSyntheticParameter parameter = (ClosureSyntheticParameter)o;
+    // Closure parameter is uniquely identified by the closure itself
     return Objects.equals(myClosure, parameter.myClosure);
   }
 

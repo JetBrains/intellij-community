@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt
 
-/**
- * @author peter
- */
 class GroovyHighlightingTest extends GrHighlightingTestBase {
 
   void testDuplicateClosurePrivateVariable() {

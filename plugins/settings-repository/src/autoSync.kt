@@ -8,8 +8,10 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.progressSink
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import kotlinx.coroutines.*
+import kotlin.coroutines.coroutineContext
 
 internal class AutoSyncManager(private val icsManager: IcsManager) {
   @Volatile
@@ -17,22 +19,15 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
 
   @Volatile var enabled = true
 
-  fun waitAutoSync(indicator: ProgressIndicator) {
-    val autoFuture = autoSyncFuture
-    if (autoFuture != null) {
-      if (autoFuture.isCompleted) {
-        autoSyncFuture = null
-      }
-      else if (autoSyncFuture != null) {
-        LOG.info("Wait for auto sync future")
-        indicator.text = IcsBundle.message("autosync.progress.text")
-        while (!autoFuture.isCompleted) {
-          if (indicator.isCanceled) {
-            return
-          }
-          Thread.sleep(5)
-        }
-      }
+  suspend fun waitAutoSync() {
+    val autoFuture = autoSyncFuture ?: return
+    if (autoFuture.isCompleted) {
+      autoSyncFuture = null
+    }
+    else {
+      LOG.info("Wait for auto sync future")
+      coroutineContext.progressSink?.text(IcsBundle.message("autosync.progress.text"))
+      autoFuture.join()
     }
   }
 
@@ -51,7 +46,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       // called on final confirmed exit - no need to restore enabled state
       enabled = false
       catchAndLog {
-        runBlocking {
+        runBlockingMaybeCancellable {
           icsManager.runInAutoCommitDisabledMode {
             val repositoryManager = icsManager.repositoryManager
             val hasUpstream = repositoryManager.hasUpstream()

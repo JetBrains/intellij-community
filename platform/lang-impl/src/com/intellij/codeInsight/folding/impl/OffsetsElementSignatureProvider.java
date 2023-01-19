@@ -30,8 +30,6 @@ import java.util.StringTokenizer;
  * Performs {@code 'PSI element <-> signature'} mappings on the basis of the target PSI element's offsets.
  * <p/>
  * Thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class OffsetsElementSignatureProvider extends AbstractElementSignatureProvider {
 

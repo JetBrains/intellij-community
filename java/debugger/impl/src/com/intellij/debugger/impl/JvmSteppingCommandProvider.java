@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -14,8 +14,8 @@ public abstract class JvmSteppingCommandProvider {
     ExtensionPointName.create("com.intellij.debugger.jvmSteppingCommandProvider");
 
   /**
-   * @see DebugProcessImpl#createStepIntoCommand(SuspendContextImpl, boolean, MethodFilter, int)
    * @return null if can not handle
+   * @see DebugProcessImpl#createStepIntoCommand(SuspendContextImpl, boolean, MethodFilter, int)
    */
   public DebugProcessImpl.ResumeCommand getStepIntoCommand(SuspendContextImpl suspendContext,
                                                            boolean ignoreFilters,
@@ -25,16 +25,16 @@ public abstract class JvmSteppingCommandProvider {
   }
 
   /**
-   * @see DebugProcessImpl#createStepOutCommand(SuspendContextImpl, int)
    * @return null if can not handle
+   * @see DebugProcessImpl#createStepOutCommand(SuspendContextImpl, int)
    */
   public DebugProcessImpl.ResumeCommand getStepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
     return null;
   }
 
   /**
-   * @see DebugProcessImpl#createStepOverCommand(SuspendContextImpl, boolean, MethodFilter, int)
    * @return null if can not handle
+   * @see DebugProcessImpl#createStepOverCommand(SuspendContextImpl, boolean, MethodFilter, int)
    */
   public DebugProcessImpl.ResumeCommand getStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, int stepSize) {
     return null;

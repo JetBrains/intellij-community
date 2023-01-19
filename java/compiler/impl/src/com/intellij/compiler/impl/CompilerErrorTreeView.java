@@ -99,6 +99,11 @@ public final class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(final @NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(false);
@@ -106,7 +111,9 @@ public final class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       if (project == null) {
         return;
       }
-      final ErrorTreeElement errorTreeElement = getSelectedErrorTreeElement();
+      ErrorTreeElement errorTreeElement = e.getUpdateSession()
+        .compute(this, "getSelectedErrorTreeElement", ActionUpdateThread.EDT, CompilerErrorTreeView.this::getSelectedErrorTreeElement);
+
       if (errorTreeElement instanceof NavigatableMessageElement) {
         final NavigatableMessageElement messageElement = (NavigatableMessageElement)errorTreeElement;
         final String[] text = messageElement.getText();

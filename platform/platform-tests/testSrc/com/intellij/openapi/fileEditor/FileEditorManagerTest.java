@@ -5,10 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.mock.Mock;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -38,8 +35,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
-
-  public void testTabOrder() throws Exception {
+  public void testTabOrder() {
     openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));
     assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
 
@@ -65,11 +61,24 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     }
   }
 
-  public void testTabLimit() throws Exception {
+  public void testTabLimit() {
     UISettings.getInstance().getState().setEditorTabLimit(2);
     openFiles(STRING);
     // note that foo.xml is pinned
     assertOpenFiles("foo.xml", "3.txt");
+  }
+
+  /**
+   * IDEA-309704 Files are closed if tabs exceed the limit
+   */
+  public void testTabLimit2() {
+    manager.closeAllFiles();
+    UISettings.getInstance().getState().setEditorTabLimit(3);
+    manager.openFile(getFile("/src/1.txt"), true);
+    manager.openFile(getFile("/src/2.txt"), true);
+    manager.openFile(getFile("/src/3.txt"), true);
+    manager.openFile(getFile("/src/foo.xml"), true);
+    assertOpenFiles("2.txt", "3.txt", "foo.xml");
   }
 
   public void testTabLimitWithJupyterNotebooks() {
@@ -81,7 +90,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertOpenFiles("test.ipynb");
   }
 
-  public void testSingleTabLimit() throws Exception {
+  public void testSingleTabLimit() {
     UISettings.getInstance().getState().setEditorTabLimit(1);
     openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));
     assertOpenFiles("3.txt");
@@ -92,7 +101,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     // note that foo.xml is pinned
     assertOpenFiles("foo.xml");
     manager.openFile(getFile("/src/3.txt"), true);
-    assertOpenFiles("foo.xml", "3.txt");//limit is still 1 but pinned prevent closing tab and actual tab number may exceed the limit
+    // the limit is still 1, but a pinned flag prevents closing the tab, and the actual tab number may exceed the limit
+    assertOpenFiles("foo.xml", "3.txt");
 
     manager.closeAllFiles();
 
@@ -131,23 +141,25 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     }
   }
 
-  public void testOpenRecentEditorTab() throws Exception {
+  public void testOpenRecentEditorTab() {
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyFileEditorProvider(), myFixture.getTestRootDisposable());
 
-    openFiles("  <component name=\"FileEditorManager\">\n" +
-              "    <leaf>\n" +
-              "      <file pinned=\"false\" current=\"true\" current-in-tab=\"true\">\n" +
-              "        <entry selected=\"true\" file=\"file://$PROJECT_DIR$/src/1.txt\">\n" +
-              "          <provider editor-type-id=\"mock\" selected=\"true\">\n" +
-              "            <state />\n" +
-              "          </provider>\n" +
-              "          <provider editor-type-id=\"text-editor\">\n" +
-              "            <state/>\n" +
-              "          </provider>\n" +
-              "        </entry>\n" +
-              "      </file>\n" +
-              "    </leaf>\n" +
-              "  </component>\n");
+    openFiles("""
+                  <component name="FileEditorManager">
+                    <leaf>
+                      <file pinned="false" current="true" current-in-tab="true">
+                        <entry selected="true" file="file://$PROJECT_DIR$/src/1.txt">
+                          <provider editor-type-id="mock" selected="true">
+                            <state />
+                          </provider>
+                          <provider editor-type-id="text-editor">
+                            <state/>
+                          </provider>
+                        </entry>
+                      </file>
+                    </leaf>
+                  </component>
+                """);
     FileEditor[] selectedEditors = manager.getSelectedEditors();
     assertEquals(1, selectedEditors.length);
     assertEquals(MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, selectedEditors[0].getName());
@@ -195,18 +207,19 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);//2.txt only, selected and focused
     assertNotNull(secondaryWindow);
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
-    manager.openFileWithProviders(file1, true, true);//Here we have to ignore 'searchForSplitter'
+    // here we have to ignore 'searchForSplitter'
+    manager.openFile(file1, null, new FileEditorOpenOptions().withReuseOpen().withRequestFocus());
     assertEquals(2, primaryWindow.getTabCount());
     assertEquals(2, secondaryWindow.getTabCount());
-    assertOrderedEquals(primaryWindow.getFiles(), file1, file2);
-    assertOrderedEquals(secondaryWindow.getFiles(), file2, file1);
+    assertOrderedEquals(primaryWindow.getFileList(), file1, file2);
+    assertOrderedEquals(secondaryWindow.getFileList(), file2, file1);
   }
 
   public void testStoringCaretStateForFileWithFoldingsWithNoTabs() {
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
     VirtualFile file = getFile("/src/Test.java");
     assertNotNull(file);
-    Assume.assumeTrue("JAVA".equals(file.getFileType().getName())); // otherwise, the folding'd be incorrect
+    Assume.assumeTrue("JAVA".equals(file.getFileType().getName())); // otherwise, the folding would be incorrect
     FileEditor[] editors = manager.openFile(file, false);
     assertEquals(1, editors.length);
     assertTrue(editors[0] instanceof TextEditor);
@@ -331,10 +344,10 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertNotNull(primaryWindow);
     manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
     EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
-    manager.openFileImpl2(secondaryWindow, file2, true);
-    manager.closeFile(file, secondaryWindow, true);
+    manager.openFileImpl2(secondaryWindow, file2, new FileEditorOpenOptions().withRequestFocus(true));
+    manager.closeFile(file, secondaryWindow);
 
-    // default behavior is to reuse the existing splitter
+    // the default behavior is to reuse the existing splitter
     new OpenFileDescriptor(getProject(), file).navigate(true);
     assertEquals(1, secondaryWindow.getTabCount());
   }
@@ -349,8 +362,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertNotNull(primaryWindow);
     manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
     EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
-    manager.openFileImpl2(secondaryWindow, file2, true);
-    manager.closeFile(file, secondaryWindow, true);
+    manager.openFileImpl2(secondaryWindow, file2, new FileEditorOpenOptions().withRequestFocus(true));
+    manager.closeFile(file, secondaryWindow);
 
     // with the changed setting, we want to open the file in the current splitter (
     new OpenFileDescriptor(getProject(), file).navigate(true);
@@ -367,8 +380,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertNotNull(primaryWindow);
     manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
     EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
-    manager.openFileImpl2(secondaryWindow, file2, true);
-    manager.closeFile(file, secondaryWindow, true);
+    manager.openFileImpl2(secondaryWindow, file2, new FileEditorOpenOptions().withRequestFocus(true));
+    manager.closeFile(file, secondaryWindow);
 
     // with the changed setting, we want to open the file in the current splitter (
     new OpenFileDescriptor(getProject(), file).setUseCurrentWindow(true).navigate(true);
@@ -376,45 +389,47 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   @Language("XML")
-  private static final String STRING = "<component name=\"FileEditorManager\">\n" +
-                                       "    <leaf>\n" +
-                                       "      <file pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
-                                       "        <entry file=\"file://$PROJECT_DIR$/src/1.txt\">\n" +
-                                       "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                       "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                       "            </state>\n" +
-                                       "          </provider>\n" +
-                                       "        </entry>\n" +
-                                       "      </file>\n" +
-                                       "      <file pinned=\"true\" current=\"false\" current-in-tab=\"false\">\n" +
-                                       "        <entry file=\"file://$PROJECT_DIR$/src/foo.xml\">\n" +
-                                       "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                       "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                       "            </state>\n" +
-                                       "          </provider>\n" +
-                                       "        </entry>\n" +
-                                       "      </file>\n" +
-                                       "      <file pinned=\"false\" current=\"true\" current-in-tab=\"true\">\n" +
-                                       "        <entry file=\"file://$PROJECT_DIR$/src/2.txt\">\n" +
-                                       "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                       "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                       "            </state>\n" +
-                                       "          </provider>\n" +
-                                       "        </entry>\n" +
-                                       "      </file>\n" +
-                                       "      <file pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
-                                       "        <entry file=\"file://$PROJECT_DIR$/src/3.txt\">\n" +
-                                       "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                       "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                       "            </state>\n" +
-                                       "          </provider>\n" +
-                                       "        </entry>\n" +
-                                       "      </file>\n" +
-                                       "    </leaf>\n" +
-                                       "  </component>\n";
+  private static final String STRING = """
+    <component name="FileEditorManager">
+        <leaf>
+          <file pinned="false" current="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/src/1.txt">
+              <provider selected="true" editor-type-id="text-editor">
+                <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="true" current="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/src/foo.xml">
+              <provider selected="true" editor-type-id="text-editor">
+                <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current="true" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/src/2.txt">
+              <provider selected="true" editor-type-id="text-editor">
+                <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/src/3.txt">
+              <provider selected="true" editor-type-id="text-editor">
+                <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </component>
+    """;
 
   private void assertOpenFiles(String... fileNames) {
-    List<String> names = ContainerUtil.map(manager.getSplitters().getEditorComposites(), composite -> composite.getFile().getName());
+    List<String> names = ContainerUtil.map(manager.getSplitters().getAllComposites(), composite -> composite.getFile().getName());
     assertEquals(Arrays.asList(fileNames), names);
   }
 
@@ -609,10 +624,11 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
   public void testMustNotAllowToTypeIntoFileRenamedToUnknownExtension() throws Exception {
     File ioFile = IoTestUtil.createTestFile("test.txt", "");
-    FileUtil.writeToFile(ioFile, new byte[]{1,2,3,4,29}); // to convince IDEA it's binary when renamed to unknown extension
+    FileUtil.writeToFile(ioFile, new byte[]{1,2,3,4,29}); // to convince IDEA it's binary when renamed to an unknown extension
     VirtualFile file = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile));
     assertEquals(PlainTextFileType.INSTANCE, file.getFileType());
     FileEditorManager.getInstance(getProject()).openFile(file, true);
+    //noinspection SpellCheckingInspection
     HeavyPlatformTestCase.rename(file, "test.unkneownExtensiosn");
     assertEquals(UnknownFileType.INSTANCE, file.getFileType());
     assertFalse(FileEditorManager.getInstance(getProject()).isFileOpen(file)); // must close

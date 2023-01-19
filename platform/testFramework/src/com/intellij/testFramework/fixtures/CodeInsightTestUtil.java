@@ -29,6 +29,8 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -37,9 +39,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.EdtTestUtil;
@@ -187,9 +191,25 @@ public final class CodeInsightTestUtil {
     fixture.checkResultByFile(after, false);
   }
 
-  @TestOnly
   public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, CodeInsightTestFixture fixture) {
-    doInlineRename(handler, newName, fixture.getEditor(), fixture.getElementAtCaret());
+    PsiElement elementAtCaret = fixture.getElementAtCaret();
+    Editor editorForElement = openEditorFor(elementAtCaret);
+    doInlineRename(handler, newName, editorForElement, elementAtCaret);
+  }
+
+  @NotNull
+  public static Editor openEditorFor(@NotNull PsiElement elementAtCaret) {
+    // sometimes the element found by TargetElementUtil may belong to the other editor, e.g, in case of an injected element
+    // but inplace rename requires that both element and the editor must be consistent
+    Editor editorForElement = PsiEditorUtil.getInstance().findEditorByPsiElement(elementAtCaret);
+    if (editorForElement == null) {
+      PsiFile containingFile = elementAtCaret.getContainingFile();
+      VirtualFile virtualFile = containingFile.getVirtualFile();
+      Project project = containingFile.getProject();
+      editorForElement = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
+      editorForElement.getCaretModel().moveToOffset(elementAtCaret.getTextOffset());
+    }
+    return editorForElement;
   }
 
   public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, @NotNull Editor editor, PsiElement elementAtCaret) {

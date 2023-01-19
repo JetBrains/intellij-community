@@ -23,9 +23,6 @@ import com.intellij.refactoring.JavaRenameRefactoring;
 import com.intellij.refactoring.rename.naming.AutomaticInheritorRenamerFactory;
 import com.intellij.refactoring.rename.naming.AutomaticVariableRenamerFactory;
 
-/**
- * @author dsl
- */
 public class JavaRenameRefactoringImpl extends RenameRefactoringImpl implements JavaRenameRefactoring {
   private static final AutomaticVariableRenamerFactory ourVariableRenamerFactory = new AutomaticVariableRenamerFactory();
   private static final AutomaticInheritorRenamerFactory ourInheritorRenamerFactory = new AutomaticInheritorRenamerFactory();

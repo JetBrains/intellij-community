@@ -81,35 +81,36 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
 
   @Override
   protected String getPreviewText() {                    //| Margin is here
-    return "package sample;\n" +
-           "public class Sample {\n" +
-           "  /**\n" +
-           "   * This is a method description that is long enough to exceed right margin.\n" +
-           "   *\n" +
-           "   * Another paragraph of the description placed after blank line.\n" +
-           "   * <p/>\n" +
-           "   * Line with manual\n" +
-           "   * line feed.\n" +
-           "   * @param i short named parameter description\n" +
-           "   * @param longParameterName long named parameter description\n" +
-           "   * @param missingDescription\n" +
-           "   * @return return description.\n" +
-           "   * @throws XXXException description.\n" +
-           "   * @throws YException description.\n" +
-           "   * @throws ZException\n" +
-           "   *\n" +
-           "   * @invalidTag" +
-           "   */\n" +
-           "  public abstract String sampleMethod(int i, int longParameterName, int missingDescription) throws XXXException, YException, ZException;\n" +
-           "\n" +
-           "  /** One-line comment */\n" +
-           "  public abstract String sampleMethod2();\n" +
-           "\n" +
-           "  /**\n" +
-           "   * Simple method description\n" +
-           "   * @return\n" +
-           "   */\n" +
-           "  public abstract String sampleMethod3();\n";
+    return """
+      package sample;
+      public class Sample {
+        /**
+         * This is a method description that is long enough to exceed right margin.
+         *
+         * Another paragraph of the description placed after blank line.
+         * <p/>
+         * Line with manual
+         * line feed.
+         * @param i short named parameter description
+         * @param longParameterName long named parameter description
+         * @param missingDescription
+         * @return return description.
+         * @throws XXXException description.
+         * @throws YException description.
+         * @throws ZException
+         *
+         * @invalidTag   */
+        public abstract String sampleMethod(int i, int longParameterName, int missingDescription) throws XXXException, YException, ZException;
+
+        /** One-line comment */
+        public abstract String sampleMethod2();
+
+        /**
+         * Simple method description
+         * @return
+         */
+        public abstract String sampleMethod3();
+      """;
   }
 
 

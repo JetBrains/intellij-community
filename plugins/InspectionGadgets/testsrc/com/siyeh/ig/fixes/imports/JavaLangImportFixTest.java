@@ -17,51 +17,63 @@ public class JavaLangImportFixTest extends IGQuickFixesTestCase {
 
   public void testRemoveJavaLangImport() {
     doTest(InspectionGadgetsBundle.message("delete.import.quickfix"),
-           "import/**/ java.lang.String;\n" +
-           "\n" +
-           "class X {\n" +
-           "  public void printName(String[] names) {\n" +
-           "  }\n" +
-           "}\n",
-           "class X {\n" +
-           "  public void printName(String[] names) {\n" +
-           "  }\n" +
-           "}\n"
+           """
+             import/**/ java.lang.String;
+
+             class X {
+               public void printName(String[] names) {
+               }
+             }
+             """,
+           """
+             class X {
+               public void printName(String[] names) {
+               }
+             }
+             """
     );
   }
 
   public void testRemoveJavaLangImportOnDemand() {
     doTest(InspectionGadgetsBundle.message("delete.import.quickfix"),
-           "import/**/ java.lang.*;\n" +
-           "\n" +
-           "class X {\n" +
-           "  public void printName(String[] names) {\n" +
-           "  }\n" +
-           "}\n",
-           "class X {\n" +
-           "  public void printName(String[] names) {\n" +
-           "  }\n" +
-           "}\n"
+           """
+             import/**/ java.lang.*;
+
+             class X {
+               public void printName(String[] names) {
+               }
+             }
+             """,
+           """
+             class X {
+               public void printName(String[] names) {
+               }
+             }
+             """
     );
   }
 
   public void testRemoveJavaLangImportAmongOther() {
     doTest(InspectionGadgetsBundle.message("delete.import.quickfix"),
-           "import/**/ java.lang.String;\n" +
-           "import java.util.Date;\n" +
-           "\n" +
-           "class X {\n" +
-           "  public String printDate(Date date) {\n" +
-           "    return date.toString();\n" +
-           "  }\n" +
-           "}\n",
-           "import java.util.Date;\n" +
-           "\n" +
-           "class X {\n" +
-           "  public String printDate(Date date) {\n" +
-           "    return date.toString();\n" +
-           "  }\n" +
-           "}\n"
+           """
+             import/**/ java.lang.String;
+             import java.util.Date;
+
+             class X {
+               public String printDate(Date date) {
+                 return date.toString();
+               }
+             }
+             """,
+           """
+             import java.util.Date;
+
+             class X {
+               public String printDate(Date date) {
+                 return date.toString();
+               }
+             }
+             """
     );
   }
 }

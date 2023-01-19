@@ -7,13 +7,12 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.suggested.endOffset
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 
 /**
  * This is a base class for classes, handling indenting/unindenting of list items.
@@ -25,7 +24,7 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
     baseHandler?.isEnabled(editor, caret, dataContext) == true
 
   override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-    val enabled = editor.project?.let { MarkdownSettings.getInstance(it) }?.isEnhancedEditingEnabled == true
+    val enabled = MarkdownCodeInsightSettings.getInstance().state.adjustListIndentation
     if (caret == null || !enabled || !doExecuteAction(editor, caret)) {
       baseHandler?.execute(editor, caret, dataContext)
     }
@@ -49,7 +48,7 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
         continue
       }
       indentPerformed = true
-      if (Registry.`is`("markdown.lists.renumber.on.type.enable")) {
+      if (MarkdownCodeInsightSettings.getInstance().state.renumberListsOnType) {
         psiDocumentManager.commitDocument(document)
         @Suppress("name_shadowing") // item is not valid anymore, but line didn't change
         val item = file.getListItemAtLine(line, document)!!

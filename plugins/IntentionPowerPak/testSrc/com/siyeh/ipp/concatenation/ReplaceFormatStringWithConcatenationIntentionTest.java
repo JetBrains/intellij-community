@@ -111,43 +111,45 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
   }
 
   public void testConditional() {
-    doTest("class Info {\n" +
-           "\n" +
-           "    public String name;\n" +
-           "    public boolean isSource;\n" +
-           "\n" +
-           "    public boolean isSource() {\n" +
-           "        return isSource;\n" +
-           "    }\n" +
-           "\n" +
-           "    public String getName() {\n" +
-           "        return name;\n" +
-           "    }\n" +
-           "\n" +
-           "    @Override\n" +
-           "    public final String toString() {\n" +
-           "        return String.format(\"%s%s port\", getName(),\n" +
-           "                             isSource() ? \" source\" : /*_Replace 'String.format()' with concatenation*/\" target\");\n" +
-           "    }\n" +
-           "}",
+    doTest("""
+             class Info {
 
-           "class Info {\n" +
-           "\n" +
-           "    public String name;\n" +
-           "    public boolean isSource;\n" +
-           "\n" +
-           "    public boolean isSource() {\n" +
-           "        return isSource;\n" +
-           "    }\n" +
-           "\n" +
-           "    public String getName() {\n" +
-           "        return name;\n" +
-           "    }\n" +
-           "\n" +
-           "    @Override\n" +
-           "    public final String toString() {\n" +
-           "        return getName() + (isSource() ? \" source\" : \" target\") + \" port\";\n" +
-           "    }\n" +
-           "}");
+                 public String name;
+                 public boolean isSource;
+
+                 public boolean isSource() {
+                     return isSource;
+                 }
+
+                 public String getName() {
+                     return name;
+                 }
+
+                 @Override
+                 public final String toString() {
+                     return String.format("%s%s port", getName(),
+                                          isSource() ? " source" : /*_Replace 'String.format()' with concatenation*/" target");
+                 }
+             }""",
+
+           """
+             class Info {
+
+                 public String name;
+                 public boolean isSource;
+
+                 public boolean isSource() {
+                     return isSource;
+                 }
+
+                 public String getName() {
+                     return name;
+                 }
+
+                 @Override
+                 public final String toString() {
+                     return getName() + (isSource() ? " source" : " target") + " port";
+                 }
+             }""");
   }
 }

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.base.compilerPreferences.facet
 import com.intellij.facet.ui.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ShowSettingsUtilImpl
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.ui.ComboBox
@@ -12,18 +13,16 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.HoverHyperlinkLabel
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.ThreeStateCheckBox
-import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
-import org.jetbrains.kotlin.idea.base.util.onTextChange
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.base.util.onTextChange
 import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.facet.getExposedFacetFields
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.platform.*
-import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -83,8 +82,8 @@ class KotlinFacetEditorGeneralTab(
         lateinit var targetPlatformLabel: JLabel //JTextField?
         var targetPlatformsCurrentlySelected: TargetPlatform? = null
         private lateinit var projectSettingsLink: HoverHyperlinkLabel
-        lateinit var targetPlatformFacetLabel: JLabel
-        lateinit var useProjectSettingsWarningLabel: JLabel
+        private lateinit var targetPlatformFacetLabel: JLabel
+        private lateinit var useProjectSettingsWarningLabel: JLabel
 
         @Volatile
         private var isInTargetPlatformChangeAction = false
@@ -377,7 +376,7 @@ class KotlinFacetEditorGeneralTab(
 
         editor.initialize()
 
-        for (creator in KotlinFacetValidatorCreator.EP_NAME.getExtensions()) {
+        for (creator in KotlinFacetValidatorCreator.EP_NAME.extensions) {
             validatorsManager.registerValidator(creator.create(editor, validatorsManager, editorContext))
         }
 

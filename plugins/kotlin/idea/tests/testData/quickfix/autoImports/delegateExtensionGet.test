@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import extension function 'DelegateImpl.getValue'" "true"
 // ERROR: Type 'DelegateImpl<Int>' has no method 'getValue(BigTest, KProperty<*>)' and thus it cannot serve as a delegate
 /* IGNORE_FIR */
 
@@ -27,7 +27,7 @@ public operator fun <T> DelegateImpl<T>.getValue(thisRef: Any?, property: KPrope
 
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import extension function 'DelegateImpl.getValue'" "true"
 // ERROR: Type 'DelegateImpl<Int>' has no method 'getValue(BigTest, KProperty<*>)' and thus it cannot serve as a delegate
 /* IGNORE_FIR */
 

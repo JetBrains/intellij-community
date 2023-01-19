@@ -6,7 +6,7 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.JPanel
 
-class BackgroundRoundedPanel(private val arcSize: Int) : JPanel() {
+open class BackgroundRoundedPanel(private val arcSize: Int) : JPanel() {
 
   override fun paintComponent(g: Graphics?) {
     if (!isOpaque) {

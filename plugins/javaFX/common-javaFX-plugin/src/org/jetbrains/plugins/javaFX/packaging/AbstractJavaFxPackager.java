@@ -351,9 +351,6 @@ public abstract class AbstractJavaFxPackager {
 
   private static String getAntHome() {
     final String appHome = PathManager.getHomePath();
-    if (appHome == null) {
-      return null;
-    }
 
     File antHome = new File(appHome, "lib" + File.separator + "ant");
     if (!antHome.exists()) {

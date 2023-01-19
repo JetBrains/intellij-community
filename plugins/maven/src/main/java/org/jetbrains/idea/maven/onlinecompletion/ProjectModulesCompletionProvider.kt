@@ -7,25 +7,23 @@ import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactIn
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.reposearch.DependencySearchProvider
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
+import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 
 class ProjectModulesCompletionProvider(private val myProject: Project) : DependencySearchProvider {
 
-  override fun fulltextSearch(searchString: String, consumer: Consumer<RepositoryArtifactData>) {
-    return MavenProjectsManager.getInstance(myProject).projects.asSequence()
-      .map { MavenDependencyCompletionItem(it.mavenId.key) }
-      .filter { it.groupId != null && it.artifactId != null }
-      .map { MavenRepositoryArtifactInfo(it.groupId!!, it.artifactId!!, listOf(it).toTypedArray()) }
-      .forEach(consumer::accept)
-  }
+  override fun fulltextSearch(searchString: String) = getLocal()
 
-  override fun suggestPrefix(groupId: String?, artifactId: String?, consumer: Consumer<RepositoryArtifactData>) {
-    return MavenProjectsManager.getInstance(myProject).projects.asSequence()
-      .map { MavenDependencyCompletionItem(it.mavenId.key) }
-      .filter { it.groupId != null && it.artifactId != null }
-      .map { MavenRepositoryArtifactInfo(it.groupId!!, it.artifactId!!, listOf(it).toTypedArray()) }
-      .forEach(consumer::accept)
-  }
+  override fun suggestPrefix(groupId: String?, artifactId: String?) = getLocal()
+
+  private fun getLocal(): CompletableFuture<List<RepositoryArtifactData>> =
+    CompletableFuture.supplyAsync {
+      MavenProjectsManager.getInstance(myProject).projects.asSequence()
+        .map { MavenDependencyCompletionItem(it.mavenId.key) }
+        .filter { it.groupId != null && it.artifactId != null }
+        .map { MavenRepositoryArtifactInfo(it.groupId!!, it.artifactId!!, arrayOf(it)) }
+        .toList()
+    }
 
   override fun isLocal() = true
 }

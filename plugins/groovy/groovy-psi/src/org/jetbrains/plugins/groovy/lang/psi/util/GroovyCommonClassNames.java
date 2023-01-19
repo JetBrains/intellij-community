@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.util.containers.ContainerUtil;
+
 import java.util.Set;
 
-import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
 import static java.util.Collections.unmodifiableSet;
 
 /**
@@ -71,7 +72,7 @@ public interface GroovyCommonClassNames {
   String GROOVY_TRAIT = "groovy.transform.Trait";
   String GROOVY_TRAIT_IMPLEMENTED = "org.codehaus.groovy.transform.trait.Traits.Implemented";
 
-  Set<String> DEFAULT_INSTANCE_EXTENSIONS = unmodifiableSet(newLinkedHashSet(
+  Set<String> DEFAULT_INSTANCE_EXTENSIONS = unmodifiableSet(ContainerUtil.newLinkedHashSet(
     "org.codehaus.groovy.runtime.DateGroovyMethods",
     "org.codehaus.groovy.runtime.DefaultGroovyMethods",
     "org.codehaus.groovy.runtime.EncodingGroovyMethods",
@@ -90,7 +91,7 @@ public interface GroovyCommonClassNames {
     "org.codehaus.groovy.runtime.dgmimpl.NumberNumberDiv"
   ));
 
-  Set<String> DEFAULT_STATIC_EXTENSIONS = unmodifiableSet(newLinkedHashSet(
+  Set<String> DEFAULT_STATIC_EXTENSIONS = unmodifiableSet(ContainerUtil.newLinkedHashSet(
     "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods"
   ));
 }

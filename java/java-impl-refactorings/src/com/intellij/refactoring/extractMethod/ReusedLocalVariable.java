@@ -4,9 +4,6 @@ package com.intellij.refactoring.extractMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Pavel.Dolgov
- */
 class ReusedLocalVariable {
   @NotNull private final String myName;
   @Nullable private final String myTempName;

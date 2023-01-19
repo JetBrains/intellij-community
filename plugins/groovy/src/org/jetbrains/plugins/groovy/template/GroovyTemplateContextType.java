@@ -22,9 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * @author peter
- */
 public abstract class GroovyTemplateContextType extends TemplateContextType {
 
   protected GroovyTemplateContextType(@NlsContexts.Label @NotNull String presentableName) {

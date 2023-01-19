@@ -16,13 +16,12 @@
 
 package com.intellij.ide.todo;
 
-import com.intellij.ide.todo.nodes.ToDoRootNode;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.NotNull;
 
 public class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
   private final ScopeChooserCombo myScopes;
@@ -33,28 +32,12 @@ public class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
   }
 
   @Override
-  public boolean accept(final PsiFile psiFile) {
+  public boolean accept(final @NotNull PsiFile psiFile) {
     if (!psiFile.isValid()) return false;
 
     SearchScope scope = myScopes.getSelectedScope();
     VirtualFile file = psiFile.getVirtualFile();
     boolean isAffected = scope != null && file != null && scope.contains(file);
-    return isAffected && (myTodoFilter != null && myTodoFilter.accept(mySearchHelper, psiFile) ||
-                          (myTodoFilter == null && mySearchHelper.getTodoItemsCount(psiFile) > 0));
-  }
-
-  @Override
-  public boolean getIsPackagesShown() {
-    return myArePackagesShown;
-  }
-
-  @Override
-  Object getFirstSelectableElement() {
-    return ((ToDoRootNode)myRootElement).getSummaryNode();
-  }
-
-  @Override
-  protected AbstractTreeNode createRootElement() {
-    return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
+    return isAffected && acceptTodoFilter(psiFile);
   }
 }

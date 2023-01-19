@@ -7,14 +7,16 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.IntStack;
 import com.intellij.util.containers.Stack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntStack;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.ApiStatus;
@@ -66,7 +68,7 @@ public final class Divider {
       if (rootFilter == null || !rootFilter.test(root)) {
         continue;
       }
-      divideInsideAndOutsideInOneRoot(root, restrictRange.toScalarRange(), priorityRange.toScalarRange(), processor);
+      divideInsideAndOutsideInOneRoot(root, TextRangeScalarUtil.toScalarRange(restrictRange), TextRangeScalarUtil.toScalarRange(priorityRange), processor);
     }
   }
 
@@ -80,7 +82,7 @@ public final class Divider {
     if (cached != null &&
         cached.modificationStamp == modificationStamp &&
         cached.restrictRange == restrictRange &&
-        TextRange.contains(cached.priorityRange, priorityRange)) {
+        TextRangeScalarUtil.contains(cached.priorityRange, priorityRange)) {
       elements = cached;
     }
     else {
@@ -105,12 +107,12 @@ public final class Divider {
                                                       @NotNull List<? super PsiElement> outParents,
                                                       @NotNull LongList outParentRanges,
                                                       boolean includeParents) {
-    int startOffset = TextRange.startOffset(restrictRange);
-    int endOffset = TextRange.endOffset(restrictRange);
+    int startOffset = TextRangeScalarUtil.startOffset(restrictRange);
+    int endOffset = TextRangeScalarUtil.endOffset(restrictRange);
 
     Condition<PsiElement>[] filters = CollectHighlightsUtil.EP_NAME.getExtensions();
 
-    IntStack starts = new IntStack(STARTING_TREE_HEIGHT);
+    IntStack starts = new IntArrayList(STARTING_TREE_HEIGHT);
     starts.push(startOffset);
     Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
     Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
@@ -144,15 +146,15 @@ public final class Divider {
           offset += element.getTextLength();
         }
 
-        int start = starts.pop();
+        int start = starts.popInt();
         if (startOffset <= start && offset <= endOffset) {
-          if (TextRange.containsRange(priorityRange, start, offset)) {
+          if (TextRangeScalarUtil.containsRange(priorityRange, start, offset)) {
             inside.add(element);
-            insideRanges.add(TextRange.toScalarRange(start, offset));
+            insideRanges.add(TextRangeScalarUtil.toScalarRange(start, offset));
           }
           else {
             outside.add(element);
-            outsideRanges.add(TextRange.toScalarRange(start, offset));
+            outsideRanges.add(TextRangeScalarUtil.toScalarRange(start, offset));
           }
         }
 
@@ -181,7 +183,7 @@ public final class Divider {
           outParents.add(parent);
           TextRange textRange = parent.getTextRange();
           assert textRange != null : "Text range for " + parent + " is null. " + parent.getClass() +"; root: "+root+": "+root.getVirtualFile();
-          outParentRanges.add(textRange.toScalarRange());
+          outParentRanges.add(TextRangeScalarUtil.toScalarRange(textRange));
         }
       }
     }

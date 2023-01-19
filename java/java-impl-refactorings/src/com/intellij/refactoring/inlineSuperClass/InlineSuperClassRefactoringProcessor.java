@@ -78,7 +78,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
 
   @Override
-  protected void findUsages(@NotNull final List<FixableUsageInfo> usages) {
+  protected void findUsages(final @NotNull List<? super FixableUsageInfo> usages) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
     final PsiElementFactory elementFactory = facade.getElementFactory();
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
@@ -319,7 +319,8 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   protected void performRefactoring(final UsageInfo @NotNull [] usages) {
     try {
       final UsageInfo[] infos = ContainerUtil.map2Array(myTargetClasses, UsageInfo.class, UsageInfo::new);
-      new PushDownProcessor<>(mySuperClass, Arrays.asList(myMemberInfos), new DocCommentPolicy(myPolicy)).pushDownToClasses(infos);
+      new PushDownProcessor<>(mySuperClass, Arrays.asList(myMemberInfos), new DocCommentPolicy(myPolicy), myCurrentInheritor!=null)
+        .pushDownToClasses(infos);
 
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
       for (UsageInfo usageInfo : usages) {

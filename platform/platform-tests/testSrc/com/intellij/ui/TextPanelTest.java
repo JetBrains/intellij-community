@@ -6,9 +6,6 @@ import org.junit.Test;
 
 import java.awt.*;
 
-/**
- * @author Denis Fokin
- */
 public class TextPanelTest {
 
   @Test

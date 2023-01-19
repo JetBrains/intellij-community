@@ -6,6 +6,8 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -41,9 +43,7 @@ import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.kdoc.psi.api.KDocElement
 import org.jetbrains.kotlin.name.FqName
@@ -471,12 +471,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
         }
 
         val dummyOriginalFile = runReadAction {
-            KtPsiFactory(project)
-                .createAnalyzableFile(
-                    "dummy-original.$extension",
-                    "$dummyOrigFileProlog${transferableData.sourceText}",
-                    ctxFile
-                )
+            KtPsiFactory.contextual(ctxFile).createFile("dummy-original.$extension", "$dummyOrigFileProlog${transferableData.sourceText}")
         }
 
         if (script) {
@@ -547,13 +542,16 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
         val project = file.project
         val dummyImportsFile = runReadAction {
-            KtPsiFactory(project)
-                .createAnalyzableFile(
+            KtPsiFactory.contextual(ctxFile)
+                .createFile(
                     "dummy-imports.kt",
-                    "package $fakePkgName\n" +
-                            "${joinLines(fakePkgImports)}\n" +
-                            transferableData.sourceText,
-                    ctxFile
+                    buildString {
+                        appendLine("package $fakePkgName")
+                        for (pkgImport in fakePkgImports) {
+                            appendLine(pkgImport)
+                        }
+                        append(transferableData.sourceText)
+                    }
                 )
         }
 

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.mediator.daemon;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.util.concurrent.internal.InternalFutureFailureAccess;
 import com.google.protobuf.Message;
 import com.intellij.execution.process.mediator.rpc.ProcessMediatorProto;
 import com.sun.jna.Native;
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings({"RedundantArrayCreation", "KotlinInternalInJava", "UnnecessaryFullyQualifiedName"})
-public class DaemonProcessRuntimeClasspath {
+public final class DaemonProcessRuntimeClasspath {
 
   private static final List<Class<?>> CLASSPATH_CLASSES = List.of(new Class<?>[]{
     DaemonProcessMainKt.class,
@@ -48,6 +49,7 @@ public class DaemonProcessRuntimeClasspath {
     Context.class, // grpc-context
     AbstractStub.class, // grpc-stub
     AbstractCoroutineStub.class, // grpc-kotlin-stub
+    InternalFutureFailureAccess.class, // guava
     MoreObjects.class, // guava
 
     Message.class, // protobuf
@@ -65,6 +67,7 @@ public class DaemonProcessRuntimeClasspath {
     "java.net.preferIPv4Stack",
     "java.net.preferIPv6Addresses",
     "java.util.logging.config.file",
+    "jna.boot.library.path",
   });
 
   public static @NotNull Class<?> getMainClass() {

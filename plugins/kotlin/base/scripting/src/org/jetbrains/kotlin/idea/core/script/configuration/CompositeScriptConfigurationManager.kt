@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.ProjectJdkTable.JDK_TABLE_TOPIC
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
@@ -17,9 +18,7 @@ import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifier
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
-import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
-import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsCache
-import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsUpdater
+import org.jetbrains.kotlin.idea.core.script.ucache.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -94,14 +93,16 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
         return default.getOrLoadConfiguration(virtualFile, preloadedKtFile)
     }
 
+    private val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
+
     override fun getConfiguration(file: KtFile) =
-        getOrLoadConfiguration(file.originalFile.virtualFile, file)
+        getOrLoadConfiguration(file.alwaysVirtualFile, file)
 
     override fun hasConfiguration(file: KtFile): Boolean =
-        classpathRoots.contains(file.originalFile.virtualFile)
+        classpathRoots.contains(file.alwaysVirtualFile)
 
     override fun isConfigurationLoadingInProgress(file: KtFile): Boolean =
-        plugins.firstOrNull { it.isApplicable(file.originalFile.virtualFile) }?.isConfigurationLoadingInProgress(file)
+        plugins.firstOrNull { it.isApplicable(file.alwaysVirtualFile) }?.isConfigurationLoadingInProgress(file)
             ?: default.isConfigurationLoadingInProgress(file)
 
     fun getLightScriptInfo(file: String): ScriptClassRootsCache.LightScriptInfo? =
@@ -175,6 +176,18 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
 
     override fun getAllScriptSdkDependenciesSources(): Collection<VirtualFile> =
         classpathRoots.sdks.nonIndexedSourceRoots
+
+    override fun getScriptDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile> =
+        classpathRoots.getScriptDependenciesClassFiles(file)
+
+    override fun getScriptDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile> =
+        classpathRoots.getScriptDependenciesSourceFiles(file)
+
+    override fun getScriptSdkDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile> =
+        classpathRoots.getScriptDependenciesSdkFiles(file, OrderRootType.CLASSES)
+
+    override fun getScriptSdkDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile> =
+        classpathRoots.getScriptDependenciesSdkFiles(file, OrderRootType.SOURCES)
 
     ///////////////////
     // Adapters for deprecated API

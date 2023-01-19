@@ -210,13 +210,7 @@ class ChainMethodCallsBlockBuilder {
   }
 
 
-  private static class ChainedCallChunk {
-    @NotNull final List<ASTNode> nodes;
-
-    ChainedCallChunk(@NotNull List<ASTNode> nodes) {
-      this.nodes = nodes;
-    }
-
+  private record ChainedCallChunk(@NotNull List<ASTNode> nodes) {
     boolean isEmpty() {
       return nodes.isEmpty();
     }

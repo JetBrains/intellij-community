@@ -25,14 +25,14 @@ public abstract class IErrorCounterReparseableElementType extends IReparseableEl
   public static final int NO_ERRORS = 0;
   public static final int FATAL_ERROR = Integer.MIN_VALUE;
 
-  public IErrorCounterReparseableElementType(@NonNls final String debugName, final Language language) {
+  public IErrorCounterReparseableElementType(@NonNls String debugName, Language language) {
     super(debugName, language);
   }
 
   public abstract int getErrorsCount(CharSequence seq, Language fileLanguage, Project project);
 
   @Override
-  public boolean isParsable(@NotNull CharSequence buffer, @NotNull Language fileLanguage, @NotNull final Project project) {
+  public boolean isParsable(@NotNull CharSequence buffer, @NotNull Language fileLanguage, @NotNull Project project) {
     return getErrorsCount(buffer, fileLanguage, project) == NO_ERRORS;
   }
 }

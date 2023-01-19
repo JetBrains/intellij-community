@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions.generate
 
@@ -10,7 +10,8 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.refactoring.canRefactor
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -35,7 +36,9 @@ abstract class KotlinGenerateActionBase : CodeInsightAction(), CodeInsightAction
         if (file !is KtFile || file.isCompiled) return false
 
         val targetClass = getTargetClass(editor, file) ?: return false
-        return targetClass.canRefactor() && isValidForClass(targetClass)
+        if (!targetClass.isValid) return false
+        val filter = RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true)
+        return RootKindMatcher.matches(targetClass, filter) && isValidForClass(targetClass)
     }
 
     protected open fun getTargetClass(editor: Editor, file: PsiFile): KtClassOrObject? {

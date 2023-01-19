@@ -36,7 +36,7 @@ class AddWhenElseBranchFix(element: KtWhenExpression) : AddElseBranchFix<KtWhenE
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         val whenCloseBrace = element.closeBrace ?: return
-        val entry = KtPsiFactory(file).createWhenEntry("else -> {}")
+        val entry = KtPsiFactory(project).createWhenEntry("else -> {}")
         CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element.addBefore(entry, whenCloseBrace))?.endOffset?.let { offset ->
             editor?.caretModel?.moveToOffset(offset - 1)
         }
@@ -60,7 +60,7 @@ class AddIfElseBranchFix(element: KtIfExpression) : AddElseBranchFix<KtIfExpress
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         val withBraces = element.then is KtBlockExpression
-        val psiFactory = KtPsiFactory(file)
+        val psiFactory = KtPsiFactory(project)
         val newIf = psiFactory.createExpression(
             if (withBraces) {
                 "if (true) {} else {}"

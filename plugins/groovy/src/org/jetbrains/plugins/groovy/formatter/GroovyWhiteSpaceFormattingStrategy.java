@@ -20,9 +20,6 @@ import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
-/**
- * @author peter
- */
 public class GroovyWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrategyAdapter {
   @Override
   public boolean containsWhitespacesOnly(@NotNull ASTNode node) {

@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public class MockFileManager implements FileManager {
   private final PsiManagerEx myManager;
   // in mock tests it's LightVirtualFile, they're only alive when they're referenced,

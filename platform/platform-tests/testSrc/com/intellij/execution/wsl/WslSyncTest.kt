@@ -33,7 +33,7 @@ class WslSyncTest(private val linToWin: Boolean) {
       private set
 
     override fun before() {
-      dir = wslRule.wsl.runCommand("mktemp", "-d")
+      dir = wslRule.wsl.runCommand("mktemp", "-d").getOrThrow()
     }
 
     override fun after() {
@@ -75,7 +75,7 @@ class WslSyncTest(private val linToWin: Boolean) {
   val timeoutRule = Timeout(30, TimeUnit.SECONDS)
 
   private val linuxDirAsPath: Path
-    get() = wslRule.wsl.getUNCRootVirtualFile(true)!!.toNioPath().resolve(linuxDirRule.dir)
+    get() = wslRule.wsl.getUNCRootPath().resolve(linuxDirRule.dir)
 
   @Test
   fun testLinksReported() {

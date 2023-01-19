@@ -77,13 +77,6 @@ public enum GitVersionSpecialty {
     }
   },
 
-  DOESNT_DEFINE_HOME_ENV_VAR {
-    @Override
-    public boolean existsIn(@NotNull GitVersion version) {
-      return SystemInfo.isWindows && version.isOlderOrEqual(new GitVersion(1, 7, 0, 2));
-    }
-  },
-
   KNOWS_PULL_REBASE {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {

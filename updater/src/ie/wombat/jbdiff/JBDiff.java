@@ -29,7 +29,10 @@ package ie.wombat.jbdiff;
 import com.intellij.updater.Utils;
 import com.intellij.updater.Utils.OpenByteArrayOutputStream;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.zip.GZIPOutputStream;
@@ -40,7 +43,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * @author <a href="maito:jdesbonnet@gmail.com">Joe Desbonnet</a>
  */
-public class JBDiff {
+public final class JBDiff {
   private static void selectSplit(int[] I, int[] V, int start, int len, int h) {
     int j;
     for (int k = start; k < start + len; k += j) {

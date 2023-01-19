@@ -12,9 +12,6 @@ import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.NeedsIndex
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class SignatureCompletionTest extends LightFixtureCompletionTestCase {
 

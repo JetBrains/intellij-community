@@ -1,9 +1,9 @@
-class InputState(object):
+class InputState:
     PURE_ASCII: int
     ESC_ASCII: int
     HIGH_BYTE: int
 
-class LanguageFilter(object):
+class LanguageFilter:
     CHINESE_SIMPLIFIED: int
     CHINESE_TRADITIONAL: int
     JAPANESE: int
@@ -13,17 +13,17 @@ class LanguageFilter(object):
     CHINESE: int
     CJK: int
 
-class ProbingState(object):
+class ProbingState:
     DETECTING: int
     FOUND_IT: int
     NOT_ME: int
 
-class MachineState(object):
+class MachineState:
     START: int
     ERROR: int
     ITS_ME: int
 
-class SequenceLikelihood(object):
+class SequenceLikelihood:
     NEGATIVE: int
     UNLIKELY: int
     LIKELY: int
@@ -31,7 +31,7 @@ class SequenceLikelihood(object):
     @classmethod
     def get_num_categories(cls) -> int: ...
 
-class CharacterCategory(object):
+class CharacterCategory:
     UNDEFINED: int
     LINE_BREAK: int
     SYMBOL: int

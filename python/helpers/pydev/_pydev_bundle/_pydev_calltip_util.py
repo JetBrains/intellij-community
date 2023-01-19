@@ -5,7 +5,7 @@ Author: Yuli Fitterman
 # noinspection PyBroadException
 import types
 
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY3K
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY3K, IS_PY311
 
 try:
     import inspect
@@ -101,17 +101,25 @@ def get_description(obj):
     fn_class = None
     if callable(fob):
         try:
-            if IS_PY3K:
-                spec_info = inspect.getfullargspec(fob)
+            if IS_PY311:
+                spec_info = inspect.signature(fob)
+                argspec = str(spec_info)
             else:
-                spec_info = inspect.getargspec(fob)
+                if IS_PY3K:
+                    spec_info = inspect.getfullargspec(fob)
+                else:
+                    spec_info = inspect.getargspec(fob)
+                argspec = inspect.formatargspec(*spec_info)
         except TypeError:
             if is_init_func:
                 spec_info = getargspec_py2(obj)
             else:
                 spec_info = getargspec_py2(fob)
+            argspec = inspect.formatargspec(*spec_info)
+        except ValueError:
+            # function/method defined in C for example str.count
+            argspec = None
 
-        argspec = inspect.formatargspec(*spec_info)
         fn_name = getattr(fob, '__name__', None)
         if isinstance(obj, type) or type(obj).__name__ == 'classobj':
             fn_name = "__init__"

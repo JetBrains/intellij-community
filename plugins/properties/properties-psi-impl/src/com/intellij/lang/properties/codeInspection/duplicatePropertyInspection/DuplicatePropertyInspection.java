@@ -4,6 +4,9 @@ package com.intellij.lang.properties.codeInspection.duplicatePropertyInspection;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.options.OptDropdown;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.properties.IProperty;
@@ -35,10 +38,9 @@ import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
   public boolean CURRENT_FILE = true;
@@ -330,76 +332,28 @@ public final class DuplicatePropertyInspection extends GlobalSimpleInspectionToo
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new OptionsPanel().myWholePanel;
+  public @NotNull OptPane getOptionsPane() {
+    @SuppressWarnings("InjectedReferences")
+    OptDropdown scope = dropdown("SCOPE", PropertiesBundle.message("label.analysis.scope"),
+                                 option("file", PropertiesBundle.message("duplicate.property.file.scope.option")),
+                                 option("module", PropertiesBundle.message("duplicate.property.module.scope.option")),
+                                 option("project", PropertiesBundle.message("duplicate.property.project.scope.option")));
+    return pane(
+      scope,
+      checkbox("CHECK_DUPLICATE_VALUES", PropertiesBundle.message("duplicate.property.value.option")),
+      checkbox("CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES", PropertiesBundle.message("duplicate.property.diff.key.option")),
+      checkbox("CHECK_DUPLICATE_KEYS", PropertiesBundle.message("duplicate.property.key.option"))
+    );
   }
 
-  public class OptionsPanel {
-    private JRadioButton myFileScope;
-    private JRadioButton myModuleScope;
-    private JRadioButton myProjectScope;
-    private JCheckBox myDuplicateValues;
-    private JCheckBox myDuplicateKeys;
-    private JCheckBox myDuplicateBoth;
-    private JPanel myWholePanel;
-
-    OptionsPanel() {
-      ButtonGroup buttonGroup = new ButtonGroup();
-      buttonGroup.add(myFileScope);
-      buttonGroup.add(myModuleScope);
-      buttonGroup.add(myProjectScope);
-
-      myFileScope.setSelected(CURRENT_FILE);
-      myModuleScope.setSelected(MODULE_WITH_DEPENDENCIES);
-      myProjectScope.setSelected(!(CURRENT_FILE || MODULE_WITH_DEPENDENCIES));
-
-      myFileScope.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          CURRENT_FILE = myFileScope.isSelected();
-        }
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onValue(
+      "SCOPE",
+      () -> CURRENT_FILE ? "file" : MODULE_WITH_DEPENDENCIES ? "module" : "project",
+      value -> {
+        CURRENT_FILE = "file".equals(value);
+        MODULE_WITH_DEPENDENCIES = "module".equals(value);
       });
-      myModuleScope.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          MODULE_WITH_DEPENDENCIES = myModuleScope.isSelected();
-          if (MODULE_WITH_DEPENDENCIES) {
-            CURRENT_FILE = false;
-          }
-        }
-      });
-      myProjectScope.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (myProjectScope.isSelected()) {
-            CURRENT_FILE = false;
-            MODULE_WITH_DEPENDENCIES = false;
-          }
-        }
-      });
-
-      myDuplicateKeys.setSelected(CHECK_DUPLICATE_KEYS);
-      myDuplicateValues.setSelected(CHECK_DUPLICATE_VALUES);
-      myDuplicateBoth.setSelected(CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES);
-
-      myDuplicateKeys.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          CHECK_DUPLICATE_KEYS = myDuplicateKeys.isSelected();
-        }
-      });
-      myDuplicateValues.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          CHECK_DUPLICATE_VALUES = myDuplicateValues.isSelected();
-        }
-      });
-      myDuplicateBoth.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES = myDuplicateBoth.isSelected();
-        }
-      });
-    }
   }
 }

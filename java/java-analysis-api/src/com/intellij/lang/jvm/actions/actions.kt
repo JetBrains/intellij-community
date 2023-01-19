@@ -44,6 +44,13 @@ fun createModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequ
   }
 }
 
+fun createChangeOverrideActions(target: JvmModifiersOwner, shouldBePresent: Boolean): List<IntentionAction> {
+  return createActions {
+    it.createChangeOverrideActions(target, shouldBePresent)
+  }
+}
+
+
 fun createAddFieldActions(target: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
   return createActions {
     it.createAddFieldActions(target, request)

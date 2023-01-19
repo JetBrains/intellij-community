@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.ApiStatus;
@@ -97,9 +98,7 @@ public final class ProgressIndicatorUtils {
    */
   public static boolean runWithWriteActionPriority(@NotNull Runnable action, @NotNull ProgressIndicator progressIndicator) {
     ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      throw new IllegalStateException("Must not call from EDT");
-    }
+    application.assertIsNonDispatchThread();
     Runnable cancellation = indicatorCancellation(progressIndicator);
     if (isWriteActionRunningOrPending(application)) {
       cancellation.run();
@@ -245,9 +244,7 @@ public final class ProgressIndicatorUtils {
     if (application.isReadAccessAllowed()) {
       throw new IllegalStateException("Mustn't be called from within read action");
     }
-    if (application.isDispatchThread()) {
-      throw new IllegalStateException("Mustn't be called from EDT");
-    }
+    application.assertIsNonDispatchThread();
     Semaphore semaphore = new Semaphore(1);
     application.invokeLater(semaphore::up, ModalityState.any());
     awaitWithCheckCanceled(semaphore, indicator);
@@ -304,6 +301,15 @@ public final class ProgressIndicatorUtils {
     finally {
       lock.unlock();
     }
+  }
+
+  public static void awaitWithCheckCanceled(long millis) {
+    long start = System.nanoTime();
+    awaitWithCheckCanceled(() -> {
+      if (TimeoutUtil.getDurationMillis(start) > millis) return true;
+      TimeoutUtil.sleep(ConcurrencyUtil.DEFAULT_TIMEOUT_MS);
+      return false;
+    });
   }
 
   public static void awaitWithCheckCanceled(@NotNull Condition condition) {

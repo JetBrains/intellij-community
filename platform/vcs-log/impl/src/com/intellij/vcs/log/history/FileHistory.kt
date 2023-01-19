@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
@@ -396,9 +396,7 @@ internal class AdditionDeletion(val filePath: FilePath, val child: Int, val pare
     if (!FILE_PATH_HASHING_STRATEGY.equals(filePath, other.filePath)) return false
     if (child != other.child) return false
     if (parent != other.parent) return false
-    if (isAddition != other.isAddition) return false
-
-    return true
+    return isAddition == other.isAddition
   }
 
   override fun hashCode(): Int {
@@ -433,9 +431,7 @@ internal class Rename(val parentPath: FilePath, val childPath: FilePath, val par
     if (!FILE_PATH_HASHING_STRATEGY.equals(parentPath, other.parentPath)) return false
     if (!FILE_PATH_HASHING_STRATEGY.equals(childPath, other.childPath)) return false
     if (parentCommit != other.parentCommit) return false
-    if (childCommit != other.childCommit) return false
-
-    return true
+    return childCommit == other.childCommit
   }
 
   override fun hashCode(): Int {
@@ -457,9 +453,7 @@ class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
     other as MaybeDeletedFilePath
 
     if (!FILE_PATH_HASHING_STRATEGY.equals(filePath, other.filePath)) return false
-    if (deleted != other.deleted) return false
-
-    return true
+    return deleted == other.deleted
   }
 
   override fun hashCode(): Int {
@@ -485,7 +479,7 @@ internal fun forEach(map: Map<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>
 }
 
 internal fun Int2ObjectMap<*>.removeAll(keys: List<Int>) {
-  keys.forEach { this.remove(it) }
+  keys.forEach(this::remove)
 }
 
 private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
@@ -497,6 +491,6 @@ private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
 }
 
 @JvmField
-val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
+internal val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
 
-data class EdgeData<T>(val parent: T, val child: T)
+data class EdgeData<T>(@JvmField val parent: T, @JvmField val child: T)

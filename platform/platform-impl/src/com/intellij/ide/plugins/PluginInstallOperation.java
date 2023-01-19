@@ -25,6 +25,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -53,20 +54,6 @@ public final class PluginInstallOperation {
   private boolean myRestartRequired = false;
   private boolean myShownErrors;
   private MarketplacePluginDownloadService myDownloadService;
-
-  /**
-   * @deprecated use {@link #PluginInstallOperation(List, Collection, PluginEnabler, ProgressIndicator)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
-                                @NotNull List<? extends IdeaPluginDescriptor> customReposPlugins,
-                                @NotNull PluginManagerMain.PluginEnabler pluginEnabler,
-                                @NotNull ProgressIndicator indicator) {
-    this(pluginsToInstall,
-         (Collection<PluginNode>)ContainerUtil.filterIsInstance(customReposPlugins, PluginNode.class),
-         pluginEnabler,
-         indicator);
-  }
 
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
                                 @NotNull Collection<PluginNode> customReposPlugins,
@@ -234,6 +221,7 @@ public final class PluginInstallOperation {
     }
   }
 
+  @RequiresBackgroundThread
   private boolean prepareToInstall(@NotNull PluginNode pluginNode,
                                    @NotNull List<PluginId> pluginIds) throws IOException {
     if (!checkMissingDependencies(pluginNode, pluginIds)) return false;

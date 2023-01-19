@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.module.Module
@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.LibrarySourcesScope
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -181,12 +180,7 @@ internal class NotUnderContentRootModuleByModuleInfo(
     private val moduleInfo: IdeaModuleInfo,
     provider: ProjectStructureProviderIdeImpl
 ) : KtModuleByModuleInfoBase(moduleInfo, provider), KtNotUnderContentRootModule {
-    override val moduleDescription: String
-        get() = "Non under content root module"
-
+    override val moduleDescription: String get() = "Non under content root module"
     override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
+    override val project: Project get() = moduleInfo.project
 }
-
-
-private fun ModuleInfo.dependenciesWithoutSelf(): Sequence<ModuleInfo> =
-    dependencies().asSequence().filter { it != this }

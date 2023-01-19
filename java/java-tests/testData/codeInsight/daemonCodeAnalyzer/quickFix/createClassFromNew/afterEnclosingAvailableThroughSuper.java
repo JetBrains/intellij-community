@@ -1,4 +1,4 @@
-// "Create class 'MyCollection'" "true"
+// "Create class 'MyCollection'" "true-preview"
 import java.util.*;
 
 class Test extends Foo {

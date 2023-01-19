@@ -19,7 +19,9 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ProjectModifiableLibraryTableBridgeImpl(
@@ -34,7 +36,11 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
   private val librariesArrayValue = CachedValue<Array<Library>> { storage ->
     storage.entities(LibraryEntity::class.java).filter { it.tableId == LibraryTableId.ProjectLibraryTableId }
-      .mapNotNull { storage.libraryMap.getDataByEntity(it) }
+      .mapNotNull { entity ->
+        val libraryBridge = storage.libraryMap.getDataByEntity(entity)
+        (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
+        libraryBridge
+      }
       .toList().toTypedArray()
   }
 
@@ -89,6 +95,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
     val libraryEntity = entityStorageOnDiff.current.findLibraryEntity(library as LibraryBridge)
     if (libraryEntity != null) {
+      (library as LibraryBridgeImpl).clearTargetBuilder()
       diff.removeEntity(libraryEntity)
       if (myAddedLibraries.remove(library)) {
         Disposer.dispose(library)
@@ -98,17 +105,18 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
   override fun commit() {
     prepareForCommit()
-    WorkspaceModel.getInstance(project).updateProjectModel {
+    WorkspaceModel.getInstance(project).updateProjectModel("Project library table commit") {
       it.addDiff(diff)
     }
+    librariesArray.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
   }
 
   override fun prepareForCommit() {
     assertModelIsLive()
     modelIsCommittedOrDisposed = true
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     myAddedLibraries.forEach { library ->
-      if (storage.resolve(library.libraryId) != null) {
+      if (library.libraryId in storage) {
         // it may happen that actual library table already has a library with such name (e.g. when multiple projects are imported in parallel)
         // in such case we need to skip the new library to avoid exceptions.
         diff.removeEntity(diff.libraryMap.getEntities(library).first())
@@ -122,7 +130,9 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
   override fun getLibraryByName(name: String): Library? {
     val libraryEntity = diff.resolve(LibraryId(name, LibraryTableId.ProjectLibraryTableId)) ?: return null
-    return diff.libraryMap.getDataByEntity(libraryEntity)
+    val libraryBridge = diff.libraryMap.getDataByEntity(libraryEntity)
+    (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
+    return libraryBridge
   }
 
   override fun getLibraries(): Array<Library> = librariesArray
@@ -132,7 +142,8 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
     myAddedLibraries.forEach { Disposer.dispose(it) }
     myAddedLibraries.clear()
+    librariesArray.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
   }
 
-  override fun isChanged(): Boolean = !diff.isEmpty()
+  override fun isChanged(): Boolean = diff.hasChanges()
 }

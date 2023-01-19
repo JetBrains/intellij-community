@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcsUtil;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ThrowableConvertor;
@@ -42,14 +41,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 @ApiStatus.NonExtendable
-public class VcsUtil {
-  protected static final char[] ourCharsToBeChopped = {'/', '\\'};
+public final class VcsUtil {
+  private static final char[] ourCharsToBeChopped = {'/', '\\'};
   private static final Logger LOG = Logger.getInstance(VcsUtil.class);
 
   public static final @NonNls String MAX_VCS_LOADED_SIZE_KB = "idea.max.vcs.loaded.size.kb";
@@ -257,18 +255,6 @@ public class VcsUtil {
     if (virtualFile != null) return IconUtil.getIcon(virtualFile, 0, project);
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(filePath.getName());
     return fileType.getIcon();
-  }
-
-  /**
-   * @deprecated use {@link StatusBar.Info#set(String, Project)} directly.
-   */
-  @Deprecated(forRemoval = true)
-  public static void showStatusMessage(@NotNull Project project, @Nullable @Nls String message) {
-    SwingUtilities.invokeLater(() -> {
-      if (project.isOpen()) {
-        StatusBar.Info.set(message, project);
-      }
-    });
   }
 
   /**
@@ -530,6 +516,7 @@ public class VcsUtil {
                                             @NotNull String projectBaseDir,
                                             @NotNull FilePath filePath,
                                             boolean acceptEmptyPath) {
+    if (project.isDisposed()) return null;
     String path = filePath.getPath();
 
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -641,11 +628,11 @@ public class VcsUtil {
 
   @NotNull
   public static Set<String> getVcsIgnoreFileNames(@NotNull Project project) {
-    return IgnoredFileContentProvider
-      .IGNORE_FILE_CONTENT_PROVIDER
-      .extensions(project)
-      .map(IgnoredFileContentProvider::getFileName)
-      .collect(Collectors.toSet());
+    Set<String> set = new HashSet<>();
+    for (IgnoredFileContentProvider provider : IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.getExtensionList(project)) {
+      set.add(provider.getFileName());
+    }
+    return set;
   }
 
   @Nls

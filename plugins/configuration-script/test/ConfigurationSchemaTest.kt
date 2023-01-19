@@ -34,7 +34,7 @@ internal class ConfigurationSchemaTest : BasePlatformTestCase() {
     """.trimIndent())
 
     checkDescription(variants, "env", "Environment variables")
-    checkDescription(variants, "isAllowRunningInParallel", "Allow parallel run")
+    checkDescription(variants, "isAllowRunningInParallel", "Allow multiple instances")
     checkDescription(variants, "isShowConsoleOnStdErr", "Show console when a message is printed to standard error stream")
     checkDescription(variants, "isShowConsoleOnStdOut", "Show console when a message is printed to standard output stream")
   }

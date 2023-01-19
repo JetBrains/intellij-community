@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInsight.FileModificationService
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -15,6 +17,9 @@ class ValToObjectIntention : SelfTargetingIntention<KtProperty>(
     KtProperty::class.java,
     KotlinBundle.lazyMessage("convert.to.object.declaration")
 ) {
+
+    override fun startInWriteAction(): Boolean = false
+
     override fun isApplicableTo(element: KtProperty, caretOffset: Int): Boolean {
         if (element.isVar) return false
         if (!element.isTopLevel) return false
@@ -30,6 +35,8 @@ class ValToObjectIntention : SelfTargetingIntention<KtProperty>(
     }
 
     override fun applyTo(element: KtProperty, editor: Editor?) {
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
+
         val name = element.name ?: return
         val objectLiteral = element.initializer as? KtObjectLiteralExpression ?: return
         val declaration = objectLiteral.objectDeclaration
@@ -40,7 +47,10 @@ class ValToObjectIntention : SelfTargetingIntention<KtProperty>(
         val superTypesText = superTypeList?.text?.plus(" ") ?: ""
 
         val replacementText = "${prefix}object $name: $superTypesText${body.text}"
-        val replaced = element.replaced(KtPsiFactory(element).createDeclarationByPattern<KtObjectDeclaration>(replacementText))
+        val replaced = runWriteAction {
+            val psiFactory = KtPsiFactory(element.project)
+            element.replaced(psiFactory.createDeclarationByPattern<KtObjectDeclaration>(replacementText))
+        }
 
         editor?.caretModel?.moveToOffset(replaced.nameIdentifier?.endOffset ?: return)
     }

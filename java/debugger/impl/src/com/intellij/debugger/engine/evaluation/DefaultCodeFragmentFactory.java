@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.codeInsight.completion.CompletionService;
@@ -63,7 +63,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
       fragment = factory.createCodeBlockCodeFragment(text, context, true);
     }
 
-    if(item.getImports().length() > 0) {
+    if (item.getImports().length() > 0) {
       fragment.addImportsFromString(item.getImports());
     }
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);

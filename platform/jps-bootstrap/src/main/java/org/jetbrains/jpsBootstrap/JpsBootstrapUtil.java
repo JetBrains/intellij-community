@@ -1,74 +1,27 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jpsBootstrap;
 
-import jetbrains.buildServer.messages.serviceMessages.Message;
-import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.*;
+
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.info;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.underTeamCity;
 
 public final class JpsBootstrapUtil {
   public static final String TEAMCITY_BUILD_PROPERTIES_FILE_ENV = "TEAMCITY_BUILD_PROPERTIES_FILE";
   public static final String TEAMCITY_CONFIGURATION_PROPERTIES_SYSTEM_PROPERTY = "teamcity.configuration.properties.file";
 
-  public static final boolean underTeamCity = System.getenv("TEAMCITY_VERSION") != null;
+  public static final String JPS_RESOLUTION_RETRY_ENABLED_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.enabled";
+  public static final String JPS_RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.max.attempts";
+  public static final String JPS_RESOLUTION_RETRY_DELAY_MS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.delay.ms";
+  public static final String JPS_RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.backoff.limit.ms";
 
-  private static boolean verboseEnabled = false;
-
-  public static void warn(String message) {
-    if (underTeamCity) {
-      System.out.println(new Message(message, "WARNING", null).asString());
-    } else {
-      System.out.println(message);
-    }
-  }
-
-  public static void info(String message) {
-    if (underTeamCity) {
-      System.out.println(new Message(message, "NORMAL", null).asString());
-    } else {
-      System.out.println(message);
-    }
-  }
-
-  public static void verbose(String message) {
-    if (underTeamCity) {
-      Map<String, String> attributes = new HashMap<>();
-      attributes.put("text", message);
-      attributes.put("status", "NORMAL");
-      attributes.put("tc:tags", "tc:internal");
-      System.out.println(new MessageWithAttributes(ServiceMessageTypes.MESSAGE, attributes) {}.asString());
-    } else {
-      if (verboseEnabled) {
-        System.out.println(message);
-      }
-    }
-  }
-
-  public static void error(String message) {
-    if (underTeamCity) {
-      System.out.println(new Message(message, "ERROR", null).asString());
-    } else {
-      System.out.println("ERROR: " + message);
-    }
-  }
-
-  public static void fatal(String message) {
-    if (underTeamCity) {
-      System.out.println(new Message(message, "FAILURE", null).asString());
-    } else {
-      System.err.println("\nFATAL: " + message);
-    }
-  }
-
-  public static void setVerboseEnabled(boolean verboseEnabled) {
-    JpsBootstrapUtil.verboseEnabled = verboseEnabled;
-  }
 
   public static boolean toBooleanChecked(String s) {
     switch (s) {
@@ -122,6 +75,39 @@ public final class JpsBootstrapUtil {
     return value;
   }
 
+  /**
+   * Create properties to enable artifacts resolution retries in org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder
+   * if ones absent in {@code existingProperties}. Latest of {@code existingProperties} has the highest priority.
+   *
+   * @param existingProperties Existing properties to check whether required values already present.
+   * @return Properties to enable artifacts resolution retries while build.
+   */
+  public static Properties getJpsArtifactsResolutionRetryProperties(final Properties... existingProperties) {
+    final Properties properties = new Properties();
+
+    final Properties existingPropertiesMerged = new Properties();
+    for (Properties it : existingProperties) {
+      existingPropertiesMerged.putAll(it);
+    }
+
+    String enabled = existingPropertiesMerged.getProperty(JPS_RESOLUTION_RETRY_ENABLED_PROPERTY, "true");
+    properties.put(JPS_RESOLUTION_RETRY_ENABLED_PROPERTY, enabled);
+
+    String maxAttempts = existingPropertiesMerged.getProperty(JPS_RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY, "3");
+    properties.put(JPS_RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY, maxAttempts);
+
+    String initialDelayMs = existingPropertiesMerged.getProperty(JPS_RESOLUTION_RETRY_DELAY_MS_PROPERTY, "1000");
+    properties.put(JPS_RESOLUTION_RETRY_DELAY_MS_PROPERTY, initialDelayMs);
+
+    String backoffLimitMs = existingPropertiesMerged.getProperty(
+      JPS_RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY,
+      Long.toString(TimeUnit.MINUTES.toMillis(5))
+    );
+    properties.put(JPS_RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY, backoffLimitMs);
+
+    return properties;
+  }
+
   static <T> List<T> executeTasksInParallel(List<Callable<T>> tasks) throws InterruptedException {
     ExecutorService executorService = Executors.newFixedThreadPool(5);
     long start = System.currentTimeMillis();
@@ -164,7 +150,7 @@ public final class JpsBootstrapUtil {
 
       return results;
     } finally {
-      JpsBootstrapUtil.info("Finished all tasks in " + (System.currentTimeMillis() - start) + " ms");
+      info("Finished all tasks in " + (System.currentTimeMillis() - start) + " ms");
 
       if (!executorService.isShutdown()) {
         executorService.shutdownNow();

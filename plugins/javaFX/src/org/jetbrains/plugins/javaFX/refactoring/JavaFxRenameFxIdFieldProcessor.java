@@ -17,9 +17,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
@@ -42,7 +39,7 @@ public class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
         final Ref<Boolean> found = new Ref<>(false);
         fxml.accept(new XmlRecursiveElementVisitor() {
           @Override
-          public void visitXmlTag(XmlTag tag) {
+          public void visitXmlTag(@NotNull XmlTag tag) {
             super.visitXmlTag(tag);
             if (found.get()) return;
             if (FxmlConstants.FX_INCLUDE.equals(tag.getName())) {

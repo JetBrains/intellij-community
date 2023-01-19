@@ -1,5 +1,5 @@
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManager;
 
 public class RegistryKeyId {
 

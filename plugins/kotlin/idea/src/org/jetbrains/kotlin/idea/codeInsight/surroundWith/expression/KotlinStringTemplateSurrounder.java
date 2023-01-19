@@ -27,9 +27,8 @@ public class KotlinStringTemplateSurrounder extends KotlinExpressionSurrounder {
     @Nullable
     @Override
     public TextRange surroundExpression(@NotNull Project project, @NotNull Editor editor, @NotNull KtExpression expression) {
-        KtStringTemplateExpression stringTemplateExpression = (KtStringTemplateExpression) KtPsiFactoryKt.KtPsiFactory(expression).createExpression(
-                getCodeTemplate(expression)
-        );
+        KtStringTemplateExpression stringTemplateExpression =
+                (KtStringTemplateExpression) new KtPsiFactory(expression.getProject()).createExpression(getCodeTemplate(expression));
         KtStringTemplateEntry templateEntry = stringTemplateExpression.getEntries()[0];
         KtExpression innerExpression = templateEntry.getExpression();
         assert innerExpression != null : "KtExpression should exists for " + stringTemplateExpression;

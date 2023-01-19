@@ -8,7 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -43,11 +43,11 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
     val savedPatchesUi = GitSavedPatchesUi(disposable!!)
     project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {
-        savedPatchesUi.updateLayout(isVertical(), isEditorDiffPreview())
+        savedPatchesUi.updateLayout()
       }
     })
     project.messageBus.connect(disposable!!).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      override fun stateChanged(toolWindowManager: ToolWindowManager) = savedPatchesUi.updateLayout(isVertical(), isEditorDiffPreview())
+      override fun stateChanged(toolWindowManager: ToolWindowManager) = savedPatchesUi.updateLayout()
     })
     return savedPatchesUi
   }
@@ -55,8 +55,10 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
   private inner class GitSavedPatchesUi(parent: Disposable) : SavedPatchesUi(project,
                                                                              listOf(GitStashProvider(project, parent),
                                                                                     ShelfProvider(project, parent)),
-                                                                             isVertical(), isEditorDiffPreview(),
-                                                                             ::returnFocusToToolWindow, parent) {
+                                                                             isVertical = ::isVertical,
+                                                                             isEditorDiffPreview = ::isEditorDiffPreview,
+                                                                             focusMainUi = ::returnFocusToToolWindow,
+                                                                             parent) {
     init {
       tree.emptyText
         .appendLine("")
@@ -110,7 +112,7 @@ internal class GitStashDisplayNameSupplier : Supplier<String> {
   }
 }
 
-internal class GitStashStartupActivity : StartupActivity.DumbAware {
+internal class GitStashStartupActivity : ProjectPostStartupActivity {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {
@@ -118,21 +120,20 @@ internal class GitStashStartupActivity : StartupActivity.DumbAware {
     }
   }
 
-  override fun runActivity(project: Project) {
-    ApplicationManager.getApplication().invokeLater({
-        val gitStashTracker = project.service<GitStashTracker>()
-        stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
-          override fun afterValueChanged(value: RegistryValue) {
-            gitStashTracker.scheduleRefresh()
-            project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-            ShelvedChangesViewManager.getInstance(project).updateAvailability()
-          }
-        }, gitStashTracker)
-      }) { project.isDisposed }
+  override suspend fun execute(project: Project) {
+    val gitStashTracker = project.service<GitStashTracker>()
+
+    stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        gitStashTracker.scheduleRefresh()
+        project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+      }
+    }, gitStashTracker)
   }
 }
 
-fun stashToolWindowRegistryOption() = Registry.get("git.enable.stash.toolwindow")
-fun isStashToolWindowEnabled(project: Project): Boolean {
+internal fun stashToolWindowRegistryOption(): RegistryValue = Registry.get("git.enable.stash.toolwindow")
+
+internal fun isStashToolWindowEnabled(project: Project): Boolean {
   return ShelvedChangesViewManager.hideDefaultShelfTab(project)
 }

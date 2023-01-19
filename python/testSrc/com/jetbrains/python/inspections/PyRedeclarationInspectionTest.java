@@ -172,14 +172,15 @@ public class PyRedeclarationInspectionTest extends PyInspectionTestCase {
   // PY-23003
   public void testVariableUsedInElIf() {
     doTestByText(
-      "for file in ['test_file']:\n" +
-      "    block = False\n" +
-      "    if a:\n" +
-      "        block = True\n" +
-      "    elif block and b:\n" +
-      "        block = False\n" +
-      "    else:\n" +
-      "        print(c)"
+      """
+        for file in ['test_file']:
+            block = False
+            if a:
+                block = True
+            elif block and b:
+                block = False
+            else:
+                print(c)"""
     );
   }
 

@@ -44,7 +44,7 @@ class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
 
     fun testBinaryPlus() { doTest("1 + 2", """
         val a = <warning descr="SSR">1 + 2</warning>
-        val b = <warning descr="SSR">1.plus(2)</warning>
+        val b = 1.plus(2)
         val c = 1 + 3
         val d = 1.plus(3)
         val e = 1.minus(2)
@@ -52,42 +52,42 @@ class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
 
     fun testBinaryMinus() { doTest("1 - 2", """
         val a = <warning descr="SSR">1 - 2</warning>
-        val b = <warning descr="SSR">1.minus(2)</warning>
+        val b = 1.minus(2)
         val c = 1 - 3
         val d = 1.minus(3)
     """.trimIndent()) }
 
     fun testBinaryTimes() { doTest("1 * 2", """
         val a = <warning descr="SSR">1 * 2</warning>
-        val b = <warning descr="SSR">1.times(2)</warning>
+        val b = 1.times(2)
         val c = 1 * 3
         val d = 1.times(3)
     """.trimIndent()) }
 
     fun testBinaryDiv() { doTest("1 / 2", """
         val a = <warning descr="SSR">1 / 2</warning>
-        val b = <warning descr="SSR">1.div(2)</warning>
+        val b = 1.div(2)
         val c = 1 / 3
         val d = 1.div(3)
     """.trimIndent()) }
 
     fun testBinaryRem() { doTest("1 % 2", """
         val a = <warning descr="SSR">1 % 2</warning>
-        val b = <warning descr="SSR">1.rem(2)</warning>
+        val b = 1.rem(2)
         val c = 1 % 3
         val d = 1.rem(3)
     """.trimIndent()) }
 
     fun testBinaryRangeTo() { doTest("1..2", """
         val a = <warning descr="SSR">1..2</warning>
-        val b = <warning descr="SSR">1.rangeTo(2)</warning>
+        val b = 1.rangeTo(2)
         val c = 1..3
         val d = 1.rangeTo(3)
     """.trimIndent()) }
 
     fun testBinaryIn() { doTest("1 in 0..2", """
         val a = <warning descr="SSR">1 in 0..2</warning>
-        val b = <warning descr="SSR">(0..2).contains(1)</warning>
+        val b = (0..2).contains(1)
         val c = (0..1).contains(1)
         val d = (0..2).contains(2)
         val e = 2 in 0..2
@@ -98,19 +98,19 @@ class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
 
     fun testBinaryNotIn() { doTest("1 !in 0..2", """
         val a = <warning descr="SSR">1 !in 0..2</warning>
-        val b = <warning descr="SSR">!(0..2).contains(1)</warning>
+        val b = !(0..2).contains(1)
         val c = !(0..1).contains(1)
         val d = !(0..2).contains(2)
         val e = 2 !in 0..2
         val f = 1 !in 1..2
         val g = 1 in 0..2
         val h = (0..2).contains(1)
-        val i = <warning descr="SSR">!((0..2).contains(1))</warning>
+        val i = !((0..2).contains(1))
     """.trimIndent()) }
 
     fun testBinaryBigThan() { doTest("1 > 2", """
         val a = <warning descr="SSR">1 > 2</warning>
-        val b = <warning descr="SSR">1.compareTo(2) > 0</warning>
+        val b = 1.compareTo(2) > 0
         val c = 1 > 3
         val d = 1.compareTo(3) > 0
         val e = 1.compareTo(2) < 0
@@ -120,7 +120,7 @@ class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
 
     fun testBinaryLessThan() { doTest("1 < 2", """
         val a = <warning descr="SSR">1 < 2</warning>
-        val b = <warning descr="SSR">1.compareTo(2) < 0</warning>
+        val b = 1.compareTo(2) < 0
         val c = 1 < 3
         val d = 1.compareTo(3) < 0
         val e = 1.compareTo(2) > 0
@@ -130,7 +130,7 @@ class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
 
     fun testBinaryBigEqThan() { doTest("1 >= 2", """
         val a = <warning descr="SSR">1 >= 2</warning>
-        val b = <warning descr="SSR">1.compareTo(2) >= 0</warning>
+        val b = 1.compareTo(2) >= 0
         val c = 1 >= 3
         val d = 1.compareTo(3) >= 0
         val e = 1.compareTo(2) <= 0
@@ -140,7 +140,7 @@ class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
 
     fun testBinaryLessEqThan() { doTest("1 <= 2", """
         val a = <warning descr="SSR">1 <= 2</warning>
-        val b = <warning descr="SSR">1.compareTo(2) <= 0</warning>
+        val b = 1.compareTo(2) <= 0
         val c = 1 <= 3
         val d = 1.compareTo(3) >= 0
         val e = 1.compareTo(2) >= 0
@@ -150,33 +150,33 @@ class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
 
     fun testBinaryEquality() { doTest("a == b", """
         var a: String? = "Hello world"
-        var b: String? = "Hello world"     
-        var c: String? = "Hello world"     
-        val d = <warning descr="SSR">a == b</warning>        
-        val e = <warning descr="SSR">a?.equals(b) ?: (b === null)</warning>       
-        val f = a == c       
-        val g = c == b        
-        val h = a?.equals(c) ?: (b === null)       
-        val i = c?.equals(b) ?: (b === null)       
-        val j = a?.equals(b) ?: (c === null)       
-        val k = a?.equals(b)       
-        val l = a === b       
+        var b: String? = "Hello world"
+        var c: String? = "Hello world"
+        val d = <warning descr="SSR">a == b</warning>
+        val e = a?.equals(b) ?: (b === null)
+        val f = a == c
+        val g = c == b
+        val h = a?.equals(c) ?: (b === null)
+        val i = c?.equals(b) ?: (b === null)
+        val j = a?.equals(b) ?: (c === null)
+        val k = a?.equals(b)
+        val l = a === b
         val m = a != b
     """.trimIndent()) }
 
     fun testBinaryInEquality() { doTest("a != b", """
-        var a: String? = "Hello world"        
-        var b: String? = "Hello world"        
-        var c: String? = "Hello world"        
-        val d = <warning descr="SSR">a != b</warning>        
-        val e = <warning descr="SSR">!(a?.equals(b) ?: (b === null))</warning>        
-        val f = a != c       
-        val g = c != b        
-        val h = !(a?.equals(c) ?: (b === null))        
-        val i = !(c?.equals(b) ?: (b === null))        
-        val j = !(a?.equals(b) ?: (c === null))        
-        val k = !(a?.equals(b)!!)        
-        val l = a !== b        
+        var a: String? = "Hello world"
+        var b: String? = "Hello world"
+        var c: String? = "Hello world"
+        val d = <warning descr="SSR">a != b</warning>
+        val e = !(a?.equals(b) ?: (b === null))
+        val f = a != c
+        val g = c != b
+        val h = !(a?.equals(c) ?: (b === null))
+        val i = !(c?.equals(b) ?: (b === null))
+        val j = !(a?.equals(b) ?: (c === null))
+        val k = !(a?.equals(b)!!)
+        val l = a !== b
         val m = a == b
     """.trimIndent()) }
 
@@ -196,27 +196,27 @@ class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
         fun main() {
             var z = 1
             <warning descr="SSR">z += 2</warning>
-            <warning descr="SSR">z = z + 2</warning>
+            z = z + 2
             print(z)
             var x = Foo()
             val y = Foo()
-            <warning descr="SSR">x.plusAssign(y)</warning>
+            x.plusAssign(y)
         }
     """.trimIndent()) }
 
-    fun testBinaryAssignPlus() { doTest("'_x = '_x + '_", """
+    fun testBinaryAssignPlus() { doTest("'_ = '_ + '_", """
         class Foo {
             operator fun plusAssign(other: Foo) { print(other) }
         }
 
         fun main() {
             var z = 1
-            <warning descr="SSR">z += 2</warning>
+            z += 2
             <warning descr="SSR">z = z + 2</warning>
             print(z)
             var x = Foo()
             val y = Foo()
-            <warning descr="SSR">x.plusAssign(y)</warning>
+            x.plusAssign(y)
         }        
     """.trimIndent()) }
 
@@ -228,27 +228,27 @@ class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
         fun foo() {
             var z = 1
             <warning descr="SSR">z -= 2</warning>
-            <warning descr="SSR">z = z - 2</warning>
+            z = z - 2
             print(z)
             var x = Foo()
             val y = Foo()
-            <warning descr="SSR">x.minusAssign(y)</warning>
+            x.minusAssign(y)
         }
     """.trimIndent()) }
 
-    fun testBinaryAssignMinus() { doTest("'_x = '_x - '_", """
+    fun testBinaryAssignMinus() { doTest("'_ = '_ - '_", """
         class Foo {
             operator fun minusAssign(other: Foo) { print(other) }
         }
 
         fun foo() {
             var z = 1
-            <warning descr="SSR">z -= 2</warning>
+            z -= 2
             <warning descr="SSR">z = z - 2</warning>
             print(z)
             var x = Foo()
             val y = Foo()
-            <warning descr="SSR">x.minusAssign(y)</warning>
+            x.minusAssign(y)
         }
     """.trimIndent()) }
 
@@ -260,27 +260,27 @@ class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
         fun foo() {
             var z = 1
             <warning descr="SSR">z *= 2</warning>
-            <warning descr="SSR">z = z * 2</warning>
+            z = z * 2
             print(z)
             var x = Foo()
             val y = Foo()
-            <warning descr="SSR">x.timesAssign(y)</warning>
+            x.timesAssign(y)
         }
     """.trimIndent()) }
 
-    fun testBinaryAssignTimes() { doTest("'_x = '_x * '_", """
+    fun testBinaryAssignTimes() { doTest("'_ = '_ * '_", """
         class Foo {
             operator fun timesAssign(other: Foo) { print(other) }
         }
 
         fun foo() {
             var z = 1
-            <warning descr="SSR">z *= 2</warning>
+            z *= 2
             <warning descr="SSR">z = z * 2</warning>
             print(z)
             var x = Foo()
             val y = Foo()
-            <warning descr="SSR">x.timesAssign(y)</warning>
+            x.timesAssign(y)
         }
     """.trimIndent()) }
 
@@ -292,27 +292,27 @@ class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
         fun foo() {
             var z = 1
             <warning descr="SSR">z /= 2</warning>
-            <warning descr="SSR">z = z / 2</warning>
+            z = z / 2
             print(z)
             var x = Foo()
             val y = Foo()
-            <warning descr="SSR">x.divAssign(y)</warning>
+            x.divAssign(y)
         }
     """.trimIndent()) }
 
-    fun testBinaryAssignDiv() { doTest("'_x = '_x / '_", """
+    fun testBinaryAssignDiv() { doTest("'_ = '_ / '_", """
         class Foo {
             operator fun divAssign(other: Foo) { print(other) }
         }
 
         fun foo() {
             var z = 1
-            <warning descr="SSR">z /= 2</warning>
+            z /= 2
             <warning descr="SSR">z = z / 2</warning>
             print(z)
             var x = Foo()
             val y = Foo()
-            <warning descr="SSR">x.divAssign(y)</warning>
+            x.divAssign(y)
         }
     """.trimIndent()) }
 
@@ -324,27 +324,27 @@ class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
         fun foo() {
             var z = 1
             <warning descr="SSR">z %= 2</warning>
-            <warning descr="SSR">z = z % 2</warning>
+            z = z % 2
             print(z)
             var x = Foo()
             val y = Foo()
-            <warning descr="SSR">x.remAssign(y)</warning>
+            x.remAssign(y)
         }
     """.trimIndent()) }
 
-    fun testBinaryAssignRem() { doTest("'_x = '_x % '_", """
+    fun testBinaryAssignRem() { doTest("'_ = '_ % '_", """
         class Foo {
             operator fun remAssign(other: Foo) { print(other) }
         }
 
         fun foo() {
             var z = 1
-            <warning descr="SSR">z %= 2</warning>
+            z %= 2
             <warning descr="SSR">z = z % 2</warning>
             print(z)
             var x = Foo()
             val y = Foo()
-            <warning descr="SSR">x.remAssign(y)</warning>
+            x.remAssign(y)
         }
     """.trimIndent()) }
 
@@ -353,7 +353,7 @@ class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
 
         fun b() {
             <warning descr="SSR">a[0] = 1 + 2</warning>
-            <warning descr="SSR">a.set(0, 1 + 2)</warning>
+            a.set(0, 1 + 2)
             a.set(0, 1)
             a.set(1, 1 + 2)
             val c = intArrayOf(1, 1)

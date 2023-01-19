@@ -250,7 +250,7 @@ public final class OfflineDescriptorResolveResult {
     return fixes.isEmpty() ? null : fixes.toArray(QuickFix.EMPTY_ARRAY);
   }
 
-  private static void addFix(@NotNull CommonProblemDescriptor descriptor, RefEntity entity, List<QuickFix<?>> fixes, String hint, @NotNull InspectionToolPresentation presentation) {
+  private static void addFix(@NotNull CommonProblemDescriptor descriptor, RefEntity entity, List<? super QuickFix<?>> fixes, String hint, @NotNull InspectionToolPresentation presentation) {
     ContainerUtil.addAllNotNull(fixes, presentation.findQuickFixes(descriptor, entity, hint));
   }
 

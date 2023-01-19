@@ -34,9 +34,6 @@ import java.nio.charset.UnsupportedCharsetException;
 
 import static com.jetbrains.python.psi.FutureFeature.UNICODE_LITERALS;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyByteLiteralInspection extends PyInspection {
 
   @NotNull

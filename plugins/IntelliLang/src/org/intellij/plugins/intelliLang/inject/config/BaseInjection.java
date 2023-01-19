@@ -295,7 +295,8 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   @Override
   public void loadState(@NotNull Element element) {
     final PatternCompiler<PsiElement> helper = getCompiler();
-    myDisplayName = StringUtil.notNullize(element.getChildTextTrim("display-name"));
+    @NlsSafe String displayName = element.getChildTextTrim("display-name");
+    myDisplayName = StringUtil.notNullize(displayName);
     myInjectedLanguageId = StringUtil.notNullize(element.getAttributeValue("language"));
     myPrefix = StringUtil.notNullize(element.getChildText("prefix"));
     mySuffix = StringUtil.notNullize(element.getChildText("suffix"));

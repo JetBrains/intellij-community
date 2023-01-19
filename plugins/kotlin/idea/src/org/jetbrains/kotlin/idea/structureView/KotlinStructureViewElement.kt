@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.structureView
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.Queryable
 import com.intellij.psi.NavigatablePsiElement
@@ -14,7 +15,6 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import javax.swing.Icon
 import kotlin.properties.ReadWriteProperty
@@ -66,7 +66,15 @@ class KotlinStructureViewElement(
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
         val children = when (val element = element) {
-            is KtFile -> element.declarations
+            is KtFile -> {
+                val declarations = element.declarations
+                // it is a bit faster that `element.isScript()`
+                if (declarations.size == 1 && declarations[0] is KtScript) {
+                    declarations[0] as KtScript
+                } else {
+                    element
+                }.declarations
+            }
             is KtClass -> element.getStructureDeclarations()
             is KtClassOrObject -> element.declarations
             is KtFunction, is KtClassInitializer, is KtProperty -> element.collectLocalDeclarations()

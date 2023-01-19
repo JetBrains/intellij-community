@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ final class ErrorComponent extends JEditorPane {
     setCaret(EmptyCaret.INSTANCE);
 
     StyleSheet sheet = ((HTMLEditorKit)getEditorKit()).getStyleSheet();
-    sheet.addRule("span {color: " + ColorUtil.toHtmlColor(UIUtil.getErrorForeground()) + "}");
+    sheet.addRule("span {color: " + ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground()) + "}");
     sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}");
 
     addHyperlinkListener(new HyperlinkAdapter() {

@@ -62,20 +62,16 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
                      boolean indentBeforeReformat) {
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     switch (howtoReformat) {
-      case CodeInsightSettings.INDENT_BLOCK:
-        indentBlock(project, editor, startOffset, endOffset, anchorColumn);
-        break;
-      case CodeInsightSettings.INDENT_EACH_LINE:
-        indentEachLine(project, editor, startOffset, endOffset);
-        break;
-      case CodeInsightSettings.REFORMAT_BLOCK:
+      case CodeInsightSettings.INDENT_BLOCK -> indentBlock(project, editor, startOffset, endOffset, anchorColumn);
+      case CodeInsightSettings.INDENT_EACH_LINE -> indentEachLine(project, editor, startOffset, endOffset);
+      case CodeInsightSettings.REFORMAT_BLOCK -> {
         final RangeMarker bounds = editor.getDocument().createRangeMarker(startOffset, endOffset);
         if (indentBeforeReformat) {
           indentEachLine(project, editor, startOffset, endOffset); // this is needed for example when inserting a comment before method
         }
         reformatRange(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
         bounds.dispose();
-        break;
+      }
     }
   }
 

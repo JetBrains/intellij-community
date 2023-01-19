@@ -2,9 +2,11 @@
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +31,6 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 import org.jetbrains.java.generate.template.TemplateResource;
@@ -42,9 +43,6 @@ import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author dsl
- */
 public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass, PsiMember, MemberInfo> {
   private static final Logger LOG = Logger.getInstance(GenerateEqualsWizard.class);
 
@@ -98,7 +96,9 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       myNonNullPanel = new MemberSelectionPanel(JavaBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"), Collections.emptyList(), null);
       myFieldsToNonNull = createFieldToMemberInfoMap(false);
       for (final Map.Entry<PsiMember, MemberInfo> entry : myFieldsToNonNull.entrySet()) {
-        entry.getValue().setChecked(NullableNotNullManager.isNotNull(entry.getKey()));
+        entry.getValue().setChecked(NullableNotNullManager.isNotNull(entry.getKey()) ||
+                                    entry.getKey() instanceof PsiField field &&
+                                    NullabilityUtil.getNullabilityFromFieldInitializers(field).second == Nullability.NOT_NULL);
       }
     }
 

@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManager.RecentProjectsChange
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.DnDSupport
@@ -29,7 +30,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollecto
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory.createComponent
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
-import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.ContainerUtil
@@ -40,7 +41,7 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Insets
 import java.io.File
-import javax.swing.BoxLayout
+import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
@@ -56,17 +57,18 @@ internal class ProjectsTabFactory : WelcomeTabFactory {
   override fun isApplicable(): Boolean = !PlatformUtils.isDataSpell()
 }
 
-class ProjectsTab(private val parentDisposable: Disposable) :
-  DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.projects.title"), WelcomeScreenEventCollector.TabType.TabNavProject) {
-  private val wrapper = Wrapper()
-  private val recentProjectsPanel: JComponent
-  private val emptyStatePanel: JComponent
+class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScreenTab(
+  IdeBundle.message("welcome.screen.projects.title"),
+  WelcomeScreenEventCollector.TabType.TabNavProject
+) {
+  private val projectsPanelWrapper: Wrapper = Wrapper()
+  private val recentProjectsPanel: JComponent = createRecentProjectsPanel()
+  private val emptyStatePanel: JComponent = createEmptyStatePanel()
+  private val notificationPanel: JComponent = createNotificationPanel()
   private var panelState: PanelState
 
   init {
     panelState = getCurrentState()
-    recentProjectsPanel = createRecentProjectsPanel()
-    emptyStatePanel = createEmptyStatePanel()
     updateState(panelState)
     val connect = ApplicationManager.getApplication().messageBus.connect(parentDisposable)
     connect.subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
@@ -89,7 +91,24 @@ class ProjectsTab(private val parentDisposable: Disposable) :
   }
 
   override fun buildComponent(): JComponent {
-    return wrapper
+    val bottomPanel = JBUI.Panels.simplePanel().andTransparent().apply {
+      layout = VerticalLayout(0)
+      add(notificationPanel)
+
+      val promoPanel = WelcomeScreenComponentFactory.getSinglePromotion(RecentProjectsManagerBase.getInstanceEx().getRecentPaths().isEmpty())
+      if (promoPanel != null) {
+        val borderPanel = JBUI.Panels.simplePanel(promoPanel).andTransparent().apply {
+          border = JBUI.Borders.empty(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET)
+        }
+
+        add(borderPanel)
+      }
+    }
+
+    return JBUI.Panels.simplePanel()
+      .withBackground(WelcomeScreenUIManager.getProjectsBackground())
+      .addToCenter(projectsPanelWrapper)
+      .addToBottom(bottomPanel)
   }
 
   private fun checkState() {
@@ -102,13 +121,13 @@ class ProjectsTab(private val parentDisposable: Disposable) :
 
   private fun updateState(currentPanelState: PanelState) {
     if (currentPanelState == PanelState.EMPTY) {
-      wrapper.setContent(emptyStatePanel)
+      projectsPanelWrapper.setContent(emptyStatePanel)
     }
     else {
-      wrapper.setContent(recentProjectsPanel)
+      projectsPanelWrapper.setContent(recentProjectsPanel)
     }
     panelState = currentPanelState
-    wrapper.repaint()
+    projectsPanelWrapper.repaint()
   }
 
   private fun createRecentProjectsPanel(): JComponent {
@@ -143,24 +162,9 @@ class ProjectsTab(private val parentDisposable: Disposable) :
     northPanel.add(projectActionsPanel, BorderLayout.EAST)
     recentProjectsPanel.add(northPanel, BorderLayout.NORTH)
     recentProjectsPanel.add(projectsPanel, BorderLayout.CENTER)
-    val notificationPanel = WelcomeScreenComponentFactory.createNotificationPanel(parentDisposable)
 
-    val promoPanel = WelcomeScreenComponentFactory.getSinglePromotion(false)
-    if (promoPanel != null) {
-      val southPanel: JPanel = NonOpaquePanel()
-      southPanel.layout = BoxLayout(southPanel, BoxLayout.Y_AXIS)
-      southPanel.add(notificationPanel)
-
-      val borderPanel: JPanel = NonOpaquePanel()
-      borderPanel.border = JBUI.Borders.empty(8, 4, 3, 4)
-      borderPanel.add(promoPanel)
-
-      southPanel.add(borderPanel)
-      recentProjectsPanel.add(southPanel, BorderLayout.SOUTH)
-    } else {
-      recentProjectsPanel.add(notificationPanel, BorderLayout.SOUTH)
-    }
     initDnD(treeComponent)
+
     return recentProjectsPanel
   }
 
@@ -168,6 +172,10 @@ class ProjectsTab(private val parentDisposable: Disposable) :
     val emptyStateProjectsPanel = EmptyStateProjectsPanel(parentDisposable)
     initDnD(emptyStateProjectsPanel)
     return emptyStateProjectsPanel
+  }
+
+  private fun createNotificationPanel(): JComponent {
+    return WelcomeScreenComponentFactory.createNotificationPanel(parentDisposable)
   }
 
   private fun initDnD(component: JComponent) {
@@ -194,10 +202,10 @@ class ProjectsTab(private val parentDisposable: Disposable) :
     toolbarActionGroup.addAction(moreActionGroup)
     val toolbar: ActionToolbarImpl = object : ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, toolbarActionGroup, true) {
       override fun createToolbarButton(action: AnAction,
-                                       look: ActionButtonLook,
+                                       look: ActionButtonLook?,
                                        place: String,
                                        presentation: Presentation,
-                                       minimumSize: Dimension): ActionButton {
+                                       minimumSize: Supplier<out Dimension>): ActionButton {
         val toolbarButton = super.createToolbarButton(action, look, place, presentation, minimumSize)
         toolbarButton.isFocusable = true
         return toolbarButton
@@ -218,6 +226,10 @@ class ProjectsTab(private val parentDisposable: Disposable) :
     }
     return ToolbarTextButtonWrapper.wrapAsTextButton(action)
   }
+
+  companion object {
+    private const val PROMO_BORDER_OFFSET = 16
+  }
 }
 
 private enum class PanelState {
@@ -226,7 +238,7 @@ private enum class PanelState {
 
 private fun getCurrentState(): PanelState {
   val recentProjects = RecentProjectListActionProvider.getInstance().collectProjects()
-  val collectCloneableProjects = CloneableProjectsService.getInstance().collectCloneableProjects()
+  val collectCloneableProjects = CloneableProjectsService.getInstance().collectCloneableProjects().toList()
   return if (recentProjects.isEmpty() && collectCloneableProjects.isEmpty()) {
     PanelState.EMPTY
   }

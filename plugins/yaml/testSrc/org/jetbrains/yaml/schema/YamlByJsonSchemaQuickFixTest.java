@@ -28,92 +28,100 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
   }
 
   public void testAddMissingProperty() {
-    doTest("{\n" +
-           "  \"properties\": {\n" +
-           "    \"a\": {\n" +
-           "      \"default\": \"q\"\n" +
-           "    }\n" +
-           "  },\n" +
-           "  \"required\": [\"a\", \"b\"]\n" +
-           "}", "<warning>c: 5</warning>", "Add missing properties 'a', 'b'", "a: q\n" +
-                                                                              "b:\n" +
-                                                                              "c: 5");
+    doTest("""
+             {
+               "properties": {
+                 "a": {
+                   "default": "q"
+                 }
+               },
+               "required": ["a", "b"]
+             }""", "<warning>c: 5</warning>", "Add missing properties 'a', 'b'", """
+             a: q
+             b:
+             c: 5""");
   }
 
   public void testRemoveProhibitedProperty() {
-    doTest("{\n" +
-           "  \"properties\": {\n" +
-           "    \"a\": {},\n" +
-           "    \"c\": {}\n" +
-           "  },\n" +
-           "  \"additionalProperties\": false\n" +
-           "}", "a: 5\n<warning>b: 6<caret></warning>\nc: 7", "Remove prohibited property 'b'", "a: 5\n" +
-                                                                                         "c: 7");
+    doTest("""
+             {
+               "properties": {
+                 "a": {},
+                 "c": {}
+               },
+               "additionalProperties": false
+             }""", "a: 5\n<warning>b: 6<caret></warning>\nc: 7", "Remove prohibited property 'b'", "a: 5\n" +
+                                                                                                   "c: 7");
   }
 
   public void testEmptyFile() {
-    doTest("{\n" +
-           "  \"type\": \"object\",\n" +
-           "\n" +
-           "  \"properties\": {\n" +
-           "    \"versionAsStringArray\": {\n" +
-           "      \"type\": \"array\"\n" +
-           "    }\n" +
-           "  },\n" +
-           "  \"required\": [\"versionAsStringArray\"]\n" +
-           "}", "<warning></warning>", "Add missing property 'versionAsStringArray'", "versionAsStringArray:\n" +
-                                                                   "  - ");
+    doTest("""
+             {
+               "type": "object",
+
+               "properties": {
+                 "versionAsStringArray": {
+                   "type": "array"
+                 }
+               },
+               "required": ["versionAsStringArray"]
+             }""", "<warning></warning>", "Add missing property 'versionAsStringArray'", "versionAsStringArray:\n" +
+                                                                                         "  - ");
   }
 
   public void testEmptyObject() {
-    doTest("{\n" +
-           "  \"type\": \"object\",\n" +
-           "\n" +
-           "  \"properties\": {\n" +
-           "    \"versionAsStringArray\": {\n" +
-           "      \"type\": \"object\",\n" +
-           "      \"properties\": {\n" +
-           "        \"xxx\": {\n" +
-           "          \"type\": \"array\"\n" +
-           "        }\n" +
-           "      },\n" +
-           "      \"required\": [\"xxx\"]\n" +
-           "    }\n" +
-           "  },\n" +
-           "  \"required\": [\"versionAsStringArray\"]\n" +
-           "}", "versionAsStringArray:\n" +
-                "<warning>  <caret></warning>", "Add missing property 'xxx'", "versionAsStringArray:\n" +
-                                                                       "  xxx:\n" +
-                                                                       "    - ");
+    doTest("""
+             {
+               "type": "object",
+
+               "properties": {
+                 "versionAsStringArray": {
+                   "type": "object",
+                   "properties": {
+                     "xxx": {
+                       "type": "array"
+                     }
+                   },
+                   "required": ["xxx"]
+                 }
+               },
+               "required": ["versionAsStringArray"]
+             }""", "versionAsStringArray:\n" +
+                   "<warning>  <caret></warning>", "Add missing property 'xxx'", """
+             versionAsStringArray:
+               xxx:
+                 -\s""");
   }
 
   public void testEmptyObjectMultipleProps() {
-    doTest("{\n" +
-           "  \"type\": \"object\",\n" +
-           "\n" +
-           "  \"properties\": {\n" +
-           "    \"versionAsStringArray\": {\n" +
-           "      \"type\": \"object\",\n" +
-           "      \"properties\": {\n" +
-           "        \"xxx\": {\n" +
-           "          \"type\": \"number\"\n" +
-           "        },\n" +
-           "        \"yyy\": {\n" +
-           "          \"type\": \"string\"\n" +
-           "        },\n" +
-           "        \"zzz\": {\n" +
-           "          \"type\": \"number\"\n" +
-           "        }\n" +
-           "      },\n" +
-           "      \"required\": [\"xxx\", \"yyy\", \"zzz\"]\n" +
-           "    }\n" +
-           "  },\n" +
-           "  \"required\": [\"versionAsStringArray\"]\n" +
-           "}", "versionAsStringArray:\n" +
-                "<warning>  <caret></warning>","Add missing properties 'xxx', 'yyy', 'zzz'", "versionAsStringArray:\n" +
-                                                                                      "  xxx: 0\n" +
-                                                                                      "  yyy:\n" +
-                                                                                      "  zzz: 0");
+    doTest("""
+             {
+               "type": "object",
+
+               "properties": {
+                 "versionAsStringArray": {
+                   "type": "object",
+                   "properties": {
+                     "xxx": {
+                       "type": "number"
+                     },
+                     "yyy": {
+                       "type": "string"
+                     },
+                     "zzz": {
+                       "type": "number"
+                     }
+                   },
+                   "required": ["xxx", "yyy", "zzz"]
+                 }
+               },
+               "required": ["versionAsStringArray"]
+             }""", "versionAsStringArray:\n" +
+                   "<warning>  <caret></warning>", "Add missing properties 'xxx', 'yyy', 'zzz'", """
+             versionAsStringArray:
+               xxx: 0
+               yyy:
+               zzz: 0""");
   }
 
   public void testAddMissingPropertyAfterComment() {
@@ -128,26 +136,28 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
                                                                                                                                            "  tag: ");
   }
 
-  @Language("JSON") private static final String SCHEMA_WITH_NESTING = "{\n" +
-                                                               "  \"properties\": {\n" +
-                                                               "    \"image\": {\n" +
-                                                               "      \"description\": \"Container Image\",\n" +
-                                                               "      \"properties\": {\n" +
-                                                               "        \"repo\": {\n" +
-                                                               "          \"type\": \"string\"\n" +
-                                                               "        },\n" +
-                                                               "        \"tag\": {\n" +
-                                                               "          \"type\": \"string\"\n" +
-                                                               "        }\n" +
-                                                               "      },\n" +
-                                                               "      \"required\": [\n" +
-                                                               "        \"tag\"\n" +
-                                                               "      ],\n" +
-                                                               "      \"type\": \"object\"\n" +
-                                                               "    }\n" +
-                                                               "  },\n" +
-                                                               "  \"title\": \"Values\",\n" +
-                                                               "  \"type\": \"object\"\n" +
-                                                               "}\n";
+  @Language("JSON") private static final String SCHEMA_WITH_NESTING = """
+    {
+      "properties": {
+        "image": {
+          "description": "Container Image",
+          "properties": {
+            "repo": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "tag"
+          ],
+          "type": "object"
+        }
+      },
+      "title": "Values",
+      "type": "object"
+    }
+    """;
 
 }

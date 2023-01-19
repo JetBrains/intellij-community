@@ -28,7 +28,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.locks.Lock;
 
-public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Closeable, Forceable {
+public class PersistentEnumerator<Data> implements ScannableDataEnumeratorEx<Data>, Closeable, Forceable {
   @NotNull protected final PersistentEnumeratorBase<Data> myEnumerator;
 
   public PersistentEnumerator(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
@@ -136,6 +136,7 @@ public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Close
   }
 
   @ApiStatus.Internal
+  @Override
   public boolean processAllDataObjects(@NotNull Processor<? super Data> processor) throws IOException {
     return myEnumerator.iterateData(processor);
   }

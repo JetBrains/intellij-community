@@ -121,15 +121,19 @@ class IdeaResolverForProject(
             IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, projectContext.project)
 
         val resolverForModuleFactory = getResolverForModuleFactory(moduleInfo)
+        val optimizingOptions = ResolveOptimizingOptionsProvider.getOptimizingOptions(projectContext.project, descriptor, moduleInfo)
 
-        return resolverForModuleFactory.createResolverForModule(
+        val resolverForModule = resolverForModuleFactory.createResolverForModule(
             descriptor as ModuleDescriptorImpl,
             projectContext.withModule(descriptor),
             moduleContent,
             this,
             languageVersionSettings,
-            sealedInheritorsProvider = IdeSealedClassInheritorsProvider
+            sealedInheritorsProvider = IdeSealedClassInheritorsProvider,
+            resolveOptimizingOptions = optimizingOptions,
         )
+        ResolverForModuleComputationTrackerEx.getInstance(projectContext.project)?.onCreateResolverForModule(descriptor, moduleInfo)
+        return resolverForModule
     }
 
     private fun getResolverForModuleFactory(moduleInfo: IdeaModuleInfo): ResolverForModuleFactory {
@@ -139,7 +143,10 @@ class IdeaResolverForProject(
             packagePartProviderFactory = { IDEPackagePartProvider(it.moduleContentScope) },
             moduleByJavaClass = { javaClass: JavaClass ->
                 val psiClass = (javaClass as JavaClassImpl).psi
-                psiClass.getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform)?.platformModule ?: psiClass.moduleInfoOrNull
+                when (settings) {
+                    is CompositeAnalysisSettings -> psiClass.moduleInfoOrNull
+                    else -> psiClass.getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform)?.platformModule ?: psiClass.moduleInfoOrNull
+                }
             },
             resolverForReferencedModule = { targetModuleInfo, referencingModuleInfo ->
                 require(targetModuleInfo is IdeaModuleInfo && referencingModuleInfo is IdeaModuleInfo) {

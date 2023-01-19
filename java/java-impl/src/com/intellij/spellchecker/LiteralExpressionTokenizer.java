@@ -22,7 +22,7 @@ import java.util.Arrays;
  */
 public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiteralExpression> {
   @Override
-  public void tokenize(@NotNull PsiLiteralExpression expression, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiLiteralExpression expression, @NotNull TokenConsumer consumer) {
     String text;
     if (!ExpressionUtils.hasStringType(expression)) {
       text = null;

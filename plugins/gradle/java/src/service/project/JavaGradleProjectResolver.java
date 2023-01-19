@@ -327,7 +327,7 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
       .min(Comparator.naturalOrder())
       .orElse(null);
     if (languageLevel != null) return languageLevel;
-    boolean isPreview = externalModules.stream().allMatch(it -> isPreview(it.second));
+    boolean isPreview = ContainerUtil.and(externalModules, it -> isPreview(it.second));
     IdeaJavaLanguageSettings javaLanguageSettings = ideaProject.getJavaLanguageSettings();
     return getLanguageLevel(javaLanguageSettings, isPreview);
   }
@@ -384,7 +384,12 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
   }
 
   private static boolean isPreview(@NotNull ExternalProject externalProject) {
-    return externalProject.getSourceSets().values().stream().allMatch(it -> it.isPreview());
+    final Collection<? extends ExternalSourceSet> values = externalProject.getSourceSets().values();
+    if (values.isEmpty()) {
+      return false;
+    } else {
+      return ContainerUtil.and(values, it -> it.isPreview());
+    }
   }
 
   private @Nullable String getTargetBytecodeVersion(@NotNull IdeaProject ideaProject) {

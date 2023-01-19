@@ -77,7 +77,7 @@ public abstract class RecursiveLighterASTNodeWalkingVisitor extends LighterASTNo
     }
   }
 
-  protected RecursiveLighterASTNodeWalkingVisitor(@NotNull final LighterAST ast) {
+  protected RecursiveLighterASTNodeWalkingVisitor(@NotNull LighterAST ast) {
     this.ast = ast;
 
     myWalkingState = new WalkingState<IndexedLighterASTNode>(new LighterASTGuide()) {

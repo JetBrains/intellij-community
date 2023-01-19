@@ -5,14 +5,206 @@ import com.intellij.configurationStore.deserializeInto
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import junit.framework.TestCase.assertFalse
+import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Test
+import kotlin.test.assertTrue
 
 class RecentProjectManagerTest {
   companion object {
     @ClassRule
     @JvmField
     val appRule = ApplicationRule()
+  }
+
+  // IDEA-298050
+  @Test
+  fun `state modification tracker updated on groups expand`() {
+    val manager = RecentProjectsManagerBase()
+
+    @Language("XML")
+    val element = JDOMUtil.load("""
+    <application>
+      <component name="RecentDirectoryProjectsManager">
+        <option name="recentPaths">
+          <list>
+            <option value="/home/WebstormProjects/untitled" />
+            <option value="/home/WebstormProjects/conference-data" />
+          </list>
+        </option>
+        <option name="pid" value="" />
+        <option name="additionalInfo">
+          <map>
+            <entry key="/home/WebstormProjects/conference-data">
+              <value>
+                <RecentProjectMetaInfo>
+                  <option name="build" value="WS-191.8026.39" />
+                  <option name="productionCode" value="WS" />
+                  <option name="projectOpenTimestamp" value="1572355647642" />
+                  <option name="buildTimestamp" value="1564385774770" />
+                </RecentProjectMetaInfo>
+              </value>
+            </entry>
+            <entry key="/home/WebstormProjects/new-react-app-for-testing">
+              <value>
+                <RecentProjectMetaInfo>
+                  <option name="build" value="WS-191.8026.39" />
+                  <option name="productionCode" value="WS" />
+                  <option name="projectOpenTimestamp" value="1571662310725" />
+                  <option name="buildTimestamp" value="1564385807237" />
+                </RecentProjectMetaInfo>
+              </value>
+            </entry>
+            <entry key="/home/WebstormProjects/untitled">
+              <value>
+                <RecentProjectMetaInfo>
+                  <option name="build" value="WS-191.8026.39" />
+                  <option name="productionCode" value="WS" />
+                  <option name="projectOpenTimestamp" value="1574357146611" />
+                  <option name="buildTimestamp" value="1564385803063" />
+                </RecentProjectMetaInfo>
+              </value>
+            </entry>
+          </map>
+        </option>
+        <option name="groups">
+      <list>
+        <ProjectGroup>
+          <option name="name" value="TEST" />
+          <option name="projects">
+            <list>
+              <option value="/home/WebstormProjects/conference-data" />
+            </list>
+          </option>
+        </ProjectGroup>
+        <ProjectGroup>
+          <option name="name" value="TEST2" />
+          <option name="projects">
+            <list>
+              <option value="/home/WebstormProjects/new-react-app-for-testing" />
+            </list>
+          </option>
+        </ProjectGroup>
+        <ProjectGroup>
+          <option name="name" value="TEST3" />
+        </ProjectGroup>
+      </list>
+    </option>
+      </component>
+    </application>
+    """.trimIndent())
+    val state = RecentProjectManagerState()
+    element.getChild("component")!!.deserializeInto(state)
+    manager.loadState(state)
+
+    val initialModCounter = state.modificationCount
+
+    val groups = manager.groups
+    assertTrue(groups.all { !it.isExpanded })
+    groups.first().isExpanded = true
+
+    val newModCounter = state.modificationCount
+    assertTrue(
+      newModCounter > initialModCounter,
+      "Modification counter didn't change on group expand. Old counter: $initialModCounter, new counter: $newModCounter"
+    )
+  }
+
+  // IDEA-298050
+  @Test
+  fun `state modification tracker updated on groups expand when one was expanded before`() {
+    val manager = RecentProjectsManagerBase()
+
+    @Language("XML")
+    val element = JDOMUtil.load("""
+    <application>
+      <component name="RecentDirectoryProjectsManager">
+        <option name="recentPaths">
+          <list>
+            <option value="/home/WebstormProjects/untitled" />
+            <option value="/home/WebstormProjects/conference-data" />
+          </list>
+        </option>
+        <option name="pid" value="" />
+        <option name="additionalInfo">
+          <map>
+            <entry key="/home/WebstormProjects/conference-data">
+              <value>
+                <RecentProjectMetaInfo>
+                  <option name="build" value="WS-191.8026.39" />
+                  <option name="productionCode" value="WS" />
+                  <option name="projectOpenTimestamp" value="1572355647642" />
+                  <option name="buildTimestamp" value="1564385774770" />
+                </RecentProjectMetaInfo>
+              </value>
+            </entry>
+            <entry key="/home/WebstormProjects/new-react-app-for-testing">
+              <value>
+                <RecentProjectMetaInfo>
+                  <option name="build" value="WS-191.8026.39" />
+                  <option name="productionCode" value="WS" />
+                  <option name="projectOpenTimestamp" value="1571662310725" />
+                  <option name="buildTimestamp" value="1564385807237" />
+                </RecentProjectMetaInfo>
+              </value>
+            </entry>
+            <entry key="/home/WebstormProjects/untitled">
+              <value>
+                <RecentProjectMetaInfo>
+                  <option name="build" value="WS-191.8026.39" />
+                  <option name="productionCode" value="WS" />
+                  <option name="projectOpenTimestamp" value="1574357146611" />
+                  <option name="buildTimestamp" value="1564385803063" />
+                </RecentProjectMetaInfo>
+              </value>
+            </entry>
+          </map>
+        </option>
+        <option name="groups">
+      <list>
+        <ProjectGroup>
+          <option name="name" value="TEST" />
+          <option name="projects">
+            <list>
+              <option value="/home/WebstormProjects/conference-data" />
+            </list>
+          </option>
+        </ProjectGroup>
+        <ProjectGroup>
+          <option name="expanded" value="true" />
+          <option name="name" value="TEST2" />
+          <option name="projects">
+            <list>
+              <option value="/home/WebstormProjects/new-react-app-for-testing" />
+            </list>
+          </option>
+        </ProjectGroup>
+        <ProjectGroup>
+          <option name="name" value="TEST3" />
+        </ProjectGroup>
+      </list>
+    </option>
+      </component>
+    </application>
+    """.trimIndent())
+    val state = RecentProjectManagerState()
+    element.getChild("component")!!.deserializeInto(state)
+    manager.loadState(state)
+
+    val initialModCounter = state.modificationCount
+
+    val groups = manager.groups
+    assertFalse(groups.first().isExpanded)
+    assertTrue(groups[1].isExpanded)
+
+    groups.first().isExpanded = true
+
+    val newModCounter = state.modificationCount
+    assertTrue(
+      newModCounter > initialModCounter,
+      "Modification counter didn't change on group expand. Old counter: $initialModCounter, new counter: $newModCounter"
+    )
   }
 
   @Test

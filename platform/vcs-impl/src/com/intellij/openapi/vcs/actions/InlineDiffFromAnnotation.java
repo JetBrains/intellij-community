@@ -228,12 +228,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
     List<DiffFragment> delta = ByWord.compare(contentAfter, currentContent, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
     DiffIterable iterable = DiffIterableUtil.createFragments(delta, contentAfter.length(), currentContent.length());
 
-    LineNumberConvertor.Builder builder = new LineNumberConvertor.Builder();
-    for (Pair<Range, Boolean> pair : DiffIterableUtil.iterateAll(iterable)) {
-      Range range = pair.first;
-      builder.put(range.start1, range.start2, range.end1 - range.start1, range.end2 - range.start2);
-    }
-    LineNumberConvertor convertor = builder.build();
+    LineNumberConvertor convertor = LineNumberConvertor.fromIterable(iterable);
 
     return ContainerUtil.map(changes, change -> {
       int start = convertor.convertApproximate(change.startOffset);
@@ -244,16 +239,11 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
 
   @NotNull
   private static TextDiffType getDiffType(@NotNull InnerChangeType changeType) {
-    switch (changeType) {
-      case DELETED:
-        return TextDiffType.DELETED;
-      case INSERTED:
-        return TextDiffType.INSERTED;
-      case MODIFIED:
-        return TextDiffType.MODIFIED;
-      default:
-        throw new IllegalArgumentException(changeType.name());
-    }
+    return switch (changeType) {
+      case DELETED -> TextDiffType.DELETED;
+      case INSERTED -> TextDiffType.INSERTED;
+      case MODIFIED -> TextDiffType.MODIFIED;
+    };
   }
 
   private static boolean mouseIsInsideAnnotationArea(@NotNull EditorEx editor, @NotNull MouseEvent event) {

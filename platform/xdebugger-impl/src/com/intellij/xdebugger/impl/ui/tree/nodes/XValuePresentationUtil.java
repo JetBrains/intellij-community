@@ -53,14 +53,14 @@ public final class XValuePresentationUtil {
   }
 
   private static char getEscapingSymbol(char ch) {
-    switch (ch) {
-      case '\n': return 'n';
-      case '\r': return 'r';
-      case '\t': return 't';
-      case '\b': return 'b';
-      case '\f': return 'f';
-      default: return ch;
-    }
+    return switch (ch) {
+      case '\n' -> 'n';
+      case '\r' -> 'r';
+      case '\t' -> 't';
+      case '\b' -> 'b';
+      case '\f' -> 'f';
+      default -> ch;
+    };
   }
 
   public static void appendSeparator(@NotNull ColoredTextContainer text, @NotNull @NlsSafe String separator) {

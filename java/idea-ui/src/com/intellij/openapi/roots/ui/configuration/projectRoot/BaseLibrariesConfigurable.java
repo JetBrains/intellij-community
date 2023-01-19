@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -276,8 +278,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
                 containerType2Usage.putValue(usage.getContainingElement().getTypeName(), usage);
               }
 
-              List<String> types = new ArrayList<>(containerType2Usage.keySet());
-              Collections.sort(types);
+              List<String> types = ContainerUtil.sorted(containerType2Usage.keySet());
 
               final StringBuilder sb = new StringBuilder("Library '");
               Library libraryModel = myContext.getLibraryModel(library);
@@ -382,6 +383,11 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       } else {
         e.getPresentation().setEnabled(getSelectedObject() instanceof LibraryEx);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

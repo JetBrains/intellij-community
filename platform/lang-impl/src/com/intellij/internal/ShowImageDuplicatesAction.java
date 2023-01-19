@@ -71,7 +71,7 @@ final class ShowImageDuplicatesAction extends AnAction {
     }
   }
 
-  private static void showResults(final Project project, final List<VirtualFile> images, Map<Long, Set<VirtualFile>> duplicates) {
+  private static void showResults(final Project project, final List<? extends VirtualFile> images, Map<Long, Set<VirtualFile>> duplicates) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator == null || indicator.isCanceled()) return;
     indicator.setText("MD5 check");

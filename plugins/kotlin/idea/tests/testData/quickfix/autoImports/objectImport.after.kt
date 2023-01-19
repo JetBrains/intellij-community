@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import object 'TestObject'" "true"
 // ERROR: Unresolved reference: TestObject
 
 package ccc
@@ -6,3 +6,4 @@ package ccc
 import bbb.TestObject
 
 val x = TestObject
+/* IGNORE_FIR */

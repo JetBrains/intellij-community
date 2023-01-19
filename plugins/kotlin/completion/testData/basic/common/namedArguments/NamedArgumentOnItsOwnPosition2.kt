@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun foo(p1: Int, p2: Int, p3: Int, p4: Int, p5: Int) {}
 
 fun usage(param: Int) {

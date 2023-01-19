@@ -35,10 +35,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class KeyChooserDialog extends DialogWrapper{
   private final PropertiesFile myBundle;
   private final String myBundleName;

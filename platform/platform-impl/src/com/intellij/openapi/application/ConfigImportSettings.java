@@ -1,15 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 @ApiStatus.Internal
 public interface ConfigImportSettings {
@@ -45,8 +43,7 @@ public interface ConfigImportSettings {
   default void processPluginsToMigrate(@NotNull Path newConfigDir,
                                        @NotNull Path oldConfigDir,
                                        @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
-                                       @NotNull List<IdeaPluginDescriptor> pluginsToDownload,
-                                       @NotNull Map<? super PluginId, ? extends IdeaPluginDescriptor> pluginIdMap) { }
+                                       @NotNull List<IdeaPluginDescriptor> pluginsToDownload) { }
 
   /**
    * @param prefix is a platform prefix of {@code configDirectory}
@@ -54,5 +51,12 @@ public interface ConfigImportSettings {
    */
   default boolean shouldBeSeenAsImportCandidate(Path configDirectory, @Nullable String prefix, @Nullable String productPrefixOtherIde) {
     return true;
+  }
+
+  /**
+   * Whether a file should be skipped during configuration import.
+   */
+  default boolean shouldSkipPath(@NotNull Path path) {
+    return false;
   }
 }

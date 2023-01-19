@@ -28,7 +28,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.PsiDirectoryImpl;
@@ -259,8 +258,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
           PsiFile firstFile = added.get(0);
           CopyHandler.updateSelectionInActiveProjectView(firstFile, project, doClone);
           if (!(firstFile instanceof PsiBinaryFile)) {
-            EditorHelper.openInEditor(firstFile);
-            ToolWindowManager.getInstance(project).activateEditorComponent();
+            EditorHelper.openInEditor(firstFile, true, true);
           }
         }
       }
@@ -270,7 +268,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     }
   }
 
-  public static void updateAddedFiles(List<PsiFile> added) {
+  public static void updateAddedFiles(List<? extends PsiFile> added) {
     if (added.isEmpty()) return;
     Project project = added.get(0).getProject();
     if (Registry.is("run.refactorings.under.progress")) {
@@ -316,12 +314,12 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     return added.get(0);
   }
 
-  private static void copyToDirectory(List<PsiFileSystemItem> elementsToCopy,
+  private static void copyToDirectory(List<? extends PsiFileSystemItem> elementsToCopy,
                                       @Nullable String newName,
                                       @NotNull PsiDirectory targetDirectory,
                                       int @Nullable [] choice,
                                       @Nullable @NlsContexts.Command String title,
-                                      @NotNull List<PsiFile> added) throws IncorrectOperationException, IOException {
+                                      @NotNull List<? super PsiFile> added) throws IncorrectOperationException, IOException {
     MultiMap<PsiDirectory, PsiFile> existingFiles = new MultiMap<>();
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     if (Registry.is("run.refactorings.under.progress")) {
@@ -374,7 +372,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
                                           int @Nullable [] choice,
                                           @NlsContexts.DialogTitle String title,
                                           @NotNull MultiMap<PsiDirectory, PsiFile> existingFiles,
-                                          @NotNull List<PsiFile> added) {
+                                          @NotNull List<? super PsiFile> added) {
     SkipOverwriteChoice defaultChoice = choice != null && choice[0] > -1 ? SkipOverwriteChoice.values()[choice[0]] : null;
     try {
       defaultChoice = handleExistingFiles(defaultChoice, choice, newName, targetDirectory, title, existingFiles, added, null);
@@ -392,7 +390,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
                                                          PsiDirectory targetDirectory,
                                                          @NlsContexts.DialogTitle String title,
                                                          @NotNull MultiMap<PsiDirectory, PsiFile> existingFiles,
-                                                         @NotNull List<PsiFile> added,
+                                                         @NotNull List<? super PsiFile> added,
                                                          ProgressIndicator progressIndicator) {
     for (PsiDirectory tDirectory : existingFiles.keySet()) {
       Collection<PsiFile> replacementFiles = existingFiles.get(tDirectory);
@@ -454,7 +452,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   private static void copyToDirectoryUnderProgress(PsiFileSystemItem elementToCopy,
                                                    @Nullable String newName,
                                                    @NotNull PsiDirectory targetDirectory,
-                                                   @NotNull List<PsiFile> added,
+                                                   @NotNull List<? super PsiFile> added,
                                                    MultiMap<PsiDirectory, PsiFile> existingFiles,
                                                    @Nullable ProgressIndicator pi) throws IncorrectOperationException, IOException {
     if (pi != null) {

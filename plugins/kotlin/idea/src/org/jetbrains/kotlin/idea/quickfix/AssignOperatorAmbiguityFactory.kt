@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -71,7 +72,7 @@ private class ReplaceWithAssignFunctionCallFix(
         val left = binaryExpression.left ?: return
         val right = binaryExpression.right ?: return
         val replaced = binaryExpression.replace(
-            KtPsiFactory(binaryExpression).createExpressionByPattern("$0.${operationText}Assign($1)", left, right)
+            KtPsiFactory(project).createExpressionByPattern("$0.${operationText}Assign($1)", left, right)
         )
         editor?.caretModel?.moveToOffset(replaced.endOffset)
     }

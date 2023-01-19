@@ -27,9 +27,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyClassicStyleClassInspection extends PyInspection {
 
   @NotNull

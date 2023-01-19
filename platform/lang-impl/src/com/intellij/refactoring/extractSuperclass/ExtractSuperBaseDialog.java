@@ -27,9 +27,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, MemberInfoType extends MemberInfoBase> extends RefactoringDialog {
   private final @NlsContexts.DialogTitle String myRefactoringName;
   protected final ClassType mySourceClass;

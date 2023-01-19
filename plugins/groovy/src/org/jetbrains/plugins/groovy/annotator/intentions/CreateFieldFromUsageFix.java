@@ -16,9 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
 
   private final @NotNull String myReferenceName;

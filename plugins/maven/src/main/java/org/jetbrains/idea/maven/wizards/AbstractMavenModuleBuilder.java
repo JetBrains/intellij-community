@@ -5,8 +5,10 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -55,6 +57,12 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   private Map<String, String> myPropertiesToCreateByArtifact;
 
   @Override
+  protected void setupModule(Module module) throws ConfigurationException {
+    super.setupModule(module);
+    ExternalSystemUtil.markModuleAsMaven(module, true);
+  }
+
+  @Override
   public void setupRootModel(@NotNull ModifiableRootModel rootModel) {
     final Project project = rootModel.getProject();
 
@@ -62,7 +70,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     rootModel.addContentEntry(root);
 
     // todo this should be moved to generic ModuleBuilder
-    if (myJdk != null){
+    if (myJdk != null) {
       rootModel.setSdk(myJdk);
     } else {
       rootModel.inheritSdk();
@@ -257,6 +265,11 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   @Nullable
   @Override
   public Project createProject(String name, String path) {
-    return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
+    Project project = super.createProject(name, path);
+    if (project != null) {
+      ExternalProjectsManagerImpl.setupCreatedProject(project);
+      MavenProjectsManager.setupCreatedMavenProject(project);
+    }
+    return project;
   }
 }

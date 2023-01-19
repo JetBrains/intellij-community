@@ -4,30 +4,31 @@ package org.jetbrains.intellij.build.dependencies;
 import com.github.luben.zstd.ZstdInputStreamNoFinalizer;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.Striped;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.TracerProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesNoopTracer;
-import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesSpan;
-import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTraceEventAttributes;
-import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTracer;
+import org.jetbrains.intellij.build.KtorKt;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -37,12 +38,9 @@ import java.util.stream.Stream;
 
 @SuppressWarnings({"SSBasedInspection", "UnstableApiUsage"})
 @ApiStatus.Internal
-final public class BuildDependenciesDownloader {
+public final class BuildDependenciesDownloader {
   private static final Logger LOG = Logger.getLogger(BuildDependenciesDownloader.class.getName());
 
-  private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length";
-  private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
-    .version(HttpClient.Version.HTTP_1_1).build();
   private static final Striped<Lock> fileLocks = Striped.lock(1024);
   private static final AtomicBoolean cleanupFlag = new AtomicBoolean(false);
 
@@ -51,16 +49,15 @@ final public class BuildDependenciesDownloader {
 
   // increment on semantic changes in download code to invalidate all current caches
   // e.g. when some issues in extraction code were fixed
-  private static final int DOWNLOAD_CODE_VERSION = 1;
+  private static final int DOWNLOAD_CODE_VERSION = 2;
 
   /**
    * Set tracer to get telemetry. e.g. it's set for build scripts to get opentelemetry events
    */
   @SuppressWarnings("StaticNonFinalField")
-  @NotNull
-  public static BuildDependenciesTracer TRACER = BuildDependenciesNoopTracer.INSTANCE;
+  public static volatile @NotNull Tracer TRACER = TracerProvider.noop().get("noop-build-dependencies");
 
-  public static DependenciesProperties getCommunityDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
+  public static DependenciesProperties getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
     try {
       return new DependenciesProperties(communityRoot);
     }
@@ -121,20 +118,14 @@ final public class BuildDependenciesDownloader {
     return path;
   }
 
-  public static synchronized Path downloadFileToCacheLocation(BuildDependenciesCommunityRoot communityRoot, URI uri) {
-    cleanUpIfRequired(communityRoot);
-    String uriString = uri.toString();
-    try {
-      String lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1);
-      String fileName = hashString(uriString + "V" + DOWNLOAD_CODE_VERSION).substring(0, 10) + "-" + lastNameFromUri;
-      Path targetFile = getDownloadCachePath(communityRoot).resolve(fileName);
+  public static Path downloadFileToCacheLocation(@NotNull BuildDependenciesCommunityRoot communityRoot, @NotNull URI uri) {
+    return KtorKt.downloadFileToCacheLocationSync(uri.toString(), communityRoot);
+  }
 
-      downloadFile(uri, targetFile);
-      return targetFile;
-    }
-    catch (Exception e) {
-      throw new RuntimeException("Cannot download " + uriString, e);
-    }
+  public static @NotNull Path getTargetFile(@NotNull BuildDependenciesCommunityRoot communityRoot, @NotNull String uriString) throws IOException {
+    String lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1);
+    String fileName = hashString(uriString + "V" + DOWNLOAD_CODE_VERSION).substring(0, 10) + "-" + lastNameFromUri;
+    return getDownloadCachePath(communityRoot).resolve(fileName);
   }
 
   public static synchronized Path extractFileToCacheLocation(BuildDependenciesCommunityRoot communityRoot,
@@ -300,102 +291,32 @@ final public class BuildDependenciesDownloader {
     }
   }
 
-  private static void downloadFile(URI uri, Path target) throws Exception {
-    final Lock lock = fileLocks.get(target);
-    lock.lock();
-    try {
-      BuildDependenciesTraceEventAttributes attributes = TRACER.createAttributes();
-      attributes.setAttribute("uri", uri.toString());
-      attributes.setAttribute("target", target.toString());
+  public static final class HttpStatusException extends IllegalStateException {
+    private final int statusCode;
+    private final String url;
 
-      BuildDependenciesSpan span = TRACER.startSpan("download", attributes);
-      try {
-        Instant now = Instant.now();
-        if (Files.exists(target)) {
-          span.addEvent("skip downloading because target file already exists", TRACER.createAttributes());
+    public HttpStatusException(@NotNull String message, int statusCode, @NotNull String url) {
+      super(message);
 
-          // Update file modification time to maintain FIFO caches i.e.
-          // in persistent cache folder on TeamCity agent
-          Files.setLastModifiedTime(target, FileTime.from(now));
-          return;
-        }
-
-        // save to the same disk to ensure that move will be atomic and not as a copy
-        String tempFileName = target.getFileName() + "-"
-                              + Long.toString(now.getEpochSecond() - 1634886185, 36) + "-"
-                              + Integer.toString(now.getNano(), 36);
-
-        if (tempFileName.length() > 255) {
-          tempFileName = tempFileName.substring(tempFileName.length() - 255);
-        }
-        Path tempFile = target.getParent().resolve(tempFileName);
-
-        try {
-          HttpRequest request = HttpRequest.newBuilder()
-            .GET()
-            .uri(uri)
-            .setHeader("User-Agent", "Build Script Downloader")
-            .build();
-
-          LOG.info(" * Downloading " + uri + " -> " + target);
-
-          HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
-          if (response.statusCode() != 200) {
-            StringBuilder builder =
-              new StringBuilder("Error downloading " + uri + ": non-200 http status code " + response.statusCode() + "\n");
-
-            Map<String, List<String>> headers = response.headers().map();
-            headers.keySet().stream().sorted()
-              .flatMap(headerName -> headers.get(headerName).stream().map(value -> "Header: " + headerName + ": " + value + "\n"))
-              .forEach(builder::append);
-
-            builder.append("\n");
-            if (Files.exists(tempFile)) {
-              try (InputStream inputStream = Files.newInputStream(tempFile)) {
-                // yes, not trying to guess encoding
-                // string constructor should be exception free,
-                // so at worse we'll get some random characters
-                builder.append(new String(inputStream.readNBytes(1024), StandardCharsets.UTF_8));
-              }
-            }
-
-            throw new IllegalStateException(builder.toString());
-          }
-
-          long contentLength = response.headers().firstValueAsLong(HTTP_HEADER_CONTENT_LENGTH).orElse(-1);
-          if (contentLength <= 0) {
-            throw new IllegalStateException("Header '" + HTTP_HEADER_CONTENT_LENGTH + "' is missing or zero for " + uri);
-          }
-
-          long fileSize = Files.size(tempFile);
-          if (fileSize != contentLength) {
-            throw new IllegalStateException("Wrong file length after downloading uri '" + uri +
-                                            "' to '" + tempFile +
-                                            "': expected length " + contentLength +
-                                            "from Content-Length header, but got " + fileSize + " on disk");
-          }
-
-          Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-        }
-        finally {
-          Files.deleteIfExists(tempFile);
-        }
-      }
-      catch (Throwable e) {
-        span.recordException(e);
-        span.setStatus(BuildDependenciesSpan.SpanStatus.ERROR);
-        throw e;
-      }
-      finally {
-        span.close();
-      }
+      this.statusCode = statusCode;
+      this.url = url;
     }
-    finally {
-      lock.unlock();
+
+    public int getStatusCode() {
+      return statusCode;
+    }
+
+    public @NotNull String getUrl() {
+      return url;
+    }
+
+    @Override
+    public String toString() {
+      return "HttpStatusException(status=" + statusCode + ", url=" + url + ", message=" + getMessage() + ")";
     }
   }
 
-  private static void cleanUpIfRequired(BuildDependenciesCommunityRoot communityRoot) {
+  public static void cleanUpIfRequired(BuildDependenciesCommunityRoot communityRoot) {
     if (!cleanupFlag.getAndSet(true)) {
       // run only once per process
       return;
@@ -406,16 +327,15 @@ final public class BuildDependenciesDownloader {
       return;
     }
 
-    Path cachesDir = getProjectLocalDownloadCache(communityRoot);
-
+    Path cacheDir = getProjectLocalDownloadCache(communityRoot);
     try {
-      new BuildDependenciesDownloaderCleanup(cachesDir).runCleanupIfRequired();
+      new BuildDependenciesDownloaderCleanup(cacheDir).runCleanupIfRequired();
     }
     catch (Throwable t) {
       StringWriter writer = new StringWriter();
       t.printStackTrace(new PrintWriter(writer));
 
-      LOG.warning("Cleaning up failed for the directory '" + cachesDir + "'\n" + writer);
+      LOG.warning("Cleaning up failed for the directory '" + cacheDir + "'\n" + writer);
     }
   }
 

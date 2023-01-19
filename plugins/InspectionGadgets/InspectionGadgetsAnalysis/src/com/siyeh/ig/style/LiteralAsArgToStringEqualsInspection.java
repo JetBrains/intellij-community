@@ -75,7 +75,7 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection impleme
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiExpression argument = (PsiExpression)descriptor.getPsiElement();
       final PsiElement argumentList = PsiUtil.skipParenthesizedExprUp(argument.getParent());
       final PsiMethodCallExpression expression = (PsiMethodCallExpression)argumentList.getParent();

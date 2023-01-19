@@ -157,6 +157,11 @@ public abstract class GitHandler {
     toPass.add("core.quotepath=false");
     toPass.add("log.showSignature=false");
     toPass.addAll(requestedConfigParameters);
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      toPass.add("protocol.file.allow=always");
+    }
+
     return toPass;
   }
 
@@ -367,6 +372,12 @@ public abstract class GitHandler {
     myCustomEnv.put(name, value);
   }
 
+  /**
+   * Use {@link #getExecutable()} and {@link GitExecutable#convertFilePath(File)}
+   *
+   * @deprecated Do not use, each ENV may have its own escaping rules.
+   */
+  @Deprecated
   public void addCustomEnvironmentVariable(@NotNull @NonNls String name, @NotNull File file) {
     myCustomEnv.put(name, myExecutable.convertFilePath(file));
   }

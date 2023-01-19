@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.io.exists
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
 import org.jetbrains.annotations.ApiStatus
@@ -20,6 +19,7 @@ import java.net.URLConnection
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.zip.ZipInputStream
+import kotlin.io.path.exists
 
 private val LOG = Logger.getInstance(MarketplacePluginDownloadService::class.java)
 
@@ -227,8 +227,8 @@ private fun guessFileName(contentDisposition: String?, usedURL: String, file: Fi
 private fun downloadPercent(oldBlockMap: BlockMap, newBlockMap: BlockMap): Double {
   val oldSet = oldBlockMap.chunks.toSet()
   val newChunks = newBlockMap.chunks.filter { chunk -> !oldSet.contains(chunk) }
-  return newChunks.sumBy { chunk -> chunk.length }.toDouble() /
-         newBlockMap.chunks.sumBy { chunk -> chunk.length }.toDouble()
+  return newChunks.sumOf { chunk -> chunk.length }.toDouble() /
+         newBlockMap.chunks.sumOf { chunk -> chunk.length }.toDouble()
 }
 
 private fun getPluginFileUrl(connection: URLConnection): String {

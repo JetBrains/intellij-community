@@ -3,6 +3,7 @@ package com.intellij.testFramework
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -10,7 +11,6 @@ import com.intellij.testFramework.common.runAllCatching
 import com.intellij.util.SmartList
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.ApiStatus
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -24,12 +24,16 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Predicate
+import kotlin.io.path.exists
 import kotlin.properties.Delegates
 
 /**
- * fileName argument is not used as is for generated file or dir name - sortable UID is added as suffix.
- * `hello.kt` will be created as `hello_1eSBtxBR5522COEjhRLR6AEz.kt`.
- * `.kt` will be created as `1eSBtxBR5522COEjhRLR6AEz.kt`.
+ * Provides the possibility to create a temporary directory during a test.
+ * The directory is not actually created by default; call [createDir] to do that.
+ *
+ * * The `fileName` argument is not used as is for generated file or dir name - sortable UID is added as suffix.
+ * * `hello.kt` will be created as `hello_1eSBtxBR5522COEjhRLR6AEz.kt`.
+ * * `.kt` will be created as `1eSBtxBR5522COEjhRLR6AEz.kt`.
  */
 open class TemporaryDirectory : ExternalResource() {
   private val paths = SmartList<Path>()
@@ -74,12 +78,11 @@ open class TemporaryDirectory : ExternalResource() {
     return super.apply(base, description)
   }
 
-  
   protected fun before(testName: String) {
     sanitizedName = testNameToFileName(testName)
     root = Paths.get(FileUtilRt.getTempDirectory())
   }
-  
+
   @ApiStatus.Internal
   fun init(commonPrefix: String, root: Path) {
     if (this.root != null) {
@@ -184,6 +187,10 @@ fun Path.refreshVfs() {
   VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
 }
 
+fun Path.refreshVfs(relativePath: String) {
+  getResolvedPath(relativePath).refreshVfs()
+}
+
 private fun generateName(fileName: String): String {
   // use unique postfix sortable by timestamp to avoid stale data in VFS and file exists check
   // (file is not created at the moment of path generation)
@@ -209,7 +216,7 @@ class TemporaryDirectoryExtension : TemporaryDirectory(), BeforeEachCallback, Af
   override fun afterEach(context: ExtensionContext?) {
     after()
   }
-  
+
   override fun beforeEach(context: ExtensionContext) {
     before(context.testMethod.map { it.name }.orElse(context.displayName))
   }

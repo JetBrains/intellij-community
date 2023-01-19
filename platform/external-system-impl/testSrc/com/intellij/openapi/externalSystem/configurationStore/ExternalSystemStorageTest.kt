@@ -14,7 +14,6 @@ import com.intellij.facet.mock.MockSubFacetType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
@@ -27,10 +26,7 @@ import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
-import com.intellij.openapi.project.ExternalStorageConfigurationManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTests
-import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
@@ -53,8 +49,8 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel.Companion.getInstance
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.storage.MutableEntityStorage.Companion.from
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -231,7 +227,7 @@ class ExternalSystemStorageTest {
   fun `check mavenized will be applied to the single diff`() {
     loadProjectAndCheckResults("twoRegularModules") { project ->
       val moduleManager = ModuleManager.getInstance(project)
-      val initialStorage = getInstance(project).entityStorage.current
+      val initialStorage = getInstance(project).currentSnapshot
       val storageBuilder = from(initialStorage)
       for (module in moduleManager.modules) {
         val modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module)
@@ -714,6 +710,35 @@ class ExternalSystemStorageTest {
     checkFacetAndSubFacet(module, "web", null, MOCK_EXTERNAL_SOURCE)
   }
 
+  @Test
+  fun `load module with test properties`() = loadProjectAndCheckResults("moduleWithTestProperties") { project ->
+    val mainModuleName = "foo"
+    val testModuleName = "foo.test"
+    val moduleManager = ModuleManager.getInstance(project)
+    val testModule = moduleManager.findModuleByName(testModuleName)
+    val mainModule = moduleManager.findModuleByName(mainModuleName)
+    assertNotNull(testModule)
+    assertNotNull(mainModule)
+    val testModuleProperties = TestModuleProperties.getInstance(testModule!!)
+    assertEquals(mainModuleName, testModuleProperties.productionModuleName)
+    assertSame(mainModule, testModuleProperties.productionModule)
+  }
+
+  @Test
+  fun `test property for module`() {
+    loadModifySaveAndCheck("twoModules", "moduleWithTestProperties") {project ->
+      val mainModuleName = "foo"
+      val testModuleName = "foo.test"
+      val moduleManager = ModuleManager.getInstance(project)
+      val testModule = moduleManager.findModuleByName(testModuleName)
+      assertNotNull(testModule)
+      val testModuleProperties = TestModuleProperties.getInstance(testModule!!)
+      runWriteActionAndWait {
+        testModuleProperties.productionModuleName = mainModuleName
+      }
+    }
+  }
+
   @Test(expected = Test.None::class)
   fun `get modifiable models of renamed module`() = loadProjectAndCheckResults("singleModuleWithImportedSubFacet") { project ->
     runWriteActionAndWait {
@@ -765,8 +790,8 @@ class ExternalSystemStorageTest {
   @Before
   fun registerFacetType() {
     WriteAction.runAndWait<RuntimeException> {
-      FacetType.EP_NAME.getPoint().registerExtension(MockFacetType(), disposableRule.disposable)
-      FacetType.EP_NAME.getPoint().registerExtension(MockSubFacetType(), disposableRule.disposable)
+      FacetType.EP_NAME.point.registerExtension(MockFacetType(), disposableRule.disposable)
+      FacetType.EP_NAME.point.registerExtension(MockSubFacetType(), disposableRule.disposable)
     }
   }
 
@@ -818,14 +843,15 @@ class ExternalSystemStorageTest {
 
     val expectedDir = tempDirManager.newPath("expectedStorage")
     FileUtil.copyDir(testDataRoot.resolve("common").toFile(), expectedDir.toFile())
-    FileUtil.copyDir(testDataRoot.resolve(dataDirNameToCompareWith).toFile(), expectedDir.toFile())
+    val originalExpectedDir = testDataRoot.resolve(dataDirNameToCompareWith)
+    FileUtil.copyDir(originalExpectedDir.toFile(), expectedDir.toFile())
 
     val projectDir = project.stateStore.directoryStorePath!!.parent
-    projectDir.toFile().assertMatches(directoryContentOf(expectedDir.resolve("project")))
+    projectDir.toFile().assertMatches(directoryContentOf(expectedDir.resolve("project"), originalExpectedDir.resolve("project")))
 
     val expectedCacheDir = expectedDir.resolve("cache")
     if (Files.exists(expectedCacheDir)) {
-      cacheDir.toFile().assertMatches(directoryContentOf(expectedCacheDir), FileTextMatcher.ignoreBlankLines())
+      cacheDir.toFile().assertMatches(directoryContentOf(expectedCacheDir, originalExpectedDir.resolve("cache")), FileTextMatcher.ignoreBlankLines())
     }
     else {
       assertTrue("$cacheDir doesn't exist", !Files.exists(cacheDir) || isFolderWithoutFiles(cacheDir.toFile()))
@@ -853,7 +879,7 @@ class ExternalSystemStorageTest {
       }
       val testCacheFilesDir = testDataRoot.resolve(testDataDirName).resolve("cache").toFile()
       if (testCacheFilesDir.exists()) {
-        val cachePath = appSystemDir.resolve("external_build_system").resolve(getProjectCacheFileName(dir.toNioPath()))
+        val cachePath = getProjectDataPathRoot(dir.toNioPath()).resolve("external_build_system")
         FileUtil.copyDir(testCacheFilesDir, cachePath.toFile())
       }
       VfsUtil.markDirtyAndRefresh(false, true, true, dir)

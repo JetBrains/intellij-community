@@ -57,6 +57,15 @@ public class FallThrough {
         break;
     }
     switch (o) {
+      case Integer integer:
+        System.out.println(1);
+      case <error descr="Illegal fall-through to a pattern">String s when s.isEmpty()</error>:
+        System.out.println(2);
+        break;
+      default:
+        System.out.println(3);
+    }
+    switch (o) {
       case String s:
         break;
       case Integer x when x > 0:

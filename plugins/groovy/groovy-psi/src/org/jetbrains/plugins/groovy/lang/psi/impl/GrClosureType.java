@@ -28,9 +28,6 @@ import java.util.List;
 import static com.intellij.util.LazyKt.recursionSafeLazy;
 import static kotlin.LazyKt.lazyOf;
 
-/**
- * @author ven
- */
 public final class GrClosureType extends GrLiteralClassType {
 
   private final List<GrSignature> mySignatures;

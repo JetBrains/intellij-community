@@ -3,9 +3,11 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 
+@ApiStatus.Internal
 interface StreamProvider {
   /**
    * Whether is enabled.
@@ -25,14 +27,16 @@ interface StreamProvider {
    */
   fun isApplicable(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): Boolean = true
 
-  /**
-   * @param fileSpec
-   * @param content bytes of content, size of array is not actual size of data, you must use `size`
-   * @param size actual size of data
-   */
-  fun write(fileSpec: String, content: ByteArray, size: Int = content.size, roamingType: RoamingType = RoamingType.DEFAULT)
+  fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType = RoamingType.DEFAULT)
 
-  fun write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT): Unit = write(path, content.internalBuffer, content.size(), roamingType)
+  @Deprecated("Use #write(fileSpec, content, roamingType) without the 'size' parameter")
+  fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType = RoamingType.DEFAULT) : Unit =
+    write(fileSpec, content, roamingType)
+
+  @Deprecated("Use #write(fileSpec, content, roamingType) with ByteArray parameter")
+  fun write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT): Unit =
+    write(path, content.toByteArray(), roamingType)
+
 
   /**
    * `true` if provider is applicable for file.

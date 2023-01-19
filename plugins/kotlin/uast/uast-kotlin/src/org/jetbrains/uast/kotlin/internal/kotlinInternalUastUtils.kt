@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
 import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.descriptors.*
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.descriptors.impl.EnumEntrySyntheticClassDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.core.unwrapIfFakeOverride
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaPackageFragment
 import org.jetbrains.kotlin.load.java.sam.SamAdapterDescriptor
@@ -38,10 +40,7 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.ImportedFromObjectCallableDescriptor
+import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstructor
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
@@ -223,7 +222,7 @@ private fun buildAnnotationProvider(ktType: KotlinType, context: PsiElement): Ty
 
 internal fun KtTypeReference?.toPsiType(source: UElement, boxed: Boolean = false): PsiType {
     if (this == null) return UastErrorType
-    return (analyze()[BindingContext.TYPE, this] ?: return UastErrorType).toPsiType(source, this, this.typeOwnerKind, boxed)
+    return (getType() ?: return UastErrorType).toPsiType(source, this, this.typeOwnerKind, boxed)
 }
 
 internal fun KtElement.analyze(): BindingContext {
@@ -236,6 +235,9 @@ internal fun KtExpression.getExpectedType(): KotlinType? = analyze()[BindingCont
 
 internal fun KtTypeReference.getType(): KotlinType? = analyze()[BindingContext.TYPE, this]
 
+internal fun KtCallableDeclaration.getReturnType(): KotlinType? =
+    (analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, this] as? CallableDescriptor)?.returnType
+
 internal fun KotlinType.getFunctionalInterfaceType(
     source: UElement,
     element: KtElement,
@@ -244,7 +246,12 @@ internal fun KotlinType.getFunctionalInterfaceType(
     takeIf { it.isInterface() && !it.isBuiltinFunctionalTypeOrSubtype }?.toPsiType(source, element, typeOwnerKind, false)
 
 internal fun KotlinULambdaExpression.getFunctionalInterfaceType(): PsiType? {
-    val parent = sourcePsi.parent
+    val parent = if (sourcePsi.parent is KtLabeledExpression) {
+        // lambda -> labeled expression -> lambda argument (value argument)
+        sourcePsi.parent.parent
+    } else {
+        sourcePsi.parent
+    }
     if (parent is KtBinaryExpressionWithTypeRHS)
         return parent.right?.getType()?.getFunctionalInterfaceType(this, sourcePsi, parent.right!!.typeOwnerKind)
     if (parent is KtValueArgument) run {
@@ -288,6 +295,11 @@ internal fun resolveToPsiMethod(
         return resolveToPsiMethod(context, descriptor.underlyingConstructorDescriptor)
     }
 
+    // import pkg.to.Object.member
+    if (descriptor is FunctionImportedFromObject) {
+        return resolveToPsiMethod(context, descriptor.callableFromObject)
+    }
+
     // For synthetic members in enum classes, `source` points to their containing enum class.
     if (source is KtClass && source.isEnum() && descriptor is SimpleFunctionDescriptor) {
         val lightClass = source.toLightClass() ?: return null
@@ -307,6 +319,13 @@ internal fun resolveToPsiMethod(
         return null
     }
 
+    // FunctionN::invoke
+    if (descriptor is FunctionInvokeDescriptor) {
+        return resolveToPsiClass({ null }, descriptor.containingDeclaration, context)
+            ?.methods
+            ?.singleOrNull() // FunctionN is SAM!
+    }
+
     return when (source) {
         is KtFunction ->
             if (source.isLocal)
@@ -314,7 +333,10 @@ internal fun resolveToPsiMethod(
             else // UltraLightMembersCreator.createMethods() returns nothing for JVM-invisible methods, so fake it if we get null here
                 LightClassUtil.getLightClassMethod(source) ?: getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
         is PsiMethod -> source
-        null -> resolveDeserialized(context, descriptor) as? PsiMethod
+        null -> {
+            val unwrapped = descriptor.unwrapIfFakeOverride() as? DeserializedCallableMemberDescriptor ?: descriptor
+            resolveDeserialized(context, unwrapped) as? PsiMethod
+        }
         else -> null
     }
 }
@@ -528,10 +550,7 @@ private fun PsiClass.getMethodBySignature(methodSignature: JvmMemberSignature?) 
 private fun PsiClass.getMethodBySignature(name: String, descr: String?) =
     methods.firstOrNull { method -> method.name == name && descr?.let { method.matchesDesc(it) } ?: true }
 
-private fun PsiMethod.matchesDesc(desc: String) = desc == buildString {
-    parameterList.parameters.joinTo(this, separator = "", prefix = "(", postfix = ")") { MapPsiToAsmDesc.typeDesc(it.type) }
-    append(MapPsiToAsmDesc.typeDesc(returnType ?: PsiType.VOID))
-}
+private fun PsiMethod.matchesDesc(desc: String) = desc == this.desc
 
 private fun getMethodSignatureFromDescriptor(context: KtElement, descriptor: CallableDescriptor): JvmMemberSignature? {
     fun PsiType.raw() = (this as? PsiClassType)?.rawType() ?: PsiPrimitiveType.getUnboxedType(this) ?: this

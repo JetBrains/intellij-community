@@ -2,6 +2,9 @@
   <module value="com.intellij.modules.remoteServers"/>
 
   <extensionPoints>
+    <extensionPoint name="remoteServer.deploymentConfiguration.stateProvider"
+                    interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerStateProvider"
+                    dynamic="true"/>
     <extensionPoint name="remoteServer.type" interface="com.intellij.remoteServer.ServerType" dynamic="true"/>
     <extensionPoint name="remoteServer.deploymentSource.type"
                     interface="com.intellij.remoteServer.configuration.deployment.DeploymentSourceType"
@@ -37,9 +40,10 @@
                     serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeploymentConfigurationManagerImpl"/>
     <remoteServer.deploymentSource.type
       implementation="com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceType"/>
-    <applicationService
-      serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar"
-      preload="await"/>
+
+    <applicationService serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar"/>
+    <!--suppress PluginXmlValidity -->
+    <execution.syntheticConfigurationTypeProvider implementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar$Provider"/>
 
     <projectService serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersDeploymentManager"/>
     <serviceViewContributor implementation="com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor"/>

@@ -32,7 +32,7 @@ internal class PackageKotlinPlatformsPanel : HtmlEditorPane() {
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         border = emptyBorder(top = 8)
-        background = PackageSearchUI.UsualBackgroundColor
+        background = PackageSearchUI.Colors.panelBackground
     }
 
     fun display(platforms: List<ApiStandardPackage.ApiPlatform>) {

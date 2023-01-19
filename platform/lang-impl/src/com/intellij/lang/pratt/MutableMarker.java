@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 
-/**
- * @author peter
- */
 public class MutableMarker {
   enum Mode { READY, DROPPED, COMMITTED, ERROR }
 

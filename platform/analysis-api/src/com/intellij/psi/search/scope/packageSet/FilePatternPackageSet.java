@@ -70,7 +70,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     return myFilePattern.matcher(relativePath).matches();
   }
 
-  static String convertToRegexp(String aspectsntx, char separator) {
+  public static String convertToRegexp(String aspectsntx, char separator) {
     StringBuilder buf = new StringBuilder(aspectsntx.length());
     int cur = 0;
     boolean isAfterSeparator = false;

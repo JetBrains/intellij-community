@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
@@ -32,21 +32,20 @@ public class TestVcsLogProvider implements VcsLogProvider {
       return true;
     }
 
-    @NotNull
     @Override
-    public Color getBackgroundColor() {
+    public @NotNull Color getBackgroundColor() {
       return JBColor.WHITE;
     }
   };
   private static final String SAMPLE_SUBJECT = "Sample subject";
   public static final VcsUser DEFAULT_USER = new VcsUserImpl("John Smith", "John.Smith@mail.com");
 
-  @NotNull private final List<TimedVcsCommit> myCommits;
-  @NotNull private final Set<VcsRef> myRefs;
-  @NotNull private final MockRefManager myRefManager;
-  @NotNull private final ReducibleSemaphore myFullLogSemaphore;
-  @NotNull private final ReducibleSemaphore myRefreshSemaphore;
-  @NotNull private final AtomicInteger myReadFirstBlockCounter = new AtomicInteger();
+  private final @NotNull List<TimedVcsCommit> myCommits;
+  private final @NotNull Set<VcsRef> myRefs;
+  private final @NotNull MockRefManager myRefManager;
+  private final @NotNull ReducibleSemaphore myFullLogSemaphore;
+  private final @NotNull ReducibleSemaphore myRefreshSemaphore;
+  private final @NotNull AtomicInteger myReadFirstBlockCounter = new AtomicInteger();
 
   public TestVcsLogProvider() {
     myCommits = new ArrayList<>();
@@ -56,9 +55,8 @@ public class TestVcsLogProvider implements VcsLogProvider {
     myRefreshSemaphore = new ReducibleSemaphore();
   }
 
-  @NotNull
   @Override
-  public DetailedLogData readFirstBlock(@NotNull final VirtualFile root, @NotNull Requirements requirements) {
+  public @NotNull DetailedLogData readFirstBlock(final @NotNull VirtualFile root, @NotNull Requirements requirements) {
     LOG.debug("readFirstBlock began");
     if (requirements instanceof VcsLogProviderRequirementsEx && ((VcsLogProviderRequirementsEx)requirements).isRefresh()) {
       try {
@@ -75,15 +73,13 @@ public class TestVcsLogProvider implements VcsLogProvider {
     return new LogDataImpl(Collections.emptySet(), metadatas);
   }
 
-  @NotNull
-  private static VcsCommitMetadataImpl createDefaultMetadataForCommit(@NotNull VirtualFile root, TimedVcsCommit commit) {
+  private static @NotNull VcsCommitMetadataImpl createDefaultMetadataForCommit(@NotNull VirtualFile root, TimedVcsCommit commit) {
     return new VcsCommitMetadataImpl(commit.getId(), commit.getParents(), commit.getTimestamp(), root, SAMPLE_SUBJECT,
                                      DEFAULT_USER, SAMPLE_SUBJECT, DEFAULT_USER, commit.getTimestamp());
   }
 
-  @NotNull
   @Override
-  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<? super TimedVcsCommit> commitConsumer) {
+  public @NotNull LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<? super TimedVcsCommit> commitConsumer) {
     LOG.debug("readAllHashes");
     try {
       myFullLogSemaphore.acquire();
@@ -111,41 +107,35 @@ public class TestVcsLogProvider implements VcsLogProvider {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public VcsKey getSupportedVcs() {
+  public @NotNull VcsKey getSupportedVcs() {
     return MockAbstractVcs.getKey();
   }
 
-  @NotNull
   @Override
-  public VcsLogRefManager getReferenceManager() {
+  public @NotNull VcsLogRefManager getReferenceManager() {
     return myRefManager;
   }
 
-  @NotNull
   @Override
-  public Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher) {
+  public @NotNull Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher) {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root,
-                                                       @NotNull VcsLogFilterCollection filterCollection,
-                                                       int maxCount) throws VcsException {
+  public @NotNull List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root,
+                                                                @NotNull VcsLogFilterCollection filterCollection,
+                                                                int maxCount) throws VcsException {
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
   @Override
-  public VcsUser getCurrentUser(@NotNull VirtualFile root) {
+  public @Nullable VcsUser getCurrentUser(@NotNull VirtualFile root) {
     return DEFAULT_USER;
   }
 
-  @NotNull
   @Override
-  public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) {
+  public @NotNull Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) {
     throw new UnsupportedOperationException();
   }
 
@@ -181,15 +171,13 @@ public class TestVcsLogProvider implements VcsLogProvider {
     return myReadFirstBlockCounter.get();
   }
 
-  @Nullable
   @Override
-  public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
+  public @Nullable <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getCurrentBranch(@NotNull VirtualFile root) {
+  public @Nullable String getCurrentBranch(@NotNull VirtualFile root) {
     return null;
   }
 
@@ -197,21 +185,18 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
     public static final Comparator<VcsRef> FAKE_COMPARATOR = (o1, o2) -> 0;
 
-    @NotNull
     @Override
-    public Comparator<VcsRef> getLabelsOrderComparator() {
+    public @NotNull Comparator<VcsRef> getLabelsOrderComparator() {
       return FAKE_COMPARATOR;
     }
 
-    @NotNull
     @Override
-    public List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs) {
+    public @NotNull List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs) {
       return ContainerUtil.map(refs, SingletonRefGroup::new);
     }
 
-    @NotNull
     @Override
-    public List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> refs, boolean compact, boolean showTagNames) {
+    public @NotNull List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> refs, boolean compact, boolean showTagNames) {
       return groupForBranchFilter(refs);
     }
 
@@ -219,9 +204,8 @@ public class TestVcsLogProvider implements VcsLogProvider {
     public void serialize(@NotNull DataOutput out, @NotNull VcsRefType type) {
     }
 
-    @NotNull
     @Override
-    public VcsRefType deserialize(@NotNull DataInput in) {
+    public @NotNull VcsRefType deserialize(@NotNull DataInput in) {
       throw new UnsupportedOperationException();
     }
 
@@ -234,9 +218,8 @@ public class TestVcsLogProvider implements VcsLogProvider {
     public void setFavorite(@NotNull VcsRef reference, boolean favorite) {
     }
 
-    @NotNull
     @Override
-    public Comparator<VcsRef> getBranchLayoutComparator() {
+    public @NotNull Comparator<VcsRef> getBranchLayoutComparator() {
       return FAKE_COMPARATOR;
     }
   }

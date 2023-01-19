@@ -75,7 +75,7 @@ public final class JAXPDOMAdapter extends AbstractDOMAdapter {
    * Use a Thread-local for keeping a single instance of a
    * DocumentBuilder in memory. Thread-safe this way.
    */
-  private static final ThreadLocal<DocumentBuilder> localbuilder = new ThreadLocal<DocumentBuilder>();
+  private static final ThreadLocal<DocumentBuilder> localbuilder = new ThreadLocal<>();
 
   /**
    * This creates an empty <code>Document</code> object based

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.structureView.newStructureView;
 
@@ -8,6 +8,7 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel {
+public final class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel {
   private final StructureViewModel myModel;
   private final TreeActionsOwner myStructureView;
 
@@ -25,8 +26,7 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
   }
 
   @Override
-  @NotNull
-  public StructureViewTreeElement getRoot() {
+  public @NotNull StructureViewTreeElement getRoot() {
     return myModel.getRoot();
   }
 
@@ -36,8 +36,7 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
     return filtered.toArray(Grouper.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private <T extends TreeAction> List<T> filterActive(T @NotNull [] actions) {
+  private @NotNull <T extends TreeAction> List<T> filterActive(T @NotNull [] actions) {
     List<T> filtered = new ArrayList<>();
     for (T action : actions) {
       if (isFiltered(action)) filtered.add(action);
@@ -45,17 +44,23 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
     return filtered;
   }
 
-  @NotNull
-  private List<NodeProvider> filterProviders(@NotNull Collection<? extends NodeProvider> actions) {
-    List<NodeProvider> filtered = new ArrayList<>();
-    for (NodeProvider action : actions) {
-      if (isFiltered(action)) filtered.add(action);
+  private @NotNull List<NodeProvider<?>> filterProviders(@NotNull Collection<? extends NodeProvider<?>> actions) {
+    List<NodeProvider<?>> filtered = new ArrayList<>();
+    for (NodeProvider<?> action : actions) {
+      if (isFiltered(action)) {
+        filtered.add(action);
+      }
     }
     return filtered;
   }
 
   private boolean isFiltered(@NotNull TreeAction action) {
     return action instanceof Sorter && !((Sorter)action).isVisible() || myStructureView.isActionActive(action.getName());
+  }
+
+  @Override
+  public @NotNull FileStatus getElementStatus(Object element) {
+    return myModel.getElementStatus(element);
   }
 
   @Override
@@ -75,9 +80,8 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
     return myModel.getCurrentEditorElement();
   }
 
-  @NotNull
   @Override
-  public Collection<NodeProvider> getNodeProviders() {
+  public @NotNull Collection<NodeProvider<?>> getNodeProviders() {
     if (myModel instanceof ProvidingTreeModel) {
       return filterProviders(((ProvidingTreeModel)myModel).getNodeProviders());
     }
@@ -130,7 +134,7 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
   }
 
   @Override
-  public boolean isEnabled(@NotNull NodeProvider provider) {
+  public boolean isEnabled(@NotNull NodeProvider<?> provider) {
     return myStructureView.isActionActive(provider.getName());
   }
 }

@@ -7,8 +7,10 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.workspaceModel.storage.CodeGeneratorVersions
 import org.jetbrains.kotlin.KtNodeTypes
@@ -23,9 +25,9 @@ class WorkspaceImplObsoleteInspection: LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
     override fun visitClass(klass: KtClass) {
       if (!klass.isWorkspaceEntity()) return
-      val targetApiVersion = calculateTargetApiVersion(klass.project)
+      val targetApiVersion = calculateTargetApiVersion(klass.resolveScope, klass.project)
       if (targetApiVersion == null) {
-        LOG.info("Can't evaluate target API version")
+        LOG.info("Can't evaluate target API version for ${klass.name}")
         return
       }
       if (klass.name == "Builder") return
@@ -39,28 +41,10 @@ class WorkspaceImplObsoleteInspection: LocalInspectionTool() {
     }
   }
 
-  private fun calculateTargetApiVersion(project: Project): Int? {
-    val generatorVersions = CodeGeneratorVersions::class.simpleName
-    val foundClasses = KotlinClassShortNameIndex.get(generatorVersions!!, project, GlobalSearchScope.allScope(project))
-    if (foundClasses.isEmpty()) {
-      error("Can't find $generatorVersions")
-    }
-    val ktClassOrObject = foundClasses.first()
-    val fieldName = "API_VERSION"
-    val ktDeclaration = ktClassOrObject.declarations.first { it.name == fieldName }
-    if (ktDeclaration !is KtProperty) {
-      error("Unexpected declaration type for field $fieldName")
-    }
-
-    val propertyExpression = ktDeclaration.initializer as? KtConstantExpression
-    if (propertyExpression == null) {
-      error("Property value should be int constant")
-    }
-    val elementType = propertyExpression.node.elementType
-    if (elementType == KtNodeTypes.INTEGER_CONSTANT) {
-      return parseNumericLiteral(propertyExpression.text, elementType)?.toInt()
-    }
-    return null
+  private fun calculateTargetApiVersion(scope: GlobalSearchScope, project: Project): Int? {
+    val generatorVersionsClass = JavaPsiFacade.getInstance(project).findClass(CodeGeneratorVersions::class.java.name, scope) ?: return null
+    val versionField = generatorVersionsClass.findFieldByName("API_VERSION_INTERNAL", false) ?: return null
+    return (versionField.initializer as? PsiLiteralExpression)?.value as? Int
   }
 }
 

@@ -1,43 +1,27 @@
 import sys
 from _typeshed import Self, SupportsGetItem, SupportsItemAccess
-from builtins import type as _type
+from builtins import list as _list, type as _type
 from collections.abc import Iterable, Iterator, Mapping
 from types import TracebackType
 from typing import IO, Any, Protocol
 
-if sys.version_info >= (3, 8):
-    __all__ = [
-        "MiniFieldStorage",
-        "FieldStorage",
-        "parse",
-        "parse_multipart",
-        "parse_header",
-        "test",
-        "print_exception",
-        "print_environ",
-        "print_form",
-        "print_directory",
-        "print_arguments",
-        "print_environ_usage",
-    ]
-else:
-    __all__ = [
-        "MiniFieldStorage",
-        "FieldStorage",
-        "parse",
-        "parse_qs",
-        "parse_qsl",
-        "parse_multipart",
-        "parse_header",
-        "test",
-        "print_exception",
-        "print_environ",
-        "print_form",
-        "print_directory",
-        "print_arguments",
-        "print_environ_usage",
-        "escape",
-    ]
+__all__ = [
+    "MiniFieldStorage",
+    "FieldStorage",
+    "parse",
+    "parse_multipart",
+    "parse_header",
+    "test",
+    "print_exception",
+    "print_environ",
+    "print_form",
+    "print_directory",
+    "print_arguments",
+    "print_environ_usage",
+]
+
+if sys.version_info < (3, 8):
+    __all__ += ["parse_qs", "parse_qsl", "escape"]
 
 def parse(
     fp: IO[Any] | None = ...,
@@ -51,13 +35,9 @@ if sys.version_info < (3, 8):
     def parse_qs(qs: str, keep_blank_values: bool = ..., strict_parsing: bool = ...) -> dict[str, list[str]]: ...
     def parse_qsl(qs: str, keep_blank_values: bool = ..., strict_parsing: bool = ...) -> list[tuple[str, str]]: ...
 
-if sys.version_info >= (3, 7):
-    def parse_multipart(
-        fp: IO[Any], pdict: SupportsGetItem[str, bytes], encoding: str = ..., errors: str = ..., separator: str = ...
-    ) -> dict[str, list[Any]]: ...
-
-else:
-    def parse_multipart(fp: IO[Any], pdict: SupportsGetItem[str, bytes]) -> dict[str, list[bytes]]: ...
+def parse_multipart(
+    fp: IO[Any], pdict: SupportsGetItem[str, bytes], encoding: str = ..., errors: str = ..., separator: str = ...
+) -> dict[str, list[Any]]: ...
 
 class _Environ(Protocol):
     def __getitem__(self, __k: str) -> str: ...
@@ -86,8 +66,6 @@ class MiniFieldStorage:
     name: Any
     value: Any
     def __init__(self, name: Any, value: Any) -> None: ...
-
-_list = list
 
 class FieldStorage:
     FieldStorageClass: _type | None
@@ -127,7 +105,7 @@ class FieldStorage:
         separator: str = ...,
     ) -> None: ...
     def __enter__(self: Self) -> Self: ...
-    def __exit__(self, *args: Any) -> None: ...
+    def __exit__(self, *args: object) -> None: ...
     def __iter__(self) -> Iterator[str]: ...
     def __getitem__(self, key: str) -> Any: ...
     def getvalue(self, key: str, default: Any = ...) -> Any: ...

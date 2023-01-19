@@ -11,11 +11,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.getCapitalizedAccessorName
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
@@ -47,7 +48,7 @@ private fun getSettingsFile(project: Project) : GroovyFileBase? {
   for (projectDatum in projectData) {
     val settings = Path.of(projectDatum.data.linkedExternalProjectPath).resolve(GradleConstants.SETTINGS_FILE_NAME).let {
       VfsUtil.findFile(it, false)
-    }?.let { PsiManager.getInstance(project).findFile(it) }?.castSafelyTo<GroovyFileBase>()
+    }?.let { PsiManager.getInstance(project).findFile(it) }?.asSafely<GroovyFileBase>()
     return settings
   }
   return null
@@ -55,7 +56,7 @@ private fun getSettingsFile(project: Project) : GroovyFileBase? {
 
 private class GroovySettingsFileResolveVisitor(val element : PsiElement) : GroovyRecursiveElementVisitor() {
   var resolveTarget : PsiElement? = null
-  val accessorName = element.castSafelyTo<PsiMethod>()?.takeIf { it.returnType?.resolve()?.qualifiedName == GradleCommonClassNames.GRADLE_API_PROVIDER_PROVIDER }?.let(::getCapitalizedAccessorName)
+  val accessorName = element.asSafely<PsiMethod>()?.takeIf { it.returnType?.resolve()?.qualifiedName == GradleCommonClassNames.GRADLE_API_PROVIDER_PROVIDER }?.let(::getCapitalizedAccessorName)
 
   override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
     val method = methodCallExpression.resolveMethod()
@@ -65,7 +66,7 @@ private class GroovySettingsFileResolveVisitor(val element : PsiElement) : Groov
     }
     if (accessorName != null && method?.containingClass?.qualifiedName == GradleCommonClassNames.GRADLE_API_VERSION_CATALOG_BUILDER) {
       val definedName = methodCallExpression.argumentList.expressionArguments.firstOrNull()
-      val definedNameValue = GroovyConstantExpressionEvaluator.evaluate(definedName).castSafelyTo<String>() ?: return super.visitMethodCallExpression(methodCallExpression)
+      val definedNameValue = GroovyConstantExpressionEvaluator.evaluate(definedName).asSafely<String>() ?: return super.visitMethodCallExpression(methodCallExpression)
       val longName = definedNameValue.split("_", ".", "-").joinToString("", transform = GroovyPropertyUtils::capitalize)
       if (longName == accessorName) {
         resolveTarget = methodCallExpression
@@ -76,24 +77,4 @@ private class GroovySettingsFileResolveVisitor(val element : PsiElement) : Groov
   }
 }
 
-internal fun getCapitalizedAccessorName(method: PsiMethod): String? {
-  val propertyName = GroovyPropertyUtils.getPropertyName(method) ?: return null
-  val methodFinalPart = GroovyPropertyUtils.capitalize(propertyName)
-  val methodParts = method.containingClass?.takeUnless { it.name?.startsWith(LIBRARIES_FOR_PREFIX) == true }?.name?.trimAccessorName()
-  return (methodParts ?: "") + methodFinalPart
-}
 
-
-private fun String.trimAccessorName(): String {
-  for (suffix in listOf(BUNDLE_ACCESSORS_SUFFIX, LIBRARY_ACCESSORS_SUFFIX, PLUGIN_ACCESSORS_SUFFIX, VERSION_ACCESSORS_SUFFIX)) {
-    if (endsWith(suffix)) return substringBeforeLast(suffix)
-  }
-  return this
-}
-
-internal const val BUNDLE_ACCESSORS_SUFFIX = "BundleAccessors"
-internal const val LIBRARY_ACCESSORS_SUFFIX = "LibraryAccessors"
-internal const val PLUGIN_ACCESSORS_SUFFIX = "PluginAccessors"
-internal const val VERSION_ACCESSORS_SUFFIX = "VersionAccessors"
-
-internal const val LIBRARIES_FOR_PREFIX = "LibrariesFor"

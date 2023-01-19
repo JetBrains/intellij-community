@@ -15,7 +15,7 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analysis.providers.KtModuleStateTracker
@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicLong
 class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
     init {
         val busConnection = project.messageBus.connect(this)
-        WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener())
+        busConnection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
         busConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, JdkListener())
     }
 
@@ -41,6 +41,7 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
 
     fun getModuleStateTrackerFor(module: KtModule): KtModuleStateTracker {
         return when (module) {
+            is KtBuiltinsModule -> ModuleStateTrackerImpl()
             is KtLibraryModule -> {
                 val libraryInfo = module.moduleInfo as LibraryInfo
                 libraryInfo.checkValidity()
@@ -62,7 +63,6 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
 
             is KtLibrarySourceModule -> getModuleStateTrackerFor(module.binaryLibrary)
             is KtNotUnderContentRootModule -> ModuleStateTrackerImpl() // TODO need proper cache?
-            is KtBuiltinsModule -> ModuleStateTrackerImpl()
         }
     }
 
@@ -94,7 +94,7 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
                 getChangedModule(it.oldEntity?.contentRoot, it.newEntity?.contentRoot)
             }
 
-            getChanges(JavaSourceRootEntity::class.java).mapNotNullTo(this) {
+            getChanges(JavaSourceRootPropertiesEntity::class.java).mapNotNullTo(this) {
                 getChangedModule(it.oldEntity?.sourceRoot?.contentRoot, it.newEntity?.sourceRoot?.contentRoot)
             }
         }

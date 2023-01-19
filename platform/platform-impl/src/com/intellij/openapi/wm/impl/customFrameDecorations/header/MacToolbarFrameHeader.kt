@@ -1,73 +1,102 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
-import com.intellij.openapi.wm.IdeFrame
+import com.intellij.ide.actions.ToggleDistractionFreeModeAction
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.util.ui.JBUI
 import com.jetbrains.CustomWindowDecoration
 import com.jetbrains.JBR
-import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.Rectangle
+import java.awt.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JRootPane
 
+
 private const val GAP_FOR_BUTTONS = 80
 private const val DEFAULT_HEADER_HEIGHT = 40
 
 internal class MacToolbarFrameHeader(private val frame: JFrame,
-                                     private val root: JRootPane,
-                                     private val ideMenu: IdeMenuBar) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder {
-  private var toolbar: MainToolbar?
+                                     root: JRootPane) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
+  private val ideMenu: IdeMenuBar = IdeMenuBar()
+  private var toolbar: MainToolbar? = null
+  private val headerTitle = SimpleCustomDecorationPath(frame)
+
+  private val TOOLBAR_CARD = "TOOLBAR_CARD"
+  private val PATH_CARD = "PATH_CARD"
 
   init {
-    layout = BorderLayout()
+    layout = AdjustableSizeCardLayout()
     root.addPropertyChangeListener(MacMainFrameDecorator.FULL_SCREEN, PropertyChangeListener { updateBorders() })
-    add(ideMenu, BorderLayout.NORTH)
+    add(ideMenu)
 
-    val toolbar = createToolBar()
-    this.toolbar = toolbar
+    addHeaderTitle()
+    toolbar = createToolBar()
+    updateVisibleCard()
   }
 
   private fun createToolBar(): MainToolbar {
     val toolbar = MainToolbar()
     toolbar.isOpaque = false
-    add(toolbar, BorderLayout.CENTER)
+    toolbar.addComponentListener(object: ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) {
+        updateCustomDecorationHitTestSpots()
+        super.componentResized(e)
+      }
+    })
+    add(toolbar, TOOLBAR_CARD)
     return toolbar
   }
 
-  override fun initToolbar() {
-    var toolbar = toolbar
-    if (toolbar == null) {
-      toolbar = createToolBar()
-      this.toolbar = toolbar
+  private fun addHeaderTitle() {
+    headerTitle.isOpaque = false
+    add(headerTitle, PATH_CARD)
+    updateBorders()
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+
+    if (parent != null) {
+      updateBorders()
     }
-    toolbar.init((frame as? IdeFrame)?.project)
+  }
+
+  override fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
+    toolbar?.init(toolbarActionGroups)
   }
 
   override fun updateToolbar() {
-    removeToolbar()
-
-    val toolbar = createToolBar()
+    var toolbar = toolbar ?: return
+    remove(toolbar)
+    toolbar = createToolBar()
     this.toolbar = toolbar
-    toolbar.init((frame as? IdeFrame)?.project)
+    toolbar.init(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
 
     revalidate()
     updateCustomDecorationHitTestSpots()
+
+    updateVisibleCard()
   }
 
-  override fun removeToolbar() {
-    val toolbar = toolbar ?: return
-    this.toolbar = null
-    remove(toolbar)
+  private fun updateVisibleCard() {
+    val cardToShow = if (ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()) PATH_CARD else TOOLBAR_CARD
+    (getLayout() as? CardLayout)?.show(this, cardToShow)
+
     revalidate()
+    repaint()
   }
 
   override fun windowStateChanged() {
@@ -107,12 +136,17 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   override fun getHeaderBackground(active: Boolean) = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)
 
   private fun updateBorders() {
-    val isFullscreen = root.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) != null
-    border = if (isFullscreen) JBUI.Borders.empty() else JBUI.Borders.emptyLeft(GAP_FOR_BUTTONS)
+    border = JBUI.Borders.emptyLeft(GAP_FOR_BUTTONS)
+    headerTitle.updateBorders(GAP_FOR_BUTTONS)
+    toolbar?.let { it.border = JBUI.Borders.empty() }
   }
 
   override fun updateActive() {
     super.updateActive()
     toolbar?.background = getHeaderBackground(myActive)
+  }
+
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    updateVisibleCard()
   }
 }

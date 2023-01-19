@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides a possibility to query the directories corresponding to a specific Java package name.
@@ -44,4 +45,11 @@ public abstract class PackageIndex {
    */
   @NotNull
   public abstract Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources);
+
+  /**
+   * Returns the name of the package corresponding to the specified directory.
+   *
+   * @return the package name, or null if the directory does not correspond to any package.
+   */
+  public abstract @Nullable String getPackageNameByDirectory(@NotNull VirtualFile dir);
 }

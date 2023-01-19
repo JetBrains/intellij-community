@@ -18,7 +18,7 @@ class LatencyRecord {
   var totalLatency: Long = 0L
   var maxLatency: Int = 0
   val samples = IntArrayList()
-  var samplesSorted = false
+  private var samplesSorted = false
 
   fun update(latencyInMS: Int) {
     samplesSorted = false

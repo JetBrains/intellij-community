@@ -123,7 +123,7 @@ final class ServiceViewDragHelper {
   }
 
   @Nullable
-  static ServiceViewContributor getTheOnlyRootContributor(List<ServiceViewItem> items) {
+  static ServiceViewContributor getTheOnlyRootContributor(List<? extends ServiceViewItem> items) {
     ServiceViewContributor result = null;
     for (ServiceViewItem node : items) {
       if (result == null) {
@@ -183,6 +183,10 @@ final class ServiceViewDragHelper {
     public Object getData(@NotNull String dataId) {
       if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
         return ContainerUtil.map2Array(myItems, ServiceViewItem::getValue);
+      }
+      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+        ServiceViewItem item = ContainerUtil.getOnlyItem(myItems);
+        return item != null ? item.getValue() : null;
       }
       return null;
     }

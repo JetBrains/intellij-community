@@ -5,13 +5,12 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.builtins.DefaultBuiltIns
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.inspections.collections.isMap
-import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -33,7 +32,7 @@ class JavaMapForEachInspection : AbstractApplicabilityBasedInspection<KtCallExpr
 
         val context = element.analyze(BodyResolveMode.PARTIAL)
         val resolvedCall = element.getResolvedCall(context) ?: return false
-        return resolvedCall.dispatchReceiver?.type?.isMap(DefaultBuiltIns.Instance) == true && resolvedCall.isResolvedWithSamConversions()
+        return resolvedCall.dispatchReceiver?.type?.isMap() == true && resolvedCall.isResolvedWithSamConversions()
     }
 
     override fun inspectionHighlightRangeInElement(element: KtCallExpression): TextRange? = element.calleeExpression?.textRangeIn(element)
@@ -47,7 +46,7 @@ class JavaMapForEachInspection : AbstractApplicabilityBasedInspection<KtCallExpr
         val lambda = element.lambda() ?: return
         val valueParameters = lambda.valueParameters
         lambda.functionLiteral.valueParameterList?.replace(
-            KtPsiFactory(element).createLambdaParameterList("(${valueParameters[0].text}, ${valueParameters[1].text})")
+            KtPsiFactory(project).createLambdaParameterList("(${valueParameters[0].text}, ${valueParameters[1].text})")
         )
     }
 

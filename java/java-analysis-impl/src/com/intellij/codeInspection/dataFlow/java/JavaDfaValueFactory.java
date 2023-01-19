@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -32,12 +32,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * Utility class to help producing values for Java DFA
  */
-public class JavaDfaValueFactory {
+public final class JavaDfaValueFactory {
 
   private JavaDfaValueFactory() {
   }
@@ -202,6 +203,8 @@ public class JavaDfaValueFactory {
     }
     if (target instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)target;
+      // Assume that methods returning stream always return a new one
+      if (InheritanceUtil.isInheritor(method.getReturnType(), JAVA_UTIL_STREAM_BASE_STREAM)) return null;
       if (method.getParameterList().isEmpty() &&
           (PropertyUtilBase.isSimplePropertyGetter(method) || JavaMethodContractUtil.isPure(method) || isClassAnnotatedImmutable(method)) &&
           isContractAllowedForGetter(method)) {

@@ -163,10 +163,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   @Override
-  public void setFont(EditorFontType key, Font font) {
-  }
-
-  @Override
   public abstract Object clone();
 
   public void copyTo(AbstractColorsScheme newScheme) {
@@ -357,26 +353,18 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     for (Element childNode : node.getChildren()) {
       String childName = childNode.getName();
       switch (childName) {
-        case OPTION_ELEMENT:
-          readSettings(childNode, isDefault, fontScale);
-          break;
-        case EDITOR_FONT:
+        case OPTION_ELEMENT -> readSettings(childNode, isDefault, fontScale);
+        case EDITOR_FONT -> {
           readFontSettings(ensureEditableFontPreferences(), childNode, isDefault, fontScale.get(), clearEditorFonts);
           clearEditorFonts = false;
-          break;
-        case CONSOLE_FONT:
+        }
+        case CONSOLE_FONT -> {
           readFontSettings(ensureEditableConsoleFontPreferences(), childNode, isDefault, fontScale.get(), clearConsoleFonts);
           clearConsoleFonts = false;
-          break;
-        case COLORS_ELEMENT:
-          readColors(childNode);
-          break;
-        case ATTRIBUTES_ELEMENT:
-          readAttributes(childNode);
-          break;
-        case META_INFO_ELEMENT:
-          readMetaInfo(childNode);
-          break;
+        }
+        case COLORS_ELEMENT -> readColors(childNode);
+        case ATTRIBUTES_ELEMENT -> readAttributes(childNode);
+        case META_INFO_ELEMENT -> readMetaInfo(childNode);
       }
     }
 
@@ -451,51 +439,40 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   private void readSettings(@NotNull Element childNode, boolean isDefault, @NotNull Ref<Float> fontScale) {
     switch (childNode.getAttributeValue(NAME_ATTR)) {
-      case FONT_SCALE: {
-        fontScale.set(myValueReader.read(Float.class, childNode));
-        break;
-      }
-      case LINE_SPACING: {
+      case FONT_SCALE -> fontScale.set(myValueReader.read(Float.class, childNode));
+      case LINE_SPACING -> {
         Float value = myValueReader.read(Float.class, childNode);
         if (value != null) setLineSpacing(value);
-        break;
       }
-      case EDITOR_FONT_SIZE: {
+      case EDITOR_FONT_SIZE -> {
         float value = readFontSize(childNode, isDefault, fontScale.get());
         if (value > 0) setEditorFontSize(value);
-        break;
       }
-      case EDITOR_FONT_NAME: {
+      case EDITOR_FONT_NAME -> {
         String value = myValueReader.read(String.class, childNode);
         if (value != null) setEditorFontName(value);
-        break;
       }
-      case CONSOLE_LINE_SPACING: {
+      case CONSOLE_LINE_SPACING -> {
         Float value = myValueReader.read(Float.class, childNode);
         if (value != null) setConsoleLineSpacing(value);
-        break;
       }
-      case CONSOLE_FONT_SIZE: {
+      case CONSOLE_FONT_SIZE -> {
         float value = readFontSize(childNode, isDefault, fontScale.get());
         if (value > 0) setConsoleFontSize(value);
-        break;
       }
-      case CONSOLE_FONT_NAME: {
+      case CONSOLE_FONT_NAME -> {
         String value = myValueReader.read(String.class, childNode);
         if (value != null) setConsoleFontName(value);
-        break;
       }
-      case EDITOR_LIGATURES: {
+      case EDITOR_LIGATURES -> {
         Boolean value = myValueReader.read(Boolean.class, childNode);
         if (value != null) ensureEditableFontPreferences().setUseLigatures(value);
-        break;
       }
-      case CONSOLE_LIGATURES: {
+      case CONSOLE_LIGATURES -> {
         Boolean value = myValueReader.read(Boolean.class, childNode);
         if (value != null) {
           ensureEditableConsoleFontPreferences().setUseLigatures(value);
         }
-        break;
       }
     }
   }

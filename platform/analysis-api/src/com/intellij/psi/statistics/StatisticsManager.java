@@ -54,7 +54,7 @@ public abstract class StatisticsManager {
   public abstract int getLastUseRecency(@NotNull StatisticsInfo info);
 
   /**
-   * Registers a usage of an <context, value> entry represented by info parameter.
+   * Registers a usage of an (context, value) entry represented by info parameter.
    * This will affect subsequent {@link #getUseCount(StatisticsInfo)} and {@link #getLastUseRecency(StatisticsInfo)} results.
    */
   public abstract void incUseCount(@NotNull StatisticsInfo info);

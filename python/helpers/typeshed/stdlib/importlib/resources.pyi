@@ -1,44 +1,26 @@
 import os
 import sys
+from collections.abc import Iterator
 from contextlib import AbstractContextManager
 from pathlib import Path
 from types import ModuleType
-from typing import Any, BinaryIO, Iterator, TextIO, Union
+from typing import Any, BinaryIO, TextIO
+from typing_extensions import TypeAlias
+
+__all__ = ["Package", "Resource", "contents", "is_resource", "open_binary", "open_text", "path", "read_binary", "read_text"]
+
+if sys.version_info >= (3, 9):
+    __all__ += ["as_file", "files"]
 
 if sys.version_info >= (3, 10):
-    __all__ = [
-        "Package",
-        "Resource",
-        "ResourceReader",
-        "as_file",
-        "contents",
-        "files",
-        "is_resource",
-        "open_binary",
-        "open_text",
-        "path",
-        "read_binary",
-        "read_text",
-    ]
-elif sys.version_info >= (3, 9):
-    __all__ = [
-        "Package",
-        "Resource",
-        "as_file",
-        "contents",
-        "files",
-        "is_resource",
-        "open_binary",
-        "open_text",
-        "path",
-        "read_binary",
-        "read_text",
-    ]
-else:
-    __all__ = ["Package", "Resource", "contents", "is_resource", "open_binary", "open_text", "path", "read_binary", "read_text"]
+    __all__ += ["ResourceReader"]
 
-Package = Union[str, ModuleType]
-Resource = Union[str, os.PathLike[Any]]
+Package: TypeAlias = str | ModuleType
+
+if sys.version_info >= (3, 11):
+    Resource: TypeAlias = str
+else:
+    Resource: TypeAlias = str | os.PathLike[Any]
 
 def open_binary(package: Package, resource: Resource) -> BinaryIO: ...
 def open_text(package: Package, resource: Resource, encoding: str = ..., errors: str = ...) -> TextIO: ...

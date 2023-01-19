@@ -60,14 +60,13 @@ public enum ErrorTreeElementKind {
 
   @NotNull
   public static ErrorTreeElementKind convertMessageFromCompilerErrorType(int type) {
-    switch(type) {
-      case MessageCategory.ERROR : return ERROR;
-      case MessageCategory.WARNING : return WARNING;
-      case MessageCategory.INFORMATION : return INFO;
-      case MessageCategory.STATISTICS : return INFO;
-      case MessageCategory.SIMPLE : return GENERIC;
-      case MessageCategory.NOTE : return NOTE;
-      default : return GENERIC;
-    }
+    return switch (type) {
+      case MessageCategory.ERROR -> ERROR;
+      case MessageCategory.WARNING -> WARNING;
+      case MessageCategory.INFORMATION, MessageCategory.STATISTICS -> INFO;
+      case MessageCategory.SIMPLE -> GENERIC;
+      case MessageCategory.NOTE -> NOTE;
+      default -> GENERIC;
+    };
   }
 }

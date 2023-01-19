@@ -18,10 +18,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.components.dialog
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -66,7 +66,7 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
       row(IdeBundle.message("task.browser.label")) {
         cell(browserComboBox)
           .resizableColumn()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
         if (JavaScriptDebuggerStarter.Util.hasStarters()) {
           startJavaScriptDebuggerCheckBox = checkBox(IdeBundle.message("start.browser.with.js.debugger"))
             .applyToComponent { isSelected = state.withDebugger }
@@ -75,7 +75,7 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
       }
       row(IdeBundle.message("task.browser.url")) {
         cell(url)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .columns(COLUMNS_MEDIUM)
       }
     }

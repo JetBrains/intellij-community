@@ -271,7 +271,7 @@ public final class NewMappings implements Disposable {
     if (!(SystemInfoRt.isMac && ExperimentalUI.isNewUI())) {
       ApplicationManager.getApplication().invokeLater(() -> {
         ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(myProject);
-        if (frame != null && frame.getRootPane() != null) {
+        if (frame != null) {
           frame.updateView();
         }
       }, myProject.getDisposed());
@@ -400,13 +400,19 @@ public final class NewMappings implements Disposable {
   private List<MappedRoot> reuseDefaultMappingsFrom(@NotNull VcsDirectoryMapping mapping,
                                                     @NotNull List<MappedRoot> oldMappedRoots,
                                                     @NotNull Disposable pointerDisposable) {
+    // Pretend that mappings did not change at first, and "<Project>" mappings has detected all the roots that were used before.
+    // This prevents such roots from being temporally unregistered if they will be detected later by the proper-and-slow logic.
+    // Which in its turn allows preserving Change-to-Changelist mappings and
+    // avoiding sporadic "file not under VCS root anymore" errors in the middle of operation.
+
+    // For example, if a "$PROJECT_DIR$" was replaced with a "<Project>" mapping as a part of shelve-unshelve operation.
+
     List<MappedRoot> result = new ArrayList<>();
     ReadAction.run(() -> {
-      for (MappedRoot root : oldMappedRoots) {
-        if (root.mapping.isDefaultMapping() && root.mapping.equals(mapping)) {
-          VirtualFilePointerManager.getInstance().create(root.root, pointerDisposable, myFilePointerListener);
-          result.add(root);
-        }
+      List<MappedRoot> oldMappings = ContainerUtil.filter(oldMappedRoots, root -> root.mapping.getVcs().equals(mapping.getVcs()));
+      for (MappedRoot root : oldMappings) {
+        VirtualFilePointerManager.getInstance().create(root.root, pointerDisposable, myFilePointerListener);
+        result.add(new MappedRoot(root.vcs, mapping, root.root));
       }
     });
     return result;
@@ -594,6 +600,10 @@ public final class NewMappings implements Disposable {
           filteredMappings.addAll(ContainerUtil.map(vcs.filterUniqueRoots(objects, pair -> pair.getFirst()), Functions.pairSecond()));
         }
       }
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("NewMappings.cleanupMappings", getDirectoryMappings(), filteredMappings);
     }
 
     updateVcsMappings(filteredMappings);

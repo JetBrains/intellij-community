@@ -34,8 +34,6 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
@@ -91,12 +89,17 @@ public abstract class AppIcon {
    * <p>
    * This method might resort to requesting user attention to a target window if focus stealing is not supported by the OS
    * (this is the case on Windows, where focus stealing can only be enabled using {@link WinFocusStealer}).
+   *
+   * @see #requestFocus(Window)
    */
   public void requestFocus(IdeFrame frame) {
     requestFocus(frame == null ? null : SwingUtilities.getWindowAncestor(frame.getComponent()));
   }
 
-  protected void requestFocus(@Nullable Window window) {
+  /**
+   * @see #requestFocus(IdeFrame)
+   */
+  public void requestFocus(@Nullable Window window) {
   }
 
   public void requestFocus() {
@@ -208,15 +211,12 @@ public abstract class AppIcon {
       try {
         if (myAppImage != null) return myAppImage;
 
-        Image appImage = (Image)getAppMethod("getDockIconImage").invoke(getApp());
+        Image appImage = Taskbar.getTaskbar().getIconImage();
         if (appImage == null) return null;
 
         // [tav] expecting two resolution variants for the dock icon: 128x128, 256x256
         appImage = MultiResolutionImageProvider.getMaxSizeResolutionVariant(appImage);
         myAppImage = ImageUtil.toBufferedImage(appImage);
-      }
-      catch (NoSuchMethodException e) {
-        return null;
       }
       catch (Exception e) {
         LOG.error(e);
@@ -230,16 +230,15 @@ public abstract class AppIcon {
       EDT.assertIsEdt();
 
       try {
-        getAppMethod("setDockIconBadge", String.class).invoke(getApp(), text);
+        Taskbar.getTaskbar().setIconBadge(text);
       }
-      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
     }
 
     @Override
-    protected void requestFocus(@Nullable Window window) {
+    public void requestFocus(@Nullable Window window) {
       if (window != null) {
         window.toFront();
       }
@@ -251,9 +250,8 @@ public abstract class AppIcon {
       EDT.assertIsEdt();
 
       try {
-        getAppMethod("requestForeground", boolean.class).invoke(getApp(), true);
+        Desktop.getDesktop().requestForeground(true);
       }
-      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -264,9 +262,8 @@ public abstract class AppIcon {
       EDT.assertIsEdt();
 
       try {
-        getAppMethod("requestUserAttention", boolean.class).invoke(getApp(), critical);
+        Taskbar.getTaskbar().requestUserAttention(true, critical);
       }
-      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -393,23 +390,11 @@ public abstract class AppIcon {
 
     static void setDockIcon(BufferedImage image) {
       try {
-        getAppMethod("setDockIconImage", Image.class).invoke(getApp(), image);
+        Taskbar.getTaskbar().setIconImage(image);
       }
       catch (Exception e) {
         LOG.error(e);
       }
-    }
-
-    private static Method getAppMethod(String name, Class<?>... args) throws NoSuchMethodException, ClassNotFoundException {
-      return getAppClass().getMethod(name, args);
-    }
-
-    private static Object getApp() throws NoSuchMethodException, ClassNotFoundException, InvocationTargetException, IllegalAccessException {
-      return getAppClass().getMethod("getApplication").invoke(null);
-    }
-
-    private static Class<?> getAppClass() throws ClassNotFoundException {
-      return Class.forName("com.apple.eawt.Application");
     }
   }
 
@@ -667,7 +652,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    protected void requestFocus(@Nullable Window window) {
+    public void requestFocus(@Nullable Window window) {
       if (window != null) {
         try {
           // This is required for the focus stealing mechanism to work reliably;
@@ -677,7 +662,7 @@ public abstract class AppIcon {
         catch (InterruptedException e) {
           LOG.error(e);
         }
-        window.toFront();
+        UIUtil.toFront(window);
       }
     }
 

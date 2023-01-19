@@ -1,8 +1,9 @@
 import sys
 from _typeshed import Self, SupportsWrite
+from collections.abc import Generator, Iterable, Iterator, Mapping
 from types import FrameType, TracebackType
-from typing import IO, Any, Generator, Iterable, Iterator, Mapping, Optional, overload
-from typing_extensions import Literal
+from typing import IO, Any, overload
+from typing_extensions import Literal, TypeAlias
 
 __all__ = [
     "extract_stack",
@@ -26,7 +27,7 @@ __all__ = [
     "walk_tb",
 ]
 
-_PT = tuple[str, int, str, Optional[str]]
+_PT: TypeAlias = tuple[str, int, str, str | None]
 
 def print_tb(tb: TracebackType | None, limit: int | None = ..., file: IO[str] | None = ...) -> None: ...
 
@@ -95,6 +96,12 @@ def clear_frames(tb: TracebackType) -> None: ...
 def walk_stack(f: FrameType | None) -> Iterator[tuple[FrameType, int]]: ...
 def walk_tb(tb: TracebackType | None) -> Iterator[tuple[FrameType, int]]: ...
 
+if sys.version_info >= (3, 11):
+    class _ExceptionPrintContext:
+        def __init__(self) -> None: ...
+        def indent(self) -> str: ...
+        def emit(self, text_gen: str | Iterable[str], margin_char: str | None = ...) -> Generator[str, None, None]: ...
+
 class TracebackException:
     __cause__: TracebackException
     __context__: TracebackException
@@ -106,7 +113,34 @@ class TracebackException:
     text: str
     offset: int
     msg: str
-    if sys.version_info >= (3, 10):
+    if sys.version_info >= (3, 11):
+        def __init__(
+            self,
+            exc_type: type[BaseException],
+            exc_value: BaseException,
+            exc_traceback: TracebackType | None,
+            *,
+            limit: int | None = ...,
+            lookup_lines: bool = ...,
+            capture_locals: bool = ...,
+            compact: bool = ...,
+            max_group_width: int = ...,
+            max_group_depth: int = ...,
+            _seen: set[int] | None = ...,
+        ) -> None: ...
+        @classmethod
+        def from_exception(
+            cls: type[Self],
+            exc: BaseException,
+            *,
+            limit: int | None = ...,
+            lookup_lines: bool = ...,
+            capture_locals: bool = ...,
+            compact: bool = ...,
+            max_group_width: int = ...,
+            max_group_depth: int = ...,
+        ) -> Self: ...
+    elif sys.version_info >= (3, 10):
         def __init__(
             self,
             exc_type: type[BaseException],
@@ -147,8 +181,15 @@ class TracebackException:
         ) -> Self: ...
 
     def __eq__(self, other: object) -> bool: ...
-    def format(self, *, chain: bool = ...) -> Generator[str, None, None]: ...
+    if sys.version_info >= (3, 11):
+        def format(self, *, chain: bool = ..., _ctx: _ExceptionPrintContext | None = ...) -> Generator[str, None, None]: ...
+    else:
+        def format(self, *, chain: bool = ...) -> Generator[str, None, None]: ...
+
     def format_exception_only(self) -> Generator[str, None, None]: ...
+
+    if sys.version_info >= (3, 11):
+        def print(self, *, file: SupportsWrite[str] | None = ..., chain: bool = ...) -> None: ...
 
 class FrameSummary(Iterable[Any]):
     if sys.version_info >= (3, 11):
@@ -211,5 +252,8 @@ class StackSummary(list[FrameSummary]):
         capture_locals: bool = ...,
     ) -> StackSummary: ...
     @classmethod
-    def from_list(cls, a_list: list[_PT]) -> StackSummary: ...
+    def from_list(cls, a_list: Iterable[FrameSummary | _PT]) -> StackSummary: ...
+    if sys.version_info >= (3, 11):
+        def format_frame_summary(self, frame_summary: FrameSummary) -> str: ...
+
     def format(self) -> list[str]: ...

@@ -75,7 +75,12 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
           myToggled = !myToggled;
           myScreenMenuItemPeer.setState(myToggled);
         }
-        ApplicationManager.getApplication().invokeLater(() -> performAction(0));
+        SwingUtilities.invokeLater(() -> {
+          if (myAction.getAction().isEnabledInModalContext() ||
+              !Boolean.TRUE.equals(myContext.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT))) {
+            ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> performAction(0));
+          }
+        });
       });
     }
     else {
@@ -235,7 +240,8 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   private Icon wrapNullIcon(Icon icon) {
-    if (ActionMenu.isShowNoIcons()) {
+    boolean isMainMenu = ActionPlaces.MAIN_MENU.equals(myPlace);
+    if (ActionMenu.isShowNoIcons() && isMainMenu) {
       return null;
     }
     if (!ActionMenu.isAligned() || !ActionMenu.isAlignedInGroup()) {
@@ -252,7 +258,7 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
     if (icon != null) {
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
+        icon = IconLoader.INSTANCE.getMenuBarIcon(icon, myUseDarkIcons);
       }
       else if (ActionMenu.shouldConvertIconToDarkVariant()) {
         icon = IconLoader.getDarkIcon(icon, true);

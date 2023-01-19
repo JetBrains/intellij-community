@@ -16,3 +16,21 @@ inline fun <reified T: Number> number(t: T) {
     // TODO: support 'always false' here
     if (x is T) {}
 }
+
+// Non-reified
+class TreeWalker<T> {
+    // KTIJ-23521
+    fun test() : Boolean {
+        var current: TreeWalker<*>? = this
+        while (<warning descr="Condition 'current != null' is always true">current != null</warning>) {
+            if (current.type is <error descr="[CANNOT_CHECK_FOR_ERASED] Cannot check for instance of erased type: T">T</error>)
+            return true
+            current = current.parent()
+        }
+        return false
+    }
+
+    var type: Any = Any()
+
+    fun parent() = this
+}

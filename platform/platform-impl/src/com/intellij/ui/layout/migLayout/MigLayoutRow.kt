@@ -15,7 +15,6 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.DialogPanel
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import net.miginfocom.layout.*
@@ -27,6 +26,7 @@ import javax.swing.text.JTextComponent
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             override val builder: MigLayoutBuilder,
                             val labeled: Boolean = false,
@@ -457,12 +457,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     addCommentRow(commentComponent, forComponent, anchorComponent)
   }
 
-  // not using @JvmOverloads to maintain binary compatibility
-  fun addCommentRow(component: JComponent, forComponent: Boolean) {
-    addCommentRow(component, forComponent, null)
-  }
-
-  fun addCommentRow(component: JComponent, forComponent: Boolean, anchorComponent: JComponent?) {
+  private fun addCommentRow(component: JComponent, forComponent: Boolean, anchorComponent: JComponent?) {
     gapAfter = "${spacing.commentVerticalTopGap}px!"
 
     val isParentRowLabeled = labeled
@@ -501,10 +496,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     gapAfter = "${spacing.largeVerticalGap}px!"
   }
 
-  override fun createRow(label: String?): Row {
-    return createChildRow(label = label?.let { Label(it) })
-  }
-
   override fun createNoteOrCommentRow(component: JComponent): Row {
     val cc = CC()
     cc.vertical.gapBefore = gapToBoundSize(if (subRows == null) spacing.verticalGap else spacing.largeVerticalGap, false)
@@ -515,12 +506,15 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     return row
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  @ApiStatus.Internal
   override fun radioButton(text: String, comment: String?): CellBuilder<JBRadioButton> {
     val result = super.radioButton(text, comment)
     attachSubRowsEnabled(result.component)
     return result
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String?): CellBuilder<JBRadioButton> {
     return super.radioButton(text, prop, comment).also { attachSubRowsEnabled(it.component) }
   }
@@ -564,7 +558,7 @@ private class CellBuilderImpl<T : JComponent>(
   private val row: MigLayoutRow,
   override val component: T,
   private val viewComponent: JComponent = component
-) : CellBuilder<T>, CheckboxCellBuilder, ScrollPaneCellBuilder {
+) : CellBuilder<T> {
   private var applyIfEnabled = false
   private var property: GraphProperty<*>? = null
 
@@ -575,12 +569,6 @@ private class CellBuilderImpl<T : JComponent>(
 
   override fun comment(text: String, maxLineLength: Int, forComponent: Boolean): CellBuilder<T> {
     row.addCommentRow(text, maxLineLength, forComponent, viewComponent)
-    return this
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun commentComponent(component: JComponent, forComponent: Boolean): CellBuilder<T> {
-    row.addCommentRow(component, forComponent, viewComponent)
     return this
   }
 
@@ -644,19 +632,6 @@ private class CellBuilderImpl<T : JComponent>(
     return !(applyIfEnabled && !viewComponent.isEnabled)
   }
 
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun actsAsLabel() {
-    builder.updateComponentConstraints(viewComponent) { spanX = 1 }
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun noGrowY() {
-    builder.updateComponentConstraints(viewComponent) {
-      growY(0.0f)
-      pushY(0.0f)
-    }
-  }
-
   @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
   override fun sizeGroup(name: String): CellBuilderImpl<T> {
     builder.updateComponentConstraints(viewComponent) {
@@ -693,13 +668,6 @@ private class CellBuilderImpl<T : JComponent>(
     }
     return this
   }
-
-  override fun withLeftGap(gapLeft: Int): CellBuilder<T> {
-    builder.updateComponentConstraints(viewComponent) {
-      horizontal.gapBefore = gapToBoundSize(gapLeft, true)
-    }
-    return this
-  }
 }
 
 private val JComponent.origin: JComponent
@@ -709,3 +677,8 @@ private val JComponent.origin: JComponent
       else -> this
     }
   }
+
+private fun Row.attachSubRowsEnabled(component: AbstractButton) {
+  subRowsEnabled = component.selected()
+  component.selected.addListener { subRowsEnabled = it }
+}

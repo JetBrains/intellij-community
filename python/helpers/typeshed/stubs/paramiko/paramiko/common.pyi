@@ -1,5 +1,5 @@
-import sys
-from typing import Protocol, Text, Union
+from typing import Protocol
+from typing_extensions import TypeAlias
 
 MSG_DISCONNECT: int
 MSG_IGNORE: int
@@ -99,17 +99,13 @@ max_byte: bytes
 cr_byte: bytes
 linefeed_byte: bytes
 crlf: bytes
-if sys.version_info >= (3, 0):
-    cr_byte_value: int
-    linefeed_byte_value: int
-else:
-    cr_byte_value: bytes
-    linefeed_byte_value: bytes
+cr_byte_value: int
+linefeed_byte_value: int
 
 class _SupportsAsBytes(Protocol):
     def asbytes(self) -> bytes: ...
 
-_LikeBytes = Union[bytes, Text, _SupportsAsBytes]
+_LikeBytes: TypeAlias = bytes | str | _SupportsAsBytes
 
 def asbytes(s: _LikeBytes) -> bytes: ...
 

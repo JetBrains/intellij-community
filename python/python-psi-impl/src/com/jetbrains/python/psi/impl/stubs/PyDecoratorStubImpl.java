@@ -15,7 +15,6 @@ import java.util.Map;
 
 /**
  * Decorator stub storage.
- * User: dcheryasov
  */
 public class PyDecoratorStubImpl extends StubBase<PyDecorator> implements PyDecoratorStub {
   private final QualifiedName myQualifiedName;

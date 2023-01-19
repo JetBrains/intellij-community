@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -138,13 +139,9 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
         if (artifactEvents != null) {
           for (MavenArtifactDownloadServerProgressEvent e : artifactEvents) {
             switch (e.getArtifactEventType()) {
-              case DOWNLOAD_STARTED:
-                indicator.startedDownload(e.getResolveType(), e.getDependencyId());
-                break;
-              case DOWNLOAD_COMPLETED:
-                indicator.completedDownload(e.getResolveType(), e.getDependencyId());
-                break;
-              case DOWNLOAD_FAILED:
+              case DOWNLOAD_STARTED -> indicator.startedDownload(e.getResolveType(), e.getDependencyId());
+              case DOWNLOAD_COMPLETED -> indicator.completedDownload(e.getResolveType(), e.getDependencyId());
+              case DOWNLOAD_FAILED ->
                 indicator.failedDownload(e.getResolveType(), e.getDependencyId(), e.getErrorMessage(), e.getStackTrace());
             }
           }
@@ -193,8 +190,9 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                 Transformer.ID :
                                 RemotePathTransformerFactory.createForProject(myProject);
       final List<File> ioFiles = ContainerUtil.map(files, file -> new File(transformer.toRemotePath(file.getPath())));
+      var forceResolveDependenciesSequentially = Registry.is("maven.server.force.resolve.dependencies.sequentially");
       Collection<MavenServerExecutionResult> results =
-        getOrCreateWrappee().resolveProject(ioFiles, activeProfiles, inactiveProfiles, ourToken);
+        getOrCreateWrappee().resolveProject(ioFiles, activeProfiles, inactiveProfiles, forceResolveDependenciesSequentially, ourToken);
       if (transformer != Transformer.ID) {
         for (MavenServerExecutionResult result : results) {
           MavenServerExecutionResult.ProjectData data = result.projectData;

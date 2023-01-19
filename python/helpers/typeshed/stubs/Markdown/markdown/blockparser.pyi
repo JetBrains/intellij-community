@@ -1,4 +1,5 @@
-from typing import Any, Iterable, TypeVar
+from collections.abc import Iterable
+from typing import Any, TypeVar
 from xml.etree.ElementTree import Element, ElementTree
 
 from . import Markdown
@@ -16,8 +17,6 @@ class BlockParser:
     state: State[Any]  # TODO: possible to get rid of Any?
     md: Markdown
     def __init__(self, md: Markdown) -> None: ...
-    @property
-    def markdown(self): ...  # deprecated
     root: Element
     def parseDocument(self, lines: Iterable[str]) -> ElementTree: ...
     def parseChunk(self, parent: Element, text: str) -> None: ...

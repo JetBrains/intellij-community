@@ -10,26 +10,26 @@ import com.intellij.workspaceModel.codegen.utils.fqn
 import com.intellij.workspaceModel.codegen.utils.lines
 import com.intellij.workspaceModel.codegen.utils.toQualifiedName
 import com.intellij.workspaceModel.codegen.writer.allFields
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 
 internal fun ObjClass<*>.softLinksCode(context: LinesBuilder, hasSoftLinks: Boolean) {
-  context.conditionalLine({ hasSoftLinks }, "override fun getLinks(): Set<${PersistentEntityId::class.fqn}<*>>") {
-    line("val result = HashSet<${PersistentEntityId::class.fqn}<*>>()")
+  context.conditionalLine({ hasSoftLinks }, "override fun getLinks(): Set<${SymbolicEntityId::class.fqn}<*>>") {
+    line("val result = HashSet<${SymbolicEntityId::class.fqn}<*>>()")
     operate(this) { line("result.add($it)") }
     line("return result")
   }
 
   context.conditionalLine(
     { hasSoftLinks },
-    "override fun index(index: ${WorkspaceMutableIndex::class.fqn}<${PersistentEntityId::class.fqn}<*>>)"
+    "override fun index(index: ${WorkspaceMutableIndex::class.fqn}<${SymbolicEntityId::class.fqn}<*>>)"
   ) {
     operate(this) { line("index.index(this, $it)") }
   }
 
   context.conditionalLine(
     { hasSoftLinks },
-    "override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: ${WorkspaceMutableIndex::class.fqn}<${PersistentEntityId::class.fqn}<*>>)"
+    "override fun updateLinksIndex(prev: Set<${SymbolicEntityId::class.fqn}<*>>, index: ${WorkspaceMutableIndex::class.fqn}<${SymbolicEntityId::class.fqn}<*>>)"
   ) {
     line("// TODO verify logic")
     line("val mutablePreviousSet = HashSet(prev)")
@@ -46,7 +46,7 @@ internal fun ObjClass<*>.softLinksCode(context: LinesBuilder, hasSoftLinks: Bool
 
   context.conditionalLine(
     { hasSoftLinks },
-    "override fun updateLink(oldLink: ${PersistentEntityId::class.fqn}<*>, newLink: ${PersistentEntityId::class.fqn}<*>): Boolean"
+    "override fun updateLink(oldLink: ${SymbolicEntityId::class.fqn}<*>, newLink: ${SymbolicEntityId::class.fqn}<*>): Boolean"
   ) {
     line("var changed = false")
     operateUpdateLink(this)
@@ -55,35 +55,33 @@ internal fun ObjClass<*>.softLinksCode(context: LinesBuilder, hasSoftLinks: Bool
 }
 
 internal fun ObjClass<*>.hasSoftLinks(): Boolean {
-  return fields.noPersistentId().noRefs().any { field ->
+  return fields.noSymbolicId().noRefs().any { field ->
     field.hasSoftLinks()
   }
 }
 
 internal fun ObjProperty<*, *>.hasSoftLinks(): Boolean {
-  if (name == "persistentId") return false
+  if (name == "symbolicId") return false
   return valueType.hasSoftLinks()
 }
 
 internal fun ValueType<*>.hasSoftLinks(): Boolean = when (this) {
-  is ValueType.Blob -> isPersistentId
+  is ValueType.Blob -> isSymbolicId
   is ValueType.Collection<*, *> -> elementType.hasSoftLinks()
   is ValueType.Optional<*> -> type.hasSoftLinks()
-  is ValueType.SealedClass<*> -> isPersistentId || subclasses.any { it.hasSoftLinks() }
-  is ValueType.DataClass<*> -> isPersistentId || properties.any { it.type.hasSoftLinks() }
+  is ValueType.SealedClass<*> -> isSymbolicId || subclasses.any { it.hasSoftLinks() }
+  is ValueType.DataClass<*> -> isSymbolicId || properties.any { it.type.hasSoftLinks() }
   else -> false
 }
 
-val ValueType.JvmClass<*>.isPersistentId: Boolean
-  get() = PersistentEntityId::class.java.simpleName in javaSuperClasses || //todo check qualified name only
-          PersistentEntityId::class.java.name in javaSuperClasses        
-
+val ValueType.JvmClass<*>.isSymbolicId: Boolean
+  get() = SymbolicEntityId::class.java.name in javaSuperClasses
 
 private fun ObjClass<*>.operate(
   context: LinesBuilder,
   operation: LinesBuilder.(String) -> Unit
 ) {
-  allFields.noPersistentId().noRefs().forEach { field ->
+  allFields.noSymbolicId().noRefs().forEach { field ->
     field.valueType.operate(field.name, context, operation)
   }
 }
@@ -97,7 +95,7 @@ private fun ValueType<*>.operate(
   when (this) {
     is ValueType.JvmClass -> {
       when {
-        isPersistentId -> context.operation(varName)
+        isSymbolicId -> context.operation(varName)
         this is ValueType.SealedClass<*> -> processSealedClass(this, varName, context, operation, generateNewName)
         this is ValueType.DataClass<*> -> processDataClassProperties(varName, context, properties, operation)
       }
@@ -110,7 +108,7 @@ private fun ValueType<*>.operate(
       }
     }
     is ValueType.Optional<*> -> {
-      if (type is ValueType.JvmClass && type.isPersistentId) {
+      if (type is ValueType.JvmClass && type.isSymbolicId) {
         context.line("val optionalLink_${varName.clean()} = $varName")
         context.`if`("optionalLink_${varName.clean()} != null") label@{
           type.operate("optionalLink_${varName.clean()}", this@label, operation)
@@ -155,7 +153,7 @@ private fun processSealedClass(thisClass: ValueType.SealedClass<*>,
 
 
 private fun ObjClass<*>.operateUpdateLink(context: LinesBuilder) {
-  allFields.noPersistentId().noRefs().forEach { field ->
+  allFields.noSymbolicId().noRefs().forEach { field ->
     val retType = field.valueType.processType(context, field.name)
     if (retType != null) {
       context.`if`("$retType != null") {
@@ -178,7 +176,7 @@ private fun ValueType<*>.processType(
   return when (this) {
     is ValueType.JvmClass -> {
       when {
-        isPersistentId -> {
+        isSymbolicId -> {
           val name = "${varName.clean()}_data"
           context.lineNoNl("val $name = ")
           context.ifElse("$varName == oldLink", {

@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
 
-/**
- * @author peter
- */
 public final class PsiFileSystemItemUtil {
   @Nullable
   public static String findRelativePath(PsiFileSystemItem src, PsiFileSystemItem dst) {

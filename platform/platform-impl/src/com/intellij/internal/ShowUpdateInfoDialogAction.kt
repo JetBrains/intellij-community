@@ -19,7 +19,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.SwingUndoUtil
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import java.io.File
@@ -71,7 +71,7 @@ internal class ShowUpdateInfoDialogAction : DumbAwareAction() {
 
     override fun createCenterPanel(): JComponent {
       textArea = JTextArea(40, 100)
-      UIUtil.addUndoRedoActions(textArea)
+      SwingUndoUtil.addUndoRedoActions(textArea)
       textArea.wrapStyleWord = true
       textArea.lineWrap = true
 

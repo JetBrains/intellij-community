@@ -20,9 +20,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.LightIdeaTestCase;
 
-/**
- * @author dsl
- */
 public class FindParameterTest extends LightIdeaTestCase {
   public void testMethod() {
     String text =

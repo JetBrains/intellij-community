@@ -83,20 +83,16 @@ class CompareBranchesLogPanel extends JPanel {
     JPanel htb = layoutCommitListPanel(true);
     JPanel bth = layoutCommitListPanel(false);
 
-    JPanel listPanel = null;
-    switch (getInfoType()) {
-      case HEAD_TO_BRANCH:
-        listPanel = htb;
-        break;
-      case BRANCH_TO_HEAD:
-        listPanel = bth;
-        break;
-      case BOTH:
+    JPanel listPanel = switch (getInfoType()) {
+      case HEAD_TO_BRANCH -> htb;
+      case BRANCH_TO_HEAD -> bth;
+      case BOTH -> {
         Splitter lists = new Splitter(true, 0.5f);
         lists.setFirstComponent(htb);
         lists.setSecondComponent(bth);
-        listPanel = lists;
-    }
+        yield lists;
+      }
+    };
 
     Splitter rootPanel = new Splitter(false, 0.7f);
     rootPanel.setSecondComponent(changesBrowser);

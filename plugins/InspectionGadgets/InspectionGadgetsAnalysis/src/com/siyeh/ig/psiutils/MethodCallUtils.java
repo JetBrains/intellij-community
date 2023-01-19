@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.HardcodedMethodConstants;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -257,14 +256,7 @@ public final class MethodCallUtils {
       return null;
     }
     final PsiExpression[] expressions = argumentList.getExpressions();
-    int index = -1;
-    for (int i = 0; i < expressions.length; i++) {
-      final PsiExpression expression = expressions[i];
-      if (expression == target) {
-        index = i;
-        break;
-      }
-    }
+    int index = ArrayUtil.indexOf(expressions, target);
     if (index < 0) {
       return null;
     }
@@ -413,7 +405,7 @@ public final class MethodCallUtils {
       return false;
     }
     PsiMethod method = (PsiMethod)scope;
-    final Set<PsiMethod> checked = new THashSet<>();
+    final Set<PsiMethod> checked = new HashSet<>();
 
     while (true) {
       ProgressManager.checkCanceled();

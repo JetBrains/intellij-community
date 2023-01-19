@@ -56,7 +56,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 /**
  * Creates Groovy PSI element by given AST node
  *
- * @author ilyas, Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  */
 public final class GroovyPsiCreator {
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.impl;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -23,17 +22,10 @@ import org.jetbrains.annotations.NotNull;
 public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements PsiAnnotationStub {
   private static final Logger LOG = Logger.getInstance(PsiAnnotationStubImpl.class);
 
-  static {
-    CharTableImpl.addStringsFromClassToStatics(AnnotationUtil.class);
-    CharTableImpl.staticIntern("@NotNull");
-    CharTableImpl.staticIntern("@Nullable");
-    CharTableImpl.staticIntern("@Override");
-  }
-
   private final String myText;
   private SoftReference<PsiAnnotation> myParsedFromRepository;
 
-  public PsiAnnotationStubImpl(StubElement parent, @NotNull String text) {
+  public PsiAnnotationStubImpl(StubElement<?> parent, @NotNull String text) {
     super(parent, JavaStubElementTypes.ANNOTATION);
     CharSequence interned = CharTableImpl.getStaticInterned(text);
     myText = interned == null ? text : interned.toString();

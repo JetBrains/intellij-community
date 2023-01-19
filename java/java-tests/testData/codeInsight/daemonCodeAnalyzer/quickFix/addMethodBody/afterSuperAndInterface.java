@@ -1,4 +1,4 @@
-// "Make 'a.f' not abstract" "true-preview"
+// "Make 'a.f()' not abstract" "true-preview"
 interface a {
     default String f() {
         return null;

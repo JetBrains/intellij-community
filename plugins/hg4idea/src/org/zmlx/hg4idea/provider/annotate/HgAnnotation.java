@@ -144,29 +144,21 @@ public class HgAnnotation extends FileAnnotation {
 
   @Nullable
   private static String id(FIELD field) {
-    switch (field) {
-      case USER:
-        return LineAnnotationAspect.AUTHOR;
-      case REVISION:
-        return LineAnnotationAspect.REVISION;
-      case DATE:
-        return LineAnnotationAspect.DATE;
-      default:
-        return null;
-    }
+    return switch (field) {
+      case USER -> LineAnnotationAspect.AUTHOR;
+      case REVISION -> LineAnnotationAspect.REVISION;
+      case DATE -> LineAnnotationAspect.DATE;
+      default -> null;
+    };
   }
 
   private static @NlsContexts.ListItem @Nullable String displayName(FIELD field) {
-    switch (field) {
-      case USER:
-        return VcsBundle.message("line.annotation.aspect.author");
-      case REVISION:
-        return VcsBundle.message("line.annotation.aspect.revision");
-      case DATE:
-        return VcsBundle.message("line.annotation.aspect.date");
-      default:
-        return null;
-    }
+    return switch (field) {
+      case USER -> VcsBundle.message("line.annotation.aspect.author");
+      case REVISION -> VcsBundle.message("line.annotation.aspect.revision");
+      case DATE -> VcsBundle.message("line.annotation.aspect.date");
+      default -> null;
+    };
   }
 
   private static boolean isShowByDefault(FIELD aspectType) {

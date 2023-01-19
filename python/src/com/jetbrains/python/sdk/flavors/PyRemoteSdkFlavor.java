@@ -10,10 +10,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public final class PyRemoteSdkFlavor extends CPythonSdkFlavor {
+/**
+ * @deprecated in favour of targets API
+ */
+@Deprecated
+public final class PyRemoteSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   private PyRemoteSdkFlavor() {
   }
 
@@ -25,9 +30,13 @@ public final class PyRemoteSdkFlavor extends CPythonSdkFlavor {
     return true;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     return new ArrayList<>();
   }
 

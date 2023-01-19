@@ -28,12 +28,9 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class ExcludeFromCompletionLookupActionProvider implements LookupActionProvider {
   @Override
-  public void fillActions(@NotNull LookupElement element, @NotNull Lookup lookup, @NotNull Consumer<@NotNull LookupElementAction> consumer) {
+  public void fillActions(@NotNull LookupElement element, @NotNull Lookup lookup, @NotNull Consumer<? super @NotNull LookupElementAction> consumer) {
     Object o = element.getObject();
     if (o instanceof PsiClassObjectAccessExpression) {
       o = PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)o).getOperand().getType());

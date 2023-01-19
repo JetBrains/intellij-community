@@ -4,7 +4,10 @@ package com.intellij.ide.wizard
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.projectWizard.NewProjectWizardCollector
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
@@ -26,7 +29,7 @@ import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.JComponent
 
-abstract class AbstractNewProjectWizardMultiStepWithAddButton<S : NewProjectWizardStep, F: NewProjectWizardMultiStepFactory<S>>(
+abstract class AbstractNewProjectWizardMultiStepWithAddButton<S : NewProjectWizardStep, F : NewProjectWizardMultiStepFactory<S>>(
   parent: NewProjectWizardStep,
   epName: ExtensionPointName<F>
 ) : AbstractNewProjectWizardMultiStep<S, F>(parent, epName) {
@@ -42,7 +45,7 @@ abstract class AbstractNewProjectWizardMultiStepWithAddButton<S : NewProjectWiza
           val plus = AdditionalStepsAction()
           val actionButton = ActionButton(
             plus,
-            plus.templatePresentation,
+            null,
             ActionPlaces.getPopupPlace("NEW_PROJECT_WIZARD"),
             ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
           )

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.uncheckedWarnings;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.GenerifyFileFix;
@@ -13,13 +14,12 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -28,17 +28,17 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "UNCHECKED_WARNING";
@@ -55,58 +55,14 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel panel = new InspectionOptionsPanel();
-
-    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.assignment"), IGNORE_UNCHECKED_ASSIGNMENT,
-                            new Pass<>() {
-                              @Override
-                              public void pass(JCheckBox cb) {
-                                IGNORE_UNCHECKED_ASSIGNMENT = cb.isSelected();
-                              }
-                            }));
-
-    panel.add(createSetting(
-      JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.generics.array.creation.for.vararg.parameter"), IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION,
-      new Pass<>() {
-        @Override
-        public void pass(JCheckBox cb) {
-          IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION = cb.isSelected();
-        }
-      }));
-
-    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.call.as.member.of.raw.type"), IGNORE_UNCHECKED_CALL,
-                            new Pass<>() {
-                              @Override
-                              public void pass(JCheckBox cb) {
-                                IGNORE_UNCHECKED_CALL = cb.isSelected();
-                              }
-                            }));
-
-    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.cast"), IGNORE_UNCHECKED_CAST,
-                            new Pass<>() {
-                              @Override
-                              public void pass(JCheckBox cb) {
-                                IGNORE_UNCHECKED_CAST = cb.isSelected();
-                              }
-                            }));
-
-    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.overriding"), IGNORE_UNCHECKED_OVERRIDING,
-                            new Pass<>() {
-                              @Override
-                              public void pass(JCheckBox cb) {
-                                IGNORE_UNCHECKED_OVERRIDING = cb.isSelected();
-                              }
-                            }));
-
-    return panel;
-  }
-
-  @NotNull
-  static JCheckBox createSetting(@NotNull @Nls String cbText, final boolean option, @NotNull Consumer<? super JCheckBox> pass) {
-    final JCheckBox uncheckedCb = new JCheckBox(cbText, option);
-    uncheckedCb.addActionListener(e -> pass.accept(uncheckedCb));
-    return uncheckedCb;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_UNCHECKED_ASSIGNMENT", JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.assignment")),
+      checkbox("IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION", JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.generics.array.creation.for.vararg.parameter")),
+      checkbox("IGNORE_UNCHECKED_CALL", JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.call.as.member.of.raw.type")),
+      checkbox("IGNORE_UNCHECKED_CAST", JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.cast")),
+      checkbox("IGNORE_UNCHECKED_OVERRIDING", JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.overriding"))
+    );
   }
 
   private static LocalQuickFix @NotNull [] getChangeVariableTypeFixes(@NotNull PsiVariable parameter, @Nullable PsiType itemType, LocalQuickFix[] generifyFixes) {
@@ -333,6 +289,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       super.visitForeachStatement(statement);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
       final PsiParameter parameter = statement.getIterationParameter();
+      if (parameter == null) return;
       final PsiType parameterType = parameter.getType();
       final PsiExpression iteratedValue = statement.getIteratedValue();
       if (iteratedValue == null) return;
@@ -424,6 +381,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
                                               PsiExpression expression, PsiType parameterType,
                                               PsiType itemType,
                                               final Supplier<LocalQuickFix[]> fixesSupplier) {
+      if (GenericsHighlightUtil.checkGenericArrayCreation(expression, expression.getType()) != null) return;
       if (parameterType == null || itemType == null) return;
       if (!TypeConversionUtil.isAssignable(parameterType, itemType)) return;
       if (JavaGenericsUtil.isRawToGeneric(parameterType, itemType)) {

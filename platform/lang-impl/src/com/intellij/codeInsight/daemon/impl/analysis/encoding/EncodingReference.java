@@ -31,9 +31,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class EncodingReference implements PsiReference, EmptyResolveMessageProvider {
   private final PsiElement myElement;
 

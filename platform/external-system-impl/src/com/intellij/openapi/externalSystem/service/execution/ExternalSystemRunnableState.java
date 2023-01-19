@@ -171,7 +171,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     String jvmParametersSetup = getJvmParametersSetup();
 
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, jvmParametersSetup, myConfiguration);

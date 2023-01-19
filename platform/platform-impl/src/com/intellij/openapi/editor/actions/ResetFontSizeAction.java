@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -12,6 +13,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
@@ -19,6 +21,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +35,8 @@ public final class ResetFontSizeAction extends EditorAction {
   public interface Strategy {
     float getFontSize();
     void setFontSize(float fontSize);
+
+    @NlsActions.ActionText String getText(float fontSize);
     default void reset() {
       setFontSize(getFontSize());
     }
@@ -58,6 +63,11 @@ public final class ResetFontSizeAction extends EditorAction {
     public void setFontSize(float fontSize) {
       myEditorEx.setFontSize(fontSize);
     }
+
+    @Override
+    public String getText(float fontSize) {
+      return IdeBundle.message("action.reset.font.size", fontSize);
+    }
   }
 
   private static final class AllEditorsStrategy implements Strategy {
@@ -81,6 +91,36 @@ public final class ResetFontSizeAction extends EditorAction {
       EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(fontSize);
       ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
     }
+
+    @Override
+    public String getText(float fontSize) {
+      return IdeBundle.message("action.reset.font.size.all.editors", fontSize);
+    }
+  }
+
+  private static final class PresentationModeStrategy implements Strategy {
+    private final UISettings settings = UISettings.getInstance();
+
+    @Override
+    public float getFontSize() {
+      return settings.getPresentationModeFontSize();
+    }
+
+    @Override
+    public void setFontSize(float fontSize) {
+      int fs = (int)fontSize;
+      settings.setPresentationModeFontSize(fs);
+      for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+        if (editor instanceof EditorEx) {
+          ((EditorEx)editor).setFontSize(fs);
+        }
+      }
+    }
+
+    @Override
+    public String getText(float fontSize) {
+      return IdeBundle.message("action.reset.font.size", fontSize);
+    }
   }
 
   @ApiStatus.Internal
@@ -88,8 +128,14 @@ public final class ResetFontSizeAction extends EditorAction {
     float globalSize = ConsoleViewUtil.isConsoleViewEditor(editor)
                        ? EditorColorsManager.getInstance().getGlobalScheme().getConsoleFontSize2D()
                        : EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
-    if (editor instanceof EditorImpl && ((EditorImpl) editor).getFontSize2D() == globalSize) {
-      return new AllEditorsStrategy(editor);
+
+    if (editor instanceof EditorImpl) {
+      if (UISettings.getInstance().getPresentationMode()) {
+        return new PresentationModeStrategy();
+      }
+      if (((EditorImpl) editor).getFontSize2D() == globalSize) {
+        return new AllEditorsStrategy(editor);
+      }
     }
     return new SingleEditorStrategy(editor);
   }
@@ -106,9 +152,10 @@ public final class ResetFontSizeAction extends EditorAction {
         return;
       }
       EditorEx editorEx = (EditorEx)editor;
-      float toReset = getStrategy(editorEx).getFontSize();
+      Strategy strategy = getStrategy(editorEx);
+      float toReset = strategy.getFontSize();
       //noinspection DialogTitleCapitalization
-      e.getPresentation().setText(IdeBundle.message("action.reset.font.size", toReset));
+      e.getPresentation().setText(strategy.getText(toReset));
       if (editor instanceof EditorImpl) {
         e.getPresentation().setEnabled(((EditorImpl)editor).getFontSize2D() != toReset);
       }

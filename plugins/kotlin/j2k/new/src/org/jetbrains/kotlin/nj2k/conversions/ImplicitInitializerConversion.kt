@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.declarationList
 import org.jetbrains.kotlin.nj2k.findUsages
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
@@ -72,6 +73,7 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
                     parent is JKKtAssignmentStatement -> parent
                     parent is JKQualifiedExpression && parent.receiver is JKThisExpression ->
                         parent.parent as? JKKtAssignmentStatement
+
                     else -> null
                 } ?: return@mapNotNull null
             val constructor =

@@ -2,15 +2,18 @@
 package org.jetbrains.kotlin.idea.base.psi
 
 import com.google.common.collect.HashMultimap
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.JvmNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_OVERLOADS_FQ_NAME
@@ -246,5 +249,76 @@ object KotlinPsiHeuristics {
         }
 
         return true
+    }
+
+    /**
+     * Performs simple PSI-only type equivalence check. Might be useful for preliminary checks.
+     * Only `KtUserType` types are checked. Nullability is not supported.
+     *
+     * Examples:
+     * - `typeMatches("kotlin.Array", "String")`
+     * - `typeMatches("MutableMap", "Key", "out Value")`
+     */
+    fun typeMatches(typeReference: KtTypeReference, name: ClassId, vararg args: ClassId): Boolean {
+        val typeElement = typeReference.typeElement ?: return false
+        return typeMatches(typeElement, name, *args)
+    }
+
+    private fun typeMatches(typeElement: KtTypeElement, name: ClassId, vararg args: ClassId): Boolean {
+        fun checkName(typeElement: KtUserType, expectedName: ClassId): Boolean {
+            val actualChunks = generateSequence(typeElement) { it.qualifier }
+                .map { it.referencedName }
+                .toList().asReversed()
+
+            val expectedChunks = sequenceOf(expectedName.packageFqName, expectedName.relativeClassName)
+                .flatMap { it.pathSegments() }
+                .map { it.asString() }
+                .toList()
+
+            // 'kotlin.Unit' should match 'Unit', yet not 'foo.kotlin.Unit'
+            return expectedChunks.size >= actualChunks.size
+                    && expectedChunks.subList(expectedChunks.size - actualChunks.size, expectedChunks.size) == actualChunks
+        }
+
+        if (typeElement is KtNullableType) {
+            val innerType = typeElement.innerType
+            return innerType != null && typeMatches(innerType, name, *args)
+        }
+
+        if (typeElement is KtUserType) {
+            if (!checkName(typeElement, name)) {
+                return false
+            }
+
+            val typeArguments = typeElement.typeArguments
+            if (args.size != typeArguments.size) {
+                return false
+            }
+
+            for ((index, typeArgument) in typeArguments.withIndex()) {
+                if (typeArgument.projectionKind == KtProjectionKind.STAR) {
+                    return false
+                }
+
+                val argTypeElement = typeArgument.typeReference?.typeElement
+                if (argTypeElement == null || !typeMatches(argTypeElement, args[index])) {
+                    return false
+                }
+            }
+        }
+
+        return true
+    }
+
+    fun isEnumCompanionPropertyWithEntryConflict(element: PsiElement, expectedName: String): Boolean {
+        if (element !is KtProperty) return false
+
+        val propertyClass = element.containingClassOrObject as? KtObjectDeclaration ?: return false
+        if (!propertyClass.isCompanion()) return false
+
+        val outerClass = propertyClass.containingClassOrObject as? KtClass ?: return false
+        if (!outerClass.isEnum()) return false
+
+        return outerClass.declarations.any { it is KtEnumEntry && it.name == expectedName }
     }
 }

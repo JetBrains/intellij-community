@@ -13,12 +13,14 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Properties;
 
 /*
@@ -140,12 +142,20 @@ public class CreateFromTemplatePanel {
       myAttrPanel.add(myFilenameField, new GridBagConstraints(1, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, insets, 0, 0));
     }
 
+    Map<String, @Nls String> attributeVisibleNames = null;
+    if (myAttributesDefaults != null) {
+      attributeVisibleNames = myAttributesDefaults.getAttributeVisibleNames();
+    }
     int lastRow = 2;
     for (@NlsSafe String attribute : myUnsetAttributes) {
       if (attribute.equals(FileTemplate.ATTRIBUTE_NAME)) { // already asked above
         continue;
       }
-      final JLabel label = new JLabel(attribute.replace('_', ' ') + ":");
+      String visibleName = attribute.replace('_', ' ');
+      if (attributeVisibleNames != null && attributeVisibleNames.containsKey(attribute)) {
+        visibleName = attributeVisibleNames.get(attribute);
+      }
+      final JLabel label = new JLabel(visibleName + ":");
       final JTextField field = new JTextField();
       field.setColumns(30);
       if (myAttributesDefaults != null) {

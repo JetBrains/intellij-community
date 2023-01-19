@@ -197,18 +197,6 @@ class NotificationGroup private constructor(val displayId: String,
     createNotification(title, content, type)
       .also { if (listener != null) it.setListener(listener) }
 
-  @Deprecated("Use `createNotification(String, String, NotificationType)` along with `Notification#setDisplayId` and `Notification#setListener`")
-  @ApiStatus.ScheduledForRemoval
-  @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
-  fun createNotification(@NotificationTitle title: String,
-                         @NotificationContent content: String,
-                         type: NotificationType = NotificationType.INFORMATION,
-                         listener: NotificationListener? = null,
-                         notificationDisplayId: String? = null): Notification =
-    createNotification(title, content, type)
-      .also { if (notificationDisplayId != null) it.setDisplayId(notificationDisplayId) }
-      .also { if (listener != null) it.setListener(listener) }
-
   @Deprecated("Use `createNotification(String, NotificationType)` or `createNotification(String, String, NotificationType)`")
   @ApiStatus.ScheduledForRemoval
   @Suppress("DeprecatedCallableAddReplaceWith")

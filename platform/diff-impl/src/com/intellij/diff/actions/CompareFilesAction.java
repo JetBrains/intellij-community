@@ -63,17 +63,11 @@ public class CompareFilesAction extends BaseShowDiffAction {
           text = ActionsBundle.message("action.compare.text");
         }
         else {
-          switch (types.iterator().next()) {
-            case FILE:
-              text = ActionsBundle.message("action.compare.files.text");
-              break;
-            case DIRECTORY:
-              text = ActionsBundle.message("action.CompareDirs.text");
-              break;
-            case ARCHIVE:
-              text = ActionsBundle.message("action.compare.archives.text");
-              break;
-          }
+          text = ActionsBundle.message(switch (types.iterator().next()) {
+            case FILE -> "action.compare.files.text";
+            case DIRECTORY -> "action.CompareDirs.text";
+            case ARCHIVE -> "action.compare.archives.text";
+          });
         }
       }
     }
@@ -150,6 +144,9 @@ public class CompareFilesAction extends BaseShowDiffAction {
     Set<Type> types = ContainerUtil.map2Set(files, CompareFilesAction::getType);
     if (types.contains(Type.DIRECTORY)) FeatureUsageTracker.getInstance().triggerFeatureUsed("dir.diff");
     if (types.contains(Type.ARCHIVE)) FeatureUsageTracker.getInstance().triggerFeatureUsed("jar.diff");
+    if ("ipynb".equals(file1.getExtension()) && "ipynb".equals(file2.getExtension())) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("jupyter.compare.notebooks");
+    }
 
     return createMutableChainFromFiles(project, file1, file2, baseFile);
   }

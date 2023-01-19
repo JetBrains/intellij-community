@@ -20,12 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author ven
- */
 public class WrapExpressionFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(WrapExpressionFix.class);
 
@@ -171,7 +169,7 @@ public class WrapExpressionFix implements IntentionAction {
 
   public static void registerWrapAction(JavaResolveResult[] candidates,
                                         PsiExpression[] expressions,
-                                        HighlightInfo highlightInfo,
+                                        @NotNull HighlightInfo.Builder highlightInfo,
                                         TextRange fixRange) {
     PsiType expectedType = null;
     PsiExpression expr = null;
@@ -211,7 +209,8 @@ public class WrapExpressionFix implements IntentionAction {
     }
 
     if (expectedType != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new WrapExpressionFix(expectedType, expr, null));
+      IntentionAction action = new WrapExpressionFix(expectedType, expr, null);
+      highlightInfo.registerFix(action, null, null, fixRange, null);
     }
   }
 

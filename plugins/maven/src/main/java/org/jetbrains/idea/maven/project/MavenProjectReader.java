@@ -220,11 +220,15 @@ public final class MavenProjectReader {
   private static List<MavenResource> collectResources(List<Element> xmlResources) {
     List<MavenResource> result = new ArrayList<>();
     for (Element each : xmlResources) {
-      result.add(new MavenResource(MavenJDOMUtil.findChildValueByPath(each, "directory"),
-                                   "true".equals(MavenJDOMUtil.findChildValueByPath(each, "filtering")),
-                                   MavenJDOMUtil.findChildValueByPath(each, "targetPath"),
-                                   MavenJDOMUtil.findChildrenValuesByPath(each, "includes", "include"),
-                                   MavenJDOMUtil.findChildrenValuesByPath(each, "excludes", "exclude")));
+      String directory = MavenJDOMUtil.findChildValueByPath(each, "directory");
+      boolean filtered = "true".equals(MavenJDOMUtil.findChildValueByPath(each, "filtering"));
+      String targetPath = MavenJDOMUtil.findChildValueByPath(each, "targetPath");
+      List<String> includes = MavenJDOMUtil.findChildrenValuesByPath(each, "includes", "include");
+      List<String> excludes = MavenJDOMUtil.findChildrenValuesByPath(each, "excludes", "exclude");
+
+      if (null == directory) continue;
+
+      result.add(new MavenResource(directory, filtered, targetPath, includes, excludes));
     }
     return result;
   }
@@ -249,7 +253,7 @@ public final class MavenProjectReader {
                                  ? "${project.build.directory}/test-classes" : build.getTestOutputDirectory());
   }
 
-  private List<MavenResource> repairResources(List<MavenResource> resources, String defaultDir) {
+  private List<MavenResource> repairResources(List<MavenResource> resources, @NotNull String defaultDir) {
     List<MavenResource> result = new ArrayList<>();
     if (resources.isEmpty()) {
       result.add(createResource(defaultDir));
@@ -263,7 +267,7 @@ public final class MavenProjectReader {
     return result;
   }
 
-  private MavenResource createResource(String directory) {
+  private MavenResource createResource(@NotNull String directory) {
     return new MavenResource(directory, false, null, Collections.emptyList(), Collections.emptyList());
   }
 
@@ -414,15 +418,9 @@ public final class MavenProjectReader {
                                                  Path basedir,
                                                  MavenExplicitProfiles explicitProfiles,
                                                  Collection<String> alwaysOnProfiles) {
-    MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject, projectPomDir.toAbsolutePath().toString());
-    try {
-      return connector.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
-    }
-    catch (Exception e) {
-      MavenServerManager.getInstance().shutdownConnector(connector, false);
-      return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.toAbsolutePath().toString())
-        .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
-    }
+
+    return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.toAbsolutePath().toString())
+      .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
   }
 
   private MavenModel resolveInheritance(final MavenGeneralSettings generalSettings,

@@ -58,9 +58,6 @@ import java.util.List;
 
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInReadActionWithWriteActionPriority;
 
-/**
- * @author peter
- */
 public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   implements GutterIconNavigationHandler<PsiElement>, DumbAware {
   protected final @PopupTitle String myPopupTitle;
@@ -69,7 +66,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   private final NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> myPointers;
   private final boolean myComputeTargetsInBackground;
 
-  private @Nullable GutterIconNavigationHandler<? super PsiElement> myNavigationHandler;
+  private final @Nullable GutterIconNavigationHandler<? super PsiElement> myNavigationHandler;
 
   protected NavigationGutterIconRenderer(@PopupTitle String popupTitle,
                                          @PopupContent String emptyText,
@@ -80,20 +77,16 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
 
   protected NavigationGutterIconRenderer(@PopupTitle String popupTitle,
                                          @PopupContent String emptyText,
-                                         Computable<? extends PsiElementListCellRenderer> cellRenderer,
-                                         NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> pointers,
+                                         @NotNull Computable<? extends PsiElementListCellRenderer<?>> cellRenderer,
+                                         @NotNull NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> pointers,
                                          boolean computeTargetsInBackground) {
-    myPopupTitle = popupTitle;
-    myEmptyText = emptyText;
-    myCellRenderer = cellRenderer;
-    myPointers = pointers;
-    myComputeTargetsInBackground = computeTargetsInBackground;
+    this(popupTitle, emptyText, cellRenderer, pointers, computeTargetsInBackground, null);
   }
 
   protected NavigationGutterIconRenderer(@PopupTitle String popupTitle,
                                          @PopupContent String emptyText,
-                                         Computable<? extends PsiElementListCellRenderer> cellRenderer,
-                                         NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> pointers,
+                                         @NotNull Computable<? extends PsiElementListCellRenderer<?>> cellRenderer,
+                                         @NotNull NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> pointers,
                                          boolean computeTargetsInBackground,
                                          @Nullable GutterIconNavigationHandler<? super PsiElement> navigationHandler) {
     myPopupTitle = popupTitle;
@@ -185,7 +178,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
     }));
   }
 
-  private void navigateTargets(@Nullable MouseEvent event, List<PsiElement> targets) {
+  private void navigateTargets(@Nullable MouseEvent event, @NotNull List<? extends PsiElement> targets) {
     if (targets.isEmpty()) {
       if (myEmptyText != null) {
         if (event != null) {
@@ -218,10 +211,13 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
     }
     else if (event != null) {
       PsiElement[] elements = PsiUtilCore.toPsiElementArray(getTargetElements());
-      JBPopup popup = NavigationUtil.getPsiElementPopup(elements, myCellRenderer.compute(), myPopupTitle, element -> {
+      //noinspection unchecked
+      PsiElementListCellRenderer<PsiElement> renderer = (PsiElementListCellRenderer<PsiElement>)myCellRenderer.compute();
+      JBPopup popup = NavigationUtil.getPsiElementPopup(elements, renderer, myPopupTitle, element -> {
         if (myNavigationHandler != null) {
           myNavigationHandler.navigate(event, element);
-        } else {
+        }
+        else {
           Navigatable descriptor = EditSourceUtil.getDescriptor(element);
           if (descriptor != null && descriptor.canNavigate()) {
             descriptor.navigate(true);

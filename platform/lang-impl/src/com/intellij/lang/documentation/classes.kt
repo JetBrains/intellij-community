@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Image
 import java.util.function.Supplier
@@ -25,7 +26,8 @@ internal data class LinkData(
   val linkUrls: List<String> = emptyList(),
 )
 
-internal class AsyncDocumentation(
+@Internal
+class AsyncDocumentation(
   val supplier: AsyncSupplier<DocumentationResult.Data?>
 ) : DocumentationResult
 

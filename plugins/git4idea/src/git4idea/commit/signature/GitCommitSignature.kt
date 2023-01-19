@@ -20,4 +20,6 @@ internal sealed class GitCommitSignature : VcsCommitExternalStatus {
     REVOKED_KEY,
     CANNOT_VERIFY
   }
+
+  override fun toString(): String = ""
 }

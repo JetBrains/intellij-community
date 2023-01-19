@@ -24,6 +24,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.MemoryDumpHelper;
@@ -246,6 +247,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     document = null;
 
     myDocumentManager.saveAllDocuments();
+    UIUtil.dispatchAllInvocationEvents();
 
     GCWatcher.tracking(myDocumentManager.getDocument(file)).ensureCollected();
 
@@ -637,6 +639,18 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
   }
 
+  public void testDropAllUnsavedDocuments() throws Exception {
+    VirtualFile file = createFile("test.txt", "unedited");
+    Document document = myDocumentManager.getDocument(file);
+    assertEquals("unedited", document.getText());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText("edited"));
+    assertEquals("edited", myDocumentManager.getDocument(file).getText());
+
+    ApplicationManager.getApplication().runWriteAction(myDocumentManager::dropAllUnsavedDocuments);
+    assertEquals("unedited", myDocumentManager.getDocument(file).getText());
+  }
+
   private static void checkDocumentFiles(List<VirtualFile> files) throws Exception {
     FileDocumentManager fdm = FileDocumentManager.getInstance();
 
@@ -659,7 +673,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
         future.get(20, TimeUnit.SECONDS);
       }
       catch (TimeoutException e) {
-        printThreadDump();
+        ThreadUtil.printThreadDump();
         throw e;
       }
     }

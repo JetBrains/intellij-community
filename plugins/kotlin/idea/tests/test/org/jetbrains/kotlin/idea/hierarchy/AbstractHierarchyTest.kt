@@ -138,7 +138,7 @@ abstract class AbstractHierarchyTest : KotlinHierarchyViewTestBase() {
         }
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     override val testDataDirectory: File
         get() {

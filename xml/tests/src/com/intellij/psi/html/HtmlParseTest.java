@@ -42,26 +42,29 @@ public class HtmlParseTest extends LightIdeaTestCase {
                                "        \"http://www.w3.org/TR/html4/frameset.dtd\"><html lang=\"ru\"></html>");
     assertResult("DocumentWithDocType2.txt",result);
 
-    result = getTreeTextByText("<tag>\n" +
-                               "    <subtag>\n" +
-                               "        Value\n" +
-                               "    </subtag>\n" +
-                               "    <emptyTag attr=\"\"/>\n" +
-                               "</tag>");
+    result = getTreeTextByText("""
+                                 <tag>
+                                     <subtag>
+                                         Value
+                                     </subtag>
+                                     <emptyTag attr=""/>
+                                 </tag>""");
     assertResult("Tags.txt",result);
 
-    result = getTreeTextByText("<table>\n" +
-                               "    <tr>\n" +
-                               "        <td nowrap></td>\n" +
-                               "    </tr>\n" +
-                               "</table>");
+    result = getTreeTextByText("""
+                                 <table>
+                                     <tr>
+                                         <td nowrap></td>
+                                     </tr>
+                                 </table>""");
     assertResult("AttributeWithoutValue.txt",result);
 
-    result = getTreeTextByText("<table id=a>\n" +
-                               "    <tr>\n" +
-                               "        <td nowrap></td>\n" +
-                               "    </tr>\n" +
-                               "</table>");
+    result = getTreeTextByText("""
+                                 <table id=a>
+                                     <tr>
+                                         <td nowrap></td>
+                                     </tr>
+                                 </table>""");
     assertResult("AttributeWithoutQuotes.txt",result);
 
     result = getTreeTextByText("<h1>c<br><span>a</span></h1>");
@@ -73,14 +76,15 @@ public class HtmlParseTest extends LightIdeaTestCase {
     result = getTreeTextByText("<head><body></body>");
     assertResult("OptionalEndTagEndedByBlockTag.txt",result);
 
-    result = getTreeTextByText("<DL>\n" +
-                               "<DT><A HREF=\"aaa\"><B>PROHIBITED</B></A> - \n" +
-                               "Static variable in class ssh2.<A HREF=\"a.html\" title=\"class in ssh2.\">ChannelOpenException</A>\n" +
-                               "<DD>The administrator does not permit this channel to be opened\n" +
-                               "<DT><A HREF=\"A.html\" title=\"class in sshtools.\"><B>QQQ</B></A> - cipher.<A HREF=\"sshtools.QQQ.html\" title=\"class in sshtools.\">WWW</A>.<DD>cipher API.<DT><A HREF=\"QQQ.html#QQQ()\"><B>QQQ()</B></A> - \n" +
-                               "Constructor for class sshtools.<A HREF=\"QQ.html\" title=\"class in sshtools\">QQ</A>\n" +
-                               "<DD>&nbsp;\n" +
-                               "</DL>");
+    result = getTreeTextByText("""
+                                 <DL>
+                                 <DT><A HREF="aaa"><B>PROHIBITED</B></A> -\s
+                                 Static variable in class ssh2.<A HREF="a.html" title="class in ssh2.">ChannelOpenException</A>
+                                 <DD>The administrator does not permit this channel to be opened
+                                 <DT><A HREF="A.html" title="class in sshtools."><B>QQQ</B></A> - cipher.<A HREF="sshtools.QQQ.html" title="class in sshtools.">WWW</A>.<DD>cipher API.<DT><A HREF="QQQ.html#QQQ()"><B>QQQ()</B></A> -\s
+                                 Constructor for class sshtools.<A HREF="QQ.html" title="class in sshtools">QQ</A>
+                                 <DD>&nbsp;
+                                 </DL>""");
     assertResult("OptionalEndTagEndedByBlockTag2.txt",result);
 
     result = getTreeTextByText("<body></BODY>");
@@ -89,9 +93,10 @@ public class HtmlParseTest extends LightIdeaTestCase {
     result = getTreeTextByText("<DIV><P><P><P></DIV>");
     assertResult("ManyPs.txt",result);
 
-    result = getTreeTextByText("<CENTER>\n" +
-                               "<A NAME=\"TOP\"></a>\n" +
-                               "<A HREF=\"http://www.jflex.de\"><IMG SRC=\"logo.gif\" BORDER=0 HEIGHT=223 WIDTH=577></a></CENTER>");
+    result = getTreeTextByText("""
+                                 <CENTER>
+                                 <A NAME="TOP"></a>
+                                 <A HREF="http://www.jflex.de"><IMG SRC="logo.gif" BORDER=0 HEIGHT=223 WIDTH=577></a></CENTER>""");
     assertResult("ManyAs.txt",result);
 
     result = getTreeTextByText("<FRAMESET rows=50,* ></FRAMESET>");
@@ -100,74 +105,79 @@ public class HtmlParseTest extends LightIdeaTestCase {
     result = getTreeTextByText("<P><P><P><P><br><br><h2></h2><div></div>");
     assertResult("ComplexPs.txt",result);
 
-    result = getTreeTextByText("<HTML>\n" +
-                               "<BODY>\n" +
-                               "<P>\n" +
-                               "<BR><HR><H4>Footnotes</H4>\n" +
-                               "<BR><HR>\n" +
-                               "<ADDRESS>\n" +
-                               "Mon Apr 12 20:58:12 EST 2004, <a href=\"http://www.doclsf.de\">Gerwin Klein</a>\n" +
-                               "</ADDRESS>\n" +
-                               "</BODY>\n" +
-                               "</HTML>");
+    result = getTreeTextByText("""
+                                 <HTML>
+                                 <BODY>
+                                 <P>
+                                 <BR><HR><H4>Footnotes</H4>
+                                 <BR><HR>
+                                 <ADDRESS>
+                                 Mon Apr 12 20:58:12 EST 2004, <a href="http://www.doclsf.de">Gerwin Klein</a>
+                                 </ADDRESS>
+                                 </BODY>
+                                 </HTML>""");
     assertResult("BRHR.txt",result);
 
-    result = getTreeTextByText("<UL>\n" +
-                               "<LI><A NAME=\"tex2html81\"\n" +
-                               "  HREF=\"manual.html#SECTION00020000000000000000\">Introduction</A>\n" +
-                               "<UL>\n" +
-                               "<LI><A NAME=\"tex2html82\"\n" +
-                               "  HREF=\"manual.html#SECTION00021000000000000000\">Design goals</A>\n" +
-                               "</UL>\n" +
-                               "<LI><A NAME=\"tex2html84\"\n" +
-                               "  HREF=\"manual.html#SECTION00030000000000000000\">Installing and Running JFlex</A>\n" +
-                               "</UL>");
+    result = getTreeTextByText("""
+                                 <UL>
+                                 <LI><A NAME="tex2html81"
+                                   HREF="manual.html#SECTION00020000000000000000">Introduction</A>
+                                 <UL>
+                                 <LI><A NAME="tex2html82"
+                                   HREF="manual.html#SECTION00021000000000000000">Design goals</A>
+                                 </UL>
+                                 <LI><A NAME="tex2html84"
+                                   HREF="manual.html#SECTION00030000000000000000">Installing and Running JFlex</A>
+                                 </UL>""");
     assertResult("List.txt",result);
 
-    result = getTreeTextByText("<HTML>\n" +
-                               "<BODY>\n" +
-                               "<P>\n" +
-                               "<CENTER>\n" +
-                               "<A NAME=\"TOP\"></a>\n" +
-                               "</CENTER>\n" +
-                               "<P>\n" +
-                               "<DIV><I>Copyright<BR></I></DIV>\n" +
-                               "</BODY>\n" +
-                               "</HTML>");
+    result = getTreeTextByText("""
+                                 <HTML>
+                                 <BODY>
+                                 <P>
+                                 <CENTER>
+                                 <A NAME="TOP"></a>
+                                 </CENTER>
+                                 <P>
+                                 <DIV><I>Copyright<BR></I></DIV>
+                                 </BODY>
+                                 </HTML>""");
     assertResult("WronglyBalancedOutOfChain.txt",result);
 
-    result = getTreeTextByText("<html>\n" +
-                               "<body bgcolor=\"#FFFFFF\">\n" +
-                               "\n" +
-                               "<h2>Changes to build 3075</h2>\n" +
-                               "<br><br>\n" +
-                               "\n" +
-                               "<h3>Import Eclipse projects</h3>\n" +
-                               "\n" +
-                               "&nbsp;&nbsp;&nbsp;<img src=\"images/3075_eclipse.gif\"><br><br>\n" +
-                               "\n" +
-                               "<p>Now you can import Eclipse projects into IDEA. </p>\n" +
-                               "\n" +
-                               "<h3>J2ME Support</h3>\n" +
-                               "\n" +
-                               "<p>\n" +
-                               "    Features enhancing work with CSS:\n" +
-                               "    <ul>\n" +
-                               "        <li>aaa</li>\n" +
-                               "    </ul>\n" +
-                               "</p>\n" +
-                               "\n" +
-                               "<hr>\n" +
-                               "</body>\n" +
-                               "</html>");
+    result = getTreeTextByText("""
+                                 <html>
+                                 <body bgcolor="#FFFFFF">
+
+                                 <h2>Changes to build 3075</h2>
+                                 <br><br>
+
+                                 <h3>Import Eclipse projects</h3>
+
+                                 &nbsp;&nbsp;&nbsp;<img src="images/3075_eclipse.gif"><br><br>
+
+                                 <p>Now you can import Eclipse projects into IDEA. </p>
+
+                                 <h3>J2ME Support</h3>
+
+                                 <p>
+                                     Features enhancing work with CSS:
+                                     <ul>
+                                         <li>aaa</li>
+                                     </ul>
+                                 </p>
+
+                                 <hr>
+                                 </body>
+                                 </html>""");
     assertResult("BadBadBR.txt",result);
 
-    @NonNls String s = "<?>\n" +
-               "<?style tt = font courier>\n" +
-               "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\n" +
-               "<?page break>\n" +
-               "<?experiment> ... <?/experiment>\n" +
-               "</html>";
+    @NonNls String s = """
+      <?>
+      <?style tt = font courier>
+      <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+      <?page break>
+      <?experiment> ... <?/experiment>
+      </html>""";
     result = getTreeTextByText(s);
     assertResult("ToleratingHtmlPIs.txt",result);
 
@@ -189,7 +199,14 @@ public class HtmlParseTest extends LightIdeaTestCase {
   }
 
   public void testWellFormedBlockTags() throws Exception {
-    @NonNls String s = "<html><h3>\n" + "<center>\n" + "<font color=\"red\">\n" + "There appears to be a problem\n" + "</font>\n" + "</center>\n" + "</h3></html>";
+    @NonNls String s = """
+      <html><h3>
+      <center>
+      <font color="red">
+      There appears to be a problem
+      </font>
+      </center>
+      </h3></html>""";
     String result = getTreeTextByText(s);
     assertResult("WellFormedBlockLevelTags.txt",result);
   }
@@ -205,110 +222,117 @@ public class HtmlParseTest extends LightIdeaTestCase {
   }
 
   public void testErrorParse() throws Exception {
-    String result = getTreeTextByText("<tag>\n" +
-                                      "    <subtag>\n" +
-                                      "        Value\n" +
-                                      "    <!--</subtag>-->\n" +
-                                      "    <emptyTag attr=\"\"/>\n" +
-                                      "</tag>");
+    String result = getTreeTextByText("""
+                                        <tag>
+                                            <subtag>
+                                                Value
+                                            <!--</subtag>-->
+                                            <emptyTag attr=""/>
+                                        </tag>""");
     assertResult("MissingEndTag.txt",result);
 
-    result = getTreeTextByText("<tag>\n" +
-                               "<!--    <subtag>-->\n" +
-                               "        Value\n" +
-                               "    </subtag>\n" +
-                               "    <emptyTag attr=\"\"/>\n" +
-                               "</tag>");
+    result = getTreeTextByText("""
+                                 <tag>
+                                 <!--    <subtag>-->
+                                         Value
+                                     </subtag>
+                                     <emptyTag attr=""/>
+                                 </tag>""");
     assertResult("MissingStartTag.txt",result);
 
-    result = getTreeTextByText("<tag>\n" +
-                               "<a href=\"\"\n"+
-                               "</tag>");
+    result = getTreeTextByText("""
+                                 <tag>
+                                 <a href=""
+                                 </tag>""");
     assertResult("NoEndTagWithAttribute.txt",result);
 
     result = getTreeTextByText("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">\n" +
                                "<html></html>");
     assertResult("DocumentWithDocType3.txt",result);
 
-    @NonNls String s = "<html>\n" +
-               "<body>\n" +
-               "<H2>\n" +
-               "<FONT SIZE=\"-1\">\n" +
-               "com.sshtools.cipher</FONT>\n" +
-               "<BR>\n" +
-               "Class AES128Cbc</H2>\n" +
-               "<PRE>\n" +
-               "java.lang.Object\n" +
-               "  <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\">com.maverick.ssh.cipher.SshCipher\n" +
-               "      <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\">com.maverick.ssh.crypto.engines.CbcBlockCipher\n" +
-               "          <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\"><B>com.sshtools.cipher.AES128Cbc</B>\n" +
-               "</PRE>\n" +
-               "<HR>\n" +
-               "<DL>\n" +
-               "<DT>public class <B>AES128Cbc</B><DT>extends com.maverick.ssh.crypto.engines.CbcBlockCipher</DL>\n" +
-               "\n" +
-               "<P>\n" +
-               "This cipher can optionally be added to the J2SSH Maverick API. To add\n" +
-               " the ciphers from this package simply add them to the <A HREF=\"../../../com/maverick/ssh2/Ssh2Context.html\" title=\"class in com.maverick.ssh2\"><CODE>Ssh2Context</CODE></A>\n" +
-               " <blockquote><pre>\n" +
-               "  import com.sshtools.cipher.*;\n" +
-               "\n" +
-               " </pre></blockquote>\n" +
-               "<P>\n" +
-               "\n" +
-               "<P>\n" +
-               "<DL>\n" +
-               "<DT><B>Version:</B></DT>\n" +
-               "  <DD>Revision: 1.20</DD>\n" +
-               "</DL>\n" +
-               "<HR>\n" +
-               "</body>\n" +
-               "</html>";
+    @NonNls String s = """
+      <html>
+      <body>
+      <H2>
+      <FONT SIZE="-1">
+      com.sshtools.cipher</FONT>
+      <BR>
+      Class AES128Cbc</H2>
+      <PRE>
+      java.lang.Object
+        <IMG SRC="../../../resources/inherit.gif" ALT="extended by">com.maverick.ssh.cipher.SshCipher
+            <IMG SRC="../../../resources/inherit.gif" ALT="extended by">com.maverick.ssh.crypto.engines.CbcBlockCipher
+                <IMG SRC="../../../resources/inherit.gif" ALT="extended by"><B>com.sshtools.cipher.AES128Cbc</B>
+      </PRE>
+      <HR>
+      <DL>
+      <DT>public class <B>AES128Cbc</B><DT>extends com.maverick.ssh.crypto.engines.CbcBlockCipher</DL>
+
+      <P>
+      This cipher can optionally be added to the J2SSH Maverick API. To add
+       the ciphers from this package simply add them to the <A HREF="../../../com/maverick/ssh2/Ssh2Context.html" title="class in com.maverick.ssh2"><CODE>Ssh2Context</CODE></A>
+       <blockquote><pre>
+        import com.sshtools.cipher.*;
+
+       </pre></blockquote>
+      <P>
+
+      <P>
+      <DL>
+      <DT><B>Version:</B></DT>
+        <DD>Revision: 1.20</DD>
+      </DL>
+      <HR>
+      </body>
+      </html>""";
 
     result = getTreeTextByText(s);
     assertResult("WronglyNestedPs.txt",result);
 
-    s = "<?xml version=\"1.0\"?>\n" +
-        "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n" +
-        "          \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n" +
-        "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\"></html>";
+    s = """
+      <?xml version="1.0"?>
+      <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+                "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+      <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"></html>""";
     result = getTreeTextByText(s);
     assertResult("ToleratingPIs.txt",result);
 
-    s = "<html>\n" +
-        "<body>\n" +
-        "<br>\n" +
-        "<br>\n" +
-        "<br>\n" +
-        "<ul>\n" +
-        "<li>JUnit is a regression test framework.</li><br><br>\n" +
-        "</ul>\n" +
-        "</ul>\n" +
-        "</body>\n" +
-        "</html>";
+    s = """
+      <html>
+      <body>
+      <br>
+      <br>
+      <br>
+      <ul>
+      <li>JUnit is a regression test framework.</li><br><br>
+      </ul>
+      </ul>
+      </body>
+      </html>""";
     result = getTreeTextByText(s);
     assertResult("ToleratingMissingTagStart.txt",result);
 
-    s = "<pre><code>\n" +
-        "<font class=\"detailedtext\">public class</font> SortTest <font class=\"detailedtext\">implements</font> Test {\n" +
-        "  <font class=\"detailedtext\">public int</font> countTestCases() {\n" +
-        "    <font class=\"detailedtext\">return</font> 0;\n" +
-        "  }\n" +
-        "\n" +
-        "  <font class=\"detailedtext\">public void</font> run(TestResult testResult) {\n" +
-        "    File testData = <font class=\"detailedtext\">new</font> File(\".\");\n" +
-        "    String[] names = FSUtil.findTests(testData);\n" +
-        "    <font class=\"detailedtext\">for</font> (<font class=\"detailedtext\">int</font> i = 0; i < names.length; i++) {\n" +
-        "      String name = names[i];\n" +
-        "      <font class=\"detailedtext\">new</font> MyTestCase(name, testData){}.run(testResult);\n" +
-        "    }\n" +
-        "  }\n" +
-        "\n" +
-        "  <font class=\"detailedtext\">public static</font> Test suite() {\n" +
-        "    <font class=\"detailedtext\">return new</font> SortTest();\n" +
-        "  }\n" +
-        "}\n" +
-        "    </code></pre>";
+    s = """
+      <pre><code>
+      <font class="detailedtext">public class</font> SortTest <font class="detailedtext">implements</font> Test {
+        <font class="detailedtext">public int</font> countTestCases() {
+          <font class="detailedtext">return</font> 0;
+        }
+
+        <font class="detailedtext">public void</font> run(TestResult testResult) {
+          File testData = <font class="detailedtext">new</font> File(".");
+          String[] names = FSUtil.findTests(testData);
+          <font class="detailedtext">for</font> (<font class="detailedtext">int</font> i = 0; i < names.length; i++) {
+            String name = names[i];
+            <font class="detailedtext">new</font> MyTestCase(name, testData){}.run(testResult);
+          }
+        }
+
+        <font class="detailedtext">public static</font> Test suite() {
+          <font class="detailedtext">return new</font> SortTest();
+        }
+      }
+          </code></pre>""";
     result = getTreeTextByText(s);
     assertResult("GreaterInTagValue.txt",result);
 
@@ -316,34 +340,35 @@ public class HtmlParseTest extends LightIdeaTestCase {
     result = getTreeTextByText(s);
     assertResult("TwoRootTags.txt",result);
 
-    s = "<html>\n" +
-        "<body>\n" +
-        "<hr>\n" +
-        "<table>\n" +
-        "\t<tr>\n" +
-        "\t\t<td>\n" +
-        "\t\t<br>\n" +
-        "\t\t<table>\n" +
-        "\t\t\t<tr>\n" +
-        "\t\t\t\t<td><nobr>Ctrl + <b>W</nobr></b></td>\n" +
-        "\t\t\t</tr>\n" +
-        "\t\t</table><br>\n" +
-        "\t\t<br>\n" +
-        "\t\t<table>\n" +
-        "\t\t\t<tr>\n" +
-        "\t\t\t\t<td><b><nobr>Ctrl + Numpad/</b></nobr></td>\n" +
-        "\t\t\t</tr><tr>\n" +
-        "\t\t\t\t<td><b><nobr>Ctrl + Numpad+</b></nobr></td>\n" +
-        "\t\t\t</tr>\n" +
-        "\t\t</table><br>\n" +
-        "\t\t<br>\t\t\n" +
-        "\t\t<br>\n" +
-        "\t\t</td>\n" +
-        "\t</tr>\n" +
-        "</table>\n" +
-        "<hr>\n" +
-        "</body>\n" +
-        "</html>";
+    s = """
+      <html>
+      <body>
+      <hr>
+      <table>
+      \t<tr>
+      \t\t<td>
+      \t\t<br>
+      \t\t<table>
+      \t\t\t<tr>
+      \t\t\t\t<td><nobr>Ctrl + <b>W</nobr></b></td>
+      \t\t\t</tr>
+      \t\t</table><br>
+      \t\t<br>
+      \t\t<table>
+      \t\t\t<tr>
+      \t\t\t\t<td><b><nobr>Ctrl + Numpad/</b></nobr></td>
+      \t\t\t</tr><tr>
+      \t\t\t\t<td><b><nobr>Ctrl + Numpad+</b></nobr></td>
+      \t\t\t</tr>
+      \t\t</table><br>
+      \t\t<br>\t\t
+      \t\t<br>
+      \t\t</td>
+      \t</tr>
+      </table>
+      <hr>
+      </body>
+      </html>""";
     result = getTreeTextByText(s);
     assertResult("SeveralMisplacedTags.txt",result);
 

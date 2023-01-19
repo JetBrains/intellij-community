@@ -8,4 +8,6 @@ fun test(foo: String, bar: Int, baz: Int) {
         // comment4
         append(baz) // comment5
     }
+    // Unrelated comment
+    // Unrelated comment 2
 }

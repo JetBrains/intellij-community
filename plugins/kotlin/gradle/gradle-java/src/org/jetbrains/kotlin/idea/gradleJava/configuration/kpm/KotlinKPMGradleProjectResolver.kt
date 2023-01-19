@@ -11,7 +11,7 @@ import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.util.PlatformUtils
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.gradle.kpm.idea.*
+import org.jetbrains.kotlin.gradle.idea.kpm.*
 import org.jetbrains.kotlin.idea.base.externalSystem.findAll
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.configuration.multiplatform.KotlinMultiplatformNativeDebugSuggester
@@ -104,11 +104,11 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
 
         //TODO check this
         internal fun extractPackagePrefix(fragment: IdeaKpmFragment): String? = null
-        internal fun extractContentRootSources(model: IdeaKpmProject): Collection<IdeaKpmFragment> =
+        private fun extractContentRootSources(model: IdeaKpmProject): Collection<IdeaKpmFragment> =
             model.modules.flatMap { it.fragments }
 
         //TODO replace with proper implementation, like with KotlinTaskProperties
-        internal fun extractPureKotlinSourceFolders(fragment: IdeaKpmFragment): Collection<File> = fragment.sourceDirs
+        private fun extractPureKotlinSourceFolders(fragment: IdeaKpmFragment): Collection<File> = fragment.sourceDirs
 
         //TODO Unite with KotlinGradleProjectResolverExtension.getSourceSetName
         internal val IdeaKpmProject.pureKotlinSourceFolders: Collection<String>
@@ -118,7 +118,7 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
             get() = (data as? GradleSourceSetData)?.id?.substringAfterLast(':')
 
         //TODO Unite with KotlinGradleProjectResolverExtension.addDependency
-        internal fun addModuleDependency(
+        private fun addModuleDependency(
             dependentModule: DataNode<out ModuleData>,
             dependencyModule: DataNode<out ModuleData>,
         ) {

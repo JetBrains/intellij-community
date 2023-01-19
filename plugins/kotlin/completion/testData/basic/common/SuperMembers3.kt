@@ -1,3 +1,5 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 open class A<T> {
     open fun xxx_foo(p1: T, vararg p2: String) {}
     open fun xxx_bar(p1: Int, p2: String) {}
@@ -14,8 +16,8 @@ class C : B<String>() {
 }
 
 // WITH_ORDER
-// EXIST: { lookupString: "xxx_foo", itemText: "xxx_foo", tailText: "(p1, *p2)", typeText: "Unit", attributes: "", icon: "nodes/method.svg"}
-// EXIST: { lookupString: "xxx_foo", itemText: "xxx_foo", tailText: "(p1: String, vararg p2: String)", typeText: "Unit", attributes: "", icon: "nodes/method.svg"}
+// EXIST: { lookupString: "xxx_foo", itemText: "xxx_foo", tailText: "(p1, *p2)", typeText: "Unit", attributes: "", icon: "Method"}
+// EXIST: { lookupString: "xxx_foo", itemText: "xxx_foo", tailText: "(p1: String, vararg p2: String)", typeText: "Unit", attributes: "", icon: "Method"}
 // EXIST: { lookupString: "xxx_val", itemText: "xxx_val", tailText: null, typeText: "Int", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg"}
-// EXIST: { lookupString: "xxx_bar", itemText: "xxx_bar", tailText: "(p1: Int, p2: String)", typeText: "Unit", attributes: "", icon: "nodes/method.svg"}
+// EXIST: { lookupString: "xxx_bar", itemText: "xxx_bar", tailText: "(p1: Int, p2: String)", typeText: "Unit", attributes: "", icon: "Method"}
 // NOTHING_ELSE

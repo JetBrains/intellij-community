@@ -22,31 +22,36 @@ import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 
 abstract class PackageVersionRangeInspection : AbstractPackageUpdateInspectionCheck() {
 
     override fun ProblemsHolder.checkFile(file: PsiFile, fileModule: Module) {
-        file.project.packageSearchProjectService.dependenciesByModuleStateFlow.value
-            .entries
-            .find { it.key.nativeModule == fileModule }
-            ?.value
-            ?.filter { it.dependency.coordinates.version?.let { isIvyRange(it) } ?: false }
-            ?.mapNotNull { coordinates ->
-                runCatching {
-                    coordinates.declarationIndexes
-                        ?.let { selectPsiElementIndex(it) }
-                        ?.let { PsiUtil.getElementAtOffset(file, it) }
-                }.getOrNull()
-                    ?.let { coordinates to it }
-            }
-            ?.forEach { (coordinatesWithResolvedVersion, psiElement) ->
+        file.project.packageSearchProjectService.installedDependenciesFlow.value
+            .byModule[fileModule]
+            ?.mapNotNull { model -> model.usagesByModule[fileModule]?.let { model to it } }
+            ?.forEach { (_, usageInfos) ->
+                for (usageInfo in usageInfos) {
+                    if (
+                        usageInfo.declaredVersion !is NormalizedPackageVersion.Missing
+                        && !isIvyRange(usageInfo.declaredVersion.versionName)
+                    ) continue
 
-                val message = coordinatesWithResolvedVersion.dependency.coordinates.version
-                    ?.let { PackageSearchBundle.message("packagesearch.inspection.upgrade.range.withVersion", it) }
-                    ?: PackageSearchBundle.message("packagesearch.inspection.upgrade.range")
+                    val versionElement = runCatching {
+                        usageInfo.declarationIndexInBuildFile
+                            ?.let { selectPsiElementIndex(it) }
+                            ?.let { PsiUtil.getElementAtOffset(file, it) }
+                    }
+                        .getOrNull()
+                        ?: continue
 
-                registerProblem(psiElement, message, ProblemHighlightType.WEAK_WARNING)
+                    registerProblem(
+                        /* psiElement = */ versionElement,
+                        /* descriptionTemplate = */ PackageSearchBundle.message("packagesearch.inspection.upgrade.range.withVersion", usageInfo.declaredVersion.displayName),
+                        /* highlightType = */ ProblemHighlightType.WEAK_WARNING
+                    )
+                }
             }
     }
 

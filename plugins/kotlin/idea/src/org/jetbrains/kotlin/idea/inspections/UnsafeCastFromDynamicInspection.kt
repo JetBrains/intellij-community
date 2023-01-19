@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
@@ -41,7 +42,7 @@ class UnsafeCastFromDynamicInspection : AbstractKotlinInspection() {
         })
 }
 
-private class CastExplicitlyFix(private val type: KotlinType) : LocalQuickFix {
+private class CastExplicitlyFix(@SafeFieldForPreview private val type: KotlinType) : LocalQuickFix {
     override fun getName() = KotlinBundle.message("cast.explicitly.fix.text")
 
     override fun getFamilyName() = name
@@ -50,7 +51,7 @@ private class CastExplicitlyFix(private val type: KotlinType) : LocalQuickFix {
         val expression = descriptor.psiElement as? KtExpression ?: return
         val typeName = type.constructor.declarationDescriptor?.name ?: return
         val pattern = if (type.isMarkedNullable) "$0 as? $1" else "$0 as $1"
-        val newExpression = KtPsiFactory(expression).createExpressionByPattern(pattern, expression, typeName)
+        val newExpression = KtPsiFactory(project).createExpressionByPattern(pattern, expression, typeName)
         expression.replace(newExpression)
     }
 }

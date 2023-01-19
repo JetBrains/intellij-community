@@ -26,7 +26,7 @@ import static com.intellij.internal.statistic.libraryJar.LibraryJarUtilKt.findJa
  * @author Andrey Cheptsov
  */
 public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("javaLibraryJars", 3);
+  private static final EventLogGroup GROUP = new EventLogGroup("javaLibraryJars", 4);
   private static final EventId2<String, String> USED_LIBRARY =
     GROUP.registerEvent("used.library",
                         EventFields.Version,

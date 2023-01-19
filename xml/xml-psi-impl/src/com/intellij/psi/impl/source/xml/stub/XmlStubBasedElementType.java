@@ -17,12 +17,25 @@ import java.util.Locale;
 public abstract class XmlStubBasedElementType<StubT extends StubElement<?>, PsiT extends PsiElement>
   extends IStubElementType<StubT, PsiT> implements ICompositeElementType {
 
-  private final @NotNull String externalId;
+  private String externalId = null;
 
   public XmlStubBasedElementType(@NotNull String debugName,
                                  @NotNull Language language) {
-    super((language == XMLLanguage.INSTANCE ? "" : language.getID().toUpperCase(Locale.ENGLISH) + ":") + debugName, language);
-    externalId = (language == XMLLanguage.INSTANCE ? "" : language.getID().toUpperCase(Locale.ENGLISH) + ":") + debugName;
+    super(debugName, language);
+  }
+
+  @NotNull
+  @Override
+  public String getExternalId() {
+    if (externalId == null) {
+      externalId = (getLanguage() == XMLLanguage.INSTANCE ? "" : getLanguage().getID().toUpperCase(Locale.ENGLISH) + ":") + getDebugName();
+    }
+    return externalId;
+  }
+
+  @Override
+  public String toString() {
+    return getExternalId();
   }
 
   @Override
@@ -31,12 +44,6 @@ public abstract class XmlStubBasedElementType<StubT extends StubElement<?>, PsiT
 
   @NotNull
   public abstract PsiT createPsi(@NotNull ASTNode node);
-
-  @NotNull
-  @Override
-  public String getExternalId() {
-    return externalId;
-  }
 
   @NotNull
   @Override

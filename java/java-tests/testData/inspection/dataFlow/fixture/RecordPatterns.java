@@ -32,7 +32,7 @@ class Test {
   void testWhen(Object obj) {
     switch (obj) {
       case R(int a, int b) when (a > b) -> {}
-      case R(int b, int a) when (<warning descr="Condition 'b > a' is always 'false'">b > a</warning>) -> {}
+      case <warning descr="Switch label 'R(int b, int a) when (b > a)' is unreachable">R(int b, int a) when (<warning descr="Condition 'b > a' is always 'false'">b > a</warning>)</warning> -> {}
       case R(int x, int y) r when <warning descr="Condition 'x == r.x()' is always 'true'">x == r.x()</warning> -> {}
       default -> {}
     }

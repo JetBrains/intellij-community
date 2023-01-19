@@ -22,9 +22,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 final class ParameterUsageInfo extends UsageInfo implements BranchableUsageInfo {
   private final PsiReference myReferenceExpression;
 

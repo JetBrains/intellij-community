@@ -10,6 +10,7 @@ import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.propertyBased.*
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.PropertyChecker
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.quickfix.AbstractImportFixInfo
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
@@ -37,7 +38,7 @@ class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
     fun testRandomActivity() {
         enableInspections()
@@ -60,7 +61,7 @@ class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     private fun enableInspections() {
-        MadTestingUtil.enableAllInspections(project)
+        MadTestingUtil.enableAllInspections(project, KotlinLanguage.INSTANCE)
     }
 
     private fun actionOnKotlinFiles(fileActions: Function<PsiFile, Generator<out MadTestingAction>>): Supplier<MadTestingAction?> {

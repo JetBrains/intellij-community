@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import extension function 'Some.set'" "true"
 // ERROR: Unresolved reference: foo()["other"]
 // ERROR: No set method providing array access
 /* IGNORE_FIR */
@@ -25,7 +25,7 @@ operator fun Some.set(s: String) {}
 
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import extension function 'Some.set'" "true"
 // ERROR: Unresolved reference: foo()["other"]
 // ERROR: No set method providing array access
 /* IGNORE_FIR */

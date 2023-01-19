@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -15,13 +15,13 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -37,11 +37,9 @@ public final class VfsUtil extends VfsUtilCore {
    */
   public static final long NOTIFICATION_DELAY_MILLIS = 300;
 
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
-    Charset charset = file.getCharset();
-    try (OutputStream stream = file.getOutputStream(file)) {
-      stream.write(text.getBytes(charset));
-    }
+    VfsUtilCore.saveText(file, text);
   }
 
   public static byte @NotNull [] toByteArray(@NotNull VirtualFile file, @NotNull String text) throws IOException {
@@ -330,8 +328,22 @@ public final class VfsUtil extends VfsUtilCore {
     return result;
   }
 
+  /**
+   * Returns {@code true} if the given name is illegal from the VFS point of view.
+   * Rejected are: nulls, empty strings, traversals ({@code "."} and {@code ".."}), and strings containing back- and forward slashes.
+   */
+  @Contract(value = "null -> true", pure = true)
   public static boolean isBadName(String name) {
-    return name == null || name.isEmpty() || "/".equals(name) || "\\".equals(name);
+    if (name == null || name.isEmpty() || ".".equals(name) || "..".equals(name)) {
+      return true;
+    }
+    for (int i = 0; i < name.length(); i++) {
+      char ch = name.charAt(i);
+      if (ch == '/' || ch == '\\') {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static VirtualFile createDirectories(@NotNull String directoryPath) throws IOException {
@@ -370,7 +382,8 @@ public final class VfsUtil extends VfsUtilCore {
       return null;
     }
 
-    VirtualFile parent = createDirectoryIfMissing(fileSystem, path.substring(0, pos));
+    String parentPath = StringUtil.defaultIfEmpty(path.substring(0, pos), "/");
+    VirtualFile parent = createDirectoryIfMissing(fileSystem, parentPath);
     if (parent == null) {
       return null;
     }

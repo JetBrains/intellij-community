@@ -9,9 +9,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.util.CachedValue
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
@@ -19,11 +17,8 @@ import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationList
 import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -50,7 +45,7 @@ class CompletionBindingContextProvider(project: Project) {
     }
 
     private class CompletionData(
-        val block: KtBlockExpression,
+        val container: KtExpression,
         val prevStatement: KtExpression?,
         val psiElementsBeforeAndAfter: List<PsiElementData>,
         val bindingContext: BindingContext,
@@ -58,7 +53,13 @@ class CompletionBindingContextProvider(project: Project) {
         val statementResolutionScope: LexicalScope,
         val statementDataFlowInfo: DataFlowInfo,
         val debugText: String
-    )
+    ) {
+        init {
+          require(container is KtBlockExpression || container is KtDeclarationWithBody) {
+              "Container was of class ${container::class}"
+          }
+        }
+    }
 
     private data class PsiElementData(val element: PsiElement, val level: Int)
 
@@ -90,8 +91,11 @@ class CompletionBindingContextProvider(project: Project) {
     }
 
     private fun _getBindingContext(position: PsiElement, resolutionFacade: ResolutionFacade): BindingContext {
-        val inStatement = position.findStatementInBlock()
-        val block = inStatement?.parent as KtBlockExpression?
+        val (inStatement, container) =
+            position.findStatementInBlock()
+                ?: position.findSingleExpressionBody()
+                ?: (null to null)
+
         val prevStatement = inStatement?.siblings(forward = false, withItself = false)?.firstIsInstanceOrNull<KtExpression>()
         val modificationScope = inStatement?.let { PureKotlinCodeBlockModificationListener.getInsideCodeBlockModificationScope(it)?.element }
 
@@ -101,8 +105,8 @@ class CompletionBindingContextProvider(project: Project) {
         when {
             prevCompletionData == null ->
                 log("No up-to-date data from previous completion\n")
-            block != prevCompletionData.block ->
-                log("Not in the same block\n")
+            container != prevCompletionData.container ->
+                log("Not in the same container\n")
             prevStatement != prevCompletionData.prevStatement ->
                 log("Previous statement is not the same\n")
             psiElementsBeforeAndAfter != prevCompletionData.psiElementsBeforeAndAfter ->
@@ -118,7 +122,7 @@ class CompletionBindingContextProvider(project: Project) {
                 //TODO: expected type?
                 val statementContext = inStatement.analyzeInContext(
                     scope = prevCompletionData.statementResolutionScope,
-                    contextExpression = block,
+                    contextExpression = container,
                     dataFlowInfo = prevCompletionData.statementDataFlowInfo,
                     isStatement = true
                 )
@@ -129,11 +133,11 @@ class CompletionBindingContextProvider(project: Project) {
 
         val bindingContext =
             resolutionFacade.analyze(position.parentsWithSelf.firstIsInstance<KtElement>(), BodyResolveMode.PARTIAL_FOR_COMPLETION)
-        prevCompletionDataCache.value.data = if (block != null && modificationScope != null) {
+        prevCompletionDataCache.value.data = if (container != null && modificationScope != null) {
             val resolutionScope = inStatement.getResolutionScope(bindingContext, resolutionFacade)
             val dataFlowInfo = bindingContext.getDataFlowInfoBefore(inStatement)
             CompletionData(
-                block,
+                container,
                 prevStatement,
                 psiElementsBeforeAndAfter!!,
                 bindingContext,
@@ -170,9 +174,25 @@ class CompletionBindingContextProvider(project: Project) {
         }
     }
 
-    private fun PsiElement.findStatementInBlock(): KtExpression? {
-        return parents.filterIsInstance<KtExpression>().firstOrNull { it.parent is KtBlockExpression }
-    }
+    private fun PsiElement.findStatementInBlock(): Pair<KtExpression, KtBlockExpression>? =
+        parentsOfType<KtExpression>().firstNotNullOfOrNull { expression ->
+            val parent = expression.parent
+            if (parent is KtBlockExpression) {
+                expression to parent
+            } else {
+                null
+            }
+        }
+
+    private fun PsiElement.findSingleExpressionBody(): Pair<KtExpression, KtDeclaration>? =
+        parentsOfType<KtExpression>().firstNotNullOfOrNull { expression ->
+            val parent = expression.parent
+            if (parent is KtDeclarationWithBody && parent.bodyExpression == expression) {
+                expression to parent
+            } else {
+                null
+            }
+        }
 
     private fun KtExpression.isTooComplex(): Boolean {
         return anyDescendantOfType<KtBlockExpression> { it.statements.size > 1 }

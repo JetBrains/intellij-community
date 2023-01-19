@@ -21,14 +21,14 @@ import java.util.Set;
 public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionType extends PostfixTemplateExpressionCondition>
   extends EditablePostfixTemplate {
 
-  @NotNull protected final Set<ConditionType> myExpressionConditions;
+  @NotNull protected final Set<? extends ConditionType> myExpressionConditions;
   protected final boolean myUseTopmostExpression;
 
   protected EditablePostfixTemplateWithMultipleExpressions(@NotNull String templateId,
                                                            @NotNull String templateName,
                                                            @NotNull TemplateImpl liveTemplate,
                                                            @NotNull String example,
-                                                           @NotNull Set<ConditionType> expressionConditions,
+                                                           @NotNull Set<? extends ConditionType> expressionConditions,
                                                            boolean useTopmostExpression,
                                                            @NotNull PostfixTemplateProvider provider) {
     super(templateId, templateName, liveTemplate, example, provider);
@@ -41,7 +41,7 @@ public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionTy
                                                            @NotNull String templateKey,
                                                            @NotNull TemplateImpl liveTemplate,
                                                            @NotNull String example,
-                                                           @NotNull Set<ConditionType> expressionConditions,
+                                                           @NotNull Set<? extends ConditionType> expressionConditions,
                                                            boolean useTopmostExpression,
                                                            @NotNull PostfixTemplateProvider provider) {
     super(templateId, templateName, templateKey, liveTemplate, example, provider);
@@ -71,7 +71,7 @@ public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionTy
   protected abstract PsiElement getTopmostExpression(@NotNull PsiElement element);
 
   @NotNull
-  public Set<ConditionType> getExpressionConditions() {
+  public Set<? extends ConditionType> getExpressionConditions() {
     return myExpressionConditions;
   }
 

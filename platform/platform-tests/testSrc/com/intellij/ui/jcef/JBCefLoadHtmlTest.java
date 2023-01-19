@@ -39,15 +39,15 @@ public class JBCefLoadHtmlTest {
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   static final String JS_FILE_PATH = PlatformTestUtil.getPlatformTestDataPath() + "ui/jcef/JBCefLoadHtmlTest.js";
-  static final String HTML = "<html>\n" +
-                             "<body>\n" +
-                             "\n" +
-                             "=== JBCefLoadHtmlTest ===" +
-                             "\n" +
-                             "<script src=\"JBCefLoadHtmlTest.js\"></script>\n" +
-                             "\n" +
-                             "</body>\n" +
-                             "</html>";
+  static final String HTML = """
+    <html>
+    <body>
+
+    === JBCefLoadHtmlTest ===
+    <script src="JBCefLoadHtmlTest.js"></script>
+
+    </body>
+    </html>""";
 
   static final CountDownLatch LATCH = new CountDownLatch(1);
   static volatile boolean testPassed;

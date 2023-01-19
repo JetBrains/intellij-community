@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
 
@@ -83,31 +82,35 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testPrivateClassCanHaveInheritorsInAnotherFile() {
-    myFixture.addClass("public class Test {\n" +
-                "  public static class A { }\n" +
-                "  private static class B extends A { }\n" +
-                "  public static class C1 extends B { }\n" +
-                "  public static class C2 extends B { }\n" +
-                "}");
-    myFixture.addClass("public class Test2 {\n" +
-                "  private static class D1 extends Test.C1 { }\n" +
-                "  private static class D2 extends Test.C2 { }\n" +
-                "}");
+    myFixture.addClass("""
+                         public class Test {
+                           public static class A { }
+                           private static class B extends A { }
+                           public static class C1 extends B { }
+                           public static class C2 extends B { }
+                         }""");
+    myFixture.addClass("""
+                         public class Test2 {
+                           private static class D1 extends Test.C1 { }
+                           private static class D2 extends Test.C2 { }
+                         }""");
     assertSize(5, ClassInheritorsSearch.search(myFixture.findClass("Test.A")).findAll());
     assertSize(4, ClassInheritorsSearch.search(myFixture.findClass("Test.B")).findAll());
   }
 
   public void testPackageLocalClassCanHaveInheritorsInAnotherPackage() {
-    myFixture.addClass("package one; public class Test {\n" +
-                "  public static class A { }\n" +
-                "  static class B extends A { }\n" +
-                "  public static class C1 extends B { }\n" +
-                "  public static class C2 extends B { }\n" +
-                "}");
-    myFixture.addClass("package another; public class Test2 {\n" +
-                "  private static class D1 extends one.Test.C1 { }\n" +
-                "  private static class D2 extends one.Test.C2 { }\n" +
-                "}");
+    myFixture.addClass("""
+                         package one; public class Test {
+                           public static class A { }
+                           static class B extends A { }
+                           public static class C1 extends B { }
+                           public static class C2 extends B { }
+                         }""");
+    myFixture.addClass("""
+                         package another; public class Test2 {
+                           private static class D1 extends one.Test.C1 { }
+                           private static class D2 extends one.Test.C2 { }
+                         }""");
     assertSize(5, ClassInheritorsSearch.search(myFixture.findClass("one.Test.A")).findAll());
     assertSize(4, ClassInheritorsSearch.search(myFixture.findClass("one.Test.B")).findAll());
   }
@@ -115,12 +118,12 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
   public void testInheritorsInAnotherModuleWithNoDirectDependency() throws IOException {
     myFixture.addFileToProject("A.java", "class A {}");
     myFixture.addFileToProject("mod1/B.java", "class B extends A {}");
-    myFixture.addFileToProject("mod1/C.java", "class C extends B {}");
+    myFixture.addFileToProject("mod2/C.java", "class C extends B {}");
 
     Module mod1 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
-    Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+    Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
 
-    ModuleRootModificationUtil.addDependency(mod1, getModule(), DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(mod1, getModule(), DependencyScope.COMPILE, true);
     ModuleRootModificationUtil.addDependency(mod2, mod1, DependencyScope.COMPILE, false);
 
     assertSize(2, ClassInheritorsSearch.search(myFixture.findClass("A")).findAll());

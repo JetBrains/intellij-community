@@ -2,19 +2,18 @@ from typing import Any, ClassVar
 
 import passlib.utils.handlers as uh
 
-class scrypt(uh.ParallelismMixin, uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.HasManyIdents, uh.GenericHandler):  # type: ignore
+class scrypt(uh.ParallelismMixin, uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.HasManyIdents, uh.GenericHandler):  # type: ignore[misc]
     backends: ClassVar[tuple[str, ...]]
-    name: str
-    setting_kwds: Any
-    checksum_size: int
-    default_ident: Any
-    ident_values: Any
+    name: ClassVar[str]
+    checksum_size: ClassVar[int]
+    default_ident: ClassVar[str]
+    ident_values: ClassVar[tuple[str, ...]]
     default_salt_size: ClassVar[int]
-    max_salt_size: int
-    default_rounds: int
-    min_rounds: int
-    max_rounds: int
-    rounds_cost: str
+    max_salt_size: ClassVar[int]
+    default_rounds: ClassVar[int]
+    min_rounds: ClassVar[int]
+    max_rounds: ClassVar[int]
+    rounds_cost: ClassVar[str]
     parallelism: int
     block_size: int
     @classmethod

@@ -21,17 +21,17 @@ public class MockArrayType extends MockReferenceType implements ArrayType {
 
   @Override
   public ArrayReference newInstance(int i) {
-    throw new UnsupportedOperationException(); 
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public String signature() {
-    return "["+myComponentType.signature();
+    return "[" + myComponentType.signature();
   }
 
   @Override
   public String name() {
-    return myComponentType.name()+"[]";
+    return myComponentType.name() + "[]";
   }
 
   @Override
@@ -71,7 +71,7 @@ public class MockArrayType extends MockReferenceType implements ArrayType {
 
   @Override
   public boolean isVerified() {
-    return true;
+    return super.isVerified();
   }
 
   @Override

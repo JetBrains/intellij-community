@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
-* @author peter
-*/
 public class GroovySupportConfigurable extends FrameworkSupportInModuleConfigurable {
   @Override
   public JComponent createComponent() {

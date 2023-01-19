@@ -25,9 +25,9 @@ private class FeaturesTrainerSettingsPanel : BoundConfigurable(LearnBundle.messa
           .map { LanguageOption(it) }
         comboBox(options)
           .bindItem({
-                      val languageName = LangManager.getInstance().state.languageName
-                      options.find { it.id == languageName } ?: options[0]
-                    }, { language -> resetPrimaryLanguage(languagesExtensions.first { it.language == language?.id }.instance) })
+                      val languageId = LangManager.getInstance().getLanguageId()
+                      options.find { it.id == languageId } ?: options[0]
+                    }, { language -> language?.let { resetPrimaryLanguage(it.id) } })
       }
     }
     row {

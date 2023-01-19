@@ -31,7 +31,7 @@ public class AnActionEvent implements PlaceProvider {
   private final boolean myIsActionToolbar;
 
   private boolean myWorksInInjected;
-  private UpdateSession myUpdateSession;
+  private UpdateSession myUpdateSession = UpdateSession.EMPTY;
 
   /**
    * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
@@ -255,11 +255,11 @@ public class AnActionEvent implements PlaceProvider {
     visitor.visitEvent(this);
   }
 
-  public @Nullable UpdateSession getUpdateSession() {
+  public @NotNull UpdateSession getUpdateSession() {
     return myUpdateSession;
   }
 
-  public void setUpdateSession(@Nullable UpdateSession updateSession) {
+  public void setUpdateSession(@NotNull UpdateSession updateSession) {
     myUpdateSession = updateSession;
   }
 

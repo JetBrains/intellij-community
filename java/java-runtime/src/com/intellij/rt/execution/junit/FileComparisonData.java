@@ -3,7 +3,9 @@ package com.intellij.rt.execution.junit;
 
 public interface FileComparisonData {
   Object getActual();
+  String getActualStringPresentation();
   Object getExpected();
+  String getExpectedStringPresentation();
   String getFilePath();
   String getActualFilePath();
 }

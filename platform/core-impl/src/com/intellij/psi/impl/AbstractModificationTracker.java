@@ -22,7 +22,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman.Chernyatchik
- * @deprecated see {@link com.intellij.psi.util.PsiModificationTracker#OUT_OF_CODE_BLOCK_MODIFICATION_COUNT}
+ * @deprecated it's better to avoid processing PSI changes at all, see {@link com.intellij.psi.PsiTreeChangeEvent} for more details; if you
+ * really need this, implement {@link PsiTreeChangePreprocessor} directly.
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval
@@ -46,7 +47,7 @@ public abstract class AbstractModificationTracker implements PsiTreeChangePrepro
   }
 
   @Override
-  public void treeChanged(@NotNull final PsiTreeChangeEventImpl event) {
+  public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
     boolean changedInsideCodeBlock = false;
 
     switch (event.getCode()) {
@@ -89,7 +90,7 @@ public abstract class AbstractModificationTracker implements PsiTreeChangePrepro
     }
   }
 
-  protected void processOutOfCodeBlockModification(final PsiTreeChangeEventImpl event) {
+  protected void processOutOfCodeBlockModification(PsiTreeChangeEventImpl event) {
     myModificationTracker.incOutOfCodeBlockModificationCounter();
   }
 }

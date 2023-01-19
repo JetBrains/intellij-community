@@ -1,12 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
-import com.intellij.xdebugger.memory.component.InstancesTracker;
-import com.intellij.xdebugger.memory.event.InstancesTrackerListener;
-import com.intellij.xdebugger.memory.tracking.TrackingType;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
@@ -22,6 +19,9 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.memory.component.InstancesTracker;
+import com.intellij.xdebugger.memory.event.InstancesTrackerListener;
+import com.intellij.xdebugger.memory.tracking.TrackingType;
 import com.intellij.xdebugger.memory.ui.InstancesTree;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -121,6 +121,7 @@ class InstancesWithStackFrameView {
       list.setFrameItems(Collections.emptyList());
     });
   }
+
   @Nullable
   private static ObjectReference getSelectedReference(InstancesTree tree) {
     TreePath selectionPath = tree.getSelectionPath();

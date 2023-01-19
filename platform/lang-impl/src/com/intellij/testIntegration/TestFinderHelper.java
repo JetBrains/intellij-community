@@ -1,12 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.testIntegration;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +58,18 @@ public final class TestFinderHelper {
       }
     }
     return false;
+  }
+
+  public static @NotNull @NlsContexts.ProgressTitle String getSearchingForTestsForClassProgressTitle(@NotNull PsiElement element) {
+    List<TestFinder> finders = getFinders();
+    Set<String> titles = ContainerUtil.map2SetNotNull(finders, finder -> finder.getSearchingForTestsForClassProgressTitle(element));
+    return ContainerUtil.getOnlyItem(titles, LangBundle.message("progress.title.searching.for.tests.for.class"));
+  }
+
+  public static @NotNull @NlsContexts.ProgressTitle String getSearchingForClassesForTestProgressTitle(@NotNull PsiElement element) {
+    List<TestFinder> finders = getFinders();
+    Set<String> titles = ContainerUtil.map2SetNotNull(finders, finder -> finder.getSearchingForClassesForTestProgressTitle(element));
+    return ContainerUtil.getOnlyItem(titles, LangBundle.message("progress.title.searching.for.classes.for.test"));
   }
 
   public static List<TestFinder> getFinders() {

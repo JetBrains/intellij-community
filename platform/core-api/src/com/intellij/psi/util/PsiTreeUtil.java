@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -19,10 +19,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Function;
@@ -46,10 +43,10 @@ public class PsiTreeUtil {
    *
    * @param ancestor parent candidate. {@code false} will be returned if ancestor is {@code null}.
    * @param element  child candidate
-   * @param strict   whether to return {@code true} if ancestor and parent are the same.
+   * @param strict   whether to start search from element ({@code true}) or from element's parent ({@code false}).
    * @return {@code true} if element has ancestor as its parent somewhere in the hierarchy, {@code false} otherwise.
    */
-  @Contract("null, _, _ -> false")
+  @Contract(value = "null, _, _ -> false", pure = true)
   public static boolean isAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
     if (ancestor == null) return false;
     // fast path to avoid loading tree
@@ -74,7 +71,7 @@ public class PsiTreeUtil {
    *
    * @param ancestor parent candidate. {@code false} will be returned if ancestor is {@code null}.
    * @param element  child candidate
-   * @param strict   whether to return {@code true} if ancestor and parent are the same.
+   * @param strict   whether to start search from element ({@code true}) or from element's parent ({@code false}).
    * @return {@code true} if element has ancestor as its parent somewhere in the hierarchy, {@code false} otherwise.
    */
   @Contract("null, _, _ -> false")
@@ -392,6 +389,7 @@ public class PsiTreeUtil {
   }
 
   @SafeVarargs
+  @Unmodifiable
   public static @NotNull <T extends PsiElement> List<T> getChildrenOfAnyType(@Nullable PsiElement element, @NotNull Class<? extends T> @NotNull ... classes) {
     List<T> result = null;
     if (element != null) {
@@ -406,6 +404,7 @@ public class PsiTreeUtil {
     return result != null ? result : ContainerUtil.emptyList();
   }
 
+  @Unmodifiable
   public static @NotNull <T extends PsiElement> List<T> getChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<? extends T> aClass) {
     List<T> result = null;
     if (element != null) {
@@ -419,6 +418,7 @@ public class PsiTreeUtil {
     return result != null ? result : Collections.emptyList();
   }
 
+  @Unmodifiable
   public static @NotNull List<PsiElement> getElementsOfRange(@NotNull PsiElement start, @NotNull PsiElement end) {
     List<PsiElement> result = new ArrayList<>();
     for (PsiElement e = start; e != end; e = e.getNextSibling()) {
@@ -444,6 +444,7 @@ public class PsiTreeUtil {
     return null;
   }
 
+  @Unmodifiable
   public static @NotNull <T extends PsiElement> List<T> getStubChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<? extends T> aClass) {
     if (element == null) return Collections.emptyList();
 
@@ -650,6 +651,7 @@ public class PsiTreeUtil {
     return aClass.cast(element);
   }
 
+  @Unmodifiable
   public static @NotNull <T extends PsiElement> List<T> collectParents(@NotNull PsiElement element,
                                                                        @NotNull Class<? extends T> parent,
                                                                        boolean includeMyself,
@@ -933,7 +935,7 @@ public class PsiTreeUtil {
   }
 
   public static boolean processElements(@NotNull PsiElementProcessor<? super PsiElement> processor, PsiElement @Nullable ... elements) {
-    if (elements != null && elements.length != 0) {
+    if (elements != null) {
       for (PsiElement element : elements) {
         if (!processElements(element, processor)) {
           return false;
@@ -1291,7 +1293,8 @@ public class PsiTreeUtil {
     throw new AssertionError(descendant + " is not a descendant of " + ancestor);
   }
 
-  public static List<PsiElement> getInjectedElements(@NotNull OuterLanguageElement outerLanguageElement) {
+  @Unmodifiable
+  public static @NotNull List<PsiElement> getInjectedElements(@NotNull OuterLanguageElement outerLanguageElement) {
     PsiElement psi = outerLanguageElement.getContainingFile().getViewProvider().getPsi(outerLanguageElement.getLanguage());
     TextRange injectionRange = outerLanguageElement.getTextRange();
     List<PsiElement> res = new ArrayList<>();

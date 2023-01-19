@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -35,7 +35,7 @@ public interface IdeFrame {
    * RecentProjectsManagerBase.setActivationTimestamp at nearest suitable time (e.g. at startup this can be delayed till a project is
    * assigned to the frame).
    */
-  default void notifyProjectActivation() {}
+  default void notifyProjectActivation() { }
 
   interface Child extends IdeFrame {
   }

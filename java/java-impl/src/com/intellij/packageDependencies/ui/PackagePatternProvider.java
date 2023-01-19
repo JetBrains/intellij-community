@@ -8,7 +8,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClassOwner;
@@ -81,7 +81,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
         final VirtualFile virtualFile = javaFile.getVirtualFile();
         LOG.assertTrue(virtualFile != null);
         final String packageName =
-          ProjectRootManager.getInstance(element.getProject()).getFileIndex().getPackageNameByDirectory(virtualFile.getParent());
+          PackageIndex.getInstance(element.getProject()).getPackageNameByDirectory(virtualFile.getParent());
         final String name = virtualFile.getNameWithoutExtension();
         if (!PsiNameHelper.getInstance(element.getProject()).isIdentifier(name)) return null;
         qName = StringUtil.getQualifiedName(packageName, name);

@@ -43,7 +43,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
+      public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
         PsiFile file = holder.getFile();
         if (!(file instanceof XmlFile)) return;
 

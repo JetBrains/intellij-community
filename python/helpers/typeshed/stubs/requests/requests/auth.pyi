@@ -1,4 +1,4 @@
-from typing import Any, Text
+from typing import Any
 
 from . import cookies, models, utils
 
@@ -9,7 +9,7 @@ to_native_string = utils.to_native_string
 CONTENT_TYPE_FORM_URLENCODED: Any
 CONTENT_TYPE_MULTI_PART: Any
 
-def _basic_auth_str(username: bytes | Text, password: bytes | Text) -> str: ...
+def _basic_auth_str(username: bytes | str, password: bytes | str) -> str: ...
 
 class AuthBase:
     def __call__(self, r: models.PreparedRequest) -> models.PreparedRequest: ...

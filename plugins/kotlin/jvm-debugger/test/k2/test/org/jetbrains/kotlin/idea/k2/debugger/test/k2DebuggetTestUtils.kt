@@ -3,12 +3,10 @@
 
 package org.jetbrains.kotlin.idea.k2.debugger.test
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.testFramework.registerOrReplaceServiceInstance
 import com.intellij.testFramework.registerServiceInstance
-import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.unregisterService
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
@@ -23,6 +21,7 @@ import org.jetbrains.kotlin.resolve.ResolutionAnchorProvider
  * Needed for DebuggerTestCompilerFacility to be able to compile testdata, probably need to be rewritten to compile with K2 compiler
  */
 internal inline fun <R> withTestServicesNeededForCodeCompilation(project: Project, action: () -> R): R {
+    val disposable = Disposer.newCheckedDisposable("withTestServicesNeededForCodeCompilation")
     val services = listOf(
         ServiceWithImplementation(KotlinCacheService::class.java, ::KotlinCacheServiceImpl),
         ServiceWithImplementation(ResolutionAnchorProvider::class.java) { DummyResolutionAnchorProvider() },
@@ -32,12 +31,14 @@ internal inline fun <R> withTestServicesNeededForCodeCompilation(project: Projec
 
     services.forEach { (serviceInterface, createServiceInstance) ->
         val serviceInstance = createServiceInstance(project)
+        (serviceInstance as? Disposable)?.let { Disposer.register(disposable, it) }
         project.registerServiceInstance(serviceInterface as Class<Any>, serviceInstance)
     }
 
     return try {
         action()
     } finally {
+        Disposer.dispose(disposable)
         services.forEach { (serviceInterface, _) ->
             project.unregisterService(serviceInterface)
         }

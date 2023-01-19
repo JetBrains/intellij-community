@@ -25,8 +25,6 @@ import java.util.List;
 /**
  * Basic DOM inspection (see {@link BasicDomElementsInspection})
  * calls this annotator on all DOM elements with the given custom user-defined annotation.
- *
- * @author peter
  */
 public abstract class DomCustomAnnotationChecker<T extends Annotation> {
   static final ExtensionPointName<DomCustomAnnotationChecker> EP_NAME = ExtensionPointName.create("com.intellij.dom.customAnnotationChecker");

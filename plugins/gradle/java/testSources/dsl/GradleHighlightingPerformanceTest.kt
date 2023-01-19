@@ -5,10 +5,10 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.externalSystem.util.runInEdtAndWait
-import com.intellij.openapi.externalSystem.util.text
+import com.intellij.openapi.vfs.readText
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
@@ -24,7 +24,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
   fun testPerformance(gradleVersion: GradleVersion) {
     test(gradleVersion, FIXTURE_BUILDER) {
       val file = getFile("build.gradle")
-      val pos = file.text.indexOf("a.json")
+      val pos = file.readText().indexOf("a.json")
       runInEdtAndWait {
         fixture.openFileInEditor(file)
         fixture.editor.caretModel.moveToOffset(pos + 1)
@@ -48,7 +48,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
   fun testCompletionPerformance(gradleVersion: GradleVersion) {
     test(gradleVersion, COMPLETION_FIXTURE) {
       val file = getFile("build.gradle")
-      val pos = file.text.indexOf("dependencies {") + "dependencies {".length
+      val pos = file.readText().indexOf("dependencies {") + "dependencies {".length
       runInEdtAndWait {
         fixture.openFileInEditor(file)
         fixture.editor.caretModel.moveToOffset(pos)
@@ -66,8 +66,8 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
           }
         }.setup {
           val rangeMarkers = ArrayList<RangeMarker>()
-          document.castSafelyTo<DocumentEx>()?.processRangeMarkers { rangeMarkers.add(it) }
-          rangeMarkers.forEach { marker -> document.castSafelyTo<DocumentEx>()?.removeRangeMarker(marker as RangeMarkerEx) }
+          document.asSafely<DocumentEx>()?.processRangeMarkers { rangeMarkers.add(it) }
+          rangeMarkers.forEach { marker -> document.asSafely<DocumentEx>()?.removeRangeMarker(marker as RangeMarkerEx) }
         }.usesAllCPUCores().assertTiming()
       }
     }

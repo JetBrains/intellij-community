@@ -12,9 +12,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.jetbrains.python.run.PythonConfigurationType
 import com.jetbrains.python.run.PythonRunConfiguration
 
-/**
- * @author vlan
- */
 class PyRunAnythingProvider : RunAnythingMatchedRunConfigurationProvider() {
   override fun createConfiguration(dataContext: DataContext, pattern: String): RunnerAndConfigurationSettings {
     val runManager = RunManager.getInstance(dataContext.project)
@@ -43,6 +40,7 @@ class PyRunAnythingProvider : RunAnythingMatchedRunConfigurationProvider() {
       }
       workingDir?.findPythonSdk(project)?.let {
         sdkHome = it.homePath
+        sdk = it
       }
       workingDir?.let {
         workingDirectory = it.canonicalPath

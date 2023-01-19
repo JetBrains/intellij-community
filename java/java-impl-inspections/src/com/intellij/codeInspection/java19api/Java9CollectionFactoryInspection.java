@@ -18,7 +18,7 @@ package com.intellij.codeInspection.java19api;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -39,10 +39,11 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
@@ -68,13 +69,11 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
   public boolean IGNORE_NON_CONSTANT = false;
   public boolean SUGGEST_MAP_OF_ENTRIES = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaBundle.message("inspection.collection.factories.option.ignore.non.constant"), "IGNORE_NON_CONSTANT");
-    panel.addCheckbox(JavaBundle.message("inspection.collection.factories.option.suggest.ofentries"), "SUGGEST_MAP_OF_ENTRIES");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_NON_CONSTANT", JavaBundle.message("inspection.collection.factories.option.ignore.non.constant")),
+      checkbox("SUGGEST_MAP_OF_ENTRIES", JavaBundle.message("inspection.collection.factories.option.suggest.ofentries")));
   }
 
   @NotNull
@@ -143,14 +142,11 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
     }
 
     private StreamEx<PsiExpression> keyExpressions() {
-      switch (myType) {
-        case "Set":
-          return StreamEx.of(myContent);
-        case "Map":
-          return IntStreamEx.range(0, myContent.size(), 2).elements(myContent);
-        default:
-          return StreamEx.empty();
-      }
+      return switch (myType) {
+        case "Set" -> StreamEx.of(myContent);
+        case "Map" -> IntStreamEx.range(0, myContent.size(), 2).elements(myContent);
+        default -> StreamEx.empty();
+      };
     }
 
     public static PrepopulatedCollectionModel fromList(PsiExpression listDefinition) {

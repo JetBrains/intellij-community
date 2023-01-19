@@ -2,33 +2,23 @@
 
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native
 
-import com.intellij.ProjectTopics
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction.nonBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.ProjectPostStartupActivity
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.PathUtilRt
-import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.concurrency.CancellablePromise
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoListener
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.KlibCompatibilityInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibraryInfo
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.isGradleLibraryName
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
-import org.jetbrains.kotlin.idea.search.containsKotlinFile
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanelProvider
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 
@@ -42,14 +32,41 @@ internal class KotlinNativeABICompatibilityChecker : ProjectPostStartupActivity 
 @Service(Service.Level.PROJECT)
 internal class KotlinNativeABICompatibilityCheckerService(private val project: Project): Disposable {
     fun runActivity() {
-        project.messageBus.connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-            override fun rootsChanged(event: ModuleRootEvent) {
-                // run when project roots are changes, e.g. on project import
-                validateKotlinNativeLibraries()
+        val connection = project.messageBus.connect(this)
+
+        connection.subscribe(LibraryInfoListener.TOPIC, object : LibraryInfoListener {
+            override fun libraryInfosAdded(libraryInfos: Collection<LibraryInfo>) {
+                val incompatibleLibraries =
+                    synchronized(cachedIncompatibleLibraries) {
+                        val libraryInfoMap = libraryInfos
+                            .toIncompatibleLibraries()
+                            .filterKeys { it !in cachedIncompatibleLibraries }
+                            .ifEmpty { return }
+
+                        cachedIncompatibleLibraries.addAll(libraryInfoMap.keys)
+                        libraryInfoMap
+                    }
+
+                prepareNotifications(incompatibleLibraries).forEach {
+                    it.notify(project)
+                }
             }
+
+            override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
+                val incompatibleLibraries = libraryInfos.toIncompatibleLibraries().ifEmpty { return }
+
+                synchronized(cachedIncompatibleLibraries) {
+                    cachedIncompatibleLibraries.removeAll(incompatibleLibraries.keys)
+                }
+            }
+
         })
-        validateKotlinNativeLibraries()
     }
+
+    private fun Collection<LibraryInfo>.toIncompatibleLibraries() =
+        this.filterIsInstance<NativeKlibLibraryInfo>()
+            .filter { !it.compatibilityInfo.isCompatible }
+            .associateBy { it.libraryRoot }
 
     private sealed class LibraryGroup(private val ordinal: Int) : Comparable<LibraryGroup> {
         override fun compareTo(other: LibraryGroup) = when {
@@ -65,57 +82,6 @@ internal class KotlinNativeABICompatibilityCheckerService(private val project: P
     }
 
     private val cachedIncompatibleLibraries = mutableSetOf<String>()
-
-    internal fun validateKotlinNativeLibraries() {
-        if (isUnitTestMode() || project.isDisposed) return
-
-        val backgroundJob: Ref<CancellablePromise<*>> = Ref()
-        val disposable = Disposable {
-            backgroundJob.get()?.let(CancellablePromise<*>::cancel)
-        }
-        Disposer.register(this, disposable)
-
-        backgroundJob.set(
-            nonBlocking<List<Notification>> {
-                if (project.containsKotlinFile()) {
-                    val librariesToNotify = getLibrariesToNotifyAbout()
-                    prepareNotifications(librariesToNotify)
-                } else {
-                    // do not scan libraries in projects without Kotlin files
-                    emptyList()
-                }
-            }
-                .finishOnUiThread(ModalityState.defaultModalityState()) { notifications ->
-                    notifications.forEach {
-                        it.notify(project)
-                    }
-                }
-                .expireWith(this) // cancel job when project is disposed
-                .coalesceBy(this@KotlinNativeABICompatibilityCheckerService) // cancel previous job when new one is submitted
-                .withDocumentsCommitted(project)
-                .submit(AppExecutorUtil.getAppExecutorService())
-                .onProcessed {
-                    backgroundJob.set(null)
-                    Disposer.dispose(disposable)
-                })
-    }
-
-    private fun getLibrariesToNotifyAbout(): Map<String, NativeKlibLibraryInfo> {
-        val incompatibleLibraries = getModuleInfosFromIdeaModel(project)
-            .filterIsInstance<NativeKlibLibraryInfo>()
-            .filter { !it.compatibilityInfo.isCompatible }
-            .associateBy { it.libraryRoot }
-
-        val newEntries = if (cachedIncompatibleLibraries.isNotEmpty())
-            incompatibleLibraries.filterKeys { it !in cachedIncompatibleLibraries }
-        else
-            incompatibleLibraries
-
-        cachedIncompatibleLibraries.clear()
-        cachedIncompatibleLibraries.addAll(incompatibleLibraries.keys)
-
-        return newEntries
-    }
 
     private fun prepareNotifications(librariesToNotify: Map<String, NativeKlibLibraryInfo>): List<Notification> {
         if (librariesToNotify.isEmpty())
@@ -208,7 +174,7 @@ internal class KotlinNativeABICompatibilityCheckerService(private val project: P
         }
     }
 
-    // returns pair of library name and library group
+    // returns a pair of library name and library group
     private fun parseIDELibraryName(libraryInfo: NativeKlibLibraryInfo): Pair<String, LibraryGroup> {
         val ideLibraryName = libraryInfo.library.name?.takeIf(String::isNotEmpty)
         if (ideLibraryName != null) {

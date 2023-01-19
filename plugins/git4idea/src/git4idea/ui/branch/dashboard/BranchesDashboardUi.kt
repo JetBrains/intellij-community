@@ -9,6 +9,7 @@ import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionPlaces.VCS_LOG_BRANCHES_PLACE
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.util.ProgressWindow
@@ -41,6 +42,7 @@ import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogContentProvider.MAIN_LOG_ID
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToBranch
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
@@ -59,7 +61,6 @@ import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.FetchAction
-import git4idea.ui.branch.dashboard.BranchesDashboardActions.NewBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ToggleFavoriteAction
@@ -129,7 +130,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   internal fun navigateToSelectedBranch(focus: Boolean) {
     val selectedReference = filteringTree.getSelectedBranchFilters().singleOrNull() ?: return
 
-    logUi.vcsLog.jumpToReference(selectedReference, focus)
+    logUi.jumpToBranch(selectedReference, false, focus)
   }
 
   internal fun toggleGrouping(key: GroupingKey, state: Boolean) {
@@ -156,7 +157,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
     override fun getOrderedComponents(): List<Component> = listOf(filteringTree.component, logUi.table,
                                                                   logUi.changesBrowser.preferredFocusedComponent,
-                                                                  logUi.filterUi.textFilterComponent.textEditor)
+                                                                  logUi.filterUi.textFilterComponent.textField)
   }
 
   private val showBranches get() = logUi.properties.get(SHOW_GIT_BRANCHES_LOG_PROPERTY)
@@ -201,7 +202,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val toggleFavoriteAction = ToggleFavoriteAction()
     val fetchAction = FetchAction(this)
     val showMyBranchesAction = ShowMyBranchesAction(uiController)
-    val newBranchAction = NewBranchAction()
+    val newBranchAction = ActionManager.getInstance().getAction("Git.New.Branch.In.Log")
     val updateSelectedAction = UpdateSelectedBranchAction()
     val defaultTreeExpander = DefaultTreeExpander(filteringTree.component)
     val commonActionsManager = CommonActionsManager.getInstance()
@@ -284,8 +285,11 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   inner class BranchesTreePanel : BorderLayoutPanel(), DataProvider {
     override fun getData(dataId: String): Any? {
       return when {
+        SELECTED_ITEMS.`is`(dataId) -> filteringTree.component.selectionPaths
         GIT_BRANCHES.`is`(dataId) -> filteringTree.getSelectedBranches()
         GIT_BRANCH_FILTERS.`is`(dataId) -> filteringTree.getSelectedBranchFilters()
+        GIT_BRANCH_REMOTES.`is`(dataId) -> filteringTree.getSelectedRemotes()
+        GIT_BRANCH_DESCRIPTORS.`is`(dataId) -> filteringTree.getSelectedBranchNodes()
         BRANCHES_UI_CONTROLLER.`is`(dataId) -> uiController
         VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId) -> logUi.properties
         else -> null

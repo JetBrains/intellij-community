@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +68,8 @@ class ProjectStructureElementRenderer extends ColoredTreeCellRenderer {
             final boolean isUnused = problemsHolder.containsProblems(ProjectStructureProblemType.Severity.UNUSED);
             final boolean haveWarnings = problemsHolder.containsProblems(ProjectStructureProblemType.Severity.WARNING);
             final boolean haveErrors = problemsHolder.containsProblems(ProjectStructureProblemType.Severity.ERROR);
-            Color foreground = isUnused ? UIUtil.getInactiveTextColor() : null;
+            Color foreground;
+            foreground = isUnused ? NamedColorUtil.getInactiveTextColor() : null;
             final int style = haveWarnings || haveErrors ? SimpleTextAttributes.STYLE_WAVED : -1;
             final Color waveColor = haveErrors ? JBColor.RED : haveWarnings ? JBColor.GRAY : null;
             textAttributes = textAttributes.derive(style, foreground, null, waveColor);

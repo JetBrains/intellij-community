@@ -14,8 +14,6 @@ import java.util.Arrays;
  * Highly customizable {@link LineWrapPositionStrategy} implementation.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy {
 
@@ -112,9 +110,12 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
       Rule rule = myRules.get(c);
       if (rule != null) {
         switch (rule.condition) {
-          case BOTH:
-          case BEFORE: return i;
-          case AFTER: if (i < endOffset - 1) return i + 1;
+          case BOTH, BEFORE -> {
+            return i;
+          }
+          case AFTER -> {
+            if (i < endOffset - 1) return i + 1;
+          }
         }
       }
 

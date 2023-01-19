@@ -11,7 +11,7 @@ import org.jetbrains.uast.kotlin.internal.KotlinUElementWithComments
 
 @ApiStatus.Internal
 abstract class KotlinAbstractUElement(
-    val givenParent: UElement?,
+    givenParent: UElement?,
 ) : KotlinUElementWithComments {
 
     protected val languagePlugin: UastLanguagePlugin? by lz {
@@ -22,9 +22,9 @@ abstract class KotlinAbstractUElement(
         ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
             ?: error("${BaseKotlinUastResolveProviderService::class.java.name} is not available for ${this::class.simpleName}")
     }
-    
-    final override val uastParent: UElement? get() {
-       return givenParent ?: convertParent()
+
+    final override val uastParent: UElement? by lz {
+        givenParent ?: convertParent()
     }
 
     protected open fun convertParent(): UElement? {

@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
-import org.jetbrains.plugins.github.api.data.GHNodes
+import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 
 @GraphQLFragment("/graphql/fragment/pullRequestMergeability.graphql")
 class GHPullRequestMergeabilityData(val mergeable: GHPullRequestMergeableState,
                                     val canBeRebased: Boolean,
                                     val mergeStateStatus: GHPullRequestMergeStateStatus,
-                                    val commits: GHNodes<GHPullRequestCommitWithCheckStatuses>)
+                                    val commits: GraphQLNodesDTO<GHPullRequestCommitWithCheckStatuses>)

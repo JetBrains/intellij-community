@@ -11,9 +11,11 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VfsUtil
@@ -142,7 +144,17 @@ fun checkFiles(
         configureEditorByExistingFile(file, project, textWithoutTags)
     }
 
-    editors.forEach { analyzer.checkHighlighting(project, it) }
+    try {
+        editors.forEach {
+            analyzer.checkHighlighting(project, it)
+        }
+    } finally {
+        files.forEach {
+            runInEdtAndWait {
+                FileEditorManager.getInstance(project).closeFile(it)
+            }
+        }
+    }
 
     Assert.assertTrue(atLeastOneFile)
 }

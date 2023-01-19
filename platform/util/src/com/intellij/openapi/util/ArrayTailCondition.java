@@ -16,9 +16,6 @@
 
 package com.intellij.openapi.util;
 
-/**
- * @author peter
- */
 public interface ArrayTailCondition<T> {
   ArrayTailCondition TRUE = new ArrayTailCondition() {
     @Override

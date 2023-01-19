@@ -17,7 +17,7 @@ internal fun optional(action: () -> Unit) {
   }
 }
 
-internal class StepPrinter : StepProcessor {
+class StepPrinter : StepProcessor {
 
   private var indent = ThreadLocal.withInitial { 0 }
 

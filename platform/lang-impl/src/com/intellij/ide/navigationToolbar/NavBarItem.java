@@ -33,7 +33,9 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public final class NavBarItem extends SimpleColoredComponent implements Disposable {
   private final @Nls String myText;
   private final SimpleTextAttributes myAttributes;
@@ -47,7 +49,7 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
   private final boolean myIsModule;
 
   public static final Icon CHEVRON_ICON = AllIcons.General.ChevronRight;
-  private static final Icon MODULE_ICON = IconManager.getInstance().getIcon("expui/nodes/module8x8.svg", AllIcons.class);
+  static final Icon MODULE_ICON = IconManager.getInstance().getIcon("expui/nodes/module8x8.svg", AllIcons.class);
 
   public NavBarItem(NavBarPanel panel, Object object, int idx, Disposable parent) {
     this(panel, object, idx, parent, false);
@@ -99,7 +101,7 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
       }
     }
     else {
-      setIconOpaque(true);
+      setIconOpaque(false);
       setFocusBorderAroundIcon(true);
     }
 
@@ -256,7 +258,7 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
 
   @Override
   protected boolean shouldDrawBackground() {
-    return isSelected() && isFocusedOrPopupElement();
+    return isSelected() && isFocused() && !isPopupElement;
   }
 
   @Override

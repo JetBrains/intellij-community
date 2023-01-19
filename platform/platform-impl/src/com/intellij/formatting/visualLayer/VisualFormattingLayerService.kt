@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.visualLayer
 
-import com.intellij.application.options.RegistryManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
@@ -11,20 +10,15 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.util.Key
 import com.intellij.psi.codeStyle.CodeStyleSettings
 
-
-private const val REGISTRY_KEY = "editor.visual.formatting.layer.enabled"
 val visualFormattingElementKey = Key.create<Boolean>("visual.formatting.element")
 
 abstract class VisualFormattingLayerService {
   private val EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS = Key.create<CodeStyleSettings>("visual.formatting.layer.info")
-  val Editor.visualFormattingLayerEnabled: Boolean
+  private val Editor.visualFormattingLayerEnabled: Boolean
     get() = visualFormattingLayerCodeStyleSettings != null
   var Editor.visualFormattingLayerCodeStyleSettings: CodeStyleSettings?
     get() = getUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS)
     private set(value) = putUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS, value)
-
-  val enabledByRegistry: Boolean
-    get() = RegistryManager.getInstance().`is`(REGISTRY_KEY)
 
   fun enabledForEditor(editor: Editor) = editor.visualFormattingLayerEnabled
 
@@ -36,7 +30,9 @@ abstract class VisualFormattingLayerService {
     editor.visualFormattingLayerCodeStyleSettings = null
   }
 
-  abstract fun getVisualFormattingLayerElements(editor: Editor): List<VisualFormattingLayerElement>
+  abstract fun collectVisualFormattingLayerElements(editor: Editor): List<VisualFormattingLayerElement>
+
+  abstract fun applyVisualFormattingLayerElementsToEditor(editor: Editor, elements: List<VisualFormattingLayerElement>)
 
   companion object {
     @JvmStatic
@@ -76,15 +72,13 @@ sealed class VisualFormattingLayerElement {
 
   data class Folding(val offset: Int, val length: Int) : VisualFormattingLayerElement() {
     override fun applyToEditor(editor: Editor) {
-      editor.foldingModel.runBatchFoldingOperation {
-        editor.foldingModel
-          .addFoldRegion(offset, offset + length, "")
-          ?.apply {
-            isExpanded = false
-            shouldNeverExpand()
-            putUserData(visualFormattingElementKey, true)
-          }
-      }
+      editor.foldingModel
+        .addFoldRegion(offset, offset + length, "")
+        ?.apply {
+          isExpanded = false
+          shouldNeverExpand()
+          putUserData(visualFormattingElementKey, true)
+        }
     }
   }
 }

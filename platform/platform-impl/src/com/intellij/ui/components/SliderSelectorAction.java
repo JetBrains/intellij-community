@@ -24,9 +24,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 
-/**
- * @author Irina.Chernushina on 11/12/2014.
- */
 public class SliderSelectorAction extends DumbAwareAction {
   @NotNull private final Configuration myConfiguration;
 

@@ -156,7 +156,7 @@ internal fun result(navigationTargets: Collection<NavigationTarget>): Navigation
       SingleTarget(request, null)
     }
     else -> MultipleTargets(navigationTargets.map { navigationTarget ->
-      LazyTargetWithPresentation(navigationTarget::navigationRequest, navigationTarget.targetPresentation, null)
+      LazyTargetWithPresentation(navigationTarget::navigationRequest, navigationTarget.presentation(), null)
     })
   }
 }

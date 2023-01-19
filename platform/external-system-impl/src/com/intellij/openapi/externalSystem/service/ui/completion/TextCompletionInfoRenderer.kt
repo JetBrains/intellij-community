@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.service.ui.completion
 
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
-import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer.Companion.append
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Companion.append
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Cell
 import com.intellij.ui.SimpleTextAttributes
 import javax.swing.SwingConstants

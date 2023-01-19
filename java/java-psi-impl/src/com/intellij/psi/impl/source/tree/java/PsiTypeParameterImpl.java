@@ -40,9 +40,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
   public PsiTypeParameterImpl(final PsiTypeParameterStub stub) {
     super(stub, JavaStubElementTypes.TYPE_PARAMETER);

@@ -3,7 +3,6 @@
 package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -20,9 +19,7 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,24 +27,14 @@ import com.intellij.util.indexing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.function.IntPredicate;
 
 public class IndexTodoCacheManagerImpl implements TodoCacheManager {
-  private static final Logger LOG = Logger.getInstance(IndexTodoCacheManagerImpl.class);
-
   private final Project myProject;
 
   public IndexTodoCacheManagerImpl(@NotNull Project project) {
     myProject = project;
-  }
-
-  @Override
-  public PsiFile @NotNull [] getFilesWithTodoItems() {
-    HashSet<PsiFile> files = new HashSet<>();
-    processFilesWithTodoItems(new CommonProcessors.CollectProcessor<>(files));
-    return PsiUtilCore.toPsiFileArray(files);
   }
 
   @Override

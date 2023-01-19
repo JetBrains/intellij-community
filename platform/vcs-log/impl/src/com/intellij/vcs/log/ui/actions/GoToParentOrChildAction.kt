@@ -14,11 +14,11 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.data.LoadingDetails
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRow
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector.PARENT_COMMIT
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
-import com.intellij.vcs.log.util.VcsLogUtil.jumpToRow
 import java.awt.event.KeyEvent
 
 open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
@@ -53,7 +53,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
     }
 
     if (rows.size == 1) {
-      jumpToRow(ui, rows.single(), false)
+      ui.jumpToRow(rows.single(), false, true)
     }
     else {
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(
@@ -71,7 +71,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
       object : DumbAwareAction(text, VcsLogBundle.message("action.go.to.navigate.to", text), null) {
         override fun actionPerformed(e: AnActionEvent) {
           triggerUsage(e)
-          jumpToRow(ui, row, false)
+          ui.jumpToRow(row, false, true)
         }
       }
     }

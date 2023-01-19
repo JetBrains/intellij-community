@@ -46,8 +46,10 @@ class PyTypedDictInspection : PyInspection() {
       val indexExpression = node.indexExpression
       val indexExpressionValueOptions = getIndexExpressionValueOptions(indexExpression)
       if (indexExpressionValueOptions.isNullOrEmpty()) {
-        val keyList = operandType.fields.keys.joinToString(transform = { "'$it'" })
-        registerProblem(indexExpression, PyPsiBundle.message("INSP.typeddict.typeddict.key.must.be.string.literal.expected.one", keyList))
+        if (!operandType.isDefinition) {
+          val keyList = operandType.fields.keys.joinToString(transform = { "'$it'" })
+          registerProblem(indexExpression, PyPsiBundle.message("INSP.typeddict.typeddict.key.must.be.string.literal.expected.one", keyList))
+        }
         return
       }
 
@@ -77,9 +79,7 @@ class PyTypedDictInspection : PyInspection() {
         val arguments = node.arguments
         for (argument in arguments) {
           val type = myTypeEvalContext.getType(argument)
-          if (argument !is PyKeywordArgument
-              && type !is PyTypedDictType
-              && !PyTypedDictTypeProvider.isTypedDict(argument, myTypeEvalContext)) {
+          if (!isValidSuperclass(argument, type)) {
             registerProblem(argument, PyPsiBundle.message("INSP.typeddict.typeddict.cannot.inherit.from.non.typeddict.base.class"))
           }
           if (argument is PyKeywordArgument && argument.keyword == TYPED_DICT_TOTAL_PARAMETER && argument.valueExpression != null) {
@@ -109,6 +109,13 @@ class PyTypedDictInspection : PyInspection() {
         }
       }
     }
+
+    private fun isValidSuperclass(argument: PyExpression, type: PyType?) =
+      (argument is PyKeywordArgument ||
+       type is PyTypedDictType ||
+       PyTypedDictTypeProvider.isTypedDict(argument, myTypeEvalContext) ||
+       argument is PySubscriptionExpression &&
+       PyTypingTypeProvider.GENERIC == (myTypeEvalContext.getType(argument.operand) as? PyClassLikeType)?.classQName)
 
     override fun visitPyClass(node: PyClass) {
       if (!PyTypedDictTypeProvider.isTypingTypedDictInheritor(node, myTypeEvalContext)) return

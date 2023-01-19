@@ -13,9 +13,10 @@ import com.intellij.testFramework.EditorTestUtil;
 
 public class EditorMultiCaretStateRestoreTest extends HeavyFileEditorManagerTestCase {
   public void testRestoreState() {
-    String text = "some<caret> text<caret>\n" +
-                  "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
-                  "<selection>ano<caret>ther</selection> line";
+    String text = """
+      some<caret> text<caret>
+      some <selection><caret>other</selection> <selection>text<caret></selection>
+      <selection>ano<caret>ther</selection> line""";
     PsiFile psiFile = myFixture.configureByText(PlainTextFileType.INSTANCE, text);
     VirtualFile virtualFile = psiFile.getVirtualFile();
     assertNotNull(virtualFile);

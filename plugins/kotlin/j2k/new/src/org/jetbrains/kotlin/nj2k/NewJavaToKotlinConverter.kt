@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.nj2k
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
@@ -62,13 +63,8 @@ class NewJavaToKotlinConverter(
                         phase = J2KConversionPhase.CREATE_FILES,
                         description = "Creating files..."
                     )
-                    KtPsiFactory(project).createFileWithLightClassSupport(
-                        javaFile.name.replace(".java", ".kt"),
-                        result!!.text,
-                        files[i]
-                    ).apply {
-                        addImports(result.importsToAdd)
-                    }
+                    KtPsiFactory.contextual(files[i]).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
+                        .also { it.addImports(result.importsToAdd) }
                 }
 
             }
@@ -83,7 +79,11 @@ class NewJavaToKotlinConverter(
         }
     }
 
-    fun elementsToKotlin(inputElements: List<PsiElement>, processor: WithProgressProcessor, bodyFilter: ((PsiElement) -> Boolean)?): Result {
+    fun elementsToKotlin(
+        inputElements: List<PsiElement>,
+        processor: WithProgressProcessor,
+        bodyFilter: ((PsiElement) -> Boolean)?
+    ): Result {
         val phaseDescription = KotlinNJ2KBundle.message("phase.converting.j2k")
         val contextElement = inputElements.firstOrNull() ?: return Result(emptyList(), null, null)
         val resolver = JKResolver(project, targetModule, contextElement)
@@ -174,11 +174,11 @@ class NewJavaToKotlinConverter(
 
     companion object {
         fun KtFile.addImports(imports: Collection<FqName>) {
-            val factory = KtPsiFactory(this)
+            val psiFactory = KtPsiFactory(project)
 
 
             if (imports.isEmpty()) return
-            val importPsi = factory.createImportDirectives(
+            val importPsi = psiFactory.createImportDirectives(
                 imports.map { ImportPath(it, isAllUnder = false) }
             )
             val createdImportList = importPsi.first().parent as KtImportList
@@ -235,6 +235,7 @@ class NewJ2kWithProgressProcessor(
         fileIndex: Int?,
         description: String
     ) {
+        ProgressManager.checkCanceled()
         progress?.checkCanceled()
         val singlePhaseFraction = 1.0 / phasesCount.toDouble()
         val singleSubPhaseFraction = singlePhaseFraction / subPhaseCount.toDouble()

@@ -31,9 +31,10 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.ide.wizard.AbstractWizard.isNewWizard;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
-public class ActionGroupPanelWrapper {
+public final class ActionGroupPanelWrapper {
 
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
 
@@ -86,11 +87,9 @@ public class ActionGroupPanelWrapper {
                          }) {
                            @Override
                            protected JComponent createItemComponent() {
-                             myTextLabel = new ErrorLabel();
-                             myTextLabel.setOpaque(true);
-                             myTextLabel.setBorder(JBUI.Borders.empty(3, 7));
-
-                             return myTextLabel;
+                             JComponent component = super.createItemComponent();
+                             myTextLabel.setBorder(!isNewWizard() ? JBUI.Borders.empty(3) : JBUI.Borders.empty(5, 0));
+                             return component;
                            }
 
                            @Override

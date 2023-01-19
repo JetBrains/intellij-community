@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -6,6 +6,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -19,11 +20,12 @@ import com.sun.jna.platform.win32.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
-public final class GotoDesktopDirAction extends FileChooserAction implements LightEditCompatible {
+final class GotoDesktopDirAction extends FileChooserAction implements LightEditCompatible {
   private final NullableLazyValue<Path> myDesktopPath = lazyNullable(() -> {
     Path path = getDesktopDirectory();
     return Files.isDirectory(path) ? path : null;
@@ -31,7 +33,7 @@ public final class GotoDesktopDirAction extends FileChooserAction implements Lig
 
   private final NullableLazyValue<VirtualFile> myDesktopDirectory = lazyNullable(() -> {
     Path path = myDesktopPath.getValue();
-    return path != null ? LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path) : null;
+    return path != null ? LocalFileSystem.getInstance().findFileByNioFile(path) : null;
   });
 
   @Override
@@ -84,7 +86,12 @@ public final class GotoDesktopDirAction extends FileChooserAction implements Lig
     else if (SystemInfo.hasXdgOpen()) {
       String path = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-user-dir", "DESKTOP"));
       if (path != null && !path.isBlank()) {
-        return Path.of(path);
+        try {
+          return Path.of(path);
+        }
+        catch (InvalidPathException e) {
+          Logger.getInstance(GotoDesktopDirAction.class).error("str='" + path + "' JNU=" + System.getProperty("sun.jnu.encoding"), e);
+        }
       }
     }
 

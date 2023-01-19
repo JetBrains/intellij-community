@@ -137,12 +137,10 @@ public class ShareProjectAction extends BasicAction {
                                               boolean createStandardStructure,
                                               @NotNull Url parentUrl,
                                               @NotNull String commitText) throws VcsException {
-    switch (shareTarget) {
-      case useSelected:
-        return Target.on(parentUrl, Revision.HEAD);
-      case useProjectName:
-        return createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
-      default:
+    return switch (shareTarget) {
+      case useSelected -> Target.on(parentUrl, Revision.HEAD);
+      case useProjectName -> createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
+      default -> {
         Target projectRoot = createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
         Target trunk = createRemoteFolder(vcs, projectRoot.getUrl(), TRUNK_NAME, commitText);
 
@@ -150,8 +148,9 @@ public class ShareProjectAction extends BasicAction {
           createRemoteFolder(vcs, projectRoot.getUrl(), BRANCHES_NAME, commitText);
           createRemoteFolder(vcs, projectRoot.getUrl(), TAGS_NAME, commitText);
         }
-        return trunk;
-    }
+        yield trunk;
+      }
+    };
   }
 
   private static boolean isFolderEmpty(@NotNull SvnVcs vcs, @NotNull String folderUrl) throws VcsException {

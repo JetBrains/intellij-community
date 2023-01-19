@@ -1,33 +1,25 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.uast
 
 import com.intellij.testFramework.TestDataPath
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.fir.uast.env.kotlin.AbstractFirUastTest
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
-import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastApiTestBase
 import org.junit.runner.RunWith
+import java.nio.file.Path
 
 @RunWith(JUnit3RunnerWithInners::class)
-open class FirUastApiTest : AbstractFirUastTest() {
+abstract class FirUastApiTest : AbstractFirUastTest() {
     override val isFirUastPlugin: Boolean = true
-
-    override val basePath = KotlinRoot.PATH.resolve("uast")
-
+    override val testBasePath: Path = KotlinRoot.PATH.resolve("uast")
     override fun check(filePath: String, file: UFile) {
         // Bogus
     }
 
     private val whitelist : Set<String> = setOf(
-        // TODO: resolve to inline and stdlib
-        "uast-kotlin/tests/testData/Resolve.kt",
-        // TODO: return type of inline functions
-        "uast-kotlin/tests/testData/ReifiedReturnType.kt",
     )
 
     override fun isExpectedToFail(filePath: String, fileContent: String): Boolean {
@@ -38,15 +30,14 @@ open class FirUastApiTest : AbstractFirUastTest() {
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
     class Declaration : FirUastApiTest(), UastApiTestBase {
-        override val isFirUastPlugin: Boolean = true
-
-        override fun check(filePath: String, file: UFile) {
-            // Bogus
-        }
-
         @TestMetadata("retention.kt")
         fun testRetention() {
             doCheck("uast-kotlin-fir/testData/declaration/retention.kt", ::checkCallbackForRetention)
+        }
+
+        @TestMetadata("returns.kt")
+        fun testReturnJumpTargets() {
+            doCheck("uast-kotlin-fir/testData/declaration/returns.kt", ::checkReturnJumpTargets)
         }
     }
 
@@ -54,12 +45,6 @@ open class FirUastApiTest : AbstractFirUastTest() {
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
     class Legacy : FirUastApiTest(), UastApiTestBase {
-        override val isFirUastPlugin: Boolean = true
-
-        override fun check(filePath: String, file: UFile) {
-            // Bogus
-        }
-
         @TestMetadata("AnnotationParameters.kt")
         fun testAnnotationParameters() {
             doCheck("uast-kotlin/tests/testData/AnnotationParameters.kt", ::checkCallbackForAnnotationParameters)
@@ -160,11 +145,6 @@ open class FirUastApiTest : AbstractFirUastTest() {
             doCheck("uast-kotlin/tests/testData/ParametersDisorder.kt", ::checkCallbackForParametersDisorder)
         }
 
-        @TestMetadata("Resolve.kt")
-        fun testResolve() {
-            doCheck("uast-kotlin/tests/testData/Resolve.kt", ::checkCallbackForResolve)
-        }
-
         @TestMetadata("Lambdas.kt")
         fun testLambdas() {
             doCheck("uast-kotlin/tests/testData/Lambdas.kt", ::checkCallbackForLambdas)
@@ -213,6 +193,11 @@ open class FirUastApiTest : AbstractFirUastTest() {
         @TestMetadata("StringTemplateComplexForUInjectionHost.kt")
         fun testStringTemplateComplexForUInjectionHost() {
             doCheck("uast-kotlin/tests/testData/StringTemplateComplexForUInjectionHost.kt", ::checkCallbackForComplexStrings)
+        }
+
+        @TestMetadata("WhenIs.kt")
+        fun testWhenIs() {
+            doCheck("uast-kotlin/tests/testData/WhenIs.kt", ::checkSwitchYieldTargets)
         }
     }
 }

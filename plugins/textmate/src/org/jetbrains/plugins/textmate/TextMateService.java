@@ -2,15 +2,14 @@ package org.jetbrains.plugins.textmate;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.PreferencesRegistry;
+import org.jetbrains.plugins.textmate.language.preferences.ShellVariablesRegistry;
 import org.jetbrains.plugins.textmate.language.preferences.SnippetsRegistry;
-import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable;
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter;
 
 import java.util.Map;
@@ -42,8 +41,8 @@ public abstract class TextMateService {
   @Nullable
   public abstract TextMateLanguageDescriptor getLanguageDescriptorByExtension(@Nullable CharSequence extension);
 
-  @Nullable
-  public abstract TextMateShellVariable getVariable(@NotNull String name, @NotNull EditorEx editor);
+  @NotNull
+  public abstract ShellVariablesRegistry getShellVariableRegistry();
 
   @NotNull
   public abstract SnippetsRegistry getSnippetsRegistry();

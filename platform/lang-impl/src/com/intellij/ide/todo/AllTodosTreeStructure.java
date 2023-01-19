@@ -16,41 +16,17 @@
 
 package com.intellij.ide.todo;
 
-import com.intellij.ide.todo.nodes.ToDoRootNode;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class AllTodosTreeStructure extends TodoTreeStructure {
   public AllTodosTreeStructure(final Project project) {
     super(project);
   }
 
   @Override
-  public boolean accept(final PsiFile psiFile) {
-    return psiFile.isValid() &&
-           (
-             myTodoFilter != null && myTodoFilter.accept(mySearchHelper, psiFile) ||
-             (myTodoFilter == null && mySearchHelper.getTodoItemsCount(psiFile) > 0)
-           );
-  }
-
-  @Override
-  public boolean getIsPackagesShown() {
-    return myArePackagesShown;
-  }
-
-  @Override
-  Object getFirstSelectableElement() {
-    return ((ToDoRootNode)myRootElement).getSummaryNode();
-  }
-
-  @Override
-  protected AbstractTreeNode createRootElement() {
-    return new ToDoRootNode(myProject, new Object(),
-                            myBuilder, mySummaryElement);
+  public boolean accept(final @NotNull PsiFile psiFile) {
+    return psiFile.isValid() && acceptTodoFilter(psiFile);
   }
 }

@@ -5,9 +5,6 @@ import org.jetbrains.idea.maven.dom.MavenDomElement;
 
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public interface MavenDomMirrors extends MavenDomElement {
   @NotNull
   List<MavenDomMirror> getMirrors();

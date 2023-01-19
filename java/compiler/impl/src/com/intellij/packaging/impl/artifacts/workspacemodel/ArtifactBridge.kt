@@ -5,6 +5,7 @@ import com.intellij.configurationStore.deserializeInto
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.packaging.artifacts.*
@@ -17,15 +18,11 @@ import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArchivePackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.CompositePackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.util.JpsPathUtil
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 open class ArtifactBridge(
   _artifactId: ArtifactId,
@@ -36,16 +33,15 @@ open class ArtifactBridge(
 ) : ModifiableArtifact, UserDataHolderBase() {
 
   init {
-    val busConnection = project.messageBus.connect()
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun beforeChanged(event: VersionedStorageChange) {
         event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
-          if (it.entity.persistentId != artifactId) return@forEach
+          if (it.entity.symbolicId != artifactId) return@forEach
 
           // Artifact may be "re-added" with the same id
           // In this case two artifact bridges exists with the same ArtifactId: one for removed artifact and one for newly created
           // We should make sure that we "disable" removed artifact bridge
-          if (event.storageAfter.resolve(artifactId) != null
+          if (artifactId in event.storageAfter
               && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != this@ArtifactBridge
               && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != originalArtifact) {
             return@forEach
@@ -54,7 +50,7 @@ open class ArtifactBridge(
           // We inject a builder instead of store because requesting of packaging elements adds new bridges to this builder.
           // If case of storage here, the new bridges will be added to the store.
           entityStorage = VersionedEntityStorageOnBuilder(event.storageBefore.toBuilder())
-          assert(entityStorage.current.resolve(artifactId) != null) { "Cannot resolve artifact $artifactId." }
+          assert(artifactId in entityStorage.current) { "Cannot resolve artifact $artifactId." }
         }
       }
     })
@@ -82,9 +78,9 @@ open class ArtifactBridge(
   // and not supposed to be) and the name of the artifact is modified directly in diff. However, we assume that this case isn't possible.
   val artifactId: ArtifactId
     get() {
-      val persistentId = (entityStorage.base.artifactsMap.getEntities(this@ArtifactBridge).singleOrNull() as? ArtifactEntity)?.persistentId
-      if (persistentId != null) {
-        artifactIdRaw = persistentId
+      val symbolicId = (entityStorage.base.artifactsMap.getEntities(this@ArtifactBridge).singleOrNull() as? ArtifactEntity)?.symbolicId
+      if (symbolicId != null) {
+        artifactIdRaw = symbolicId
       }
       return artifactIdRaw
     }
@@ -108,9 +104,7 @@ open class ArtifactBridge(
     else type
   }
 
-  override fun getName(): String {
-    return artifactId.name
-  }
+  final override fun getName(): @NlsSafe String = artifactId.name
 
   override fun isBuildOnMake(): Boolean {
     val artifactEntity = entityStorage.base.get(artifactId)

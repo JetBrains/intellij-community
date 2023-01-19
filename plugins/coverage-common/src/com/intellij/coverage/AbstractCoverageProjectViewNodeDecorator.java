@@ -10,19 +10,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractCoverageProjectViewNodeDecorator implements ProjectViewNodeDecorator {
-  private Project myProject;
-
-  public AbstractCoverageProjectViewNodeDecorator(@NotNull Project project) {
-    myProject = project;
+  protected AbstractCoverageProjectViewNodeDecorator() {
   }
 
   /**
-   * @deprecated Use {@link #getCoverageDataManager(Project)}
+   * @deprecated use {@link #AbstractCoverageProjectViewNodeDecorator()} instead
    */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  protected final CoverageDataManager getCoverageDataManager() {
-    return getCoverageDataManager(myProject);
+  @Deprecated
+  public AbstractCoverageProjectViewNodeDecorator(@NotNull Project project) {
   }
 
   @SuppressWarnings("MethodMayBeStatic")

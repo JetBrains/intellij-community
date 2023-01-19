@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl
 
+import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.actions.*
 import com.intellij.lang.jvm.*
@@ -12,7 +14,10 @@ import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.util.asSafely
 import org.jetbrains.uast.UDeclaration
 import java.util.*
 
@@ -22,8 +27,43 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
     return listOf(ChangeModifierFix(declaration, request))
   }
-  
-  internal class ChangeModifierFix(declaration: PsiModifierListOwner, @FileModifier.SafeFieldForPreview val request: ChangeModifierRequest) : 
+
+  private class RemoveAnnotationFix(private val fqn: String, element: PsiModifierListOwner) : IntentionAction {
+    val pointer = element.createSmartPointer()
+
+    override fun startInWriteAction(): Boolean = true
+
+    override fun getText(): String = QuickFixBundle.message("remove.override.fix.text")
+
+    override fun getFamilyName(): String = QuickFixBundle.message("remove.override.fix.family")
+
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = pointer.element != null
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+      PsiTreeUtil.findSameElementInCopy(pointer.element, file)?.deleteAnnotation()
+      return IntentionPreviewInfo.DIFF
+    }
+
+    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+      pointer.element?.deleteAnnotation()
+    }
+
+    private fun PsiModifierListOwner.deleteAnnotation() {
+      getAnnotation(fqn)?.delete()
+    }
+  }
+
+  override fun createChangeOverrideActions(target: JvmModifiersOwner, shouldBePresent: Boolean): List<IntentionAction> {
+    val psiElement = target.asSafely<PsiModifierListOwner>() ?: return emptyList()
+    if (psiElement.language != JavaLanguage.INSTANCE) return emptyList()
+    return if (shouldBePresent) {
+      createAddAnnotationActions(target, annotationRequest(CommonClassNames.JAVA_LANG_OVERRIDE))
+    } else {
+      listOf(RemoveAnnotationFix(CommonClassNames.JAVA_LANG_OVERRIDE, psiElement))
+    }
+  }
+
+  internal class ChangeModifierFix(declaration: PsiModifierListOwner, @FileModifier.SafeFieldForPreview val request: ChangeModifierRequest) :
     ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true) {
     override fun isAvailable(): Boolean = request.isValid && super.isAvailable()
 

@@ -13,9 +13,6 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author peter
- */
 @CompileStatic
 class GroovyDslTest extends LightJavaCodeInsightFixtureTestCase {
 

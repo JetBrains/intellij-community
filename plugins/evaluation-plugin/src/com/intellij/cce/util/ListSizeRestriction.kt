@@ -12,7 +12,7 @@ class ListSizeRestriction private constructor(private val list: List<*>) {
     const val MAX_ATTEMPTS_TO_WAIT_IF_SIZE_INCREASING: Long = 60
 
     // workaround for performance degradation during completion evaluation due to
-    // application listeners are added more ofter than are removed
+    // application listeners are added more often than are removed
     fun applicationListeners(): ListSizeRestriction {
       val application = ApplicationManager.getApplication()
       return try {

@@ -42,9 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   public static final XmlZenCodingGeneratorImpl INSTANCE = new XmlZenCodingGeneratorImpl();
 
@@ -119,7 +116,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
     root.accept(new XmlRecursiveElementVisitor() {
       @Override
-      public void visitXmlTag(final XmlTag tag) {
+      public void visitXmlTag(final @NotNull XmlTag tag) {
         if (!isTagClosed(tag)) {
           tagToClose.add(pointerManager.createSmartPsiElementPointer(tag));
         }

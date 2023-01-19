@@ -34,7 +34,7 @@ public interface FoldingModel {
    * @param startOffset     the start offset of the region to fold.
    * @param endOffset       the end offset of the region to fold.
    * @param placeholderText the text to display instead of the region contents when the region is folded.
-   * @return the fold region, or {@code null} if folding is currently disabled or corresponding region cannot be added (e.g. if it
+   * @return the fold region, or {@code null} if folding is currently disabled or corresponding region cannot be added (e.g., if it
    * intersects with another existing region)
    */
   @Nullable
@@ -50,7 +50,7 @@ public interface FoldingModel {
 
   /**
    * Gets the list of all fold regions in the specified editor.
-   * Returned array is sorted according to {@link RangeMarker#BY_START_OFFSET} comparator, i.e. first by start offset, then by end offset.
+   * Returned array is sorted according to {@link RangeMarker#BY_START_OFFSET} comparator, i.e., first by start offset, then by end offset.
    *
    * @return the array of fold regions, or an empty array if folding is currently disabled.
    */
@@ -58,7 +58,7 @@ public interface FoldingModel {
 
   /**
    * Checks if the specified offset in the document belongs to a folded region. The region must contain given offset or be located right
-   * after given offset, i.e. the following condition must hold: foldStartOffset <= offset < foldEndOffset.
+   * after given offset, i.e., the following condition must hold: foldStartOffset <= offset < foldEndOffset.
    * <br>
    * This method can return incorrect data if it's invoked in the context of {@link #runBatchFoldingOperation(Runnable)} invocation.
    *
@@ -127,7 +127,7 @@ public interface FoldingModel {
    * @param endLine ending document line in a target line range to fold (inclusive)
    * @param renderer Renderer defining the representation of fold region (size and rendered content). One renderer can be re-used for
    *                 multiple fold regions.
-   * @return resulting fold region, or {@code null} if it cannot be created (e.g. due to unsupported overlapping with already existing
+   * @return resulting fold region, or {@code null} if it cannot be created (e.g., due to unsupported overlapping with already existing
    * regions)
    */
   @ApiStatus.Experimental

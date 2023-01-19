@@ -13,13 +13,12 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
   private final PsiJavaModuleReferenceElement myReference;
@@ -76,7 +75,7 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   }
 
   private static void appendChildren(Iterable<? extends PsiElement> children, StringBuilder buffer, int indentLevel, int start) {
-    List<PsiElement> statements = newArrayList(children);
+    List<PsiElement> statements = ContainerUtil.newArrayList(children);
     if (!statements.isEmpty()) {
       if (buffer.length() > start) buffer.append('\n');
       for (PsiElement statement : statements) appendText(statement, indentLevel, buffer);
@@ -100,7 +99,7 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   }
 
   private static <T extends PsiElement> void setMirrors(Iterable<? extends T> stubs, Iterable<? extends T> mirrors) {
-    setMirrors(newArrayList(stubs), newArrayList(mirrors));
+    setMirrors(ContainerUtil.newArrayList(stubs), ContainerUtil.newArrayList(mirrors));
   }
 
   @NotNull

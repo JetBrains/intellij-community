@@ -39,18 +39,18 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_HEIGHT;
  */
 @SuppressWarnings("UnregisteredNamedColor")
 public class DarculaButtonUI extends BasicButtonUI {
-  private final Rectangle viewRect = new Rectangle();
-  private final Rectangle textRect = new Rectangle();
-  private final Rectangle iconRect = new Rectangle();
+  protected final Rectangle viewRect = new Rectangle();
+  protected final Rectangle textRect = new Rectangle();
+  protected final Rectangle iconRect = new Rectangle();
 
   protected static JBValue HELP_BUTTON_DIAMETER = new JBValue.Float(22);
   protected static JBValue MINIMUM_BUTTON_WIDTH = new JBValue.Float(72);
   protected static JBValue HORIZONTAL_PADDING = new JBValue.Float(14);
 
   private static final Color GOTIT_BUTTON_COLOR_START =
-    JBColor.namedColor("GotItTooltip.startBackground", JBUI.CurrentTheme.Button.buttonColorStart());
+    JBColor.namedColor("GotItTooltip.Button.startBackground", JBUI.CurrentTheme.Button.buttonColorStart());
   private static final Color GOTIT_BUTTON_COLOR_END =
-    JBColor.namedColor("GotItTooltip.endBackground", JBUI.CurrentTheme.Button.buttonColorEnd());
+    JBColor.namedColor("GotItTooltip.Button.endBackground", JBUI.CurrentTheme.Button.buttonColorEnd());
 
   public static final Key<Boolean> DEFAULT_STYLE_KEY = Key.create("JButton.styleDefault");
 

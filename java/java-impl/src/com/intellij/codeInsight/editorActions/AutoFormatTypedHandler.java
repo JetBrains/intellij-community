@@ -33,7 +33,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -41,27 +40,25 @@ import java.util.List;
 
 public class AutoFormatTypedHandler extends TypedHandlerDelegate {
   private static boolean myIsEnabledInTests;
-  
+
   private static final char[] NO_SPACE_AFTER = {
-    '+', '-', '*', '/', '%', '&', '^', '|', '<', '>', '!', '=', ' ' 
+    '+', '-', '*', '/', '%', '&', '^', '|', '<', '>', '!', '=', ' '
   };
 
-  private static final List<IElementType> COMPLEX_ASSIGNMENTS = ContainerUtil.newArrayList(
-    JavaTokenType.PLUSEQ, JavaTokenType.MINUSEQ,
-    JavaTokenType.ASTERISKEQ, JavaTokenType.DIVEQ,
-    JavaTokenType.PERCEQ,
-    JavaTokenType.ANDEQ, JavaTokenType.XOREQ, JavaTokenType.OREQ,
-    JavaTokenType.LTLTEQ, JavaTokenType.GTGTEQ
-  );
+  private static final List<IElementType> COMPLEX_ASSIGNMENTS = List.of(JavaTokenType.PLUSEQ, JavaTokenType.MINUSEQ,
+                                                                        JavaTokenType.ASTERISKEQ, JavaTokenType.DIVEQ,
+                                                                        JavaTokenType.PERCEQ,
+                                                                        JavaTokenType.ANDEQ, JavaTokenType.XOREQ, JavaTokenType.OREQ,
+                                                                        JavaTokenType.LTLTEQ, JavaTokenType.GTGTEQ);
 
   private static boolean isEnabled(Editor editor) {
-    boolean isEnabled = myIsEnabledInTests && ApplicationManager.getApplication().isUnitTestMode() 
+    boolean isEnabled = myIsEnabledInTests && ApplicationManager.getApplication().isUnitTestMode()
                         || Registry.is("editor.reformat.on.typing");
-    
+
     if (!isEnabled) {
       return false;
     }
-    
+
     Project project = editor.getProject();
     Language language = null;
     if (project != null) {
@@ -73,7 +70,7 @@ public class AutoFormatTypedHandler extends TypedHandlerDelegate {
 
     return language == JavaLanguage.INSTANCE;
   }
-  
+
   @TestOnly
   public static void setEnabledInTests(boolean value) {
     myIsEnabledInTests = value;
@@ -99,19 +96,19 @@ public class AutoFormatTypedHandler extends TypedHandlerDelegate {
     if (!isSpaceAroundAssignment(editor, project)) {
       return false;
     }
-    
+
     int caretOffset = editor.getCaretModel().getOffset();
     CharSequence text = editor.getDocument().getImmutableCharSequence();
-    
+
     HighlighterIterator lexerIterator = createLexerIterator(editor, caretOffset);
     if (lexerIterator == null || lexerIterator.getTokenType() == JavaTokenType.STRING_LITERAL) {
       return false;
     }
 
     boolean insertBeforeEq = charTyped == '=' && isInsertSpaceBeforeEq(caretOffset, text);
-    boolean insertAfterEq = caretOffset > 0 && caretOffset - 1 < text.length() && text.charAt(caretOffset - 1) == '=' 
-                            && isAssignmentOperator(lexerIterator) && isInsertSpaceAfterEq(charTyped); 
-    
+    boolean insertAfterEq = caretOffset > 0 && caretOffset - 1 < text.length() && text.charAt(caretOffset - 1) == '='
+                            && isAssignmentOperator(lexerIterator) && isInsertSpaceAfterEq(charTyped);
+
     return (insertBeforeEq || insertAfterEq);
   }
 
@@ -136,12 +133,12 @@ public class AutoFormatTypedHandler extends TypedHandlerDelegate {
           return true;
         }
       }
-      
+
       else if (type == TokenType.WHITE_SPACE || type == JavaTokenType.IDENTIFIER) {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -163,7 +160,7 @@ public class AutoFormatTypedHandler extends TypedHandlerDelegate {
         return false;
       }
     }
-    
+
     return true;
   }
 
@@ -177,5 +174,4 @@ public class AutoFormatTypedHandler extends TypedHandlerDelegate {
     }
     return false;
   }
-  
 }

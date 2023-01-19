@@ -2,28 +2,25 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.ModuleCapability
-import org.jetbrains.kotlin.descriptors.konan.DeserializedKlibModuleOrigin
-import org.jetbrains.kotlin.descriptors.konan.KlibModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.CommonizerNativeTargetsCompat.commonizerNativeTargetsCompat
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.konan.properties.propertyList
 import org.jetbrains.kotlin.library.BaseKotlinLibrary
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_NATIVE_TARGETS
 import org.jetbrains.kotlin.library.KotlinLibrary
+import org.jetbrains.kotlin.library.metadata.DeserializedKlibModuleOrigin
+import org.jetbrains.kotlin.library.metadata.KlibModuleOrigin
 import org.jetbrains.kotlin.library.nativeTargets
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms.nativePlatformByTargetNames
 import org.jetbrains.kotlin.resolve.ImplicitIntegerCoercion
 import java.io.IOException
 
-class NativeKlibLibraryInfo(
-    project: Project,
-    library: Library,
-    libraryRoot: String
-) : AbstractKlibLibraryInfo(project, library, libraryRoot) {
+class NativeKlibLibraryInfo internal constructor(project: Project, library: LibraryEx, libraryRoot: String) :
+    AbstractKlibLibraryInfo(project, library, libraryRoot) {
     // If you're changing this, please take a look at ideaModelDependencies as well
     val isStdlib: Boolean get() = libraryRoot.endsWith(KONAN_STDLIB_NAME)
 

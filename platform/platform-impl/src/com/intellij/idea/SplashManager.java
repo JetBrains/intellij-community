@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.impl.FrameBoundsConverter;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -16,14 +17,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public final class SplashManager {
   private static volatile JFrame PROJECT_FRAME;
@@ -62,7 +61,7 @@ public final class SplashManager {
   }
 
   private static @Nullable Runnable createFrameIfPossible() throws IOException {
-    Path infoFile = Paths.get(PathManager.getSystemPath(), "lastProjectFrameInfo");
+    Path infoFile = Path.of(PathManager.getSystemPath(), "lastProjectFrameInfo");
     ByteBuffer buffer;
     try (SeekableByteChannel channel = Files.newByteChannel(infoFile)) {
       buffer = ByteBuffer.allocate((int)channel.size());
@@ -87,7 +86,12 @@ public final class SplashManager {
     boolean isFullScreen = buffer.get() == 1;
     int extendedState = buffer.getInt();
     return () -> {
-      PROJECT_FRAME = doShowFrame(savedBounds, backgroundColor, extendedState);
+      try {
+        PROJECT_FRAME = doShowFrame(savedBounds, backgroundColor, extendedState);
+      }
+      catch (Throwable e) {
+        Logger.getInstance(SplashManager.class).error(e);
+      }
     };
   }
 
@@ -96,7 +100,11 @@ public final class SplashManager {
     frame.setAutoRequestFocus(false);
     frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-    frame.setBounds(FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds));
+    var devicePair = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds);
+    // this functionality under the flag - fully correct behavior is not needed here (that's default is not applied if null)
+    if (devicePair != null) {
+      frame.setBounds(devicePair.getFirst());
+    }
     frame.setExtendedState(extendedState);
 
     frame.setMinimumSize(new Dimension(340, (int)frame.getMinimumSize().getHeight()));
@@ -111,40 +119,6 @@ public final class SplashManager {
     frame.setVisible(true);
     activity.end();
     return frame;
-  }
-
-  public static void executeWithHiddenSplash(@NotNull Window window, @NotNull Runnable runnable) {
-    if (SPLASH_WINDOW == null) {
-      if (PROJECT_FRAME != null) {
-        // just destroy frame
-        hide();
-      }
-      runnable.run();
-      return;
-    }
-
-    WindowListener listener = new WindowAdapter() {
-      @Override
-      public void windowOpened(WindowEvent e) {
-        setVisible(false);
-      }
-    };
-    window.addWindowListener(listener);
-
-    runnable.run();
-
-    setVisible(true);
-    window.removeWindowListener(listener);
-  }
-
-  private static void setVisible(boolean value) {
-    Splash splash = SPLASH_WINDOW;
-    if (splash != null) {
-      splash.setVisible(value);
-      if (value) {
-        splash.paint(splash.getGraphics());
-      }
-    }
   }
 
   public static @Nullable JFrame getAndUnsetProjectFrame() {

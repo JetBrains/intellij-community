@@ -69,10 +69,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.TextRangeUtil;
-import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TextTransferable;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -191,7 +188,6 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     myStructureTreeModel = new StructureTreeModel<>(myFilteringStructure, this);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, this);
-    myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
     StructureViewComponent.registerAutoExpandListener(myTree, myTreeModel);
     PopupUtil.applyNewUIBackground(myTree);
@@ -253,7 +249,11 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     TreeUtil.installActions(myTree);
   }
 
-  public void show() {
+  public void show(){
+    showWithResult();
+  }
+
+  public Promise<TreePath> showWithResult() {
     JComponent panel = createCenterPanel();
     myTree.addTreeSelectionListener(__ -> {
       if (myPopup.isVisible()) {
@@ -278,6 +278,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       .setCancelKeyEnabled(false)
       .setDimensionServiceKey(myProject, getDimensionServiceKey(), true)
       .setCancelCallback(() -> myCanClose)
+      .setAdvertiser(new SpeedSearchAdvertiser().addSpeedSearchAdvertisement())
       .createPopup();
 
     Disposer.register(myPopup, this);
@@ -288,7 +289,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
 
-    rebuildAndSelect(false, myInitialElement).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
+    return rebuildAndSelect(false, myInitialElement).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
       installUpdater();
     }));
@@ -972,7 +973,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     private volatile boolean myPopupVisible;
 
     MyTreeSpeedSearch() {
-      super(myTree, path -> getSpeedSearchText(TreeUtil.getLastUserObject(path)), true);
+      super(myTree, true, path -> getSpeedSearchText(TreeUtil.getLastUserObject(path)));
     }
 
     @Override

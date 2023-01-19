@@ -1,4 +1,4 @@
-// "Convert to 'class'" "true"
+// "Convert to 'class'" "true-preview"
 
 abstract class A {
   public A() {

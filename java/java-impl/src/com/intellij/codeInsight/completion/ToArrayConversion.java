@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -7,9 +7,9 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.siyeh.ig.psiutils.ConstructionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.*;
 
-/**
- * @author peter
- */
 public final class ToArrayConversion {
   static void addConversions(final @NotNull PsiFile file,
                              final PsiElement element, final String prefix, final PsiType itemType,
@@ -89,7 +86,7 @@ public final class ToArrayConversion {
 
     String[] lookupStrings = {prefix + ".toArray(" + getSpace(callSpace) + expressionString +
                               getSpace(callSpace) + ")", presentableString};
-    result.consume(new ExpressionLookupItem(conversion, PlatformIcons.METHOD_ICON, prefix + ".toArray(" + presentableString + ")", lookupStrings) {
+    result.consume(new ExpressionLookupItem(conversion, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method), prefix + ".toArray(" + presentableString + ")", lookupStrings) {
         @Override
         public void handleInsert(@NotNull InsertionContext context) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_TOAR);

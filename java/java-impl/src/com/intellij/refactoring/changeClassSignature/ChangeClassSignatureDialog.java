@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author dsl
  * @author Konstantin Bulenkov
  */
 public class ChangeClassSignatureDialog extends RefactoringDialog {
@@ -240,16 +239,15 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      switch (columnIndex) {
-        case NAME_COLUMN:
-          return myTypeParameterInfos.get(rowIndex).getName(myOriginalParameters);
-        case BOUND_VALUE_COLUMN:
-          return myBoundValueTypeCodeFragments.get(rowIndex);
-        case DEFAULT_VALUE_COLUMN:
-          return myDefaultValueTypeCodeFragments.get(rowIndex);
-      }
-      LOG.assertTrue(false);
-      return null;
+      return switch (columnIndex) {
+        case NAME_COLUMN -> myTypeParameterInfos.get(rowIndex).getName(myOriginalParameters);
+        case BOUND_VALUE_COLUMN -> myBoundValueTypeCodeFragments.get(rowIndex);
+        case DEFAULT_VALUE_COLUMN -> myDefaultValueTypeCodeFragments.get(rowIndex);
+        default -> {
+          LOG.assertTrue(false);
+          yield null;
+        }
+      };
     }
 
     @Override
@@ -259,30 +257,23 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case NAME_COLUMN:
-          return RefactoringBundle.message("column.name.name");
-        case BOUND_VALUE_COLUMN:
-          return JavaRefactoringBundle.message("changeSignature.bound.value.column");
-        case DEFAULT_VALUE_COLUMN:
-          return JavaRefactoringBundle.message("changeSignature.default.value.column");
-        default:
+      return switch (column) {
+        case NAME_COLUMN -> RefactoringBundle.message("column.name.name");
+        case BOUND_VALUE_COLUMN -> JavaRefactoringBundle.message("changeSignature.bound.value.column");
+        case DEFAULT_VALUE_COLUMN -> JavaRefactoringBundle.message("changeSignature.default.value.column");
+        default -> {
           LOG.assertTrue(false);
-      }
-      return null;
+          yield null;
+        }
+      };
     }
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch (columnIndex) {
-        case NAME_COLUMN:
-          ((New)myTypeParameterInfos.get(rowIndex)).setNewName((String)aValue);
-          break;
-        case BOUND_VALUE_COLUMN:
-        case DEFAULT_VALUE_COLUMN:
-          break;
-        default:
-          LOG.assertTrue(false);
+        case NAME_COLUMN -> ((New)myTypeParameterInfos.get(rowIndex)).setNewName((String)aValue);
+        case BOUND_VALUE_COLUMN, DEFAULT_VALUE_COLUMN -> {}
+        default -> LOG.assertTrue(false);
       }
     }
 

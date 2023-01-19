@@ -43,17 +43,10 @@ public class MapUpdateInliner implements CallInliner {
         .evaluateFunction(function);
       String name = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
       switch (name) {
-        case "computeIfAbsent":
-          inlineComputeIfAbsent(builder, function, type);
-          break;
-        case "computeIfPresent":
-          inlineComputeIfPresent(builder, function, type);
-          break;
-        case "compute":
-          inlineCompute(builder, function, type);
-          break;
-        default:
-          throw new IllegalStateException("Unsupported name: " + name);
+        case "computeIfAbsent" -> inlineComputeIfAbsent(builder, function, type);
+        case "computeIfPresent" -> inlineComputeIfPresent(builder, function, type);
+        case "compute" -> inlineCompute(builder, function, type);
+        default -> throw new IllegalStateException("Unsupported name: " + name);
       }
       builder.resultOf(call);
       return true;

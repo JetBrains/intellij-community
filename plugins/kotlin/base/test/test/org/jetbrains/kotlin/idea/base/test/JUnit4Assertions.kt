@@ -9,7 +9,8 @@ import java.io.File
 
 object JUnit4Assertions : Assertions() {
     override fun assertEqualsToFile(expectedFile: File, actual: String, sanitizer: (String) -> String, message: () -> String) {
-        KotlinTestHelpers.assertEqualsToPath(expectedFile.toPath(), actual, sanitizer, message)
+        val expectedPath = expectedFile.toPath()
+        KotlinTestHelpers.assertEqualsToPath(expectedPath, actual, sanitizer, message)
     }
 
     override fun assertEquals(expected: Any?, actual: Any?, message: (() -> String)?) {
@@ -36,8 +37,12 @@ object JUnit4Assertions : Assertions() {
         UsefulTestCase.assertSameElements(message?.invoke() ?: "Collections are different", actual, expected)
     }
 
-    override fun assertAll(exceptions: List<Throwable>) {
+    override fun failAll(exceptions: List<Throwable>) {
         exceptions.forEach { throw it }
+    }
+
+    override fun assertAll(conditions: List<() -> Unit>) {
+        conditions.forEach { it.invoke() }
     }
 
     override fun fail(message: () -> String): Nothing {

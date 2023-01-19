@@ -4,13 +4,14 @@ import socket
 import sys
 from collections import defaultdict
 from typing import Any
+from typing_extensions import TypeAlias
 
 if sys.version_info >= (3, 11):
     __all__ = ["SMTPChannel", "SMTPServer", "DebuggingServer", "PureProxy"]
 else:
     __all__ = ["SMTPChannel", "SMTPServer", "DebuggingServer", "PureProxy", "MailmanProxy"]
 
-_Address = tuple[str, int]  # (host, port)
+_Address: TypeAlias = tuple[str, int]  # (host, port)
 
 class SMTPChannel(asynchat.async_chat):
     COMMAND: int
@@ -41,7 +42,7 @@ class SMTPChannel(asynchat.async_chat):
         conn: socket.socket,
         addr: Any,
         data_size_limit: int = ...,
-        map: asyncore._maptype | None = ...,
+        map: asyncore._MapType | None = ...,
         enable_SMTPUTF8: bool = ...,
         decode_data: bool = ...,
     ) -> None: ...
@@ -71,7 +72,7 @@ class SMTPServer(asyncore.dispatcher):
         localaddr: _Address,
         remoteaddr: _Address,
         data_size_limit: int = ...,
-        map: asyncore._maptype | None = ...,
+        map: asyncore._MapType | None = ...,
         enable_SMTPUTF8: bool = ...,
         decode_data: bool = ...,
     ) -> None: ...

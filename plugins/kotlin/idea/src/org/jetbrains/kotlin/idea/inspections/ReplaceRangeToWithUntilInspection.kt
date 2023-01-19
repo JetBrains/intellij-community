@@ -9,11 +9,11 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
+import org.jetbrains.kotlin.idea.inspections.ReplaceUntilWithRangeUntilInspection.Companion.isPossibleToUseRangeUntil
 import org.jetbrains.kotlin.idea.intentions.getArguments
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.nj2k.isPossibleToUseRangeUntil
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getType
@@ -72,7 +72,7 @@ sealed class AbstractReplaceRangeToWithRangeUntilInspection : AbstractRangeInspe
             val args = element.getArguments() ?: return
             val operator = if (useRangeUntil) "..<" else " until "
             element.replace(
-                KtPsiFactory(element).createExpressionByPattern(
+                KtPsiFactory(element.project).createExpressionByPattern(
                     "$0$operator$1",
                     args.first ?: return,
                     (args.second?.deparenthesize() as? KtBinaryExpression)?.left ?: return

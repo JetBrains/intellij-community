@@ -5,9 +5,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author sergey.evdokimov
- */
 public abstract class GroovyFrameworkConfigNotification {
 
   public static final ExtensionPointName<GroovyFrameworkConfigNotification> EP_NAME =

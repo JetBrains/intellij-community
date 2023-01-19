@@ -264,17 +264,21 @@ public final class ExecutionHelper {
 
   public static void selectContentDescriptor(final @NotNull DataContext dataContext,
                                              final @NotNull Project project,
-                                             @NotNull Collection<? extends RunContentDescriptor> consoles,
-                                             @NlsContexts.PopupTitle String selectDialogTitle, final Consumer<? super RunContentDescriptor> descriptorConsumer) {
-    if (consoles.size() == 1) {
-      RunContentDescriptor descriptor = consoles.iterator().next();
+                                             @NotNull Collection<? extends RunContentDescriptor> contentDescriptors,
+                                             @NlsContexts.PopupTitle String selectDialogTitle,
+                                             final Consumer<? super RunContentDescriptor> descriptorConsumer) {
+    if (contentDescriptors.size() == 1) {
+      RunContentDescriptor descriptor = contentDescriptors.iterator().next();
       descriptorConsumer.consume(descriptor);
       descriptorToFront(project, descriptor);
     }
-    else if (consoles.size() > 1) {
+    else if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.error("Expected a single content descriptor, got " + contentDescriptors);
+    }
+    else if (contentDescriptors.size() > 1) {
       final Icon icon = DefaultRunExecutor.getRunExecutorInstance().getIcon();
       JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(new ArrayList<>(consoles))
+        .createPopupChooserBuilder(new ArrayList<>(contentDescriptors))
         .setRenderer(SimpleListCellRenderer.<RunContentDescriptor>create((label, value, index) -> {
           label.setText(value.getDisplayName());
           label.setIcon(icon);

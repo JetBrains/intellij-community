@@ -14,8 +14,8 @@ import java.util.concurrent.TimeUnit;
 Benchmark                              Mode  Cnt   Score   Error  Units
 StringHashBenchmark.murmur3            avgt   25  59.986 ± 4.639  ns/op
 StringHashBenchmark.murmur3_unencoded  avgt   25  40.002 ± 0.369  ns/op
-StringHashBenchmark.xxh3               avgt   25  12.475 ± 0.041  ns/op
-StringHashBenchmark.xxh3_unencoded     avgt   25  58.890 ± 0.522  ns/op
+StringHashBenchmark.xxh3            avgt    5  29,033 ± 5,166  ns/op
+StringHashBenchmark.xxh3_unencoded  avgt    5  62,121 ± 5,109  ns/op
  */
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)

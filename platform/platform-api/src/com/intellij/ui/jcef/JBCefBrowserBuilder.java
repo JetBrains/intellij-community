@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.util.registry.RegistryManager;
 import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,9 +17,10 @@ public class JBCefBrowserBuilder {
   @Nullable String myUrl;
   @Nullable CefBrowser myCefBrowser;
   @Nullable JBCefOSRHandlerFactory myOSRHandlerFactory;
-  boolean myIsOffScreenRendering;
+  boolean myIsOffScreenRendering = RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled");
   boolean myCreateImmediately;
   boolean myEnableOpenDevToolsMenuItem;
+  boolean myMouseWheelEventEnable = true;
 
   /**
    * Sets whether the browser is rendered off-screen.
@@ -123,5 +125,16 @@ public class JBCefBrowserBuilder {
    */
   public @NotNull JBCefBrowser build() {
     return JBCefBrowser.create(this);
+  }
+
+  /**
+   * If {@code true}, the browser will intercept mouse wheel events. Otherwise, the browser won't react on scrolling,
+   * and the parent component will handle scroll events.
+   * <p>
+   * Default is {@code true}.
+   */
+  public @NotNull JBCefBrowserBuilder setMouseWheelEventEnable(boolean mouseWheelEventEnable) {
+    myMouseWheelEventEnable = mouseWheelEventEnable;
+    return this;
   }
 }

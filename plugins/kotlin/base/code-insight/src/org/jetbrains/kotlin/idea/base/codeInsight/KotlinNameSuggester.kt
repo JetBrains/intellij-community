@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.lang.java.lexer.JavaLexer
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.text.NameUtilCore
@@ -56,6 +57,14 @@ class KotlinNameSuggester(
             }
 
             val DEFAULT = EscapingRules()
+
+            val NONE = EscapingRules(
+                escapeKotlinHardKeywords = false,
+                escapeKotlinSoftKeywords = false,
+                escapeJavaHardKeywords = false,
+                escapeJavaSoftKeywords = false,
+                escaper = { listOf(it) }
+            )
         }
 
         fun shouldEscape(name: String): Boolean {
@@ -75,7 +84,7 @@ class KotlinNameSuggester(
     }
 
     enum class Case(val case: CaseTransformation, val separator: String?, val capitalizeFirst: Boolean, val capitalizeNext: Boolean) {
-        PASCAL(CaseTransformation.DEFAULT, separator = null, capitalizeFirst = true, capitalizeNext = true, ), // FooBar
+        PASCAL(CaseTransformation.DEFAULT, separator = null, capitalizeFirst = true, capitalizeNext = true), // FooBar
         CAMEL(CaseTransformation.DEFAULT, separator = null, capitalizeFirst = false, capitalizeNext = true), // fooBar
         SNAKE(CaseTransformation.LOWERCASE, separator = "_", capitalizeFirst = false, capitalizeNext = false), // foo_bar
         SCREAMING_SNAKE(CaseTransformation.UPPERCASE, separator = "_", capitalizeFirst = false, capitalizeNext = false), // FOO_BAR
@@ -136,7 +145,12 @@ class KotlinNameSuggester(
         return sequence {
             val primitiveType = getPrimitiveType(type)
             if (primitiveType != null) {
-                PRIMITIVE_TYPE_NAMES.getValue(primitiveType).forEach { registerCompoundName(it) }
+                PRIMITIVE_TYPE_NAMES.getValue(primitiveType).forEachIndexed { index, s ->
+                    // skip first item for the primitives like `int`
+                    if (index > 0) {
+                        registerCompoundName(s)
+                    }
+                }
                 return@sequence
             }
 
@@ -168,14 +182,18 @@ class KotlinNameSuggester(
 
             suspend fun SequenceScope<String>.registerClassNames(type: KtType, preprocessor: (String) -> String = { it }) {
                 val classId = getClassId(type) ?: return
-                suggestClassNames(classId).map(preprocessor).forEach { registerCompoundName(it) }
+
+                KotlinNameSuggester(case, EscapingRules.NONE, ignoreCompanionNames)
+                    .suggestClassNames(classId)
+                    .map(preprocessor)
+                    .forEach { registerCompoundName(it) }
             }
 
             if (type is KtNonErrorClassType) {
                 val elementType = getIterableElementType(type)
 
                 if (elementType != null) {
-                    registerClassNames(elementType) { it + "s" }
+                    registerClassNames(elementType) { Strings.pluralize(it) }
                     return@sequence
                 }
 
@@ -186,7 +204,8 @@ class KotlinNameSuggester(
                     val primitiveElementType = FqNames.arrayClassFqNameToPrimitiveType[fqName]
                     if (primitiveElementType != null) {
                         val primitiveName = PRIMITIVE_TYPE_NAMES.getValue(primitiveElementType).first()
-                        registerCompoundName(primitiveName + "s")
+                        val chunk = Strings.pluralize(primitiveName)
+                        registerCompoundName(chunk)
                         return@sequence
                     }
 
@@ -343,7 +362,7 @@ class KotlinNameSuggester(
          * Returns a name sequence from given names, appending numeric suffixes.
          * Example: [foo, bar] -> [foo, bar, foo2, bar2, ...]
          */
-        fun enumerate(names: List<String>): Sequence<String> {
+        private fun enumerate(names: List<String>): Sequence<String> {
             return sequence {
                 yieldAll(names)
 
@@ -400,13 +419,13 @@ private val ITERABLE_LIKE_CLASS_IDS =
 
 private fun KtAnalysisSession.getIterableElementType(type: KtType): KtType? {
     if (type is KtNonErrorClassType && type.classId in ITERABLE_LIKE_CLASS_IDS) {
-        return type.typeArguments.singleOrNull()?.type
+        return type.ownTypeArguments.singleOrNull()?.type
     }
 
     for (supertype in type.getAllSuperTypes()) {
         if (supertype is KtNonErrorClassType) {
             if (supertype.classId in ITERABLE_LIKE_CLASS_IDS) {
-                return supertype.typeArguments.singleOrNull()?.type
+                return supertype.ownTypeArguments.singleOrNull()?.type
             }
         }
     }

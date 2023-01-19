@@ -1,6 +1,6 @@
 <templateSet group="Python">
-  <template name="super" value="super($class$, self).$method$($end$)" description="'super(...)' call" toReformat="false" toShortenFQNames="true">
-    <variable name="class" expression="pyClassName()" defaultValue="" alwaysStopAt="false" />
+  <template name="super" value="super($args$).$method$($end$)" description="'super(...)' call" toReformat="false" toShortenFQNames="true">
+    <variable name="args" expression="pyVerSpecificSuperSignature()" defaultValue="" alwaysStopAt="false" />
     <variable name="method" expression="pyFunctionName()" defaultValue="" alwaysStopAt="false" />
     <variable name="end" expression="" defaultValue="" alwaysStopAt="true" />
     <context>

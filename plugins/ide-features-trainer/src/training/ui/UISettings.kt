@@ -31,7 +31,7 @@ internal class UISettings {
   //FONTS
   val plainFont: Font
     get() = JBUI.Fonts.label()
-  val fontSize: Float
+  private val fontSize: Float
     get() = plainFont.size2D
   val modulesFont: Font
     get() = plainFont.deriveFont(Font.BOLD)

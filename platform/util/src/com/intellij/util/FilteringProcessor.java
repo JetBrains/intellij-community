@@ -2,12 +2,13 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Condition;
+import org.jetbrains.annotations.NotNull;
 
 public class FilteringProcessor<T> implements Processor<T> {
   private final Condition<? super T> myFilter;
   private final Processor<? super T> myProcessor;
 
-  public FilteringProcessor(final Condition<? super T> filter, Processor<? super T> processor) {
+  public FilteringProcessor(@NotNull Condition<? super T> filter, @NotNull Processor<? super T> processor) {
     myFilter = filter;
     myProcessor = processor;
   }

@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +101,7 @@ public enum AccessModifier {
   }
 
   @Override
-  public String toString() {
+  public @Nls String toString() {
     return JavaPsiBundle.visibilityPresentation(toPsiModifier());
   }
 

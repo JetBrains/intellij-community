@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -20,14 +20,12 @@ import javax.swing.*;
 import java.util.function.Function;
 
 final class EditorConfigEditorNotificationProvider implements EditorNotificationProvider {
-
   @Override
-  public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                 @NotNull VirtualFile file) {
-    return file.getFileType().equals(EditorConfigFileType.INSTANCE) &&
-           !getEditorConfigSettings(project).ENABLED ?
-           fileEditor -> new MyPanel(fileEditor, project) :
-           CONST_NULL;
+    return file.getFileType().equals(EditorConfigFileType.INSTANCE) && !getEditorConfigSettings(project).ENABLED
+           ? fileEditor -> new MyPanel(fileEditor, project)
+           : null;
   }
 
   private static final class MyPanel extends EditorNotificationPanel {

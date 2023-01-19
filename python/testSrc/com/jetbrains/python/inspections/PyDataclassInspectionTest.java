@@ -120,18 +120,19 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-32078
   public void testComparisonForManuallyOrderedAttrs() {
-    doTestByText("from attr import s\n" +
-                 "\n" +
-                 "@s(cmp=False)\n" +
-                 "class Test:\n" +
-                 "    def __gt__(self, other):\n" +
-                 "        pass\n" +
-                 "\n" +
-                 "print(Test() < Test())\n" +
-                 "print(Test() > Test())\n" +
-                 "\n" +
-                 "print(Test < Test)\n" +
-                 "print(Test > Test)");
+    doTestByText("""
+                   from attr import s
+
+                   @s(cmp=False)
+                   class Test:
+                       def __gt__(self, other):
+                           pass
+
+                   print(Test() < Test())
+                   print(Test() > Test())
+
+                   print(Test < Test)
+                   print(Test > Test)""");
   }
 
   // PY-28506
@@ -186,11 +187,12 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-33445
   public void testDontConsiderUnresolvedFieldsAsInitOnly() {
-    doTestByText("class A:\n" +
-                 "    pass\n" +
-                 "\n" +
-                 "a = A()\n" +
-                 "b = a.b");
+    doTestByText("""
+                   class A:
+                       pass
+
+                   a = A()
+                   b = a.b""");
   }
 
   // PY-27398
@@ -225,16 +227,17 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-43359
   public void testSuppressedDunderPostInitSignature() {
-    doTestByText("import dataclasses\n" +
-                 "\n" +
-                 "@dataclasses.dataclass\n" +
-                 "class A:\n" +
-                 "    a: int\n" +
-                 "    b: dataclasses.InitVar[str]\n" +
-                 "    c: dataclasses.InitVar[bytes]\n" +
-                 "\n" +
-                 "    def __post_init__(self, *args, **kwargs):\n" +
-                 "        pass");
+    doTestByText("""
+                   import dataclasses
+
+                   @dataclasses.dataclass
+                   class A:
+                       a: int
+                       b: dataclasses.InitVar[str]
+                       c: dataclasses.InitVar[bytes]
+
+                       def __post_init__(self, *args, **kwargs):
+                           pass""");
   }
 
   // PY-27398

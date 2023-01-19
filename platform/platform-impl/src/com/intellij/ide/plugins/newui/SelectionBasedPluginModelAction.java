@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
@@ -10,19 +9,23 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.Producer;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
-import static com.intellij.openapi.util.text.StringUtil.split;
 import static com.intellij.util.containers.ContainerUtil.*;
 
 abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends IdeaPluginDescriptor> extends DumbAwareAction {
@@ -68,7 +71,6 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
   static final class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C, IdeaPluginDescriptor> {
 
     private static final CustomShortcutSet SHORTCUT_SET = new CustomShortcutSet(KeyEvent.VK_SPACE);
-    private static final RegistryValue EXCLUSION_LIST = RegistryManager.getInstance().get("ide.plugins.per.project.exclusion.list");
 
     private final @NotNull PluginEnableDisableAction myAction;
 
@@ -98,21 +100,14 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
       boolean disabled = pluginIds.isEmpty() ||
                          !all(states, myAction::isApplicable) ||
-                         (myAction == PluginEnableDisableAction.DISABLE_GLOBALLY ||
-                          myAction == PluginEnableDisableAction.DISABLE_FOR_PROJECT) &&
-                         exists(pluginIds, myPluginModel::isRequiredPluginForProject) ||
-                         myAction.isPerProject() && (e.getProject() == null ||
-                                                     !DynamicPluginEnabler.isPerProjectEnabled() ||
-                                                     exists(pluginIds, EnableDisableAction::isPluginExcluded) ||
-                                                     exists(descriptors, myPluginModel::requiresRestart));
+                         myAction == PluginEnableDisableAction.DISABLE_GLOBALLY &&
+                         exists(pluginIds, myPluginModel::isRequiredPluginForProject);
 
       boolean enabled = !disabled;
       e.getPresentation().setEnabledAndVisible(isForceEnableAll || enabled);
 
-      boolean isForceDisableAll = myAction == PluginEnableDisableAction.DISABLE_GLOBALLY &&
-                                  allEnabled;
-      setShortcutSet(SHORTCUT_SET,
-                     myShowShortcut && (isForceEnableAll || isForceDisableAll));
+      boolean isForceDisableAll = myAction == PluginEnableDisableAction.DISABLE_GLOBALLY && allEnabled;
+      setShortcutSet(SHORTCUT_SET, myShowShortcut && (isForceEnableAll || isForceDisableAll));
     }
 
     @Override
@@ -122,13 +117,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myPluginModel.setEnabledState(getAllDescriptors(),
-                                    myAction);
-    }
-
-    private static boolean isPluginExcluded(@NotNull PluginId pluginId) {
-      return split(EXCLUSION_LIST.asString(), ",")
-        .contains(pluginId.getIdString());
+      myPluginModel.setEnabledState(getAllDescriptors(), myAction);
     }
   }
 
@@ -227,7 +216,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
   static <C extends JComponent> void addActionsTo(@NotNull DefaultActionGroup group,
                                                   @NotNull Function<? super @NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
-                                                  @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
+                                                  @NotNull Producer<? extends @NotNull UninstallAction<C>> createUninstallAction) {
     PluginEnableDisableAction[] actions = PluginEnableDisableAction.values();
     for (int i = 0; i < actions.length; i++) {
       group.add(createEnableDisableAction.apply(actions[i]));
@@ -238,8 +227,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     group.add(createUninstallAction.produce());
   }
 
-  static <C extends JComponent> @NotNull JComponent createGearButton(@NotNull Function<@NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
-                                                                     @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
+  static <C extends JComponent> @NotNull JComponent createGearButton(@NotNull Function<? super @NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
+                                                                     @NotNull Producer<? extends @NotNull UninstallAction<C>> createUninstallAction) {
     DefaultActionGroup result = new DefaultActionGroup();
     addActionsTo(result,
                  createEnableDisableAction,
@@ -248,5 +237,89 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     return TabbedPaneHeaderComponent.createToolbar(result,
                                                    IdeBundle.message("plugin.settings.link.title"),
                                                    AllIcons.General.GearHover);
+  }
+
+  static <C extends JComponent> @NotNull OptionButtonController<C> createOptionButton(@NotNull Function<? super @NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
+                                                                                      @NotNull Producer<? extends @NotNull UninstallAction<C>> createUninstallAction) {
+    return new OptionButtonController<C>(createEnableDisableAction.apply(PluginEnableDisableAction.ENABLE_GLOBALLY),
+                                      createEnableDisableAction.apply(PluginEnableDisableAction.DISABLE_GLOBALLY),
+                                      createUninstallAction.produce());
+  }
+
+  static class OptionButtonController<C extends JComponent> implements ActionListener {
+    public final JBOptionButton button = new OptionButton();
+    public final JButton bundledButton = new JButton();
+
+    private final EnableDisableAction<C> myEnableAction;
+    private final EnableDisableAction<C> myDisableAction;
+    private EnableDisableAction<C> myCurrentAction;
+
+    OptionButtonController(@NotNull EnableDisableAction<C> enableAction,
+                           @NotNull EnableDisableAction<C> disableAction,
+                           @NotNull UninstallAction<C> uninstallAction) {
+      myEnableAction = enableAction;
+      myDisableAction = disableAction;
+      button.setAction(new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          OptionButtonController.this.actionPerformed(null);
+        }
+      });
+
+      button.setOptions(new Action[]{new AbstractAction(uninstallAction.getTemplateText()) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          uninstallAction.actionPerformed(AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
+        }
+      }});
+
+      bundledButton.setOpaque(false);
+      bundledButton.addActionListener(this);
+    }
+
+    public void update() {
+      Presentation presentation = new Presentation();
+      AnActionEvent event = AnActionEvent.createFromDataContext("", presentation, DataContext.EMPTY_CONTEXT);
+
+      myEnableAction.update(event);
+      myCurrentAction = presentation.isEnabledAndVisible() ? myEnableAction : myDisableAction;
+
+      String text = myCurrentAction.getTemplateText();
+      button.getAction().putValue(Action.NAME, text);
+      bundledButton.setText(text);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      myCurrentAction.actionPerformed(AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
+    }
+  }
+
+  private static class OptionButton extends JBOptionButton {
+    private final JButton myBaseline = new JButton();
+
+    OptionButton() {
+      super(null, null);
+
+      setAddSeparator(false);
+      setSelectFirstItem(false);
+      setPopupBackgroundColor(UIUtil.getListBackground());
+      setShowPopupYOffset(-2);
+
+      setPopupHandler(popup -> {
+        Dimension size = new Dimension(popup.getSize());
+        Insets insets = getInsets();
+        size.width = getWidth() - insets.left - insets.right;
+        popup.setSize(size);
+        return null;
+      });
+    }
+
+    @Override
+    public int getBaseline(int width, int height) {
+      myBaseline.setText(getText());
+      myBaseline.setSize(getSize());
+      return myBaseline.getBaseline(width, height);
+    }
   }
 }

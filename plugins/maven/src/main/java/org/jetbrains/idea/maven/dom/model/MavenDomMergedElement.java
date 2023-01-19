@@ -21,9 +21,6 @@ import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
 import org.jetbrains.idea.maven.dom.converters.MavenCombineChildConverter;
 
-/**
- * @author Sergey Evdokimov
- */
 public interface MavenDomMergedElement extends MavenDomElement {
 
   @Attribute("combine.self")

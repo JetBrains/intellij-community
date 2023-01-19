@@ -38,9 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public final class ConsoleViewUtil {
   public static final Key<Boolean> EDITOR_IS_CONSOLE_HISTORY_VIEW = Key.create("EDITOR_IS_CONSOLE_HISTORY_VIEW");
 
@@ -96,9 +93,6 @@ public final class ConsoleViewUtil {
     NullEditorHighlighter() {
       super(NULL_ATTRIBUTES);
     }
-
-    @Override
-    public void setAttributes(TextAttributes attributes) { }
 
     @Override
     public void setColorScheme(@NotNull EditorColorsScheme scheme) {}

@@ -265,20 +265,12 @@ public class JqlCompletionContributor extends CompletionContributor {
       if (predicate != null) {
         listFunctionExpected = false;
         JqlHistoryPredicate.Type predicateType = predicate.getType();
-        switch (predicateType) {
-          case BEFORE:
-          case AFTER:
-          case DURING:
-          case ON:
-            operandType = JqlFieldType.DATE;
-            break;
-          case BY:
-            operandType = JqlFieldType.USER;
-            break;
+        operandType = switch (predicateType) {
+          case BEFORE, AFTER, DURING, ON -> JqlFieldType.DATE;
+          case BY -> JqlFieldType.USER;
           // from, to
-          default:
-            operandType = findTypeOfField(curElem);
-        }
+          default -> findTypeOfField(curElem);
+        };
       }
       else {
         operandType = findTypeOfField(curElem);

@@ -28,14 +28,6 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
     this(id, displayName, false);
   }
 
-  /**
-   * @deprecated use {@link LineAnnotationAspectAdapter#LineAnnotationAspectAdapter(String, String, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public LineAnnotationAspectAdapter(@NonNls @Nullable String id, boolean showByDefault) {
-    this(id, null, showByDefault);
-  }
-
   public LineAnnotationAspectAdapter(@NonNls @Nullable String id,
                                      @NlsContexts.ListItem @Nullable String displayName,
                                      boolean showByDefault) {

@@ -10,9 +10,6 @@ import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class DomHighlightingHelper {
 
   @NotNull

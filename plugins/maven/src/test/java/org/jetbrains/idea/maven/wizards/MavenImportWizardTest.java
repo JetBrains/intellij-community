@@ -4,11 +4,14 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.maven.testFramework.MavenTestCase;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
@@ -23,13 +26,16 @@ import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProjectWizard> {
@@ -121,9 +127,11 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     Path pom1 = createPom("pom1.xml");
     Path pom2 = pom1.getParent().resolve("pom2.xml");
     PathKt.write(pom2, MavenTestCase.createPomXml(
-      "<groupId>test</groupId>" +
-      "<artifactId>project2</artifactId>" +
-      "<version>1</version>"));
+      """
+        <groupId>test</groupId>
+        <artifactId>project2</artifactId>
+        <version>1</version>
+        """));
     Module module = importProjectFrom(pom1.toString(), null, new MavenProjectImportProvider());
     if (MavenUtil.isLinearImportEnabled()) {
       afterImportFinished(getCreatedProject(), c -> {
@@ -143,13 +151,15 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     }
   }
 
-  public void testImportProjectWithDirectPom() throws Exception {
+  public void testImportProjectWithChildPomShouldContainRootPom() throws Exception {
     Path pom1 = createPom();
     Path pom2 = pom1.getParent().resolve("pom2.xml");
     PathKt.write(pom2, MavenTestCase.createPomXml(
-      "<groupId>test</groupId>" +
-      "<artifactId>project2</artifactId>" +
-      "<version>1</version>"));
+      """
+        <groupId>test</groupId>
+        <artifactId>project2</artifactId>
+        <version>1</version>
+        """));
     MavenProjectImportProvider provider = new MavenProjectImportProvider();
     MavenProjectBuilder builder = (MavenProjectBuilder)provider.doGetBuilder();
     builder.setFileToImport(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom2));
@@ -157,10 +167,10 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     if (MavenUtil.isLinearImportEnabled()) {
       afterImportFinished(module.getProject(), c -> {
         List<Path> paths = ContainerUtil.map(
-          MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
+          MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getRootProjectsFiles(), m -> m.toNioPath()
         );
         assertEquals(1, paths.size());
-        assertContainsElements(paths, pom2);
+        assertEquals(pom2, paths.get(0));
       });
     }
     else {
@@ -168,8 +178,46 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
         MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
       );
       assertEquals(1, paths.size());
-      assertContainsElements(paths, pom2);
+      assertEquals(pom2, paths.get(0));
     }
+  }
+
+
+  public void testShouldStoreImlFileInSameDirAsPomXml() throws IOException {
+    Path dir = getTempDir().newPath("", true);
+    String projectName = dir.toFile().getName();
+    Path pom = dir.resolve("pom.xml");
+    PathKt.write(pom, MavenTestCase.createPomXml(
+      "<groupId>test</groupId>\n" +
+      "<artifactId>\n" + projectName + "</artifactId>\n" +
+      "<version>1</version>"));
+    MavenProjectImportProvider provider = new MavenProjectImportProvider();
+    MavenProjectBuilder builder = (MavenProjectBuilder)provider.doGetBuilder();
+    builder.setFileToImport(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom));
+    Module module = importProjectFrom(pom.toString(), null, provider);
+    Project project = module.getProject();
+    waitForMavenImporting(project, LocalFileSystem.getInstance().findFileByNioFile(pom));
+    ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false);
+
+    Module[] modules = ModuleManager.getInstance(project).getModules();
+    File imlFile = dir.resolve(projectName + ".iml").toFile();
+    assertThat(modules).hasOnlyOneElementSatisfying(m ->
+                                                      assertPathsEqual(m.getModuleFilePath(), imlFile.getAbsolutePath())
+    );
+  }
+
+  private void waitForMavenImporting(@NotNull Project project, @NotNull VirtualFile file) {
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    if (!MavenUtil.isLinearImportEnabled()) {
+      manager.waitForImportCompletion();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        manager.scheduleImportInTests(Collections.singletonList(file));
+        manager.importProjects();
+      });
+    }
+
+    Promise<?> promise = manager.waitForImportCompletion();
+    PlatformTestUtil.waitForPromise(promise);
   }
 
   private @NotNull Path createPom() throws IOException {
@@ -177,9 +225,10 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
   }
 
   private @NotNull Path createPom(String pomName) throws IOException {
-    return createTempFile(pomName, MavenTestCase.createPomXml("<groupId>test</groupId>" +
-                                                              "<artifactId>project</artifactId>" +
-                                                              "<version>1</version>")).toPath();
+    return createTempFile(pomName, MavenTestCase.createPomXml("""
+                                                                <groupId>test</groupId>
+                                                                <artifactId>project</artifactId>
+                                                                <version>1</version>""")).toPath();
   }
 
   private static void createMavenWrapper(@NotNull Path pomPath, @NotNull String context) {

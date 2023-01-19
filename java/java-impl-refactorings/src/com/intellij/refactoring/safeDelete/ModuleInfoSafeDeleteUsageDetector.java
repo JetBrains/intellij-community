@@ -2,7 +2,7 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.psi.*;
 import com.intellij.refactoring.move.moveClassesOrPackages.ModifyModuleStatementUsageInfo;
 import com.intellij.refactoring.move.moveClassesOrPackages.ModuleInfoUsageDetector;
@@ -26,7 +26,7 @@ public class ModuleInfoSafeDeleteUsageDetector extends ModuleInfoUsageDetector {
   @Override
   public void detectModuleStatementsUsed(@NotNull List<? super UsageInfo> usageInfos, @NotNull MultiMap<PsiElement, String> conflicts) {
     if (mySourceClassesByDir.isEmpty()) return;
-    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
+    PackageIndex packageIndex = PackageIndex.getInstance(myProject);
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     MultiMap<PsiJavaModule, PsiDirectory> sourceDirsByModuleDescriptor = groupDirsByModuleDescriptor(mySourceClassesByDir.keySet());
     List<ModifyModuleStatementUsageInfo> moduleStatementUsages = new SmartList<>();
@@ -36,7 +36,7 @@ public class ModuleInfoSafeDeleteUsageDetector extends ModuleInfoUsageDetector {
       MultiMap<PsiPackage, PsiPackageAccessibilityStatement> sourceExports = collectModuleStatements(sourceModuleDescriptor.getExports());
       MultiMap<PsiPackage, PsiPackageAccessibilityStatement> sourceOpens = collectModuleStatements(sourceModuleDescriptor.getOpens());
       for (PsiDirectory sourceDir : sourceDirs) {
-        String sourcePkgName = fileIndex.getPackageNameByDirectory(sourceDir.getVirtualFile());
+        String sourcePkgName = packageIndex.getPackageNameByDirectory(sourceDir.getVirtualFile());
         if (sourcePkgName == null) continue;
         PsiPackage sourcePkg = psiFacade.findPackage(sourcePkgName);
         if (sourcePkg == null) continue;

@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 def add_uppercase_char(char_list: Sequence[tuple[str, str]]) -> Sequence[tuple[str, str]]: ...
 

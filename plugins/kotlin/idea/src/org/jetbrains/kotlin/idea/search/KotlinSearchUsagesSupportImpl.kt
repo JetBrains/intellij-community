@@ -1,23 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
-import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
-import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.usagesSearch.*
-import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
@@ -26,17 +20,12 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.ImportPath
 
 class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
-    override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> =
+  override fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean {
+    return false
+  }
+
+  override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> =
         declaration.actualsForExpected(module)
-
-    override fun dataClassComponentMethodName(element: KtParameter): String? =
-        element.dataClassComponentFunction()?.name?.asString()
-
-    override fun hasType(element: KtExpression): Boolean =
-        org.jetbrains.kotlin.idea.search.usagesSearch.hasType(element)
-
-    override fun isSamInterface(psiClass: PsiClass): Boolean =
-        org.jetbrains.kotlin.idea.search.usagesSearch.isSamInterface(psiClass)
 
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean =
         reference.isCallableOverrideUsage(declaration)
@@ -89,32 +78,14 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
             processor
         )
 
-    override fun forEachOverridingMethod(method: PsiMethod, scope: SearchScope, processor: (PsiMethod) -> Boolean): Boolean =
-        method.forEachOverridingMethod(scope, processor)
-
     override fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
         org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsNoWrapping(method)
-
-    override fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
-        org.jetbrains.kotlin.idea.search.declarationsSearch.findSuperMethodsNoWrapping(method)
-
-    override fun findTypeAliasByShortName(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> =
-        KotlinTypeAliasShortNameIndex.get(shortName, project, scope)
-
-    override fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean): Boolean =
-        RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = includeScriptsOutsideSourceRoots).matches(element)
 
     override fun isOverridable(declaration: KtDeclaration): Boolean =
         declaration.isOverridable()
 
     override fun isInheritable(ktClass: KtClass): Boolean =
         ktClass.isInheritable()
-
-    override fun formatJavaOrLightMethod(method: PsiMethod): String =
-        org.jetbrains.kotlin.idea.refactoring.formatJavaOrLightMethod(method)
-
-    override fun formatClass(classOrObject: KtClassOrObject): String =
-        org.jetbrains.kotlin.idea.refactoring.formatClass(classOrObject)
 
     override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? =
         declaration.expectedDeclarationIfAny()

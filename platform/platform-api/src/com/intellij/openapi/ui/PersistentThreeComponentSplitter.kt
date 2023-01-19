@@ -25,7 +25,7 @@ class PersistentThreeComponentSplitter(
   }
 
   // hack
-  var maxRetryCount = 100
+  private var maxRetryCount = 100
 
   @NonNls private val firstProportionKey = "${proportionKey}_PTCS_FirstProportionKey"
   @NonNls private val lastProportionKey = "${proportionKey}_PTCS_LastProportionKey"
@@ -71,7 +71,7 @@ class PersistentThreeComponentSplitter(
     lastProportion = lastSize / (totalSize - 2.0f * dividerWidth)
   }
 
-  fun restoreProportions() {
+  private fun restoreProportions() {
     setFirstSize()
     setLastSize()
   }

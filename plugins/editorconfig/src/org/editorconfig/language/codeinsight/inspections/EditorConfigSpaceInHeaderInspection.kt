@@ -4,11 +4,11 @@ package org.editorconfig.language.codeinsight.inspections
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiTreeUtil
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveSpacesQuickFix
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigHeader
-import org.editorconfig.language.psi.EditorConfigPatternEnumeration
 import org.editorconfig.language.psi.EditorConfigVisitor
 
 class EditorConfigSpaceInHeaderInspection : LocalInspectionTool() {
@@ -21,14 +21,12 @@ class EditorConfigSpaceInHeaderInspection : LocalInspectionTool() {
       holder.registerProblem(
         header,
         message,
-        EditorConfigRemoveSpacesQuickFix(spaces)
+        EditorConfigRemoveSpacesQuickFix()
       )
     }
   }
 
-  companion object {
-    fun findSuspiciousSpaces(header: EditorConfigHeader) =
-      PsiTreeUtil.findChildrenOfType(header, PsiWhiteSpace::class.java)
-        .filter { it.parent !is EditorConfigPatternEnumeration }
-  }
 }
+
+internal fun findSuspiciousSpaces(header: EditorConfigHeader) =
+  SyntaxTraverser.psiTraverser(header).filter(PsiWhiteSpace::class.java).toList()

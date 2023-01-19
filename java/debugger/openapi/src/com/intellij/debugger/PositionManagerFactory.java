@@ -11,7 +11,8 @@ import org.jetbrains.annotations.Nullable;
  * <p>{@link #createPositionManager} is called once on debug process start
  */
 public abstract class PositionManagerFactory {
-  public static final ExtensionPointName<PositionManagerFactory> EP_NAME = ExtensionPointName.create("com.intellij.debugger.positionManagerFactory");
+  public static final ExtensionPointName<PositionManagerFactory> EP_NAME =
+    ExtensionPointName.create("com.intellij.debugger.positionManagerFactory");
 
   @Nullable
   public abstract PositionManager createPositionManager(@NotNull DebugProcess process);

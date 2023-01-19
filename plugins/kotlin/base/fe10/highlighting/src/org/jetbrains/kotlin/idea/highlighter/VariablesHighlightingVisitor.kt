@@ -13,8 +13,11 @@ import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10HighlightingBundle
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors.*
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.*
@@ -24,6 +27,7 @@ import org.jetbrains.kotlin.resolve.calls.tasks.isDynamic
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExtensionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
 import org.jetbrains.kotlin.types.expressions.CaptureKind
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class VariablesHighlightingVisitor(holder: HighlightInfoHolder, bindingContext: BindingContext) :
     AfterAnalysisHighlightingVisitor(holder, bindingContext) {
@@ -144,7 +148,16 @@ internal class VariablesHighlightingVisitor(holder: HighlightInfoHolder, binding
             }
 
             if (descriptor.isVar) {
-                highlightName(elementToHighlight, MUTABLE_VARIABLE)
+                val shouldHighlight = if (elementToHighlight is KtNameReferenceExpression) {
+                    val setter = descriptor.safeAs<PropertyDescriptor>()?.setter
+                    setter == null || setter.isVisible(
+                        elementToHighlight, elementToHighlight.getReceiverExpression(), bindingContext,
+                        elementToHighlight.getResolutionFacade()
+                    )
+                } else true
+                if (shouldHighlight) {
+                    highlightName(elementToHighlight, MUTABLE_VARIABLE)
+                }
             }
 
             if (bindingContext.get(CAPTURED_IN_CLOSURE, descriptor) == CaptureKind.NOT_INLINE) {

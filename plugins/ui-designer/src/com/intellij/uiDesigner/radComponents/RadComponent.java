@@ -34,10 +34,6 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class RadComponent implements IComponent {
   private static final Logger LOG = Logger.getInstance(RadComponent.class);
 

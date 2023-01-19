@@ -1,60 +1,34 @@
 import sys
 import types
-from _typeshed import Self, SupportsAllComparisons, SupportsItems
-from typing import Any, Callable, Generic, Hashable, Iterable, NamedTuple, Sequence, Sized, TypeVar, overload
-from typing_extensions import Literal, final
+from _typeshed import IdentityFunction, Self, SupportsAllComparisons, SupportsItems
+from collections.abc import Callable, Hashable, Iterable, Sequence, Sized
+from typing import Any, Generic, NamedTuple, TypeVar, overload
+from typing_extensions import Literal, TypeAlias, final
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
 
-    __all__ = [
-        "update_wrapper",
-        "wraps",
-        "WRAPPER_ASSIGNMENTS",
-        "WRAPPER_UPDATES",
-        "total_ordering",
-        "cache",
-        "cmp_to_key",
-        "lru_cache",
-        "reduce",
-        "partial",
-        "partialmethod",
-        "singledispatch",
-        "singledispatchmethod",
-        "cached_property",
-    ]
-elif sys.version_info >= (3, 8):
-    __all__ = [
-        "update_wrapper",
-        "wraps",
-        "WRAPPER_ASSIGNMENTS",
-        "WRAPPER_UPDATES",
-        "total_ordering",
-        "cmp_to_key",
-        "lru_cache",
-        "reduce",
-        "partial",
-        "partialmethod",
-        "singledispatch",
-        "singledispatchmethod",
-        "cached_property",
-    ]
-else:
-    __all__ = [
-        "update_wrapper",
-        "wraps",
-        "WRAPPER_ASSIGNMENTS",
-        "WRAPPER_UPDATES",
-        "total_ordering",
-        "cmp_to_key",
-        "lru_cache",
-        "reduce",
-        "partial",
-        "partialmethod",
-        "singledispatch",
-    ]
+__all__ = [
+    "update_wrapper",
+    "wraps",
+    "WRAPPER_ASSIGNMENTS",
+    "WRAPPER_UPDATES",
+    "total_ordering",
+    "cmp_to_key",
+    "lru_cache",
+    "reduce",
+    "partial",
+    "partialmethod",
+    "singledispatch",
+]
 
-_AnyCallable = Callable[..., Any]
+if sys.version_info >= (3, 8):
+    __all__ += ["cached_property", "singledispatchmethod"]
+
+if sys.version_info >= (3, 9):
+    __all__ += ["cache"]
+
+_AnyCallable: TypeAlias = Callable[..., object]
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
@@ -94,7 +68,7 @@ WRAPPER_ASSIGNMENTS: tuple[
 WRAPPER_UPDATES: tuple[Literal["__dict__"]]
 
 def update_wrapper(wrapper: _T, wrapped: _AnyCallable, assigned: Sequence[str] = ..., updated: Sequence[str] = ...) -> _T: ...
-def wraps(wrapped: _AnyCallable, assigned: Sequence[str] = ..., updated: Sequence[str] = ...) -> Callable[[_T], _T]: ...
+def wraps(wrapped: _AnyCallable, assigned: Sequence[str] = ..., updated: Sequence[str] = ...) -> IdentityFunction: ...
 def total_ordering(cls: type[_T]) -> type[_T]: ...
 def cmp_to_key(mycmp: Callable[[_T, _T], int]) -> Callable[[_T], SupportsAllComparisons]: ...
 
@@ -111,7 +85,7 @@ class partial(Generic[_T]):
         def __class_getitem__(cls, item: Any) -> GenericAlias: ...
 
 # With protocols, this could change into a generic protocol that defines __get__ and returns _T
-_Descriptor = Any
+_Descriptor: TypeAlias = Any
 
 class partialmethod(Generic[_T]):
     func: Callable[..., _T] | _Descriptor

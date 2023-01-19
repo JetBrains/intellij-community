@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
   private static final Logger LOG = Logger.getInstance(GenerateEqualsHandler.class);
   private PsiField[] myEqualsFields;

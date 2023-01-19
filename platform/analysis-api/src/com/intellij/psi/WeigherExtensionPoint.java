@@ -11,9 +11,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class WeigherExtensionPoint extends BaseKeyedLazyInstance<Weigher> implements KeyedLazyInstance<Weigher> {
   public static final ExtensionPointName<WeigherExtensionPoint> EP = new ExtensionPointName<>("com.intellij.weigher");
 

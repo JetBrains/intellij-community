@@ -2,48 +2,49 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.ProjectTopics
+import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.facet.FacetManager
-import com.intellij.ide.impl.TrustStateListener
 import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.extensions.ExtensionPointListener
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.Function
 import com.intellij.util.messages.Topic
+import com.jetbrains.packagesearch.intellij.plugin.data.LoadingContainer
+import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchCachesService
+import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectCachesService
 import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.AsyncModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.lifecycle.PackageSearchLifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.ui.UiCommandsService
+import com.jetbrains.packagesearch.intellij.plugin.ui.PkgsUiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchCachesService
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchProjectCachesService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.launch
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -58,15 +59,6 @@ internal val packageVersionNormalizer: PackageVersionNormalizer
 
 internal val Project.packageSearchProjectCachesService: PackageSearchProjectCachesService
     get() = service()
-
-internal val Project.toolWindowManagerFlow: Flow<ToolWindow>
-    get() = messageBusFlow(ToolWindowManagerListener.TOPIC) {
-        object : ToolWindowManagerListener {
-            override fun toolWindowShown(toolWindow: ToolWindow) {
-                trySend(toolWindow)
-            }
-        }
-    }
 
 fun <L : Any, K> Project.messageBusFlow(
     topic: Topic<L>,
@@ -83,8 +75,8 @@ fun <L : Any, K> Project.messageBusFlow(
 
 internal val Project.trustedProjectFlow: Flow<Boolean>
     get() {
-        return ApplicationManager.getApplication().messageBusFlow(TrustStateListener.TOPIC, { isTrusted() }) {
-            object : TrustStateListener {
+        return ApplicationManager.getApplication().messageBusFlow(TrustedProjectsListener.TOPIC, { isTrusted() }) {
+            object : TrustedProjectsListener {
                 override fun onProjectTrusted(project: Project) {
                     if (project == this@trustedProjectFlow) trySend(isTrusted())
                 }
@@ -117,7 +109,10 @@ val Project.filesChangedEventFlow: Flow<MutableList<out VFileEvent>>
     get() = messageBusFlow(VirtualFileManager.VFS_CHANGES) {
         object : BulkFileListener {
             override fun after(events: MutableList<out VFileEvent>) {
-                trySend(events)
+                val result = trySend(events)
+                if (result.isFailure) {
+                    logDebug("filesChangedEventFlow", throwable = result.exceptionOrNull()) { "Failed to send file change" }
+                }
             }
         }
     }
@@ -133,14 +128,11 @@ internal val Project.moduleChangesSignalFlow: Flow<Unit>
 internal val Project.lifecycleScope: PackageSearchLifecycleScope
     get() = service()
 
-internal val ProjectModule.lifecycleScope: PackageSearchLifecycleScope
+internal val PackageSearchModule.lifecycleScope: PackageSearchLifecycleScope
     get() = nativeModule.project.lifecycleScope
 
-internal val Project.uiStateModifier: UiStateModifier
-    get() = service<UiCommandsService>()
-
-internal val Project.uiStateSource: UiStateSource
-    get() = service<UiCommandsService>()
+internal val Project.pkgsUiStateModifier: UiStateModifier
+    get() = service<PkgsUiCommandsService>()
 
 val Project.dumbService: DumbService
     get() = DumbService.getInstance(this)
@@ -151,28 +143,12 @@ suspend fun DumbService.awaitSmart() {
     }
 }
 
-internal val Project.moduleTransformers: List<CoroutineModuleTransformer>
-    get() = CoroutineModuleTransformer.extensions(this) + ModuleTransformer.extensions(this)
+internal val Project.moduleTransformers: List<ModuleTransformer>
+    get() = ModuleTransformer.extensions(this) + AsyncModuleTransformer.extensions(this)
 
 internal val Project.lookAndFeelFlow: Flow<LafManager>
     get() = messageBusFlow(LafManagerListener.TOPIC, { LafManager.getInstance()!! }) {
         LafManagerListener { trySend(it) }
-    }
-
-val <T : Any> ExtensionPointName<T>.extensionsFlow: Flow<List<T>>
-    get() = callbackFlow {
-        val listener = object : ExtensionPointListener<T> {
-            override fun extensionAdded(extension: T, pluginDescriptor: PluginDescriptor) {
-                trySendBlocking(extensions.toList())
-            }
-
-            override fun extensionRemoved(extension: T, pluginDescriptor: PluginDescriptor) {
-                trySendBlocking(extensions.toList())
-            }
-        }
-        send(extensions.toList())
-        addExtensionPointListener(listener)
-        awaitClose { removeExtensionPointListener(listener) }
     }
 
 fun Project.hasKotlinModules(): Boolean = ModuleManager.getInstance(this).modules.any { it.hasKotlinFacet() }
@@ -181,3 +157,54 @@ internal fun Module.hasKotlinFacet(): Boolean {
     val facetManager = FacetManager.getInstance(this)
     return facetManager.allFacets.any { it.typeId.toString() == "kotlin-language" }
 }
+
+internal fun Project.modifyPackages(builder: PackageManagementOperationExecutor.() -> Unit) =
+    lifecycleScope.launch {
+        PackageManagementOperationExecutor(this@modifyPackages)
+            .apply(builder)
+            .execute()
+    }
+
+val Project.dependencyModifierService
+    get() = DependencyModifierService.getInstance(this)
+
+internal val Project.loadingContainer
+    get() = service<LoadingContainer>()
+
+internal sealed interface FileEditorEvent {
+
+    val file: VirtualFile
+
+    @JvmInline
+    value class FileOpened(override val file: VirtualFile) : FileEditorEvent
+
+    @JvmInline
+    value class FileClosed(override val file: VirtualFile) : FileEditorEvent
+}
+
+private val Project.project
+    get() = this
+
+internal val Project.fileOpenedFlow
+    get() = flow {
+        val buffer: MutableList<VirtualFile> = FileEditorManager.getInstance(project).openFiles
+            .toMutableList()
+        emit(buffer.toList())
+        messageBusFlow(FileEditorManagerListener.FILE_EDITOR_MANAGER) {
+            object : FileEditorManagerListener {
+                override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+                    trySend(FileEditorEvent.FileOpened(file))
+                }
+
+                override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+                    trySend(FileEditorEvent.FileClosed(file))
+                }
+            }
+        }.collect {
+            when (it) {
+                is FileEditorEvent.FileClosed -> buffer.remove(it.file)
+                is FileEditorEvent.FileOpened -> buffer.add(it.file)
+            }
+            emit(buffer.toList())
+        }
+    }

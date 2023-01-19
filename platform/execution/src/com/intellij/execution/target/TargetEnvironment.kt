@@ -2,6 +2,7 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -175,7 +176,7 @@ abstract class TargetEnvironment(
   //     Therefore, to indicate the disposable nature of environments, the method might be moved to the `TargetEnvironmentFactory`.
   @Throws(ExecutionException::class)
   abstract fun createProcess(commandLine: TargetedCommandLine,
-                             indicator: ProgressIndicator): Process
+                             indicator: ProgressIndicator = EmptyProgressIndicator()): Process
 
   abstract val targetPlatform: TargetPlatform
 

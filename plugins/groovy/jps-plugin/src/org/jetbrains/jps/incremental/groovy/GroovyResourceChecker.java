@@ -19,9 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author peter
- */
 public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescriptor, CheckResourcesTarget> {
   public static final Key<Boolean> CHECKING_RESOURCES_REBUILD = Key.create("CHECKING_RESOURCES");
 

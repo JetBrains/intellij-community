@@ -3,7 +3,9 @@ package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IconReplacer;
 import com.intellij.ui.IconWithOverlay;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -15,7 +17,11 @@ import java.awt.geom.Ellipse2D;
  */
 public class ScratchFileTypeIcon extends IconWithOverlay {
   public ScratchFileTypeIcon(Icon fileTypeIcon) {
-    super(fileTypeIcon, AllIcons.Actions.Scratch);
+    this(fileTypeIcon, AllIcons.Actions.Scratch);
+  }
+
+  private ScratchFileTypeIcon(Icon fileTypeIcon, Icon scratchIcon) {
+    super(fileTypeIcon, scratchIcon);
   }
 
   @Override
@@ -29,5 +35,11 @@ public class ScratchFileTypeIcon extends IconWithOverlay {
       return new Ellipse2D.Double(x + w - 2 * r + scale, y - scale, 2 * r, 2 * r);
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public ScratchFileTypeIcon replaceBy(@NotNull IconReplacer replacer) {
+    return new ScratchFileTypeIcon(replacer.replaceIcon(getIcon(0)), replacer.replaceIcon(getIcon(1)));
   }
 }

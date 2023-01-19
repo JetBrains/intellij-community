@@ -4,7 +4,9 @@ package com.intellij.ide.favoritesTreeView
 import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.bookmark.BookmarkProvider
 import com.intellij.openapi.project.Project
+import java.lang.Deprecated
 
+@Deprecated(forRemoval = true)
 internal class AbstractUrlBookmarkProvider(private val project: Project) : BookmarkProvider {
   override fun getWeight() = Int.MAX_VALUE
   override fun getProject() = project

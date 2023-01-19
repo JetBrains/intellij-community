@@ -1,13 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.model.completion;
 
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
@@ -36,6 +34,8 @@ import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIE
 import static org.jetbrains.concurrency.Promise.State.PENDING;
 
 public abstract class MavenCoordinateCompletionContributor extends CompletionContributor {
+  
+  public static final Key<String> MAVEN_COORDINATE_COMPLETION_PREFIX_KEY = Key.create("MAVEN_COORDINATE_COMPLETION_PREFIX_KEY");
 
   private final String myTagId;
 
@@ -51,6 +51,7 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
     if (placeChecker.isCorrectPlace()) {
 
       MavenDomShortArtifactCoordinates coordinates = placeChecker.getCoordinates();
+      String completionPrefix = CompletionUtil.findReferenceOrAlphanumericPrefix(parameters);
       result = amendResultSet(result);
       ConcurrentLinkedDeque<RepositoryArtifactData> cld = new ConcurrentLinkedDeque<>();
       Promise<Integer> promise = find(
@@ -59,19 +60,21 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
         mdci -> cld.add(mdci)
       );
 
-      fillResults(result, coordinates, cld, promise);
+      fillResults(result, coordinates, cld, promise, completionPrefix);
       fillAfter(result);
     }
   }
 
   protected void fillResults(@NotNull CompletionResultSet result,
                              @NotNull MavenDomShortArtifactCoordinates coordinates,
-                             @NotNull ConcurrentLinkedDeque<RepositoryArtifactData> cld, @NotNull Promise<Integer> promise) {
+                             @NotNull ConcurrentLinkedDeque<RepositoryArtifactData> cld,
+                             @NotNull Promise<Integer> promise,
+                             @NotNull String completionPrefix) {
     while (promise.getState() == PENDING || !cld.isEmpty()) {
       ProgressManager.checkCanceled();
       RepositoryArtifactData item = cld.poll();
       if (item instanceof MavenRepositoryArtifactInfo) {
-        fillResult(coordinates, result, (MavenRepositoryArtifactInfo)item);
+        fillResult(coordinates, result, (MavenRepositoryArtifactInfo)item, completionPrefix);
       }
     }
   }
@@ -95,9 +98,12 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
 
   protected void fillResult(@NotNull MavenDomShortArtifactCoordinates coordinates,
                             @NotNull CompletionResultSet result,
-                            @NotNull MavenRepositoryArtifactInfo item) {
-    result
-      .addElement(MavenDependencyCompletionUtil.lookupElement(item).withInsertHandler(MavenDependencyInsertionHandler.INSTANCE));
+                            @NotNull MavenRepositoryArtifactInfo item,
+                            @NotNull String completionPrefix) {
+    final LookupElement lookup = MavenDependencyCompletionUtil.lookupElement(item)
+      .withInsertHandler(MavenDependencyInsertionHandler.INSTANCE);
+    lookup.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix);
+    result.addElement(lookup);
   }
 
   @NotNull
@@ -129,9 +135,9 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
     private Project myProject;
     private MavenDomShortArtifactCoordinates domCoordinates;
 
-    public PlaceChecker(CompletionParameters parameters) {myParameters = parameters;}
+    public PlaceChecker(CompletionParameters parameters) { myParameters = parameters; }
 
-    boolean isCorrectPlace() {return !badPlace;}
+    boolean isCorrectPlace() { return !badPlace; }
 
     Project getProject() {
       return myProject;
@@ -172,21 +178,9 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
       myProject = element.getProject();
 
       switch (myTagId) {
-        case "artifactId":
-        case "groupId":
-        case "version": {
-          checkPlaceForChildrenTags(tag);
-          break;
-        }
-
-        case "dependency":
-        case "extension":
-        case "plugin": {
-          checkPlaceForParentTags(tag);
-          break;
-        }
-        default:
-          badPlace = true;
+        case "artifactId", "groupId", "version" -> checkPlaceForChildrenTags(tag);
+        case "dependency", "extension", "plugin" -> checkPlaceForParentTags(tag);
+        default -> badPlace = true;
       }
 
       return this;

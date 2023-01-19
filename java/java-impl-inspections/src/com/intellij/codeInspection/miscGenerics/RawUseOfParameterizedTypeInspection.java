@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -29,12 +29,11 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Set;
 
-/**
- *  @author dsl
- */
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean ignoreObjectConstruction = false;
@@ -67,20 +66,14 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(JavaBundle.message("raw.use.of.parameterized.type.ignore.new.objects.option"),
-                             "ignoreObjectConstruction");
-    optionsPanel.addCheckbox(JavaBundle.message("raw.use.of.parameterized.type.ignore.type.casts.option"),
-                             "ignoreTypeCasts");
-    optionsPanel.addCheckbox(JavaBundle.message("raw.use.of.parameterized.type.ignore.uncompilable.option"),
-                             "ignoreUncompilable");
-    optionsPanel.addCheckbox(JavaBundle.message("raw.use.of.parameterized.type.ignore.overridden.parameter.option"),
-                             "ignoreParametersOfOverridingMethods");
-    optionsPanel.addCheckbox(JavaBundle.message("raw.use.of.parameterized.type.ignore.quickfix.not.available.option"),
-                             "ignoreWhenQuickFixNotAvailable");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreObjectConstruction", JavaBundle.message("raw.use.of.parameterized.type.ignore.new.objects.option")),
+      checkbox("ignoreTypeCasts", JavaBundle.message("raw.use.of.parameterized.type.ignore.type.casts.option")),
+      checkbox("ignoreUncompilable", JavaBundle.message("raw.use.of.parameterized.type.ignore.uncompilable.option")),
+      checkbox("ignoreParametersOfOverridingMethods",
+               JavaBundle.message("raw.use.of.parameterized.type.ignore.overridden.parameter.option")),
+      checkbox("ignoreWhenQuickFixNotAvailable", JavaBundle.message("raw.use.of.parameterized.type.ignore.quickfix.not.available.option")));
   }
 
   @Override
@@ -230,7 +223,8 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       }
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(
         typeElement, PsiTypeElement.class, PsiReferenceParameterList.class, PsiJavaCodeReferenceElement.class);
-      if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiClassObjectAccessExpression) {
+      if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiClassObjectAccessExpression ||
+          parent instanceof PsiDeconstructionPattern) {
         return;
       }
       if (ignoreTypeCasts && parent instanceof PsiTypeCastExpression) {
@@ -350,7 +344,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiJavaCodeReferenceElement element = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
       if (element == null) return;
       PsiReferenceParameterList parameterList = element.getParameterList();
@@ -378,7 +372,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiTypeElement cast = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiTypeElement.class);
       if (cast == null) return;
       CodeStyleManager.getInstance(project).reformat(new CommentTracker().replace(cast, myTargetType));
@@ -410,7 +404,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getStartElement().getParent();
       if (element instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)element;

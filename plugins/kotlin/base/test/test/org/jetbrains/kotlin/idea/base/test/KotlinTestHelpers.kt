@@ -3,29 +3,15 @@ package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.rt.execution.junit.FileComparisonFailure
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import junit.framework.TestCase
 import org.jetbrains.kotlin.test.util.trimTrailingWhitespacesAndAddNewlineAtEOF
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
-import kotlin.io.path.extension
-import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.exists
 import kotlin.io.path.writeText
 
 object KotlinTestHelpers {
-    fun getExpectedPath(path: Path, suffix: String): Path {
-        val parent = path.parent
-
-        val nameWithoutExtension = path.nameWithoutExtension
-        val extension = path.extension
-
-        if (extension.isEmpty()) {
-            return parent.resolve(nameWithoutExtension + suffix)
-        } else {
-            return parent.resolve("$nameWithoutExtension$suffix.$extension")
-        }
-    }
 
     fun getTestRootPath(testClass: Class<*>): Path {
         var current = testClass
@@ -41,7 +27,7 @@ object KotlinTestHelpers {
     }
 
     fun assertEqualsToPath(expectedPath: Path, actual: String) {
-        assertEqualsToPath(expectedPath, actual, { it }, { "Actual data differs from file content" })
+        assertEqualsToPath(expectedPath, actual, { it }) { "Expected file content differs from the actual result" }
     }
 
     fun assertEqualsToPath(expectedPath: Path, actual: String, sanitizer: (String) -> String, message: () -> String) {
@@ -60,7 +46,6 @@ object KotlinTestHelpers {
 
         val processedExpected = process(expectedPath.readText())
         val processedActual = process(actual)
-
         if (processedExpected != processedActual) {
             throw FileComparisonFailure(message(), processedExpected, processedActual, expectedPath.absolutePathString())
         }

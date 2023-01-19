@@ -49,7 +49,7 @@ public final class Disposer {
   }
 
   /**
-   * @return new {@link Disposable} instance with the given name which is visible in its {@link Disposable#toString()}.
+   * @return new {@link Disposable} instance with the given name which is visible in its {@link Object#toString()}.
    * Please be aware of increased memory consumption due to storing this name inside the object instance.
    */
   @NotNull
@@ -97,7 +97,7 @@ public final class Disposer {
   }
 
   /**
-   * @param debugName a name to render in {@link Disposable#toString()}
+   * @param debugName a name to render in this instance {@link Object#toString()}
    * @return new {@link Disposable} instance which tracks its own invalidation
    * <p>
    * Please be aware of increased memory consumption due to storing the debug name
@@ -122,11 +122,32 @@ public final class Disposer {
     }
   }
 
+  @Contract(pure = true, value = "_->new")
+  public static @NotNull Disposable newDisposable(@NotNull Disposable parentDisposable) {
+    Disposable disposable = newDisposable();
+    register(parentDisposable, disposable);
+    return disposable;
+  }
+
   @Contract(pure = true, value = "_,_->new")
   public static @NotNull Disposable newDisposable(@NotNull Disposable parentDisposable, @NotNull String debugName) {
     Disposable result = newDisposable(debugName);
     register(parentDisposable, result);
     return result;
+  }
+
+  @Contract(pure = true, value = "_->new")
+  public static @NotNull CheckedDisposable newCheckedDisposable(@NotNull Disposable parentDisposable) {
+    CheckedDisposable disposable = newCheckedDisposable();
+    register(parentDisposable, disposable);
+    return disposable;
+  }
+
+  @Contract(pure = true, value = "_,_->new")
+  public static @NotNull CheckedDisposable newCheckedDisposable(@NotNull Disposable parentDisposable, @NotNull String debugName) {
+    CheckedDisposable disposable = newCheckedDisposable(debugName);
+    register(parentDisposable, disposable);
+    return disposable;
   }
 
   private static final Map<String, Disposable> ourKeyDisposables = ContainerUtil.createConcurrentWeakMap();
@@ -137,7 +158,7 @@ public final class Disposer {
    * then it's unregistered from {@code oldParent} before registering with {@code parent}.
    *
    * @throws IncorrectOperationException If {@code child} has been registered with {@code parent} before;
-   *                                     if {@code parent} is being disposed or already disposed ({@link #isDisposed(Disposable)}.
+   *                                     if {@code parent} is being disposed or already disposed, see {@link #isDisposed(Disposable)}.
    */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) throws IncorrectOperationException {
     ourTree.register(parent, child);
@@ -249,10 +270,12 @@ public final class Disposer {
     return ourTree;
   }
 
+  @ApiStatus.Internal
   public static void assertIsEmpty() {
     assertIsEmpty(false);
   }
 
+  @ApiStatus.Internal
   public static void assertIsEmpty(boolean throwError) {
     if (ourDebugMode) {
       ourTree.assertIsEmpty(throwError);

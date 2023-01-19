@@ -5,7 +5,6 @@ import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsoleProperties;
@@ -15,7 +14,6 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionCo
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
 import static org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocationCustomizer.GradleTestLocationInfo;
 
 /**
@@ -46,9 +44,14 @@ public abstract class AbstractTestEvent implements TestEvent {
 
   @NotNull
   protected String findLocationUrl(@Nullable String name, @NotNull String fqClassName) {
+    return findLocationUrl(JavaTestLocator.TEST_PROTOCOL, name, fqClassName);
+  }
+
+  @NotNull
+  protected static String findLocationUrl(@NotNull String protocol, @Nullable String name, @NotNull String fqClassName) {
     return name == null
-           ? JavaTestLocator.TEST_PROTOCOL + SCHEME_SEPARATOR + fqClassName
-           : JavaTestLocator.TEST_PROTOCOL + SCHEME_SEPARATOR + StringUtil.getQualifiedName(fqClassName, StringUtil.trimEnd(name, "()"));
+           ? JavaTestLocator.createLocationUrl(protocol, fqClassName)
+           : JavaTestLocator.createLocationUrl(protocol, fqClassName, name);
   }
 
   @Nullable

@@ -18,7 +18,6 @@ class KotlinMultiplatformAllInDirectoryConfigurationProducer
 
     private val mppTestTasksChooser = MultiplatformTestTasksChooser()
 
-
     override fun isPreferredConfiguration(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
         return !other.isProducedBy(KotlinMultiplatformAllInPackageConfigurationProducer::class.java) && super.isPreferredConfiguration(self, other)
     }
@@ -28,11 +27,18 @@ class KotlinMultiplatformAllInDirectoryConfigurationProducer
     }
 
     override fun findExistingConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings? {
-        val module = context.module ?: return null
-        if (module.platform.isCommon())
+        val existingConfiguration = super.findExistingConfiguration(context)
+        if (existingConfiguration == null) {
+            // it might be cheaper to check existing configuration than to determine a module platform on cold start
             return null
+        }
 
-        return super.findExistingConfiguration(context)
+        val module = context.module ?: return null
+        if (module.platform.isCommon()) {
+            return null
+        }
+
+        return existingConfiguration
     }
 
     override fun getAllTestsTaskToRun(

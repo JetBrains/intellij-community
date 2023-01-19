@@ -54,6 +54,8 @@
 
 package org.jdom;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 /**
@@ -196,7 +198,7 @@ final class AttributeList extends AbstractList<Attribute> implements RandomAcces
    * @throws IllegalAddException if validation rules prevent the addAll
    */
   @Override
-  public boolean addAll(final Collection<? extends Attribute> collection) {
+  public boolean addAll(@NotNull Collection<? extends Attribute> collection) {
     return addAll(size(), collection);
   }
 
@@ -494,7 +496,7 @@ final class AttributeList extends AbstractList<Attribute> implements RandomAcces
    * @return an iterator.
    */
   @Override
-  public Iterator<Attribute> iterator() {
+  public @NotNull Iterator<Attribute> iterator() {
     return new ALIterator();
   }
 

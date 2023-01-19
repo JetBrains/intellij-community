@@ -24,10 +24,10 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.JavaNameSuggestionUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,9 +39,6 @@ import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiField;
 import static com.intellij.patterns.StandardPatterns.or;
 
-/**
- * @author peter
- */
 public final class JavaMemberNameCompletionContributor extends CompletionContributor implements DumbAware {
   public static final ElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().
     afterLeaf(psiElement().withText("?").andOr(
@@ -393,7 +390,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
 
     if (ourClassParent.isAnnotationType() && matcher.prefixMatches(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
       set.add(LookupElementBuilder.create(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
-                .withIcon(PlatformIcons.METHOD_ICON)
+                .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method))
                 .withTailText("()")
                 .withInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS));
     }
@@ -401,7 +398,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
     if (element instanceof PsiField && ((PsiField)element).hasModifierProperty(PsiModifier.STATIC) &&
         ourClassParent.equals(PsiUtil.resolveClassInClassTypeOnly(((PsiField)element).getType()))) {
       set.add(LookupElementBuilder.create("getInstance")
-                                  .withIcon(PlatformIcons.METHOD_ICON)
+                                  .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method))
                                   .withTailText("()")
                                   .withInsertHandler(ParenthesesInsertHandler.WITH_PARAMETERS));
 

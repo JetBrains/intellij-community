@@ -26,7 +26,7 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
         public void actionPerformed(@NotNull AnActionEvent e) {
           manager.updateSettingsTracker();
           manager.USE_PER_PROJECT_SETTINGS = true;
-          CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(null);
+          CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged();
         }
       });
     }
@@ -50,7 +50,7 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
         manager.updateSettingsTracker();
         manager.USE_PER_PROJECT_SETTINGS = false;
         manager.PREFERRED_PROJECT_CODE_STYLE = scheme.getName();
-        manager.fireCodeStyleSettingsChanged(null);
+        manager.fireCodeStyleSettingsChanged();
       }
     });
   }

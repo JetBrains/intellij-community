@@ -77,10 +77,12 @@ public class PyStringLiteralTest extends PyTestCase {
   }
 
   public void testIterateEscapedBackslash() {
-    assertSameElements(getCharacterRanges("'''\n" +
-                                          "foo.\\\\\n" +
-                                          "bar\n" +
-                                          "'''\n"),
+    assertSameElements(getCharacterRanges("""
+                                            '''
+                                            foo.\\\\
+                                            bar
+                                            '''
+                                            """),
                        Arrays.asList("\nfoo.", "\\", "\nbar\n"));
   }
 

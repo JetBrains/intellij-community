@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.components.BaseComponent;
@@ -17,7 +17,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 public enum ComponentType {
-  @SuppressWarnings("deprecation")
+
   MODULE(ModuleComponent.class, "module-components", "new.menu.module.component.text"),
   @SuppressWarnings("deprecation")
   PROJECT(ProjectComponent.class, "project-components", "new.menu.project.component.text"),

@@ -40,14 +40,13 @@ class SvgTranscoder private constructor(private var width: Float, private var he
     // An SVG tag custom attribute, optional for @2x SVG icons.
     // When provided and is set to "true" the document size should be treated as double-scaled of the base size.
     // See https://youtrack.jetbrains.com/issue/IDEA-267073
-    const val DATA_SCALED_ATTR = "data-scaled"
+    private const val DATA_SCALED_ATTR = "data-scaled"
 
     init {
       SVGFeatureStrings.addSupportedFeatureStrings(supportedFeatures)
     }
 
-    @JvmStatic
-    val iconMaxSize: Float by lazy {
+    internal val iconMaxSize: Float by lazy {
       var maxSize = Integer.MAX_VALUE.toFloat()
       if (!GraphicsEnvironment.isHeadless()) {
         val device = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice

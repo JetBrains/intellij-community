@@ -35,6 +35,12 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
     }
     myPresentableName = CommandLineUtil.extractPresentableName(StringUtil.notNullize(commandLine));
     myWaitFor = new ProcessWaitFor(process, this, myPresentableName);
+    addProcessListener(new ProcessListener() {
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        closeStreams();
+      }
+    });
   }
 
   @NotNull
@@ -67,12 +73,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
 
   @Override
   protected void destroyProcessImpl() {
-    try {
-      closeStreams();
-    }
-    finally {
-      doDestroyProcess();
-    }
+    doDestroyProcess();
   }
 
   @Override
@@ -92,12 +93,36 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
     return false;
   }
 
-  protected void closeStreams() {
+  private void closeStreams() {
     try {
       myProcess.getOutputStream().close();
     }
     catch (IOException e) {
-      LOG.warn(e);
+      // The process may have already terminated, but some data has not yet been written to its standard input.
+      // For example, `com.intellij.execution.process.ProcessServiceImpl.sendWinProcessCtrlC(int, OutputStream)`
+      // tries to terminate a process with `GenerateConsoleCtrlEvent(CTRL_C_EVENT)` and then writes `-1` to process's input to
+      // unblock ReadConsoleW/ReadFile.
+      // In this case, `close` will fail, because of close -> flush -> write, and 'write' cannot be performed
+      // on a stream of the terminated process.
+      if (myProcess.isAlive()) {
+        LOG.warn("Cannot close stdin of '" + getCommandLine() + "'", e);
+      }
+    }
+    try {
+      myProcess.getInputStream().close();
+    }
+    catch (IOException e) {
+      if (myProcess.isAlive()) {
+        LOG.warn("Cannot close stdout of '" + getCommandLine() + "'", e);
+      }
+    }
+    try {
+      myProcess.getErrorStream().close();
+    }
+    catch (IOException e) {
+      if (myProcess.isAlive()) {
+        LOG.warn("Cannot close stderr of '" + getCommandLine() + "'", e);
+      }
     }
   }
 }

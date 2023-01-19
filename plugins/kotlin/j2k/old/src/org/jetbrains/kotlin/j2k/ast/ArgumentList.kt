@@ -6,9 +6,9 @@ import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.append
 
 class ArgumentList(
-        val expressions: List<Expression>,
-        val lPar: LPar,
-        val rPar: RPar
+  val expressions: List<Expression>,
+  val lPar: LPar,
+  private val rPar: RPar
 ) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append(lPar)

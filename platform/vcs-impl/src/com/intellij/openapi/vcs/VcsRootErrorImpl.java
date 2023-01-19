@@ -5,9 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * @author Nadya Zabrodina
- */
 public class VcsRootErrorImpl implements VcsRootError {
 
   private final @NotNull Type myType;

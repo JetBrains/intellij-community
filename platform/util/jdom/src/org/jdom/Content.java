@@ -54,9 +54,9 @@
 
 package org.jdom;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Superclass for JDOM objects which can be legal child content
@@ -73,8 +73,7 @@ import java.util.List;
  * @see ProcessingInstruction
  * @see Text
  */
-public abstract class Content extends CloneBase
-  implements Serializable, NamespaceAware {
+public abstract class Content extends CloneBase implements Serializable {
   /**
    * An enumeration useful for identifying content types without
    * having to do <code>instanceof</code> type conditionals.
@@ -210,8 +209,8 @@ public abstract class Content extends CloneBase
    * @return the containing Element or null if unattached or a root element
    */
   final public Element getParentElement() {
-    Parent pnt = getParent();
-    return (Element)((pnt instanceof Element) ? pnt : null);
+    Parent parent = this.parent;
+    return (Element)((parent instanceof Element) ? parent : null);
   }
 
   /**
@@ -236,11 +235,9 @@ public abstract class Content extends CloneBase
    *
    * @return this child's owning document or null if none
    */
-  public Document getDocument() {
-    if (parent == null) return null;
-    return parent.getDocument();
+  public @Nullable Document getDocument() {
+    return parent == null ? null : parent.getDocument();
   }
-
 
   /**
    * Returns the XPath 1.0 string value of this child.
@@ -254,45 +251,5 @@ public abstract class Content extends CloneBase
     Content c = (Content)super.clone();
     c.parent = null;
     return c;
-  }
-
-  /**
-   * This tests for equality of this Content object to the supplied object.
-   * Content items are considered equal only if they are referentially equal
-   * (i&#46;e&#46; the same object).  User code may choose to compare objects
-   * based on their properties instead.
-   *
-   * @param ob <code>Object</code> to compare to.
-   * @return <code>boolean</code> - whether the <code>Content</code> is
-   * equal to the supplied <code>Object</code>.
-   */
-  @Override
-  public final boolean equals(Object ob) {
-    return (ob == this);
-  }
-
-  /**
-   * This returns the hash code for this <code>Content</code> item.
-   *
-   * @return <code>int</code> - hash code.
-   */
-  @Override
-  public final int hashCode() {
-    return super.hashCode();
-  }
-
-  @Override
-  public List<Namespace> getNamespacesInScope() {
-    // Element class will override this method to do it differently.
-    Element emt = getParentElement();
-    if (emt == null) {
-      return Collections.singletonList(Namespace.XML_NAMESPACE);
-    }
-    return emt.getNamespacesInScope();
-  }
-
-  @Override
-  public List<Namespace> getNamespacesIntroduced() {
-    return Collections.emptyList();
   }
 }

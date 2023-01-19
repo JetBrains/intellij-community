@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.render
 abstract class BuildFilePrinter {
     abstract val indent: Int
     private val builder = StringBuilder()
-    protected var currentIndent = 0
+    private var currentIndent = 0
 
     fun nl(lineBreaks: Int = 1) {
         +"\n".repeat(lineBreaks)

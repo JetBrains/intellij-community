@@ -19,7 +19,7 @@ public final class VcsDirectoryMapping {
 
   @NotNull private final String myDirectory;
   private final String myVcs;
-  private VcsRootSettings myRootSettings;
+  private final VcsRootSettings myRootSettings;
 
   /**
    * Empty string as 'directory' denotes "default mapping" aka "&lt;Project&gt;".
@@ -61,17 +61,6 @@ public final class VcsDirectoryMapping {
   @Nullable
   public VcsRootSettings getRootSettings() {
     return myRootSettings;
-  }
-
-  /**
-   * Sets the VCS-specific settings for the given mapping.
-   *
-   * @param rootSettings the VCS-specific settings
-   * @deprecated Use constructor parameter
-   */
-  @Deprecated(forRemoval = true)
-  public void setRootSettings(final VcsRootSettings rootSettings) {
-    myRootSettings = rootSettings;
   }
 
   /**

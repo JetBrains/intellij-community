@@ -16,6 +16,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.client.ClientDisposableProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -47,7 +48,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
@@ -65,8 +65,8 @@ import static javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
 import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
 
 /**
- * The standard base class for modal dialog boxes. The dialog wrapper could be used only on event dispatch thread.
- * In case when the dialog must be created from other threads use
+ * The standard base class for modal dialog boxes. The dialog wrapper should be used from the event dispatch thread only.
+ * In case the dialog must be created from another thread use
  * {@link EventQueue#invokeLater(Runnable)} or {@link EventQueue#invokeAndWait(Runnable)}.
  *
  * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/dialog_wrapper.html">DialogWrapper on SDK DevGuide</a>
@@ -82,15 +82,11 @@ public abstract class DialogWrapper {
     MODELESS;
 
     public @NotNull Dialog.ModalityType toAwtModality() {
-      switch (this) {
-        case IDE:
-          return Dialog.ModalityType.APPLICATION_MODAL;
-        case PROJECT:
-          return Dialog.ModalityType.DOCUMENT_MODAL;
-        case MODELESS:
-          return Dialog.ModalityType.MODELESS;
-      }
-      throw new IllegalStateException(toString());
+      return switch (this) {
+        case IDE -> Dialog.ModalityType.APPLICATION_MODAL;
+        case PROJECT -> Dialog.ModalityType.DOCUMENT_MODAL;
+        case MODELESS -> Dialog.ModalityType.MODELESS;
+      };
     }
   }
 
@@ -135,7 +131,7 @@ public abstract class DialogWrapper {
    * @deprecated use {@link UIUtil#getErrorForeground()}
    */
   @Deprecated
-  public static final Color ERROR_FOREGROUND_COLOR = UIUtil.getErrorForeground();
+  public static final Color ERROR_FOREGROUND_COLOR = NamedColorUtil.getErrorForeground();
 
   /**
    * The shared instance of default border for dialog's content pane.
@@ -318,7 +314,7 @@ public abstract class DialogWrapper {
     createDefaultActions();
   }
 
-  protected DialogWrapper(@NotNull Function<DialogWrapper, DialogWrapperPeer> peerFactory) {
+  protected DialogWrapper(@NotNull Function<? super DialogWrapper, ? extends DialogWrapperPeer> peerFactory) {
     myPeer = peerFactory.apply(this);
     myCreateSouthSection = false;
     createDefaultActions();
@@ -354,7 +350,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Allow disabling continuous validation.
+   * Allows disabling continuous validation.
    * When disabled {@link #initValidation()} needs to be invoked after every change of the dialog to validate.
    *
    * @return {@code false} to disable continuous validation
@@ -558,7 +554,7 @@ public abstract class DialogWrapper {
     }
 
     JComponent result = createSouthPanel(leftSideButtons, rightSideButtons, addHelpToLeftSide);
-    if (ApplicationManager.getApplication() != null) {
+    if (ApplicationManager.getApplication() != null && LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       Touchbar.setButtonActions(result, leftSideButtons, rightSideButtons, null);
     }
     return result;
@@ -926,7 +922,6 @@ public abstract class DialogWrapper {
     JRootPane rootPane = getRootPane();
     // if rootPane = null, dialog has already been disposed
     if (rootPane != null) {
-      unregisterKeyboardActions(rootPane);
       if (myActualSize != null && isAutoAdjustable()) {
         setSize(myActualSize.width, myActualSize.height);
       }
@@ -934,6 +929,7 @@ public abstract class DialogWrapper {
     }
   }
 
+  @ApiStatus.Internal
   public static void cleanupRootPane(@Nullable JRootPane rootPane) {
     if (rootPane == null) return;
     // Must be preserved:
@@ -942,7 +938,6 @@ public abstract class DialogWrapper {
     // Must be cleared:
     //   JComponent#clientProperties, contentPane children
     RepaintManager.currentManager(rootPane).removeInvalidComponent(rootPane);
-    unregisterKeyboardActions(rootPane);
     Container contentPane = rootPane.getContentPane();
     if (contentPane != null) contentPane.removeAll();
     clearOwnFields(rootPane, field -> {
@@ -954,23 +949,13 @@ public abstract class DialogWrapper {
     });
   }
 
+  /** @deprecated does nothing */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public static void unregisterKeyboardActions(@Nullable Component rootPane) {
-    int[] flags = {JComponent.WHEN_FOCUSED, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, WHEN_IN_FOCUSED_WINDOW};
-    for (JComponent eachComp : UIUtil.uiTraverser(rootPane).traverse().filter(JComponent.class)) {
-      ActionMap actionMap = eachComp.getActionMap();
-      if (actionMap == null) continue;
-      for (KeyStroke eachStroke : eachComp.getRegisteredKeyStrokes()) {
-        boolean remove = true;
-        for (int i : flags) {
-          Object key = eachComp.getInputMap(i).get(eachStroke);
-          Action action = key == null ? null : actionMap.get(key);
-          if (action instanceof UIResource) remove = false;
-        }
-        if (remove) eachComp.unregisterKeyboardAction(eachStroke);
-      }
-    }
   }
 
+  @ApiStatus.Internal
   public static void cleanupWindowListeners(@Nullable Window window) {
     if (window == null) return;
     SwingUtilities.invokeLater(() -> {
@@ -1260,7 +1245,21 @@ public abstract class DialogWrapper {
       private int myHeight;
 
       @Override
-      public void componentResized(ComponentEvent event) {
+      public void componentResized(ComponentEvent e) {
+        resize(e);
+      }
+
+      @Override
+      public void componentShown(ComponentEvent e) {
+        resize(e);
+      }
+
+      @Override
+      public void componentHidden(ComponentEvent e) {
+        resize(e);
+      }
+
+      private void resize(ComponentEvent event) {
         int height = !myErrorText.isVisible() ? 0 : event.getComponent().getHeight();
         if (height != myHeight) {
           myHeight = height;
@@ -1278,7 +1277,7 @@ public abstract class DialogWrapper {
         }
       }
     };
-    myErrorText.myLabel.addComponentListener(resizeListener);
+    myErrorText.addComponentListener(resizeListener);
     Disposer.register(myDisposable, () -> myErrorText.myLabel.removeComponentListener(resizeListener));
 
     myRoot.setLayout(createRootLayout());
@@ -1311,7 +1310,7 @@ public abstract class DialogWrapper {
         DialogPanel dialogPanel = (DialogPanel)centerPanel;
         myPreferredFocusedComponentFromPanel = dialogPanel.getPreferredFocusedComponent();
         dialogPanel.registerValidators(myDisposable, map -> {
-          setOKActionEnabled(map.isEmpty());
+          setOKActionEnabled(ContainerUtil.and(map.values(), info -> info.okEnabled));
           return Unit.INSTANCE;
         });
         myDialogPanel = dialogPanel;
@@ -1415,7 +1414,7 @@ public abstract class DialogWrapper {
       // null if headless
       JRootPane rootPane = getRootPane();
       myValidationAlarm.addRequest(validateRequest, myValidationDelay,
-                                   ApplicationManager.getApplication() == null ? null :
+                                   (ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) ? null :
                                    rootPane != null ? ModalityState.stateForComponent(rootPane) :
                                    ModalityState.current());
     }
@@ -1669,7 +1668,7 @@ public abstract class DialogWrapper {
     ensureEventDispatchThread();
     registerKeyboardShortcuts();
 
-    Disposable uiParent = ApplicationManager.getApplication();
+    Disposable uiParent = ClientDisposableProvider.getCurrentDisposable();
     if (uiParent != null) { // may be null if no app yet (license agreement)
       Disposer.register(uiParent, myDisposable); // ensure everything is disposed on app quit
     }
@@ -1691,6 +1690,9 @@ public abstract class DialogWrapper {
 
   public void setInitialLocationCallback(@NotNull Computable<? extends Point> callback) {
     myInitialLocationCallback = callback;
+  }
+
+  public void beforeShowCallback() {
   }
 
   private void registerKeyboardShortcuts() {
@@ -1864,7 +1866,7 @@ public abstract class DialogWrapper {
   }
 
   private void recordAction(String name, AWTEvent event) {
-    if (event instanceof KeyEvent && ApplicationManager.getApplication() != null) {
+    if (event instanceof KeyEvent && ApplicationManager.getApplication() != null && LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       //noinspection deprecation
       ActionsCollector.getInstance().record(name, (KeyEvent)event, getClass());
     }
@@ -1995,7 +1997,7 @@ public abstract class DialogWrapper {
         continue;
       }
 
-      Color color = info.warning ? MessageType.WARNING.getTitleForeground() : UIUtil.getErrorForeground();
+      Color color = info.warning ? MessageType.WARNING.getTitleForeground() : NamedColorUtil.getErrorForeground();
       htmlBuilder
         .append(
           HtmlChunk.raw(info.message)

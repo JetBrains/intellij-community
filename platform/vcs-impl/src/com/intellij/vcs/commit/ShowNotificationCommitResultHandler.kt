@@ -33,7 +33,7 @@ class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) :
 
     val allExceptions = committer.exceptions
     if (allExceptions.isEmpty()) {
-      notifier.notifySuccess(COMMIT_FINISHED, "", message)
+      notifier.notifyMinorInfo(COMMIT_FINISHED, "", message)
       return
     }
 

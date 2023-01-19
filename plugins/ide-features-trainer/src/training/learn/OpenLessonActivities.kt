@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -91,7 +92,7 @@ internal object OpenLessonActivities {
       val langSupport = LangManager.getInstance().getLangSupport() ?: throw Exception("Language for learning plugin is not defined")
 
       var learnProject = LearningUiManager.learnProject
-      if (learnProject != null && !isLearningProject(learnProject, langSupport)) {
+      if (learnProject != null && !isLearningProject(learnProject, langSupport.primaryLanguage)) {
         learnProject = null // We are in the project from another course
       }
       LOG.debug("${projectWhereToStartLesson.name}: trying to get cached LearnProject ${learnProject != null}")
@@ -110,7 +111,7 @@ internal object OpenLessonActivities {
           LOG.debug("The lesson opened in user project ${projectWhereToStartLesson.name}")
         }
         learnProject == null || learnProject.isDisposed -> {
-          if (!isLearningProject(projectWhereToStartLesson, langSupport)) {
+          if (!isLearningProject(projectWhereToStartLesson, langSupport.primaryLanguage)) {
             //1. learnProject == null and current project has different name then initLearnProject and register post startup open lesson
             LOG.debug("${projectWhereToStartLesson.name}: 1. learnProject is null or disposed")
             initLearnProject(projectWhereToStartLesson, null) {
@@ -201,7 +202,7 @@ internal object OpenLessonActivities {
     }
 
     if (lesson.lessonType != LessonType.SCRATCH) {
-      ProjectUtils.closeAllEditorsInProject(project)
+      FileEditorManagerEx.getInstanceEx(project).closeOpenedEditors()
     }
 
     if (lesson.lessonType != LessonType.SCRATCH || LearningUiManager.learnProject == project) {
@@ -492,7 +493,7 @@ internal object OpenLessonActivities {
 
   private fun findLearnProjectInOpenedProjects(langSupport: LangSupport): Project? {
     val openProjects = ProjectManager.getInstance().openProjects
-    return openProjects.firstOrNull { isLearningProject(it, langSupport) }
+    return openProjects.firstOrNull { isLearningProject(it, langSupport.primaryLanguage) }
   }
 
 }

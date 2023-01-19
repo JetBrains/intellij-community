@@ -43,8 +43,6 @@ import static java.awt.event.MouseEvent.*;
 /**
  * Current implementation of the dispatcher is intended to filter mouse event addressed to
  * the editor. Also it allows to map middle mouse's button to some action.
- *
- * @author Vladimir Kondratyev
  * @author Konstantin Bulenkov
  */
 public final class IdeMouseEventDispatcher {
@@ -76,7 +74,7 @@ public final class IdeMouseEventDispatcher {
   public IdeMouseEventDispatcher() {
   }
 
-  private static void fillActionsList(@NotNull List<AnAction> actions,
+  private static void fillActionsList(@NotNull List<? super AnAction> actions,
                                       @NotNull Component component,
                                       @NotNull MouseShortcut mouseShortcut,
                                       boolean recursive) {

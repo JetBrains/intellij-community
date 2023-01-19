@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionFinalSorter
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.features.RankingFeaturesOverrides
@@ -81,18 +82,19 @@ class MLSorter : CompletionFinalSorter() {
     val queryLength = lookup.queryLength()
     val prefix = lookup.prefix()
 
-    val element2score = mutableMapOf<LookupElement, Double?>()
-    val elements = items.toList()
-
-    val positionsBefore = elements.withIndex().associate { it.value to it.index }
+    val positionsBefore = items.withIndex().associate { it.value to it.index }
+    val elements = positionsBefore.keys.toList()
+    val element2score = HashMap<LookupElement, Double?>(elements.size)
 
     tryFillFromCache(element2score, elements, queryLength)
-    val itemsForScoring = if (element2score.size == elements.size) emptyList() else elements
+    val itemsForScoring = elements.filter { element2score[it] == null }
     calculateScores(element2score, itemsForScoring, positionsBefore,
                     queryLength, prefix, lookup, lookupStorage, parameters)
     val finalRanking = sortByMlScores(elements, element2score, positionsBefore, lookupStorage, lookup)
 
     lookupStorage.performanceTracker.sortingPerformed(itemsForScoring.size, System.currentTimeMillis() - startedTimestamp)
+
+    LOG.assertTrue(elements.size == finalRanking.size, "MLSorter shouldn't filter items")
 
     return finalRanking
   }
@@ -182,7 +184,7 @@ class MLSorter : CompletionFinalSorter() {
                              element2score: Map<LookupElement, Double?>,
                              positionsBefore: Map<LookupElement, Int>,
                              lookupStorage: MutableLookupStorage,
-                             lookup: LookupImpl): Iterable<LookupElement> {
+                             lookup: LookupImpl): List<LookupElement> {
     val shouldSort = element2score.values.none { it == null } && lookupStorage.shouldReRank()
     if (LOG.isDebugEnabled) {
       LOG.debug("ML sorting in completion used=$shouldSort for language=${lookupStorage.language.id}")
@@ -193,7 +195,7 @@ class MLSorter : CompletionFinalSorter() {
       val decoratingItemsPolicy = lookupStorage.model?.decoratingPolicy() ?: DecoratingItemsPolicy.DISABLED
       val topItemsCount = if (reorderOnlyTopItems) REORDER_ONLY_TOP_K else Int.MAX_VALUE
       return items
-        .filter { it !is MLRankingIgnorable }
+        .filter { !it.isIgnored() }
         .reorderByMLScores(element2score, topItemsCount)
         .insertIgnoredItems(items)
         .markRelevantItemsIfNeeded(element2score, lookup, decoratingItemsPolicy)
@@ -232,11 +234,11 @@ class MLSorter : CompletionFinalSorter() {
     return result
   }
 
-  private fun Iterable<LookupElement>.insertIgnoredItems(allItems: Iterable<LookupElement>): Iterable<LookupElement> {
+  private fun Iterable<LookupElement>.insertIgnoredItems(allItems: Iterable<LookupElement>): List<LookupElement> {
     val sortedItems = this.iterator()
     return allItems.mapNotNull { item ->
       when {
-        item is MLRankingIgnorable -> item
+        item.isIgnored() -> item
         sortedItems.hasNext() -> sortedItems.next()
         else -> null
       }
@@ -246,7 +248,9 @@ class MLSorter : CompletionFinalSorter() {
   private fun Iterable<LookupElement>.removeDuplicatesIfNeeded(): Iterable<LookupElement> =
     if (Registry.`is`("completion.ml.reorder.without.duplicates", false)) this.distinctBy { it.lookupString } else this
 
-  private fun Iterable<LookupElement>.addDiagnosticsIfNeeded(positionsBefore: Map<LookupElement, Int>, reordered: Int, lookup: LookupImpl): Iterable<LookupElement> {
+  private fun List<LookupElement>.addDiagnosticsIfNeeded(positionsBefore: Map<LookupElement, Int>,
+                                                         reordered: Int,
+                                                         lookup: LookupImpl): List<LookupElement> {
     if (CompletionMLRankingSettings.getInstance().isShowDiffEnabled) {
       var positionChanged = false
       this.forEachIndexed { position, element ->
@@ -263,9 +267,9 @@ class MLSorter : CompletionFinalSorter() {
     return this
   }
 
-  private fun Iterable<LookupElement>.markRelevantItemsIfNeeded(element2score: Map<LookupElement, Double?>,
-                                                                lookup: LookupImpl,
-                                                                decoratingItemsPolicy: DecoratingItemsPolicy): Iterable<LookupElement> {
+  private fun List<LookupElement>.markRelevantItemsIfNeeded(element2score: Map<LookupElement, Double?>,
+                                                            lookup: LookupImpl,
+                                                            decoratingItemsPolicy: DecoratingItemsPolicy): List<LookupElement> {
     if (CompletionMLRankingSettings.getInstance().isDecorateRelevantEnabled) {
       val relevantItems = decoratingItemsPolicy.itemsToDecorate(this.map { element2score[it] ?: 0.0 })
       for (index in relevantItems) {
@@ -296,6 +300,18 @@ class MLSorter : CompletionFinalSorter() {
     cachedScore[element] = info
 
     return info.mlRank
+  }
+
+  private fun LookupElement.isIgnored(): Boolean {
+    if (this is MLRankingIgnorable) return true
+
+    var item: LookupElement = this
+    while (item is LookupElementDecorator<*>) {
+      item = item.delegate
+      if (item is MLRankingIgnorable) return true
+    }
+
+    return false
   }
 
   /**

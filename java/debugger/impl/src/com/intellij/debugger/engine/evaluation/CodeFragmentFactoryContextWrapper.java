@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
@@ -71,6 +71,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
     GlobalSearchScope originalResolveScope = codeFragment.getResolveScope();
     codeFragment.forceResolveScope(new DelegatingGlobalSearchScope(GlobalSearchScope.allScope(codeFragment.getProject())) {
       final Comparator<VirtualFile> myScopeComparator = Comparator.comparing(originalResolveScope::contains).thenComparing(super::compare);
+
       @Override
       public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
         // prefer files from the original resolve scope

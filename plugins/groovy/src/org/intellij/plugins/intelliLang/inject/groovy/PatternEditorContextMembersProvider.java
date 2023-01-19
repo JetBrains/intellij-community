@@ -80,7 +80,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
       map = new SoftFactoryMap<>() {
 
         @Override
-        protected PsiFile create(Class[] key) {
+        protected PsiFile create(Class @NotNull [] key) {
           String text = PatternCompilerFactory.getFactory().getPatternCompiler(key).dumpContextDeclarations();
           return PsiFileFactory.getInstance(project).createFileFromText("context.groovy", GroovyFileType.GROOVY_FILE_TYPE, text);
         }

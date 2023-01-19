@@ -9,7 +9,6 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
 import com.intellij.util.Consumer
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
@@ -25,7 +24,8 @@ internal object MarkdownPsiStructureUtil {
 
   @JvmField
   val TRANSPARENT_CONTAINERS = TokenSet.create(
-    MarkdownElementTypes.MARKDOWN_FILE,
+    MarkdownElementTypes.MARKDOWN_FILE_ELEMENT_TYPE,
+    //MarkdownElementTypes.MARKDOWN_FILE,
     MarkdownElementTypes.UNORDERED_LIST,
     MarkdownElementTypes.ORDERED_LIST,
     MarkdownElementTypes.LIST_ITEM,
@@ -53,7 +53,7 @@ internal object MarkdownPsiStructureUtil {
    * @return true if element is on the file top level.
    */
   internal fun ASTNode.isTopLevel(): Boolean {
-    return treeParent?.hasType(MarkdownElementTypes.MARKDOWN_FILE) == true
+    return treeParent?.hasType(MarkdownElementTypes.MARKDOWN_FILE_ELEMENT_TYPE) == true
   }
 
   @JvmStatic
@@ -79,7 +79,7 @@ internal object MarkdownPsiStructureUtil {
       return
     }
     val structureContainer = when (element) {
-      is MarkdownFile -> findFirstMarkdownChild(element)
+      is MarkdownFile -> element
       else -> element.parentOfType(withSelf = true, TRANSPARENT_CONTAINERS)
     }
     if (structureContainer == null) {
@@ -96,10 +96,6 @@ internal object MarkdownPsiStructureUtil {
       }
       else -> processHeader(structureContainer, null, null, consumer, nextHeaderConsumer)
     }
-  }
-
-  private fun findFirstMarkdownChild(element: PsiElement): PsiElement? {
-    return element.children().firstOrNull { it.language.isMarkdownLanguage() }
   }
 
   private fun processHeader(

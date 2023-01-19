@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
@@ -44,9 +44,8 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
 
     init {
         val messageBusConnection = project.messageBus.connect(this)
-        WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(
-            messageBusConnection,
-            object : WorkspaceModelChangeListener {
+        messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED,
+                                       object : WorkspaceModelChangeListener {
                 override fun changed(event: VersionedStorageChange) {
                     val hasChanges = event.getChanges(FacetEntity::class.java).any { change ->
                         change.facetTypes.any { it == KotlinFacetType.ID }
@@ -57,8 +56,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
                 }
             }
         )
-        project.messageBus.connect(this).subscribe(
-            KotlinCompilerSettingsListener.TOPIC,
+        messageBusConnection.subscribe(KotlinCompilerSettingsListener.TOPIC,
             object : KotlinCompilerSettingsListener {
                 override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
                     pluginsCacheCachedValue.drop()

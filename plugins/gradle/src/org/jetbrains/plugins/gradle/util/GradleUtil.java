@@ -5,6 +5,9 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.project.ContentRootData;
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl;
@@ -23,7 +26,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.gradle.GradleScript;
-import org.gradle.util.GUtil;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.WrapperConfiguration;
 import org.gradle.wrapper.WrapperExecutor;
@@ -38,6 +40,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -46,17 +49,16 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.io.FileUtil.isAncestor;
+import static com.intellij.openapi.util.io.FileUtil.toCanonicalPath;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION;
 
 /**
  * Holds miscellaneous utility methods.
- *
- * @author Denis Zhdanov
  */
 public final class GradleUtil {
   private static final String LAST_USED_GRADLE_HOME_KEY = "last.used.gradle.home";
@@ -104,8 +106,10 @@ public final class GradleUtil {
     if (wrapperPropertiesFile == null) return null;
 
     final WrapperConfiguration wrapperConfiguration = new WrapperConfiguration();
-    try {
-      final Properties props = GUtil.loadProperties(Files.newInputStream(wrapperPropertiesFile));
+
+    try (Reader wrapperPropertiesReader = Files.newBufferedReader(wrapperPropertiesFile)) {
+      final Properties props = new Properties();
+      props.load(wrapperPropertiesReader);
       String distributionUrl = props.getProperty(WrapperExecutor.DISTRIBUTION_URL_PROPERTY);
       if (isEmpty(distributionUrl)) {
         throw new ExternalSystemException("Wrapper 'distributionUrl' property does not exist!");
@@ -345,5 +349,36 @@ public final class GradleUtil {
     File data = dataNode.getData().getBuildScriptSource();
     if (data == null) return null;
     return VfsUtil.findFileByIoFile(data, true);
+  }
+
+  public static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
+    ContentRootData excludedContentRootData;
+    DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
+    if (contentRootDataDataNode == null || !isContentRootAncestor(contentRootDataDataNode.getData(), ideaOutDir)) {
+      excludedContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, ideaOutDir.getPath());
+      ideModule.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData);
+    }
+    else {
+      excludedContentRootData = contentRootDataDataNode.getData();
+    }
+
+    excludedContentRootData.storePath(ExternalSystemSourceType.EXCLUDED, ideaOutDir.getPath());
+  }
+
+  public static void unexcludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
+    DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
+
+    if (contentRootDataDataNode != null && isContentRootAncestor(contentRootDataDataNode.getData(), ideaOutDir)) {
+          ContentRootData excludedContentRootData;
+          excludedContentRootData = contentRootDataDataNode.getData();
+          excludedContentRootData.getPaths(ExternalSystemSourceType.EXCLUDED).removeIf(sourceRoot -> {
+            return sourceRoot.getPath().equals(ideaOutDir.getPath()); });
+        }
+  }
+
+  private static boolean isContentRootAncestor(@NotNull ContentRootData data, @NotNull File ideaOutDir) {
+    var canonicalIdeOutPath = toCanonicalPath(ideaOutDir.getPath());
+    var canonicalRootPath = data.getRootPath();
+    return isAncestor(canonicalRootPath, canonicalIdeOutPath, false);
   }
 }

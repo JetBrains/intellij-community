@@ -17,9 +17,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 final class FoldLinesLikeThis extends DumbAwareAction {
 
   private static @Nullable String getSingleLineSelection(@NotNull Editor editor) {

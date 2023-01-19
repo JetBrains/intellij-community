@@ -28,6 +28,7 @@ internal class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLog) 
         thisLogger().error("Disabling indexing for ${rootsForIndexing.map { it.name }} due to corruption " +
                           "(count=$count).", t)
         rootsForIndexing.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
+        projectLog.recreateLog(logManager, true)
         return
       }
     }

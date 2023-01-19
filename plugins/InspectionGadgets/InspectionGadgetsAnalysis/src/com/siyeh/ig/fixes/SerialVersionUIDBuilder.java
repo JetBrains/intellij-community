@@ -104,17 +104,15 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
 
     staticInitializers = new ArrayList<>(1);
     final PsiClassInitializer[] initializers = clazz.getInitializers();
-    if (initializers.length > 0) {
-      for (final PsiClassInitializer initializer : initializers) {
-        final PsiModifierList modifierList =
-          initializer.getModifierList();
-        if (modifierList != null &&
-            modifierList.hasModifierProperty(PsiModifier.STATIC)) {
-          final MemberSignature initializerSignature =
-            MemberSignature.getStaticInitializerMemberSignature();
-          staticInitializers.add(initializerSignature);
-          break;
-        }
+    for (final PsiClassInitializer initializer : initializers) {
+      final PsiModifierList modifierList =
+        initializer.getModifierList();
+      if (modifierList != null &&
+          modifierList.hasModifierProperty(PsiModifier.STATIC)) {
+        final MemberSignature initializerSignature =
+          MemberSignature.getStaticInitializerMemberSignature();
+        staticInitializers.add(initializerSignature);
+        break;
       }
     }
     if (staticInitializers.isEmpty()) {

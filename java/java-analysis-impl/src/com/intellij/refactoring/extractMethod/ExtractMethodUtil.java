@@ -15,9 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author ven
- */
 public final class ExtractMethodUtil {
   private static final Logger LOG = Logger.getInstance(ExtractMethodUtil.class);
   private static final Key<PsiMethod> RESOLVE_TARGET_KEY = Key.create("RESOLVE_TARGET_KEY");

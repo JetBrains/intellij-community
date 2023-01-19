@@ -54,6 +54,7 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
 
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = actionGroup != null
+    e.presentation.isEnabled = e.isFromActionToolbar
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {

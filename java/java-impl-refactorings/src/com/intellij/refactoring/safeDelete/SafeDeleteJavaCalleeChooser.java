@@ -31,15 +31,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement> {
-  SafeDeleteJavaCalleeChooser(PsiMember member,
-                                     Project project,
-                                     ArrayList<UsageInfo> result) {
+  SafeDeleteJavaCalleeChooser(@NotNull PsiMember member,
+                              @NotNull Project project,
+                              @NotNull List<? super UsageInfo> result) {
     super(member, project, JavaRefactoringBundle.message("safe.delete.select.members.to.propagate.dialog.title"), null, "dummy." + JavaFileType.INSTANCE.getDefaultExtension(), members -> result.addAll(ContainerUtil.map(members, m -> {
       return new SafeDeleteReferenceJavaDeleteUsageInfo(m, m, true);
     })));
   }
 
-  protected abstract ArrayList<SafeDeleteMemberCalleeUsageInfo> getTopLevelItems();
+  protected abstract @NotNull List<SafeDeleteMemberCalleeUsageInfo> getTopLevelItems();
 
   @Override
   protected @NlsContexts.Label String getEmptyCallerText() {
@@ -108,8 +108,10 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
         }
       });
 
+      PsiFile containingFile = body.getContainingFile();
       return elementsToCheck
         .stream()
+        .filter(m -> m != containingFile)
         .filter(m -> !PsiTreeUtil.isAncestor(psiMember, m, true))
         .filter(m -> !(m instanceof PsiMember) || containingClass != null && containingClass.equals(((PsiMember)m).getContainingClass()) && !psiMember.equals(m))
         .filter(m -> !(m instanceof PsiMethod) || ((PsiMethod)m).findDeepestSuperMethods().length == 0)
@@ -160,7 +162,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
     protected void customizeRendererText(ColoredTreeCellRenderer renderer) {
       PsiElement member = getMember();
       if (member instanceof PsiMember) {
-        JavaMemberNode.customizeRendererText(renderer, ((PsiMember)member), isEnabled());
+        JavaMemberNode.customizeRendererText(renderer, (PsiMember)member, isEnabled());
       }
       else {
         renderer.append(ElementDescriptionUtil.getElementDescription(member, UsageViewShortNameLocation.INSTANCE));

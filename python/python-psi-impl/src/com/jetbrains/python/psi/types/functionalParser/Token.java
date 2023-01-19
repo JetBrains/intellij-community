@@ -18,9 +18,6 @@ package com.jetbrains.python.psi.types.functionalParser;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author vlan
-*/
 public class Token<T> {
   @NotNull private final CharSequence myText;
   @NotNull private final TextRange myRange;

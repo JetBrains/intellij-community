@@ -66,6 +66,14 @@ public class JavaSelectWordTest extends SelectWordTestBase {
     doTest("java");
   }
 
+  public void testCallMultiline() {
+    doTest("java");
+  }
+
+  public void testCallMultiline2() {
+    doTest("java");
+  }
+
   public void testBlock1() {
     doTest("java");
   }

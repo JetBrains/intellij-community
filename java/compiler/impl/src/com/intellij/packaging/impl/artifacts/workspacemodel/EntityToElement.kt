@@ -13,9 +13,10 @@ import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.impl.artifacts.UnknownPackagingElementTypeException
 import com.intellij.packaging.impl.elements.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.TimeUnit
@@ -36,6 +37,7 @@ internal fun CompositePackagingElementEntity.toCompositeElement(
   project: Project,
   storage: VersionedEntityStorage,
   addToMapping: Boolean = true,
+  mappingsCollector: MutableList<Pair<PackagingElementEntity, PackagingElement<*>>> = ArrayList(),
 ): CompositePackagingElement<*> {
   rwLock.readLock().lock()
 
@@ -58,21 +60,21 @@ internal fun CompositePackagingElementEntity.toCompositeElement(
         val element = when (this) {
           is DirectoryPackagingElementEntity -> {
             val element = DirectoryPackagingElement(this.directoryName)
-            this.children.pushTo(element, project, storage)
+            this.children.pushTo(element, project, storage, mappingsCollector)
             element
           }
           is ArchivePackagingElementEntity -> {
             val element = ArchivePackagingElement(this.fileName)
-            this.children.pushTo(element, project, storage)
+            this.children.pushTo(element, project, storage, mappingsCollector)
             element
           }
           is ArtifactRootElementEntity -> {
             val element = ArtifactRootElementImpl()
-            this.children.pushTo(element, project, storage)
+            this.children.pushTo(element, project, storage, mappingsCollector)
             element
           }
           is CustomPackagingElementEntity -> {
-            val unpacked = unpackCustomElement(storage, project)
+            val unpacked = unpackCustomElement(storage, project, mappingsCollector)
             if (unpacked !is CompositePackagingElement<*>) {
               error("Expected composite packaging element")
             }
@@ -80,16 +82,21 @@ internal fun CompositePackagingElementEntity.toCompositeElement(
           }
           else -> unknownElement()
         }
+        mappingsCollector.add(this to element)
         if (addToMapping) {
           val storageBase = storage.base
           if (storageBase is MutableEntityStorage) {
             val mutableMapping = storageBase.mutableElements
-            mutableMapping.addMapping(this, element)
+            for ((entity, mapping) in mappingsCollector) {
+              mutableMapping.addMapping(entity, mapping)
+            }
           }
           else {
-            WorkspaceModel.getInstance(project).updateProjectModelSilent {
+            (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Apply packaging elements mappings") {
               val mutableMapping = it.mutableElements
-              mutableMapping.addMapping(this, element)
+              for ((entity, mapping) in mappingsCollector) {
+                mutableMapping.addMapping(entity, mapping)
+              }
             }
           }
         }
@@ -107,7 +114,12 @@ internal fun CompositePackagingElementEntity.toCompositeElement(
   return existing as CompositePackagingElement<*>
 }
 
-fun PackagingElementEntity.toElement(project: Project, storage: VersionedEntityStorage): PackagingElement<*> {
+fun PackagingElementEntity.toElement(
+  project: Project,
+  storage: VersionedEntityStorage,
+  addToMapping: Boolean = true,
+  mappingsCollector: MutableList<Pair<PackagingElementEntity, PackagingElement<*>>> = ArrayList(),
+): PackagingElement<*> {
   rwLock.readLock().lock()
 
   var existing = try {
@@ -186,9 +198,9 @@ fun PackagingElementEntity.toElement(project: Project, storage: VersionedEntityS
             val directory = this.filePath
             DirectoryCopyPackagingElement(JpsPathUtil.urlToPath(directory.url))
           }
-          is ArchivePackagingElementEntity -> this.toCompositeElement(project, storage, false)
-          is DirectoryPackagingElementEntity -> this.toCompositeElement(project, storage, false)
-          is ArtifactRootElementEntity -> this.toCompositeElement(project, storage, false)
+          is ArchivePackagingElementEntity -> this.toCompositeElement(project, storage, false, mappingsCollector)
+          is DirectoryPackagingElementEntity -> this.toCompositeElement(project, storage, false, mappingsCollector)
+          is ArtifactRootElementEntity -> this.toCompositeElement(project, storage, false, mappingsCollector)
           is LibraryFilesPackagingElementEntity -> {
             val mapping = storage.base.getExternalMapping<PackagingElement<*>>("intellij.artifacts.packaging.elements")
             val data = mapping.getDataByEntity(this)
@@ -206,19 +218,26 @@ fun PackagingElementEntity.toElement(project: Project, storage: VersionedEntityS
               LibraryPackagingElement()
             }
           }
-          is CustomPackagingElementEntity -> unpackCustomElement(storage, project)
+          is CustomPackagingElementEntity -> unpackCustomElement(storage, project, mappingsCollector)
           else -> unknownElement()
         }
 
-        val storageBase = storage.base
-        if (storageBase is MutableEntityStorage) {
-          val mutableMapping = storageBase.mutableElements
-          mutableMapping.addIfAbsent(this, element)
-        }
-        else {
-          WorkspaceModel.getInstance(project).updateProjectModelSilent {
-            val mutableMapping = it.mutableElements
-            mutableMapping.addIfAbsent(this, element)
+        mappingsCollector.add(this to element)
+        if (addToMapping) {
+          val storageBase = storage.base
+          if (storageBase is MutableEntityStorage) {
+            val mutableMapping = storageBase.mutableElements
+            for ((entity, mapping) in mappingsCollector) {
+              mutableMapping.addMapping(entity, mapping)
+            }
+          }
+          else {
+            (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Apply packaging elements mappings (toElement)") {
+              val mutableMapping = it.mutableElements
+              for ((entity, mapping) in mappingsCollector) {
+                mutableMapping.addMapping(entity, mapping)
+              }
+            }
           }
         }
         existing = element
@@ -235,8 +254,11 @@ fun PackagingElementEntity.toElement(project: Project, storage: VersionedEntityS
   return existing as PackagingElement<*>
 }
 
-private fun CustomPackagingElementEntity.unpackCustomElement(storage: VersionedEntityStorage,
-                                                             project: Project): PackagingElement<*> {
+private fun CustomPackagingElementEntity.unpackCustomElement(
+  storage: VersionedEntityStorage,
+  project: Project,
+  mappingsCollector: MutableList<Pair<PackagingElementEntity, PackagingElement<*>>>,
+): PackagingElement<*> {
   val mapping = storage.base.getExternalMapping<PackagingElement<*>>("intellij.artifacts.packaging.elements")
   val data = mapping.getDataByEntity(this)
   if (data != null) {
@@ -256,7 +278,7 @@ private fun CustomPackagingElementEntity.unpackCustomElement(storage: VersionedE
     packagingElement.loadState(state)
   }
   if (packagingElement is CompositePackagingElement<*>) {
-    this.children.pushTo(packagingElement, project, storage)
+    this.children.pushTo(packagingElement, project, storage, mappingsCollector)
   }
   return packagingElement
 }
@@ -265,10 +287,13 @@ private fun PackagingElementEntity.unknownElement(): Nothing {
   error("Unknown packaging element entity: $this")
 }
 
-private fun List<PackagingElementEntity>.pushTo(element: CompositePackagingElement<*>,
-                                                project: Project,
-                                                storage: VersionedEntityStorage) {
-  val children = this.map { it.toElement(project, storage) }.toList()
+private fun List<PackagingElementEntity>.pushTo(
+  element: CompositePackagingElement<*>,
+  project: Project,
+  storage: VersionedEntityStorage,
+  mappingsCollector: MutableList<Pair<PackagingElementEntity, PackagingElement<*>>>,
+) {
+  val children = this.map { it.toElement(project, storage, addToMapping = false, mappingsCollector = mappingsCollector) }.toList()
   children.reversed().forEach { element.addFirstChild(it) }
 }
 

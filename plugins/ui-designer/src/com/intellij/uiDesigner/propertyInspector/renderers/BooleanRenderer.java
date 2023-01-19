@@ -7,10 +7,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class BooleanRenderer extends JCheckBox implements PropertyRenderer<Boolean> {
   @Override
   public JComponent getComponent(final RadRootContainer rootContainer, final Boolean value, final boolean selected, final boolean hasFocus){

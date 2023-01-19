@@ -33,6 +33,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
   var showLibraryContents = ProjectViewSettings.Immutable.DEFAULT.isShowLibraryContents
   var showMembers = ProjectViewSettings.Immutable.DEFAULT.isShowMembers
   var showModules = ProjectViewSettings.Immutable.DEFAULT.isShowModules
+  var showScratchesAndConsoles = ProjectViewSettings.Immutable.DEFAULT.isShowScratchesAndConsoles
   var showURL = ProjectViewSettings.Immutable.DEFAULT.isShowURL
   var showVisibilityIcons = ProjectViewSettings.Immutable.DEFAULT.isShowVisibilityIcons
   var sortByType = false
@@ -55,6 +56,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
     showLibraryContents = ProjectViewSharedSettings.instance.showLibraryContents
     showMembers = ProjectViewSharedSettings.instance.showMembers
     showModules = ProjectViewSharedSettings.instance.showModules
+    showScratchesAndConsoles = ProjectViewSharedSettings.instance.showScratchesAndConsoles
     showURL = Registry.`is`("project.tree.structure.show.url")
     showVisibilityIcons = ProjectViewSharedSettings.instance.showVisibilityIcons
     sortByType = ProjectViewSharedSettings.instance.sortByType

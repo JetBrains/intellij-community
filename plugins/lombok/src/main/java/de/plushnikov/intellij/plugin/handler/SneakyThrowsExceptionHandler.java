@@ -38,12 +38,12 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
     return false;
   }
 
-  private boolean isHandledByTryCatch(@NotNull PsiClassType exceptionType, PsiTryStatement topElement) {
+  private static boolean isHandledByTryCatch(@NotNull PsiClassType exceptionType, PsiTryStatement topElement) {
     List<PsiType> caughtExceptions = ContainerUtil.map(topElement.getCatchBlockParameters(), PsiParameter::getType);
     return isExceptionHandled(exceptionType, caughtExceptions);
   }
 
-  private boolean isExceptionHandled(@NotNull PsiModifierListOwner psiModifierListOwner, PsiClassType exceptionClassType) {
+  private static boolean isExceptionHandled(@NotNull PsiModifierListOwner psiModifierListOwner, PsiClassType exceptionClassType) {
     final PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiModifierListOwner, LombokClassNames.SNEAKY_THROWS);
     if (psiAnnotation == null) {
       return false;
@@ -56,7 +56,7 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
       || isExceptionHandled(exceptionClassType, sneakedExceptionTypes);
   }
 
-  private boolean isExceptionHandled(@NotNull PsiClassType exceptionClassType, @NotNull Collection<PsiType> sneakedExceptionTypes) {
+  private static boolean isExceptionHandled(@NotNull PsiClassType exceptionClassType, @NotNull Collection<PsiType> sneakedExceptionTypes) {
     for (PsiType sneakedExceptionType : sneakedExceptionTypes) {
       if (sneakedExceptionType.equalsToText(JAVA_LANG_THROWABLE) || sneakedExceptionType.equals(exceptionClassType)) {
         return true;

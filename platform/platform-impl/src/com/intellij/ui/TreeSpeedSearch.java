@@ -22,6 +22,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.function.Function;
 
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
@@ -29,38 +30,72 @@ import static javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
 public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   protected boolean myCanExpand;
 
-  private static final Convertor<TreePath, String> TO_STRING = path -> path.getLastPathComponent().toString();
-  private final Convertor<? super TreePath, String> myToStringConvertor;
+  private static final Function<TreePath, String> TO_STRING = path -> path.getLastPathComponent().toString();
+
+  private final @NotNull Function<? super TreePath, String> myPresentableStringFunction;
+
+  /**
+   * @deprecated use {@link #NODE_PRESENTATION_FUNCTION} instead.
+   */
+  @Deprecated
   public static final Convertor<TreePath, String> NODE_DESCRIPTOR_TOSTRING = path -> {
     NodeDescriptor descriptor = TreeUtil.getLastUserObject(NodeDescriptor.class, path);
     if (descriptor != null) return descriptor.toString();
-    return TO_STRING.convert(path);
+    return TO_STRING.apply(path);
   };
 
-  public TreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> toStringConvertor) {
-    this(tree, toStringConvertor, false);
-  }
+  public static final Function<TreePath, String> NODE_PRESENTATION_FUNCTION = path -> {
+    NodeDescriptor<?> descriptor = TreeUtil.getLastUserObject(NodeDescriptor.class, path);
+    return descriptor != null ? descriptor.toString() : TO_STRING.apply(path);
+  };
+
 
   public TreeSpeedSearch(JTree tree) {
-    this(tree, TO_STRING);
+    this(tree, false, TO_STRING);
   }
 
-  public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString) {
-    this(tree, toString, false);
-  }
-
-  public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString, boolean canExpand) {
-    this((JTree)tree, toString, canExpand);
-  }
-
-  public TreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> toString, boolean canExpand) {
+  public TreeSpeedSearch(@NotNull JTree tree, boolean canExpand, @NotNull Function<? super TreePath, String> presentableStringFunction) {
     super(tree);
     setComparator(new SpeedSearchComparator(false, true));
-    myToStringConvertor = toString;
+    myPresentableStringFunction = presentableStringFunction;
     myCanExpand = canExpand;
 
     new MySelectAllAction(tree, this).registerCustomShortcutSet(tree, null);
   }
+
+
+  /**
+   * @deprecated use the constructor with Function.
+   */
+  @Deprecated
+  public TreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> toString) {
+    this(tree, false, toString.asFunction());
+  }
+
+  /**
+   * @deprecated use the constructor with Function.
+   */
+  @Deprecated
+  public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString) {
+    this(tree, false, toString.asFunction());
+  }
+
+  /**
+   * @deprecated use the constructor with Function.
+   */
+  @Deprecated
+  public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString, boolean canExpand) {
+    this(tree, canExpand, toString.asFunction());
+  }
+
+  /**
+   * @deprecated use the constructor with Function.
+   */
+  @Deprecated
+  public TreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> toString, boolean canExpand) {
+    this (tree, canExpand, toString.asFunction());
+  }
+
 
   public void setCanExpand(boolean canExpand) {
     myCanExpand = canExpand;
@@ -114,8 +149,8 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   @Override
   protected String getElementText(Object element) {
     TreePath path = (TreePath)element;
-    String string = myToStringConvertor.convert(path);
-    if (string == null) return TO_STRING.convert(path);
+    String string = myPresentableStringFunction.apply(path);
+    if (string == null) return TO_STRING.apply(path);
     return string;
   }
 

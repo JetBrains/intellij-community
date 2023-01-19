@@ -5,6 +5,7 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.options.ConfigurationException;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.Refactoring;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -175,13 +177,13 @@ public abstract class RefactoringDialog extends DialogWrapper {
   protected void validateButtons() {
     boolean enabled = true;
     try {
-      setErrorText(null);
       canRun();
     }
     catch (ConfigurationException e) {
       enabled = false;
       setErrorText(e.getMessage());
     }
+    if (enabled) setErrorText(null);
     getPreviewAction().setEnabled(enabled);
     getRefactorAction().setEnabled(enabled);
   }
@@ -191,7 +193,6 @@ public abstract class RefactoringDialog extends DialogWrapper {
   }
 
   protected void validateButtonsAsync(@NotNull ModalityState modalityState) {
-    setErrorText(null);
     ReadAction.nonBlocking(() -> {
         try {
           canRun();
@@ -201,9 +202,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
           return e;
         }
       }).finishOnUiThread(modalityState, e -> {
-        if (e != null) {
-          setErrorText(e.getMessage());
-        }
+        setErrorText(e == null ? null : e.getMessage());
         getPreviewAction().setEnabled(e == null);
         getRefactorAction().setEnabled(e == null);
       })
@@ -248,7 +247,9 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      doRefactorAction();
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        doRefactorAction();
+      }
     }
   }
 

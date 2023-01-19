@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.pom.java.LanguageLevel;
@@ -353,7 +354,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
             if (element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType())) return null;
             if (PsiUtil.getLanguageLevel(element).isLessThan(LanguageLevel.JDK_19_PREVIEW) &&
                 element instanceof PsiPattern && expressionType != null &&
-                JavaPsiPatternUtil.isTotalForType(element, expressionType)) {
+                JavaPsiPatternUtil.isUnconditionalForType(element, expressionType)) {
               return null;
             }
           }
@@ -579,19 +580,19 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       return myFromUnknown;
     }
 
-    public boolean isAlwaysNull(@NotNull Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
+    public boolean isAlwaysNull(boolean ignoreAssertions) {
       PsiExpression expression = PsiUtil.skipParenthesizedExprDown(getDereferencedExpression());
       return expression != null &&
-             (ExpressionUtils.isNullLiteral(expression) || expressions.get(expression) == DataFlowInspectionBase.ConstantResult.NULL);
+             (ExpressionUtils.isNullLiteral(expression) || CommonDataflow.getDfType(expression, ignoreAssertions) == DfTypes.NULL);
     }
 
     @NotNull
-    public @InspectionMessage String getMessage(@NotNull Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
+    public @InspectionMessage String getMessage(boolean ignoreAssertions) {
       if (myKind.myAlwaysNullMessage == null || myKind.myNormalMessage == null) {
         throw new IllegalStateException("This problem kind has no message associated: " + myKind);
       }
       String suffix = myFromUnknown ? JavaAnalysisBundle.message("dataflow.message.unknown.nullability") : "";
-      Supplier<@Nls String> msg = isAlwaysNull(expressions) ? myKind.myAlwaysNullMessage : myKind.myNormalMessage;
+      Supplier<@Nls String> msg = isAlwaysNull(ignoreAssertions) ? myKind.myAlwaysNullMessage : myKind.myNormalMessage;
       return msg.get() + suffix;
     }
 

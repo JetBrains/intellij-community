@@ -21,9 +21,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.FileContainerDe
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDescription
 import com.intellij.workspaceModel.ide.toExternalSource
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
 import java.io.StringReader
 
 class LibraryStateSnapshot(
@@ -33,8 +33,7 @@ class LibraryStateSnapshot(
   val parentDisposable: Disposable) {
   private val roots = collectFiles(libraryEntity)
   private val excludedRootsContainer = if (libraryEntity.excludedRoots.isNotEmpty()) {
-    FileContainerDescription(libraryEntity.excludedRoots,
-                             emptyList())
+    FileContainerDescription(libraryEntity.excludedRoots.map { it.url }, emptyList())
   }
   else null
 
@@ -63,7 +62,7 @@ class LibraryStateSnapshot(
   }
 
   val name: String?
-    get() = LibraryNameGenerator.getLegacyLibraryName(libraryEntity.persistentId)
+    get() = LibraryNameGenerator.getLegacyLibraryName(libraryEntity.symbolicId)
 
   val module: Module?
     get() = (libraryTable as? ModuleLibraryTableBridge)?.module

@@ -55,7 +55,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   public abstract @PopupTitle String getCaption(int size);
 
   @Nullable
-  protected abstract Usage createUsage(T element);
+  protected abstract Usage createUsage(@NotNull T element);
 
   protected void replaceModel(@NotNull List<? extends T> data) {
     myUpdater.replaceModel(data);
@@ -79,7 +79,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
    * @deprecated Use {@link #BackgroundUpdaterTaskBase(Project, String, Comparator)} and {@link #updateComponent(T)} instead
    */
   @Deprecated(forRemoval = true)
-  public boolean updateComponent(@NotNull T element, @Nullable Comparator comparator) {
+  protected boolean updateComponent(@NotNull T element, @Nullable Comparator comparator) {
     if (tryAppendUsage(element)) return true;
     if (myCanceled) return false;
 

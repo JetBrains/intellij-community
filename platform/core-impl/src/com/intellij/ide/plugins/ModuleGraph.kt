@@ -3,9 +3,9 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.util.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.Graph
-import com.intellij.util.lang.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -193,7 +193,7 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
       // can be such requirements removed or not
       if (rootDescriptor === dep) {
         if (rootDescriptor.pluginId != PluginManagerCore.CORE_ID) {
-          PluginManagerCore.getLogger().error("Plugin $rootDescriptor depends on self")
+          PluginManagerCore.getLogger().error("Plugin $rootDescriptor depends on self (${dependency})")
         }
       }
       else {

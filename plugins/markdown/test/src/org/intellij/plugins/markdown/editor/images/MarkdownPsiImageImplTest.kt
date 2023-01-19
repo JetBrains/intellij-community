@@ -49,8 +49,7 @@ class MarkdownPsiImageImplTest: LightPlatformCodeInsightTestCase() {
 
   private fun doTest(text: String, description: String? = null, destination: String? = null, title: String? = null) {
     configureFromFileText("some.md", text)
-    val root = file.firstChild!!
-    val image = root.firstChild!!.firstChild!!
+    val image = file.firstChild!!.firstChild!!
     assertInstanceOf(image, MarkdownImage::class.java)
     image as MarkdownImage
     assertEquals(description, image.collectLinkDescriptionText())

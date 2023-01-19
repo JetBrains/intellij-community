@@ -11,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents the type parameter of a generic class, interface, method or constructor.
- *
- * @author dsl
  */
 public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner, JvmTypeParameter {
   /**

@@ -10,9 +10,6 @@ import org.jetbrains.idea.svn.api.SvnClient;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface UpgradeClient extends SvnClient {
 
   void upgrade(@NotNull File path, @NotNull WorkingCopyFormat format, @Nullable ProgressTracker handler) throws VcsException;

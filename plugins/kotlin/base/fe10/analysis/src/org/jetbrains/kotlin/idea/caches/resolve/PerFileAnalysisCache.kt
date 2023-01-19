@@ -34,10 +34,10 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.caches.trackers.clearInBlockModifications
 import org.jetbrains.kotlin.idea.caches.trackers.inBlockModifications
+import org.jetbrains.kotlin.idea.caches.trackers.removeInBlockModifications
 import org.jetbrains.kotlin.idea.compiler.IdeMainFunctionDetectorFactory
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
 import org.jetbrains.kotlin.idea.project.IdeaModuleStructureOracle
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.*
@@ -189,7 +189,7 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
                         val newResult = analyze(inBlockModification, trace, callback)
                         analysisResult = wrapResult(result, newResult, trace)
                     }
-                    file.clearInBlockModifications()
+                    file.removeInBlockModifications(inBlockModifications)
 
                     analysisResult
                 }
@@ -452,6 +452,13 @@ private class StackedCompositeBindingContextTrace(
 
         override fun addOwnDataTo(trace: BindingTrace, commitDiagnostics: Boolean) = throw UnsupportedOperationException()
     }
+
+    override fun <K : Any?, V : Any?> get(slice: ReadOnlySlice<K, V>, key: K): V? =
+        if (slice == BindingContext.ANNOTATION) {
+            selfGet(slice, key) ?: parentContext.get(slice, key)
+        } else {
+            super.get(slice, key)
+        }
 
     override fun clear() {
         super.clear()

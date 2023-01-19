@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -21,12 +21,11 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM
 
 @State(name = "Vcs.Log.App.Settings", storages = @Storage("vcs.xml"), category = SettingsCategory.TOOLS)
 public final class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
-  @NotNull private final EventDispatcher<PropertiesChangeListener> myEventDispatcher = EventDispatcher.create(PropertiesChangeListener.class);
+  private final @NotNull EventDispatcher<PropertiesChangeListener> myEventDispatcher = EventDispatcher.create(PropertiesChangeListener.class);
   private State myState = new State();
 
-  @Nullable
   @Override
-  public State getState() {
+  public @Nullable State getState() {
     return myState;
   }
 
@@ -36,9 +35,8 @@ public final class VcsLogApplicationSettings implements PersistentStateComponent
   }
 
   @SuppressWarnings("unchecked")
-  @NotNull
   @Override
-  public <T> T get(@NotNull VcsLogUiProperty<T> property) {
+  public @NotNull <T> T get(@NotNull VcsLogUiProperty<T> property) {
     if (property instanceof CustomBooleanProperty) {
       Boolean value = myState.CUSTOM_BOOLEAN_PROPERTIES.get(property.getName());
       if (value == null) {
@@ -158,8 +156,7 @@ public final class VcsLogApplicationSettings implements PersistentStateComponent
       super(name);
     }
 
-    @NotNull
-    public Boolean defaultValue() {
+    public @NotNull Boolean defaultValue() {
       return Boolean.FALSE;
     }
   }

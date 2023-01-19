@@ -39,7 +39,8 @@ public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWri
       File dir = clearIndex ? ourInstance.myIndex.getIndicesDir() : null;
       try {
         ourInstance.close();
-      } finally {
+      }
+      finally {
         ourInstance = null;
         if (dir != null) {
           FileUtil.delete(dir);
@@ -65,24 +66,27 @@ public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWri
         CompilerReferenceIndex.removeIndexFiles(buildDir);
         return;
       }
+
+      boolean cleanupOk = true;
       if (isRebuild) {
         CompilerReferenceIndex.removeIndexFiles(buildDir);
-      } else if (CompilerReferenceIndex.versionDiffers(buildDir, JavaCompilerIndices.VERSION)) {
+        cleanupOk = !CompilerReferenceIndex.exists(buildDir);
+      }
+      else if (CompilerReferenceIndex.versionDiffers(buildDir, JavaCompilerIndices.VERSION)) {
         CompilerReferenceIndex.removeIndexFiles(buildDir);
         if ((ourInitAttempt++ == 0 && areAllJavaModulesAffected(context))) {
           throw new BuildDataCorruptedException("backward reference index will be updated to actual version");
-        } else {
-          // do not request a rebuild if a project is affected incompletely and version is changed, just disable indices
         }
+        // do not request a rebuild if a project is affected incompletely and version is changed, just disable indices
+        return;
       }
 
-      if (CompilerReferenceIndex.exists(buildDir) || isRebuild) {
+      if (cleanupOk) {
         ourInstance = new JavaBackwardReferenceIndexWriter(new JavaCompilerBackwardReferenceIndex(buildDir, dataManager.getRelativizer(), false));
-        ShutDownTracker.getInstance().registerShutdownTask(() -> {
-          closeIfNeeded(false);
-        });
+        ShutDownTracker.getInstance().registerShutdownTask(() -> closeIfNeeded(false));
       }
-    } else {
+    }
+    else {
       CompilerReferenceIndex.removeIndexFiles(buildDir);
     }
   }

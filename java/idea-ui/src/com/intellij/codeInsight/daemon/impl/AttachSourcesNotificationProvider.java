@@ -49,6 +49,7 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -80,10 +81,10 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
   }
 
   @Override
-  public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                 @NotNull VirtualFile file) {
     if (!FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE)) {
-      return CONST_NULL;
+      return null;
     }
 
     String classFileInfo = getTextWithClassFileInfo(file);
@@ -141,6 +142,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
   }
 
   @SuppressWarnings("IncorrectParentDisposable")
+  @RequiresEdt
   private static void findLibraryEntriesForFile(@NotNull Project project,
                                                 @NotNull VirtualFile file,
                                                 @NotNull List<? extends LibraryOrderEntry> originalLibraries,
@@ -156,7 +158,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
       .expireWith(project)
       .expireWhen(() -> !file.isValid())
       .coalesceBy(file, project)
-      .finishOnUiThread(ModalityState.any(), uiThreadAction)
+      .finishOnUiThread(ModalityState.current(), uiThreadAction)
       .submit(NonUrgentExecutor.getInstance())
       .onError(rejected -> {
         if (rejected instanceof CancellationException) {

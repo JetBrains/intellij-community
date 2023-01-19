@@ -847,11 +847,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   }
 
   @Override
-  public JTextField getModuleNameField() {
-    return null;
-  }
-
-  @Override
   public String getHelpId() {
     if (getCustomStep() != null && getCustomStep().getHelpId() != null) {
       return getCustomStep().getHelpId();

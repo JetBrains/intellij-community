@@ -16,10 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author dsl
- * @author peter
- */
 public final class KeywordParser {
   private static final Logger LOG = Logger.getInstance(KeywordParser.class);
   private final List<Set<String>> myKeywordSets = new ArrayList<>();

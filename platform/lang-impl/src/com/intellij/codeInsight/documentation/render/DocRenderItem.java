@@ -266,7 +266,7 @@ public final class DocRenderItem {
     toggle(null);
   }
 
-  private boolean toggle(@Nullable Collection<Runnable> foldingTasks) {
+  private boolean toggle(@Nullable Collection<? super Runnable> foldingTasks) {
     if (!(editor instanceof EditorEx)) return false;
     FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
     if (foldRegion == null) {
@@ -349,7 +349,7 @@ public final class DocRenderItem {
     if (items != null) updateRenderers(items, recreateContent);
   }
 
-  private void updateIcon(List<Runnable> foldingTasks) {
+  private void updateIcon(List<? super Runnable> foldingTasks) {
     boolean iconEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled();
     boolean iconExists = highlighter.getGutterIconRenderer() != null;
     if (iconEnabled != iconExists) {

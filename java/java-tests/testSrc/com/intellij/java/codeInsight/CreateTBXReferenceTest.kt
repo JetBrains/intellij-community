@@ -3,10 +3,7 @@ package com.intellij.java.codeInsight
 
 import com.intellij.JavaTestUtil
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -56,7 +53,9 @@ class CreateTBXReferenceTest : BasePlatformTestCase() {
     dataContext = SimpleDataContext.getSimpleContext(additionalDataContext, dataContext)
     val action = ActionManager.getInstance().getAction("CopyTBXReference")
 
-    action.actionPerformed(AnActionEvent(null, dataContext, ActionPlaces.MAIN_MENU, action.templatePresentation, ActionManager.getInstance(), 0))
+    val presentation = Presentation()
+    presentation.copyFrom(action.templatePresentation)
+    action.actionPerformed(AnActionEvent(null, dataContext, ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance(), 0))
 
     val content = CopyPasteManager.getInstance().contents?.getTransferData(DataFlavor.stringFlavor) as String
     assertThat(content).startsWith("jetbrains://idea/navigate/reference?project=" + project.name)

@@ -1,0 +1,1 @@
+fstring = f'{"foo".upper() + f"afoobfooc"} foo {"foo".upper()}'

@@ -86,7 +86,7 @@ public final class JavaModuleInsight extends ModuleInsight {
         }
       }
 
-      addModules(StreamEx.of(moduleInfos.values()).map(info -> info.descriptor).toList());
+      addModules(ContainerUtil.map(moduleInfos.values(), info -> info.descriptor));
     }
     catch (ProcessCanceledException ignored) { }
     finally {

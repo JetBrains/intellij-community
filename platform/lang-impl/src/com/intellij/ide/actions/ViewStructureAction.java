@@ -2,7 +2,6 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -53,8 +52,6 @@ public class ViewStructureAction extends DumbAwareAction {
     if (editor != null) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     }
-
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file.structure");
 
     FileStructurePopup popup = createPopup(project, fileEditor);
     if (popup == null) return;

@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.unassignedVariable;
 
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiParameter;
@@ -10,7 +10,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
@@ -31,12 +30,11 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import javax.swing.*;
 import java.util.List;
 
-/**
- * @author ven
- */
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBase {
 
   @NotNull
@@ -49,12 +47,9 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
 
   public boolean myIgnoreBooleanExpressions = true;
 
-  @Nullable
   @Override
-  public JComponent createGroovyOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(GroovyBundle.message("ignore.boolean.expressions"), "myIgnoreBooleanExpressions");
-    return optionsPanel;
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(checkbox("myIgnoreBooleanExpressions", GroovyBundle.message("ignore.boolean.expressions")));
   }
 
   @Override

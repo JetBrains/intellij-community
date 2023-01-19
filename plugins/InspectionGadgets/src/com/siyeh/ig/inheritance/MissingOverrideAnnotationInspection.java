@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -27,13 +27,15 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class MissingOverrideAnnotationInspection extends BaseInspection implements CleanupLocalInspectionTool{
   @SuppressWarnings("PublicField")
@@ -73,12 +75,11 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.equals.hashcode.and.tostring"), "ignoreObjectMethods");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.in.anonymous.classes"), "ignoreAnonymousClassMethods");
-    panel.addCheckbox(InspectionGadgetsBundle.message("missing.override.warn.on.super.option"), "warnInSuper");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreObjectMethods", InspectionGadgetsBundle.message("ignore.equals.hashcode.and.tostring")),
+      checkbox("ignoreAnonymousClassMethods", InspectionGadgetsBundle.message("ignore.methods.in.anonymous.classes")),
+      checkbox("warnInSuper", InspectionGadgetsBundle.message("missing.override.warn.on.super.option")));
   }
 
   @Override

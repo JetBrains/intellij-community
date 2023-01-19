@@ -1,12 +1,14 @@
 import sys
-from typing import Any, Generic, Iterable, Mapping, TypeVar, Union, overload
+from collections.abc import Iterable, Mapping
+from typing import Any, Generic, TypeVar, overload
+from typing_extensions import TypeAlias
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
 
 __all__ = ["CookieError", "BaseCookie", "SimpleCookie"]
 
-_DataType = Union[str, Mapping[str, Union[str, Morsel[Any]]]]
+_DataType: TypeAlias = str | Mapping[str, str | Morsel[Any]]
 _T = TypeVar("_T")
 
 @overload
@@ -28,11 +30,7 @@ class Morsel(dict[str, Any], Generic[_T]):
     @property
     def key(self) -> str: ...
     def __init__(self) -> None: ...
-    if sys.version_info >= (3, 7):
-        def set(self, key: str, val: str, coded_val: _T) -> None: ...
-    else:
-        def set(self, key: str, val: str, coded_val: _T, LegalChars: str = ...) -> None: ...
-
+    def set(self, key: str, val: str, coded_val: _T) -> None: ...
     def setdefault(self, key: str, val: str | None = ...) -> str: ...
     # The dict update can also get a keywords argument so this is incompatible
     @overload  # type: ignore[override]

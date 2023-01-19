@@ -17,9 +17,6 @@ package com.intellij.notification
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightPlatformTestCase
 
-/**
- * @author peter
- */
 class EventLogTest extends LightPlatformTestCase {
 
   void testHtmlEntities() {

@@ -7,6 +7,7 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.GitSilentFileAdderProvider
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
@@ -55,7 +56,7 @@ class MavenGroovyNewProjectBuilder(private val groovySdkVersion: String) : Abstr
       rootModel.inheritSdk()
     }
 
-    MavenUtil.runWhenInitialized(project) { setupMavenStructure(project, root) }
+    MavenUtil.runWhenInitialized(project, DumbAwareRunnable { setupMavenStructure (project, root) })
   }
 
   private fun setupMavenStructure(project: Project, root: VirtualFile) {

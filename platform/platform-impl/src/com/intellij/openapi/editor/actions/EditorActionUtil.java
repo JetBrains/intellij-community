@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
@@ -121,7 +120,7 @@ public final class EditorActionUtil {
    * Unless 'resetToSingleLineAtCaret' is set, and because the resulting selection always includes the line ending character,
    * repeated invocations of this method extend the selection to include each next line one by one.
    *
-   * @param resetToSingleLineAtCaret discard the the current selection, if any,
+   * @param resetToSingleLineAtCaret discard the current selection, if any,
    *                                 and select just a single line at the caret position.
    */
   public static void selectEntireLines(@NotNull Caret caret, boolean resetToSingleLineAtCaret) {
@@ -131,19 +130,12 @@ public final class EditorActionUtil {
     if (lineNumber >= document.getLineCount()) {
       return;
     }
-
-    Pair<LogicalPosition, LogicalPosition> lines =
-      EditorUtil.calcSurroundingRange(editor,
-                                      resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionStartPosition(),
-                                      resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionEndPosition());
-    LogicalPosition lineStart = lines.first;
-    LogicalPosition nextLineStart = lines.second;
-
-    int start = editor.logicalPositionToOffset(lineStart);
-    int end = editor.logicalPositionToOffset(nextLineStart);
-
+    TextRange range =
+      EditorUtil.calcSurroundingTextRange(editor,
+                                          resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionStartPosition(),
+                                          resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionEndPosition());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    caret.setSelection(start, end);
+    caret.setSelection(range.getStartOffset(), range.getEndOffset());
   }
 
   @NotNull

@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,12 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
       return myOrder - ((GutterIntentionAction)o).myOrder;
     }
     return 0;
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public @NotNull AnAction getAction() {
+    return myAction;
   }
 
   @Override

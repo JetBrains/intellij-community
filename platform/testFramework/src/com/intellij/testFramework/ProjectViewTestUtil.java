@@ -3,7 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.ui.LafManager;
@@ -112,11 +112,11 @@ public final class ProjectViewTestUtil {
     Assert.assertEquals(expected.trim(), actual.trim());
   }
 
-  public static boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
+  public static boolean isExpanded(PsiElement element, AbstractProjectViewPane pane) {
     return null != getVisiblePath(element, pane);
   }
 
-  public static @Nullable TreePath getVisiblePath(@NotNull PsiElement element, @NotNull AbstractProjectViewPSIPane pane) {
+  public static @Nullable TreePath getVisiblePath(@NotNull PsiElement element, @NotNull AbstractProjectViewPane pane) {
     PlatformTestUtil.waitWhileBusy(pane.getTree());
     return TreeUtil.visitVisibleRows(pane.getTree(), path -> {
       AbstractTreeNode<?> node = TreeUtil.getLastUserObject(AbstractTreeNode.class, path);

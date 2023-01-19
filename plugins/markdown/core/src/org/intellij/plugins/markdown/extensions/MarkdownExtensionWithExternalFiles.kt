@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions
 
-import com.intellij.util.io.exists
 import org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager.Companion.obtainExternalFilesDirectoryPath
 import org.jetbrains.annotations.ApiStatus
+import kotlin.io.path.exists
 
 @ApiStatus.Experimental
 interface MarkdownExtensionWithExternalFiles: MarkdownConfigurableExtension {

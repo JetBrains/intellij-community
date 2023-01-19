@@ -292,12 +292,13 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     sendBreakpointEvent(type, listener -> listener.breakpointRemoved(breakpoint));
   }
 
-  private void sendBreakpointEvent(XBreakpointType type, Consumer<XBreakpointListener<XBreakpoint<?>>> event) {
+  private void sendBreakpointEvent(XBreakpointType type, Consumer<? super XBreakpointListener<XBreakpoint<?>>> event) {
     if (myFirstLoadDone) {
       EventDispatcher<XBreakpointListener> dispatcher = myDispatchers.get(type);
       if (dispatcher != null) {
         //noinspection unchecked
-        event.consume(dispatcher.getMulticaster());
+        XBreakpointListener<XBreakpoint<?>> multicaster = dispatcher.getMulticaster();
+        event.consume(multicaster);
       }
       event.consume(getBreakpointDispatcherMulticaster());
     }
@@ -362,13 +363,6 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeClass);
     LOG.assertTrue(type != null, "Unregistered breakpoint type " + typeClass + ", registered: " + Arrays.toString(XBreakpointType.EXTENSION_POINT_NAME.getExtensions()));
     return getBreakpoints(type);
-  }
-
-  @Override
-  @Nullable
-  public <B extends XBreakpoint<?>> B getDefaultBreakpoint(@NotNull XBreakpointType<B, ?> type) {
-    Set<B> defaultBreakpoints = getDefaultBreakpoints(type);
-    return ContainerUtil.getFirstItem(defaultBreakpoints);
   }
 
   @Override

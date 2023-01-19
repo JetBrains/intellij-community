@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -17,7 +17,6 @@ interface NewProjectWizardBaseData {
    * @deprecated projectPath throws exception when it isn't validated
    */
   @Deprecated("Unsafe", ReplaceWith("Path.of(path, name)", "java.nio.file.Path"))
-  @JvmDefault
   val projectPath: Path
     get() = Path.of(path, name)
 

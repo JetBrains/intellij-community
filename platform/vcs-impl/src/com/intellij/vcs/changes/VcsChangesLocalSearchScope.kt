@@ -13,7 +13,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.scope.RangeBasedLocalSearchScope
 import com.intellij.util.text.CharArrayUtil
-import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import java.util.*
 
@@ -80,11 +79,13 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
   override fun getVirtualFiles(): Array<VirtualFile> = rangeMap.keys.toTypedArray()
 
   override fun getPsiElements(): Array<PsiElement> = ReadAction.compute<Array<PsiElement>, RuntimeException> {
-    val elements: List<PsiElement> = ArrayList()
+    val elements: MutableList<PsiElement> = ArrayList()
     val psiManager = PsiManager.getInstance(myProject)
     this.rangeMap.forEach { (virtualFile, ranges) ->
       val psiFile = psiManager.findFile(virtualFile)
-      ranges.forEach { collectPsiElementsAtRange(psiFile, elements, it.startOffset, it.endOffset) }
+      if (psiFile != null) {
+        ranges.forEach { collectPsiElementsAtRange(psiFile, elements, it.startOffset, it.endOffset) }
+      }
     }
 
     elements.toTypedArray()

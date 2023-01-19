@@ -116,27 +116,16 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         else if (type == RegExpTT.ESC_CHARACTER) {
           final int value = ch.getValue();
           switch (value) {
-            case '.':
-            case '$':
-            case '?':
-            case '*':
-            case '+':
-            case '|':
-            case '{':
-            case '(':
-            case ')':
-              text.append((char)value);
-              break;
-            case '^':
+            case '.', '$', '?', '*', '+', '|', '{', '(', ')' -> text.append((char)value);
+            case '^' -> {
               if (text.length() == 1) {
                 text.append(ch.getUnescapedText());
               }
               else {
                 text.append((char)value);
               }
-              break;
-            default:
-              text.append(ch.getUnescapedText());
+            }
+            default -> text.append(ch.getUnescapedText());
           }
         }
         else {

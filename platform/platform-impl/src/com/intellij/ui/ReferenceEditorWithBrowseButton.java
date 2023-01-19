@@ -29,9 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor {
   private final Function<? super String, ? extends Document> myFactory;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();

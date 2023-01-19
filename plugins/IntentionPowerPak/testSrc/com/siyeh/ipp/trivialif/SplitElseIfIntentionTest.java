@@ -20,24 +20,26 @@ import com.siyeh.ipp.IPPTestCase;
 public class SplitElseIfIntentionTest extends IPPTestCase {
 
   public void testCommentsAreKept() {
-    doTest("class X {\n" +
-           "    void test() {\n" +
-           "        if (true) { //asdf\n" +
-           "\n" +
-           "        } else/*_Split 'else if'*/ if (false) {\n" +
-           "        }//comment\n" +
-           "    }\n" +
-           "}",
+    doTest("""
+             class X {
+                 void test() {
+                     if (true) { //asdf
 
-           "class X {\n" +
-           "    void test() {\n" +
-           "        if (true) { //asdf\n" +
-           "\n" +
-           "        } else {\n" +
-           "            if (false) {\n" +
-           "            }//comment\n" +
-           "        }\n" +
-           "    }\n" +
-           "}");
+                     } else/*_Split 'else if'*/ if (false) {
+                     }//comment
+                 }
+             }""",
+
+           """
+             class X {
+                 void test() {
+                     if (true) { //asdf
+
+                     } else {
+                         if (false) {
+                         }//comment
+                     }
+                 }
+             }""");
   }
 }

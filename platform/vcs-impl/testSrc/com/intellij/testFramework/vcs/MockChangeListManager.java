@@ -3,7 +3,6 @@ package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.*;
@@ -12,6 +11,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.io.File;
 import java.util.*;
@@ -203,12 +203,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
     return changes;
   }
 
-  @Nullable
-  @Override
-  public AbstractVcs getVcsFor(@NotNull Change change) {
-    return null;
-  }
-
   @NotNull
   @Override
   public ThreeState haveChangesUnder(@NotNull VirtualFile vf) {
@@ -248,11 +242,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
   @NotNull
   @Override
   public List<CommitExecutor> getRegisteredExecutors() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles) {
     throw new UnsupportedOperationException();
   }
 
@@ -316,6 +305,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public @NotNull Promise<?> promiseWaitForUpdate() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public String isFreezed() {
     throw new UnsupportedOperationException();
   }
@@ -368,6 +362,10 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes) {
+  }
+
+  @Override
+  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<@NotNull Change> changes) {
   }
 
   @Override

@@ -15,7 +15,8 @@ class TrustedProjectsTest {
 
   @JvmField @Rule val memoryFs = InMemoryFsRule()
 
-  @Test fun `prefer closest ancestor to determine the trusted state`() {
+  @Test
+  fun `prefer closest ancestor to determine the trusted state`() {
     val projects = memoryFs.fs.getPath("~/projects/")
     val outerDir = (projects / "outer")
     val innerDir = (outerDir / "inner")
@@ -28,7 +29,8 @@ class TrustedProjectsTest {
     assertTrusted(innerDir)
   }
 
-  @Test fun `return unsure if there are no information about ancestors`() {
+  @Test
+  fun `return unsure if there are no information about ancestors`() {
     val projects = memoryFs.fs.getPath("~/projects/")
     TrustedPaths.getInstance().setProjectPathTrusted(projects, true)
 
@@ -40,6 +42,8 @@ class TrustedProjectsTest {
   private fun assertNotTrusted(path: Path) = assertEquals(ThreeState.NO, TrustedPaths.getInstance().getProjectPathTrustedState(path))
 
   companion object {
-    @ClassRule @JvmField val appRule = ApplicationRule()
+    @ClassRule
+    @JvmField
+    val appRule = ApplicationRule()
   }
 }

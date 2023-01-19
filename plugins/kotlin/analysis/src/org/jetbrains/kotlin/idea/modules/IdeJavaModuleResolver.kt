@@ -4,15 +4,20 @@ package org.jetbrains.kotlin.idea.modules
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.impl.light.LightJavaModule
+import org.jetbrains.kotlin.idea.base.facet.implementedModules
+import org.jetbrains.kotlin.idea.base.facet.implementingModules
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.load.java.structure.JavaAnnotation
 import org.jetbrains.kotlin.load.java.structure.impl.JavaAnnotationImpl
 import org.jetbrains.kotlin.load.java.structure.impl.convert
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
 import java.util.concurrent.ConcurrentHashMap
 
@@ -42,7 +47,7 @@ class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
         fileFromOurModule: VirtualFile?, referencedFile: VirtualFile, referencedPackage: FqName?
     ): JavaModuleResolver.AccessError? {
         val ourModule = fileFromOurModule?.let(::findJavaModule)?.also { if (it is LightJavaModule) return null }
-        val theirModule = findJavaModule(referencedFile)
+        val theirModule = findJvmModule(referencedFile)
 
         if (ourModule?.name == theirModule?.name) return null
 
@@ -62,12 +67,32 @@ class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
         // use classpath, not the module path, and in the same way everything will work at runtime as well.
         if (ourModule != null) {
             val fqName = referencedPackage?.asString() ?: return null
-            if (!exports(theirModule, fqName, ourModule)) {
+            if (theirModule.name != PsiJavaModule.JAVA_BASE && !exports(theirModule, fqName, ourModule)) {
                 return JavaModuleResolver.AccessError.ModuleDoesNotExportPackage(theirModule.name)
             }
         }
 
         return null
+    }
+
+    private fun findJvmModule(referencedFile: VirtualFile): PsiJavaModule? {
+        val referencedModuleForJvm = findJavaModule(referencedFile)
+        if (referencedModuleForJvm != null) return referencedModuleForJvm
+
+        val index = ProjectFileIndex.getInstance(project)
+        if (index.isInLibrary(referencedFile)) return null
+
+        val referencedModule = index.getModuleForFile(referencedFile) ?: return null
+        val implementingModules = referencedModule.implementingModules
+        val jvmModule = implementingModules.find { it.platform.isJvm() } ?: return null
+
+        val inTestSourceContent = index.isInTestSourceContent(referencedFile)
+
+        val jvmModuleDescriptor = JavaModuleGraphUtil.findDescriptorByModule(jvmModule, inTestSourceContent)
+        if (jvmModuleDescriptor != null) return jvmModuleDescriptor
+
+        val implementedJvmModule = jvmModule.implementedModules.find { it.platform.isJvm() }
+        return JavaModuleGraphUtil.findDescriptorByModule(implementedJvmModule, inTestSourceContent)
     }
 
     // Returns whether or not [source] exports [packageName] to [target]

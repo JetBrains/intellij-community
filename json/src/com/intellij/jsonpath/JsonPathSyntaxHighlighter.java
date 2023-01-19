@@ -71,6 +71,8 @@ final class JsonPathSyntaxHighlighter extends SyntaxHighlighterBase {
             JsonPathTypes.ROOT_CONTEXT, JsonPathTypes.EVAL_CONTEXT);
     fillMap(ourMap, JSONPATH_BRACKETS,
             JsonPathTypes.LBRACKET, JsonPathTypes.RBRACKET);
+    fillMap(ourMap, JSONPATH_BRACES,
+            JsonPathTypes.LBRACE, JsonPathTypes.RBRACE);
     fillMap(ourMap, JSONPATH_PARENTHESES,
             JsonPathTypes.LPARENTH, JsonPathTypes.RPARENTH);
     fillMap(ourMap, JSONPATH_DOT,

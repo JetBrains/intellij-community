@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -19,12 +18,15 @@ import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceLis
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
+open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -34,21 +36,21 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  @JvmField
-  var _fileProperty: List<VirtualFileUrl>? = null
   override val fileProperty: List<VirtualFileUrl>
-    get() = _fileProperty!!
+    get() = dataSource.fileProperty
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ListVFUEntityData?) : ModifiableWorkspaceEntityBase<ListVFUEntity>(), ListVFUEntity.Builder {
+  class Builder(result: ListVFUEntityData?) : ModifiableWorkspaceEntityBase<ListVFUEntity, ListVFUEntityData>(
+    result), ListVFUEntity.Builder {
     constructor() : this(ListVFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,8 +68,11 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
-      index(this, "fileProperty", this.fileProperty.toHashSet())
+      index(this, "fileProperty", this.fileProperty)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -90,14 +95,20 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    override fun afterModification() {
+      val collection_fileProperty = getEntityData().fileProperty
+      if (collection_fileProperty is MutableWorkspaceList<*>) {
+        collection_fileProperty.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ListVFUEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
-      this.fileProperty = dataSource.fileProperty.toMutableList()
-      if (parents != null) {
-      }
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty.toMutableList()
+      updateChildToParentReferences(parents)
     }
 
 
@@ -105,7 +116,7 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -114,29 +125,33 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
     private val filePropertyUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
-      if (_diff != null) index(this, "fileProperty", value.toHashSet())
+      if (_diff != null) index(this, "fileProperty", value)
       changedProperty.add("fileProperty")
     }
     override var fileProperty: MutableList<VirtualFileUrl>
       get() {
         val collection_fileProperty = getEntityData().fileProperty
         if (collection_fileProperty !is MutableWorkspaceList) return collection_fileProperty
-        collection_fileProperty.setModificationUpdateAction(filePropertyUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_fileProperty.setModificationUpdateAction(filePropertyUpdater)
+        }
+        else {
+          collection_fileProperty.cleanModificationUpdateAction()
+        }
         return collection_fileProperty
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().fileProperty = value
+        getEntityData(true).fileProperty = value
         filePropertyUpdater.invoke(value)
       }
 
-    override fun getEntityData(): ListVFUEntityData = result ?: super.getEntityData() as ListVFUEntityData
     override fun getEntityClass(): Class<ListVFUEntity> = ListVFUEntity::class.java
   }
 }
@@ -148,26 +163,21 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
   fun isDataInitialized(): Boolean = ::data.isInitialized
   fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ListVFUEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ListVFUEntity> {
     val modifiable = ListVFUEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): ListVFUEntity {
-    val entity = ListVFUEntityImpl()
-    entity._data = data
-    entity._fileProperty = fileProperty.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ListVFUEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): ListVFUEntityData {
@@ -199,7 +209,7 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ListVFUEntityData
 
@@ -211,7 +221,7 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ListVFUEntityData
 

@@ -165,30 +165,19 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
                                  LocalQuickFix @NotNull [] fixes,
                                  @NotNull String messageKey, Object... args) {
       switch (messageKey) {
-        case "inspection.nullable.problems.primitive.type.annotation":
-        case "inspection.nullable.problems.receiver.annotation":
-        case "inspection.nullable.problems.outer.type":
-        case "inspection.nullable.problems.at.reference.list":
-        case "inspection.nullable.problems.at.constructor":
-        case "inspection.nullable.problems.at.enum.constant":
+        case "inspection.nullable.problems.primitive.type.annotation", "inspection.nullable.problems.receiver.annotation",
+          "inspection.nullable.problems.outer.type", "inspection.nullable.problems.at.reference.list",
+          "inspection.nullable.problems.at.constructor", "inspection.nullable.problems.at.enum.constant" ->
           warnings.put(anchor, "jspecify_nullness_intrinsically_not_nullable");
-          break;
-        case "inspection.nullable.problems.at.wildcard":
-        case "inspection.nullable.problems.at.type.parameter":
-        case "inspection.nullable.problems.at.local.variable":
+        case "inspection.nullable.problems.at.wildcard", "inspection.nullable.problems.at.type.parameter",
+          "inspection.nullable.problems.at.local.variable" ->
           warnings.put(anchor, "jspecify_unrecognized_location");
-          break;
-        case "inspection.nullable.problems.Nullable.method.overrides.NotNull":
-        case "inspection.nullable.problems.NotNull.parameter.overrides.Nullable":
+        case "inspection.nullable.problems.Nullable.method.overrides.NotNull",
+          "inspection.nullable.problems.NotNull.parameter.overrides.Nullable" ->
           warnings.put(anchor, "jspecify_nullness_mismatch");
-          break;
-        case "inspection.nullable.problems.method.overrides.NotNull":
-        case "inspection.nullable.problems.parameter.overrides.NotNull":
+        case "inspection.nullable.problems.method.overrides.NotNull", "inspection.nullable.problems.parameter.overrides.NotNull" ->
           warnings.put(anchor, "jspecify_nullness_not_enough_information");
-          break;
-        case "inspection.nullable.problems.Nullable.NotNull.conflict":
-          warnings.put(anchor, "jspecify_conflicting_annotations");
-          break;
+        case "inspection.nullable.problems.Nullable.NotNull.conflict" -> warnings.put(anchor, "jspecify_conflicting_annotations");
       }
     }
   }
@@ -219,8 +208,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
 
     @Override
     protected void reportNullabilityProblems(DataFlowInspectionBase.ProblemReporter reporter,
-                                             List<NullabilityProblemKind.NullabilityProblem<?>> problems,
-                                             Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
+                                             List<NullabilityProblemKind.NullabilityProblem<?>> problems) {
       for (NullabilityProblemKind.NullabilityProblem<?> problem : problems) {
         String warning = getJSpecifyWarning(problem);
         if (warning != null) {

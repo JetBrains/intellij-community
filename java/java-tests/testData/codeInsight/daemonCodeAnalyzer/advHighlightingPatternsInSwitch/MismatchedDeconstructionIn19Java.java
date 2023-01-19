@@ -1,3 +1,5 @@
+import java.util.List;
+
 record LongRecord(String s1, String s2, String s3) {}
 record PrimitiveRecord(int x){}
 record IntegerRecord(Integer x){}
@@ -24,7 +26,7 @@ public class Incompatible {
       case RecordWithInterface(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'I'">Integer x</error>, <error descr="Incompatible types. Found: 'java.lang.Integer', required: 'I'">Integer y</error>) s when true -> {}
       case RecordWithInterface(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'I'">Integer x</error>, D y) s when true -> {}
       case RecordWithInterface(I x, D y) s when true -> {}
-      case <error descr="Deconstruction pattern can only be applied to a record">Integer</error>(double x) -> {}
+      case <error descr="Deconstruction pattern can only be applied to a record, 'java.lang.Integer' is not a record">Integer</error>(double x) -> {}
       case PrimitiveRecord(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'int'">Integer x</error>) s when true -> {}
       case PrimitiveRecord(int x) s when true -> {}
       case IntegerRecord(Integer x) s when true -> {}
@@ -38,6 +40,17 @@ public class Incompatible {
     }
     switch (typedRecord){
       case TypedRecord<I>(I x) s-> {}
+      default -> {}
+    }
+    switch (typedRecord){
+      case <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(C x) s-> {}
+      case <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(I x) s-> {}
+      case TypedRecord<I>(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'I'">Integer t</error>) -> {}
+      case TypedRecord<?>(<error descr="'java.lang.Object' cannot be safely cast to 'java.util.List<java.lang.Number>'">List<Number> nums</error>) -> {}
+      case TypedRecord<?>(List<?> list) -> {}
+      case TypedRecord<?>(<error descr="'java.lang.Object' cannot be safely cast to 'T'">T t</error>) -> {}
+      case TypedRecord<?>(String s) -> {}
+      case TypedRecord<?>(var x) -> {}
       default -> {}
     }
     switch (object){

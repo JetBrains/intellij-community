@@ -1,0 +1,6 @@
+// "Remove redundant 'if' statement" "true"
+fun test(a: Boolean, b: Boolean): Boolean {
+    // comment1
+    // comment2
+    return !(!a && b)
+}

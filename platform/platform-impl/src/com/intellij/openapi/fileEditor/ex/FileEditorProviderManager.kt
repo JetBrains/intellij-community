@@ -6,10 +6,6 @@ import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 interface FileEditorProviderManager {
   companion object {
     @JvmStatic
@@ -21,7 +17,7 @@ interface FileEditorProviderManager {
 
   /**
    * @return All providers that can create editor for the specified `file` or empty array if there are none.
-   * Please note that returned array is constructed with respect to editor policies.
+   * Please note that a returned array is constructed with respect to editor policies.
    */
   fun getProviderList(project: Project, file: VirtualFile): List<FileEditorProvider>
 

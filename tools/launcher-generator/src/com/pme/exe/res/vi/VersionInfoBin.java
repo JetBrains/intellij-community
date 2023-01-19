@@ -1,29 +1,30 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.pme.exe.res.vi;
 
 import com.pme.exe.Bin;
-import com.pme.util.OffsetTrackingInputStream;
+import com.pme.util.StreamUtil;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 
-public class VersionInfoBin extends Bin.Structure {
+public abstract class VersionInfoBin extends Bin.Structure {
   private String myExpectedName;
   private VersionInfoFactory myChildFactory;
+  protected final Word myLength;
+  protected final WCharStringNT myKey;
+  protected final Word myValueLength;
 
   public VersionInfoBin(String name) {
     super(name);
-    Word length = new Word("wLength");
-    addMember(length);
-    addSizeHolder(length);
-    addMember(new Word("wValueLength"));
+    myLength = addMember(new Word("wLength"));
+    addSizeHolder(myLength);
+    myValueLength = addMember(new Word("wValueLength"));
     addMember(new Word("wType"));
-    addMember(new WChar("szKey"));
-    addMember(new Padding(4));
+    myKey = addMember(new WCharStringNT("szKey"));
+    addMember(new Padding("Padding", 4));
   }
 
   public VersionInfoBin(String versionInfo, String expectedName) {
@@ -38,20 +39,21 @@ public class VersionInfoBin extends Bin.Structure {
 
   @Override
   public void read(DataInput stream) throws IOException {
-    OffsetTrackingInputStream inputStream = (OffsetTrackingInputStream) stream;
-    long startOffset = inputStream.getOffset();
+    long startOffset = StreamUtil.getOffset(stream);
     assert startOffset % 4 == 0;
     super.read(stream);
     if (myExpectedName != null) {
-      String signature = ((WChar) getMember("szKey")).getValue();
-      assert signature.equals(myExpectedName): "Expected signature " + myExpectedName + ", found '" + signature + "'";
+      String signature = myKey.getValue();
+      if (!signature.equals(myExpectedName)) {
+        throw new IllegalStateException("Expected signature '" + myExpectedName + "', found '" + signature + "'");
+      }
     }
     if (myChildFactory != null) {
-      long length = getValue("wLength");
+      long length = myLength.getValue();
       int i = 0;
-      while(inputStream.getOffset() < startOffset + length) {
+      while (StreamUtil.getOffset(stream) < startOffset + length) {
         VersionInfoBin child = myChildFactory.createChild(i++);
-        child.read(inputStream);
+        child.read(stream);
         addMember(child);
       }
     }
@@ -59,18 +61,12 @@ public class VersionInfoBin extends Bin.Structure {
 
   @Override
   public void write(DataOutput stream) throws IOException {
-    long startOffset = -1;
-    if (stream instanceof RandomAccessFile) {
-      startOffset = ((RandomAccessFile) stream).getFilePointer();
-      assert startOffset % 4 == 0;
-    }
+    long startOffset = StreamUtil.getOffset(stream);
     super.write(stream);
-    if (stream instanceof RandomAccessFile) {
-      long offset = ((RandomAccessFile) stream).getFilePointer();
-      long realLength = offset - startOffset;
-      long expectedLength = getValue("wLength");
-      assert realLength == expectedLength: "Actual length does not match calculated length for " + getName() +
-          ": expected " + expectedLength + ", actual " + realLength + ", sizeInBytes() " + sizeInBytes();
-    }
+    long offset = StreamUtil.getOffset(stream);
+    long realLength = offset - startOffset;
+    long expectedLength = myLength.getValue();
+    assert realLength == expectedLength : "Actual length does not match calculated length for " + getName() +
+                                          ": expected " + expectedLength + ", actual " + realLength + ", sizeInBytes() " + sizeInBytes();
   }
 }

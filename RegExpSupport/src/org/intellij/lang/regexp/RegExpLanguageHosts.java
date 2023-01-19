@@ -51,7 +51,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     final RegExpLanguageHost host = findRegExpHost(ch);
     if (host != null) {
       final char c = text.charAt(1);
-      return !host.characterNeedsEscaping(c);
+      return !host.characterNeedsEscaping(c, ch.getParent() instanceof RegExpClass);
     }
     else {
       return !("\\]".equals(text) || "\\}".equals(text));

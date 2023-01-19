@@ -374,10 +374,12 @@ object UpdateChecker {
 
     val incompatible = if (buildNumber == null) emptyList() else {
       // collecting plugins that aren't going to be updated and are incompatible with the new build
-      // (the map may contain updateable bundled plugins - those are expected to have a compatible version in IDE)
+      // (the map may contain updateable and already-updated bundled plugins - those are expected to have a compatible version in IDE)
       updateable.values.asSequence()
         .filterNotNull()
-        .filter { it.isEnabled && !it.isBundled && !PluginManagerCore.isCompatible(it, buildNumber) }
+        .filter { it.isEnabled }
+        .filterNot { it.isBundled || it.allowBundledUpdate() }
+        .filterNot { PluginManagerCore.isCompatible(it, buildNumber) }
         .toSet()
     }
 
@@ -441,12 +443,14 @@ object UpdateChecker {
                                                                                            buildNumber) > 0)) {
         runCatching { MarketplaceRequests.loadPluginDescriptor(id.idString, lastUpdate, indicator) }
           .onFailure { if (it !is HttpRequests.HttpStatusException || it.statusCode != HttpURLConnection.HTTP_NOT_FOUND) throw it }
+          .onSuccess { it.externalPluginIdForScreenShots = lastUpdate.externalPluginId }
           .onSuccess { prepareDownloader(state, it, buildNumber, toUpdate, toUpdateDisabled, indicator, null) }
       }
     }
     (toUpdate.keys.asSequence() + toUpdateDisabled.keys.asSequence()).forEach { updateable.remove(it) }
   }
 
+  @RequiresBackgroundThread
   private fun prepareDownloader(state: InstalledPluginsState,
                                 descriptor: PluginNode,
                                 buildNumber: BuildNumber?,
@@ -490,6 +494,7 @@ object UpdateChecker {
   @Throws(IOException::class)
   @JvmOverloads
   @JvmStatic
+  @RequiresBackgroundThread
   fun checkAndPrepareToInstall(
     originalDownloader: PluginDownloader,
     state: InstalledPluginsState,

@@ -38,14 +38,14 @@ public final class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
       ButtonModel bm = b.getModel();
 
       String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
-      Object op = b.getClientProperty("JComponent.outline");
+      DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(b);
       boolean focused = op == null && c.hasFocus() || bm.isRollover() || isCellRollover(b);
       boolean pressed = bm.isPressed() || isCellPressed(b);
       Icon icon = WinIconLookup.getIcon(iconName, selected || isIndeterminate(b), focused, enabled, false, pressed);
       icon.paintIcon(c, g, iconRect.x, iconRect.y);
 
       if (op != null) {
-        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, b.hasFocus());
+        op.setGraphicsColor(g2, b.hasFocus());
         Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
 
         outline.append(new Rectangle2D.Float(iconRect.x - JBUIScale.scale(1), iconRect.y - JBUIScale.scale(1), JBUIScale.scale(15),

@@ -24,7 +24,7 @@ class VerticalListInlayPresentation(
   override var height: Int = 0
     private set
 
-  var presentationUnderCursor: InlayPresentation? = null
+  private var presentationUnderCursor: InlayPresentation? = null
 
   init {
     calcDimensions()
@@ -65,7 +65,7 @@ class VerticalListInlayPresentation(
 
   fun calcDimensions() {
     width = presentations.maxByOrNull { it.width }!!.width
-    height = presentations.sumBy { it.height }
+    height = presentations.sumOf { it.height }
   }
 
 

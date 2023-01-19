@@ -2,8 +2,7 @@
 
 package com.intellij.grazie.text
 
-import ai.grazie.nlp.tokenizer.sentence.RuleSentenceTokenizer
-import ai.grazie.utils.mpp.FromResourcesDataLoader
+import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer
 import ai.grazie.utils.toLinkedSet
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -31,6 +30,9 @@ import com.intellij.refactoring.suggested.startOffset
 import kotlinx.coroutines.*
 
 class CheckerRunner(val text: TextContent) {
+  private val tokenizer
+    get() = StandardSentenceTokenizer.Default
+
   private val sentences by lazy { tokenizer.tokenize(text.toString()) }
 
   fun run(checkers: List<TextChecker>, consumer: (TextProblem) -> Unit) {
@@ -211,12 +213,6 @@ class CheckerRunner(val text: TextContent) {
 
   private fun highlightSpan(problem: TextProblem) =
     TextRange(problem.highlightRanges[0].startOffset, problem.highlightRanges.last().endOffset)
-
-  companion object {
-    private val tokenizer by lazy {
-      runBlocking { RuleSentenceTokenizer.load(FromResourcesDataLoader) }
-    }
-  }
 }
 
 private val filterEp = LanguageExtension<ProblemFilter>("com.intellij.grazie.problemFilter")

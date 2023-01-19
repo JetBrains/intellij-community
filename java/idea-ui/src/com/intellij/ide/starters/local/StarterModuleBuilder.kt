@@ -7,6 +7,7 @@ import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.StarterModuleImporter
 import com.intellij.ide.starters.StarterModuleProcessListener
 import com.intellij.ide.starters.local.generator.AssetsProcessor
+import com.intellij.ide.starters.local.generator.*
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.local.wizard.StarterLibrariesStep
 import com.intellij.ide.starters.shared.*
@@ -22,7 +23,8 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -31,6 +33,7 @@ import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkType
@@ -83,6 +86,11 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
         .replace("-", "")
         .replace(INVALID_PACKAGE_NAME_SYMBOL_PATTERN, "_")
         .lowercase()
+    }
+
+    @JvmStatic
+    fun setupProject(project: Project) {
+      ExternalProjectsManagerImpl.setupCreatedProject(project)
     }
 
     @JvmStatic
@@ -202,16 +210,18 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     return null
   }
 
+  override fun createProject(name: String?, path: String?): Project? {
+    val project = super.createProject(name, path)
+    project?.let { setupProject(it) }
+    return project
+  }
+
   @Throws(ConfigurationException::class)
   override fun setupModule(module: Module) {
     super.setupModule(module)
 
-    if (starterContext.isCreatingNewProject) {
-      val project = module.project
-
-      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, java.lang.Boolean.TRUE)
-      project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, java.lang.Boolean.TRUE)
-    }
+    val isMaven = starterContext.projectType?.id?.contains("Maven", ignoreCase = true) ?: false
+    ExternalSystemUtil.configureNewModule(module, starterContext.isCreatingNewProject, isMaven)
 
     startGenerator(module)
   }
@@ -295,6 +305,15 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   }
 
   @Throws(ConfigurationException::class)
+  protected open fun validateConfiguration() {
+  }
+
+  @Throws(ConfigurationException::class)
+  internal fun validateConfigurationInternal() {
+    return validateConfiguration()
+  }
+
+  @Throws(ConfigurationException::class)
   private fun startGenerator(module: Module) {
     val moduleContentRoot =
       if (!ApplicationManager.getApplication().isUnitTestMode) {
@@ -326,13 +345,17 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       dependencyConfig,
       getGeneratorContextProperties(sdk, dependencyConfig),
       getAssets(starter),
-      moduleContentRoot
+      convertOutputLocationForTests(moduleContentRoot)
     )
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       WriteAction.runAndWait<Throwable> {
         try {
-          AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
+          AssetsProcessor.getInstance().generateSources(
+            generatorContext.outputDirectory,
+            generatorContext.assets,
+            getTemplateProperties() + ("context" to generatorContext)
+          )
         }
         catch (e: IOException) {
           logger<StarterModuleBuilder>().error("Unable to create module by template", e)
@@ -370,7 +393,12 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     }
     else {
       // test mode, open files immediately, do not import module
-      AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
+      AssetsProcessor.getInstance().generateSources(
+        generatorContext.outputDirectory,
+        generatorContext.assets,
+        getTemplateProperties() + ("context" to generatorContext)
+      )
+
       ReformatCodeProcessor(module.project, module, false).run()
       openSampleFiles(module, getFilePathsToOpen())
     }

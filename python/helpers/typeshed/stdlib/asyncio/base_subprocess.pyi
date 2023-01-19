@@ -1,10 +1,12 @@
 import subprocess
 from collections import deque
-from typing import IO, Any, Callable, Optional, Sequence, Union
+from collections.abc import Callable, Sequence
+from typing import IO, Any
+from typing_extensions import TypeAlias
 
 from . import events, futures, protocols, transports
 
-_File = Optional[Union[int, IO[Any]]]
+_File: TypeAlias = int | IO[Any] | None
 
 class BaseSubprocessTransport(transports.SubprocessTransport):
 
@@ -54,7 +56,7 @@ class BaseSubprocessTransport(transports.SubprocessTransport):
     def terminate(self) -> None: ...
     def kill(self) -> None: ...
     async def _connect_pipes(self, waiter: futures.Future[Any] | None) -> None: ...  # undocumented
-    def _call(self, cb: Callable[..., Any], *data: Any) -> None: ...  # undocumented
+    def _call(self, cb: Callable[..., object], *data: Any) -> None: ...  # undocumented
     def _pipe_connection_lost(self, fd: int, exc: BaseException | None) -> None: ...  # undocumented
     def _pipe_data_received(self, fd: int, data: bytes) -> None: ...  # undocumented
     def _process_exited(self, returncode: int) -> None: ...  # undocumented

@@ -1,22 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ServiceEventListener {
   Topic<ServiceEventListener> TOPIC =
     Topic.create("services topic", ServiceEventListener.class, Topic.BroadcastDirection.TO_CHILDREN);
-
-  /**
-   * @deprecated has no effect since 2021.2, shall be removed in 2022.1
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  Object POLLING_RESET_TARGET = ObjectUtils.sentinel("pollingResetTarget");
 
   void handle(@NotNull ServiceEvent event);
 

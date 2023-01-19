@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.paint.EffectPainter;
@@ -32,9 +31,9 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -60,16 +59,17 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private final XSourcePosition myPosition;
   private SimpleColoredText myPresentation;
 
-  InlineDebugRenderer(XValueNodeImpl valueNode, @NotNull XSourcePosition position, @NotNull XDebugSession session) {
+  public InlineDebugRenderer(XValueNodeImpl valueNode, @NotNull XSourcePosition position, @NotNull XDebugSession session) {
     myPosition = position;
     mySession = session;
     myCustomNode = valueNode instanceof InlineWatchNodeImpl;
     myValueNode = valueNode;
     updatePresentation();
+    XValueMarkers<?, ?> markers = session instanceof XDebugSessionImpl ?  ((XDebugSessionImpl)session).getValueMarkers() : null;
     myTreeCreator = new XDebuggerTreeCreator(session.getProject(),
                                              session.getDebugProcess().getEditorsProvider(),
                                              session.getCurrentPosition(),
-                                             ((XDebugSessionImpl)session).getValueMarkers());
+                                             markers);
   }
 
   public void updatePresentation() {
@@ -119,12 +119,7 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     if (inlayRenderer.myPopupIsShown) {
       return;
     }
-    String name = "valueName";
-    XValue container = myValueNode.getValueContainer();
-    if (container instanceof XNamedValue) {
-      name = ((XNamedValue)container).getName();
-    }
-    Pair<XValue, String> descriptor = Pair.create(container, name);
+    Pair<XValue, String> descriptor = getXValueDescriptor(myValueNode);
     Rectangle bounds = inlay.getBounds();
     Point point = new Point(bounds.x, bounds.y + bounds.height);
 
@@ -136,13 +131,23 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
       });
     };
 
-    XValue value = myValueNode.getValueContainer();
-    if (value instanceof XValueTextProvider && ((XValueTextProvider)value).shouldShowTextValue()) {
-      String initialText = ((XValueTextProvider)value).getValueText();
-      XDebuggerTextInlayPopup.showTextPopup(StringUtil.notNullize(initialText), myTreeCreator, descriptor, myValueNode, inlay.getEditor(), point, myPosition, mySession, hidePopupRunnable);
+    Editor editor = inlay.getEditor();
+    InlineValuePopupProvider popupProvider = InlineValuePopupProvider.EP_NAME.findFirstSafe(a -> a.accepts(myValueNode));
+    if (popupProvider != null) {
+      popupProvider.showPopup(myValueNode, mySession, myPosition, myTreeCreator, editor, point, hidePopupRunnable);
     } else {
-      XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, descriptor, myValueNode, inlay.getEditor(), point, myPosition, mySession, hidePopupRunnable);
+      XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, descriptor, myValueNode, editor, point, myPosition, mySession, hidePopupRunnable);
     }
+  }
+
+  @NotNull
+  public static Pair<XValue, String> getXValueDescriptor(@NotNull XValueNodeImpl xValueNode) {
+    String name = "valueName";
+    XValue container = xValueNode.getValueContainer();
+    if (container instanceof XNamedValue) {
+      name = ((XNamedValue)container).getName();
+    }
+    return Pair.create(container, name);
   }
 
 

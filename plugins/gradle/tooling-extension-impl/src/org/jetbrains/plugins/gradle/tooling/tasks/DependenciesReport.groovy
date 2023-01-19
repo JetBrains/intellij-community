@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.tasks
 
 import com.google.gson.GsonBuilder
 import com.intellij.openapi.externalSystem.model.project.dependencies.*
-import gnu.trove.THashMap
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
@@ -193,7 +192,7 @@ class DependenciesReport extends DefaultTask {
     }
 
     private static class IdGenerator {
-      private THashMap<Object, Long> idMap = new THashMap<>()
+      private HashMap<Object, Long> idMap = new HashMap<>()
       private AtomicLong nextId
 
       IdGenerator(AtomicLong nextId) {

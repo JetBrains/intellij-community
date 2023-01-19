@@ -1,13 +1,16 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
@@ -15,39 +18,39 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 // ------------------------------ Persistent Id ---------------
 
-data class NameId(private val name: String) : PersistentEntityId<NamedEntity> {
+data class NameId(private val name: String) : SymbolicEntityId<NamedEntity> {
   override val presentableName: String
     get() = name
 
   override fun toString(): String = name
 }
 
-data class AnotherNameId(private val name: String) : PersistentEntityId<NamedEntity> {
+data class AnotherNameId(private val name: String) : SymbolicEntityId<NamedEntity> {
   override val presentableName: String
     get() = name
 
   override fun toString(): String = name
 }
 
-data class ComposedId(val name: String, val link: NameId) : PersistentEntityId<ComposedIdSoftRefEntity> {
+data class ComposedId(val name: String, val link: NameId) : SymbolicEntityId<ComposedIdSoftRefEntity> {
   override val presentableName: String
     get() = "$name - ${link.presentableName}"
 }
 
 // ------------------------------ Entity With Persistent Id ------------------
 
-interface NamedEntity : WorkspaceEntityWithPersistentId {
+interface NamedEntity : WorkspaceEntityWithSymbolicId {
   val myName: String
   val additionalProperty: String?
 
   val children: List<@Child NamedChildEntity>
 
-  override val persistentId: NameId
+  override val symbolicId: NameId
     get() = NameId(myName)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : NamedEntity, ModifiableWorkspaceEntity<NamedEntity>, ObjBuilder<NamedEntity> {
+  interface Builder : NamedEntity, WorkspaceEntity.Builder<NamedEntity>, ObjBuilder<NamedEntity> {
     override var entitySource: EntitySource
     override var myName: String
     override var additionalProperty: String?
@@ -55,6 +58,9 @@ interface NamedEntity : WorkspaceEntityWithPersistentId {
   }
 
   companion object : Type<NamedEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(myName: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): NamedEntity {
       val builder = builder()
       builder.myName = myName
@@ -100,13 +106,16 @@ interface NamedChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : NamedChildEntity, ModifiableWorkspaceEntity<NamedChildEntity>, ObjBuilder<NamedChildEntity> {
+  interface Builder : NamedChildEntity, WorkspaceEntity.Builder<NamedChildEntity>, ObjBuilder<NamedChildEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
     override var parentEntity: NamedEntity
   }
 
   companion object : Type<NamedChildEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): NamedChildEntity {
       val builder = builder()
       builder.childProperty = childProperty
@@ -144,12 +153,15 @@ interface WithSoftLinkEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : WithSoftLinkEntity, ModifiableWorkspaceEntity<WithSoftLinkEntity>, ObjBuilder<WithSoftLinkEntity> {
+  interface Builder : WithSoftLinkEntity, WorkspaceEntity.Builder<WithSoftLinkEntity>, ObjBuilder<WithSoftLinkEntity> {
     override var entitySource: EntitySource
     override var link: NameId
   }
 
   companion object : Type<WithSoftLinkEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(link: NameId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): WithSoftLinkEntity {
       val builder = builder()
       builder.link = link
@@ -178,12 +190,15 @@ interface ComposedLinkEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ComposedLinkEntity, ModifiableWorkspaceEntity<ComposedLinkEntity>, ObjBuilder<ComposedLinkEntity> {
+  interface Builder : ComposedLinkEntity, WorkspaceEntity.Builder<ComposedLinkEntity>, ObjBuilder<ComposedLinkEntity> {
     override var entitySource: EntitySource
     override var link: ComposedId
   }
 
   companion object : Type<ComposedLinkEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(link: ComposedId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ComposedLinkEntity {
       val builder = builder()
       builder.link = link
@@ -207,23 +222,26 @@ fun MutableEntityStorage.addComposedLinkEntity(link: ComposedId, source: EntityS
   return composedLinkEntity
 }
 
-// ------------------------- Entity with persistentId and the list of soft links ------------------
+// ------------------------- Entity with SymbolicId and the list of soft links ------------------
 
 
-interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
+interface WithListSoftLinksEntity : WorkspaceEntityWithSymbolicId {
   val myName: String
   val links: List<NameId>
-  override val persistentId: AnotherNameId get() = AnotherNameId(myName)
+  override val symbolicId: AnotherNameId get() = AnotherNameId(myName)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : WithListSoftLinksEntity, ModifiableWorkspaceEntity<WithListSoftLinksEntity>, ObjBuilder<WithListSoftLinksEntity> {
+  interface Builder : WithListSoftLinksEntity, WorkspaceEntity.Builder<WithListSoftLinksEntity>, ObjBuilder<WithListSoftLinksEntity> {
     override var entitySource: EntitySource
     override var myName: String
     override var links: MutableList<NameId>
   }
 
   companion object : Type<WithListSoftLinksEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(myName: String,
                         links: List<NameId>,
                         entitySource: EntitySource,
@@ -260,20 +278,23 @@ fun MutableEntityStorage.addWithListSoftLinksEntity(
 // --------------------------- Entity with composed persistent id via soft reference ------------------
 
 
-interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
+interface ComposedIdSoftRefEntity : WorkspaceEntityWithSymbolicId {
   val myName: String
   val link: NameId
-  override val persistentId: ComposedId get() = ComposedId(myName, link)
+  override val symbolicId: ComposedId get() = ComposedId(myName, link)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ComposedIdSoftRefEntity, ModifiableWorkspaceEntity<ComposedIdSoftRefEntity>, ObjBuilder<ComposedIdSoftRefEntity> {
+  interface Builder : ComposedIdSoftRefEntity, WorkspaceEntity.Builder<ComposedIdSoftRefEntity>, ObjBuilder<ComposedIdSoftRefEntity> {
     override var entitySource: EntitySource
     override var myName: String
     override var link: NameId
   }
 
   companion object : Type<ComposedIdSoftRefEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(myName: String,
                         link: NameId,
                         entitySource: EntitySource,

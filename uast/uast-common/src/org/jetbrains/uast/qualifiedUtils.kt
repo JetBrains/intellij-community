@@ -18,10 +18,8 @@
 
 package org.jetbrains.uast
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiMethodUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.UastVisitor
@@ -224,6 +222,8 @@ fun getMainMethodClass(uMainMethod: UMethod): PsiClass? {
   //a workaround for KT-33956
   if (isKotlinParameterlessMain(mainMethod)) return containingClass.javaPsi
 
+  if (isKotlinSuspendMain(uMainMethod)) return containingClass.javaPsi
+
   // Check for @JvmStatic main method in companion object
   val parentClassForCompanionObject = (containingClass.uastParent as? UClass)?.javaPsi ?: return null
 
@@ -242,6 +242,23 @@ private fun isKotlinParameterlessMain(mainMethod: PsiMethod) =
   && PsiType.VOID == mainMethod.returnType
   && mainMethod.hasModifierProperty(PsiModifier.STATIC)
 
+private fun isKotlinSuspendMain(uMainMethod: UMethod): Boolean {
+  val sourcePsi = uMainMethod.sourcePsi ?: return false
+  if (sourcePsi.language.id != "kotlin") return false
+  if (!SyntaxTraverser.psiTraverser(sourcePsi.children.first()).any { it is LeafPsiElement && it.textMatches("suspend") }) return false
+  val method = uMainMethod.javaPsi
+  val parameters: Array<PsiParameter> = method.parameterList.parameters
+  if (parameters.size > 2) return false
+  
+  // suspend main method has additional parameter kotlin.coroutines.Continuation but it could be seen as java.lang.Object
+  // on the PSI level, so we don't check it directly
+  if (parameters.size == 2) {
+    val argsType = parameters[0].type as? PsiArrayType ?: return false
+    if (!argsType.componentType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return false
+  }
+  return method.hasModifierProperty(PsiModifier.STATIC) && method.returnType?.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) == true
+}
+
 @ApiStatus.Experimental
 fun findMainInClass(uClass: UClass?): PsiMethod? {
   val javaPsi = uClass?.javaPsi ?: return null
@@ -249,5 +266,6 @@ fun findMainInClass(uClass: UClass?): PsiMethod? {
 
   //a workaround for KT-33956
   javaPsi.methods.find(::isKotlinParameterlessMain)?.let { return it }
+  uClass.methods.find(::isKotlinSuspendMain)?.javaPsi?.let { return it }
   return null
 }

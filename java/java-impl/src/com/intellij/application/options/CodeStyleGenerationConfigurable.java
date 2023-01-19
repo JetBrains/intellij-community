@@ -43,6 +43,9 @@ import java.awt.*;
 import java.util.Comparator;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.options.Configurable.isCheckboxModified;
+import static com.intellij.openapi.options.Configurable.isFieldModified;
+
 public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   private final JavaVisibilityPanel myJavaVisibilityPanel;
   JPanel myPanel;
@@ -209,32 +212,32 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
 
   public boolean isModified(CodeStyleSettings settings) {
     JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
-    boolean isModified = isModified(myCbPreferLongerNames, javaSettings.PREFER_LONGER_NAMES);
+    boolean isModified = isCheckboxModified(myCbPreferLongerNames, javaSettings.PREFER_LONGER_NAMES);
 
-    isModified |= isModified(myFieldPrefixField, javaSettings.FIELD_NAME_PREFIX);
-    isModified |= isModified(myStaticFieldPrefixField, javaSettings.STATIC_FIELD_NAME_PREFIX);
-    isModified |= isModified(myParameterPrefixField, javaSettings.PARAMETER_NAME_PREFIX);
-    isModified |= isModified(myLocalVariablePrefixField, javaSettings.LOCAL_VARIABLE_NAME_PREFIX);
-    isModified |= isModified(mySubclassPrefix, javaSettings.SUBCLASS_NAME_PREFIX);
-    isModified |= isModified(myTestClassPrefix, javaSettings.TEST_NAME_PREFIX);
+    isModified |= isFieldModified(myFieldPrefixField, javaSettings.FIELD_NAME_PREFIX);
+    isModified |= isFieldModified(myStaticFieldPrefixField, javaSettings.STATIC_FIELD_NAME_PREFIX);
+    isModified |= isFieldModified(myParameterPrefixField, javaSettings.PARAMETER_NAME_PREFIX);
+    isModified |= isFieldModified(myLocalVariablePrefixField, javaSettings.LOCAL_VARIABLE_NAME_PREFIX);
+    isModified |= isFieldModified(mySubclassPrefix, javaSettings.SUBCLASS_NAME_PREFIX);
+    isModified |= isFieldModified(myTestClassPrefix, javaSettings.TEST_NAME_PREFIX);
 
-    isModified |= isModified(myFieldSuffixField, javaSettings.FIELD_NAME_SUFFIX);
-    isModified |= isModified(myStaticFieldSuffixField, javaSettings.STATIC_FIELD_NAME_SUFFIX);
-    isModified |= isModified(myParameterSuffixField, javaSettings.PARAMETER_NAME_SUFFIX);
-    isModified |= isModified(myLocalVariableSuffixField, javaSettings.LOCAL_VARIABLE_NAME_SUFFIX);
-    isModified |= isModified(mySubclassSuffix, javaSettings.SUBCLASS_NAME_SUFFIX);
-    isModified |= isModified(myTestClassSuffix, javaSettings.TEST_NAME_SUFFIX);
+    isModified |= isFieldModified(myFieldSuffixField, javaSettings.FIELD_NAME_SUFFIX);
+    isModified |= isFieldModified(myStaticFieldSuffixField, javaSettings.STATIC_FIELD_NAME_SUFFIX);
+    isModified |= isFieldModified(myParameterSuffixField, javaSettings.PARAMETER_NAME_SUFFIX);
+    isModified |= isFieldModified(myLocalVariableSuffixField, javaSettings.LOCAL_VARIABLE_NAME_SUFFIX);
+    isModified |= isFieldModified(mySubclassSuffix, javaSettings.SUBCLASS_NAME_SUFFIX);
+    isModified |= isFieldModified(myTestClassSuffix, javaSettings.TEST_NAME_SUFFIX);
 
-    isModified |= isModified(myCbGenerateFinalLocals, javaSettings.GENERATE_FINAL_LOCALS);
-    isModified |= isModified(myCbGenerateFinalParameters, javaSettings.GENERATE_FINAL_PARAMETERS);
+    isModified |= isCheckboxModified(myCbGenerateFinalLocals, javaSettings.GENERATE_FINAL_LOCALS);
+    isModified |= isCheckboxModified(myCbGenerateFinalParameters, javaSettings.GENERATE_FINAL_PARAMETERS);
 
-    isModified |= isModified(myCbUseExternalAnnotations, javaSettings.USE_EXTERNAL_ANNOTATIONS);
-    isModified |= isModified(myInsertOverrideAnnotationCheckBox, javaSettings.INSERT_OVERRIDE_ANNOTATION);
-    isModified |= isModified(myRepeatSynchronizedCheckBox, javaSettings.REPEAT_SYNCHRONIZED);
+    isModified |= isCheckboxModified(myCbUseExternalAnnotations, javaSettings.USE_EXTERNAL_ANNOTATIONS);
+    isModified |= isCheckboxModified(myInsertOverrideAnnotationCheckBox, javaSettings.INSERT_OVERRIDE_ANNOTATION);
+    isModified |= isCheckboxModified(myRepeatSynchronizedCheckBox, javaSettings.REPEAT_SYNCHRONIZED);
 
-    isModified |= isModified(myReplaceInstanceOfCb, javaSettings.REPLACE_INSTANCEOF_AND_CAST);
-    isModified |= isModified(myReplaceNullCheckCb, javaSettings.REPLACE_NULL_CHECK);
-    isModified |= isModified(myReplaceSumCb, javaSettings.REPLACE_SUM);
+    isModified |= isCheckboxModified(myReplaceInstanceOfCb, javaSettings.REPLACE_INSTANCEOF_AND_CAST);
+    isModified |= isCheckboxModified(myReplaceNullCheckCb, javaSettings.REPLACE_NULL_CHECK);
+    isModified |= isCheckboxModified(myReplaceSumCb, javaSettings.REPLACE_SUM);
 
     isModified |= !javaSettings.VISIBILITY.equals(myJavaVisibilityPanel.getVisibility());
 

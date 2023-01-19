@@ -1,9 +1,9 @@
 fun foo() {
     class LocalClass {}
 
-    interface LocalTrait {}
+    interface LocalInterface {}
 
-    interface LocalTraitWithImpl {
+    interface LocalInterfaceWithImpl {
         fun foo() {}
     }
 
@@ -12,6 +12,6 @@ fun foo() {
 
 // SEARCH_TEXT: Local
 // REF: (in foo).LocalClass
+// REF: (in foo).LocalInterface
+// REF: (in foo).LocalInterfaceWithImpl
 // REF: (in foo).LocalObject
-// REF: (in foo).LocalTrait
-// REF: (in foo).LocalTraitWithImpl

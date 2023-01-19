@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.popup.*
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
+import com.intellij.ui.popup.PopupState
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
@@ -14,6 +15,7 @@ import javax.swing.*
 object ChooserPopupUtil {
 
   suspend fun <T> showChooserPopup(point: RelativePoint,
+                                   popupState: PopupState<JBPopup>,
                                    items: List<T>,
                                    presenter: (T) -> PopupItemPresentation): T? {
     val listModel = CollectionListModel(items)
@@ -27,10 +29,12 @@ object ChooserPopupUtil {
       .setFilterAlwaysVisible(true)
       .createPopup()
 
+    popupState.prepareToShow(popup)
     return popup.showAndAwaitSubmission(list, point)
   }
 
   suspend fun <T> showAsyncChooserPopup(point: RelativePoint,
+                                        popupState: PopupState<JBPopup>,
                                         itemsLoader: suspend () -> List<T>,
                                         presenter: (T) -> PopupItemPresentation): T? {
     val listModel = CollectionListModel<T>()
@@ -46,6 +50,7 @@ object ChooserPopupUtil {
       .addListener(loadingListener)
       .createPopup()
 
+    popupState.prepareToShow(popup)
     return popup.showAndAwaitSubmission(list, point)
   }
 

@@ -22,9 +22,6 @@ import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public abstract class PrattParser implements PsiParser {
   protected abstract PrattRegistry getRegistry();
 

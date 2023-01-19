@@ -3,20 +3,21 @@ package com.intellij.java.devkit.psiViewer;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class PsiViewerExpressionExtension extends JavaPsiViewerExtension {
+final class PsiViewerExpressionExtension extends JavaPsiViewerExtension {
   @Override
   public @NotNull String getName() {
-    return "Java Expression";
+    return JavaPsiViewerBundle.message("java.expression");
   }
 
   @Override
   public @NotNull Icon getIcon() {
-    return PlatformIcons.CLASS_INITIALIZER;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.ClassInitializer);
   }
 
   @Override

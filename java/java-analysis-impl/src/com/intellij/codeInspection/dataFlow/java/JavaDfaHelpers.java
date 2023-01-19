@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
@@ -16,11 +16,12 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.function.UnaryOperator;
 
 /**
  * Utility class to help interpreting the Java DFA
  */
-public class JavaDfaHelpers {
+public final class JavaDfaHelpers {
   public static DfaValue dropLocality(DfaValue value, DfaMemoryState state) {
     if (!(value instanceof DfaVariableValue)) {
       DfType type = value.getDfType();
@@ -35,15 +36,10 @@ public class JavaDfaHelpers {
       return value;
     }
     DfaVariableValue var = (DfaVariableValue)value;
-    DfType dfType = state.getDfType(var);
-    if (dfType instanceof DfReferenceType) {
-      state.setDfType(var, ((DfReferenceType)dfType).dropLocality());
-    }
+    UnaryOperator<@NotNull DfType> updater = dfType -> dfType instanceof DfReferenceType refType ? refType.dropLocality() : dfType;
+    state.updateDfType(var, updater);
     for (DfaVariableValue v : new ArrayList<>(var.getDependentVariables())) {
-      dfType = state.getDfType(v);
-      if (dfType instanceof DfReferenceType) {
-        state.setDfType(v, ((DfReferenceType)dfType).dropLocality());
-      }
+      state.updateDfType(v, updater);
     }
     return value;
   }

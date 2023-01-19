@@ -9,9 +9,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ilyas
- */
 public final class HandlerUtils {
   private HandlerUtils() {
   }

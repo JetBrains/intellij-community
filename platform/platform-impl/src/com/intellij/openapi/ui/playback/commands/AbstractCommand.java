@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.playback.PlaybackCommand;
 import com.intellij.openapi.ui.playback.PlaybackContext;
+import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +90,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
         context.code(getText(), getLine());
       }
       final AsyncPromise<Object> result = new AsyncPromise<>();
-      Runnable runnable = () -> {
+      Runnable runnable = Context.current().wrap(() -> {
         try {
           _execute(context).processed(result);
         }
@@ -98,7 +99,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
           dumpError(context, e.getMessage());
           result.setError(e);
         }
-      };
+      });
 
       Application application = ApplicationManager.getApplication();
       if (myExecuteInAwt) {

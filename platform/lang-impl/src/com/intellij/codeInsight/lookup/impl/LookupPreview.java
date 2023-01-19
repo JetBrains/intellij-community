@@ -21,9 +21,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 class LookupPreview {
   private final List<Inlay> myInlays = new ArrayList<>();
   private final LookupImpl myLookup;

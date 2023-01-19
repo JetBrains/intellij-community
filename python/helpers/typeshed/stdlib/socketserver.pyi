@@ -1,43 +1,35 @@
 import sys
 import types
 from _typeshed import Self
+from collections.abc import Callable
 from socket import socket as _socket
-from typing import Any, BinaryIO, Callable, ClassVar, Union
+from typing import Any, BinaryIO, ClassVar, Union
+from typing_extensions import TypeAlias
 
-if sys.platform == "win32":
-    __all__ = [
-        "BaseServer",
-        "TCPServer",
-        "UDPServer",
-        "ThreadingUDPServer",
-        "ThreadingTCPServer",
-        "BaseRequestHandler",
-        "StreamRequestHandler",
-        "DatagramRequestHandler",
-        "ThreadingMixIn",
-    ]
-else:
-    __all__ = [
-        "BaseServer",
-        "TCPServer",
-        "UDPServer",
-        "ThreadingUDPServer",
-        "ThreadingTCPServer",
-        "BaseRequestHandler",
-        "StreamRequestHandler",
-        "DatagramRequestHandler",
-        "ThreadingMixIn",
-        "ForkingUDPServer",
-        "ForkingTCPServer",
+__all__ = [
+    "BaseServer",
+    "TCPServer",
+    "UDPServer",
+    "ThreadingUDPServer",
+    "ThreadingTCPServer",
+    "BaseRequestHandler",
+    "StreamRequestHandler",
+    "DatagramRequestHandler",
+    "ThreadingMixIn",
+]
+if sys.platform != "win32":
+    __all__ += [
         "ForkingMixIn",
-        "UnixStreamServer",
-        "UnixDatagramServer",
-        "ThreadingUnixStreamServer",
+        "ForkingTCPServer",
+        "ForkingUDPServer",
         "ThreadingUnixDatagramServer",
+        "ThreadingUnixStreamServer",
+        "UnixDatagramServer",
+        "UnixStreamServer",
     ]
 
-_RequestType = Union[_socket, tuple[bytes, _socket]]
-_AddressType = Union[tuple[str, int], str]
+_RequestType: TypeAlias = Union[_socket, tuple[bytes, _socket]]
+_AddressType: TypeAlias = Union[tuple[str, int], str]
 
 # This can possibly be generic at some point:
 class BaseServer:
@@ -89,6 +81,8 @@ class TCPServer(BaseServer):
     def get_request(self) -> tuple[_socket, Any]: ...
 
 class UDPServer(BaseServer):
+    if sys.version_info >= (3, 11):
+        allow_reuse_port: bool
     max_packet_size: ClassVar[int]
     def get_request(self) -> tuple[tuple[bytes, _socket], Any]: ...
 
@@ -114,8 +108,7 @@ if sys.platform != "win32":
         timeout: float | None  # undocumented
         active_children: set[int] | None  # undocumented
         max_children: int  # undocumented
-        if sys.version_info >= (3, 7):
-            block_on_close: bool
+        block_on_close: bool
         def collect_children(self, *, blocking: bool = ...) -> None: ...  # undocumented
         def handle_timeout(self) -> None: ...  # undocumented
         def service_actions(self) -> None: ...  # undocumented
@@ -124,8 +117,7 @@ if sys.platform != "win32":
 
 class ThreadingMixIn:
     daemon_threads: bool
-    if sys.version_info >= (3, 7):
-        block_on_close: bool
+    block_on_close: bool
     def process_request_thread(self, request: _RequestType, client_address: _AddressType) -> None: ...  # undocumented
     def process_request(self, request: _RequestType, client_address: _AddressType) -> None: ...
     def server_close(self) -> None: ...
@@ -161,7 +153,7 @@ class StreamRequestHandler(BaseRequestHandler):
     wbufsize: ClassVar[int]  # undocumented
     timeout: ClassVar[float | None]  # undocumented
     disable_nagle_algorithm: ClassVar[bool]  # undocumented
-    connection: _socket  # undocumented
+    connection: Any  # undocumented
     rfile: BinaryIO
     wfile: BinaryIO
 

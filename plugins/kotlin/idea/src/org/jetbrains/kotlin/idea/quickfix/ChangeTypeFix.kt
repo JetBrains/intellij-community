@@ -42,7 +42,7 @@ class ChangeTypeFix(element: KtTypeReference, private val type: KotlinType) : Ko
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val newTypeRef = element.replaced(KtPsiFactory(file).createType(IdeDescriptorRenderers.SOURCE_CODE.renderType(type)))
+        val newTypeRef = element.replaced(KtPsiFactory(project).createType(IdeDescriptorRenderers.SOURCE_CODE.renderType(type)))
         ShortenReferences.DEFAULT.process(newTypeRef)
     }
 

@@ -125,7 +125,7 @@ class JpsReleaseVersionQuickFix : BuildIssueContributor {
     return null
   }
 
-  fun extractFailedMavenId(project: Project, moduleName: String): MavenId? {
+  private fun extractFailedMavenId(project: Project, moduleName: String): MavenId? {
     val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
     return MavenProjectsManager.getInstance(project).findProject(module)?.mavenId ?: return null
   }

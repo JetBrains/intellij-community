@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * Anchor for positioning {@link ToolWindow tool window} (TOP, LEFT, BOTTOM, RIGHT).
@@ -17,6 +18,7 @@ public final class ToolWindowAnchor {
   public static final @NotNull ToolWindowAnchor LEFT = new ToolWindowAnchor("left", "action.text.anchor.left", "action.text.anchor.left.capitalized");
   public static final @NotNull ToolWindowAnchor BOTTOM = new ToolWindowAnchor("bottom", "action.text.anchor.bottom", "action.text.anchor.bottom.capitalized");
   public static final @NotNull ToolWindowAnchor RIGHT = new ToolWindowAnchor("right", "action.text.anchor.right", "action.text.anchor.right.capitalized");
+  public static final @NotNull List<ToolWindowAnchor> VALUES = List.of(TOP, LEFT, BOTTOM, RIGHT);
 
   private final @NotNull String myText;
 
@@ -48,18 +50,13 @@ public final class ToolWindowAnchor {
   }
 
   public static @NotNull ToolWindowAnchor get(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT}) int swingOrientationConstant) {
-    switch(swingOrientationConstant) {
-      case SwingConstants.TOP:
-        return TOP;
-      case SwingConstants.BOTTOM:
-        return BOTTOM;
-      case SwingConstants.LEFT:
-        return LEFT;
-      case SwingConstants.RIGHT:
-        return RIGHT;
-    }
-
-    throw new IllegalArgumentException("Unknown anchor constant: " + swingOrientationConstant);
+    return switch (swingOrientationConstant) {
+      case SwingConstants.TOP -> TOP;
+      case SwingConstants.BOTTOM -> BOTTOM;
+      case SwingConstants.LEFT -> LEFT;
+      case SwingConstants.RIGHT -> RIGHT;
+      default -> throw new IllegalArgumentException("Unknown anchor constant: " + swingOrientationConstant);
+    };
   }
 
   public boolean isSplitVertically() {
@@ -68,17 +65,12 @@ public final class ToolWindowAnchor {
   }
 
   public static @NotNull ToolWindowAnchor fromText(@NotNull String anchor) {
-    switch (anchor) {
-      case "top":
-        return TOP;
-      case "left":
-        return LEFT;
-      case "bottom":
-        return BOTTOM;
-      case "right":
-        return RIGHT;
-      default:
-        throw new IllegalArgumentException("Unknown anchor constant: " + anchor);
-    }
+    return switch (anchor) {
+      case "top" -> TOP;
+      case "left" -> LEFT;
+      case "bottom" -> BOTTOM;
+      case "right" -> RIGHT;
+      default -> throw new IllegalArgumentException("Unknown anchor constant: " + anchor);
+    };
   }
 }

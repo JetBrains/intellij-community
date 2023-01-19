@@ -2,8 +2,12 @@
 package com.intellij.collaboration.api
 
 import com.intellij.openapi.util.NlsSafe
+import java.net.URI
 
 interface ServerPath {
+
+  fun toURI(): URI
+
   @NlsSafe
   override fun toString(): String
 }

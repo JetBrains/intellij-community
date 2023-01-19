@@ -421,7 +421,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ProgressManager.checkCanceled();
 
     if (!myHandler.isTestingMode()) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
 
     LookupElement lookupElement = item.getLookupElement();
@@ -939,7 +939,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     public void showIncompleteHint(@NotNull Editor editor, @NotNull @HintText String text, boolean isDumbMode) {
       String message = isDumbMode ?
                        text + CodeInsightBundle.message("completion.incomplete.during.indexing.suffix") : text;
-      HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXmlEntities(message), HintManager.UNDER);
+      HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXmlEntities(message), HintManager.ABOVE);
     }
   }
 }

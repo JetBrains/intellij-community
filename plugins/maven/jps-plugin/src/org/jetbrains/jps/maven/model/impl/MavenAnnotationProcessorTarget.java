@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 /**
  * Class is used to provide implicit dependencies between modules. It is used in cases when one module uses other project modules as
  * annotation processors, which is possible using "annotationProcessorPaths" option of "maven-compiler-plugin"
- * @author ibessonov
  */
 public final class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRootDescriptor> {
   private final MavenAnnotationProcessorTargetType myTargetType;

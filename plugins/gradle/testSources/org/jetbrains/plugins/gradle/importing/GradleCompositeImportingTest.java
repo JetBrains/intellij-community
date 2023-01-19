@@ -50,10 +50,11 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @TargetVersions("3.3+")
   public void testBasicCompositeBuild() throws Exception {
     //enableGradleDebugWithSuspend();
-    createSettingsFile("rootProject.name='adhoc'\n" +
-                       "\n" +
-                       "includeBuild '../my-app'\n" +
-                       "includeBuild '../my-utils'");
+    createSettingsFile("""
+                         rootProject.name='adhoc'
+
+                         includeBuild '../my-app'
+                         includeBuild '../my-utils'""");
 
     createProjectSubFile("../my-app/settings.gradle", "rootProject.name = 'my-app-name'\n");
     createProjectSubFile("../my-app/build.gradle",
@@ -117,9 +118,10 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     createSettingsFile("rootProject.name = 'app'\n" +
                        "includeBuild 'lib'");
 
-    createProjectSubFile("lib/settings.gradle", "rootProject.name = 'lib'\n" +
-                                                "include 'runtime'\n" +
-                                                "include 'runtime:runtime-mod'");
+    createProjectSubFile("lib/settings.gradle", """
+      rootProject.name = 'lib'
+      include 'runtime'
+      include 'runtime:runtime-mod'""");
     createProjectSubFile("lib/runtime/runtime-mod/build.gradle",
                          "apply plugin: 'java'\n" +
                          "group = 'my.group'");
@@ -152,9 +154,10 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     createSettingsFile("rootProject.name = 'app'\n" +
                        "includeBuild 'lib'");
 
-    createProjectSubFile("lib/settings.gradle", "rootProject.name = 'lib'\n" +
-                                                "include 'runtime'\n" +
-                                                "include 'runtime:runtime-mod'");
+    createProjectSubFile("lib/settings.gradle", """
+      rootProject.name = 'lib'
+      include 'runtime'
+      include 'runtime:runtime-mod'""");
     createProjectSubFile("lib/runtime/runtime-mod/build.gradle",
                          "apply plugin: 'java'\n" +
                          "group = 'my.group'");
@@ -176,10 +179,11 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("4.0+")
   public void testCompositeBuildWithGradleProjectDuplicates() throws Exception {
-    createSettingsFile("rootProject.name = 'app'\n" +
-                       "include 'runtime'\n" +
-                       "includeBuild 'lib1'\n" +
-                       "includeBuild 'lib2'");
+    createSettingsFile("""
+                         rootProject.name = 'app'
+                         include 'runtime'
+                         includeBuild 'lib1'
+                         includeBuild 'lib2'""");
 
     createProjectSubFile("runtime/build.gradle",
                          "apply plugin: 'java'");
@@ -218,10 +222,11 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("3.3+")
   public void testCompositeBuildWithGradleProjectDuplicatesModulePerSourceSet() throws Exception {
-    createSettingsFile("rootProject.name = 'app'\n" +
-                       "include 'runtime'\n" +
-                       "includeBuild 'lib1'\n" +
-                       "includeBuild 'lib2'");
+    createSettingsFile("""
+                         rootProject.name = 'app'
+                         include 'runtime'
+                         includeBuild 'lib1'
+                         includeBuild 'lib2'""");
 
     createProjectSubFile("runtime/build.gradle",
                          "apply plugin: 'java'");
@@ -287,13 +292,16 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     modelsProvider.newModule(getProjectPath() + "/my-utils-api_main.iml", StdModuleTypes.JAVA.getId());
     edt(() -> ApplicationManager.getApplication().runWriteAction(modelsProvider::commit));
 
-    createSettingsFile("rootProject.name='adhoc'\n" +
-                       "\n" +
-                       "includeBuild '../my-app'\n" +
-                       "includeBuild '../my-utils'");
+    createSettingsFile("""
+                         rootProject.name='adhoc'
 
-    createProjectSubFile("../my-app/settings.gradle", "rootProject.name = 'my-app'\n" +
-                                                      "include 'api'\n");
+                         includeBuild '../my-app'
+                         includeBuild '../my-utils'""");
+
+    createProjectSubFile("../my-app/settings.gradle", """
+      rootProject.name = 'my-app'
+      include 'api'
+      """);
     createProjectSubFile("../my-app/build.gradle",
                          createBuildScriptBuilder()
                            .withJavaPlugin()
@@ -503,17 +511,18 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     // consumer need to be complicated to display the issue
     createProjectSubFile("consumer/settings.gradle",
-                         "pluginManagement {\n" +
-                         "  resolutionStrategy {\n" +
-                         "    eachPlugin {\n" +
-                         "      println \"resolving ${requested.id.id} dependency\"\n" +
-                         "      if(requested.id.id == \"test-plugin\") {\n" +
-                         "        useModule(\"myGroup:test-plugin:1.0\")\n" +
-                         "      }\n" +
-                         "    }\n" +
-                         "  }\n" +
-                         "}\n"
-                         + "include 'library'");
+                         """
+                           pluginManagement {
+                             resolutionStrategy {
+                               eachPlugin {
+                                 println "resolving ${requested.id.id} dependency"
+                                 if(requested.id.id == "test-plugin") {
+                                   useModule("myGroup:test-plugin:1.0")
+                                 }
+                               }
+                             }
+                           }
+                           include 'library'""");
     createProjectSubFile("consumer/build.gradle", createBuildScriptBuilder()
       .addPostfix(
         "plugins {",
@@ -546,9 +555,10 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("3.1+")
   public void testSubstituteDependencyWithRootProject() throws Exception {
-    createSettingsFile("rootProject.name = \"root-project\"\n" +
-                       "include 'sub-project'\n" +
-                       "includeBuild('included-project') { dependencySubstitution { substitute module('my.grp:myId') with project(':') } }");
+    createSettingsFile("""
+                         rootProject.name = "root-project"
+                         include 'sub-project'
+                         includeBuild('included-project') { dependencySubstitution { substitute module('my.grp:myId') with project(':') } }""");
 
 
     createProjectSubFile("sub-project/build.gradle",
@@ -577,23 +587,24 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("3.1+")
   public void testScopeUpdateForSubstituteDependency() throws Exception {
-    createSettingsFile("rootProject.name = 'pA'\n" +
-                       "include 'pA-1', 'pA-2'\n" +
-                       "includeBuild('pB')\n" +
-                       "includeBuild('pC')");
+    createSettingsFile("""
+                         rootProject.name = 'pA'
+                         include 'pA-1', 'pA-2'
+                         includeBuild('pB')
+                         includeBuild('pC')""");
 
     createProjectSubFile("pB/settings.gradle");
     createProjectSubFile("pC/settings.gradle");
 
     createProjectSubFile("pA-1/build.gradle",
                          createBuildScriptBuilder()
-                           .applyPlugin("'java-library'")
+                           .applyPlugin("java-library")
                            .addDependency("implementation 'group:pC'")
                            .generate());
 
     createProjectSubFile("pA-2/build.gradle",
                          createBuildScriptBuilder()
-                           .applyPlugin("'java-library'")
+                           .applyPlugin("java-library")
                            .addDependency("implementation project(':pA-1')")
                            .addDependency("implementation 'group:pB'")
                            .generate());
@@ -601,14 +612,14 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     createProjectSubFile("pB/build.gradle",
                          createBuildScriptBuilder()
                            .addPostfix("group = 'group'")
-                           .applyPlugin("'java-library'")
+                           .applyPlugin("java-library")
                            .addDependency("api 'group:pC'")
                            .generate());
 
     createProjectSubFile("pC/build.gradle",
                          createBuildScriptBuilder()
                            .addPostfix("group = 'group'")
-                           .applyPlugin("'java-library'")
+                           .applyPlugin("java-library")
                            .generate());
 
     //enableGradleDebugWithSuspend();
@@ -631,8 +642,10 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     importProject();
 
     // create files for the first "included" build1
-    createProjectSubFile("build1/settings.gradle", "rootProject.name = 'project1'\n" +
-                                                   "include 'utils'\n");
+    createProjectSubFile("build1/settings.gradle", """
+      rootProject.name = 'project1'
+      include 'utils'
+      """);
     createProjectSubFile("build1/build.gradle",
                          createBuildScriptBuilder()
                            .addGroup("org.build1")
@@ -642,23 +655,31 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                            .addImplementationDependency("org.build2:utils:1.0")
                            .generate());
     createProjectSubFile("build1/utils/build.gradle",
-                         "apply plugin: 'java'\n" +
-                         "group 'org.build1'\n" +
-                         "version '1.0'\n");
+                         """
+                           apply plugin: 'java'
+                           group 'org.build1'
+                           version '1.0'
+                           """);
     // use Gradle wrapper of the test root project
     FileUtil.copyDirContent(file("gradle"), file("build1"));
 
     // create files for the second "included" build2
-    createProjectSubFile("build2/settings.gradle", "rootProject.name = 'project2'\n" +
-                                                   "include 'utils'\n");
+    createProjectSubFile("build2/settings.gradle", """
+      rootProject.name = 'project2'
+      include 'utils'
+      """);
     createProjectSubFile("build2/build.gradle",
-                         "apply plugin: 'java'\n" +
-                         "group 'org.build2'\n" +
-                         "version '1.0'\n");
+                         """
+                           apply plugin: 'java'
+                           group 'org.build2'
+                           version '1.0'
+                           """);
     createProjectSubFile("build2/utils/build.gradle",
-                         "apply plugin: 'java'\n" +
-                         "group 'org.build2'\n" +
-                         "version '1.0'\n");
+                         """
+                           apply plugin: 'java'
+                           group 'org.build2'
+                           version '1.0'
+                           """);
     // use Gradle wrapper of the test root project
     FileUtil.copyDirContent(file("gradle"), file("build2"));
 
@@ -717,11 +738,12 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("6.8+") // https://docs.gradle.org/6.8-rc-1/release-notes.html#desired-cycles-between-builds-are-now-fully-supported
   public void testNestedCyclicCompositeBuilds() throws Exception {
-    createSettingsFile("rootProject.name = 'root'\n" +
-                       "includeBuild('A')\n" +
-                       "includeBuild('B')\n" +
-                       "includeBuild('C')\n" +
-                       "includeBuild('.')");
+    createSettingsFile("""
+                         rootProject.name = 'root'
+                         includeBuild('A')
+                         includeBuild('B')
+                         includeBuild('C')
+                         includeBuild('.')""");
     createProjectSubFile("A/settings.gradle", "includeBuild('AA')");
     createProjectSubFile("A/AA/settings.gradle", "includeBuild('AAA')");
     createProjectSubFile("A/AA/AAA/settings.gradle");

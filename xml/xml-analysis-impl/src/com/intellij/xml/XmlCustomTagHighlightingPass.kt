@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType.INFORMATION
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType.SYMBOL_TYPE_SEVERITY
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
+import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection
 import com.intellij.lang.ASTNode
 import com.intellij.lang.html.HtmlCompatibleFile
 import com.intellij.openapi.application.ApplicationManager
@@ -18,6 +19,7 @@ import com.intellij.openapi.editor.ex.util.LayeredTextAttributes
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import com.intellij.psi.XmlRecursiveElementWalkingVisitor
 import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl
@@ -35,7 +37,7 @@ val attributeKeyMapping = mapOf<TextAttributesKey, TextAttributesKey>(
 )
 
 class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEditorHighlightingPass(file.project, editor.document, true) {
-  
+
   private val myHolder: HighlightInfoHolder = HighlightInfoHolder(file)
   private val myHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(file.language, file.project, file.virtualFile)
 
@@ -44,8 +46,13 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
       override fun visitXmlTag(tag: XmlTag) {
         super.visitXmlTag(tag)
         val descriptor = tag.descriptor ?: return
-        if (descriptor is AnyXmlElementDescriptor) return
-        if (isCustomTag(descriptor, tag)) {
+
+        //e.g. for unresolved tags
+        if (descriptor is AnyXmlElementDescriptor && !getCustomNames().contains(tag.name)) {
+          return
+        }
+
+        if (isCustomTag(file, tag)) {
           tag.node?.let {
             for (child in it.getChildren(null)) {
               applyHighlighting(child, child.elementType)
@@ -56,23 +63,9 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
     })
   }
 
-  private fun isCustomTag(descriptor: XmlElementDescriptor, tag: XmlTag): Boolean {
-    if (descriptor is XmlCustomElementDescriptor) return descriptor.isCustomElement()
-    
-    return isHtmlLikeFile() && !isHtmlTagName(descriptor, tag)
-  }
-
-  private fun isHtmlLikeFile() = file.viewProvider.allFiles.any { it is HtmlCompatibleFile } || HtmlUtil.supportsXmlTypedHandlers(file)
-
-  private fun isHtmlTagName(descriptor: XmlElementDescriptor, tag: XmlTag): Boolean {
-    if (descriptor is HtmlElementDescriptorImpl) return true
-    val nsDescriptor = tag.getNSDescriptor(tag.namespace, true)
-    if (nsDescriptor is HtmlNSDescriptorImpl) {
-      val htmlDescriptor = nsDescriptor.getElementDescriptorByName(tag.name)
-      if (htmlDescriptor != null) return true
-    }
-    return false
-  }
+  private fun getCustomNames() = (HtmlUtil.getEntitiesString(file, XmlEntitiesInspection.TAG_SHORT_NAME)
+                             ?.let { StringUtil.split(it, ",").toSet() }
+                           ?: emptySet())
 
   private fun applyHighlighting(node: ASTNode, elementType: IElementType) {
     if (node !is LeafElement) return
@@ -118,4 +111,25 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
     }
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, file.textLength, highlights, colorsScheme, id)
   }
+}
+
+fun isCustomTag(file: PsiFile, tag: XmlTag): Boolean {
+  val descriptor = tag.descriptor ?: return false
+  if (descriptor is XmlCustomElementDescriptor) return descriptor.isCustomElement
+  return isHtmlLikeFile(file) && !isHtmlTagName(descriptor, tag)
+}
+
+private fun isHtmlLikeFile(file: PsiFile) = file.viewProvider.allFiles.any { it is HtmlCompatibleFile } || HtmlUtil.supportsXmlTypedHandlers(file)
+
+private fun isHtmlTagName(descriptor: XmlElementDescriptor, tag: XmlTag): Boolean {
+  if (descriptor is HtmlElementDescriptorImpl) return true
+  val nsDescriptor = tag.getNSDescriptor(tag.namespace, true)
+  if (nsDescriptor is HtmlNSDescriptorImpl) {
+    val htmlDescriptor = nsDescriptor.getElementDescriptorByName(tag.name)
+    if (htmlDescriptor != null) {
+      //make it case-sensitive
+      return descriptor.name == htmlDescriptor.name
+    }
+  }
+  return false
 }

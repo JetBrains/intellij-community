@@ -56,20 +56,13 @@ public class EditorGutterLayout {
     GutterArea(String ID, Supplier<Integer> areaWidth) {
       id = ID;
       widthFunc = areaWidth;
-      switch (ID) {
-        case LINE_NUMBERS_AREA:
-        case ADDITIONAL_LINE_NUMBERS_AREA: mouseEventAreaType = EditorMouseEventArea.LINE_NUMBERS_AREA; break;
-
-        case ANNOTATIONS_AREA: mouseEventAreaType = EditorMouseEventArea.ANNOTATIONS_AREA; break;
-
-        case LEFT_FREE_PAINTERS_AREA:
-        case RIGHT_FREE_PAINTERS_AREA:
-        case ICONS_AREA: mouseEventAreaType = EditorMouseEventArea.LINE_MARKERS_AREA; break;
-
-        case GAP_AFTER_ICONS_AREA:
-        case FOLDING_AREA:
-        case VERTICAL_LINE_AREA: mouseEventAreaType = EditorMouseEventArea.FOLDING_OUTLINE_AREA; break;
-      }
+      mouseEventAreaType = switch (ID) {
+        case LINE_NUMBERS_AREA, ADDITIONAL_LINE_NUMBERS_AREA -> EditorMouseEventArea.LINE_NUMBERS_AREA;
+        case ANNOTATIONS_AREA -> EditorMouseEventArea.ANNOTATIONS_AREA;
+        case LEFT_FREE_PAINTERS_AREA, RIGHT_FREE_PAINTERS_AREA, ICONS_AREA -> EditorMouseEventArea.LINE_MARKERS_AREA;
+        case GAP_AFTER_ICONS_AREA, FOLDING_AREA, VERTICAL_LINE_AREA -> EditorMouseEventArea.FOLDING_OUTLINE_AREA;
+        default -> null;
+      };
     }
 
     int width() {

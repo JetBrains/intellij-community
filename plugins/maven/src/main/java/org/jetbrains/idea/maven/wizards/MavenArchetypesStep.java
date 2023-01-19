@@ -5,7 +5,6 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
@@ -18,6 +17,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.indices.MavenArchetypeManager;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 
@@ -103,7 +103,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
       }
     });
 
-    new TreeSpeedSearch(myArchetypesTree, path -> {
+    new TreeSpeedSearch(myArchetypesTree, false, path -> {
       MavenArchetype info = getArchetypeInfoFromPathComponent(path.getLastPathComponent());
       return info.groupId + ":" + info.artifactId + ":" + info.version;
     }).setComparator(new SpeedSearchComparator(false));
@@ -222,8 +222,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     myCurrentUpdaterMarker = currentUpdaterMarker;
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      MavenIndicesManager mavenIndicesManager = MavenIndicesManager.getInstance(findProject());
-      final Set<MavenArchetype> archetypes = mavenIndicesManager.getArchetypes();
+      final Set<MavenArchetype> archetypes = MavenArchetypeManager.getInstance(findProject()).getArchetypes();
 
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {

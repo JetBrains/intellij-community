@@ -17,10 +17,6 @@ package com.intellij.uiDesigner.core;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class GridConstraints implements Cloneable {
   public static final GridConstraints[] EMPTY_ARRAY = new GridConstraints[0];
   public static final int FILL_NONE = 0;

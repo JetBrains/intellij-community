@@ -11,6 +11,7 @@ import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
+import com.intellij.ui.tree.ui.PlainSelectionTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableModelAdapter;
@@ -64,29 +65,7 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
   public JBTreeTable(@NotNull TreeTableModel model) {
     setLayout(new BorderLayout());
 
-    myTree = new Tree() {
-      @Override
-      public void repaint(long tm, int x, int y, int width, int height) {
-        if (!addTreeTableRowDirtyRegion(this, tm, x, y, width, height)) {
-          super.repaint(tm, x, y, width, height);
-        }
-      }
-
-      @Override
-      public void treeDidChange() {
-        super.treeDidChange();
-        if (myTable != null) {
-          myTable.revalidate();
-          myTable.repaint();
-        }
-      }
-
-      @Nullable
-      @Override
-      public Color getPathBackground(@NotNull TreePath path, int row) {
-        return JBTreeTable.this.getPathBackground(path, row);
-      }
-    };
+    myTree = new MyTree();
     myTable = new Table();
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setRootVisible(false);
@@ -396,6 +375,30 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     @Override
     public int getTotalColumnWidth() {
       return myTree.getVisibleRect().width + 1;
+    }
+  }
+
+  private class MyTree extends Tree implements PlainSelectionTree {
+    @Override
+    public void repaint(long tm, int x, int y, int width, int height) {
+      if (!addTreeTableRowDirtyRegion(this, tm, x, y, width, height)) {
+        super.repaint(tm, x, y, width, height);
+      }
+    }
+
+    @Override
+    public void treeDidChange() {
+      super.treeDidChange();
+      if (myTable != null) {
+        myTable.revalidate();
+        myTable.repaint();
+      }
+    }
+
+    @Nullable
+    @Override
+    public Color getPathBackground(@NotNull TreePath path, int row) {
+      return JBTreeTable.this.getPathBackground(path, row);
     }
   }
 }

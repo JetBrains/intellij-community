@@ -51,6 +51,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.notification.NotificationType.INFORMATION;
 import static git4idea.GitNotificationIdsHolder.LOCAL_CHANGES_DETECTED;
+import static git4idea.commands.GitImpl.REBASE_CONFIG_PARAMS;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE;
 import static git4idea.update.GitUpdateSessionKt.getBodyForUpdateNotification;
 import static git4idea.update.GitUpdateSessionKt.getTitleForUpdateNotification;
@@ -136,6 +137,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
               }
               GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(project, selectedRoot);
               rebaseEditorManager.set(GitHandlerRebaseEditorManager.prepareEditor(handler, editor));
+              handler.overwriteConfig(REBASE_CONFIG_PARAMS);
             }
 
             handler.addLineListener(localChangesDetector);

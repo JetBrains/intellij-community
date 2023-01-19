@@ -241,16 +241,18 @@ public final class ExportTestResultsAction extends DumbAwareAction {
 
   private boolean writeOutputFile(ExportTestResultsConfiguration config, File outputFile) throws IOException, TransformerException, SAXException {
     switch (config.getExportFormat()) {
-      case Xml:
+      case Xml -> {
         TransformerHandler handler = ((SAXTransformerFactory)TransformerFactory.newInstance()).newTransformerHandler();
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
         handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");  // NON-NLS
         return transform(outputFile, handler);
-      case BundledTemplate:
+      }
+      case BundledTemplate -> {
         try (InputStream bundledXsltUrl = getClass().getResourceAsStream("intellij-export.xsl")) {
           return transformWithXslt(outputFile, new StreamSource(bundledXsltUrl));
         }
-      case UserTemplate:
+      }
+      case UserTemplate -> {
         File xslFile = new File(config.getUserTemplatePath());
         if (!xslFile.isFile()) {
           showBalloon(myRunConfiguration.getProject(), MessageType.ERROR,
@@ -258,8 +260,8 @@ public final class ExportTestResultsAction extends DumbAwareAction {
           return false;
         }
         return transformWithXslt(outputFile, new StreamSource(xslFile));
-      default:
-        throw new IllegalArgumentException();
+      }
+      default -> throw new IllegalArgumentException();
     }
   }
 

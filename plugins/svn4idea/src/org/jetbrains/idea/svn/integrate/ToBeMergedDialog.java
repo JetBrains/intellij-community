@@ -169,21 +169,11 @@ public class ToBeMergedDialog extends DialogWrapper {
 
   @NotNull
   private static ListMergeStatus toListMergeStatus(@NotNull MergeCheckResult mergeCheckResult) {
-    ListMergeStatus result;
-
-    switch (mergeCheckResult) {
-      case MERGED:
-        result = ListMergeStatus.MERGED;
-        break;
-      case NOT_EXISTS:
-        result = ListMergeStatus.ALIEN;
-        break;
-      default:
-        result = ListMergeStatus.REFRESHING;
-        break;
-    }
-
-    return result;
+    return switch (mergeCheckResult) {
+      case MERGED -> ListMergeStatus.MERGED;
+      case NOT_EXISTS -> ListMergeStatus.ALIEN;
+      default -> ListMergeStatus.REFRESHING;
+    };
   }
 
   @Override

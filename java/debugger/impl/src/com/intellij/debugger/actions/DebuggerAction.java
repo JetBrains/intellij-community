@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class DebuggerAction
@@ -39,19 +39,19 @@ public abstract class DebuggerAction extends AnAction {
   }
 
   @Nullable
-  public static DebuggerTree getTree(DataContext dataContext){
+  public static DebuggerTree getTree(DataContext dataContext) {
     return DebuggerTree.DATA_KEY.getData(dataContext);
   }
 
   @Nullable
-  public static DebuggerTreePanel getPanel(DataContext dataContext){
+  public static DebuggerTreePanel getPanel(DataContext dataContext) {
     return DebuggerTreePanel.DATA_KEY.getData(dataContext);
   }
 
   @Nullable
   public static DebuggerTreeNodeImpl getSelectedNode(DataContext dataContext) {
     DebuggerTree tree = getTree(dataContext);
-    if(tree == null) return null;
+    if (tree == null) return null;
 
     if (tree.getSelectionCount() != 1) {
       return null;
@@ -69,7 +69,7 @@ public abstract class DebuggerAction extends AnAction {
 
   public static DebuggerTreeNodeImpl @Nullable [] getSelectedNodes(DataContext dataContext) {
     DebuggerTree tree = getTree(dataContext);
-    if(tree == null) return null;
+    if (tree == null) return null;
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null || paths.length == 0) {
       return Holder.EMPTY_TREE_NODE_ARRAY;
@@ -78,7 +78,7 @@ public abstract class DebuggerAction extends AnAction {
     for (TreePath path : paths) {
       Object component = path.getLastPathComponent();
       if (component instanceof DebuggerTreeNodeImpl) {
-        nodes.add((DebuggerTreeNodeImpl) component);
+        nodes.add((DebuggerTreeNodeImpl)component);
       }
     }
     return nodes.toArray(new DebuggerTreeNodeImpl[0]);
@@ -87,9 +87,10 @@ public abstract class DebuggerAction extends AnAction {
   @NotNull
   public static DebuggerContextImpl getDebuggerContext(DataContext dataContext) {
     DebuggerTreePanel panel = getPanel(dataContext);
-    if(panel != null) {
+    if (panel != null) {
       return panel.getContext();
-    } else {
+    }
+    else {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       return project != null ? (DebuggerManagerEx.getInstanceEx(project)).getContext() : DebuggerContextImpl.EMPTY_CONTEXT;
     }

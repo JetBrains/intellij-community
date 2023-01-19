@@ -31,9 +31,6 @@ import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectVarHan
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Key<ReflectiveSignature> DEFAULT_SIGNATURE = Key.create("DEFAULT_SIGNATURE");
   public static final Key<List<LookupElement>> POSSIBLE_SIGNATURES = Key.create("POSSIBLE_SIGNATURES");
@@ -109,32 +106,20 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
           if (typeExpression == null) return;
 
           switch (factoryMethodName) {
-            case FIND_GETTER:
-            case FIND_SETTER:
-            case FIND_VAR_HANDLE:
+            case FIND_GETTER, FIND_SETTER, FIND_VAR_HANDLE ->
               checkField(ownerClass, memberName, nameExpression, typeExpression, false, factoryMethodExpression, holder);
-              break;
-
-            case FIND_STATIC_GETTER:
-            case FIND_STATIC_SETTER:
-            case FIND_STATIC_VAR_HANDLE:
+            case FIND_STATIC_GETTER, FIND_STATIC_SETTER, FIND_STATIC_VAR_HANDLE ->
               checkField(ownerClass, memberName, nameExpression, typeExpression, true, factoryMethodExpression, holder);
-              break;
-
-            case FIND_VIRTUAL:
+            case FIND_VIRTUAL ->
               checkMethod(ownerClass, memberName, nameExpression, typeExpression, false, true, factoryMethodExpression, holder);
-              break;
-
-            case FIND_STATIC:
+            case FIND_STATIC ->
               checkMethod(ownerClass, memberName, nameExpression, typeExpression, true, true, factoryMethodExpression, holder);
-              break;
-
-            case FIND_SPECIAL:
+            case FIND_SPECIAL -> {
               checkMethod(ownerClass, memberName, nameExpression, typeExpression, false, false, factoryMethodExpression, holder);
               if (arguments.length > 3) {
                 checkSpecial(ownerClass, arguments[3], holder);
               }
-              break;
+            }
           }
         }
       }

@@ -100,7 +100,7 @@ abstract class LibrariesFromLibraryTableInRootModelTestCase {
     val committed = commitModifiableRootModel(model)
     val committedEntry = getSingleLibraryOrderEntry(committed)
     assertThat(committedEntry.library).isEqualTo(library)
-    assertThat(committedEntry.getFiles(OrderRootType.CLASSES).single()).isEqualTo(libRoot)
+    assertThat(committedEntry.getRootFiles(OrderRootType.CLASSES).single()).isEqualTo(libRoot)
   }
 
   @Test
@@ -115,13 +115,13 @@ abstract class LibrariesFromLibraryTableInRootModelTestCase {
 
     val committed = commitModifiableRootModel(model)
     val committedEntry1 = getSingleLibraryOrderEntry(committed)
-    assertThat(committedEntry1.getFiles(OrderRootType.CLASSES)).isEmpty()
+    assertThat(committedEntry1.getRootFiles(OrderRootType.CLASSES)).isEmpty()
     assertThat(committedEntry1.library).isEqualTo(library)
 
     runWriteActionAndWait { libraryModel.commit() }
     val committedEntry2 = getSingleLibraryOrderEntry(committed)
     assertThat(committedEntry2.library).isEqualTo(library)
-    assertThat(committedEntry2.getFiles(OrderRootType.CLASSES).single()).isEqualTo(libRoot)
+    assertThat(committedEntry2.getRootFiles(OrderRootType.CLASSES).single()).isEqualTo(libRoot)
   }
 
   @Test

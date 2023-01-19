@@ -3,7 +3,7 @@ package org.jetbrains.plugins.notebooks.visualization
 import com.intellij.openapi.editor.event.DocumentEvent
 
 /**
- * Passed to NotebookCellLines.IntervalListener when document is changed.
+ * Passed to [NotebookCellLines.IntervalListener] when document is changed.
  *
  * Intervals that were just shifted are included neither [oldIntervals], nor in [newIntervals].
  *
@@ -48,3 +48,13 @@ data class NotebookCellLinesEvent(
   fun isIntervalsChanged(): Boolean =
     !(oldIntervals.isEmpty() && newIntervals.isEmpty())
 }
+
+/**
+ * Passed to [NotebookCellLines.IntervalListener] before document change.
+ * [modificationStamp] is old, version before change
+ */
+data class NotebookCellLinesEventBeforeChange(
+  val documentEvent: DocumentEvent,
+  val oldAffectedIntervals: List<NotebookCellLines.Interval>,
+  val modificationStamp: Long,
+)

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
-import com.intellij.diff.comparison.iterables.DiffIterable
+import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.comparison.trimStart
 import com.intellij.diff.tools.util.text.LineOffsets
@@ -266,14 +266,11 @@ class DocumentTracker(
     }
   }
 
-  @RequiresEdt
-  fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> Boolean): String {
-    val otherSide = side.other()
-    val affectedBlocks = LOCK.write {
-      updateFrozenContentIfNeeded()
-      tracker.blocks.filter(condition)
-    }
+  fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> Boolean): String? {
+    if (isDisposed) return null
 
+    val otherSide = side.other()
+    val affectedBlocks = tracker.blocks.filter(condition)
     val content = getContent(side)
     val otherContent = getContent(otherSide)
 
@@ -629,7 +626,7 @@ private class LineTracker(private val handlers: List<Handler>,
     afterBulkRangeChange(isDirty)
   }
 
-  fun rangesChanged(side: Side, iterable: DiffIterable) {
+  fun rangesChanged(side: Side, iterable: FairDiffIterable) {
     val newBlocks = BulkRangeChangeHandler(handlers, blocks, side).run(iterable)
 
     blocks = newBlocks
@@ -833,7 +830,7 @@ private class BulkRangeChangeHandler(private val handlers: List<Handler>,
   private var dirtyBlockShift: Int = 0
   private var dirtyChangeShift: Int = 0
 
-  fun run(iterable: DiffIterable): List<Block> {
+  fun run(iterable: FairDiffIterable): List<Block> {
     val it1 = PeekableIteratorWrapper(blocks.iterator())
     val it2 = PeekableIteratorWrapper(iterable.changes())
 
@@ -1140,10 +1137,8 @@ private class BlocksRefresher(val handlers: List<Handler>,
 }
 
 private fun getRangeDelta(range: Range, side: Side): Int {
-  val otherSide = side.other()
-  val deleted = range.end(side) - range.start(side)
-  val inserted = range.end(otherSide) - range.start(otherSide)
-  return inserted - deleted
+  val delta = DiffIterableUtil.getRangeDelta(range)
+  return if (side.isLeft) delta else -delta
 }
 
 private fun Block.shift(side: Side, delta: Int) = Block(

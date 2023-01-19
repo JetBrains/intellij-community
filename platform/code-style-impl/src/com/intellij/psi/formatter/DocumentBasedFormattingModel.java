@@ -34,7 +34,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
   /**
    * @deprecated use other CTORs
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public DocumentBasedFormattingModel(final Block rootBlock,
                                       @NotNull final Document document,
                                       final Project project,
@@ -193,7 +193,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
     for (int i = elementRange.getStartOffset(); i < elementRange.getEndOffset(); i++) {
       final char c = myDocument.getCharsSequence().charAt(i);
       switch (c) {
-        case '\n':
+        case '\n' -> {
           if (line > 0) {
             createWhiteSpace(whiteSpaceLength + shift, buffer);
           }
@@ -206,27 +206,27 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
           afterWhiteSpace = new StringBuilder();
           buffer.append(c);
           line++;
-          break;
-        case ' ':
+        }
+        case ' ' -> {
           if (insideWhiteSpace) {
             whiteSpaceLength += 1;
           }
           else {
             afterWhiteSpace.append(c);
           }
-          break;
-        case '\t':
+        }
+        case '\t' -> {
           if (insideWhiteSpace) {
             whiteSpaceLength += getIndentOptions().TAB_SIZE;
           }
           else {
             afterWhiteSpace.append(c);
           }
-
-          break;
-        default:
+        }
+        default -> {
           insideWhiteSpace = false;
           afterWhiteSpace.append(c);
+        }
       }
     }
     if (line > 0 && afterWhiteSpace.length() > 0 ) {

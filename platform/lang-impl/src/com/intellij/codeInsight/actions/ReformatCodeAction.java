@@ -39,6 +39,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
   private static ReformatFilesOptions myTestOptions;
 
   public ReformatCodeAction() {
+    setInjectedContext(true);
     setEnabledInModalContext(true);
   }
 

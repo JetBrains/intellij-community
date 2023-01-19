@@ -73,7 +73,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.diff.tools.util.base.TextDiffViewerUtil.recursiveRegisterShortcutSet;
+import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public abstract class DiffRequestProcessor implements CheckedDisposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
@@ -111,6 +112,8 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   @NotNull private DiffRequest myActiveRequest;
 
   @NotNull private ViewerState myState;
+
+  @Nullable private ScrollToPolicy myCurrentScrollToPolicy;
 
   private final boolean myIsNewToolbar;
 
@@ -237,7 +240,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   @RequiresEdt
   public void updateRequest(boolean force) {
-    updateRequest(force, null);
+    updateRequest(force, myCurrentScrollToPolicy);
   }
 
   @RequiresEdt
@@ -548,7 +551,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
       navigationActions.add(new MyChangeDiffToolAction());
     }
     else {
-      myRightToolbarGroup.add(new MyDiffToolChooser(myMainPanel));
+      myRightToolbarGroup.add(new MyDiffToolChooser());
     }
     DiffUtil.addActionBlock(myToolbarGroup,
                             navigationActions);
@@ -715,6 +718,11 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       getShowActions().get(0).actionPerformed(e);
     }
@@ -754,13 +762,13 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   }
 
   private class MyDiffToolChooser extends DiffToolChooser {
-    private MyDiffToolChooser(@Nullable JComponent targetComponent) {
-      super(targetComponent);
+    private MyDiffToolChooser() {
+      super(chooseNotNull(myProject, myContext.getProject()));
     }
 
     @Override
-    public void onSelected(@NotNull AnActionEvent e, @NotNull DiffTool diffTool) {
-      DiffUsageTriggerCollector.logToggleDiffTool(e.getProject(), diffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
+    public void onSelected(@NotNull Project project, @NotNull DiffTool diffTool) {
+      DiffUsageTriggerCollector.logToggleDiffTool(project, diffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
       moveToolOnTop(diffTool);
 
       updateRequest(true);
@@ -787,12 +795,17 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   private class MyChangeDiffToolAction extends ComboBoxAction implements DumbAware {
     // TODO: add icons for diff tools, show only icon in toolbar - to reduce jumping on change ?
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
 
       DiffTool activeTool = myState.getActiveTool();
+      //noinspection DialogTitleCapitalization
       presentation.setText(activeTool.getName());
 
       if (myForcedDiffTool != null) {
@@ -812,7 +825,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
     @NotNull
     @Override
-    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       DefaultActionGroup group = new DefaultActionGroup();
       for (DiffTool tool : getAvailableFittedTools()) {
         group.add(new DiffToolToggleAction(tool));
@@ -826,8 +839,14 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     @NotNull private final DiffTool myDiffTool;
 
     private DiffToolToggleAction(@NotNull DiffTool tool) {
+      //noinspection DialogTitleCapitalization
       super(tool.getName());
       myDiffTool = tool;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -849,6 +868,11 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   private class ShowActionGroupPopupAction extends DumbAwareAction {
     ShowActionGroupPopupAction() {
       ActionUtil.copyFrom(this, "Diff.ShowSettingsPopup");
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -883,10 +907,16 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     return false;
   }
 
+  /**
+   * @see #goToNextChangeImpl(boolean, Runnable)
+   */
   @RequiresEdt
   protected void goToNextChange(boolean fromDifferences) {
   }
 
+  /**
+   * @see #goToPrevChangeImpl(boolean, Runnable)
+   */
   @RequiresEdt
   protected void goToPrevChange(boolean fromDifferences) {
   }
@@ -896,9 +926,40 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     return false;
   }
 
+  protected void goToNextChangeImpl(boolean fromDifferences, @NotNull Runnable navigationTask) {
+    runWithScrollPolicy(fromDifferences, ScrollToPolicy.FIRST_CHANGE, navigationTask);
+  }
+
+  protected void goToPrevChangeImpl(boolean fromDifferences, @NotNull Runnable navigationTask) {
+    runWithScrollPolicy(fromDifferences, ScrollToPolicy.LAST_CHANGE, navigationTask);
+  }
+
+  private void runWithScrollPolicy(boolean fromDifferences, @NotNull ScrollToPolicy lastChange, @NotNull Runnable navigationTask) {
+    if (fromDifferences) {
+      assert myCurrentScrollToPolicy == null;
+      myCurrentScrollToPolicy = lastChange;
+      try {
+        navigationTask.run();
+        updateRequest();
+      }
+      finally {
+        myCurrentScrollToPolicy = null;
+      }
+    }
+    else {
+      navigationTask.run();
+      updateRequest();
+    }
+  }
+
   protected class MyNextDifferenceAction extends NextDifferenceAction {
 
     public MyNextDifferenceAction() {
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -947,6 +1008,11 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   protected class MyPrevDifferenceAction extends PrevDifferenceAction {
 
     public MyPrevDifferenceAction() {
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -1055,6 +1121,11 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     public MyNextChangeAction() { }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
         e.getPresentation().setEnabledAndVisible(true);
@@ -1080,6 +1151,11 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   protected class MyPrevChangeAction extends PrevChangeAction {
     public MyPrevChangeAction() { }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -1359,19 +1435,12 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   private class ErrorState implements ViewerState {
     @Nullable private final DiffTool myDiffTool;
-    @NotNull private final MessageDiffRequest myRequest;
 
     @NotNull private final DiffViewer myViewer;
 
-    ErrorState(@NotNull MessageDiffRequest request) {
-      this(request, null);
-    }
-
     ErrorState(@NotNull MessageDiffRequest request, @Nullable DiffTool diffTool) {
       myDiffTool = diffTool;
-      myRequest = request;
-
-      myViewer = ErrorDiffTool.INSTANCE.createComponent(myContext, myRequest);
+      myViewer = ErrorDiffTool.INSTANCE.createComponent(myContext, request);
     }
 
     @Override
@@ -1510,7 +1579,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     }
 
     @Nullable
-    private List<AnAction> mergeActions(@Nullable List<AnAction> actions1, @Nullable List<AnAction> actions2) {
+    private static List<AnAction> mergeActions(@Nullable List<AnAction> actions1, @Nullable List<AnAction> actions2) {
       if (actions1 == null && actions2 == null) return null;
       if (ContainerUtil.isEmpty(actions1)) return actions2;
       if (ContainerUtil.isEmpty(actions2)) return actions1;

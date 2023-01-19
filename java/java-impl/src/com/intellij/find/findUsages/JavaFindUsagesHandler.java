@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public class JavaFindUsagesHandler extends FindUsagesHandler {
   private static final Logger LOG = Logger.getInstance(JavaFindUsagesHandler.class);
 

@@ -16,13 +16,10 @@ public class GrClassConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {
-    switch (position) {
-      case ASSIGNMENT:
-      case RETURN_VALUE:
-        return true;
-      default:
-        return false;
-    }
+    return switch (position) {
+      case ASSIGNMENT, RETURN_VALUE -> true;
+      default -> false;
+    };
   }
 
   @Nullable

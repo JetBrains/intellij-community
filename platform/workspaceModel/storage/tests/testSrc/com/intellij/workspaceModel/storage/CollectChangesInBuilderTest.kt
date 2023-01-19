@@ -5,7 +5,6 @@ import com.intellij.workspaceModel.storage.entities.test.addChildEntity
 import com.intellij.workspaceModel.storage.entities.test.addParentEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
-import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -116,12 +115,26 @@ class CollectChangesInBuilderTest {
     builder.addChildEntity(parent, "to remove")
     val storage = builder.toSnapshot()
     val newBuilder = createBuilderFrom(storage)
-    newBuilder.removeEntity(parent)
+    newBuilder.removeEntity(parent.from(newBuilder))
     val changes = newBuilder.collectChanges(storage)
     val childChange = changes.getValue(XChildEntity::class.java).single() as EntityChange.Removed<XChildEntity>
     val parentChange = changes.getValue(XParentEntity::class.java).single() as EntityChange.Removed<XParentEntity>
     assertEquals("to remove", childChange.entity.childProperty)
     assertEquals("to remove", parentChange.entity.parentProperty)
+  }
+
+  @Test
+  fun `remove child by modifying parent`() {
+    val parent = builder.addParentEntity()
+    builder.addChildEntity(parent, "to remove")
+    val snapshot = builder.toSnapshot()
+    val newBuilder = createBuilderFrom(snapshot)
+    newBuilder.modifyEntity(snapshot.entities(XParentEntity::class.java).single()) {
+      children = emptyList()
+    }
+    val changes = newBuilder.collectChanges(snapshot)
+    val childChanges = changes.getValue(XChildEntity::class.java)
+    assertEquals("to remove", (childChanges.single() as EntityChange.Removed<XChildEntity>).oldEntity.childProperty)
   }
 
   private fun collectSampleEntityChanges(): List<EntityChange<SampleEntity>> {

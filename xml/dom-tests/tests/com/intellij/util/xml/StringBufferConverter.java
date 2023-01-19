@@ -15,9 +15,6 @@
  */
 package com.intellij.util.xml;
 
-/**
- * @author peter
- */
 public class StringBufferConverter extends Converter<StringBuffer> {
   @Override
   public StringBuffer fromString(final String s, final ConvertContext context) {

@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @author peter
  * @see DomManager#createModelMerger() 
  */
 public interface ModelMerger {

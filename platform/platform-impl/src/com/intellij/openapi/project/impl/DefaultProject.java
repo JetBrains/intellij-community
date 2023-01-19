@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -29,9 +28,6 @@ import org.picocontainer.PicoContainer;
 
 import java.util.Map;
 
-/**
- * @author peter
- */
 final class DefaultProject extends UserDataHolderBase implements Project {
   private static final Logger LOG = Logger.getInstance(DefaultProject.class);
 
@@ -53,6 +49,11 @@ final class DefaultProject extends UserDataHolderBase implements Project {
       ((DefaultProjectImpl)project).init();
     }
   };
+
+  @Override
+  public ComponentManager getActualComponentManager() {
+    return getDelegate();
+  }
 
   @Override
   public <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
@@ -100,12 +101,6 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   @Override
   public boolean hasComponent(@NotNull Class<?> interfaceClass) {
     return getDelegate().hasComponent(interfaceClass);
-  }
-
-  @Override
-  public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
-    //noinspection deprecation
-    return getDelegate().getComponents(baseClass);
   }
 
   // make default project facade equal to any other default project facade
@@ -236,7 +231,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
 
   @Override
   public @NotNull PicoContainer getPicoContainer() {
-    return getDelegate().getPicoContainer();
+    throw new UnsupportedOperationException();
   }
 
   @Override

@@ -28,7 +28,7 @@ internal class StartupMetricCollector : ProjectPostStartupActivity {
 
     val metrics = StartUpPerformanceService.getInstance().getMetrics() ?: return
     for (entry in Object2IntMaps.fastIterable(metrics)) {
-      StartupPerformanceCollector.logEvent(entry.key, entry.intValue)
+      StartupPerformanceCollector.logEvent(project, entry.key, entry.intValue)
     }
   }
 }

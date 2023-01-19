@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.icons.AllIcons
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
@@ -53,11 +53,9 @@ internal class ActionToolbarGotItTooltip(@NonNls private val id: String,
   }
 }
 
-internal val gearButtonOrToolbar: (ActionToolbar) -> JComponent = { toolbar -> toolbar.getGearButton() ?: toolbar.component }
-internal val gearButton: (ActionToolbar) -> JComponent? = { toolbar -> toolbar.getGearButton() }
-
-private fun ActionToolbar.getGearButton(): ActionButton? =
-  UIUtil.uiTraverser(component)
+internal fun findToolbarActionButton(toolbar: ActionToolbar, condition: (AnAction) -> Boolean): JComponent? {
+  return UIUtil.uiTraverser(toolbar.component)
     .filter(ActionButton::class.java)
-    .filter { it.icon == AllIcons.General.GearPlain }
+    .filter { condition(it.action) }
     .first()
+}

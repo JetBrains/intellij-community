@@ -44,48 +44,8 @@ inline fun <T> trimLists(left: List<T>, right: List<T>, comparator: (T, T) -> Bo
   return left.run { subList(trimLeft, size - trimRight) } to right.run { subList(trimLeft, size - trimRight) }
 }
 
-inline fun paintNotebookCellBackgroundGutter(
-  editor: EditorImpl,
-  g: Graphics,
-  r: Rectangle,
-  interval: NotebookCellLines.Interval,
-  top: Int,
-  height: Int,
-  crossinline actionBetweenBackgroundAndStripe: () -> Unit = {}
-) {
-  val appearance = editor.notebookAppearance
-  val stripe = appearance.getCellStripeColor(editor, interval)
-  val stripeHover = appearance.getCellStripeHoverColor(editor, interval)
-  val borderWidth = appearance.getLeftBorderWidth()
-  val rectBorderCellX = r.width - borderWidth
-  g.color = appearance.getCodeCellBackground(editor.colorsScheme)
-  if (editor.editorKind == EditorKind.DIFF) {
-    g.fillRect(rectBorderCellX + 3, top, borderWidth - 3, height)
-  }
-  else {
-    g.fillRect(rectBorderCellX, top, borderWidth, height)
-  }
-  actionBetweenBackgroundAndStripe()
-  if (editor.editorKind == EditorKind.DIFF) return
-  if (stripe != null) {
-    appearance.paintCellStripe(g, r, stripe, top, height)
-  }
-  if (stripeHover != null) {
-    g.color = stripeHover
-    g.fillRect(r.width - appearance.getLeftBorderWidth(), top, appearance.getCellLeftLineHoverWidth(), height)
-  }
-}
 
-fun NotebookEditorAppearance.paintCellStripe(
-  g: Graphics,
-  r: Rectangle,
-  stripe: Color,
-  top: Int,
-  height: Int,
-) {
-  g.color = stripe
-  g.fillRect(r.width - getLeftBorderWidth(), top, getCellLeftLineWidth(), height)
-}
+
 
 /**
  * Creates a document listener that will be automatically unregistered when the editor is disposed.

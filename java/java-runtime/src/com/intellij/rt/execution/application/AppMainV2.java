@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.Locale;
 
 /**
- * @author ven
  * @noinspection UseOfSystemOutOrSystemErr, CharsetObjectCanBeUsed
  */
 public final class AppMainV2 {
@@ -28,6 +27,7 @@ public final class AppMainV2 {
       String arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
       //noinspection SpellCheckingInspection
       String libName = "x86_64".equals(arch) || "amd64".equals(arch) ? "breakgen64.dll" :
+                       "aarch64".equals(arch) || "arm64".equals(arch) ? "breakgen64a.dll" :
                        "i386".equals(arch) || "x86".equals(arch) ? "breakgen.dll" :
                        null;  // see also: `ProcessProxyImpl#canSendBreak`
       if (libName != null) {

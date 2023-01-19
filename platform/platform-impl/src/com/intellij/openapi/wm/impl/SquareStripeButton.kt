@@ -11,9 +11,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
-import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
@@ -22,24 +20,14 @@ import com.intellij.ui.UIBundle
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
-import java.util.function.Supplier
 
 internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
-  ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
+  ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
   companion object {
-    fun createMoveGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
-      val result = DefaultActionGroup.createPopupGroup(Supplier { UIBundle.message("tool.window.new.stripe.move.to.action.group.name") })
-      result.add(MoveToAction(toolWindow, ToolWindowMoveAction.Anchor.LeftTop))
-      result.add(MoveToAction(toolWindow, ToolWindowMoveAction.Anchor.BottomLeft))
-      result.add(MoveToAction(toolWindow, ToolWindowMoveAction.Anchor.RightTop))
-      result.add(MoveToAction(toolWindow, ToolWindowMoveAction.Anchor.BottomRight))
-
-      return result
-    }
+    fun createMoveGroup() = ToolWindowMoveAction.Group()
   }
 
   init {
@@ -126,8 +114,9 @@ private fun createPresentation(toolWindow: ToolWindowImpl): Presentation {
 }
 
 private fun scaleIcon(presentation: Presentation) {
-  if (presentation.icon is ScalableIcon && presentation.icon.iconWidth != 20) {
-    presentation.icon = IconLoader.loadCustomVersionOrScale(presentation.icon as ScalableIcon, 20f)
+  val iconSize = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
+  if (presentation.icon is ScalableIcon && presentation.icon.iconWidth != iconSize) {
+    presentation.icon = IconLoader.loadCustomVersionOrScale(presentation.icon as ScalableIcon, iconSize)
   }
 }
 
@@ -135,29 +124,8 @@ private fun createPopupGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
   val group = DefaultActionGroup()
   group.add(HideAction(toolWindow))
   group.addSeparator()
-  group.add(createMoveGroup(toolWindow))
+  group.add(createMoveGroup())
   return group
-}
-
-private class MoveToAction(private val toolWindow: ToolWindowImpl,
-                           private val targetAnchor: ToolWindowMoveAction.Anchor) : AnAction(targetAnchor.toString()), DumbAware {
-  override fun actionPerformed(e: AnActionEvent) {
-    val toolWindowManager = toolWindow.toolWindowManager
-    val info = toolWindowManager.getLayout().getInfo(toolWindow.id)
-    toolWindowManager.setSideToolAndAnchor(id = toolWindow.id,
-                                           paneId = info?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID,
-                                           anchor = targetAnchor.anchor,
-                                           order = -1,
-                                           isSplit = targetAnchor.isSplit)
-  }
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = targetAnchor.anchor != toolWindow.anchor || toolWindow.isSplitMode != targetAnchor.isSplit
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
 }
 
 private class HideAction(private val toolWindow: ToolWindowImpl)
@@ -172,14 +140,12 @@ private class HideAction(private val toolWindow: ToolWindowImpl)
 }
 
 private class SquareAnActionButton(private val window: ToolWindowImpl) : ToggleActionButton(window.stripeTitle, null), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
   override fun isSelected(e: AnActionEvent): Boolean {
     e.presentation.icon = window.icon ?: AllIcons.Toolbar.Unknown
     scaleIcon(e.presentation)
     return window.isVisible
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {

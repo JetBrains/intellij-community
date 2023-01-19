@@ -61,7 +61,7 @@ class LookupStateManager(private val shouldLogElementFeatures: Boolean) {
     }
   }
 
-  fun getElementId(item: LookupElement): Int? {
+  private fun getElementId(item: LookupElement): Int? {
     val itemString = item.idString()
     return elementToId[itemString]
   }

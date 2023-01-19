@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPsiBasedFactory
@@ -86,7 +87,7 @@ open class AddModifierFix(
                     }
                     if (modifier == KtTokens.ABSTRACT_KEYWORD
                         && modifierListOwner is KtClass
-                        && modifierListOwner.hasModifier(KtTokens.INLINE_KEYWORD)
+                        && modifierListOwner.isInlineOrValue()
                     ) return null
                 }
                 KtTokens.INNER_KEYWORD -> {

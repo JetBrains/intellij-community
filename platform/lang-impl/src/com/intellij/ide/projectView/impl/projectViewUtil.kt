@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 
 internal fun getNodeElement(userObject: Any?): Any? {
   return when (userObject) {
@@ -25,7 +26,8 @@ internal fun getNodeElement(userObject: Any?): Any? {
   }
 }
 
-internal fun moduleContexts(project: Project, elements: Array<out Any>): List<Module> {
+@ApiStatus.Internal
+fun moduleContexts(project: Project, elements: Array<out Any>): List<Module> {
   val result = ArrayList<Module>()
   for (selectedValue in elements) {
     result += moduleContexts(project, selectedValue) ?: continue
@@ -42,7 +44,8 @@ private fun moduleContexts(project: Project, element: Any?): Collection<Module>?
   }
 }
 
-internal fun moduleContext(project: Project, element: Any?): Module? {
+@ApiStatus.Internal
+fun moduleContext(project: Project, element: Any?): Module? {
   return when (element) {
     is Module -> if (element.isDisposed) null else element
     is PsiDirectory -> moduleBySingleContentRoot(project, element.virtualFile)

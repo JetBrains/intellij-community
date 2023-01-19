@@ -1,6 +1,7 @@
 import time
+from collections.abc import Callable, Iterable
 from logging import Logger
-from typing import Any, Callable, Iterable
+from typing import Any
 
 from aws_xray_sdk import global_sdk_config as global_sdk_config
 from aws_xray_sdk.version import VERSION as VERSION
@@ -18,8 +19,8 @@ from .models.dummy_entities import DummySegment as DummySegment, DummySubsegment
 from .models.segment import Segment as Segment, SegmentContextManager as SegmentContextManager
 from .models.subsegment import Subsegment as Subsegment, SubsegmentContextManager as SubsegmentContextManager
 from .plugins.utils import get_plugin_modules as get_plugin_modules
-from .sampling.local.sampler import LocalSampler as LocalSampler
-from .sampling.sampler import DefaultSampler as DefaultSampler
+from .sampling.local.sampler import LocalSampler
+from .sampling.sampler import DefaultSampler
 from .streaming.default_streaming import DefaultStreaming as DefaultStreaming
 from .utils import stacktrace as stacktrace
 from .utils.compat import string_types as string_types
@@ -76,7 +77,7 @@ class AWSXRayRecorder:
         kwargs: dict[str, Any],
         name: str,
         namespace: str,
-        meta_processor: Callable[..., Any],
+        meta_processor: Callable[..., object],
     ) -> Any: ...
     @property
     def enabled(self) -> bool: ...

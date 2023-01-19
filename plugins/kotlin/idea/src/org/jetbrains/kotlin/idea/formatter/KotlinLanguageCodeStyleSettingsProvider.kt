@@ -10,9 +10,11 @@ import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAcces
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.codeStyle.*
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntryTable
 import java.lang.reflect.Field
@@ -53,7 +55,8 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
     }
 
     override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
-        fun showCustomOption(field: KProperty<*>, title: String, groupName: String? = null, vararg options: Any) {
+        fun showCustomOption(field: KProperty<*>, @Nls @NlsContexts.Label title: String, @Nls @NlsContexts.Label groupName: String? = null, vararg options: Any) {
+            @Suppress("HardCodedStringLiteral")
             consumer.showCustomOption(KotlinCodeStyleSettings::class.java, field.name, title, groupName, *options)
         }
 

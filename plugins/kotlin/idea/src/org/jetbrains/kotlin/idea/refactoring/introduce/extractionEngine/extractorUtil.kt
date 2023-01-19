@@ -30,8 +30,8 @@ import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.inspections.PublicApiImplicitTypeInspection
 import org.jetbrains.kotlin.idea.inspections.UseExpressionBodyInspection
 import org.jetbrains.kotlin.idea.intentions.InfixCallToOrdinaryIntention
-import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValueBoxer.AsTuple
@@ -285,7 +285,7 @@ private fun makeCall(
 
         if (anchor is KtOperationReferenceExpression) {
             val newNameExpression = when (val operationExpression = anchor.parent as? KtOperationExpression ?: return null) {
-                is KtUnaryExpression -> OperatorToFunctionIntention.convert(operationExpression).second
+                is KtUnaryExpression -> OperatorToFunctionConverter.convert(operationExpression).second
                 is KtBinaryExpression -> {
                     InfixCallToOrdinaryIntention.convert(operationExpression).getCalleeExpressionIfAny()
                 }
@@ -454,7 +454,7 @@ private var KtReturnExpression.isReturnForLabelRemoval: Boolean
 fun ExtractionGeneratorConfiguration.generateDeclaration(
     declarationToReplace: KtNamedDeclaration? = null
 ): ExtractionResult {
-    val psiFactory = KtPsiFactory(descriptor.extractionData.originalFile)
+    val psiFactory = KtPsiFactory(descriptor.extractionData.project)
 
     fun getReturnsForLabelRemoval() = descriptor.controlFlow.outputValues
         .flatMapTo(arrayListOf()) { it.originalExpressions.filterIsInstance<KtReturnExpression>() }
@@ -680,8 +680,6 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
     if (shouldInsert) {
         ShortenReferences.DEFAULT.process(declaration)
     }
-
-    if (generatorOptions.inTempFile) return ExtractionResult(this, declaration, emptyMap())
 
     val duplicateReplacers = HashMap<KotlinPsiRange, () -> Unit>().apply {
         if (generatorOptions.delayInitialOccurrenceReplacement) {

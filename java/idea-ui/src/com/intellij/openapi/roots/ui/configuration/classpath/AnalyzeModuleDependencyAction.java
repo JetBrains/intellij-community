@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -114,15 +115,14 @@ class AnalyzeModuleDependencyAction extends AnAction {
                                                     );
 
         String[] options = {JavaUiBundle.message("button.text.replace"), JavaUiBundle.message("show.dependencies"), Messages.getCancelButton()};
-        switch (Messages.showDialog(myProject, message, getTemplateText(), options, 0, Messages.getWarningIcon())) {
-          case 0:
+        return switch (Messages.showDialog(myProject, message, getTemplateText(), options, 0, Messages.getWarningIcon())) {
+          case 0 -> {
             InlineModuleDependencyAction.inlineEntry(myPanel, selectedEntry, usedEntries::contains);
-            return false;
-          case 1:
-            return true;
-          default:
-            return false;
-        }
+            yield false;
+          }
+          case 1 -> true;
+          default -> false;
+        };
       }
 
       @Override
@@ -179,5 +179,10 @@ class AnalyzeModuleDependencyAction extends AnAction {
     final OrderEntry entry = myPanel.getSelectedEntry();
     e.getPresentation().setEnabledAndVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null
                                              || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

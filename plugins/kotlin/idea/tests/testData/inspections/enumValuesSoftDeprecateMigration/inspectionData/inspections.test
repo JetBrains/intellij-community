@@ -1,0 +1,4 @@
+// INSPECTION_CLASS: org.jetbrains.kotlin.idea.inspections.migration.EnumValuesSoftDeprecateMigrationInspection
+// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.EnumValuesSoftDeprecateMigrationInspection
+// COMPILER_ARGUMENTS: -XXLanguage:+EnumEntries
+// LANGUAGE_VERSION: 1.9

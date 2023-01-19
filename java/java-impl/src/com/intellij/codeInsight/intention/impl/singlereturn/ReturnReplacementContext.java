@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,7 +146,7 @@ final class ReturnReplacementContext {
         currentContext = loopOrSwitch;
         return currentContext;
       }
-      List<PsiStatement> statements = StreamEx.of(tail).select(PsiStatement.class).toList();
+      List<PsiStatement> statements = ContainerUtil.filterIsInstance(tail, PsiStatement.class);
       if (!statements.isEmpty()) {
         PsiStatement statement = statements.get(0);
         if (statements.size() == 1 && myExitContext.isDefaultReturn(statement)) {

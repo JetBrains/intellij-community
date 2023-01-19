@@ -3,7 +3,6 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.SystemProperties
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
@@ -18,7 +17,7 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
     val started = Instant.now()
     return try {
       val tasks = prepareTasks()
-      runParallelTasks(tasks)
+      runParallelTasks(tasks, true)
       val result = finish()
       val message = getInitializationFinishedMessage(result)
       log.info("Index data initialization done: ${Duration.between(started, Instant.now()).toMillis()} ms. " + message)
@@ -36,59 +35,50 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
 
   protected abstract fun prepareTasks(): Collection<ThrowableRunnable<*>>
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private fun runParallelTasks(tasks: Collection<ThrowableRunnable<*>>) {
-    if (tasks.isEmpty()) {
-      return
-    }
-
-    if (ourDoParallelIndicesInitialization) {
-      runBlocking(Dispatchers.IO.limitedParallelism(UnindexedFilesUpdater.getNumberOfIndexingThreads())) {
-        for (task in tasks) {
-          launch {
-            executeTask(task)
-          }
-        }
-      }
-    }
-    else {
-      for (callable in tasks) {
-        executeTask(callable)
-      }
-    }
-  }
-
-  private fun executeTask(callable: ThrowableRunnable<*>) {
-    val app = ApplicationManager.getApplication()
-    try {
-      // To correctly apply file removals in indices shutdown hook we should process all initialization tasks
-      // Todo: make processing removed files more robust because ignoring 'dispose in progress' delays application exit and
-      // may cause memory leaks IDEA-183718, IDEA-169374,
-      if (app.isDisposed /*|| app.isDisposeInProgress()*/) {
-        return
-      }
-      callable.run()
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (t: Throwable) {
-      LOG.error(t)
-    }
-  }
-
   companion object {
     private val LOG = Logger.getInstance(IndexDataInitializer::class.java)
-    private val ourDoParallelIndicesInitialization = SystemProperties.getBooleanProperty("idea.parallel.indices.initialization", true)
 
-    @JvmField
-    val ourDoAsyncIndicesInitialization = SystemProperties.getBooleanProperty("idea.async.indices.initialization", true)
     @OptIn(ExperimentalCoroutinesApi::class)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
 
     @JvmStatic
     fun <T> submitGenesisTask(action: Callable<T>): Future<T> {
       return scope.async { action.call() }.asCompletableFuture()
+    }
+
+    @JvmStatic
+    fun runParallelTasks(tasks: Collection<ThrowableRunnable<*>>, checkAppDisposed: Boolean) {
+      if (tasks.isEmpty()) {
+        return
+      }
+
+      runBlocking(Dispatchers.IO.limitedParallelism(UnindexedFilesUpdater.getNumberOfIndexingThreads()) +
+                  CoroutineName("Index Storage Lifecycle")) {
+        for (task in tasks) {
+          launch {
+            executeTask(task, checkAppDisposed)
+          }
+        }
+      }
+    }
+
+    private fun executeTask(callable: ThrowableRunnable<*>, checkAppDisposed: Boolean) {
+      val app = ApplicationManager.getApplication()
+      try {
+        // To correctly apply file removals in indices shutdown hook we should process all initialization tasks
+        // Todo: make processing removed files more robust because ignoring 'dispose in progress' delays application exit and
+        // may cause memory leaks IDEA-183718, IDEA-169374,
+        if (checkAppDisposed && (app.isDisposed /*|| app.isDisposeInProgress()*/)) {
+          return
+        }
+        callable.run()
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (t: Throwable) {
+        LOG.error(t)
+      }
     }
   }
 }

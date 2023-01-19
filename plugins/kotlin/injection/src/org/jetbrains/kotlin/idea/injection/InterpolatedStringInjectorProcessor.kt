@@ -3,15 +3,14 @@
 package org.jetbrains.kotlin.idea.injection
 
 import com.intellij.injected.editor.InjectionMeta
+import com.intellij.lang.injection.general.Injection
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.Trinity
+import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.util.containers.ContainerUtil.concat
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
-import com.intellij.lang.injection.general.Injection
-import com.intellij.psi.ElementManipulators
-import com.intellij.util.containers.ContainerUtil.concat
+import org.intellij.plugins.intelliLang.inject.InjectorUtils.InjectionInfo
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -19,9 +18,7 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluat
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-typealias InjectionTrinity = Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>
-
-data class InjectionSplitResult(val isUnparsable: Boolean, val ranges: List<InjectionTrinity>)
+data class InjectionSplitResult(val isUnparsable: Boolean, val ranges: List<InjectionInfo>)
 
 internal var PsiElement.trimIndent: String? by UserDataProperty(InjectionMeta.INJECTION_INDENT)
 
@@ -30,10 +27,10 @@ fun transformToInjectionParts(injection: Injection, literalOrConcatenation: KtEl
 
     val indentHandler = literalOrConcatenation.indentHandler ?: NoIndentHandler
 
-    fun injectionRange(literal: KtStringTemplateExpression, range: TextRange, prefix: String, suffix: String): InjectionTrinity {
+    fun injectionRange(literal: KtStringTemplateExpression, range: TextRange, prefix: String, suffix: String): InjectionInfo {
         TextRange.assertProperRange(range, injection)
         val injectedLanguage = InjectedLanguage.create(injection.injectedLanguageId, prefix, suffix, true)!!
-        return Trinity.create(literal, injectedLanguage, range)
+        return InjectionInfo(literal, injectedLanguage, range)
     }
 
     tailrec fun collectInjections(
@@ -41,7 +38,7 @@ fun transformToInjectionParts(injection: Injection, literalOrConcatenation: KtEl
         children: List<PsiElement>,
         pendingPrefix: String,
         unparseable: Boolean,
-        collected: MutableList<InjectionTrinity>
+        collected: MutableList<InjectionInfo>
     ): InjectionSplitResult {
         val child = children.firstOrNull() ?: return InjectionSplitResult(unparseable, collected)
         val tail = children.subList(1, children.size)
@@ -65,7 +62,7 @@ fun transformToInjectionParts(injection: Injection, literalOrConcatenation: KtEl
             }
             literal == null -> {
                 val (prefix, myUnparseable) = makePlaceholder(child)
-                return collectInjections(literal, tail, pendingPrefix + prefix, unparseable || myUnparseable, collected)
+                return collectInjections(literal = null, tail, pendingPrefix + prefix, unparseable || myUnparseable, collected)
             }
             child is KtLiteralStringTemplateEntry || child is KtEscapeStringTemplateEntry -> {
                 val consequentStringsCount = tail.asSequence()

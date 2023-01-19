@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.generate;
 
@@ -59,6 +59,44 @@ public abstract class GenerateTestSupportMethodActionTestGenerated extends Abstr
         @TestMetadata("testMethod.kt")
         public void testTestMethod() throws Exception {
             runTest("testData/codeInsight/generate/testFrameworkSupport/jUnit4/testMethod.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/codeInsight/generate/testFrameworkSupport/jUnit5")
+    public static class JUnit5 extends AbstractGenerateTestSupportMethodActionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("setUp.kt")
+        public void testSetUp() throws Exception {
+            runTest("testData/codeInsight/generate/testFrameworkSupport/jUnit5/setUp.kt");
+        }
+
+        @TestMetadata("setUpExists.kt")
+        public void testSetUpExists() throws Exception {
+            runTest("testData/codeInsight/generate/testFrameworkSupport/jUnit5/setUpExists.kt");
+        }
+
+        @TestMetadata("setUpOverrides.kt")
+        public void testSetUpOverrides() throws Exception {
+            runTest("testData/codeInsight/generate/testFrameworkSupport/jUnit5/setUpOverrides.kt");
+        }
+
+        @TestMetadata("tearDown.kt")
+        public void testTearDown() throws Exception {
+            runTest("testData/codeInsight/generate/testFrameworkSupport/jUnit5/tearDown.kt");
+        }
+
+        @TestMetadata("tearDownExists.kt")
+        public void testTearDownExists() throws Exception {
+            runTest("testData/codeInsight/generate/testFrameworkSupport/jUnit5/tearDownExists.kt");
+        }
+
+        @TestMetadata("testMethod.kt")
+        public void testTestMethod() throws Exception {
+            runTest("testData/codeInsight/generate/testFrameworkSupport/jUnit5/testMethod.kt");
         }
     }
 

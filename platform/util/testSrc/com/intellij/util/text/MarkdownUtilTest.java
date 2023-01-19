@@ -15,7 +15,6 @@
  */
 package com.intellij.util.text;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -29,9 +28,9 @@ public class MarkdownUtilTest {
 
   @Test
   public void testReplaceHeaders() {
-    List<String> markdown = ContainerUtil.newArrayList("# Hello1", "## Hello2##", "### Hello3#");
+    List<String> markdown = Arrays.asList("# Hello1", "## Hello2##", "### Hello3#");
     MarkdownUtil.replaceHeaders(markdown);
-    Assert.assertEquals(ContainerUtil.newArrayList("<h1>Hello1</h1>", "<h2>Hello2</h2>", "<h3>Hello3</h3>"), markdown);
+    Assert.assertEquals(List.of("<h1>Hello1</h1>", "<h2>Hello2</h2>", "<h3>Hello3</h3>"), markdown);
   }
 
   @Test

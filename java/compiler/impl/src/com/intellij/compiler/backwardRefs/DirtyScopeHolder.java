@@ -38,9 +38,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
-import kotlin.collections.ArraysKt;
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +94,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
 
     compilationAffectedModulesSubscription.accept(connect, myCompilationAffectedModules);
 
-    WorkspaceModelTopics.getInstance(myProject).subscribeAfterModuleLoading(connect, new WorkspaceModelChangeListener() {
+    connect.subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
       @Override
       public void beforeChanged(@NotNull VersionedStorageChange event) {
         for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
@@ -139,14 +138,6 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       myExcludedFilesScope = null;
       myCompilationAffectedModules.clear();
     }
-  }
-
-  /**
-   * @deprecated use {@link DirtyScopeHolder#upToDateCheckFinished(Collection, Collection)}
-   */
-  @Deprecated(forRemoval = true)
-  public void upToDateCheckFinished(Module @NotNull [] modules) {
-    upToDateCheckFinished(ArraysKt.asList(modules), Collections.emptyList());
   }
 
   public void upToDateCheckFinished(@Nullable Collection<@NotNull Module> allModules, @Nullable Collection<@NotNull Module> compiledModules) {
@@ -227,9 +218,9 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       }
     }
 
-    PsiDocumentManager psiDocumentMananger = PsiDocumentManager.getInstance(myProject);
-    for (Document document : psiDocumentMananger.getUncommittedDocuments()) {
-      final PsiFile psiFile = psiDocumentMananger.getPsiFile(document);
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
+    for (Document document : psiDocumentManager.getUncommittedDocuments()) {
+      final PsiFile psiFile = psiDocumentManager.getPsiFile(document);
       if (psiFile == null) continue;
       final VirtualFile file = psiFile.getVirtualFile();
       if (file == null) continue;
@@ -276,9 +267,8 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       }
       else if (event instanceof VFileCopyEvent || event instanceof VFileMoveEvent) {
         VirtualFile file = event.getFile();
-        if (file != null) {
-          fileChanged(file);
-        }
+        assert file != null;
+        fileChanged(file);
       }
       else {
         if (event instanceof VFilePropertyChangeEvent) {
@@ -302,10 +292,9 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
 
       if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || event instanceof VFileContentChangeEvent) {
         VirtualFile file = event.getFile();
-        if (file != null) {
-          final Module module = getModuleForSourceContentFile(file);
-          ContainerUtil.addIfNotNull(modulesToBeMarkedDirty, module);
-        }
+        assert file != null;
+        final Module module = getModuleForSourceContentFile(file);
+        ContainerUtil.addIfNotNull(modulesToBeMarkedDirty, module);
       }
       else if (event instanceof VFilePropertyChangeEvent) {
         VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;

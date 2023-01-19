@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author peter
- */
 class JavaCompletionPolicy extends CompletionPolicy {
   @Nullable
   @Override

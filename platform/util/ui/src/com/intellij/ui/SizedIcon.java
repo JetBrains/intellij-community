@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
@@ -14,7 +14,7 @@ import java.awt.*;
 import static java.lang.Math.ceil;
 import static java.lang.Math.floor;
 
-public class SizedIcon extends JBCachingScalableIcon implements MenuBarIconProvider, DarkIconProvider, RetrievableIcon {
+public final class SizedIcon extends JBCachingScalableIcon implements MenuBarIconProvider, DarkIconProvider, RetrievableIcon {
   private final int myWidth;
   private final int myHeight;
   @NotNull
@@ -33,6 +33,12 @@ public class SizedIcon extends JBCachingScalableIcon implements MenuBarIconProvi
     myHeight = icon.myHeight;
     myDelegate = icon.myDelegate;
     myScaledDelegate = null;
+  }
+
+  @NotNull
+  @Override
+  public SizedIcon replaceBy(@NotNull IconReplacer replacer) {
+    return new SizedIcon(replacer.replaceIcon(myDelegate), myWidth, myHeight);
   }
 
   @NotNull
@@ -59,7 +65,7 @@ public class SizedIcon extends JBCachingScalableIcon implements MenuBarIconProvi
   @NotNull
   @Override
   public Icon getMenuBarIcon(boolean isDark) {
-    return new SizedIcon(IconLoader.getMenuBarIcon(myDelegate, isDark), myWidth, myHeight);
+    return new SizedIcon(IconLoader.INSTANCE.getMenuBarIcon(myDelegate, isDark), myWidth, myHeight);
   }
 
   @NotNull

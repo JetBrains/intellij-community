@@ -35,7 +35,7 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     return startedWithData(Consumer { })
   }
 
-  fun startedWithData(consumer: Consumer<FeatureUsageData>): IdeActivity {
+  private fun startedWithData(consumer: Consumer<FeatureUsageData>): IdeActivity {
     if (!LOG.assertTrue(state == IdeActivityState.NOT_STARTED, state.name)) return this
     state = IdeActivityState.STARTED
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameInfo;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
@@ -89,14 +90,14 @@ public final class LightEditServiceImpl implements LightEditService,
       boolean notify = false;
       if (myFrameWrapper == null) {
         mySaveSession = restoreSession;
-        myFrameWrapper = LightEditFrameWrapper.allocate(project, myConfiguration.frameInfo, () -> closeEditorWindow());
+        myFrameWrapper = LightEditFrameWrapper.Companion.allocate(project, myConfiguration.frameInfo, () -> closeEditorWindow());
         LOG.info("Frame created");
         if (restoreSession) {
           restoreSession();
         }
         notify = true;
       }
-      IdeFrameImpl frame = myFrameWrapper.requireNotNullFrame();
+      IdeFrameImpl frame = myFrameWrapper.getFrame();
       if (!frame.isVisible()) {
         frame.setVisible(true);
         LOG.info("Window opened");
@@ -199,12 +200,9 @@ public final class LightEditServiceImpl implements LightEditService,
     dialog.show();
     if (dialog.isDontAsk()) {
       switch (dialog.getExitCode()) {
-        case LightEditConfirmationDialog.STAY_IN_LIGHT_EDIT:
+        case LightEditConfirmationDialog.STAY_IN_LIGHT_EDIT ->
           myConfiguration.preferredMode = LightEditConfiguration.PreferredMode.LightEdit;
-          break;
-        case LightEditConfirmationDialog.PROCEED_TO_PROJECT:
-          myConfiguration.preferredMode = LightEditConfiguration.PreferredMode.Project;
-          break;
+        case LightEditConfirmationDialog.PROCEED_TO_PROJECT -> myConfiguration.preferredMode = LightEditConfiguration.PreferredMode.Project;
       }
     }
     if (dialog.getExitCode() == LightEditConfirmationDialog.PROCEED_TO_PROJECT) {
@@ -267,37 +265,38 @@ public final class LightEditServiceImpl implements LightEditService,
 
   @Override
   public boolean closeEditorWindow() {
-    if (canClose()) {
-      Project project = myFrameWrapper.getProject();
-      myFrameWrapper.requireNotNullFrame().setVisible(false);
-      saveSession();
-      myEditorWindowClosing = true;
+    if (!canClose()) {
+      LOG.info("Close cancelled");
+      return false;
+    }
+
+    Project project = myFrameWrapper.getProject();
+    myFrameWrapper.getFrame().setVisible(false);
+    saveSession();
+    myEditorWindowClosing = true;
+    try {
+      myEditorManager.closeAllEditors();
+    }
+    finally {
+      myEditorWindowClosing = false;
+    }
+
+    LOG.info("Window closed");
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditServiceListener.TOPIC).lightEditWindowClosed(project);
+    if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
+      closeAndDisposeFrame();
+      LOG.info("No open projects or welcome frame, exiting");
       try {
-        myEditorManager.closeAllEditors();
+        Disposer.dispose(myEditorManager);
+        ApplicationManager.getApplication().exit();
       }
-      finally {
-        myEditorWindowClosing = false;
-      }
-      LOG.info("Window closed");
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditServiceListener.TOPIC).lightEditWindowClosed(project);
-      if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
-        closeAndDisposeFrame();
-        LOG.info("No open projects or welcome frame, exiting");
-        try {
-          Disposer.dispose(myEditorManager);
-          ApplicationManager.getApplication().exit();
-        }
-        catch (Throwable t) {
-          System.exit(1);
-        }
-      }
-      else {
-        myFrameWrapper.releaseFrame();
-        myFrameWrapper = null;
+      catch (Throwable t) {
+        System.exit(1);
       }
     }
     else {
-      LOG.info("Close cancelled");
+      WindowManagerEx.getInstanceEx().releaseFrame(myFrameWrapper);
+      myFrameWrapper = null;
     }
     return false;
   }
@@ -305,7 +304,7 @@ public final class LightEditServiceImpl implements LightEditService,
   private boolean canClose() {
     final FileDocumentManager documentManager = FileDocumentManager.getInstance();
     return !myEditorManager.containsUnsavedDocuments() ||
-           autosaveDocuments() ||
+           autoSaveDocuments() ||
            LightEditUtil.confirmClose(
              ApplicationBundle.message("light.edit.exit.message"),
              ApplicationBundle.message("light.edit.exit.title"),
@@ -330,7 +329,7 @@ public final class LightEditServiceImpl implements LightEditService,
            );
   }
 
-  private boolean autosaveDocuments() {
+  private boolean autoSaveDocuments() {
     if (isAutosaveMode()) {
       FileDocumentManager.getInstance().saveAllDocuments();
       return true;

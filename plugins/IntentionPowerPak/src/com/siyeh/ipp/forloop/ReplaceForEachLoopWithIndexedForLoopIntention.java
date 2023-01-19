@@ -61,6 +61,9 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       return;
     }
     final PsiParameter iterationParameter = statement.getIterationParameter();
+    if (iterationParameter == null) {
+      return;
+    }
     final PsiType type = iterationParameter.getType();
     final PsiType iteratedValueType = iteratedValue.getType();
     if (iteratedValueType == null) {
@@ -79,7 +82,8 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     if (JavaCodeStyleSettings.getInstance(statement.getContainingFile()).GENERATE_FINAL_LOCALS) {
       newStatement.append("final ");
     }
-    newStatement.append(type.getCanonicalText());
+    PsiTypeElement typeElement = iterationParameter.getTypeElement();
+    newStatement.append(typeElement != null && typeElement.isInferredType() ? PsiKeyword.VAR : type.getCanonicalText());
     newStatement.append(' ');
     newStatement.append(iterationParameter.getName());
     newStatement.append('=');

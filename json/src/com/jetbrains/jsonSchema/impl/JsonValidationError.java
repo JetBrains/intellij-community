@@ -149,18 +149,16 @@ public class JsonValidationError {
 
   public LocalQuickFix @NotNull [] createFixes(@Nullable JsonLikeSyntaxAdapter quickFixAdapter) {
     if (quickFixAdapter == null) return LocalQuickFix.EMPTY_ARRAY;
-    switch (myFixableIssueKind) {
-      case MissingProperty:
-        return new AddMissingPropertyFix[]{new AddMissingPropertyFix((MissingMultiplePropsIssueData)myIssueData, quickFixAdapter)};
-      case MissingOneOfProperty:
-      case MissingAnyOfProperty:
-        return ((MissingOneOfPropsIssueData)myIssueData).myExclusiveOptions.stream().map(d -> new AddMissingPropertyFix(d, quickFixAdapter)).toArray(LocalQuickFix[]::new);
-      case ProhibitedProperty:
-        return new RemoveProhibitedPropertyFix[]{new RemoveProhibitedPropertyFix((ProhibitedPropertyIssueData)myIssueData, quickFixAdapter)};
-      case NonEnumValue:
-        return new SuggestEnumValuesFix[]{new SuggestEnumValuesFix(quickFixAdapter)};
-      default:
-        return LocalQuickFix.EMPTY_ARRAY;
-    }
+    return switch (myFixableIssueKind) {
+      case MissingProperty ->
+        new AddMissingPropertyFix[]{new AddMissingPropertyFix((MissingMultiplePropsIssueData)myIssueData, quickFixAdapter)};
+      case MissingOneOfProperty, MissingAnyOfProperty ->
+        ((MissingOneOfPropsIssueData)myIssueData).myExclusiveOptions.stream().map(d -> new AddMissingPropertyFix(d, quickFixAdapter))
+          .toArray(LocalQuickFix[]::new);
+      case ProhibitedProperty ->
+        new RemoveProhibitedPropertyFix[]{new RemoveProhibitedPropertyFix((ProhibitedPropertyIssueData)myIssueData, quickFixAdapter)};
+      case NonEnumValue -> new SuggestEnumValuesFix[]{new SuggestEnumValuesFix(quickFixAdapter)};
+      default -> LocalQuickFix.EMPTY_ARRAY;
+    };
   }
 }

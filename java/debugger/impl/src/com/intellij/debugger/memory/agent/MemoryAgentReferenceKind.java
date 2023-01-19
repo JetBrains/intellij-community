@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import java.util.HashMap;
@@ -27,6 +27,7 @@ public enum MemoryAgentReferenceKind {
   private final int myValue;
 
   private static final Map<Integer, MemoryAgentReferenceKind> INT_TO_REFERENCE_KIND = new HashMap<>();
+
   static {
     for (MemoryAgentReferenceKind kind : values()) {
       INT_TO_REFERENCE_KIND.put(kind.myValue, kind);

@@ -7,14 +7,14 @@ import org.jetbrains.kotlin.j2k.append
 import org.jetbrains.kotlin.j2k.buildList
 
 open class Class(
-        val name: Identifier,
-        annotations: Annotations,
-        modifiers: Modifiers,
-        val typeParameterList: TypeParameterList,
-        val extendsTypes: List<Type>,
-        val baseClassParams: List<DeferredElement<Expression>>?,
-        val implementsTypes: List<Type>,
-        val body: ClassBody
+  val name: Identifier,
+  annotations: Annotations,
+  modifiers: Modifiers,
+  val typeParameterList: TypeParameterList,
+  private val extendsTypes: List<Type>,
+  private val baseClassParams: List<DeferredElement<Expression>>?,
+  private val implementsTypes: List<Type>,
+  val body: ClassBody
 ) : Member(annotations, modifiers) {
 
     override fun generateCode(builder: CodeBuilder) {

@@ -1,9 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowConfirmationOption;
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption;
 import com.intellij.openapi.vcs.update.ActionInfo;
@@ -19,6 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
+  @SuppressWarnings("LoggerInitializedWithForeignClass")
+  public static final Logger MAPPING_DETECTION_LOG = Logger.getInstance(NewMappings.class);
+
   @Topic.ProjectLevel
   public static final Topic<VcsActivationListener> VCS_ACTIVATED =
     new Topic<>(VcsActivationListener.class, Topic.BroadcastDirection.NONE);
@@ -55,5 +61,11 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
 
   public abstract void fireDirectoryMappingsChanged();
 
+  /**
+   * @return {@link AbstractVcs#getName()} for &lt;Project&gt; mapping if configured;
+   * empty string for &lt;None&gt; &lt;Project&gt; mapping;
+   * null if no default mapping is configured.
+   */
+  @Nullable
   public abstract String haveDefaultMapping();
 }

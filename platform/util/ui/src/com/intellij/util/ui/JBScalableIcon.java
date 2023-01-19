@@ -118,25 +118,21 @@ public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScale
    * Returns the value scaled according to the provided scale type
    */
   protected double scaleVal(double value, @NotNull ScaleType type) {
-    switch (type) {
-      case USR_SCALE: return myScaler.scaleVal(value);
-      case SYS_SCALE: return value * getScale(SYS_SCALE);
-      case OBJ_SCALE: return value * getScale(OBJ_SCALE);
-    }
-    return value; // unreachable
+    return switch (type) {
+      case USR_SCALE -> myScaler.scaleVal(value);
+      case SYS_SCALE -> value * getScale(SYS_SCALE);
+      case OBJ_SCALE -> value * getScale(OBJ_SCALE);
+    };
   }
 
   /**
    * Returns the value scaled according to the provided scale type
    */
   protected double scaleVal(double value, @NotNull DerivedScaleType type) {
-    switch (type) {
-      case DEV_SCALE: return value * getScale(DEV_SCALE);
-      case EFF_USR_SCALE:
-      case PIX_SCALE:
-        return myScaler.scaleVal(value) * getScale(OBJ_SCALE);
-    }
-    return value; // unreachable
+    return switch (type) {
+      case DEV_SCALE -> value * getScale(DEV_SCALE);
+      case EFF_USR_SCALE, PIX_SCALE -> myScaler.scaleVal(value) * getScale(OBJ_SCALE);
+    };
   }
 
   @Override

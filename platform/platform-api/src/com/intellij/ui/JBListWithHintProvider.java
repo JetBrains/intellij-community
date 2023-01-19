@@ -24,7 +24,6 @@ import javax.swing.*;
 import java.util.Collection;
 
 /**
- * @author pegov
  * @deprecated use HintUpdateSupply directly
  * @see HintUpdateSupply
  */

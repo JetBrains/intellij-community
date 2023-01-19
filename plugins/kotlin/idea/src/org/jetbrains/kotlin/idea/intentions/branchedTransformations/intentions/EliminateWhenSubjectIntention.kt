@@ -34,7 +34,7 @@ class EliminateWhenSubjectIntention :
 
         val commentSaver = CommentSaver(element, saveLineBreaks = true)
 
-        val whenExpression = KtPsiFactory(element).buildExpression {
+        val whenExpression = KtPsiFactory(element.project).buildExpression {
             appendFixedText("when {\n")
 
             for (entry in element.entries) {

@@ -188,7 +188,7 @@ public final class Helpers {
     return actionId == null ? action.toString() : actionId;
   }
 
-  static void collectLeafActions(@NotNull ActionGroup actionGroup, @NotNull Collection<AnAction> out) {
+  static void collectLeafActions(@NotNull ActionGroup actionGroup, @NotNull Collection<? super AnAction> out) {
     AnAction[] actions = actionGroup.getChildren(null);
     for (AnAction childAction : actions) {
       if (childAction == null) {

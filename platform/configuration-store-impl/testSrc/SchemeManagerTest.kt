@@ -170,8 +170,8 @@ internal class SchemeManagerTest {
     val schemeManager = SchemeManagerImpl(FILE_SPEC, ATestSchemeProcessor(), object : StreamProvider {
       override val isExclusive = true
 
-      override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-        getFile(fileSpec).write(content, 0, size)
+      override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
+        getFile(fileSpec).write(content)
       }
 
       override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {

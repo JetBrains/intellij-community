@@ -13,8 +13,6 @@ import java.util.*;
 
 /**
  * Utility functions to trigger file reparsing programmatically.
- *
- * @author peter
  */
 public final class FileContentUtilCore {
   public static final String FORCE_RELOAD_REQUESTOR = "FileContentUtilCore.saveOrReload";

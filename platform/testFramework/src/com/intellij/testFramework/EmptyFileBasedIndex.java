@@ -38,7 +38,7 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
 
   @Override
   public @Nullable VirtualFile findFileById(int id) {
-    return PersistentFS.getInstance().findFileByIdIfCached(id);
+    return PersistentFS.getInstance().findFileById(id);
   }
 
   @Override

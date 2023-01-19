@@ -1,13 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -28,18 +30,18 @@ import org.jetbrains.kotlin.descriptors.impl.MutablePackageFragmentDescriptor
 import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.TypeParameterDescriptorImpl
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassKind
 import org.jetbrains.kotlin.idea.refactoring.*
@@ -48,8 +50,6 @@ import org.jetbrains.kotlin.idea.util.DialogWithEditor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getDefaultInitializer
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -80,6 +80,7 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.*
 import kotlin.math.max
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 /**
  * Represents a single choice for a type (e.g. parameter type or return type).
@@ -206,10 +207,20 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
     private fun buildNext(iterator: Iterator<CallableInfo>) {
         if (iterator.hasNext()) {
             val context = Context(iterator.next())
-            runWriteAction { context.buildAndRunTemplate { buildNext(iterator) } }
-            ApplicationManager.getApplication().invokeLater { context.showDialogIfNeeded() }
+            val action: () -> Unit = { context.buildAndRunTemplate { buildNext(iterator) } }
+            if (IntentionPreviewUtils.isPreviewElement(config.currentFile)) {
+                action()
+            } else {
+                runWriteAction(action)
+                ApplicationManager.getApplication().invokeLater { context.showDialogIfNeeded() }
+            }
         } else {
-            runWriteAction { ShortenReferences.DEFAULT.process(elementsToShorten) }
+            val action: () -> Unit = { ShortenReferences.DEFAULT.process(elementsToShorten) }
+            if (IntentionPreviewUtils.isPreviewElement(config.currentFile)) {
+                action()
+            } else {
+                runWriteAction(action)
+            }
         }
     }
 
@@ -472,7 +483,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 val returnTypeString = if (skipReturnType || assignmentToReplace != null) "" else ": Any"
                 val header = "$ownerTypeString${callableInfo.name.quoteIfNeeded()}$paramList$returnTypeString"
 
-                val psiFactory = KtPsiFactory(currentFile)
+                val psiFactory = KtPsiFactory(currentFile.project)
 
                 val modifiers = buildString {
                     val modifierList = callableInfo.modifierList?.copied() ?: psiFactory.createEmptyModifierList()
@@ -516,9 +527,9 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             callableInfo.isAbstract -> ""
                             containingElement is KtClass && containingElement.hasModifier(KtTokens.EXTERNAL_KEYWORD) -> ""
                             containingElement is KtObjectDeclaration && containingElement.hasModifier(KtTokens.EXTERNAL_KEYWORD) -> ""
-                            containingElement is KtObjectDeclaration && containingElement.isCompanion()
-                                    && containingElement.parent.parent is KtClass
-                                    && (containingElement.parent.parent as KtClass).hasModifier(KtTokens.EXTERNAL_KEYWORD) -> ""
+                            containingElement is KtObjectDeclaration && containingElement.isCompanion() &&
+                                    containingElement.parents.match(KtClassBody::class, last = KtClass::class)
+                                        ?.hasModifier(KtTokens.EXTERNAL_KEYWORD) == true -> ""
                             isExpectClassMember -> ""
                             else -> "{\n\n}"
 
@@ -584,6 +595,9 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 }
 
                 if (callableInfo is PropertyInfo) {
+                    callableInfo.annotations.forEach { declaration.addAnnotationEntry(it) }
+                }
+                if (callableInfo is ConstructorInfo) {
                     callableInfo.annotations.forEach { declaration.addAnnotationEntry(it) }
                 }
 
@@ -656,7 +670,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
         ) {
             if (config.isExtension) {
                 val receiverTypeText = receiverTypeCandidate!!.theType.renderLong(typeParameterNameMap).first()
-                val replacingTypeRef = KtPsiFactory(declaration).createType(receiverTypeText)
+                val replacingTypeRef = KtPsiFactory(declaration.project).createType(receiverTypeText)
                 (declaration as KtCallableDeclaration).setReceiverTypeReference(replacingTypeRef)!!
             }
 
@@ -716,7 +730,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 if (skipReturnType) "Unit" else (func as? KtFunction)?.typeReference?.text ?: "",
                 receiverClassDescriptor?.importableFqName ?: receiverClassDescriptor?.name?.let { FqName.topLevel(it) }
             )
-            oldBody.replace(KtPsiFactory(func).createBlock(bodyText))
+            oldBody.replace(KtPsiFactory(func.project).createBlock(bodyText))
         }
 
         private fun setupCallTypeArguments(callElement: KtCallElement, typeParameters: List<TypeParameterDescriptor>) {
@@ -728,7 +742,8 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             if (renderedTypeArgs.isEmpty()) {
                 oldTypeArgumentList.delete()
             } else {
-                oldTypeArgumentList.replace(KtPsiFactory(callElement).createTypeArguments(renderedTypeArgs.joinToString(", ", "<", ">")))
+                val psiFactory = KtPsiFactory(callElement.project)
+                oldTypeArgumentList.replace(psiFactory.createTypeArguments(renderedTypeArgs.joinToString(", ", "<", ">")))
                 elementsToShorten.add(callElement.typeArgumentList!!)
             }
         }
@@ -848,7 +863,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
 
         private fun transformToJavaMemberIfApplicable(declaration: KtNamedDeclaration): Boolean {
             fun convertToJava(targetClass: PsiClass): PsiMember? {
-                val psiFactory = KtPsiFactory(declaration)
+                val psiFactory = KtPsiFactory(declaration.project)
 
                 psiFactory.createPackageDirectiveIfNeeded(config.currentFile.packageFqName)?.let {
                     declaration.containingFile.addBefore(it, null)
@@ -927,9 +942,11 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
 
         private fun setupEditor(declaration: KtNamedDeclaration) {
             if (declaration is KtProperty && !declaration.hasInitializer() && containingElement is KtBlockExpression) {
+                val psiFactory = KtPsiFactory(declaration.project)
+
                 val defaultValueType = typeCandidates[callableInfo.returnTypeInfo]!!.firstOrNull()?.theType
-                val defaultValue = defaultValueType?.let { it.getDefaultInitializer() } ?: "null"
-                val initializer = declaration.setInitializer(KtPsiFactory(declaration).createExpression(defaultValue))!!
+                val defaultValue = defaultValueType?.getDefaultInitializer() ?: "null"
+                val initializer = declaration.setInitializer(psiFactory.createExpression(defaultValue))!!
                 val range = initializer.textRange
                 containingFileEditor.selectionModel.setSelection(range.startOffset, range.endOffset)
                 containingFileEditor.caretModel.moveToOffset(range.endOffset)
@@ -1010,6 +1027,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             false
                         ) ?: return
 
+                        if (IntentionPreviewUtils.isPreviewElement(config.currentFile)) return
                         runWriteAction {
                             postprocessDeclaration(newDeclaration)
 
@@ -1075,7 +1093,7 @@ internal fun <D : KtNamedDeclaration> placeDeclarationInContainer(
     anchor: PsiElement,
     fileToEdit: KtFile = container.containingFile as KtFile
 ): D {
-    val psiFactory = KtPsiFactory(container)
+    val psiFactory = KtPsiFactory(container.project)
     val newLine = psiFactory.createNewLine()
 
     fun calcNecessaryEmptyLines(decl: KtDeclaration, after: Boolean): Int {

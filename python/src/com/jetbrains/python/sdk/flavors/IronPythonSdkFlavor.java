@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -13,11 +14,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
 
 
-public final class IronPythonSdkFlavor extends PythonSdkFlavor {
+public final class IronPythonSdkFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
   public static final Pattern VERSION_RE = Pattern.compile("\\w+ ([0-9\\.]+).*");
 
   private IronPythonSdkFlavor() {
@@ -33,9 +35,13 @@ public final class IronPythonSdkFlavor extends PythonSdkFlavor {
     return "IRONPYTHONPATH";
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     Set<String> result = new TreeSet<>();
     String root = System.getenv("ProgramFiles(x86)");
     if (root == null) {
@@ -56,7 +62,7 @@ public final class IronPythonSdkFlavor extends PythonSdkFlavor {
     }
     WinPythonSdkFlavor.findInPath(result, "ipy.exe");
     WinPythonSdkFlavor.findInPath(result, "ipy64.exe");
-    return result;
+    return ContainerUtil.map(result, Path::of);
   }
 
   @Override

@@ -34,6 +34,13 @@ class EmptyCollection {
       
     }
   }
+
+  void testAddToSet() {
+    Set<String> set = new HashSet<>();
+    if (<warning descr="Condition 'set.add(\"1\")' is always 'true'">set.add("1")</warning>) {
+      System.out.println("added");
+    }
+  }
   
   static List<String> fill(List<String> list) {
     list.add("foo");

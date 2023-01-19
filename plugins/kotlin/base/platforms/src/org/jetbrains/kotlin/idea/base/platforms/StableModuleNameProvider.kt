@@ -11,7 +11,7 @@ interface StableModuleNameProvider {
     companion object {
         private val LOG = Logger.getInstance(StableModuleNameProvider::class.java)
 
-        val Fallback = object : StableModuleNameProvider {
+        private val Fallback = object : StableModuleNameProvider {
             override fun getStableModuleName(module: Module): String {
                 LOG.error("HMPP: regular workspace module name was used for module $module")
                 return module.name

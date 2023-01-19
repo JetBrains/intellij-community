@@ -63,10 +63,6 @@ import java.util.*;
 import static com.jetbrains.python.PyStringFormatParser.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author Alexey.Ivanov
- * @author vlan
- */
 abstract public class IntroduceHandler implements RefactoringActionHandler {
   protected static PsiElement findAnchor(List<? extends PsiElement> occurrences) {
     PsiElement anchor = occurrences.get(0);
@@ -563,7 +559,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       if (data != null) {
         final PsiElement parent = data.getFirst();
         final String text = parent.getText();
-        final Pair<String, String> detectedQuotes = PyStringLiteralUtil.getQuotes(text);
+        final Pair<String, String> detectedQuotes = PyStringLiteralCoreUtil.getQuotes(text);
         final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
         final TextRange range = data.getSecond();
         final String substring = range.substring(text);

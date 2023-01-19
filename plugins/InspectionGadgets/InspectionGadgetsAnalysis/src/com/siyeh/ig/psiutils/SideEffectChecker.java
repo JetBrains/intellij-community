@@ -23,7 +23,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,10 +68,14 @@ public final class SideEffectChecker {
     return visitor.mayHaveSideEffects();
   }
 
-  public static boolean mayHaveSideEffects(@NotNull PsiElement element, Predicate<? super PsiElement> shouldIgnoreElement) {
+  public static boolean mayHaveSideEffects(@NotNull PsiElement element, @NotNull Predicate<? super PsiElement> shouldIgnoreElement) {
     final SideEffectsVisitor visitor = new SideEffectsVisitor(null, element, shouldIgnoreElement);
     element.accept(visitor);
     return visitor.mayHaveSideEffects();
+  }
+
+  public static boolean mayHaveNonLocalSideEffects(@NotNull PsiElement element, @NotNull Predicate<PsiElement> shouldIgnoreElement) {
+    return mayHaveSideEffects(element, shouldIgnoreElement.or(e -> isLocalSideEffect(e)));
   }
 
   /**
@@ -130,7 +133,7 @@ public final class SideEffectChecker {
                                                                  @NotNull Predicate<? super PsiElement> ignoreElement) {
     List<PsiElement> list = new SmartList<>();
     element.accept(new SideEffectsVisitor(list, element, ignoreElement));
-    return StreamEx.of(list).select(PsiExpression.class).toList();
+    return ContainerUtil.filterIsInstance(list, PsiExpression.class);
   }
 
   private static class SideEffectsVisitor extends JavaRecursiveElementWalkingVisitor {

@@ -102,15 +102,6 @@ public class VcsNotifier {
     return notifyError(displayId, title, buildNotificationMessage(message, errors));
   }
 
-  /**
-   * @deprecated use {@link #notifyWeakError(String, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public Notification notifyWeakError(@NotificationContent @NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, null, "", message, NotificationType.ERROR);
-  }
-
   @NotNull
   public Notification notifyWeakError(@NonNls @Nullable String displayId,
                                       @NotificationContent @NotNull String message) {
@@ -168,16 +159,6 @@ public class VcsNotifier {
                                     @NotificationContent @NotNull String message,
                                     @Nullable NotificationListener listener) {
     return notify(NOTIFICATION_GROUP_ID, displayId, title, message, NotificationType.INFORMATION, listener);
-  }
-
-  /**
-   * @deprecated use {@link #notifyImportantInfo(String, String, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public Notification notifyImportantInfo(@NotificationTitle @NotNull String title,
-                                          @NotificationContent @NotNull String message) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, null, title, message, NotificationType.INFORMATION, (NotificationListener)null);
   }
 
   /**
@@ -268,16 +249,6 @@ public class VcsNotifier {
                                     @NotificationTitle @NotNull String title,
                                     @NotificationContent @NotNull String message) {
     return notify(NOTIFICATION_GROUP_ID, displayId, title, message, NotificationType.WARNING);
-  }
-
-  /**
-   * @deprecated use {@link #notifyImportantWarning(String, String, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public Notification notifyImportantWarning(@NotificationTitle @NotNull String title,
-                                             @NotificationContent @NotNull String message) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, null, title, message, NotificationType.WARNING);
   }
 
   @NotNull

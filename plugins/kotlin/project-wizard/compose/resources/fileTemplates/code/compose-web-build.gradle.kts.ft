@@ -1,14 +1,13 @@
 import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose")
 }
 
-group "${context.group}"
-version "${context.version}"
+group = "${context.group}"
+version = "${context.version}"
 
 repositories {
     google()

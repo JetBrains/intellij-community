@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author peter
-*/
 public abstract class RenameableFakePsiElement extends FakePsiElement implements PsiMetaOwner, PsiPresentableMetaData {
   private final PsiElement myParent;
 
@@ -80,17 +77,17 @@ public abstract class RenameableFakePsiElement extends FakePsiElement implements
 
   @Override
   @NonNls
-  public String getName(final PsiElement context) {
+  public String getName(PsiElement context) {
     return getName();
   }
 
   @Override
-  public void init(final PsiElement element) {
+  public void init(PsiElement element) {
   }
 
   @Override
   @Nullable
-  public final Icon getIcon(final boolean open) {
+  public final Icon getIcon(boolean open) {
     return getIcon();
   }
 

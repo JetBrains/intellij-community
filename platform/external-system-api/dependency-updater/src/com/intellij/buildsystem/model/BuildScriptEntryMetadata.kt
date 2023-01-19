@@ -8,7 +8,7 @@ data class BuildScriptEntryMetadata constructor(
     val rawText: String
 ) {
 
-    val linesCount: Int = endLine - startLine + 1
+    private val linesCount: Int = endLine - startLine + 1
 
     init {
         require(startLine >= 1) { "The startLine value is 1-based, and must be [1, +inf), but was $startLine" }

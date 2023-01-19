@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
@@ -19,7 +20,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.tree.TreeUtil
@@ -48,6 +48,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   companion object {
     @kotlin.jvm.JvmField
     val PREVIEW_KEY = Key.create<Any>("inlay.preview.key")
+
+    fun getFileTypeForPreview(model: InlayProviderSettingsModel): LanguageFileType {
+      return model.getCasePreviewLanguage(null)?.associatedFileType ?: PlainTextFileType.INSTANCE
+    }
   }
 
   init {
@@ -117,8 +121,8 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
     }, root, CheckPolicy(true, true, true, false)) {
       override fun installSpeedSearch() {
-        TreeSpeedSearch(this, Convertor { getName(it.lastPathComponent as DefaultMutableTreeNode,
-                                                  it.parentPath?.lastPathComponent as DefaultMutableTreeNode?) }, true)
+        TreeSpeedSearch(this, true) { getName(it.lastPathComponent as DefaultMutableTreeNode,
+                                              it.parentPath?.lastPathComponent as DefaultMutableTreeNode?) }
       }
     }
     tree.addTreeSelectionListener(
@@ -141,7 +145,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private fun getName(node: DefaultMutableTreeNode?, parent: DefaultMutableTreeNode?): String {
     when (val item = node?.userObject) {
       is InlayGroupSettingProvider -> return item.group.toString()
-      is InlayGroup -> return item.toString()
+      is InlayGroup -> return item.toString() //NON-NLS
       is Language -> return item.displayName
       is InlayProviderSettingsModel -> return if (parent?.userObject is InlayGroup) item.language.displayName else item.name
       is ImmediateConfigurable.Case -> return item.name
@@ -156,7 +160,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     var nodeToSelect: CheckedTreeNode? = selected
     model.onChangeListener = object : ChangeListener {
       override fun settingsChanged() {
-        currentEditor?.let { updateHints(it, model) }
+        currentEditor?.let {
+          val case = (it.getUserData(PREVIEW_KEY) as? CaseCheckedNode)?.userObject as? ImmediateConfigurable.Case
+          updateHints(it, model, case)
+        }
       }
     }
     val node = object: CheckedTreeNode(model) {
@@ -168,21 +175,27 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     }
     parent.add(node)
     model.cases.forEach {
-      val caseNode = object: CheckedTreeNode(it) {
-        override fun setChecked(checked: Boolean) {
-          super.setChecked(checked)
-          it.value = checked
-          if (PREVIEW_KEY.get(currentEditor) == this) {
-            model.onChangeListener?.settingsChanged()
-          }
-        }
-      }
+      val caseNode = CaseCheckedNode(it, { currentEditor }, model)
       node.add(caseNode)
       if (nodeToSelect == null && getProviderId(caseNode) == lastId) {
         nodeToSelect = caseNode
       }
     }
     return if (nodeToSelect == null && getProviderId(node) == lastId) node else nodeToSelect
+  }
+
+  private class CaseCheckedNode(
+    private val case: ImmediateConfigurable.Case,
+    private val editorProvider: () -> Editor?,
+    private val model: InlayProviderSettingsModel
+  ) : CheckedTreeNode(case) {
+    override fun setChecked(checked: Boolean) {
+      super.setChecked(checked)
+      case.value = checked
+      if (PREVIEW_KEY.get(editorProvider()) == this) {
+        model.onChangeListener?.settingsChanged()
+      }
+    }
   }
 
   private fun updateRightPanel(treeNode: CheckedTreeNode?) {
@@ -265,7 +278,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         currentEditor = editor
         PREVIEW_KEY.set(editor, treeNode)
         CASE_KEY.set(editor, case)
-        updateHints(editor, model)
+        updateHints(editor, model, case)
       }
       editorTextField.text = previewText
       editorTextField.addSettingsProvider {
@@ -281,10 +294,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     }
   }
 
-  private fun updateHints(editor: Editor, model: InlayProviderSettingsModel) {
-    val fileType = model.getCasePreviewLanguage(null)?.associatedFileType ?: PlainTextFileType.INSTANCE
+  private fun updateHints(editor: Editor, model: InlayProviderSettingsModel, case: ImmediateConfigurable.Case?) {
+    val fileType = getFileTypeForPreview(model)
     ReadAction.nonBlocking(Callable {
-      val file = model.createFile(project, fileType, editor.document)
+      val file = model.createFile(project, fileType, editor.document, case?.id)
       val continuation = model.collectData(editor, file)
       continuation
     })

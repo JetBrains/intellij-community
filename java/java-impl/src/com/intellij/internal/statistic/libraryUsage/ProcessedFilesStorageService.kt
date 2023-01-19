@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.xmlb.annotations.XMap
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
@@ -18,9 +19,11 @@ import java.util.concurrent.TimeUnit
   reportStatistic = false,
   reloadable = false,
 )
+@ApiStatus.Internal
 class ProcessedFilesStorageService :
   PersistentStateComponentWithModificationTracker<ProcessedFilesStorageService.MyState>,
   Disposable {
+
   override fun initializeComponent() {
     if (dropOutdatedPaths()) {
       tracker.incModificationCount()
@@ -76,4 +79,6 @@ class ProcessedFilesStorageService :
   }
 }
 
-private fun isDayPassed(lastTime: Long, currentTime: Long): Boolean = TimeUnit.MILLISECONDS.toDays(currentTime - lastTime) >= 1
+private fun isDayPassed(lastTime: Long, currentTime: Long): Boolean {
+  return TimeUnit.MILLISECONDS.toDays(currentTime - lastTime) >= 1
+}

@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Danila Ponomarenko
- */
 public class JavaPolyadicExpressionUnwrapper extends JavaUnwrapper {
   public JavaPolyadicExpressionUnwrapper() {
     super("");
@@ -74,7 +71,7 @@ public class JavaPolyadicExpressionUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     return e.getParent();
   }

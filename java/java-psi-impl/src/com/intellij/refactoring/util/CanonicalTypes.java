@@ -17,9 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * @author dsl
- */
 public final class CanonicalTypes {
   private CanonicalTypes() { }
 
@@ -44,7 +41,15 @@ public final class CanonicalTypes {
     protected final TypeAnnotationProvider myProvider;
 
     AnnotatedType(@NotNull TypeAnnotationProvider provider) {
-      PsiAnnotation[] annotations = ContainerUtil.map(provider.getAnnotations(), annotation -> (PsiAnnotation)annotation.copy(), PsiAnnotation.EMPTY_ARRAY);
+      PsiAnnotation[] annotations = ContainerUtil.map(
+        provider.getAnnotations(),
+        annotation -> {
+          PsiElement copy = annotation.copy();
+          if (copy instanceof PsiAnnotation) return (PsiAnnotation)copy;
+          // copy is not implemented (e.g., for KtUltraLightSimpleAnnotation)
+          return JavaPsiFacade.getElementFactory(annotation.getProject()).createAnnotationFromText(annotation.getText(), annotation);
+        },
+        PsiAnnotation.EMPTY_ARRAY);
       myProvider = TypeAnnotationProvider.Static.create(annotations);
     }
   }

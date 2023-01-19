@@ -11,10 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class RadErrorComponent extends RadAtomicComponent {
 
   private final String myComponentClassName;

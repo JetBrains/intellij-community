@@ -10,9 +10,6 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   private final JavaClassFindUsagesOptions myFindClassOptions;
   private final JavaMethodFindUsagesOptions myFindMethodOptions;

@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.DependencyCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
-import kotlinx.coroutines.launch
 
 internal class MavenDependencyCollector : DependencyCollector {
 
@@ -22,8 +21,6 @@ internal class MavenDependencyCollector : DependencyCollector {
 internal class MavenDependencyUpdater(private val project: Project) : MavenImportListener {
 
   override fun importFinished(importedProjects: Collection<MavenProject>, newModules: List<Module>) {
-    project.coroutineScope.launch {
-      PluginAdvertiserService.getInstance().rescanDependencies(project)
-    }
+    PluginAdvertiserService.getInstance(project).rescanDependencies()
   }
 }

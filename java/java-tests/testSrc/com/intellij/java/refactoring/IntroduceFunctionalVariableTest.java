@@ -63,10 +63,11 @@ public class IntroduceFunctionalVariableTest extends LightRefactoringTestCase  {
       fail("Unable to perform is expected");
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals("Cannot perform refactoring.\n" +
-                   "There are multiple output values for the selected code fragment:\n" +
-                   "    x : int,\n" +
-                   "    y : int.", e.getMessage());
+      assertEquals("""
+                     Cannot perform refactoring.
+                     There are multiple output values for the selected code fragment:
+                         x : int,
+                         y : int.""", e.getMessage());
     }
   }
 

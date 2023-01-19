@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent.parsers
 
 import com.intellij.debugger.engine.ReferringObject
@@ -6,7 +6,6 @@ import com.intellij.debugger.memory.agent.*
 import com.intellij.openapi.util.Pair
 import com.sun.jdi.*
 import java.util.*
-import kotlin.collections.ArrayList
 
 object StringParser : ResultParser<String> {
   override fun parse(value: Value): String {
@@ -87,12 +86,13 @@ object ObjectsReferencesInfoParser : ResultParser<ReferringObjectsInfo> {
                   throw UnexpectedValueFormatException("Object references information should be represented by array")
 
       val distinctIndices = mutableSetOf<Int>()
-      val referenceInfos =  LinkedList<ReferringObject>()
+      val referenceInfos = LinkedList<ReferringObject>()
       val rootReferenceKinds = mutableListOf<MemoryAgentReferenceKind>()
       for ((i, index) in indices.withIndex()) {
         if (index == -1) {
           rootReferenceKinds.add(MemoryAgentReferenceKind.valueOf(kinds[i]))
-        } else if (!distinctIndices.contains(index)) {
+        }
+        else if (!distinctIndices.contains(index)) {
           distinctIndices.add(index)
           referenceInfos.add(
             MemoryAgentReferringObjectCreator.createReferringObject(

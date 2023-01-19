@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.EditorTracker;
 import com.intellij.idea.HardwareAgentRequired;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -42,12 +43,12 @@ public class BigJavaFilesPerformanceTest extends LightJavaCodeInsightFixtureTest
   @Test
   public void testHighlightingJComponent() {
     long mean = doHighlightingTest("/codeInsight/bigFilesPerformance/JComponent.java", 9);
-    Assertions.assertTrue(mean < 10_000);
+    Assertions.assertTrue(mean < 10_000, mean+"ms");
   }
 
   @Test
   public void testHighlightingWithInspectionsJComponent() {
-    MadTestingUtil.enableDefaultInspections(getFixture().getProject());
+    MadTestingUtil.enableDefaultInspections(getFixture().getProject(), JavaLanguage.INSTANCE);
     long mean = doHighlightingTest("/codeInsight/bigFilesPerformance/JComponent.java", 9);
     Assertions.assertTrue(mean < 15_000);
   }
@@ -60,14 +61,14 @@ public class BigJavaFilesPerformanceTest extends LightJavaCodeInsightFixtureTest
 
   @Test
   public void testTypingWithInspectionsJComponent(){
-    MadTestingUtil.enableDefaultInspections(getFixture().getProject());
+    MadTestingUtil.enableDefaultInspections(getFixture().getProject(), JavaLanguage.INSTANCE);
     long mean = doTypingTest("/codeInsight/bigFilesPerformance/JComponent.java", 50, true);
     Assertions.assertTrue(mean < 50);
   }
 
   @Test
   public void testHighlightingWithInspectionsThinletBig() {
-    MadTestingUtil.enableDefaultInspections(getFixture().getProject());
+    MadTestingUtil.enableDefaultInspections(getFixture().getProject(), JavaLanguage.INSTANCE);
     long mean = doHighlightingTest("/psi/resolve/ThinletBig.java", 9);
     System.out.println("Warnings: " + getFixture().doHighlighting().size());
     Assertions.assertTrue(mean < 75_000);
@@ -75,12 +76,12 @@ public class BigJavaFilesPerformanceTest extends LightJavaCodeInsightFixtureTest
 
   @Test
   public void testTypingWithInspectionsThinletBig() {
-    MadTestingUtil.enableDefaultInspections(getFixture().getProject());
+    MadTestingUtil.enableDefaultInspections(getFixture().getProject(), JavaLanguage.INSTANCE);
     long mean = doTypingTest("/psi/resolve/ThinletBig.java", 50,true);
     Assertions.assertTrue(mean < 70, "Slow typing, delay is " + mean);
   }
 
-  private void doTest(String filename, int samples, Consumer<DaemonListener> processSample) {
+  private void doTest(String filename, int samples, Consumer<? super DaemonListener> processSample) {
     Timings.getStatistics();
     JavaCodeInsightTestFixture fixture = getFixture();
     fixture.configureByFile(filename);

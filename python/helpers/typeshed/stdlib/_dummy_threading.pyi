@@ -1,63 +1,37 @@
 import sys
-from types import FrameType, TracebackType
-from typing import Any, Callable, Iterable, Mapping, Optional, TypeVar
+from _typeshed import ProfileFunction, TraceFunction
+from collections.abc import Callable, Iterable, Mapping
+from types import TracebackType
+from typing import Any, TypeVar
 
-# TODO recursive type
-_TF = Callable[[FrameType, str, Any], Optional[Callable[..., Any]]]
-
-_PF = Callable[[FrameType, str, Any], None]
 _T = TypeVar("_T")
 
+__all__ = [
+    "get_ident",
+    "active_count",
+    "Condition",
+    "current_thread",
+    "enumerate",
+    "main_thread",
+    "TIMEOUT_MAX",
+    "Event",
+    "Lock",
+    "RLock",
+    "Semaphore",
+    "BoundedSemaphore",
+    "Thread",
+    "Barrier",
+    "BrokenBarrierError",
+    "Timer",
+    "ThreadError",
+    "setprofile",
+    "settrace",
+    "local",
+    "stack_size",
+]
+
 if sys.version_info >= (3, 8):
-    __all__ = [
-        "get_ident",
-        "active_count",
-        "Condition",
-        "current_thread",
-        "enumerate",
-        "main_thread",
-        "TIMEOUT_MAX",
-        "Event",
-        "Lock",
-        "RLock",
-        "Semaphore",
-        "BoundedSemaphore",
-        "Thread",
-        "Barrier",
-        "BrokenBarrierError",
-        "Timer",
-        "ThreadError",
-        "setprofile",
-        "settrace",
-        "local",
-        "stack_size",
-        "excepthook",
-        "ExceptHookArgs",
-    ]
-else:
-    __all__ = [
-        "get_ident",
-        "active_count",
-        "Condition",
-        "current_thread",
-        "enumerate",
-        "main_thread",
-        "TIMEOUT_MAX",
-        "Event",
-        "Lock",
-        "RLock",
-        "Semaphore",
-        "BoundedSemaphore",
-        "Thread",
-        "Barrier",
-        "BrokenBarrierError",
-        "Timer",
-        "ThreadError",
-        "setprofile",
-        "settrace",
-        "local",
-        "stack_size",
-    ]
+    __all__ += ["ExceptHookArgs", "excepthook"]
 
 def active_count() -> int: ...
 def current_thread() -> Thread: ...
@@ -65,8 +39,8 @@ def currentThread() -> Thread: ...
 def get_ident() -> int: ...
 def enumerate() -> list[Thread]: ...
 def main_thread() -> Thread: ...
-def settrace(func: _TF) -> None: ...
-def setprofile(func: _PF | None) -> None: ...
+def settrace(func: TraceFunction) -> None: ...
+def setprofile(func: ProfileFunction | None) -> None: ...
 def stack_size(size: int = ...) -> int: ...
 
 TIMEOUT_MAX: float
@@ -80,12 +54,13 @@ class local:
 
 class Thread:
     name: str
-    ident: int | None
     daemon: bool
+    @property
+    def ident(self) -> int | None: ...
     def __init__(
         self,
         group: None = ...,
-        target: Callable[..., Any] | None = ...,
+        target: Callable[..., object] | None = ...,
         name: str | None = ...,
         args: Iterable[Any] = ...,
         kwargs: Mapping[str, Any] | None = ...,
@@ -176,16 +151,19 @@ class Timer(Thread):
     def __init__(
         self,
         interval: float,
-        function: Callable[..., Any],
+        function: Callable[..., object],
         args: Iterable[Any] | None = ...,
         kwargs: Mapping[str, Any] | None = ...,
     ) -> None: ...
     def cancel(self) -> None: ...
 
 class Barrier:
-    parties: int
-    n_waiting: int
-    broken: bool
+    @property
+    def parties(self) -> int: ...
+    @property
+    def n_waiting(self) -> int: ...
+    @property
+    def broken(self) -> bool: ...
     def __init__(self, parties: int, action: Callable[[], None] | None = ..., timeout: float | None = ...) -> None: ...
     def wait(self, timeout: float | None = ...) -> int: ...
     def reset(self) -> None: ...

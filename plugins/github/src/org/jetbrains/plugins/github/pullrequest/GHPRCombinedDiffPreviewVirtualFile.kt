@@ -25,6 +25,7 @@ internal class GHPRCombinedDiffPreviewVirtualFile(sourceId: String,
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is GHPRCombinedDiffPreviewVirtualFile) return false
+    if (other.pullRequest != pullRequest) return false
     if (!super.equals(other)) return false
     return true
   }

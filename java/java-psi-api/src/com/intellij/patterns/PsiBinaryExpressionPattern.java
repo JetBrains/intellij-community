@@ -5,9 +5,6 @@ import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class PsiBinaryExpressionPattern extends PsiExpressionPattern<PsiBinaryExpression, PsiBinaryExpressionPattern>{
   protected PsiBinaryExpressionPattern() {
     super(PsiBinaryExpression.class);

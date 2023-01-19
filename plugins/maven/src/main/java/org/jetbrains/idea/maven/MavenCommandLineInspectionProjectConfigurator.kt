@@ -9,22 +9,36 @@ import com.intellij.build.events.OutputBuildEvent
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
+import com.intellij.openapi.module.LanguageLevelUtil.getNextLanguageLevel
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.ui.configuration.SdkLookup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.LanguageLevel.HIGHEST
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.lang.JavaVersion
+import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.resolved
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -34,6 +48,7 @@ private const val MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY = "mave
 private val LOG = Logger.getInstance(MavenCommandLineInspectionProjectConfigurator::class.java)
 private const val DISABLE_EXTERNAL_SYSTEM_AUTO_IMPORT = "external.system.auto.import.disabled"
 private const val MAVEN_COMMAND_LINE_CONFIGURATOR_EXIT_ON_UNRESOLVED_PLUGINS = "maven.command.line.configurator.exit.on.unresolved.plugins"
+private const val MAVEN_LINEAR_IMPORT = "maven.linear.import"
 private val MAVEN_OUTPUT_LOG = Logger.getInstance("MavenOutput")
 
 class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProjectConfigurator {
@@ -44,6 +59,9 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
   override fun configureEnvironment(context: ConfiguratorContext) = context.run {
     Registry.get(DISABLE_EXTERNAL_SYSTEM_AUTO_IMPORT).setValue(true)
     Registry.get(MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY).setValue(false)
+    if (!"false".equals(System.getProperty(MAVEN_LINEAR_IMPORT), ignoreCase = true)) {
+      Registry.get(MAVEN_LINEAR_IMPORT).setValue(true)
+    }
   }
 
   override fun configureProject(project: Project, context: ConfiguratorContext) {
@@ -62,7 +80,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     val buildViewManager = project.service<BuildViewManager>()
     val syncViewManager = project.service<SyncViewManager>()
 
-    externalSystemRunConfigurationViewManager.addListener(progressListener,disposable)
+    externalSystemRunConfigurationViewManager.addListener(progressListener, disposable)
     buildViewManager.addListener(progressListener, disposable)
     syncViewManager.addListener(progressListener, disposable)
 
@@ -77,9 +95,11 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
       try {
         promise.blockingGet(10, TimeUnit.MILLISECONDS)
         break
-      } catch (e: TimeoutException) {
+      }
+      catch (e: TimeoutException) {
 
-      } catch (e: ExecutionException) {
+      }
+      catch (e: ExecutionException) {
         ExceptionUtil.rethrow(e)
       }
       ProgressManager.checkCanceled()
@@ -108,9 +128,58 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
         val errorMessage = "maven project: ${mavenProject.name} has unresolved plugins: $unresolvedPlugins"
         if (System.getProperty(MAVEN_COMMAND_LINE_CONFIGURATOR_EXIT_ON_UNRESOLVED_PLUGINS, "false").toBoolean()) {
           throw IllegalStateException(errorMessage)
-        } else {
+        }
+        else {
           LOG.warn(errorMessage)
         }
+      }
+    }
+
+    if (mavenProjectsManager.projects.isNotEmpty()) {
+      setupDefaultJdk(mavenProjectsManager.projects, context, project)
+    }
+  }
+
+  private fun setupDefaultJdk(projects: List<MavenProject>, context: ConfiguratorContext, project: Project) {
+
+    if (ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()).isNotEmpty()) return
+
+    val maxLevel = projects.flatMap {
+      val javaVersions = MavenImportUtil.getMavenJavaVersions(it)
+      listOf(javaVersions.sourceLevel, javaVersions.testSourceLevel, javaVersions.targetLevel, javaVersions.testTargetLevel)
+    }.filterNotNull().maxWithOrNull(Comparator.naturalOrder()) ?: HIGHEST
+
+    setupJdkWithVersionAboveOrEqual(maxLevel, project, context)
+  }
+
+  private fun setupJdkWithVersionAboveOrEqual(maxLevel: LanguageLevel,
+                                              project: Project,
+                                              context: ConfiguratorContext) {
+    var currentLevel: LanguageLevel? = maxLevel
+    while (currentLevel != null) {
+      val level = currentLevel
+      val future = CompletableFuture<Sdk?>()
+      SdkLookup
+        .newLookupBuilder()
+        .withProgressIndicator(context.progressIndicator)
+        .withVersionFilter { JavaVersion.tryParse(it)?.feature == level.toJavaVersion().feature }
+        .withSdkType(JavaSdk.getInstance())
+        .onSdkResolved { sdk ->
+          future.complete(sdk)
+        }
+        .executeLookup()
+
+      val sdk = future.get()
+      if (sdk != null) {
+        invokeAndWaitIfNeeded {
+          runWriteAction {
+            ProjectRootManager.getInstance(project).projectSdk = sdk
+          }
+        }
+        return
+      }
+      else {
+        currentLevel = getNextLanguageLevel(currentLevel)
       }
     }
   }

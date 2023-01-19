@@ -2,10 +2,13 @@
 package com.intellij.execution.wsl.sync
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.processTools.getBareExecutionResult
+import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.wsl.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.io.delete
+import kotlinx.coroutines.runBlocking
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -31,7 +34,7 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, only
                              .joinToString("\n")
                              // No need to create link if parent dir doesn't exist
                              { "[ -e $(dirname ${it.first}) ] && ln -s ${it.second} ${it.first}" })
-    distro.runCommand("sh", script.second, ignoreExitCode = true)
+    runBlocking { distro.createProcess("sh", script.second).getBareExecutionResult() }
     script.first.delete()
   }
 
@@ -46,14 +49,14 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, only
         hashes += hashesAndLinks.first
         links += hashesAndLinks.second
       }
-      waitProcess(process, tool.commandLineString)
+      runBlocking { process.getResultStdoutStr() }
     }
     LOGGER.info("Linux files calculated in $time")
     return Pair(hashes, links)
   }
 
 
-  override fun createTempFile(): String = distro.runCommand("mktemp", "-u")
+  override fun createTempFile(): String = distro.runCommand("mktemp", "-u").getOrThrow()
 
   override fun removeLinks(vararg linksToRemove: FilePathRelativeToDir) {
     this.removeFiles(linksToRemove.asList())

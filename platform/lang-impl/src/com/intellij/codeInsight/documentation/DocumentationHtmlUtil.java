@@ -30,7 +30,7 @@ public final class DocumentationHtmlUtil {
   private DocumentationHtmlUtil() {
   }
 
-  public static ExtendableHTMLViewFactory.Extension getIconsExtension(@NotNull Function<@NotNull String, @Nullable Icon> iconResolver) {
+  public static ExtendableHTMLViewFactory.Extension getIconsExtension(@NotNull Function<? super @NotNull String, ? extends @Nullable Icon> iconResolver) {
     return ExtendableHTMLViewFactory.Extensions.icons(key -> {
       Icon resolved = iconResolver.apply(key);
       if (resolved != null) {

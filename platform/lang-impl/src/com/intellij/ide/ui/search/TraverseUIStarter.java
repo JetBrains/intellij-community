@@ -86,18 +86,17 @@ public final class TraverseUIStarter implements ApplicationStarter {
 
   @Override
   public void main(@NotNull List<String> args) {
-    System.out.println("Starting searchable options index builder");
     try {
       startup(Path.of(OUTPUT_PATH), SPLIT_BY_RESOURCE_PATH, I18N_OPTION);
       ApplicationManagerEx.getApplicationEx().exit(ApplicationEx.FORCE_EXIT | ApplicationEx.EXIT_CONFIRMED);
       System.out.println("Searchable options index builder completed");
     }
     catch (Throwable e) {
-      System.out.println("Searchable options index builder failed");
       try {
         Logger.getInstance(getClass()).error("Searchable options index builder failed", e);
-      } catch (Throwable ignored) {}
-      e.printStackTrace();
+      }
+      catch (Throwable ignored) {
+      }
       System.exit(-1);
     }
   }
@@ -257,7 +256,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
 
   private static void wordsToOptionDescriptors(@NotNull Set<String> optionsPath,
                                                @Nullable String path,
-                                               @NotNull Set<OptionDescription> result) {
+                                               @NotNull Set<? super OptionDescription> result) {
     SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
     for (String opt : optionsPath) {
       for (@NlsSafe String word : registrar.getProcessedWordsWithoutStemming(opt)) {

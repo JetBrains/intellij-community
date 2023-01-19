@@ -2,6 +2,7 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -27,6 +29,9 @@ internal fun lookupPopupContext(editor: Editor?): PopupContext? {
 internal class LookupPopupContext(val lookup: LookupEx) : SecondaryPopupContext() {
 
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
+    if ((lookup as LookupImpl).isLookupDisposed) {
+      throw CancellationException()
+    }
     super.setUpPopup(popup, popupUI)
     cancelPopupWhenLookupIsClosed(lookup, popup)
   }

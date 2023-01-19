@@ -85,7 +85,7 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiBinaryExpression binaryExpression = ObjectUtils.tryCast(element.getParent(), PsiBinaryExpression.class);
       if (binaryExpression == null) return;

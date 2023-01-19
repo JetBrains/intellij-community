@@ -75,6 +75,7 @@ public final class GitPatchParser {
       throw new PatchSyntaxException(iterator.previousIndex(),
                                      VcsBundle.message("patch.can.t.detect.file.names.from.git.format.header.line"));
     }
+    boolean preferPatchInfoPaths = false;
     while (iterator.hasNext()) {
       String next = iterator.next();
       Matcher indexMatcher = ourIndexHeaderLinePattern.matcher(next);
@@ -98,7 +99,9 @@ public final class GitPatchParser {
         else if (fileRenameFromMatcher.matches() && iterator.hasNext()) {
           Matcher fileRenameToMatcher = ourRenameToPattern.matcher(iterator.next());
           if (fileRenameToMatcher.matches()) {
-            beforeAfterName = Couple.of(fileRenameFromMatcher.group(1).trim(), fileRenameToMatcher.group(1).trim());
+            beforeAfterName = Couple.of(VcsFileUtil.unescapeGitPath(fileRenameFromMatcher.group(1).trim()),
+                                        VcsFileUtil.unescapeGitPath(fileRenameToMatcher.group(1).trim()));
+            preferPatchInfoPaths = true; // this form has non-ambiguous parsing, prefer it to other sources
           }
           else {
             iterator.previous();
@@ -113,14 +116,15 @@ public final class GitPatchParser {
         LOG.debug("Can't parse file mode from " + next);
       }
     }
-    return new PatchInfo(beforeAfterName, sha1Indexes, parsedStatus, newFileMode);
+    return new PatchInfo(beforeAfterName, preferPatchInfoPaths, sha1Indexes, parsedStatus, newFileMode);
   }
 
   private static void applyPatchInfo(@NotNull FilePatch patch, @NotNull GitPatchParser.PatchInfo patchInfo) {
     if (patch instanceof TextFilePatch) ((TextFilePatch)patch).setFileStatus(patchInfo.myFileStatus);
 
-    if (patch.getBeforeName() == null) patch.setBeforeName(patchInfo.myBeforeName);
-    if (patch.getAfterName() == null) patch.setAfterName(patchInfo.myAfterName);
+    // 'patch.getBeforeName() | getAfterName()' values pre-filled from '--- a/1.txt | +++ b/1.txt' lines
+    if (patch.getBeforeName() == null || patchInfo.myPreferPatchInfoPaths) patch.setBeforeName(patchInfo.myBeforeName);
+    if (patch.getAfterName() == null || patchInfo.myPreferPatchInfoPaths) patch.setAfterName(patchInfo.myAfterName);
     //remember sha-1 as version ids or set null if no info
     patch.setBeforeVersionId(patchInfo.myBeforeIndex);
     patch.setAfterVersionId(patchInfo.myAfterIndex);
@@ -172,6 +176,7 @@ public final class GitPatchParser {
   private static final class PatchInfo {
     @Nullable private final String myBeforeName;
     @Nullable private final String myAfterName;
+    private final boolean myPreferPatchInfoPaths;
 
     @Nullable private final @Nls String myBeforeIndex;
     @Nullable private final @Nls String myAfterIndex;
@@ -181,11 +186,13 @@ public final class GitPatchParser {
     @NotNull private final FileStatus myFileStatus;
 
     private PatchInfo(@NotNull Couple<String> beforeAfterName,
+                      boolean preferPatchInfoPaths,
                       @Nullable Couple<@Nls String> indexes,
                       @NotNull FileStatus status,
                       int newFileMode) {
       myBeforeName = beforeAfterName.first;
       myAfterName = beforeAfterName.second;
+      myPreferPatchInfoPaths = preferPatchInfoPaths;
       myBeforeIndex = Pair.getFirst(indexes);
       myAfterIndex = Pair.getSecond(indexes);
       myNewFileMode = newFileMode;

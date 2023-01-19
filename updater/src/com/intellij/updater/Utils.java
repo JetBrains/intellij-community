@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -11,7 +11,7 @@ import java.util.zip.ZipFile;
 
 import static com.intellij.updater.Runner.LOG;
 
-public class Utils {
+public final class Utils {
   private static final String OS_NAME = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
   public static final boolean IS_WINDOWS = OS_NAME.startsWith("windows");
   public static final boolean IS_MAC = OS_NAME.startsWith("mac");

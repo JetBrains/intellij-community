@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.formatter
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.ShortcutSet
@@ -187,7 +188,7 @@ class KotlinImportOrderLayoutPanel : BaseKotlinImportLayoutPanel(KotlinBundle.me
 
         val importLayoutPanel = ToolbarDecorator.createDecorator(layoutTable)
             .addExtraAction(
-                object : DumbAwareActionButton(KotlinBundle.message("button.add.package"), IconUtil.getAddPackageIcon()) {
+                object : DumbAwareActionButton(KotlinBundle.message("button.add.package"), IconUtil.addPackageIcon) {
                     override fun actionPerformed(event: AnActionEvent) {
                         addPackage()
                     }
@@ -195,6 +196,8 @@ class KotlinImportOrderLayoutPanel : BaseKotlinImportLayoutPanel(KotlinBundle.me
                     override fun getShortcut(): ShortcutSet {
                         return CommonShortcuts.getNewForDialogs()
                     }
+
+                    override fun getActionUpdateThread() = ActionUpdateThread.BGT
                 }
             )
             .setRemoveAction { removePackage() }

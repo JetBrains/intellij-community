@@ -51,7 +51,6 @@ public class MoveChangesDialog extends DialogWrapper {
     myTreeList.selectFile(current);
 
     myCheckBox = new JBCheckBox(VcsBundle.message("checkbox.select.current.file.only"));
-    myCheckBox.setMnemonic('c');
     myCheckBox.addActionListener(e -> setSelected(myCheckBox.isSelected()));
 
     boolean selectCurrent = PropertiesComponent.getInstance().getBoolean(MOVE_CHANGES_CURRENT_ONLY);

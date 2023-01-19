@@ -24,9 +24,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyStringConcatenationToFormatIntention extends PyBaseIntentionAction {
 
   @Override
@@ -136,7 +133,7 @@ public class PyStringConcatenationToFormatIntention extends PyBaseIntentionActio
           isUnicode = true;
         }
         if (!quotesDetected) {
-          quotes = PyStringLiteralUtil.getQuotes(expression.getText());
+          quotes = PyStringLiteralCoreUtil.getQuotes(expression.getText());
           quotesDetected = true;
         }
         String value = ((PyStringLiteralExpression)expression).getStringValue();

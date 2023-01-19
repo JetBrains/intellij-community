@@ -3,15 +3,15 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor.LightRecordConstructorParameter
 import com.intellij.psi.impl.light.LightRecordField
-import com.intellij.psi.impl.source.PsiParameterImpl
-import com.intellij.psi.impl.source.tree.java.PsiLocalVariableImpl
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
+import org.jetbrains.uast.internal.CONVERSION_LOGGER
 import org.jetbrains.uast.internal.UElementAlternative
 import org.jetbrains.uast.internal.accommodate
 import org.jetbrains.uast.internal.alternative
@@ -41,7 +41,7 @@ abstract class AbstractJavaUVariable(
   abstract override val sourcePsi: PsiVariable?
 
   override val uastAnchor: UIdentifier?
-    get() = sourcePsi?.let {  UIdentifier(it.nameIdentifier, this) }
+    get() = sourcePsi?.let { UIdentifier(it.nameIdentifier, this) }
 
   override fun equals(other: Any?): Boolean = other is AbstractJavaUVariable && javaPsi == other.javaPsi
   override fun hashCode(): Int = javaPsi.hashCode()
@@ -56,7 +56,7 @@ class JavaUVariable(
   override val psi: PsiVariable
     get() = javaPsi
 
-  override val sourcePsi: PsiVariable? get() = javaPsi.takeIf { it.isPhysical || it is PsiLocalVariableImpl}
+  override val sourcePsi: PsiVariable? get() = javaPsi.takeIf { it !is LightElement }
 
   companion object {
     fun create(psi: PsiVariable, containingElement: UElement?): UVariable {
@@ -69,6 +69,7 @@ class JavaUVariable(
       }
     }
   }
+
   override fun getOriginalElement(): PsiElement? = javaPsi.originalElement
 }
 
@@ -83,7 +84,7 @@ class JavaUParameter(
     get() = javaPsi
 
   override val sourcePsi: PsiParameter?
-    get() = javaPsi.takeIf { it.isPhysical || (it is PsiParameterImpl && it.parentOfType<PsiMethod>()?.let { canBeSourcePsi(it) } == true) }
+    get() = javaPsi.takeIf { it !is LightElement }
 
   override fun getOriginalElement(): PsiElement? = javaPsi.originalElement
 }
@@ -104,16 +105,21 @@ private class JavaRecordUParameter(
   override fun getPsiParentForLazyConversion(): PsiElement? = javaPsi.context
 }
 
-internal fun convertRecordConstructorParameterAlternatives(element: PsiElement, givenParent: UElement?, expectedTypes: Array<out Class<out UElement>>): Sequence<UVariable> {
-  val (paramAlternative, fieldAlternative) = createAlternatives(element, givenParent)?:return emptySequence()
-  
+internal fun convertRecordConstructorParameterAlternatives(element: PsiElement,
+                                                           givenParent: UElement?,
+                                                           expectedTypes: Array<out Class<out UElement>>): Sequence<UVariable> {
+  val (paramAlternative, fieldAlternative) = createAlternatives(element, givenParent) ?: return emptySequence()
+
   return when (element) {
     is LightRecordField -> expectedTypes.accommodate(fieldAlternative, paramAlternative)
     else -> expectedTypes.accommodate(paramAlternative, fieldAlternative)
   }
 }
-internal fun convertRecordConstructorParameterAlternatives(element: PsiElement, givenParent: UElement?, expectedType: Class<out UElement>): UVariable? {
-  val (paramAlternative, fieldAlternative) = createAlternatives(element, givenParent)?:return null
+
+internal fun convertRecordConstructorParameterAlternatives(element: PsiElement,
+                                                           givenParent: UElement?,
+                                                           expectedType: Class<out UElement>): UVariable? {
+  val (paramAlternative, fieldAlternative) = createAlternatives(element, givenParent) ?: return null
 
   return when (element) {
     is LightRecordField -> expectedType.accommodate(fieldAlternative, paramAlternative)
@@ -121,28 +127,38 @@ internal fun convertRecordConstructorParameterAlternatives(element: PsiElement, 
   }
 }
 
-private fun createAlternatives(element: PsiElement, givenParent: UElement?): Pair<UElementAlternative<JavaRecordUParameter>, UElementAlternative<JavaRecordUField>>? {
+private fun createAlternatives(element: PsiElement,
+                               givenParent: UElement?): Pair<UElementAlternative<JavaRecordUParameter>, UElementAlternative<JavaRecordUField>>? {
+
+  fun <T> logAndNull(message: () -> String): T? =
+    CONVERSION_LOGGER.logAndNull { "createAlternatives($element) ${message()}" }
+
   val (psiRecordComponent, lightRecordField, lightConstructorParameter) = when (element) {
     is PsiRecordComponent -> Triple(element, null, null)
     is LightRecordConstructorParameter -> {
-      val lightRecordField = element.parentOfType<PsiMethod>()?.containingClass?.findFieldByName(element.name, false)
-        ?.castSafelyTo<LightRecordField>() ?: return null
+      val containingClass = element.parentOfType<PsiMethod>()?.containingClass
+                            ?: return logAndNull { "failed to get containingClass" }
+      val findFieldByName = containingClass.findFieldByName(element.name, false)
+                            ?: return logAndNull { "failed to find ${element.name} in $containingClass" }
+      val lightRecordField = findFieldByName.asSafely<LightRecordField>()
+                             ?: return logAndNull { "failed to cast ${findFieldByName} to LightRecordField" }
       Triple(lightRecordField.recordComponent, lightRecordField, element)
     }
     is LightRecordField -> Triple(element.recordComponent, element, null)
-    else -> return null
+    else -> return logAndNull { "no matches in when" }
   }
 
   val paramAlternative = alternative {
-    val psiClass = psiRecordComponent.containingClass ?: return@alternative null
+    val psiClass = psiRecordComponent.containingClass ?: return@alternative logAndNull { "no psiRecordComponent containingClass" }
     val jvmParameter = lightConstructorParameter ?: psiClass.constructors.asSequence()
-      .filter { !it.isPhysical }
+      .filter { it is LightElement }
       .flatMap { it.parameterList.parameters.asSequence() }.firstOrNull { it.name == psiRecordComponent.name }
-    JavaRecordUParameter(psiRecordComponent, jvmParameter ?: return@alternative null, givenParent)
+    val psiParameter = jvmParameter ?: return@alternative logAndNull { "no psiRecordComponent psiParameter ${psiRecordComponent.name}" }
+    JavaRecordUParameter(psiRecordComponent, psiParameter, givenParent)
   }
   val fieldAlternative = alternative {
     val psiField = lightRecordField ?: psiRecordComponent.containingClass?.findFieldByName(psiRecordComponent.name, false)
-                   ?: return@alternative null
+                   ?: return@alternative logAndNull { "no lightRecordField by name ${psiRecordComponent.name}" }
     JavaRecordUField(psiRecordComponent, psiField, givenParent)
   }
   return Pair(paramAlternative, fieldAlternative)

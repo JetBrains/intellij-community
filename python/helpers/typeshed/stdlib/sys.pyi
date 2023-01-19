@@ -1,31 +1,17 @@
 import sys
-from _typeshed import structseq
+from _typeshed import OptExcInfo, ProfileFunction, TraceFunction, structseq
 from builtins import object as _object
+from collections.abc import AsyncGenerator, Callable, Coroutine, Sequence
 from importlib.abc import PathEntryFinder
 from importlib.machinery import ModuleSpec
 from io import TextIOWrapper
 from types import FrameType, ModuleType, TracebackType
-from typing import (
-    Any,
-    AsyncGenerator,
-    Callable,
-    Coroutine,
-    NoReturn,
-    Optional,
-    Protocol,
-    Sequence,
-    TextIO,
-    TypeVar,
-    Union,
-    overload,
-)
-from typing_extensions import Literal, final
+from typing import Any, NoReturn, Protocol, TextIO, TypeVar, overload
+from typing_extensions import Literal, TypeAlias, final
 
 _T = TypeVar("_T")
 
-# The following type alias are stub-only and do not exist during runtime
-_ExcInfo = tuple[type[BaseException], BaseException, TracebackType]
-_OptExcInfo = Union[_ExcInfo, tuple[None, None, None]]
+_OptExcInfo: TypeAlias = OptExcInfo  # TODO: obsolete, remove fall 2022 or later
 
 # Intentionally omits one deprecated and one optional method of `importlib.abc.MetaPathFinder`
 class _MetaPathFinder(Protocol):
@@ -89,19 +75,17 @@ _xoptions: dict[Any, Any]
 
 # Type alias used as a mixin for structseq classes that cannot be instantiated at runtime
 # This can't be represented in the type system, so we just use `structseq[Any]`
-_uninstantiable_structseq = structseq[Any]
+_UninstantiableStructseq: TypeAlias = structseq[Any]
 
 flags: _flags
 
 if sys.version_info >= (3, 10):
-    _FlagTuple = tuple[int, int, int, int, int, int, int, int, int, int, int, int, int, bool, int, int]
-elif sys.version_info >= (3, 7):
-    _FlagTuple = tuple[int, int, int, int, int, int, int, int, int, int, int, int, int, bool, int]
+    _FlagTuple: TypeAlias = tuple[int, int, int, int, int, int, int, int, int, int, int, int, int, bool, int, int]
 else:
-    _FlagTuple = tuple[int, int, int, int, int, int, int, int, int, int, int, int, int]
+    _FlagTuple: TypeAlias = tuple[int, int, int, int, int, int, int, int, int, int, int, int, int, bool, int]
 
 @final
-class _flags(_uninstantiable_structseq, _FlagTuple):
+class _flags(_UninstantiableStructseq, _FlagTuple):
     @property
     def debug(self) -> int: ...
     @property
@@ -128,14 +112,16 @@ class _flags(_uninstantiable_structseq, _FlagTuple):
     def hash_randomization(self) -> int: ...
     @property
     def isolated(self) -> int: ...
-    if sys.version_info >= (3, 7):
-        @property
-        def dev_mode(self) -> bool: ...
-        @property
-        def utf8_mode(self) -> int: ...
+    @property
+    def dev_mode(self) -> bool: ...
+    @property
+    def utf8_mode(self) -> int: ...
     if sys.version_info >= (3, 10):
         @property
         def warn_default_encoding(self) -> int: ...  # undocumented
+    if sys.version_info >= (3, 11):
+        @property
+        def safe_path(self) -> bool: ...
 
 float_info: _float_info
 
@@ -209,7 +195,7 @@ class _int_info(structseq[int], tuple[int, int]):
     def sizeof_digit(self) -> int: ...
 
 @final
-class _version_info(_uninstantiable_structseq, tuple[int, int, int, str, int]):
+class _version_info(_UninstantiableStructseq, tuple[int, int, int, str, int]):
     @property
     def major(self) -> int: ...
     @property
@@ -230,7 +216,10 @@ def _getframe(__depth: int = ...) -> FrameType: ...
 def _debugmallocstats() -> None: ...
 def __displayhook__(__value: object) -> None: ...
 def __excepthook__(__exctype: type[BaseException], __value: BaseException, __traceback: TracebackType | None) -> None: ...
-def exc_info() -> _OptExcInfo: ...
+def exc_info() -> OptExcInfo: ...
+
+if sys.version_info >= (3, 11):
+    def exception() -> BaseException | None: ...
 
 # sys.exit() accepts an optional argument of anything printable
 def exit(__status: object = ...) -> NoReturn: ...
@@ -249,21 +238,15 @@ def getsizeof(obj: object) -> int: ...
 @overload
 def getsizeof(obj: object, default: int) -> int: ...
 def getswitchinterval() -> float: ...
-
-_ProfileFunc = Callable[[FrameType, str, Any], Any]
-
-def getprofile() -> _ProfileFunc | None: ...
-def setprofile(profilefunc: _ProfileFunc | None) -> None: ...
-
-_TraceFunc = Callable[[FrameType, str, Any], Optional[Callable[[FrameType, str, Any], Any]]]
-
-def gettrace() -> _TraceFunc | None: ...
-def settrace(tracefunc: _TraceFunc | None) -> None: ...
+def getprofile() -> ProfileFunction | None: ...
+def setprofile(profilefunc: ProfileFunction | None) -> None: ...
+def gettrace() -> TraceFunction | None: ...
+def settrace(tracefunc: TraceFunction | None) -> None: ...
 
 if sys.platform == "win32":
     # A tuple of length 5, even though it has more than 5 attributes.
     @final
-    class _WinVersion(_uninstantiable_structseq, tuple[int, int, int, int, str]):
+    class _WinVersion(_UninstantiableStructseq, tuple[int, int, int, int, str]):
         @property
         def major(self) -> int: ...
         @property
@@ -290,9 +273,9 @@ if sys.platform == "win32":
 def intern(__string: str) -> str: ...
 def is_finalizing() -> bool: ...
 
-if sys.version_info >= (3, 7):
-    __breakpointhook__: Any  # contains the original value of breakpointhook
-    def breakpointhook(*args: Any, **kwargs: Any) -> Any: ...
+__breakpointhook__: Any  # contains the original value of breakpointhook
+
+def breakpointhook(*args: Any, **kwargs: Any) -> Any: ...
 
 if sys.platform != "win32":
     def setdlopenflags(__flags: int) -> None: ...
@@ -322,7 +305,7 @@ if sys.version_info >= (3, 8):
     def addaudithook(hook: Callable[[str, tuple[Any, ...]], Any]) -> None: ...
     def audit(__event: str, *args: Any) -> None: ...
 
-_AsyncgenHook = Optional[Callable[[AsyncGenerator[Any, Any]], None]]
+_AsyncgenHook: TypeAlias = Callable[[AsyncGenerator[Any, Any]], None] | None
 
 @final
 class _asyncgen_hooks(structseq[_AsyncgenHook], tuple[_AsyncgenHook, _AsyncgenHook]):
@@ -334,15 +317,13 @@ class _asyncgen_hooks(structseq[_AsyncgenHook], tuple[_AsyncgenHook, _AsyncgenHo
 def get_asyncgen_hooks() -> _asyncgen_hooks: ...
 def set_asyncgen_hooks(firstiter: _AsyncgenHook = ..., finalizer: _AsyncgenHook = ...) -> None: ...
 
-if sys.version_info >= (3, 6):
-    if sys.platform == "win32":
-        def _enablelegacywindowsfsencoding() -> None: ...
+if sys.platform == "win32":
+    def _enablelegacywindowsfsencoding() -> None: ...
 
-if sys.version_info >= (3, 7):
-    def get_coroutine_origin_tracking_depth() -> int: ...
-    def set_coroutine_origin_tracking_depth(depth: int) -> None: ...
+def get_coroutine_origin_tracking_depth() -> int: ...
+def set_coroutine_origin_tracking_depth(depth: int) -> None: ...
 
 if sys.version_info < (3, 8):
-    _CoroWrapper = Callable[[Coroutine[Any, Any, Any]], Any]
+    _CoroWrapper: TypeAlias = Callable[[Coroutine[Any, Any, Any]], Any]
     def set_coroutine_wrapper(__wrapper: _CoroWrapper) -> None: ...
     def get_coroutine_wrapper() -> _CoroWrapper: ...

@@ -29,7 +29,6 @@ import java.util.Objects;
 public class VcsDescriptor {
 
   private final String myName;
-  private final boolean myCrawlUpToCheckUnderVcs;
   private final boolean myAreChildrenValidMappings;
   private final String myDisplayName;
   private final List<String> myAdministrativePatterns;
@@ -37,12 +36,10 @@ public class VcsDescriptor {
   public VcsDescriptor(String administrativePattern,
                        String displayName,
                        String name,
-                       boolean crawlUpToCheckUnderVcs,
                        boolean areChildrenValidMappings) {
     myAdministrativePatterns = parseAdministrativePatterns(administrativePattern);
     myDisplayName = displayName;
     myName = name;
-    myCrawlUpToCheckUnderVcs = crawlUpToCheckUnderVcs;
     myAreChildrenValidMappings = areChildrenValidMappings;
   }
 
@@ -57,29 +54,12 @@ public class VcsDescriptor {
   }
 
   public boolean probablyUnderVcs(final VirtualFile file) {
-    return probablyUnderVcs(file, myCrawlUpToCheckUnderVcs);
-  }
-
-  public boolean probablyUnderVcs(final VirtualFile file, boolean crawlUp) {
-    if (file == null || !file.isDirectory() || !file.isValid()) return false;
     if (myAdministrativePatterns.isEmpty()) return false;
-
-    if (crawlUp) {
-      return ReadAction.compute(() -> {
-        VirtualFile current = file;
-        while (current != null) {
-          if (matchesVcsDirPattern(current)) return true;
-          current = current.getParent();
-        }
-        return false;
-      });
-    }
-    else {
-      return ReadAction.compute(() -> matchesVcsDirPattern(file));
-    }
+    return ReadAction.compute(() -> matchesVcsDirPattern(file));
   }
 
-  private boolean matchesVcsDirPattern(@NotNull VirtualFile file) {
+  private boolean matchesVcsDirPattern(@Nullable VirtualFile file) {
+    if (file == null || !file.isDirectory() || !file.isValid()) return false;
     for (String pattern : myAdministrativePatterns) {
       VirtualFile child = file.findChild(pattern);
       if (child != null) return true;

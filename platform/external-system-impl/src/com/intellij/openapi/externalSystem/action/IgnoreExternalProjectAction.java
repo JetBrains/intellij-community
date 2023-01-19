@@ -78,7 +78,7 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
       public void run(@NotNull ProgressIndicator indicator) {
         uniqueExternalProjects.forEach(
           externalProjectInfo -> ApplicationManager.getApplication().getService(ProjectDataManager.class)
-            .importData(externalProjectInfo, project, true)
+            .importData(externalProjectInfo, project)
         );
       }
     });

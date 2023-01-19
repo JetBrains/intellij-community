@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class ExtractableExpressionPart {
   final PsiExpression myUsage;
   final PsiVariable myVariable;

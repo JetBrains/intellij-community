@@ -8,7 +8,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
-import org.jetbrains.kotlin.idea.highlighting.HiglightingFactory
+import org.jetbrains.kotlin.idea.highlighting.HighlightingFactory
 import org.jetbrains.kotlin.psi.KtElement
 
 internal abstract class AfterResolveHighlighter(
@@ -19,8 +19,8 @@ internal abstract class AfterResolveHighlighter(
     context(KtAnalysisSession)
     abstract fun highlight(element: KtElement)
 
-    protected fun createInfoAnnotation(textRange: TextRange, message: String?, textAttributes: TextAttributesKey?) {
-        HiglightingFactory.createInfoAnnotation(holder, textRange, message, textAttributes)
+    private fun createInfoAnnotation(textRange: TextRange, message: String?, textAttributes: TextAttributesKey?) {
+        HighlightingFactory.createInfoAnnotation(holder, textRange, message, textAttributes)
     }
 
     protected fun createInfoAnnotation(element: PsiElement, message: String? = null, textAttributes: TextAttributesKey) {
@@ -46,6 +46,7 @@ internal abstract class AfterResolveHighlighter(
             FunctionCallHighlighter(holder, project),
             ExpressionsSmartcastHighlighter(holder, project),
             VariableReferenceHighlighter(holder, project),
+            DslHighlighter(holder, project),
         )
     }
 }

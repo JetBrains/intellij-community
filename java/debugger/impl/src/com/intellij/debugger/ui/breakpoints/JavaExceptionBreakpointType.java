@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.HelpID;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.TreeClassChooser;

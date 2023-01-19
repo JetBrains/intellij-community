@@ -2,8 +2,7 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
+import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceVariable.ReassignVariableUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -49,16 +48,18 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
                        "public abstract int hashCode();" +
                        "public abstract String toString();" +
                        "}");
-    myFixture.configureByText("A.java", "record Point(int x) {" +
-                                        "    public Point {\n" +
-                                        "        int x<caret>1 = 0\n" +
-                                        "    }" + 
-                                        "}");
+    myFixture.configureByText("A.java", """
+      record Point(int x) {    public Point {
+              int x<caret>1 = 0
+          }}""");
 
     PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiDeclarationStatement.class);
     assertNotNull(decl);
     ReassignVariableUtil.registerDeclaration(getEditor(), decl, getTestRootDisposable());
     ReassignVariableUtil.reassign(getEditor());
+  }
+  public void testModifiersInsideAnonymousLocal() {
+    doTest();
   }
 
   private void doTest() {

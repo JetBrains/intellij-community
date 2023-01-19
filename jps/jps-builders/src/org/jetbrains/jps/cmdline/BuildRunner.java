@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.Nls;
@@ -97,7 +97,7 @@ public final class BuildRunner {
         dataManager.close();
       }
       myForceCleanCaches = true;
-      FileUtilRt.delete(dataStorageRoot);
+      NioFiles.deleteRecursively(dataStorageRoot.toPath());
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
       projectStamps = new ProjectStamps(dataStorageRoot, targetsState, relativizer);
       dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);

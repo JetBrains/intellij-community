@@ -1,39 +1,56 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.extensions
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.remote.GitHttpAuthDataProvider
+import git4idea.remote.hosting.GitHostingUrlUtil.match
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubServerPath.DEFAULT_SERVER
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 
 private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun isSilent(): Boolean = false
 
+  @RequiresBackgroundThread
   override fun getAuthData(project: Project, url: String, login: String): AuthData? {
-    if (!DEFAULT_SERVER.matches(url)) return null
+    if (!match(DEFAULT_SERVER.toURI(), url)) return null
 
-    return getAuthDataOrCancel(project, url, login)
+    return runBlocking {
+      getAuthDataOrCancel(project, url, login)
+    }
   }
 
+  @RequiresBackgroundThread
   override fun getAuthData(project: Project, url: String): AuthData? {
-    if (!DEFAULT_SERVER.matches(url)) return null
+    if (!match(DEFAULT_SERVER.toURI(), url)) return null
 
-    return getAuthDataOrCancel(project, url, null)
+    return runBlocking {
+      getAuthDataOrCancel(project, url, null)
+    }
   }
 }
 
-private fun getAuthDataOrCancel(project: Project, url: String, login: String?): AuthData {
-  val accounts = GithubAuthenticationManager.getInstance().getAccounts().filter { it.server.matches(url) }
-  val provider = when (accounts.size) {
-    0 -> GHCreateAccountHttpAuthDataProvider(project, DEFAULT_SERVER, login)
-    1 -> GHUpdateTokenHttpAuthDataProvider(project, accounts.first())
-    else -> GHSelectAccountHttpAuthDataProvider(project, accounts)
-  }
-  val authData = invokeAndWaitIfNeeded(ModalityState.any()) { provider.getAuthData(null) }
+private suspend fun getAuthDataOrCancel(project: Project, url: String, login: String?): AuthData {
+  val accountManager = service<GHAccountManager>()
+  val accountsWithTokens = accountManager.accountsState.value
+    .filter { match(it.server.toURI(), url) }
+    .associateWith { accountManager.findCredentials(it) }
 
-  return authData ?: throw ProcessCanceledException()
+  return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    when (accountsWithTokens.size) {
+      0 -> GHAccountsUtil.requestNewAccount(DEFAULT_SERVER, login, project)
+      1 -> GHAccountsUtil.requestReLogin(accountsWithTokens.keys.first(), project = project)
+      else -> GHSelectAccountHttpAuthDataProvider(project, accountsWithTokens).getAuthData(null)
+    }
+  } ?: throw ProcessCanceledException()
 }

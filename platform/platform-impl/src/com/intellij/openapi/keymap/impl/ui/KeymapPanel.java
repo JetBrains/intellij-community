@@ -73,7 +73,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private final ActionsTree myActionsTree = new ActionsTree();
   private FilterComponent myFilterComponent;
   private TreeExpansionMonitor myTreeExpansionMonitor;
-  private final ShortcutFilteringPanel myFilteringPanel = new ShortcutFilteringPanel();
+  private final @NotNull ShortcutFilteringPanel myFilteringPanel = new ShortcutFilteringPanel();
 
   private boolean myQuickListsModified = false;
   private QuickList[] myQuickLists = QuickListsManager.getInstance().getAllQuickLists();
@@ -81,7 +81,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private ShowFNKeysSettingWrapper myShowFN;
 
   private boolean myShowOnlyConflicts;
-  private JPanel mySystemShortcutConflictsPanel;
+  private final JPanel mySystemShortcutConflictsPanel;
   private ToggleActionButton myShowOnlyConflictsButton;
 
   public KeymapPanel() { this(false); }
@@ -232,6 +232,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   @Override
   public void updateUI() {
     super.updateUI();
+    //noinspection ConstantValue -- can be called during superclass initialization
     if (myFilteringPanel != null) {
       SwingUtilities.updateComponentTreeUI(myFilteringPanel);
     }
@@ -811,8 +812,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private static @Nullable KeyboardShortcut findKeyboardShortcut(@NotNull Keymap keymap, @NotNull KeyStroke ks, @NotNull String actionId) {
     Shortcut[] actionShortcuts = keymap.getShortcuts(actionId);
-    if (actionShortcuts.length == 0)
-      return null;
 
     for (Shortcut sc: actionShortcuts) {
       if (!(sc instanceof KeyboardShortcut))

@@ -5,10 +5,13 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.value.*
+import com.intellij.execution.target.value.TargetEnvironmentFunction
+import com.intellij.execution.target.value.plus
+import com.intellij.execution.target.value.targetPath
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.*
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase
+import java.nio.file.Path
 import java.util.function.Function
 
 class PythonDocTestCommandLineState(config: PythonDocTestRunConfiguration, env: ExecutionEnvironment)
@@ -39,13 +42,13 @@ class PythonDocTestCommandLineState(config: PythonDocTestRunConfiguration, env: 
 
     private fun PythonDocTestRunConfiguration.buildTestSpec(request: TargetEnvironmentRequest): TargetEnvironmentFunction<String> =
       when (testType) {
-        TEST_SCRIPT -> request.getTargetEnvironmentValueForLocalPath(scriptName)
-        TEST_CLASS -> request.getTargetEnvironmentValueForLocalPath(scriptName) + "::$className"
-        TEST_METHOD -> request.getTargetEnvironmentValueForLocalPath(scriptName) + "::$className::$methodName"
+        TEST_SCRIPT -> targetPath(Path.of(scriptName))
+        TEST_CLASS -> targetPath(Path.of(scriptName)) + "::$className"
+        TEST_METHOD -> targetPath(Path.of(scriptName)) + "::$className::$methodName"
         TEST_FOLDER ->
-          if (usePattern() && !pattern.isEmpty()) request.getTargetEnvironmentValueForLocalPath(folderName) + "/;$pattern"
-          else request.getTargetEnvironmentValueForLocalPath(folderName) + "/"
-        TEST_FUNCTION -> request.getTargetEnvironmentValueForLocalPath(scriptName) + "::::$methodName"
+          if (usePattern() && !pattern.isEmpty()) targetPath(Path.of(folderName)) + "/;$pattern"
+          else targetPath(Path.of(folderName)) + "/"
+        TEST_FUNCTION -> targetPath(Path.of(scriptName)) + "::::$methodName"
         else -> throw IllegalArgumentException("Unknown test type: $testType")
       }
   }

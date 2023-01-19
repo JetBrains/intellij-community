@@ -66,7 +66,10 @@ private class GradleScriptFileChangeListener(
     private val watcher: GradleScriptListener,
     private val buildRootsManager: GradleBuildRootsManager
 ) : VirtualFileChangesListener {
+
     val changedFiles = mutableListOf<String>()
+
+    override fun isProcessRecursively() = true
 
     override fun init() {
         changedFiles.clear()

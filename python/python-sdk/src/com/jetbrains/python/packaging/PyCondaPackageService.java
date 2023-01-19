@@ -31,7 +31,11 @@ import org.jetbrains.annotations.SystemDependent;
 import java.io.File;
 import java.util.*;
 
-@State(name = "PyCondaPackageService", storages = @Storage(value="conda_packages.xml", roamingType = RoamingType.DISABLED))
+/**
+ * @deprecated This class doesn't support targets, can't work with remote systems and shouldn't be used
+ */
+@Deprecated
+@State(name = "PyCondaPackageService", storages = @Storage(value = "conda_packages.xml", roamingType = RoamingType.DISABLED))
 public class PyCondaPackageService implements PersistentStateComponent<PyCondaPackageService> {
   private static final Logger LOG = Logger.getInstance(PyCondaPackageService.class);
 
@@ -86,7 +90,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
 
   @Nullable
   private static String getSystemCondaExecutable() {
-    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
+    final String condaName = SystemInfo.isWindows ? "conda.bat" : "conda";
 
     final File condaInPath = PathEnvironmentVariableUtil.findInPath(condaName);
     if (condaInPath != null) {
@@ -140,7 +144,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     final String condaName;
     final VirtualFile condaFolder;
     if (SystemInfo.isWindows) {
-      condaName = "conda.exe";
+      condaName = "conda.bat";
       // On Windows python.exe is directly inside base interpreter/environment directory.
       // On other systems executable normally resides in "bin" subdirectory.
       condaFolder = pyExecutableDir;
@@ -199,7 +203,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   @Nullable
   private static String findExecutable(String condaName, @Nullable final VirtualFile condaFolder) {
     if (condaFolder != null) {
-      final VirtualFile binFolder = condaFolder.findChild(SystemInfo.isWindows ? "Scripts" : "bin");
+      final VirtualFile binFolder = condaFolder.findChild(SystemInfo.isWindows ? "condabin" : "bin");
       if (binFolder != null) {
         final VirtualFile bin = binFolder.findChild(condaName);
         if (bin != null) {

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.Platform;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
@@ -13,12 +12,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
@@ -64,9 +63,9 @@ public final class JBCefApp {
 
   private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
 
-  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 98;
+  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 104;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
-  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 7;
+  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 9;
 
   @NotNull private final CefApp myCefApp;
 
@@ -153,6 +152,26 @@ public final class JBCefApp {
 
     settings.cache_path = ApplicationManager.getApplication().getService(JBCefAppCache.class).getPath().toString();
 
+    if (Registry.is("ide.browser.jcef.sandbox.enable")) {
+      LOG.info("JCEF-sandbox is enabled");
+      settings.no_sandbox = false;
+
+      if (SystemInfoRt.isWindows) {
+        String sandboxPtr = System.getProperty("jcef.sandbox.ptr");
+        if (sandboxPtr != null && !sandboxPtr.trim().isEmpty()) {
+          if (isSandboxSupported())
+            settings.browser_subprocess_path = "";
+          else {
+            LOG.info("JCEF-sandbox was disabled because current jcef version doesn't support sandbox");
+            settings.no_sandbox = true;
+          }
+        } else {
+          LOG.info("JCEF-sandbox was disabled because java-process initialized without sandbox");
+          settings.no_sandbox = true;
+        }
+      }
+    }
+
     String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
       .getProviders()
       .stream()
@@ -202,28 +221,34 @@ public final class JBCefApp {
     CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes));
     myCefSettings = settings;
     myCefApp = CefApp.getInstance(settings);
+    LOG.info(String.format("jcef version: %s | cmd args: %s", myCefApp.getVersion().getJcefVersion(), Arrays.toString(args)));
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
 
   private static LogSeverity getLogLevel() {
     String level = System.getProperty("ide.browser.jcef.log.level", "disable").toLowerCase(Locale.ENGLISH);
-    switch (level) {
-      case "disable":
-        return LogSeverity.LOGSEVERITY_DISABLE;
-      case "verbose":
-        return LogSeverity.LOGSEVERITY_VERBOSE;
-      case "info":
-        return LogSeverity.LOGSEVERITY_INFO;
-      case "warning":
-        return LogSeverity.LOGSEVERITY_WARNING;
-      case "error":
-        return LogSeverity.LOGSEVERITY_ERROR;
-      case "fatal":
-        return LogSeverity.LOGSEVERITY_FATAL;
-      case "default":
-      default:
-        return LogSeverity.LOGSEVERITY_DEFAULT;
+    return switch (level) {
+      case "disable" -> LogSeverity.LOGSEVERITY_DISABLE;
+      case "verbose" -> LogSeverity.LOGSEVERITY_VERBOSE;
+      case "info" -> LogSeverity.LOGSEVERITY_INFO;
+      case "warning" -> LogSeverity.LOGSEVERITY_WARNING;
+      case "error" -> LogSeverity.LOGSEVERITY_ERROR;
+      case "fatal" -> LogSeverity.LOGSEVERITY_FATAL;
+      case "default" -> LogSeverity.LOGSEVERITY_DEFAULT;
+      default -> LogSeverity.LOGSEVERITY_DEFAULT;
+    };
+  }
+
+  private static boolean isSandboxSupported() {
+    JCefVersionDetails version;
+    try {
+      version = JCefAppConfig.getVersionDetails();
     }
+    catch (Throwable e) {
+      LOG.error("JCEF runtime version is not supported");
+      return false;
+    }
+    return version.cefVersion.major >= 104 && version.apiVersion.minor >= 9;
   }
 
   @NotNull
@@ -295,10 +320,10 @@ public final class JBCefApp {
    */
   public static boolean isSupported() {
     boolean testModeEnabled = RegistryManager.getInstance().is("ide.browser.jcef.testMode.enabled");
-    if (ourSupported != null && !testModeEnabled) {
-      return ourSupported.get();
-    }
     synchronized (ourSupportedLock) {
+      if (ourSupported != null && !testModeEnabled) {
+        return ourSupported.get();
+      }
       if (testModeEnabled) {
         ourSupported = null;
       }
@@ -346,7 +371,7 @@ public final class JBCefApp {
       String name = JCefAppConfig.class.getName().replace('.', '/');
       boolean isJbrModule = path != null && path.contains("/jcef/" + name);
       if (!isJbrModule) {
-        return unsupported.apply("JCEF runtime library is not a JBR module");
+        LOG.warn("JCefAppConfig is not from a JBR module, path: " + path);
       }
       ourSupported = new AtomicBoolean(true);
       return true;

@@ -3,12 +3,17 @@ package org.jetbrains.kotlin.idea.base.codeInsight.test
 
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.SpecialNames
 
-class KotlinClassNameSuggesterTest : KotlinLightCodeInsightFixtureTestCase() {
+class KotlinClassNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCase() {
+    override val pluginKind: KotlinPluginKind
+        get() = KotlinPluginKind.FIR_PLUGIN
+
     fun testTopLevelClass() = test("x/y/Foo", "foo")
     fun testJavaLangString() = test("java/lang/String", "string")
     fun testKotlinList() = test("kotlin/collections/List", "list")
@@ -28,4 +33,6 @@ class KotlinClassNameSuggesterTest : KotlinLightCodeInsightFixtureTestCase() {
         val actualNames = nameSuggester.suggestClassNames(classId).toList().sorted()
         TestCase.assertEquals(names.sorted(), actualNames)
     }
+
+    override fun getTestDataPath() = KotlinRoot.PATH.toString()
 }

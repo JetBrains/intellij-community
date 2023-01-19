@@ -15,8 +15,6 @@ import org.jetbrains.annotations.Nullable;
  * {@link PsiReferenceProvider#getReferencesByElement(PsiElement, com.intellij.util.ProcessingContext)} is executed, from
  * which one can return the references whose {@link PsiReference#getElement()} is the same as the first parameter of
  * {@link PsiReferenceProvider#getReferencesByElement(PsiElement, com.intellij.util.ProcessingContext)}.
- *
- * @author peter
  */
 public abstract class PsiReferenceRegistrar implements UserDataHolder {
 

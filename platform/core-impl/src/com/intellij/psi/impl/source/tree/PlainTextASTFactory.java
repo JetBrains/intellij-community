@@ -29,7 +29,7 @@ public class PlainTextASTFactory extends ASTFactory {
 
   @Override
   @Nullable
-  public LeafElement createLeaf(@NotNull final IElementType type, @NotNull CharSequence text) {
+  public LeafElement createLeaf(@NotNull IElementType type, @NotNull CharSequence text) {
     if (type == PlainTextTokenTypes.PLAIN_TEXT) {
       return new PsiPlainTextImpl(text);
     }

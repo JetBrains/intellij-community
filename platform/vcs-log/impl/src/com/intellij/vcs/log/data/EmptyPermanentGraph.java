@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Condition;
@@ -33,39 +19,33 @@ public class EmptyPermanentGraph implements PermanentGraph<Integer> {
 
   private static final PermanentGraph<Integer> INSTANCE = new EmptyPermanentGraph();
 
-  @NotNull
-  public static PermanentGraph<Integer> getInstance() {
+  public static @NotNull PermanentGraph<Integer> getInstance() {
     return INSTANCE;
   }
 
-  @NotNull
   @Override
-  public VisibleGraph<Integer> createVisibleGraph(@NotNull SortType sortType, @Nullable Set<? extends Integer> headsOfVisibleBranches,
-                                                  @Nullable Set<? extends Integer> filter) {
+  public @NotNull VisibleGraph<Integer> createVisibleGraph(@NotNull SortType sortType, @Nullable Set<? extends Integer> headsOfVisibleBranches,
+                                                           @Nullable Set<? extends Integer> filter) {
     return EmptyVisibleGraph.getInstance();
   }
 
-  @NotNull
   @Override
-  public List<GraphCommit<Integer>> getAllCommits() {
+  public @NotNull List<GraphCommit<Integer>> getAllCommits() {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public List<Integer> getChildren(@NotNull Integer commit) {
+  public @NotNull List<Integer> getChildren(@NotNull Integer commit) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Set<Integer> getContainingBranches(@NotNull Integer commit) {
+  public @NotNull Set<Integer> getContainingBranches(@NotNull Integer commit) {
     return Collections.emptySet();
   }
 
-  @NotNull
   @Override
-  public Condition<Integer> getContainedInBranchCondition(@NotNull Collection<? extends Integer> currentBranchHead) {
+  public @NotNull Condition<Integer> getContainedInBranchCondition(@NotNull Collection<? extends Integer> currentBranchHead) {
     return Conditions.alwaysFalse();
   }
 }

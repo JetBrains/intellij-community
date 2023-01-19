@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import property 'localStorage'" "true"
 // JS
 
 package test

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -548,7 +548,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
       VirtualFile classesDir = ProjectStructureDslKt.resolveVirtualFile(classesDirSpec.get());
       VirtualFile sourcesDir = ProjectStructureDslKt.resolveVirtualFile(sourcesDirSpec.get());
 
-      Sdk sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdkName"), sdkModificator -> {
+      Sdk sdk = projectModelRule.addSdk("sdkName", sdkModificator -> {
         sdkModificator.addRoot(classesDir, OrderRootType.CLASSES);
         sdkModificator.addRoot(sourcesDir, OrderRootType.SOURCES);
         return Unit.INSTANCE;
@@ -604,7 +604,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
       VirtualFile sourcesDir = ProjectStructureDslKt.resolveVirtualFile(sourcesDirSpec.get());
       VirtualFile sourcesExcludedDir = ProjectStructureDslKt.resolveVirtualFile(sourcesExcludedDirSpec.get());
 
-      Sdk sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdkName"), sdkModificator -> {
+      Sdk sdk = projectModelRule.addSdk("sdkName", sdkModificator -> {
         sdkModificator.addRoot(classesDir, OrderRootType.CLASSES);
         sdkModificator.addRoot(sourcesDir, OrderRootType.SOURCES);
         return Unit.INSTANCE;
@@ -749,7 +749,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
       List<VirtualFile> actualRoots = new ArrayList<>();
       for (IndexableIteratorBuilder builder : builders) {
         assertInstanceOf(builder, SdkIteratorBuilder.class);
-        actualRoots.add(((SdkIteratorBuilder)builder).getRoot());
+        actualRoots.addAll(((SdkIteratorBuilder)builder).getRoots());
       }
       assertContainsElements(actualRoots, roots);
 

@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dataflow;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -10,9 +10,9 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class LawOfDemeterInspection extends BaseInspection {
 
@@ -29,10 +29,9 @@ public class LawOfDemeterInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("law.of.demeter.ignore.library.calls.option"), this,
-                                          "ignoreLibraryCalls");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreLibraryCalls", InspectionGadgetsBundle.message("law.of.demeter.ignore.library.calls.option")));
   }
 
   @Override
@@ -117,8 +116,11 @@ public class LawOfDemeterInspection extends BaseInspection {
           }
           return true;
         }
-        else if (target instanceof PsiLocalVariable) {
-          final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, (PsiVariable)target);
+        else if (target instanceof PsiLocalVariable variable) {
+          if (ignoreLibraryCalls && variable.getType() instanceof PsiArrayType) {
+            return false;
+          }
+          final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, variable);
           return violatesLawOfDemeter(definition);
         }
       }

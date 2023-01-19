@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
+import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
@@ -50,3 +51,17 @@ val Application.kotlinPluginStatusFlow: Flow<KotlinPluginStatus>
             }
         }
     }
+
+internal enum class PowerSaveModeState {
+    ENABLED, DISABLED;
+
+    companion object {
+        fun getCurrentState() = if (PowerSaveMode.isEnabled()) ENABLED else DISABLED
+    }
+}
+
+internal val Application.powerSaveModeFlow
+    get() = messageBusFlow(PowerSaveMode.TOPIC, { PowerSaveModeState.getCurrentState() }) {
+        PowerSaveMode.Listener { trySend(PowerSaveModeState.getCurrentState()) }
+    }
+

@@ -1,6 +1,7 @@
 package com.intellij.settingsSync
 
 import com.intellij.ide.plugins.PluginManagerCore.isRunningFromSources
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
@@ -9,6 +10,8 @@ import com.intellij.util.io.inputStream
 import com.jetbrains.cloudconfig.*
 import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
+import org.jetbrains.annotations.VisibleForTesting
+import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
@@ -20,44 +23,53 @@ private const val TIMEOUT = 10000
 
 internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
-  private val client get() = _client.value
+  private val snapshotFilePath get() = getSnapshotFilePath()
+
+  internal val client get() = _client.value
   private val _client = lazy { createCloudConfigClient(clientVersionContext) }
   private val clientVersionContext = CloudConfigVersionContext()
 
-  private var knownVersionOfSnapshotZip : String? = null
+  private fun receiveSnapshotFile(): Pair<InputStream?, String?> {
+    return clientVersionContext.doWithVersion(snapshotFilePath, null) { filePath ->
+      try {
+        val stream = client.read(filePath)
 
-  private fun receiveSnapshotFile(): InputStream? {
-    return clientVersionContext.doWithVersion(null) {
-      val result = client.read(SETTINGS_SYNC_SNAPSHOT_ZIP)
-      rememberLatestVersion()
-      result
+        val actualVersion: String? = clientVersionContext.get(filePath)
+        if (actualVersion == null) {
+          LOG.warn("Version not stored in the context for $filePath")
+        }
+
+        Pair(stream, actualVersion)
+      }
+      catch (fileNotFound : FileNotFoundException) {
+        Pair(null, null)
+      }
     }
   }
 
-  // executed under the lock of the VersionContext
-  private fun rememberLatestVersion() {
-    val actualVersion: String? = clientVersionContext.get(SETTINGS_SYNC_SNAPSHOT_ZIP)
-    if (actualVersion == null) {
-      LOG.warn("Version not stored in the context for $SETTINGS_SYNC_SNAPSHOT_ZIP")
-    }
-    else {
-      knownVersionOfSnapshotZip = actualVersion
-    }
+  private fun sendSnapshotFile(inputStream: InputStream, knownServerVersion: String?, force: Boolean): SettingsSyncPushResult {
+    return sendSnapshotFile(inputStream, knownServerVersion, force, clientVersionContext, client)
   }
 
-  private fun sendSnapshotFile(inputStream: InputStream, force: Boolean): SettingsSyncPushResult {
+  @VisibleForTesting
+  internal fun sendSnapshotFile(
+    inputStream: InputStream,
+    knownServerVersion: String?,
+    force: Boolean,
+    versionContext: CloudConfigVersionContext,
+    cloudConfigClient: CloudConfigFileClientV2
+  ): SettingsSyncPushResult {
     val versionToPush: String?
     if (force) {
       // get the latest server version: pushing with it will overwrite the file in any case
-      versionToPush = getLatestVersion()?.versionId
+      versionToPush = getLatestVersion(snapshotFilePath)?.versionId
     }
     else {
-      val rememberedVersion = knownVersionOfSnapshotZip
-      if (rememberedVersion != null) {
-        versionToPush = rememberedVersion
+      if (knownServerVersion != null) {
+        versionToPush = knownServerVersion
       }
       else {
-        val serverVersion = getLatestVersion()?.versionId
+        val serverVersion = getLatestVersion(snapshotFilePath)?.versionId
         if (serverVersion == null) {
           // no file on the server => just push it there
           versionToPush = null
@@ -70,21 +82,26 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       }
     }
 
-    clientVersionContext.doWithVersion(versionToPush) {
-      client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
-      rememberLatestVersion()
+    val serverVersionId = versionContext.doWithVersion(snapshotFilePath, versionToPush) { filePath ->
+      cloudConfigClient.write(filePath, inputStream)
+
+      val actualVersion: String? = versionContext.get(filePath)
+      if (actualVersion == null) {
+        LOG.warn("Version not stored in the context for $filePath")
+      }
+      actualVersion
     }
     // errors are thrown as exceptions, and are handled above
-    return SettingsSyncPushResult.Success
+    return SettingsSyncPushResult.Success(serverVersionId)
   }
 
   override fun checkServerState(): ServerState {
     try {
-      val latestVersion = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)
-      LOG.info("Latest version info: $latestVersion")
+      val latestVersion = client.getLatestVersion(snapshotFilePath)
+      LOG.debug("Latest version info: $latestVersion")
       when (latestVersion?.versionId) {
         null -> return ServerState.FileNotExists
-        knownVersionOfSnapshotZip -> return ServerState.UpToDate
+        SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId -> return ServerState.UpToDate
         else -> return ServerState.UpdateNeeded
       }
     }
@@ -97,9 +114,9 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   override fun receiveUpdates(): UpdateResult {
     LOG.info("Receiving settings snapshot from the cloud config server...")
     try {
-      val stream = receiveSnapshotFile()
+      val (stream, version) = receiveSnapshotFile()
       if (stream == null) {
-        LOG.info("$SETTINGS_SYNC_SNAPSHOT_ZIP not found on the server")
+        LOG.info("$snapshotFilePath not found on the server")
         return UpdateResult.NoFileOnServer
       }
 
@@ -107,7 +124,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       try {
         FileUtil.writeToFile(tempFile, stream.readAllBytes())
         val snapshot = SettingsSnapshotZipSerializer.extractFromZip(tempFile.toPath())
-        return if (snapshot.isEmpty()) UpdateResult.NoFileOnServer else UpdateResult.Success(snapshot)
+        return if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, version)
       }
       finally {
         FileUtil.delete(tempFile)
@@ -119,7 +136,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
   }
 
-  override fun push(snapshot: SettingsSnapshot, force: Boolean): SettingsSyncPushResult {
+  override fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult {
     LOG.info("Pushing setting snapshot to the cloud config server...")
     val zip = try {
       SettingsSnapshotZipSerializer.serializeToZip(snapshot)
@@ -130,7 +147,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
 
     try {
-      return sendSnapshotFile(zip.inputStream(), force)
+      return sendSnapshotFile(zip.inputStream(), expectedServerVersionId, force)
     }
     catch (ive: InvalidVersionIdException) {
       LOG.info("Rejected: version doesn't match the version on server: ${ive.message}")
@@ -163,31 +180,39 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
   }
 
-  fun downloadSnapshot(version: FileVersionInfo): InputStream? {
-    val stream = clientVersionContext.doWithVersion(version.versionId) {
-      client.read(SETTINGS_SYNC_SNAPSHOT_ZIP)
+  fun downloadSnapshot(filePath: String, version: FileVersionInfo): InputStream? {
+    val stream = clientVersionContext.doWithVersion(filePath, version.versionId) { path ->
+      client.read(path)
     }
 
     if (stream == null) {
-      LOG.info("$SETTINGS_SYNC_SNAPSHOT_ZIP not found on the server")
+      LOG.info("$snapshotFilePath not found on the server")
     }
 
     return stream
   }
 
-  fun getLatestVersion(): FileVersionInfo? {
-    return client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)
+  override fun createFile(filePath: String, content: String) {
+    client.write(filePath, content.byteInputStream())
+  }
+
+  private fun getLatestVersion(filePath: String): FileVersionInfo? {
+    return client.getLatestVersion(filePath)
   }
 
   @Throws(IOException::class)
-  override fun delete() {
-    knownVersionOfSnapshotZip = null
-    client.delete(SETTINGS_SYNC_SNAPSHOT_ZIP)
+  override fun deleteFile(filePath: String) {
+    SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = null
+    client.delete(filePath)
+  }
+
+  override fun isFileExists(filePath: String): Boolean {
+    return client.getLatestVersion(filePath) != null
   }
 
   @Throws(Exception::class)
-  fun fetchHistory(): List<FileVersionInfo> {
-    return client.getVersions(SETTINGS_SYNC_SNAPSHOT_ZIP)
+  fun fetchHistory(filePath: String): List<FileVersionInfo> {
+    return client.getVersions(filePath)
   }
 
   companion object {
@@ -212,6 +237,14 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     internal fun createCloudConfigClient(versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
       val conf = createConfiguration()
       return CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, versionContext)
+    }
+
+    @VisibleForTesting
+    internal fun getSnapshotFilePath() = if (SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
+      SETTINGS_SYNC_SNAPSHOT_ZIP
+    }
+    else {
+      "${ApplicationNamesInfo.getInstance().productName.lowercase()}/$SETTINGS_SYNC_SNAPSHOT_ZIP"
     }
 
     private fun createConfiguration(): Configuration {

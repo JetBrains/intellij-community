@@ -24,9 +24,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BREADTH_FIRST
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.DEPTH_FIRST
 
-/**
- * @author Denis Zhdanov
- */
 @CompileStatic
 class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
   

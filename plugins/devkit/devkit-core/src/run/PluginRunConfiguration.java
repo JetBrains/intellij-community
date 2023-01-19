@@ -17,10 +17,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.*;
@@ -28,7 +25,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.JavaModuleOptions;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.system.OS;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import static com.intellij.idea.LoggerFactory.LOG_FILE_NAME;
@@ -170,6 +172,33 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         vm.defineProperty(PathManager.PROPERTY_PLUGINS_PATH, canonicalSandbox + File.separator + "plugins");
         vm.defineProperty("idea.classpath.index.enabled", "false");
 
+        if (!vm.hasProperty("jdk.module.illegalAccess.silent")) {
+          vm.defineProperty("jdk.module.illegalAccess.silent", "true");
+        }
+
+        String buildNumber = IdeaJdk.getBuildNumber(ideaJdkHome);
+        if (buildNumber != null) {
+          String versionString = StringUtil.substringAfter(buildNumber, "-");
+          if (versionString != null) {
+            Version version = Version.parseVersion(versionString);
+            if (version != null && version.isOrGreaterThan(221)) {
+              vm.defineProperty(JUnitDevKitPatcher.SYSTEM_CL_PROPERTY, "com.intellij.util.lang.PathClassLoader");
+            }
+          }
+        }
+
+        Sdk internalJavaSdk = ObjectUtils.chooseNotNull(IdeaJdk.getInternalJavaSdk(usedIdeaJdk), usedIdeaJdk);
+        var sdkVersion = ((JavaSdk)internalJavaSdk.getSdkType()).getVersion(jdk);
+        if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
+          try (InputStream stream = PluginRunConfiguration.class.getResourceAsStream("OpenedPackages.txt")) {
+            assert stream != null;
+            JavaModuleOptions.readOptions(stream, OS.CURRENT).forEach(vm::add);
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+
         if (!vm.hasProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY) && PluginModuleType.isOfType(module)) {
           final String id = getPluginId(module);
           if (id != null) {
@@ -189,13 +218,16 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         }
 
         if (!vm.hasProperty(PlatformUtils.PLATFORM_PREFIX_KEY)) {
-          String buildNumber = IdeaJdk.getBuildNumber(ideaJdkHome);
           if (buildNumber != null) {
             String prefix = IntelliJPlatformProduct.fromBuildNumber(buildNumber).getPlatformPrefix();
             if (prefix != null) {
               vm.defineProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
             }
           }
+        }
+
+        if (!vm.hasProperty(SlowOperations.IDEA_PLUGIN_SANDBOX_MODE)) {
+          vm.defineProperty(SlowOperations.IDEA_PLUGIN_SANDBOX_MODE, "true");
         }
 
         params.setWorkingDirectory(ideaJdkHome + File.separator + "bin" + File.separator);
@@ -209,9 +241,11 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
         else {
-          // log4j, jdom and trove4j needed for running on branch 202 and older
-          final List<String> jars = List.of("log4j.jar", "jdom.jar", "trove4j.jar",
-                         "openapi.jar", "util.jar", "util_rt.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar");
+          final List<String> jars = List.of(
+            // log4j, jdom and trove4j needed for running on branch 202 and older
+            "log4j.jar", "jdom.jar", "trove4j.jar",
+            "openapi.jar", "util.jar", "util_rt.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar",
+            "3rd-party-rt.jar", "jna.jar");
           for (String path : jars) {
             params.getClassPath().add(ideaJdkHome + FileUtil.toSystemDependentName("/lib/" + path));
           }

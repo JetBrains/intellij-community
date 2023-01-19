@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -17,9 +16,11 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.core.OPT_IN_FQ_NAMES
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker
@@ -35,14 +36,9 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.SINCE_KOTLIN_FQ_NAME
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
-import org.jetbrains.kotlin.resolve.checkers.OptInNames.OPT_IN_FQ_NAMES
 import org.jetbrains.kotlin.resolve.constants.ArrayValue
 import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.constants.StringValue
-import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
-import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -61,6 +57,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * or the entire unnecessary `@OptIn` annotation if it contains a single marker.
  */
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Companion.asKtClass
+import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.resolve.descriptorUtil.*
 
 class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
 
@@ -84,7 +83,7 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
     )
 
     // Short names for `kotlin.OptIn` and `kotlin.UseExperimental` for faster comparison without name resolution
-    private val OPT_IN_SHORT_NAMES = OPT_IN_FQ_NAMES.map { it.shortName().asString() }.toSet()
+    private val OPT_IN_SHORT_NAMES = OptInNames.OPT_IN_FQ_NAMES.map { it.shortName().asString() }.toSet()
 
     /**
      * Main inspection visitor to traverse all annotation entries.
@@ -108,7 +107,7 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
             val resolutionFacade = annotationEntry.getResolutionFacade()
             val annotationContext = annotationEntry.analyze(resolutionFacade)
             val annotationFqName = annotationContext[BindingContext.ANNOTATION, annotationEntry]?.fqName
-            if (annotationFqName !in OPT_IN_FQ_NAMES) return@annotationEntryVisitor
+            if (annotationFqName !in OptInNames.OPT_IN_FQ_NAMES) return@annotationEntryVisitor
 
             val resolvedMarkers = mutableListOf<ResolvedMarker>()
             for (arg in annotationEntryArguments) {
@@ -169,6 +168,26 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
      * @return true if no marked names was found during the check, false if there is at least one marked name
      */
     fun isUnused(marker: FqName): Boolean = marker !in foundMarkers
+
+    /**
+     * Collect experimental markers for a declaration and add them to [foundMarkers].
+     *
+     * Find a class whose superclass is annotated with @SubclassOptInRequired
+     * and add the experimental marker to [foundMarkers].
+     *
+     * @param declaration the declaration to process
+     */
+
+    fun collectMarkers(declaration: KtClassOrObject?) {
+        if (declaration == null) return
+        for (superTypeEntry in declaration.superTypeListEntries) {
+            val superClassDescriptor = superTypeEntry.asKtClass()?.descriptor ?: continue
+            val superClassAnnotation = superClassDescriptor.annotations.findAnnotation(OptInNames.SUBCLASS_OPT_IN_REQUIRED_FQ_NAME) ?: continue
+            val markerFqName = superClassAnnotation.allValueArguments[OptInNames.OPT_IN_ANNOTATION_CLASS]
+                ?.safeAs<KClassValue>()?.getArgumentType(superClassDescriptor.module)?.fqName
+            markerFqName?.let { foundMarkers += it }
+        }
+    }
 
     /**
      * Collect experimental markers for a declaration and add them to [foundMarkers].
@@ -259,7 +278,7 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
 
             // Add the annotation class as a marker if it has `@RequireOptIn` annotation.
             if (annotationClass.annotations.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME)
-                || annotationClass.annotations.hasAnnotation(OptInNames.OLD_EXPERIMENTAL_FQ_NAME)) {
+                || annotationClass.annotations.hasAnnotation(FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME)) {
                 foundMarkers += annotationFqName
             }
 
@@ -321,6 +340,11 @@ private class OptInMarkerVisitor : KtTreeVisitor<MarkerCollector>() {
         markerCollector.collectMarkers(expression)
         return super.visitReferenceExpression(expression, markerCollector)
     }
+
+    override fun visitClassOrObject(expression: KtClassOrObject, markerCollector: MarkerCollector): Void? {
+        markerCollector.collectMarkers(expression)
+        return super.visitClassOrObject(expression, markerCollector)
+    }
 }
 
 /**
@@ -340,6 +364,8 @@ private class RemoveAnnotationArgumentOrEntireEntry : LocalQuickFix {
         }
     }
 }
+
+
 
 /**
  * A quick fix that removes the entire annotation entry.

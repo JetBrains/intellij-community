@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
-import static com.jetbrains.python.inspections.quickfix.sdk.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
+import static com.jetbrains.python.inspections.PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
 public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
   @Override

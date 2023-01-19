@@ -74,6 +74,7 @@ final class ChangeLAFAnimator {
         JComponent imageLayer = new JComponent() {
           @Override
           public void updateUI() {
+            super.updateUI();
           }
 
           @Override

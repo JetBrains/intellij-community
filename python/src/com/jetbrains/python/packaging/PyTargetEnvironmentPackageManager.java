@@ -60,12 +60,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     getPythonProcessResult(pythonExecution, true, true, helpersAwareTargetRequest.getTargetEnvironmentRequest());
   }
 
-  @NotNull
-  protected String toSystemDependentName(@NotNull final String dirName) {
-    return FileUtil.toSystemDependentName(dirName);
-  }
-
-  protected PyTargetEnvironmentPackageManager(@NotNull final Sdk sdk) {
+  PyTargetEnvironmentPackageManager(@NotNull final Sdk sdk) {
     super(sdk);
   }
 
@@ -235,8 +230,9 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest = getPythonTargetInterpreter();
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
 
-    PythonScriptExecution pythonExecution =
-      PythonScripts.prepareHelperScriptExecution(PythonHelper.VIRTUALENV_ZIPAPP, helpersAwareTargetRequest);
+    PythonScriptExecution pythonExecution = PythonScripts.prepareHelperScriptExecution(
+      languageLevel.isPython2() ? PythonHelper.PY2_VIRTUALENV_ZIPAPP : PythonHelper.VIRTUALENV_ZIPAPP,
+      helpersAwareTargetRequest);
     if (useGlobalSite) {
       pythonExecution.addParameter("--system-site-packages");
     }
@@ -295,8 +291,8 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     TargetedCommandLine targetedCommandLine = PythonScripts.buildTargetedCommandLine(pythonExecution,
                                                                                      targetEnvironment,
                                                                                      getSdk(),
-                                                                                     Collections.emptyList(),
-                                                                                     false);
+                                                                                     Collections.emptyList()
+    );
     // TODO [targets] Set parent directory of interpreter as the working directory
 
     LOG.info("Running packaging tool");
@@ -368,10 +364,6 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
 
   @NotNull
   private HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter() throws ExecutionException {
-    String homePath = getSdk().getHomePath();
-    if (homePath == null) {
-      throw new ExecutionException(PySdkBundle.message("python.sdk.packaging.cannot.find.python.interpreter", getSdk().getName()));
-    }
     HelpersAwareTargetEnvironmentRequest request = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(getSdk(),
                                                                                                                          ProjectManager.getInstance()
                                                                                                                            .getDefaultProject());

@@ -175,18 +175,6 @@ fun FqName.quoteSegmentsIfNeeded(): String {
     return quoteIfNeeded().asString()
 }
 
-fun isEnumCompanionPropertyWithEntryConflict(element: PsiElement, expectedName: String): Boolean {
-    if (element !is KtProperty) return false
-
-    val propertyClass = element.containingClassOrObject as? KtObjectDeclaration ?: return false
-    if (!propertyClass.isCompanion()) return false
-
-    val outerClass = propertyClass.containingClassOrObject as? KtClass ?: return false
-    if (!outerClass.isEnum()) return false
-
-    return outerClass.declarations.any { it is KtEnumEntry && it.name == expectedName }
-}
-
 fun KtCallExpression.receiverValue(): ReceiverValue? {
     val resolvedCall = getResolvedCall(safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)) ?: return null
     return resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
@@ -194,7 +182,7 @@ fun KtCallExpression.receiverValue(): ReceiverValue? {
 
 fun KtCallExpression.receiverType(): KotlinType? = receiverValue()?.type
 
-fun KtExpression.resolveType(): KotlinType? = this.analyze(BodyResolveMode.PARTIAL).getType(this)
+fun KtExpression.resolveType(context: BindingContext = this.analyze(BodyResolveMode.PARTIAL)): KotlinType? = context.getType(this)
 
 fun KtModifierKeywordToken.toVisibility(): DescriptorVisibility {
     return when (this) {

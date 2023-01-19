@@ -47,9 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.ServerSocket;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   static final Logger LOG = Logger.getInstance(ExternalSystemTaskDebugRunner.class);
 

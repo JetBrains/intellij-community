@@ -5,13 +5,14 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.PatternCondition
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
+import com.intellij.util.asSafely
+import org.jetbrains.plugins.gradle.service.resolve.transformation.GradleDecoratedLightPsiClass
 import org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 val projectTypeKey: Key<GradleProjectAwareType> = Key.create("gradle.current.project")
 val saveProjectType: PatternCondition<GroovyMethodResult> = object : PatternCondition<GroovyMethodResult>("saveProjectContext") {
@@ -46,4 +47,17 @@ internal fun PsiElement.getLinkedGradleProjectPath() : String? {
 
 internal fun PsiElement.getRootGradleProjectPath() : String? {
   return ExternalSystemApiUtil.getExternalRootProjectPath(module)
+}
+
+internal fun decoratePsiType(type: PsiType) : PsiType =
+  if (type is PsiClassType) decoratePsiClassType(type) else type
+
+/**
+ * @see org.jetbrains.plugins.gradle.service.resolve.transformation.GradleDecoratedLightPsiClass
+ */
+internal fun decoratePsiClassType(type: PsiClassType) : PsiClassType {
+  val resolveResult = type.resolveGenerics()
+  val resolvedClass = resolveResult.element ?: return type
+  val decorated = GradleDecoratedLightPsiClass(resolvedClass)
+  return resolveResult.substitutor.substitute(decorated.type()).asSafely<PsiClassType>() ?: return type
 }

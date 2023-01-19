@@ -7,7 +7,7 @@ import com.intellij.idea.Java11ShimImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.testFramework.TestLoggerFactory
-import com.intellij.util.lang.Java11Shim
+import com.intellij.util.Java11Shim
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 

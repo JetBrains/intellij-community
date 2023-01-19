@@ -17,13 +17,20 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.ArrayUtil;
+import one.util.streamex.StreamEx;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -866,5 +873,28 @@ public class KeymapTest extends LightPlatformTestCase {
     finally {
       KeymapManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT);
     }
+  }
+  
+  public void testParallelGetShortcuts() {
+    Keymap grandChild = myChild.deriveKeymap("GrandChild");
+    Runnable task = () -> {
+      for (int i = 0; i < 1000; i++) {
+        assertEquals(Shortcut.EMPTY_ARRAY, grandChild.getShortcuts("none"));
+        List<Shortcut> shortcuts = Arrays.asList(grandChild.getShortcuts(ACTION_1));
+        assertTrue(shortcuts.size() >= 2 && shortcuts.size() <= 3);
+        String message = shortcuts.toString();
+        assertTrue(message, shortcuts.contains(shortcut1));
+        assertTrue(message, shortcuts.contains(shortcutA));
+        if (shortcuts.size() == 3) {
+          assertTrue(message, shortcuts.contains(shortcut2));
+        }
+      }
+    };
+    List<CompletableFuture<Void>> tasks = StreamEx.constant(task, 10).map(CompletableFuture::runAsync).toList();
+    for (int i = 0; i < 10000; i++) {
+      grandChild.addShortcut(ACTION_1, shortcut2);
+      grandChild.removeShortcut(ACTION_1, shortcut2);
+    }
+    tasks.forEach(CompletableFuture::join);
   }
 }

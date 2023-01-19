@@ -14,8 +14,6 @@ import java.io.StringWriter;
  * <p/>
  * This class allows to extract textual description of the target problem and deliver it for further processing without risking to 
  * get the problems mentioned above. I.e. it doesn't require anything specific can be safely delivered to ide process then.
- * 
- * @author Denis Zhdanov
  */
 public class ExternalSystemException extends RuntimeException {
 

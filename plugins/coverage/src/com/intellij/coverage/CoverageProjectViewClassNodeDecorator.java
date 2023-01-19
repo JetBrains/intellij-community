@@ -13,10 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
-  CoverageProjectViewClassNodeDecorator(@NotNull Project project) {
-    super(project);
-  }
-
   @Override
   public void decorate(ProjectViewNode node, PresentationData data) {
     final Project project = node.getProject();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.AppTopics;
@@ -7,7 +7,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Document;
@@ -22,6 +21,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,9 +31,12 @@ import com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -50,14 +53,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 public final class XLineBreakpointManager {
-  private final BidirectionalMap<XLineBreakpointImpl, String> myBreakpoints = new BidirectionalMap<>();
+  private final MultiMap<String, XLineBreakpointImpl> myBreakpoints = MultiMap.createConcurrent();
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
 
@@ -76,7 +77,7 @@ public final class XLineBreakpointManager {
       busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileUrlChangeAdapter() {
         @Override
         protected void fileUrlChanged(String oldUrl, String newUrl) {
-          breakpoints().forEach(breakpoint -> {
+          myBreakpoints.values().forEach(breakpoint -> {
             String url = breakpoint.getFileUrl();
             if (FileUtil.startsWith(url, oldUrl)) {
               breakpoint.setFileUrl(newUrl + url.substring(oldUrl.length()));
@@ -86,22 +87,18 @@ public final class XLineBreakpointManager {
 
         @Override
         public void fileDeleted(@NotNull VirtualFileEvent event) {
-          List<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(event.getFile().getUrl());
-          removeBreakpoints(breakpoints != null ? new ArrayList<>(breakpoints) : null); // safe copy
+          removeBreakpoints(myBreakpoints.get(event.getFile().getUrl()));
         }
       }));
     }
-    myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project);
+    myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project, null, Alarm.ThreadToUse.POOLED_THREAD);
 
     // Update breakpoints colors if global color schema was changed
     busConnection.subscribe(EditorColorsManager.TOPIC, new MyEditorColorsListener());
     busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
-        List<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(file.getUrl());
-        if (breakpoints != null) {
-          breakpoints.stream().filter(b -> b.getHighlighter() == null).forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
-        }
+        myBreakpoints.get(file.getUrl()).stream().filter(b -> b.getHighlighter() == null).forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
       }
     });
   }
@@ -111,42 +108,30 @@ public final class XLineBreakpointManager {
       return;
     }
 
-    StartupManager.getInstance(myProject).runAfterOpened(() -> {
-      for (XLineBreakpointImpl<?> breakpoint : myBreakpoints.keySet()) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          breakpoint.updateUI();
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
-      }
-    });
+    StartupManager.getInstance(myProject).runAfterOpened(this::queueAllBreakpointsUpdate);
   }
 
   public void registerBreakpoint(XLineBreakpointImpl breakpoint, final boolean initUI) {
     if (initUI) {
-      breakpoint.updateUI();
+      updateBreakpointNow(breakpoint);
     }
-    myBreakpoints.put(breakpoint, breakpoint.getFileUrl());
+    myBreakpoints.putValue(breakpoint.getFileUrl(), breakpoint);
   }
 
   public void unregisterBreakpoint(final XLineBreakpointImpl breakpoint) {
-    myBreakpoints.remove(breakpoint);
+    myBreakpoints.remove(breakpoint.getFileUrl(), breakpoint);
   }
 
   @NotNull
   public Collection<XLineBreakpointImpl> getDocumentBreakpoints(Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
-      Collection<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(file.getUrl());
-      if (breakpoints != null) {
-        return new ArrayList<>(breakpoints);
-      }
+      return myBreakpoints.get(file.getUrl());
     }
     return Collections.emptyList();
   }
 
-  private Stream<XLineBreakpointImpl> breakpoints() {
-    return myBreakpoints.keySet().stream();
-  }
-
+  @RequiresEdt
   private void updateBreakpoints(@NotNull Document document) {
     Collection<XLineBreakpointImpl> breakpoints = getDocumentBreakpoints(document);
 
@@ -166,7 +151,7 @@ public final class XLineBreakpointManager {
     removeBreakpoints(toRemove);
   }
 
-  private void removeBreakpoints(@Nullable final List<? extends XLineBreakpoint> toRemove) {
+  private void removeBreakpoints(@Nullable final Collection<? extends XLineBreakpoint> toRemove) {
     if (ContainerUtil.isEmpty(toRemove)) {
       return;
     }
@@ -177,7 +162,7 @@ public final class XLineBreakpointManager {
 
   public void breakpointChanged(XLineBreakpointImpl breakpoint) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      breakpoint.updateUI();
+      updateBreakpointNow(breakpoint);
     }
     else {
       queueBreakpointUpdate(breakpoint);
@@ -194,18 +179,21 @@ public final class XLineBreakpointManager {
     }
   }
 
-  public void queueBreakpointUpdate(@NotNull final XLineBreakpointImpl<?> breakpoint) {
+  // Skip waiting 300ms in myBreakpointsUpdateQueue (good for sync updates like enable/disable or create new breakpoint)
+  private void updateBreakpointNow(@NotNull final XLineBreakpointImpl<?> breakpoint) {
+    queueBreakpointUpdate(breakpoint, null);
+    myBreakpointsUpdateQueue.sendFlush();
+  }
+
+  void queueBreakpointUpdate(@NotNull final XLineBreakpointImpl<?> breakpoint) {
     queueBreakpointUpdate(breakpoint, null);
   }
 
-  public void queueBreakpointUpdate(@NotNull final XLineBreakpointImpl<?> breakpoint, @Nullable Runnable callOnUpdate) {
+  void queueBreakpointUpdate(@NotNull final XLineBreakpointImpl<?> breakpoint, @Nullable Runnable callOnUpdate) {
     myBreakpointsUpdateQueue.queue(new Update(breakpoint) {
       @Override
       public void run() {
-        breakpoint.updateUI();
-        if (callOnUpdate != null) {
-          callOnUpdate.run();
-        }
+        breakpoint.doUpdateUI(ObjectUtils.notNull(callOnUpdate, EmptyRunnable.INSTANCE));
       }
     });
   }
@@ -214,9 +202,11 @@ public final class XLineBreakpointManager {
     myBreakpointsUpdateQueue.queue(new Update("all breakpoints") {
       @Override
       public void run() {
-        breakpoints().forEach(XLineBreakpointImpl::updateUI);
+        myBreakpoints.values().forEach(b -> b.doUpdateUI(EmptyRunnable.INSTANCE));
       }
     });
+    // skip waiting
+    myBreakpointsUpdateQueue.sendFlush();
   }
 
   private class MyDocumentListener implements DocumentListener {
@@ -228,7 +218,9 @@ public final class XLineBreakpointManager {
         myBreakpointsUpdateQueue.queue(new Update(document) {
           @Override
           public void run() {
-            updateBreakpoints(document);
+            ApplicationManager.getApplication().invokeLater(() -> {
+              updateBreakpoints(document);
+            });
           }
         });
       }

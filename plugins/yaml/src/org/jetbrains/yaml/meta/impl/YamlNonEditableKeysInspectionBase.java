@@ -53,7 +53,7 @@ public abstract class YamlNonEditableKeysInspectionBase extends YamlMetaTypeInsp
     }
 
     private static final class StripNonEditableKeysQuickFix implements LocalQuickFix {
-      @NotNull
+      @SafeFieldForPreview @NotNull
       private final YamlMetaTypeProvider myMetaTypeProvider;
 
       private StripNonEditableKeysQuickFix(@NotNull YamlMetaTypeProvider provider) {myMetaTypeProvider = provider;}

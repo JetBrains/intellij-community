@@ -592,7 +592,11 @@ public final class JavaCompletionUtil {
       return Collections.singletonList(item);
     }
     if (completion instanceof PsiVariable) {
-      return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor).qualifyIfNeeded(reference));
+      if (completion instanceof PsiEnumConstant enumConstant &&
+          PsiTreeUtil.isAncestor(enumConstant.getArgumentList(), reference.getElement(), true)) {
+        return Collections.emptyList();
+      }
+      return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor).qualifyIfNeeded(reference, null));
     }
     if (completion instanceof PsiPackage) {
       return Collections.singletonList(new PackageLookupItem((PsiPackage)completion, reference.getElement()));

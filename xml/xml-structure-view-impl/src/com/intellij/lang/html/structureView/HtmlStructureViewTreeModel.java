@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.html.structureView;
 
 import com.intellij.icons.AllIcons;
@@ -17,15 +17,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 
-class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements PlaceHolder {
-
-  private final Collection<NodeProvider> myNodeProviders;
+final class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements PlaceHolder {
+  private final Collection<NodeProvider<?>> myNodeProviders;
   private String myStructureViewPlace;
 
   private static final Sorter HTML_ALPHA_SORTER = new Sorter() {
-    @NotNull
     @Override
-    public Comparator getComparator() {
+    public @NotNull Comparator getComparator() {
       return new Comparator() {
         @Override
         public int compare(Object o1, Object o2) {
@@ -38,7 +36,7 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
           return s1.compareToIgnoreCase(s2);
         }
 
-        private boolean isTagPresentation(final String presentation, final String tagName) {
+        private static boolean isTagPresentation(final String presentation, final String tagName) {
           // "head", "head#id", "head.cls"
           final String lowerCased = StringUtil.toLowerCase(presentation);
           return lowerCased.startsWith(tagName) &&
@@ -57,16 +55,14 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
     }
 
     @Override
-    @NotNull
-    public ActionPresentation getPresentation() {
+    public @NotNull ActionPresentation getPresentation() {
       return new ActionPresentationData(PlatformEditorBundle.message("action.sort.alphabetically"),
                                         PlatformEditorBundle.message("action.sort.alphabetically"),
                                         AllIcons.ObjectBrowser.Sorted);
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return ALPHA_SORTER_ID;
     }
   };
@@ -80,7 +76,7 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
   }
 
   @Override
-  public void setPlace(@NotNull final String place) {
+  public void setPlace(final @NotNull String place) {
     myStructureViewPlace = place;
   }
 
@@ -99,14 +95,12 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
   }
 
   @Override
-  @NotNull
-  public Collection<NodeProvider> getNodeProviders() {
+  public @NotNull Collection<NodeProvider<?>> getNodeProviders() {
     return myNodeProviders;
   }
 
   @Override
-  @NotNull
-  public StructureViewTreeElement getRoot() {
+  public @NotNull StructureViewTreeElement getRoot() {
     return new HtmlFileTreeElement(TreeStructureUtil.isInStructureViewPopup(this), getPsiFile());
   }
 }

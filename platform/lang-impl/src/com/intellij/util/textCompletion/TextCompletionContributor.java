@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * @author sergey.evdokimov
- */
 public class TextCompletionContributor extends CompletionContributor implements DumbAware {
 
   @Override

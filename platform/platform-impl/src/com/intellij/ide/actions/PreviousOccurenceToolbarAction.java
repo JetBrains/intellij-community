@@ -24,7 +24,6 @@ public class PreviousOccurenceToolbarAction extends PreviousOccurenceAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    ActionUpdateThread thread = myNavigator.getActionUpdateThread();
-    return thread != null ? thread : super.getActionUpdateThread();
+    return myNavigator.getActionUpdateThread();
   }
 }

@@ -332,7 +332,7 @@ public final class ChangesUtil {
   }
 
   public static void markInternalOperation(@NotNull VirtualFile file, boolean set) {
-    file.putUserData(INTERNAL_OPERATION_KEY, set);
+    file.putUserData(INTERNAL_OPERATION_KEY, set ? Boolean.TRUE : null);
   }
 
   public static boolean isInternalOperation(@NotNull VirtualFile file) {
@@ -394,22 +394,8 @@ public final class ChangesUtil {
     return false;
   }
 
-
-  /**
-   * @deprecated Use {@link #iteratePaths(Iterable)}
-   */
   @NotNull
-  @Deprecated(forRemoval = true)
-  public static Stream<FilePath> getPaths(@NotNull Stream<? extends Change> changes) {
-    return changes.flatMap(ChangesUtil::getPathsCaseSensitive);
-  }
-
-  /**
-   * @deprecated Use {@link #iteratePathsCaseSensitive(Change)}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public static Stream<FilePath> getPathsCaseSensitive(@NotNull Change change) {
+  private static Stream<FilePath> getPathsCaseSensitive(@NotNull Change change) {
     FilePath beforePath = getBeforePath(change);
     FilePath afterPath = getAfterPath(change);
 
@@ -423,18 +409,7 @@ public final class ChangesUtil {
   @NotNull
   @Deprecated(forRemoval = true)
   public static Stream<VirtualFile> getFiles(@NotNull Stream<? extends Change> changes) {
-    return getPaths(changes)
-      .map(FilePath::getVirtualFile)
-      .filter(Objects::nonNull);
-  }
-
-  /**
-   * @deprecated Use inlined
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public static Stream<VirtualFile> getFilesFromPaths(@NotNull Stream<? extends FilePath> paths) {
-    return paths
+    return changes.flatMap(ChangesUtil::getPathsCaseSensitive)
       .map(FilePath::getVirtualFile)
       .filter(Objects::nonNull);
   }

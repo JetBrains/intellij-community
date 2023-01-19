@@ -24,9 +24,11 @@ public class TransientFieldInNonSerializableClassFixTest extends IGQuickFixesTes
 
   public void testDoNotFixUsedTransient() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("remove.modifier.quickfix", "transient"),
-                               "class Example implements java.io.Serializable {\n" +
-                               "  private transient/**/ String password;\n" +
-                               "}\n"
+                               """
+                                 class Example implements java.io.Serializable {
+                                   private transient/**/ String password;
+                                 }
+                                 """
     );
   }
 }

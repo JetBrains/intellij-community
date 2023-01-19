@@ -41,6 +41,7 @@
     <projectModelContributor implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModelContributor"/>
 
     <executionEnvironmentProvider implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleAppEnvProvider"/>
+    <buildTasksProvider implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinMPPBuildTasksProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -77,11 +78,6 @@
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer"/>
 
-    <projectTaskRunner
-            id="gradle.mpp"
-            order="first, before gradle"
-            implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinMPPGradleProjectTaskRunner"/>
-
     <registryKey
             key="kotlin.gradle.testing.enabled"
             description="Import Kotlin Gradle test tasks and process test output"
@@ -97,7 +93,6 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator"/>
-    <projectConfigurator implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinJsGradleModuleConfigurator"/>
 
     <gradleModelFacade implementation="org.jetbrains.kotlin.idea.gradleJava.inspections.DefaultGradleModelFacade"/>
 
@@ -125,8 +120,10 @@
     <moduleInitialize implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinBasicFragmentDataInitializer"/>
     <createRoots implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinFragmentContentRootsCreator"/>
     <createRoots implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinGradleModuleContentRootsCreator"/>
-    <extrasSerialization implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinExtrasSerializationService"/>
+  </extensions>
 
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
+    <extrasSerialization implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.serialize.KotlinExtrasSerializationService"/>
   </extensions>
 
   <actions>

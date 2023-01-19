@@ -20,9 +20,6 @@ import java.util.Set;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
 
-/**
- * @author peter
- */
 final class SlowerTypeConversions {
   private static final CallMatcher CLONE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "clone").parameterCount(0);
   

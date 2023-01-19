@@ -85,8 +85,10 @@ class AddNameToArgumentFix(argument: KtValueArgument) : KotlinQuickFixAction<KtV
     }
 
     private fun createArgumentWithName(name: Name, reformat: Boolean = true): KtValueArgument {
-        val argumentExpression = element!!.getArgumentExpression()!!
-        return KtPsiFactory(element!!).createArgument(argumentExpression, name, element!!.getSpreadElement() != null, reformat = reformat)
+        val element = this.element!!
+        val argumentExpression = element.getArgumentExpression()!!
+        return KtPsiFactory(element.project)
+            .createArgument(argumentExpression, name, element.getSpreadElement() != null, reformat = reformat)
     }
 
     private fun chooseNameAndAdd(project: Project, editor: Editor, names: List<Name>) {

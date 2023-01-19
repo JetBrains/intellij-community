@@ -13,7 +13,7 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.DEF
@@ -45,7 +45,7 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
       sink.addInlineElement(element.textOffset, false, typeRepresentation, false)
     }
     if (element is GrClosableBlock && element.parameterList.isEmpty) {
-      val itParameter = element.allParameters.singleOrNull()?.castSafelyTo<ClosureSyntheticParameter>() ?: return true
+      val itParameter = element.allParameters.singleOrNull()?.asSafely<ClosureSyntheticParameter>() ?: return true
       if (!itParameter.isStillValid) return true
       val type: PsiType = getRepresentableType(itParameter) ?: return true
       val textRepresentation: InlayPresentation = with(factory) {

@@ -47,7 +47,8 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
 
 
-    if (!userHomePath.exists()) error("Home directory ${userHomePath.pathNotResolvingSymlinks()} of user=$username, uid=$uid does not exist")
+    if (!userHomePath.exists())
+      error("Home directory ${userHomePath.pathNotResolvingSymlinks()} of user=$username, uid=$uid does not exist")
 
     val imageName = "$UBUNTU_18_04_WITH_USER_TEMPLATE-user-$usernameForDockerBuild-uid-$uid"
 
@@ -75,19 +76,16 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
       "--user=$username"
     )
 
-    val containerName = if (options.containerName != null)
-      "${options.containerName}-${System.nanoTime()}".let {
-        dockerCmd.add("--name=$it")
-        it
-      }
-    else null
+    val containerName = "${options.containerName}-${System.nanoTime()}".let {
+      dockerCmd.add("--name=$it")
+      it
+    }
 
     // **** RW ****
     val writeable = listOf(paths.logFolder,
                            paths.configFolder,
                            paths.systemFolder,
                            paths.outputRootFolder, // classpath index making a lot of noise
-                           paths.sourcesRootFolder.resolve("remote-dev/cwm-tests/general/data"), // classpath index making a lot of noise in stderr
                            paths.communityRootFolder.resolve("build/download")) // quiche lib
 
     // docker can create these under root, so we create them ourselves
@@ -114,12 +112,9 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
     // ~/.m2
     dockerCmd.addReadonly(paths.mavenRepositoryFolder)
-    
+
     // quiche
     dockerCmd.addReadonly(paths.sourcesRootFolder.resolve(".idea"))
-
-    // kotlin
-    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("out").resolve("kotlinc-dist"))
 
     // user-provided volumes
     paths.dockerVolumesToWritable.forEach { (volume, isWriteable) -> dockerCmd.addVolume(volume, isWriteable) }
@@ -184,8 +179,8 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
       if (!dockerRun.isAlive) error("docker run exited with code ${dockerRun.exitValue()}")
 
       if (containerIdFile.exists() && containerIdFile.length() > 0) {
-          logger.info("Container ID file with non-zero length detected at ${containerIdPath}")
-          break
+        logger.info("Container ID file with non-zero length detected at ${containerIdPath}")
+        break
       }
 
       val sleepMillis = 100L * 2.0.pow(i).toLong()
@@ -197,28 +192,28 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     if (containerId.isEmpty()) error { "Started container ID must not be empty" }
     logger.info("Container ID=$containerId")
 
-    if (containerName != null) {
-      fun isInDockerPs() = runCmd(1, TimeUnit.MINUTES, true, paths.tempFolder, true, "docker", "ps").count { it.contains(containerName) } > 0
+    fun isInDockerPs() =
+      runCmd(1, TimeUnit.MINUTES, true, paths.tempFolder, true, "docker", "ps")
+        .count { it.contains(containerName) } > 0
 
-      for (i in 1..5) {
-        if (!dockerRun.isAlive) error("docker run exited with code ${dockerRun.exitValue()}")
+    for (i in 1..5) {
+      if (!dockerRun.isAlive) error("docker run exited with code ${dockerRun.exitValue()}")
 
-        if (isInDockerPs()) {
-          logger.info("Container with name $containerName detected in docker ps output")
-          break
-        }
-
-        val sleepMillis = 100L * 2.0.pow(i).toLong()
-        logger.info("No container with name $containerName in docker ps output, sleeping for $sleepMillis")
-        Thread.sleep(sleepMillis)
+      if (isInDockerPs()) {
+        logger.info("Container with name $containerName detected in docker ps output")
+        break
       }
+
+      val sleepMillis = 100L * 2.0.pow(i).toLong()
+      logger.info("No container with name $containerName in docker ps output, sleeping for $sleepMillis")
+      Thread.sleep(sleepMillis)
     }
 
     return dockerRun
   }
 
   private fun dockerInfo() = runCmd(1, TimeUnit.MINUTES, false, paths.tempFolder, false, "docker", "info")
-  private fun dockerKill(containerId: String) = runCmd(1, TimeUnit.MINUTES, false, paths.tempFolder,false, "docker", "kill", containerId)
+  private fun dockerKill(containerId: String) = runCmd(1, TimeUnit.MINUTES, false, paths.tempFolder, false, "docker", "kill", containerId)
 
   private fun dockerBuild(tag: String, buildArgs: Map<String, String>) {
     val dockerBuildCmd = listOf("docker", "build", "-t", tag).toMutableList()
@@ -230,17 +225,22 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     dockerBuildCmd.add(".")
 
     val res = runCmd(10,
-           TimeUnit.MINUTES,
-           true,
-           paths.communityRootFolder.resolve("build/launch/src/com/intellij/tools/launch"),
-           true,
-           *dockerBuildCmd.toTypedArray())
+                     TimeUnit.MINUTES,
+                     true,
+                     paths.communityRootFolder.resolve("build/launch/src/com/intellij/tools/launch"),
+                     true,
+                     *dockerBuildCmd.toTypedArray())
 
     logger.info(res.toString())
   }
 
 
-  private fun runCmd(timeout: Long, unit: TimeUnit, assertSuccess: Boolean, workDir: File, captureOutput: Boolean = false, vararg cmd: String): List<String> {
+  private fun runCmd(timeout: Long,
+                     unit: TimeUnit,
+                     assertSuccess: Boolean,
+                     workDir: File,
+                     captureOutput: Boolean = false,
+                     vararg cmd: String): List<String> {
     if (!SystemInfo.isLinux)
       error("We are heavily relaying on paths being the same everywhere and may use networks, so only Linux can be used as a host system.")
 
@@ -266,8 +266,10 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
         error("${cmd[0]} failed to exit under required timeout of $timeout $unit, will destroy it")
 
       if (assertSuccess)
-        if (process.exitValue() != 0) error("${cmd[0]} exited with non-zero exit code ${process.exitValue()}. Full commandline: ${cmd.joinToString(" ")}")
-    } finally {
+        if (process.exitValue() != 0)
+          error("${cmd[0]} exited with non-zero exit code ${process.exitValue()}. Full commandline: ${cmd.joinToString(" ")}")
+    }
+    finally {
       process.destroy()
     }
 

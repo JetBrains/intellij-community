@@ -57,8 +57,9 @@ public abstract class PackageGlobalInspection extends BaseGlobalInspection {
       final IntRef current = new IntRef();
       analysisScope.accept(file -> {
         current.inc();
-        if (file.isDirectory() || !scope.contains(file)) return true;
+        if (file.isDirectory()) return true;
         String packageName = ReadAction.nonBlocking(() -> {
+          if (!scope.contains(file)) return null;
           final PsiFile element = PsiManager.getInstance(scope.getProject()).findFile(file);
           if (!(element instanceof PsiClassOwner)) return null;
           final PsiClassOwner classOwner = (PsiClassOwner)element;

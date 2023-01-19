@@ -33,7 +33,7 @@ class CommentLabel(@NlsContexts.Label text: String? = null) : JBLabel() {
 fun commentLabel(@NlsContexts.Label text: String, init: JBLabel.() -> Unit = {}) =
     CommentLabel(text).apply(init)
 
-fun componentWithCommentAtBottom(component: JComponent, label: String?, gap: Int = 4) = borderPanel {
+fun componentWithCommentAtBottom(component: JComponent, label: @NlsContexts.Label String?, gap: Int = 4) = borderPanel {
     addToTop(component)
     label?.let {
         addToCenter(commentLabel(it) {

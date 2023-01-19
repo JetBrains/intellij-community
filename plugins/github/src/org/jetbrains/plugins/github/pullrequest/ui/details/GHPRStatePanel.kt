@@ -1,305 +1,297 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
-import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.emptyBorders
+import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.EDT
 import com.intellij.ui.CardLayoutPanel
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.UIUtil
-import icons.CollaborationToolsIcons
+import com.intellij.util.childScope
+import com.intellij.util.ui.InlineIconButton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.GithubIcons
-import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
+import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.*
-import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import java.awt.FlowLayout
-import java.awt.event.ActionEvent
-import javax.swing.*
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRMetadataModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import java.awt.event.ActionListener
+import javax.swing.Action
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
 
-internal class GHPRStatePanel(private val securityService: GHPRSecurityService, private val stateModel: GHPRStateModel)
-  : CardLayoutPanel<GHPullRequestState, GHPRStatePanel.StateUI, JComponent>() {
+internal class GHPRStatePanel(
+  parentScope: CoroutineScope,
+  private val reviewDetailsVm: GHPRDetailsViewModel,
+  private val reviewFlowVm: GHPRReviewFlowViewModel,
+  private val dataProvider: GHPRDataProvider,
+  private val securityService: GHPRSecurityService,
+  private val stateModel: GHPRStateModel,
+  private val metadataModel: GHPRMetadataModel,
+  private val avatarIconsProvider: GHAvatarIconsProvider
+) : CardLayoutPanel<GHPRReviewFlowViewModel.ReviewRole, GHPRStatePanel.StateUI, JComponent>() {
+  private val scope = parentScope.childScope(Dispatchers.EDT)
 
-  override fun prepare(key: GHPullRequestState): StateUI {
+  init {
+    scope.launch {
+      reviewFlowVm.roleState.collect { role ->
+        select(role, true)
+      }
+    }
+  }
+
+  override fun prepare(key: GHPRReviewFlowViewModel.ReviewRole): StateUI {
     return when (key) {
-      GHPullRequestState.MERGED -> StateUI.Merged(stateModel)
-      GHPullRequestState.CLOSED -> StateUI.Closed(securityService, stateModel)
-      GHPullRequestState.OPEN -> StateUI.Open(securityService, stateModel)
+      GHPRReviewFlowViewModel.ReviewRole.AUTHOR -> StateUI.Author(
+        scope, reviewDetailsVm, reviewFlowVm, stateModel, securityService, metadataModel, avatarIconsProvider
+      )
+      GHPRReviewFlowViewModel.ReviewRole.REVIEWER -> StateUI.Reviewer(
+        scope, reviewDetailsVm, reviewFlowVm, stateModel, securityService, metadataModel, avatarIconsProvider, dataProvider
+      )
+      GHPRReviewFlowViewModel.ReviewRole.GUEST -> StateUI.Guest(
+        scope, reviewDetailsVm, reviewFlowVm, stateModel, securityService, metadataModel, avatarIconsProvider
+      )
     }
   }
 
   override fun create(ui: StateUI) = ui.createComponent()
 
-  internal sealed class StateUI(protected val stateModel: GHPRStateModel) {
+  internal sealed class StateUI(
+    protected val scope: CoroutineScope,
+    private val reviewDetailsVm: GHPRDetailsViewModel,
+    protected val reviewFlowVm: GHPRReviewFlowViewModel,
+    protected val metadataModel: GHPRMetadataModel,
+    protected val stateModel: GHPRStateModel,
+    protected val securityService: GHPRSecurityService,
+    protected val avatarIconsProvider: GHAvatarIconsProvider
+  ) {
+    protected val horizontalLayout = MigLayout(
+      LC()
+        .emptyBorders()
+        .fill()
+        .flowX()
+        .hideMode(3)
+    )
 
-    companion object {
-      protected const val STATUSES_GAP = 4
-    }
+    abstract fun createReviewActionsForOpenReview(): JComponent
 
     fun createComponent(): JComponent {
-      val statusComponent = createStatusComponent()
-
-      val buttonsPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
+      val reviewActionsComponentForOpenReview = createReviewActionsForOpenReview().apply {
+        bindVisibility(scope, reviewDetailsVm.reviewMergeState.map { it == GHPullRequestState.OPEN })
+      }
+      val reviewActionsComponentForCloseReview = JButton().apply {
         isOpaque = false
-        for (button in createButtons()) {
-          add(button)
-        }
-      }
-      val errorComponent = HtmlEditorPane().apply {
-        foreground = UIUtil.getErrorForeground()
-      }
-      stateModel.addAndInvokeActionErrorChangedListener {
-        errorComponent.setBody(stateModel.actionError?.message.orEmpty())
+        text = GithubBundle.message("pull.request.reopen.action")
+        action = GHPRReopenAction(stateModel, securityService)
+        bindVisibility(scope, reviewDetailsVm.reviewMergeState.map { it == GHPullRequestState.CLOSED })
       }
 
-      val actionsPanel = JPanel(null).apply {
+      return JPanel(HorizontalLayout(0)).apply {
         isOpaque = false
-        layout = MigLayout(LC().fill().flowY().gridGap("${JBUIScale.scale(5)}", "0").insets("0"))
-
-        add(buttonsPanel)
-        add(errorComponent, CC().minWidth("0"))
-      }
-
-      return JPanel(null).apply {
-        isOpaque = false
-        layout = MigLayout(LC().fill().flowY().gridGap("${JBUIScale.scale(4)}", "0").insets("0"))
-
-        add(statusComponent)
-        add(actionsPanel)
+        add(reviewActionsComponentForOpenReview, HorizontalLayout.LEFT)
+        add(reviewActionsComponentForCloseReview, HorizontalLayout.LEFT)
       }
     }
 
-    abstract fun createStatusComponent(): JComponent
-
-    abstract fun createButtons(): List<JComponent>
-
-    class Merged(stateModel: GHPRStateModel) : StateUI(stateModel) {
-
-      override fun createStatusComponent() = JLabel(GithubBundle.message("pull.request.state.merged.long"), GithubIcons.PullRequestMerged,
-                                                    SwingConstants.LEFT)
-
-      override fun createButtons() = emptyList<JComponent>()
-    }
-
-    class Closed(securityService: GHPRSecurityService, stateModel: GHPRStateModel) : StateUI(stateModel) {
-
-      private val canReopen = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE)
-                              || stateModel.viewerDidAuthor
-
-      override fun createStatusComponent(): JComponent {
-        val stateLabel = JLabel(
-          GithubBundle.message("pull.request.state.closed.long"),
-          CollaborationToolsIcons.PullRequestClosed,
-          SwingConstants.LEFT
-        )
-        return if (canReopen) stateLabel
-        else {
-          val accessDeniedLabel = JLabel().apply {
-            icon = AllIcons.RunConfigurations.TestError
-            text = GithubBundle.message("pull.request.repo.access.required")
-          }
-          JPanel(VerticalLayout(STATUSES_GAP)).apply {
-            isOpaque = false
-            add(stateLabel)
-            add(accessDeniedLabel)
-          }
+    protected fun createMoreButton(actionGroup: ActionGroup): JComponent {
+      return InlineIconButton(AllIcons.Actions.More).apply {
+        withBackgroundHover = true
+        actionListener = ActionListener { event ->
+          val parentComponent = event.source as JComponent
+          val popupMenu = ActionManager.getInstance().createActionPopupMenu("github.review.details", actionGroup)
+          val point = RelativePoint.getSouthWestOf(parentComponent).originalPoint
+          popupMenu.component.show(parentComponent, point.x, point.y + JBUIScale.scale(8))
         }
-      }
-
-      override fun createButtons(): List<JComponent> {
-        return if (canReopen) {
-          val action = GHPRReopenAction(stateModel)
-          listOf(JButton(action))
-        }
-        else emptyList()
       }
     }
 
-    class Open(securityService: GHPRSecurityService, stateModel: GHPRStateModel) : StateUI(stateModel) {
-
-      private val canClose =
-        securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) || stateModel.viewerDidAuthor
-      private val canMerge = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)
-      private val mergeForbidden = securityService.isMergeForbiddenForProject()
-      private val canMarkReadyForReview =
-        securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE) || stateModel.viewerDidAuthor
-
-      private val canCommitMerge = securityService.isMergeAllowed()
-      private val canSquashMerge = securityService.isSquashMergeAllowed()
-      private val canRebaseMerge = securityService.isRebaseMergeAllowed()
-
-      override fun createStatusComponent(): JComponent {
-        val panel = Wrapper()
-        LoadingController(panel)
-        return panel
+    protected fun createMergeReviewButton(scope: CoroutineScope, reviewFlowVm: GHPRReviewFlowViewModel): JComponent {
+      val actions = arrayOf<Action>(
+        GHPRRebaseMergeAction(stateModel, securityService),
+        GHPRSquashMergeAction(stateModel, securityService)
+      )
+      return JBOptionButton(GHPRCommitMergeAction(stateModel, securityService), actions).apply {
+        bindVisibility(scope, reviewFlowVm.reviewState.map { it == GHPRReviewFlowViewModel.ReviewState.ACCEPTED })
       }
+    }
 
-      private fun createNotLoadedComponent(isDraft: Boolean): JComponent {
-        val stateLabel = JLabel(GithubBundle.message("pull.request.loading.status"), AllIcons.RunConfigurations.TestNotRan,
-                                SwingConstants.LEFT)
-        val accessDeniedLabel = createAccessDeniedLabel(isDraft)
-        return JPanel(VerticalLayout(STATUSES_GAP, SwingConstants.LEFT)).apply {
+    class Author(
+      scope: CoroutineScope,
+      reviewDetailsVm: GHPRDetailsViewModel,
+      reviewFlowVm: GHPRReviewFlowViewModel,
+      stateModel: GHPRStateModel,
+      securityService: GHPRSecurityService,
+      metadataModel: GHPRMetadataModel,
+      avatarIconsProvider: GHAvatarIconsProvider
+    ) : StateUI(scope, reviewDetailsVm, reviewFlowVm, metadataModel, stateModel, securityService, avatarIconsProvider) {
+      override fun createReviewActionsForOpenReview(): JComponent {
+        val requestReviewButton = JButton().apply {
           isOpaque = false
-          add(stateLabel)
-          add(accessDeniedLabel)
+          text = CollaborationToolsBundle.message("review.details.action.request")
+          action = GHPRRequestReviewAction(stateModel, securityService, metadataModel, avatarIconsProvider)
+          bindVisibility(scope, combine(reviewFlowVm.reviewState, reviewFlowVm.requestedReviewersState) { reviewState, requestedReviewers ->
+            reviewState == GHPRReviewFlowViewModel.ReviewState.NEED_REVIEW ||
+            (reviewState == GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isNotEmpty())
+          })
         }
-      }
-
-      private fun createErrorComponent() = GHHtmlErrorPanel.create(GithubBundle.message("pull.request.state.cannot.load"),
-                                                                   stateModel.mergeabilityLoadingError!!,
-                                                                   object : AbstractAction(GithubBundle.message("retry.action")) {
-                                                                     override fun actionPerformed(e: ActionEvent?) {
-                                                                       stateModel.reloadMergeabilityState()
-                                                                     }
-                                                                   }, SwingConstants.LEFT)
-
-      private fun createLoadedComponent(mergeability: GHPRMergeabilityState, isDraft: Boolean): JComponent {
-        val statusChecks = GHPRStatusChecksComponent.create(mergeability)
-
-        val conflictsLabel = JLabel().apply {
-          when (mergeability.hasConflicts) {
-            false -> {
-              icon = AllIcons.RunConfigurations.TestPassed
-              text = GithubBundle.message("pull.request.conflicts.none")
-            }
-            true -> {
-              icon = AllIcons.RunConfigurations.TestError
-              text = GithubBundle.message("pull.request.conflicts.must.be.resolved")
-            }
-            null -> {
-              icon = AllIcons.RunConfigurations.TestNotRan
-              text = GithubBundle.message("pull.request.conflicts.checking")
-            }
-          }
-        }
-
-        val requiredReviewsLabel = JLabel().apply {
-          val requiredApprovingReviewsCount = mergeability.requiredApprovingReviewsCount
-          isVisible = requiredApprovingReviewsCount > 0 && !isDraft
-
-          icon = AllIcons.RunConfigurations.TestError
-          text = GithubBundle.message("pull.request.reviewers.required", requiredApprovingReviewsCount)
-        }
-
-        val restrictionsLabel = JLabel().apply {
-          isVisible = mergeability.isRestricted && !isDraft
-          icon = AllIcons.RunConfigurations.TestError
-          text = GithubBundle.message("pull.request.not.authorized.to.merge")
-        }
-
-        val accessDeniedLabel = createAccessDeniedLabel(isDraft)
-
-        return JPanel(VerticalLayout(STATUSES_GAP, SwingConstants.LEFT)).apply {
+        val reRequestReviewButton = JButton().apply {
           isOpaque = false
-          add(statusChecks)
-          add(requiredReviewsLabel)
-          add(conflictsLabel)
-          add(restrictionsLabel)
-          add(accessDeniedLabel)
+          text = CollaborationToolsBundle.message("review.details.action.rerequest")
+          action = GHPRReRequestReviewAction(stateModel, securityService, metadataModel, reviewFlowVm)
+          bindVisibility(scope, combine(reviewFlowVm.reviewState, reviewFlowVm.requestedReviewersState) { reviewState, requestedReviewers ->
+            reviewState == GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isEmpty()
+          })
+        }
+        val mergePullRequest = createMergeReviewButton(scope, reviewFlowVm)
+
+        val actionGroup = DefaultActionGroup(GithubBundle.message("pull.request.review.actions.more.name"), true)
+        val moreActions = createMoreButton(actionGroup)
+
+        scope.launch {
+          reviewFlowVm.reviewState.collect { reviewState ->
+            actionGroup.removeAll()
+            when (reviewState) {
+              GHPRReviewFlowViewModel.ReviewState.NEED_REVIEW, GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES -> {
+                actionGroup.add(GHPRCommitMergeAction(stateModel, securityService).toAnAction())
+                actionGroup.add(GHPRCloseAction(stateModel, securityService).toAnAction())
+              }
+              GHPRReviewFlowViewModel.ReviewState.ACCEPTED -> {
+                actionGroup.add(GHPRRequestReviewAction(stateModel, securityService, metadataModel, avatarIconsProvider).toAnAction())
+                actionGroup.add(GHPRCloseAction(stateModel, securityService).toAnAction())
+              }
+            }
+          }
+        }
+
+        return JPanel(horizontalLayout).apply {
+          isOpaque = false
+          add(requestReviewButton, CC())
+          add(reRequestReviewButton, CC())
+          add(mergePullRequest, CC())
+          add(moreActions, CC())
+        }
+      }
+    }
+
+    class Reviewer(
+      scope: CoroutineScope,
+      reviewDetailsVm: GHPRDetailsViewModel,
+      reviewFlowVm: GHPRReviewFlowViewModel,
+      stateModel: GHPRStateModel,
+      securityService: GHPRSecurityService,
+      metadataModel: GHPRMetadataModel,
+      avatarIconsProvider: GHAvatarIconsProvider,
+      private val dataProvider: GHPRDataProvider
+    ) : StateUI(scope, reviewDetailsVm, reviewFlowVm, metadataModel, stateModel, securityService, avatarIconsProvider) {
+      override fun createReviewActionsForOpenReview(): JComponent {
+        val submitReviewButton = createSubmitReviewButton(scope, reviewFlowVm, dataProvider)
+        val mergeReviewButton = createMergeReviewButton(scope, reviewFlowVm)
+
+        val actionGroup = DefaultActionGroup(GithubBundle.message("pull.request.review.actions.more.name"), true)
+        val moreActions = createMoreButton(actionGroup)
+
+        scope.launch {
+          reviewFlowVm.reviewState.collect { reviewState ->
+            actionGroup.removeAll()
+            when (reviewState) {
+              GHPRReviewFlowViewModel.ReviewState.NEED_REVIEW, GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES -> {
+                actionGroup.add(GHPRRequestReviewAction(stateModel, securityService, metadataModel, avatarIconsProvider).toAnAction())
+                actionGroup.add(GHPRCommitMergeAction(stateModel, securityService).toAnAction())
+                actionGroup.add(GHPRCloseAction(stateModel, securityService).toAnAction())
+              }
+              GHPRReviewFlowViewModel.ReviewState.ACCEPTED -> {
+                actionGroup.add(GHPRRequestReviewAction(stateModel, securityService, metadataModel, avatarIconsProvider).toAnAction())
+                actionGroup.add(GHPRCloseAction(stateModel, securityService).toAnAction())
+              }
+            }
+          }
+        }
+
+        return JPanel(horizontalLayout).apply {
+          isOpaque = false
+          add(submitReviewButton, CC())
+          add(mergeReviewButton, CC())
+          add(moreActions, CC())
         }
       }
 
-      private fun createAccessDeniedLabel(isDraft: Boolean): JComponent {
-        return JLabel().apply {
-          when {
-            !canClose -> {
-              JLabel().apply {
-                icon = AllIcons.RunConfigurations.TestError
-                text = GithubBundle.message("pull.request.repo.access.required")
-              }
-            }
-            !canMarkReadyForReview && isDraft -> {
-              JLabel().apply {
-                icon = AllIcons.RunConfigurations.TestError
-                text = GithubBundle.message("pull.request.repo.write.access.required")
-              }
-            }
-            !canMerge && !isDraft -> {
-              JLabel().apply {
-                icon = AllIcons.RunConfigurations.TestError
-                text = GithubBundle.message("pull.request.repo.write.access.required")
-              }
-            }
-            mergeForbidden && !isDraft -> {
-              JLabel().apply {
-                icon = AllIcons.RunConfigurations.TestError
-                text = GithubBundle.message("pull.request.merge.disabled")
-              }
-            }
-            else -> {
-              isVisible = false
-            }
+      private fun createSubmitReviewButton(
+        scope: CoroutineScope,
+        reviewFlowVm: GHPRReviewFlowViewModel,
+        dataProvider: GHPRDataProvider
+      ): JComponent {
+        return JButton().apply {
+          isOpaque = false
+          addActionListener {
+            val dataContext = SimpleDataContext.builder()
+              .add(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER, dataProvider)
+              .build()
+            val presentation = Presentation()
+            presentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, this)
+            val anActionEvent = AnActionEvent.createFromDataContext("github.review.details", presentation, dataContext)
+            GHPRReviewSubmitAction().actionPerformed(anActionEvent)
           }
+
+          bindText(scope, reviewFlowVm.pendingCommentsState.map { pendingComments ->
+            GithubBundle.message("pull.request.review.actions.submit", pendingComments)
+          })
+          bindVisibility(scope, reviewFlowVm.reviewState.map {
+            it == GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES || it == GHPRReviewFlowViewModel.ReviewState.NEED_REVIEW
+          })
         }
       }
+    }
 
-      override fun createButtons(): List<JComponent> {
-        val list = mutableListOf<JComponent>()
-        if (canMarkReadyForReview) {
-          val button = JButton(GHPRMarkReadyForReviewAction(stateModel))
-          list.add(button)
-          stateModel.addAndInvokeDraftStateListener {
-            button.isVisible = stateModel.isDraft
-          }
+    class Guest(
+      scope: CoroutineScope,
+      reviewDetailsVm: GHPRDetailsViewModel,
+      reviewFlowVm: GHPRReviewFlowViewModel,
+      stateModel: GHPRStateModel,
+      securityService: GHPRSecurityService,
+      metadataModel: GHPRMetadataModel,
+      avatarIconsProvider: GHAvatarIconsProvider
+    ) : StateUI(scope, reviewDetailsVm, reviewFlowVm, metadataModel, stateModel, securityService, avatarIconsProvider) {
+      override fun createReviewActionsForOpenReview(): JComponent {
+        val setAsReviewerButton = JButton().apply {
+          isOpaque = false
+          text = CollaborationToolsBundle.message("review.details.action.set.myself.as.reviewer")
+          action = GHPRSetMyselfAsReviewerAction(stateModel, securityService, metadataModel)
         }
-
-        if (canMerge && !mergeForbidden) {
-          val allowedActions = mutableListOf<Action>()
-          if (canCommitMerge)
-            allowedActions.add(GHPRCommitMergeAction(stateModel))
-          if (canRebaseMerge)
-            allowedActions.add(GHPRRebaseMergeAction(stateModel))
-          if (canSquashMerge)
-            allowedActions.add(GHPRSquashMergeAction(stateModel))
-
-          val action = allowedActions.firstOrNull()
-          val actions = if (allowedActions.size > 1) Array(allowedActions.size - 1) { allowedActions[it + 1] } else emptyArray()
-
-          val mergeButton = JBOptionButton(action, actions)
-          list.add(mergeButton)
-          stateModel.addAndInvokeDraftStateListener {
-            mergeButton.isVisible = !stateModel.isDraft
-          }
+        val actionGroup = DefaultActionGroup(GithubBundle.message("pull.request.review.actions.more.name"), true).apply {
+          add(GHPRRequestReviewAction(stateModel, securityService, metadataModel, avatarIconsProvider).toAnAction())
+          add(GHPRCommitMergeAction(stateModel, securityService).toAnAction())
+          add(GHPRCloseAction(stateModel, securityService).toAnAction())
         }
+        val moreButton = createMoreButton(actionGroup)
 
-        if (canClose) {
-          list.add(JButton(GHPRCloseAction(stateModel)))
-        }
-        return list
-      }
-
-      private inner class LoadingController(private val panel: Wrapper) {
-
-        init {
-          stateModel.addAndInvokeMergeabilityStateLoadingResultListener(::update)
-          stateModel.addAndInvokeDraftStateListener(::update)
-        }
-
-        private fun update() {
-          val mergeability = stateModel.mergeabilityState
-          if (mergeability == null) {
-            if (stateModel.mergeabilityLoadingError?.takeIf { !CompletableFutureUtil.isCancellation(it) } == null) {
-              panel.setContent(createNotLoadedComponent(stateModel.isDraft))
-            }
-            else {
-              panel.setContent(createErrorComponent())
-            }
-          }
-          else {
-            panel.setContent(createLoadedComponent(mergeability, stateModel.isDraft))
-            panel.revalidate()
-          }
+        return JPanel(horizontalLayout).apply {
+          isOpaque = false
+          add(setAsReviewerButton, CC())
+          add(moreButton, CC())
         }
       }
     }

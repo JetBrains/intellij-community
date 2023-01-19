@@ -22,9 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 @State(
     name = "TemplateDataLanguagePatterns",
     storages = @Storage("templateLanguages.xml"),

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder
@@ -59,7 +59,7 @@ class ModuleTypeRegistrationTest : HeavyPlatformTestCase() {
     extension.setPluginDescriptor(DefaultPluginDescriptor("test"))
     extension.id = MockModuleType.ID
     extension.implementationClass = MockModuleType::class.qualifiedName
-    ModuleTypeManagerImpl.EP_NAME.getPoint().registerExtension(extension, moduleTypeDisposable)
+    ModuleTypeManagerImpl.EP_NAME.point.registerExtension(extension, moduleTypeDisposable)
   }
 }
 

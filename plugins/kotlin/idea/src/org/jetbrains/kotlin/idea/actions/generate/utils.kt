@@ -30,7 +30,7 @@ tailrec fun ClassDescriptor.findDeclaredFunction(
         .firstOrNull { it.containingDeclaration == this && it.kind == CallableMemberDescriptor.Kind.DECLARATION && filter(it) }
         ?.let { return it }
 
-    return if (checkSuperClasses) getSuperClassOrAny().findDeclaredFunction(name, checkSuperClasses, filter) else null
+    return if (checkSuperClasses) getSuperClassOrAny().findDeclaredFunction(name, checkSuperClasses = true, filter) else null
 }
 
 fun getPropertiesToUseInGeneratedMember(classOrObject: KtClassOrObject): List<KtNamedDeclaration> {

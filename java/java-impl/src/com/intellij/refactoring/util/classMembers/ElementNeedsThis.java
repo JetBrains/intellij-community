@@ -19,9 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class ElementNeedsThis extends ClassThisReferencesVisitor {
   private boolean myResult;
   private final PsiElement myMember;

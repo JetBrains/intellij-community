@@ -209,7 +209,7 @@ PsiJetFileStubImpl[package=a]
               MODIFIER_LIST[public]
               VALUE_PARAMETER_LIST
             CLASS_BODY
-          CLASS[classId=a/InheritingClasses.InheritAny.OnlyTrait, fqName=a.InheritingClasses.InheritAny.OnlyTrait, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=false, name=OnlyTrait, superNames=[SomeTrait]]
+          CLASS[classId=a/InheritingClasses.InheritAny.OnlyInterface, fqName=a.InheritingClasses.InheritAny.OnlyInterface, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=false, name=OnlyInterface, superNames=[SomeInterface]]
             MODIFIER_LIST[public final]
             PRIMARY_CONSTRUCTOR
               MODIFIER_LIST[public]
@@ -224,9 +224,9 @@ PsiJetFileStubImpl[package=a]
                           REFERENCE_EXPRESSION[referencedName=a]
                         REFERENCE_EXPRESSION[referencedName=InheritingClasses]
                       REFERENCE_EXPRESSION[referencedName=InheritAny]
-                    REFERENCE_EXPRESSION[referencedName=SomeTrait]
+                    REFERENCE_EXPRESSION[referencedName=SomeInterface]
             CLASS_BODY
-          CLASS[classId=a/InheritingClasses.InheritAny.OnlyTraits, fqName=a.InheritingClasses.InheritAny.OnlyTraits, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=false, name=OnlyTraits, superNames=[SomeTrait, SomeTrait2]]
+          CLASS[classId=a/InheritingClasses.InheritAny.OnlyInterfaces, fqName=a.InheritingClasses.InheritAny.OnlyInterfaces, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=false, name=OnlyInterfaces, superNames=[SomeInterface, SomeInterface2]]
             MODIFIER_LIST[public final]
             PRIMARY_CONSTRUCTOR
               MODIFIER_LIST[public]
@@ -241,7 +241,7 @@ PsiJetFileStubImpl[package=a]
                           REFERENCE_EXPRESSION[referencedName=a]
                         REFERENCE_EXPRESSION[referencedName=InheritingClasses]
                       REFERENCE_EXPRESSION[referencedName=InheritAny]
-                    REFERENCE_EXPRESSION[referencedName=SomeTrait]
+                    REFERENCE_EXPRESSION[referencedName=SomeInterface]
               SUPER_TYPE_ENTRY
                 TYPE_REFERENCE
                   USER_TYPE
@@ -251,15 +251,15 @@ PsiJetFileStubImpl[package=a]
                           REFERENCE_EXPRESSION[referencedName=a]
                         REFERENCE_EXPRESSION[referencedName=InheritingClasses]
                       REFERENCE_EXPRESSION[referencedName=InheritAny]
-                    REFERENCE_EXPRESSION[referencedName=SomeTrait2]
+                    REFERENCE_EXPRESSION[referencedName=SomeInterface2]
             CLASS_BODY
-          CLASS[classId=a/InheritingClasses.InheritAny.SomeTrait, fqName=a.InheritingClasses.InheritAny.SomeTrait, isEnumEntry=false, isInterface=true, isLocal=false, isTopLevel=false, name=SomeTrait, superNames=[]]
+          CLASS[classId=a/InheritingClasses.InheritAny.SomeInterface, fqName=a.InheritingClasses.InheritAny.SomeInterface, isEnumEntry=false, isInterface=true, isLocal=false, isTopLevel=false, name=SomeInterface, superNames=[]]
             MODIFIER_LIST[public]
             CLASS_BODY
-          CLASS[classId=a/InheritingClasses.InheritAny.SomeTrait2, fqName=a.InheritingClasses.InheritAny.SomeTrait2, isEnumEntry=false, isInterface=true, isLocal=false, isTopLevel=false, name=SomeTrait2, superNames=[]]
+          CLASS[classId=a/InheritingClasses.InheritAny.SomeInterface2, fqName=a.InheritingClasses.InheritAny.SomeInterface2, isEnumEntry=false, isInterface=true, isLocal=false, isTopLevel=false, name=SomeInterface2, superNames=[]]
             MODIFIER_LIST[public]
             CLASS_BODY
-          CLASS[classId=a/InheritingClasses.InheritAny.TraitWithExplicitAny, fqName=a.InheritingClasses.InheritAny.TraitWithExplicitAny, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=false, name=TraitWithExplicitAny, superNames=[Any, SomeTrait]]
+          CLASS[classId=a/InheritingClasses.InheritAny.InterfaceWithExplicitAny, fqName=a.InheritingClasses.InheritAny.InterfaceWithExplicitAny, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=false, name=InterfaceWithExplicitAny, superNames=[Any, SomeInterface]]
             MODIFIER_LIST[public final]
             PRIMARY_CONSTRUCTOR
               MODIFIER_LIST[public]
@@ -280,9 +280,9 @@ PsiJetFileStubImpl[package=a]
                           REFERENCE_EXPRESSION[referencedName=a]
                         REFERENCE_EXPRESSION[referencedName=InheritingClasses]
                       REFERENCE_EXPRESSION[referencedName=InheritAny]
-                    REFERENCE_EXPRESSION[referencedName=SomeTrait]
+                    REFERENCE_EXPRESSION[referencedName=SomeInterface]
             CLASS_BODY
-          CLASS[classId=a/InheritingClasses.InheritAny.TraitsWithExplicitAny, fqName=a.InheritingClasses.InheritAny.TraitsWithExplicitAny, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=false, name=TraitsWithExplicitAny, superNames=[SomeTrait2, Any, SomeTrait]]
+          CLASS[classId=a/InheritingClasses.InheritAny.InterfacesWithExplicitAny, fqName=a.InheritingClasses.InheritAny.InterfacesWithExplicitAny, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=false, name=InterfacesWithExplicitAny, superNames=[SomeInterface2, Any, SomeInterface]]
             MODIFIER_LIST[public final]
             PRIMARY_CONSTRUCTOR
               MODIFIER_LIST[public]
@@ -297,7 +297,7 @@ PsiJetFileStubImpl[package=a]
                           REFERENCE_EXPRESSION[referencedName=a]
                         REFERENCE_EXPRESSION[referencedName=InheritingClasses]
                       REFERENCE_EXPRESSION[referencedName=InheritAny]
-                    REFERENCE_EXPRESSION[referencedName=SomeTrait2]
+                    REFERENCE_EXPRESSION[referencedName=SomeInterface2]
               SUPER_TYPE_ENTRY
                 TYPE_REFERENCE
                   USER_TYPE
@@ -313,7 +313,7 @@ PsiJetFileStubImpl[package=a]
                           REFERENCE_EXPRESSION[referencedName=a]
                         REFERENCE_EXPRESSION[referencedName=InheritingClasses]
                       REFERENCE_EXPRESSION[referencedName=InheritAny]
-                    REFERENCE_EXPRESSION[referencedName=SomeTrait]
+                    REFERENCE_EXPRESSION[referencedName=SomeInterface]
             CLASS_BODY
       CLASS[classId=a/InheritingClasses.InheritFunctionType, fqName=a.InheritingClasses.InheritFunctionType, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=false, name=InheritFunctionType, superNames=[]]
         MODIFIER_LIST[abstract public]

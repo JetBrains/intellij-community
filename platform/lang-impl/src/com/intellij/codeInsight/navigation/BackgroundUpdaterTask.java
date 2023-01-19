@@ -16,7 +16,7 @@ import java.util.Comparator;
 
 public abstract class BackgroundUpdaterTask extends BackgroundUpdaterTaskBase<PsiElement> {
 
-  public BackgroundUpdaterTask(@Nullable Project project, @ProgressTitle @NotNull String title, @Nullable Comparator<PsiElement> comparator) {
+  public BackgroundUpdaterTask(@Nullable Project project, @ProgressTitle @NotNull String title, @Nullable Comparator<? super PsiElement> comparator) {
     super(project, title, comparator);
   }
 
@@ -35,6 +35,7 @@ public abstract class BackgroundUpdaterTask extends BackgroundUpdaterTaskBase<Ps
     return new UsageInfo2UsageAdapter(new UsageInfo(element));
   }
 
+  @Deprecated(forRemoval = true)
   @Override
   public boolean updateComponent(@NotNull PsiElement element, @Nullable Comparator comparator) {
     //Ensures that method with signature `updateComponent(PsiElement, Comparator)` is present in bytecode,

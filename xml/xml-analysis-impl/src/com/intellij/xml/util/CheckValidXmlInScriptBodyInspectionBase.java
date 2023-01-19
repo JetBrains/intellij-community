@@ -55,7 +55,7 @@ public class CheckValidXmlInScriptBodyInspectionBase extends XmlSuppressableInsp
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
-      @Override public void visitXmlTag(final XmlTag tag) {
+      @Override public void visitXmlTag(final @NotNull XmlTag tag) {
         if (HtmlUtil.isHtmlTag(tag)) return;
         
         if (HtmlUtil.SCRIPT_TAG_NAME.equals(tag.getName()) ||

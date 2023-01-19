@@ -54,7 +54,7 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
 
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
     fun testMakeNotFinal() {
         myFixture.configureByText(

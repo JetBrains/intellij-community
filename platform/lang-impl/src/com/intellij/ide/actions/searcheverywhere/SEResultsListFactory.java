@@ -67,7 +67,7 @@ abstract class SEResultsListFactory {
       return component;
     }
     SelectablePanel selectablePanel = SelectablePanel.wrap(component, JBUI.CurrentTheme.Popup.BACKGROUND);
-    PopupUtil.configSelectablePanel(selectablePanel);
+    PopupUtil.configListRendererFixedHeight(selectablePanel);
     if (selected) {
       selectablePanel.setSelectionColor(UIUtil.getListBackground(true, true));
     }
@@ -79,15 +79,15 @@ abstract class SEResultsListFactory {
                                       SearchListModel searchListModel, Map<String, ListCellRenderer<? super Object>> renderersCache) {
     Color unselectedBackground = extractUnselectedBackground(selected, () ->
       SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(list, value, index, false, hasFocus));
-    Component component = SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(
-      list, value, index, selected, hasFocus);
+    Component component = detachParent(SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(
+      list, value, index, selected, hasFocus));
     if (component == null) {
       SearchEverywhereContributor<Object> contributor = searchListModel.getContributorForIndex(index);
       assert contributor != null : "Null contributor is not allowed here";
       ListCellRenderer<? super Object> renderer = renderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
       unselectedBackground = extractUnselectedBackground(selected, () ->
-        renderer.getListCellRendererComponent(list, value, index, false, true));
-      component = renderer.getListCellRendererComponent(list, value, index, selected, true);
+        detachParent(renderer.getListCellRendererComponent(list, value, index, false, true)));
+      component = detachParent(renderer.getListCellRendererComponent(list, value, index, selected, true));
     }
 
     if (component instanceof JComponent) {
@@ -108,10 +108,6 @@ abstract class SEResultsListFactory {
         rowBackground = unselectedBackground;
       }
       else {
-        // In case component's background is null parent's background is returned. Detach from parent to avoid that
-        if (component.getParent() != null) {
-          component.getParent().remove(component);
-        }
         rowBackground = component.getBackground();
       }
       if (rowBackground == null || rowBackground == UIUtil.getListBackground()) {
@@ -130,7 +126,7 @@ abstract class SEResultsListFactory {
         component = selectablePanel;
       }
       selectablePanel.setBackground(rowBackground);
-      PopupUtil.configSelectablePanel(selectablePanel);
+      PopupUtil.configListRendererFixedHeight(selectablePanel);
       if (selected) {
         selectablePanel.setSelectionColor(UIUtil.getListBackground(true, true));
       }
@@ -138,6 +134,16 @@ abstract class SEResultsListFactory {
       component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
     }
 
+    return component;
+  }
+
+  /**
+   * In case component's background is null parent's background is returned. Detach from parent to avoid that
+   */
+  private static <T extends Component> T detachParent(@Nullable T component) {
+    if (ExperimentalUI.isNewUI() && component != null && component.getParent() != null) {
+      component.getParent().remove(component);
+    }
     return component;
   }
 

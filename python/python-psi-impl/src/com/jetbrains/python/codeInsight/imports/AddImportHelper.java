@@ -45,7 +45,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Does the actual job of adding an import statement into a file.
- * User: dcheryasov
  */
 public final class AddImportHelper {
   private static final Logger LOG = Logger.getInstance(AddImportHelper.class);

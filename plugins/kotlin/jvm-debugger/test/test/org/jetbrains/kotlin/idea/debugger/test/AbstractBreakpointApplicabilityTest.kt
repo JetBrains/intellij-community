@@ -19,7 +19,7 @@ abstract class AbstractBreakpointApplicabilityTest : KotlinLightCodeInsightFixtu
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     protected open fun doTest(unused: String) {

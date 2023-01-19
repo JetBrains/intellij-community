@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegistry {
   private final Map<String, ProcessOutputType> myStdoutAttrsToKeyMap = new ConcurrentHashMap<>();
@@ -47,13 +47,15 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
 
   /*
     Description
-     0	Cancel all attributes except foreground/background color
+     0	Cancel all attributes
      1	Bright (bold)
      2	Normal (not bold)
+     3	Italic
      4	Underline
      5	Blink
      7	Reverse video
      8	Concealed (don't display characters)
+     9	Strike through
      30	Make foreground (the characters) black
      31	Make foreground red
      32	Make foreground green
@@ -117,7 +119,7 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
                                          (ProcessOutputType)streamType : (ProcessOutputType)ProcessOutputTypes.STDOUT;
 
     ProcessOutputType newKey = new ProcessOutputType(ansiSerializedState, streamOutputType);
-    ConsoleViewContentType.registerNewConsoleViewType(newKey, new AnsiConsoleViewContentType(terminal));
+    ConsoleViewContentType.registerNewConsoleViewType(newKey, createAnsiConsoleViewContentType(terminal));
     attrsToKeyMap.put(ansiSerializedState, newKey);
     return newKey;
   }
@@ -211,128 +213,103 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
         backgroundColor = value - 92;
       }
     }
-    return new AnsiConsoleViewContentType(attribute, backgroundColor, foregroundColor, inverse, effectType, fontType);
+    return createAnsiConsoleViewContentType(
+      attribute,
+      backgroundColor,
+      foregroundColor,
+      null,
+      null,
+      inverse,
+      effectType == null ? Collections.emptyList() : Collections.singletonList(effectType),
+      fontType
+    );
   }
 
-  private static final class AnsiConsoleViewContentType extends ConsoleViewContentType {
-    private final int myBackgroundColorIndex;
-    private final int myForegroundColorIndex;
-    private final @Nullable Color myEnforcedBackgroundColor;
-    private final @Nullable Color myEnforcedForegroundColor;
-    private final boolean myInverse;
-    private final @NotNull java.util.List<EffectType> myEffectTypes;
-    private final int myFontType;
+  private static ConsoleViewContentType createAnsiConsoleViewContentType(@NotNull AnsiTerminalEmulator terminalEmulator) {
+    return createAnsiConsoleViewContentType(
+      terminalEmulator.getAnsiSerializedSGRState(),
+      terminalEmulator.getBackgroundColorIndex(),
+      terminalEmulator.getForegroundColorIndex(),
+      terminalEmulator.getBackgroundColor(),
+      terminalEmulator.getForegroundColor(),
+      terminalEmulator.isInverse(),
+      computeEffectTypes(terminalEmulator),
+      computeAwtFont(terminalEmulator)
+    );
+  }
 
-    private AnsiConsoleViewContentType(@NotNull String attribute,
-                                       int backgroundColorIndex,
-                                       int foregroundColorIndex,
-                                       @Nullable Color enforcedBackgroundColor,
-                                       @Nullable Color enforcedForegroundColor,
-                                       boolean inverse,
-                                       @NotNull java.util.List<EffectType> effectTypes,
-                                       int fontType) {
-      super(attribute, new TextAttributes());
-      myBackgroundColorIndex = backgroundColorIndex;
-      myEnforcedBackgroundColor = enforcedBackgroundColor;
-      myForegroundColorIndex = foregroundColorIndex;
-      myEnforcedForegroundColor = enforcedForegroundColor;
-      myInverse = inverse;
-      myEffectTypes = effectTypes.isEmpty() ? ContainerUtil.emptyList() : ContainerUtil.immutableList(effectTypes);
-      myFontType = fontType;
+  private static @NotNull List<EffectType> computeEffectTypes(@NotNull AnsiTerminalEmulator terminalEmulator) {
+    ArrayList<EffectType> result = new ArrayList<>();
+    AnsiTerminalEmulator.Underline underline = terminalEmulator.getUnderline();
+    if (underline == AnsiTerminalEmulator.Underline.SINGLE_UNDERLINE) {
+      result.add(EffectType.LINE_UNDERSCORE);
+    }
+    else if (underline == AnsiTerminalEmulator.Underline.DOUBLE_UNDERLINE) {
+      result.add(EffectType.BOLD_LINE_UNDERSCORE);
+    }
+    if (terminalEmulator.isCrossedOut()) {
+      result.add(EffectType.STRIKEOUT);
+    }
+    AnsiTerminalEmulator.FrameType frameType = terminalEmulator.getFrameType();
+    if (frameType == AnsiTerminalEmulator.FrameType.FRAMED) {
+      result.add(EffectType.BOXED);
+    }
+    else if (frameType == AnsiTerminalEmulator.FrameType.ENCIRCLED) {
+      result.add(EffectType.ROUNDED_BOX);
+    }
+    return result;
+  }
+
+  private static int computeAwtFont(@NotNull AnsiTerminalEmulator terminalEmulator) {
+    int result = 0;
+    if (terminalEmulator.getWeight() == AnsiTerminalEmulator.Weight.BOLD) {
+      result = Font.BOLD;
+    }
+    if (terminalEmulator.isItalic()) {
+      result |= Font.ITALIC;
+    }
+    return result;
+  }
+
+  private static ConsoleViewContentType createAnsiConsoleViewContentType(
+    @NotNull String attribute,
+    int backgroundColorIndex,
+    int foregroundColorIndex,
+    @Nullable Color enforcedBackgroundColor,
+    @Nullable Color enforcedForegroundColor,
+    boolean inverse,
+    @NotNull java.util.List<EffectType> effectTypes,
+    int fontType
+  ) {
+    TextAttributes attrs = new TextAttributes();
+    attrs.setEffectType(null); // re-setting default BOX
+    if (fontType != -1) {
+      attrs.setFontType(fontType);
     }
 
-    private AnsiConsoleViewContentType(@NotNull String attribute,
-                                       int backgroundColor,
-                                       int foregroundColor,
-                                       boolean inverse,
-                                       @Nullable EffectType effectType,
-                                       int fontType) {
-      this(attribute, backgroundColor, foregroundColor, null, null, inverse,
-           effectType == null ? Collections.emptyList() : Collections.singletonList(effectType), fontType);
+    Color foregroundColor = getColor(foregroundColorIndex, enforcedForegroundColor, ColoredOutputTypeRegistryImpl::getDefaultForegroundColor);
+    Color backgroundColor = getColor(backgroundColorIndex, enforcedBackgroundColor, ColoredOutputTypeRegistryImpl::getDefaultBackgroundColor);
+    if (inverse) {
+      attrs.setForegroundColor(backgroundColor);
+      attrs.setEffectColor(backgroundColor);
+      attrs.setBackgroundColor(foregroundColor);
+      effectTypes.forEach(it -> attrs.withAdditionalEffect(it, backgroundColor));
+    }
+    else {
+      attrs.setForegroundColor(foregroundColor);
+      attrs.setEffectColor(foregroundColor);
+      attrs.setBackgroundColor(backgroundColor);
+      effectTypes.forEach(it -> attrs.withAdditionalEffect(it, foregroundColor));
     }
 
-    private AnsiConsoleViewContentType(@NotNull AnsiTerminalEmulator terminalEmulator) {
-      this(terminalEmulator.getAnsiSerializedSGRState(),
-           terminalEmulator.getBackgroundColorIndex(),
-           terminalEmulator.getForegroundColorIndex(),
-           terminalEmulator.getBackgroundColor(),
-           terminalEmulator.getForegroundColor(),
-           terminalEmulator.isInverse(),
-           computeEffectTypes(terminalEmulator),
-           computeAwtFont(terminalEmulator));
+    return new ConsoleViewContentType(attribute, attrs);
+  }
+
+  private static Color getColor(int colorIndex, Color enforcedColor, Supplier<? extends Color> getDefaultColor) {
+    if (enforcedColor != null) {
+      return enforcedColor;
     }
 
-    /**
-     * Computes effect types that can be represented by our editor
-     */
-    private static @NotNull List<EffectType> computeEffectTypes(@NotNull AnsiTerminalEmulator terminalEmulator) {
-      ArrayList<EffectType> result = new ArrayList<>();
-      AnsiTerminalEmulator.Underline underline = terminalEmulator.getUnderline();
-      if (underline == AnsiTerminalEmulator.Underline.SINGLE_UNDERLINE) {
-        result.add(EffectType.LINE_UNDERSCORE);
-      }
-      else if (underline == AnsiTerminalEmulator.Underline.DOUBLE_UNDERLINE) {
-        result.add(EffectType.BOLD_LINE_UNDERSCORE);
-      }
-      if (terminalEmulator.isCrossedOut()) {
-        result.add(EffectType.STRIKEOUT);
-      }
-      AnsiTerminalEmulator.FrameType frameType = terminalEmulator.getFrameType();
-      if (frameType == AnsiTerminalEmulator.FrameType.FRAMED) {
-        result.add(EffectType.BOXED);
-      }
-      else if (frameType == AnsiTerminalEmulator.FrameType.ENCIRCLED) {
-        result.add(EffectType.ROUNDED_BOX);
-      }
-      return result;
-    }
-
-    /**
-     * Computes font style from boldness/italic flags
-     */
-    private static int computeAwtFont(@NotNull AnsiTerminalEmulator terminalEmulator) {
-      int result = 0;
-      if (terminalEmulator.getWeight() == AnsiTerminalEmulator.Weight.BOLD) {
-        result = Font.BOLD;
-      }
-      if (terminalEmulator.isItalic()) {
-        result |= Font.ITALIC;
-      }
-      return result;
-    }
-
-    @Override
-    public TextAttributes getAttributes() {
-      TextAttributes attrs = new TextAttributes();
-      attrs.setEffectType(null); // re-setting default BOX
-      if (myFontType != -1) {
-        attrs.setFontType(myFontType);
-      }
-      Color foregroundColor = getForegroundColor();
-      Color backgroundColor = getBackgroundColor();
-      if (myInverse) {
-        attrs.setForegroundColor(backgroundColor);
-        attrs.setEffectColor(backgroundColor);
-        attrs.setBackgroundColor(foregroundColor);
-        myEffectTypes.forEach(it -> attrs.withAdditionalEffect(it, backgroundColor));
-      }
-      else {
-        attrs.setForegroundColor(foregroundColor);
-        attrs.setEffectColor(foregroundColor);
-        attrs.setBackgroundColor(backgroundColor);
-        myEffectTypes.forEach(it -> attrs.withAdditionalEffect(it, foregroundColor));
-      }
-      return attrs;
-    }
-
-    private Color getForegroundColor() {
-      return myEnforcedForegroundColor != null ? myEnforcedForegroundColor :
-             myForegroundColorIndex != -1 ? getAnsiColor(myForegroundColorIndex) : getDefaultForegroundColor();
-    }
-
-    private Color getBackgroundColor() {
-      return myEnforcedBackgroundColor != null ? myEnforcedBackgroundColor :
-             myBackgroundColorIndex != -1 ? getAnsiColor(myBackgroundColorIndex) : getDefaultBackgroundColor();
-    }
+    return colorIndex != -1 ? getAnsiColor(colorIndex) : getDefaultColor.get();
   }
 }

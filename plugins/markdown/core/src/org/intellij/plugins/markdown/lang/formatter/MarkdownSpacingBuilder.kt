@@ -33,13 +33,13 @@ internal object MarkdownSpacingBuilder {
 
     return SpacingBuilder(settings, MarkdownLanguage.INSTANCE)
       //CODE
-      .aroundInside(MarkdownElementTypes.CODE_FENCE, MarkdownElementTypes.MARKDOWN_FILE)
+      .aroundInside(MarkdownElementTypes.CODE_FENCE, MarkdownElementTypes.MARKDOWN_FILE_ELEMENT_TYPE)
       .blankLinesRange(markdown.MIN_LINES_AROUND_BLOCK_ELEMENTS, markdown.MAX_LINES_AROUND_BLOCK_ELEMENTS)
-      .aroundInside(MarkdownElementTypes.CODE_BLOCK, MarkdownElementTypes.MARKDOWN_FILE)
+      .aroundInside(MarkdownElementTypes.CODE_BLOCK, MarkdownElementTypes.MARKDOWN_FILE_ELEMENT_TYPE)
       .blankLinesRange(markdown.MIN_LINES_AROUND_BLOCK_ELEMENTS, markdown.MAX_LINES_AROUND_BLOCK_ELEMENTS)
 
       //TABLE
-      .aroundInside(MarkdownElementTypes.TABLE, MarkdownElementTypes.MARKDOWN_FILE)
+      .aroundInside(MarkdownElementTypes.TABLE, MarkdownElementTypes.MARKDOWN_FILE_ELEMENT_TYPE)
       .blankLinesRange(markdown.MIN_LINES_AROUND_BLOCK_ELEMENTS, markdown.MAX_LINES_AROUND_BLOCK_ELEMENTS)
 
       //LISTS
@@ -48,7 +48,7 @@ internal object MarkdownSpacingBuilder {
       .between(MarkdownTokenTypeSets.LISTS, MarkdownTokenTypeSets.LISTS).blankLines(markdown.MIN_LINES_AROUND_BLOCK_ELEMENTS)
       .aroundInside(MarkdownTokenTypeSets.LISTS, MarkdownElementTypes.LIST_ITEM).blankLines(0)
       //but we can enforce one line around LISTS
-      .aroundInside(MarkdownTokenTypeSets.LISTS, MarkdownElementTypes.MARKDOWN_FILE)
+      .aroundInside(MarkdownTokenTypeSets.LISTS, MarkdownElementTypes.MARKDOWN_FILE_ELEMENT_TYPE)
       .blankLinesRange(markdown.MIN_LINES_AROUND_BLOCK_ELEMENTS, markdown.MAX_LINES_AROUND_BLOCK_ELEMENTS)
 
       .applyIf(markdown.FORCE_ONE_SPACE_AFTER_LIST_BULLET) {
@@ -57,7 +57,7 @@ internal object MarkdownSpacingBuilder {
 
 
       //HEADINGS
-      .aroundInside(MarkdownTokenTypeSets.ATX_HEADERS, MarkdownElementTypes.MARKDOWN_FILE)
+      .aroundInside(MarkdownTokenTypeSets.ATX_HEADERS, MarkdownElementTypes.MARKDOWN_FILE_ELEMENT_TYPE)
       .blankLinesRange(markdown.MIN_LINES_AROUND_HEADER, markdown.MAX_LINES_AROUND_HEADER)
 
       .applyIf(markdown.FORCE_ONE_SPACE_AFTER_HEADER_SYMBOL) {
@@ -77,7 +77,7 @@ internal object MarkdownSpacingBuilder {
       .blankLines(1)
 
       //PARAGRAPHS
-      .betweenInside(MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.MARKDOWN_FILE)
+      .betweenInside(MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.MARKDOWN_FILE_ELEMENT_TYPE)
       .blankLinesRange(markdown.MIN_LINES_BETWEEN_PARAGRAPHS, markdown.MAX_LINES_BETWEEN_PARAGRAPHS)
       .apply {
         val spaces = if (markdown.FORCE_ONE_SPACE_BETWEEN_WORDS) 1 else Integer.MAX_VALUE

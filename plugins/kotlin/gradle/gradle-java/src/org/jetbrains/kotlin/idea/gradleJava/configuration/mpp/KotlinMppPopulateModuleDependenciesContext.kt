@@ -8,16 +8,11 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradle.configuration.mpp.DistinctIdKotlinDependenciesPreprocessor
 import org.jetbrains.kotlin.idea.gradle.configuration.mpp.KotlinDependenciesPreprocessor
 import org.jetbrains.kotlin.idea.gradle.configuration.mpp.plus
-import org.jetbrains.kotlin.idea.gradle.configuration.utils.createSourceSetVisibilityGraph
-import org.jetbrains.kotlin.idea.gradle.configuration.utils.transitiveClosure
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.CompilationWithDependencies
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.modifyDependenciesOnMppModules
 import org.jetbrains.kotlin.idea.gradleJava.configuration.getMppModel
 import org.jetbrains.kotlin.idea.gradleJava.configuration.klib.KotlinNativeLibrariesDependencySubstitutor
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.gradleTooling.getCompilations
-import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
@@ -33,16 +28,14 @@ internal typealias ArtifactPath = String
 data class KotlinMppPopulateModuleDependenciesContext(
     val resolverCtx: ProjectResolverContext,
     val mppModel: KotlinMPPGradleModel,
-    val gradleModule: IdeaModule,
+    val gradleIdeaModule: GradleIdeaModule,
     val ideProject: DataNode<ProjectData>,
     val ideModule: DataNode<ModuleData>,
     val dependenciesPreprocessor: KotlinDependenciesPreprocessor,
     val sourceSetMap: Map<ModuleId, IntelliJPair<DataNode<GradleSourceSetData>, ExternalSourceSet>>,
     val artifactsMap: Map<ArtifactPath, ModuleId>,
     val processedModuleIds: MutableSet<ModuleId> = mutableSetOf(),
-) {
-    val sourceSetVisibilityGraph = createSourceSetVisibilityGraph(mppModel).transitiveClosure
-}
+)
 
 fun createKotlinMppPopulateModuleDependenciesContext(
     gradleModule: IdeaModule,
@@ -61,7 +54,7 @@ fun createKotlinMppPopulateModuleDependenciesContext(
     return KotlinMppPopulateModuleDependenciesContext(
         resolverCtx = resolverCtx,
         mppModel = mppModel,
-        gradleModule = gradleModule,
+        gradleIdeaModule = gradleModule,
         ideProject = ideProject,
         ideModule = ideModule,
         dependenciesPreprocessor = dependenciesPreprocessor,
@@ -81,10 +74,3 @@ fun KotlinMppPopulateModuleDependenciesContext.getRegularDependencies(sourceSet:
 fun KotlinMppPopulateModuleDependenciesContext.getIntransitiveDependencies(sourceSet: KotlinSourceSet): List<KotlinDependency> {
     return dependenciesPreprocessor(sourceSet.intransitiveDependencies.mapNotNull { id -> mppModel.dependencyMap[id] })
 }
-
-internal fun KotlinMppPopulateModuleDependenciesContext.getCompilationsWithDependencies(
-    sourceSet: KotlinSourceSet
-): List<CompilationWithDependencies> {
-    return mppModel.getCompilations(sourceSet).map { compilation -> CompilationWithDependencies(compilation, getDependencies(compilation)) }
-}
-

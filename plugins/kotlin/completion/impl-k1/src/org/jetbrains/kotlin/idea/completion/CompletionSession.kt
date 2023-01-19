@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.OriginCapability
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class CompletionSessionConfiguration(
     val useBetterPrefixMatcherForNonImportedClasses: Boolean,
@@ -90,7 +92,7 @@ abstract class CompletionSession(
         if (reference != null) {
             if (reference.expression is KtLabelReferenceExpression) {
                 this.nameExpression = null
-                this.expression = reference.expression.parent.parent as? KtExpressionWithLabel
+                this.expression = reference.expression.parents.match(KtContainerNode::class, last = KtExpressionWithLabel::class)
             } else {
                 this.nameExpression = reference.expression
                 this.expression = nameExpression
@@ -102,16 +104,13 @@ abstract class CompletionSession(
     }
 
     protected val bindingContext = CompletionBindingContextProvider.getInstance(project).getBindingContext(position, resolutionFacade)
-    protected val inDescriptor = position.getResolutionScope(bindingContext, resolutionFacade).ownerDescriptor
-
-    private val kotlinIdentifierStartPattern = StandardPatterns.character().javaIdentifierStart().andNot(singleCharPattern('$'))
-    private val kotlinIdentifierPartPattern = StandardPatterns.character().javaIdentifierPart().andNot(singleCharPattern('$'))
+    private val inDescriptor = position.getResolutionScope(bindingContext, resolutionFacade).ownerDescriptor
 
     protected val prefix = CompletionUtil.findIdentifierPrefix(
         originalParameters.position.containingFile,
         originalParameters.offset,
-        kotlinIdentifierPartPattern or singleCharPattern('@'),
-        kotlinIdentifierStartPattern
+        kotlinIdentifierPartPattern(),
+        kotlinIdentifierStartPattern()
     )
 
     protected val prefixMatcher = CamelHumpMatcher(prefix)
@@ -304,7 +303,7 @@ abstract class CompletionSession(
 
         sorter = sorter.weighAfter("kotlin.proximity", ByNameAlphabeticalWeigher, PreferLessParametersWeigher)
 
-        sorter = sorter.weighBefore("prefix", KotlinUnwantedLookupElementWeigher)
+        sorter = sorter.weighBefore("prefix", K1SoftDeprecationWeigher)
 
         sorter = if (expectedInfos.all { it.fuzzyType?.type?.isUnit() == true }) {
             sorter.weighBefore("prefix", PreferDslMembers)
@@ -315,7 +314,7 @@ abstract class CompletionSession(
         return sorter
     }
 
-    protected fun calcContextForStatisticsInfo(): String? {
+    private fun calcContextForStatisticsInfo(): String? {
         if (expectedInfos.isEmpty()) return null
 
         var context = expectedInfos

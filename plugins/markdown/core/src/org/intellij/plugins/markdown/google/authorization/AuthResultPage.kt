@@ -29,17 +29,21 @@ object AuthResultPage {
       getMessageElement(isSuccess)
     )
 
+  private fun loadIcon(): @NlsSafe String? {
+    val icon = AppUIUtil.findIcon() ?: return null
+    if (!icon.endsWith(".svg")) {
+      return null
+    }
+    val file = File(icon)
+    if (file.exists() && file.isFile) {
+      return file.readText(Charsets.UTF_8)
+    }
+    return null
+  }
+
   private fun getApplicationIcon(): Element {
-    val icon: @NlsSafe String? = AppUIUtil.findIcon()
-      .takeIf { it?.endsWith(".svg") ?: false }
-      ?.let {
-        val iconFile = File(it)
-
-        if (iconFile.exists() && iconFile.isFile) iconFile.readText(Charsets.UTF_8)
-        else null
-      }
-
-    return div().attr("class", "central-div-app-icon").addRaw(icon ?: "")
+    val icon = loadIcon().orEmpty()
+    return div().attr("class", "central-div-app-icon").addRaw(icon)
   }
 
   private fun getMessageElement(isSuccess: Boolean): Element {

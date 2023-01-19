@@ -39,6 +39,8 @@ import java.nio.file.Path
 import kotlin.io.path.*
 
 abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
+    open fun isFirPlugin(): Boolean = false
+
     private var vfsDisposable: Ref<Disposable>? = null
 
     abstract fun getTestDataDirectory(): File
@@ -52,6 +54,7 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
         enableKotlinOfficialCodeStyle(project)
 
         vfsDisposable = allowProjectRootAccess(this)
+        checkPluginIsCorrect(isFirPlugin())
     }
 
     fun module(name: String, hasTestRoot: Boolean = false, sdkFactory: () -> Sdk = { IdeaTestUtil.getMockJdk18() }): Module {

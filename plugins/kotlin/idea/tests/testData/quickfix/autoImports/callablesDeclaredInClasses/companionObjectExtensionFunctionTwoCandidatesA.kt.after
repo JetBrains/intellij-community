@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'Companion.foo'" "true"
 package p
 
 import p.PObject.foo

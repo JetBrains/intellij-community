@@ -17,7 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +85,7 @@ public class LicensePanel extends NonOpaquePanel {
       myMessage.setIcon(warning ? EmptyIcon.ICON_16 : null);
     }
 
-    myMessage.setForeground(errorColor ? UIUtil.getErrorForeground() : null);
+    myMessage.setForeground(errorColor ? NamedColorUtil.getErrorForeground() : null);
     myMessage.setVisible(true);
 
     myPanel.setVisible(true);
@@ -161,14 +161,14 @@ public class LicensePanel extends NonOpaquePanel {
       List<String> tags = ((PluginNode)plugin).getTags();
       if (tags.contains(Tags.Freemium.name())) {
         updateLink(IdeBundle.message("plugins.configurable.activate.trial.for.full.access"), false);
+        return;
       }
-    } else {
-      PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), false), price -> {
-        if (plugin == getPlugin.get()) {
-          updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), true);
-        }
-      });
     }
+    PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), false), price -> {
+      if (plugin == getPlugin.get()) {
+        updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), true);
+      }
+    });
   }
 
   public static boolean isEA2Product(@Nullable String productCodeOrPluginId) {

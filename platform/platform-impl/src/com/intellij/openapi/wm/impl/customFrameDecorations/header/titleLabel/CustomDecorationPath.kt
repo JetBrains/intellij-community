@@ -11,9 +11,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
@@ -22,11 +19,9 @@ import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JFrame
 
-internal open class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath(), CustomHeaderTitle {
+internal open class CustomDecorationPath(private val frame: JFrame) : SelectedEditorFilePath(frame), CustomHeaderTitle {
   companion object {
     fun createInstance(frame: JFrame): CustomDecorationPath = CustomDecorationPath(frame)
-
-    fun createMainInstance(frame: JFrame): CustomDecorationPath = MainCustomDecorationPath(frame)
   }
 
   private val projectManagerListener = object : ProjectManagerListener {
@@ -110,33 +105,12 @@ internal open class CustomDecorationPath(val frame: JFrame) : SelectedEditorFile
     frame.removePropertyChangeListener(titleChangeListener)
   }
 
-  private fun getMouseInsetList(view: JComponent,
-                                mouseInsets: Int = 1): List<RelativeRectangle> {
+  private fun getMouseInsetList(view: JComponent, mouseInsets: Int = 1): List<RelativeRectangle> {
     return listOf(
       RelativeRectangle(view, Rectangle(0, 0, mouseInsets, view.height)),
       RelativeRectangle(view, Rectangle(0, 0, view.width, mouseInsets)),
-      RelativeRectangle(view,
-        Rectangle(0, view.height - mouseInsets, view.width, mouseInsets)),
-      RelativeRectangle(view,
-        Rectangle(view.width - mouseInsets, 0, mouseInsets, view.height))
+      RelativeRectangle(view, Rectangle(0, view.height - mouseInsets, view.width, mouseInsets)),
+      RelativeRectangle(view, Rectangle(view.width - mouseInsets, 0, mouseInsets, view.height))
     )
-  }
-}
-
-internal class MainCustomDecorationPath(frame: JFrame) : CustomDecorationPath(frame) {
-  private val classKey = "ide.borderless.tab.caption.in.title"
-
-  private val registryListener = object : RegistryValueListener {
-    override fun afterValueChanged(value: RegistryValue) {
-      updatePaths()
-    }
-  }
-
-  override val captionInTitle: Boolean
-    get() = Registry.get(classKey).asBoolean()
-
-  override fun addAdditionalListeners(disp: Disposable) {
-    super.addAdditionalListeners(disp)
-    Registry.get(classKey).addListener(registryListener, disp)
   }
 }

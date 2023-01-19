@@ -80,47 +80,46 @@ class AntReferenceInjector implements DomReferenceInjector {
         return;
       }
     }
-    
-    if (xmlAttributeValue != null /*&& value.indexOf("@{") < 0*/) {
-      final int valueBeginingOffset = Math.abs(xmlAttributeValue.getTextRange().getStartOffset() - xmlAttributeValue.getValueTextRange().getStartOffset());
-      int startIndex;
-      int endIndex = -1;
-      while ((startIndex = value.indexOf("${", endIndex + 1)) > endIndex) {
-        if (startIndex > 0 && value.charAt(startIndex - 1) == '$') {
-          // the '$' is escaped
-          endIndex = startIndex + 1;
-          continue;
-        }
-        startIndex += 2;
-        endIndex = startIndex;
-        int nestedBrackets = 0;
-        while (value.length() > endIndex) {
-          final char ch = value.charAt(endIndex);
-          if (ch == '}') {
-            if (nestedBrackets == 0) {
-              break;
-            }
-            --nestedBrackets;
-          }
-          else if (ch == '{') {
-            ++nestedBrackets;
-          }
-          ++endIndex;
-        }
-        if (nestedBrackets > 0 || endIndex > value.length()) return;
-        if (endIndex >= startIndex) {
-          //final String propName = value.substring(startIndex, endIndex);
-          //if (antFile.isEnvironmentProperty(propName) && antFile.getProperty(propName) == null) {
-          //  continue;
-          //}
-          final AntDomPropertyReference ref = new AntDomPropertyReference(
-            contextElement, xmlAttributeValue, new TextRange(valueBeginingOffset + startIndex, valueBeginingOffset + endIndex)
-          );
-          
-          result.add(ref);
-        }
-        endIndex = startIndex;
+
+    final int valueBeginingOffset =
+      Math.abs(xmlAttributeValue.getTextRange().getStartOffset() - xmlAttributeValue.getValueTextRange().getStartOffset());
+    int startIndex;
+    int endIndex = -1;
+    while ((startIndex = value.indexOf("${", endIndex + 1)) > endIndex) {
+      if (startIndex > 0 && value.charAt(startIndex - 1) == '$') {
+        // the '$' is escaped
+        endIndex = startIndex + 1;
+        continue;
       }
+      startIndex += 2;
+      endIndex = startIndex;
+      int nestedBrackets = 0;
+      while (value.length() > endIndex) {
+        final char ch = value.charAt(endIndex);
+        if (ch == '}') {
+          if (nestedBrackets == 0) {
+            break;
+          }
+          --nestedBrackets;
+        }
+        else if (ch == '{') {
+          ++nestedBrackets;
+        }
+        ++endIndex;
+      }
+      if (nestedBrackets > 0 || endIndex > value.length()) return;
+      if (endIndex >= startIndex) {
+        //final String propName = value.substring(startIndex, endIndex);
+        //if (antFile.isEnvironmentProperty(propName) && antFile.getProperty(propName) == null) {
+        //  continue;
+        //}
+        final AntDomPropertyReference ref = new AntDomPropertyReference(
+          contextElement, xmlAttributeValue, new TextRange(valueBeginingOffset + startIndex, valueBeginingOffset + endIndex)
+        );
+        
+        result.add(ref);
+      }
+      endIndex = startIndex;
     }
   }
   

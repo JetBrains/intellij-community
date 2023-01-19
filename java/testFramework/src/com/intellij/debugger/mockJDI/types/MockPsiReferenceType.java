@@ -11,6 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -124,9 +125,7 @@ public class MockPsiReferenceType extends MockType implements ReferenceType {
 
   @Override
   public List<Method> methods() {
-    return StreamEx.of(myClass.getMethods())
-      .<Method>map(m -> new MockPsiMethod(myVirtualMachine, m))
-      .toList();
+    return ContainerUtil.map(myClass.getMethods(), m -> new MockPsiMethod(myVirtualMachine, m));
   }
 
   @Override
@@ -139,16 +138,12 @@ public class MockPsiReferenceType extends MockType implements ReferenceType {
 
   @Override
   public List<Method> allMethods() {
-    return StreamEx.of(myClass.getAllMethods())
-      .<Method>map(m -> new MockPsiMethod(myVirtualMachine, m))
-      .toList();
+    return ContainerUtil.map(myClass.getAllMethods(), m -> new MockPsiMethod(myVirtualMachine, m));
   }
 
   @Override
   public List<Method> methodsByName(String name) {
-    return StreamEx.of(myClass.findMethodsByName(name, true))
-      .<Method>map(m -> new MockPsiMethod(myVirtualMachine, m))
-      .toList();
+    return ContainerUtil.map(myClass.findMethodsByName(name, true), m -> new MockPsiMethod(myVirtualMachine, m));
   }
 
   @Override

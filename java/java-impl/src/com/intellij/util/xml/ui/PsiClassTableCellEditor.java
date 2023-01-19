@@ -37,9 +37,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.EventObject;
 
-/**
- * @author peter
- */
 public class PsiClassTableCellEditor extends AbstractTableCellEditor {
   private final Project myProject;
   private final GlobalSearchScope mySearchScope;

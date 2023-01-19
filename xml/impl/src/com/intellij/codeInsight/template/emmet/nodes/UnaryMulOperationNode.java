@@ -10,9 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class UnaryMulOperationNode extends ZenCodingNode {
   private final ZenCodingNode myOperand;
 

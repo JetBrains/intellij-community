@@ -2,6 +2,7 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -21,8 +22,9 @@ public class DataFlowInspectionAncientTest extends LightJavaCodeInsightFixtureTe
 
   private void doTest() {
     DataFlowInspection inspection = new DataFlowInspection();
-    inspection.REPORT_CONSTANT_REFERENCE_VALUES = false;
-    myFixture.enableInspections(inspection);
+    ConstantValueInspection cvInspection = new ConstantValueInspection();
+    cvInspection.REPORT_CONSTANT_REFERENCE_VALUES = false;
+    myFixture.enableInspections(inspection, cvInspection);
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 

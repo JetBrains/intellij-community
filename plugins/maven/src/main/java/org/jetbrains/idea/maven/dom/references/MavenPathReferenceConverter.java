@@ -25,9 +25,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenPathReferenceConverter extends PathReferenceConverter {
 
   private final Condition<PsiFileSystemItem> myCondition;
@@ -72,7 +69,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
           @Override
           protected void innerResolveInContext(@NotNull String text,
                                                @NotNull PsiFileSystemItem context,
-                                               @NotNull Collection<ResolveResult> result,
+                                               @NotNull Collection<? super ResolveResult> result,
                                                boolean caseSensitive) {
             if (model == null) {
               DomElement rootElement = DomUtil.getFileElement(genericDomValue).getRootElement();

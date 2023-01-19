@@ -52,10 +52,11 @@ public class CreateSubclassTest extends LightMultiFileTestCase {
     IntentionAction intention = myFixture.findSingleIntention("Create Subclass");
     assertNotNull(intention);
     intention.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
-    myFixture.checkResult("class Scratch { }\n" +
-                          "\n" +
-                          "class <caret>ScratchImpl extends Scratch {\n" +
-                          "}");
+    myFixture.checkResult("""
+                            class Scratch { }
+
+                            class <caret>ScratchImpl extends Scratch {
+                            }""");
   }
 
   private void doTestInner() {

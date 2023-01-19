@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,10 +20,10 @@ import java.util.stream.Stream;
 public class RefsModel implements VcsLogRefs {
   private static final Logger LOG = Logger.getInstance(RefsModel.class);
 
-  @NotNull private final VcsLogStorage myStorage;
-  @NotNull private final Map<VirtualFile, CompressedRefs> myRefs;
-  @NotNull private final Int2ObjectMap<VcsRef> myBestRefForHead;
-  @NotNull private final Int2ObjectMap<VirtualFile> myRootForHead;
+  private final @NotNull VcsLogStorage myStorage;
+  private final @NotNull Map<VirtualFile, CompressedRefs> myRefs;
+  private final @NotNull Int2ObjectMap<VcsRef> myBestRefForHead;
+  private final @NotNull Int2ObjectMap<VirtualFile> myRootForHead;
 
   public RefsModel(@NotNull Map<VirtualFile, CompressedRefs> refs,
                    @NotNull Set<Integer> heads,
@@ -50,23 +51,19 @@ public class RefsModel implements VcsLogRefs {
     }
   }
 
-  @Nullable
-  public VcsRef bestRefToHead(int headIndex) {
+  public @Nullable VcsRef bestRefToHead(int headIndex) {
     return myBestRefForHead.get(headIndex);
   }
 
-  @NotNull
-  public VirtualFile rootAtHead(int headIndex) {
+  public @NotNull VirtualFile rootAtHead(int headIndex) {
     return myRootForHead.get(headIndex);
   }
 
-  @NotNull
-  public Map<VirtualFile, CompressedRefs> getAllRefsByRoot() {
+  public @NotNull Map<VirtualFile, CompressedRefs> getAllRefsByRoot() {
     return myRefs;
   }
 
-  @NotNull
-  public List<VcsRef> refsToCommit(int index) {
+  public @NotNull List<VcsRef> refsToCommit(int index) {
     if (myRefs.size() <= 10) {
       for (CompressedRefs refs : myRefs.values()) {
         if (refs.contains(index)) {
@@ -82,20 +79,17 @@ public class RefsModel implements VcsLogRefs {
   }
 
   @Override
-  @NotNull
-  public Collection<VcsRef> getBranches() {
+  public @NotNull Collection<VcsRef> getBranches() {
     return myRefs.values().stream().flatMap(CompressedRefs::streamBranches).collect(Collectors.toList());
   }
 
   @Override
-  @NotNull
-  public Stream<VcsRef> stream() {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+  public @NotNull Stream<VcsRef> stream() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     return myRefs.values().stream().flatMap(CompressedRefs::stream);
   }
 
-  @NotNull
-  public static RefsModel createEmptyInstance(@NotNull VcsLogStorage storage) {
+  public static @NotNull RefsModel createEmptyInstance(@NotNull VcsLogStorage storage) {
     return new RefsModel(Collections.emptyMap(), Collections.emptySet(), storage, Collections.emptyMap());
   }
 }

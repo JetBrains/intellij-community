@@ -31,13 +31,13 @@ public class AnnotateActionGroup extends ActionGroup implements DumbAware {
    * @deprecated It is an internal API, try to avoid using it.
    */
   @Deprecated
-  public AnnotateActionGroup(@NotNull List<AnnotationFieldGutter> gutters,
+  public AnnotateActionGroup(@NotNull List<? extends AnnotationFieldGutter> gutters,
                              @Nullable Couple<Map<VcsRevisionNumber, Color>> bgColorMap) {
     this(null, gutters, bgColorMap);
   }
 
   public AnnotateActionGroup(@Nullable FileAnnotation fileAnnotation,
-                             @NotNull List<AnnotationFieldGutter> gutters,
+                             @NotNull List<? extends AnnotationFieldGutter> gutters,
                              @Nullable Couple<Map<VcsRevisionNumber, Color>> bgColorMap) {
     super(VcsBundle.message("annotate.action.view.group.text"), true);
     final List<AnAction> actions = new ArrayList<>();

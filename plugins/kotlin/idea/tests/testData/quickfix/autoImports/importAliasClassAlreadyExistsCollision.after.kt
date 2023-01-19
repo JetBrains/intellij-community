@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import class 'ImportedClass'" "true"
 // ERROR: Unresolved reference: ImportedClass
 
 import editor.completion.apx.ImportedClass
@@ -7,3 +7,4 @@ fun context() {
     class Class2
     val c: <caret>ImportedClass
 }
+/* IGNORE_FIR */

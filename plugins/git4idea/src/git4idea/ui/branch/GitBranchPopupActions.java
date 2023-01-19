@@ -17,11 +17,9 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
@@ -41,6 +39,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.update.GitUpdateExecutionProcess;
 import icons.DvcsImplIcons;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,8 +64,10 @@ import static one.util.streamex.StreamEx.of;
 
 public class GitBranchPopupActions {
 
+  public static final @NonNls String EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP = "Git.Experimental.Branch.Popup.Actions";
+
   private static final int MAX_BRANCH_NAME_LENGTH = 40;
-  private static final int BRANCH_NAME_LENGHT_DELTA = 4;
+  private static final int BRANCH_NAME_LENGTH_DELTA = 4;
   private static final int BRANCH_NAME_SUFFIX_LENGTH = 5;
   private final Project myProject;
   private final GitRepository myRepository;
@@ -93,7 +94,7 @@ public class GitBranchPopupActions {
     }
 
     if (ExperimentalUI.isNewUI()) {
-      ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction("Git.Experimental.Branch.Popup.Actions");
+      ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP);
       topActions.addAll(actionGroup);
       topActions.addSeparator();
     }
@@ -131,7 +132,8 @@ public class GitBranchPopupActions {
       .toList();
     int topShownBranches = getNumOfTopShownBranches(localBranchActions);
     if (currentBranch != null) {
-      localBranchActions.add(0, new CurrentBranchActions(myProject, repositoryList, currentBranch.getName(), myRepository));
+      localBranchActions = prepend(localBranchActions,
+                                   new CurrentBranchActions(myProject, repositoryList, currentBranch.getName(), myRepository));
       topShownBranches++;
     }
     // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites;
@@ -173,17 +175,7 @@ public class GitBranchPopupActions {
   private static AnAction createRepositoryRebaseAction(@NotNull AnAction rebaseAction, @NotNull GitRepository repository) {
     if (!(rebaseAction instanceof GitOngoingOperationAction)) return null;
     GitOngoingOperationAction ongoingAction = (GitOngoingOperationAction)rebaseAction;
-    DumbAwareAction repositoryAction = new DumbAwareAction() {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(ongoingAction.isEnabled(repository));
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        ongoingAction.performInBackground(repository);
-      }
-    };
+    DumbAwareAction repositoryAction = new MyOngoindOperationAnAction(ongoingAction, repository);
     repositoryAction.getTemplatePresentation().copyFrom(rebaseAction.getTemplatePresentation());
     return repositoryAction;
   }
@@ -231,46 +223,44 @@ public class GitBranchPopupActions {
   @NotNull
   private static String getCurrentBranchTruncatedName(@NlsSafe @NotNull String branchName,
                                                       @NotNull Project project) {
-    return showFullBranchNamesInsteadOfCurrentSelected()
-           ? wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)))
-           : GitBundle.message("branches.current.branch.name");
+    return wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)));
   }
 
   @NlsSafe
   @NotNull
   public static String getSelectedBranchTruncatedPresentation(@NotNull Project project,
                                                               @NlsSafe @NotNull String branchName) {
-    return showFullBranchNamesInsteadOfCurrentSelected()
-           ? wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)))
-           : GitBundle.message("branches.selected.branch.name");
-  }
-
-  private static boolean showFullBranchNamesInsteadOfCurrentSelected() {
-    return Registry.is("git.show.full.branch.name.instead.current.selected");
+    return wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)));
   }
 
   @NlsSafe
   @NotNull
-  static String truncateBranchName(@NotNull @NlsSafe String branchName, @NotNull Project project) {
+  public static String truncateBranchName(@NotNull @NlsSafe String branchName, @NotNull Project project) {
+    return truncateBranchName(project, branchName,
+                              MAX_BRANCH_NAME_LENGTH, BRANCH_NAME_SUFFIX_LENGTH, BRANCH_NAME_LENGTH_DELTA);
+  }
+
+  @NlsSafe
+  @NotNull
+  public static String truncateBranchName(@NotNull Project project, @NotNull @NlsSafe String branchName,
+                                          int maxBranchNameLength, int suffixLength, int delta) {
     int branchNameLength = branchName.length();
 
-    if (branchNameLength <= MAX_BRANCH_NAME_LENGTH + BRANCH_NAME_LENGHT_DELTA) {
+    if (branchNameLength <= maxBranchNameLength + delta) {
       return branchName;
     }
 
     IssueNavigationConfiguration issueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
     List<IssueNavigationConfiguration.LinkMatch> issueMatches = issueNavigationConfiguration.findIssueLinks(branchName);
+    int affectedMaxBranchNameLength = maxBranchNameLength - StringUtil.ELLIPSIS.length();
     if (issueMatches.size() != 0) {
       // never truncate the first occurrence of the issue id
       IssueNavigationConfiguration.LinkMatch firstMatch = issueMatches.get(0);
       TextRange firstMatchRange = firstMatch.getRange();
-      return truncateAndSaveIssueId(firstMatchRange, branchName, MAX_BRANCH_NAME_LENGTH, BRANCH_NAME_SUFFIX_LENGTH,
-                                    BRANCH_NAME_LENGHT_DELTA);
+      return truncateAndSaveIssueId(firstMatchRange, branchName, affectedMaxBranchNameLength, suffixLength, delta);
     }
 
-    return StringUtil.shortenTextWithEllipsis(branchName,
-                                              MAX_BRANCH_NAME_LENGTH,
-                                              BRANCH_NAME_SUFFIX_LENGTH, true);
+    return StringUtil.shortenTextWithEllipsis(branchName, affectedMaxBranchNameLength, suffixLength, true);
   }
 
   @NlsSafe
@@ -370,6 +360,11 @@ public class GitBranchPopupActions {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.checkout(reference, true, myRepositories, null);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -534,6 +529,11 @@ public class GitBranchPopupActions {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
       public void update(@NotNull AnActionEvent e) {
         disableActionIfAnyRepositoryIsFresh(e, myRepositories, GitBundle.message("action.not.possible.in.fresh.repo.push"));
       }
@@ -567,6 +567,11 @@ public class GitBranchPopupActions {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         rename(myProject, myRepositories, myCurrentBranchName);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override
@@ -879,6 +884,11 @@ public class GitBranchPopupActions {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!GitProtectedBranchesKt.isRemoteBranchProtected(myRepositories, myBranchName));
       }
@@ -908,6 +918,11 @@ public class GitBranchPopupActions {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       disableActionIfAnyRepositoryIsFresh(e, myRepositories, DvcsBundle.message("action.not.possible.in.fresh.repo.new.branch"));
     }
@@ -932,6 +947,11 @@ public class GitBranchPopupActions {
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -972,6 +992,11 @@ public class GitBranchPopupActions {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       String description = GitBundle.message("branches.show.commits.in",
                                              getSelectedBranchFullPresentation(myBranchName),
@@ -1006,6 +1031,11 @@ public class GitBranchPopupActions {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(!new GitMultiRootBranchConfig(myRepositories).diverged());
       String description =
@@ -1029,6 +1059,11 @@ public class GitBranchPopupActions {
       myRepositories = repositories;
       myBranchName = branchName;
       myLocalBranch = localBranch;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -1070,6 +1105,11 @@ public class GitBranchPopupActions {
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -1117,6 +1157,11 @@ public class GitBranchPopupActions {
       myBranchName = branchName;
       myBranchNameList = Collections.singletonList(branchName);
       myHasIncoming = hasIncoming;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -1207,6 +1252,31 @@ public class GitBranchPopupActions {
     @Override
     public @Nullable String getInfoText() {
       return KeymapUtil.getPreferredShortcutText(getDelegate().getShortcutSet().getShortcuts());
+    }
+  }
+
+  private static class MyOngoindOperationAnAction extends DumbAwareAction {
+    private final @NotNull GitOngoingOperationAction myOngoingAction;
+    private final @NotNull GitRepository myRepository;
+
+    MyOngoindOperationAnAction(@NotNull GitOngoingOperationAction ongoingAction, @NotNull GitRepository repository) {
+      myOngoingAction = ongoingAction;
+      myRepository = repository;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(myOngoingAction.isEnabled(myRepository));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myOngoingAction.performInBackground(myRepository);
     }
   }
 }

@@ -47,7 +47,7 @@ abstract class FilesProcessorImpl(protected val project: Project, parentDisposab
     }
   }
 
-  protected fun addNewFiles(filesToAdd: Collection<VirtualFile>) {
+  private fun addNewFiles(filesToAdd: Collection<VirtualFile>) {
     synchronized(files) {
       files.addAll(filesToAdd)
     }

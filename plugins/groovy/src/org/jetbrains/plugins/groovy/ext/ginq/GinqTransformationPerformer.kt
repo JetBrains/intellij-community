@@ -19,7 +19,7 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.impl.source.tree.FileElement
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parents
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
 import org.jetbrains.plugins.groovy.ext.ginq.completion.GinqCompletionUtils
 import org.jetbrains.plugins.groovy.ext.ginq.formatting.GINQ_AWARE_GROOVY_BLOCK_PRODUCER
@@ -80,9 +80,9 @@ class GinqTransformationPerformer(private val root: GinqRootPsiElement) : Groovy
     else
       expression.getStoredGinq()
     if (ginq != null) {
-      return inferGeneralGinqType(root.castSafelyTo<GinqRootPsiElement.Call>()?.psi, ginq, expression, expression == root.psi)
+      return inferGeneralGinqType(root.asSafely<GinqRootPsiElement.Call>()?.psi, ginq, expression, expression == root.psi)
     }
-    if (expression is GrMethodCall && expression.resolveMethod().castSafelyTo<OriginInfoAwareElement>()?.originInfo == OVER_ORIGIN_INFO) {
+    if (expression is GrMethodCall && expression.resolveMethod().asSafely<OriginInfoAwareElement>()?.originInfo == OVER_ORIGIN_INFO) {
       return inferOverType(expression)
     }
     if (expression is GrReferenceExpression) {
@@ -165,7 +165,7 @@ class GinqTransformationPerformer(private val root: GinqRootPsiElement) : Groovy
 
   override fun computeStaticReference(element: PsiElement): ElementResolveResult<PsiElement>? {
     val tree = getTopParsedGinqTree(root) ?: return null
-    val referenceName = element.castSafelyTo<GrReferenceElement<*>>()?.referenceName ?: return null
+    val referenceName = element.asSafely<GrReferenceElement<*>>()?.referenceName ?: return null
     val hierarchy = element.ginqParents(root, tree)
     for (ginq in hierarchy) {
       val bindings =

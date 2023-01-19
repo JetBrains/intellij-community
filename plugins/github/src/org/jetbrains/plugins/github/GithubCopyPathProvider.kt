@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
+import git4idea.remote.hosting.findKnownRepositories
 import com.intellij.ide.actions.DumbAwareCopyPathProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -25,7 +26,7 @@ class GithubCopyPathProvider: DumbAwareCopyPathProvider() {
     if (accessibleRepositories.isEmpty()) return null
 
     val refs = accessibleRepositories
-      .mapNotNull { GHPathUtil.getFileURL(repository, it.ghRepositoryCoordinates, virtualFile, editor) }
+      .mapNotNull { GHPathUtil.getFileURL(repository, it.repository, virtualFile, editor) }
       .distinct()
 
     return if (refs.isNotEmpty()) refs.joinToString("\n") else null

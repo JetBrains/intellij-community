@@ -21,7 +21,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.CachedValue;
 import com.intellij.workspaceModel.storage.ExternalEntityMapping;
 import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -75,7 +75,7 @@ final class ArtifactVirtualFileListener implements BulkFileListener {
     //this is needed to set up mapping from ArtifactEntity to ArtifactBridge
     artifactManager.getArtifacts();
     
-    EntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
     ExternalEntityMapping<ArtifactBridge> artifactsMap = ArtifactManagerBridge.Companion.getArtifactsMap(storage);
     ModifiableArtifactModel model = artifactManager.createModifiableModel();
     for (ArtifactEntity artifactEntity : artifactEntities) {

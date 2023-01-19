@@ -57,7 +57,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     return isAvailable(mySwitchStatement);
   }
 
-  public static boolean isAvailable(PsiSwitchStatement switchStatement) {
+  public static boolean isAvailable(@NotNull PsiSwitchStatement switchStatement) {
     final PsiCodeBlock body = switchStatement.getBody();
     return body != null && !body.isEmpty() && BreakConverter.from(switchStatement) != null && !mayFallThroughNonTerminalDefaultCase(body);
   }

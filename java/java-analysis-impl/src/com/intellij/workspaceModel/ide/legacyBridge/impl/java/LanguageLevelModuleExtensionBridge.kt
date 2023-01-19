@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.ide.legacyBridge.impl.java
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl
 import com.intellij.openapi.roots.ModuleExtension
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.java.languageLevel
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
@@ -12,14 +12,14 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 
 class LanguageLevelModuleExtensionBridge private constructor(private val module: ModuleBridge,
                                                              private val entityStorage: VersionedEntityStorage,
                                                              private val diff: MutableEntityStorage?) : LanguageLevelModuleExtensionImpl(), ModuleExtensionBridge {
   private var changed = false
   private val moduleEntity
-    get() = entityStorage.current.findModuleEntity(module)
+    get() = module.findModuleEntity(entityStorage.current)
 
   override fun setLanguageLevel(languageLevel: LanguageLevel?) {
     if (diff == null) error("Cannot modify data via read-only extensions")

@@ -10,3 +10,5 @@ import library.*
 fun test() {
     val o = <caret>O
 }
+
+// FIR_COMPARISON

@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.JsonSchemaType
 import com.intellij.openapi.components.StoredProperty
 import com.intellij.openapi.components.StoredPropertyBase
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.SmartList
 
 // Technically, it is not possible to proxy write operations because a collection can be mutated via iterator.
@@ -17,9 +18,9 @@ open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.ARRAY
 
-  override fun isEqualToDefault() = if (defaultValue == null) value.isEmpty() else value.size == 1 && value.firstOrNull() == defaultValue
+  override fun isEqualToDefault(): Boolean = if (defaultValue == null) value.isEmpty() else value.size == 1 && value.firstOrNull() == defaultValue
 
-  override fun getValue(thisRef: BaseState) = value
+  override fun getValue(thisRef: BaseState): C = value
 
   override fun setValue(thisRef: BaseState, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: C) {
     if (doSetValue(value, newValue)) {
@@ -27,7 +28,7 @@ open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected
     }
   }
 
-  private fun doSetValue(old: C, new: C): Boolean {
+  private fun doSetValue(old: C, new: Collection<E>): Boolean {
     if (old == new) {
       return false
     }
@@ -52,27 +53,24 @@ open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected
   fun __getValue() = value
 }
 
-internal class ListStoredProperty<T : Any> : CollectionStoredProperty<T, SmartList<T>>(SmartList(), null) {
+internal class ListStoredProperty<T : Any> : CollectionStoredProperty<T, ModCountableList<T>>(ModCountableList(), null) {
   private var modCount = 0L
-  private var lastItemModCount = 0L
+  private var lastStructuralModCount = 0
+  private var lastItemsModCount = 0L
 
   override fun getModificationCount(): Long {
-    modCount = value.modificationCount.toLong()
-    var itemModCount = 0L
-    for (item in value) {
-      if (item is BaseState) {
-        itemModCount += item.modificationCount
-      }
-      else {
-        // or all values are BaseState or not
-        return modCount
-      }
-    }
+    val itemsModCount = value.filterIsInstance<ModificationTracker>().sumOf { it.modificationCount }
+    val structuralModCount = value.modCount()
 
-    if (itemModCount != lastItemModCount) {
-      lastItemModCount = itemModCount
+    // increment modCount if some elements were added/removed or mutable elements that we can track were changed
+    if (structuralModCount != lastStructuralModCount || lastItemsModCount != itemsModCount) {
       modCount++
+      lastStructuralModCount = structuralModCount
+      lastItemsModCount = itemsModCount
     }
     return modCount
   }
+}
+class ModCountableList<T> : SmartList<T>() {
+  fun modCount(): Int = modCount
 }

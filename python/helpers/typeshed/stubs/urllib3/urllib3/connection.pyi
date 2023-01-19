@@ -1,20 +1,15 @@
 import ssl
-import sys
-from typing import IO, Any, Iterable
+from builtins import ConnectionError as ConnectionError
+from collections.abc import Iterable
+from http.client import HTTPConnection as _HTTPConnection, HTTPException as HTTPException
+from typing import IO, Any
+from typing_extensions import TypeAlias
 
 from . import exceptions, util
 from .packages import ssl_match_hostname
 from .util import ssl_
 
-if sys.version_info >= (3, 0):
-    from builtins import ConnectionError as ConnectionError
-    from http.client import HTTPConnection as _HTTPConnection, HTTPException as HTTPException
-else:
-    from httplib import HTTPConnection as _HTTPConnection, HTTPException as HTTPException
-
-    class ConnectionError(Exception): ...
-
-_TYPE_BODY = bytes | IO[Any] | Iterable[bytes] | str
+_TYPE_BODY: TypeAlias = bytes | IO[Any] | Iterable[bytes] | str
 
 class DummyConnection: ...
 
@@ -22,7 +17,6 @@ BaseSSLError = ssl.SSLError
 
 ConnectTimeoutError = exceptions.ConnectTimeoutError
 SystemTimeWarning = exceptions.SystemTimeWarning
-SecurityWarning = exceptions.SecurityWarning
 match_hostname = ssl_match_hostname.match_hostname
 resolve_cert_reqs = ssl_.resolve_cert_reqs
 resolve_ssl_version = ssl_.resolve_ssl_version
@@ -63,5 +57,3 @@ class VerifiedHTTPSConnection(HTTPSConnection):
     auto_open: Any
     is_verified: Any
     def connect(self): ...
-
-UnverifiedHTTPSConnection = HTTPSConnection

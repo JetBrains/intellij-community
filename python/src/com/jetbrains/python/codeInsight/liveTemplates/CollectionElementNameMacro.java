@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.liveTemplates;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -71,5 +71,10 @@ public class CollectionElementNameMacro extends Macro {
       return lookup.toArray(LookupElement.EMPTY_ARRAY);
     }
     return null;
+  }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof PythonTemplateContextType;
   }
 }

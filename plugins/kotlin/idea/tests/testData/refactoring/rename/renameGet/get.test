@@ -3,5 +3,6 @@
   "classId": "/A",
   "oldName": "get",
   "newName": "foo",
-  "mainFile": "get.kt"
+  "mainFile": "get.kt",
+  "enabledInK2": true
 }

@@ -6,6 +6,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorRenderer;
@@ -25,22 +27,23 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.TreePath;
 import java.awt.datatransfer.StringSelection;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureViewComponent {
   private final static Logger LOG = Logger.getInstance(ResourceBundleStructureViewComponent.class);
 
   private final ResourceBundle myResourceBundle;
 
-  public ResourceBundleStructureViewComponent(@NotNull final ResourceBundle resourceBundle,
-                                              @NotNull final ResourceBundleEditor editor) {
+  public ResourceBundleStructureViewComponent(@NotNull ResourceBundle resourceBundle,
+                                              @NotNull ResourceBundleEditor editor) {
     super(resourceBundle.getProject(), editor, new ResourceBundleStructureViewModel(resourceBundle));
     myResourceBundle = resourceBundle;
     tunePopupActionGroup();
@@ -71,6 +74,11 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
 
     actionGroup.add(new ToggleAction(ResourceBundleEditorBundle.message("show.only.incomplete.action.text"), null, AllIcons.General.Error) {
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return ((ResourceBundleStructureViewModel)getTreeModel()).isShowOnlyIncomplete();
       }
@@ -93,73 +101,49 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     PopupHandler.installPopupMenu(getTree(), propertiesPopupGroup, IdeActions.GROUP_STRUCTURE_VIEW_POPUP);
   }
 
-  private PsiFile @NotNull [] getSelectedPsiFiles() {
-    for (ResourceBundleEditorViewElement element : ((ResourceBundleEditor)getFileEditor()).getSelectedElements()) {
-      if (element.getFiles() != null) {
-        return element.getFiles();
-      }
-    }
-    return PsiFile.EMPTY_ARRAY;
-  }
-
   @Override
-  public Object getData(@NotNull final String dataId) {
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return new ResourceBundleAsVirtualFile(myResourceBundle);
-    } else if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-      return getFileEditor();
-    }
-    else if (ResourceBundle.ARRAY_DATA_KEY.is(dataId)) {
+  public Object getData(@NotNull String dataId) {
+    if (ResourceBundle.ARRAY_DATA_KEY.is(dataId)) {
       return new ResourceBundle[]{myResourceBundle};
     }
-    else if (IProperty.ARRAY_KEY.is(dataId)) {
-      final Collection<ResourceBundleEditorViewElement> selectedElements = ((ResourceBundleEditor)getFileEditor()).getSelectedElements();
-      if (selectedElements.isEmpty()) {
-        return null;
-      }
-      else if (selectedElements.size() == 1) {
-        return ContainerUtil.getFirstItem(selectedElements).getProperties();
-      }
-      else {
-        return ContainerUtil.toArray(ContainerUtil.flatten(
-          ContainerUtil.mapNotNull(selectedElements, element -> {
-            final IProperty[] properties = element.getProperties();
-            return properties == null ? null : ContainerUtil.newArrayList(properties);
-          })), IProperty[]::new);
-      }
-    }
-    else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      final List<PsiElement> elements = new ArrayList<>();
-      Collections.addAll(elements, getSelectedPsiFiles());
-      final IProperty[] properties = (IProperty[])getData(IProperty.ARRAY_KEY.getName());
-      if (properties != null) {
-        for (IProperty property : properties) {
-          final PsiElement element = property.getPsiElement();
-          if (element.isValid()) {
-            elements.add(element);
-          }
-        }
-      }
-      return elements.toArray(PsiElement.EMPTY_ARRAY);
+    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      DataProvider superProvider = (DataProvider)super.getData(dataId);
+      JBIterable<Object> selection = JBIterable.of(getTree().getSelectionPaths()).map(TreeUtil::getLastUserObject);
+      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selection, myResourceBundle), superProvider);
     }
     else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      if (getSelectedPsiFiles().length != 0) {
-        return new ResourceBundleDeleteProvider();
-      }
-      final IProperty[] properties = IProperty.ARRAY_KEY.getData(this);
-      if (properties != null && properties.length != 0) {
-        return new PropertiesDeleteProvider(((ResourceBundleEditor)getFileEditor()).getPropertiesInsertDeleteManager(), properties);
-      }
-    }
-    else if (UsageView.USAGE_TARGETS_KEY.is(dataId)) {
-      final PsiElement[] chosenElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
-      if (chosenElements != null) {
-        final UsageTarget[] usageTargets = new UsageTarget[chosenElements.length];
-        for (int i = 0; i < chosenElements.length; i++) {
-          usageTargets[i] = new PsiElement2UsageTargetAdapter(chosenElements[i]);
+      return new DeleteProvider() {
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
         }
-        return usageTargets;
-      }
+
+        @Override
+        public void deleteElement(@NotNull DataContext dataContext) {
+          PsiElement[] selectedPsiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+          if (selectedPsiElements == null) return;
+          List<PsiFile> psiFiles = ContainerUtil.findAll(selectedPsiElements, PsiFile.class);
+          DeleteProvider delegate;
+          if (!psiFiles.isEmpty()) {
+            delegate = new ResourceBundleDeleteProvider();
+          }
+          else {
+            IProperty[] properties = IProperty.ARRAY_KEY.getData(dataContext);
+            if (properties != null && properties.length != 0) {
+              delegate = new PropertiesDeleteProvider(((ResourceBundleEditor)getFileEditor()).getPropertiesInsertDeleteManager(), properties);
+            }
+            else {
+              return;
+            }
+          }
+          delegate.deleteElement(dataContext);
+        }
+
+        @Override
+        public boolean canDeleteElement(@NotNull DataContext dataContext) {
+          return CommonDataKeys.PROJECT.getData(dataContext) != null;
+        }
+      };
     }
     else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return new CopyProvider() {
@@ -169,11 +153,11 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
         }
 
         @Override
-        public void performCopy(@NotNull final DataContext dataContext) {
-          final PsiElement[] selectedPsiElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
+        public void performCopy(@NotNull DataContext dataContext) {
+          PsiElement[] selectedPsiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
           if (selectedPsiElements != null) {
-            final List<String> names = new ArrayList<>(selectedPsiElements.length);
-            for (final PsiElement element : selectedPsiElements) {
+            List<String> names = new ArrayList<>(selectedPsiElements.length);
+            for (PsiElement element : selectedPsiElements) {
               if (element instanceof PsiNamedElement) {
                 names.add(((PsiNamedElement)element).getName());
               }
@@ -183,17 +167,55 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
         }
 
         @Override
-        public boolean isCopyEnabled(@NotNull final DataContext dataContext) {
+        public boolean isCopyEnabled(@NotNull DataContext dataContext) {
           return true;
         }
 
         @Override
-        public boolean isCopyVisible(@NotNull final DataContext dataContext) {
+        public boolean isCopyVisible(@NotNull DataContext dataContext) {
           return true;
         }
       };
     }
     return super.getData(dataId);
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId,
+                                              @NotNull JBIterable<Object> selection,
+                                              @NotNull ResourceBundle resourceBundle) {
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return new ResourceBundleAsVirtualFile(resourceBundle);
+    }
+    else if (IProperty.ARRAY_KEY.is(dataId)) {
+      List<IProperty> list = selection
+        .filterMap(StructureViewComponent::unwrapWrapper)
+        .filter(ResourceBundleEditorViewElement.class)
+        .flatten(o -> JBIterable.of(o.getProperties()))
+        .toList();
+      return list.isEmpty() ? null : list.toArray(IProperty.EMPTY_ARRAY);
+    }
+    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      List<PsiElement> list = selection
+        .filterMap(StructureViewComponent::unwrapWrapper)
+        .filter(ResourceBundleEditorViewElement.class)
+        .flatten(o -> JBIterable.<PsiElement>of(o.getFiles())
+          .append(JBIterable.of(o.getProperties())
+                    .map(IProperty::getPsiElement)
+                    .filter(PsiElement::isValid)))
+        .toList();
+      return list.toArray(PsiElement.EMPTY_ARRAY);
+    }
+    else if (UsageView.USAGE_TARGETS_KEY.is(dataId)) {
+      PsiElement[] chosenElements = (PsiElement[])getSlowData(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getName(), selection, resourceBundle);
+      if (chosenElements != null) {
+        UsageTarget[] usageTargets = new UsageTarget[chosenElements.length];
+        for (int i = 0; i < chosenElements.length; i++) {
+          usageTargets[i] = new PsiElement2UsageTargetAdapter(chosenElements[i], true);
+        }
+        return usageTargets;
+      }
+    }
+    return null;
   }
 
   @Override

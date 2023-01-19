@@ -16,17 +16,21 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.rmi.RemoteProcessSupport;
+import com.intellij.maven.testFramework.MavenTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.WaitFor;
-import com.intellij.maven.testFramework.MavenTestCase;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 
 import java.io.File;
-import java.util.concurrent.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MavenServerManagerTest extends MavenTestCase {
@@ -60,7 +64,7 @@ public class MavenServerManagerTest extends MavenTestCase {
       }
     }
     if (!ok) {
-      printThreadDump();
+      ThreadUtil.printThreadDump();
       fail();
     }
     result.cancel(true);

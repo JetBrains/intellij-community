@@ -24,7 +24,7 @@ sealed class JKMethodSymbol : JKSymbol {
 class JKUniverseMethodSymbol(override val typeFactory: JKTypeFactory) : JKMethodSymbol(), JKUniverseSymbol<JKMethod> {
     override val receiverType: JKType?
         get() = target.parent.safeAs<JKClass>()?.let {
-            JKClassType(symbolProvider.provideUniverseSymbol(it), emptyList())
+            JKClassType(symbolProvider.provideUniverseSymbol(it))
         }
     override val parameterTypes: List<JKType>
         get() = target.parameters.map { it.type.type }
@@ -40,7 +40,7 @@ class JKMultiverseMethodSymbol(
 ) : JKMethodSymbol(), JKMultiverseSymbol<PsiMethod> {
     override val receiverType: JKType?
         get() = target.containingClass?.let {
-            JKClassType(symbolProvider.provideDirectSymbol(it) as JKClassSymbol, emptyList())
+            JKClassType(symbolProvider.provideDirectSymbol(it) as JKClassSymbol)
         }
     override val parameterTypes: List<JKType>
         get() = target.parameterList.parameters.map { typeFactory.fromPsiType(it.type) }
@@ -70,7 +70,7 @@ class JKMultiverseFunctionSymbol(
                 if (parameter.isVarArg) {
                     JKClassType(
                         symbolProvider.provideClassSymbol(StandardNames.FqNames.array.toSafe()),
-                        listOf(it)
+                        parameters = listOf(it)
                     )
                 } else it
             }

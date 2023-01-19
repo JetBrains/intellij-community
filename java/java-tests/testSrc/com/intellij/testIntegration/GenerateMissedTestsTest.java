@@ -17,21 +17,24 @@ public class GenerateMissedTestsTest extends LightJavaCodeInsightFixtureTestCase
     PsiClass targetClass = ((PsiJavaFile)myFixture.configureByText("MyTest.java", "public class MyTest {}")).getClasses()[0];
     List<MemberInfo> infos = TestIntegrationUtils.extractClassMethods(srcClass, true);
     doTest(srcClass, targetClass, infos, new JUnit4Framework());
-    myFixture.checkResult("public class MyTest {\n" +
-                          "    @org.junit.Test\n" +
-                          "    public void testHashCode() {\n" +
-                          "    }\n" +
-                          "}", true);
+    myFixture.checkResult("""
+                            public class MyTest {
+                                @org.junit.Test
+                                public void testHashCode() {
+                                }
+                            }""", true);
     //repeat
     doTest(srcClass, targetClass, infos, new JUnit4Framework());
-    myFixture.checkResult("public class MyTest {\n" +
-                          "    @org.junit.Test\n" +
-                          "    public void testHashCode() {\n" +
-                          "    }\n\n" +
-                          "    @org.junit.Test\n" +
-                          "    public void testHashCode1() {\n" +
-                          "    }\n" +
-                          "}", true);
+    myFixture.checkResult("""
+                            public class MyTest {
+                                @org.junit.Test
+                                public void testHashCode() {
+                                }
+
+                                @org.junit.Test
+                                public void testHashCode1() {
+                                }
+                            }""", true);
   }
 
   private void doTest(PsiClass srcClass, PsiClass targetClass, List<MemberInfo> infos, JUnit4Framework framework) {

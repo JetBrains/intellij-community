@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -31,7 +32,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
     override fun getLineMarkerInfo(element: PsiElement) = null
 
-    override fun collectSlowLineMarkers(elements: MutableList<out PsiElement>, result: LineMarkerInfos) {
+    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
         val markedLineNumbers = HashSet<Int>()
 
         for (element in elements) {
@@ -98,12 +99,12 @@ class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
             return when (receiverOwner) {
                 is SimpleFunctionDescriptor -> receiverOwner != enclosingFunctionDescriptor
                 is ClassDescriptor -> receiverOwner != enclosingFunctionDescriptor.containingDeclaration
+                is PropertyDescriptor -> receiverOwner.containingDeclaration != enclosingFunctionDescriptor.containingDeclaration
                 else -> return true
             }
         }
 
-        if (isDifferentReceiver(resolvedCall.dispatchReceiver)) return false
-        return true
+        return !isDifferentReceiver(resolvedCall.dispatchReceiver)
     }
 
     private class RecursiveMethodCallMarkerInfo(callElement: PsiElement) : LineMarkerInfo<PsiElement>(

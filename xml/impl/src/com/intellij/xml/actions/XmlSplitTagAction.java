@@ -35,9 +35,6 @@ import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
 public class XmlSplitTagAction implements IntentionAction {
 
   @Override

@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ConstPropertyName")
+
 package org.jetbrains.intellij.build.io
 
 import java.nio.ByteBuffer
@@ -20,18 +22,24 @@ private const val compressThreshold = 8 * 1024
 // 8 MB (as JDK)
 private const val mappedTransferSize = 8L * 1024L * 1024L
 
-inline fun writeNewZip(file: Path, compress: Boolean = false, task: (ZipFileWriter) -> Unit) {
+inline fun writeNewZip(file: Path,
+                       compress: Boolean = false,
+                       withOptimizedMetadataEnabled: Boolean = !compress,
+                       task: (ZipFileWriter) -> Unit) {
   Files.createDirectories(file.parent)
   ZipFileWriter(channel = FileChannel.open(file, W_CREATE_NEW),
-                deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use {
+                deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null,
+                withOptimizedMetadataEnabled = !compress && withOptimizedMetadataEnabled).use {
     task(it)
   }
 }
 
 // you must pass SeekableByteChannel if files will be written (`file` method)
-class ZipFileWriter(channel: WritableByteChannel, private val deflater: Deflater? = null) : AutoCloseable {
+class ZipFileWriter(channel: WritableByteChannel,
+                    private val deflater: Deflater? = null,
+                    withOptimizedMetadataEnabled: Boolean = deflater == null) : AutoCloseable {
   // size is written as part of optimized metadata - so, if compression is enabled, optimized metadata will be incorrect
-  internal val resultStream = ZipArchiveOutputStream(channel, withOptimizedMetadataEnabled = deflater == null)
+  internal val resultStream = ZipArchiveOutputStream(channel, withOptimizedMetadataEnabled = withOptimizedMetadataEnabled)
   private val crc32 = CRC32()
 
   private val bufferAllocator = ByteBufferAllocator()

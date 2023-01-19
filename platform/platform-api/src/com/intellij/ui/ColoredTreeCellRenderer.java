@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -15,15 +14,11 @@ import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.AccessibleAction;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent implements TreeCellRenderer {
   private static final Logger LOG = Logger.getInstance(ColoredTreeCellRenderer.class);
 
@@ -124,8 +119,8 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     }
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
-    if (!myUsedCustomSpeedSearchHighlighting && !AbstractTreeUi.isLoadingNode(value)) {
-      SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, this, true, selected);
+    if (!myUsedCustomSpeedSearchHighlighting && !(value instanceof LoadingNode)) {
+      SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, (SimpleColoredComponent)this, true, selected);
     }
   }
 

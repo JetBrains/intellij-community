@@ -25,7 +25,7 @@ final class DefaultVcsRootChecker extends VcsRootChecker {
 
   @Override
   public boolean isRoot(@NotNull VirtualFile file) {
-    return myVcsDescriptor.probablyUnderVcs(file, false);
+    return myVcsDescriptor.probablyUnderVcs(file);
   }
 
   @Override

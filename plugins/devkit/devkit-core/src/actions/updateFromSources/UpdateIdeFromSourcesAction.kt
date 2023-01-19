@@ -3,10 +3,7 @@ package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessAdapter
-import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.*
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
@@ -37,6 +34,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.task.ProjectTaskManager
 import com.intellij.testFramework.LightVirtualFile
@@ -49,8 +47,8 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 import kotlin.io.path.name
 
@@ -73,7 +71,10 @@ internal open class UpdateIdeFromSourcesAction
     if (forceShowSettings || UpdateFromSourcesSettings.getState().showSettings) {
       val oldWorkIdePath = UpdateFromSourcesSettings.getState().actualIdePath
       val ok = UpdateFromSourcesDialog(project, forceShowSettings).showAndGet()
-      if (!ok) return
+      if (!ok) {
+        return
+      }
+
       val updatedState = UpdateFromSourcesSettings.getState()
       if (oldWorkIdePath != updatedState.actualIdePath) {
         updatedState.workIdePathsHistory.remove(oldWorkIdePath)
@@ -119,7 +120,7 @@ internal open class UpdateIdeFromSourcesAction
           .map { it.pluginPath }
           .filter { it.isDirectory() }
           .map { it.name }
-          .toSet()
+          .toHashSet()
       )
       PluginManagerCore.getPlugins()
         .filter { it.isBundled && !it.isEnabled }
@@ -129,9 +130,13 @@ internal open class UpdateIdeFromSourcesAction
       val list = pluginDirectoriesToSkip.toMutableList()
       state.pluginDirectoriesForDisabledPlugins = list
       bundledPluginDirsToSkip = list
-      nonBundledPluginDirsToInclude = PluginManagerCore.getPlugins().filter {
-        !it.isBundled && it.isEnabled
-      }.map { it.pluginPath }.filter { it.isDirectory() }.map { it.name }
+      nonBundledPluginDirsToInclude = PluginManagerCore.getPlugins()
+        .asSequence()
+        .filter { !it.isBundled && it.isEnabled }
+        .map { it.pluginPath }
+        .filter { it.isDirectory() }
+        .map { it.name }
+        .toList()
     }
     else {
       bundledPluginDirsToSkip = emptyList()
@@ -141,8 +146,12 @@ internal open class UpdateIdeFromSourcesAction
     val deployDir = "$devIdeaHome/out/deploy" // NON-NLS
     val distRelativePath = "dist" // NON-NLS
     val backupDir = "$devIdeaHome/out/backup-before-update-from-sources" // NON-NLS
-    val params = createScriptJavaParameters(project, deployDir, distRelativePath,
-                                            buildEnabledPluginsOnly, bundledPluginDirsToSkip, nonBundledPluginDirsToInclude) ?: return
+    val params = createScriptJavaParameters(project = project,
+                                            deployDir = deployDir,
+                                            distRelativePath = distRelativePath,
+                                            buildEnabledPluginsOnly = buildEnabledPluginsOnly,
+                                            bundledPluginDirsToSkip = bundledPluginDirsToSkip,
+                                            nonBundledPluginDirsToInclude = nonBundledPluginDirsToInclude) ?: return
     val taskManager = ProjectTaskManager.getInstance(project)
     taskManager
       .run(taskManager.createModulesBuildTask(ModuleManager.getInstance(project).modules, true, true, true, false))
@@ -154,13 +163,18 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   private fun checkIdeHome(workIdeHome: String): String? {
-    val homeDir = File(workIdeHome)
-    if (!homeDir.exists()) return null
+    val homeDir = Path.of(workIdeHome)
+    if (Files.notExists(homeDir)) {
+      return null
+    }
 
-    if (homeDir.isFile) return DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.work.home.not.valid.ide.home.not.directory")
+    if (!Files.isDirectory(homeDir)) {
+      return DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.work.home.not.valid.ide.home.not.directory")
+    }
+
     val buildTxt = if (SystemInfo.isMac) "Resources/build.txt" else "build.txt" // NON-NLS
     for (name in listOf("bin", buildTxt)) {
-      if (!File(homeDir, name).exists()) {
+      if (Files.notExists(homeDir.resolve(name))) {
         return DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.work.home.not.valid.ide.home.not.exists", name)
       }
     }
@@ -180,13 +194,13 @@ internal open class UpdateIdeFromSourcesAction
         indicator.text = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.text")
         backupImportantFilesIfNeeded(workIdeHome, backupDir, indicator)
         indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.delete", builtDistPath)
-        FileUtil.delete(File(builtDistPath))
+        NioFiles.deleteRecursively(Path.of(builtDistPath))
         indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.start.script", ULTIMATE_UPDATE_FROM_SOURCES_BUILD_TARGET)
         val commandLine = params.toCommandLine()
         commandLine.isRedirectErrorStream = true
         val scriptHandler = OSProcessHandler(commandLine)
         val output = Collections.synchronizedList(ArrayList<@NlsSafe String>())
-        scriptHandler.addProcessListener(object : ProcessAdapter() {
+        scriptHandler.addProcessListener(object : ProcessListener {
           override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
             output.add(event.text)
             if (outputType == ProcessOutputTypes.STDOUT) {
@@ -272,22 +286,22 @@ internal open class UpdateIdeFromSourcesAction
   private fun backupImportantFilesIfNeeded(workIdeHome: String,
                                            backupDirPath: String,
                                            indicator: ProgressIndicator) {
-    val backupDir = File(backupDirPath)
-    if (backupDir.exists()) {
+    val backupDir = Path.of(backupDirPath)
+    if (Files.exists(backupDir)) {
       LOG.debug("$backupDir already exists, skipping backup")
       return
     }
 
     LOG.debug("Backing up files from $workIdeHome to $backupDir")
     indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.backup.progress.text")
-    FileUtil.createDirectory(backupDir)
+    Files.createDirectories(backupDir)
     File(workIdeHome, "bin").listFiles()
       ?.filter { it.name !in safeToDeleteFilesInBin && it.extension !in safeToDeleteExtensions }
-      ?.forEach { FileUtil.copy(it, File(backupDir, "bin/${it.name}")) }
+      ?.forEach { FileUtil.copy(it, backupDir.resolve("bin/${it.name}").toFile()) }
 
     File(workIdeHome).listFiles()
       ?.filter { it.name !in safeToDeleteFilesInHome }
-      ?.forEach { FileUtil.copyFileOrDir(it, File(backupDir, it.name)) }
+      ?.forEach { FileUtil.copyFileOrDir(it, backupDir.resolve(it.name).toFile()) }
   }
 
   private fun startCopyingFiles(builtDistPath: String, workIdeHome: String, project: Project) {
@@ -351,7 +365,7 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   private fun restartWithCommand(command: Array<String>, deployDirPath: String) {
-    val pluginsDir = Paths.get(deployDirPath)
+    val pluginsDir = Path.of(deployDirPath)
       .resolve("artifacts/${ApplicationInfo.getInstance().build.productCode}-plugins")
 
     val nonBundledPluginsPaths = lazy { nonBundledPluginsPaths() }

@@ -3,11 +3,11 @@
 
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
+import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.annotations.Nls
 
@@ -26,8 +26,8 @@ private fun getOriginalName(shelvedName: String): String {
 
 fun getPredefinedChangeList(shelvedList: ShelvedChangeList, changeListManager: ChangeListManager): LocalChangeList? {
   val defaultName = shelvedList.DESCRIPTION
-  return changeListManager.findChangeList(defaultName) ?:
-         if (shelvedList.isMarkedToDelete) changeListManager.findChangeList(getOriginalName(defaultName)) else null
+  return changeListManager.findChangeList(defaultName)
+         ?: if (shelvedList.isMarkedToDelete) changeListManager.findChangeList(getOriginalName(defaultName)) else null
 }
 
 fun getChangeListNameForUnshelve(shelvedList: ShelvedChangeList): String {
@@ -44,11 +44,10 @@ fun createNameForChangeList(project: Project, commitMessage: String): String {
   return UniqueNameGenerator.generateUniqueName(proposedName, "", "", "-", "", { changeListManager.findChangeList(it) == null })
 }
 
-fun onChangeListAvailabilityChanged(project: Project, disposable: Disposable, executeNow: Boolean, callback: Runnable) {
-  project.messageBus.connect(disposable).subscribe(ChangeListListener.TOPIC, object : ChangeListListener {
+fun onChangeListAvailabilityChanged(projectConnection: MessageBusConnection, callback: Runnable) {
+  projectConnection.subscribe(ChangeListListener.TOPIC, object : ChangeListListener {
     override fun changeListAvailabilityChanged() {
       callback.run()
     }
   })
-  if (executeNow) callback.run()
 }

@@ -26,18 +26,6 @@ public interface RemoteSdkProperties extends RemoteSdkPropertiesPaths {
 
   String getSdkId();
 
-  /**
-   * isValid() is used now
-   * To be removed in IDEA 15
-   *
-   * @deprecated
-   */
-  @Deprecated(forRemoval = true)
-  boolean isInitialized();
-
-  @Deprecated
-  void setInitialized(boolean initialized);
-
   boolean isValid();
 
   void setValid(boolean valid);

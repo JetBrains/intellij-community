@@ -125,12 +125,8 @@
 + -com-intellij-javaee-webSocket-
 + -JSR45Plugin-
 + -com-intellij-jsf-
-+ -com-intellij-seam-
-+ -com-intellij-seam-pages-
-+ -com-intellij-seam-pageflow-
 + -com-intellij-spring-
 + -CloudFoundry-
-+ -com-intellij-dmserver-
 + -com-intellij-spring-osgi-
 + -com-intellij-spring-security-
 + -com-intellij-thymeleaf-

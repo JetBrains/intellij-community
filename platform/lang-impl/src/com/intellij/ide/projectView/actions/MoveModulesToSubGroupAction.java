@@ -42,7 +42,7 @@ public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 
   @Override

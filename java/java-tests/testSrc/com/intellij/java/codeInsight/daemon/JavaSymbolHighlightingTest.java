@@ -16,41 +16,39 @@ public class JavaSymbolHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testImplicitAnonymousClassParameterHighlighting_InsideLambda() {
     configureFromFileText("Test.java",
-                          "class T {" +
-                          "    private T(int i){}\n" +
-                          "    public void test() {\n" +
-                          "        int xxx = 12;\n" +
-                          "        Runnable r = () -> {\n" +
-                          "            check(<symbolName type=\"IMPLICIT_ANONYMOUS_CLASS_PARAMETER\">xxx</symbolName>);\n" +
-                          "            new T(<symbolName type=\"IMPLICIT_ANONYMOUS_CLASS_PARAMETER\">xxx</symbolName>){};" +
-                          "        };" +
-                          "    }\n" +
-                          "    public void check(int a) {}\n" +
-                          "}");
+                          """
+                            class T {    private T(int i){}
+                                public void test() {
+                                    int xxx = 12;
+                                    Runnable r = () -> {
+                                        check(<symbolName type="IMPLICIT_ANONYMOUS_CLASS_PARAMETER">xxx</symbolName>);
+                                        new T(<symbolName type="IMPLICIT_ANONYMOUS_CLASS_PARAMETER">xxx</symbolName>){};        };    }
+                                public void check(int a) {}
+                            }""");
     
     doTestConfiguredFile(true, true, true, null);
   }
 
   public void testReassignedVariables() {
     configureFromFileText("Test.java",
-                          "class Test {\n" +
-                          "  void foo() {\n" +
-                          "    @SuppressWarnings(\"ReassignedVariable\") int y = 0;\n" +
-                          "    y = 7; " +
-                          "    int x = 0;\n" +
-                          "    <text_attr descr=\"Reassigned local variable\">x</text_attr> = 1;\n" +
-                          "  }\n" +
-                          "  \n" +
-                          "  String loop() {\n" +
-                          "    String <text_attr descr=\"Reassigned local variable\">a</text_attr>;\n" +
-                          "\n" +
-                          "    do {\n" +
-                          "      <text_attr descr=\"Reassigned local variable\">a</text_attr> = \"aaaa\";\n" +
-                          "    }\n" +
-                          "    while (<text_attr descr=\"Reassigned local variable\">a</text_attr>.equals(\"bbb\"));\n" +
-                          "    return <text_attr descr=\"Reassigned local variable\">a</text_attr>;\n" +
-                          "  }\n" +
-                          "}");
+                          """
+                            class Test {
+                              void foo() {
+                                @SuppressWarnings("ReassignedVariable") int y = 0;
+                                y = 7;     int x = 0;
+                                <text_attr descr="Reassigned local variable">x</text_attr> = 1;
+                              }
+                             \s
+                              String loop() {
+                                String <text_attr descr="Reassigned local variable">a</text_attr>;
+
+                                do {
+                                  <text_attr descr="Reassigned local variable">a</text_attr> = "aaaa";
+                                }
+                                while (<text_attr descr="Reassigned local variable">a</text_attr>.equals("bbb"));
+                                return <text_attr descr="Reassigned local variable">a</text_attr>;
+                              }
+                            }""");
     doTestConfiguredFile(true, true, true, null);
   }
   

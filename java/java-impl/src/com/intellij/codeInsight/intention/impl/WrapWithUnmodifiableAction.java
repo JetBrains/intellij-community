@@ -28,9 +28,6 @@ import java.util.Set;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Pavel.Dolgov
- */
 public class WrapWithUnmodifiableAction extends BaseIntentionAction {
   private static final String JAVA_UTIL_SORTED_MAP = "java.util.SortedMap";
 
@@ -103,18 +100,11 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
         if (expectedClass != null) {
           String collectionClass = findSuperClass(psiClass, expectedClass, CLASS_TO_METHOD.keySet());
           if (collectionClass != null && !isUnmodifiable(expression)) {
-            String message;
-            switch (collectionClass) {
-              case JAVA_UTIL_LIST:
-                message = "intention.wrap.with.unmodifiable.list";
-                break;
-              case JAVA_UTIL_SET:
-              case JAVA_UTIL_SORTED_SET:
-                message = "intention.wrap.with.unmodifiable.set";
-                break;
-              default:
-                message = "intention.wrap.with.unmodifiable.map";
-            }
+            String message = switch (collectionClass) {
+              case JAVA_UTIL_LIST -> "intention.wrap.with.unmodifiable.list";
+              case JAVA_UTIL_SET, JAVA_UTIL_SORTED_SET -> "intention.wrap.with.unmodifiable.set";
+              default -> "intention.wrap.with.unmodifiable.map";
+            };
             setText(JavaBundle.message(message));
             return true;
           }

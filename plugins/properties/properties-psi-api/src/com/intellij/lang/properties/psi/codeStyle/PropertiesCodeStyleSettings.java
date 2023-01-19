@@ -64,15 +64,9 @@ public class PropertiesCodeStyleSettings extends CustomCodeStyleSettings {
       }
       if (delimiter != null) {
         switch (delimiter) {
-          case '=':
-            KEY_VALUE_DELIMITER_CODE = 0;
-            break;
-          case ':':
-            KEY_VALUE_DELIMITER_CODE = 1;
-            break;
-          case ' ':
-            KEY_VALUE_DELIMITER_CODE = 2;
-            break;
+          case '=' -> KEY_VALUE_DELIMITER_CODE = 0;
+          case ':' -> KEY_VALUE_DELIMITER_CODE = 1;
+          case ' ' -> KEY_VALUE_DELIMITER_CODE = 2;
         }
       }
     }

@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 package pack
 
@@ -8,6 +9,6 @@ fun f() {
 }
 
 // ABSENT: "xxx"
-// EXIST: { lookupString: "yyy", attributes: "bold", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "yyy", attributes: "bold", icon: "Function"}
 // ABSENT: "zzz"
 // ABSENT: "extensionProp"

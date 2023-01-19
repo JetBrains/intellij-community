@@ -3,14 +3,19 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.test.junit.HamcrestCommonClassNames.*
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
-import com.intellij.psi.CommonClassNames.*
+import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiPrimitiveType
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.intellij.util.castSafelyTo
-import com.siyeh.ig.junit.JUnitCommonClassNames.*
+import com.intellij.util.asSafely
+import com.siyeh.ig.junit.JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_ASSERT
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UastElementFactory
@@ -18,19 +23,15 @@ import org.jetbrains.uast.generate.getUastElementFactory
 import org.jetbrains.uast.generate.importMemberOnDemand
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import javax.swing.JComponent
 
 class HamcrestAssertionsConverterInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
   var importMemberOnDemand = true
 
-  override fun createOptionsPanel(): JComponent = SingleCheckboxOptionsPanel(
-    JvmAnalysisBundle.message("jvm.inspections.migrate.assert.to.matcher.option"), this, "importMemberOnDemand"
-  )
+  override fun getOptionsPane() = pane(checkbox("importMemberOnDemand", JvmAnalysisBundle.message("jvm.inspections.migrate.assert.to.matcher.option")))
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    val matcherFqn =
-      JavaPsiFacade.getInstance(holder.project).findClass(ORG_HAMCREST_MATCHERS, holder.file.resolveScope)?.qualifiedName
+    val matcherFqn = JavaPsiFacade.getInstance(holder.project).findClass(ORG_HAMCREST_MATCHERS, holder.file.resolveScope)?.qualifiedName
       ?: JavaPsiFacade.getInstance(holder.project).findClass(ORG_HAMCREST_CORE_MATCHERS, holder.file.resolveScope)?.qualifiedName
       ?: return PsiElementVisitor.EMPTY_VISITOR
 
@@ -87,7 +88,7 @@ private class MigrateToAssertThatQuickFix(private val matcherClassFqn: String, p
     val factory = call.getUastElementFactory(project) ?: return
     val methodName = call.methodName ?: return
     val arguments = call.valueArguments.toMutableList()
-    val method = call.resolveToUElement()?.castSafelyTo<UMethod>() ?: return
+    val method = call.resolveToUElement()?.asSafely<UMethod>() ?: return
     val message = if (TypeUtils.typeEquals(JAVA_LANG_STRING, method.uastParameters.first().type)) {
       arguments.removeFirst()
     } else null
@@ -101,7 +102,7 @@ private class MigrateToAssertThatQuickFix(private val matcherClassFqn: String, p
             conditionArgument.leftOperand to matchExpression
           }
           is UQualifiedReferenceExpression -> {
-            val conditionCall = conditionArgument.selector.castSafelyTo<UCallExpression>() ?: return
+            val conditionCall = conditionArgument.selector.asSafely<UCallExpression>() ?: return
             val conditionMethodName = conditionCall.methodName ?: return
             val matchExpression = if (methodName.contains("False")) {
               factory.createMatchExpression(
@@ -147,11 +148,11 @@ private class MigrateToAssertThatQuickFix(private val matcherClassFqn: String, p
     }
     if (importMemberOnDemand) {
       val assertThatCall = factory.createAssertThat(listOfNotNull(message, left, right)) ?: return
-      val replaced = call.getQualifiedParentOrThis().replace(assertThatCall)?.castSafelyTo<UQualifiedReferenceExpression>() ?: return
+      val replaced = call.getQualifiedParentOrThis().replace(assertThatCall)?.asSafely<UQualifiedReferenceExpression>() ?: return
       var toImport = replaced
       while (true) {
-        val imported = toImport.importMemberOnDemand()?.castSafelyTo<UCallExpression>() ?: return
-        toImport = imported.valueArguments.lastOrNull()?.castSafelyTo<UQualifiedReferenceExpression>() ?: return
+        val imported = toImport.importMemberOnDemand()?.asSafely<UCallExpression>() ?: return
+        toImport = imported.valueArguments.lastOrNull()?.asSafely<UQualifiedReferenceExpression>() ?: return
       }
     }
   }

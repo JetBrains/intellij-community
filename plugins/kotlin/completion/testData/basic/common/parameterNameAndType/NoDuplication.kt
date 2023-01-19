@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 import kotlin.properties.*
 
 fun f(readonlypr<caret>)

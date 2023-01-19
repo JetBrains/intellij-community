@@ -24,9 +24,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- *  @author dsl
- */
 public class MethodJavaDocHelper {
   private static final Logger LOG = Logger.getInstance(MethodJavaDocHelper.class);
   private final PsiMethod myMethod;

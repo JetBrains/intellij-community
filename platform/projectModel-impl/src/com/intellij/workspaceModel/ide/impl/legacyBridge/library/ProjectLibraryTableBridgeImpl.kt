@@ -17,12 +17,12 @@ import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -41,21 +41,17 @@ class ProjectLibraryTableBridgeImpl(
   }
 
   init {
-    val messageBusConnection = project.messageBus.connect(this)
-
-    WorkspaceModelTopics.getInstance(project).subscribeProjectLibsInitializer(messageBusConnection, object : WorkspaceModelChangeListener {
+    project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object  : WorkspaceModelChangeListener {
       override fun beforeChanged(event: VersionedStorageChange) {
-        val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
-          .filterIsInstance<EntityChange.Removed<LibraryEntity>>()
-        if (changes.isEmpty()) return
+        val libraryChanges = event.getChanges(LibraryEntity::class.java)
+        val removeChanges = libraryChanges.filterProjectLibraryChanges().filterIsInstance<EntityChange.Removed<LibraryEntity>>()
+        if (removeChanges.isEmpty()) return
 
-        executeOrQueueOnDispatchThread {
-          for (change in changes) {
-            val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
-            LOG.debug { "Fire 'beforeLibraryRemoved' event for ${change.entity.name}, library = $library" }
-            if (library != null) {
-              dispatcher.multicaster.beforeLibraryRemoved(library)
-            }
+        for (change in removeChanges) {
+          val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
+          LOG.debug { "Fire 'beforeLibraryRemoved' event for ${change.entity.name}, library = $library" }
+          if (library != null) {
+            dispatcher.multicaster.beforeLibraryRemoved(library)
           }
         }
       }
@@ -64,53 +60,35 @@ class ProjectLibraryTableBridgeImpl(
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
         if (changes.isEmpty()) return
 
-        executeOrQueueOnDispatchThread {
-          for (change in changes) {
-            LOG.debug { "Process library change $change" }
-            when (change) {
-              is EntityChange.Added -> {
-                val alreadyCreatedLibrary = event.storageAfter.libraryMap.getDataByEntity(change.entity) as LibraryBridgeImpl?
-                val library = if (alreadyCreatedLibrary != null) {
-                  alreadyCreatedLibrary.entityStorage = entityStorage
-                  alreadyCreatedLibrary
-                }
-                else {
-                  var newLibrary: LibraryBridge? = null
-                  WorkspaceModel.getInstance(project).updateProjectModelSilent {
-                    newLibrary = it.mutableLibraryMap.getOrPutDataByEntity(change.entity) {
-                      LibraryBridgeImpl(
-                        libraryTable = this@ProjectLibraryTableBridgeImpl,
-                        project = project,
-                        initialId = change.entity.persistentId,
-                        initialEntityStorage = entityStorage,
-                        targetBuilder = null
-                      )
-                    }
-                  }
-                  newLibrary!!
-                }
+        for (change in changes) {
+          LOG.debug { "Process library change $change" }
+          when (change) {
+            is EntityChange.Added -> {
+              val alreadyCreatedLibrary = event.storageAfter.libraryMap.getDataByEntity(change.entity) as? LibraryBridgeImpl
+                                            ?: error("Library bridge should be created in `before` method")
+                alreadyCreatedLibrary.entityStorage = entityStorage
+                alreadyCreatedLibrary.clearTargetBuilder()
 
-                dispatcher.multicaster.afterLibraryAdded(library)
+              dispatcher.multicaster.afterLibraryAdded(alreadyCreatedLibrary)
+            }
+            is EntityChange.Removed -> {
+              val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
+
+              if (library != null) {
+                // TODO There won't be any content in libraryImpl as EntityStore's current was already changed
+                dispatcher.multicaster.afterLibraryRemoved(library)
+                Disposer.dispose(library)
               }
-              is EntityChange.Removed -> {
-                val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
+            }
+            is EntityChange.Replaced -> {
+              val idBefore = change.oldEntity.symbolicId
+              val idAfter = change.newEntity.symbolicId
 
+              if (idBefore != idAfter) {
+                val library = event.storageBefore.libraryMap.getDataByEntity(change.oldEntity) as? LibraryBridgeImpl
                 if (library != null) {
-                  // TODO There won't be any content in libraryImpl as EntityStore's current was already changed
-                  dispatcher.multicaster.afterLibraryRemoved(library)
-                  Disposer.dispose(library)
-                }
-              }
-              is EntityChange.Replaced -> {
-                val idBefore = change.oldEntity.persistentId
-                val idAfter = change.newEntity.persistentId
-
-                if (idBefore != idAfter) {
-                  val library = event.storageBefore.libraryMap.getDataByEntity(change.oldEntity) as? LibraryBridgeImpl
-                  if (library != null) {
-                    library.entityId = idAfter
-                    dispatcher.multicaster.afterLibraryRenamed(library, LibraryNameGenerator.getLegacyLibraryName(idBefore))
-                  }
+                  library.entityId = idAfter
+                  dispatcher.multicaster.afterLibraryRenamed(library, LibraryNameGenerator.getLegacyLibraryName(idBefore))
                 }
               }
             }
@@ -120,8 +98,27 @@ class ProjectLibraryTableBridgeImpl(
     })
   }
 
-  suspend fun loadLibraries() {
-    val storage = entityStorage.current
+  internal fun initializeLibraryBridges(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
+    @Suppress("UNCHECKED_CAST")
+    val libraryChanges = (changes[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList()
+    val addChanges = libraryChanges.filterProjectLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
+
+    for (addChange in addChanges) {
+      // Will initialize the bridge if missing
+      builder.mutableLibraryMap.getOrPutDataByEntity(addChange.entity) {
+        LibraryBridgeImpl(
+          libraryTable = this@ProjectLibraryTableBridgeImpl,
+          project = project,
+          initialId = addChange.entity.symbolicId,
+          initialEntityStorage = entityStorage,
+          targetBuilder = builder
+        )
+      }
+    }
+  }
+
+  suspend fun loadLibraries(targetBuilder: MutableEntityStorage?) {
+    val storage = targetBuilder ?: entityStorage.current
     val libraries = storage
       .entities(LibraryEntity::class.java)
       .filter { it.tableId is LibraryTableId.ProjectLibraryTableId }
@@ -130,9 +127,9 @@ class ProjectLibraryTableBridgeImpl(
         Pair(libraryEntity, LibraryBridgeImpl(
           libraryTable = this@ProjectLibraryTableBridgeImpl,
           project = project,
-          initialId = libraryEntity.persistentId,
+          initialId = libraryEntity.symbolicId,
           initialEntityStorage = entityStorage,
-          targetBuilder = null
+          targetBuilder = targetBuilder
         ))
       }
       .toList()
@@ -141,16 +138,22 @@ class ProjectLibraryTableBridgeImpl(
       return
     }
 
-    WorkspaceModel.getInstance(project).updateProjectModelSilent {
-      for ((entity, library) in libraries) {
-        it.mutableLibraryMap.addIfAbsent(entity, library)
-      }
-    }
-    withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction {
-        for ((_, library) in libraries) {
-          dispatcher.multicaster.afterLibraryAdded(library)
+    if (targetBuilder == null) {
+      (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Add project library mapping") {
+        for ((entity, library) in libraries) {
+          it.mutableLibraryMap.addIfAbsent(entity, library)
         }
+      }
+      withContext(Dispatchers.EDT) {
+        ApplicationManager.getApplication().runWriteAction {
+          for ((_, library) in libraries) {
+            dispatcher.multicaster.afterLibraryAdded(library)
+          }
+        }
+      }
+    } else {
+      for ((entity, library) in libraries) {
+        targetBuilder.mutableLibraryMap.addIfAbsent(entity, library)
       }
     }
   }

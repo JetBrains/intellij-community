@@ -21,9 +21,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class ClsAnnotationParameterListImpl extends ClsElementImpl implements PsiAnnotationParameterList {
   private final PsiAnnotation myParent;
   private final ClsNameValuePairImpl[] myAttributes;

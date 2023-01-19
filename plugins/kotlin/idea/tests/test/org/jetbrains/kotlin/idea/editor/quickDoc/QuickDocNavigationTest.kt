@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/kdoc/navigate")
 @RunWith(JUnit38ClassRunner::class)
 class QuickDocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.INSTANCE
+    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
     fun testSimple() {
         val target = resolveDocLink("C")

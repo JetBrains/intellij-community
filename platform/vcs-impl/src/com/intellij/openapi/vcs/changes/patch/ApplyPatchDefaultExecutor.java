@@ -71,7 +71,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
 
 
   public static void applyAdditionalInfoBefore(@NotNull Project project,
-                                               @NotNull ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
+                                               @NotNull ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
                                                @Nullable CommitContext commitContext) {
     List<PatchEP> extensions = PatchEP.EP_NAME.getExtensionList();
     if (extensions.isEmpty()) {

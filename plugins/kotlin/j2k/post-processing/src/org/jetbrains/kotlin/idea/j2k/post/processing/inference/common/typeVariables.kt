@@ -41,18 +41,18 @@ data class TypeParameterElementData(
 ) : TypeElementData()
 
 class TypeElementBasedTypeVariable(
-  override val classReference: ClassReference,
-  override val typeParameters: List<TypeParameter>,
-  val typeElement: TypeElementData,
-  override val owner: TypeVariableOwner,
-  override var state: State
+    override val classReference: ClassReference,
+    override val typeParameters: List<TypeParameter>,
+    val typeElement: TypeElementData,
+    override val owner: TypeVariableOwner,
+    override var state: State
 ) : TypeVariable()
 
 class TypeBasedTypeVariable(
-  override val classReference: ClassReference,
-  override val typeParameters: List<TypeParameter>,
-  val type: KotlinType,
-  override var state: State
+    override val classReference: ClassReference,
+    override val typeParameters: List<TypeParameter>,
+    val type: KotlinType,
+    override var state: State
 ) : TypeVariable() {
     override val owner = OtherTarget
 }

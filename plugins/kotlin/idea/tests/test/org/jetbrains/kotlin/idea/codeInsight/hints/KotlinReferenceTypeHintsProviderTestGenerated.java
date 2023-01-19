@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints;
 
@@ -113,6 +113,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/JavaFQName.kt");
     }
 
+    @TestMetadata("LambdaReturnType.kt")
+    public void testLambdaReturnType() throws Exception {
+        runTest("testData/codeInsight/hints/types/LambdaReturnType.kt");
+    }
+
     @TestMetadata("LocalVariable.kt")
     public void testLocalVariable() throws Exception {
         runTest("testData/codeInsight/hints/types/LocalVariable.kt");
@@ -186,5 +191,10 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
     @TestMetadata("UnitLocalVariable3.kt")
     public void testUnitLocalVariable3() throws Exception {
         runTest("testData/codeInsight/hints/types/UnitLocalVariable3.kt");
+    }
+
+    @TestMetadata("When.kt")
+    public void testWhen() throws Exception {
+        runTest("testData/codeInsight/hints/types/When.kt");
     }
 }

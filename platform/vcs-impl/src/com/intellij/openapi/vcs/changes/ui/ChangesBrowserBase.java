@@ -5,6 +5,7 @@ import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -14,6 +15,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.DiffPreview;
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
@@ -92,18 +94,10 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     if (headerPanel != null) topPanel.add(headerPanel, BorderLayout.EAST);
 
     switch (myToolbarAnchor) {
-      case SwingConstants.TOP:
-        topPanel.add(toolbarComponent, BorderLayout.CENTER);
-        break;
-      case SwingConstants.BOTTOM:
-        add(toolbarComponent, BorderLayout.SOUTH);
-        break;
-      case SwingConstants.LEFT:
-        add(toolbarComponent, BorderLayout.WEST);
-        break;
-      case SwingConstants.RIGHT:
-        add(toolbarComponent, BorderLayout.EAST);
-        break;
+      case SwingConstants.TOP -> topPanel.add(toolbarComponent, BorderLayout.CENTER);
+      case SwingConstants.BOTTOM -> add(toolbarComponent, BorderLayout.SOUTH);
+      case SwingConstants.LEFT -> add(toolbarComponent, BorderLayout.WEST);
+      case SwingConstants.RIGHT -> add(toolbarComponent, BorderLayout.EAST);
     }
 
     add(topPanel, BorderLayout.NORTH);
@@ -129,6 +123,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     }
 
     myShowDiffAction.registerCustomShortcutSet(this, null);
+    DiffUtil.recursiveRegisterShortcutSet(myToolBarGroup, this, null);
   }
 
   @NotNull
@@ -137,28 +132,19 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   public void setViewerBorder(@NotNull Border border) {
+    if(ExperimentalUI.isNewUI()) return;
+
     myViewerScrollPane.setBorder(border);
   }
 
   public void hideViewerBorder() {
-    int borders;
-    switch (myToolbarAnchor) {
-      case SwingConstants.TOP:
-        borders = SideBorder.TOP;
-        break;
-      case SwingConstants.BOTTOM:
-        borders = SideBorder.BOTTOM;
-        break;
-      case SwingConstants.LEFT:
-        borders = SideBorder.LEFT;
-        break;
-      case SwingConstants.RIGHT:
-        borders = SideBorder.RIGHT;
-        break;
-      default:
-        borders = SideBorder.NONE;
-        break;
-    }
+    int borders = switch (myToolbarAnchor) {
+      case SwingConstants.TOP -> SideBorder.TOP;
+      case SwingConstants.BOTTOM -> SideBorder.BOTTOM;
+      case SwingConstants.LEFT -> SideBorder.LEFT;
+      case SwingConstants.RIGHT -> SideBorder.RIGHT;
+      default -> SideBorder.NONE;
+    };
 
     setViewerBorder(IdeBorderFactory.createBorder(borders));
   }
@@ -238,6 +224,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
   public void addToolbarAction(@NotNull AnAction action) {
     myToolBarGroup.add(action);
+    action.registerCustomShortcutSet(this, null);
   }
 
   public void addToolbarSeparator() {

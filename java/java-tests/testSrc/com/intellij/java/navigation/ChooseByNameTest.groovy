@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-/**
- * @author peter
- */
 class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   static final ELEMENTS_LIMIT = 30
 
@@ -627,6 +624,7 @@ class Intf {
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
 
+    @NotNull
     @Override
     String getSearchProviderId() {
       return "ClassSearchEverywhereContributor"
@@ -643,6 +641,7 @@ class Intf {
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
 
+    @NotNull
     @Override
     String getSearchProviderId() {
       return "FileSearchEverywhereContributor"
@@ -659,6 +658,7 @@ class Intf {
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
 
+    @NotNull
     @Override
     String getSearchProviderId() {
       return "SymbolSearchEverywhereContributor"

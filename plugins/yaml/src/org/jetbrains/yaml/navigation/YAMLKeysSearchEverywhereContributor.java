@@ -78,7 +78,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
     if (application.isUnitTestMode()) {
       application.runReadAction(task);
     } else {
-      if (application.isDispatchThread()) throw new IllegalStateException("This method must not be called from EDT");
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
       ProgressIndicatorUtils.yieldToPendingWriteActions();
       ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, progressIndicator);
     }

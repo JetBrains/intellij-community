@@ -1,5 +1,6 @@
 import sys
-from typing import Any, AnyStr, Callable, Generic, Iterable, Iterator, NamedTuple, Sequence, TypeVar, overload
+from collections.abc import Callable, Iterable, Iterator, Sequence
+from typing import Any, AnyStr, Generic, NamedTuple, TypeVar, overload
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
@@ -27,8 +28,17 @@ class Match(NamedTuple):
     size: int
 
 class SequenceMatcher(Generic[_T]):
+    @overload
+    def __init__(self, isjunk: Callable[[_T], bool] | None, a: Sequence[_T], b: Sequence[_T], autojunk: bool = ...) -> None: ...
+    @overload
+    def __init__(self, *, a: Sequence[_T], b: Sequence[_T], autojunk: bool = ...) -> None: ...
+    @overload
     def __init__(
-        self, isjunk: Callable[[_T], bool] | None = ..., a: Sequence[_T] = ..., b: Sequence[_T] = ..., autojunk: bool = ...
+        self: SequenceMatcher[str],
+        isjunk: Callable[[str], bool] | None = ...,
+        a: Sequence[str] = ...,
+        b: Sequence[str] = ...,
+        autojunk: bool = ...,
     ) -> None: ...
     def set_seqs(self, a: Sequence[_T], b: Sequence[_T]) -> None: ...
     def set_seq1(self, a: Sequence[_T]) -> None: ...

@@ -109,17 +109,12 @@ public class RegExReplacementBuilder {
     if (myCursor == myTemplate.length()) throw new IllegalArgumentException("character to be escaped is missing");
     nextChar = myTemplate.charAt(myCursor++);
     switch (nextChar) {
-      case 'n':
-        myReplacement.append('\n'); break;
-      case 'r':
-        myReplacement.append('\r'); break;
-      case 'b':
-        myReplacement.append('\b');  break;
-      case 't':
-        myReplacement.append('\t'); break;
-      case 'f':
-        myReplacement.append('\f'); break;
-      case 'x':
+      case 'n' -> myReplacement.append('\n');
+      case 'r' -> myReplacement.append('\r');
+      case 'b' -> myReplacement.append('\b');
+      case 't' -> myReplacement.append('\t');
+      case 'f' -> myReplacement.append('\f');
+      case 'x' -> {
         if (myCursor + 4 <= myTemplate.length()) {
           try {
             int code = Integer.parseInt(myTemplate.substring(myCursor, myCursor + 4), 16);
@@ -128,14 +123,13 @@ public class RegExReplacementBuilder {
           }
           catch (NumberFormatException ignored) {}
         }
-        break;
-      case 'l': startConversionForCharacter(false); break;
-      case 'u': startConversionForCharacter(true); break;
-      case 'L': startConversionForRegion(false); break;
-      case 'U': startConversionForRegion(true); break;
-      case 'E': resetConversionState(); break;
-      default:
-        myReplacement.append(nextChar);
+      }
+      case 'l' -> startConversionForCharacter(false);
+      case 'u' -> startConversionForCharacter(true);
+      case 'L' -> startConversionForRegion(false);
+      case 'U' -> startConversionForRegion(true);
+      case 'E' -> resetConversionState();
+      default -> myReplacement.append(nextChar);
     }
   }
 

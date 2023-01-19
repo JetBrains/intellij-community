@@ -241,15 +241,16 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                      // std out
                      "stdout1 ",
                      // std err
-                     "\n" +
-                     "error msg\n" +
-                     "expected\n" +
-                     "actual\n" +
-                     "\n" +
-                     "\n" +
-                     "method1:1\n" +
-                     "method2:2\n" +
-                     "stderr1 ",
+                     """
+
+                       error msg
+                       expected
+                       actual
+
+
+                       method1:1
+                       method2:2
+                       stderr1\s""",
                      // std sys
                      "Expected :Actual   :");
 
@@ -259,12 +260,16 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                      // std out
                      "stdout1 ",
                      // std err
-                     "stderr1 \nerror msg\n" +
-                     "expected\n" +
-                     "actual\n" +
-                     "\n" +
-                     "\n" +
-                     "method1:1\nmethod2:2\n",
+                     """
+                       stderr1\s
+                       error msg
+                       expected
+                       actual
+
+
+                       method1:1
+                       method2:2
+                       """,
                      // std sys
                      "Expected :Actual   :");
   }
@@ -277,21 +282,25 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
-    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "\nerror msg\n" +
-                                                         "\n" +
-                                                         "\n" +
-                                                         "method1:1\n" +
-                                                         "method2:2\n" +
-                                                         "stderr1 ", "");
+    assertAllOutputs(myMockResettablePrinter, "stdout1 ", """
+
+      error msg
+
+
+      method1:1
+      method2:2
+      stderr1\s""", "");
 
     final MockPrinter mockPrinter1 = new MockPrinter(true);
     mockPrinter1.onNewAvailable(myTest1);
-    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 \n" +
-                                               "error msg\n" +
-                                               "\n" +
-                                               "\n" +
-                                               "method1:1\n" +
-                                               "method2:2\n", "");
+    assertAllOutputs(mockPrinter1, "stdout1 ", """
+      stderr1\s
+      error msg
+
+
+      method1:1
+      method2:2
+      """, "");
   }
 
  public void testProcessor_OnError() {
@@ -330,11 +339,12 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     final MockPrinter mockPrinter1 = new MockPrinter(true);
     mockPrinter1.onNewAvailable(myTest1);
-    assertAllOutputs(mockPrinter1, "stdout1 ", "\n" +
-                                               "error msg\n" +
-                                               "method1:1\n" +
-                                               "method2:2\n" +
-                                               "stderr1 ", "");
+    assertAllOutputs(mockPrinter1, "stdout1 ", """
+
+      error msg
+      method1:1
+      method2:2
+      stderr1\s""", "");
     myEventsProcessor.onTestFinished(new TestFinishedEvent("my_test", 1L));
     myTest1.setFinished();
 
@@ -358,27 +368,33 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     suite.setPrinter(myMockResettablePrinter);
     myEventsProcessor.onError("error msg:suite", "method1:1\nmethod2:2", true);
 
-    assertAllOutputs(myMockResettablePrinter, "", "\n" +
-                                                 "error msg:suite\n" +
-                                                 "method1:1\n" +
-                                                 "method2:2\n", "");
+    assertAllOutputs(myMockResettablePrinter, "", """
+
+      error msg:suite
+      method1:1
+      method2:2
+      """, "");
 
     final MockPrinter mockSuitePrinter = new MockPrinter(true);
     mockSuitePrinter.onNewAvailable(suite);
-    assertAllOutputs(mockSuitePrinter, "", "\n" +
-                                               "error msg:suite\n" +
-                                               "method1:1\n" +
-                                               "method2:2\n", "");
+    assertAllOutputs(mockSuitePrinter, "", """
+
+      error msg:suite
+      method1:1
+      method2:2
+      """, "");
     final MockPrinter mockRootSuitePrinter = new MockPrinter(true);
     mockRootSuitePrinter.onNewAvailable(myRootSuite);
-    assertAllOutputs(mockRootSuitePrinter, "", "\n" +
-                                               "error msg:root\n" +
-                                               "method1:1\n" +
-                                               "method2:2\n" +
-                                               "\n" +
-                                               "error msg:suite\n" +
-                                               "method1:1\n" +
-                                               "method2:2\n", "");
+    assertAllOutputs(mockRootSuitePrinter, "", """
+
+      error msg:root
+      method1:1
+      method2:2
+
+      error msg:suite
+      method1:1
+      method2:2
+      """, "");
   }
 
   public void testProcessor_OnIgnored() {
@@ -545,32 +561,42 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onUncapturedOutput("root output 2\n", ProcessOutputTypes.STDOUT);
     myEventsProcessor.onFinishTesting();
 
-    assertAllOutputs(myMockResettablePrinter, "root output 1\n" +
-                                              "root output 2\n", "", "");
+    assertAllOutputs(myMockResettablePrinter, """
+      root output 1
+      root output 2
+      """, "", "");
 
     myMockResettablePrinter.resetIfNecessary();
     myConsole.getPrinter().updateOnTestSelected(suite);
-    assertAllOutputs(myMockResettablePrinter, "suite output\n" +
-                                              "test output\n", "", "");
+    assertAllOutputs(myMockResettablePrinter, """
+      suite output
+      test output
+      """, "", "");
 
     myMockResettablePrinter.resetIfNecessary();
     myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
-    assertAllOutputs(myMockResettablePrinter, "root output 1\n" +
-                                              "root output 2\n", "", "");
+    assertAllOutputs(myMockResettablePrinter, """
+      root output 1
+      root output 2
+      """, "", "");
 
     myRootSuite.setShouldPrintOwnContentOnly(false);
 
     myMockResettablePrinter.resetIfNecessary();
     myConsole.getPrinter().updateOnTestSelected(suite);
-    assertAllOutputs(myMockResettablePrinter, "suite output\n" +
-                                              "test output\n", "", "");
+    assertAllOutputs(myMockResettablePrinter, """
+      suite output
+      test output
+      """, "", "");
 
     myMockResettablePrinter.resetIfNecessary();
     myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
-    assertAllOutputs(myMockResettablePrinter, "root output 1\n" +
-                                              "suite output\n" +
-                                              "test output\n" +
-                                              "root output 2\n", "", "");
+    assertAllOutputs(myMockResettablePrinter, """
+      root output 1
+      suite output
+      test output
+      root output 2
+      """, "", "");
   }
 
   public void testPrintingManyOutputForRootWithoutChildren() {

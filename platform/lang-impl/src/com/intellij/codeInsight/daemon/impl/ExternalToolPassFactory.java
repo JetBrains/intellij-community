@@ -29,7 +29,7 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
     if (textRange == null || !externalAnnotatorsDefined(file)) {
       return null;
     }
-    return new ExternalToolPass(this, file, editor, textRange.getStartOffset(), textRange.getEndOffset());
+    return new ExternalToolPass(file, editor.getDocument(), editor, textRange.getStartOffset(), textRange.getEndOffset(), new DefaultHighlightInfoProcessor(), false);
   }
 
   private static boolean externalAnnotatorsDefined(@NotNull PsiFile file) {
@@ -51,6 +51,6 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
     if (range == null || !externalAnnotatorsDefined(file)) {
       return null;
     }
-    return new ExternalToolPass(this, file, document, null, range.getStartOffset(), range.getEndOffset(), highlightInfoProcessor, true);
+    return new ExternalToolPass(file, document, null, range.getStartOffset(), range.getEndOffset(), highlightInfoProcessor, true);
   }
 }

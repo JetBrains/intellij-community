@@ -35,7 +35,6 @@ import java.util.stream.Stream;
 
 /**
  * Functions common to different implementors of PyCallExpression, with different base classes.
- * User: dcheryasov
  */
 public final class PyCallExpressionHelper {
   private PyCallExpressionHelper() {
@@ -1220,7 +1219,7 @@ public final class PyCallExpressionHelper {
     }
     allMappedParameters.putAll(mappedExplicitParameters);
 
-    return PyTypeChecker.unifyGenericCallWithParamSpecs(receiver, allMappedParameters, context) == null;
+    return PyTypeChecker.unifyGenericCall(receiver, allMappedParameters, context) == null;
   }
 
   public static class ArgumentMappingResults {

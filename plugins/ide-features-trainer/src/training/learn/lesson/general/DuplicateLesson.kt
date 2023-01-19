@@ -62,8 +62,6 @@ class DuplicateLesson(private val sample: LessonSample) :
     return start.column == end.column && abs(start.line - end.line) >= 2
   }
 
-  override val suitableTips = listOf("CtrlD", "DeleteLine")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.lines.of.code"),
          LessonUtil.getHelpLink("working-with-source-code.html#editor_lines_code_blocks")),

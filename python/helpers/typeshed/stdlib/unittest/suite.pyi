@@ -1,8 +1,9 @@
 import unittest.case
 import unittest.result
-from typing import Iterable, Iterator, Union
+from collections.abc import Iterable, Iterator
+from typing_extensions import TypeAlias
 
-_TestType = Union[unittest.case.TestCase, TestSuite]
+_TestType: TypeAlias = unittest.case.TestCase | TestSuite
 
 class BaseTestSuite(Iterable[_TestType]):
     _tests: list[unittest.case.TestCase]

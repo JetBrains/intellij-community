@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.uast;
 
@@ -41,6 +41,26 @@ public class FirUastTypesTestGenerated extends AbstractFirUastTypesTest {
     @TestMetadata("classLiteral.kt")
     public void testClassLiteral() throws Exception {
         runTest("testData/type/classLiteral.kt");
+    }
+
+    @TestMetadata("jvmInlineParameter.kt")
+    public void testJvmInlineParameter() throws Exception {
+        runTest("testData/type/jvmInlineParameter.kt");
+    }
+
+    @TestMetadata("nonNullCompanion.kt")
+    public void testNonNullCompanion() throws Exception {
+        runTest("testData/type/nonNullCompanion.kt");
+    }
+
+    @TestMetadata("nonNullablePair.kt")
+    public void testNonNullablePair() throws Exception {
+        runTest("testData/type/nonNullablePair.kt");
+    }
+
+    @TestMetadata("nullnessInVarargs.kt")
+    public void testNullnessInVarargs() throws Exception {
+        runTest("testData/type/nullnessInVarargs.kt");
     }
 
     @TestMetadata("objectLiteral.kt")

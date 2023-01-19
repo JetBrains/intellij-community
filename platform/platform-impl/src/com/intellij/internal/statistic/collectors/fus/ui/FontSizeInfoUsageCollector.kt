@@ -40,7 +40,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     val FONT_SIZE = EventFields.Int("font_size")
     val FONT_SIZE_2D = EventFields.Float("font_size_2d")
     val LINE_SPACING = EventFields.Float("line_spacing")
-    val FONT_SIZE_STRING = EventFields.String(
+    private val FONT_SIZE_STRING = EventFields.String(
       "font_size", arrayListOf("X_SMALL", "X_LARGE", "XX_SMALL", "XX_LARGE", "SMALL", "MEDIUM", "LARGE")
     )
 

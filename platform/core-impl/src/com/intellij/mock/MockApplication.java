@@ -93,7 +93,7 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public boolean isWriteThread() {
+  public boolean isWriteIntentLockAcquired() {
     return true;
   }
 
@@ -123,7 +123,7 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void assertIsWriteThread() {
+  public void assertWriteIntentLockAcquired() {
   }
 
   @Override
@@ -369,6 +369,11 @@ public class MockApplication extends MockComponentManager implements Application
   public boolean tryRunReadAction(@NotNull Runnable runnable) {
     runReadAction(runnable);
     return true;
+  }
+
+  @Override
+  public <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

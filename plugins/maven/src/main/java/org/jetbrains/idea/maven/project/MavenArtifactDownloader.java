@@ -182,14 +182,14 @@ public final class MavenArtifactDownloader {
                   downloadedFiles.add(file);
 
                   switch (eachElement.type) {
-                    case SOURCES:
+                    case SOURCES -> {
                       result.resolvedSources.add(id);
                       result.unresolvedSources.remove(id);
-                      break;
-                    case DOCS:
+                    }
+                    case DOCS -> {
                       result.resolvedDocs.add(id);
                       result.unresolvedDocs.remove(id);
-                      break;
+                    }
                   }
                 }
               }

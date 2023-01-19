@@ -3,20 +3,21 @@ package com.intellij.java.devkit.psiViewer;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class PsiViewerMethodExtension extends JavaPsiViewerExtension {
+final class PsiViewerMethodExtension extends JavaPsiViewerExtension {
   @Override
   public @NotNull String getName() {
-    return "Java Method";
+    return JavaPsiViewerBundle.message("java.method");
   }
 
   @Override
   public @NotNull Icon getIcon() {
-    return PlatformIcons.METHOD_ICON;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.Method);
   }
 
   @Override

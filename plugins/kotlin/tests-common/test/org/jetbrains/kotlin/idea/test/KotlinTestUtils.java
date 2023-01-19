@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -33,8 +32,6 @@ import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.builtins.DefaultBuiltIns;
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys;
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity;
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation;
@@ -42,30 +39,25 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
 import org.jetbrains.kotlin.cli.jvm.config.JvmContentRootsKt;
-import org.jetbrains.kotlin.config.*;
-import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl;
+import org.jetbrains.kotlin.config.CommonConfigurationKeys;
+import org.jetbrains.kotlin.config.CompilerConfiguration;
+import org.jetbrains.kotlin.config.JVMConfigurationKeys;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
-import org.jetbrains.kotlin.idea.checkers.CompilerTestLanguageVersionSettings;
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot;
 import org.jetbrains.kotlin.idea.test.util.JetTestUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
-import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.KtFile;
-import org.jetbrains.kotlin.storage.LockBasedStorageManager;
-import org.jetbrains.kotlin.idea.base.test.KotlinRoot;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestJdkKind;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 import org.junit.Assert;
 
-import javax.tools.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -74,7 +66,7 @@ import java.util.regex.Pattern;
 import static org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.IGNORE_BACKEND_DIRECTIVE_PREFIX;
 import static org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.isIgnoredTarget;
 
-public class KotlinTestUtils {
+public final class KotlinTestUtils {
     public static final String TEST_MODULE_NAME = "test-module";
 
     private static final boolean RUN_IGNORED_TESTS_AS_REGULAR =
@@ -212,10 +204,6 @@ public class KotlinTestUtils {
         return (KtFile) factory.trySetupPsiForFile(virtualFile, KotlinLanguage.INSTANCE, true, false);
     }
 
-    public static String doLoadFile(String myFullDataPath, String name) throws IOException {
-        return doLoadFile(new File(myFullDataPath, name));
-    }
-
     public static String doLoadFile(@NotNull File file) throws IOException {
         try {
             return FileUtil.loadFile(file, CharsetToolkit.UTF8, true);
@@ -285,8 +273,8 @@ public class KotlinTestUtils {
         if (jdkKind == TestJdkKind.MOCK_JDK) {
             JvmContentRootsKt.addJvmClasspathRoot(configuration, findMockJdkRtJar());
             configuration.put(JVMConfigurationKeys.NO_JDK, true);
-        } else if (SystemInfo.IS_AT_LEAST_JAVA9) {
-            configuration.put(JVMConfigurationKeys.JDK_HOME, getAtLeastJdk9Home());
+        } else {
+            configuration.put(JVMConfigurationKeys.JDK_HOME, getCurrentProcessJdkHome());
         }
 
         if (configurationKind.getKotlinStdlib()) {
@@ -317,7 +305,7 @@ public class KotlinTestUtils {
     }
 
     @NotNull
-    public static File getAtLeastJdk9Home() {
+    public static File getCurrentProcessJdkHome() {
         return new File(System.getProperty("java.home"));
     }
 
@@ -387,8 +375,8 @@ public class KotlinTestUtils {
 
             String expectedText = JetTestUtils.trimTrailingWhitespacesAndAddNewlineAtEOF(StringUtil.convertLineSeparators(expected.trim()));
 
-            String sanitizedExpectedText = sanitizer.invoke(expectedText);
-            String sanitizedActualText = sanitizer.invoke(actualText);
+            String sanitizedExpectedText = JetTestUtils.trimTrailingWhitespacesAndAddNewlineAtEOF(sanitizer.invoke(expectedText));
+            String sanitizedActualText = JetTestUtils.trimTrailingWhitespacesAndAddNewlineAtEOF(sanitizer.invoke(actualText));
 
             if (!Objects.equals(sanitizedExpectedText, sanitizedActualText)) {
                 throw new FileComparisonFailure(message + ": " + expectedFile.getName(),
@@ -509,38 +497,8 @@ public class KotlinTestUtils {
     }
 
     public static boolean compileJavaFiles(@NotNull Collection<File> files, List<String> options) throws IOException {
-        return compileJavaFiles(files, options, null);
-    }
-
-    private static boolean compileJavaFiles(@NotNull Collection<File> files, List<String> options, @Nullable File javaErrorFile)
-            throws IOException {
-        JavaCompiler javaCompiler = ToolProvider.getSystemJavaCompiler();
-        DiagnosticCollector<JavaFileObject> diagnosticCollector = new DiagnosticCollector<>();
-        try (StandardJavaFileManager fileManager =
-                     javaCompiler.getStandardFileManager(diagnosticCollector, Locale.ENGLISH, StandardCharsets.UTF_8)) {
-            Iterable<? extends JavaFileObject> javaFileObjectsFromFiles = fileManager.getJavaFileObjectsFromFiles(files);
-
-            JavaCompiler.CompilationTask task = javaCompiler.getTask(
-                    new StringWriter(), // do not write to System.err
-                    fileManager,
-                    diagnosticCollector,
-                    options,
-                    null,
-                    javaFileObjectsFromFiles);
-
-            Boolean success = task.call(); // do NOT inline this variable, call() should complete before errorsToString()
-            if (javaErrorFile == null || !javaErrorFile.exists()) {
-                Assert.assertTrue(errorsToString(diagnosticCollector, true), success);
-            } else {
-                assertEqualsToFile(javaErrorFile, errorsToString(diagnosticCollector, false));
-            }
-            return success;
-        }
-    }
-
-    public static boolean compileJavaFilesExternallyWithJava9(@NotNull Collection<File> files, @NotNull List<String> options) {
         List<String> command = new ArrayList<>();
-        command.add(new File(getAtLeastJdk9Home(), "bin/javac").getPath());
+        command.add(new File(getCurrentProcessJdkHome(), "bin/javac").getPath());
         command.addAll(options);
         for (File file : files) {
             command.add(file.getPath());
@@ -553,24 +511,6 @@ public class KotlinTestUtils {
         } catch (Exception e) {
             throw ExceptionUtilsKt.rethrow(e);
         }
-    }
-
-    @NotNull
-    private static String errorsToString(@NotNull DiagnosticCollector<JavaFileObject> diagnosticCollector, boolean humanReadable) {
-        StringBuilder builder = new StringBuilder();
-        for (javax.tools.Diagnostic<? extends JavaFileObject> diagnostic : diagnosticCollector.getDiagnostics()) {
-            if (diagnostic.getKind() != javax.tools.Diagnostic.Kind.ERROR) continue;
-
-            if (humanReadable) {
-                builder.append(diagnostic).append("\n");
-            } else {
-                builder.append(new File(diagnostic.getSource().toUri()).getName()).append(":")
-                        .append(diagnostic.getLineNumber()).append(":")
-                        .append(diagnostic.getColumnNumber()).append(":")
-                        .append(diagnostic.getCode()).append("\n");
-            }
-        }
-        return builder.toString();
     }
 
     public interface DoTest {
@@ -723,21 +663,6 @@ public class KotlinTestUtils {
     private static String getMethodMetadata(Method method) {
         TestMetadata testMetadata = method.getAnnotation(TestMetadata.class);
         return (testMetadata != null) ? testMetadata.value() : null;
-    }
-
-    @NotNull
-    public static ModuleDescriptorImpl createEmptyModule() {
-        return createEmptyModule("<empty-for-test>");
-    }
-
-    @NotNull
-    public static ModuleDescriptorImpl createEmptyModule(@NotNull String name) {
-        return createEmptyModule(name, DefaultBuiltIns.getInstance());
-    }
-
-    @NotNull
-    public static ModuleDescriptorImpl createEmptyModule(@NotNull String name, @NotNull KotlinBuiltIns builtIns) {
-        return new ModuleDescriptorImpl(Name.special(name), LockBasedStorageManager.NO_LOCKS, builtIns);
     }
 
     @NotNull

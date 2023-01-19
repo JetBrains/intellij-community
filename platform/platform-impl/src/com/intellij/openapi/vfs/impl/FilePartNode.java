@@ -20,6 +20,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Contract;
@@ -109,6 +110,10 @@ class FilePartNode {
   @NotNull
   static String myUrl(@NotNull Object fileOrUrl) {
     return fileOrUrl instanceof VirtualFile ? ((VirtualFile)fileOrUrl).getUrl() : (String)fileOrUrl;
+  }
+
+  boolean isUrlBased() {
+    return myFileOrUrl instanceof String;
   }
 
   // for creating fake root
@@ -386,6 +391,25 @@ class FilePartNode {
     for (FilePartNode child : children) {
       child.fixUrlPartNodes(oldPath, newPath);
     }
+  }
+
+  void replaceChildrenWithUPN() {
+    children = ContainerUtil.map(children, n -> n.replaceWithUPN(this), EMPTY_ARRAY);
+  }
+
+  @NotNull
+  private UrlPartNode replaceWithUPN(@NotNull FilePartNode parent) {
+    if (this instanceof UrlPartNode) return (UrlPartNode)this;
+    if (this instanceof FilePartNodeRoot) throw new IllegalArgumentException("invalid argument node: " + this);
+
+    UrlPartNode newNode = new UrlPartNode(getName().toString(), parent.myUrl(), myFS);
+    newNode.children = children;
+    newNode.replaceChildrenWithUPN();
+    processPointers(pointer -> newNode.addLeaf(pointer));
+
+    leaves = null;
+
+    return newNode;
   }
 
   @NotNull

@@ -11,10 +11,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 
@@ -47,7 +44,10 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
    * @param underlyingFacetType if this parameter is not {@code null} then you will be able to add facets of this type only as
    *                            subfacets to a facet of the specified type. If this parameter is {@code null} it will be possible to add facet of this type
    *                            directly to a module
+   * @deprecated facet types with underlying facet are deprecated (see <a href="https://youtrack.jetbrains.com/issue/IDEA-309067">IDEA-309067</a>), 
+   * use {@link #FacetType(FacetTypeId, String, String)} instead
    */
+  @Deprecated
   public FacetType(final @NotNull FacetTypeId<F> id,
                    final @NotNull @NonNls String stringId,
                    final @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName,
@@ -94,6 +94,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
   }
 
   @Nullable
+  @ApiStatus.NonExtendable
   public FacetTypeId<?> getUnderlyingFacetType() {
     return myUnderlyingFacetType;
   }

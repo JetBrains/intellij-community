@@ -45,43 +45,51 @@ public class XmlTypedHandlersTest extends BasePlatformTestCase {
   }
 
   public void testCloseTagOnSlashWithMultiCarets() {
-    doTest("<bar>\n" +
-           "<foo><<caret>\n" +
-           "<foo><<caret>\n" +
-           "</bar>", '/', "<bar>\n" +
-                          "    <foo></foo><caret>\n" +
-                          "    <foo></foo><caret>\n" +
-                          "</bar>");
+    doTest("""
+             <bar>
+             <foo><<caret>
+             <foo><<caret>
+             </bar>""", '/', """
+             <bar>
+                 <foo></foo><caret>
+                 <foo></foo><caret>
+             </bar>""");
   }
 
   public void testCloseTagOnGtWithMultiCarets() {
-    doTest("<bar>\n" +
-           "<foo<caret>\n" +
-           "<foo<caret>\n" +
-           "</bar>", '>', "<bar>\n" +
-                          "<foo><caret></foo>\n" +
-                          "<foo><caret></foo>\n" +
-                          "</bar>");
+    doTest("""
+             <bar>
+             <foo<caret>
+             <foo<caret>
+             </bar>""", '>', """
+             <bar>
+             <foo><caret></foo>
+             <foo><caret></foo>
+             </bar>""");
   }
 
   public void testCloseTagOnSlashWithMultiCaretsInDifferentContexts() {
-    doTest("<bar>\n" +
-           "<foo><<caret>\n" +
-           "<fiz><<caret>\n" +
-           "</bar>", '/', "<bar>\n" +
-                          "    <foo></foo><caret>\n" +
-                          "    <fiz></fiz><caret>\n" +
-                          "</bar>");
+    doTest("""
+             <bar>
+             <foo><<caret>
+             <fiz><<caret>
+             </bar>""", '/', """
+             <bar>
+                 <foo></foo><caret>
+                 <fiz></fiz><caret>
+             </bar>""");
   }
 
   public void testCloseTagOnGtWithMultiCaretsInDifferentContexts() {
-    doTest("<bar>\n" +
-           "<foo<caret>\n" +
-           "<fiz<caret>\n" +
-           "</bar>", '>', "<bar>\n" +
-                          "<foo><caret></foo>\n" +
-                          "<fiz><caret></fiz>\n" +
-                          "</bar>");
+    doTest("""
+             <bar>
+             <foo<caret>
+             <fiz<caret>
+             </bar>""", '>', """
+             <bar>
+             <foo><caret></foo>
+             <fiz><caret></fiz>
+             </bar>""");
   }
 
   public void testGreedyClosing() {
@@ -126,13 +134,15 @@ public class XmlTypedHandlersTest extends BasePlatformTestCase {
   }
 
   public void testFooBar() {
-    doTest("<foo>\n" +
-           "  <bar<caret></bar>\n" +
-           "</foo>",
+    doTest("""
+             <foo>
+               <bar<caret></bar>
+             </foo>""",
            '>',
-           "<foo>\n" +
-           "  <bar></bar>\n" +
-           "</foo>");
+           """
+             <foo>
+               <bar></bar>
+             </foo>""");
   }
 
   public void testWeb13982() {
@@ -142,10 +152,11 @@ public class XmlTypedHandlersTest extends BasePlatformTestCase {
 
       '\n',
 
-      "<a foo=\"1\"\n" +
-      "   bar=\"2\">\n" +
-      "    <caret>\n" +
-      "</a>"
+      """
+        <a foo="1"
+           bar="2">
+            <caret>
+        </a>"""
     );
   }
 
@@ -156,9 +167,10 @@ public class XmlTypedHandlersTest extends BasePlatformTestCase {
 
       '\n',
 
-      "<h1>Title</h1>\n" +
-      "<p>body text</p>\n" +
-      "<caret>"
+      """
+        <h1>Title</h1>
+        <p>body text</p>
+        <caret>"""
     );
   }
 
@@ -170,19 +182,21 @@ public class XmlTypedHandlersTest extends BasePlatformTestCase {
 
   public void testAutoindentEndTag() {
     doTest(
-      "<div>\n" +
-      "    <p>\n" +
-      "        Some text\n" +
-      "    </p>\n" +
-      "    <<caret>",
+      """
+        <div>
+            <p>
+                Some text
+            </p>
+            <<caret>""",
 
       '/',
 
-      "<div>\n" +
-      "    <p>\n" +
-      "        Some text\n" +
-      "    </p>\n" +
-      "</div><caret>"
+      """
+        <div>
+            <p>
+                Some text
+            </p>
+        </div><caret>"""
     );
   }
 
@@ -270,6 +284,18 @@ public class XmlTypedHandlersTest extends BasePlatformTestCase {
     myFixture.configureByText("test.html", "<div><caret></div>");
     myFixture.type("<>aa</");
     myFixture.checkResult("<div><>aa</></div>");
+  }
+
+  public void testAttributeValueQuoteEatXml(){
+    myFixture.configureByText("test.xml", "<foo attr<caret>><bar attr<caret>></bar></foo>");
+    myFixture.type("=\"foo\" a2='");
+    myFixture.checkResult("<foo attr=\"foo\" a2=\"'\"><bar attr=\"foo\" a2=\"'\"></bar></foo>");
+  }
+
+  public void testAttributeValueQuoteEatHtml(){
+    myFixture.configureByText("test.html", "<div attr<caret>><div attr<caret>></div></div>");
+    myFixture.type("=\"foo\" a2='bar");
+    myFixture.checkResult("<div attr=\"foo\" a2=\"bar\"><div attr=\"foo\" a2=\"bar\"></div></div>");
   }
 
   private void doTest(String text, char c, String result) {

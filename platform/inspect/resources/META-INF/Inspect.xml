@@ -1,9 +1,16 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <appStarter implementation="com.intellij.codeInspection.InspectionMain"/>
+    <inspectionGroupProvider implementation="com.intellij.codeInspection.inspectionProfile.InspectionBasicGroupProvider" />
+    <inspectionGroupProvider implementation="com.intellij.codeInspection.inspectionProfile.InspectionPathGroupProvider" />
+    <appStarter implementation="com.intellij.inspectopedia.extractor.InspectopediaExtractor"/>
   </extensions>
   <extensionPoints>
     <extensionPoint name="inspectResultsConsumer" interface="com.intellij.codeInspection.InspectResultsConsumer" dynamic="true"/>
     <extensionPoint name="inspectionApplicationFactory" interface="com.intellij.codeInspection.InspectionApplicationFactory" dynamic="true"/>
+    <extensionPoint name="inspectionGroupProvider" interface="com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider" dynamic="true"/>
   </extensionPoints>
+  <actions>
+      <action id="LoadDefaultYamlProfile" internal="true" class="com.intellij.codeInspection.inspectionProfile.LoadDefaultYamlProfile"/>
+  </actions>
 </idea-plugin>

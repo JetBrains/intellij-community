@@ -13,6 +13,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
+    TestModeFlags.set(CodeVisionHost.isCodeVisionTestKey, true, testRootDisposable)
     TestModeFlags.set(ProjectProblemUtils.ourTestingProjectProblems, true, testRootDisposable)
     super.setUp()
   }

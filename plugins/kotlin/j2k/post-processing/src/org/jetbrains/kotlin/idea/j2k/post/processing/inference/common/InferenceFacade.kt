@@ -2,19 +2,19 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.runUndoTransparentActionInEdt
+import com.intellij.openapi.application.runReadAction
+import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class InferenceFacade(
-  private val typeVariablesCollector: ContextCollector,
-  private val constraintsCollectorAggregator: ConstraintsCollectorAggregator,
-  private val boundTypeCalculator: BoundTypeCalculator,
-  private val stateUpdater: StateUpdater,
-  private val defaultStateProvider: DefaultStateProvider,
-  private val renderDebugTypes: Boolean = false,
-  private val printDebugConstraints: Boolean = false
+    private val typeVariablesCollector: ContextCollector,
+    private val constraintsCollectorAggregator: ConstraintsCollectorAggregator,
+    private val boundTypeCalculator: BoundTypeCalculator,
+    private val stateUpdater: StateUpdater,
+    private val defaultStateProvider: DefaultStateProvider,
+    private val renderDebugTypes: Boolean = false,
+    private val printDebugConstraints: Boolean = false
 ) {
     fun runOn(elements: List<KtElement>) {
         val inferenceContext = runReadAction { typeVariablesCollector.collectTypeVariables(elements) }
@@ -38,11 +38,11 @@ class InferenceFacade(
                         element.addTypeVariablesNames()
                     }
                     for (element in elements) {
-                        val factory = KtPsiFactory(element)
-                        element.add(factory.createNewLine(lineBreaks = 2))
+                        val psiFactory = KtPsiFactory(element.project)
+                        element.add(psiFactory.createNewLine(lineBreaks = 2))
                         for (constraint in initialConstraints!!) {
-                            element.add(factory.createComment("//${constraint.asString()}"))
-                            element.add(factory.createNewLine(lineBreaks = 1))
+                            element.add(psiFactory.createComment("//${constraint.asString()}"))
+                            element.add(psiFactory.createNewLine(lineBreaks = 1))
                         }
                     }
                 }

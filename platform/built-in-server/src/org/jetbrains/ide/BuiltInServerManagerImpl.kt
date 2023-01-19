@@ -12,11 +12,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
-import com.intellij.util.io.serverBootstrap
 import com.intellij.util.net.NetUtils
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
+import io.netty.bootstrap.ServerBootstrap
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
@@ -56,7 +54,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
     }
   }
 
-  override fun createClientBootstrap() = NettyUtil.nioClientBootstrap(server!!.eventLoopGroup)
+  override fun createClientBootstrap() = NettyUtil.nioClientBootstrap(server!!.childEventLoopGroup)
 
   companion object {
     internal const val NOTIFICATION_GROUP = "Built-in Server"
@@ -92,7 +90,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
     }
   }
 
-  fun createServerBootstrap() = serverBootstrap(server!!.eventLoopGroup)
+  fun createServerBootstrap(): ServerBootstrap = server!!.createServerBootstrap()
 
   override fun waitForStart(): BuiltInServerManager {
     val app = ApplicationManager.getApplication()
@@ -114,18 +112,26 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
     return this
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   private suspend fun startServerInPooledThread() {
     if (SystemProperties.getBooleanProperty(PROPERTY_DISABLED, false)) {
-      throw Throwable("Built-in server is disabled by `$PROPERTY_DISABLED` VM option")
+      throw RuntimeException("Built-in server is disabled by `$PROPERTY_DISABLED` VM option")
     }
 
     val mainServer = getServerFutureAsync().await()
     try {
-      server = when (mainServer) {
-        null -> BuiltInServer.start(firstPort = defaultPort, portsCount = PORTS_COUNT, tryAnyPort = true)
-        else -> BuiltInServer.start(eventLoopGroup = mainServer.eventLoopGroup, isEventLoopGroupOwner = false, firstPort = defaultPort,
-                                    portsCount = PORTS_COUNT, tryAnyPort = true)
+      server = if (mainServer == null) {
+        BuiltInServer.start(firstPort = defaultPort, portsCount = PORTS_COUNT, tryAnyPort = true)
       }
+      else {
+        BuiltInServer.start(parentEventLoopGroup = mainServer.eventLoopGroup,
+                            childEventLoopGroup = mainServer.childEventLoopGroup,
+                            isEventLoopGroupOwner = false,
+                            firstPort = defaultPort,
+                            portsCount = PORTS_COUNT,
+                            tryAnyPort = true)
+      }
+
       bindCustomPorts(server!!)
     }
     catch (e: Throwable) {
@@ -153,7 +159,9 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   }
 
   override fun overridePort(port: Int?) {
-    portOverride = port
+    if (port != this.port) {
+      portOverride = port
+    }
   }
 
   override fun configureRequestToWebServer(connection: URLConnection) {

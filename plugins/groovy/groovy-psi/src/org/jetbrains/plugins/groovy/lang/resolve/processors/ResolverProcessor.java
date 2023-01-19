@@ -22,9 +22,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
-/**
- * @author ven
- */
 public abstract class ResolverProcessor<T extends GroovyResolveResult> extends GrScopeProcessorWithHints {
 
   protected final PsiElement myPlace;

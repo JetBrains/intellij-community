@@ -33,6 +33,7 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,6 +45,7 @@ import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -122,6 +124,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
       .findFirst().ifPresent(tabInfo -> select(tabInfo, true));
   }
 
+  // Counterpart of com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
   private final class CloseTabAction extends DumbAwareAction implements LightEditCompatible {
     private final LightEditorInfo myEditorInfo;
 
@@ -133,11 +136,11 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if ((e.getModifiers() & InputEvent.ALT_MASK) == 0) {
-        closeCurrentTab();
+      if (e.getInputEvent() instanceof MouseEvent && BitUtil.isSet(e.getInputEvent().getModifiersEx(), InputEvent.ALT_DOWN_MASK)) {
+        closeAllTabsExceptCurrent();
       }
       else {
-        closeAllTabsExceptCurrent();
+        closeCurrentTab();
       }
     }
 
@@ -151,7 +154,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     private Icon getIcon() {
@@ -278,19 +281,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     return null;
   }
 
-  private static class TabEditorData {
-    private final @NotNull LightEditorInfo editorInfo;
-    private final @NotNull EditorComposite editorComposite;
-
-    private TabEditorData(@NotNull LightEditorInfo editorInfo, @NotNull EditorComposite editorComposite) {
-      this.editorInfo = editorInfo;
-      this.editorComposite = editorComposite;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof TabEditorData && ((TabEditorData)obj).editorInfo.equals(editorInfo);
-    }
+  private record TabEditorData(@NotNull LightEditorInfo editorInfo, @NotNull EditorComposite editorComposite) {
   }
 
   @Nullable
@@ -359,7 +350,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   @Override
-  public void fileStatusChanged(@NotNull Collection<LightEditorInfo> editorInfos) {
+  public void fileStatusChanged(@NotNull Collection<? extends LightEditorInfo> editorInfos) {
     ApplicationManager.getApplication().invokeLater(() -> {
       List<Pair.NonNull<TabInfo, LightEditorInfo>> tabEditorPairs = ContainerUtil.mapNotNull(editorInfos, editorInfo -> {
         TabInfo info = findTabInfo(editorInfo);

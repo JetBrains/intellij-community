@@ -4,6 +4,7 @@ package com.intellij.diff.actions.impl;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.DiffBundle;
@@ -37,6 +38,11 @@ public final class GoToChangePopupBuilder {
   }
 
   public static abstract class BaseGoToChangePopupAction extends GoToChangePopupAction {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(canNavigate() && e.getData(DiffDataKeys.DIFF_CONTEXT) != null);
@@ -118,7 +124,7 @@ public final class GoToChangePopupBuilder {
       }
 
       @Override
-      public PopupStep onChosen(final DiffRequestProducer selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(final DiffRequestProducer selectedValue, boolean finalChoice) {
         return doFinalStep(() -> {
           int index = myChain.getRequests().indexOf(selectedValue);
           myOnSelected.consume(index);

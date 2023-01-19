@@ -20,9 +20,6 @@ import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.util.Alarm
 import org.jetbrains.annotations.VisibleForTesting
 
-/**
- * @author peter
- */
 class StatisticsUpdate
     private constructor(private val myInfo: StatisticsInfo) : Disposable {
   private var mySpared: Int = 0

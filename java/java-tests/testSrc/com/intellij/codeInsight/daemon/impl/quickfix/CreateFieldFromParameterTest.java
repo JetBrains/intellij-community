@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_8;
 
-/**
- * @author ven
- */
 public class CreateFieldFromParameterTest extends LightIntentionActionTestCase {
   @Override
   protected void setUp() throws Exception {

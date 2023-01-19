@@ -6,7 +6,9 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -27,7 +29,9 @@ import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import net.miginfocom.swing.MigLayout
 import sun.swing.SwingUtilities2
 import java.awt.Color
@@ -36,7 +40,10 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import javax.swing.JComponent
+import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.event.AncestorEvent
@@ -45,7 +52,7 @@ import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
-internal open class SelectedEditorFilePath {
+internal open class SelectedEditorFilePath(frame: JFrame) {
   var onBoundsChanged: (() -> Unit)? = null
   private val projectTitle = ProjectTitlePane()
   private val classTitle = ClassTitlePane()
@@ -61,15 +68,16 @@ internal open class SelectedEditorFilePath {
     get() = true
 
   init {
+    @Suppress("DEPRECATION")
     val scope = ApplicationManager.getApplication().coroutineScope
-    scope.launch {
+    val updatePathJob = scope.launch {
       updatePathRequests
         .debounce(100.milliseconds)
         .collectLatest {
           updatePath()
         }
     }
-    scope.launch {
+    val updateJob = scope.launch {
       updateViewRequests
         .debounce(70.milliseconds)
         .collectLatest {
@@ -78,6 +86,12 @@ internal open class SelectedEditorFilePath {
           }
         }
     }
+    frame.addWindowListener(object : WindowAdapter() {
+      override fun windowClosed(p0: WindowEvent?) {
+        updatePathJob.cancel()
+        updateJob.cancel()
+      }
+    })
   }
 
   protected fun updateProjectPath() {
@@ -85,7 +99,7 @@ internal open class SelectedEditorFilePath {
     updateProject()
   }
 
-  protected fun updatePaths() {
+  private fun updatePaths() {
     updateTitlePaths()
     scheduleViewUpdate()
   }
@@ -374,9 +388,10 @@ internal open class SelectedEditorFilePath {
     label.text = titleString
     HelpTooltip.dispose(label)
 
-    (if (isClipped || basePaths.firstOrNull{!it.active} != null) {
+    (if (isClipped || basePaths.firstOrNull { !it.active } != null) {
       components.filter { it.active || basePaths.contains(it) }.joinToString(separator = "", transform = { it.toolTipPart })
-    } else null)?.let {
+    }
+    else null)?.let {
       HelpTooltip().setTitle(it).installOn(label)
     }
 

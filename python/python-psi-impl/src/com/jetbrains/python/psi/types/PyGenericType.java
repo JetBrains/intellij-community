@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author vlan
- */
 public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> {
   @NotNull private final String myName;
   @Nullable private final PyType myBound;

@@ -61,7 +61,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : Styled
           // it is required to not add extra space below the image
           StyleConstants.setLineSpacing(this, 0f)
         }
-        else StyleConstants.setLineSpacing(this, 0.2f)
+        else StyleConstants.setLineSpacing(this, 0.3f)
 
         val properties = textProperties
         if (properties != null) {

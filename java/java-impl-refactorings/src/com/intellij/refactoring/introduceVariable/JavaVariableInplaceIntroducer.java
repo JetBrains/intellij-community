@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.intention.impl.TypeExpression;
@@ -24,16 +24,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
+import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.refactoring.rename.inplace.SelectableInlayPresentation;
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil;
@@ -63,7 +63,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   private final boolean myReplaceSelf;
   private boolean myDeleteSelf = true;
   private final boolean mySkipTypeExpressionOnStart;
-  private final PsiFile myFile;
   private final boolean myCanBeVarType;
 
   public JavaVariableInplaceIntroducer(final Project project,
@@ -76,7 +75,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     super(project, editor, CommonJavaRefactoringUtil.outermostParenthesizedExpression(expr), null, occurrences, selectorManager, title);
     mySettings = settings;
     myChosenAnchor = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(chosenAnchor);
-    myFile = chosenAnchor.getContainingFile();
     myCantChangeFinalModifier = cantChangeFinalModifier;
     myHasTypeSuggestion = selectorManager.getTypesForAll().length > 1;
     myTitle = title;
@@ -159,7 +157,9 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   protected void deleteTemplateField(PsiVariable variable) {
     if (!myDeleteSelf) return;
     if (myReplaceSelf) {
-      variable.replace(variable.getInitializer());
+      PsiExpression initializer = variable.getInitializer();
+      assert initializer != null;
+      variable.replace(initializer);
     } else {
       super.deleteTemplateField(variable);
     }
@@ -241,7 +241,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     if (currentVariableRange == null) return;
 
     final PsiVariable variable = getVariable();
-    if (variable instanceof PsiPatternVariable && !PsiUtil.isLanguageLevel16OrHigher(variable)) return;
     boolean canBeVarType = myCanBeVarType && variable instanceof PsiLocalVariable;
     if (myCantChangeFinalModifier && !canBeVarType) return;
 
@@ -281,7 +280,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(@NotNull List<? super Pair<PsiElement, TextRange>> stringUsages) {
     if (isReplaceAllOccurrences()) {
       for (PsiExpression expression : getOccurrences()) {
         LOG.assertTrue(expression.isValid(), expression.getText());
@@ -295,7 +294,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+  protected void addReferenceAtCaret(Collection<? super PsiReference> refs) {
     if (!isReplaceAllOccurrences()) {
       final PsiExpression expr = getExpr();
       if (expr == null && !myReplaceSelf || expr != null && expr.getParent() == getVariable()) {
@@ -371,11 +370,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       }
     }
     return null;
-  }
-
-
-  protected boolean createFinals() {
-    return createFinals(myFile);
   }
 
   static boolean createFinals(PsiFile file) {
@@ -481,8 +475,8 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected String[] suggestNames(PsiType defaultType, String propName) {
-    return CommonJavaRefactoringUtil.getSuggestedName(defaultType, myExpr).names;
+  protected SuggestedNameInfo suggestNames(PsiType defaultType, String propName) {
+    return CommonJavaRefactoringUtil.getSuggestedName(defaultType, myExpr);
   }
 
   @Override

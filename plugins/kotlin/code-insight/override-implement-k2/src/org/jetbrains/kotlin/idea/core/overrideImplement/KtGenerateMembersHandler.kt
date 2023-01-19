@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -13,12 +14,11 @@ import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
-import org.jetbrains.kotlin.analysis.api.components.RendererModifier
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -77,17 +77,19 @@ abstract class KtGenerateMembersHandler(
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun KtAnalysisSession.generateMembers(
         editor: Editor,
         currentClass: KtClassOrObject,
         selectedElements: Collection<KtClassMember>,
         copyDoc: Boolean
     ): List<MemberEntry> {
-        if (selectedElements.isEmpty()) return emptyList()
-        val selectedMemberSymbolsAndGeneratedPsi: Map<KtCallableSymbol, KtCallableDeclaration> = selectedElements.associate {
-            it.symbol to generateMember(currentClass.project, it, currentClass, copyDoc)
+        val selectedMemberSymbolsAndGeneratedPsi = selectedElements.mapNotNull { member ->
+            member.memberInfo.symbolPointer.restoreSymbol()?.let { it to member }
+        }.associate { (symbol, member) ->
+            symbol to generateMember(currentClass.project, member, symbol, currentClass, copyDoc)
         }
+
+        if (selectedMemberSymbolsAndGeneratedPsi.isEmpty()) return emptyList()
 
         val classBody = currentClass.body
         val offset = editor.caretModel.offset
@@ -182,8 +184,8 @@ abstract class KtGenerateMembersHandler(
         // `KtMemberScope` because the latter does not guarantee members are traversed in the original order. For example the
         // FIR implementation groups overloaded functions together.
         outer@ for ((selectedSymbol, generatedPsi) in newMemberSymbolsAndGeneratedPsi) {
-            val superSymbol = selectedSymbol.originalOverriddenSymbol
-            val superPsi = superSymbol?.psi
+            val superSymbol = selectedSymbol.unwrapFakeOverrides
+            val superPsi = superSymbol.psi
             if (superPsi == null) {
                 // This normally should not happen, but we just try to play safe here.
                 sentinelTailNode.prepend(DoublyLinkedNode(MemberEntry.NewEntry(generatedPsi)))
@@ -302,16 +304,11 @@ abstract class KtGenerateMembersHandler(
     }
 
     companion object {
-        val renderOption = KtDeclarationRendererOptions(
-            modifiers = setOf(RendererModifier.OVERRIDE, RendererModifier.ANNOTATIONS),
-            renderDeclarationHeader = false,
-            renderUnitReturnType = true,
-            typeRendererOptions = KtTypeRendererOptions(
-                shortQualifiedNames = true,
-                renderFunctionType = true,
-                renderUnresolvedTypeAsResolved = true,
-            )
-        )
+        val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+         modifiersRenderer = modifiersRenderer.with {
+             modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD)
+         }
+        }
     }
 
     /** A block of code (represented as a list of Kotlin declarations) that should be inserted at a given anchor. */

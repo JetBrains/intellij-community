@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
@@ -12,10 +13,10 @@ import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRMetadataModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.LabeledListPanelHandle
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import org.jetbrains.plugins.github.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -85,7 +86,8 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
   }
 
   private fun createUserLabel(user: GHPullRequestRequestedReviewer) = JLabel(user.shortName,
-                                                                             avatarIconsProvider.getIcon(user.avatarUrl),
+                                                                             avatarIconsProvider.getIcon(user.avatarUrl,
+                                                                                                         GHUIUtil.AVATAR_SIZE),
                                                                              SwingConstants.LEFT).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2)
   }
@@ -114,7 +116,7 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
 
   companion object {
     private fun addListPanel(panel: JPanel, handle: LabeledListPanelHandle<*>) {
-      panel.add(handle.label, CC().alignY("top").width(":${handle.preferredLabelWidth}:"))
+      panel.add(handle.label, CC().alignY("top").width(":${handle.preferredLabelWidth}px:"))
       panel.add(handle.panel, CC().minWidth("0").growX().pushX().wrap())
     }
   }

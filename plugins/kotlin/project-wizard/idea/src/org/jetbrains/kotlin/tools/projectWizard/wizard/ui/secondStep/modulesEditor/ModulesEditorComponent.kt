@@ -62,7 +62,7 @@ class ModulesEditorComponent(
         }
     }
 
-    fun updateModel() {
+    private fun updateModel() {
         model.update()
     }
 

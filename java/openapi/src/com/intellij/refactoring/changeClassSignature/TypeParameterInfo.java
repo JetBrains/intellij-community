@@ -4,9 +4,6 @@ package com.intellij.refactoring.changeClassSignature;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiTypeParameter;
 
-/**
- * @author dsl
- */
 public interface TypeParameterInfo {
   String getName(PsiTypeParameter[] parameters);
 

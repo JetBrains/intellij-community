@@ -66,12 +66,12 @@ public class ArrangementSettingsSerializationTest {
   }
 
   private static StdArrangementSettings settings(@NotNull List<? extends ArrangementGroupingRule> groupings,
-                                                 @NotNull List<ArrangementSectionRule> sections) {
+                                                 @NotNull List<? extends ArrangementSectionRule> sections) {
     return new StdArrangementSettings(groupings, sections);
   }
 
   private static StdArrangementExtendableSettings extendableSettings(@NotNull List<? extends ArrangementGroupingRule> groupings,
-                                                                     @NotNull List<ArrangementSectionRule> sections,
+                                                                     @NotNull List<? extends ArrangementSectionRule> sections,
                                                                      @NotNull Collection<? extends StdArrangementRuleAliasToken> tokens) {
     return new StdArrangementExtendableSettings(groupings, sections, tokens);
   }
@@ -191,7 +191,7 @@ public class ArrangementSettingsSerializationTest {
   @Test
   public void testSimpleSectionSerialize() {
     final StdArrangementSettings settings =
-      settings(ContainerUtil.newArrayList(group(OVERRIDDEN_METHODS)), ContainerUtil.newArrayList(section(true, FIELD)));
+      settings(List.of(group(OVERRIDDEN_METHODS)), List.of(section(true, FIELD)));
     final Element holder = doSerializationTest(settings, emptySettings());
     assertEquals(2, holder.getChildren().size());
     assertNotNull(holder.getChild("groups"));
@@ -206,11 +206,11 @@ public class ArrangementSettingsSerializationTest {
 
   @Test
   public void testSectionSerialize() {
-    final ArrayList<ArrangementSectionRule> sections =
-      ContainerUtil.newArrayList(section("start section", "end section", rule(true, METHOD, PRIVATE), rule(false, METHOD, PUBLIC)),
-                                 section("start section", "end section", rule(true, FIELD)));
+    final List<ArrangementSectionRule> sections =
+      List.of(section("start section", "end section", rule(true, METHOD, PRIVATE), rule(false, METHOD, PUBLIC)),
+              section("start section", "end section", rule(true, FIELD)));
     final StdArrangementSettings settings =
-      settings(ContainerUtil.newArrayList(group(OVERRIDDEN_METHODS)), sections);
+      settings(List.of(group(OVERRIDDEN_METHODS)), sections);
 
     final Element holder = doSerializationTest(settings, emptySettings());
     assertEquals(2, holder.getChildren().size());
@@ -226,9 +226,9 @@ public class ArrangementSettingsSerializationTest {
   @Test
   public void testDefaultCustomTokenSerialize() {
     final Set<StdArrangementRuleAliasToken> tokens = ContainerUtil.newHashSet(visibilityToken());
-    final ArrayList<ArrangementGroupingRule> groupings =
-      ContainerUtil.newArrayList(new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
-    final ArrayList<ArrangementSectionRule> rules = ContainerUtil.newArrayList(section(true, FIELD));
+    final List<ArrangementGroupingRule> groupings =
+      List.of(new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
+    final List<ArrangementSectionRule> rules = List.of(section(true, FIELD));
     final StdArrangementExtendableSettings settings = extendableSettings(groupings, rules, tokens);
 
     final Element holder = doSerializationTest(settings, settings.clone());
@@ -238,137 +238,137 @@ public class ArrangementSettingsSerializationTest {
   @Test
   public void testCustomTokenSerializeLessThanDefault() throws IOException {
     final Set<StdArrangementRuleAliasToken> tokens = ContainerUtil.newHashSet(visibilityToken());
-    final ArrayList<ArrangementGroupingRule> groupings = ContainerUtil.newArrayList(
-      new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
-    final ArrayList<ArrangementSectionRule> rules = ContainerUtil.newArrayList(section(true, FIELD));
+    final List<ArrangementGroupingRule> groupings = List.of(new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
+    final List<ArrangementSectionRule> rules = List.of(section(true, FIELD));
     final StdArrangementExtendableSettings settings = extendableSettings(groupings, rules, tokens);
 
     final Set<StdArrangementRuleAliasToken> defaultTokens = ContainerUtil.newHashSet(visibilityToken(), modifiersToken());
     final StdArrangementExtendableSettings defaultSettings = extendableSettings(groupings, rules, defaultTokens);
 
     final Element holder = doSerializationTest(settings, defaultSettings);
-    final String expected = "<holder>\n" +
-                            "  <tokens>\n" +
-                            "    <token id=\"visibility\" name=\"visibility\">\n" +
-                            "      <rules>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PUBLIC>true</PUBLIC>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PROTECTED>true</PROTECTED>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PRIVATE>true</PRIVATE>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "      </rules>\n" +
-                            "    </token>\n" +
-                            "  </tokens>\n" +
-                            "</holder>";
+    final String expected = """
+      <holder>
+        <tokens>
+          <token id="visibility" name="visibility">
+            <rules>
+              <rule>
+                <match>
+                  <AND>
+                    <PUBLIC>true</PUBLIC>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PROTECTED>true</PROTECTED>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PRIVATE>true</PRIVATE>
+                  </AND>
+                </match>
+              </rule>
+            </rules>
+          </token>
+        </tokens>
+      </holder>""";
     assertXmlOutputEquals(expected, holder);
   }
 
   @Test
   public void testCustomTokenSerializeMoreThanDefault() throws IOException {
     final Set<StdArrangementRuleAliasToken> tokens = ContainerUtil.newHashSet(visibilityToken(), modifiersToken());
-    final ArrayList<ArrangementGroupingRule> groupings = ContainerUtil.newArrayList(
-      new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
-    final ArrayList<ArrangementSectionRule> rules = ContainerUtil.newArrayList(section(true, FIELD));
+    final List<ArrangementGroupingRule> groupings = List.of(new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
+    final List<ArrangementSectionRule> rules = List.of(section(true, FIELD));
     final StdArrangementExtendableSettings settings = extendableSettings(groupings, rules, tokens);
 
     final Set<StdArrangementRuleAliasToken> defaultTokens = ContainerUtil.newHashSet(visibilityToken());
     final StdArrangementExtendableSettings defaultSettings = extendableSettings(groupings, rules, defaultTokens);
 
     final Element holder = doSerializationTest(settings, defaultSettings);
-    final String expected = "<holder>\n" +
-                            "  <tokens>\n" +
-                            "    <token id=\"modifiers\" name=\"modifiers\">\n" +
-                            "      <rules>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PUBLIC>true</PUBLIC>\n" +
-                            "              <STATIC>true</STATIC>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PROTECTED>true</PROTECTED>\n" +
-                            "              <STATIC>true</STATIC>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PRIVATE>true</PRIVATE>\n" +
-                            "              <STATIC>true</STATIC>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PUBLIC>true</PUBLIC>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PROTECTED>true</PROTECTED>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PRIVATE>true</PRIVATE>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "      </rules>\n" +
-                            "    </token>\n" +
-                            "    <token id=\"visibility\" name=\"visibility\">\n" +
-                            "      <rules>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PUBLIC>true</PUBLIC>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PROTECTED>true</PROTECTED>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PRIVATE>true</PRIVATE>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "      </rules>\n" +
-                            "    </token>\n" +
-                            "  </tokens>\n" +
-                            "</holder>";
+    final String expected = """
+      <holder>
+        <tokens>
+          <token id="modifiers" name="modifiers">
+            <rules>
+              <rule>
+                <match>
+                  <AND>
+                    <PUBLIC>true</PUBLIC>
+                    <STATIC>true</STATIC>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PROTECTED>true</PROTECTED>
+                    <STATIC>true</STATIC>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PRIVATE>true</PRIVATE>
+                    <STATIC>true</STATIC>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PUBLIC>true</PUBLIC>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PROTECTED>true</PROTECTED>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PRIVATE>true</PRIVATE>
+                  </AND>
+                </match>
+              </rule>
+            </rules>
+          </token>
+          <token id="visibility" name="visibility">
+            <rules>
+              <rule>
+                <match>
+                  <AND>
+                    <PUBLIC>true</PUBLIC>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PROTECTED>true</PROTECTED>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PRIVATE>true</PRIVATE>
+                  </AND>
+                </match>
+              </rule>
+            </rules>
+          </token>
+        </tokens>
+      </holder>""";
     assertXmlOutputEquals(expected, holder);
   }
 
@@ -377,30 +377,30 @@ public class ArrangementSettingsSerializationTest {
     final StdArrangementRuleAliasToken visibility = visibilityToken();
     final StdArrangementRuleAliasToken modifiers = modifiersToken();
     final Set<StdArrangementRuleAliasToken> tokens = ContainerUtil.newHashSet(visibility, modifiers);
-    final ArrayList<ArrangementGroupingRule> groupings = ContainerUtil.newArrayList(
-      new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
-    final ArrayList<ArrangementSectionRule> rules = ContainerUtil.newArrayList(section(true, FIELD, visibility));
+    final List<ArrangementGroupingRule> groupings = List.of(new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
+    final List<ArrangementSectionRule> rules = List.of(section(true, FIELD, visibility));
     final StdArrangementExtendableSettings settings = extendableSettings(groupings, rules, tokens);
 
-    final ArrayList<ArrangementSectionRule> defaultRules = ContainerUtil.newArrayList(section(true, FIELD));
+    List<ArrangementSectionRule> defaultRules = List.of(section(true, FIELD));
     final StdArrangementExtendableSettings defaultSettings = extendableSettings(groupings, defaultRules, tokens);
 
     final Element holder = doSerializationTest(settings, defaultSettings);
-    final String expected = "<holder>\n" +
-                            "  <rules>\n" +
-                            "    <section>\n" +
-                            "      <rule>\n" +
-                            "        <match>\n" +
-                            "          <AND>\n" +
-                            "            <FIELD>true</FIELD>\n" +
-                            "            <visibility />\n" +
-                            "          </AND>\n" +
-                            "        </match>\n" +
-                            "        <order>BY_NAME</order>\n" +
-                            "      </rule>\n" +
-                            "    </section>\n" +
-                            "  </rules>\n" +
-                            "</holder>";
+    final String expected = """
+      <holder>
+        <rules>
+          <section>
+            <rule>
+              <match>
+                <AND>
+                  <FIELD>true</FIELD>
+                  <visibility />
+                </AND>
+              </match>
+              <order>BY_NAME</order>
+            </rule>
+          </section>
+        </rules>
+      </holder>""";
     assertXmlOutputEquals(expected, holder);
   }
 
@@ -409,9 +409,8 @@ public class ArrangementSettingsSerializationTest {
     final StdArrangementRuleAliasToken visibility = visibilityToken();
     final StdArrangementRuleAliasToken modifiers = modifiersToken();
     final Set<StdArrangementRuleAliasToken> tokens = ContainerUtil.newHashSet(visibility, modifiers);
-    final ArrayList<ArrangementGroupingRule> groupings = ContainerUtil.newArrayList(
-      new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
-    final ArrayList<ArrangementSectionRule> rules = ContainerUtil.newArrayList(section(true, FIELD, visibility));
+    List<ArrangementGroupingRule> groupings = List.of(new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
+    List<ArrangementSectionRule> rules = List.of(section(true, FIELD, visibility));
     final StdArrangementExtendableSettings settings = extendableSettings(groupings, rules, tokens);
     final StdArrangementExtendableSettings defaultSettings = new StdArrangementExtendableSettings();
     doSerializationTest(settings, defaultSettings);

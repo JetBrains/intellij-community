@@ -16,7 +16,7 @@ import os
 import sys
 
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import INTERACTIVE_MODE_AVAILABLE, dict_keys
+from _pydevd_bundle.pydevd_constants import INTERACTIVE_MODE_AVAILABLE, dict_keys, IS_ASYNCIO_REPL
 from _pydevd_bundle.pydevd_utils import save_main_module
 
 from _pydev_bundle import fix_getpass
@@ -68,7 +68,10 @@ class InterpreterInterface(BaseInterpreterInterface):
         BaseInterpreterInterface.__init__(self, mainThread, connect_status_queue, rpc_client)
         self.namespace = {}
         self.save_main()
-        self.interpreter = InteractiveConsole(self.namespace)
+        if AsyncioInteractiveConsole is not None:
+            self.interpreter = AsyncioInteractiveConsole(self.namespace)
+        else:
+            self.interpreter = InteractiveConsole(self.namespace)
         self._input_error_printed = False
 
     def save_main(self):
@@ -316,6 +319,62 @@ try:
 except:
     IPYTHON = False
     pass
+
+AsyncioInteractiveConsole = None
+
+if IS_ASYNCIO_REPL and not IPYTHON:
+    import asyncio
+    import ast
+    import types
+    import inspect
+
+    def create_new_loop():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    def create_task(coro, name=None):
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            create_new_loop()
+            loop = asyncio.get_event_loop()
+
+        task = loop.create_task(coro)
+
+        if name is not None:
+            task.set_name(name)
+
+        return task
+
+    asyncio.create_task = create_task
+
+
+    class _AsyncioInteractiveConsole(InteractiveConsole):
+        """ Simulates asyncio REPL (python -m asyncio) """
+        def get_event_loop_err(self):
+            return 'There is no current event loop in thread %r.' % threading.current_thread().name
+
+        def __init__(self, locals):
+            super(_AsyncioInteractiveConsole, self).__init__(locals)
+            self.compile.compiler.flags |= ast.PyCF_ALLOW_TOP_LEVEL_AWAIT
+
+        def runcode(self, code):
+            try:
+                func = types.FunctionType(code, self.locals)
+                coro = func()
+                if inspect.iscoroutine(coro):
+                    loop = asyncio.get_event_loop()
+                    loop.run_until_complete(coro)
+            except SystemExit:
+                raise
+            except RuntimeError as err:
+                if str(err) == self.get_event_loop_err():
+                    create_new_loop()
+                    self.runcode(code)
+            except:
+                self.showtraceback()
+
+    AsyncioInteractiveConsole = _AsyncioInteractiveConsole
 
 
 #=======================================================================================================================

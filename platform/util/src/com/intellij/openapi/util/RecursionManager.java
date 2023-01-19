@@ -48,8 +48,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * {@code A()->B()->C()->null} returns the same value as {@code A()->B()->C()->A()->B()->C()->null} etc. If your functions lack that quality
  * (e.g. if they add items to some list), you won't get stable caching results ever, and your code will produce unpredictable results
  * with hard-to-catch bugs. Therefore, please strive for idempotence.
- *
- * @author peter
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public final class RecursionManager {

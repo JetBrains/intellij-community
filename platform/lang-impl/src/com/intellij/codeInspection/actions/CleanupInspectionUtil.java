@@ -33,14 +33,14 @@ public interface CleanupInspectionUtil {
 
   default AbstractPerformFixesTask applyFixes(@NotNull Project project,
                                               @NotNull @NlsContexts.DialogTitle String presentationText,
-                                              @NotNull List<? extends ProblemDescriptor> descriptions,
+                                              @NotNull List<ProblemDescriptor> descriptions,
                                               @Nullable Class<?> quickfixClass,
                                               boolean startInWriteAction) {
     sortDescriptions(descriptions);
     return applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction, true);
   }
 
-  default void sortDescriptions(@NotNull List<? extends ProblemDescriptor> descriptions) {
+  default void sortDescriptions(@NotNull List<ProblemDescriptor> descriptions) {
     descriptions.sort(CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
   }
 }

@@ -7,7 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
-import com.jetbrains.python.inspections.quickfix.sdk.InterpreterSettingsQuickFix
+import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.sdk.findBaseSdks
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -33,7 +33,7 @@ object PythonLessonsUtil {
   fun LessonContext.showWarningIfPython3NotFound() {
     task {
       val callbackId = LearningUiManager.addCallback {
-        InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, project.modules.first())
+        PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, project.modules.first())
       }
       stateCheck { isPython3Installed(project) }
       showWarning(PythonLessonsBundle.message("python.3.required.warning.message", callbackId)) {

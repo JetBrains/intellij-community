@@ -14,12 +14,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 
-abstract class DocumentsSynchronizer {
+public abstract class DocumentsSynchronizer {
   @NotNull protected final Document myDocument1;
   @NotNull protected final Document myDocument2;
   @Nullable private final Project myProject;
 
-  private boolean myDuringModification = false;
+  protected boolean myDuringModification = false;
 
   private final DocumentListener myListener1 = new DocumentListener() {
     @Override

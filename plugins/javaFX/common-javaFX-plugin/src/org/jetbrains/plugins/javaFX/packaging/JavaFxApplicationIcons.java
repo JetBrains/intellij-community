@@ -5,9 +5,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxApplicationIcons {
   private String myLinuxIcon;
   private String myMacIcon;

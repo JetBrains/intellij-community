@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 
 import static com.jetbrains.python.refactoring.introduce.IntroduceHandler.findOccurrenceUnderCaret;
 
-public class PyIntroduceHandlerUi {
+public final class PyIntroduceHandlerUi {
 
   public static void performInplaceIntroduceVariable(IntroduceOperation operation, PsiElement statement) {
     if (statement instanceof PyAssignmentStatement) {
@@ -32,7 +32,7 @@ public class PyIntroduceHandlerUi {
 
   public static void performIntroduceWithDialog(IntroduceOperation operation,
                                                 @NlsContexts.DialogTitle String dialogTitle,
-                                                IntroduceValidator validator, String id, Consumer<IntroduceOperation> performRefactoringCallback) {
+                                                IntroduceValidator validator, String id, Consumer<? super IntroduceOperation> performRefactoringCallback) {
     final Project project = operation.getProject();
     if (operation.getName() == null) {
       PyIntroduceDialog dialog = new PyIntroduceDialog(project, dialogTitle, validator, id, operation);

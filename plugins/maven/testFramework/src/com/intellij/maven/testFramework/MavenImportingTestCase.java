@@ -3,16 +3,21 @@ package com.intellij.maven.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.java.library.LibraryWithMavenCoordinatesProperties;
+import com.intellij.java.library.MavenCoordinates;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
@@ -48,19 +53,21 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.importing.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.reposearch.DependencySearchService;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.junit.Assume;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.testFramework.PlatformTestUtil.waitForFuture;
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
@@ -80,8 +87,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                       "MavenProjectsManagerTest.testUpdatingProjectsWhenAbsentManagedProjectFileAppears",
                       "MavenProjectsManagerTest.testAddingManagedFileAndChangingAggregation",
                       "MavenProjectsManagerWatcherTest.testChangeConfigInOurProjectShouldCallUpdatePomFile",
-                      "MavenProjectsManagerWatcherTest.testIncrementalAutoReload",
-                      "InvalidEnvironmentImportingTest.testShouldShowLogsOfMavenServerIfNotStarted");
+                      "MavenProjectsManagerWatcherTest.testIncrementalAutoReload");
 
   @Override
   protected void setUp() throws Exception {
@@ -121,40 +127,44 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     );
   }
 
+  @Override
+  protected boolean useDirectoryBasedProjectFormat() {
+    return true;
+  }
+
+  public boolean isWorkspaceImport() {
+    return MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+  }
+
   public boolean supportModuleGroups() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject)
+    return !isWorkspaceImport()
            && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
   public boolean supportsKeepingManualChanges() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   public boolean supportsImportOfNonExistingFolders() {
-    return MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+    return isWorkspaceImport();
   }
 
   public boolean supportsKeepingModulesFromPreviousImport() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject)
+    return !isWorkspaceImport()
            && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
   public boolean supportsLegacyKeepingFoldersFromPreviousImport() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   public boolean supportsKeepingFacetsFromPreviousImport() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   public boolean supportsCreateAggregatorOption() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject)
+    return !isWorkspaceImport()
            && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
-  }
-
-  public boolean supportsZeroEventsOnNoProjectChange() {
-    // IDEA-297902 WorkspaceModel#updateProjectModel should not trigger VersionedStorageChange events, if nothing actually changes
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
   }
 
   protected void stopMavenImportManager() {
@@ -353,7 +363,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertEquals(scope, dep.getScope());
   }
 
-  private LibraryOrderEntry getModuleLibDep(String moduleName, String depName) {
+  protected LibraryOrderEntry getModuleLibDep(String moduleName, String depName) {
     return getModuleDep(moduleName, depName, LibraryOrderEntry.class);
   }
 
@@ -430,6 +440,34 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       actualNames.add(name == null ? "<unnamed>" : name);
     }
     assertUnorderedElementsAreEqual(actualNames, expectedNames);
+  }
+
+  public void assertProjectLibraryCoordinates(@NotNull String libraryName,
+                                              @Nullable String groupId,
+                                              @Nullable String artifactId,
+                                              @Nullable String version) {
+    assertProjectLibraryCoordinates(libraryName, groupId, artifactId, null, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING, version);
+  }
+
+  public void assertProjectLibraryCoordinates(@NotNull String libraryName,
+                                              @Nullable String groupId,
+                                              @Nullable String artifactId,
+                                              @Nullable String classifier,
+                                              @Nullable String packaging,
+                                              @Nullable String version)
+
+  {
+    Library lib = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName);
+    assertNotNull("Library [" + libraryName + "] not found", lib);
+    LibraryProperties libraryProperties = ((LibraryEx)lib).getProperties();
+    assertInstanceOf(libraryProperties, LibraryWithMavenCoordinatesProperties.class);
+    MavenCoordinates coords = ((LibraryWithMavenCoordinatesProperties)libraryProperties).getMavenCoordinates();
+    assertNotNull("Expected non-empty maven coordinates", coords);
+    assertEquals("Unexpected groupId", groupId, coords.getGroupId());
+    assertEquals("Unexpected artifactId", artifactId, coords.getArtifactId());
+    assertEquals("Unexpected classifier", classifier, coords.getClassifier());
+    assertEquals("Unexpected packaging", packaging, coords.getPackaging());
+    assertEquals("Unexpected version", version, coords.getVersion());
   }
 
   protected void assertModuleGroupPath(String moduleName, String... expected) {
@@ -538,7 +576,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       importViaNewFlow(files, failOnReadingError, Collections.emptyList(), profiles);
     }
     else {
-      doImportProjects(files, failOnReadingError, Collections.emptyList(), profiles);
+      doImportProjectsLegacyWay(files, failOnReadingError, Collections.emptyList(), profiles);
     }
   }
 
@@ -564,10 +602,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       myImportedContext = p.getContext();
       myReadContext = myImportedContext.getReadContext();
       myResolvedContext = myImportedContext.getResolvedContext();
-      DependencySearchService depService = myReadContext.getProject().getServiceIfCreated(DependencySearchService.class);
-      if (depService != null) {
-        depService.updateProviders();
-      }
     });
 
     try {
@@ -611,7 +645,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     PlatformTestUtil.waitForFuture(future, 60_000);*/
   }
 
-  protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError,
+  protected void doImportProjectsLegacyWay(final List<VirtualFile> files, boolean failOnReadingError,
                                   List<String> disabledProfiles, String... profiles) {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
     initProjectsManager(false);
@@ -620,11 +654,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.scheduleImportInTests(files);
-      myProjectsManager.importProjects();
     });
+    myProjectsManager.importProjects();
 
     Promise<?> promise = myProjectsManager.waitForImportCompletion();
-    PlatformTestUtil.waitForPromise(promise);
+    ApplicationManager.getApplication().invokeAndWait(() -> PlatformTestUtil.waitForPromise(promise));
 
 
     if (failOnReadingError) {
@@ -635,7 +669,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void waitForImportCompletion() {
-    edt(() -> waitForPromise(myProjectsManager.waitForImportCompletion()));
+    edt(() -> waitForPromise(myProjectsManager.waitForImportCompletion(), 60_000));
   }
 
   protected void readProjects(List<VirtualFile> files, String... profiles) {
@@ -653,7 +687,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                               Arrays.asList(profiles),
                               disabledProfiles);
       myProjectsManager.initForTests();
-      myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
+      });
+      edt(() -> waitForFuture(future, 10_000));
+
       flow.updateProjectManager(myReadContext);
     }
     else {
@@ -663,8 +701,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void updateProjectsAndImport(VirtualFile... files) {
-    readProjects(files);
-    myProjectsManager.performScheduledImportInTests();
+    if (isNewImportingProcess) {
+      importViaNewFlow(Arrays.asList(files), true, Collections.emptyList());
+    }
+    else {
+      readProjects(files);
+      myProjectsManager.performScheduledImportInTests();
+    }
   }
 
   protected void initProjectsManager(boolean enableEventHandling) {
@@ -693,7 +736,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     });
   }
 
-  protected void readProjects() {
+  protected void readProjects() throws Exception {
     readProjects(myProjectsManager.getProjectsFiles());
   }
 
@@ -854,5 +897,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   private CodeStyleSettings getCurrentCodeStyleSettings() {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return CodeStyle.createTestSettings();
     return CodeStyle.getSettings(myProject);
+  }
+
+  protected void waitForSmartMode() {
+    AsyncPromise<Void> promise = new AsyncPromise<>();
+    DumbService.getInstance(myProject).smartInvokeLater(() -> {
+      promise.setResult(null);
+    });
+    edt(() -> waitForPromise(promise, 60_000));
   }
 }

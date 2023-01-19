@@ -8,19 +8,18 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.siblings
-import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.buildEmptyRow
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
+import org.intellij.plugins.markdown.editor.tables.buildEmptyRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 
 internal class MarkdownTableShiftEnterHandler(private val baseHandler: EditorActionHandler?): EditorWriteActionHandler() {
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
@@ -35,7 +34,7 @@ internal class MarkdownTableShiftEnterHandler(private val baseHandler: EditorAct
 
   private fun actuallyExecute(editor: Editor, caret: Caret?, dataContext: DataContext?): Boolean {
     val project = editor.project ?: return false
-    if (!Registry.`is`("markdown.tables.editing.support.enable") || !MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
+    if (!MarkdownCodeInsightSettings.getInstance().state.insertNewTableRowOnShiftEnter) {
       return false
     }
     val document = editor.document

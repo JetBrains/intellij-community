@@ -78,9 +78,11 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertTrue(text, text.matches("Hello\\. I are a very humble\\spersons\\."));
 
     assertEquals("First line.\nThird line.", extractText("a.java",
-      "// First line.\n" +
-      "// \n" +
-      "//   Third line.\n"
+                                                         """
+                                                           // First line.
+                                                           //\s
+                                                           //   Third line.
+                                                           """
       , 4).toString());
 
     text = "//1\n//2\n//3\n//4";
@@ -116,17 +118,18 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testJavadoc() {
-    String docText = "/**\n" +
-                     "* Hello {@link #foo},\n" +
-                     "* here's an asterisk: *\n" +
-                     "* and some {@code code}.\n" +
-                     "* tags1 <unknownTag>this<unknownTag>is</unknownTag>unknown</unknownTag >\n" +
-                     "* tags2 <unknown1>one<unknown2>unknown<unknown1>unknown</unknown2> two<p/> three<unknown1/> four</unknown1>\n" +
-                     "* {@link #unknown} is unknown.\n" +
-                     "* @param foo the text without the parameter name\n" +
-                     "* @return the offset of {@link #bar} in something\n" +
-                     "* @throws Exception when something happens\n" +
-                     " */";
+    String docText = """
+      /**
+      * Hello {@link #foo},
+      * here's an asterisk: *
+      * and some {@code code}.
+      * tags1 <unknownTag>this<unknownTag>is</unknownTag>unknown</unknownTag >
+      * tags2 <unknown1>one<unknown2>unknown<unknown1>unknown</unknown2> two<p/> three<unknown1/> four</unknown1>
+      * {@link #unknown} is unknown.
+      * @param foo the text without the parameter name
+      * @return the offset of {@link #bar} in something
+      * @throws Exception when something happens
+       */""";
     TextContent text = extractText("a.java", docText, 6);
     assertEquals("Hello |,\nhere's an asterisk: *\nand some |.\ntags1 |\ntags2 |\n|is unknown.", unknownOffsets(text));
 
@@ -145,14 +148,13 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testJavaTextBlock() {
-    String text = "class C { " +
-                  "  String s = \"\"\"\n" +
-                  "    abc \\\n" +
-                  "    \\\n" +
-                  "    def\n" +
-                  "      ghi\n" +
-                  "    \"\"\"; " +
-                  "}";
+    String text = """
+      class C {   String s = ""\"
+          abc \\
+          \\
+          def
+            ghi
+          ""\"; }""";
     int offset = text.indexOf("def");
     TextContent content = extractText("a.java", text, offset);
     assertEquals("abc def\n  ghi", content.toString());

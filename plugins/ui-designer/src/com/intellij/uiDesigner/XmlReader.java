@@ -35,10 +35,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class XmlReader {
   private static final Logger LOG = Logger.getInstance(XmlReader.class);
 

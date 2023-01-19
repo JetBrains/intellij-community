@@ -76,7 +76,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
 
   /**
    * A reverse to {@link #extractLocalPath(String)} - i.e. dresses a local file path to make it a suitable root path for this filesystem.
-   * E.g. "/x/y.jar" -> "/x/y.jar!/"
+   * E.g., "/x/y.jar" -> "/x/y.jar!/"
    */
   protected abstract @NotNull String composeRootPath(@NotNull String localPath);
 
@@ -149,10 +149,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
 
   @Override
   public boolean exists(@NotNull VirtualFile file) {
-    if (file.getParent() == null) {
-      return getLocalByEntry(file) != null;
-    }
-    return getAttributes(file) != null;
+    return file.getParent() == null ? getLocalByEntry(file) != null : getAttributes(file) != null;
   }
 
   @Override

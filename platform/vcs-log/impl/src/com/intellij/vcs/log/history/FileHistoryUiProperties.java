@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,12 +21,12 @@ import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 public final class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
   public static final VcsLogUiProperty<Boolean> SHOW_ALL_BRANCHES = new VcsLogUiProperty<>("Table.ShowOtherBranches");
 
-  @NotNull private final EventDispatcher<PropertiesChangeListener> myEventDispatcher = EventDispatcher.create(PropertiesChangeListener.class);
-  @NotNull private final VcsLogApplicationSettings myAppSettings =
+  private final @NotNull EventDispatcher<PropertiesChangeListener> myEventDispatcher = EventDispatcher.create(PropertiesChangeListener.class);
+  private final @NotNull VcsLogApplicationSettings myAppSettings =
     ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
-  @NotNull private final PropertiesChangeListener myApplicationSettingsListener = this::onApplicationSettingChange;
+  private final @NotNull PropertiesChangeListener myApplicationSettingsListener = this::onApplicationSettingChange;
 
-  @NotNull private final Set<VcsLogUiProperty<?>> myApplicationLevelProperties = Set.of(PREFER_COMMIT_DATE,
+  private final @NotNull Set<VcsLogUiProperty<?>> myApplicationLevelProperties = Set.of(PREFER_COMMIT_DATE,
                                                                                         COMPACT_REFERENCES_VIEW,
                                                                                         SHOW_TAG_NAMES,
                                                                                         LABELS_LEFT_ALIGNED);
@@ -34,9 +34,8 @@ public final class FileHistoryUiProperties implements VcsLogUiProperties, Persis
   private State myState = new State();
 
   @SuppressWarnings("unchecked")
-  @NotNull
   @Override
-  public <T> T get(@NotNull VcsLogUiProperty<T> property) {
+  public @NotNull <T> T get(@NotNull VcsLogUiProperty<T> property) {
     if (property instanceof TableColumnWidthProperty) {
       Integer savedWidth = myState.COLUMN_ID_WIDTH.get(property.getName());
       if (savedWidth == null) {
@@ -134,8 +133,7 @@ public final class FileHistoryUiProperties implements VcsLogUiProperties, Persis
   }
 
   @Override
-  @Nullable
-  public State getState() {
+  public @Nullable State getState() {
     return myState;
   }
 

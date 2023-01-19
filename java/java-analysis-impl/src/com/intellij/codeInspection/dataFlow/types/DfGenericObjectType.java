@@ -139,6 +139,13 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
   }
 
   @Override
+  public @NotNull DfReferenceType convert(TypeConstraints.@NotNull TypeConstraintFactory factory) {
+    TypeConstraint newConstraint = myConstraint.convert(factory);
+    DfType newSpecialFieldType = (mySpecialFieldType instanceof DfReferenceType refType) ? refType.convert(factory) : mySpecialFieldType;
+    return new DfGenericObjectType(myNotValues, newConstraint, myNullability, myMutability, mySpecialField, newSpecialFieldType, myLocal);
+  }
+
+  @Override
   public boolean isSuperType(@NotNull DfType other) {
     if (other == BOTTOM) return true;
     if (other instanceof DfNullConstantType) {
@@ -258,26 +265,27 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
       if (!otherSfType.equals(mySpecialFieldType)) bits |= SF_TYPE;
       if (otherLocal != myLocal) bits |= LOCAL;
       switch (bits) {
-        case CONSTRAINT:
-        case NULLABILITY | CONSTRAINT: {
+        case CONSTRAINT, NULLABILITY | CONSTRAINT -> {
           TypeConstraint constraint = otherConstraint.tryJoinExactly(myConstraint);
           return constraint == null ? null :
                  new DfGenericObjectType(myNotValues, constraint, myNullability.unite(otherNullability), myMutability,
                                          mySpecialField, mySpecialFieldType, myLocal);
         }
-        case MUTABILITY:
+        case MUTABILITY -> {
           return new DfGenericObjectType(myNotValues, myConstraint, myNullability, myMutability.join(otherMutability),
                                          mySpecialField, mySpecialFieldType, myLocal);
-        case NULLABILITY:
+        }
+        case NULLABILITY -> {
           return new DfGenericObjectType(myNotValues, myConstraint, myNullability.unite(otherNullability), myMutability,
                                          mySpecialField, mySpecialFieldType, myLocal);
-        case NOT_VALUES: {
+        }
+        case NOT_VALUES -> {
           Set<Object> notValues = new HashSet<>(myNotValues);
           notValues.retainAll(otherNotValues);
           return new DfGenericObjectType(notValues, myConstraint, myNullability, myMutability,
                                          mySpecialField, mySpecialFieldType, myLocal);
         }
-        case SF_TYPE: {
+        case SF_TYPE -> {
           DfType sfType = otherSfType.tryJoinExactly(mySpecialFieldType);
           return sfType == null ? null :
                  new DfGenericObjectType(myNotValues, myConstraint, myNullability, myMutability,

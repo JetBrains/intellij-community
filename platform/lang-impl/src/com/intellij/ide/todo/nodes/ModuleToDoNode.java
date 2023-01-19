@@ -30,15 +30,14 @@ public class ModuleToDoNode extends BaseToDoNode<Module> {
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
     ArrayList<AbstractTreeNode<?>> children = new ArrayList<>();
     if (myToDoSettings.getIsPackagesShown()) {
       TodoTreeHelper.getInstance(getProject()).addPackagesToChildren(children, getValue(), myBuilder);
     }
     else {
-      for (Iterator i = myBuilder.getAllFiles(); i.hasNext();) {
-        final PsiFile psiFile = (PsiFile)i.next();
+      for (Iterator<? extends PsiFile> i = myBuilder.getAllFiles(); i.hasNext(); ) {
+        final PsiFile psiFile = i.next();
         if (psiFile == null) { // skip invalid PSI files
           continue;
         }
@@ -52,7 +51,6 @@ public class ModuleToDoNode extends BaseToDoNode<Module> {
       }
     }
     return children;
-
   }
 
   @Override

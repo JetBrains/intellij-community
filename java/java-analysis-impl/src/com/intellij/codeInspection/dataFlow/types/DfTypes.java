@@ -187,25 +187,17 @@ public final class DfTypes {
    * @return resulting DfType.
    */
   public static @NotNull DfType rangeClamped(@NotNull LongRangeSet range, @NotNull LongRangeType lrType) {
-    switch (lrType) {
-      case INT32:
-        return intRangeClamped(range);
-      case INT64:
-        return longRange(range);
-      default:
-        throw new IllegalStateException("Unexpected value: " + lrType);
-    }
+    return switch (lrType) {
+      case INT32 -> intRangeClamped(range);
+      case INT64 -> longRange(range);
+    };
   }
 
   static @NotNull DfType range(@NotNull LongRangeSet range, @Nullable LongRangeSet wideRange, @NotNull LongRangeType lrType) {
-    switch (lrType) {
-      case INT32:
-        return intRange(range, wideRange);
-      case INT64:
-        return longRange(range, wideRange);
-      default:
-        throw new IllegalStateException("Unexpected value: " + lrType);
-    }
+    return switch (lrType) {
+      case INT32 -> intRange(range, wideRange);
+      case INT64 -> longRange(range, wideRange);
+    };
   }
 
   /**
@@ -403,21 +395,14 @@ public final class DfTypes {
    */
   public static DfConstantType<?> defaultValue(@NotNull PsiType type) {
     if (type instanceof PsiPrimitiveType) {
-      switch (type.getCanonicalText()) {
-        case "boolean":
-          return FALSE;
-        case "byte":
-        case "char":
-        case "short":
-        case "int":
-          return intValue(0);
-        case "long":
-          return longValue(0L);
-        case "float":
-          return floatValue(0F);
-        case "double":
-          return doubleValue(0D);
-      }
+      return switch (type.getCanonicalText()) {
+        case "boolean" -> FALSE;
+        case "byte", "char", "short", "int" -> intValue(0);
+        case "long" -> longValue(0L);
+        case "float" -> floatValue(0F);
+        case "double" -> doubleValue(0D);
+        default -> NULL;
+      };
     }
     return NULL;
   }

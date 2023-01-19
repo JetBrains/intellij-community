@@ -16,7 +16,7 @@ abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.Com
 
   fun getPath(path: P): String = pathSerializer.serialize(path)
 
-  fun getComplexPath(path: String): P = pathSerializer.deserialize(path)
+  private fun getComplexPath(path: String): P = pathSerializer.deserialize(path)
 
   private fun getComplexPathSafe(path: String): P? {
     return try {

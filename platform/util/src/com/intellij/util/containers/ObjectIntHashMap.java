@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -9,7 +9,9 @@ import java.util.Set;
 
 /**
  * return -1 instead of 0 if no such mapping exists
+ * @deprecated Use {@link Object2IntOpenHashMap}
  */
+@Deprecated
 public class ObjectIntHashMap<K> implements ObjectIntMap<K> {
   private final Object2IntMap<K> myMap;
   public ObjectIntHashMap() {
@@ -78,17 +80,7 @@ public class ObjectIntHashMap<K> implements ObjectIntMap<K> {
 
   @Override
   public @NotNull Iterable<Entry<K>> entries() {
-    return ContainerUtil.map(myMap.object2IntEntrySet(), e->new Entry<K>() {
-      @Override
-      public @NotNull K getKey() {
-        return e.getKey();
-      }
-
-      @Override
-      public int getValue() {
-        return e.getIntValue();
-      }
-    });
+    return ContainerUtil.map(myMap.object2IntEntrySet(), e-> new IntEntry(e));
   }
 
   /**
@@ -97,5 +89,26 @@ public class ObjectIntHashMap<K> implements ObjectIntMap<K> {
   @Deprecated
   public final int get(@NotNull K key, int defaultValue) {
     return getOrDefault(key, defaultValue);
+  }
+
+  private class IntEntry implements Entry<K> {
+    private final Object2IntMap.Entry<? extends K> myEntry;
+
+    IntEntry(@NotNull Object2IntMap.Entry<? extends K> entry) { myEntry = entry; }
+
+    @Override
+    public @NotNull K getKey() {
+      return myEntry.getKey();
+    }
+
+    @Override
+    public int getValue() {
+      return myEntry.getIntValue();
+    }
+
+    @Override
+    public String toString() {
+      return myEntry.toString();
+    }
   }
 }

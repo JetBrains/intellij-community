@@ -1,5 +1,6 @@
 {
   "type": "KOTLIN_CLASS",
   "classId": "test/E",
-  "newName": "D"
+  "newName": "D",
+  "enabledInK2": true
 }

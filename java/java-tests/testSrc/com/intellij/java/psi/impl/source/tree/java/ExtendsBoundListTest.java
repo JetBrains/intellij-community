@@ -20,9 +20,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.*;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
-/**
- *  @author dsl
- */
 public class ExtendsBoundListTest extends LightJavaCodeInsightTestCase {
   public void testRemoveBoundFromFront() {
     final PsiTypeParameter typeParameter = getTypeParameter();

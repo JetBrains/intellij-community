@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,8 +51,9 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
 
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
-    e.getPresentation().setVisible(BekUtil.isBekEnabled());
-    e.getPresentation().setEnabled(BekUtil.isBekEnabled() && logUI != null);
+    Presentation presentation = e.getPresentation();
+    presentation.setVisible(BekUtil.isBekEnabled());
+    presentation.setEnabled(BekUtil.isBekEnabled() && logUI != null);
 
     if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
       String description;
@@ -63,13 +65,11 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
         String localizedDescription = GraphSortPresentationUtil.getLocalizedDescription(PermanentGraph.SortType.Normal);
         description = VcsLogBundle.message("vcs.log.action.turn.intellisort.off", StringUtil.toLowerCase(localizedDescription));
       }
-      e.getPresentation().setDescription(description);
-      e.getPresentation().setText(description);
+      presentation.setDescription(description);
     }
     else {
-      e.getPresentation().setText(VcsLogBundle.message("vcs.log.action.intellisort.text"));
       //noinspection DialogTitleCapitalization
-      e.getPresentation().setDescription(VcsLogBundle.message("vcs.log.action.intellisort.description"));
+      presentation.setDescription(VcsLogBundle.message("vcs.log.action.intellisort.description"));
     }
   }
 

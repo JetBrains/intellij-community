@@ -60,20 +60,23 @@ public class SimplifiableBooleanExpressionFixTest extends IGQuickFixesTestCase {
     // affect dereferencing (e.g. "a != null && b != null && a.foo(b.bar()) || b == null") is safe, but replacement is not.
     // Proper replacement would be "(a || !b) && (!b || c)", but it's not shorter than the original code
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
-                 "class X {\n" +
-                 "  boolean fff(boolean a, boolean b, boolean c) { \n" +
-                 "    return a && b && c/**/ || !b;\n" +
-                 "  }\n" +
-                 "}");
+                               """
+                                 class X {
+                                   boolean fff(boolean a, boolean b, boolean c) {\s
+                                     return a && b && c/**/ || !b;
+                                   }
+                                 }""");
   }
 
   public void testIncomplete() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
-                               "class X {\n" +
-                               "  boolean fff(boolean a) { \n" +
-                               "    return a/**/ && || !a;\n\n" +
-                               "  }\n" +
-                               "}");
+                               """
+                                 class X {
+                                   boolean fff(boolean a) {\s
+                                     return a/**/ && || !a;
+
+                                   }
+                                 }""");
   }
 
   public void testAndOrExpression3Parentheses() {

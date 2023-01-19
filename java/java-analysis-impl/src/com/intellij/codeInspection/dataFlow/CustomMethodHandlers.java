@@ -397,27 +397,26 @@ public final class CustomMethodHandlers {
     if (arguments.myArguments.length != 1) return DfType.TOP;
     Integer val = state.getDfType(arguments.myArguments[0]).getConstantOfType(Integer.class);
     if (val == null) return DfType.TOP;
-    LongRangeSet range = null;
-    switch (val) {
-      case Calendar.DATE: range = LongRangeSet.range(1, 31); break;
-      case Calendar.MONTH: {
+    LongRangeSet range = switch (val) {
+      case Calendar.DATE -> LongRangeSet.range(1, 31);
+      case Calendar.MONTH -> {
         PsiType type = TypeConstraint.fromDfType(state.getDfType(arguments.myQualifier)).getPsiType(factory.getProject());
         if (TypeUtils.typeEquals("java.util.GregorianCalendar", type)) {
-          range = LongRangeSet.range(0, 11);
-        } else {
-          // Could be lunar calendar
-          range = LongRangeSet.range(0, 12);
+          yield LongRangeSet.range(0, 11);
         }
-        break;
+        else {
+          // Could be lunar calendar
+          yield LongRangeSet.range(0, 12);
+        }
       }
-      case Calendar.AM_PM: range = LongRangeSet.range(0, 1); break;
-      case Calendar.DAY_OF_YEAR: range = LongRangeSet.range(1, 366); break;
-      case Calendar.HOUR: range = LongRangeSet.range(0, 11); break;
-      case Calendar.HOUR_OF_DAY: range = LongRangeSet.range(0, 23); break;
-      case Calendar.MINUTE:
-      case Calendar.SECOND: range = LongRangeSet.range(0, 59); break;
-      case Calendar.MILLISECOND: range = LongRangeSet.range(0, 999); break;
-    }
+      case Calendar.AM_PM -> LongRangeSet.range(0, 1);
+      case Calendar.DAY_OF_YEAR -> LongRangeSet.range(1, 366);
+      case Calendar.HOUR -> LongRangeSet.range(0, 11);
+      case Calendar.HOUR_OF_DAY -> LongRangeSet.range(0, 23);
+      case Calendar.MINUTE, Calendar.SECOND -> LongRangeSet.range(0, 59);
+      case Calendar.MILLISECOND -> LongRangeSet.range(0, 999);
+      default -> null;
+    };
     return range == null ? DfType.TOP : intRange(range);
   }
 
@@ -491,18 +490,14 @@ public final class CustomMethodHandlers {
       if (psiClass != null) {
         String result;
         switch (name) {
-          case "getSimpleName":
-            result = psiClass instanceof PsiAnonymousClass ? "" : psiClass.getName();
-            break;
-          case "getName":
+          case "getSimpleName" -> result = psiClass instanceof PsiAnonymousClass ? "" : psiClass.getName();
+          case "getName" -> {
             if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
               return DfType.TOP;
             }
             result = ClassUtil.getJVMClassName(psiClass);
-            break;
-          default:
-            result = psiClass.getQualifiedName();
-            break;
+          }
+          default -> result = psiClass.getQualifiedName();
         }
         return constant(result, stringType);
       }

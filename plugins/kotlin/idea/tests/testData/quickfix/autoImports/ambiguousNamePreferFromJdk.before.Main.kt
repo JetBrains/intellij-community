@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import class 'Date'" "true"
 // ERROR: Unresolved reference: Date
 
 import java.util.*

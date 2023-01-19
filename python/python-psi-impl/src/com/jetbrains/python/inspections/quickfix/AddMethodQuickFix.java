@@ -30,7 +30,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Adds a method foo to class X if X.foo() is unresolved.
- * User: dcheryasov
  */
 public class AddMethodQuickFix implements LocalQuickFix {
 

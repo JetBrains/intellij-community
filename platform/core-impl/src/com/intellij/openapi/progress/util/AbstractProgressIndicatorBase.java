@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -132,7 +133,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void cancel() {
     myCanceled = true;
     stopSystemActivity();
-    if (ApplicationManager.getApplication() != null) {
+    if (ApplicationManager.getApplication() != null && LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       ProgressManager.canceled(this);
     }
   }

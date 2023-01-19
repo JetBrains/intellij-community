@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKComment
 import org.jetbrains.kotlin.nj2k.tree.JKDeclaration
 import org.jetbrains.kotlin.nj2k.tree.JKFormattingOwner
 
-internal class JKCommentPrinter(val printer: JKPrinter) {
+internal class JKCommentPrinter(private val printer: JKPrinter) {
     private val printedTokens = mutableSetOf<JKComment>()
 
     //TODO move to ast transformation phase

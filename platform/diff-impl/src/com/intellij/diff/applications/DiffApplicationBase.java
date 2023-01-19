@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.applications;
 
-import com.intellij.openapi.application.ApplicationStarterBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -28,21 +27,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class DiffApplicationBase extends ApplicationStarterBase {
-  @NlsSafe protected static final String NULL_PATH = "/dev/null";
+public final class DiffApplicationBase {
+  static final @NlsSafe String NULL_PATH = "/dev/null";
 
-  protected static final Logger LOG = Logger.getInstance(DiffApplicationBase.class);
+  static final Logger LOG = Logger.getInstance(DiffApplicationBase.class);
 
-  protected DiffApplicationBase(int... possibleArgumentsCount) {
-    super(possibleArgumentsCount);
+  private DiffApplicationBase() {
   }
 
   //
   // Impl
   //
 
-  @NotNull
-  public static List<VirtualFile> findFilesOrThrow(@NotNull List<String> filePaths, @Nullable String currentDirectory) throws Exception {
+  public static @NotNull List<VirtualFile> findFilesOrThrow(@NotNull List<String> filePaths, @Nullable String currentDirectory) throws Exception {
     List<VirtualFile> files = new ArrayList<>();
 
     for (String path : filePaths) {
@@ -69,8 +66,7 @@ public abstract class DiffApplicationBase extends ApplicationStarterBase {
     }
   }
 
-  @Nullable
-  public static VirtualFile findFile(@NotNull String path, @Nullable String currentDirectory) {
+  public static @Nullable VirtualFile findFile(@NotNull String path, @Nullable String currentDirectory) {
     File file = getFile(path, currentDirectory);
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     if (virtualFile == null) {
@@ -79,8 +75,7 @@ public abstract class DiffApplicationBase extends ApplicationStarterBase {
     return virtualFile;
   }
 
-  @Nullable
-  public static VirtualFile findOrCreateFile(@NotNull String path, @Nullable String currentDirectory) throws IOException {
+  public static @Nullable VirtualFile findOrCreateFile(@NotNull String path, @Nullable String currentDirectory) throws IOException {
     File file = getFile(path, currentDirectory);
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     if (virtualFile == null) {
@@ -95,8 +90,7 @@ public abstract class DiffApplicationBase extends ApplicationStarterBase {
     return virtualFile;
   }
 
-  @NotNull
-  public static File getFile(@NotNull String path, @Nullable String currentDirectory) {
+  public static @NotNull File getFile(@NotNull String path, @Nullable String currentDirectory) {
     File file = new File(path);
     if (!file.isAbsolute() && currentDirectory != null) {
       file = new File(currentDirectory, path);
@@ -104,14 +98,11 @@ public abstract class DiffApplicationBase extends ApplicationStarterBase {
     return file;
   }
 
-  @NotNull
-  public static List<VirtualFile> replaceNullsWithEmptyFile(@NotNull List<? extends VirtualFile> contents) {
+  public static @NotNull List<VirtualFile> replaceNullsWithEmptyFile(@NotNull List<? extends VirtualFile> contents) {
     return ContainerUtil.map(contents, file -> file != null ? file : new LightVirtualFile(NULL_PATH, PlainTextFileType.INSTANCE, ""));
   }
 
-
-  @Nullable
-  protected static Project guessProject(@NotNull List<? extends VirtualFile> files) {
+  static @Nullable Project guessProject(@NotNull List<? extends VirtualFile> files) {
     Set<Project> projects = new HashSet<>();
     for (VirtualFile file : files) {
       projects.addAll(ProjectLocator.getInstance().getProjectsForFile(file));

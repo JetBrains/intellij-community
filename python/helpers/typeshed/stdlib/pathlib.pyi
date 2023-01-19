@@ -8,10 +8,11 @@ from _typeshed import (
     Self,
     StrPath,
 )
+from collections.abc import Generator, Sequence
 from io import BufferedRandom, BufferedReader, BufferedWriter, FileIO, TextIOWrapper
 from os import PathLike, stat_result
 from types import TracebackType
-from typing import IO, Any, BinaryIO, Generator, Sequence, overload
+from typing import IO, Any, BinaryIO, overload
 from typing_extensions import Literal
 
 if sys.version_info >= (3, 9):
@@ -158,8 +159,7 @@ class Path(PurePath):
         # so it's safer to pretend they don't exist
         def owner(self) -> str: ...
         def group(self) -> str: ...
-        if sys.version_info >= (3, 7):
-            def is_mount(self) -> bool: ...
+        def is_mount(self) -> bool: ...
 
     if sys.version_info >= (3, 9):
         def readlink(self: Self) -> Self: ...

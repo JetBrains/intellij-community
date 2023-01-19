@@ -27,6 +27,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+/**
+ * @deprecated use {@link HighlightInfoHolder}
+ */
+@Deprecated(forRemoval = true)
 public class CheckLevelHighlightInfoHolder extends HighlightInfoHolder {
   private final HighlightInfoHolder myHolder;
   private PsiElement myLevel;

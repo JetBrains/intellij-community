@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nls
 import java.util.*
 
 @Service
-internal class SettingsSyncStatusTracker : SettingsSyncEnabledStateListener {
+internal class SettingsSyncStatusTracker : SettingsSyncEnabledStateListener, SettingsChangeListener {
   private var lastSyncTime = -1L
   private var errorMessage: String? = null
 
@@ -15,6 +15,7 @@ internal class SettingsSyncStatusTracker : SettingsSyncEnabledStateListener {
 
   init {
     SettingsSyncEvents.getInstance().addEnabledStateChangeListener(this)
+    SettingsSyncEvents.getInstance().addSettingsChangedListener(this)
   }
 
   companion object {
@@ -46,6 +47,12 @@ internal class SettingsSyncStatusTracker : SettingsSyncEnabledStateListener {
 
   override fun enabledStateChanged(syncEnabled: Boolean) {
     if (!syncEnabled) clear()
+  }
+
+  override fun settingChanged(event: SyncSettingsEvent) {
+    if (event is SyncSettingsEvent.CloudChange) {
+      updateOnSuccess()
+    }
   }
 
   fun getErrorMessage(): String? = errorMessage

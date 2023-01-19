@@ -4,19 +4,17 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddArgumentNamesApplicators
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.addArgumentName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatchStatus.ARGUMENT_HAS_NO_TYPE
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatchStatus.SUCCESS
@@ -48,14 +46,13 @@ class AddNameToArgumentIntention : SelfTargetingIntention<KtValueArgument>(
             super.skipProcessingFurtherElementsAfter(element)
 
     override fun applyTo(element: KtValueArgument, editor: Editor?) {
-        apply(element, givenResolvedCall = null, editor)
+        apply(element, givenResolvedCall = null)
     }
 
     companion object {
-        fun apply(element: KtValueArgument, givenResolvedCall: ResolvedCall<*>?, editor: Editor?) {
+        fun apply(element: KtValueArgument, givenResolvedCall: ResolvedCall<*>?) {
             val name = detectNameToAdd(element, shouldBeLastUnnamed = false, givenResolvedCall = givenResolvedCall) ?: return
-            AddArgumentNamesApplicators.singleArgumentApplicator
-                .applyTo(element, AddArgumentNamesApplicators.SingleArgumentInput(name), element.project, editor)
+            addArgumentName(element, name)
         }
 
         fun detectNameToAdd(argument: KtValueArgument, shouldBeLastUnnamed: Boolean, givenResolvedCall: ResolvedCall<*>? = null): Name? {

@@ -6,40 +6,38 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.FoldRegionImpl;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
-public class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion {
+public abstract class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion {
   private final EditorWindow myEditorWindow;
-
-  private final FoldRegion myHostRegion;
 
   FoldingRegionWindow(@NotNull DocumentWindow documentWindow,
                       @NotNull EditorWindow editorWindow,
-                      @NotNull FoldRegion hostRegion,
-                      int startShift,
-                      int endShift)
-  {
-    super(documentWindow, (RangeMarkerEx)hostRegion, startShift, endShift);
+                      int startOffset,
+                      int endOffset) {
+    super(documentWindow, startOffset, endOffset, false);
     myEditorWindow = editorWindow;
-    myHostRegion = hostRegion;
   }
+  @Override
+  @NotNull abstract RangeMarker createHostRangeMarkerToTrack(@NotNull TextRange hostRange, boolean surviveOnExternalChange);
 
   @Override
   public boolean isExpanded() {
-    return myHostRegion.isExpanded();
+    return getDelegate().isExpanded();
   }
 
   @Override
   public void setExpanded(boolean expanded) {
-    myHostRegion.setExpanded(expanded);
+    getDelegate().setExpanded(expanded);
   }
 
   @Override
   @NotNull
   public String getPlaceholderText() {
-    return myHostRegion.getPlaceholderText();
+    return getDelegate().getPlaceholderText();
   }
 
   @Override
@@ -49,7 +47,7 @@ public class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion
 
   @Override
   public FoldingGroup getGroup() {
-    return myHostRegion.getGroup();
+    return getDelegate().getGroup();
   }
 
   @Override
@@ -58,23 +56,23 @@ public class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion
   }
 
   @Override
-  public FoldRegionImpl getDelegate() {
-    return (FoldRegionImpl)myHostRegion;
+  public @NotNull FoldRegionImpl getDelegate() {
+    return (FoldRegionImpl)super.getDelegate();
   }
 
   @Override
   public void setGutterMarkEnabledForSingleLine(boolean value) {
-    myHostRegion.setGutterMarkEnabledForSingleLine(value);
+    getDelegate().setGutterMarkEnabledForSingleLine(value);
   }
 
   @Override
   public boolean isGutterMarkEnabledForSingleLine() {
-    return myHostRegion.isGutterMarkEnabledForSingleLine();
+    return getDelegate().isGutterMarkEnabledForSingleLine();
   }
 
   @Override
   public void setPlaceholderText(@NotNull String text) {
-    myHostRegion.setPlaceholderText(text);
+    getDelegate().setPlaceholderText(text);
   }
 
   public static FoldingRegionWindow getInjectedRegion(@NotNull FoldRegion hostRegion) {

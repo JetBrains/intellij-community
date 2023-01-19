@@ -2,11 +2,7 @@
 package training.actions
 
 import com.intellij.lang.Language
-import com.intellij.lang.LanguageExtensionPoint
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ExperimentalUI
@@ -14,17 +10,22 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import training.lang.LangManager
 import training.lang.LangSupport
+import training.lang.LangSupportBean
 import training.learn.LearnBundle
 import training.ui.LearnToolWindow
 import training.util.resetPrimaryLanguage
 import javax.swing.JComponent
 
 internal class ChooseProgrammingLanguageForLearningAction(private val learnToolWindow: LearnToolWindow) : ComboBoxAction() {
-  override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
+  override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
     val allActionsGroup = DefaultActionGroup()
     val supportedLanguagesExtensions = LangManager.getInstance().supportedLanguagesExtensions.sortedBy { it.language }
-    for (langSupportExt: LanguageExtensionPoint<LangSupport> in supportedLanguagesExtensions) {
-      val languageId = langSupportExt.language
+    for (langSupportExt: LangSupportBean in supportedLanguagesExtensions) {
+      val languageId = langSupportExt.getLang()
       val displayName = Language.findLanguageByID(languageId)?.displayName ?: continue
       allActionsGroup.add(SelectLanguageAction(languageId, displayName))
     }
@@ -50,7 +51,7 @@ internal class ChooseProgrammingLanguageForLearningAction(private val learnToolW
   private inner class SelectLanguageAction(private val languageId: String, @NlsSafe displayName: String) : AnAction(displayName) {
     override fun actionPerformed(e: AnActionEvent) {
       val ep = LangManager.getInstance().supportedLanguagesExtensions.singleOrNull { it.language == languageId } ?: return
-      resetPrimaryLanguage(ep.instance)
+      resetPrimaryLanguage(ep.getLang())
       learnToolWindow.setModulesPanel()
     }
   }

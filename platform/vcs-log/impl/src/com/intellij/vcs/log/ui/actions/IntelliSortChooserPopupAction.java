@@ -3,11 +3,6 @@ package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
@@ -18,43 +13,29 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.GraphSortPresentationUtil;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.awt.event.InputEvent;
+import java.util.Arrays;
 
-public class IntelliSortChooserPopupAction extends DumbAwareAction {
+public class IntelliSortChooserPopupAction extends DefaultActionGroup {
   public IntelliSortChooserPopupAction() {
     super(VcsLogBundle.messagePointer("action.IntelliSortChooserPopupAction.text"),
           VcsLogBundle.messagePointer("action.IntelliSortChooserPopupAction.description"), VcsLogIcons.IntelliSort);
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogUiProperties properties = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
 
-    ActionGroup settingsGroup = new DefaultActionGroup(ContainerUtil.map(PermanentGraph.SortType.values(),
-                                                                         (Function<PermanentGraph.SortType, AnAction>)sortType ->
-                                                                           new SelectIntelliSortTypeAction(logUI, properties, sortType)));
+    return Arrays.stream(PermanentGraph.SortType.values())
+      .map(sortType -> new SelectIntelliSortTypeAction(logUI, properties, sortType))
+      .toArray(AnAction[]::new);
+  }
 
-
-    ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, settingsGroup, e.getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
-                              ActionPlaces.TOOLWINDOW_POPUP);
-
-    InputEvent inputEvent = e.getInputEvent();
-    if (inputEvent != null) {
-      Component component = inputEvent.getComponent();
-      if (component instanceof ActionButtonComponent) {
-        popup.showUnderneathOf(component);
-      }
-      else {
-        popup.showInCenterOf(component);
-      }
-    }
-    else {
-      popup.showInFocusCenter();
-    }
+  @Override
+  public boolean isPopup() {
+    return true;
   }
 
   @Override

@@ -2,12 +2,9 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
-import com.intellij.workspaceModel.storage.entities.test.api.CollectionFieldEntity
-import com.intellij.workspaceModel.storage.entities.test.api.MySource
-import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
-import com.intellij.workspaceModel.storage.entities.test.api.SampleEntitySource
+import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
@@ -137,6 +134,21 @@ class EntityStorageSerializationTest {
   }
 
   @Test
+  fun `serialize rider like`() {
+    val virtualFileManager = VirtualFileUrlManagerImpl()
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+
+    val builder = createEmptyBuilder()
+
+    builder.addEntity(ProjectModelTestEntity("info", DescriptorInstance("info"), MySource))
+
+    val stream = ByteArrayOutputStream()
+    val result = serializer.serializeCache(stream, builder.toSnapshot())
+
+    assertTrue(result is SerializationResult.Success)
+  }
+
+  @Test
   fun `read broken cache`() {
     val virtualFileManager = VirtualFileUrlManagerImpl()
     val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
@@ -164,7 +176,7 @@ private val expectedKryoRegistration = """
   [12, com.intellij.workspaceModel.storage.impl.ChildEntityId]
   [13, com.intellij.workspaceModel.storage.impl.ParentEntityId]
   [14, it.unimi.dsi.fastutil.objects.ObjectOpenHashSet]
-  [15, com.intellij.workspaceModel.storage.impl.indices.PersistentIdInternalIndex]
+  [15, com.intellij.workspaceModel.storage.impl.indices.SymbolicIdInternalIndex]
   [16, com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex]
   [17, com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex]
   [18, com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongMultiMap]

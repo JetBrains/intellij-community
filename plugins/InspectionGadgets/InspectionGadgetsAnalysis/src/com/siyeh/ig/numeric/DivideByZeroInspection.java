@@ -116,7 +116,7 @@ public class DivideByZeroInspection extends BaseInspection {
 
   private static class ReplaceWithNaNFix extends InspectionGadgetsFix {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiBinaryExpression division = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiBinaryExpression.class);
       if (division == null) return;
       PsiType type = division.getType();

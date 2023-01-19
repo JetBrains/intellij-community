@@ -268,14 +268,15 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
                                                   AntBundle.message("starting.ant.build.dialog.title"), Messages.getQuestionIcon());
 
       switch (result) {
-        case Messages.YES:  // yes
+        case Messages.YES -> {  // yes
           buildMessageView.stopProcess();
           ijMessageView.getContentManager().removeContent(content, true);
-          continue;
-        case Messages.NO: // no
-          continue;
-        default: // cancel
+        }
+        case Messages.NO -> { // no
+        }
+        default -> { // cancel
           return null;
+        }
       }
     }
 
@@ -423,10 +424,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     updateErrorAndWarningCounters(priority);
     final AntMessage message = createErrorMessage(priority, error);
     addCommand(new AddMessageCommand(message));
-    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
     VirtualFile file = message.getFile();
     if (file != null) {
-      wolf.queue(file);
+      queueToWolf(file);
     }
   }
 
@@ -434,10 +434,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     updateErrorAndWarningCounters(PRIORITY_ERR);
     AntMessage message = createErrorMessage(PRIORITY_ERR, exception);
     addCommand(new AddExceptionCommand(message));
-    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
     VirtualFile file = message.getFile();
     if (file != null) {
-      wolf.queue(file);
+      queueToWolf(file);
     }
   }
 
@@ -513,9 +512,25 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     final AntMessage message = new AntMessage(type, priority, text, file, line, column);
     addCommand(new AddJavacMessageCommand(message, url));
     if (type == MessageType.ERROR && file != null) {
-      WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-      wolf.queue(file);
+      queueToWolf(file);
     }
+  }
+
+  private void queueToWolf(@NotNull VirtualFile file) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> doQueueToWolf(file));
+    }
+    else {
+      doQueueToWolf(file);
+    }
+  }
+
+  private void doQueueToWolf(@NotNull VirtualFile file) {
+    ReadAction.run(() -> {
+      if (!myProject.isDisposed()) {
+        WolfTheProblemSolver.getInstance(myProject).queue(file);
+      }
+    });
   }
 
   private JComponent getComponent() {

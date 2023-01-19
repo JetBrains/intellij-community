@@ -38,8 +38,6 @@ import java.util.List;
  * </pre>
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class ArrangementEntryWrapper<E extends ArrangementEntry> {
 

@@ -5,7 +5,7 @@ import com.intellij.testFramework.fixtures.SdkTestFixture
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleCodeInsightTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 
 internal class GradleTestFixtureFactoryImpl : GradleTestFixtureFactory {
@@ -23,12 +23,12 @@ internal class GradleTestFixtureFactoryImpl : GradleTestFixtureFactory {
     return FileTestFixtureImpl(relativePath, configure)
   }
 
-  override fun createGradleTestFixture(
+  override fun createGradleProjectTestFixture(
     projectName: String,
     gradleVersion: GradleVersion,
     configure: FileTestFixture.Builder.() -> Unit
-  ): GradleTestFixture {
-    return GradleTestFixtureImpl(projectName, gradleVersion, configure)
+  ): GradleProjectTestFixture {
+    return GradleProjectTestFixtureImpl(projectName, gradleVersion, configure)
   }
 
   override fun createGradleCodeInsightTestFixture(
@@ -37,11 +37,11 @@ internal class GradleTestFixtureFactoryImpl : GradleTestFixtureFactory {
     configure: FileTestFixture.Builder.() -> Unit
   ): GradleCodeInsightTestFixture {
     return createGradleCodeInsightTestFixture(
-      createGradleTestFixture(projectName, gradleVersion, configure)
+      createGradleProjectTestFixture(projectName, gradleVersion, configure)
     )
   }
 
-  override fun createGradleCodeInsightTestFixture(gradleTestFixture: GradleTestFixture): GradleCodeInsightTestFixture {
-    return GradleCodeInsightTestFixtureImpl(gradleTestFixture)
+  override fun createGradleCodeInsightTestFixture(gradleProjectTestFixture: GradleProjectTestFixture): GradleCodeInsightTestFixture {
+    return GradleCodeInsightTestFixtureImpl(gradleProjectTestFixture)
   }
 }

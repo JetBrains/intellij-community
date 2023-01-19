@@ -37,11 +37,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class BeforeRunComponent extends JPanel implements DnDTarget, Disposable {
-  private final List<TaskButton> myTags = new ArrayList<>();
+  private final @NotNull List<TaskButton> myTags = new ArrayList<>();
   private final InplaceButton myAddButton;
   private final JPanel myAddPanel;
   private final ActionLink myAddLabel;
@@ -72,8 +73,9 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   }
 
   private List<BeforeRunTaskProvider<BeforeRunTask<?>>> getProviders() {
+    Set<? extends Key<?>> existing = ContainerUtil.map2Set(myTags, button -> button.myTask.getProviderId());
     return ContainerUtil.filter(BeforeRunTaskProvider.EP_NAME.getExtensions(myConfiguration.getProject()),
-                                provider -> provider.createTask(myConfiguration) != null);
+                                provider -> provider.createTask(myConfiguration) != null && (!provider.isSingleton() || !existing.contains(provider.getId())));
   }
 
   private TaskButton createTag(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {
@@ -204,6 +206,8 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
 
   @Override
   public void cleanUpOnLeave() {
+    //just for the case if it can be executed during superclass initialization
+    //noinspection ConstantValue
     if (myTags != null) {
       myTags.forEach(button -> button.showDropPlace(false));
     }

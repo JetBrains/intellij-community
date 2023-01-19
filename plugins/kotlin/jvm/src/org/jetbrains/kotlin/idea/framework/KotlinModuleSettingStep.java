@@ -38,8 +38,8 @@ import org.jetbrains.kotlin.idea.projectConfiguration.JSLibraryStdDescription;
 import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription;
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle;
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter;
+import org.jetbrains.kotlin.platform.JsPlatformKt;
 import org.jetbrains.kotlin.platform.TargetPlatform;
-import org.jetbrains.kotlin.platform.js.JsPlatformKt;
 import org.jetbrains.kotlin.platform.jvm.JvmPlatformKt;
 
 import javax.swing.*;

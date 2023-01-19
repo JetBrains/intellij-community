@@ -34,16 +34,12 @@ public final class OptionalUtil {
   @NotNull
   @Contract(pure = true)
   public static String getOptionalClass(String type) {
-    switch (type) {
-      case "int":
-        return OPTIONAL_INT;
-      case "long":
-        return OPTIONAL_LONG;
-      case "double":
-        return OPTIONAL_DOUBLE;
-      default:
-        return JAVA_UTIL_OPTIONAL;
-    }
+    return switch (type) {
+      case "int" -> OPTIONAL_INT;
+      case "long" -> OPTIONAL_LONG;
+      case "double" -> OPTIONAL_DOUBLE;
+      default -> JAVA_UTIL_OPTIONAL;
+    };
   }
 
   public static boolean isJdkOptionalClassName(String className) {
@@ -65,25 +61,21 @@ public final class OptionalUtil {
     if(aClass == null) return null;
     String className = aClass.getQualifiedName();
     if(className == null) return null;
-    switch (className) {
-      case OPTIONAL_INT:
-        return PsiType.INT;
-      case OPTIONAL_LONG:
-        return PsiType.LONG;
-      case OPTIONAL_DOUBLE:
-        return PsiType.DOUBLE;
-      case JAVA_UTIL_OPTIONAL:
-      case GUAVA_OPTIONAL:
+    return switch (className) {
+      case OPTIONAL_INT -> PsiType.INT;
+      case OPTIONAL_LONG -> PsiType.LONG;
+      case OPTIONAL_DOUBLE -> PsiType.DOUBLE;
+      case JAVA_UTIL_OPTIONAL, GUAVA_OPTIONAL -> {
         PsiType[] parameters = ((PsiClassType)type).getParameters();
-        if (parameters.length != 1) return null;
+        if (parameters.length != 1) yield null;
         PsiType streamType = parameters[0];
         if (streamType instanceof PsiCapturedWildcardType) {
           streamType = ((PsiCapturedWildcardType)streamType).getUpperBound();
         }
-        return streamType;
-      default:
-        return null;
-    }
+        yield streamType;
+      }
+      default -> null;
+    };
   }
 
   @Contract("null -> false")

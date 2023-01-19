@@ -29,11 +29,11 @@ internal class UastDescriptorLightParameter(
 ) : UastDescriptorLightParameterBase<ValueParameterDescriptor>(name, type, parent, ktParameter, language)
 
 internal open class UastDescriptorLightParameterBase<T : ParameterDescriptor>(
-    name: String,
-    type: PsiType,
-    private val parent: PsiElement,
-    val ktOrigin: T,
-    language: Language = parent.language,
+  name: String,
+  type: PsiType,
+  private val parent: PsiElement,
+  private val ktOrigin: T,
+  language: Language = parent.language,
 ) : LightParameter(name, type, parent, language, ktOrigin.isVararg) {
 
     override fun getParent(): PsiElement = parent

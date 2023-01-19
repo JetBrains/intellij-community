@@ -5,8 +5,6 @@
 
 #pragma code_page(65001)
 
-IDB_SPLASH              BITMAP                  "splash.bmp"
-
 IDI_WINLAUNCHER         ICON                    "WinLauncher.ico"
 
 1 VERSIONINFO
@@ -46,11 +44,9 @@ BEGIN
   IDS_MAIN_CLASS                    "-"
   IDS_JDK_ONLY                      "-"
   IDS_JDK_ENV_VAR                   "-"
-  IDS_APP_TITLE                     "-"
   IDS_VM_OPTIONS_PATH               "-"
   IDS_VM_OPTION_ERRORFILE           "-"
   IDS_VM_OPTION_HEAPDUMPPATH        "-"
-  IDC_WINLAUNCHER                   "-"
   IDS_PROPS_ENV_VAR                 "-"
   IDS_VM_OPTIONS_ENV_VAR            "-"
   IDS_ERROR_LAUNCHING_APP           "-"

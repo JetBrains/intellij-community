@@ -33,7 +33,7 @@ internal object GHTextActions {
     }
   }
 
-  fun createEditButton(): InlineIconButton {
+  private fun createEditButton(): InlineIconButton {
     val icon = AllIcons.General.Inline_edit
     val hoverIcon = AllIcons.General.Inline_edit_hovered
     return InlineIconButton(icon, hoverIcon, tooltip = CommonBundle.message("button.edit"))

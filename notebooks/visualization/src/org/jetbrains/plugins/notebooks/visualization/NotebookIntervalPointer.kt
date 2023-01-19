@@ -1,94 +1,74 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
 import java.util.*
 
 /**
- * Pointer becomes invalid when code cell is removed
- * Invalid pointer returns null
+ * Pointer becomes invalid when code cell is removed.
+ * It may become valid again when action is undone or redone.
+ * Invalid pointer returns null.
  */
 interface NotebookIntervalPointer {
+  /** should be called in read-action */
   fun get(): NotebookCellLines.Interval?
 }
 
-private val key = Key.create<NotebookIntervalPointerFactory>(NotebookIntervalPointerFactory::class.java.name)
-
 interface NotebookIntervalPointerFactory {
-  /** interval should be valid, return pointer to it */
+  /**
+   * Interval should be valid, return pointer to it.
+   * Should be called in read-action.
+   */
   fun create(interval: NotebookCellLines.Interval): NotebookIntervalPointer
 
   /**
-   * if action changes document, hints applied instantly at document change
-   * if doesn't - hints applied after action
-   * hint should contain pointers created by this factory
+   * Can be called only inside write-action.
+   * Undo and redo will be added automatically.
    */
-  fun <T> modifyingPointers(changes: Iterable<Change>, modifyDocumentAction: () -> T): T
+  fun modifyPointers(changes: Iterable<Change>)
 
-  fun invalidateCell(cell: NotebookCellLines.Interval) {
-    modifyingPointers(listOf(Invalidate(create(cell)))) {}
-  }
-
-  fun moveCells(newPositions: List<Pair<NotebookCellLines.Interval, Int>>) {
-    modifyingPointers(newPositions.map { (interval, newOrdinal) -> Reuse(create(interval), newOrdinal) }) {}
-  }
-
+  /**
+   * listener shouldn't throw exceptions
+   */
   interface ChangeListener : EventListener {
-    fun onInserted(ordinal: Int)
-
-    fun onEdited(ordinal: Int)
-
-    fun onRemoved(ordinal: Int)
-
-    /** [fromOrdinal] and [toOrdinal] are never equal */
-    fun onMoved(fromOrdinal: Int, toOrdinal: Int)
+    fun onUpdated(event: NotebookIntervalPointersEvent)
   }
 
   val changeListeners: EventDispatcher<ChangeListener>
 
   companion object {
+    internal val key = Key.create<NotebookIntervalPointerFactory>(NotebookIntervalPointerFactory::class.java.name)
+
     fun get(editor: Editor): NotebookIntervalPointerFactory =
       getOrNull(editor)!!
 
-    fun getOrNull(editor: Editor): NotebookIntervalPointerFactory? =
-      key.get(editor.document) ?: tryInstall(editor)
+    fun get(project: Project, document: Document): NotebookIntervalPointerFactory =
+      getOrNull(project, document)!!
 
-    private fun tryInstall(editor: Editor): NotebookIntervalPointerFactory? =
-      getLanguage(editor)
+    fun getOrNull(editor: Editor): NotebookIntervalPointerFactory? {
+      val project = editor.project ?: return null
+      return getOrNull(project, editor.document)
+    }
+
+    fun getOrNull(project: Project, document: Document): NotebookIntervalPointerFactory? {
+      return key.get(document) ?: tryInstall(project, document)
+    }
+
+    private fun tryInstall(project: Project, document: Document): NotebookIntervalPointerFactory? =
+      getLanguage(project, document)
         ?.let { NotebookIntervalPointerFactoryProvider.forLanguage(it) }
-        ?.create(editor)
-        ?.also { key.set(editor.document, it) }
+        ?.create(project, document)
+        ?.also { key.set(document, it) }
   }
 
   sealed interface Change
 
-  /** invalidate pointer, create new pointer for interval if necessary */
-  data class Invalidate(val ptr: NotebookIntervalPointer) : Change
+  /** invalidate pointer to interval, create new pointer */
+  data class Invalidate(val interval: NotebookCellLines.Interval) : Change
 
-  /** reuse old pointer instead of creating new, for example when moving interval */
-  data class Reuse(val ptr: NotebookIntervalPointer, val ordinalAfterChange: Int) : Change
+  /** swap two pointers */
+  data class Swap(val firstOrdinal: Int, val secondOrdinal: Int) : Change
 }
-
-fun <T> NotebookIntervalPointerFactory?.invalidatingCell(cell: NotebookCellLines.Interval, action: () -> T): T =
-  if (this == null) {
-    action()
-  }
-  else {
-    modifyingPointers(listOf(NotebookIntervalPointerFactory.Invalidate(create(cell)))) {
-      action()
-    }
-  }
-
-/**
- * input pairs - current interval and it's ordinal after document change
- */
-fun <T> NotebookIntervalPointerFactory?.movingCells(newPositions: List<Pair<NotebookCellLines.Interval, Int>>, action: () -> T): T =
-  if (this == null) {
-    action()
-  }
-  else {
-    modifyingPointers(newPositions.map { (interval, newOrdinal) -> NotebookIntervalPointerFactory.Reuse(create(interval), newOrdinal) }) {
-      action()
-    }
-  }

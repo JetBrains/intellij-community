@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -14,14 +14,16 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,10 +48,22 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
   }
 
   static void setupRecordComponents(@Nullable PsiRecordHeader header, @NotNull TemplateBuilder builder,
-                                    @NotNull PsiExpressionList argumentList, @NotNull PsiSubstitutor substitutor)
-    throws IncorrectOperationException {
+                                    @NotNull PsiExpressionList list, @NotNull PsiSubstitutor substitutor) {
     if (header == null) return;
-    PsiExpression[] args = argumentList.getExpressions();
+    setupRecordComponents(header, builder, substitutor, list.getExpressions());
+  }
+
+  static void setupRecordComponentsFromPattern(@Nullable PsiRecordHeader header,
+                                               @NotNull TemplateBuilder builder,
+                                               @NotNull PsiDeconstructionList list) {
+    if (header == null) return;
+    setupRecordComponents(header, builder, PsiSubstitutor.EMPTY, list.getDeconstructionComponents());
+  }
+
+  private static void setupRecordComponents(@NotNull PsiRecordHeader header,
+                                            @NotNull TemplateBuilder builder,
+                                            @NotNull PsiSubstitutor substitutor,
+                                            @NotNull PsiCaseLabelElement @NotNull [] elements) {
     final PsiManager psiManager = header.getManager();
     final Project project = psiManager.getProject();
 
@@ -75,20 +89,19 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
     }
     List<ComponentData> components = new ArrayList<>();
     //255 is the maximum number of record components
-    for (int i = 0; i < Math.min(args.length, 255); i++) {
-      PsiExpression exp = args[i];
-
-      PsiType argType = CommonJavaRefactoringUtil.getTypeByExpression(exp);
-      SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(
-        VariableKind.PARAMETER, null, exp, argType);
-      @NonNls String[] names = suggestedInfo.names;
+    for (int i = 0; i < Math.min(elements.length, 255); i++) {
+      PsiCaseLabelElement element = elements[i];
+      PsiType type = element instanceof PsiExpression expression
+                     ? CommonJavaRefactoringUtil.getTypeByExpression(expression)
+                     : JavaPsiPatternUtil.getPatternType(element);
+      @NonNls String[] names = suggestVariableName(project, element, type).names;
 
       if (names.length == 0) {
         names = new String[]{"c" + i};
       }
 
-      argType = CreateFromUsageUtils.getParameterTypeByArgumentType(argType, psiManager, resolveScope);
-      components.add(new ComponentData(argType, names));
+      type = CreateFromUsageUtils.getParameterTypeByArgumentType(type, psiManager, resolveScope);
+      components.add(new ComponentData(type, names));
     }
     PsiRecordHeader newHeader = factory.createRecordHeaderFromText(StringUtil.join(components, ", "), containingClass);
     PsiRecordHeader replacedHeader = (PsiRecordHeader)header.replace(newHeader);
@@ -98,13 +111,26 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
       PsiRecordComponent component = recordComponents[i];
       ComponentData data = components.get(i);
 
-      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(data.myType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, data.myType, TailType.NONE);
+      int kind =
+        TypeConversionUtil.isPrimitiveAndNotNull(data.myType) ? ExpectedTypeInfo.TYPE_STRICTLY : ExpectedTypeInfo.TYPE_OR_SUPERTYPE;
+      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(data.myType, kind, data.myType, TailType.NONE);
 
-      PsiElement context = PsiTreeUtil.getParentOfType(argumentList, PsiClass.class, PsiMethod.class);
+      PsiElement context = PsiTreeUtil.getParentOfType(elements[i], PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(Objects.requireNonNull(component.getTypeElement()), new ExpectedTypeInfo[]{info}, context, containingClass);
 
       Expression expression = new CreateFromUsageUtils.ParameterNameExpression(data.myNames);
       builder.replaceElement(Objects.requireNonNull(component.getNameIdentifier()), expression);
     }
+  }
+
+  private static SuggestedNameInfo suggestVariableName(@NotNull Project project,
+                                                       @NotNull PsiCaseLabelElement element,
+                                                       @Nullable PsiType type) {
+    if (element instanceof PsiExpression expression) {
+      return JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, expression, type);
+    }
+    PsiPatternVariable variable = JavaPsiPatternUtil.getPatternVariable(element);
+    List<String> semanticNames = variable != null ? Collections.singletonList(variable.getName()) : Collections.emptyList();
+    return JavaCodeStyleManager.getInstance(project).suggestNames(semanticNames, VariableKind.PARAMETER, type);
   }
 }

@@ -133,9 +133,10 @@ public final class XDebugSessionImpl implements XDebugSession {
       }
     }
 
-    String currentConfigurationName = getConfigurationName();
+    String currentConfigurationName = computeConfigurationName();
     if (oldSessionData == null || !oldSessionData.getConfigurationName().equals(currentConfigurationName)) {
-      oldSessionData = new XDebugSessionData(getWatchExpressions(), currentConfigurationName);
+      List<XExpression> watchExpressions = myDebuggerManager.getWatchesManager().getWatches(currentConfigurationName);
+      oldSessionData = new XDebugSessionData(watchExpressions, currentConfigurationName);
     }
     mySessionData = oldSessionData;
   }
@@ -721,7 +722,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       }
     }
     XBreakpointManagerImpl debuggerManager = myDebuggerManager.getBreakpointManager();
-    debuggerManager.getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint, () -> debuggerManager.fireBreakpointPresentationUpdated(breakpoint, this));
+    debuggerManager.getLineBreakpointManager().queueBreakpointUpdate(breakpoint, () -> debuggerManager.fireBreakpointPresentationUpdated(breakpoint, this));
   }
 
   @Override
@@ -732,11 +733,6 @@ public final class XDebugSessionImpl implements XDebugSession {
   @Override
   public void setBreakpointInvalid(@NotNull XLineBreakpoint<?> breakpoint, @Nullable String errorMessage) {
     updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage);
-  }
-
-  @Override
-  public boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @NotNull final XSuspendContext suspendContext) {
-    return breakpointReached(breakpoint, null, suspendContext);
   }
 
   @Override
@@ -1082,8 +1078,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     }
   }
 
-  @NotNull
-  private String getConfigurationName() {
+  private @NotNull String computeConfigurationName() {
     if (myEnvironment != null) {
       RunProfile profile = myEnvironment.getRunProfile();
       if (profile instanceof RunConfiguration) {
@@ -1092,16 +1087,6 @@ public final class XDebugSessionImpl implements XDebugSession {
     }
     return getSessionName();
   }
-
-  public void setWatchExpressions(@NotNull List<XExpression> watchExpressions) {
-    mySessionData.setWatchExpressions(watchExpressions);
-    myDebuggerManager.getWatchesManager().setWatches(getConfigurationName(), watchExpressions);
-  }
-
-  List<XExpression> getWatchExpressions() {
-    return myDebuggerManager.getWatchesManager().getWatches(getConfigurationName());
-  }
-
 
   @Nullable
   public ExecutionEnvironment getExecutionEnvironment() {

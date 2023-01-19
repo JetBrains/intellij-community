@@ -270,7 +270,7 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
   }
 
 
-  private static class ToolwindowIdReference extends ExtensionPointReferenceBase {
+  private static class ToolwindowIdReference extends ExtensionReferenceBase {
 
     private ToolwindowIdReference(@NotNull PsiElement element, String id) {
       super(element, TextRange.allOf(id).shiftRight(TOOLWINDOW_STRIPE_PREFIX.length()));

@@ -57,6 +57,11 @@ public class MultilineEditor extends JPanel {
             ActionUtil.copyFrom(this, id);
             registerCustomShortcutSet(getShortcutSet(), component);
         }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
     }
 
     public MultilineEditor(Document document, Project project, FileType fileType, EditorModel model) {

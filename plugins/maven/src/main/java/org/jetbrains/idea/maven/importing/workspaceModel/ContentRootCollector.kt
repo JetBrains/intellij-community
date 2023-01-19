@@ -7,6 +7,9 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
+private const val DEFAULT_ANNOTATION_PATH_OUTPUT = "target/generated-sources/annotations"
+private const val DEFAULT_TEST_ANNOTATION_OUTPUT = "target/generated-test-sources/test-annotations"
+
 object ContentRootCollector {
   fun collect(folders: List<ImportedFolder>): Collection<ContentRootResult> {
     class ContentRootWithFolders(val path: String, val folders: MutableList<ImportedFolder> = mutableListOf())
@@ -34,6 +37,10 @@ object ContentRootCollector {
         }
         nearestRoot = ContentRootWithFolders(curr.path)
         result.add(nearestRoot)
+
+        if (curr is ProjectRootFolder) {
+          return@forEach
+        }
       }
 
       // 2. MERGE DUPLICATE PATHS
@@ -47,10 +54,17 @@ object ContentRootCollector {
       // 3. MERGE SUBFOLDERS:
       if (prev != null && FileUtil.isAncestor(prev.path, curr.path, true)) {
         if (prev is SourceFolder && curr is UserOrGeneratedSourceFolder) {
-          // don't add sub source folders
-          return@forEach
+          // don't add resource under source folder, test under production
+          if (prev.rootTypeRank <= curr.rootTypeRank) {
+            return@forEach
+          }
+          nearestRoot.folders.removeLast()
         }
         else if (prev is GeneratedSourceFolder && curr is UserOrGeneratedSourceFolder) {
+          // prefer generated folder to annotations subfolder
+          if (curr.path.endsWith(DEFAULT_ANNOTATION_PATH_OUTPUT) || curr.path.endsWith(DEFAULT_TEST_ANNOTATION_OUTPUT)) {
+            return@forEach
+          }
           // don't add generated folder when there are sub source folder
           nearestRoot.folders.removeLast()
         }
@@ -100,7 +114,9 @@ object ContentRootCollector {
     }
   }
 
-  sealed class ImportedFolder(val path: String, internal val rank: Int) : Comparable<ImportedFolder> {
+  sealed class ImportedFolder(path: String, internal val rank: Int) : Comparable<ImportedFolder> {
+    val path: String = FileUtil.toCanonicalPath(path)
+
     override fun compareTo(other: ImportedFolder): Int {
       val result = FileUtil.comparePaths(path, other.path)
       if (result != 0) return result

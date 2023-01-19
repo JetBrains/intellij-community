@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -27,10 +27,10 @@ import kotlin.math.max
 /**
  * Pluggable [HTMLFactory] which allows overriding and adding functionality to [HTMLFactory] without using inheritance
  */
-class ExtendableHTMLViewFactory
-internal constructor(private val extensions: List<(Element, View) -> View?>,
-                     private val base: ViewFactory = HTMLEditorKit().viewFactory)
-  : HTMLFactory() {
+class ExtendableHTMLViewFactory internal constructor(
+  private val extensions: List<(Element, View) -> View?>,
+  private val base: ViewFactory = HTMLEditorKit().viewFactory
+) : HTMLFactory() {
 
   internal constructor(vararg extensions: (Element, View) -> View?) : this(extensions.asList())
 
@@ -325,29 +325,28 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
         }
       }
     }
+  }
 
-    private class WordWrapExtension : Extension {
-      override fun invoke(elem: Element, defaultView: View): View? {
-        if (defaultView !is ParagraphView) return null
+  private class WordWrapExtension : Extension {
+    override fun invoke(elem: Element, defaultView: View): View? {
+      if (defaultView !is ParagraphView) return null
 
-        return object : ParagraphView(elem) {
-          override fun calculateMinorAxisRequirements(axis: Int, requirements: SizeRequirements?): SizeRequirements =
-            (requirements ?: SizeRequirements()).apply {
-              minimum = layoutPool.getMinimumSpan(axis).toInt()
-              preferred = max(minimum, layoutPool.getPreferredSpan(axis).toInt())
-              maximum = Int.MAX_VALUE
-              alignment = 0.5f
-            }
-        }
+      return object : ParagraphView(elem) {
+        override fun calculateMinorAxisRequirements(axis: Int, requirements: SizeRequirements?): SizeRequirements =
+          (requirements ?: SizeRequirements()).apply {
+            minimum = layoutPool.getMinimumSpan(axis).toInt()
+            preferred = max(minimum, layoutPool.getPreferredSpan(axis).toInt())
+            maximum = Int.MAX_VALUE
+            alignment = 0.5f
+          }
       }
     }
+  }
+}
 
-    private class HiDpiImagesExtension : Extension {
-
-      override fun invoke(elem: Element, defaultView: View): View? {
-        if (defaultView !is ImageView) return null
-        return HiDpiScalingImageView(elem)
-      }
-    }
+private class HiDpiImagesExtension : ExtendableHTMLViewFactory.Extension {
+  override fun invoke(elem: Element, defaultView: View): View? {
+    if (defaultView !is ImageView) return null
+    return HiDpiScalingImageView(elem)
   }
 }

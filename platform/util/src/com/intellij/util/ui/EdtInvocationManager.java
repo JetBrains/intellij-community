@@ -29,20 +29,22 @@ public abstract class EdtInvocationManager {
    * On AWT thread, invoked runnable immediately, otherwise do {@link SwingUtilities#invokeLater(Runnable)} on it.
    */
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
-    EdtInvocationManager edtInvocationManager = getInstance();
-    if (edtInvocationManager.isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       runnable.run();
     }
     else {
-      edtInvocationManager.invokeLater(runnable);
+      getInstance().invokeLater(runnable);
     }
   }
 
   /**
    * @deprecated Use {@link EDT#isCurrentThreadEdt()}
    */
+  @SuppressWarnings("MethodMayBeStatic")
   @Deprecated
-  public abstract boolean isEventDispatchThread();
+  public final boolean isEventDispatchThread() {
+    return EventQueue.isDispatchThread();
+  }
 
   public abstract void invokeLater(@NotNull Runnable task);
 
@@ -74,13 +76,12 @@ public abstract class EdtInvocationManager {
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
-    EdtInvocationManager manager = getInstance();
-    if (manager.isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       runnable.run();
     }
     else {
       try {
-        manager.invokeAndWait(runnable);
+        getInstance().invokeAndWait(runnable);
       }
       catch (Exception e) {
         Logger.getInstance(EdtInvocationManager.class).error(e);
@@ -92,11 +93,6 @@ public abstract class EdtInvocationManager {
    * The default {@link EdtInvocationManager} implementation that uses {@link EventQueue}.
    */
   public static class SwingEdtInvocationManager extends EdtInvocationManager {
-    @Override
-    public boolean isEventDispatchThread() {
-      return EventQueue.isDispatchThread();
-    }
-
     @Override
     public void invokeLater(@NotNull Runnable task) {
       EventQueue.invokeLater(task);

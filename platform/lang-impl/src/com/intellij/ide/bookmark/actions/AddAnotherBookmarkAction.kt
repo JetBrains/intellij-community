@@ -20,6 +20,7 @@ internal class AddAnotherBookmarkAction : DumbAwareAction(BookmarkBundle.message
   }
 
   private fun process(event: AnActionEvent, perform: Boolean): Boolean {
+    if (event.contextBookmarks != null) { return false }
     val manager = event.bookmarksManager ?: return false
     val bookmark = event.contextBookmark ?: return false
     if (bookmark is LineBookmark) return false

@@ -1,13 +1,16 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
@@ -21,13 +24,16 @@ interface VFUEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : VFUEntity, ModifiableWorkspaceEntity<VFUEntity>, ObjBuilder<VFUEntity> {
+  interface Builder : VFUEntity, WorkspaceEntity.Builder<VFUEntity>, ObjBuilder<VFUEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var fileProperty: VirtualFileUrl
   }
 
   companion object : Type<VFUEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String,
                         fileProperty: VirtualFileUrl,
                         entitySource: EntitySource,
@@ -56,7 +62,7 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : VFUWithTwoPropertiesEntity, ModifiableWorkspaceEntity<VFUWithTwoPropertiesEntity>, ObjBuilder<VFUWithTwoPropertiesEntity> {
+  interface Builder : VFUWithTwoPropertiesEntity, WorkspaceEntity.Builder<VFUWithTwoPropertiesEntity>, ObjBuilder<VFUWithTwoPropertiesEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var fileProperty: VirtualFileUrl
@@ -64,6 +70,9 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
   }
 
   companion object : Type<VFUWithTwoPropertiesEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String,
                         fileProperty: VirtualFileUrl,
                         secondFileProperty: VirtualFileUrl,
@@ -94,13 +103,16 @@ interface NullableVFUEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : NullableVFUEntity, ModifiableWorkspaceEntity<NullableVFUEntity>, ObjBuilder<NullableVFUEntity> {
+  interface Builder : NullableVFUEntity, WorkspaceEntity.Builder<NullableVFUEntity>, ObjBuilder<NullableVFUEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var fileProperty: VirtualFileUrl?
   }
 
   companion object : Type<NullableVFUEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): NullableVFUEntity {
       val builder = builder()
       builder.data = data
@@ -124,13 +136,16 @@ interface ListVFUEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ListVFUEntity, ModifiableWorkspaceEntity<ListVFUEntity>, ObjBuilder<ListVFUEntity> {
+  interface Builder : ListVFUEntity, WorkspaceEntity.Builder<ListVFUEntity>, ObjBuilder<ListVFUEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var fileProperty: MutableList<VirtualFileUrl>
   }
 
   companion object : Type<ListVFUEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String,
                         fileProperty: List<VirtualFileUrl>,
                         entitySource: EntitySource,
@@ -158,13 +173,16 @@ interface SetVFUEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SetVFUEntity, ModifiableWorkspaceEntity<SetVFUEntity>, ObjBuilder<SetVFUEntity> {
+  interface Builder : SetVFUEntity, WorkspaceEntity.Builder<SetVFUEntity>, ObjBuilder<SetVFUEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var fileProperty: MutableSet<VirtualFileUrl>
   }
 
   companion object : Type<SetVFUEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String,
                         fileProperty: Set<VirtualFileUrl>,
                         entitySource: EntitySource,

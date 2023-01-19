@@ -4,8 +4,6 @@ package com.intellij.vcsUtil;
 import com.intellij.util.ExceptionUtil;
 
 /**
- * @author irengrig
- *
  * @deprecated use {@link ExceptionUtil} instead
  */
 @Deprecated

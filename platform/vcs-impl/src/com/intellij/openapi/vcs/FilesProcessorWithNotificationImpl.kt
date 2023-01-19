@@ -100,12 +100,12 @@ abstract class FilesProcessorWithNotificationImpl(
     notification.expire()
   }
 
-  protected fun notificationNotPresent() =
+  private fun notificationNotPresent() =
     synchronized(NOTIFICATION_LOCK) {
       notification?.isExpired ?: true
     }
 
-  protected fun expireNotification() =
+  private fun expireNotification() =
     synchronized(NOTIFICATION_LOCK) {
       notification?.expire()
     }
@@ -120,6 +120,6 @@ abstract class FilesProcessorWithNotificationImpl(
   override fun needDoForCurrentProject() =
     PropertiesComponent.getInstance(project).getBoolean(doForCurrentProjectProperty, false)
 
-  protected fun notAskedBefore() = !wasAskedBefore()
-  protected fun wasAskedBefore() = PropertiesComponent.getInstance(project).getBoolean(askedBeforeProperty, false)
+  private fun notAskedBefore() = !wasAskedBefore()
+  private fun wasAskedBefore() = PropertiesComponent.getInstance(project).getBoolean(askedBeforeProperty, false)
 }

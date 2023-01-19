@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -63,7 +64,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       if (start < 0 || end < 0) {
         throw new IllegalArgumentException("Invalid offsets: start=" + start+"; end="+end);
       }
-      myRange = TextRange.toScalarRange(start, end);
+      myRange = TextRangeScalarUtil.toScalarRange(start, end);
       intervals = new SmartList<>(createGetter(key));
       setValid(true);
     }
@@ -280,15 +281,14 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
 
     @Override
     public int intervalStart() {
-      return TextRange.startOffset(myRange);
+      return TextRangeScalarUtil.startOffset(myRange);
     }
 
     @Override
     public int intervalEnd() {
-      return TextRange.endOffset(myRange);
+      return TextRangeScalarUtil.endOffset(myRange);
     }
 
-    @Override
     public long toScalarRange() {
       return myRange;
     }
@@ -1014,7 +1014,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     int delta = root.delta;
     root.setCachedValues(0, true, 0);
     if (delta != 0) {
-      root.setRange(TextRange.deltaScalarRange(root.toScalarRange(), delta, delta));
+      root.setRange(TextRangeScalarUtil.shift(root.toScalarRange(), delta, delta));
       root.maxEnd += delta;
       root.delta = 0;
       //noinspection NonShortCircuitBooleanExpression

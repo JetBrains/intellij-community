@@ -1,4 +1,4 @@
-// "Convert sealed sub-class to object" "false"
+// "Convert sealed subclass to object" "false"
 // TOOL: org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection
 // ACTION: Create test
 // ACTION: Make internal

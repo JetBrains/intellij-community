@@ -229,13 +229,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
 
   private static boolean isLanguageSupported(Collection<String> fileLanguageIds, IntentionAction action) {
     if (action instanceof IntentionActionWrapper) {
-      Set<String> languages = ((IntentionActionWrapper)action).getLanguages();
-      if (!languages.isEmpty()) {
-        for (String fileLanguage : fileLanguageIds) {
-          if (languages.contains(fileLanguage)) return true;
-        }
-        return false;
-      }
+      return ((IntentionActionWrapper)action).isApplicable(fileLanguageIds);
     }
 
     return true;

@@ -38,23 +38,23 @@ enum Value implements Result {
   }
 
   ContractReturnValue toReturnValue() {
-    switch (this) {
-      case False: return ContractReturnValue.returnFalse();
-      case True: return ContractReturnValue.returnTrue();
-      case NotNull: return ContractReturnValue.returnNotNull();
-      case Null: return ContractReturnValue.returnNull();
-      case Fail: return ContractReturnValue.fail();
-      default: return ContractReturnValue.returnAny();
-    }
+    return switch (this) {
+      case False -> ContractReturnValue.returnFalse();
+      case True -> ContractReturnValue.returnTrue();
+      case NotNull -> ContractReturnValue.returnNotNull();
+      case Null -> ContractReturnValue.returnNull();
+      case Fail -> ContractReturnValue.fail();
+      default -> ContractReturnValue.returnAny();
+    };
   }
 
   StandardMethodContract.ValueConstraint toValueConstraint() {
-    switch (this) {
-      case False: return StandardMethodContract.ValueConstraint.FALSE_VALUE;
-      case True: return StandardMethodContract.ValueConstraint.TRUE_VALUE;
-      case NotNull: return StandardMethodContract.ValueConstraint.NOT_NULL_VALUE;
-      case Null: return StandardMethodContract.ValueConstraint.NULL_VALUE;
-      default: return StandardMethodContract.ValueConstraint.ANY_VALUE;
-    }
+    return switch (this) {
+      case False -> StandardMethodContract.ValueConstraint.FALSE_VALUE;
+      case True -> StandardMethodContract.ValueConstraint.TRUE_VALUE;
+      case NotNull -> StandardMethodContract.ValueConstraint.NOT_NULL_VALUE;
+      case Null -> StandardMethodContract.ValueConstraint.NULL_VALUE;
+      default -> StandardMethodContract.ValueConstraint.ANY_VALUE;
+    };
   }
 }

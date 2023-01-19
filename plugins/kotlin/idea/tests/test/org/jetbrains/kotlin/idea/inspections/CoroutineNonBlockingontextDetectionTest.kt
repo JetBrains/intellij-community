@@ -33,7 +33,7 @@ class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTe
 
     override fun setUp() {
         super.setUp()
-        myFixture.enableInspections(BlockingMethodInNonBlockingContextInspection::class.java)
+        myFixture.enableInspections(BlockingMethodInNonBlockingContextInspection(false))
     }
 
     fun testSimpleCoroutineScope() {

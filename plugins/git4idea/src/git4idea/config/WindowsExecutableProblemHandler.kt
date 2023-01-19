@@ -14,7 +14,7 @@ import java.io.File
 internal class WindowsExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
 
   companion object {
-    val LOG = logger<WindowsExecutableProblemHandler>()
+    private val LOG = logger<WindowsExecutableProblemHandler>()
   }
 
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {

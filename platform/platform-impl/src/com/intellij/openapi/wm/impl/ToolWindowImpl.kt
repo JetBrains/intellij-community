@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.*
+import com.intellij.ide.actions.ContextHelpAction
+import com.intellij.ide.actions.ToggleToolbarAction
+import com.intellij.ide.actions.ToolWindowMoveAction
+import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -52,7 +55,6 @@ import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
-import java.util.*
 import javax.swing.*
 import kotlin.math.abs
 
@@ -114,6 +116,14 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     result
   }
 
+  private val moveOrResizeAlarm = SingleAlarm(Runnable {
+    val decorator = this@ToolWindowImpl.decorator
+    if (decorator != null) {
+      toolWindowManager.movedOrResized(decorator)
+    }
+    this@ToolWindowImpl.windowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
+  }, 100, disposable)
+
   init {
     if (component != null) {
       val content = ContentImpl(component, "", false)
@@ -170,13 +180,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     decorator.applyWindowInfo(windowInfo)
     decorator.addComponentListener(object : ComponentAdapter() {
-      private val alarm = SingleAlarm(Runnable {
-        toolWindowManager.resized(decorator)
-        windowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
-      }, 100, disposable)
-
       override fun componentResized(e: ComponentEvent) {
-        alarm.cancelAndRequest()
+        onMovedOrResized()
       }
     })
 
@@ -196,6 +201,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
 
     return contentManager
+  }
+
+  fun onMovedOrResized() {
+    moveOrResizeAlarm.cancelAndRequest()
   }
 
   internal fun setWindowInfoSilently(info: WindowInfo) {
@@ -246,7 +255,6 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   override fun isActive(): Boolean {
-    toolWindowManager.assertIsEdt()
     return windowInfo.isVisible && decorator != null && toolWindowManager.activeToolWindowId == id
   }
 
@@ -398,7 +406,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   fun getComponentIfInitialized(): JComponent? {
-    return if (contentManager.isInitialized()) contentManager.value.component else null
+    return if (contentManager.isInitialized()) contentManager.value.takeIf { !it.isDisposed }?.component else null
   }
 
   override fun getContentManagerIfCreated(): ContentManager? {
@@ -523,7 +531,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     createContentIfNeeded()
   }
 
-  internal fun createContentIfNeeded() {
+  private fun createContentIfNeeded() {
     val currentContentFactory = contentFactory ?: return
     // clear it first to avoid SOE
     this.contentFactory = null
@@ -554,7 +562,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   @JvmOverloads
   fun createPopupGroup(skipHideAction: Boolean = false): ActionGroup {
-    val group = GearActionGroup(this)
+    val group = GearActionGroup()
     if (!skipHideAction) {
       group.addSeparator()
       group.add(HideAction())
@@ -594,7 +602,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     decorator?.background = color
   }
 
-  private inner class GearActionGroup(toolWindow: ToolWindowImpl) : DefaultActionGroup(), DumbAware {
+  private inner class GearActionGroup : DefaultActionGroup(), DumbAware {
     init {
       templatePresentation.icon = AllIcons.General.GearPlain
       if (toolWindowManager.isNewUi) {
@@ -620,7 +628,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       addAction(toggleToolbarGroup).setAsSecondary(true)
       add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
       if (toolWindowManager.isNewUi) {
-        add(SquareStripeButton.createMoveGroup(toolWindow))
+        add(SquareStripeButton.createMoveGroup())
       }
       else {
         add(ToolWindowMoveAction.Group())
@@ -651,24 +659,20 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  private inner class ResizeActionGroup : ActionGroup(ActionsBundle.groupText("ResizeToolWindowGroup"), true), DumbAware {
-    private val children by lazy<Array<AnAction>> {
-      // force creation
-      createContentIfNeeded()
-      val component = decorator
-      val toolWindow = this@ToolWindowImpl
-      arrayOf(
-        ResizeToolWindowAction.Left(toolWindow, component),
-        ResizeToolWindowAction.Right(toolWindow, component),
-        ResizeToolWindowAction.Up(toolWindow, component),
-        ResizeToolWindowAction.Down(toolWindow, component),
-        ActionManager.getInstance().getAction("MaximizeToolWindow")
+  private inner class ResizeActionGroup : DefaultActionGroup(
+    ActionsBundle.groupText("ResizeToolWindowGroup"),
+    ActionManager.getInstance().let { actionManager ->
+      listOf(
+        actionManager.getAction("ResizeToolWindowLeft"),
+        actionManager.getAction("ResizeToolWindowRight"),
+        actionManager.getAction("ResizeToolWindowUp"),
+        actionManager.getAction("ResizeToolWindowDown"),
+        actionManager.getAction("MaximizeToolWindow")
       )
+    }) {
+    init {
+      isPopup = true
     }
-
-    override fun getChildren(e: AnActionEvent?) = children
-
-    override fun isDumbAware() = true
   }
 
   private inner class RemoveStripeButtonAction :
@@ -724,9 +728,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   fun requestFocusInToolWindow() {
     focusTask.resetStartTime()
-    val alarm = focusAlarm
-    alarm.cancelAllRequests()
-    alarm.request(delay = 0)
+    focusAlarm.cancelAllRequests()
+    focusTask.run()
   }
 }
 
@@ -756,14 +759,22 @@ private fun addSorted(main: DefaultActionGroup, group: ActionGroup) {
 }
 
 private fun addContentNotInHierarchyComponents(contentUi: ToolWindowContentUi) {
-  contentUi.component.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, object : Iterable<JComponent> {
-    override fun iterator(): Iterator<JComponent> {
-      val contentManager = contentUi.contentManager
-      if (contentManager.contentCount == 0) {
-        return Collections.emptyIterator()
-      }
+  contentUi.component.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, NotInHierarchyComponents(contentUi))
+}
 
-      return contentManager.contents
+private class NotInHierarchyComponents(val contentUi: ToolWindowContentUi) : Iterable<Component> {
+  private val oldProperty = ClientProperty.get(contentUi.component, UIUtil.NOT_IN_HIERARCHY_COMPONENTS)
+
+  override fun iterator(): Iterator<Component> {
+    var result = emptySequence<Component>()
+
+    if (oldProperty != null) {
+      result += oldProperty.asSequence()
+    }
+
+    val contentManager = contentUi.contentManager
+    if (contentManager.contentCount != 0) {
+      result += contentManager.contents
         .asSequence()
         .mapNotNull { content: Content ->
           var last: JComponent? = null
@@ -777,9 +788,10 @@ private fun addContentNotInHierarchyComponents(contentUi: ToolWindowContentUi) {
           }
           last
         }
-        .iterator()
     }
-  })
+
+    return result.iterator()
+  }
 }
 
 /**

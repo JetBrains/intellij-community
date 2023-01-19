@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
+import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor
@@ -59,9 +60,10 @@ open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachPr
       LocalFileSystem.getInstance().findFileByNioFile(it)
     }
     if (preselectedDirectory == null) {
+      val defaultProjectDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
       preselectedDirectory =
-        if (StringUtil.isNotEmpty(GeneralSettings.getInstance().defaultProjectDirectory))
-          VfsUtil.findFileByIoFile(File(GeneralSettings.getInstance().defaultProjectDirectory), true)
+        if (StringUtil.isNotEmpty(defaultProjectDirectory))
+          VfsUtil.findFileByIoFile(File(defaultProjectDirectory), true)
         else
           VfsUtil.findFileByIoFile(File(SystemProperties.getUserHome()), true)
     }

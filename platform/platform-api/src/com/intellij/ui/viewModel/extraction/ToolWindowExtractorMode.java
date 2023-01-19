@@ -15,8 +15,9 @@ import org.jetbrains.annotations.ApiStatus;
  *   <li>Default mode is used:</li>
  *   <ul>
  *     <li>{@link #MIRROR} for few common toolwindows for CWM guests</li>
- *     <li>{@link #FALLBACK} for all other toolwindows for CWM guests</li>
+ *     <li>{@link #FALLBACK} for some toolwindows for Remote Dev controller</li>
  *     <li>{@link #PROJECTOR_STEALING} for Remote Dev controller client</li>
+ *     <li>{@link #UNSUPPORTED} for all other toolwindows for CWM guests</li>
  *   </ul>
  * </ol>
  */
@@ -48,7 +49,12 @@ public enum ToolWindowExtractorMode {
    * Steal content from host's toolwindow to share it using Projector.
    * Applicable only for Remote Dev controller client.
    */
-  PROJECTOR_STEALING;
+  PROJECTOR_STEALING,
+  /**
+   * Returned for toolwindow whose synchronization with host we don't really support. For toolwindows,
+   * which client actually has, it will work as {@link #FALLBACK}, for others it will show placeholder with unimplemented message.
+   */
+  UNSUPPORTED;
 
   /**
    * Returns true for modes that create a new toolwindow instance per client
@@ -62,6 +68,10 @@ public enum ToolWindowExtractorMode {
    */
   public boolean isMirrorLike() {
     return this == MIRROR || this == PROJECTOR_STEALING;
+  }
+
+  public boolean isUnsupported() {
+    return this == UNSUPPORTED;
   }
 
   /**

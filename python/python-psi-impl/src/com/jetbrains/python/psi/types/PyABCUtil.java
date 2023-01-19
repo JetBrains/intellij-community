@@ -20,9 +20,6 @@ import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public final class PyABCUtil {
   private PyABCUtil() {
   }

@@ -23,14 +23,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import org.ec4j.core.model.Ec4jPath;
 import org.editorconfig.configmanagement.export.EditorConfigSettingsWriter;
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind;
-import org.editorconfig.core.EditorConfig;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.language.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.ec4j.core.model.Glob;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -144,7 +145,7 @@ public class EditorConfigGenerateLanguagePropertiesAction extends CodeInsightAct
 
     private static List<Language> getSupportedLanguages() {
       return
-        LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()
+        LanguageCodeStyleSettingsProvider.getAllProviders()
                                                  .stream()
                                                  .filter(provider -> provider.supportsExternalFormats())
                                                  .map(provider -> provider.getLanguage())
@@ -166,7 +167,9 @@ public class EditorConfigGenerateLanguagePropertiesAction extends CodeInsightAct
           for (FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
             if (fileType instanceof LanguageFileType) {
               String testName = "/a." + fileType.getDefaultExtension();
-              if (EditorConfig.filenameMatches("", pattern, testName)) {
+              // TODO verify that the pattern ends up being created from the same string
+              //if (EditorConfig.filenameMatches("", pattern, testName)) {
+              if (new Glob(pattern).match(Ec4jPath.Ec4jPaths.of(testName))) {
                 languages.add(((LanguageFileType)fileType).getLanguage());
               }
             }

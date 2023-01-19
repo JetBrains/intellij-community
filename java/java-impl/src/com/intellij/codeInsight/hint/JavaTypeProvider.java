@@ -21,10 +21,8 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
@@ -36,12 +34,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -153,7 +151,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
     infoLines.removeIf(pair -> pair.getSecond().isEmpty());
     if (!infoLines.isEmpty()) {
       infoLines.add(0, Pair.create(JavaBundle.message("type.information.type"), basicType));
-      HtmlChunk[] rows = StreamEx.of(infoLines).map(pair -> makeHtmlRow(pair.getFirst(), pair.getSecond())).toArray(HtmlChunk.class);
+      HtmlChunk[] rows = ContainerUtil.map2Array(infoLines, HtmlChunk.class, pair -> makeHtmlRow(pair.getFirst(), pair.getSecond()));
       return HtmlChunk.tag("table").children(rows).toString();
     }
     return basicType;

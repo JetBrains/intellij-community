@@ -439,18 +439,12 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
   @Contract(value = "null, _ -> null", pure = true)
   private static @Nullable @NonNls String getComparingMethodName(String type, boolean first) {
     if(type == null) return null;
-    switch(PsiTypesUtil.unboxIfPossible(type)) {
-      case "int":
-      case "short":
-      case "byte":
-      case "char":
-        return first ? "comparingInt" : "thenComparingInt";
-      case "long":
-        return first ? "comparingLong" : "thenComparingLong";
-      case "double":
-        return first ? "comparingDouble" : "thenComparingDouble";
-    }
-    return null;
+    return switch (PsiTypesUtil.unboxIfPossible(type)) {
+      case "int", "short", "byte", "char" -> first ? "comparingInt" : "thenComparingInt";
+      case "long" -> first ? "comparingLong" : "thenComparingLong";
+      case "double" -> first ? "comparingDouble" : "thenComparingDouble";
+      default -> null;
+    };
   }
 
   @Contract("_, null, _, _ -> false; _, !null, _, null -> false")

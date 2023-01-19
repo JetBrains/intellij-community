@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationBundle.message
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.listCellRenderer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
@@ -30,8 +30,8 @@ internal val CLOSE_BUTTON_POSITION: String
   get() = message("tabs.close.button.placement")
 
 internal fun Row.closeButtonPositionComboBox() {
-  comboBox(CollectionComboBoxModel(items), listCellRenderer { value, _, _ -> text = optionName(value) })
-    .bindItem({ getCloseButtonPlacement() }, { set(it) })
+  comboBox(CollectionComboBoxModel(items), listCellRenderer { text = optionName(it) })
+    .bindItem(::getCloseButtonPlacement, ::set)
 }
 
 internal fun closeButtonPlacementOptionDescription(): Collection<BooleanOptionDescription> = items.map { asOptionDescriptor(it) }

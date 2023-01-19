@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import function 'foo'" "true"
 // ERROR: Not enough information to infer type variable T
 /* IGNORE_FIR */
 
@@ -16,7 +16,7 @@ package pack_one.sub
 fun foo() {}
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import function 'foo'" "true"
 // ERROR: Not enough information to infer type variable T
 /* IGNORE_FIR */
 

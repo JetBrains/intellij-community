@@ -39,15 +39,14 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @NotNull
   private static final Set<String> EXCEPTION_SUPPRESSORS = ImmutableSet.of("suppress", "assertRaises", "assertRaisesRegex");
+
+  private static final Set<String> KNOWN_NORETURNS = ImmutableSet.of("sys.exit", "exit", "pytest.fail");
 
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
 
@@ -136,9 +135,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyCallExpression(final @NotNull PyCallExpression node) {
     final PyExpression callee = node.getCallee();
     // Flow abrupted
-    final String repr = PyUtil.getReadableRepr(callee, true);
-    if (callee != null && ("sys.exit".equals(repr) ||
-                           "self.fail".equals(repr))) {
+    if (callee != null && assumeDeadEnd(callee)) {
       callee.accept(this);
       for (PyExpression expression : node.getArguments()) {
         expression.accept(this);
@@ -995,6 +992,28 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
     final PyTargetExpression target = node.getTarget();
     if (target != null) target.accept(this);
+  }
+
+  private static boolean assumeDeadEnd(final @NotNull PyExpression callee) {
+    String repr = PyUtil.getReadableRepr(callee, true);
+    if (KNOWN_NORETURNS.contains(repr)) {
+      return true;
+    }
+    /* Since we can't fully resolve the call during the building of the control flow graph,
+     * here we make an assumption that the class which contains self.fail() call is the real
+     * test class and self.fail() is actually unittest.TestCase.fail() call which leads to flow abruption (see PY-23859).
+     * This approach does not completely eliminate false positives, but it helps to reduce their number. */
+    if (repr.equals("self.fail")) {
+      PyClass clazz = PsiTreeUtil.getParentOfType(callee, PyClass.class);
+      if (clazz != null && clazz.getName() != null) {
+        String className = clazz.getName();
+        boolean classNameContainsTest = className.contains("Test");
+        if (classNameContainsTest) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private void abruptFlow(final PsiElement node) {

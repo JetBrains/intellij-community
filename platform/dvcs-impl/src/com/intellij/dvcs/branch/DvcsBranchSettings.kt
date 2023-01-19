@@ -20,16 +20,6 @@ class DvcsBranchSettings : BaseState() {
 
 private val defaultGroupingKey = GroupingKey.GROUPING_BY_DIRECTORY
 
-fun DvcsBranchSettings.isGroupingEnabled(key: GroupingKey): Boolean {
-  return groupingKeyIds.contains(key.id)
-}
-
-fun DvcsBranchSettings.setGrouping(key: GroupingKey, state: Boolean) {
-  if (state) groupingKeyIds.add(key.id) else groupingKeyIds.remove(key.id)
-
-  intIncrementModificationCount()
-}
-
 enum class GroupingKey(val id: @NonNls String,
                        val text: @NlsActions.ActionText String? = null,
                        val description: @NlsActions.ActionDescription String? = null) {

@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,41 +24,54 @@ import java.util.Optional;
 
 /**
  * {@link GradleProjectSettings} holds settings for the linked gradle project.
- *
- * @author Denis Zhdanov
  */
+@SuppressWarnings("unused")
 public class GradleProjectSettings extends ExternalProjectSettings {
-  private static final Logger LOG = Logger.getInstance(GradleProjectSettings.class);
+  private static final @NotNull Logger LOG = Logger.getInstance(GradleProjectSettings.class);
 
   public static final boolean DEFAULT_DELEGATE = true;
-  public static final TestRunner DEFAULT_TEST_RUNNER = TestRunner.GRADLE;
+  public static final @NotNull TestRunner DEFAULT_TEST_RUNNER = TestRunner.GRADLE;
 
-  @Nullable private String myGradleHome;
-  @Nullable private String myGradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK;
-  @Nullable private DistributionType distributionType;
+  private @Nullable String myGradleJvm;
+  private @Nullable DistributionType myDistributionType;
+  private @Nullable String myGradleHome;
   private boolean disableWrapperSourceDistributionNotification;
-  private boolean resolveModulePerSourceSet = true;
-  private boolean resolveExternalAnnotations = true;
-  @Nullable private CompositeBuild myCompositeBuild;
+  private boolean resolveModulePerSourceSet;
+  private boolean resolveExternalAnnotations;
+  private @Nullable CompositeBuild myCompositeBuild;
 
-  @Nullable
-  private Boolean delegatedBuild;
-  @Nullable
-  private TestRunner testRunner;
+  private @NotNull Boolean delegatedBuild;
+  private @NotNull TestRunner testRunner;
 
-  @Nullable
-  @NlsSafe
-  public String getGradleHome() {
-    return myGradleHome;
+  public GradleProjectSettings(@NotNull String externalProjectPath) {
+    this();
+    this.setExternalProjectPath(externalProjectPath);
   }
 
-  public void setGradleHome(@Nullable String gradleHome) {
-    myGradleHome = gradleHome;
+  public GradleProjectSettings() {
+    myGradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK;
+    myDistributionType = DistributionType.DEFAULT_WRAPPED;
+    myGradleHome = null;
+    disableWrapperSourceDistributionNotification = false;
+    resolveModulePerSourceSet = true;
+    resolveExternalAnnotations = true;
+    delegatedBuild = DEFAULT_DELEGATE;
+    testRunner = DEFAULT_TEST_RUNNER;
+    setupHeadlessProjectSettings();
   }
 
-  @Nullable
-  @NlsSafe
-  public String getGradleJvm() {
+  private void setupHeadlessProjectSettings() {
+    var distributionType = GradleEnvironment.Headless.GRADLE_DISTRIBUTION_TYPE;
+    if (distributionType != null) {
+      myDistributionType = DistributionType.valueOf(distributionType);
+    }
+    var gradleHome = GradleEnvironment.Headless.GRADLE_HOME;
+    if (gradleHome != null) {
+      myGradleHome = gradleHome;
+    }
+  }
+
+  public @Nullable @NlsSafe String getGradleJvm() {
     return myGradleJvm;
   }
 
@@ -65,13 +79,20 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     myGradleJvm = gradleJvm;
   }
 
-  @Nullable
-  public DistributionType getDistributionType() {
-    return distributionType;
+  public @Nullable @NlsSafe String getGradleHome() {
+    return myGradleHome;
+  }
+
+  public void setGradleHome(@Nullable String gradleHome) {
+    myGradleHome = gradleHome;
+  }
+
+  public @Nullable DistributionType getDistributionType() {
+    return myDistributionType;
   }
 
   public void setDistributionType(@Nullable DistributionType distributionType) {
-    this.distributionType = distributionType;
+    myDistributionType = distributionType;
   }
 
   public boolean isDisableWrapperSourceDistributionNotification() {
@@ -99,8 +120,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   }
 
   @OptionTag(tag = "compositeConfiguration", nameAttribute = "")
-  @Nullable
-  public CompositeBuild getCompositeBuild() {
+  public @Nullable CompositeBuild getCompositeBuild() {
     return myCompositeBuild;
   }
 
@@ -108,28 +128,10 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     myCompositeBuild = compositeBuild;
   }
 
-  @NotNull
-  @Override
-  public GradleProjectSettings clone() {
-    GradleProjectSettings result = new GradleProjectSettings();
-    copyTo(result);
-    result.myGradleHome = myGradleHome;
-    result.myGradleJvm = myGradleJvm;
-    result.distributionType = distributionType;
-    result.disableWrapperSourceDistributionNotification = disableWrapperSourceDistributionNotification;
-    result.resolveModulePerSourceSet = resolveModulePerSourceSet;
-    result.resolveExternalAnnotations = resolveExternalAnnotations;
-    result.myCompositeBuild = myCompositeBuild != null ? myCompositeBuild.copy() : null;
-
-    result.delegatedBuild = delegatedBuild;
-    result.testRunner = testRunner;
-    return result;
-  }
-
   /**
    * @return Build/run mode for the gradle project
    */
-  @Transient()
+  @Transient
   public boolean getDelegatedBuild() {
     return ObjectUtils.notNull(delegatedBuild, DEFAULT_DELEGATE);
   }
@@ -139,15 +141,13 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   }
 
   // For backward compatibility
-  @Nullable
-  @OptionTag(value = "delegatedBuild")
-  public Boolean getDirectDelegatedBuild() {
+  @OptionTag("delegatedBuild")
+  public @Nullable Boolean getDirectDelegatedBuild() {
     return delegatedBuild;
   }
 
-  @SuppressWarnings("unused")
   public void setDirectDelegatedBuild(@Nullable Boolean state) {
-    this.delegatedBuild = state;
+    delegatedBuild = ObjectUtils.notNull(state, DEFAULT_DELEGATE);
   }
 
   public static boolean isDelegatedBuildEnabled(@NotNull Project project, @Nullable String gradleProjectPath) {
@@ -165,9 +165,8 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   /**
    * @return test runner option.
    */
-  @NotNull
-  @Transient()
-  public TestRunner getTestRunner() {
+  @Transient
+  public @NotNull TestRunner getTestRunner() {
     return ObjectUtils.notNull(testRunner, DEFAULT_TEST_RUNNER);
   }
 
@@ -181,19 +180,16 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   }
 
   // For backward compatibility
-  @Nullable
-  @OptionTag(value = "testRunner")
-  public TestRunner getDirectTestRunner() {
+  @OptionTag("testRunner")
+  public @Nullable TestRunner getDirectTestRunner() {
     return testRunner;
   }
 
-  @SuppressWarnings("unused")
   public void setDirectTestRunner(@Nullable TestRunner testRunner) {
-    this.testRunner = testRunner;
+    this.testRunner = ObjectUtils.notNull(testRunner, DEFAULT_TEST_RUNNER);
   }
 
-  @NotNull
-  public static TestRunner getTestRunner(@NotNull Project project, @Nullable String gradleProjectPath) {
+  public static @NotNull TestRunner getTestRunner(@NotNull Project project, @Nullable String gradleProjectPath) {
     GradleProjectSettings projectSettings = gradleProjectPath == null
                                             ? null : GradleSettings.getInstance(project).getLinkedProjectSettings(gradleProjectPath);
     TestRunner testRunner = projectSettings == null ? TestRunner.PLATFORM : projectSettings.getTestRunner();
@@ -206,30 +202,44 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     return testRunner;
   }
 
-  @NotNull
-  public static TestRunner getTestRunner(@NotNull Module module) {
+  public static @NotNull TestRunner getTestRunner(@NotNull Module module) {
     return getTestRunner(module.getProject(), ExternalSystemApiUtil.getExternalRootProjectPath(module));
   }
 
-  @NotNull
-  public GradleVersion resolveGradleVersion() {
+  public @NotNull GradleVersion resolveGradleVersion() {
     GradleVersion version = GradleInstallationManager.guessGradleVersion(this);
     return Optional.ofNullable(version).orElseGet(GradleVersion::current);
   }
 
-  public GradleProjectSettings withQualifiedModuleNames() {
+  public @NotNull GradleProjectSettings withQualifiedModuleNames() {
     setUseQualifiedModuleNames(true);
     return this;
   }
 
+  @Override
+  public @NotNull GradleProjectSettings clone() {
+    GradleProjectSettings result = new GradleProjectSettings();
+    copyTo(result);
+    result.myGradleJvm = myGradleJvm;
+    result.myDistributionType = myDistributionType;
+    result.myGradleHome = myGradleHome;
+    result.disableWrapperSourceDistributionNotification = disableWrapperSourceDistributionNotification;
+    result.resolveModulePerSourceSet = resolveModulePerSourceSet;
+    result.resolveExternalAnnotations = resolveExternalAnnotations;
+    result.myCompositeBuild = myCompositeBuild != null ? myCompositeBuild.copy() : null;
+
+    result.delegatedBuild = delegatedBuild;
+    result.testRunner = testRunner;
+    return result;
+  }
+
   @Tag("compositeBuild")
   public static class CompositeBuild {
-    @Nullable private CompositeDefinitionSource myCompositeDefinitionSource;
+    private @Nullable CompositeDefinitionSource myCompositeDefinitionSource;
     private List<BuildParticipant> myCompositeParticipants = new SmartList<>();
 
     @Attribute
-    @Nullable
-    public CompositeDefinitionSource getCompositeDefinitionSource() {
+    public @Nullable CompositeDefinitionSource getCompositeDefinitionSource() {
       return myCompositeDefinitionSource;
     }
 
@@ -238,17 +248,15 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     }
 
     @XCollection(propertyElementName = "builds", elementName = "build")
-    @NotNull
-    public List<BuildParticipant> getCompositeParticipants() {
+    public @NotNull List<BuildParticipant> getCompositeParticipants() {
       return myCompositeParticipants;
     }
 
-    public void setCompositeParticipants(List<? extends BuildParticipant> compositeParticipants) {
+    public void setCompositeParticipants(@Nullable List<? extends BuildParticipant> compositeParticipants) {
       myCompositeParticipants = compositeParticipants == null ? new SmartList<>() : new ArrayList<>(compositeParticipants);
     }
 
-    @NotNull
-    public CompositeBuild copy() {
+    public @NotNull CompositeBuild copy() {
       CompositeBuild result = new CompositeBuild();
       result.myCompositeParticipants = new ArrayList<>();
       for (BuildParticipant participant : myCompositeParticipants) {
@@ -256,6 +264,33 @@ public class GradleProjectSettings extends ExternalProjectSettings {
       }
       result.myCompositeDefinitionSource = myCompositeDefinitionSource;
       return result;
+    }
+  }
+
+  public static class GradleDistributionInfo {
+
+    private final @NotNull DistributionType type;
+
+    private final @NotNull GradleVersion gradleVersion;
+
+    private final @Nullable String gradleHome;
+
+    public GradleDistributionInfo(@NotNull DistributionType type, @NotNull GradleVersion gradleVersion, @Nullable String gradleHome) {
+      this.type = type;
+      this.gradleVersion = gradleVersion;
+      this.gradleHome = gradleHome;
+    }
+
+    public @NotNull DistributionType getType() {
+      return type;
+    }
+
+    public @NotNull GradleVersion getGradleVersion() {
+      return gradleVersion;
+    }
+
+    public @Nullable String getGradleHome() {
+      return gradleHome;
     }
   }
 }

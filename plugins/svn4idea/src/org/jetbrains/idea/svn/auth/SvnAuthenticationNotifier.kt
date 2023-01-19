@@ -31,7 +31,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ThreeState
 import com.intellij.util.io.delete
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.exists
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.proxy.CommonProxy
 import org.jetbrains.annotations.NonNls
@@ -57,6 +56,7 @@ import java.nio.file.Paths
 import java.util.Collections.synchronizedMap
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
+import kotlin.io.path.exists
 
 private val LOG = logger<SvnAuthenticationNotifier>()
 

@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public abstract class CoverageDataManager {
   public static CoverageDataManager getInstance(@NotNull Project project) {
     return project.getService(CoverageDataManagerImpl.class);
@@ -37,7 +34,7 @@ public abstract class CoverageDataManager {
                                                  String[] filters,
                                                  long lastCoverageTimeStamp,
                                                  @Nullable String suiteToMergeWith, final CoverageRunner coverageRunner,
-                                                 final boolean collectLineInfo, final boolean tracingEnabled);
+                                                 final boolean coverageByTestEnabled, final boolean tracingEnabled);
 
   public abstract CoverageSuite addExternalCoverageSuite(String selectedFileName,
                                                          long timeStamp,

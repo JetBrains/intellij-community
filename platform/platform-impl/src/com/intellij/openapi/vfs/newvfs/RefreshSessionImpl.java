@@ -62,8 +62,13 @@ final class RefreshSessionImpl extends RefreshSession {
   }
 
   RefreshSessionImpl(boolean async, List<? extends VFileEvent> events) {
-    this(async, false, null, ModalityState.defaultModalityState());
+    this(async, false, null, getSafeModalityState());
     myEvents.addAll(events);
+  }
+
+  private static ModalityState getSafeModalityState() {
+    ModalityState state = ModalityState.defaultModalityState();
+    return state != ModalityState.any() ? state : ModalityState.NON_MODAL;
   }
 
   @Override
@@ -110,75 +115,75 @@ final class RefreshSessionImpl extends RefreshSession {
   }
 
   void scan(long timeInQueue) {
-    List<VirtualFile> workQueue = myWorkQueue;
+    if (myWorkQueue.isEmpty()) return;
+    var workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<>();
-    boolean forceRefresh = !myIsRecursive && !myIsAsync;  // shallow sync refresh (e.g. project config files on open)
+    var forceRefresh = !myIsRecursive && !myIsAsync;  // shallow sync refresh (e.g. project config files on open)
 
-    if (!workQueue.isEmpty()) {
-      LocalFileSystem fs = LocalFileSystem.getInstance();
-      if (!forceRefresh && fs instanceof LocalFileSystemImpl) {
-        ((LocalFileSystemImpl)fs).markSuspiciousFilesDirty(workQueue);
+    var fs = LocalFileSystem.getInstance();
+    if (!forceRefresh && fs instanceof LocalFileSystemImpl) {
+      ((LocalFileSystemImpl)fs).markSuspiciousFilesDirty(workQueue);
+    }
+
+    if (LOG.isTraceEnabled()) LOG.trace("scanning " + workQueue);
+
+    var t = System.nanoTime();
+    PerformanceWatcher.Snapshot snapshot = null;
+    Map<String, Integer> types = null;
+    if (DURATION_REPORT_THRESHOLD_MS > 0) {
+      snapshot = PerformanceWatcher.takeSnapshot();
+      types = new HashMap<>();
+    }
+
+    var refreshRoots = new ArrayList<NewVirtualFile>(workQueue.size());
+    for (var file : workQueue) {
+      if (myCancelled) break;
+
+      var nvf = (NewVirtualFile)file;
+      if (forceRefresh) {
+        nvf.markDirty();
       }
-
-      if (LOG.isTraceEnabled()) LOG.trace("scanning " + workQueue);
-
-      long t = System.nanoTime();
-      PerformanceWatcher.Snapshot snapshot = null;
-      Map<String, Integer> types = null;
-      if (DURATION_REPORT_THRESHOLD_MS > 0) {
-        snapshot = PerformanceWatcher.takeSnapshot();
-        types = new HashMap<>();
+      if (!nvf.isDirty()) {
+        continue;
       }
+      refreshRoots.add(nvf);
 
-      int count = 0;
-      refresh: do {
-        if (LOG.isTraceEnabled()) LOG.trace("try=" + count);
-
-        for (VirtualFile file : workQueue) {
-          if (myCancelled) break refresh;
-
-          NewVirtualFile nvf = (NewVirtualFile)file;
-          if (forceRefresh) {
-            nvf.markDirty();
-          }
-          else if (!nvf.isDirty()) {
-            continue;
-          }
-
-          RefreshWorker worker = new RefreshWorker(nvf, myIsRecursive);
-          myWorker = worker;
-          myEvents.addAll(worker.scan());
-
-          if (types != null) {
-            String type = !file.isDirectory() ? "file" : file.getFileSystem() instanceof ArchiveFileSystem ? "arc" : "dir";
-            types.put(type, types.getOrDefault(type, 0) + 1);
-          }
-        }
-
-        count++;
-        if (LOG.isTraceEnabled()) LOG.trace("events=" + myEvents.size());
-      }
-      while (!myCancelled && myIsRecursive && count < RETRY_LIMIT && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
-
-      t = NANOSECONDS.toMillis(System.nanoTime() - t);
-      int localRoots = 0, archiveRoots = 0, otherRoots = 0;
-      for (VirtualFile file : workQueue) {
-        if (file.getFileSystem() instanceof LocalFileSystem) localRoots++;
-        else if (file.getFileSystem() instanceof ArchiveFileSystem) archiveRoots++;
-        else otherRoots++;
-      }
-      VfsUsageCollector.logRefreshSession(myIsRecursive, localRoots, archiveRoots, otherRoots, myCancelled, timeInQueue, t, count);
-      if (LOG.isTraceEnabled()) {
-        LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, tries " + count + ", events " + myEvents);
-      }
-      else if (snapshot != null && t > DURATION_REPORT_THRESHOLD_MS) {
-        snapshot.logResponsivenessSinceCreation(String.format(
-          "Refresh session (queue size: %s, scanned: %s, result: %s, tries: %s, events: %d)",
-          workQueue.size(), types, myCancelled ? "cancelled" : "done", count, myEvents.size()));
+      if (types != null) {
+        var type = !file.isDirectory() ? "file" : file.getFileSystem() instanceof ArchiveFileSystem ? "arc" : "dir";
+        types.put(type, types.getOrDefault(type, 0) + 1);
       }
     }
 
-    myWorker = null;
+    int count = 0;
+    do {
+      if (LOG.isTraceEnabled()) LOG.trace("try=" + count);
+
+      var worker = new RefreshWorker(refreshRoots, myIsRecursive);
+      myWorker = worker;
+      myEvents.addAll(worker.scan());
+      myWorker = null;
+
+      count++;
+      if (LOG.isTraceEnabled()) LOG.trace("events=" + myEvents.size());
+    }
+    while (!myCancelled && myIsRecursive && count < RETRY_LIMIT && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
+
+    t = NANOSECONDS.toMillis(System.nanoTime() - t);
+    int localRoots = 0, archiveRoots = 0, otherRoots = 0;
+    for (var file : refreshRoots) {
+      if (file.getFileSystem() instanceof LocalFileSystem) localRoots++;
+      else if (file.getFileSystem() instanceof ArchiveFileSystem) archiveRoots++;
+      else otherRoots++;
+    }
+    VfsUsageCollector.logRefreshSession(myIsRecursive, localRoots, archiveRoots, otherRoots, myCancelled, timeInQueue, t, count);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, tries " + count + ", events " + myEvents);
+    }
+    else if (snapshot != null && t > DURATION_REPORT_THRESHOLD_MS) {
+      snapshot.logResponsivenessSinceCreation(String.format(
+        "Refresh session (queue size: %s, scanned: %s, result: %s, tries: %s, events: %d)",
+        workQueue.size(), types, myCancelled ? "cancelled" : "done", count, myEvents.size()));
+    }
   }
 
   void cancel() {
@@ -248,8 +253,12 @@ final class RefreshSessionImpl extends RefreshSession {
     return myModality;
   }
 
+  boolean hasEvents() {
+    return !myEvents.isEmpty();
+  }
+
   @NotNull List<VFileEvent> getEvents() {
-    return new ArrayList<>(new LinkedHashSet<>(myEvents));
+    return hasEvents() ? new ArrayList<>(new LinkedHashSet<>(myEvents)) : List.of();
   }
 
   @Override

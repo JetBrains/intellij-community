@@ -42,9 +42,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.ide.util.gotoByName.GotoActionModel.*;
 
-/**
- * @author peter
- */
 public final class GotoActionItemProvider implements ChooseByNameWeightedItemProvider {
   private static final int BONUS_FOR_SPACE_IN_PATTERN = 100;
   private static final int SETTINGS_PENALTY = 100;

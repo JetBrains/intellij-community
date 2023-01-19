@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.collaboration.api.ServerPath
+import com.intellij.collaboration.util.resolveRelative
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import java.net.URI
@@ -19,6 +20,7 @@ class GitLabServerPath : ServerPath {
 
   constructor(uri: String) {
     require(uri.isNotEmpty())
+    require(!uri.endsWith('/'))
     val validation = URI.create(uri)
     require(validation.scheme != null)
     require(validation.scheme.startsWith("http"))
@@ -26,7 +28,12 @@ class GitLabServerPath : ServerPath {
   }
 
   val gqlApiUri: URI
-    get() = URI.create(uri).resolve("/api/graphql")
+    get() = toURI().resolveRelative("api/graphql/")
+
+  val restApiUri: URI
+    get() = toURI().resolveRelative("api/v4/")
+
+  override fun toURI(): URI = URI.create("$uri/")
 
   @NlsSafe
   override fun toString() = uri

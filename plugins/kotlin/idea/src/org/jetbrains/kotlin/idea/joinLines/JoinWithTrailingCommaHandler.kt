@@ -55,7 +55,7 @@ class JoinWithTrailingCommaHandler : JoinLinesHandlerDelegate {
             if (type !in TOKENS_WITH_SPACES) {
                 element.delete()
             } else {
-                element.replace(KtPsiFactory(element).createWhiteSpace())
+                element.replace(KtPsiFactory(element.project).createWhiteSpace())
             }
         }
     }

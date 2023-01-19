@@ -16,6 +16,7 @@
 package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.psi.JavaTokenType.*;
 
 public class PointlessBitwiseExpressionInspection extends BaseInspection {
@@ -62,9 +64,9 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("pointless.boolean.expression.ignore.option"),
-      this, "m_ignoreExpressionsContainingConstants");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreExpressionsContainingConstants", InspectionGadgetsBundle.message("pointless.boolean.expression.ignore.option")));
   }
 
   String calculateReplacementExpression(PsiExpression expression, CommentTracker ct) {
@@ -210,7 +212,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
       CommentTracker ct = new CommentTracker();
       final String newExpression = calculateReplacementExpression(expression, ct);

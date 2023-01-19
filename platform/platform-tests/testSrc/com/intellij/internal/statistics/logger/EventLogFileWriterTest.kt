@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogFileWriter
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider.Companion.DEFAULT_MAX_FILE_SIZE_BYTES
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.util.containers.ContainerUtil.newArrayList
+import com.intellij.util.containers.ContainerUtil
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -53,7 +53,7 @@ class EventLogFileWriterTest {
     val ts = System.currentTimeMillis()
 
     val f3 = TestFile(ts - 100 * 1000, "active.log")
-    doTestCleanupOldFiles(newArrayList(f3), newArrayList(false), -1, false)
+    doTestCleanupOldFiles(java.util.List.of(f3), java.util.List.of(false), -1, false)
   }
 
   @Test
@@ -61,7 +61,7 @@ class EventLogFileWriterTest {
     val ts = System.currentTimeMillis()
 
     val f3 = TestFile(ts - 1000, "active.log")
-    doTestCleanupOldFiles(newArrayList(f3), newArrayList(false), -1, false)
+    doTestCleanupOldFiles(java.util.List.of(f3), java.util.List.of(false), -1, false)
   }
 
   @Test
@@ -69,7 +69,7 @@ class EventLogFileWriterTest {
     val ts = System.currentTimeMillis()
 
     val f3 = TestFile(ts - MAX_AGE, "active.log")
-    doTestCleanupOldFiles(newArrayList(f3), newArrayList(false), -1, false)
+    doTestCleanupOldFiles(java.util.List.of(f3), java.util.List.of(false), -1, false)
   }
 
   @Test
@@ -80,7 +80,7 @@ class EventLogFileWriterTest {
     val f2 = TestFile(ts - 2000, "test2.log")
     val f3 = TestFile(ts - 1000, "active.log")
 
-    doTestCleanupOldFiles(newArrayList(f1, f2, f3), newArrayList(false, false, false), ts - 3000, true)
+    doTestCleanupOldFiles(ContainerUtil.newArrayList(f1, f2, f3), ContainerUtil.newArrayList(false, false, false), ts - 3000, true)
   }
 
   @Test
@@ -91,7 +91,7 @@ class EventLogFileWriterTest {
     val f2 = TestFile(ts, "test2.log")
     val f3 = TestFile(ts - 10, "active.log")
 
-    doTestCleanupOldFiles(newArrayList(f1, f2, f3), newArrayList(true, false, false), ts, true)
+    doTestCleanupOldFiles(ContainerUtil.newArrayList(f1, f2, f3), ContainerUtil.newArrayList(true, false, false), ts, true)
   }
 
   @Test
@@ -102,7 +102,7 @@ class EventLogFileWriterTest {
     val f2 = TestFile(ts, "test2.log")
     val f3 = TestFile(ts - MAX_AGE - 10, "active.log")
 
-    doTestCleanupOldFiles(newArrayList(f1, f2, f3), newArrayList(false, false, false), ts - 20, true)
+    doTestCleanupOldFiles(ContainerUtil.newArrayList(f1, f2, f3), ContainerUtil.newArrayList(false, false, false), ts - 20, true)
   }
 
   @Test
@@ -113,7 +113,7 @@ class EventLogFileWriterTest {
     val f2 = TestFile(ts, "test2.log")
     val f3 = TestFile(ts - MAX_AGE - 20, "active.log")
 
-    doTestCleanupOldFiles(newArrayList(f1, f2, f3), newArrayList(true, false, false), ts, true)
+    doTestCleanupOldFiles(ContainerUtil.newArrayList(f1, f2, f3), ContainerUtil.newArrayList(true, false, false), ts, true)
   }
 
   @Test
@@ -124,7 +124,7 @@ class EventLogFileWriterTest {
     val f2 = TestFile(ts - MAX_AGE - 2000, "test2.log")
     val f3 = TestFile(ts - MAX_AGE - 1000, "active.log")
 
-    doTestCleanupOldFiles(newArrayList(f1, f2, f3), newArrayList(true, true, false), -1, false)
+    doTestCleanupOldFiles(ContainerUtil.newArrayList(f1, f2, f3), ContainerUtil.newArrayList(true, true, false), -1, false)
   }
 
   @Test
@@ -135,7 +135,7 @@ class EventLogFileWriterTest {
     val f2 = TestFile(ts - MAX_AGE - 2000, "test2.log")
     val f3 = TestFile(ts - MAX_AGE - 4000, "active.log")
 
-    doTestCleanupOldFiles(newArrayList(f1, f2, f3), newArrayList(true, true, false), -1, false)
+    doTestCleanupOldFiles(ContainerUtil.newArrayList(f1, f2, f3), ContainerUtil.newArrayList(true, true, false), -1, false)
   }
 
   @Test
@@ -146,7 +146,7 @@ class EventLogFileWriterTest {
     val f2 = TestFile(ts - MAX_AGE - 2000, "test2.log")
     val f3 = TestFile(ts - 1000, "active.log")
 
-    doTestCleanupOldFiles(newArrayList(f1, f2, f3), newArrayList(true, true, false), -1, false)
+    doTestCleanupOldFiles(ContainerUtil.newArrayList(f1, f2, f3), ContainerUtil.newArrayList(true, true, false), -1, false)
   }
 
   @Test
@@ -161,8 +161,8 @@ class EventLogFileWriterTest {
     val f6 = TestFile(ts - 2000, "test6.log")
     val active = TestFile(ts - 1000, "active.log")
 
-    doTestCleanupOldFiles(newArrayList(f1, f2, active, f3, f4, f5, f6),
-                          newArrayList(true, false, false, false, true, true, false),
+    doTestCleanupOldFiles(ContainerUtil.newArrayList(f1, f2, active, f3, f4, f5, f6),
+                          ContainerUtil.newArrayList(true, false, false, false, true, true, false),
                           ts - 2000,
                           true)
   }
@@ -177,8 +177,8 @@ class EventLogFileWriterTest {
     val f4 = TestFile(ts - 1000, "test3.log")
     val active = TestFile(ts, "active.log")
 
-    doTestCleanupOldFiles(newArrayList(f1, f3, f2, active, f4),
-                          newArrayList(true, false, true, false, false),
+    doTestCleanupOldFiles(ContainerUtil.newArrayList(f1, f3, f2, active, f4),
+                          ContainerUtil.newArrayList(true, false, true, false, false),
                           ts - 3000,
                           true)
   }

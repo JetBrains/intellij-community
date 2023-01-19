@@ -1,5 +1,3 @@
-from typing import Any
-
 from stripe import error as error
 from stripe.api_resources import Customer as Customer
 from stripe.api_resources.abstract import (
@@ -11,5 +9,5 @@ from stripe.api_resources.abstract import (
 
 class Source(CreateableAPIResource, UpdateableAPIResource, VerifyMixin):
     OBJECT_NAME: str
-    def detach(self, idempotency_key: Any | None = ..., **params): ...
+    def detach(self, idempotency_key: str | None = ..., **params): ...
     def source_transactions(self, **params): ...

@@ -12,7 +12,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.io.exists
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
 import com.intellij.util.io.writeChild
@@ -32,6 +31,7 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.exists
 import kotlin.properties.Delegates
 
 internal class ApplicationStoreTest {
@@ -135,11 +135,11 @@ internal class ApplicationStoreTest {
       assertNotNull("Map doesn't contain item for ${item.fileSpec}. Whole map: \n${map.entries.joinToString("\n")}", map[item.fileSpec])
     }
 
-    test(ExportableItem(FileSpec("filetypes", true), "File types (schemes)"))
-    test(ExportableItem(FileSpec("options/filetypes.xml", false), "File types"))
-    test(ExportableItem(FileSpec("options/customization.xml", false), "Menus and toolbars customization"))
-    test(ExportableItem(FileSpec("options/templates.xml", false), "Live templates"))
-    test(ExportableItem(FileSpec("templates", true), "Live templates (schemes)"))
+    test(ExportableItem(FileSpec("filetypes", "filetypes", true), "File types (schemes)"))
+    test(ExportableItem(FileSpec("options/filetypes.xml", "filetypes.xml", false), "File types"))
+    test(ExportableItem(FileSpec("options/customization.xml", "customization.xml", false), "Menus and toolbars customization"))
+    test(ExportableItem(FileSpec("options/templates.xml", "templates.xml", false), "Live templates"))
+    test(ExportableItem(FileSpec("templates", "templates", true), "Live templates (schemes)"))
   }
 
   @Test
@@ -164,7 +164,8 @@ internal class ApplicationStoreTest {
     val additionalPath = configDir.resolve("foo")
     additionalPath.writeChild("bar.icls", "")
     val exportedData = BufferExposingByteArrayOutputStream()
-    exportSettings(setOf(ExportableItem(FileSpec("a.xml", false), ""), ExportableItem(FileSpec("foo", true), "")), exportedData, mapOf(), storageManager)
+    exportSettings(setOf(ExportableItem(FileSpec("a.xml", "a.xml", false), ""),
+                         ExportableItem(FileSpec("foo", "foo", true), "")), exportedData, mapOf(), storageManager)
 
     val relativePaths = getPaths(exportedData.toInputStream())
     assertThat(relativePaths).containsOnly("a.xml", "foo", "foo/bar.icls", "IntelliJ IDEA Global Settings")
@@ -194,11 +195,15 @@ internal class ApplicationStoreTest {
 
     val storageManager = componentStore.storageManager
     val configDir = storageManager.expandMacro(ROOT_CONFIG)
-    fun fileSpec(spec: String) = FileSpec(configDir.resolve(spec).toString())
+    val os = getPerOsSettingsStorageFolderName()
+
+    fun fileSpec(spec: String): FileSpec {
+      val rawSpec = spec.removePrefix("$os/")
+      return FileSpec(relativePath = configDir.resolve(spec).toString(), rawFileSpec = rawSpec, isDirectory = false)
+    }
 
     val component = Comp()
     ApplicationManager.getApplication().registerServiceInstance(Comp::class.java, component)
-    val os = getPerOsSettingsStorageFolderName()
     try {
       val allItems = getExportableComponentsMap(isComputePresentableNames = false,
                                                 storageManager = storageManager,
@@ -520,8 +525,8 @@ internal class ApplicationStoreTest {
 
     val data: MutableMap<RoamingType, MutableMap<String, String>> = EnumMap(RoamingType::class.java)
 
-    override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-      getMap(roamingType).put(fileSpec, String(content, 0, size, Charsets.UTF_8))
+    override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
+      getMap(roamingType).put(fileSpec, String(content, Charsets.UTF_8))
     }
 
     private fun getMap(roamingType: RoamingType): MutableMap<String, String> = data.computeIfAbsent(roamingType) { HashMap() }

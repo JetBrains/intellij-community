@@ -7,9 +7,13 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CommitInfo
 import com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckProvider
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.JBUI
@@ -23,8 +27,8 @@ import javax.swing.JLabel
 class GitUnresolvedMergeCheckProvider : UnresolvedMergeCheckProvider() {
   override fun checkUnresolvedConflicts(panel: CheckinProjectPanel,
                                         commitContext: CommitContext,
-                                        executor: CommitExecutor?): CheckinHandler.ReturnResult? {
-    if (executor != null) return null
+                                        commitInfo: CommitInfo): CheckinHandler.ReturnResult? {
+    if (!commitInfo.isVcsCommit) return null
     if (!panel.vcsIsAffected(GitVcs.NAME)) return null
 
     val project = panel.project

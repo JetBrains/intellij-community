@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
@@ -12,6 +11,7 @@ import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.UExpression;
 
 import java.util.Collections;
@@ -38,12 +39,14 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar
       .registerUastReferenceProvider(registrar,
-                                     injectionHostUExpression().methodCallParameter(0, psiMethod()
-                                       .withName(string().oneOf("get", "is", "intValue", "doubleValue", "stringValue", "getColor"))
-                                       .definedInClass(PsiJavaPatterns.psiClass().withQualifiedName(string().oneOf(
-                                         Registry.class.getName(),
-                                         RegistryManager.class.getName()
-                                       )))),
+                                     injectionHostUExpression()
+                                       .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
+                                       .methodCallParameter(0, psiMethod()
+                                         .withName(string().oneOf("get", "is", "intValue", "doubleValue", "stringValue", "getColor"))
+                                         .definedInClass(PsiJavaPatterns.psiClass().withQualifiedName(string().oneOf(
+                                           Registry.class.getName(),
+                                           RegistryManager.class.getName()
+                                         )))),
                                      new UastInjectionHostReferenceProvider() {
                                        @Override
                                        public boolean acceptsTarget(@NotNull PsiElement target) {
@@ -60,7 +63,7 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
   }
 
 
-  private static final class RegistryKeyIdReference extends ExtensionPointReferenceBase {
+  private static final class RegistryKeyIdReference extends ExtensionReferenceBase {
 
     private RegistryKeyIdReference(@NotNull PsiElement element) {
       super(element);

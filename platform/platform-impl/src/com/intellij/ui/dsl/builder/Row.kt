@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
 import com.intellij.icons.AllIcons
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -20,10 +21,11 @@ import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -88,6 +90,7 @@ enum class BottomGap {
 
 @ApiStatus.NonExtendable
 @LayoutDslMarker
+@JvmDefaultWithCompatibility
 interface Row {
 
   /**
@@ -100,16 +103,11 @@ interface Row {
    * Marks the row as resizable: the row occupies all extra vertical space in parent (for example in [Panel.group] or [Panel.panel])
    * and changes size together with parent. When resizable is needed in whole [DialogPanel] all row parents should be marked
    * as [resizableRow] as well. It's possible to have several resizable rows, which means extra space is shared between them.
-   * Note that vertical size and placement of components in the row are managed by [Cell.verticalAlign]
+   * Note that alignment inside the cell is managed by [CellBase.align]  method
    *
    * @see [Grid.resizableRows]
    */
   fun resizableRow(): Row
-
-  @Deprecated("Use overloaded rowComment(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun rowComment(@NlsContexts.DetailedDescription comment: String,
-                 maxLineLength: Int = DEFAULT_COMMENT_WIDTH): Row
 
   /**
    * Adds comment after the row with appropriate color and font size (macOS and Linux use smaller font).
@@ -164,6 +162,11 @@ interface Row {
   fun visibleIf(predicate: ComponentPredicate): Row
 
   /**
+   * Binds row visibility to provided [property] predicate.
+   */
+  fun visibleIf(property: ObservableProperty<Boolean>): Row
+
+  /**
    * Sets enabled state of the row including comment [Row.rowComment] and all children recursively.
    * The row is disabled if there is a disabled parent
    */
@@ -173,6 +176,11 @@ interface Row {
    * Binds row enabled state to provided [predicate]
    */
   fun enabledIf(predicate: ComponentPredicate): Row
+
+  /**
+   * Binds row enabled state to provided [property] predicate.
+   */
+  fun enabledIf(property: ObservableProperty<Boolean>): Row
 
   /**
    * Adds additional gap above current row. It is visible together with the row.
@@ -193,16 +201,15 @@ interface Row {
 
   fun checkBox(@NlsContexts.Checkbox text: String): Cell<JBCheckBox>
 
-  @Deprecated("Use overloaded radioButton(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton>
-
   /**
-   * Adds radio button. [Panel.buttonsGroup] must be defined above hierarchy before adding radio buttons.
+   * Adds radio button. [Panel.buttonsGroup] must be defined above hierarchy before adding radio buttons (and therefore there is no need
+   * to create [ButtonGroup] and register the radio button there).
+   *
+   *
    * If there is a binding [ButtonsGroup.bind] for the buttons group then:
    * * [value] must be provided with correspondent to binding type for all radio buttons in the group
-   * * it's possible to mark default radio button by [JRadioButton.isSelected] = true, such button will be selected by default in case
-   * initial bound variable value is not equal to values of radio button in the group
+   * * it's possible to mark default radio button by [JRadioButton.isSelected] = true. Such button will be selected by default in case
+   * initial value of bound variable doesn't equal any values of radio buttons in the group
    *
    * If there is no binding, then values of all radio buttons in the group must be null
    */
@@ -223,13 +230,21 @@ interface Row {
 
   @Deprecated("Use overloaded method")
   @ApiStatus.ScheduledForRemoval
-  fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar>
+  fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar>
 
   /**
    * @see [SegmentedButton]
    */
   @ApiStatus.Experimental
-  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> String): SegmentedButton<T>
+  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T>
+
+  /**
+   * todo Signature will be changed: more useful data like icons will be added here
+   *
+   * @see [SegmentedButton]
+   */
+  @ApiStatus.Experimental
+  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String, tooltipRenderer: (T) -> @Nls String?): SegmentedButton<T>
 
   /**
    * Creates JBTabbedPane which shows only tabs without tab content. To add a new tab call something like
@@ -248,17 +263,13 @@ interface Row {
    */
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
-  @Deprecated("Use text(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  fun labelHtml(@NlsContexts.Label text: String,
-                action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
-
   /**
    * Adds text
    * * [text] can contain HTML tags except &lt;html&gt;, which is added automatically
    * * \n does not work as new line in html, use &lt;br&gt; instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
+   * * MAX_LINE_LENGTH_WORD_WRAP sets AlignX.FILL, with other horizontal aligns word wrap is not supported
    *
    * It is preferable to use [label] method for short plain single-lined strings because labels use less resources and simpler
    *
@@ -269,16 +280,13 @@ interface Row {
   fun text(@NlsContexts.Label text: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
            action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
-  @Deprecated("Use overloaded comment(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP): Cell<JLabel>
-
   /**
    * Adds comment with appropriate color and font size (macOS and Linux use smaller font).
    * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
    * * \n does not work as new line in html, use &lt;br&gt; instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
+   * * MAX_LINE_LENGTH_WORD_WRAP sets AlignX.FILL, with other horizontal aligns word wrap is not supported
    *
    * @see DEFAULT_COMMENT_WIDTH
    * @see MAX_LINE_LENGTH_WORD_WRAP
@@ -286,15 +294,6 @@ interface Row {
    */
   fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
-
-  @Deprecated("Use comment(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
-
-  @Deprecated("Use comment(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  fun commentHtml(@NlsContexts.DetailedDescription text: String,
-                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   /**
    * Creates focusable link with text inside. Should not be used with html in [text]
@@ -306,13 +305,16 @@ interface Row {
    */
   fun browserLink(@NlsContexts.LinkLabel text: String, url: String): Cell<BrowserLink>
 
+  @Deprecated("Use overloaded method and Cell.onChange")
+  fun <T> dropDownLink(item: T, items: List<T>, onSelected: ((T) -> Unit)? = null, updateText: Boolean = true): Cell<DropDownLink<T>>
+
   /**
+   * Use [Cell.onChanged] to listen selection changes
+   *
    * @param item current item
    * @param items list of all available items in popup
-   * @param onSelected invoked when item is selected
-   * @param updateText true if after selection link text is updated, false otherwise
    */
-  fun <T> dropDownLink(item: T, items: List<T>, onSelected: ((T) -> Unit)? = null, updateText: Boolean = true): Cell<DropDownLink<T>>
+  fun <T> dropDownLink(item: T, items: List<T>): Cell<DropDownLink<T>>
 
   fun icon(icon: Icon): Cell<JLabel>
 
@@ -326,10 +328,13 @@ interface Row {
   /**
    * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
    */
-  fun textFieldWithBrowseButton(@NlsContexts.DialogTitle browseDialogTitle: String? = null,
-                                project: Project? = null,
-                                fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
-                                fileChosen: ((chosenFile: VirtualFile) -> String)? = null): Cell<TextFieldWithBrowseButton>
+  fun textFieldWithBrowseButton(
+    @NlsContexts.DialogTitle browseDialogTitle: String? = null,
+    project: Project? = null,
+    fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+    fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+  ): Cell<TextFieldWithBrowseButton>
+
   /**
    * Creates password field with [columns] set to [COLUMNS_SHORT]
    */
@@ -368,8 +373,14 @@ interface Row {
    */
   fun textArea(): Cell<JBTextArea>
 
+  /**
+   * @see listCellRenderer
+   */
   fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 
+  /**
+   * @see listCellRenderer
+   */
   fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 
   @Deprecated("Use overloaded comboBox(...) with Collection")

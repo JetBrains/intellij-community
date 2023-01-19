@@ -18,6 +18,7 @@ import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
@@ -51,6 +52,15 @@ public class MergeAllWindowsAction extends DumbAwareAction {
     }
   }
 
+  public static boolean isTabbedWindow(@NotNull JFrame frame) {
+    if (JdkEx.isTabbingModeAvailable() && WindowManager.getInstance().getAllProjectFrames().length > 1) {
+      ID id = MacUtil.getWindowFromJavaWindow(frame);
+      int tabs = Foundation.invoke(Foundation.invoke(id, "tabbedWindows"), "count").intValue();
+      return tabs > 1;
+    }
+    return false;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Window window = Objects.requireNonNull(UIUtil.getWindow(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)));
@@ -62,7 +72,10 @@ public class MergeAllWindowsAction extends DumbAwareAction {
     Foundation.executeOnMainThread(true, false, () -> {
       ID id = MacUtil.getWindowFromJavaWindow(window);
       Foundation.invoke(id, "mergeAllWindows:", ID.NIL);
-      if (updateTabBars) {
+      if (MacWinTabsHandler.isVersion2()) {
+        ApplicationManager.getApplication().invokeLater(() -> MacWinTabsHandlerV2.updateTabBarsAfterMerge());
+      }
+      else if (updateTabBars) {
         ApplicationManager.getApplication().invokeLater(() -> MacWinTabsHandler.updateTabBars(null));
       }
     });

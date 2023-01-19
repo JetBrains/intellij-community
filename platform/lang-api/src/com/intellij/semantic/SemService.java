@@ -18,7 +18,6 @@ import java.util.List;
  * One more difference with {@link CachedValuesManager} is that a key can be extended by other keys.
  * Cached value will be dropped automatically on any change of PSI.
  *
- * @author peter
  * @see SemElement
  * @see SemContributor
  */

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -57,17 +57,11 @@ public class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
 
   public static int getPriorityWeight(@Nullable Priority priority) {
     if (priority == null) return 0;
-    switch (priority) {
-      case TOP:
-        return 20;
-      case HIGH:
-        return 3;
-      case LOW:
-        return -3;
-      case ERROR_FIX_LESS_IMPORTANT_THAN_INSPECTION_FIX:
-        return IntentionGroup.INSPECTION.getPriority() - IntentionGroup.ERROR.getPriority() - 1;
-      default:
-        return 0;
-    }
+    return switch (priority) {
+      case TOP -> 20;
+      case HIGH -> 3;
+      case LOW -> -3;
+      default -> 0;
+    };
   }
 }

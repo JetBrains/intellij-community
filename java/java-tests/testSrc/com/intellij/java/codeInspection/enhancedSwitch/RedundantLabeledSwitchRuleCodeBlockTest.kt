@@ -5,9 +5,6 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.enhancedSwitch.RedundantLabeledSwitchRuleCodeBlockInspection
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class RedundantLabeledSwitchRuleCodeBlockTest  : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.stubs.EmptyStub;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -95,13 +96,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
   @Override
   public int getParameterNumber(final GrParameter parameter) {
     GrParameter[] parameters = getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      GrParameter param = parameters[i];
-      if (param == parameter) {
-        return i;
-      }
-    }
-    return -1;
+    return ArrayUtil.indexOf(parameters, parameter);
   }
 
   /*@Override

@@ -3,3 +3,7 @@ public class Testing {
         ClassFr<caret>
     }
 }
+
+// INVOCATION_COUNT: 2
+// FIR_IDENTICAL
+// FIR_COMPARISON

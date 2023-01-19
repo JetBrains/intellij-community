@@ -45,48 +45,96 @@ public class MalformedFormatStringInspectionTest extends LightJavaInspectionTest
       "  void formatTo(Formatter formatter, int flags, int width, int precision);" +
       "}",
 
-      "package java.time.temporal;\n" +
-      "public interface TemporalAccessor {\n" +
-      "    boolean isSupported(TemporalField field);\n" +
-      "    default ValueRange range(TemporalField field) {\n" +
-      "        return null;\n" +
-      "    }\n" +
-      "    default int get(TemporalField field) {\n" +
-      "        return 0;\n" +
-      "    }\n" +
-      "    long getLong(TemporalField field);\n" +
-      "    default <R> R query(TemporalQuery<R> query) {\n" +
-      "        return null;\n" +
-      "    }\n" +
-      "}",
+      """
+package java.time.temporal;
+public interface TemporalAccessor {
+    boolean isSupported(TemporalField field);
+    default ValueRange range(TemporalField field) {
+        return null;
+    }
+    default int get(TemporalField field) {
+        return 0;
+    }
+    long getLong(TemporalField field);
+    default <R> R query(TemporalQuery<R> query) {
+        return null;
+    }
+}""",
 
-      "package java.time.temporal;\n" +
-      "public interface Temporal extends TemporalAccessor {\n" +
-      "    boolean isSupported(TemporalUnit unit);\n" +
-      "    default Temporal with(TemporalAdjuster adjuster) {\n" +
-      "        return null;\n" +
-      "    }\n" +
-      "    Temporal with(TemporalField field, long newValue);\n" +
-      "    default Temporal plus(TemporalAmount amount) {\n" +
-      "        return null;\n" +
-      "    }\n" +
-      "    Temporal plus(long amountToAdd, TemporalUnit unit);\n" +
-      "    default Temporal minus(TemporalAmount amount) {\n" +
-      "        return null;\n" +
-      "    }\n" +
-      "    default Temporal minus(long amountToSubtract, TemporalUnit unit) {\n" +
-      "        return null;\n" +
-      "    }\n" +
-      "    long until(Temporal endExclusive, TemporalUnit unit);\n" +
-      "}",
+      """
+package java.time.temporal;
+public interface Temporal extends TemporalAccessor {
+    boolean isSupported(TemporalUnit unit);
+    default Temporal with(TemporalAdjuster adjuster) {
+        return null;
+    }
+    Temporal with(TemporalField field, long newValue);
+    default Temporal plus(TemporalAmount amount) {
+        return null;
+    }
+    Temporal plus(long amountToAdd, TemporalUnit unit);
+    default Temporal minus(TemporalAmount amount) {
+        return null;
+    }
+    default Temporal minus(long amountToSubtract, TemporalUnit unit) {
+        return null;
+    }
+    long until(Temporal endExclusive, TemporalUnit unit);
+}""",
 
-      "package java.time;\n" +
-      "import java.time.temporal.Temporal;\n" +
-      "public abstract class ZonedDateTime implements Temporal {\n" +
-      "    public static ZonedDateTime now() {\n" +
-      "        return null;\n" +
-      "    }\n" +
-      "}"
+      """
+package java.time;
+import java.time.temporal.Temporal;
+public abstract class ZonedDateTime implements Temporal {
+    public static ZonedDateTime now() {
+        return null;
+    }
+}""",
+
+      """
+package java.time;
+import java.time.temporal.Temporal;
+public abstract class LocalDateTime implements Temporal {
+    public static LocalDateTime now() {
+        return null;
+    }
+}""",
+
+      """
+package java.time;
+import java.time.temporal.Temporal;
+public abstract class LocalDate implements Temporal {
+    public static LocalDate now() {
+        return null;
+    }
+}""",
+
+      """
+package java.time;
+import java.time.temporal.Temporal;
+public abstract class LocalTime implements Temporal {
+    public static LocalTime now() {
+        return null;
+    }
+}""",
+
+      """
+package java.time;
+import java.time.temporal.Temporal;
+public abstract class OffsetDateTime implements Temporal {
+    public static OffsetDateTime now() {
+        return null;
+    }
+}""",
+
+      """
+package java.time;
+import java.time.temporal.Temporal;
+public abstract class OffsetTime implements Temporal {
+    public static OffsetTime now() {
+        return null;
+    }
+}"""
     };
   }
 }

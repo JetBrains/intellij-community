@@ -5,7 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -197,7 +197,9 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
 
   @NotNull
   private static Iterable<ActionToolbar> iterateToolbars(Iterable<? extends JComponent> roots) {
-    return UIUtil.uiTraverser(null).withRoots(roots).preOrderDfsTraversal().filter(ActionToolbar.class);
+    return UIUtil.uiTraverser(null).withRoots(roots).preOrderDfsTraversal()
+      .filter(ActionToolbar.class)
+      .filter(toolbar -> !Boolean.TRUE.equals(toolbar.getComponent().getClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY)));
   }
 
   private static class OptionsGroup extends NonTrivialActionGroup implements DumbAware {
@@ -221,7 +223,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return EMPTY_ARRAY;
-      return Utils.getOrCreateUpdateSession(e)
+      return e.getUpdateSession()
         .compute(this, "getChildrenImpl", ActionUpdateThread.EDT, this::getChildrenImpl);
     }
 

@@ -159,7 +159,7 @@ class GitMergeDialog(private val project: Project,
 
   fun getSelectedRoot(): VirtualFile = repositoryField.item.root
 
-  fun getSelectedBranch() = tryGetSelectedBranch() ?: error("Unable to find branch: ${branchField.getText().orEmpty()}")
+  fun getSelectedBranch(): GitBranch = tryGetSelectedBranch() ?: error("Unable to find branch: ${branchField.getText().orEmpty()}")
 
   private fun tryGetSelectedBranch() = getSelectedRepository().branches.findBranchByName(branchField.getText().orEmpty())
 
@@ -340,7 +340,7 @@ class GitMergeDialog(private val project: Project,
       add(repositoryField,
           CC()
             .gapAfter("0")
-            .minWidth("${JBUI.scale(135)}px")
+            .minWidth("135")
             .growX())
     }
 
@@ -348,12 +348,12 @@ class GitMergeDialog(private val project: Project,
         CC()
           .gapAfter("0")
           .alignY("top")
-          .minWidth("${JBUI.scale(100)}px"))
+          .minWidth("100"))
 
     add(branchField,
         CC()
           .alignY("top")
-          .minWidth("${JBUI.scale(300)}px")
+          .minWidth("300")
           .growX())
   }
 
@@ -390,7 +390,7 @@ class GitMergeDialog(private val project: Project,
           .alignY("top")
           .grow()
           .push()
-          .minHeight("${JBUI.scale(75)}px"))
+          .minHeight("75"))
   }
 
   private fun createPopupBuilder() = GitOptionsPopupBuilder(

@@ -132,29 +132,25 @@ public abstract class LongRangeSet {
    */
   public LongRangeSet fromRelation(@Nullable RelationType relation) {
     if (isEmpty() || relation == null) return null;
-    switch (relation) {
-      case EQ:
-        return this;
-      case NE: {
+    return switch (relation) {
+      case EQ -> this;
+      case NE -> {
         long min = min();
-        if (min == max()) return all().without(min);
-        return all();
+        if (min == max()) yield all().without(min);
+        yield all();
       }
-      case GT: {
+      case GT -> {
         long min = min();
-        return min == Long.MAX_VALUE ? empty() : range(min + 1, Long.MAX_VALUE);
+        yield min == Long.MAX_VALUE ? empty() : range(min + 1, Long.MAX_VALUE);
       }
-      case GE:
-        return range(min(), Long.MAX_VALUE);
-      case LE:
-        return range(Long.MIN_VALUE, max());
-      case LT: {
+      case GE -> range(min(), Long.MAX_VALUE);
+      case LE -> range(Long.MIN_VALUE, max());
+      case LT -> {
         long max = max();
-        return max == Long.MIN_VALUE ? empty() : range(Long.MIN_VALUE, max - 1);
+        yield max == Long.MIN_VALUE ? empty() : range(Long.MIN_VALUE, max - 1);
       }
-      default:
-        return null;
-    }
+      default -> null;
+    };
   }
 
   /**
@@ -589,7 +585,8 @@ public abstract class LongRangeSet {
       j++;
     }
     if(i == j) {
-      return point(from).join(point(to));
+      // exactly one 'unsure' bit = exactly two points (with unsure bit = 0 and unsure bit = 1)
+      return point(bits.myBits & bits.myMask).join(point((bits.myBits | (~bits.myMask))));
     }
     long modBits = -1;
     for (int rem = 0; rem < Long.SIZE; rem++) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
@@ -48,6 +48,21 @@ public class PerformanceCompletionIncrementalResolveTestGenerated extends Abstra
         runTest("../completion/testData/incrementalResolve/doNotAnalyzeComplexStatement.kt");
     }
 
+    @TestMetadata("functionWithExpressionBody.kt")
+    public void testFunctionWithExpressionBody() throws Exception {
+        runTest("../completion/testData/incrementalResolve/functionWithExpressionBody.kt");
+    }
+
+    @TestMetadata("functionWithExpressionBody_implicitType.kt")
+    public void testFunctionWithExpressionBody_implicitType() throws Exception {
+        runTest("../completion/testData/incrementalResolve/functionWithExpressionBody_implicitType.kt");
+    }
+
+    @TestMetadata("localAnonymousFunctionWithExpressionBody.kt")
+    public void testLocalAnonymousFunctionWithExpressionBody() throws Exception {
+        runTest("../completion/testData/incrementalResolve/localAnonymousFunctionWithExpressionBody.kt");
+    }
+
     @TestMetadata("noDataFlowFromOldStatement.kt")
     public void testNoDataFlowFromOldStatement() throws Exception {
         runTest("../completion/testData/incrementalResolve/noDataFlowFromOldStatement.kt");
@@ -66,6 +81,11 @@ public class PerformanceCompletionIncrementalResolveTestGenerated extends Abstra
     @TestMetadata("prevStatementNotResolved.kt")
     public void testPrevStatementNotResolved() throws Exception {
         runTest("../completion/testData/incrementalResolve/prevStatementNotResolved.kt");
+    }
+
+    @TestMetadata("propertyWithInitializer.kt")
+    public void testPropertyWithInitializer() throws Exception {
+        runTest("../completion/testData/incrementalResolve/propertyWithInitializer.kt");
     }
 
     @TestMetadata("sameStatement.kt")

@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-/**
- * @author vlan
- */
 public class PyiVisitorFilter implements PythonVisitorFilter {
 
   @NotNull

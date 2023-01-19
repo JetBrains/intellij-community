@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search
 
 import com.intellij.model.search.SearchParameters
@@ -40,7 +40,7 @@ internal val indicatorOrEmpty: ProgressIndicator
 fun <R> runSearch(cs: CoroutineScope, project: Project, query: Query<R>): ReceiveChannel<R> {
   @Suppress("EXPERIMENTAL_API_USAGE")
   return cs.produce(capacity = Channel.UNLIMITED) {
-    runUnderIndicator {
+    coroutineToIndicator {
       runSearch(project, query, Processor {
         require(channel.trySend(it).isSuccess)
         true

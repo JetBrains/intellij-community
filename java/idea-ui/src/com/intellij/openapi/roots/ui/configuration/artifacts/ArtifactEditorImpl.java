@@ -273,6 +273,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx, DataProvider {
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectStructureArtifactEditor", createToolbarActionGroup(), true);
     JComponent toolbarComponent = toolbar.getComponent();
+    toolbar.setTargetComponent(treePanel);
     if (StartupUiUtil.isUnderDarcula()) {
       toolbarComponent.setBorder(new CustomLineBorder(0, 0, 1, 0));
     }

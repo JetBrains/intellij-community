@@ -58,7 +58,7 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
                 return null
             }
             if (gradleHome == null) {
-                scriptingInfoLog(KotlinIdeaGradleBundle.message("error.text.unable.to.get.gradle.home.directory") + ": workingDir=$workingDir gradleHome=$gradleHome")
+                scriptingInfoLog(KotlinIdeaGradleBundle.message("error.text.unable.to.get.gradle.home.directory") + ": workingDir=$workingDir")
                 return null
             }
 

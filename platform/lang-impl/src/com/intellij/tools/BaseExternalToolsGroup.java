@@ -13,8 +13,10 @@ import java.util.List;
 
 /**
  * @author Eugene Belyaev
+ *
+ * TODO reimplement using regular ActionGroup, move ActionManager.registerAction to more appropriate place
  */
-public abstract class BaseExternalToolsGroup<T extends Tool> extends SimpleActionGroup implements DumbAware {
+public abstract class BaseExternalToolsGroup<T extends Tool> extends DefaultActionGroup implements DumbAware {
   protected BaseExternalToolsGroup() {
     updateGroups(true);
   }
@@ -43,7 +45,7 @@ public abstract class BaseExternalToolsGroup<T extends Tool> extends SimpleActio
     for (ToolsGroup group : groups) {
       String groupName = group.getName();
       if (!StringUtil.isEmptyOrSpaces(groupName)) {
-        SimpleActionGroup subgroup = new SimpleActionGroup();
+        DefaultActionGroup subgroup = new DefaultActionGroup();
         subgroup.getTemplatePresentation().setText(groupName, false);
         subgroup.setPopup(true);
         fillGroup(groupName, subgroup);
@@ -60,13 +62,11 @@ public abstract class BaseExternalToolsGroup<T extends Tool> extends SimpleActio
     }
   }
 
-  @NonNls
-  @NotNull
-  protected abstract String getGroupIdPrefix();
+  protected abstract @NonNls @NotNull String getGroupIdPrefix();
 
   protected abstract List<ToolsGroup<T>> getToolsGroups();
 
-  private void fillGroup(@Nullable String groupName, SimpleActionGroup group) {
+  private void fillGroup(@Nullable String groupName, @NotNull DefaultActionGroup group) {
     List<T> tools = getToolsByGroupName(groupName);
     for (T tool : tools) {
       // We used to have a bunch of IFs checking whether we want to show the given tool in the given event.getPlace().
@@ -78,7 +78,7 @@ public abstract class BaseExternalToolsGroup<T extends Tool> extends SimpleActio
     }
   }
 
-  private void addToolToGroup(T tool, SimpleActionGroup group) {
+  private void addToolToGroup(@NotNull T tool, @NotNull DefaultActionGroup group) {
     String id = tool.getActionId();
     AnAction action = ActionManager.getInstance().getAction(id);
     if (action == null) {

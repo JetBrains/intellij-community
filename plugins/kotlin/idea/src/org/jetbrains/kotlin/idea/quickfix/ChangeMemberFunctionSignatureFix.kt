@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.PlatformIcons
+import com.intellij.ui.IconManager
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NOT_NULL_ANNOTATIONS
 import org.jetbrains.kotlin.load.java.NULLABLE_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
@@ -212,6 +213,7 @@ class ChangeMemberFunctionSignatureFix private constructor(
                 isExternal = function.isExternal
                 isInline = function.isInline
                 isTailrec = function.isTailrec
+                isSuspend = function.isSuspend
             }
         }
     }
@@ -294,7 +296,8 @@ class ChangeMemberFunctionSignatureFix private constructor(
                         return PopupStep.FINAL_CHOICE
                     }
 
-                    override fun getIconFor(aValue: Signature) = PlatformIcons.FUNCTION_ICON
+                    override fun getIconFor(aValue: Signature) = IconManager.getInstance().getPlatformIcon(
+                      com.intellij.ui.PlatformIcons.Function)
 
                     override fun getTextFor(aValue: Signature) = aValue.preview
                 }
@@ -305,6 +308,10 @@ class ChangeMemberFunctionSignatureFix private constructor(
 
             project.executeWriteCommand(KotlinBundle.message("fix.change.signature.function.family")) {
                 val patternFunction = KtPsiFactory(project).createFunction(signature.sourceCode)
+
+                if (patternFunction.hasModifier(KtTokens.SUSPEND_KEYWORD)) {
+                    function.addModifier(KtTokens.SUSPEND_KEYWORD)
+                }
 
                 val newTypeRef = function.setTypeReference(patternFunction.typeReference)
                 if (newTypeRef != null) {

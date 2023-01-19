@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.memory;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -26,6 +27,8 @@ import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class StaticCollectionInspection extends BaseInspection {
 
@@ -42,10 +45,10 @@ public class StaticCollectionInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "static.collection.ignore.option"),
-                                          this, "m_ignoreWeakCollections");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreWeakCollections", InspectionGadgetsBundle.message(
+        "static.collection.ignore.option")));
   }
 
   @Override

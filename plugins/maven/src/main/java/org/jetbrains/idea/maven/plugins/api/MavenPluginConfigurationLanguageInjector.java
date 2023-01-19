@@ -24,9 +24,6 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenPluginConfigurationLanguageInjector implements LanguageInjector {
 
   @Override

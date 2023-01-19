@@ -5,6 +5,7 @@ import com.intellij.copyright.CopyrightBundle;
 import com.intellij.copyright.CopyrightManager;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -57,10 +58,10 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
   @Override
   protected void initTree() {
     super.initTree();
-    new TreeSpeedSearch(myTree, treePath -> {
+    new TreeSpeedSearch(myTree, true, treePath -> {
       MasterDetailsComponent.MyNode obj = (MyNode)treePath.getLastPathComponent();
       return obj == null ? null : obj.getDisplayName();
-    }, true);
+    });
 
     StatusText emptyText = myTree.getEmptyText();
     emptyText.setText(CopyrightBundle.message("copyright.profiles.empty"));
@@ -203,8 +204,12 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
 
       @Override
       public void update(@NotNull AnActionEvent event) {
-        super.update(event);
         event.getPresentation().setEnabled(getSelectedObject() != null);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     });
     result.add(new DumbAwareAction(CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.text.import"),

@@ -3,6 +3,7 @@ from collections.abc import Callable, Iterable, Sequence
 from ctypes import _CData, _SimpleCData, c_char
 from multiprocessing.context import BaseContext
 from multiprocessing.synchronize import _LockLike
+from types import TracebackType
 from typing import Any, Generic, Protocol, TypeVar, overload
 from typing_extensions import Literal
 
@@ -23,11 +24,11 @@ def RawArray(typecode_or_type: str, size_or_initializer: int | Sequence[Any]) ->
 def Value(typecode_or_type: type[_CT], *args: Any, lock: Literal[False], ctx: BaseContext | None = ...) -> _CT: ...
 @overload
 def Value(
-    typecode_or_type: type[_CT], *args: Any, lock: Literal[True] | _LockLike, ctx: BaseContext | None = ...
+    typecode_or_type: type[_CT], *args: Any, lock: Literal[True] | _LockLike = ..., ctx: BaseContext | None = ...
 ) -> SynchronizedBase[_CT]: ...
 @overload
 def Value(
-    typecode_or_type: str, *args: Any, lock: Literal[True] | _LockLike, ctx: BaseContext | None = ...
+    typecode_or_type: str, *args: Any, lock: Literal[True] | _LockLike = ..., ctx: BaseContext | None = ...
 ) -> SynchronizedBase[Any]: ...
 @overload
 def Value(
@@ -42,7 +43,7 @@ def Array(
     typecode_or_type: type[_CT],
     size_or_initializer: int | Sequence[Any],
     *,
-    lock: Literal[True] | _LockLike,
+    lock: Literal[True] | _LockLike = ...,
     ctx: BaseContext | None = ...,
 ) -> SynchronizedArray[_CT]: ...
 @overload
@@ -50,7 +51,7 @@ def Array(
     typecode_or_type: str,
     size_or_initializer: int | Sequence[Any],
     *,
-    lock: Literal[True] | _LockLike,
+    lock: Literal[True] | _LockLike = ...,
     ctx: BaseContext | None = ...,
 ) -> SynchronizedArray[Any]: ...
 @overload
@@ -82,7 +83,9 @@ class SynchronizedBase(Generic[_CT]):
     def get_obj(self) -> _CT: ...
     def get_lock(self) -> _LockLike: ...
     def __enter__(self) -> bool: ...
-    def __exit__(self, *args: Any) -> None: ...
+    def __exit__(
+        self, __exc_type: type[BaseException] | None, __exc_val: BaseException | None, __exc_tb: TracebackType | None
+    ) -> None: ...
 
 class Synchronized(SynchronizedBase[_SimpleCData[_T]], Generic[_T]):
     value: _T

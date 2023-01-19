@@ -7,9 +7,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 
-/**
- * @author Pavel.Dolgov
- */
 class MergeModuleStatementsFixTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   override fun getBasePath() = getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/mergeModuleStatementsFix"

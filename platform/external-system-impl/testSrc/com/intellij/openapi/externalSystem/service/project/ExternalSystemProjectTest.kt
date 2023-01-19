@@ -164,7 +164,7 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
 
     for ((libraryEntry, libraryData) in libraryOrderEntries) {
       val expected = libraryData.target.getPaths(LibraryPathType.BINARY).map(PathUtil::getLocalPath)
-      val actual = libraryEntry.getUrls(OrderRootType.CLASSES).map { PathUtil.getLocalPath(VfsUtilCore.urlToPath(it)) }
+      val actual = libraryEntry.getRootUrls(OrderRootType.CLASSES).map { PathUtil.getLocalPath(VfsUtilCore.urlToPath(it)) }
       assertThat(expected).containsExactlyInAnyOrderElementsOf(actual)
     }
   }
@@ -261,7 +261,7 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
       .flatMap { it.rootModel.contentEntries.asIterable() }
       .forEach { contentEntry -> folders.addAll(contentEntry.excludeFolders.map { File(it.url).name }) }
 
-    assertThat(folders).containsExactlyInAnyOrderElementsOf(listOf(".gradle", "build", "newExclDir"))
+    assertThat(folders).containsExactlyInAnyOrderElementsOf(listOf("build", "newExclDir"))
   }
 
   @Test
@@ -309,13 +309,13 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
         val name = entry.libraryName
         dependencies.merge(name, 1, Integer::sum)
         if ("Test_external_system_id: lib1" == name) {
-          val classesUrls = entry.getUrls(OrderRootType.CLASSES)
+          val classesUrls = entry.getRootUrls(OrderRootType.CLASSES)
           assertThat(classesUrls).hasSize(1)
           assertTrue(classesUrls.first().endsWith("bin_path"))
-          val sourceUrls = entry.getUrls(OrderRootType.SOURCES)
+          val sourceUrls = entry.getRootUrls(OrderRootType.SOURCES)
           assertThat(sourceUrls).hasSize(1)
           assertTrue(sourceUrls.first().endsWith("source_path"))
-          val docUrls = entry.getUrls(JavadocOrderRootType.getInstance())
+          val docUrls = entry.getRootUrls(JavadocOrderRootType.getInstance())
           assertThat(docUrls).hasSize(1)
           assertTrue(docUrls.first().endsWith("doc_path"))
         }

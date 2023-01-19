@@ -36,7 +36,7 @@ class SafeAccessToIfThenIntention : SelfTargetingRangeIntention<KtSafeQualifiedE
 
         val receiverIsStable = receiver.isStableSimpleExpression()
 
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         val dotQualified = psiFactory.createExpressionByPattern("$0.$1", receiver, selector)
 
         val elseClause = if (element.isUsedAsStatement(element.analyze())) null else psiFactory.createExpression("null")

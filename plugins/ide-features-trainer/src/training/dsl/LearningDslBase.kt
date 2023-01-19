@@ -4,18 +4,19 @@ package training.dsl
 import com.intellij.openapi.util.text.StringUtil
 import training.ui.LearningUiManager
 import training.util.replaceSpacesWithNonBreakSpace
+import training.util.surroundWithNonBreakSpaces
 import javax.swing.Icon
 
 /* Here can be defined common methods for any DSL level */
 interface LearningDslBase {
   /** Show shortcut for [actionId] inside lesson step message */
   fun action(actionId: String): String {
-    return " <action>$actionId</action> "
+    return "<action>$actionId</action>".surroundWithNonBreakSpaces()
   }
 
   /** Highlight as code inside lesson step message */
   fun code(sourceSample: String): String {
-    return " <code>${StringUtil.escapeXmlEntities(sourceSample).replaceSpacesWithNonBreakSpace()}</code> "
+    return "<code>${StringUtil.escapeXmlEntities(sourceSample).replaceSpacesWithNonBreakSpace()}</code>".surroundWithNonBreakSpaces()
   }
 
   /** Highlight some [text] */
@@ -30,6 +31,6 @@ interface LearningDslBase {
   }
 
   fun shortcut(key: String): String {
-    return " <shortcut>${key}</shortcut> "
+    return "<shortcut>${key}</shortcut>".surroundWithNonBreakSpaces()
   }
 }

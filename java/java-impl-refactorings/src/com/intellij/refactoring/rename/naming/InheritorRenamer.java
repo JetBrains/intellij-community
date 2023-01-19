@@ -20,9 +20,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.refactoring.RefactoringBundle;
 
-/**
- * @author dsl
- */
 public class InheritorRenamer extends AutomaticRenamer {
   public InheritorRenamer(PsiClass aClass, String newClassName) {
     for (final PsiClass inheritor : ClassInheritorsSearch.search(aClass).findAll()) {

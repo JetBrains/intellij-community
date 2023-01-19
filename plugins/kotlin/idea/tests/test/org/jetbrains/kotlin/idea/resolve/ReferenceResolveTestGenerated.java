@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.resolve;
 
@@ -491,6 +491,11 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
             runTest("testData/resolve/references/AnnotationTypeParameter.kt");
         }
 
+        @TestMetadata("AnnotationWithSingleArgument.kt")
+        public void testAnnotationWithSingleArgument() throws Exception {
+            runTest("testData/resolve/references/AnnotationWithSingleArgument.kt");
+        }
+
         @TestMetadata("ClassInTypeConstraint.kt")
         public void testClassInTypeConstraint() throws Exception {
             runTest("testData/resolve/references/ClassInTypeConstraint.kt");
@@ -694,6 +699,11 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
         @TestMetadata("JavaEnumValueOf.kt")
         public void testJavaEnumValueOf() throws Exception {
             runTest("testData/resolve/references/JavaEnumValueOf.kt");
+        }
+
+        @TestMetadata("JavaImplicitConstructor.kt")
+        public void testJavaImplicitConstructor() throws Exception {
+            runTest("testData/resolve/references/JavaImplicitConstructor.kt");
         }
 
         @TestMetadata("JavaParameter.kt")

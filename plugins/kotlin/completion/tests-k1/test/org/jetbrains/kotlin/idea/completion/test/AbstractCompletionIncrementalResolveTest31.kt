@@ -20,7 +20,7 @@ abstract class AbstractCompletionIncrementalResolveTest31 : KotlinLightCodeInsig
     private val TYPE_DIRECTIVE_PREFIX = "// TYPE:"
     private val BACKSPACES_DIRECTIVE_PREFIX = "// BACKSPACES:"
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     protected fun doTest(testPath: String) {
         CompletionBindingContextProvider.ENABLED = true

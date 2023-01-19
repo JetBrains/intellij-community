@@ -57,6 +57,7 @@ interface SettingsLog {
 
   fun setIdePosition(position: Position)
   fun setCloudPosition(position: Position)
+  fun setMasterPosition(position: Position)
 
   /**
    * Moves the master branch to the actual position, which is defined as following:

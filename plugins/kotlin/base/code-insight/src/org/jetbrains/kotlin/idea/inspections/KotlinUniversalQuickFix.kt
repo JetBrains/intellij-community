@@ -7,8 +7,8 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 
+@JvmDefaultWithCompatibility
 interface KotlinUniversalQuickFix : IntentionActionWithFixAllOption, LocalQuickFix {
-    @JvmDefault
     override fun getName() = text
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {

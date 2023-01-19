@@ -58,13 +58,10 @@ class GrChageSignatureUsageSearcher {
   public UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
     final PsiMethod method = myChangeInfo.getMethod();
-    if (method != null) {
-      findSimpleUsages(method, result);
+    findSimpleUsages(method, result);
 
-      final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
-      return UsageViewUtil.removeDuplicatedUsages(usageInfos);
-    }
-    return UsageInfo.EMPTY_ARRAY;
+    final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
+    return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
 

@@ -32,7 +32,6 @@ import java.lang.reflect.Modifier;
 
 /**
  * An interface that {@link IntentionAction} and {@link com.intellij.codeInspection.LocalQuickFix} share.
- * @author peter
  */
 public interface FileModifier extends WriteActionAware {
 

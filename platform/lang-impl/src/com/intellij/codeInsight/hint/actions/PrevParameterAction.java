@@ -20,9 +20,6 @@ import com.intellij.codeInsight.hint.PrevNextParameterHandler;
 import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 
-/**
- * @author ven
- */
 public class PrevParameterAction extends EditorAction implements PerformWithDocumentsCommitted {
   public PrevParameterAction() {
     super(new PrevNextParameterHandler(false));

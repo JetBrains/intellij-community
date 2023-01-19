@@ -24,9 +24,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
   void "test inheritance transitivity"() {
     def protobufJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("protobuf")

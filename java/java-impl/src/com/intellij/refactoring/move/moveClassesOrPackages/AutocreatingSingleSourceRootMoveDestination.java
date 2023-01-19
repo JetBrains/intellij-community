@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -23,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- *  @author dsl
- */
 public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMoveDestination {
   private final VirtualFile mySourceRoot;
 
@@ -62,6 +60,7 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
 
   @Override
   @Nullable
+  @NlsContexts.DialogMessage
   public String verify(PsiFile source) {
     return checkCanCreateInSourceRoot(mySourceRoot);
   }

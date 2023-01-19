@@ -6,9 +6,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.*;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author peter
- */
 final class IoTimings {
   private static final int WARM_UP_PROBES = 2;
   private static final int IO_PROBES = 42;

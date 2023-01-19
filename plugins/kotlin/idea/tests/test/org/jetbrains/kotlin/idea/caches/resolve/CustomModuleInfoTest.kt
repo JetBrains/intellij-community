@@ -16,7 +16,7 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class CustomModuleInfoTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testModuleInfoForMembersOfLightClassForDecompiledFile() {
         //NOTE: any class with methods from stdlib will do

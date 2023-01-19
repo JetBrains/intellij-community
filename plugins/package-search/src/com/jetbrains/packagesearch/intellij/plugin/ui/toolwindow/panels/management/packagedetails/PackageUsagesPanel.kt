@@ -34,7 +34,7 @@ internal class PackageUsagesPanel : HtmlEditorPane() {
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         border = emptyBorder(top = 8)
-        background = PackageSearchUI.UsualBackgroundColor
+        background = PackageSearchUI.Colors.panelBackground
     }
 
     override fun onLinkClicked(anchor: String) {
@@ -50,15 +50,15 @@ internal class PackageUsagesPanel : HtmlEditorPane() {
         val chunks = mutableListOf<HtmlChunk>()
         chunks += HtmlChunk.p().addText(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.info.usages.caption"))
         chunks += HtmlChunk.ul().children(
-            packageModel.usageInfo.mapIndexed { index, usageInfo ->
+            packageModel.usagesByModule.values.flatten().mapIndexed { index, usageInfo ->
                 val anchor = "#$index"
 
                 usageInfo.declarationIndexInBuildFile
-                    ?.let { usageInfo.projectModule.getBuildFileNavigatableAtOffset(it.wholeDeclarationStartIndex) }
+                    ?.let { usageInfo.module.getBuildFileNavigatableAtOffset(it.wholeDeclarationStartIndex) }
                     ?.let { linkActionsMap[anchor] = it }
 
                 HtmlChunk.li().child(
-                    HtmlChunk.link(anchor, usageInfo.projectModule.name)
+                    HtmlChunk.link(anchor, usageInfo.module.name)
                 )
             }
         )

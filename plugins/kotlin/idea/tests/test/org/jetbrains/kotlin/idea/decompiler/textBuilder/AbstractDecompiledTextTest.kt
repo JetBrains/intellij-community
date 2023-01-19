@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.util.indexing.FileContentImpl
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinClsStubBuilder
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.stubs.elements.KtFileStubBuilder
 import org.junit.Assert
 import java.nio.file.Paths
+import kotlin.io.path.exists
 import kotlin.test.assertTrue
 
 abstract class AbstractDecompiledTextTest(baseDirectory: String) : AbstractDecompiledTextBaseTest(baseDirectory) {
@@ -60,7 +60,7 @@ abstract class AbstractJvmDecompiledTextTest : AbstractDecompiledTextTest("/deco
 fun findTestLibraryRoot(module: Module): VirtualFile? {
     for (orderEntry in ModuleRootManager.getInstance(module).orderEntries) {
         if (orderEntry is LibraryOrderEntry) {
-            return orderEntry.getFiles(OrderRootType.CLASSES)[0]
+            return orderEntry.getRootFiles(OrderRootType.CLASSES)[0]
         }
     }
     return null

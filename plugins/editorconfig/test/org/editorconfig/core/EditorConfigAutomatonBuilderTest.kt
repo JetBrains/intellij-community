@@ -23,7 +23,7 @@ class EditorConfigAutomatonBuilderTest {
 
   @Test
   fun `test getGlob on pattern enumeration`() {
-    val source = "*.{cs, vb}"
+    val source = "*.{cs,vb}"
     val actual = EditorConfigAutomatonBuilder.sanitizeGlob(source, "C:/folder")
     val expected = ".*/[^/]*\\.(cs|vb)"
     assertEquals(expected, actual)
@@ -31,7 +31,7 @@ class EditorConfigAutomatonBuilderTest {
 
   @Test
   fun `test getGlob on global pattern enumeration`() {
-    val source = "{*.cs, *.vb}"
+    val source = "{*.cs,*.vb}"
     val actual = EditorConfigAutomatonBuilder.sanitizeGlob(source, "C:/folder")
     val expected = ".*/([^/]*\\.cs|[^/]*\\.vb)"
     assertEquals(expected, actual)

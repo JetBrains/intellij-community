@@ -16,20 +16,14 @@
 
 package com.intellij.codeInsight.completion.actions;
 
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class SmartCodeCompletionAction extends BaseCodeCompletionAction{
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL);
     invokeCompletion(e, CompletionType.SMART, 1);
   }
 

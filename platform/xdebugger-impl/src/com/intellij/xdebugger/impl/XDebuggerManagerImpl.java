@@ -31,7 +31,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -128,7 +127,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         if (!(breakpoint instanceof XLineBreakpoint)) {
           final XDebugSessionImpl session = getCurrentSession();
           if (session != null && breakpoint.equals(session.getActiveNonLineBreakpoint())) {
-            XBreakpointBase breakpointBase = (XBreakpointBase)breakpoint;
+            var breakpointBase = (XBreakpointBase<?, ?, ?>)breakpoint;
             breakpointBase.clearIcon();
             myExecutionPointHighlighter.updateGutterIcon(breakpointBase.createGutterIconRenderer());
           }
@@ -314,6 +313,9 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     }, myProject.getDisposed());
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(TOPIC).currentSessionChanged(previousSession, currentSession);
+      if (currentSession != null && previousSession != null) {
+        XDebuggerActionsCollector.sessionChanged.log();
+      }
     }
   }
 
@@ -447,7 +449,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
     }
 
-    private void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter, @Nullable Icon icon, @Nullable Integer line) {
+    private static void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter, @Nullable Icon icon, @Nullable Integer line) {
       if (gutter.getClientProperty("editor.gutter.context.menu") != null) return;
       boolean requireRepaint = false;
       if (gutter.getClientProperty("line.number.hover.icon") != icon) {
@@ -526,7 +528,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
     }
 
-    private int getLineNumber(EditorMouseEvent event) {
+    private static int getLineNumber(EditorMouseEvent event) {
       Editor editor = event.getEditor();
       if (event.getVisualPosition().line >= ((EditorImpl)editor).getVisibleLineCount()) {
         return -1;
@@ -541,7 +543,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         int lineNumber = getLineNumber(e);
         XDebugSessionImpl session = getCurrentSession();
         if (session != null && lineNumber >= 0) {
-          XSourcePositionImpl position = XSourcePositionImpl.create(((EditorEx)e.getEditor()).getVirtualFile(), lineNumber);
+          XSourcePositionImpl position = XSourcePositionImpl.create(e.getEditor().getVirtualFile(), lineNumber);
           if (position != null) {
             e.consume();
             AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR);

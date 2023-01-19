@@ -27,14 +27,14 @@ public class WhatsNewTriggerTest extends BareTestFixtureTestCase {
     Files.writeString(
       tempUpdateData,
       "<products>\n" +
-       "  <product name='IDEA'>\n" +
-       "    <code>" + ApplicationInfo.getInstance().getBuild().getProductCode() + "</code>\n" +
-       "    <channel id='-' licensing='release'>\n" +
-       "      <build fullNumber='212.4746.92'/>\n" +
-       "      <build fullNumber='211.7628.21'/>\n" +
-       "    </channel>\n" +
-       "  </product>\n" +
-       "</products>");
+      "  <product name='IDEA'>\n" +
+      "    <code>" + ApplicationInfo.getInstance().getBuild().getProductCode() + "</code>\n" +
+      "    <channel id='-' licensing='release'>\n" +
+      "      <build fullNumber='212.4746.92'/>\n" +
+      "      <build fullNumber='211.7628.21'/>\n" +
+      "    </channel>\n" +
+      "  </product>\n" +
+      "</products>");
     System.setProperty("idea.updates.url", tempUpdateData.toUri().toURL().toExternalForm());
   }
 

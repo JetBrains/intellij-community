@@ -31,7 +31,7 @@ public class ShellVariablesTest {
   private static ShellVariablesRegistry loadVariables(@NotNull String bundleName) throws IOException {
     final Bundle bundle = TestUtil.getBundle(bundleName);
     assertNotNull(bundle);
-    final ShellVariablesRegistry variablesRegistry = new ShellVariablesRegistry();
+    final ShellVariablesRegistryImpl variablesRegistry = new ShellVariablesRegistryImpl();
     for (File file : bundle.getPreferenceFiles()) {
       for (Map.Entry<String, Plist> settingsPair : bundle.loadPreferenceFile(file, new CompositePlistReader())) {
         if (settingsPair != null) {

@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.resolve.graphInference.PatternInference;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.java.PsiExpressionListImpl;
@@ -18,6 +19,8 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -260,19 +263,25 @@ public final class JavaResolveUtil {
 
   public static void substituteResults(@NotNull final PsiJavaCodeReferenceElement ref, JavaResolveResult @NotNull [] result) {
     if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
+      PsiDeconstructionPattern pattern = ObjectUtils.tryCast(ref.getParent().getParent(), PsiDeconstructionPattern.class);
       for (int i = 0; i < result.length; i++) {
         final CandidateInfo resolveResult = (CandidateInfo)result[i];
         final PsiElement resultElement = resolveResult.getElement();
-        if (resultElement instanceof PsiClass && ((PsiClass)resultElement).hasTypeParameters()) {
-          PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-          result[i] = new CandidateInfo(resolveResult, substitutor) {
-            @NotNull
-            @Override
-            public PsiSubstitutor getSubstitutor() {
-              final PsiType[] parameters = ref.getTypeParameters();
-              return super.getSubstitutor().putAll((PsiClass)resultElement, parameters);
-            }
-          };
+        if (resultElement instanceof PsiClass) {
+          PsiClass resultClass = (PsiClass)resultElement;
+          if (resultClass.hasTypeParameters()) {
+            PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+            result[i] = pattern != null && ref.getTypeParameterCount() == 0 
+                        ? PatternInference.inferPatternType(resolveResult, pattern, resultClass, getContextType(pattern))
+                        : new CandidateInfo(resolveResult, substitutor) {
+                          @NotNull
+                          @Override
+                          public PsiSubstitutor getSubstitutor() {
+                            PsiType[] parameters = ref.getTypeParameters();
+                            return super.getSubstitutor().putAll(resultClass, parameters);
+                          }
+                        };
+          }
         }
       }
     }
@@ -315,5 +324,48 @@ public final class JavaResolveUtil {
     if (directory == null) return null;
 
     return JavaDirectoryService.getInstance().getPackage(directory);
+  }
+
+  /**
+   * @param pattern deconstruction pattern to find a context type for
+   * @return a context type for the pattern; null, if cannot be determined. This method can perform 
+   * the inference for outer patterns if necessary.
+   */
+  private static @Nullable PsiType getContextType(@NotNull PsiDeconstructionPattern pattern) {
+    PsiElement parent = pattern.getParent();
+    while (parent instanceof PsiParenthesizedPattern) {
+      parent = parent.getParent();
+    }
+    if (parent instanceof PsiInstanceOfExpression) {
+      return ((PsiInstanceOfExpression)parent).getOperand().getType();
+    }
+    if (parent instanceof PsiCaseLabelElementList) {
+      PsiSwitchLabelStatementBase label = ObjectUtils.tryCast(parent.getParent(), PsiSwitchLabelStatementBase.class);
+      if (label != null) {
+        PsiSwitchBlock block = label.getEnclosingSwitchBlock();
+        if (block != null) {
+          PsiExpression expression = block.getExpression();
+          if (expression != null) {
+            return expression.getType();
+          }
+        }
+      }
+    }
+    if (parent instanceof PsiDeconstructionList) {
+      PsiDeconstructionPattern parentPattern = ObjectUtils.tryCast(parent.getParent(), PsiDeconstructionPattern.class);
+      if (parentPattern != null) {
+        int index = ArrayUtil.indexOf(((PsiDeconstructionList)parent).getDeconstructionComponents(), pattern);
+        if (index < 0) return null;
+        PsiType patternType = parentPattern.getTypeElement().getType();
+        if (!(patternType instanceof PsiClassType)) return null;
+        PsiSubstitutor parentSubstitutor = ((PsiClassType)patternType).resolveGenerics().getSubstitutor();
+        PsiClass parentRecord = PsiUtil.resolveClassInClassTypeOnly(parentPattern.getTypeElement().getType());
+        if (parentRecord == null) return null;
+        PsiRecordComponent[] components = parentRecord.getRecordComponents();
+        if (index >= components.length) return null;
+        return parentSubstitutor.substitute(components[index].getType());
+      }
+    }
+    return null;
   }
 }

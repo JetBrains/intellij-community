@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.intention.EmptyIntentionAction
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.testFramework.IdeaTestUtil
 import junit.framework.TestCase
@@ -300,10 +301,15 @@ class ConvertToSetInspectionTest15 : KotlinLightCodeInsightFixtureTestCase() {
                 )
 
                 if (sample.problemExpected && highlightInfos.isNotEmpty()) {
-                    val localFixActions = highlightInfos
-                        .flatMap { it.quickFixActionMarkers ?: emptyList() }
-                        .map { it.first.action }
-                        .filter { it !is EmptyIntentionAction }
+                    val localFixActions:MutableList<IntentionAction> = ArrayList()
+                    highlightInfos.forEach { info ->
+                        info.findRegisteredQuickFix<Any?> { desc, _ ->
+                            if (desc.action !is EmptyIntentionAction) {
+                                localFixActions.add(desc.action)
+                            }
+                            null
+                        }
+                    }
 
                     TestCase.assertTrue(
                         "${sample.name}: No fix action found",

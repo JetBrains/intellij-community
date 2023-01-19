@@ -28,24 +28,28 @@ public class NestedTryStatementInspectionTest extends LightJavaInspectionTestCas
 
   public void testClassInitializer() {
     //noinspection EmptyTryBlock
-    doTest("class C {\n" +
-           "  static {\n" +
-           "    try {\n" +
-           "      /*Nested 'try' statement*/try/**/{\n" +
-           "      } finally{}\n" +
-           "    } finally {}\n" +
-           "  }\n" +
-           "}\n");
+    doTest("""
+             class C {
+               static {
+                 try {
+                   /*Nested 'try' statement*/try/**/{
+                   } finally{}
+                 } finally {}
+               }
+             }
+             """);
   }
 
   public void testInsideLambda() {
     //noinspection EmptyTryBlock
-    doTest("class C {\n" +
-           "  static void m() {\n" +
-           "   try {\n" +
-           "     new Thread(() -> {try {} finally {}});\n" +
-           "   } finally {}\n" +
-           "  }\n" +
-           "}\n");
+    doTest("""
+             class C {
+               static void m() {
+                try {
+                  new Thread(() -> {try {} finally {}});
+                } finally {}
+               }
+             }
+             """);
   }
 }

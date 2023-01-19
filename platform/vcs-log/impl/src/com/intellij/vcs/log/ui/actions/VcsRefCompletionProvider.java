@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -14,8 +14,8 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public class VcsRefCompletionProvider extends TwoStepCompletionProvider<VcsRef> {
-  @NotNull private final VcsLogRefs myRefs;
-  @NotNull private final Set<VirtualFile> myRoots;
+  private final @NotNull VcsLogRefs myRefs;
+  private final @NotNull Set<VirtualFile> myRoots;
 
   public VcsRefCompletionProvider(@NotNull VcsLogRefs refs,
                                   @NotNull Collection<? extends VirtualFile> roots,
@@ -25,27 +25,23 @@ public class VcsRefCompletionProvider extends TwoStepCompletionProvider<VcsRef> 
     myRoots = new HashSet<>(roots);
   }
 
-  @NotNull
   @Override
-  protected Stream<? extends VcsRef> collectSync(@NotNull CompletionResultSet result) {
+  protected @NotNull Stream<? extends VcsRef> collectSync(@NotNull CompletionResultSet result) {
     return filterAndSort(result, myRefs.getBranches().stream());
   }
 
-  @NotNull
   @Override
-  protected Stream<? extends VcsRef> collectAsync(@NotNull CompletionResultSet result) {
+  protected @NotNull Stream<? extends VcsRef> collectAsync(@NotNull CompletionResultSet result) {
     return filterAndSort(result, myRefs.stream().filter(ref -> !ref.getType().isBranch()));
   }
 
-  @NotNull
-  private Stream<VcsRef> filterAndSort(@NotNull CompletionResultSet result, @NotNull Stream<VcsRef> stream) {
+  private @NotNull Stream<VcsRef> filterAndSort(@NotNull CompletionResultSet result, @NotNull Stream<VcsRef> stream) {
     Stream<VcsRef> matched = stream.filter(ref -> myRoots.contains(ref.getRoot()) &&
                                                   result.getPrefixMatcher().prefixMatches(ref.getName()));
     return filterRefs(matched);
   }
 
-  @NotNull
-  protected Stream<VcsRef> filterRefs(@NotNull Stream<VcsRef> vcsRefs) {
+  protected @NotNull Stream<VcsRef> filterRefs(@NotNull Stream<VcsRef> vcsRefs) {
     return vcsRefs;
   }
 }

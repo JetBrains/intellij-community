@@ -55,9 +55,9 @@ final class StrippedLongToObjectMap<V> implements LongFunction<V> {
 
   StrippedLongToObjectMap(IntFunction<V[]> valueArrayFactory, int expectedCapacity) {
     this.valueArrayFactory = valueArrayFactory;
-    tableSize = Hash.arraySize(expectedCapacity, Hash.DEFAULT_LOAD_FACTOR);
+    tableSize = Hash.arraySize(expectedCapacity, Hash.FAST_LOAD_FACTOR);
     mask = tableSize - 1;
-    maxFill = Hash.maxFill(tableSize, Hash.DEFAULT_LOAD_FACTOR);
+    maxFill = Hash.maxFill(tableSize, Hash.FAST_LOAD_FACTOR);
     keys = new long[tableSize + 1];
     values = valueArrayFactory.apply(tableSize + 1);
   }
@@ -78,9 +78,9 @@ final class StrippedLongToObjectMap<V> implements LongFunction<V> {
   }
 
   /**
-   * Index is negative for non-existing key.
+   * The index is negative for non-existing key.
    */
-  public int index(final long key) {
+  public int index(long key) {
     if (key == 0) {
       return containsNullKey ? tableSize : -(tableSize + 1);
     }
@@ -89,7 +89,7 @@ final class StrippedLongToObjectMap<V> implements LongFunction<V> {
     long[] keys = this.keys;
     int index;
     // the starting point
-    if ((current = keys[index = (int)Hash.mix(key) & mask]) == 0) {
+    if ((current = keys[index = (int)key & mask]) == 0) {
       return -(index + 1);
     }
     if (key == current) {
@@ -109,7 +109,7 @@ final class StrippedLongToObjectMap<V> implements LongFunction<V> {
   public void addByIndex(int index, long key, V value) {
     replaceByIndex(-index - 1, key, value);
     if (size++ >= maxFill) {
-      rehash(Hash.arraySize(size + 1, Hash.DEFAULT_LOAD_FACTOR));
+      rehash(Hash.arraySize(size + 1, Hash.FAST_LOAD_FACTOR));
     }
   }
 
@@ -135,7 +135,7 @@ final class StrippedLongToObjectMap<V> implements LongFunction<V> {
     final long[] key = this.keys;
     int pos;
     // The starting point.
-    if ((curr = key[pos = (int)Hash.mix(k) & mask]) == 0) {
+    if ((curr = key[pos = (int)k & mask]) == 0) {
       return null;
     }
     if (k == curr) {
@@ -183,7 +183,7 @@ final class StrippedLongToObjectMap<V> implements LongFunction<V> {
     for (int j = realSize(); j-- != 0; ) {
       //noinspection StatementWithEmptyBody
       while (keys[--i] == 0) ;
-      if (!(newKey[pos = (int)Hash.mix(keys[i]) & mask] == 0)) {
+      if (!(newKey[pos = (int)keys[i] & mask] == 0)) {
         //noinspection StatementWithEmptyBody
         while (!(newKey[pos = pos + 1 & mask] == 0)) ;
       }
@@ -193,7 +193,7 @@ final class StrippedLongToObjectMap<V> implements LongFunction<V> {
     newValue[newN] = values[tableSize];
     tableSize = newN;
     this.mask = mask;
-    maxFill = Hash.maxFill(tableSize, Hash.DEFAULT_LOAD_FACTOR);
+    maxFill = Hash.maxFill(tableSize, Hash.FAST_LOAD_FACTOR);
     this.keys = newKey;
     this.values = newValue;
   }

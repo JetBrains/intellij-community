@@ -17,6 +17,7 @@ class TestCaseMethod(
     private val contentRootPath: String,
     private val localPath: String,
     private val isCompilerTestData: Boolean,
+    private val passTestDataPath: Boolean
 ) : TestMethod {
     override val methodName = run {
         "test" + when (val qualifier = File(localPath).parentFile?.systemIndependentPath ?: "") {
@@ -26,13 +27,21 @@ class TestCaseMethod(
     }
 
     fun embed(path: String): TestCaseMethod {
-        return TestCaseMethod(methodNameBase, contentRootPath, File(path, localPath).systemIndependentPath, isCompilerTestData)
+        return TestCaseMethod(
+            methodNameBase,
+            contentRootPath,
+            File(path, localPath).systemIndependentPath,
+            isCompilerTestData,
+            passTestDataPath
+        )
     }
 
     override fun Code.render() {
         appendAnnotation(TAnnotation<TestMetadata>(localPath))
         appendBlock("public void $methodName() throws Exception") {
-            if (isCompilerTestData) {
+            if (!passTestDataPath) {
+                append("performTest();")
+            } else if (isCompilerTestData) {
                 val path = contentRootPath.substringAfter(TestKotlinArtifacts.compilerTestDataDir.name + "/")
                 append("runTest(${TestKotlinArtifacts::compilerTestData.name}(\"$path\"));")
             } else {

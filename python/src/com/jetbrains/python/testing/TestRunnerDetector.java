@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,8 +32,7 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
     if (module.isDisposed()) {
       return null;
     }
-    final Application application = ApplicationManager.getApplication();
-    assert !application.isDispatchThread() : "This method should not be called on AWT";
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     //  //check setup.py
     String testRunner = ReadAction.compute(() -> detectTestRunnerFromSetupPy(module));
     assert testRunner != null : "detectTestRunnerFromSetupPy can't return null";

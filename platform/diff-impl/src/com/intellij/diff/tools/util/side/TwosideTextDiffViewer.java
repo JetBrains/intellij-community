@@ -200,7 +200,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
   @NotNull
   public List<? extends DocumentContent> getContents() {
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (List)myRequest.getContents();
   }
 

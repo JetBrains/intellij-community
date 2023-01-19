@@ -36,9 +36,6 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static org.jetbrains.idea.maven.utils.MavenUtil.isMavenModule;
 
-/**
- * @author ibessonov
- */
 public class MavenProjectTaskRunner extends ProjectTaskRunner {
 
   @Override

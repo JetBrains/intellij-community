@@ -27,7 +27,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 
 internal class HeaderLevelInferenceTypedHandler: TypedHandlerDelegate() {
   override fun beforeCharTyped(char: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {
-    if (!Registry.`is`("markdown.experimental.header.level.inference.enable")) {
+    if (!Registry.`is`("markdown.experimental.header.level.inference.enable", false)) {
       return super.beforeCharTyped(char, project, editor, file, fileType)
     }
     if (file.fileType != MarkdownFileType.INSTANCE || file !is MarkdownFile || char != '#') {

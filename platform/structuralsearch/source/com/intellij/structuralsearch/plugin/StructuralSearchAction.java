@@ -42,7 +42,6 @@ public class StructuralSearchAction extends DumbAwareAction {
 
     final StructuralSearchDialog searchDialog = new StructuralSearchDialog(searchContext, replace);
     if (config != null) {
-      searchDialog.setUseLastConfiguration(true);
       searchDialog.loadConfiguration(config);
     }
     StructuralSearchPlugin.getInstance(project).setDialog(searchDialog);

@@ -18,6 +18,7 @@ class HeaderTextIndex: StringStubIndexExtension<MarkdownHeader>() {
   override fun getKey(): StubIndexKey<String, MarkdownHeader> = KEY
 
   companion object {
+    @JvmField
     val KEY: StubIndexKey<String, MarkdownHeader> = StubIndexKey.createIndexKey("markdown.header")
 
     fun collectFileHeaders(text: String, project: Project, psiFile: PsiFile?): Collection<PsiElement> {

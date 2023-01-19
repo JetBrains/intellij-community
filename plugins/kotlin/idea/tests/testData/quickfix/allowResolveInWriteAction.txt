@@ -2,6 +2,7 @@
 # Please consider rewriting a quick-fix and remove resolve from it before adding a new entry to this list.
 
 org.jetbrains.kotlin.idea.core.overrideImplement.ImplementAsConstructorParameter
+org.jetbrains.kotlin.idea.quickfix.ReorderParametersFix
 org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
 org.jetbrains.kotlin.idea.inspections.ConflictingExtensionPropertyInspection$DeleteRedundantExtensionAction
 org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection$HighPriorityIntentionBasedQuickFix
@@ -47,7 +48,6 @@ org.jetbrains.kotlin.idea.quickfix.ConvertToAnonymousObjectFix
 org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory$CreateLocalFromUsageAction
 org.jetbrains.kotlin.idea.quickfix.DeprecatedJavaAnnotationFix
 org.jetbrains.kotlin.idea.quickfix.ImportFix
-org.jetbrains.kotlin.idea.quickfix.ImportFixWithHint
 org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$AddInitializerFix
 org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$InitializeWithConstructorParameter
 org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$MoveToConstructorParameters
@@ -80,3 +80,5 @@ com.intellij.spring.model.highlighting.autowire.SpringUastInjectionPointsAutowir
 org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelMigrateToParcelizeQuickFix
 org.jetbrains.kotlin.idea.quickfix.AddConversionCallFix
 org.jetbrains.kotlin.idea.quickfix.OverloadResolutionChangeFix
+org.jetbrains.kotlin.idea.quickfix.AbstractSuperCallFix
+org.jetbrains.kotlin.idea.quickfix.AddFunModifierFix

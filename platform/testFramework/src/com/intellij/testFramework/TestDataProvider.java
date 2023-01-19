@@ -20,9 +20,6 @@ import javax.swing.*;
 
 import static com.intellij.openapi.actionSystem.DataContext.EMPTY_CONTEXT;
 
-/**
- * @author peter
- */
 public class TestDataProvider implements DataProvider {
   private final Project myProject;
   private final boolean myWithRules;
@@ -58,9 +55,6 @@ public class TestDataProvider implements DataProvider {
       return myProject;
     }
     FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
-    if (manager == null) {
-      return null;
-    }
     if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
       return manager instanceof FileEditorManagerImpl ? ((FileEditorManagerImpl)manager).getSelectedTextEditor(true) : manager.getSelectedTextEditor();
     }

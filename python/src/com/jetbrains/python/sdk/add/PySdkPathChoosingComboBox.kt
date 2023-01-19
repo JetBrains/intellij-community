@@ -44,7 +44,6 @@ import javax.swing.plaf.basic.BasicComboBoxEditor
  *
  * To fill this box in async mode use [addInterpretersAsync]
  *
- * @author vlan
  */
 class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = emptyList(),
                                                           suggestedFile: VirtualFile? = null,
@@ -89,7 +88,7 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
           val title = PyBundle.message("python.sdk.interpreter.executable.path.title")
           targetType.createBrowser(project,
                                    title,
-                                   PY_SDK_COMBOBOX_TEXT_ACCESSOR,
+                                   PySdkComboBoxTextAccessor(targetEnvironmentConfiguration),
                                    childComponent,
                                    Supplier { targetEnvironmentConfiguration },
                                    TargetBrowserHints(false))
@@ -148,12 +147,12 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
   }
 
   companion object {
-    private val PY_SDK_COMBOBOX_TEXT_ACCESSOR = object : TextComponentAccessor<JComboBox<PySdkComboBoxItem>> {
+    class PySdkComboBoxTextAccessor(private val targetEnvironmentConfiguration: TargetEnvironmentConfiguration?) : TextComponentAccessor<JComboBox<PySdkComboBoxItem>> {
       override fun getText(component: JComboBox<PySdkComboBoxItem>): String =
         (component.selectedItem as? ExistingPySdkComboBoxItem)?.getText().orEmpty()
 
       override fun setText(component: JComboBox<PySdkComboBoxItem>, text: String) {
-        val newItem = ExistingPySdkComboBoxItem(createDetectedSdk(text, isLocal = false))
+        val newItem = ExistingPySdkComboBoxItem(createDetectedSdk(text, targetEnvironmentConfiguration))
         component.addItem(newItem)
         component.selectedItem = newItem
       }

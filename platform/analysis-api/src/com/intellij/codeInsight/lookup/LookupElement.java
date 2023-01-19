@@ -22,7 +22,6 @@ import java.util.Set;
  * or other advanced logic.
  *
  * @see com.intellij.codeInsight.completion.PrioritizedLookupElement
- * @author peter
  */
 public abstract class LookupElement extends UserDataHolderBase {
   public static final LookupElement[] EMPTY_ARRAY = new LookupElement[0];

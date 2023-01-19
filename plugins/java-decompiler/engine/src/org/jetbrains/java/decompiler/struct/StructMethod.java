@@ -126,53 +126,24 @@ public class StructMethod extends StructMember {
       }
       else {
         switch (opcode) {
-          case opc_bipush:
+          case opc_bipush -> {
             operands.add((int)in.readByte());
             i++;
-            break;
-          case opc_ldc:
-          case opc_newarray:
+          }
+          case opc_ldc, opc_newarray -> {
             operands.add(in.readUnsignedByte());
             i++;
-            break;
-          case opc_sipush:
-          case opc_ifeq:
-          case opc_ifne:
-          case opc_iflt:
-          case opc_ifge:
-          case opc_ifgt:
-          case opc_ifle:
-          case opc_if_icmpeq:
-          case opc_if_icmpne:
-          case opc_if_icmplt:
-          case opc_if_icmpge:
-          case opc_if_icmpgt:
-          case opc_if_icmple:
-          case opc_if_acmpeq:
-          case opc_if_acmpne:
-          case opc_goto:
-          case opc_jsr:
-          case opc_ifnull:
-          case opc_ifnonnull:
+          }
+          case opc_sipush, opc_ifeq, opc_ifne, opc_iflt, opc_ifge, opc_ifgt, opc_ifle, opc_if_icmpeq, opc_if_icmpne, opc_if_icmplt,
+            opc_if_icmpge, opc_if_icmpgt, opc_if_icmple, opc_if_acmpeq, opc_if_acmpne, opc_goto, opc_jsr, opc_ifnull, opc_ifnonnull -> {
             if (opcode != opc_sipush) {
               group = GROUP_JUMP;
             }
             operands.add((int)in.readShort());
             i += 2;
-            break;
-          case opc_ldc_w:
-          case opc_ldc2_w:
-          case opc_getstatic:
-          case opc_putstatic:
-          case opc_getfield:
-          case opc_putfield:
-          case opc_invokevirtual:
-          case opc_invokespecial:
-          case opc_invokestatic:
-          case opc_new:
-          case opc_anewarray:
-          case opc_checkcast:
-          case opc_instanceof:
+          }
+          case opc_ldc_w, opc_ldc2_w, opc_getstatic, opc_putstatic, opc_getfield, opc_putfield, opc_invokevirtual, opc_invokespecial,
+            opc_invokestatic, opc_new, opc_anewarray, opc_checkcast, opc_instanceof -> {
             operands.add(in.readUnsignedShort());
             i += 2;
             if (opcode >= opc_getstatic && opcode <= opc_putfield) {
@@ -181,26 +152,17 @@ public class StructMethod extends StructMember {
             else if (opcode >= opc_invokevirtual && opcode <= opc_invokestatic) {
               group = GROUP_INVOCATION;
             }
-            break;
-          case opc_invokedynamic:
+          }
+          case opc_invokedynamic -> {
             if (bytecodeVersion >= CodeConstants.BYTECODE_JAVA_7) { // instruction unused in Java 6 and before
               operands.add(in.readUnsignedShort());
               in.discard(2);
               group = GROUP_INVOCATION;
               i += 4;
             }
-            break;
-          case opc_iload:
-          case opc_lload:
-          case opc_fload:
-          case opc_dload:
-          case opc_aload:
-          case opc_istore:
-          case opc_lstore:
-          case opc_fstore:
-          case opc_dstore:
-          case opc_astore:
-          case opc_ret:
+          }
+          case opc_iload, opc_lload, opc_fload, opc_dload, opc_aload, opc_istore, opc_lstore,
+            opc_fstore, opc_dstore, opc_astore, opc_ret -> {
             if (wide) {
               operands.add(in.readUnsignedShort());
               i += 2;
@@ -212,8 +174,8 @@ public class StructMethod extends StructMember {
             if (opcode == opc_ret) {
               group = GROUP_RETURN;
             }
-            break;
-          case opc_iinc:
+          }
+          case opc_iinc -> {
             if (wide) {
               operands.add(in.readUnsignedShort());
               operands.add((int)in.readShort());
@@ -224,27 +186,26 @@ public class StructMethod extends StructMember {
               operands.add((int)in.readByte());
               i += 2;
             }
-            break;
-          case opc_goto_w:
-          case opc_jsr_w:
+          }
+          case opc_goto_w, opc_jsr_w -> {
             opcode = opcode == opc_jsr_w ? opc_jsr : opc_goto;
             operands.add(in.readInt());
             group = GROUP_JUMP;
             i += 4;
-            break;
-          case opc_invokeinterface:
+          }
+          case opc_invokeinterface -> {
             operands.add(in.readUnsignedShort());
             operands.add(in.readUnsignedByte());
             in.discard(1);
             group = GROUP_INVOCATION;
             i += 4;
-            break;
-          case opc_multianewarray:
+          }
+          case opc_multianewarray -> {
             operands.add(in.readUnsignedShort());
             operands.add(in.readUnsignedByte());
             i += 3;
-            break;
-          case opc_tableswitch:
+          }
+          case opc_tableswitch -> {
             in.discard((4 - (i + 1) % 4) % 4);
             i += ((4 - (i + 1) % 4) % 4); // padding
             operands.add(in.readInt());
@@ -261,9 +222,8 @@ public class StructMethod extends StructMember {
               i += 4;
             }
             group = GROUP_SWITCH;
-
-            break;
-          case opc_lookupswitch:
+          }
+          case opc_lookupswitch -> {
             in.discard((4 - (i + 1) % 4) % 4);
             i += ((4 - (i + 1) % 4) % 4); // padding
             operands.add(in.readInt());
@@ -279,14 +239,8 @@ public class StructMethod extends StructMember {
               i += 4;
             }
             group = GROUP_SWITCH;
-            break;
-          case opc_ireturn:
-          case opc_lreturn:
-          case opc_freturn:
-          case opc_dreturn:
-          case opc_areturn:
-          case opc_return:
-          case opc_athrow:
+          }
+          case opc_ireturn, opc_lreturn, opc_freturn, opc_dreturn, opc_areturn, opc_return, opc_athrow ->
             group = GROUP_RETURN;
         }
       }

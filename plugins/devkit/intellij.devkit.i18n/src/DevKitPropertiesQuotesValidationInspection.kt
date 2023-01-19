@@ -9,12 +9,12 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import java.text.ChoiceFormat
 
 class DevKitPropertiesQuotesValidationInspection : PropertiesInspectionBase() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    if (!DevKitInspectionBase.isAllowed(holder.file)) {
+    if (!DevKitInspectionUtil.isAllowed(holder.file)) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
     return object : PsiElementVisitor() {
@@ -25,13 +25,13 @@ class DevKitPropertiesQuotesValidationInspection : PropertiesInspectionBase() {
         val quotedParam = checkQuotedParam(value) ?: return
 
         val paramString = "{$quotedParam}"
-        val idx = value.indexOf(paramString) + element.getNode().findChildByType(PropertiesTokenTypes.VALUE_CHARACTERS)!!.startOffsetInParent 
+        val idx = value.indexOf(paramString) + element.getNode().findChildByType(PropertiesTokenTypes.VALUE_CHARACTERS)!!.startOffsetInParent
         holder.registerProblem(element, TextRange(idx, idx + paramString.length),
                                DevKitI18nBundle.message("inspection.message.wrong.quotes.around.parameter.reference", paramString))
       }
     }
   }
-  
+
   fun checkQuotedParam(pattern: String): Int? {
     var raw = true
     var inQuote = false

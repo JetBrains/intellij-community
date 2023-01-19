@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
@@ -8,31 +9,31 @@ import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.FocusUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public class ColumnSelectionModePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget, PropertyChangeListener {
-  private final TextPanel myTextPanel = new TextPanel();
+final class ColumnSelectionModePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
+  static final @NonNls String SWING_FOCUS_OWNER_PROPERTY = "focusOwner";
+  private TextPanel textPanel;
 
-  public ColumnSelectionModePanel(@NotNull Project project) {
+  ColumnSelectionModePanel(@NotNull Project project) {
     super(project);
-    myTextPanel.setVisible(false);
   }
 
   @Override
-  @NotNull
-  public String ID() {
+  public @NotNull String ID() {
     return StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL;
   }
 
@@ -42,65 +43,76 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
   }
 
   @Override
-  public StatusBarWidget copy() {
+  public @NotNull StatusBarWidget copy() {
     return new ColumnSelectionModePanel(getProject());
   }
 
   @Override
   public JComponent getComponent() {
-    return myTextPanel;
+    if (textPanel == null) {
+      textPanel = new TextPanel(() -> UIBundle.message("status.bar.column.status.tooltip.text"));
+      textPanel.setVisible(false);
+    }
+    return textPanel;
   }
 
   @Override
-  public void install(@NotNull StatusBar statusBar) {
-    super.install(statusBar);
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, this);
-    Disposer.register(this, 
-                      () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, 
-                                                                                                               this));
+  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        updateStatus();
+      }
+
+      @Override
+      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        updateStatus();
+      }
+
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        updateStatus();
+      }
+    });
+
+    PropertyChangeListener propertyChangeListener = event -> {
+      String propertyName = event.getPropertyName();
+      if (EditorEx.PROP_INSERT_MODE.equals(propertyName) ||
+          EditorEx.PROP_COLUMN_MODE.equals(propertyName) ||
+          SWING_FOCUS_OWNER_PROPERTY.equals(propertyName)) {
+        if (!getProject().isDisposed()) {
+          updateStatus();
+        }
+      }
+    };
+
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     if (multicaster instanceof EditorEventMulticasterEx) {
-      ((EditorEventMulticasterEx)multicaster).addPropertyChangeListener(this, this);
+      ((EditorEventMulticasterEx)multicaster).addPropertyChangeListener(propertyChangeListener, this);
     }
-    updateStatus();
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      FocusUtil.addFocusOwnerListener(this, propertyChangeListener);
+      updateStatus();
+    }, getProject().getDisposed());
   }
 
   private void updateStatus() {
-    if (myProject.isDisposed()) return;
-    final Editor editor = getFocusedEditor();
-    if (editor != null && !isOurEditor(editor)) return;
+    if (textPanel == null) {
+      return;
+    }
+
+    Editor editor = getFocusedEditor();
+    if (editor != null && !isOurEditor(editor)) {
+      return;
+    }
+
     if (editor == null || !editor.isColumnMode()) {
-      myTextPanel.setVisible(false);
+      textPanel.setVisible(false);
     } 
     else {
-      myTextPanel.setVisible(true);
-      myTextPanel.setText(UIBundle.message("status.bar.column.status.text"));
-      myTextPanel.setToolTipText(UIBundle.message("status.bar.column.status.tooltip.text"));
+      textPanel.setVisible(true);
+      textPanel.setText(UIBundle.message("status.bar.column.status.text"));
     }
-  }
-
-  @Override
-  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    updateStatus();
-  }
-
-  @Override
-  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    updateStatus();
-  }
-
-  @Override
-  public void propertyChange(@NotNull PropertyChangeEvent evt) {
-    String propertyName = evt.getPropertyName();
-    if (EditorEx.PROP_INSERT_MODE.equals(propertyName) || 
-        EditorEx.PROP_COLUMN_MODE.equals(propertyName) || 
-        SWING_FOCUS_OWNER_PROPERTY.equals(propertyName)) {
-      updateStatus();
-    }
-  }
-
-  @Override
-  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-    updateStatus();
   }
 }

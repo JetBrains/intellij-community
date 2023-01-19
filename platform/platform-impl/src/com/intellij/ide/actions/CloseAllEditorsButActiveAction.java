@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -14,16 +14,15 @@ public class CloseAllEditorsButActiveAction extends AnAction implements DumbAwar
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    FileEditorManagerEx fileEditorManager=FileEditorManagerEx.getInstanceEx(project);
+    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     VirtualFile selectedFile;
     final EditorWindow window = e.getData(EditorWindow.DATA_KEY);
-    if (window != null){
+    if (window != null) {
       window.closeAllExcept(e.getData(CommonDataKeys.VIRTUAL_FILE));
       return;
     }
     selectedFile = fileEditorManager.getSelectedFiles()[0];
-    final VirtualFile[] siblings = fileEditorManager.getSiblings(selectedFile);
-    for (final VirtualFile sibling : siblings) {
+    for (final VirtualFile sibling : fileEditorManager.getSiblings(selectedFile)) {
       if (!Comparing.equal(selectedFile, sibling)) {
         fileEditorManager.closeFile(sibling);
       }
@@ -31,28 +30,29 @@ public class CloseAllEditorsButActiveAction extends AnAction implements DumbAwar
   }
 
   @Override
-  public void update(@NotNull AnActionEvent event){
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
+
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     VirtualFile selectedFile;
     final EditorWindow window = event.getData(EditorWindow.DATA_KEY);
-    if (window != null){
-      presentation.setEnabled(window.getFiles().length > 1);
+    if (window != null) {
+      presentation.setEnabled(window.getFileList().size() > 1);
       return;
-    } else {
+    }
+    else {
       if (fileEditorManager.getSelectedFiles().length == 0) {
         presentation.setEnabled(false);
         return;
       }
       selectedFile = fileEditorManager.getSelectedFiles()[0];
     }
-    VirtualFile[] siblings = fileEditorManager.getSiblings(selectedFile);
-    presentation.setEnabled(siblings.length > 1);
+    presentation.setEnabled(fileEditorManager.getSiblings(selectedFile).size() > 1);
   }
 
   @Override

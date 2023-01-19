@@ -151,7 +151,7 @@ public final class GradleProgressEventConverter {
   @NotNull
   private static String getFileName(String path) {
     int index = path.lastIndexOf('/');
-    if (index > 0 && index < path.length()) {
+    if (index > 0) {
       String fileName = path.substring(index + 1);
       if (!fileName.isEmpty()) return fileName;
     }

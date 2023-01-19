@@ -135,20 +135,24 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
                                         @NotNull final String stderr,
                                         @NotNull final String all, int exitCode) {
           if (runner.getCurrentRerunStep() == 0) {
-            assertEquals("test with docstring produced bad tree", "Test tree:\n" +
-                                                                  "[root](-)\n" +
-                                                                  ".test_test(-)\n" +
-                                                                  "..SomeTestCase(-)\n" +
-                                                                  "...testSomething (Only with docstring test is parsed with extra space)(+)\n" +
-                                                                  "...testSomethingBad (Fail)(-)\n", runner.getFormattedTestTree());
+            assertEquals("test with docstring produced bad tree", """
+              Test tree:
+              [root](-)
+              .test_test(-)
+              ..SomeTestCase(-)
+              ...testSomething (Only with docstring test is parsed with extra space)(+)
+              ...testSomethingBad (Fail)(-)
+              """, runner.getFormattedTestTree());
           }
           else {
             assertEquals("test with docstring failed to rerun",
-                         "Test tree:\n" +
-                         "[root](-)\n" +
-                         ".test_test(-)\n" +
-                         "..SomeTestCase(-)\n" +
-                         "...testSomethingBad (Fail)(-)\n", runner.getFormattedTestTree());
+                         """
+                           Test tree:
+                           [root](-)
+                           .test_test(-)
+                           ..SomeTestCase(-)
+                           ...testSomethingBad (Fail)(-)
+                           """, runner.getFormattedTestTree());
           }
         }
       });
@@ -287,11 +291,13 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
         if (runner.getCurrentRerunStep() == 1) {
           // Make sure derived tests are launched, not abstract
           Assert.assertEquals("Wrong tests after rerun",
-                              "Test tree:\n" +
-                              "[root](-)\n" +
-                              ".rerun_derived(-)\n" +
-                              "..TestDerived(-)\n" +
-                              "...test_a(-)\n", runner.getFormattedTestTree());
+                              """
+                                Test tree:
+                                [root](-)
+                                .rerun_derived(-)
+                                ..TestDerived(-)
+                                ...test_a(-)
+                                """, runner.getFormattedTestTree());
         }
       }
 

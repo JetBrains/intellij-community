@@ -15,10 +15,14 @@
  */
 package com.intellij.ui.content;
 
+import com.intellij.ui.IconReplacer;
+import com.intellij.ui.RetrievableIcon;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
 
-public class AlertIcon implements Icon {
+public class AlertIcon implements Icon, RetrievableIcon {
 
   private final Icon myIcon;
   private final int myVShift;
@@ -59,5 +63,15 @@ public class AlertIcon implements Icon {
   @Override
   public int getIconHeight() {
     return myIcon.getIconHeight();
+  }
+
+  @Override
+  public @NotNull Icon retrieveIcon() {
+    return myIcon;
+  }
+
+  @Override
+  public @NotNull AlertIcon replaceBy(@NotNull IconReplacer replacer) {
+    return new AlertIcon(replacer.replaceIcon(myIcon), myVShift, myHShift);
   }
 }

@@ -17,12 +17,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.IToken;
 import com.jetbrains.python.console.pydev.PyCodeCompletionImages;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -52,13 +54,10 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
       return RatedResolveResult.EMPTY_ARRAY;
     }
 
-    if (pyExpression instanceof PyReferenceExpression) {
-      final PsiReference redirectedRef = pyExpression.getReference();
-      if (redirectedRef != null) {
-        PsiElement resolved = redirectedRef.resolve();
-        if (resolved != null) {
-          return new ResolveResult[]{new RatedResolveResult(RatedResolveResult.RATE_HIGH, resolved)};
-        }
+    if (pyExpression instanceof PyReferenceExpression ref) {
+      PsiElement resolved = ref.getReference().resolve();
+      if (resolved != null) {
+        return new ResolveResult[]{new RatedResolveResult(RatedResolveResult.RATE_HIGH, resolved)};
       }
     }
 
@@ -102,6 +101,10 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
 
   @Override
   public Object @NotNull [] getVariants() {
+    if (!PyConsoleOptions.getInstance(getElement().getProject()).isAutoCompletionEnabled()) {
+      return ArrayUtils.EMPTY_OBJECT_ARRAY;
+    }
+
     Map<String, LookupElement> variants = Maps.newHashMap();
     try {
       final List<PydevCompletionVariant> completions = myCommunication.getCompletions(getText(), myPrefix);

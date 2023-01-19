@@ -50,7 +50,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   public String myDefaultNotNull = NOT_NULL;
   public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList();
   public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList();
-  private List<String> myInstrumentedNotNulls = ContainerUtil.newArrayList(NOT_NULL);
+  private List<String> myInstrumentedNotNulls = List.of(NOT_NULL);
   private final SimpleModificationTracker myTracker = new SimpleModificationTracker();
 
   public NullableNotNullManagerImpl(Project project) {
@@ -245,7 +245,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
     Element instrumented = state.getChild(INSTRUMENTED_NOT_NULLS_TAG);
     if (instrumented == null) {
-      myInstrumentedNotNulls = ContainerUtil.newArrayList(NOT_NULL);
+      myInstrumentedNotNulls = List.of(NOT_NULL);
     }
     else {
       myInstrumentedNotNulls = ContainerUtil.mapNotNull(instrumented.getChildren("option"), o -> o.getAttributeValue("value"));

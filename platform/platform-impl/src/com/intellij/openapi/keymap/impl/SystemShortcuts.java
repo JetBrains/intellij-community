@@ -129,7 +129,7 @@ public final class SystemShortcuts {
       return null;
     }
 
-    final Condition<Shortcut> predicat = sc -> {
+    final Condition<Shortcut> predicate = sc -> {
       if (sc == null) {
         return false;
       }
@@ -143,7 +143,7 @@ public final class SystemShortcuts {
       }
       return false;
     };
-    return ActionsTreeUtil.isActionFiltered(ActionManager.getInstance(), myKeymap, predicat);
+    return ActionsTreeUtil.isActionFiltered(ActionManager.getInstance(), myKeymap, predicate);
   }
 
   public @Nullable
@@ -463,7 +463,6 @@ public final class SystemShortcuts {
 
   private static final class MuteConflictsSettings {
     private static final String MUTED_ACTIONS_KEY = "muted.system.shortcut.conflicts.actions";
-    @NotNull
     private Set<String> myMutedActions;
 
     void init() {

@@ -127,15 +127,11 @@ class VcsPreviewPanel implements PreviewPanel {
     int currentInnerLine = 0;
     for (byte type : inner) {
       switch (type) {
-        case Range.EQUAL:
-        case Range.INSERTED:
-        case Range.MODIFIED:
+        case Range.EQUAL, Range.INSERTED, Range.MODIFIED -> {
           innerRanges.add(new InnerRange(currentInnerLine, currentInnerLine + 1, type));
           currentInnerLine++;
-          break;
-        case Range.DELETED:
-          innerRanges.add(new InnerRange(currentInnerLine, currentInnerLine, type));
-          break;
+        }
+        case Range.DELETED -> innerRanges.add(new InnerRange(currentInnerLine, currentInnerLine, type));
       }
     }
 

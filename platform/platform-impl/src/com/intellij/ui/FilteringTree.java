@@ -62,8 +62,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   public FilteringTree(@NotNull Tree tree, @NotNull T root) {
     myRoot = root;
     myTree = tree;
-    myTree
-      .setModel(new SearchTreeModel<>(myRoot, DUMMY_SEARCH, o -> getText(o), this::createNode, this::getChildren, useIdentityHashing()));
+    myTree.setModel(new SearchTreeModel<>(myRoot, DUMMY_SEARCH, o -> getText(o), this::createNode, this::getChildren, useIdentityHashing()));
   }
 
   @NotNull
@@ -158,8 +157,8 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   public void installSimple() {
     SpeedSearchSupply supply =
       new TreeSpeedSearch(myTree,
-                          p -> StringUtil.notNullize(getText(p == null ? null : getUserObject((TreeNode)p.getLastPathComponent()))),
-                          true) {
+                          true,
+                          p -> StringUtil.notNullize(getText(p == null ? null : getUserObject((TreeNode)p.getLastPathComponent())))) {
         @Override
         protected void onSearchFieldUpdated(String pattern) {
           super.onSearchFieldUpdated(pattern);

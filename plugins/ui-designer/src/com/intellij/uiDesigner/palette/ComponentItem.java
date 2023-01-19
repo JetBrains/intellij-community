@@ -3,10 +3,7 @@ package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.palette.PaletteItem;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.project.Project;
@@ -37,10 +34,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ComponentItem implements Cloneable, PaletteItem {
   private static final Logger LOG = Logger.getInstance(ComponentItem.class);
 
@@ -360,15 +353,22 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   }
 
   @Override
-  @Nullable public Object getData(Project project, @NotNull String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return JavaPsiFacade.getInstance(project).findClass(myClassName, GlobalSearchScope.allScope(project));
-    }
-    if (getClass().getName().equals(dataId)) {
+  public @Nullable Object getData(@NotNull Project project, @NotNull String dataId) {
+    if (DATA_KEY.is(dataId)) {
       return this;
     }
     if (GroupItem.DATA_KEY.is(dataId)) {
       return Palette.getInstance(project).findGroup(this);
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)slowId -> getSlowData(slowId, project);
+    }
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull Project project) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return JavaPsiFacade.getInstance(project).findClass(myClassName, GlobalSearchScope.allScope(project));
     }
     return null;
   }

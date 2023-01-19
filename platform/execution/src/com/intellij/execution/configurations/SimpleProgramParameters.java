@@ -52,7 +52,7 @@ public class SimpleProgramParameters {
   }
 
   /** @deprecated Use {@link #setEnv(Map)} and {@link #setPassParentEnvs(boolean)} instead with already preprocessed variables */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public void setupEnvs(Map<String, String> envs, boolean passDefault) {
     if (!envs.isEmpty()) {
       envs = new HashMap<>(envs);

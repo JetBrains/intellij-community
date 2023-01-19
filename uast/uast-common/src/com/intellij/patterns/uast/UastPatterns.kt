@@ -12,7 +12,7 @@ import com.intellij.patterns.PsiJavaPatterns.psiClass
 import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
@@ -119,7 +119,7 @@ private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPatte
   val uBinaryExpression = (argument.uastParent as? UBinaryExpression) ?: return false
   if (uBinaryExpression.operator != UastBinaryOperator.ASSIGN) return false
 
-  val uastReference = uBinaryExpression.leftOperand.castSafelyTo<UReferenceExpression>() ?: return false
+  val uastReference = uBinaryExpression.leftOperand.asSafely<UReferenceExpression>() ?: return false
   val resolved = uastReference.resolve()
   return methodPattern.accepts(resolved, context)
 }

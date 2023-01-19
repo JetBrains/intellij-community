@@ -2,9 +2,10 @@ import email.message
 import sys
 from _typeshed import Self, StrOrBytesPath
 from abc import ABCMeta, abstractmethod
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from types import TracebackType
-from typing import IO, Any, AnyStr, Callable, Generic, Iterable, Iterator, Mapping, Protocol, Sequence, TypeVar, Union, overload
-from typing_extensions import Literal
+from typing import IO, Any, AnyStr, Generic, Protocol, TypeVar, overload
+from typing_extensions import Literal, TypeAlias
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
@@ -31,7 +32,7 @@ __all__ = [
 
 _T = TypeVar("_T")
 _MessageT = TypeVar("_MessageT", bound=Message)
-_MessageData = Union[email.message.Message, bytes, str, IO[str], IO[bytes]]
+_MessageData: TypeAlias = email.message.Message | bytes | str | IO[str] | IO[bytes]
 
 class _HasIteritems(Protocol):
     def iteritems(self) -> Iterator[tuple[str, _MessageData]]: ...
@@ -45,9 +46,10 @@ class Mailbox(Generic[_MessageT]):
 
     _path: bytes | str  # undocumented
     _factory: Callable[[IO[Any]], _MessageT] | None  # undocumented
-    def __init__(
-        self, path: StrOrBytesPath, factory: Callable[[IO[Any]], _MessageT] | None = ..., create: bool = ...
-    ) -> None: ...
+    @overload
+    def __init__(self, path: StrOrBytesPath, factory: Callable[[IO[Any]], _MessageT], create: bool = ...) -> None: ...
+    @overload
+    def __init__(self, path: StrOrBytesPath, factory: None = ..., create: bool = ...) -> None: ...
     @abstractmethod
     def add(self, message: _MessageData) -> str: ...
     @abstractmethod

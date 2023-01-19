@@ -6,6 +6,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtValueArgument
@@ -19,6 +20,11 @@ interface KotlinUElementWithComments : UElement {
         get() {
             val psi = sourcePsi ?: return emptyList()
             val childrenComments = commentsOnPsiElement(psi)
+            // Default constructor or synthetic members whose source PSI point to its containing class or object
+            if (this !is UClass && psi is KtClassOrObject) {
+                // Don't regard class's comments as synthetic members' comments
+                return emptyList()
+            }
             // Default property accessors
             if (this is UMethod && psi is KtProperty) {
                 // Don't regard property's comments as accessor's comments,

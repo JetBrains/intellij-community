@@ -2,6 +2,7 @@
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.ui.OptionsSearchTopHitProvider.ApplicationLevelProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider.ProjectLevelProvider
@@ -9,47 +10,51 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import java.util.concurrent.ConcurrentHashMap
 
-open class TopHitCache : Disposable {
+private class AppTopHitCache : TopHitCache()
+
+sealed class TopHitCache : Disposable {
   companion object {
-    fun getInstance(): TopHitCache = service()
+    fun getInstance(): TopHitCache = service<AppTopHitCache>()
 
-    private fun dispose(options: Collection<OptionDescription>?) {
-      options?.forEach { option: OptionDescription -> dispose(option) }
-    }
-
-    private fun dispose(option: OptionDescription) {
-      if (option is Disposable) {
-        Disposer.dispose((option as Disposable))
-      }
-    }
+    fun getInstance(project: Project): TopHitCache = project.service<ProjectTopHitCache>()
   }
 
   @JvmField
   protected val map = ConcurrentHashMap<Class<*>, Collection<OptionDescription>>()
 
   override fun dispose() {
-    clear()
   }
 
   fun clear() {
-    map.values.forEach(::dispose)
     map.clear()
   }
 
   fun invalidateCachedOptions(providerClass: Class<out OptionsSearchTopHitProvider>) {
-    map.remove(providerClass)?.let(::dispose)
+    map.remove(providerClass)
   }
+
+  internal fun getCache(): Map<Class<*>, Collection<OptionDescription>> = map
 
   fun getCachedOptions(provider: OptionsSearchTopHitProvider,
                        project: Project?,
                        pluginDescriptor: PluginDescriptor?): Collection<OptionDescription> {
     return map.computeIfAbsent(provider.javaClass) { aClass ->
+      if (provider is Disposable) {
+        val errorMessage = "${provider.javaClass.name} must not implement Disposable"
+        if (pluginDescriptor == null) {
+          logger<TopHitCache>().error(errorMessage)
+        }
+        else {
+          logger<TopHitCache>().error(PluginException(errorMessage, pluginDescriptor.pluginId))
+        }
+      }
+
       val startTime = StartUpMeasurer.getCurrentTime()
       val result = when (provider) {
         is ProjectLevelProvider -> provider.getOptions(project!!)
@@ -65,14 +70,9 @@ open class TopHitCache : Disposable {
 }
 
 @Service(Service.Level.PROJECT)
-class ProjectTopHitCache(project: Project) : TopHitCache() {
-  companion object {
-    @JvmStatic
-    fun getInstance(project: Project): TopHitCache = project.service<ProjectTopHitCache>()
-  }
-
+private class ProjectTopHitCache(project: Project) : TopHitCache() {
   init {
-    OptionsTopHitProvider.PROJECT_LEVEL_EP.addExtensionPointListener(object : ExtensionPointListener<ProjectLevelProvider?> {
+    OptionsTopHitProvider.PROJECT_LEVEL_EP.addExtensionPointListener(object : ExtensionPointListener<ProjectLevelProvider> {
       override fun extensionRemoved(extension: ProjectLevelProvider, pluginDescriptor: PluginDescriptor) {
         invalidateCachedOptions(extension.javaClass)
       }

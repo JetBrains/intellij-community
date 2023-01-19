@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsFacade;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,13 +46,6 @@ public abstract class CodeStyleFacade {
    */
   @Deprecated(forRemoval = true)
   public abstract int getIndentSize(FileType fileType);
-
-  /**
-   * @deprecated Use {@link com.intellij.application.options.CodeStyle#getFacade} and
-   * {@link CodeStyleSettingsFacade#getTabSize()}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract int getTabSize(final FileType fileType);
 
   /**
    * @deprecated Use {@code CodeStyle.getIndentOptions(PsiFile).USE_TAB_CHARACTER}. See {@code CodeStyle for more information}

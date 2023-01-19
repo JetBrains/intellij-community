@@ -52,7 +52,7 @@ public final class TextDiffViewerUtil {
     result.add(ActionManager.getInstance().getAction("CompareClipboardWithSelection"));
 
     result.add(Separator.getInstance());
-    ContainerUtil.addAll(result, ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP)).getChildren(null));
+    ContainerUtil.addAll(result, ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP));
 
     return result;
   }
@@ -130,9 +130,9 @@ public final class TextDiffViewerUtil {
     if (sameDocuments) {
       StringBuilder message = new StringBuilder();
       message.append("DiffRequest with same documents detected\n");
-      message.append(request.toString()).append("\n");
+      message.append(request).append("\n");
       for (DiffContent content : contents) {
-        message.append(content.toString()).append("\n");
+        message.append(content).append("\n");
       }
       LOG.warn(message.toString());
     }
@@ -170,17 +170,6 @@ public final class TextDiffViewerUtil {
     return new HashSet<>(properties).size() == 1;
   }
 
-  public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
-                                                  @NotNull JComponent component,
-                                                  @Nullable Disposable parentDisposable) {
-    for (AnAction action : group.getChildren(null)) {
-      if (action instanceof ActionGroup) {
-        recursiveRegisterShortcutSet((ActionGroup)action, component, parentDisposable);
-      }
-      action.registerCustomShortcutSet(component, parentDisposable);
-    }
-  }
-
   public static void applyModification(@NotNull Document document1,
                                        int line1,
                                        int line2,
@@ -203,6 +192,11 @@ public final class TextDiffViewerUtil {
     private DefaultActionGroup myActions;
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setText(getText(getValue()));
@@ -210,7 +204,7 @@ public final class TextDiffViewerUtil {
 
     @NotNull
     @Override
-    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       return getActions();
     }
 
@@ -240,6 +234,11 @@ public final class TextDiffViewerUtil {
       @NotNull private final T myOption;
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void update(@NotNull AnActionEvent e) {
         Toggleable.setSelected(e.getPresentation(), getValue() == myOption);
       }
@@ -256,7 +255,7 @@ public final class TextDiffViewerUtil {
     }
   }
 
-  public static abstract class EnumPolicySettingAction<T extends Enum> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
+  public static abstract class EnumPolicySettingAction<T extends Enum<T>> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
     private final T @NotNull [] myPolicies;
 
     public EnumPolicySettingAction(T @NotNull [] policies) {
@@ -273,7 +272,6 @@ public final class TextDiffViewerUtil {
     @NotNull
     @Override
     protected List<T> getAvailableOptions() {
-      //noinspection unchecked
       return ContainerUtil.sorted(Arrays.asList(myPolicies));
     }
 
@@ -398,6 +396,11 @@ public final class TextDiffViewerUtil {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return mySettings.isEnableSyncScroll();
     }
@@ -416,6 +419,11 @@ public final class TextDiffViewerUtil {
       super(DiffBundle.message("collapse.unchanged.fragments"), AllIcons.Actions.Collapseall);
       mySettings = settings;
       myFoldingSupport = foldingSupport;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -455,6 +463,11 @@ public final class TextDiffViewerUtil {
       if (isVisible()) { // apply default state
         setSelected(isSelected());
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -585,7 +598,7 @@ public final class TextDiffViewerUtil {
     }
 
     public void install(@NotNull List<? extends EditorEx> editors, @NotNull JComponent component) {
-      recursiveRegisterShortcutSet(new DefaultActionGroup(myEditorPopupActions), component, null);
+      DiffUtil.recursiveRegisterShortcutSet(new DefaultActionGroup(myEditorPopupActions), component, null);
 
       EditorPopupHandler handler = new ContextMenuPopupHandler.Simple(
         myEditorPopupActions.isEmpty() ? null : new DefaultActionGroup(myEditorPopupActions)
@@ -594,5 +607,15 @@ public final class TextDiffViewerUtil {
         editor.installPopupHandler(handler);
       }
     }
+  }
+
+  /**
+   * @deprecated Use {@link DiffUtil#recursiveRegisterShortcutSet}
+   */
+  @Deprecated
+  public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
+                                                  @NotNull JComponent component,
+                                                  @Nullable Disposable parentDisposable) {
+    DiffUtil.recursiveRegisterShortcutSet(group, component, parentDisposable);
   }
 }

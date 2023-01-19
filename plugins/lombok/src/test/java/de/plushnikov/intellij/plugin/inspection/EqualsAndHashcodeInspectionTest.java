@@ -15,13 +15,14 @@ public class EqualsAndHashcodeInspectionTest extends LombokInspectionTest {
   }
 
   public void testOfWithUnknownFields() {
-    myFixture.configureByText("Main.java", "<warning descr=\"The field 'a' does not exist\">@lombok.EqualsAndHashCode(of={\"a\"})</warning>\n" +
-                                           "class Main {\n" +
-                                           "  int i;\n" +
-                                           "  String s;\n" +
-                                           "  Float f;\n" +
-                                           "}\n");
-    myFixture.checkHighlighting();
+    configureAndTest("""
+      <warning descr="The field 'a' does not exist">@lombok.EqualsAndHashCode(of={"a"})</warning>
+      class Main {
+        int i;
+        String s;
+        Float f;
+      }
+      """);
   }
 }
 

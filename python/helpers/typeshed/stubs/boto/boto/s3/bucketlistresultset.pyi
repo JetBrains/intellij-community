@@ -1,4 +1,5 @@
-from typing import Any, Iterable, Iterator
+from collections.abc import Iterable, Iterator
+from typing import Any
 
 from .key import Key
 

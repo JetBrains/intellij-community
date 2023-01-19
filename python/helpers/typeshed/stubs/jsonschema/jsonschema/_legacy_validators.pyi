@@ -1,4 +1,5 @@
-from typing import Any, ItemsView
+from collections.abc import ItemsView
+from typing import Any
 
 def ignore_ref_siblings(schema) -> list[tuple[str, Any]] | ItemsView[str, Any]: ...
 def dependencies_draft3(validator, dependencies, instance, schema) -> None: ...

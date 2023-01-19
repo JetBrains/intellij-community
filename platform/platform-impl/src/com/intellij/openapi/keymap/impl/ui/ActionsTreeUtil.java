@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actionMacro.ActionMacro;
@@ -8,6 +9,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -139,7 +141,7 @@ public final class ActionsTreeUtil {
     final ActionShortcutRestrictions shortcutRestrictions = ActionShortcutRestrictions.getInstance();
     return action -> {
       if (action == null) return false;
-      final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+      final String id = actionManager.getId(action);
       if (id != null) {
         if (!Registry.is("keymap.show.alias.actions")) {
           String binding = KeymapManagerEx.getInstanceEx().getActionBinding(id);
@@ -192,7 +194,7 @@ public final class ActionsTreeUtil {
       return name;
     }
     else {
-      @NlsSafe final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action);
+      @NlsSafe final String id = ActionManager.getInstance().getId(action);
       if (id != null) {
         return id;
       }
@@ -255,7 +257,7 @@ public final class ActionsTreeUtil {
         }
       }
       else {
-        String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+        String id = actionManager.getId(action);
         if (id != null) {
           if (filtered == null || filtered.value(action)) {
             group.addActionId(id);
@@ -275,10 +277,15 @@ public final class ActionsTreeUtil {
     path.add(groupName);
 
     ActionManager actionManager = ActionManager.getInstance();
-    Group group = new Group(groupName, actionManager.getId(actionGroup), actionGroup.getTemplatePresentation().getIcon());
+    String groupId = actionManager.getId(actionGroup);
+    Group group = new Group(groupName, groupId, actionGroup.getTemplatePresentation().getIcon());
     List<AnAction> children = ContainerUtil.newArrayList(getActions(actionGroup, actionManager));
 
     for (ActionUrl actionUrl : actionUrls) {
+      Object component = actionUrl.getComponent();
+      if (component instanceof Group correctedGroup && Objects.equals(correctedGroup.getId(), groupId)) {
+        group.setForceShowAsPopup(correctedGroup.isForceShowAsPopup());
+      }
       if (areEqual(path, actionUrl)) { //actual path is shorter when we use custom root
         AnAction componentAction = actionUrl.getComponentAction();
         if (componentAction != null) {
@@ -312,7 +319,7 @@ public final class ActionsTreeUtil {
         group.addSeparator();
       }
       else {
-        String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+        String id = actionManager.getId(action);
         if (id != null) {
           group.addActionId(id);
         }
@@ -362,7 +369,7 @@ public final class ActionsTreeUtil {
         addEditorActions(filtered, (DefaultActionGroup)editorAction, ids);
       }
       else {
-        String actionId = editorAction instanceof ActionStub ? ((ActionStub)editorAction).getId() : actionManager.getId(editorAction);
+        String actionId = actionManager.getId(editorAction);
         if (actionId == null) continue;
         if (filtered == null || filtered.value(editorAction)) {
           ids.add(actionId);
@@ -478,7 +485,12 @@ public final class ActionsTreeUtil {
     result.removeAll(groupIds);
 
     for (String id : ContainerUtil.sorted(result, Comparator.comparing(o -> getTextToCompare(o)))) {
-      if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) group.addActionId(id);
+      AnAction actionOrStub = actionManager.getActionOrStub(id);
+      if (actionOrStub == null || isSearchable(actionOrStub)) {
+        if (filtered == null || filtered.value(actionOrStub)) {
+          group.addActionId(id);
+        }
+      }
     }
     return group;
   }
@@ -516,7 +528,7 @@ public final class ActionsTreeUtil {
       DefaultActionGroup group = (DefaultActionGroup)action;
       AnAction[] children = group.getChildActionsOrStubs();
       for (AnAction child : children) {
-        String childId = child instanceof ActionStub ? ((ActionStub)child).getId() : actionManager.getId(child);
+        String childId = actionManager.getId(child);
         if (childId == null) {
           // SCR 35149
           continue;
@@ -601,7 +613,7 @@ public final class ActionsTreeUtil {
       for (Supplier<String> synonym : action.getSynonyms()) {
         options.add(synonym.get());
       }
-      String id = action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action);
+      String id = ActionManager.getInstance().getId(action);
       if (id != null) {
         options.add(id);
         options.addAll(AbbreviationManager.getInstance().getAbbreviations(id));
@@ -631,8 +643,7 @@ public final class ActionsTreeUtil {
                                                      final Condition<? super Shortcut> predicat) {
     return action -> {
       if (action == null) return false;
-      final Shortcut[] actionShortcuts =
-        keymap.getShortcuts(action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action));
+      final Shortcut[] actionShortcuts = keymap.getShortcuts(actionManager.getId(action));
       for (Shortcut actionShortcut : actionShortcuts) {
         if (predicat.value(actionShortcut)) {
           return true;
@@ -693,16 +704,30 @@ public final class ActionsTreeUtil {
     }
     else {
       if (filtered == null || filtered.value(action)) {
-        String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+        String id = actionManager.getId(action);
         if (id != null) group.addActionId(id);
       }
     }
   }
 
+  private static boolean isSearchable(@NotNull AnAction action) {
+    if (action instanceof ActionGroup) {
+      return ((ActionGroup)action).isSearchable();
+    }
+    return true;
+  }
+
   public static AnAction @NotNull [] getActions(@NonNls String actionGroup) {
     ActionManager actionManager = ActionManager.getInstance();
     AnAction group = actionManager.getActionOrStub(actionGroup);
-    LOG.assertTrue(group instanceof ActionGroup, actionGroup + " is " + (group == null ? "not found" : "not a group"));
+    if (group == null) {
+      LOG.error(actionGroup + " not found");
+      return AnAction.EMPTY_ARRAY;
+    }
+    else if (!(group instanceof ActionGroup)) {
+      PluginException.logPluginError(LOG, actionGroup + " is not a group", null, group.getClass());
+      return AnAction.EMPTY_ARRAY;
+    }
     return getActions((ActionGroup)group, actionManager);
   }
 
@@ -716,7 +741,7 @@ public final class ActionsTreeUtil {
         adjusted = (ActionGroup)action;
       }
       else {
-        LOG.error("not an ActionGroup: " + action + " id=" + id);
+        PluginException.logPluginError(LOG, "not an ActionGroup: " + action + " id=" + id, null, action.getClass());
       }
     }
     return adjusted instanceof DefaultActionGroup
@@ -741,6 +766,21 @@ public final class ActionsTreeUtil {
   @Nls
   public static String getMainToolbar() {
     return KeyMapBundle.message("main.toolbar.title");
+  }
+
+  @Nls
+  public static String getMainToolbarLeft() {
+    return ActionsBundle.message("group.MainToolbarLeft.text");
+  }
+
+  @Nls
+  public static String getMainToolbarCenter() {
+    return ActionsBundle.message("group.MainToolbarCenter.text");
+  }
+
+  @Nls
+  public static String getMainToolbarRight() {
+    return ActionsBundle.message("group.MainToolbarRight.text");
   }
 
   @Nls

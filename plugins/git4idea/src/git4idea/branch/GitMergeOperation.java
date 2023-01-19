@@ -153,21 +153,19 @@ class GitMergeOperation extends GitBranchOperation {
   @Override
   protected void notifySuccess(@NotNull @Nls String message) {
     switch (myDeleteOnMerge) {
-      case DELETE:
+      case DELETE -> {
         super.notifySuccess(message);
         new GitBranchWorker(myProject, myGit, myUiHandler).deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
-        break;
-      case PROPOSE:
+      }
+      case PROPOSE -> {
         String deleteBranch = GitBundle.message("merge.operation.delete.branch", myBranchToMerge);
         String description = new HtmlBuilder().appendRaw(message).br().appendLink(DELETE_HREF_ATTRIBUTE, deleteBranch).toString();
         VcsNotifier.getInstance(myProject).notifySuccess(DELETE_BRANCH_ON_MERGE,
                                                          "",
                                                          description,
                                                          new DeleteMergedLocalBranchNotificationListener());
-        break;
-      case NOTHING:
-        super.notifySuccess(message);
-        break;
+      }
+      case NOTHING -> super.notifySuccess(message);
     }
   }
 

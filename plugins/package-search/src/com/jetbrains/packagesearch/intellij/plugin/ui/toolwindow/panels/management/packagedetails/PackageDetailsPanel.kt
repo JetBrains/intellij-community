@@ -21,9 +21,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
@@ -38,8 +38,7 @@ import javax.swing.JViewport
 import javax.swing.SwingConstants
 
 internal class PackageDetailsPanel(
-    project: Project,
-    operationExecutor: OperationExecutor
+    project: Project
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.selectedPackage")) {
 
     private var currentPanelName = EMPTY_STATE
@@ -48,7 +47,7 @@ internal class PackageDetailsPanel(
         border = emptyBorder()
     }
 
-    private val headerPanel = PackageDetailsHeaderPanel(project, operationExecutor)
+    private val headerPanel = PackageDetailsHeaderPanel(project)
 
     private val infoPanel = PackageDetailsInfoPanel()
 
@@ -83,10 +82,11 @@ internal class PackageDetailsPanel(
 
     internal data class ViewModel(
         val selectedPackageModel: UiPackageModel<*>?,
-        val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        val repositoriesDeclarationsByModule: Map<PackageSearchModule, List<RepositoryModel>>,
         val targetModules: TargetModules,
         val onlyStable: Boolean,
-        val invokeLaterScope: CoroutineScope
+        val invokeLaterScope: CoroutineScope,
+        val allKnownRepositories: List<RepositoryModel>
     )
 
     fun display(viewModel: ViewModel) {
@@ -97,17 +97,19 @@ internal class PackageDetailsPanel(
 
         headerPanel.display(
             PackageDetailsHeaderPanel.ViewModel(
-                viewModel.selectedPackageModel,
-                viewModel.knownRepositoriesInTargetModules,
-                viewModel.targetModules,
-                viewModel.onlyStable
+                uiPackageModel = viewModel.selectedPackageModel,
+                knownRepositoriesInTargetModules = viewModel.repositoriesDeclarationsByModule,
+                allKnownRepositories = viewModel.allKnownRepositories,
+                targetModules = viewModel.targetModules,
+                onlyStable = viewModel.onlyStable
             )
         )
         infoPanel.display(
             PackageDetailsInfoPanel.ViewModel(
-                viewModel.selectedPackageModel.packageModel,
-                viewModel.selectedPackageModel.selectedVersion.originalVersion,
-                viewModel.knownRepositoriesInTargetModules.allKnownRepositories
+                packageModel = viewModel.selectedPackageModel.packageModel,
+                selectedVersion = viewModel.selectedPackageModel.selectedVersion.originalVersion,
+                allKnownRepositories = viewModel.allKnownRepositories,
+                knownRepositoriesInTargetModules = viewModel.repositoriesDeclarationsByModule,
             )
         )
 

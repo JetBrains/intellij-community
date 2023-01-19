@@ -16,6 +16,7 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.actions
 
+import com.intellij.dependencytoolwindow.DependencyToolWindowFactory
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -25,16 +26,13 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiUtilBase
 import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackagesListPanelProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.util.uiStateModifier
+import com.jetbrains.packagesearch.intellij.plugin.util.pkgsUiStateModifier
 
 class AddDependencyAction : AnAction(
     PackageSearchBundle.message("packagesearch.actions.addDependency.text"),
@@ -48,33 +46,25 @@ class AddDependencyAction : AnAction(
         val project = e.project
         val editor = e.getData(CommonDataKeys.EDITOR)
 
-        e.presentation.isEnabledAndVisible = project != null
-            && editor != null
-            && run {
-            val psiFile: PsiFile? = PsiUtilBase.getPsiFileInEditor(editor, project)
-            if (psiFile == null || CoroutineProjectModuleOperationProvider.forProjectPsiFileOrNull(project, psiFile) == null) {
-                return@run false
-            }
-
-            val modules = project.packageSearchProjectService.moduleModelsStateFlow.value
-            findSelectedModule(e, modules) != null
-        }
+        e.presentation.isEnabledAndVisible =
+            project != null && editor != null
+                && findSelectedModule(e, project.packageSearchProjectService.packageSearchModulesStateFlow.value) != null
     }
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
 
-        val modules = project.packageSearchProjectService.moduleModelsStateFlow.value
+        val modules = project.packageSearchProjectService.packageSearchModulesStateFlow.value
         if (modules.isEmpty()) return
 
         val selectedModule = findSelectedModule(e, modules) ?: return
 
-        PackageSearchToolWindowFactory.activateToolWindow(project) {
-            project.uiStateModifier.setTargetModules(TargetModules.One(selectedModule))
+        DependencyToolWindowFactory.activateToolWindow(project, PackagesListPanelProvider) {
+            project.pkgsUiStateModifier.setTargetModules(TargetModules.One(selectedModule))
         }
     }
 
-    private fun findSelectedModule(e: AnActionEvent, modules: List<ModuleModel>): ModuleModel? {
+    private fun findSelectedModule(e: AnActionEvent, modules: List<PackageSearchModule>): PackageSearchModule? {
         val project = e.project ?: return null
         val file = obtainSelectedProjectDirIfSingle(e)?.virtualFile ?: return null
         val selectedModule = runReadAction { ModuleUtilCore.findModuleForFile(file, project) } ?: return null
@@ -83,7 +73,7 @@ class AddDependencyAction : AnAction(
         ModuleManager.getInstance(project).findModuleByName(selectedModule.name)
             ?: return null
 
-        return modules.firstOrNull { module -> module.projectModule.nativeModule == selectedModule }
+        return modules.firstOrNull { module -> module.nativeModule == selectedModule }
     }
 
     private fun obtainSelectedProjectDirIfSingle(e: AnActionEvent): PsiDirectory? {

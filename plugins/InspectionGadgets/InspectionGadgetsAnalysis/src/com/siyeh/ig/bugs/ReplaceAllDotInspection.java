@@ -41,7 +41,11 @@ public class ReplaceAllDotInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
+    final PsiExpression expression = (PsiExpression)infos[1];
     final String methodName = methodCallExpression.getMethodExpression().getReferenceName();
+    if (isFileSeparator(expression)) {
+      return InspectionGadgetsBundle.message("replace.all.file.separator.problem.descriptor");
+    }
     return InspectionGadgetsBundle.message("replace.all.dot.problem.descriptor", methodName);
   }
 
@@ -83,7 +87,7 @@ public class ReplaceAllDotInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiLiteralExpression)) {
         return;
@@ -115,22 +119,35 @@ public class ReplaceAllDotInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!MATCHER.test(expression)) {
-        return;
-      }
-      final PsiExpression argument = ArrayUtil.getFirstElement(expression.getArgumentList().getExpressions());
-      if (!PsiUtil.isConstantExpression(argument) || !ExpressionUtils.hasStringType(argument)) {
-        return;
-      }
-      final String value = (String)ExpressionUtils.computeConstantExpression(argument);
-      if (!isRegexMetaChar(value, !isOnTheFly())) {
-        return;
-      }
-      registerError(argument, expression, argument);
+      if (!MATCHER.test(expression)) return;
+      PsiExpression arg = ArrayUtil.getFirstElement(expression.getArgumentList().getExpressions());
+      if (arg == null) return;
+      ExpressionUtils.nonStructuralChildren(arg).
+        forEach(argument -> {
+          if (PsiUtil.isConstantExpression(argument) && ExpressionUtils.hasStringType(argument)) {
+            final String value = (String)ExpressionUtils.computeConstantExpression(argument);
+            if (isRegexMetaChar(value, !isOnTheFly())) {
+              registerError(argument, expression, argument);
+            }
+          }
+          if (isFileSeparator(argument)) {
+            registerError(argument, expression, argument);
+          }
+        });
     }
 
     private static boolean isRegexMetaChar(String s, boolean includeErrors) {
       return s != null && s.length() == 1 && (includeErrors ? REGEX_META_CHARS : ".$|^").contains(s);
     }
+  }
+
+  private static boolean isFileSeparator(PsiExpression argument) {
+    if (argument instanceof PsiReferenceExpression ref &&
+        "separator".equals(ref.getReferenceName()) &&
+        ref.resolve() instanceof PsiField field) {
+      PsiClass cls = field.getContainingClass();
+      return cls != null && CommonClassNames.JAVA_IO_FILE.equals(cls.getQualifiedName());
+    }
+    return false;
   }
 }

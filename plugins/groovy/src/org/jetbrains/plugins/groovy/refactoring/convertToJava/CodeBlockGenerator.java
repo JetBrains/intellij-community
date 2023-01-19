@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -390,7 +390,6 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitForStatement(@NotNull GrForStatement forStatement) {
-    //final StringBuilder builder = new StringBuilder();
     builder.append("for(");
 
     final GrForClause clause = forStatement.getClause();
@@ -428,19 +427,16 @@ public class CodeBlockGenerator extends Generator {
         }
       }
       else if (initialization != null) {
-        StringBuilder partBuilder = new StringBuilder();
-        final ExpressionContext partContext = forContext.copy();
-        genForPart(builder, initialization, new CodeBlockGenerator(partBuilder, partContext, null));
+        genForPart(builder, initialization, new CodeBlockGenerator(new StringBuilder(), forContext.copy(), null));
       }
 
-      builder.append(';');
       if (condition != null) {
-        genForPart(builder, condition, forContext.copy());                 //todo???
+        genForPart(builder, condition, new ExpressionGenerator(new StringBuilder(), forContext.copy()));
       }
 
       builder.append(';');
       if (update != null) {
-        genForPart(builder, update, forContext.copy());
+        genForPart(builder, update, new ExpressionGenerator(new StringBuilder(), forContext.copy()));
       }
     }
     builder.append(')');
@@ -449,10 +445,6 @@ public class CodeBlockGenerator extends Generator {
     if (body != null) {
       body.accept(new CodeBlockGenerator(builder, forContext, null));
     }
-  }
-
-  private static void genForPart(StringBuilder builder, GroovyPsiElement part, final ExpressionContext context) {
-    genForPart(builder, part, new ExpressionGenerator(new StringBuilder(), context));
   }
 
   private static void genForPart(StringBuilder builder, GroovyPsiElement part, final Generator visitor) {

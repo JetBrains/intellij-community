@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xsltDebugger.impl;
 
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.XSourcePosition;
@@ -120,14 +121,14 @@ public class XsltStackFrame extends XStackFrame {
       Icon icon = null;
       if (myVariable.isGlobal()) {
         if (kind == Debugger.Variable.Kind.VARIABLE) {
-          icon = PlatformIcons.FIELD_ICON;
+          icon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field);
         } else {
           icon = PlatformIcons.PROPERTY_ICON;
         }
       } else if (kind == Debugger.Variable.Kind.VARIABLE) {
-        icon = PlatformIcons.VARIABLE_ICON;
+        icon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable);
       } else if (kind == Debugger.Variable.Kind.PARAMETER) {
-        icon = PlatformIcons.PARAMETER_ICON;
+        icon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter);
       }
 
       final Value v = myVariable.getValue();

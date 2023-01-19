@@ -5,12 +5,12 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ui.InspectionOptionsPanel
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.LangBundle
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
@@ -23,10 +23,9 @@ class IncorrectFormattingInspection(
   @JvmField var kotlinOnly: Boolean = false  // process kotlin files normally even in silent mode, compatibility
 ) : LocalInspectionTool() {
 
-  val isKotlinPlugged: Boolean by lazy { PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.kotlin")) != null }
+  private val isKotlinPlugged: Boolean by lazy { PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.kotlin")) != null }
 
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
-    file.project.service<IncorrectFormattingInspectionCodeStyleSettingsListenerService>()
 
     // Skip files we are not able to fix
     if (!file.isWritable) return null
@@ -62,14 +61,12 @@ class IncorrectFormattingInspection(
     }
   }
 
-  override fun createOptionsPanel() = object : InspectionOptionsPanel(this) {
-    init {
-      addCheckbox(LangBundle.message("inspection.incorrect.formatting.setting.report.per.file"), "reportPerFile")
-      if (isKotlinPlugged) {
-        addCheckbox(LangBundle.message("inspection.incorrect.formatting.setting.kotlin.only"), "kotlinOnly")
-      }
-    }
-  }
+  override fun getOptionsPane() = OptPane(
+    listOf(checkbox("reportPerFile", LangBundle.message("inspection.incorrect.formatting.setting.report.per.file"))) +
+    if (isKotlinPlugged) 
+      listOf(checkbox("kotlinOnly", LangBundle.message("inspection.incorrect.formatting.setting.kotlin.only"))) 
+    else listOf()
+  )
 
   override fun runForWholeFile() = true
   override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WEAK_WARNING

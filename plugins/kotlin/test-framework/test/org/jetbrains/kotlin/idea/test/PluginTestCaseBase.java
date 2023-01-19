@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test;
 
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.test.TestJdkKind;
 
 import java.io.File;
 
-public class PluginTestCaseBase {
+public final class PluginTestCaseBase {
     private PluginTestCaseBase() {
     }
 
@@ -52,34 +52,26 @@ public class PluginTestCaseBase {
 
     @NotNull
     public static Sdk jdk(@NotNull TestJdkKind kind) {
-        switch (kind) {
-            case MOCK_JDK:
-                return IdeaTestUtil.getMockJdk18();
-            case FULL_JDK_11:
-                String jre9 = KotlinTestUtils.getAtLeastJdk9Home().getPath();
-                return getSdk(jre9, "Full JDK 9");
-            case FULL_JDK_17:
-                return IdeaTestUtil.getMockJdk(LanguageLevel.JDK_17.toJavaVersion());
-            case FULL_JDK:
-                return fullJdk();
-            default:
-                throw new UnsupportedOperationException(kind.toString());
-        }
+        return switch (kind) {
+            case MOCK_JDK -> IdeaTestUtil.getMockJdk18();
+            case FULL_JDK_11 -> {
+                String jre9 = KotlinTestUtils.getCurrentProcessJdkHome().getPath();
+                yield getSdk(jre9, "Full JDK 9");
+            }
+            case FULL_JDK_17 -> IdeaTestUtil.getMockJdk(LanguageLevel.JDK_17.toJavaVersion());
+            case FULL_JDK -> fullJdk();
+            default -> throw new UnsupportedOperationException(kind.toString());
+        };
     }
 
     @NotNull
     public static LanguageLevel getLanguageLevel(@NotNull TestJdkKind kind) {
-        switch (kind) {
-            case MOCK_JDK:
-                return LanguageLevel.JDK_1_8;
-            case FULL_JDK_11:
-                return LanguageLevel.JDK_11;
-            case FULL_JDK_17:
-                return LanguageLevel.JDK_17;
-            case FULL_JDK:
-                return LanguageLevel.JDK_1_8;
-            default:
-                throw new UnsupportedOperationException(kind.toString());
-        }
+      return switch (kind) {
+        case MOCK_JDK -> LanguageLevel.JDK_1_8;
+        case FULL_JDK_11 -> LanguageLevel.JDK_11;
+        case FULL_JDK_17 -> LanguageLevel.JDK_17;
+        case FULL_JDK -> LanguageLevel.JDK_1_8;
+        default -> throw new UnsupportedOperationException(kind.toString());
+      };
     }
 }

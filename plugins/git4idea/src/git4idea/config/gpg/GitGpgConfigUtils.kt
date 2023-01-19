@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config.gpg
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -118,7 +118,7 @@ abstract class Value<T> {
   suspend fun reload(): T {
     try {
       val newValue = withContext(Dispatchers.IO) {
-        runUnderIndicator { compute() }
+        coroutineToIndicator { compute() }
       }
       value = newValue
       error = null

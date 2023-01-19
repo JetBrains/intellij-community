@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInsight.FileModificationService
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
@@ -15,7 +16,10 @@ class ReplaceItWithExplicitFunctionLiteralParamIntention : SelfTargetingOffsetIn
 ) {
     override fun isApplicableTo(element: KtNameReferenceExpression) = isAutoCreatedItUsage(element)
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun applyTo(element: KtNameReferenceExpression, editor: Editor?) {
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
         val paramToRename = convertImplicitItToExplicit(element, editor) ?: return
 

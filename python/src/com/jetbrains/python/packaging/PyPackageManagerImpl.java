@@ -9,7 +9,6 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -30,11 +29,15 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
+
 /**
- * @author vlan
+ * @deprecated This class and all its inheritors are deprecated. Everything should work via {@link PyTargetEnvironmentPackageManager}
  */
+@Deprecated
 public class PyPackageManagerImpl extends PyPackageManagerImplBase {
-  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv.pyz";
+  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.16.7.pyz";
+  private static final String PY2_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz";
 
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
@@ -185,10 +188,12 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
     args.add(destinationDir);
 
     try {
-      getPythonProcessResult(Objects.requireNonNull(getHelperPath(VIRTUALENV_ZIPAPP_NAME)), args, false, true, null, List.of("-S"));
+      getPythonProcessResult(
+        Objects.requireNonNull(getHelperPath(languageLevel.isPython2() ? PY2_VIRTUALENV_ZIPAPP_NAME : VIRTUALENV_ZIPAPP_NAME)),
+        args, false, true, null, List.of("-S"));
     }
     catch (ExecutionException e) {
-      throw new ExecutionException(PySdkBundle.message("python.creating.venv.failed.sentence"), e);
+      showSdkExecutionException(sdk, e, PySdkBundle.message("python.creating.venv.failed.title"));
     }
 
     final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);

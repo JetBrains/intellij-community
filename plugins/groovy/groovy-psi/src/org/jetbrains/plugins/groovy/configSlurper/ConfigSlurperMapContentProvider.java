@@ -18,9 +18,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
 
 import java.util.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
 
   @Nullable

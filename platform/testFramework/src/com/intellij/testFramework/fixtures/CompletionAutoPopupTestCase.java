@@ -5,9 +5,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class CompletionAutoPopupTestCase extends BasePlatformTestCase {
   protected CompletionAutoPopupTester myTester;
 

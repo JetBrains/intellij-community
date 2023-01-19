@@ -2,11 +2,14 @@
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactories
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddAccessorApplicator
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils.addAccessors
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
 
 object AddAccessorsFactories {
@@ -20,11 +23,17 @@ object AddAccessorsFactories {
             val addSetter = property.isVar && property.setter == null
             if (!addGetter && !addSetter) return@diagnosticFixFactories emptyList()
             listOf(
-                KotlinApplicatorBasedQuickFix(
-                    property,
-                    KotlinApplicatorInput.Empty,
-                    AddAccessorApplicator.applicator(addGetter, addSetter),
-                )
+                AddAccessorsQuickFix(property, addGetter, addSetter)
             )
         }
+
+    private class AddAccessorsQuickFix(
+        target: KtProperty,
+        private val addGetter: Boolean,
+        private val addSetter: Boolean,
+    ) : AbstractKotlinApplicableQuickFix<KtProperty>(target) {
+        override fun getFamilyName(): String = AddAccessorUtils.familyAndActionName(addGetter, addSetter)
+        override fun apply(element: KtProperty, project: Project, editor: Editor?, file: KtFile) =
+            addAccessors(element, addGetter, addSetter, editor)
+    }
 }

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -31,13 +32,13 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 public abstract class ScopesChooser extends ComboBoxAction implements DumbAware {
-  private final List<Descriptor> myDefaultDescriptors;
+  private final List<? extends Descriptor> myDefaultDescriptors;
   @NotNull
   private final InspectionProfileImpl myInspectionProfile;
   private final Project myProject;
   private final Set<String> myExcludedScopeNames;
 
-  public ScopesChooser(final List<Descriptor> defaultDescriptors,
+  public ScopesChooser(final List<? extends Descriptor> defaultDescriptors,
                        @NotNull InspectionProfileImpl inspectionProfile,
                        @NotNull Project project,
                        final String[] excludedScopeNames) {
@@ -51,7 +52,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
 
   @NotNull
   @Override
-  public DefaultActionGroup createPopupActionGroup(final JComponent component) {
+  public DefaultActionGroup createPopupActionGroup(@NotNull JComponent component, @NotNull DataContext context) {
     final DefaultActionGroup group = new DefaultActionGroup();
 
     final List<NamedScope> predefinedScopes = new ArrayList<>();
@@ -91,8 +92,8 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
   protected abstract void onScopeAdded(@NotNull String scopeName);
 
   private void fillActionGroup(final DefaultActionGroup group,
-                               final List<NamedScope> scopes,
-                               final List<Descriptor> defaultDescriptors,
+                               final List<? extends NamedScope> scopes,
+                               final List<? extends Descriptor> defaultDescriptors,
                                final InspectionProfileImpl inspectionProfile,
                                final Set<String> excludedScopeNames) {
     for (final NamedScope scope : scopes) {

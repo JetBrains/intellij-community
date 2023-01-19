@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.ButtonsGroup
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.ButtonGroup
 import javax.swing.JRadioButton
@@ -13,7 +13,7 @@ import javax.swing.JRadioButton
 @ApiStatus.Internal
 internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeImpl(panel, startIndex), ButtonsGroup {
 
-  private val radioButtons = mutableMapOf<Cell<JRadioButton>, Any?>()
+  private val radioButtons = mutableMapOf<CellImpl<out JRadioButton>, Any?>()
   private var groupBinding: GroupBinding<*>? = null
 
   override fun visible(isVisible: Boolean): ButtonsGroup {
@@ -23,6 +23,11 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
 
   override fun visibleIf(predicate: ComponentPredicate): ButtonsGroup {
     super.visibleIf(predicate)
+    return this
+  }
+
+  override fun visibleIf(property: ObservableProperty<Boolean>): ButtonsGroup {
+    super.visibleIf(property)
     return this
   }
 
@@ -36,6 +41,11 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
     return this
   }
 
+  override fun enabledIf(property: ObservableProperty<Boolean>): ButtonsGroup {
+    super.enabledIf(property)
+    return this
+  }
+
   override fun <T> bind(prop: MutableProperty<T>, type: Class<T>): ButtonsGroup {
     if (groupBinding != null) {
       throw UiDslException("The group is bound already")
@@ -44,7 +54,7 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
     return this
   }
 
-  fun add(cell: Cell<JRadioButton>, value: Any? = null) {
+  fun add(cell: CellImpl<out JRadioButton>, value: Any? = null) {
     radioButtons[cell] = value
   }
 
@@ -67,10 +77,21 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
       groupBinding.validate(value)
       buttonGroup.add(cell.component)
 
-      cell.component.isSelected = groupBinding.prop.get() == value
-      cell.onApply { if (cell.component.isSelected) groupBinding.set(value) }
-      cell.onReset { cell.component.isSelected = groupBinding.prop.get() == value }
-      cell.onIsModified { cell.component.isSelected != (groupBinding.prop.get() == value) }
+      cell.onChangeManager.applyBinding {
+        cell.component.isSelected = groupBinding.prop.get() == value
+      }
+
+      cell.onApply {
+        if (cell.component.isSelected) groupBinding.set(value)
+      }
+      cell.onReset {
+        cell.onChangeManager.applyBinding {
+          cell.component.isSelected = groupBinding.prop.get() == value
+        }
+      }
+      cell.onIsModified {
+        cell.component.isSelected != (groupBinding.prop.get() == value)
+      }
     }
   }
 

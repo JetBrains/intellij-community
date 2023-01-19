@@ -6,7 +6,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
@@ -57,15 +57,15 @@ open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor)
           Suppose a code:
           ```
              object : SomeClass(42) { }
-  
+
              or
-  
+
              new SomeClass(42)
           ```
           with USimpleNameReferenceExpression pointing to `SomeClass`.
-  
+
           We want ApiUsageProcessor to notice two events: 1) reference to `SomeClass` and 2) reference to `SomeClass(int)` constructor.
-  
+
           But Kotlin UAST resolves this simple reference to the PSI constructor of the class SomeClass.
           So we resolve it manually to the class because the constructor will be handled separately
           in "visitObjectLiteralExpression" or "visitCallExpression".
@@ -262,7 +262,7 @@ open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor)
 
   private fun maybeProcessReferenceInsideImportStatement(node: UReferenceExpression): Boolean {
     if (isInsideImportStatement(node)) {
-      val parentingQualifier = node.castSafelyTo<USimpleNameReferenceExpression>()?.uastParent.castSafelyTo<UQualifiedReferenceExpression>()
+      val parentingQualifier = node.asSafely<USimpleNameReferenceExpression>()?.uastParent.asSafely<UQualifiedReferenceExpression>()
       if (node != parentingQualifier?.selector) {
         val resolved = node.resolve() as? PsiModifierListOwner
         if (resolved != null) {

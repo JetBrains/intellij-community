@@ -31,6 +31,9 @@ public abstract class CheckoutProviderEx implements CheckoutProvider {
 
   /**
    * Overloads CheckoutProvider#doCheckout(Project, Listener) to provide predefined repository URL
+   * @deprecated should not be used outside VcsCloneComponentStub
+   * Migrate to {@link com.intellij.util.ui.cloneDialog.VcsCloneDialog} or {@link com.intellij.openapi.vcs.ui.VcsCloneComponent}
    */
+  @Deprecated(forRemoval = true)
   public abstract void doCheckout(@NotNull final Project project, @Nullable Listener listener, @Nullable String predefinedRepositoryUrl);
 }

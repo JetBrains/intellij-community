@@ -118,29 +118,37 @@ final class ServiceModel implements Disposable, InvokerSupplier {
     return result;
   }
 
-  private JBIterable<ServiceViewItem> findItems(Object service, Class<?> contributorClass) {
+  private JBIterable<ServiceViewItem> doFindItems(Condition<? super ServiceViewItem> visitChildrenCondition,
+                                                  Condition<? super ServiceViewItem> condition,
+                                                  boolean safe) {
+    return JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
+        visitChildrenCondition.value(node) ? new ArrayList<>(node.getChildren()) : null)
+      .withRoots(myRoots)
+      .traverse(safe ? ONLY_LOADED_BFS : NOT_LOADED_LAST_BFS)
+      .filter(condition);
+  }
+
+  private JBIterable<ServiceViewItem> findItems(Object service, Class<?> contributorClass, boolean safe) {
     Object value = service instanceof ServiceViewProvidingContributor ?
                    ((ServiceViewProvidingContributor<?, ?>)service).asService() : service;
-    return JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
-      contributorClass.isInstance(node.getRootContributor()) ? new ArrayList<>(node.getChildren()) : null)
-      .withRoots(myRoots)
-      .traverse(NOT_LOADED_LAST_BFS)
-      .filter(node -> node.getValue().equals(value));
+    return doFindItems(node -> contributorClass.isInstance(node.getRootContributor()),
+                       node -> node.getValue().equals(value),
+                       safe);
   }
 
   @Nullable
-  ServiceViewItem findItem(Condition<? super ServiceViewItem> condition, Condition<? super ServiceViewItem> visitChildrenCondition) {
-    return JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
-      visitChildrenCondition.value(node) ? new ArrayList<>(node.getChildren()) : null)
-      .withRoots(myRoots)
-      .traverse(NOT_LOADED_LAST_BFS)
-      .filter(condition)
-      .first();
+  ServiceViewItem findItem(Condition<? super ServiceViewItem> visitChildrenCondition, Condition<? super ServiceViewItem> condition) {
+    return doFindItems(visitChildrenCondition, condition, false).first();
   }
 
   @Nullable
   ServiceViewItem findItem(Object service, Class<?> contributorClass) {
-    return findItems(service, contributorClass).first();
+    return findItems(service, contributorClass, false).first();
+  }
+
+  @Nullable
+  ServiceViewItem findItemSafe(Object service, Class<?> contributorClass) {
+    return findItems(service, contributorClass, true).first();
   }
 
   @Nullable
@@ -168,26 +176,13 @@ final class ServiceModel implements Disposable, InvokerSupplier {
     Runnable handler = () -> {
       LOG.debug("Handle event: " + e);
       switch (e.type) {
-        case SERVICE_ADDED:
-          addService(e);
-          break;
-        case SERVICE_REMOVED:
-          removeService(e);
-          break;
-        case SERVICE_CHANGED:
-          serviceChanged(e);
-          break;
-        case SERVICE_STRUCTURE_CHANGED:
-          serviceStructureChanged(e);
-          break;
-        case SERVICE_GROUP_CHANGED:
-          serviceGroupChanged(e);
-          break;
-        case GROUP_CHANGED:
-          groupChanged(e);
-          break;
-        default:
-          reset(e.contributorClass);
+        case SERVICE_ADDED -> addService(e);
+        case SERVICE_REMOVED -> removeService(e);
+        case SERVICE_CHANGED -> serviceChanged(e);
+        case SERVICE_STRUCTURE_CHANGED -> serviceStructureChanged(e);
+        case SERVICE_GROUP_CHANGED -> serviceGroupChanged(e);
+        case GROUP_CHANGED -> groupChanged(e);
+        default -> reset(e.contributorClass);
       }
       for (ServiceModelEventListener listener : myListeners) {
         listener.eventProcessed(e);
@@ -400,7 +395,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   }
 
   private void groupChanged(ServiceEvent e) {
-    JBIterable<ServiceGroupNode> groups = findItems(e.target, e.contributorClass).filter(ServiceGroupNode.class);
+    JBIterable<ServiceGroupNode> groups = findItems(e.target, e.contributorClass, false).filter(ServiceGroupNode.class);
     ServiceGroupNode first = groups.first();
     if (first == null) return;
 

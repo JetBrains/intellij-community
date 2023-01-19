@@ -456,17 +456,13 @@ public class Parser implements IParser {
      * has been really applied to obtain the filter.
      */
     public String getAppliedExpression(String baseExpression) {
-      switch (instantApplied) {
-        case 0:
-          return baseExpression;
-        case 1:
-          return "*" + baseExpression;
-        case 2:
-          return baseExpression + "*";
-        case 3:
-          return "*" + baseExpression + "*";
-      }
-      return baseExpression;
+      return switch (instantApplied) {
+        case 0 -> baseExpression;
+        case 1 -> "*" + baseExpression;
+        case 2 -> baseExpression + "*";
+        case 3 -> "*" + baseExpression + "*";
+        default -> baseExpression;
+      };
     }
 
     /**
@@ -519,23 +515,8 @@ public class Parser implements IParser {
             escaped = false;
           }
           switch (c) {
-            case '[':
-            case ']':
-            case '^':
-            case '$':
-            case '+':
-            case '{':
-            case '}':
-            case '|':
-            case '(':
-            case ')':
-            case '.':
-              sb.append('\\').append(c);
-              break;
-
-            default:
-              sb.append(c);
-              break;
+            case '[', ']', '^', '$', '+', '{', '}', '|', '(', ')', '.' -> sb.append('\\').append(c);
+            default -> sb.append(c);
           }
         }
       }

@@ -11,101 +11,103 @@ public class RedundantCompareToJavaTimeInspectionTest extends LightJavaCodeInsig
 
 
   public void testCompareTo() {
-    myFixture.addClass("package java.time.chrono;\n" +
-                       "interface ChronoLocalDateTime<T>{}\n" +
-                       "interface ChronoLocalDate{}\n");
+    myFixture.addClass("""
+                         package java.time.chrono;
+                         interface ChronoLocalDateTime<T>{}
+                         interface ChronoLocalDate{}
+                         """);
     //ignore because we mock these classes
     //noinspection MethodOverloadsMethodOfSuperclass
-    myFixture.addClass("package java.time;\n" +
-                       "import java.time.chrono.*;" +
-                       "class LocalDate implements ChronoLocalDate, Comparable<ChronoLocalDate>{\n" +
-                       "  public static LocalDate now() {\n" +
-                       "    return new LocalDate();\n" +
-                       "  }\n" +
-                       "  @Override\n" +
-                       "  public int compareTo(ChronoLocalDate o) {\n" +
-                       "    return 0;\n" +
-                       "  }\n" +
-                       "  public boolean isAfter(LocalDate localDate) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "  public boolean isBefore(LocalDate localDate) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "  public boolean isEqual(LocalDate localDate) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "}\n" +
-                       "class LocalDateTime implements ChronoLocalDateTime<LocalDateTime>, Comparable<ChronoLocalDateTime>{\n" +
-                       "  public static LocalDateTime now() {\n" +
-                       "    return new LocalDateTime();\n" +
-                       "  }\n" +
-                       "  @Override\n" +
-                       "  public int compareTo(ChronoLocalDateTime<?> o) {\n" +
-                       "    return 0;\n" +
-                       "  }\n" +
-                       "  public boolean isAfter(LocalDateTime localDateTime) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "  public boolean isBefore(LocalDateTime localDateTime) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "  public boolean isEqual(LocalDateTime localDateTime) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "}\n" +
-                       "class LocalTime implements Comparable<LocalTime>{\n" +
-                       "  public static LocalTime now() {\n" +
-                       "    return new LocalTime();\n" +
-                       "  }\n" +
-                       "  @Override\n" +
-                       "  public int compareTo(LocalTime o) {\n" +
-                       "    return 0;\n" +
-                       "  }\n" +
-                       "  public boolean isAfter(LocalTime localTime) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "  public boolean isBefore(LocalTime localTime) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "}\n" +
-                       "class OffsetTime implements Comparable<OffsetTime> {\n" +
-                       "  public static OffsetTime now() {\n" +
-                       "    return new OffsetTime();\n" +
-                       "  }\n" +
-                       "\n" +
-                       "  @Override\n" +
-                       "  public int compareTo(OffsetTime o) {\n" +
-                       "    return 0;\n" +
-                       "  }\n" +
-                       "  public boolean isAfter(OffsetTime offsetTime) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "  public boolean isBefore(OffsetTime offsetTime) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "  public boolean isEqual(OffsetTime offsetTime) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "}\n" +
-                       "class OffsetDateTime implements Comparable<OffsetDateTime>{\n" +
-                       "  public static OffsetDateTime now() {\n" +
-                       "    return new OffsetDateTime();\n" +
-                       "  }\n" +
-                       "  @Override\n" +
-                       "  public int compareTo(OffsetDateTime o) {\n" +
-                       "    return 0;\n" +
-                       "  }\n" +
-                       "  public boolean isAfter(OffsetDateTime offsetDateTime) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "  public boolean isBefore(OffsetDateTime offsetDateTime) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "  public boolean isEqual(OffsetDateTime offsetDateTime) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package java.time;
+                         import java.time.chrono.*;class LocalDate implements ChronoLocalDate, Comparable<ChronoLocalDate>{
+                           public static LocalDate now() {
+                             return new LocalDate();
+                           }
+                           @Override
+                           public int compareTo(ChronoLocalDate o) {
+                             return 0;
+                           }
+                           public boolean isAfter(LocalDate localDate) {
+                             return true;
+                           }
+                           public boolean isBefore(LocalDate localDate) {
+                             return true;
+                           }
+                           public boolean isEqual(LocalDate localDate) {
+                             return true;
+                           }
+                         }
+                         class LocalDateTime implements ChronoLocalDateTime<LocalDateTime>, Comparable<ChronoLocalDateTime>{
+                           public static LocalDateTime now() {
+                             return new LocalDateTime();
+                           }
+                           @Override
+                           public int compareTo(ChronoLocalDateTime<?> o) {
+                             return 0;
+                           }
+                           public boolean isAfter(LocalDateTime localDateTime) {
+                             return true;
+                           }
+                           public boolean isBefore(LocalDateTime localDateTime) {
+                             return true;
+                           }
+                           public boolean isEqual(LocalDateTime localDateTime) {
+                             return true;
+                           }
+                         }
+                         class LocalTime implements Comparable<LocalTime>{
+                           public static LocalTime now() {
+                             return new LocalTime();
+                           }
+                           @Override
+                           public int compareTo(LocalTime o) {
+                             return 0;
+                           }
+                           public boolean isAfter(LocalTime localTime) {
+                             return true;
+                           }
+                           public boolean isBefore(LocalTime localTime) {
+                             return true;
+                           }
+                         }
+                         class OffsetTime implements Comparable<OffsetTime> {
+                           public static OffsetTime now() {
+                             return new OffsetTime();
+                           }
+
+                           @Override
+                           public int compareTo(OffsetTime o) {
+                             return 0;
+                           }
+                           public boolean isAfter(OffsetTime offsetTime) {
+                             return true;
+                           }
+                           public boolean isBefore(OffsetTime offsetTime) {
+                             return true;
+                           }
+                           public boolean isEqual(OffsetTime offsetTime) {
+                             return true;
+                           }
+                         }
+                         class OffsetDateTime implements Comparable<OffsetDateTime>{
+                           public static OffsetDateTime now() {
+                             return new OffsetDateTime();
+                           }
+                           @Override
+                           public int compareTo(OffsetDateTime o) {
+                             return 0;
+                           }
+                           public boolean isAfter(OffsetDateTime offsetDateTime) {
+                             return true;
+                           }
+                           public boolean isBefore(OffsetDateTime offsetDateTime) {
+                             return true;
+                           }
+                           public boolean isEqual(OffsetDateTime offsetDateTime) {
+                             return true;
+                           }
+                         }""");
     final LocalInspectionTool inspection = new RedundantCompareToJavaTimeInspection();
     myFixture.enableInspections(inspection);
 

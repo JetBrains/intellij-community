@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.java;
 
 import com.google.common.base.MoreObjects;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -36,9 +37,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class FunExprOccurrence {
   private final int argIndex;
   private final List<? extends ReferenceChainLink> referenceContext;
@@ -99,7 +97,8 @@ public class FunExprOccurrence {
     return new ReferenceChainLink(referenceName, isCall, isCall ? DataInputOutputUtil.readINT(in) : -1);
   }
 
-  public ThreeState checkHasTypeLight(@NotNull List<? extends PsiClass> samClasses, @NotNull VirtualFile placeFile) {
+  public ThreeState checkHasTypeLight(@NotNull List<? extends PsiClass> samClasses, @NotNull VirtualFile placeFile,
+                                      @NotNull Project project) {
     if (referenceContext.isEmpty()) return ThreeState.UNSURE;
 
     Set<PsiClass> qualifiers = null;
@@ -116,7 +115,7 @@ public class FunExprOccurrence {
         // probably fully qualified name: skip to possible class name (right before the first call)
         continue;
       }
-      List<? extends PsiMember> candidates = qualifiers == null ? link.getGlobalMembers(placeFile, samClasses.get(0).getProject())
+      List<? extends PsiMember> candidates = qualifiers == null ? link.getGlobalMembers(placeFile, project)
                                                                 : link.getSymbolMembers(qualifiers);
       if (candidates == null) {
         continue;

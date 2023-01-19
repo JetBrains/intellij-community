@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components.impl.stores
 
 import com.intellij.configurationStore.SaveSession
@@ -43,11 +43,6 @@ interface IComponentStore {
   fun clearCaches()
 
   fun release()
-}
-
-@ApiStatus.Internal
-interface IComponentStoreOwner {
-  val componentStore: IComponentStore
 }
 
 data class SaveSessionAndFile(val session: SaveSession, val file: VirtualFile)

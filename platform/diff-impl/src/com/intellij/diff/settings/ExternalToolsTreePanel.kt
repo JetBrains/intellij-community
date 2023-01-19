@@ -1,21 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.settings
 
-import com.intellij.diff.DiffContentFactory
-import com.intellij.diff.DiffRequestFactory
-import com.intellij.diff.merge.MergeResult
-import com.intellij.diff.merge.ThreesideMergeRequest
 import com.intellij.diff.tools.external.ExternalDiffSettings
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup
 import com.intellij.diff.tools.external.ExternalDiffToolUtil
+import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diff.DiffBundle
-import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.fileTypes.FileTypes
-import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColoredListCellRenderer
@@ -24,15 +24,13 @@ import com.intellij.ui.SmartExpander
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.PathUtilRt
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
-import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Component
 import java.awt.event.MouseAdapter
@@ -47,7 +45,7 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
 
-internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) : BorderLayoutPanel() {
+internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
   private var treeState: TreeState
   private val treeModel = models.treeModel
   private val root = treeModel.root as DefaultMutableTreeNode
@@ -277,6 +275,11 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
       addActionListener { showTestMerge() }
     }
 
+    private val toolOutputEditor = ConsoleViewUtil.setupConsoleEditor(null, false, false).also {
+      it.settings.additionalLinesCount = 3
+    }
+    private var toolOutputConsole: MyTestOutputConsole? = null
+
     constructor(externalTool: ExternalTool) : this(externalTool.name, true) {
       isAutocompleteToolName = false
 
@@ -292,26 +295,28 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     init {
       title = DiffBundle.message("settings.external.tool.tree.add.dialog.title")
 
+      Disposer.register(disposable) { toolOutputConsole?.let { Disposer.dispose(it) } }
+
       init()
     }
 
     override fun createCenterPanel(): JComponent = panel {
-      lateinit var argumentPatternDescription: JEditorPane;
+      lateinit var argumentPatternDescription: JEditorPane
 
       row(DiffBundle.message("settings.external.tool.tree.add.dialog.field.group")) {
-        cell(groupField).horizontalAlign(HorizontalAlign.FILL)
+        cell(groupField).align(AlignX.FILL)
       }.visible(!isEditMode)
       row(DiffBundle.message("settings.external.tool.tree.add.dialog.field.program.path")) {
-        cell(programPathField).horizontalAlign(HorizontalAlign.FILL)
+        cell(programPathField).align(AlignX.FILL)
       }
       row(DiffBundle.message("settings.external.tool.tree.add.dialog.field.tool.name")) {
-        cell(toolNameField).horizontalAlign(HorizontalAlign.FILL).validationOnApply { toolFieldValidation(groupField.item, it.text) }
+        cell(toolNameField).align(AlignX.FILL).validationOnApply { toolFieldValidation(groupField.item, it.text) }
       }
       row(DiffBundle.message("settings.external.tool.tree.add.dialog.field.argument.pattern")) {
-        cell(argumentPatternField).horizontalAlign(HorizontalAlign.FILL)
+        cell(argumentPatternField).align(AlignX.FILL)
       }
       row {
-        cell(isMergeTrustExitCode).horizontalAlign(HorizontalAlign.FILL)
+        cell(isMergeTrustExitCode).align(AlignX.FILL)
           .visibleIf(object : ComponentPredicate() {
             override fun addListener(listener: (Boolean) -> Unit) {
               groupField.addItemListener {
@@ -349,6 +354,11 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
         cell(testThreeSideDiffButton).visible(!isMergeGroup)
         cell(testMergeButton).visible(isMergeGroup)
       }.topGap(TopGap.MEDIUM)
+      row {
+        cell(toolOutputEditor.component)
+          .align(Align.FILL)
+          .applyToComponent { preferredSize = JBUI.size(400, 150) }
+      }.resizableRow()
     }
 
     fun createExternalTool(): ExternalTool = ExternalTool(toolNameField.text,
@@ -394,56 +404,22 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     }
 
     private fun showTestDiff() {
-      try {
-        val factory = DiffContentFactory.getInstance()
-        val contents = listOf(factory.create(DiffBundle.message("settings.external.diff.left.file.content"), FileTypes.PLAIN_TEXT),
-                              factory.create(DiffBundle.message("settings.external.diff.right.file.content"), FileTypes.PLAIN_TEXT))
-        val titles = listOf("Left", "Right")
-        ExternalDiffToolUtil.execute(null, createExternalTool(), contents, titles, null)
-      }
-      catch (e: Exception) {
-        Messages.showErrorDialog(e.message, DiffBundle.message("error.cannot.show.diff"))
-      }
+      ExternalDiffToolUtil.testDiffTool2(null, createExternalTool(), resetToolOutputConsole())
     }
 
     private fun showTestThreeDiff() {
-      try {
-        val factory = DiffContentFactory.getInstance()
-        val contents = listOf(factory.create(DiffBundle.message("settings.external.diff.left.file.content"), FileTypes.PLAIN_TEXT),
-                              factory.create(DiffBundle.message("settings.external.diff.base.file.content"), FileTypes.PLAIN_TEXT),
-                              factory.create(DiffBundle.message("settings.external.diff.right.file.content"), FileTypes.PLAIN_TEXT))
-        val titles = listOf("Left", "Base", "Right")
-        ExternalDiffToolUtil.execute(null, createExternalTool(), contents, titles, null)
-      }
-      catch (e: Exception) {
-        Messages.showErrorDialog(e.message, DiffBundle.message("error.cannot.show.diff"))
-      }
+      ExternalDiffToolUtil.testDiffTool3(null, createExternalTool(), resetToolOutputConsole())
     }
 
     private fun showTestMerge() {
-      try {
-        val factory = DiffRequestFactory.getInstance()
-        val document = DocumentImpl(DiffBundle.message("settings.external.diff.original.output.file.content"))
+      ExternalDiffToolUtil.testMergeTool(null, createExternalTool(), resetToolOutputConsole())
+    }
 
-        val callback = { result: MergeResult ->
-          val message = when (result) {
-            MergeResult.CANCEL -> DiffBundle.message("settings.external.diff.merge.conflict.resolve.was.canceled")
-            else -> DiffBundle.message("settings.external.diff.merge.conflict.resolve.successful",
-                                       StringUtil.shortenPathWithEllipsis(document.text, 60))
-
-          }
-          Messages.showInfoMessage(message, DiffBundle.message("settings.external.diff.test.complete"))
-        }
-        val contents = listOf(DiffBundle.message("settings.external.diff.left.file.content"),
-                              DiffBundle.message("settings.external.diff.base.file.content"),
-                              DiffBundle.message("settings.external.diff.right.file.content"))
-        val titles = listOf("Left", "Base", "Right")
-        val request = factory.createMergeRequest(null, PlainTextFileType.INSTANCE, document, contents, null, titles, callback)
-        ExternalDiffToolUtil.executeMerge(null, createExternalTool(), request as ThreesideMergeRequest, this.contentPanel)
-      }
-      catch (e: Exception) {
-        Messages.showErrorDialog(e.message, DiffBundle.message("error.cannot.show.merge"))
-      }
+    @RequiresEdt
+    private fun resetToolOutputConsole(): ExternalDiffToolUtil.TestOutputConsole {
+      toolOutputConsole?.let { Disposer.dispose(it) }
+      toolOutputConsole = MyTestOutputConsole(toolOutputEditor)
+      return toolOutputConsole!!
     }
   }
 
@@ -505,5 +481,50 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
   companion object {
     private const val DIFF_TOOL_DEFAULT_ARGUMENT_PATTERN = "%1 %2 %3"
     private const val MERGE_TOOL_DEFAULT_ARGUMENT_PATTERN = "%1 %2 %3 %4"
+  }
+
+  private class MyTestOutputConsole(private val editor: Editor) : ExternalDiffToolUtil.TestOutputConsole, Disposable {
+    private val document = editor.document
+    private val modalityState = ModalityState.stateForComponent(editor.component)
+
+    private var isDisposed: Boolean = false
+    private var wasTerminated: Boolean = false // better handling for out-of-order events
+
+    init {
+      document.setText("")
+    }
+
+    override fun getComponent(): JComponent = editor.component
+
+    override fun appendOutput(outputType: Key<*>, line: String) {
+      appendText("$outputType: $line", false)
+    }
+
+    override fun processTerminated(exitCode: Int) {
+      appendText(DiffBundle.message("settings.external.tools.test.process.exit.text", exitCode), true)
+    }
+
+    private fun appendText(text: String, isTermination: Boolean) {
+      runInEdt(modalityState) {
+        if (isDisposed) return@runInEdt // the next test session has started
+        if (isTermination) wasTerminated = true
+
+        val offset = if (!isTermination && wasTerminated && document.lineCount > 1) {
+          // the last line is termination line, insert output next-to-last-line
+          document.getLineStartOffset(document.lineCount - 2) // -2, as process termination line also ends with \n
+        }
+        else {
+          // insert into the end
+          document.textLength
+        }
+
+        val line = if (text.endsWith('\n')) text else text + '\n'
+        document.insertString(offset, line)
+      }
+    }
+
+    override fun dispose() {
+      isDisposed = true
+    }
   }
 }

@@ -10,7 +10,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.MethodSignature
 import com.intellij.psi.util.TypeConversionUtil
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -174,7 +174,7 @@ internal fun samDistance(closure: Argument?, samClass: PsiClass?) : Int? {
   }
   samClass ?: return null
   val sam = findSingleAbstractMethod(samClass) ?: return null
-  val argument = closure.expression.castSafelyTo<GrFunctionalExpression>() ?: return null
+  val argument = closure.expression.asSafely<GrFunctionalExpression>() ?: return null
   if (argument.parameterList.isEmpty) {
     return 3
   }

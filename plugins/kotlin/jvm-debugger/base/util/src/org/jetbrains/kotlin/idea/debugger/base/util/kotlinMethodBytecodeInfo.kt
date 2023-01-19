@@ -7,18 +7,36 @@ import org.jetbrains.org.objectweb.asm.Label
 import org.jetbrains.org.objectweb.asm.MethodVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
 
-fun Method.isSimpleGetter() =
-    isSimpleMemberVariableGetter() ||
-    isSimpleStaticVariableGetter() ||
-    isJVMStaticVariableGetter()
+fun Method.isSimpleGetter(): Boolean {
+    if (DexDebugFacility.isDex(virtualMachine())) {
+        // TODO(KTIJ-23684): Add support for DEX
+        return false
+    }
 
-fun Method.isLateinitVariableGetter() =
-    isOldBackendLateinitVariableGetter() ||
-    isIRBackendLateinitVariableGetter() ||
-    isIRBackendLateinitVariableGetterReturningAny()
+    return isSimpleMemberVariableGetter()
+            || isSimpleStaticVariableGetter()
+            || isJVMStaticVariableGetter()
+}
 
-fun Method.isOldBackendLateinitVariableGetter() =
-    verifyMethod(14,
+fun Method.isLateinitVariableGetter(): Boolean {
+    if (DexDebugFacility.isDex(virtualMachine())) {
+        // TODO(KTIJ-23684): Add support for DEX
+        return false
+    }
+
+    return isOldBackendLateinitVariableGetter()
+            || isIRBackendLateinitVariableGetter()
+            || isIRBackendLateinitVariableGetterReturningAny()
+}
+
+fun Method.isOldBackendLateinitVariableGetter(): Boolean {
+    if (DexDebugFacility.isDex(virtualMachine())) {
+        // TODO(KTIJ-23684): Add support for DEX
+        return false
+    }
+
+    return verifyMethod(
+        14,
         intArrayOf(
             Opcodes.ALOAD,
             Opcodes.GETFIELD,
@@ -28,18 +46,31 @@ fun Method.isOldBackendLateinitVariableGetter() =
             Opcodes.INVOKESTATIC
         )
     )
+}
 
-fun Method.isIRBackendLateinitVariableGetterReturningAny() =
-    verifyMethod(
+fun Method.isIRBackendLateinitVariableGetterReturningAny(): Boolean {
+    if (DexDebugFacility.isDex(virtualMachine())) {
+        // TODO(KTIJ-23684): Add support for DEX
+        return false
+    }
+
+    return verifyMethod(
         expectedNumOfBytecodes = 19,
         MethodBytecodeVerifierFromArray(lateinitVarReturningAnyBytecodes)
     )
+}
 
-fun Method.isIRBackendLateinitVariableGetter() =
-    verifyMethod(
+fun Method.isIRBackendLateinitVariableGetter(): Boolean {
+    if (DexDebugFacility.isDex(virtualMachine())) {
+        // TODO(KTIJ-23684): Add support for DEX
+        return false
+    }
+
+    return verifyMethod(
         expectedNumOfBytecodes = 17,
         MethodBytecodeVerifierFromArray(lateinitVarPropertyBytecodes)
     )
+}
 
 private val commonLateinitVarPropertyBytecodes =
     intArrayOf(
@@ -68,7 +99,7 @@ private fun Method.isSimpleMemberVariableGetter() =
 private fun Method.isJVMStaticVariableGetter() =
     verifyMethod(7, object : MethodBytecodeVerifier(3) {
         override fun verify(opcode: Int, position: Int) =
-            when(position) {
+            when (position) {
                 0 -> opcode == Opcodes.GETSTATIC
                 1 -> opcode == Opcodes.GETSTATIC || opcode == Opcodes.INVOKEVIRTUAL
                 2 -> opcode.isReturnOpcode()

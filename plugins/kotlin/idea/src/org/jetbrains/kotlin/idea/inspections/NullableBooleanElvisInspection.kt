@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeSimplified
+import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.simplify
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -64,14 +66,13 @@ class NullableBooleanElvisInspection : AbstractKotlinInspection(), CleanupLocalI
                 KtPsiUtil.isFalseConstant(constPart) -> false
                 else -> return
             }
-            val equalityCheckExpression = element.replaced(KtPsiFactory(constPart).buildExpression {
+            val equalityCheckExpression = element.replaced(KtPsiFactory(project).buildExpression {
                 appendExpression(exprPart)
                 appendFixedText(if (constValue) " != false" else " == true")
             })
             val prefixExpression = equalityCheckExpression.getParentOfType<KtPrefixExpression>(strict = true) ?: return
-            val simplifier = SimplifyNegatedBinaryExpressionInspection()
-            if (simplifier.isApplicable(prefixExpression)) {
-                simplifier.applyTo(prefixExpression)
+            if (prefixExpression.canBeSimplified()) {
+                prefixExpression.simplify()
             }
         }
     }

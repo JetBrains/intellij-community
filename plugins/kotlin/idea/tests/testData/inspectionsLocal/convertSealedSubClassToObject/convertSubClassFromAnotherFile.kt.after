@@ -1,3 +1,3 @@
-// FIX: Convert sealed sub-class to object
+// FIX: Convert sealed subclass to object
 // COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces -XXLanguage:+AllowSealedInheritorsInDifferentFilesOfSamePackage
 object SubSealed : Sealed()

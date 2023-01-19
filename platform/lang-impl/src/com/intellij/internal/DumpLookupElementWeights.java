@@ -19,9 +19,6 @@ import java.awt.datatransfer.StringSelection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public final class DumpLookupElementWeights extends AnAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(DumpLookupElementWeights.class);

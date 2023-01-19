@@ -12,7 +12,7 @@ import com.example.mylibrary.CommonMainApi
 
 class <lineMarker descr="Related XML file">MainActivity</lineMarker> : AppCompatActivity(), CommonMainApi, AndroidMainApi {
 
-    override fun <lineMarker descr="Overrides function in 'AppCompatActivity'">onCreate</lineMarker>(savedInstanceState: Bundle?) {
+    override fun <lineMarker descr="Overrides function in AppCompatActivity (androidx.appcompat.app) Press Ctrl+U to navigate">onCreate</lineMarker>(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
@@ -23,13 +23,13 @@ class <lineMarker descr="Related XML file">MainActivity</lineMarker> : AppCompat
         }
     }
 
-    override fun <lineMarker descr="Overrides function in 'Activity'">onCreateOptionsMenu</lineMarker>(menu: Menu): Boolean {
+    override fun <lineMarker descr="Overrides function in Activity (android.app) Press Ctrl+U to navigate">onCreateOptionsMenu</lineMarker>(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
     }
 
-    override fun <lineMarker descr="Overrides function in 'Activity'">onOptionsItemSelected</lineMarker>(item: MenuItem): Boolean {
+    override fun <lineMarker descr="Overrides function in Activity (android.app) Press Ctrl+U to navigate">onOptionsItemSelected</lineMarker>(item: MenuItem): Boolean {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
@@ -39,7 +39,7 @@ class <lineMarker descr="Related XML file">MainActivity</lineMarker> : AppCompat
         }
     }
 
-    override fun <lineMarker descr="Implements function in 'AndroidMainApi'">fragment</lineMarker>(fragment: Fragment) {
+    override fun <lineMarker descr="Implements function in AndroidMainApi (com.example.mylibrary) Press Ctrl+U to navigate">fragment</lineMarker>(fragment: Fragment) {
         println(fragment)
     }
 }

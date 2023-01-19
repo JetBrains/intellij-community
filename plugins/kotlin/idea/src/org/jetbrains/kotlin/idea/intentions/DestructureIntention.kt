@@ -55,7 +55,7 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
 ) {
     override fun applyTo(element: KtDeclaration, editor: Editor?) {
         val (usagesToRemove, removeSelectorInLoopRange) = collectUsagesToRemove(element) ?: return
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         val parent = element.parent
         val (container, anchor) = if (parent is KtParameterList) parent.parent to null else parent to element
         val validator = Fe10KotlinNewDeclarationNameValidator(
@@ -83,7 +83,7 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
             runWriteActionIfPhysical(element) {
                 variableToDrop?.delete()
                 usagesToReplace.forEach {
-                    it.replace(factory.createExpression(suggestedName))
+                    it.replace(psiFactory.createExpression(suggestedName))
                 }
             }
             names.add(suggestedName)
@@ -95,7 +95,7 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
                 val loopRange = (element.parent as? KtForExpression)?.loopRange
                 runWriteActionIfPhysical(element) {
                     val type = element.typeReference?.let { ": ${it.text}" } ?: ""
-                    element.replace(factory.createDestructuringParameter("($joinedNames)$type"))
+                    element.replace(psiFactory.createDestructuringParameter("($joinedNames)$type"))
                     if (removeSelectorInLoopRange && loopRange is KtDotQualifiedExpression) {
                         loopRange.replace(loopRange.receiverExpression)
                     }
@@ -107,7 +107,7 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
                 SpecifyExplicitLambdaSignatureIntention().applyTo(lambda, editor)
                 runWriteActionIfPhysical(element) {
                     lambda.functionLiteral.valueParameters.singleOrNull()?.replace(
-                        factory.createDestructuringParameter("($joinedNames)")
+                        psiFactory.createDestructuringParameter("($joinedNames)")
                     )
                 }
             }
@@ -117,7 +117,7 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
                 val modifierList = element.modifierList?.copied()
                 runWriteActionIfPhysical(element) {
                     val result = element.replace(
-                        factory.createDestructuringDeclarationByPattern(
+                        psiFactory.createDestructuringDeclarationByPattern(
                             "val ($joinedNames) = $0", rangeAfterEq
                         )
                     ) as KtModifierListOwner

@@ -1,3 +1,5 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 class T
 
 object O {
@@ -17,7 +19,7 @@ class A {
     }
 }
 
-// EXIST: { lookupString: "fooForA", itemText: "fooForA", icon: "nodes/function.svg"}
-// EXIST: { lookupString: "fooForB", itemText: "fooForB", icon: "nodes/function.svg"}
-// EXIST: { lookupString: "fooForT", itemText: "fooForT", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "fooForA", itemText: "fooForA", icon: "Function"}
+// EXIST: { lookupString: "fooForB", itemText: "fooForB", icon: "Function"}
+// EXIST: { lookupString: "fooForT", itemText: "fooForT", icon: "Function"}
 // ABSENT: fooForC

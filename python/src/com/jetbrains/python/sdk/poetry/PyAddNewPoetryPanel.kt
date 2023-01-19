@@ -37,7 +37,6 @@ import javax.swing.event.DocumentEvent
 /**
  * The UI panel for adding the poetry interpreter for the project.
  *
- * @author vlan
  */
 
 /**
@@ -50,7 +49,7 @@ class PyAddNewPoetryPanel(private val project: Project?,
                           override var newProjectPath: String?,
                           context: UserDataHolder) : PyAddNewEnvPanel() {
   override val envName = "Poetry"
-  override val panelName: String get() = "Poetry Environment"
+  override val panelName: String get() = PyBundle.message("python.sdk.poetry.environment.panel.title")
 
   // TODO: Need a extension point
   override val icon: Icon = POETRY_ICON
@@ -63,12 +62,12 @@ class PyAddNewPoetryPanel(private val project: Project?,
     addInterpretersAsync(baseSdkField) {
       val sdks = findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() }
                  ?: detectSystemWideSdks(module, existingSdks, context)
-      sdks.filterNot { PythonSdkUtil.isInvalid(it) || it.isPoetry }
+      sdks.filterNot { !it.sdkSeemsValid || it.isPoetry }
     }
   }
 
 
-  private val installPackagesCheckBox = JBCheckBox("Install packages from pyproject.toml").apply {
+  private val installPackagesCheckBox = JBCheckBox(PyBundle.message("python.sdk.poetry.install.packages.from.toml.checkbox.text")).apply {
     isVisible = projectPath?.let {
       StandardFileSystems.local().findFileByPath(it)?.findChild(PY_PROJECT_TOML)?.let { file -> getPyProjectTomlForPoetry(file) }
     } != null
@@ -204,7 +203,7 @@ class PyAddNewPoetryPanel(private val project: Project?,
     if (isVenvInProject(path) == false) return null
     val inProjectEnvExecutable = inProjectEnvPath?.let { computePythonExecutable(it) } ?: return null
     val inProjectEnv = homePath[inProjectEnvExecutable] ?: return null
-    return ValidationInfo("Poetry interpreter has been already added, select '${inProjectEnv.name}'")
+    return ValidationInfo(PyBundle.message("python.sdk.poetry.dialog.message.poetry.interpreter.has.been.already.added", inProjectEnv.name))
   }
 
 

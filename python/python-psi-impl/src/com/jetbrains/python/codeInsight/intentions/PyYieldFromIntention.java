@@ -26,9 +26,6 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public class PyYieldFromIntention extends PyBaseIntentionAction {
   @NotNull
   @Override

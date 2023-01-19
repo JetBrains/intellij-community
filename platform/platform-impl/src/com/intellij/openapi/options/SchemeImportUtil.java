@@ -8,6 +8,7 @@ import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -59,10 +60,7 @@ public final class SchemeImportUtil {
   }
 
   private static boolean canSelectJarFile(String @NotNull [] sourceExtensions) {
-    for (String ext : sourceExtensions) {
-      if ("jar".equals(ext)) return true;
-    }
-    return false;
+    return ArrayUtil.contains("jar", sourceExtensions);
   }
 
   @NotNull

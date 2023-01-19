@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author dcheryasov
- */
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/")
 public class PyQuickFixTest extends PyTestCase {
 
@@ -713,9 +710,10 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-20452
   public void testRemoveRedundantEscapeInMultiPartRegExp() {
     myFixture.enableInspections(new RegExpRedundantEscapeInspection());
-    myFixture.configureByText(PythonFileType.INSTANCE, "import re\n" +
-                                                       "re.compile(\"(?P<foo>\"\n" +
-                                                       "           \"((<caret>\\/(?P<bar>.+))?))\")");
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+      import re
+      re.compile("(?P<foo>"
+                 "((<caret>\\/(?P<bar>.+))?))")""");
 
     final List<IntentionAction> quickFixes = myFixture.getAllQuickFixes();
     assertEquals(1, quickFixes.size());
@@ -724,9 +722,10 @@ public class PyQuickFixTest extends PyTestCase {
     assertEquals("Remove redundant escape", removeRedundantEscapeFix.getText());
 
     myFixture.launchAction(removeRedundantEscapeFix);
-    myFixture.checkResult("import re\n" +
-                          "re.compile(\"(?P<foo>\"\n" +
-                          "           \"((/(?P<bar>.+))?))\")");
+    myFixture.checkResult("""
+                            import re
+                            re.compile("(?P<foo>"
+                                       "((/(?P<bar>.+))?))")""");
   }
 
   // PY-8174

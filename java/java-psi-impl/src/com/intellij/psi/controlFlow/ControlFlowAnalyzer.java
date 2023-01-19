@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -713,6 +713,15 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override
   public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
+    handleForeach(statement);
+  }
+
+  @Override
+  public void visitForeachPatternStatement(@NotNull PsiForeachPatternStatement statement) {
+    handleForeach(statement);
+  }
+
+  private void handleForeach(@NotNull PsiForeachStatementBase statement) {
     startElement(statement);
     final PsiStatement body = statement.getBody();
     myStartStatementStack.pushStatement(body == null ? statement : body, false);
@@ -727,9 +736,14 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     myCurrentFlow.addInstruction(instruction);
     addElementOffsetLater(statement, false);
 
-    final PsiParameter iterationParameter = statement.getIterationParameter();
-    if (myPolicy.isParameterAccepted(iterationParameter)) {
-      generateWriteInstruction(iterationParameter);
+    if (statement instanceof PsiForeachStatement) {
+      final PsiParameter iterationParameter = ((PsiForeachStatement)statement).getIterationParameter();
+      if (myPolicy.isParameterAccepted(iterationParameter)) {
+        generateWriteInstruction(iterationParameter);
+      }
+    } else if (statement instanceof PsiForeachPatternStatement) {
+      PsiPattern pattern = ((PsiForeachPatternStatement)statement).getIterationPattern();
+      processPattern(pattern);
     }
     if (body != null) {
       body.accept(this);
@@ -919,6 +933,14 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         if (caseValue instanceof PsiExpression) {
           generateExpressionInstructions((PsiExpression)caseValue);
         }
+        else if (caseValue instanceof PsiPatternGuard) {
+          PsiPatternGuard patternGuard = (PsiPatternGuard)caseValue;
+          processPattern(patternGuard.getPattern());
+          generateExpressionInstructions(patternGuard.getGuardingExpression());
+        }
+        else if (caseValue instanceof PsiPattern) {
+          processPattern((PsiPattern)caseValue);
+        }
       }
     }
   }
@@ -957,7 +979,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         if (labelElementList != null) {
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
             if (element instanceof PsiDefaultCaseLabelElement ||
-                element instanceof PsiPattern && exprType != null && JavaPsiPatternUtil.isTotalForType(element, exprType)) {
+                element instanceof PsiPattern && exprType != null && JavaPsiPatternUtil.isUnconditionalForType(element, exprType)) {
               needToCreateDefault = true;
               break;
             }
@@ -1616,15 +1638,29 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     operand.accept(this);
 
     PsiPattern pattern = expression.getPattern();
-    if (pattern instanceof PsiTypeTestPattern) {
-      PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
-
-      if (variable != null) {
-        myCurrentFlow.addInstruction(new WriteVariableInstruction(variable));
-      }
+    if (pattern != null) {
+      processPattern(pattern);
     }
 
     finishElement(expression);
+  }
+
+  private void processPattern(@NotNull PsiPattern pattern) {
+    PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
+    if (patternVariable != null) {
+      generateWriteInstruction(patternVariable);
+    }
+    if (pattern instanceof PsiDeconstructionPattern) {
+      PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)pattern;
+      PsiPattern[] deconstructionComponents = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
+      for (PsiPattern deconstructionComponent : deconstructionComponents) {
+        ProgressManager.checkCanceled();
+        processPattern(deconstructionComponent);
+      }
+    }
+    else if (pattern instanceof PsiGuardedPattern) {
+      generateExpressionInstructions(((PsiGuardedPattern)pattern).getGuardingExpression());
+    }
   }
 
   @Override

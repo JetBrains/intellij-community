@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.logging;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.logging.StringConcatenationArgumentToLogCallInspection;
@@ -23,6 +24,11 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
   public void testCharLiteral() { doTest(); }
   public void testQuoteCharLiteral() { doTest(); }
   public void testLog4JLogBuilder() { doTest(); }
+  public void testTextBlocks() {
+    doTest(
+    InspectionsBundle.message("fix.all.inspection.problems.in.file",
+                              InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.display.name")));
+  }
 
   @Override
   protected String getRelativePath() {

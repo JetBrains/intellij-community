@@ -15,7 +15,7 @@ internal class PsiElementNavigationTarget(private val myElement: PsiElement) : N
     myElement.createSmartPointer(), ::PsiElementNavigationTarget
   )
 
-  override fun getTargetPresentation(): TargetPresentation = targetPresentation(myElement)
+  override fun presentation(): TargetPresentation = targetPresentation(myElement)
 
   override fun navigationRequest(): NavigationRequest? = myElement.psiNavigatable()?.navigationRequest()
 

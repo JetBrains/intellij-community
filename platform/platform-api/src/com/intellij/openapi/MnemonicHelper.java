@@ -2,11 +2,11 @@
 package com.intellij.openapi;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentTreeWatcher;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.DialogUtil;
@@ -21,7 +21,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.InputEvent;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -42,32 +41,24 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
 
   private static final String TEXT_CHANGED_PROPERTY = "text";
 
-  private static final PropertyChangeListener ourTextPropertyListener = new PropertyChangeListener() {
-    @Override
-    public void propertyChange(PropertyChangeEvent event) {
-      Object source = event.getSource();
-      // SwingUtilities.invokeLater is needed to process this event,
-      // because the method is invoked from the setText method
-      // before Swing updates mnemonics
-      if (source instanceof AbstractButton) {
-        //noinspection SSBasedInspection //see javax.swing.AbstractButton.setText
-        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic((AbstractButton)source));
-      }
-      else if (source instanceof JLabel) {
-        //noinspection SSBasedInspection //see javax.swing.JLabel.setText
-        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic((JLabel)source, null));
-      }
+  private static final PropertyChangeListener ourTextPropertyListener = event -> {
+    Object source = event.getSource();
+    // SwingUtilities.invokeLater is needed to process this event,
+    // because the method is invoked from the setText method
+    // before Swing updates mnemonics
+    if (source instanceof AbstractButton) {
+      //noinspection SSBasedInspection //see javax.swing.AbstractButton.setText
+      SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic((AbstractButton)source));
+    }
+    else if (source instanceof JLabel) {
+      //noinspection SSBasedInspection //see javax.swing.JLabel.setText
+      SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic((JLabel)source, null));
     }
   };
 
   private Map<Integer, String> myMnemonics;
 
-  /**
-   * @see #init(Component)
-   * @deprecated do not use this object as a tree watcher
-   */
-  @Deprecated(forRemoval = true)
-  public MnemonicHelper() {
+  private MnemonicHelper() {
     super(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
 
@@ -126,12 +117,16 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
   }
 
   public void checkForDuplicateMnemonics(JLabel label) {
-    if (!Registry.is("ide.checkDuplicateMnemonics")) return;
+    if (!isCheckingDuplicateMnemonicsEnabled()) {
+      return;
+    }
     checkForDuplicateMnemonics(label.getDisplayedMnemonic(), label.getText());
   }
 
   public void checkForDuplicateMnemonics(AbstractButton button) {
-    if (!Registry.is("ide.checkDuplicateMnemonics")) return;
+    if (!isCheckingDuplicateMnemonicsEnabled()) {
+      return;
+    }
     checkForDuplicateMnemonics(button.getMnemonic(), button.getText());
   }
 
@@ -146,28 +141,21 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
   }
 
   /**
-   * Creates shortcut for mnemonic replacing standard Alt+Letter to Ctrl+Alt+Letter on Mac with jdk version newer than 6
-   *
-   * @param ch mnemonic letter
-   * @return shortcut for mnemonic
-   */
-  public static CustomShortcutSet createShortcut(char ch) {
-    Character mnemonic = Character.valueOf(ch);
-    return CustomShortcutSet.fromString("alt " + (SystemInfo.isMac ? "released" : "pressed") + " " + mnemonic);
-  }
-
-  /**
    * Initializes mnemonics support for the specified component and for its children if needed.
    *
    * @param component the root component of the hierarchy
    */
   public static void init(Component component) {
-    if (Registry.is("ide.checkDuplicateMnemonics", false)) {
+    if (isCheckingDuplicateMnemonicsEnabled()) {
       new MnemonicHelper().register(component);
     }
     else {
       ourMnemonicFixer.addTo(component);
     }
+  }
+
+  private static boolean isCheckingDuplicateMnemonicsEnabled() {
+    return Boolean.getBoolean("ide.checkDuplicateMnemonics");
   }
 
   public static boolean hasMnemonic(@Nullable Component component, int keyCode) {
@@ -177,7 +165,7 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
     if (component instanceof JLabel) {
       return ((JLabel)component).getDisplayedMnemonic() == keyCode;
     }
-    IntPredicate checker = UIUtil.getClientProperty(component, MNEMONIC_CHECKER);
+    IntPredicate checker = ClientProperty.get(component, MNEMONIC_CHECKER);
     return checker != null && checker.test(keyCode);
   }
 

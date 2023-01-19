@@ -19,3 +19,5 @@ public open class Outer {
         }
     }
 }
+
+// FIR_COMPARISON

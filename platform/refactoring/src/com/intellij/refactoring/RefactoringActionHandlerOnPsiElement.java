@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 
-public interface RefactoringActionHandlerOnPsiElement<E extends PsiElement> extends RefactoringActionHandler {
+public interface RefactoringActionHandlerOnPsiElement<E extends PsiElement> extends PreviewableRefactoringActionHandler {
   /**
    * @param project project
    * @param editor editor

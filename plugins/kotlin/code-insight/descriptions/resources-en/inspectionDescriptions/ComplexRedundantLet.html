@@ -9,7 +9,7 @@ Reports a redundant argument-based <code>let</code> call.
       "1,2,3".let { it.split(',') }
   }
 </code></pre>
-<p>A quick-fix removes the extra <code>let()</code> call:</p>
+<p>The quick-fix removes the extra <code>let()</code> call:</p>
 <pre><code>
   fun example() {
       "1,2,3".split(',')

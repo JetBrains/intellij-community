@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.diagnostic.UntraceableException;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
@@ -89,7 +88,13 @@ public final class ThrowableInterner {
   private static final Field BACKTRACE_FIELD;
 
   static {
-    BACKTRACE_FIELD = ReflectionUtil.getDeclaredField(Throwable.class, "backtrace");
+    try {
+      BACKTRACE_FIELD = Throwable.class.getDeclaredField("backtrace");
+    }
+    catch (NoSuchFieldException e) {
+      throw new RuntimeException(e);
+    }
+    BACKTRACE_FIELD.setAccessible(true);
   }
 
   private static Object[] getBacktrace(@NotNull Throwable throwable) {
@@ -113,13 +118,12 @@ public final class ThrowableInterner {
       }
     }
     catch (Throwable e) {
-      //noinspection ConstantConditions
-      ExceptionUtil.rethrowAllAsUnchecked(e);
+      ExceptionUtilRt.rethrowUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
-  @NotNull
-  public static Throwable intern(@NotNull Throwable throwable) {
+  public static @NotNull Throwable intern(@NotNull Throwable throwable) {
     return getBacktrace(throwable) == null ? throwable : myTraceInterner.intern(throwable);
   }
 

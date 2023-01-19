@@ -33,6 +33,6 @@ class ViewerEditorTest: LightPlatformTestCase() {
     finally {
       EditorFactory.getInstance().releaseEditor(editor)
     }
-    verify(mockProvider, never()).getIndentOptions(ArgumentMatchers.any(), ArgumentMatchers.any())
+    verify(mockProvider, never()).getIndentOptions(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
   }
 }

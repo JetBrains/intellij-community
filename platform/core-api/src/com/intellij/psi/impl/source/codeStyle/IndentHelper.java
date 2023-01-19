@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class IndentHelper {
@@ -15,19 +14,9 @@ public abstract class IndentHelper {
   }
 
   /**
-   * @deprecated Use {@link #getIndent(PsiFile, ASTNode)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public final int getIndent(Project project, FileType fileType, ASTNode element) {
-    return getIndent(getFile(element), element);
-  }
-
-  /**
    * @deprecated Use {@link #getIndent(PsiFile, ASTNode, boolean)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
   public final int getIndent(Project project, FileType fileType, ASTNode element, boolean includeNonSpace) {
     return getIndent(getFile(element), element, includeNonSpace);
   }

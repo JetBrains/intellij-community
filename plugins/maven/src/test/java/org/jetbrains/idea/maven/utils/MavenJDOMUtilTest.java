@@ -28,10 +28,11 @@ public class MavenJDOMUtilTest extends MavenTestCase {
                                   "aaa<!--a--></foo></root>", "foo"));
     assertEquals("aaa", readValue("<root><foo>aaa<!--a-->\n" +
                                   "</foo></root>", "foo"));
-    assertEquals("aaa", readValue("<root><foo>\n" +
-                                  "aaa\n" +
-                                  "<!--a-->\n" +
-                                  "</foo></root>", "foo"));
+    assertEquals("aaa", readValue("""
+                                    <root><foo>
+                                    aaa
+                                    <!--a-->
+                                    </foo></root>""", "foo"));
   }
 
   private String readValue(String xml, String valuePath) throws IOException {

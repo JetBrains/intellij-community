@@ -21,7 +21,7 @@ import org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase;
 import org.jetbrains.jps.model.runConfiguration.JpsRunConfigurationType;
 import org.jetbrains.jps.model.runConfiguration.JpsTypedRunConfiguration;
 
-public class JpsRunConfigurationImpl<P extends JpsElement> extends JpsNamedCompositeElementBase<JpsRunConfigurationImpl<P>> implements
+public final class JpsRunConfigurationImpl<P extends JpsElement> extends JpsNamedCompositeElementBase<JpsRunConfigurationImpl<P>> implements
                                                                                                                             JpsTypedRunConfiguration<P> {
   private final JpsRunConfigurationType<P> myType;
   

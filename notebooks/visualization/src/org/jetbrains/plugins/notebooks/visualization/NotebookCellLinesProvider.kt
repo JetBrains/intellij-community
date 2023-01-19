@@ -4,6 +4,8 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 
 private const val ID: String = "org.jetbrains.plugins.notebooks.notebookCellLinesProvider"
@@ -11,7 +13,27 @@ private const val ID: String = "org.jetbrains.plugins.notebooks.notebookCellLine
 interface NotebookCellLinesProvider : IntervalsGenerator {
   fun create(document: Document): NotebookCellLines
 
-  companion object : LanguageExtension<NotebookCellLinesProvider>(ID)
+  companion object : LanguageExtension<NotebookCellLinesProvider>(ID) {
+    private val key = Key.create<NotebookCellLinesProvider>(NotebookCellLinesProvider::class.java.name)
+
+    fun install(editor: Editor): NotebookCellLinesProvider? {
+      get(editor.document)?.let { return it }
+      val project = editor.project ?: return null
+      return install(project, editor.document)
+    }
+
+    fun install(project: Project, document: Document): NotebookCellLinesProvider? {
+      get(document)?.let { return it }
+      val language = getLanguage(project, document) ?: return null
+      val provider = forLanguage(language) ?: return null
+      key.set(document, provider)
+      return provider
+    }
+
+    fun get(document: Document): NotebookCellLinesProvider? {
+      return document.getUserData(key)
+    }
+  }
 }
 
 interface IntervalsGenerator {
@@ -27,13 +49,5 @@ open class NonIncrementalCellLinesProvider protected constructor(private val int
     NonIncrementalCellLines.getOrNull(document)?.intervals ?: intervalsGenerator.makeIntervals(document)
 }
 
-internal fun getLanguage(editor: Editor): Language? =
-  editor
-    .project
-    ?.let(PsiDocumentManager::getInstance)
-    ?.getPsiFile(editor.document)
-    ?.language
-
-val Editor.notebookCellLinesProvider: NotebookCellLinesProvider?
-  get() = getLanguage(this)
-    ?.let(NotebookCellLinesProvider::forLanguage)
+internal fun getLanguage(project: Project, document: Document): Language? =
+  PsiDocumentManager.getInstance(project).getPsiFile(document)?.language

@@ -2,11 +2,8 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
-import com.intellij.terminal.JBTerminalWidget;
-import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalTypeAheadSettings;
@@ -18,20 +15,6 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
   @Override
   public boolean shouldCloseTabOnLogout(TtyConnector ttyConnector) {
     return TerminalOptionsProvider.getInstance().getCloseSessionOnLogout();
-  }
-
-  /**
-   * @deprecated use {@link JBTerminalWidget#getSessionName()} instead
-   */
-  @Deprecated
-  @Override
-  public String tabName(TtyConnector ttyConnector, String sessionName) { //for local terminal use name from settings
-    if (ttyConnector instanceof PtyProcessTtyConnector) {
-      return TerminalOptionsProvider.getInstance().getTabName();
-    }
-    else {
-      return sessionName;
-    }
   }
 
   @Override

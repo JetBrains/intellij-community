@@ -13,13 +13,16 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.util.caching.LockFreeFineGrainedEntityCache
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.ArrayDeque
+import java.util.*
 
 /**
  * Maintains and caches mapping ModuleInfo -> SdkInfo *form its dependencies*
@@ -46,7 +49,7 @@ internal class SdkInfoCacheImpl(project: Project) :
     LockFreeFineGrainedEntityCache<ModuleInfo, SdkInfoCacheImpl.SdkDependency>(project, true),
     ProjectJdkTable.Listener,
     ModuleRootListener,
-    OutdatedLibraryInfoListener,
+    LibraryInfoListener,
     WorkspaceModelChangeListener {
 
     @JvmInline
@@ -54,10 +57,10 @@ internal class SdkInfoCacheImpl(project: Project) :
 
     override fun subscribe() {
         val connection = project.messageBus.connect(this)
-        connection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
+        connection.subscribe(LibraryInfoListener.TOPIC, this)
         connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
-        WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, this)
+        connection.subscribe(WorkspaceModelTopics.CHANGED, this)
     }
 
     override fun changed(event: VersionedStorageChange) {
@@ -93,6 +96,8 @@ internal class SdkInfoCacheImpl(project: Project) :
     }
 
     override fun rootsChanged(event: ModuleRootEvent) {
+        if (event.isCausedByWorkspaceModelChangesOnly) return
+
         // SDK could be changed (esp in tests) out of message bus subscription
         val sdks = project.allSdks()
         useCache { instance ->
@@ -119,17 +124,18 @@ internal class SdkInfoCacheImpl(project: Project) :
             return sdkDependency
         }
 
-        val libraryDependenciesCache = LibraryDependenciesCache.getInstance(this.project)
         val visitedModuleInfos = mutableSetOf<ModuleInfo>()
 
-        // graphs is a stack of paths is used to implement DFS without recursion
-        // it depends on a number of libs, that could be > 10k for a huge monorepos
-        val graphs = ArrayDeque<List<ModuleInfo>>().also {
-            // initial graph item
-            it.add(listOf(key))
-        }
+        val (path, sdkInfo) = run(fun(): Pair<List<ModuleInfo>?, SdkDependency> {
+            val libraryDependenciesCache = LibraryDependenciesCache.getInstance(this.project)
 
-        val (path, sdkInfo) = run {
+            // graphs is a stack of paths is used to implement DFS without recursion
+            // it depends on a number of libs, that could be > 10k for a huge monorepos
+            val graphs = ArrayDeque<List<ModuleInfo>>().apply {
+                // initial graph item
+                add(listOf(key))
+            }
+
             while (graphs.isNotEmpty()) {
                 ProgressManager.checkCanceled()
                 // graph of DFS from the root i.e from `moduleInfo`
@@ -143,27 +149,24 @@ internal class SdkInfoCacheImpl(project: Project) :
                 // the result could be immediately returned when cache already has it
                 val cached = cache[last]
                 if (cached != null) {
-                    cached.sdk?.let { return@run graph to cached }
-                    continue
+                    cached.sdk?.let { return graph to cached }
                 }
 
                 if (!visitedModuleInfos.add(last)) continue
 
-                val dependencies = run deps@{
-                    if (last is LibraryInfo) {
-                        // use a special case for LibraryInfo to reuse values from a library dependencies cache
-                        val libraryDependencies = libraryDependenciesCache.getLibraryDependencies(last)
-                        libraryDependencies.sdk.firstOrNull()?.let {
-                            return@run graph to SdkDependency(it)
+                val dependencies = if (last is LibraryInfo) {
+                    // use a special case for LibraryInfo to reuse values from a library dependencies cache
+                    val libraryDependencies = libraryDependenciesCache.getLibraryDependencies(last)
+                    libraryDependencies.sdk.firstOrNull()?.let {
+                        return graph to SdkDependency(it)
+                    }
+
+                    libraryDependencies.libraries
+                } else {
+                    last.dependencies().also { dependencies ->
+                        dependencies.firstIsInstanceOrNull<SdkInfo>()?.let {
+                            return graph to SdkDependency(it)
                         }
-                        libraryDependencies.libraries
-                    } else {
-                        last.dependencies()
-                            .also { dependencies ->
-                                dependencies.firstIsInstanceOrNull<SdkInfo>()?.let {
-                                    return@run graph to SdkDependency(it)
-                                }
-                            }
                     }
                 }
 
@@ -172,7 +175,7 @@ internal class SdkInfoCacheImpl(project: Project) :
                     if (sdkDependency != null) {
                         sdkDependency.sdk?.let {
                             // sdk is found when some dependency is already resolved
-                            return@run (graph + dependency) to sdkDependency
+                            return (graph + dependency) to sdkDependency
                         }
                     } else {
                         // otherwise add a new graph of (existed graph + dependency) as candidates for DFS lookup
@@ -182,16 +185,18 @@ internal class SdkInfoCacheImpl(project: Project) :
                     }
                 }
             }
-            return@run null to noSdkDependency
-        }
-        // when sdk is found: mark all graph elements could be resolved to the same sdk
-        path?.let {
-            it.forEach { info -> cache[info] = sdkInfo }
 
-            visitedModuleInfos.removeAll(it)
+            return null to noSdkDependency
+        })
+
+        // when sdk is found: mark all graph elements could be resolved to the same sdk
+        if (path != null) {
+            path.forEach { info -> cache[info] = sdkInfo }
+            visitedModuleInfos.removeAll(path)
         }
+
         // mark all visited modules (apart from found path) as dead ends
-        visitedModuleInfos.forEach { info -> cache[info] = noSdkDependency }
+        visitedModuleInfos.forEach { info -> cache.putIfAbsent(info, noSdkDependency) }
 
         return cache[key] ?: noSdkDependency
     }

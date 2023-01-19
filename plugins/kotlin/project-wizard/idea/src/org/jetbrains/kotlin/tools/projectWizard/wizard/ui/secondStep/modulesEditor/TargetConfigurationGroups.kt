@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 
 object TargetConfigurationGroups {
-    val JS = FinalTargetConfiguratorGroup(
+    private val JS = FinalTargetConfiguratorGroup(
         ModuleType.js.projectTypeName,
         ModuleType.js,
         KotlinIcons.Wizard.JS,
@@ -20,7 +20,7 @@ object TargetConfigurationGroups {
     )
 
     object NATIVE {
-        val LINUX = FinalTargetConfiguratorGroup(
+        private val LINUX = FinalTargetConfiguratorGroup(
             KotlinNewProjectWizardBundle.message("module.configuration.group.linux"),
             ModuleType.native,
             KotlinIcons.Wizard.LINUX,
@@ -32,7 +32,7 @@ object TargetConfigurationGroups {
             )
         )
 
-        val WINDOWS = FinalTargetConfiguratorGroup(
+        private val WINDOWS = FinalTargetConfiguratorGroup(
             KotlinNewProjectWizardBundle.message("module.configuration.group.windows.mingw"),
             ModuleType.native,
             KotlinIcons.Wizard.WINDOWS,
@@ -42,7 +42,7 @@ object TargetConfigurationGroups {
             )
         )
 
-        val MAC = FinalTargetConfiguratorGroup(
+        private val MAC = FinalTargetConfiguratorGroup(
             KotlinNewProjectWizardBundle.message("module.configuration.group.macos"),
             ModuleType.native,
             KotlinIcons.Wizard.MAC_OS,
@@ -51,7 +51,7 @@ object TargetConfigurationGroups {
             )
         )
 
-        val IOS = FinalTargetConfiguratorGroup(
+        private val IOS = FinalTargetConfiguratorGroup(
             KotlinNewProjectWizardBundle.message("module.configuration.group.ios"),
             ModuleType.native,
             KotlinIcons.Wizard.IOS,
@@ -62,7 +62,7 @@ object TargetConfigurationGroups {
             )
         )
 
-        val ANDROID_NATIVE = FinalTargetConfiguratorGroup(
+        private val ANDROID_NATIVE = FinalTargetConfiguratorGroup(
             KotlinNewProjectWizardBundle.message("module.configuration.group.android.native"),
             ModuleType.native,
             KotlinIcons.Wizard.ANDROID,

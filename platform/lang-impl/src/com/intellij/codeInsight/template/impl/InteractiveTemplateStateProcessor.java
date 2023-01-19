@@ -127,7 +127,7 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
     }
   }
 
-  private void runLookup(TemplateState state, final List<TemplateExpressionLookupElement> lookupItems, Project project, Editor editor,
+  private void runLookup(TemplateState state, final List<? extends TemplateExpressionLookupElement> lookupItems, Project project, Editor editor,
                          @Nullable @NlsContexts.PopupAdvertisement String advertisingText, @NotNull LookupFocusDegree lookupFocusDegree) {
     if (state.isDisposed()) return;
 
@@ -173,7 +173,7 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
     });
   }
 
-  private static void insertSingleItem(Editor editor, List<TemplateExpressionLookupElement> lookupItems) {
+  private static void insertSingleItem(Editor editor, List<? extends TemplateExpressionLookupElement> lookupItems) {
     TemplateExpressionLookupElement first = lookupItems.get(0);
     EditorModificationUtil.insertStringAtCaret(editor, first.getLookupString());
     first.handleTemplateInsert(lookupItems, Lookup.AUTO_INSERT_SELECT_CHAR);

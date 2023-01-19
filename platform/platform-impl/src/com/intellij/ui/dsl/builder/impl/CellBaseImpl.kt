@@ -1,12 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
-import com.intellij.ui.dsl.builder.CellBase
-import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -37,19 +38,48 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
     return this
   }
 
+  override fun visibleIf(property: ObservableProperty<Boolean>): CellBase<T> {
+    visible(property.get())
+    property.whenPropertyChanged {
+      visible(it)
+    }
+    return this
+  }
+
   override fun enabledIf(predicate: ComponentPredicate): CellBase<T> {
     enabled(predicate())
     predicate.addListener { enabled(it) }
     return this
   }
 
+  override fun enabledIf(property: ObservableProperty<Boolean>): CellBase<T> {
+    enabled(property.get())
+    property.whenPropertyChanged {
+      enabled(it)
+    }
+    return this
+  }
+
+  @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T> {
     this.horizontalAlign = horizontalAlign
     return this
   }
 
+  @Deprecated("Use align method instead")
   override fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T> {
     this.verticalAlign = verticalAlign
+    return this
+  }
+
+  override fun align(align: Align): CellBase<T> {
+    when (align) {
+      is AlignX -> setAlign(align, null)
+      is AlignY -> setAlign(null, align)
+      is AlignBoth -> {
+        setAlign(align.alignX, align.alignY)
+      }
+    }
     return this
   }
 
@@ -66,5 +96,25 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
   override fun customize(customGaps: Gaps): CellBase<T> {
     this.customGaps = customGaps
     return this
+  }
+
+  private fun setAlign(alignX: AlignX?, alignY: AlignY?) {
+    alignX?.let {
+      horizontalAlign = when (it) {
+        AlignX.LEFT -> HorizontalAlign.LEFT
+        AlignX.CENTER -> HorizontalAlign.CENTER
+        AlignX.RIGHT -> HorizontalAlign.RIGHT
+        AlignX.FILL -> HorizontalAlign.FILL
+      }
+    }
+
+    alignY?.let {
+      verticalAlign = when (it) {
+        AlignY.TOP -> VerticalAlign.TOP
+        AlignY.CENTER -> VerticalAlign.CENTER
+        AlignY.BOTTOM -> VerticalAlign.BOTTOM
+        AlignY.FILL -> VerticalAlign.FILL
+      }
+    }
   }
 }

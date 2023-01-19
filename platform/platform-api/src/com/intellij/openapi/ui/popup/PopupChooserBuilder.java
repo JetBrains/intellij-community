@@ -1,15 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
-import com.intellij.openapi.ui.ListComponentUpdater;
+import com.intellij.openapi.ui.GenericListComponentUpdater;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ActiveComponent;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -21,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -53,6 +57,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private final List<JBPopupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private @NlsContexts.PopupAdvertisement String myAd;
+  private JComponent myAdvertiser;
+
   private Dimension myMinSize;
   private ActiveComponent myCommandButton;
   private final List<Pair<ActionListener,KeyStroke>> myKeyboardActions = new ArrayList<>();
@@ -93,7 +99,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     default void autoSelect() {}
     default void setSelectionMode(int selection) {}
 
-    default ListComponentUpdater getBackgroundUpdater() {
+    default GenericListComponentUpdater<T> getBackgroundUpdater() {
       return null;
     }
 
@@ -121,6 +127,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     default JComponent buildFinalComponent() {
       return getComponent();
     }
+
+    default void setFixedRendererSize(@NotNull Dimension dimension) {}
   }
 
   @Override
@@ -320,12 +328,6 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   public @NotNull JBPopup createPopup() {
     JPanel contentPane = new JPanel(new BorderLayout());
-    if (!myForceMovable && myTitle != null) {
-      JLabel label = new JLabel(myTitle);
-      label.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
-      label.setHorizontalAlignment(SwingConstants.CENTER);
-      contentPane.add(label, BorderLayout.NORTH);
-    }
 
     if (myAutoselect) {
       myChooserComponent.autoSelect();
@@ -388,6 +390,10 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       addEastComponentToContentPane(contentPane, myEastComponent);
     }
 
+    if (ExperimentalUI.isNewUI()) {
+      applyInsets(contentComponent);
+    }
+
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(contentPane, myPreferableFocusComponent);
     for (JBPopupListener each : myListeners) {
       builder.addListener(each);
@@ -398,11 +404,12 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       .setRequestFocus(myRequestFocus)
       .setResizable(myForceResizable)
       .setMovable(myForceMovable)
-      .setTitle(myForceMovable ? myTitle : null)
+      .setTitle(myTitle)
       .setAlpha(myAlpha)
       .setFocusOwners(myFocusOwners)
       .setCancelKeyEnabled(myCancelKeyEnabled)
       .setAdText(myAd, myAdAlignment)
+      .setAdvertiser(myAdvertiser)
       .setKeyboardActions(myKeyboardActions)
       .setMayBeParent(myMayBeParent)
       .setLocateWithinScreenBounds(true)
@@ -533,6 +540,12 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   @Override
+  public PopupChooserBuilder<T> setAdvertiser(@Nullable JComponent advertiser) {
+    myAdvertiser = advertiser;
+    return this;
+  }
+
+  @Override
   public PopupChooserBuilder<T> setAdText(String ad, int alignment) {
     myAd = ad;
     myAdAlignment = alignment;
@@ -596,12 +609,28 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return this;
   }
 
+  @Override
+  public IPopupChooserBuilder<T> withFixedRendererSize(@NotNull Dimension dimension) {
+    myChooserComponent.setFixedRendererSize(dimension);
+    return this;
+  }
+
   public int getVisibleRowCount() {
     return myVisibleRowCount;
   }
 
   @Override
-  public ListComponentUpdater getBackgroundUpdater() {
+  public GenericListComponentUpdater<T> getBackgroundUpdater() {
     return myChooserComponent.getBackgroundUpdater();
+  }
+
+  /**
+   * Applies borders according to contentComponent. Can be extended later for different types of component
+   */
+  private void applyInsets(JComponent contentComponent) {
+    if (contentComponent instanceof ListWithFilter<?> listWithFilter) {
+      Insets insets = PopupUtil.getListInsets(StringUtil.isNotEmpty(myTitle), StringUtil.isNotEmpty(myAd));
+      listWithFilter.getList().setBorder(new EmptyBorder(insets));
+    }
   }
 }

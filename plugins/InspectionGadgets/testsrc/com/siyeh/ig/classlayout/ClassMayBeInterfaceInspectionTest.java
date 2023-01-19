@@ -24,45 +24,49 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
 public class ClassMayBeInterfaceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testOne() {
-    doTest("abstract class /*Abstract class 'ConvertMe' may be interface*/ConvertMe/**/ {\n" +
-           "    public static final String S = \"\";\n" +
-           "    public void m() {}\n" +
-           "    public static void n() {\n" +
-           "        new ConvertMe() {};\n" +
-           "        class X extends ConvertMe {}\n" +
-           "    }\n" +
-           "    public class A {}\n" +
-           "}");
+    doTest("""
+             abstract class /*Abstract class 'ConvertMe' may be interface*/ConvertMe/**/ {
+                 public static final String S = "";
+                 public void m() {}
+                 public static void n() {
+                     new ConvertMe() {};
+                     class X extends ConvertMe {}
+                 }
+                 public class A {}
+             }""");
   }
 
   public void testOnTwo() {
-    doTest("class ConvertMe {\n" +
-           "    public static final String S = \"\";\n" +
-           "    public void m() {}\n" +
-           "    public static void n() {\n" +
-           "        new ConvertMe() {};\n" +
-           "        class X extends ConvertMe {}\n" +
-           "    }\n" +
-           "    public class A {}\n" +
-           "}");
+    doTest("""
+             class ConvertMe {
+                 public static final String S = "";
+                 public void m() {}
+                 public static void n() {
+                     new ConvertMe() {};
+                     class X extends ConvertMe {}
+                 }
+                 public class A {}
+             }""");
   }
 
   public void testMethodCantBeDefault() {
-    doTest("class Issue {\n" +
-           "    public abstract class Inner {\n" +
-           "        public Issue getParent() {\n" +
-           "            return Issue.this;\n" +
-           "        }\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class Issue {
+                 public abstract class Inner {
+                     public Issue getParent() {
+                         return Issue.this;
+                     }
+                 }
+             }""");
   }
 
   public void testObjectMethods() {
-    doTest("abstract class X {\n" +
-           "  public boolean equals(Object o) { return false; }\n" +
-           "  public int hashCode() { return 1; }\n" +
-           "  public String toString() { return null; }\n" +
-           "}");
+    doTest("""
+             abstract class X {
+               public boolean equals(Object o) { return false; }
+               public int hashCode() { return 1; }
+               public String toString() { return null; }
+             }""");
   }
 
   @Override

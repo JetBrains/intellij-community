@@ -186,7 +186,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       return false;
     }
     PsiElement element = lookup.getPsiElement();
-    if (element == null) {
+    if (element == null || isDeselectingFirstPopupItemDisabled(element)) {
       return false;
     }
     IElementType elementType = element.getNode().getElementType();
@@ -233,6 +233,10 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
 
   static boolean isHtmlElementInTextCompletionEnabledForFile(@NotNull PsiFile file) {
     return HtmlInTextCompletionEnabler.EP_NAME.getExtensionList().stream().anyMatch(enabler -> enabler.isEnabledInFile(file));
+  }
+
+  private static boolean isDeselectingFirstPopupItemDisabled(@NotNull PsiElement element) {
+    return ContainerUtil.exists(HtmlInTextCompletionPopupExtension.EP_NAME.getExtensionList(), ext -> ext.isDeselectingFirstItemDisabled(element));
   }
 
   private static CompletionSorter withoutLiveTemplatesWeigher(@Nullable CompletionSorter sorter,

@@ -27,23 +27,25 @@ public class EmptyFinallyBlockInspectionTest extends LightJavaInspectionTestCase
 
   @SuppressWarnings("EmptyFinallyBlock")
   public void testSimple() {
-    doTest("class C {\n" +
-           "  void m() throws Exception {\n" +
-           "    try { throw new Exception(); }\n" +
-           "    /*Empty 'finally' block*//*_*/finally/**/ { }\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             class C {
+               void m() throws Exception {
+                 try { throw new Exception(); }
+                 /*Empty 'finally' block*//*_*/finally/**/ { }
+               }
+             }""");
     myFixture.findSingleIntention(InspectionGadgetsBundle.message("remove.try.finally.block.quickfix"));
   }
 
   @SuppressWarnings("EmptyFinallyBlock")
   public void testResources() {
-    doTest("class C {\n" +
-           "  void m() throws Exception {\n" +
-           "    try (AutoCloseable r = null) { throw new Exception(); }\n" +
-           "    /*Empty 'finally' block*//*_*/finally/**/ { }\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             class C {
+               void m() throws Exception {
+                 try (AutoCloseable r = null) { throw new Exception(); }
+                 /*Empty 'finally' block*//*_*/finally/**/ { }
+               }
+             }""");
     myFixture.findSingleIntention(InspectionGadgetsBundle.message("remove.finally.block.quickfix"));
   }
 }

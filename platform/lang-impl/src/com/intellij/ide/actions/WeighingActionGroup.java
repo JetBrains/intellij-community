@@ -25,9 +25,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author peter
- */
 abstract class WeighingActionGroup extends ActionGroup {
 
   @Override
@@ -49,7 +46,7 @@ abstract class WeighingActionGroup extends ActionGroup {
 
   @NotNull
   @Override
-  public List<AnAction> postProcessVisibleChildren(@NotNull List<AnAction> visibleChildren, @NotNull UpdateSession updateSession) {
+  public List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren, @NotNull UpdateSession updateSession) {
     LinkedHashSet<AnAction> heaviest = null;
     double maxWeight = Presentation.DEFAULT_WEIGHT;
     for (AnAction action : visibleChildren) {
@@ -66,7 +63,7 @@ abstract class WeighingActionGroup extends ActionGroup {
     }
 
     if (heaviest == null) {
-      return visibleChildren;
+      return new ArrayList<>(visibleChildren);
     }
 
     ArrayList<AnAction> chosen = new ArrayList<>();

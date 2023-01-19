@@ -2,7 +2,6 @@ package com.intellij.workspaceModel.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
@@ -16,13 +15,16 @@ interface CollectionFieldEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : CollectionFieldEntity, ModifiableWorkspaceEntity<CollectionFieldEntity>, ObjBuilder<CollectionFieldEntity> {
+  interface Builder : CollectionFieldEntity, WorkspaceEntity.Builder<CollectionFieldEntity>, ObjBuilder<CollectionFieldEntity> {
     override var entitySource: EntitySource
     override var versions: MutableSet<Int>
     override var names: MutableList<String>
   }
 
   companion object : Type<CollectionFieldEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(versions: Set<Int>,
                         names: List<String>,
                         entitySource: EntitySource,

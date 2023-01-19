@@ -3,15 +3,15 @@ package com.intellij.packageDependencies.actions
 
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
 import com.intellij.lang.LangBundle
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 
 internal class BackwardDependenciesAdditionalUi {
   val scopeChooserCombo: ScopeChooserCombo = ScopeChooserCombo()
   val panel = panel {
     row(LangBundle.message("label.scope.to.analyze.usages.in")) {
       cell(scopeChooserCombo)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
     }
   }
 }

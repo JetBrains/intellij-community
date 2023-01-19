@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.ui.IdeBorderFactory
-import org.jetbrains.plugins.notebooks.visualization.notebookAppearance
+import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.ResizeHandlebarUpdater.Companion.ensureInstalled
 import java.awt.*
 import java.awt.event.MouseEvent

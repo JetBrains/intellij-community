@@ -15,9 +15,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/**
- * @author peter
- */
 public final class DefinitionMap {
   public static final DefinitionMap NEUTRAL = new DefinitionMap(new Int2ObjectOpenHashMap<>());
 

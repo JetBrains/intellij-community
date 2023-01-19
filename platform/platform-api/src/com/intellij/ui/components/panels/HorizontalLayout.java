@@ -18,7 +18,10 @@ import java.util.List;
  * and the double gap is added between groups of components. The gap will be scaled automatically.
  * <p><b>NB!: this class must be modified together with the {@code VerticalLayout} class accordingly</b></p>
  *
+ * For simpler cases without groups {@code ListLayout} should be better
+ *
  * @see VerticalLayout
+ * @see ListLayout
  */
 public final class HorizontalLayout implements LayoutManager2 {
   public static final int FILL = -1;
@@ -62,14 +65,8 @@ public final class HorizontalLayout implements LayoutManager2 {
   public HorizontalLayout(@NotNull JBValue gap, int alignment) {
     myGap = gap;
     switch (alignment) {
-      case FILL:
-      case SwingConstants.TOP:
-      case SwingConstants.BOTTOM:
-      case SwingConstants.CENTER:
-        myAlignment = alignment;
-        break;
-      default:
-        throw new IllegalArgumentException("unsupported alignment: " + alignment);
+      case FILL, SwingConstants.TOP, SwingConstants.BOTTOM, SwingConstants.CENTER -> myAlignment = alignment;
+      default -> throw new IllegalArgumentException("unsupported alignment: " + alignment);
     }
   }
 

@@ -8,12 +8,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import com.intellij.openapi.vcs.changes.ChangeListChange;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
+import com.intellij.openapi.vcs.history.VcsBaseRevisionAdviser;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
@@ -21,6 +23,7 @@ import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
+import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -31,8 +34,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -58,23 +63,48 @@ public abstract class AbstractVcs extends StartedActivated {
     myKey = new VcsKey(myName);
   }
 
-  // acts as adapter
+  /**
+   * Called when VCS plugin is loaded.
+   * Typically, {@link #activate()} or {@link AbstractVcs#AbstractVcs} should be used instead.
+   *
+   * @see #shutdown
+   */
   @Override
   protected void start() throws VcsException {
   }
 
+  /**
+   * Called when VCS plugin is unloaded. Typically, {@link #deactivate()} should be used instead.
+   */
   @Override
   protected void shutdown() {
   }
 
+  /**
+   * Called when VCS gets a configured mapping.
+   * <p/>
+   * This is a good place to install project-wide listeners and perform generic initialization.
+   *
+   * @see #deactivate
+   */
   @Override
   protected void activate() {
   }
 
+  /**
+   * Called when VCS no longer has configured mappings.
+   */
   @Override
   protected void deactivate() {
   }
 
+  /**
+   * Unique internal ID for VCS.
+   *
+   * @see com.intellij.openapi.vcs.impl.VcsEP#name
+   * @see VcsKey#getName
+   * @see AllVcsesI#getByName(String)
+   */
   @NonNls
   public final String getName() {
     return myName;
@@ -83,7 +113,7 @@ public abstract class AbstractVcs extends StartedActivated {
   /**
    * Returns the name of the VCS as it should be displayed in the UI.
    *
-   * @see #getShortName()
+   * @see #getShortName
    */
   @Nls
   @NotNull
@@ -92,7 +122,6 @@ public abstract class AbstractVcs extends StartedActivated {
   /**
    * Returns the short or abbreviated name of this VCS, which name can be used in those places in the UI where the space is limited.
    * (e.g. it can be "SVN" for Subversion or "Hg" for Mercurial).<br/><br/>
-   * By default returns the same as {@link #getDisplayName()}.
    */
   @Nls
   @NotNull
@@ -112,10 +141,10 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * Allows to hide 'VCS' action group in 'Main Menu'.
+   * Allows hiding the 'VCS' action group in 'Main Menu'.
    * Takes effect for projects that have configured mappings for this VCS only.
    *
-   * @return true if 'VCS' group should be hidden.
+   * @return true if the 'VCS' group should be hidden.
    */
   public boolean isWithCustomMenu() {
     return false;
@@ -160,6 +189,14 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
+  /**
+   * Used by {@link com.intellij.openapi.vcs.changes.ChangeListManager} to collect changed files for VCS.
+   * <p/>
+   * VCS should notify {@link com.intellij.openapi.vcs.changes.VcsDirtyScopeManager} if it expects that some file statuses were changed,
+   * so that {@link ChangeProvider} could be called again for these files.
+   *
+   * @see #needsCaseSensitiveDirtyScope
+   */
   @Nullable
   public ChangeProvider getChangeProvider() {
     return null;
@@ -170,7 +207,7 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * Returns the interface for performing check out / edit file operations.
+   * Returns the interface for performing check-out / edit file operations.
    *
    * @return the interface implementation, or null if none is provided.
    */
@@ -179,34 +216,24 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
+  /**
+   * @deprecated dead code
+   */
+  @Deprecated(forRemoval = true)
   public boolean markExternalChangesAsUpToDate() {
     return false;
-  }
-
-  /**
-   * creates the object for performing checkin / commit / submit operations.
-   */
-  @Nullable
-  protected CheckinEnvironment createCheckinEnvironment() {
-    return null;
   }
 
   /**
    * Returns the interface for performing checkin / commit / submit operations.
    *
    * @return the checkin interface, or null if checkins are not supported by the VCS.
+   * @see #getCommitExecutors
+   * @see #arePartialChangelistsSupported
    */
   @Nullable
   public CheckinEnvironment getCheckinEnvironment() {
     return myCheckinEnvironment;
-  }
-
-  /**
-   * Returns the interface for performing revert / rollback operations.
-   */
-  @Nullable
-  protected RollbackEnvironment createRollbackEnvironment() {
-    return null;
   }
 
   /**
@@ -217,30 +244,36 @@ public abstract class AbstractVcs extends StartedActivated {
     return myRollbackEnvironment;
   }
 
+  /**
+   * @see #getDiffProvider
+   * @see #getCommittedChangesProvider
+   */
   @Nullable
   public VcsHistoryProvider getVcsHistoryProvider() {
     return null;
   }
 
+  /**
+   * Typically, delegates to {@link #getVcsHistoryProvider}.
+   */
   @Nullable
   public VcsHistoryProvider getVcsBlockHistoryProvider() {
     return null;
   }
 
+  /**
+   * @deprecated dead code
+   */
+  @Deprecated(forRemoval = true)
   public String getMenuItemText() {
     return getDisplayName();
   }
 
   /**
-   * Returns the interface for performing update/sync operations.
-   */
-  @Nullable
-  protected UpdateEnvironment createUpdateEnvironment() {
-    return null;
-  }
-
-  /**
    * @return the update interface, or null if the updates are not supported by the VCS.
+   * @see #getStatusEnvironment
+   * @see #getIntegrateEnvironment
+   * @see #getVcsExceptionsHotFixer
    */
   @Nullable
   public UpdateEnvironment getUpdateEnvironment() {
@@ -279,7 +312,7 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * This method is called when user invokes "Enable VCS Integration" and selects a particular VCS.
-   * <p>
+   * <p/>
    * By default, it sets up a single mapping {@code <Project> -> selected VCS}.
    */
   @RequiresEdt
@@ -289,7 +322,7 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * This method is called when a user invokes "Enable VCS Integration" and selects a particular VCS.
-   * <p>
+   * <p/>
    * By default, it sets up a single mapping {@code <targetDirectory> -> selected VCS}.
    * Some VCSes might try to automatically detect VCS roots or create a new one.
    *
@@ -313,7 +346,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * when the previous one was empty).
    *
    * @param list       change list that's about to be removed
-   * @param explicitly whether it's a result of explicit Delete action, or just after switching the active changelist.
+   * @param explicitly whether it's a result of an explicit Delete action, or just triggered after switching active changelist.
    * @return UNSURE if the VCS has nothing to say about this changelist.
    * YES or NO if the changelist has to be removed or not, and no further confirmations are needed about this changelist
    * (in particular, the VCS can show a confirmation to the user by itself)
@@ -324,15 +357,24 @@ public abstract class AbstractVcs extends StartedActivated {
     return ThreeState.UNSURE;
   }
 
+  /**
+   * @see com.intellij.openapi.vcs.changes.LastUnchangedContentTracker
+   */
   public boolean isTrackingUnchangedContent() {
     return false;
   }
 
+  /**
+   * @return whether VCS tracks the file. Ie: if requesting 'vcs file history' makes sense.
+   */
   public static boolean fileInVcsByFileStatus(@NotNull Project project, @NotNull FilePath path) {
     VirtualFile file = path.getVirtualFile();
     return file == null || fileInVcsByFileStatus(project, file);
   }
 
+  /**
+   * @return whether VCS tracks the file. Ie: if requesting 'vcs file history' makes sense.
+   */
   public static boolean fileInVcsByFileStatus(@NotNull Project project, @NotNull VirtualFile file) {
     FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
     return status != FileStatus.UNKNOWN && status != FileStatus.ADDED && status != FileStatus.IGNORED;
@@ -349,16 +391,30 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
+  /**
+   * Provides information about per-line modification history for a file ('git blame').
+   */
   @Nullable
   public AnnotationProvider getAnnotationProvider() {
     return null;
   }
 
+  /**
+   * @see #getVcsHistoryProvider
+   * @see #getRevisionSelector
+   */
   @Nullable
   public DiffProvider getDiffProvider() {
     return null;
   }
 
+  /**
+   * Notify that VCS supports some standard options.
+   * This information is used to hide options from settings if no available VCS supports them.
+   *
+   * @see ProjectLevelVcsManager#getStandardOption
+   * @see ProjectLevelVcsManager#getStandardConfirmation
+   */
   public void loadSettings() {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
@@ -371,6 +427,13 @@ public abstract class AbstractVcs extends StartedActivated {
     }
   }
 
+  /**
+   * Notify that VCS supports some custom file statuses.
+   *
+   * @return unused - this method is a reminder to call {@link FileStatusFactory#createFileStatus}.
+   * @see FileStatusFactory
+   */
+  @SuppressWarnings("UnusedReturnValue")
   public FileStatus[] getProvidedStatuses() {
     return null;
   }
@@ -389,13 +452,16 @@ public abstract class AbstractVcs extends StartedActivated {
    * Returns the interface for performing integrate operations (merging changes made in another branch of
    * the project into the current working copy).
    *
-   * @return the update interface, or null if the integrate operations are not supported by the VCS.
+   * @return the update interface, or null if integrate operations are not supported by the VCS.
    */
   @Nullable
   public UpdateEnvironment getIntegrateEnvironment() {
     return null;
   }
 
+  /**
+   * @see #getVcsHistoryProvider
+   */
   public @Nullable CommittedChangesProvider<? extends CommittedChangeList, ?> getCommittedChangesProvider() {
     return null;
   }
@@ -410,16 +476,19 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * For some version controls (like Git) the revision parsing is dependent
-   * on the specific repository instance since the the revision number
+   * For some version controls (like Git), the revision parsing is dependent
+   * on the specific repository instance since the revision number
    * returned from this method is later used for comparison information.
    * By default, this method invokes {@link #parseRevisionNumber(String)}.
-   * The client code should invoke this method, if it expect ordering information
+   * The client code should invoke this method if it expects ordering information
    * from revision numbers.
+   * <p/>
+   * Can be used to restore revision information for created patches and shelves.
+   * Ex: These revisions may be loaded via {@link VcsBaseRevisionAdviser} or {@link DiffProvider}.
    *
    * @param revisionNumberString the string to be parsed
    * @param path                 the path for which revision number is queried
-   * @return the parsed revision number
+   * @see #getRevisionPattern
    */
   @Nullable
   public VcsRevisionNumber parseRevisionNumber(String revisionNumberString, FilePath path) throws VcsException {
@@ -432,7 +501,7 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * @return null if does not support revision parsing
+   * @return null if VCS does not support revision parsing
    */
   @NonNls
   @Nullable
@@ -467,12 +536,24 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
+  /**
+   * @see #getRootConfigurable
+   */
   @Nullable
   public VcsRootSettings createEmptyVcsRootSettings() {
     return null;
   }
 
+  /**
+   * Overrides the list of VCS roots that is returned by {@link ProjectLevelVcsManager#getRootsUnderVcs(AbstractVcs)}.
+   *
+   * @deprecated This breaks {@link ProjectLevelVcsManager#getRootsUnderVcs(AbstractVcs)} vs {@link ProjectLevelVcsManager#getVcsFor)} symmetry,
+   * and should be avoided whenever possible.
+   * Consider implementing other means of automatic VCS root detection,
+   * such as {@link VcsRootChecker#detectProjectMappings(Project, Collection, Set)} or {@link VcsRootChecker#isRoot(VirtualFile)}.
+   */
   @Nullable
+  @Deprecated
   public RootsConvertor getCustomConvertor() {
     return null;
   }
@@ -485,11 +566,11 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * This switch disables platform support for "default mapping" aka "&lt;Project&gt;".
-   * <p>
+   * <p/>
    * If enabled, platform will do nothing. All roots from {@link com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy} will be registered as vcs root.
    * Vcs can try using {@link RootsConvertor} to process roots itself.
-   * <p>
-   * If disabled, platform will use {@link VcsRootChecker} or {@link com.intellij.openapi.vcs.impl.VcsEP#administrativeAreaName} to find actual vcs roots.
+   * <p/>
+   * If disabled, the platform will use {@link VcsRootChecker} or {@link com.intellij.openapi.vcs.impl.VcsEP#administrativeAreaName} to find actual vcs roots.
    * If vcs does not implement these EP, no vcs roots will be registered for "default mapping".
    *
    * @see ProjectLevelVcsManager
@@ -519,12 +600,16 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
+  /**
+   * @return whether VCS can have one mapped root inside another.
+   * Typically, this should be overridden.
+   */
   public boolean allowsNestedRoots() {
     return false;
   }
 
   @NotNull
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     if (!allowsNestedRoots()) {
       new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
@@ -532,6 +617,9 @@ public abstract class AbstractVcs extends StartedActivated {
     return in;
   }
 
+  /**
+   * Allows customized handling of {@link UpdateSession} errors.
+   */
   @Nullable
   public VcsExceptionsHotFixer getVcsExceptionsHotFixer() {
     return null;
@@ -614,6 +702,30 @@ public abstract class AbstractVcs extends StartedActivated {
     myRollbackEnvironment = rollbackEnvironment;
   }
 
+  /**
+   * @see #getCheckinEnvironment
+   */
+  @Nullable
+  protected CheckinEnvironment createCheckinEnvironment() {
+    return null;
+  }
+
+  /**
+   * @see #getUpdateEnvironment
+   */
+  @Nullable
+  protected UpdateEnvironment createUpdateEnvironment() {
+    return null;
+  }
+
+  /**
+   * @see #getRollbackEnvironment
+   */
+  @Nullable
+  protected RollbackEnvironment createRollbackEnvironment() {
+    return null;
+  }
+
   public void setupEnvironments() {
     setCheckinEnvironment(createCheckinEnvironment());
     setUpdateEnvironment(createUpdateEnvironment());
@@ -646,14 +758,30 @@ public abstract class AbstractVcs extends StartedActivated {
     return myKey.hashCode();
   }
 
+  /**
+   * @return whether {@link VcsFileListenerContextHelper} should be used when applying a patch on top of a working copy.
+   * @see VcsVFSListener
+   */
   public boolean fileListenerIsSynchronous() {
     return true;
   }
 
+  /**
+   * @return whether VCS supports committing only some changes for a particular file.
+   * NB: This mode is incompatible with custom {@link com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider}.
+   * @see ChangeListChange
+   * @see com.intellij.openapi.vcs.impl.PartialChangesUtil
+   * @see com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker#handlePartialCommit
+   * @see com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI#arePartialChangelistsEnabled()
+   */
   public boolean arePartialChangelistsSupported() {
     return false;
   }
 
+  /**
+   * @deprecated dead code
+   */
+  @Deprecated(forRemoval = true)
   public CheckoutProvider getCheckoutProvider() {
     return null;
   }
@@ -663,18 +791,18 @@ public abstract class AbstractVcs extends StartedActivated {
     return getName();
   }
 
+  /**
+   * @return whether {@link com.intellij.openapi.vcs.changes.VcsDirtyScopeManager} should preserve file path cases on case-insensitive systems.
+   */
   public boolean needsCaseSensitiveDirtyScope() {
     return false;
   }
 
   /**
-   * Returns true if VCS root needs to be added to watched roots by
-   * {@link com.intellij.openapi.vcs.impl.projectlevelman.FileWatchRequestModifier} when updating VCS mappings.
-   *
-   * @return true if VCS root needs to be added to watched roots, false otherwise.
+   * @return true if VCS root needs to be added to watched roots.
+   * @see com.intellij.openapi.vcs.impl.projectlevelman.FileWatchRequestModifier
    */
   public boolean needsLFSWatchesForRoots() {
     return true;
   }
 }
-

@@ -6,9 +6,6 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
-* @author peter
-*/
 public class MaybeReturnInstruction extends InstructionImpl implements MaybeInterruptInstruction {
   MaybeReturnInstruction(GrExpression element) {
     super(element);

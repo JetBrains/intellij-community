@@ -17,11 +17,17 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.workspaceModel.ide.JpsFileEntitySource;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.storage.EntitySource;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Assume;
@@ -35,18 +41,22 @@ import java.util.List;
 public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
   @Test
   public void testInheritProjectJdkForModules() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     assertTrue(ModuleRootManager.getInstance(getModule("project")).isSdkInherited());
   }
 
   @Test
   public void testDoNotResetSomeSettingsAfterReimport() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     Sdk sdk = setupJdkForModule("project");
 
@@ -66,32 +76,107 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     createModule("m1");
     createModule("m2");
     createModule("m3");
+    createModule("m4");
 
     PsiTestUtil.addSourceRoot(getModule("m1"), createProjectSubFile("m1/user-sources"));
     PsiTestUtil.addSourceRoot(getModule("m2"), createProjectSubFile("m2/user-sources"));
     PsiTestUtil.addSourceRoot(getModule("m3"), createProjectSubFile("m3/user-sources"));
+    PsiTestUtil.addSourceRoot(getModule("m4"), createProjectSubFile("m4/user-sources"));
+    PsiTestUtil.addSourceRoot(getModule("m4"), createProjectSubFile("m4/src/main/java"));
 
-    assertModules("m1", "m2", "m3");
+    assertModules("m1", "m2", "m3", "m4");
     assertSources("m1", "user-sources");
     assertSources("m2", "user-sources");
     assertSources("m3", "user-sources");
+    assertSources("m4", "user-sources", "src/main/java");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                         <module>m3</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """);
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>");
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1</version>");
+    createModulePom("m4", """
+      <groupId>test</groupId>
+      <artifactId>m4</artifactId>
+      <version>1</version>
+      """);
+
+    createProjectSubDirs("m1/src/main/java",
+                         "m2/src/main/java",
+                         "m3/src/main/jva",
+                         "m4/src/main/java");
+
+    importProject();
+    assertModules("project", "m1", "m2", "m3", "m4");
+
+    assertSources("m1", "user-sources", "src/main/java");
+    assertSources("m2", "user-sources", "src/main/java");
+    assertSources("m3", "user-sources");
+    assertSources("m4", "user-sources", "src/main/java");
+
+    ModuleEntity mFour = WorkspaceModel.getInstance(myProject).getCurrentSnapshot().resolve(new ModuleId("m4"));
+    assertNotNull(mFour);
+    //noinspection OptionalGetWithoutIsPresent
+    EntitySource sourceEntitySource =
+      mFour.getContentRoots().stream().findFirst().get().getSourceRoots().stream().filter(o -> o.getUrl().getUrl().endsWith("java"))
+        .findAny().get().getEntitySource();
+    assertTrue(sourceEntitySource instanceof JpsFileEntitySource.FileInDirectory);
+  }
+
+  @Test
+  public void testImportWithAlreadyExistingModulesWithCustomExcludes() throws IOException {
+    createModule("m1");
+    createModule("m2");
+    createModule("m3");
+
+    PsiTestUtil.addExcludedRoot(getModule("m1"), createProjectSubFile("m1/user-sources"));
+    PsiTestUtil.addExcludedRoot(getModule("m2"), createProjectSubFile("m2/user-sources"));
+    PsiTestUtil.addExcludedRoot(getModule("m3"), createProjectSubFile("m3/user-sources"));
+
+    assertModules("m1", "m2", "m3");
+    assertExcludes("m1", "user-sources");
+    assertExcludes("m2", "user-sources");
+    assertExcludes("m3", "user-sources");
+
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       """);
+
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """);
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
     createProjectSubDirs("m1/src/main/java",
                          "m2/src/main/java",
@@ -100,34 +185,80 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     importProject();
     assertModules("project", "m1", "m2", "m3");
 
-    if (supportsLegacyKeepingFoldersFromPreviousImport()) {
-      assertSources("m1", "user-sources", "src/main/java");
-      assertSources("m2", "user-sources", "src/main/java");
-      assertSources("m3", "user-sources");
-    }
-    else {
-      assertSources("m1", "src/main/java");
-      assertSources("m2", "src/main/java");
-      assertSources("m3", "user-sources");
-    }
+    assertExcludes("m1", "target", "user-sources");
+    assertExcludes("m2", "target", "user-sources");
+    assertExcludes("m3", "user-sources");
+  }
+
+  /**
+   * Keep the module if it has some custom content roots that doesn't intersect with imported
+   */
+  @Test
+  public void testImportWithAlreadyExistingModuleWithDifferentNameButSameContentRoot() throws IOException {
+    Assume.assumeTrue(isWorkspaceImport());
+
+    Module userModuleWithConflictingRoot = createModule("userModuleWithConflictingRoot");
+    PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null);
+    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, myProjectRoot);
+    VirtualFile anotherContentRoot = createProjectSubFile("m1/user-content");
+    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, anotherContentRoot);
+    assertContentRoots(userModuleWithConflictingRoot.getName(), getProjectPath(), anotherContentRoot.getPath());
+
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
+
+    importProject();
+    assertModules("project", userModuleWithConflictingRoot.getName());
+    assertContentRoots("project", getProjectPath());
+    assertContentRoots(userModuleWithConflictingRoot.getName(), anotherContentRoot.getPath());
+  }
+
+  @Test
+  public void testImportWithAlreadyExistingModuleWithPartiallySameContentRoots() {
+    Assume.assumeTrue(isWorkspaceImport());
+
+    Module userModuleWithConflictingRoot = createModule("userModuleWithConflictingRoot");
+    PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null);
+    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, myProjectRoot);
+    assertContentRoots(userModuleWithConflictingRoot.getName(), getProjectPath());
+
+    Module userModuleWithUniqueRoot = createModule("userModuleWithUniqueRoot");
+    assertContentRoots(userModuleWithUniqueRoot.getName(), getProjectPath() + "/userModuleWithUniqueRoot");
+
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
+
+    importProject();
+    assertModules("project", userModuleWithUniqueRoot.getName());
+    assertContentRoots("project", getProjectPath());
+    assertContentRoots(userModuleWithUniqueRoot.getName(), getProjectPath() + "/userModuleWithUniqueRoot");
   }
 
   @Test
   public void testMarkModulesAsMavenized() {
     createModule("userModule");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m1</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "</modules>");
-
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>");
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """);
 
     importProject();
     assertModules("project", "m1", "userModule");
@@ -136,18 +267,21 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     assertNotMavenizedModule("userModule");
 
     configConfirmationForYesAnswer();
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m2</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
-
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1</version>");
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
     importProject();
     assertModules("project", "m2", "userModule");
@@ -159,23 +293,28 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testModulesWithSlashesRegularAndBack() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>dir\\m1</module>
+                         <module>dir/m2</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>dir\\m1</module>" +
-                     "  <module>dir/m2</module>" +
-                     "</modules>");
+    createModulePom("dir/m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """);
 
-    createModulePom("dir/m1", "<groupId>test</groupId>" +
-                              "<artifactId>m1</artifactId>" +
-                              "<version>1</version>");
-
-    createModulePom("dir/m2", "<groupId>test</groupId>" +
-                              "<artifactId>m2</artifactId>" +
-                              "<version>1</version>");
+    createModulePom("dir/m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
     importProject();
     assertModules("project", "m1", "m2");
@@ -192,54 +331,66 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testModulesAreNamedAfterArtifactIds() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
-                     "<name>name</name>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <name>name</name>
+                       <modules>
+                         <module>dir1</module>
+                         <module>dir2</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>dir1</module>" +
-                     "  <module>dir2</module>" +
-                     "</modules>");
+    createModulePom("dir1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <name>name1</name>
+      """);
 
-    createModulePom("dir1", "<groupId>test</groupId>" +
-                            "<artifactId>m1</artifactId>" +
-                            "<version>1</version>" +
-                            "<name>name1</name>");
-
-    createModulePom("dir2", "<groupId>test</groupId>" +
-                            "<artifactId>m2</artifactId>" +
-                            "<version>1</version>" +
-                            "<name>name2</name>");
+    createModulePom("dir2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      <name>name2</name>
+      """);
     importProject();
     assertModules("project", "m1", "m2");
   }
 
   @Test
   public void testModulesWithSlashesAtTheEnds() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m1/</module>
+                         <module>m2\\</module>
+                         <module>m3//</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m1/</module>" +
-                     "  <module>m2\\</module>" +
-                     "  <module>m3//</module>" +
-                     "</modules>");
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """);
 
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>");
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1</version>");
-
-    createModulePom("m3", "<groupId>test</groupId>" +
-                          "<artifactId>m3</artifactId>" +
-                          "<version>1</version>");
+    createModulePom("m3", """
+      <groupId>test</groupId>
+      <artifactId>m3</artifactId>
+      <version>1</version>
+      """);
 
     importProject();
     assertModules("project", "m1", "m2", "m3");
@@ -247,23 +398,28 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testModulesWithSameArtifactId() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>dir1/m</module>
+                         <module>dir2/m</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>dir1/m</module>" +
-                     "  <module>dir2/m</module>" +
-                     "</modules>");
+    createModulePom("dir1/m", """
+      <groupId>test.group1</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      """);
 
-    createModulePom("dir1/m", "<groupId>test.group1</groupId>" +
-                              "<artifactId>m</artifactId>" +
-                              "<version>1</version>");
-
-    createModulePom("dir2/m", "<groupId>test.group2</groupId>" +
-                              "<artifactId>m</artifactId>" +
-                              "<version>1</version>");
+    createModulePom("dir2/m", """
+      <groupId>test.group2</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      """);
 
     importProject();
     assertModules("project", "m (1) (test.group1)", "m (2) (test.group2)");
@@ -271,23 +427,28 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testModulesWithSameArtifactIdAndGroup() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>dir1/m</module>
+                         <module>dir2/m</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>dir1/m</module>" +
-                     "  <module>dir2/m</module>" +
-                     "</modules>");
+    createModulePom("dir1/m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      """);
 
-    createModulePom("dir1/m", "<groupId>test</groupId>" +
-                              "<artifactId>m</artifactId>" +
-                              "<version>1</version>");
-
-    createModulePom("dir2/m", "<groupId>test</groupId>" +
-                              "<artifactId>m</artifactId>" +
-                              "<version>1</version>");
+    createModulePom("dir2/m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      """);
 
     importProject();
     assertModules("project", "m (1)", "m (2)");
@@ -295,18 +456,21 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testModuleWithRelativePath() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>../m</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>../m</module>" +
-                     "</modules>");
-
-    createModulePom("../m", "<groupId>test</groupId>" +
-                            "<artifactId>m</artifactId>" +
-                            "<version>1</version>");
+    createModulePom("../m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      """);
 
     importProject();
     assertModules("project", "m");
@@ -314,21 +478,24 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testModuleWithRelativeParent() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <version>1</version>
+                         <relativePath>../parent</relativePath>
+                       </parent>
+                       """);
 
-                     "<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>parent</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <relativePath>../parent</relativePath>" +
-                     "</parent>");
-
-    createModulePom("../parent", "<groupId>test</groupId>" +
-                                 "<artifactId>parent</artifactId>" +
-                                 "<version>1</version>" +
-                                 "<packaging>pom</packaging>");
+    createModulePom("../parent", """
+      <groupId>test</groupId>
+      <artifactId>parent</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      """);
 
     importProject();
     assertModules("project");
@@ -336,28 +503,32 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testModulePathsAsProperties() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <properties>
+                         <module1>m1</module1>
+                         <module2>m2</module2>
+                       </properties>
+                       <modules>
+                         <module>${module1}</module>
+                         <module>${module2}</module>
+                       </modules>
+                       """);
 
-                     "<properties>" +
-                     "  <module1>m1</module1>" +
-                     "  <module2>m2</module2>" +
-                     "</properties>" +
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """);
 
-                     "<modules>" +
-                     "  <module>${module1}</module>" +
-                     "  <module>${module2}</module>" +
-                     "</modules>");
-
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>");
-
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1</version>");
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
     importProject();
     assertModules("project", "m1", "m2");
@@ -374,42 +545,44 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testRecursiveParent() {
-    createProjectPom("<parent>" +
-                     "  <groupId>org.apache.maven.archetype.test</groupId>" +
-                     "  <artifactId>test-create-2</artifactId>" +
-                     "  <version>1.0-SNAPSHOT</version>" +
-                     "</parent>" +
-
-                     "<artifactId>test-create-2</artifactId>" +
-                     "<name>Maven archetype Test create-2-subModule</name>" +
-                     "<packaging>pom</packaging>");
+    createProjectPom("""
+                       <parent>
+                         <groupId>org.apache.maven.archetype.test</groupId>
+                         <artifactId>test-create-2</artifactId>
+                         <version>1.0-SNAPSHOT</version>
+                       </parent>
+                       <artifactId>test-create-2</artifactId>
+                       <name>Maven archetype Test create-2-subModule</name>
+                       <packaging>pom</packaging>
+                       """);
     importProjectWithErrors();
   }
 
   @Test
   public void testParentWithoutARelativePath() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <properties>
+                         <moduleName>m1</moduleName>
+                       </properties>
+                       <modules>
+                         <module>modules/m</module>
+                       </modules>
+                       """);
 
-                     "<properties>" +
-                     "  <moduleName>m1</moduleName>" +
-                     "</properties>" +
-
-                     "<modules>" +
-                     "  <module>modules/m</module>" +
-                     "</modules>");
-
-    createModulePom("modules/m", "<groupId>test</groupId>" +
-                                 "<artifactId>${moduleName}</artifactId>" +
-                                 "<version>1</version>" +
-
-                                 "<parent>" +
-                                 "  <groupId>test</groupId>" +
-                                 "  <artifactId>project</artifactId>" +
-                                 "  <version>1</version>" +
-                                 "</parent>");
+    createModulePom("modules/m", """
+      <groupId>test</groupId>
+      <artifactId>${moduleName}</artifactId>
+      <version>1</version>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+      </parent>
+      """);
 
     importProject();
     assertModules("project", mn("project", "m1"));
@@ -425,28 +598,29 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testModuleWithPropertiesWithParentWithoutARelativePath() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <properties>
+                         <moduleName>m1</moduleName>
+                       </properties>
+                       <modules>
+                         <module>modules/m</module>
+                       </modules>
+                       """);
 
-                     "<properties>" +
-                     "  <moduleName>m1</moduleName>" +
-                     "</properties>" +
-
-                     "<modules>" +
-                     "  <module>modules/m</module>" +
-                     "</modules>");
-
-    createModulePom("modules/m", "<groupId>test</groupId>" +
-                                 "<artifactId>${moduleName}</artifactId>" +
-                                 "<version>1</version>" +
-
-                                 "<parent>" +
-                                 "  <groupId>test</groupId>" +
-                                 "  <artifactId>project</artifactId>" +
-                                 "  <version>1</version>" +
-                                 "</parent>");
+    createModulePom("modules/m", """
+      <groupId>test</groupId>
+      <artifactId>${moduleName}</artifactId>
+      <version>1</version>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+      </parent>
+      """);
 
     importProject();
     assertModules("project", mn("project", "m1"));
@@ -465,32 +639,34 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     if (!hasMavenInstallation()) return;
 
     final VirtualFile parent = createModulePom("parent",
-                                               "<groupId>test</groupId>" +
-                                               "<artifactId>parent</artifactId>" +
-                                               "<version>1</version>" +
-                                               "<packaging>pom</packaging>" +
-
-                                               "<dependencies>" +
-                                               "  <dependency>" +
-                                               "    <groupId>junit</groupId>" +
-                                               "    <artifactId>junit</artifactId>" +
-                                               "    <version>4.0</version>" +
-                                               "  </dependency>" +
-                                               "</dependencies>");
+                                               """
+                                                 <groupId>test</groupId>
+                                                 <artifactId>parent</artifactId>
+                                                 <version>1</version>
+                                                 <packaging>pom</packaging>
+                                                 <dependencies>
+                                                   <dependency>
+                                                     <groupId>junit</groupId>
+                                                     <artifactId>junit</artifactId>
+                                                     <version>4.0</version>
+                                                   </dependency>
+                                                 </dependencies>
+                                                 """);
     executeGoal("parent", "install");
 
     WriteAction.runAndWait(() -> parent.delete(null));
 
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>m</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>parent</artifactId>" +
-                     "  <version>1</version>" +
-                     "</parent>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>m</artifactId>
+                       <version>1</version>
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <version>1</version>
+                       </parent>
+                       """);
 
     importProject();
     assertModules("m");
@@ -505,15 +681,16 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     removeFromLocalRepository(pathToJUnit);
     assertFalse(parentDir.exists());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<parent>" +
-                     "  <groupId>asm</groupId>" +
-                     "  <artifactId>asm-parent</artifactId>" +
-                     "  <version>3.0</version>" +
-                     "</parent>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <parent>
+                         <groupId>asm</groupId>
+                         <artifactId>asm-parent</artifactId>
+                         <version>3.0</version>
+                       </parent>
+                       """);
 
     importProject();
     assertModules("project");
@@ -527,44 +704,51 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
   @Test
   public void testCreatingModuleGroups() {
     VirtualFile p1 = createModulePom("project1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project1</artifactId>" +
-                                     "<version>1</version>" +
-                                     "<packaging>pom</packaging>" +
-
-                                     "<modules>" +
-                                     "  <module>m1</module>" +
-                                     "</modules>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>project1</artifactId>
+                                       <version>1</version>
+                                       <packaging>pom</packaging>
+                                       <modules>
+                                         <module>m1</module>
+                                       </modules>
+                                       """);
 
     createModulePom("project1/m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      """);
 
     VirtualFile p2 = createModulePom("project2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project2</artifactId>" +
-                                     "<version>1</version>" +
-                                     "<packaging>pom</packaging>" +
-
-                                     "<modules>" +
-                                     "  <module>m2</module>" +
-                                     "</modules>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>project2</artifactId>
+                                       <version>1</version>
+                                       <packaging>pom</packaging>
+                                       <modules>
+                                         <module>m2</module>
+                                       </modules>
+                                       """);
 
     createModulePom("project2/m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>" +
-                    "<packaging>pom</packaging>" +
-
-                    "<modules>" +
-                    "  <module>m3</module>" +
-                    "</modules>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      <packaging>pom</packaging>
+                      <modules>
+                        <module>m3</module>
+                      </modules>
+                      """);
 
     createModulePom("project2/m2/m3",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m3</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m3</artifactId>
+                      <version>1</version>
+                      """);
 
     getMavenImporterSettings().setCreateModuleGroups(true);
     importProjects(p1, p2);
@@ -579,29 +763,33 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testDoesNotCreateUnnecessaryTopLevelModuleGroup() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                       </modules>
+                       """);
 
     createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>" +
-                    "<packaging>pom</packaging>" +
-
-                    "<modules>" +
-                    "  <module>m2</module>" +
-                    "</modules>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      <packaging>pom</packaging>
+                      <modules>
+                        <module>m2</module>
+                      </modules>
+                      """);
 
     createModulePom("m1/m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      """);
 
     getMavenImporterSettings().setCreateModuleGroups(true);
     importProject();
@@ -616,29 +804,33 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
   public void testModuleGroupsWhenNotCreatingModulesForAggregatorProjects() {
     if (!supportsCreateAggregatorOption() || !supportModuleGroups()) return;
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>module1</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>module1</module>
+                       </modules>
+                       """);
 
     createModulePom("module1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>module1</artifactId>" +
-                    "<version>1</version>" +
-                    "<packaging>pom</packaging>" +
-
-                    "<modules>" +
-                    "  <module>module2</module>" +
-                    "</modules>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>module1</artifactId>
+                      <version>1</version>
+                      <packaging>pom</packaging>
+                      <modules>
+                        <module>module2</module>
+                      </modules>
+                      """);
 
     createModulePom("module1/module2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>module2</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>module2</artifactId>
+                      <version>1</version>
+                      """);
 
     getMavenImporterSettings().setCreateModuleGroups(true);
     getMavenImporterSettings().setCreateModulesForAggregators(false);
@@ -650,66 +842,81 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testReimportingProjectWhenCreatingModuleGroupsSettingChanged() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>module1</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>module1</module>
+                       </modules>
+                       """);
 
     createModulePom("module1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>module1</artifactId>" +
-                    "<version>1</version>" +
-                    "<packaging>pom</packaging>" +
-
-                    "<modules>" +
-                    "  <module>module2</module>" +
-                    "</modules>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>module1</artifactId>
+                      <version>1</version>
+                      <packaging>pom</packaging>
+                      <modules>
+                        <module>module2</module>
+                      </modules>
+                      """);
 
     createModulePom("module1/module2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>module2</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>module2</artifactId>
+                      <version>1</version>
+                      """);
     importProject();
     assertModules("project", "module1", "module2");
 
     assertModuleGroupPath("module2");
 
     getMavenImporterSettings().setCreateModuleGroups(true);
-    myProjectsManager.performScheduledImportInTests();
+    if (isNewImportingProcess) {
+      importViaNewFlow(Collections.singletonList(myProjectPom), true, Collections.emptyList());
+    }
+    else {
+      myProjectsManager.performScheduledImportInTests();
+    }
+
     assertModuleGroupPath("module2", "module1 and modules");
   }
 
   @Test
   public void testModuleGroupsWhenProjectWithDuplicateNameEmerges() {
     VirtualFile p1 = createModulePom("project1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project1</artifactId>" +
-                                     "<version>1</version>" +
-                                     "<packaging>pom</packaging>" +
-
-                                     "<modules>" +
-                                     "  <module>m1</module>" +
-                                     "</modules>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>project1</artifactId>
+                                       <version>1</version>
+                                       <packaging>pom</packaging>
+                                       <modules>
+                                         <module>m1</module>
+                                       </modules>
+                                       """);
 
     createModulePom("project1/m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>module</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>module</artifactId>
+                      <version>1</version>
+                      """);
 
     VirtualFile p2 = createModulePom("project2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project2</artifactId>" +
-                                     "<version>1</version>" +
-                                     "<packaging>pom</packaging>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>project2</artifactId>
+                                       <version>1</version>
+                                       <packaging>pom</packaging>
+                                       """);
 
     //createModulePom("m2",
-    //                "<groupId>test</groupId>" +
-    //                "<artifactId>m2</artifactId>" +
-    //                "<version>1</version>" +
+    //                "<groupId>test</groupId>\n" +
+    //                "<artifactId>m2</artifactId>\n" +
+    //                "<version>1</version>\n" +
     //                "<packaging>pom</packaging>");
 
     getMavenImporterSettings().setCreateModuleGroups(true);
@@ -722,19 +929,22 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     }
 
     p2 = createModulePom("project2",
-                         "<groupId>test</groupId>" +
-                         "<artifactId>project2</artifactId>" +
-                         "<version>1</version>" +
-                         "<packaging>pom</packaging>" +
-
-                         "<modules>" +
-                         "  <module>m2</module>" +
-                         "</modules>");
+                         """
+                           <groupId>test</groupId>
+                           <artifactId>project2</artifactId>
+                           <version>1</version>
+                           <packaging>pom</packaging>
+                           <modules>
+                             <module>m2</module>
+                           </modules>
+                           """);
 
     createModulePom("project2/m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>module</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>module</artifactId>
+                      <version>1</version>
+                      """);
 
     updateProjectsAndImport(p2); // should not fail to map module names. 
 
@@ -755,25 +965,24 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testReleaseCompilerPropertyInPerSourceTypeModules() {
-    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+    Assume.assumeTrue(isWorkspaceImport());
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<properties>" +
-                  "  <maven.compiler.release>8</maven.compiler.release>" +
-                  "  <maven.compiler.testRelease>11</maven.compiler.testRelease>" +
-                  "</properties>" +
-                  "" +
-                  " <build>\n" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      <version>3.10.0</version>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>"
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <maven.compiler.release>8</maven.compiler.release>
+                      <maven.compiler.testRelease>11</maven.compiler.testRelease>
+                    </properties>
+                     <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.10.0</version>
+                        </plugin>
+                      </plugins>
+                    </build>"""
     );
 
     assertModules("project", "project.main", "project.test");
@@ -781,55 +990,56 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testProjectWithBuiltExtension() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  " <extensions>" +
-                  "   <extension>" +
-                  "     <groupId>org.apache.maven.wagon</groupId>" +
-                  "     <artifactId>wagon-webdav</artifactId>" +
-                  "     <version>1.0-beta-2</version>" +
-                  "    </extension>" +
-                  "  </extensions>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                     <extensions>
+                       <extension>
+                         <groupId>org.apache.maven.wagon</groupId>
+                         <artifactId>wagon-webdav</artifactId>
+                         <version>1.0-beta-2</version>
+                        </extension>
+                      </extensions>
+                    </build>
+                    """);
     assertModules("project");
   }
 
   @Test
   public void testUsingPropertyInBuildExtensionsOfChildModule() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <properties>
+                         <xxx>1.0-beta-2</xxx>
+                       </properties>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
-                     "<properties>" +
-                     "  <xxx>1.0-beta-2</xxx>" +
-                     "</properties>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
-
-    createModulePom("m", "<groupId>test</groupId>" +
-                         "<artifactId>m</artifactId>" +
-
-                         "<parent>" +
-                         "  <groupId>test</groupId>" +
-                         "  <artifactId>project</artifactId>" +
-                         "  <version>1</version>" +
-                         "</parent>" +
-
-                         "<build>" +
-                         "  <extensions>" +
-                         "    <extension>" +
-                         "      <groupId>org.apache.maven.wagon</groupId>" +
-                         "      <artifactId>wagon-webdav</artifactId>" +
-                         "      <version>${xxx}</version>" +
-                         "    </extension>" +
-                         "  </extensions>" +
-                         "</build>");
+    createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+      </parent>
+      <build>
+        <extensions>
+          <extension>
+            <groupId>org.apache.maven.wagon</groupId>
+            <artifactId>wagon-webdav</artifactId>
+            <version>${xxx}</version>
+          </extension>
+        </extensions>
+      </build>
+      """);
 
     importProject();
     assertModules("project", mn("project", "m"));
@@ -837,51 +1047,53 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testFileProfileActivationInParentPom() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                         <profiles>
+                           <profile>
+                             <id>xxx</id>
+                             <dependencies>
+                               <dependency>
+                                 <groupId>junit</groupId>
+                                 <artifactId>junit</artifactId>
+                                 <version>4.0</version>
+                               </dependency>
+                             </dependencies>
+                             <activation>
+                               <file>
+                                 <exists>src/io.properties</exists>
+                               </file>
+                             </activation>
+                           </profile>
+                         </profiles>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       """);
 
-                     "  <profiles>" +
-                     "    <profile>" +
-                     "      <id>xxx</id>" +
-                     "      <dependencies>" +
-                     "        <dependency>" +
-                     "          <groupId>junit</groupId>" +
-                     "          <artifactId>junit</artifactId>" +
-                     "          <version>4.0</version>" +
-                     "        </dependency>" +
-                     "      </dependencies>" +
-                     "      <activation>" +
-                     "        <file>" +
-                     "          <exists>src/io.properties</exists>" +
-                     "        </file>" +
-                     "      </activation>" +
-                     "    </profile>" +
-                     "  </profiles>" +
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+      </parent>
+      """);
 
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
-
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-
-                          "<parent>" +
-                          "  <groupId>test</groupId>" +
-                          "  <artifactId>project</artifactId>" +
-                          "  <version>1</version>" +
-                          "</parent>");
-
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-
-                          "<parent>" +
-                          "  <groupId>test</groupId>" +
-                          "  <artifactId>project</artifactId>" +
-                          "  <version>1</version>" +
-                          "</parent>");
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+      </parent>
+      """);
     createProjectSubFile("m2/src/io.properties", "");
 
     importProject();
@@ -893,38 +1105,38 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testProjectWithProfiles() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <activation>" +
-                     "      <activeByDefault>false</activeByDefault>" +
-                     "    </activation>" +
-                     "    <properties>" +
-                     "      <junit.version>4.0</junit.version>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <activation>" +
-                     "      <activeByDefault>false</activeByDefault>" +
-                     "    </activation>" +
-                     "    <properties>" +
-                     "      <junit.version>3.8.1</junit.version>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "</profiles>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <version>${junit.version}</version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <activation>
+                             <activeByDefault>false</activeByDefault>
+                           </activation>
+                           <properties>
+                             <junit.version>4.0</junit.version>
+                           </properties>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <activation>
+                             <activeByDefault>false</activeByDefault>
+                           </activation>
+                           <properties>
+                             <junit.version>3.8.1</junit.version>
+                           </properties>
+                         </profile>
+                       </profiles>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           <version>${junit.version}</version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     importProjectWithProfiles("one");
     assertModules("project");
@@ -944,29 +1156,29 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testProjectWithDefaultProfile() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <activation>" +
-                     "      <activeByDefault>true</activeByDefault>" +
-                     "    </activation>" +
-                     "    <properties>" +
-                     "      <junit.version>4.0</junit.version>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "</profiles>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <version>${junit.version}</version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <activation>
+                             <activeByDefault>true</activeByDefault>
+                           </activation>
+                           <properties>
+                             <junit.version>4.0</junit.version>
+                           </properties>
+                         </profile>
+                       </profiles>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           <version>${junit.version}</version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     importProject();
     assertModules("project");
@@ -979,10 +1191,12 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     myProjectRoot.getChildren(); // make sure fs is cached
     new File(myProjectRoot.getPath(), "foo").mkdirs();
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-    if(isNewImportingProcess){
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
+    if (isNewImportingProcess) {
       PlatformTestUtil.waitForPromise(myImportingResult.getVfsRefreshPromise());
     }
 
@@ -990,53 +1204,55 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
-  public void  testErrorImportArtifactVersionCannotBeEmpty() {
+  public void testErrorImportArtifactVersionCannotBeEmpty() {
     assumeVersionMoreThan("3.0.5");
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "  <artifactId>parent</artifactId>\n" +
-                     "  <packaging>pom</packaging>\n" +
-                     "  <version>1</version>\n" +
-                     "  <modules>\n" +
-                     "   <module>m1</module>\n" +
-                     "  </modules>\n" +
-                     "  <properties>\n" +
-                     "   <junit.group.id>junit</junit.group.id>\n" +
-                     "   <junit.artifact.id>junit</junit.artifact.id>\n" +
-                     "  </properties>\n" +
-                     "  <profiles>\n" +
-                     "    <profile>\n" +
-                     "      <id>profile-test</id>\n" +
-                     "      <dependencies>\n" +
-                     "        <dependency>\n" +
-                     "          <groupId>${junit.group.id}</groupId>\n" +
-                     "          <artifactId>${junit.artifact.id}</artifactId>\n" +
-                     "        </dependency>\n" +
-                     "      </dependencies>\n" +
-                     "    </profile>\n" +
-                     "  </profiles>\n" +
-                     "  \n" +
-                     "  <dependencyManagement>\n" +
-                     "    <dependencies>\n" +
-                     "      <dependency>\n" +
-                     "        <groupId>junit</groupId>\n" +
-                     "        <artifactId>junit</artifactId>\n" +
-                     "        <version>4.0</version> \n" +
-                     "      </dependency>\n" +
-                     "    </dependencies>\n" +
-                     "  </dependencyManagement>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <packaging>pom</packaging>
+                         <version>1</version>
+                         <modules>
+                          <module>m1</module>
+                         </modules>
+                         <properties>
+                          <junit.group.id>junit</junit.group.id>
+                          <junit.artifact.id>junit</junit.artifact.id>
+                         </properties>
+                         <profiles>
+                           <profile>
+                             <id>profile-test</id>
+                             <dependencies>
+                               <dependency>
+                                 <groupId>${junit.group.id}</groupId>
+                                 <artifactId>${junit.artifact.id}</artifactId>
+                               </dependency>
+                             </dependencies>
+                           </profile>
+                         </profiles>
+                        \s
+                         <dependencyManagement>
+                           <dependencies>
+                             <dependency>
+                               <groupId>junit</groupId>
+                               <artifactId>junit</artifactId>
+                               <version>4.0</version>\s
+                             </dependency>
+                           </dependencies>
+                         </dependencyManagement>""");
 
-    createModulePom("m1", "<parent>\n" +
-                          "<groupId>test</groupId>\n" +
-                          "<artifactId>parent</artifactId>\n" +
-                          "<version>1</version>\t\n" +
-                          "</parent>\n" +
-                          "<artifactId>m1</artifactId>\t\n" +
-                          "<dependencies>\n" +
-                          "  <dependency>\n" +
-                          "    <groupId>junit</groupId>\n" +
-                          "    <artifactId>junit</artifactId>\n" +
-                          "  </dependency>\n" +
-                          "</dependencies>");
+    createModulePom("m1", """
+      <parent>
+      <groupId>test</groupId>
+      <artifactId>parent</artifactId>
+      <version>1</version>\t
+      </parent>
+      <artifactId>m1</artifactId>\t
+      <dependencies>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+        </dependency>
+      </dependencies>""");
 
     doImportProjects(Collections.singletonList(myProjectPom), false, "profile-test");
   }
@@ -1045,22 +1261,24 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
   public void testProjectWithMavenConfigCustomUserSettingsXml() throws IOException {
     createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml");
     createProjectSubFile(".mvn/custom-settings.xml",
-                         "<settings>\n" +
-                         "    <profiles>\n" +
-                         "        <profile>\n" +
-                         "            <id>custom1</id>\n" +
-                         "            <properties>\n" +
-                         "                <projectName>customName</prop>\n" +
-                         "            </properties>\n" +
-                         "        </profile>\n" +
-                         "    </profiles>\n" +
-                         "    <activeProfiles>\n" +
-                         "        <activeProfile>custom1</activeProfile>\n" +
-                         "    </activeProfiles>" +
-                         "</settings>");
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>${projectName}</artifactId>" +
-                     "<version>1</version>");
+                         """
+                           <settings>
+                               <profiles>
+                                   <profile>
+                                       <id>custom1</id>
+                                       <properties>
+                                           <projectName>customName</prop>
+                                       </properties>
+                                   </profile>
+                               </profiles>
+                               <activeProfiles>
+                                   <activeProfile>custom1</activeProfile>
+                               </activeProfiles></settings>""");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>${projectName}</artifactId>
+                       <version>1</version>
+                       """);
 
     MavenGeneralSettings settings = getMavenGeneralSettings();
     settings.setUserSettingsFile("");
@@ -1071,22 +1289,24 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testProjectWithActiveProfilesFromSettingsXml() throws IOException {
-    updateSettingsXml("<activeProfiles>\n" +
-                      "  <activeProfile>one</activeProfile>\n" +
-                      "</activeProfiles>");
+    updateSettingsXml("""
+                        <activeProfiles>
+                          <activeProfile>one</activeProfile>
+                        </activeProfiles>""");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>${projectName}</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <properties>" +
-                     "      <projectName>project-one</projectName>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>${projectName}</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <properties>
+                             <projectName>project-one</projectName>
+                           </properties>
+                         </profile>
+                       </profiles>
+                       """);
 
     importProject();
     assertModules("project-one");
@@ -1094,32 +1314,39 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testProjectWithActiveProfilesAndInnactiveFromSettingsXml() throws IOException {
-    updateSettingsXml("<activeProfiles>\n" +
-                      "  <activeProfile>one</activeProfile>\n" +
-                      "  <activeProfile>two</activeProfile>\n" +
-                      "</activeProfiles>");
+    updateSettingsXml("""
+                        <activeProfiles>
+                          <activeProfile>one</activeProfile>
+                          <activeProfile>two</activeProfile>
+                        </activeProfiles>""");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>${projectName}</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <properties>" +
-                     "      <projectName>project-one</projectName>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <properties>" +
-                     "      <projectName>project-two</projectName>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>${projectName}</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <properties>
+                             <projectName>project-one</projectName>
+                           </properties>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <properties>
+                             <projectName>project-two</projectName>
+                           </properties>
+                         </profile>
+                       </profiles>
+                       """);
 
     List<String> disabledProfiles = Collections.singletonList("one");
-    doImportProjects(Collections.singletonList(myProjectPom), true, disabledProfiles);
+    if (isNewImportingProcess) {
+      importViaNewFlow(Collections.singletonList(myProjectPom), true, Collections.emptyList());
+    }
+    else {
+      doImportProjectsLegacyWay(Collections.singletonList(myProjectPom), true, disabledProfiles);
+    }
     assertModules("project-two");
   }
 }

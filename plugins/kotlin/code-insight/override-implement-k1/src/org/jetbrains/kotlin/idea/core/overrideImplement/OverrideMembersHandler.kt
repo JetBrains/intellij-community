@@ -8,6 +8,10 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+
+private val METHODS_OF_ANY = listOf("equals", "hashCode", "toString").map { FqName("kotlin.Any.$it") }.toSet()
 
 class OverrideMembersHandler(private val preferConstructorParameters: Boolean = false) : GenerateMembersHandler(false) {
     override fun collectMembersToGenerate(descriptor: ClassDescriptor, project: Project): Collection<OverrideMemberChooserObject> {
@@ -18,6 +22,10 @@ class OverrideMembersHandler(private val preferConstructorParameters: Boolean = 
                 if (overridden.any { it.modality == Modality.FINAL || DescriptorVisibilities.isPrivate(it.visibility.normalize()) }) continue
 
                 if (DescriptorUtils.isInterface(descriptor) && overridden.any { descriptor.builtIns.isMemberOfAny(it) }) continue
+
+                if ((descriptor.isValue || descriptor.isInline) &&
+                    overridden.any { descriptor.builtIns.isMemberOfAny(it) && it.name.asString() in listOf("equals", "hashCode") }
+                ) continue
 
                 class Data(
                     val realSuper: CallableMemberDescriptor,
@@ -31,7 +39,11 @@ class OverrideMembersHandler(private val preferConstructorParameters: Boolean = 
                     }
                 }
 
-                val realSupers = byOriginalRealSupers.values.map(Data::realSuper)
+                var realSupers = byOriginalRealSupers.values.map(Data::realSuper)
+                if (realSupers.size > 1) {
+                    realSupers = realSupers.filter { it.fqNameSafe !in METHODS_OF_ANY }
+                }
+
                 val nonAbstractRealSupers = realSupers.filter { it.modality != Modality.ABSTRACT }
                 val realSupersToUse = if (nonAbstractRealSupers.isNotEmpty()) {
                     nonAbstractRealSupers

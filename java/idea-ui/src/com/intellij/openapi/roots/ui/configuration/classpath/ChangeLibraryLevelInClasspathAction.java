@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -70,6 +71,11 @@ class ChangeLibraryLevelInClasspathAction extends ChangeLibraryLevelActionBase {
       }
     }
     return enabled;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

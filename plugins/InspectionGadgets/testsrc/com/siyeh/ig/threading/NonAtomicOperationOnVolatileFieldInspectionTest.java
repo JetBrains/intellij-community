@@ -12,15 +12,16 @@ import org.jetbrains.annotations.Nullable;
 public class NonAtomicOperationOnVolatileFieldInspectionTest extends LightJavaInspectionTestCase {
 
   public void testWriteToDifferentInstance() {
-    doTest("class A {\n" +
-           "    private volatile int v;\n" +
-           "\n" +
-           "    A copy() {\n" +
-           "        A a = new A();\n" +
-           "        a.v = v;\n" +
-           "        return a;\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class A {
+                 private volatile int v;
+
+                 A copy() {
+                     A a = new A();
+                     a.v = v;
+                     return a;
+                 }
+             }""");
   }
 
   public void testPostfix() {

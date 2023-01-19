@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.searcheverywhere
 
@@ -8,7 +8,6 @@ import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqu
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.*
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -65,7 +64,7 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
                 transformation = { this },
                 shouldBeProcessed = { new, old ->
                     // [com.intellij.ide.actions.searcheverywhere.TrivialElementsEqualityProvider] is responsible for "new == old" case
-                    (new::class != old::class || new === old) && PsiManager.getInstance(new.project).areElementsEquivalent(new, old)
+                    (new::class != old::class || new === old) && new.manager.areElementsEquivalent(new, old)
                 },
                 shouldBeReplaced = { new, old -> new is KtElement && old !is KtElement },
             ) ?: reduce(

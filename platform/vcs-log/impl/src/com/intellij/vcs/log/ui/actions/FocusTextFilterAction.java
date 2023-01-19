@@ -37,7 +37,7 @@ public class FocusTextFilterAction extends DumbAwareAction {
       IdeFocusManager.getInstance(project).requestFocus(logUi.getTable(), true);
     }
     else {
-      IdeFocusManager.getInstance(project).requestFocus(logUi.getFilterUi().getTextFilterComponent(), true);
+      IdeFocusManager.getInstance(project).requestFocus(logUi.getFilterUi().getTextFilterComponent().getTextField(), true);
     }
   }
 

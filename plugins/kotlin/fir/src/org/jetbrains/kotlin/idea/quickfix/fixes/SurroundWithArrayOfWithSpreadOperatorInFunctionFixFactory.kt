@@ -9,10 +9,10 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames.arrayClassFqNameToPrimitiveType
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
@@ -24,7 +24,7 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
 
     class Input(val fullyQualifiedArrayOfCall: String, val shortArrayOfCall: String) : KotlinApplicatorInput
 
-    val applicator = applicator<KtExpression, Input> {
+    private val applicator = applicator<KtExpression, Input> {
         familyName(KotlinBundle.lazyMessage("surround.with.array.of"))
         actionName { _, input ->
             KotlinBundle.getMessage("surround.with.0", input.shortArrayOfCall)
@@ -34,10 +34,10 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
             val argumentName = argument.getArgumentName()?.asName ?: return@applyTo
             val argumentExpression = argument.getArgumentExpression() ?: return@applyTo
 
-            val factory = KtPsiFactory(argumentExpression)
+            val psiFactory = KtPsiFactory(psi.project)
 
-            val surroundedWithArrayOf = factory.createExpressionByPattern("${input.fullyQualifiedArrayOfCall}($0)", argumentExpression)
-            val newArgument = factory.createArgument(surroundedWithArrayOf, argumentName)
+            val surroundedWithArrayOf = psiFactory.createExpressionByPattern("${input.fullyQualifiedArrayOfCall}($0)", argumentExpression)
+            val newArgument = psiFactory.createArgument(surroundedWithArrayOf, argumentName)
 
             val replacedArgument = argument.replace(newArgument) as KtValueArgument
             // Essentially this qualifier is always `kotlin` in `kotlin.arrayOf(...)`. We choose to shorten this part so that the argument

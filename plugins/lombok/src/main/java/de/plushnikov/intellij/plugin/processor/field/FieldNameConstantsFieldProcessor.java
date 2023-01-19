@@ -2,11 +2,10 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
@@ -49,19 +48,21 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemSink builder) {
     return LombokProcessorUtil.isLevelVisible(psiAnnotation) && checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, builder);
   }
 
-  public boolean checkIfFieldNameIsValidAndWarn(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+  public static boolean checkIfFieldNameIsValidAndWarn(@NotNull PsiAnnotation psiAnnotation,
+                                                       @NotNull PsiField psiField,
+                                                       @NotNull ProblemSink builder) {
     final boolean isValid = isValidFieldNameConstant(psiAnnotation, psiField);
     if (!isValid) {
-      builder.addWarning(LombokBundle.message("inspection.message.not.generating.constant"));
+      builder.addWarningMessage("inspection.message.not.generating.constant");
     }
     return isValid;
   }
 
-  private boolean isValidFieldNameConstant(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
+  private static boolean isValidFieldNameConstant(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass) {
       final String fieldName = calcFieldConstantName(psiField, psiAnnotation, psiClass);
@@ -73,13 +74,15 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
   @Override
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiClass psiClass = psiField.getContainingClass();
-    if (null != psiClass && null != psiField.getName()) {
+    if (null != psiClass) {
       target.add(createFieldNameConstant(psiField, psiClass, psiAnnotation));
     }
   }
 
   @NotNull
-  public PsiField createFieldNameConstant(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  public static PsiField createFieldNameConstant(@NotNull PsiField psiField,
+                                                 @NotNull PsiClass psiClass,
+                                                 @NotNull PsiAnnotation psiAnnotation) {
     final PsiManager manager = psiClass.getContainingFile().getManager();
     final PsiType psiFieldType = PsiType.getJavaLangString(manager, GlobalSearchScope.allScope(psiClass.getProject()));
 
@@ -102,7 +105,7 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
   }
 
   @NotNull
-  private String calcFieldConstantName(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
+  private static String calcFieldConstantName(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
     String prefix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "prefix", CONFIG_DEFAULT);
     String suffix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "suffix", CONFIG_DEFAULT);
 

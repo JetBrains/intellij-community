@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
-/**
- * @author peter
- */
 final class UserDataInterner {
   private static final Map<MapReference, MapReference> ourCache = new LinkedHashMap<>(20, true) {
     @Override

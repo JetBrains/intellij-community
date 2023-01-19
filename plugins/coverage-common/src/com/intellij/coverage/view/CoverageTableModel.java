@@ -12,6 +12,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.tree.AbstractTreeModel;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -22,6 +23,7 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Comparator;
+import java.util.List;
 import java.util.function.Consumer;
 
 class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, SortableColumnModel, TreeModelListener, TreeVisitor.Acceptor {
@@ -41,8 +43,13 @@ class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, So
     myAsyncModel.addTreeModelListener(this);
   }
 
-  public void reset() {
-    myStructureModel.invalidateAsync();
+  public void reset(boolean restorePaths) {
+    if (restorePaths) {
+      runActionWithPathsRestore(() -> myStructureModel.invalidateAsync());
+    }
+    else {
+      myStructureModel.invalidateAsync();
+    }
   }
 
   public void makeVisible(CoverageListNode node, Consumer<? super TreePath> onSuccess) {
@@ -50,7 +57,19 @@ class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, So
   }
 
   public void setComparator(Comparator<? super NodeDescriptor<?>> comparator) {
-    myStructureModel.setComparator(comparator);
+    runActionWithPathsRestore(() -> myStructureModel.setComparator(comparator));
+  }
+
+  public void runActionWithPathsRestore(Runnable action) {
+    final List<TreePath> selectedPaths = TreeUtil.collectSelectedPaths(myTree);
+    final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
+    action.run();
+    for (TreePath path : selectedPaths) {
+      TreeUtil.promiseSelect(myTree, path);
+    }
+    for (TreePath path : expandedPaths) {
+      TreeUtil.promiseExpand(myTree, path);
+    }
   }
 
   @Override

@@ -91,12 +91,13 @@ public class SimplifiableJUnitAssertionInspectionTest extends LightJavaInspectio
       "@Target({ElementType.METHOD})" +
       "public @interface Test {}",
 
-      "package org.junit.jupiter.api;\n" +
-      "import java.util.function.Supplier;\n" +
-      "public final class Assertions {\n" +
-      "    public static void assertNotEquals(Object expected, Object actual) {}\n" +
-      "    public static void assertFalse(boolean expected) {}\n" +
-      "}"
+      """
+package org.junit.jupiter.api;
+import java.util.function.Supplier;
+public final class Assertions {
+    public static void assertNotEquals(Object expected, Object actual) {}
+    public static void assertFalse(boolean expected) {}
+}"""
     };
   }
 }

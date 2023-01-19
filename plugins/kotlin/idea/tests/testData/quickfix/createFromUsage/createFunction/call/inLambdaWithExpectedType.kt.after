@@ -1,5 +1,4 @@
 // "Create function 'bar'" "true"
-// DISABLE-ERRORS
 
 class A<T>(val t: T)
 
@@ -9,6 +8,6 @@ fun foo(l: A<String>): A<Int> {
     return l.convert { bar(it) }
 }
 
-fun bar(it: String) {
+fun bar(it: String): Int {
     TODO("Not yet implemented")
 }

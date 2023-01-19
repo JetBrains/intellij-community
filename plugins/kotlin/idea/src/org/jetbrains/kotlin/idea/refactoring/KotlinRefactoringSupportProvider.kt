@@ -52,6 +52,24 @@ class KotlinRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun getExtractSuperClassHandler() = KotlinExtractSuperclassHandler
 
     override fun getExtractInterfaceHandler() = KotlinExtractInterfaceHandler
+
+    /**
+     * Kotlin has its own family of handlers for this, so we want to disable the platform implementation of
+     * [com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler].
+     *
+     * @see org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
+     * @see org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameDispatcherHandler
+     */
+    override fun isInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean = false
+
+    /**
+     *  Kotlin has its own handler for this, so we want to disable the platform implementation of
+     *  [com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler].
+     *
+     * @see org.jetbrains.kotlin.idea.refactoring.rename.KotlinMemberInplaceRenameHandler
+     * @see org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameDispatcherHandler
+     */
+    override fun isMemberInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean = false
 }
 
 class KotlinVetoRenameCondition : Condition<PsiElement> {

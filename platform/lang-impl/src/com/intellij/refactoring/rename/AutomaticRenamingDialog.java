@@ -39,9 +39,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class AutomaticRenamingDialog extends DialogWrapper {
   private static final int CHECK_COLUMN = 0;
   private static final int OLD_NAME_COLUMN = 1;
@@ -310,27 +307,19 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      switch (columnIndex) {
-        case CHECK_COLUMN:
-          return myShouldRename[rowIndex];
-        case OLD_NAME_COLUMN:
-          return "<html><nobr>" + RefactoringUIUtil.getDescription(myRenames[rowIndex], true) + "</nobr></html>";
-        case NEW_NAME_COLUMN:
-          return myNewNames[rowIndex];
-        default:
-          return null;
-      }
+      return switch (columnIndex) {
+        case CHECK_COLUMN -> myShouldRename[rowIndex];
+        case OLD_NAME_COLUMN -> "<html><nobr>" + RefactoringUIUtil.getDescription(myRenames[rowIndex], true) + "</nobr></html>";
+        case NEW_NAME_COLUMN -> myNewNames[rowIndex];
+        default -> null;
+      };
     }
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch (columnIndex) {
-        case CHECK_COLUMN:
-          myShouldRename[rowIndex] = ((Boolean)aValue).booleanValue();
-          break;
-        case NEW_NAME_COLUMN:
-          myNewNames[rowIndex] = (String)aValue;
-          break;
+        case CHECK_COLUMN -> myShouldRename[rowIndex] = ((Boolean)aValue).booleanValue();
+        case NEW_NAME_COLUMN -> myNewNames[rowIndex] = (String)aValue;
       }
       handleChanges();
     }
@@ -343,27 +332,20 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-      switch (columnIndex) {
-        case CHECK_COLUMN:
-          return Boolean.class;
-        case OLD_NAME_COLUMN:
-        case NEW_NAME_COLUMN:
-          return String.class;
-        default:
-          return null;
-      }
+      return switch (columnIndex) {
+        case CHECK_COLUMN -> Boolean.class;
+        case OLD_NAME_COLUMN, NEW_NAME_COLUMN -> String.class;
+        default -> null;
+      };
     }
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case OLD_NAME_COLUMN:
-          return RefactoringBundle.message("automatic.renamer.entity.name.column", myRenamer.entityName());
-        case NEW_NAME_COLUMN:
-          return RefactoringBundle.message("automatic.renamer.rename.to.column");
-        default:
-          return " ";
-      }
+      return switch (column) {
+        case OLD_NAME_COLUMN -> RefactoringBundle.message("automatic.renamer.entity.name.column", myRenamer.entityName());
+        case NEW_NAME_COLUMN -> RefactoringBundle.message("automatic.renamer.rename.to.column");
+        default -> " ";
+      };
     }
 
     private MyEnableDisable getSpaceAction() {

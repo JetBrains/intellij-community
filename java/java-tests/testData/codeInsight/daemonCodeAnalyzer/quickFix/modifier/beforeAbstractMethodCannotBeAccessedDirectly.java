@@ -1,4 +1,4 @@
-// "Make 'X.foo' not abstract" "true-preview"
+// "Make 'X.foo()' not abstract" "true-preview"
 
 abstract class X {
   abstract void foo();

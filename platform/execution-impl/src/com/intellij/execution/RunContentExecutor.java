@@ -184,6 +184,11 @@ public class RunContentExecutor implements Disposable {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isDumbAware() {
       return true;
     }
@@ -204,6 +209,11 @@ public class RunContentExecutor implements Disposable {
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(myStopAction != null);
       e.getPresentation().setEnabled(myStopEnabled != null && myStopEnabled.compute());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

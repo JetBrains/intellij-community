@@ -61,7 +61,7 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
 
   private void executeCommand() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    myExecAction.actionPerformed(new TestActionEvent());
+    myExecAction.actionPerformed(TestActionEvent.createTestEvent());
   }
 
   private void execStatementList1() {

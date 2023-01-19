@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.IdeBundle;
@@ -26,6 +26,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.HtmlChunk.*;
 
+@Deprecated
 public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCustomizeIDEWizardDialog {
   protected static final String BUTTONS = "BUTTONS";
   protected static final String NO_BUTTONS = "NO_BUTTONS";
@@ -84,7 +85,8 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCus
       throw new IllegalStateException("no steps provided");
     }
     CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.WizardDisplayed);
-    SplashManager.executeWithHiddenSplash(getWindow(), () -> super.show());
+    SplashManager.hide();
+    super.show();
   }
 
   @Override

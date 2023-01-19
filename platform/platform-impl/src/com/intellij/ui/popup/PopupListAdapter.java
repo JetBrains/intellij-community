@@ -2,8 +2,8 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.JBListUpdater;
-import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ListUtil;
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
@@ -104,8 +105,8 @@ final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAda
   }
 
   @Override
-  public ListComponentUpdater getBackgroundUpdater() {
-    return new JBListUpdater((JBList)(myList));
+  public GenericListComponentUpdater<T> getBackgroundUpdater() {
+    return new JBListUpdater<T>((JBList<T>)(myList));
   }
 
   @Override
@@ -129,6 +130,12 @@ final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAda
   @Override
   public boolean checkResetFilter() {
     return myListWithFilter.resetFilter();
+  }
+
+  @Override
+  public void setFixedRendererSize(@NotNull Dimension dimension) {
+    myList.setFixedCellWidth(dimension.width);
+    myList.setFixedCellHeight(dimension.height);
   }
 
   private final class MyListWrapper extends JBScrollPane implements DataProvider {

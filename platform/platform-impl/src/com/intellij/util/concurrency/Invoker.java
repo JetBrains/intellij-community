@@ -41,10 +41,10 @@ public abstract class Invoker implements Disposable {
   private final String description;
   private volatile boolean disposed;
 
-  private Invoker(@NotNull String prefix, @NotNull Disposable parent, @NotNull ThreeState useReadAction) {
-    description = "Invoker." + UID.getAndIncrement()+"."+prefix + (useReadAction != ThreeState.UNSURE ? ".ReadAction="+useReadAction : "") + ": "+parent;
+  private Invoker(@NotNull String prefix, @NotNull String parentName, @NotNull ThreeState useReadAction) {
+    String readActionDescriptionPart = useReadAction != ThreeState.UNSURE ? ".ReadAction=" + useReadAction : "";
+    description = "Invoker." + UID.getAndIncrement() + "." + prefix + readActionDescriptionPart + ": " + parentName;
     this.useReadAction = useReadAction;
-    Disposer.register(parent, this);
   }
 
   @Override
@@ -365,7 +365,8 @@ public abstract class Invoker implements Disposable {
      */
     @Deprecated(forRemoval = true)
     public EDT(@NotNull Disposable parent) {
-      super("EDT", parent, ThreeState.UNSURE);
+      super("EDT", parent.toString(), ThreeState.UNSURE);
+      Disposer.register(parent, this);
     }
 
     @Override
@@ -381,48 +382,6 @@ public abstract class Invoker implements Disposable {
       else {
         EdtExecutorService.getInstance().execute(runnable);
       }
-    }
-  }
-
-  /**
-   * This class is the {@code Invoker} in a single background thread.
-   * This invoker does not need additional synchronization.
-   *
-   * @deprecated use {@link Invoker#forBackgroundThreadWithReadAction(Disposable)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static final class BackgroundThread extends Invoker {
-    private final ScheduledExecutorService executor;
-    private volatile Thread thread;
-
-    public BackgroundThread(@NotNull Disposable parent) {
-      super("Background.Thread", parent, ThreeState.YES);
-      executor = AppExecutorUtil.createBoundedScheduledExecutorService(toString(), 1);
-    }
-
-    @Override
-    public void dispose() {
-      super.dispose();
-      executor.shutdown();
-    }
-
-    @Override
-    public boolean isValidThread() {
-      return thread == Thread.currentThread();
-    }
-
-    @Override
-    void offer(@NotNull Runnable runnable, int delay) {
-      schedule(executor, () -> {
-        if (thread != null) LOG.error("unexpected thread: " + thread);
-        try {
-          thread = Thread.currentThread();
-          runnable.run(); // may throw an assertion error
-        }
-        finally {
-          thread = null;
-        }
-      }, delay);
     }
   }
 
@@ -445,8 +404,9 @@ public abstract class Invoker implements Disposable {
     }
 
     private Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction, int maxThreads) {
-      super(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", parent, useReadAction);
+      super(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", String.valueOf(parent.toString()), useReadAction);
       executor = AppExecutorUtil.createBoundedScheduledExecutorService(toString(), maxThreads);
+      Disposer.register(parent, this);
     }
 
     @Override

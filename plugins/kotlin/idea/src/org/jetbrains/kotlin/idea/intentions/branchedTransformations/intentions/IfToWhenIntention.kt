@@ -13,10 +13,10 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddLoopLabelFix
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.getSubjectToIntroduce
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.introduceSubject
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.unwrapBlockOrParenthesis
-import org.jetbrains.kotlin.idea.quickfix.AddLoopLabelFix
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -53,7 +53,7 @@ class IfToWhenIntention : SelfTargetingRangeIntention<KtIfExpression>(
                     builder.append(nextSibling.text)
                     nextSibling = nextSibling.nextSibling ?: break
                 }
-                KtPsiFactory(ifExpression).createBlock(builder.toString()).takeIf { it.statements.isNotEmpty() }
+                KtPsiFactory(ifExpression.project).createBlock(builder.toString()).takeIf { it.statements.isNotEmpty() }
             }
         }
     }
@@ -142,7 +142,7 @@ class IfToWhenIntention : SelfTargetingRangeIntention<KtIfExpression>(
         var applyFullCommentSaver = true
         val loop = ifExpression.getStrictParentOfType<KtLoopExpression>()
         val loopJumpVisitor = LabelLoopJumpVisitor(loop)
-        var whenExpression = KtPsiFactory(ifExpression).buildExpression {
+        var whenExpression = KtPsiFactory(ifExpression.project).buildExpression {
             appendFixedText("when {\n")
 
             var currentIfExpression = ifExpression
@@ -208,7 +208,7 @@ class IfToWhenIntention : SelfTargetingRangeIntention<KtIfExpression>(
         result.accept(loopJumpVisitor)
         val labelName = loopJumpVisitor.labelName
         if (loop != null && loopJumpVisitor.labelRequired && labelName != null && loop.parent !is KtLabeledExpression) {
-            val labeledLoopExpression = KtPsiFactory(result).createLabeledExpression(labelName)
+            val labeledLoopExpression = KtPsiFactory(result.project).createLabeledExpression(labelName)
             labeledLoopExpression.baseExpression!!.replace(loop)
             val replacedLabeledLoopExpression = loop.replace(labeledLoopExpression)
             // For some reason previous operation can break adjustments

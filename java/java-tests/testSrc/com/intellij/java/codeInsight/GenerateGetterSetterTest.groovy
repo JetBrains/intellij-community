@@ -23,9 +23,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
-/**
- * @author peter
- */
 
 @CompileStatic
 class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCase {

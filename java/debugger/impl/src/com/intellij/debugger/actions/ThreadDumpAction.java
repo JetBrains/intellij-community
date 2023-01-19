@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -42,7 +42,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
     DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
 
     final DebuggerSession session = context.getDebuggerSession();
-    if(session != null && session.isAttached()) {
+    if (session != null && session.isAttached()) {
       final DebugProcessImpl process = context.getDebugProcess();
       process.getManagerThread().invoke(new DebuggerCommandImpl() {
         @Override
@@ -236,50 +236,34 @@ public final class ThreadDumpAction extends DumbAwareAction {
   }
 
   private static String threadStatusToJavaThreadState(int status) {
-    switch (status) {
-      case ThreadReference.THREAD_STATUS_MONITOR:
-        return Thread.State.BLOCKED.name();
-      case ThreadReference.THREAD_STATUS_NOT_STARTED:
-        return Thread.State.NEW.name();
-      case ThreadReference.THREAD_STATUS_RUNNING:
-        return Thread.State.RUNNABLE.name();
-      case ThreadReference.THREAD_STATUS_SLEEPING:
-        return Thread.State.TIMED_WAITING.name();
-      case ThreadReference.THREAD_STATUS_WAIT:
-        return Thread.State.WAITING.name();
-      case ThreadReference.THREAD_STATUS_ZOMBIE:
-        return Thread.State.TERMINATED.name();
-      case ThreadReference.THREAD_STATUS_UNKNOWN:
-        return "unknown";
-      default:
-        return "undefined";
-    }
+    return switch (status) {
+      case ThreadReference.THREAD_STATUS_MONITOR -> Thread.State.BLOCKED.name();
+      case ThreadReference.THREAD_STATUS_NOT_STARTED -> Thread.State.NEW.name();
+      case ThreadReference.THREAD_STATUS_RUNNING -> Thread.State.RUNNABLE.name();
+      case ThreadReference.THREAD_STATUS_SLEEPING -> Thread.State.TIMED_WAITING.name();
+      case ThreadReference.THREAD_STATUS_WAIT -> Thread.State.WAITING.name();
+      case ThreadReference.THREAD_STATUS_ZOMBIE -> Thread.State.TERMINATED.name();
+      case ThreadReference.THREAD_STATUS_UNKNOWN -> "unknown";
+      default -> "undefined";
+    };
   }
 
   private static String threadStatusToState(int status) {
-    switch (status) {
-      case ThreadReference.THREAD_STATUS_MONITOR:
-        return "waiting for monitor entry";
-      case ThreadReference.THREAD_STATUS_NOT_STARTED:
-        return "not started";
-      case ThreadReference.THREAD_STATUS_RUNNING:
-        return "runnable";
-      case ThreadReference.THREAD_STATUS_SLEEPING:
-        return "sleeping";
-      case ThreadReference.THREAD_STATUS_WAIT:
-        return "waiting";
-      case ThreadReference.THREAD_STATUS_ZOMBIE:
-        return "zombie";
-      case ThreadReference.THREAD_STATUS_UNKNOWN:
-        return "unknown";
-      default:
-        return "undefined";
-    }
+    return switch (status) {
+      case ThreadReference.THREAD_STATUS_MONITOR -> "waiting for monitor entry";
+      case ThreadReference.THREAD_STATUS_NOT_STARTED -> "not started";
+      case ThreadReference.THREAD_STATUS_RUNNING -> "runnable";
+      case ThreadReference.THREAD_STATUS_SLEEPING -> "sleeping";
+      case ThreadReference.THREAD_STATUS_WAIT -> "waiting";
+      case ThreadReference.THREAD_STATUS_ZOMBIE -> "zombie";
+      case ThreadReference.THREAD_STATUS_UNKNOWN -> "unknown";
+      default -> "undefined";
+    };
   }
 
   public static @NonNls String renderLocation(final Location location) {
-    return "at "+DebuggerUtilsEx.getLocationMethodQName(location)+
-           "("+DebuggerUtilsEx.getSourceName(location, e -> "Unknown Source")+":"+DebuggerUtilsEx.getLineNumber(location, false)+")";
+    return "at " + DebuggerUtilsEx.getLocationMethodQName(location) +
+           "(" + DebuggerUtilsEx.getSourceName(location, e -> "Unknown Source") + ":" + DebuggerUtilsEx.getLineNumber(location, false) + ")";
   }
 
   private static String threadName(ThreadReference threadReference) {
@@ -288,7 +272,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
 
 
   @Override
-  public void update(@NotNull AnActionEvent e){
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (project == null) {

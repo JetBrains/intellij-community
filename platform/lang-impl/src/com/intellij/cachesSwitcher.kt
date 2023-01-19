@@ -27,7 +27,7 @@ object CacheSwitcher {
       fileBasedIndexTumbler.switch {
         val vfs = PersistentFS.getInstance() as PersistentFSImpl
         vfs.switch {
-          assertVirtualPointersDisposed(reason)
+          assertUrlBasedVirtualFilePointers(reason)
           unsafeDataManipulation()
 
           setupProp("caches_dir", cachesDir)
@@ -40,12 +40,12 @@ object CacheSwitcher {
     }
   }
 
-  private fun assertVirtualPointersDisposed(reason: String) {
+  private fun assertUrlBasedVirtualFilePointers(reason: String) {
     val assertSoftly = ApplicationManager.getApplication().isUnitTestMode
     val virtualFilePointerManagerImpl = VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl
 
     try {
-      virtualFilePointerManagerImpl.assertAllPointersDisposed()
+      virtualFilePointerManagerImpl.assertUrlBasedPointers()
     }
     catch (e: Exception) {
       val message = "Not disposed pointers during caches switching $reason"

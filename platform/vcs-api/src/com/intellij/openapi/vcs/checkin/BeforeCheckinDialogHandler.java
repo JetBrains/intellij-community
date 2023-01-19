@@ -17,7 +17,7 @@ public abstract class BeforeCheckinDialogHandler {
    * Checks if commit conditions are valid and Commit Dialog should be shown.
    *
    * @param project       project where commit is performed
-   * @param changes       changes to commit
+   * @param changes       changes selected for commit
    * @param executors     custom commit executors available for commit
    * @param showVcsCommit {@code true} if usual VCS commit is available in Commit Dialog.
    *                      {@code false} if only custom commit executors could be used.

@@ -6,14 +6,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
-import com.intellij.terminal.TerminalSplitAction;
 import com.intellij.terminal.actions.TerminalActionUtil;
+import com.intellij.terminal.ui.TtyConnectorAccessor;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.ProcessTtyConnector;
@@ -25,9 +23,11 @@ import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalModelListener;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalAction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
+import org.jetbrains.plugins.terminal.action.TerminalSplitAction;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -37,6 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ShellTerminalWidget extends JBTerminalWidget {
@@ -48,7 +49,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   private String myCommandHistoryFilePath;
   private final Prompt myPrompt = new Prompt();
   private final Queue<String> myPendingCommandsToExecute = new LinkedList<>();
-  private final Queue<Consumer<TtyConnector>> myPendingActionsToExecute = new LinkedList<>();
+  private final TtyConnectorAccessor myTtyConnectorAccessor = new TtyConnectorAccessor();
   private final TerminalShellCommandHandlerHelper myShellCommandHandlerHelper;
 
   private final Alarm myVfsRefreshAlarm;
@@ -174,27 +175,23 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   public void executeWithTtyConnector(@NotNull Consumer<TtyConnector> consumer) {
-    TtyConnector connector = getTtyConnector();
-    if (connector != null) {
-      consumer.consume(connector);
-    } else {
-      myPendingActionsToExecute.add(consumer);
-    }
+    myTtyConnectorAccessor.executeWithTtyConnector(consumer);
   }
 
   @Override
-  public String getSessionName() {
+  public @Nls @Nullable String getDefaultSessionName() {
     ProcessTtyConnector connector = getProcessTtyConnector();
     if (connector instanceof PtyProcessTtyConnector) {
       // use name from settings for local terminal
       return TerminalOptionsProvider.getInstance().getTabName();
     }
-    return super.getSessionName();
+    return super.getDefaultSessionName();
   }
 
   @Override
   public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
     super.setTtyConnector(ttyConnector);
+    myTtyConnectorAccessor.setTtyConnector(ttyConnector);
 
     String command;
     while ((command = myPendingCommandsToExecute.poll()) != null) {
@@ -204,11 +201,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       catch (IOException e) {
         LOG.warn("Cannot execute " + command, e);
       }
-    }
-
-    Consumer<TtyConnector> consumer;
-    while ((consumer = myPendingActionsToExecute.poll()) != null) {
-      consumer.consume(ttyConnector);
     }
   }
 
@@ -236,7 +228,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   @Override
   public List<TerminalAction> getActions() {
     List<TerminalAction> actions = new ArrayList<>(super.getActions());
-    if (TerminalView.isInTerminalToolWindow(this)) {
+    if (TerminalToolWindowManager.isInTerminalToolWindow(this)) {
       ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, RenameTerminalSessionActionKt.ACTION_ID, true));
     }
     JBTerminalWidgetListener listener = getListener();
@@ -250,8 +242,8 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       return true;
     }).withMnemonicKey(KeyEvent.VK_T));
 
-    actions.add(TerminalSplitAction.create(true, getListener()).withMnemonicKey(KeyEvent.VK_V).separatorBefore(true));
-    actions.add(TerminalSplitAction.create(false, getListener()).withMnemonicKey(KeyEvent.VK_H));
+    actions.add(TerminalSplitAction.create(true, getListener()).separatorBefore(true));
+    actions.add(TerminalSplitAction.create(false, getListener()));
     if (listener != null && listener.isGotoNextSplitTerminalAvailable()) {
       actions.add(settingsProvider.getGotoNextSplitTerminalAction(listener, true));
       actions.add(settingsProvider.getGotoNextSplitTerminalAction(listener, false));

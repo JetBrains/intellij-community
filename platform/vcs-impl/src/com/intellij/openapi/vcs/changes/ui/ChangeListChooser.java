@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
@@ -19,18 +19,6 @@ public class ChangeListChooser extends DialogWrapper {
   private final Project myProject;
   private LocalChangeList mySelectedList;
   private final ChangeListChooserPanel myPanel;
-
-  public ChangeListChooser(@NotNull Project project,
-                           @Nullable Collection<? extends ChangeList> changelists,
-                           @Nullable ChangeList defaultSelection,
-                           @NlsContexts.DialogTitle String title,
-                           @Nullable @Nls String suggestedName) {
-    this(project, title);
-
-    setChangeLists(changelists);
-    setDefaultSelection(defaultSelection);
-    setSuggestedName(suggestedName);
-  }
 
   public ChangeListChooser(@NotNull Project project,
                            @NlsContexts.DialogTitle String title) {

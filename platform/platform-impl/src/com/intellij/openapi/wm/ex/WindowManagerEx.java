@@ -15,10 +15,6 @@ import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class WindowManagerEx extends WindowManager {
   public enum WindowShadowMode { NORMAL, SMALL, DISABLED }
 
@@ -81,6 +77,8 @@ public abstract class WindowManagerEx extends WindowManager {
 
   @ApiStatus.Internal
   public abstract void releaseFrame(@NotNull ProjectFrameHelper frameHelper);
+
+  public abstract boolean isFrameReused(@NotNull ProjectFrameHelper frameHelper);
 
   @ApiStatus.Internal
   public abstract @NotNull List<ProjectFrameHelper> getProjectFrameHelpers();

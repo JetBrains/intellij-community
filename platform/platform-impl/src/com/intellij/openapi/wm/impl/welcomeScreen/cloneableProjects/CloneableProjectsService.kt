@@ -18,16 +18,19 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.CloneableProjectItem
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.Topic
+import com.intellij.util.messages.Topic.AppLevel
+import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemIndependent
 import java.util.*
 
 @Service(Level.APP)
 class CloneableProjectsService {
-  private val cloneableProjects: MutableSet<CloneableProject> = Collections.synchronizedSet(mutableSetOf())
+  private val cloneableProjects = ContainerUtil.createLockFreeCopyOnWriteList<CloneableProject>()
 
-  @RequiresEdt
+  @CalledInAny
   fun runCloneTask(projectPath: @SystemIndependent String, cloneTask: CloneTask) {
     val taskInfo = cloneTask.taskInfo()
     val progressIndicator = CloneableProjectProgressIndicator(taskInfo)
@@ -59,24 +62,25 @@ class CloneableProjectsService {
     }
   }
 
-  internal fun collectCloneableProjects(): List<CloneableProjectItem> {
-    val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
-
-    return cloneableProjects.map { cloneableProject ->
+  internal fun collectCloneableProjects(): Sequence<CloneableProjectItem> {
+    val recentProjectManager by lazy { RecentProjectsManager.getInstance() as RecentProjectsManagerBase }
+    return cloneableProjects.asSequence().map { cloneableProject ->
       val projectPath = cloneableProject.projectPath
       val projectName = recentProjectManager.getProjectName(projectPath)
       val displayName = recentProjectManager.getDisplayName(projectPath) ?: projectName
-
-      CloneableProjectItem(projectPath, projectName, displayName, cloneableProject)
+      CloneableProjectItem(projectPath = projectPath,
+                           projectName = projectName,
+                           displayName = displayName,
+                           cloneableProject = cloneableProject)
     }
   }
 
   fun cloneCount(): Int {
-    return cloneableProjects.size
+    return cloneableProjects.filter { it.cloneStatus == CloneStatus.PROGRESS }.size
   }
 
   fun isCloneActive(): Boolean {
-    return !cloneableProjects.isEmpty()
+    return cloneableProjects.any { it.cloneStatus == CloneStatus.PROGRESS }
   }
 
   fun cancelClone(cloneableProject: CloneableProject) {
@@ -121,33 +125,43 @@ class CloneableProjectsService {
   }
 
   private fun fireCloneAddedEvent(cloneableProject: CloneableProject) {
-    ApplicationManager.getApplication().messageBus
-      .syncPublisher(TOPIC)
-      .onCloneAdded(cloneableProject.progressIndicator, cloneableProject.cloneTaskInfo)
+    ApplicationManager.getApplication().invokeLater {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TOPIC)
+        .onCloneAdded(cloneableProject.progressIndicator, cloneableProject.cloneTaskInfo)
+    }
   }
 
   private fun fireCloneRemovedEvent() {
-    ApplicationManager.getApplication().messageBus
-      .syncPublisher(TOPIC)
-      .onCloneRemoved()
+    ApplicationManager.getApplication().invokeLater {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TOPIC)
+        .onCloneRemoved()
+    }
   }
 
   private fun fireCloneSuccessEvent() {
-    ApplicationManager.getApplication().messageBus
-      .syncPublisher(TOPIC)
-      .onCloneSuccess()
+    ApplicationManager.getApplication().invokeLater {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TOPIC)
+        .onCloneSuccess()
+    }
   }
 
   private fun fireCloneFailedEvent() {
-    ApplicationManager.getApplication().messageBus
-      .syncPublisher(TOPIC)
-      .onCloneFailed()
+    ApplicationManager.getApplication().invokeLater {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TOPIC)
+        .onCloneFailed()
+    }
   }
 
   private fun fireCloneCanceledEvent() {
-    ApplicationManager.getApplication().messageBus
-      .syncPublisher(TOPIC)
-      .onCloneCanceled()
+    ApplicationManager.getApplication().invokeLater {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TOPIC)
+        .onCloneCanceled()
+    }
   }
 
   enum class CloneStatus {
@@ -193,27 +207,32 @@ class CloneableProjectsService {
   }
 
   interface CloneProjectListener {
+    @RequiresEdt
     fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {
     }
 
+    @RequiresEdt
     fun onCloneRemoved() {
     }
 
+    @RequiresEdt
     fun onCloneSuccess() {
     }
 
+    @RequiresEdt
     fun onCloneFailed() {
     }
 
+    @RequiresEdt
     fun onCloneCanceled() {
     }
   }
 
   companion object {
-    @JvmField
-    val TOPIC = Topic(CloneProjectListener::class.java)
+    @AppLevel
+    val TOPIC: Topic<CloneProjectListener> = Topic(CloneProjectListener::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmStatic
-    fun getInstance() = service<CloneableProjectsService>()
+    fun getInstance(): CloneableProjectsService = service<CloneableProjectsService>()
   }
 }

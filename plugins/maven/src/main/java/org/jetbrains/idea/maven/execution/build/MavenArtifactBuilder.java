@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Extension point for delegate artifact builds to maven goals.
  * Usage on execute maven goal. {@link MavenProjectTaskRunner}
- * @author ibessonov
  */
 public interface MavenArtifactBuilder {
 

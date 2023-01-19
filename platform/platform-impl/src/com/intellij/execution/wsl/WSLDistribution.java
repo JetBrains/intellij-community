@@ -10,7 +10,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -20,8 +19,6 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,8 +34,9 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
@@ -61,6 +59,11 @@ public class WSLDistribution implements AbstractWslDistribution {
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
   private static final String RSYNC = "rsync";
+
+  /**
+   * @see <a href="https://www.gnu.org/software/bash/manual/html_node/Definitions.html#index-name">bash identifier definition</a>
+   */
+  private static final Pattern ENV_VARIABLE_NAME_PATTERN = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
 
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
@@ -207,7 +210,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @deprecated use {@link #patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @Nullable String remoteWorkingDir,
@@ -275,7 +278,12 @@ public class WSLDistribution implements AbstractWslDistribution {
     }
     if (executeCommandInShell && !options.isPassEnvVarsUsingInterop()) {
       commandLine.getEnvironment().forEach((key, val) -> {
-        prependCommand(linuxCommand, "export", CommandLineUtil.posixQuote(key) + "=" + CommandLineUtil.posixQuote(val), "&&");
+        if (ENV_VARIABLE_NAME_PATTERN.matcher(key).matches()) {
+          prependCommand(linuxCommand, "export", key + "=" + CommandLineUtil.posixQuote(val), "&&");
+        }
+        else {
+          LOG.debug("Can not pass environment variable (bad name): '", key, "'");
+        }
       });
       commandLine.getEnvironment().clear();
     }
@@ -440,15 +448,14 @@ public class WSLDistribution implements AbstractWslDistribution {
    */
   public @Nullable Map<String, String> getEnvironment() {
     try {
-      ProcessOutput processOutput =
-        executeOnWsl(Collections.singletonList("env"),
-                     new WSLCommandLineOptions()
-                       .setExecuteCommandInShell(true)
-                       .setExecuteCommandInLoginShell(true)
-                       .setExecuteCommandInInteractiveShell(true),
-                     5000,
-                     null);
-      if (processOutput.getExitCode() == 0){
+      ProcessOutput processOutput = WslExecution.executeInShellAndGetCommandOnlyStdout(
+        this, new GeneralCommandLine("env"),
+        new WSLCommandLineOptions()
+          .setExecuteCommandInShell(true)
+          .setExecuteCommandInLoginShell(true)
+          .setExecuteCommandInInteractiveShell(true),
+        5000);
+      if (processOutput.getExitCode() == 0) {
         Map<String, String> result = new HashMap<>();
         for (String string : processOutput.getStdoutLines()) {
           int assignIndex = string.indexOf('=');
@@ -468,17 +475,21 @@ public class WSLDistribution implements AbstractWslDistribution {
     return null;
   }
 
+  public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath) {
+    return getWindowsPath(wslPath, this::getMntRoot);
+  }
+
   /**
    * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL, or {@code null} if path is unmappable
    */
-  public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath) {
+  public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath, @NotNull Supplier<String> mntRootSupplier) {
     if (containsDriveLetter(wslPath)) {
-      String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
+      String windowsPath = WSLUtil.getWindowsPath(wslPath, mntRootSupplier.get());
       if (windowsPath != null) {
         return windowsPath;
       }
     }
-    return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
+    return getUNCRootPathString() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
   }
 
   private static boolean containsDriveLetter(@NotNull String linuxPath) {
@@ -567,29 +578,16 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   /**
-   * @deprecated use {@link WSLDistribution#getUNCRootPath()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull File getUNCRoot() {
-    return new File(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
-  }
-
-  /**
    * @return UNC root for the distribution, e.g. {@code \\wsl$\Ubuntu}
    */
-  @ApiStatus.Experimental
-  public @NotNull Path getUNCRootPath() {
-    return Paths.get(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
-  }
-
   @Override
   @ApiStatus.Experimental
-  public @Nullable VirtualFile getUNCRootVirtualFile(boolean refreshIfNeed) {
-    if (!Experiments.getInstance().isFeatureEnabled("wsl.p9.support")) {
-      return null;
-    }
-    File uncRoot = getUNCRoot();
-    return uncRoot.exists() ? VfsUtil.findFileByIoFile(uncRoot, refreshIfNeed) : null;
+  public @NotNull Path getUNCRootPath() {
+    return Path.of(getUNCRootPathString());
+  }
+
+  private @NotNull String getUNCRootPathString() {
+    return WslConstants.UNC_PREFIX + myDescriptor.getMsId();
   }
 
   // https://docs.microsoft.com/en-us/windows/wsl/compare-versions#accessing-windows-networking-apps-from-linux-host-ip

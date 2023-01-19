@@ -37,6 +37,7 @@ class PyRunTest : PyEnvTestCase() {
         val runConfiguration = settings.configuration as PythonRunConfiguration
         runConfiguration.apply {
           this.sdkHome = sdkHome
+          this.sdk = existingSdk
           scriptName = "inputRedirection.py"
           workingDirectory = myFixture.tempDirPath
           isRedirectInput = true

@@ -23,9 +23,6 @@ import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.PythonTokenSetContributor;
 import com.jetbrains.python.psi.LanguageLevel;
 
-/**
- * @author vlan
- */
 @TestDataPath("$CONTENT_ROOT/../testData/pyi/parsing")
 public class PyiParsingTest extends ParsingTestCase {
   public PyiParsingTest() {

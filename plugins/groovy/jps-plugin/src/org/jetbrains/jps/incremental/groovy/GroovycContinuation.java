@@ -3,9 +3,6 @@ package org.jetbrains.jps.incremental.groovy;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public interface GroovycContinuation {
 
   @NotNull GroovyCompilerResult continueCompilation() throws Exception;

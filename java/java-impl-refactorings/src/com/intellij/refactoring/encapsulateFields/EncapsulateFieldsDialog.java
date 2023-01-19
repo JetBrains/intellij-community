@@ -540,34 +540,24 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      switch (columnIndex) {
-        case CHECKED_COLUMN:
-          return myCheckedMarks[rowIndex];
-        case FIELD_COLUMN:
-          return myFieldNames[rowIndex];
-        case GETTER_COLUMN:
-          return myGetterNames[rowIndex];
-        case SETTER_COLUMN:
-          return mySetterNames[rowIndex];
-        default:
-          throw new RuntimeException("Incorrect column index");
-      }
+      return switch (columnIndex) {
+        case CHECKED_COLUMN -> myCheckedMarks[rowIndex];
+        case FIELD_COLUMN -> myFieldNames[rowIndex];
+        case GETTER_COLUMN -> myGetterNames[rowIndex];
+        case SETTER_COLUMN -> mySetterNames[rowIndex];
+        default -> throw new RuntimeException("Incorrect column index");
+      };
     }
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case CHECKED_COLUMN:
-          return " ";
-        case FIELD_COLUMN:
-          return JavaRefactoringBundle.message("encapsulate.fields.field.column.name");
-        case GETTER_COLUMN:
-          return JavaRefactoringBundle.message("encapsulate.fields.getter.column.name");
-        case SETTER_COLUMN:
-          return JavaRefactoringBundle.message("encapsulate.fields.setter.column.name");
-        default:
-          throw new RuntimeException("Incorrect column index");
-      }
+      return switch (column) {
+        case CHECKED_COLUMN -> " ";
+        case FIELD_COLUMN -> JavaRefactoringBundle.message("encapsulate.fields.field.column.name");
+        case GETTER_COLUMN -> JavaRefactoringBundle.message("encapsulate.fields.getter.column.name");
+        case SETTER_COLUMN -> JavaRefactoringBundle.message("encapsulate.fields.setter.column.name");
+        default -> throw new RuntimeException("Incorrect column index");
+      };
     }
 
     @Override
@@ -591,18 +581,15 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
         String name = (String) aValue;
         PsiField field = myFields[rowIndex];
         switch (columnIndex) {
-          case GETTER_COLUMN:
+          case GETTER_COLUMN -> {
             myGetterNames[rowIndex] = name;
             myGetterPrototypes[rowIndex] = myHelper.generateMethodPrototype(field, name, true);
-            break;
-
-          case SETTER_COLUMN:
+          }
+          case SETTER_COLUMN -> {
             mySetterNames[rowIndex] = name;
             mySetterPrototypes[rowIndex] = myHelper.generateMethodPrototype(field, name, false);
-            break;
-
-          default:
-            throw new RuntimeException("Incorrect column index");
+          }
+          default -> throw new RuntimeException("Incorrect column index");
         }
       }
     }
@@ -619,54 +606,48 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
       this.setIconTextGap(0);
       PsiField field = myFields[row];
       switch (modelColumn) {
-        case FIELD_COLUMN:
-          {
-            Icon icon = field.getIcon(Iconable.ICON_FLAG_VISIBILITY);
-            setIcon(icon);
-            setDisabledIcon(icon);
+        case FIELD_COLUMN -> {
+          Icon icon = field.getIcon(Iconable.ICON_FLAG_VISIBILITY);
+          setIcon(icon);
+          setDisabledIcon(icon);
+          configureColors(isSelected, table, hasFocus, row, column);
+        }
+        case GETTER_COLUMN, SETTER_COLUMN -> {
+          Icon methodIcon = IconUtil.getEmptyIcon(true);
+          Icon overrideIcon = EmptyIcon.ICON_16;
+
+          PsiMethod prototype = modelColumn == GETTER_COLUMN ? myGetterPrototypes[row] : mySetterPrototypes[row];
+          if (prototype != null) {
+            //              MyTableRenderer.this.setForeground(Color.black);
             configureColors(isSelected, table, hasFocus, row, column);
-            break;
-          }
 
-        case GETTER_COLUMN:
-        case SETTER_COLUMN:
-          {
-            Icon methodIcon = IconUtil.getEmptyIcon(true);
-            Icon overrideIcon = EmptyIcon.ICON_16;
-
-            PsiMethod prototype = modelColumn == GETTER_COLUMN ? myGetterPrototypes[row] : mySetterPrototypes[row];
-            if (prototype != null) {
-//              MyTableRenderer.this.setForeground(Color.black);
-              configureColors(isSelected, table, hasFocus, row, column);
-
-              PsiMethod existing = myClass.findMethodBySignature(prototype, false);
-              if (existing != null) {
-                methodIcon = existing.getIcon(Iconable.ICON_FLAG_VISIBILITY);
-              }
-
-              PsiMethod[] superMethods = prototype.findSuperMethods(myClass);
-              if (superMethods.length > 0) {
-                if (!superMethods[0].hasModifierProperty(PsiModifier.ABSTRACT)) {
-                  overrideIcon = AllIcons.General.OverridingMethod;
-                } else {
-                  overrideIcon = AllIcons.General.ImplementingMethod;
-                }
-              }
-            } else {
-              setForeground(JBColor.RED);
+            PsiMethod existing = myClass.findMethodBySignature(prototype, false);
+            if (existing != null) {
+              methodIcon = existing.getIcon(Iconable.ICON_FLAG_VISIBILITY);
             }
 
-            RowIcon icon = IconManager.getInstance().createRowIcon(methodIcon, overrideIcon);
-            setIcon(icon);
-            setDisabledIcon(icon);
-            break;
+            PsiMethod[] superMethods = prototype.findSuperMethods(myClass);
+            if (superMethods.length > 0) {
+              if (!superMethods[0].hasModifierProperty(PsiModifier.ABSTRACT)) {
+                overrideIcon = AllIcons.General.OverridingMethod;
+              }
+              else {
+                overrideIcon = AllIcons.General.ImplementingMethod;
+              }
+            }
+          }
+          else {
+            setForeground(JBColor.RED);
           }
 
-        default:
-          {
-            setIcon(null);
-            setDisabledIcon(null);
-          }
+          RowIcon icon = IconManager.getInstance().createRowIcon(methodIcon, overrideIcon);
+          setIcon(icon);
+          setDisabledIcon(icon);
+        }
+        default -> {
+          setIcon(null);
+          setDisabledIcon(null);
+        }
       }
       boolean enabled = myCheckedMarks[row];
       if (enabled) {

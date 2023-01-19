@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 @TestDataPath("\$CONTENT_ROOT")
 @TestMetadata("testData/quickfix.special/deprecatedSymbolUsage")
 class DeprecatedSymbolUsageFixSpecialTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.INSTANCE
+    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
     fun testMemberInCompiledClass() {
         doTest("this.matches(input)")

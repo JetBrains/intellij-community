@@ -198,7 +198,6 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
     if (wslUserHome == null) return null;
     String windowsUserHomePath = distribution.getWindowsPath(wslUserHome);
     if (pathsSelector == null) pathsSelector = "." + ApplicationNamesInfo.getInstance().getScriptName();
-    if (windowsUserHomePath == null) return null;
     String workingDirectory = PathManager.getDefaultUnixSystemPath(windowsUserHomePath, pathsSelector) + "/" + BuildManager.SYSTEM_ROOT;
     return Paths.get(workingDirectory);
   }

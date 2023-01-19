@@ -5,6 +5,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ContentIteratorEx;
 import com.intellij.openapi.roots.FileIndex;
@@ -13,6 +14,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -20,10 +23,12 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 abstract class FileIndexBase implements FileIndex {
   private final FileTypeRegistry myFileTypeRegistry;
   final DirectoryIndex myDirectoryIndex;
+  final WorkspaceFileIndexEx myWorkspaceFileIndex;
 
-  FileIndexBase(@NotNull DirectoryIndex directoryIndex) {
-    myDirectoryIndex = directoryIndex;
+  FileIndexBase(@NotNull Project project) {
+    myDirectoryIndex = DirectoryIndex.getInstance(project);
     myFileTypeRegistry = FileTypeRegistry.getInstance();
+    myWorkspaceFileIndex = WorkspaceFileIndexEx.IS_ENABLED ? (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project) : null;
   }
 
   protected abstract boolean isScopeDisposed();
@@ -55,8 +60,8 @@ abstract class FileIndexBase implements FileIndex {
             return SKIP_CHILDREN;
           }
         }
-        boolean accepted = ReadAction.compute(() -> !isScopeDisposed() && isInContent(file, info))
-                           && (customFilter == null || customFilter.accept(file));
+        boolean accepted = ReadAction.compute(() -> !isScopeDisposed() && isInContent(file, info) &&
+                                                    (customFilter == null || customFilter.accept(file)));
         ContentIteratorEx.Status status = accepted ? processorEx.processFileEx(file) : ContentIteratorEx.Status.CONTINUE;
         if (status == ContentIteratorEx.Status.CONTINUE) {
           return CONTINUE;
@@ -94,13 +99,6 @@ abstract class FileIndexBase implements FileIndex {
     }
     file = BackedVirtualFile.getOriginFileIfBacked(file);
     return myDirectoryIndex.getInfoForFile(file);
-  }
-
-  @Override
-  public boolean isContentSourceFile(@NotNull VirtualFile file) {
-    return !file.isDirectory() &&
-           !myFileTypeRegistry.isFileIgnored(file) &&
-           isInSourceContent(file);
   }
 
   protected boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {

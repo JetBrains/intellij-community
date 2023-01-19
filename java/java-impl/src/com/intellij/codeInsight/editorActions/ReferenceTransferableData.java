@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.io.Serializable;
@@ -15,7 +16,7 @@ public class ReferenceTransferableData implements TextBlockTransferableData, Clo
   }
 
   @Override
-  public DataFlavor getFlavor() {
+  public @Nullable DataFlavor getFlavor() {
     return ReferenceData.getDataFlavor();
   }
 
@@ -25,7 +26,7 @@ public class ReferenceTransferableData implements TextBlockTransferableData, Clo
   }
 
   @Override
-  public int getOffsets(final int[] offsets, int index) {
+  public int getOffsets(int @NotNull [] offsets, int index) {
     for (ReferenceData data : myReferenceDatas) {
       offsets[index++] = data.startOffset;
       offsets[index++] = data.endOffset;
@@ -34,7 +35,7 @@ public class ReferenceTransferableData implements TextBlockTransferableData, Clo
   }
 
   @Override
-  public int setOffsets(final int[] offsets, int index) {
+  public int setOffsets(int @NotNull [] offsets, int index) {
     for (ReferenceData data : myReferenceDatas) {
       data.startOffset = offsets[index++];
       data.endOffset = offsets[index++];

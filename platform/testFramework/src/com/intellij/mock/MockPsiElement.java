@@ -37,9 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class MockPsiElement extends UserDataHolderBase implements PsiElement, Navigatable {
   private final String myText;
   private final Project myProject;

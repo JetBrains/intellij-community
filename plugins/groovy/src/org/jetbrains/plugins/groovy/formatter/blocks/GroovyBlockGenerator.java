@@ -65,8 +65,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 /**
  * Utility class to generate myBlock hierarchy
- *
- * @author ilyas
  */
 public class GroovyBlockGenerator {
 
@@ -246,7 +244,7 @@ public class GroovyBlockGenerator {
       ArrayList<Block> blocks = new ArrayList<>();
 
       PsiElement lbrace = closableBlock.getLBrace();
-      if (lbrace != null) {
+      {
         ASTNode node = lbrace.getNode();
         blocks.add(myContext.createBlock(node, getIndent(node), Wrap.createWrap(WrapType.NONE, false)));
       }

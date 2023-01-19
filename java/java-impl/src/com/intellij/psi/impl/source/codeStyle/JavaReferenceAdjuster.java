@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.ReferenceAdjuster;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -270,7 +271,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
               return false;
             }
             if (!refClass.hasModifierProperty(PsiModifier.STATIC)) {
-              PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(psiReference, null);
+              PsiElement enclosingStaticElement = PsiUtil.getEnclosingStaticElement(psiReference, null);
               if (enclosingStaticElement != null && !PsiTreeUtil.isAncestor(enclosingStaticElement, refClass, false)) {
                 return false;
               }

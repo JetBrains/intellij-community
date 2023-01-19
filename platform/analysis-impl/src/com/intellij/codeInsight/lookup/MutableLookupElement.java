@@ -15,8 +15,5 @@
  */
 package com.intellij.codeInsight.lookup;
 
-/**
- * @author peter
- */
 public abstract class MutableLookupElement extends LookupElement{
 }

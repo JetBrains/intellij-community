@@ -11,11 +11,12 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.origin.IndexableSetContributorOriginImpl
 
-internal class IndexableSetContributorFilesIterator constructor(private val name: String?,
-                                                                private val debugName: String,
-                                                                private val projectAware: Boolean,
-                                                                private val roots: Set<VirtualFile>,
-                                                                private val indexableSetContributor: IndexableSetContributor) : IndexableFilesIterator {
+internal class IndexableSetContributorFilesIterator(private val name: String?,
+                                                    private val debugName: String,
+                                                    private val projectAware: Boolean,
+                                                    private val roots: Set<VirtualFile>,
+                                                    private val indexableSetContributor: IndexableSetContributor) : IndexableFilesIterator {
+
   constructor(indexableSetContributor: IndexableSetContributor) :
     this(getName(indexableSetContributor), getDebugName(indexableSetContributor), false,
          indexableSetContributor.additionalRootsToIndex, indexableSetContributor)

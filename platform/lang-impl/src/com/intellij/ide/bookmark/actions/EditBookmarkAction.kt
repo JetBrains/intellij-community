@@ -21,6 +21,7 @@ internal class EditBookmarkAction : DumbAwareAction(BookmarkBundle.messagePointe
   }
 
   private fun process(event: AnActionEvent, perform: Boolean): String? {
+    if (event.contextBookmarks != null) return null
     val manager = event.bookmarksManager ?: return null
     val component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) ?: return null
     val bookmark = event.contextBookmark ?: return null

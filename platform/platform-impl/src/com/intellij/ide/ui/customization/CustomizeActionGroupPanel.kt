@@ -36,7 +36,7 @@ import javax.swing.JList
  */
 class CustomizeActionGroupPanel(
   val groupId: String,
-  val addActionGroupIds: List<String> = emptyList(),
+  private val addActionGroupIds: List<String> = emptyList(),
 ) : BorderLayoutPanel() {
 
   private val list: JBList<Any>

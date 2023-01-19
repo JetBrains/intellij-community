@@ -30,9 +30,6 @@ import com.jetbrains.python.psi.impl.PyFileImpl
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 
-/**
- * @author vlan
- */
 class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLanguageDialect.getInstance()) {
   override fun getFileType(): PythonFileType = PyiFileType.INSTANCE
 

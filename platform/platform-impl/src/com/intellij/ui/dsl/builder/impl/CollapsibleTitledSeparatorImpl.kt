@@ -35,7 +35,7 @@ class CollapsibleTitledSeparatorImpl(@NlsContexts.Separator title: String) : Tit
     expandedProperty.afterChange(listener)
   }
 
-  fun updateIcon() {
+  private fun updateIcon() {
     val treeExpandedIcon = UIUtil.getTreeExpandedIcon()
     val treeCollapsedIcon = UIUtil.getTreeCollapsedIcon()
     val width = max(treeExpandedIcon.iconWidth, treeCollapsedIcon.iconWidth)

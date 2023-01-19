@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.documentation
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -22,7 +22,7 @@ class EditorConfigDocumentationTest : BasePlatformTestCase() {
     val targets = IdeDocumentationTargetProvider.getInstance(project).documentationTargets(myFixture.editor, myFixture.file, offset)
     UsefulTestCase.assertSize(1, targets)
     val target = targets[0]
-    val text = target.presentation.presentableText
+    val text = target.presentation().presentableText
     assertEquals("indent_size", text)
     val doc = EditorConfigDocumentationProvider().generateDoc(element, originalElement)
     val expected = "number of whitespace symbols used for indents"

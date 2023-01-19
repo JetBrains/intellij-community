@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 
-public class RootVisitorHost {
+public final class RootVisitorHost {
   public static void visitRoots(@NotNull final PsiElement elt, @NotNull final RootVisitor visitor) {
     // real search
     final Module module = ModuleUtilCore.findModuleForPsiElement(elt);

@@ -94,13 +94,23 @@ public class DtdParsingTest extends ParsingTestCase {
   }
 
   public void testConditionalSection2() throws Exception {
-    doTestDtd("<![%sgml.features;[\n" + "<![IGNORE[\n" +
-              "<!ENTITY % dbgenent SYSTEM \"http://www.oasis-open.org/docbook/xml/configerror.txt\">\n" + "]]>\n" + "]]>");
+    doTestDtd("""
+                <![%sgml.features;[
+                <![IGNORE[
+                <!ENTITY % dbgenent SYSTEM "http://www.oasis-open.org/docbook/xml/configerror.txt">
+                ]]>
+                ]]>""");
   }
 
   public void testConditionalSection3() throws Exception {
-    doTestDtd("<!ENTITY % dbhier.module \"INCLUDE\">\n" + "<![ %dbhier.module; [\n" + "<!ENTITY % dbhier PUBLIC\n" +
-              "\"-//OASIS//ELEMENTS DocBook Document Hierarchy V4.4//EN\"\n" + "\"dbhierx.mod\">\n" + "%dbhier;\n" + "]]>");
+    doTestDtd("""
+                <!ENTITY % dbhier.module "INCLUDE">
+                <![ %dbhier.module; [
+                <!ENTITY % dbhier PUBLIC
+                "-//OASIS//ELEMENTS DocBook Document Hierarchy V4.4//EN"
+                "dbhierx.mod">
+                %dbhier;
+                ]]>""");
   }
 
   public void testEntityRef3() throws Exception {
@@ -141,12 +151,18 @@ public class DtdParsingTest extends ParsingTestCase {
   }
 
   public void testPrologInDtd() throws Exception {
-    doTestDtd("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" + "<!ELEMENT idea-plugin>\n" + "<!ATTLIST idea-plugin\n" +
-              "    url CDATA #IMPLIED>");
+    doTestDtd("""
+                <?xml version="1.0" encoding="ISO-8859-1"?>
+                <!ELEMENT idea-plugin>
+                <!ATTLIST idea-plugin
+                    url CDATA #IMPLIED>""");
   }
 
   public void testEmptyElementsInDtd() throws Exception {
-    doTestDtd("<!ELEMENT >\n<!ELEMENT name (,)\n<!ATTLIST > <!ELEMENT zzz (aa?, bb)+> <!ELEMENT xxx(aaa,)>" + "<!ATTLIST %aaa;>");
+    doTestDtd("""
+                <!ELEMENT >
+                <!ELEMENT name (,)
+                <!ATTLIST > <!ELEMENT zzz (aa?, bb)+> <!ELEMENT xxx(aaa,)><!ATTLIST %aaa;>""");
   }
 
   public void testElementDeclaration() throws Exception {
@@ -170,17 +186,19 @@ public class DtdParsingTest extends ParsingTestCase {
   }
 
   public void testSGMLDtd() throws Exception {
-    doTestDtd("<!ELEMENT name - - (%inline;)* +(A)> <!ATTLIST (A|B) >\n" +
-              "<!ELEMENT (E|E2) - O (%flow;)*       -- table header cell, table data cell-->\n" +
-              "<!ELEMENT BODY O O (%block;|SCRIPT)+ +(INS|DEL) -- document body -->");
+    doTestDtd("""
+                <!ELEMENT name - - (%inline;)* +(A)> <!ATTLIST (A|B) >
+                <!ELEMENT (E|E2) - O (%flow;)*       -- table header cell, table data cell-->
+                <!ELEMENT BODY O O (%block;|SCRIPT)+ +(INS|DEL) -- document body -->""");
   }
 
   public void testKeywordsAsName() throws Exception {
-    doTestDtd("<!ELEMENT FIELD ANY>\n" +
-              "<!ELEMENT PUBLIC ANY>\n" +
-              "<!ELEMENT EMPTY ANY>\n" +
-              "<!ELEMENT ANY ANY>\n" +
-              "<!ELEMENT AND (FIELD|PUBLIC|EMPTY|ANY)*>");
+    doTestDtd("""
+                <!ELEMENT FIELD ANY>
+                <!ELEMENT PUBLIC ANY>
+                <!ELEMENT EMPTY ANY>
+                <!ELEMENT ANY ANY>
+                <!ELEMENT AND (FIELD|PUBLIC|EMPTY|ANY)*>""");
   }
 
   public void testKeywordsAsAttributeName() throws Exception {

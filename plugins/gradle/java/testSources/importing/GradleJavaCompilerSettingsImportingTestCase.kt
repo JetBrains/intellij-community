@@ -1,29 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
+import org.jetbrains.plugins.gradle.testFramework.util.buildSettings
 import org.jetbrains.plugins.gradle.testFramework.util.buildscript
-import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
-import org.junit.runners.Parameterized
 
 abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImportingTestCase() {
 
-  var isNotSupportedJava14: Boolean = false
-    private set
-
-  override fun setUp() {
-    super.setUp()
-    isNotSupportedJava14 = isGradleOlderThan("6.3")
-  }
-
   fun createGradleSettingsFile(vararg moduleNames: String) {
-    createSettingsFile(
-      groovy {
-        assign("rootProject.name", "project")
-        call("include", *moduleNames)
+    createSettingsFile(buildSettings {
+      setProjectName("project")
+      for (moduleName in moduleNames) {
+        include(moduleName)
       }
-    )
+    })
   }
 
   fun createJavaGradleSubProject(
@@ -60,11 +50,5 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
         }
       }
     })
-  }
-
-  companion object {
-    @Parameterized.Parameters(name = "with Gradle-{0}")
-    @JvmStatic
-    fun tests() = arrayListOf(*VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS, arrayOf("6.3"))
   }
 }

@@ -20,9 +20,6 @@ import java.util.regex.Pattern;
 import static com.intellij.ssh.SSHUtil.PASSPHRASE_PROMPT;
 import static com.intellij.ssh.SSHUtil.PASSWORD_PROMPT;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class TerminalSshModule extends BaseTerminalModule {
   private static final Pattern UNKNOWN_HOST_MESSAGE =
     Pattern.compile("The authenticity of host \\'((.*) \\((.*)\\))\\' can\\'t be established\\.\\s?");

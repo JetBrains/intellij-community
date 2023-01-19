@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Objects;
 
-/**
- * @author ven
- */
 public final class BringVariableIntoScopeFix implements IntentionAction, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(BringVariableIntoScopeFix.class);
   private final @NotNull PsiReferenceExpression myUnresolvedReference;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -25,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQuickFixProvider {
-  private static final Logger LOG1 = Logger.getInstance(TypeMigrationVariableTypeFixProvider.class);
+  private static final Logger LOG = Logger.getInstance(TypeMigrationVariableTypeFixProvider.class);
 
   @Override
   public IntentionAction @NotNull [] getFixes(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
@@ -67,6 +66,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
     if (refs.isEmpty()) return false;
     Project project = variable.getProject();
     TypeMigrationRules rules = new TypeMigrationRules(project);
+    rules.setBoundScope(variable.getUseScope());
     TypeMigrationLabeler labeler = new TypeMigrationLabeler(rules, targetType, project);
     for (PsiReferenceExpression ref : refs) {
       labeler.getTypeEvaluator().setType(new TypeMigrationUsageInfo(ref), targetType);
@@ -87,13 +87,13 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
     try {
       WriteAction.run(() -> variable.normalizeDeclaration());
       final TypeMigrationRules rules = new TypeMigrationRules(project);
-      rules.setBoundScope(GlobalSearchScope.projectScope(project));
+      rules.setBoundScope(variable.getUseScope());
       TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, variable, targetType, optimizeImports, allowDependentRoots);
       WriteAction.run(() -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(variable));
       UndoUtil.markPsiFileForUndo(variable.getContainingFile());
     }
     catch (IncorrectOperationException e) {
-      LOG1.error(e);
+      LOG.error(e);
     }
   }
 }

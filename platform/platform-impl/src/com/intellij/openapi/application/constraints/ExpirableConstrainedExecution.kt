@@ -18,8 +18,8 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
  */
 internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E>>(
   constraints: Array<ContextConstraint>,
-  protected val cancellationConditions: Array<BooleanSupplier>,
-  protected val expirationSet: Set<Expiration>
+  private val cancellationConditions: Array<BooleanSupplier>,
+  private val expirationSet: Set<Expiration>
 ) : BaseConstrainedExecution<E>(constraints) {
 
   protected abstract fun cloneWith(constraints: Array<ContextConstraint>,

@@ -20,7 +20,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.intellij.plugins.intelliLang.Configuration
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport
@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -55,6 +56,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.intellij.lang.annotations.Language as LanguageAnnotation
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
     private val absentKotlinInjection = BaseInjection("ABSENT_KOTLIN_BASE_INJECTION")
@@ -145,15 +147,15 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
     private fun unwrapTrims(ktHost: KtElement): KtElement {
         if (!Registry.`is`("kotlin.injection.handle.trimindent", true)) return ktHost
         val dotQualifiedExpression = ktHost.parent as? KtDotQualifiedExpression ?: return ktHost
-        val callExpression = dotQualifiedExpression.selectorExpression.castSafelyTo<KtCallExpression>() ?: return ktHost
+        val callExpression = dotQualifiedExpression.selectorExpression.asSafely<KtCallExpression>() ?: return ktHost
         val callFqn = callExpression.resolveToCall(BodyResolveMode.PARTIAL)?.candidateDescriptor?.fqNameOrNull()?.asString()
         if (callFqn == "kotlin.text.trimIndent") {
             ktHost.indentHandler = TrimIndentHandler()
             return dotQualifiedExpression
         }
         if (callFqn == "kotlin.text.trimMargin") {
-            val marginChar = callExpression.valueArguments.getOrNull(0)?.getArgumentExpression().castSafelyTo<KtStringTemplateExpression>()
-                ?.entries?.singleOrNull()?.castSafelyTo<KtLiteralStringTemplateEntry>()?.text ?: "|"
+            val marginChar = callExpression.valueArguments.getOrNull(0)?.getArgumentExpression().asSafely<KtStringTemplateExpression>()
+                ?.entries?.singleOrNull()?.asSafely<KtLiteralStringTemplateEntry>()?.text ?: "|"
             ktHost.indentHandler = TrimIndentHandler(marginChar)
             return dotQualifiedExpression
         }
@@ -328,7 +330,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
 
     private tailrec fun injectInAnnotationCall(host: KtElement): InjectionInfo? {
         val argument = getArgument(host) ?: return null
-        val annotationEntry = argument.parent.parent as? KtCallElement ?: return null
+        val annotationEntry = argument.parents.match(KtValueArgumentList::class, last = KtCallElement::class) ?: return null
 
         val callableShortName = getCallableShortName(annotationEntry) ?: return null
         if (callableShortName == "arrayOf") return injectInAnnotationCall(annotationEntry)

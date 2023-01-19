@@ -4,14 +4,17 @@ package com.intellij.util.indexing.diagnostic
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
+import com.intellij.util.io.DirectByteBufferAllocator
 import com.intellij.util.io.StorageLockContext
 import com.intellij.util.io.delete
 import com.intellij.util.io.stats.FilePageCacheStatistics
@@ -37,12 +40,15 @@ import kotlin.io.path.relativeTo
  */
 object StorageDiagnosticData {
   private const val fileNamePrefix = "storage-diagnostic-"
+  private const val onShutdownFileNameSuffix = "on-shutdown-"
 
   private const val maxFiles = 10
-  private const val dumpPeriodInMinutes = 5L
+  private const val dumpPeriodInMinutes = 1L
 
   @JvmStatic
   fun dumpPeriodically() {
+    setupReportingToOpenTelemetry()
+
     val executor = AppExecutorUtil.createBoundedScheduledExecutorService(
       "Storage Diagnostic Dumper",
       1,
@@ -72,7 +78,7 @@ object StorageDiagnosticData {
       thisLogger().error(e)
     }
     finally {
-      deleteOutdatedDiagnostics()
+      deleteOutdatedDiagnostics(onShutdown)
     }
   }
 
@@ -81,7 +87,7 @@ object StorageDiagnosticData {
     time,
     "json",
     IndexDiagnosticDumperUtils.indexingDiagnosticDir,
-    suffix = if (onShutdown) "on-shutdown-" else ""
+    suffix = if (onShutdown) onShutdownFileNameSuffix else ""
   )
 
   @VisibleForTesting
@@ -102,10 +108,11 @@ object StorageDiagnosticData {
     )
   }
 
-  private fun deleteOutdatedDiagnostics() {
+  private fun deleteOutdatedDiagnostics(onShutdown: Boolean) {
+    val suffix = if (onShutdown) onShutdownFileNameSuffix else ""
     val allDiagnosticFiles = IndexDiagnosticDumperUtils
       .indexingDiagnosticDir
-      .listDirectoryEntries("$fileNamePrefix*")
+      .listDirectoryEntries("$fileNamePrefix$suffix[0-9]*")
       .sortedBy { it.fileName }
     if (allDiagnosticFiles.size - maxFiles > 0) {
       val outdatedFiles = allDiagnosticFiles.take(allDiagnosticFiles.size - maxFiles)
@@ -153,7 +160,7 @@ object StorageDiagnosticData {
 
   private fun vfsStorageStatistics(mapStats: MutableMap<Path, PersistentHashMapStatistics>,
                                    enumeratorStats: MutableMap<Path, PersistentEnumeratorStatistics>)
-  : StatsPerStorage {
+    : StatsPerStorage {
     val cachesDir = Path.of(FSRecords.getCachesDir()).absolute()
     return StatsPerStorage(
       filterStatsForStoragesUnderDir(mapStats, cachesDir),
@@ -212,4 +219,91 @@ object StorageDiagnosticData {
     val indexStorageStats: IndexStorageStats?,
     val otherStorageStats: StatsPerStorage?,
   )
+
+  /* =========================== Monitoring via OpenTelemetry: ========================================== */
+
+  //TODO RC: i'd think it is better to setup such monitoring in apt. component itself, because be
+  //         observable is the responsibility of component, the same way as logging is. But:
+  //         a) FilePageCache module hasn't dependency on the monitoring module now
+  //         b) here we already have monitoring of FilePageCache, so better to keep old/new
+  //            monitoring in one place for a while
+  private fun setupReportingToOpenTelemetry() {
+    val otelMeter = TraceManager.getMeter("storage")
+
+    val uncachedFileAccess = otelMeter.counterBuilder("FilePageCache.uncachedFileAccess").buildObserver()
+    val maxRegisteredFiles = otelMeter.gaugeBuilder("FilePageCache.maxRegisteredFiles").ofLongs().buildObserver()
+
+    val pageHits = otelMeter.counterBuilder("FilePageCache.pageHits").buildObserver()
+    val pageFastCacheHit = otelMeter.counterBuilder("FilePageCache.pageFastCacheHits").buildObserver()
+    val pageLoads = otelMeter.counterBuilder("FilePageCache.pageLoads").buildObserver()
+    val pageLoadsAboveSizeThreshold = otelMeter.counterBuilder("FilePageCache.pageLoadsAboveSizeThreshold").buildObserver()
+    val totalPageLoadsUs = otelMeter.counterBuilder("FilePageCache.totalPageLoadsUs")
+      .setUnit("us").buildObserver()
+    val totalPageDisposalsUs = otelMeter.counterBuilder("FilePageCache.totalPageDisposalsUs")
+      .setUnit("us").buildObserver()
+
+    val disposedBuffers = otelMeter.counterBuilder("FilePageCache.disposedBuffers").buildObserver()
+
+    val totalCachedSizeInBytes = otelMeter.gaugeBuilder("FilePageCache.totalCachedSizeInBytes")
+      .setUnit("bytes")
+      .setDescription("Total size of all pages currently cached")
+      .ofLongs().buildObserver()
+    val maxCacheSizeInBytes = otelMeter.gaugeBuilder("FilePageCache.maxCacheSizeInBytes")
+      .setUnit("bytes")
+      .setDescription("Max size of all cached pages observed since application start")
+      .ofLongs().buildObserver()
+    val capacityInBytes = otelMeter.gaugeBuilder("FilePageCache.capacityInBytes")
+      .setUnit("bytes")
+      .setDescription("Cache capacity, configured on application startup")
+      .ofLongs().buildObserver()
+
+    val directBufferAllocatorHits = otelMeter.counterBuilder("DirectByteBufferAllocator.hits").buildObserver();
+    val directBufferAllocatorMisses = otelMeter.counterBuilder("DirectByteBufferAllocator.misses").buildObserver();
+    val directBufferAllocatorReclaimed = otelMeter.counterBuilder("DirectByteBufferAllocator.reclaimed").buildObserver();
+    val directBufferAllocatorDisposed = otelMeter.counterBuilder("DirectByteBufferAllocator.disposed").buildObserver();
+    val directBufferAllocatorTotalSizeCached = otelMeter.counterBuilder("DirectByteBufferAllocator.totalSizeOfBuffersCachedInBytes").buildObserver();
+
+    otelMeter.batchCallback(
+      {
+        try {
+          val pageCacheStats = StorageLockContext.getStatistics()
+          uncachedFileAccess.record(pageCacheStats.uncachedFileAccess.toLong())
+          maxRegisteredFiles.record(pageCacheStats.maxRegisteredFiles.toLong())
+
+          maxCacheSizeInBytes.record(pageCacheStats.maxCacheSizeInBytes)
+          capacityInBytes.record(pageCacheStats.capacityInBytes)
+          totalCachedSizeInBytes.record(pageCacheStats.totalCachedSizeInBytes)
+
+          pageFastCacheHit.record(pageCacheStats.pageFastCacheHits.toLong())
+
+          pageHits.record(pageCacheStats.pageHits.toLong())
+          pageLoads.record(pageCacheStats.regularPageLoads.toLong())
+          pageLoadsAboveSizeThreshold.record(pageCacheStats.pageLoadsAboveSizeThreshold.toLong())
+
+          totalPageLoadsUs.record(pageCacheStats.totalPageLoadUs)
+          totalPageDisposalsUs.record(pageCacheStats.totalPageDisposalUs)
+
+          disposedBuffers.record(pageCacheStats.disposedBuffers.toLong())
+
+          val bufferAllocatorStats = DirectByteBufferAllocator.ALLOCATOR.statistics
+          directBufferAllocatorHits.record(bufferAllocatorStats.hits.toLong())
+          directBufferAllocatorMisses.record(bufferAllocatorStats.misses.toLong())
+          directBufferAllocatorReclaimed.record(bufferAllocatorStats.reclaimed.toLong())
+          directBufferAllocatorDisposed.record(bufferAllocatorStats.disposed.toLong())
+          directBufferAllocatorTotalSizeCached.record(bufferAllocatorStats.totalSizeOfBuffersCachedInBytes.toLong())
+        }
+        catch (_: AlreadyDisposedException) {
+
+        }
+      },
+      uncachedFileAccess, maxRegisteredFiles, maxCacheSizeInBytes,
+      pageHits, pageFastCacheHit, pageLoadsAboveSizeThreshold, pageLoads,
+      totalPageLoadsUs, totalPageDisposalsUs,
+      disposedBuffers, capacityInBytes,
+
+      directBufferAllocatorHits, directBufferAllocatorMisses,
+      directBufferAllocatorReclaimed, directBufferAllocatorDisposed,
+      directBufferAllocatorTotalSizeCached
+    )
+  }
 }

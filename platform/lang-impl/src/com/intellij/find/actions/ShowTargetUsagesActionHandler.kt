@@ -3,7 +3,6 @@ package com.intellij.find.actions
 
 import com.intellij.find.actions.SearchOptionsService.SearchVariant
 import com.intellij.find.usages.api.SearchTarget
-import com.intellij.find.usages.api.UsageHandler
 import com.intellij.find.usages.api.UsageOptions.createOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildUsageViewQuery
@@ -18,18 +17,17 @@ import com.intellij.usages.UsageSearchPresentation
 import com.intellij.usages.UsageSearcher
 
 // data class for `copy` method
-internal data class ShowTargetUsagesActionHandler<O>(
+internal data class ShowTargetUsagesActionHandler(
   private val project: Project,
   private val target: SearchTarget,
-  private val usageHandler: UsageHandler<O>,
-  private val allOptions: AllSearchOptions<O>
+  private val allOptions: AllSearchOptions
 ) : ShowUsagesActionHandler {
 
   override fun isValid(): Boolean = true
 
   override fun getPresentation(): UsageSearchPresentation =
     object : UsageSearchPresentation {
-      override fun getSearchTargetString(): String = usageHandler.getSearchString(allOptions)
+      override fun getSearchTargetString(): String = target.usageHandler.getSearchString(allOptions)
       override fun getOptionsString(): String {
         val optionsList = ArrayList<String>()
 
@@ -40,14 +38,14 @@ internal data class ShowTargetUsagesActionHandler<O>(
     }
 
   override fun createUsageSearcher(): UsageSearcher {
-    val query = buildUsageViewQuery(project, target, usageHandler, allOptions)
+    val query = buildUsageViewQuery(project, target, allOptions)
     return UsageSearcher {
       query.forEach(it)
     }
   }
 
   override fun showDialog(): ShowUsagesActionHandler? {
-    val dialog = UsageOptionsDialog(project, target.displayString, usageHandler, allOptions, target.showScopeChooser(), false)
+    val dialog = UsageOptionsDialog(project, target.displayString, allOptions, target.showScopeChooser(), false)
     if (!dialog.showAndGet()) {
       // cancelled
       return null
@@ -61,7 +59,7 @@ internal data class ShowTargetUsagesActionHandler<O>(
     return copy(allOptions = allOptions.copy(options = createOptions(allOptions.options.isUsages, searchScope)))
   }
 
-  override fun findUsages(): Unit = findUsages(project, target, usageHandler, allOptions)
+  override fun findUsages(): Unit = findUsages(project, target, allOptions)
 
   override fun getSelectedScope(): SearchScope = allOptions.options.searchScope
 
@@ -75,19 +73,12 @@ internal data class ShowTargetUsagesActionHandler<O>(
 
     @JvmStatic
     fun showUsages(project: Project, searchScope: SearchScope, target: SearchTarget, parameters: ShowUsagesParameters) {
-      ShowUsagesAction.showElementUsages(parameters, createActionHandler(project, searchScope, target, target.usageHandler))
-    }
-
-    private fun <O> createActionHandler(project: Project,
-                                        searchScope: SearchScope,
-                                        target: SearchTarget,
-                                        usageHandler: UsageHandler<O>): ShowTargetUsagesActionHandler<O> {
-      return ShowTargetUsagesActionHandler(
+      val showTargetUsagesActionHandler = ShowTargetUsagesActionHandler(
         project,
         target = target,
-        usageHandler = usageHandler,
-        allOptions = getSearchOptions(SearchVariant.SHOW_USAGES, target, usageHandler, searchScope)
+        allOptions = getSearchOptions(SearchVariant.SHOW_USAGES, target, searchScope)
       )
+      ShowUsagesAction.showElementUsages(parameters, showTargetUsagesActionHandler)
     }
   }
 }

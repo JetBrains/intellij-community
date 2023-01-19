@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -127,6 +128,11 @@ public class PythonPathEditor extends SdkPathEditor {
       public void actionPerformed(@NotNull AnActionEvent e) {
         fireReloadPathsActionCallbacks();
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     });
   }
 
@@ -213,7 +219,7 @@ public class PythonPathEditor extends SdkPathEditor {
     private @NotNull SdkAdditionalData collectSdkAdditionalData(@NotNull SdkModificator sdkModificator) {
       PythonSdkAdditionalData data = (PythonSdkAdditionalData)sdkModificator.getSdkAdditionalData();
       if (data == null) {
-        data = new PythonSdkAdditionalData(null);
+        data = new PythonSdkAdditionalData();
       }
       data.setAddedPathsFromVirtualFiles(myAdded);
       data.setExcludedPathsFromVirtualFiles(myExcluded);

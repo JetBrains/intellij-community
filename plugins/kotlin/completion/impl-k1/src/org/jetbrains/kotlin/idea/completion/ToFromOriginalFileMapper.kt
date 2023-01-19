@@ -3,17 +3,17 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import kotlin.math.min
 
 class ToFromOriginalFileMapper private constructor(
-    val originalFile: KtFile,
-    val syntheticFile: KtFile,
-    val completionOffset: Int
+  val originalFile: KtFile,
+  private val syntheticFile: KtFile,
+  private val completionOffset: Int
 ) {
     companion object {
         fun create(parameters: CompletionParameters): ToFromOriginalFileMapper {

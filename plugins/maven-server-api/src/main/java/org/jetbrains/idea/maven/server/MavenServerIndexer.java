@@ -35,7 +35,7 @@ public interface MavenServerIndexer extends Remote {
 
   int getIndexCount(MavenToken token) throws RemoteException;
 
-  void updateIndex(MavenIndexId mavenIndexId, MavenServerSettings settings, MavenServerProgressIndicator indicator, MavenToken token)
+  void updateIndex(MavenIndexId mavenIndexId, MavenServerProgressIndicator indicator, MavenToken token)
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException;
 
   @Nullable
@@ -49,7 +49,7 @@ public interface MavenServerIndexer extends Remote {
   Set<MavenArtifactInfo> search(MavenIndexId mavenIndexId, String pattern, int maxResult, MavenToken token)
     throws RemoteException, MavenServerIndexerException;
 
-  Collection<MavenArchetype> getArchetypes(MavenToken token) throws RemoteException;
+  Collection<MavenArchetype> getInternalArchetypes(MavenToken token) throws RemoteException;
 
   void release(MavenToken token) throws RemoteException;
 

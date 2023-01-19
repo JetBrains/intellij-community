@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -136,12 +137,14 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     if (jpsServiceManager instanceof JpsServiceManagerImpl) {
       ((JpsServiceManagerImpl)jpsServiceManager).cleanupExtensionCache();
     }
+    SourceRootTypeRegistry.getInstance().clearCache();
   }
 
   private void handlePluginAdded(@NotNull PluginDescriptor pluginDescriptor) {
     if (myExternalBuildPlugins.contains(pluginDescriptor)) {
       return;
     }
+    SourceRootTypeRegistry.getInstance().clearCache();
     Set<String> before = new HashSet<>();
     for (JpsModelSerializerExtension extension : loadExtensions(JpsModelSerializerExtension.class)) {
       for (JpsModuleSourceRootPropertiesSerializer<?> serializer : extension.getModuleSourceRootPropertiesSerializers()) {
@@ -167,7 +170,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
   }
 
-  private static void replaceWithUnknownRootType(Project project, Collection<JpsModuleSourceRootPropertiesSerializer<?>> unregisteredSerializers) {
+  private static void replaceWithUnknownRootType(Project project, Collection<? extends JpsModuleSourceRootPropertiesSerializer<?>> unregisteredSerializers) {
     if (unregisteredSerializers.isEmpty()) {
       return;
     }
@@ -196,7 +199,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
   }
 
-  private static void updateCustomRootTypes(Project project, Collection<JpsModuleSourceRootPropertiesSerializer<?>> registeredSerializers) {
+  private static void updateCustomRootTypes(Project project, Collection<? extends JpsModuleSourceRootPropertiesSerializer<?>> registeredSerializers) {
     if (registeredSerializers.isEmpty()) {
       return;
     }
@@ -281,7 +284,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
   }
 
   @NotNull
-  private static <T> Collection<T> loadExtensionsFrom(@NotNull Collection<ClassLoader> loaders, @NotNull Class<T> extensionClass) {
+  private static <T> Collection<T> loadExtensionsFrom(@NotNull Collection<? extends ClassLoader> loaders, @NotNull Class<T> extensionClass) {
     if (loaders.isEmpty()) {
       return Collections.emptyList();
     }

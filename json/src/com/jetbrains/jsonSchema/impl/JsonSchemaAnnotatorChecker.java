@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author Irina.Chernushina on 4/25/2017.
- */
 public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
   private static final Set<JsonSchemaType> PRIMITIVE_TYPES =
     ContainerUtil.set(JsonSchemaType._integer, JsonSchemaType._number, JsonSchemaType._boolean, JsonSchemaType._string, JsonSchemaType._null);
@@ -309,19 +306,17 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
 
   @Nullable
   public static JsonSchemaType getMatchingSchemaType(@NotNull JsonSchemaObject schema, @NotNull JsonSchemaType input) {
-    if (schema.getType() != null) {
-      final JsonSchemaType matchType = schema.getType();
-      if (matchType != null) {
-        if (JsonSchemaType._integer.equals(input) && JsonSchemaType._number.equals(matchType)) {
-          return input;
-        }
-        if (JsonSchemaType._string_number.equals(input) && (JsonSchemaType._number.equals(matchType)
-                                                            || JsonSchemaType._integer.equals(matchType)
-                                                            || JsonSchemaType._string.equals(matchType))) {
-          return input;
-        }
-        return matchType;
+    final JsonSchemaType matchType = schema.getType();
+    if (matchType != null) {
+      if (JsonSchemaType._integer.equals(input) && JsonSchemaType._number.equals(matchType)) {
+        return input;
       }
+      if (JsonSchemaType._string_number.equals(input) && (JsonSchemaType._number.equals(matchType)
+                                                          || JsonSchemaType._integer.equals(matchType)
+                                                          || JsonSchemaType._string.equals(matchType))) {
+        return input;
+      }
+      return matchType;
     }
     if (schema.getTypeVariants() != null) {
       Set<JsonSchemaType> matchTypes = schema.getTypeVariants();
@@ -419,20 +414,13 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
     Collection<JsonValidationError> values = checker.getErrors().values();
     for (JsonValidationError value: values) {
       switch (value.getPriority()) {
-        case LOW_PRIORITY:
-          lowPriorityCount++;
-          break;
-        case MISSING_PROPS:
-          hasMissing = true;
-          break;
-        case MEDIUM_PRIORITY:
-          hasMedium = true;
-          break;
-        case TYPE_MISMATCH:
-          hasHard = true;
-          break;
-        case NOT_SCHEMA:
+        case LOW_PRIORITY -> lowPriorityCount++;
+        case MISSING_PROPS -> hasMissing = true;
+        case MEDIUM_PRIORITY -> hasMedium = true;
+        case TYPE_MISMATCH -> hasHard = true;
+        case NOT_SCHEMA -> {
           return AverageFailureAmount.NotSchema;
+        }
       }
     }
 

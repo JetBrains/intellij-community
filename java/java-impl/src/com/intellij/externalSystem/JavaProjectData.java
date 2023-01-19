@@ -50,7 +50,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   /**
    * @deprecated use {@link JavaProjectData#JavaProjectData(ProjectSystemId, String, LanguageLevel, String)} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public JavaProjectData(
     @NotNull ProjectSystemId owner,

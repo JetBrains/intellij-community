@@ -681,6 +681,13 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitPatternGuard(@NotNull PsiPatternGuard guard) {
+    if (myType1 == JavaTokenType.WHEN_KEYWORD || myType2 == JavaTokenType.WHEN_KEYWORD) {
+      createSpaceInCode(true);
+    }
+  }
+
+  @Override
   public void visitImportList(@NotNull PsiImportList list) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myType1) &&
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myType2)) {

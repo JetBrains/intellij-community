@@ -97,7 +97,7 @@ class ConfigureHtmlImageLineMarkerProvider : ConfigureImageLineMarkerProviderBas
   }
 
   companion object {
-    fun isImgTagName(element: PsiElement): Boolean {
+    private fun isImgTagName(element: PsiElement): Boolean {
       return element.hasType(XmlTokenType.XML_NAME) && element.text == "img"
     }
 

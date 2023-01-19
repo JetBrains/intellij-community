@@ -41,7 +41,6 @@ interface SavedPatchesProvider<S> {
 
     fun createDiffRequestProducer(project: Project?): ChangeDiffRequestChain.Producer?
     fun createDiffWithLocalRequestProducer(project: Project?, useBeforeVersion: Boolean): ChangeDiffRequestChain.Producer?
-    @JvmDefault
     fun asChange(): Change? = null
   }
 

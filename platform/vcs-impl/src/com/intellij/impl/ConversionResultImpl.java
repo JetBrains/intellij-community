@@ -88,7 +88,7 @@ final class ConversionResultImpl implements ConversionResult {
     }, ModalityState.NON_MODAL, project.getDisposed());
   }
 
-  private static boolean containsFilesUnderVcs(@NotNull List<VirtualFile> files, Project project) {
+  private static boolean containsFilesUnderVcs(@NotNull List<? extends VirtualFile> files, Project project) {
     if (files.isEmpty()) {
       return false;
     }
@@ -102,7 +102,7 @@ final class ConversionResultImpl implements ConversionResult {
     return false;
   }
 
-  private static @NotNull List<VirtualFile> findVirtualFiles(@NotNull Collection<Path> files) {
+  private static @NotNull List<VirtualFile> findVirtualFiles(@NotNull Collection<? extends Path> files) {
     List<VirtualFile> result = new ArrayList<>(files.size());
     for (Path file : files) {
       VirtualFile element = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);

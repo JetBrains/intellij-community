@@ -70,12 +70,8 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     for (String path : changeList.getAffectedPaths()) {
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (checkPath(path, changeList.getNumber())) {
-        case MERGED:
-          hasMergedPaths = true;
-          break;
-        case NOT_MERGED:
-          notMergedPaths.add(path);
-          break;
+        case MERGED -> hasMergedPaths = true;
+        case NOT_MERGED -> notMergedPaths.add(path);
       }
     }
 

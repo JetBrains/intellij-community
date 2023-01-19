@@ -81,6 +81,7 @@ class DifferentMavenStdlibVersionInspection : DomElementsInspection<MavenDomProj
                 SetVersionQuickFix(versionElement, bestVersion, null)
     }
 
+    @Suppress("ActionIsNotPreviewFriendly")
     private class SetVersionQuickFix(val versionElement: GenericDomValue<String>, val newVersion: String, val versionResolved: String?) :
         LocalQuickFix {
         override fun getName() = when (versionResolved) {

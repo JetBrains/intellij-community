@@ -64,16 +64,17 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
   }
 
   fun assertInjected(vararg expectedInjections: InjectionAssertionData) {
+    runReadAction {
+      val expected = expectedInjections.toCollection(LinkedList())
+      val foundInjections = getAllInjections().toCollection(LinkedList())
 
-    val expected = expectedInjections.toCollection(LinkedList())
-    val foundInjections = getAllInjections().toCollection(LinkedList())
-
-    while (expected.isNotEmpty()) {
-      val (text, injectedLanguage) = expected.pop()
-      val found = (foundInjections.find { (psi, file) -> psi.text == text && file.language.id == injectedLanguage }
-                   ?: Assert.fail(
-                     "no injection '$text' -> '$injectedLanguage' were found, remains: ${foundInjections.joinToString { (psi, file) -> "'${psi.text}' -> '${file.language}'" }}   "))
-      foundInjections.remove(found)
+      while (expected.isNotEmpty()) {
+        val (text, injectedLanguage) = expected.pop()
+        val found = (foundInjections.find { (psi, file) -> psi.text == text && file.language.id == injectedLanguage }
+                     ?: Assert.fail(
+                       "no injection '$text' -> '$injectedLanguage' were found, remains: ${foundInjections.joinToString { (psi, file) -> "'${psi.text}' -> '${file.language}'" }}   "))
+        foundInjections.remove(found)
+      }
     }
   }
 

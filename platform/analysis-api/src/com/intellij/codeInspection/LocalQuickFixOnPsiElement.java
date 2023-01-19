@@ -121,6 +121,7 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
     PsiElement endElement = getEndElement();
     if (startElement == null && myStartElement != null || 
         endElement == null && myEndElement != null) return null;
+    if (startElement != null && startElement.getContainingFile() != target.getOriginalFile()) return null;
     startElement = PsiTreeUtil.findSameElementInCopy(startElement, target);
     endElement = PsiTreeUtil.findSameElementInCopy(endElement, target);
     LocalQuickFixOnPsiElement clone;

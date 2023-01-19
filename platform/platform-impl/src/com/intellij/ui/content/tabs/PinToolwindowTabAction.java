@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.Toggleable;
 /**
  * @deprecated use {@link PinActiveTabAction}
  */
-@Deprecated(forRemoval = true)
+@Deprecated
 public class PinToolwindowTabAction extends PinActiveTabAction.TW implements Toggleable {
   public static final String ACTION_NAME = "PinToolwindowTab";
 

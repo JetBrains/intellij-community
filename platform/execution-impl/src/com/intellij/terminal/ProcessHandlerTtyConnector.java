@@ -60,16 +60,13 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
 
   @Override
   public void resize(@NotNull Dimension termSize) {
-    if (myPtyProcess instanceof PtyProcess) {
-      PtyProcess ptyProcess = (PtyProcess)myPtyProcess;
-      if (ptyProcess.isRunning()) {
+    if (myPtyProcess instanceof PtyProcess ptyProcess) {
+      if (ptyProcess.isAlive()) {
         ptyProcess.setWinSize(new WinSize(termSize.width, termSize.height));
       }
     }
-    else {
-      if (myPtyProcess instanceof PtyBasedProcess) {
-        ((PtyBasedProcess)myPtyProcess).setWindowSize(termSize.width, termSize.height);
-      }
+    else if (myPtyProcess instanceof PtyBasedProcess ptyBasedProcess) {
+      ptyBasedProcess.setWindowSize(termSize.width, termSize.height);
     }
   }
 

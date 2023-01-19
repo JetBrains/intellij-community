@@ -29,6 +29,18 @@ public class MoveLineTest extends AbstractEditorTest {
     assertInlayPositions(4);
   }
 
+  public void testMoveWithMultipleCarets() {
+    initText("<caret>foo\nbar\nba<caret>z\nfuz\n");
+    executeAction(IdeActions.ACTION_MOVE_LINE_DOWN_ACTION);
+    checkResultByText("bar\n<caret>foo\nfuz\nba<caret>z\n");
+  }
+
+  public void testMoveWithMultipleCaretsOnTheSameLine() {
+    initText("<caret>f<caret>o<caret>o\nbar\nbaz\nfuz\n");
+    executeAction(IdeActions.ACTION_MOVE_LINE_DOWN_ACTION);
+    checkResultByText("bar\n<caret>f<caret>o<caret>o\nbaz\nfuz\n");
+  }
+
   private void assertInlayPositions(int... offsets) {
     int[] actualPositions = getEditor().getInlayModel().getInlineElementsInRange(0, getEditor().getDocument().getTextLength())
       .stream().mapToInt(i -> i.getOffset()).toArray();

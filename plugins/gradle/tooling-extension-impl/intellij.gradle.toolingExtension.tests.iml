@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=enable" />
+          <option name="additionalArguments" value="-Xjvm-default=all" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -57,7 +57,6 @@
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="ion" level="project" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
-    <orderEntry type="library" scope="TEST" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.boot" scope="TEST" />
   </component>
 </module>

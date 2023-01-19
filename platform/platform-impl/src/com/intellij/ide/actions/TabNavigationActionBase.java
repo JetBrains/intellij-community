@@ -15,11 +15,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 abstract class TabNavigationActionBase extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(TabNavigationActionBase.class);
@@ -80,17 +80,15 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
       if (currentWindow != null) {
         final List<EditorComposite> composites = currentWindow.getAllComposites();
         switch (myNavigationType) {
-          case PREV:
-          case NEXT:
-            presentation.setEnabled(composites.size() > 1);
-            break;
-          case LAST:
+          case PREV, NEXT -> presentation.setEnabled(composites.size() > 1);
+          case LAST -> {
             int index = composites.indexOf(currentWindow.getSelectedComposite());
             presentation.setEnabled(index < composites.size());
-            break;
-            default:
-              int targetIndex = myNavigationType.ordinal();
-              presentation.setEnabled(targetIndex < composites.size());
+          }
+          default -> {
+            int targetIndex = myNavigationType.ordinal();
+            presentation.setEnabled(targetIndex < composites.size());
+          }
         }
       }
       return;
@@ -110,21 +108,21 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
 
     Content targetContent = null;
     switch (myNavigationType) {
-      case PREV:
+      case PREV -> {
         contentManager.selectPreviousContent();
         return;
-      case NEXT:
+      }
+      case NEXT -> {
         contentManager.selectNextContent();
         return;
-      case LAST: {
-        targetContent = contentManager.getContent(contentManager.getContentCount() - 1);
-        break;
       }
-      default:
+      case LAST -> targetContent = contentManager.getContent(contentManager.getContentCount() - 1);
+      default -> {
         int targetIndex = myNavigationType.ordinal();
         if (contentManager.getContentCount() >= targetIndex + 1) {
           targetContent = contentManager.getContent(targetIndex);
         }
+      }
     }
     if (targetContent != null) {
       contentManager.setSelectedContent(targetContent, true);
@@ -134,32 +132,24 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
   private void doNavigate(DataContext dataContext, Project project) {
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
     EditorWindow currentWindow = EditorWindow.DATA_KEY.getData(dataContext);
-    if (currentWindow == null){
-      currentWindow = editorManager.getCurrentWindow ();
+    if (currentWindow == null) {
+      currentWindow = editorManager.getCurrentWindow();
     }
-    VirtualFile selectedFile = currentWindow.getSelectedFile();
+    VirtualFile selectedFile = Objects.requireNonNull(currentWindow).getSelectedFile();
     if (selectedFile == null) {
       selectedFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     }
-    final VirtualFile[] files = currentWindow.getFiles();
-    int index = ArrayUtil.find(files, selectedFile);
+    var files = currentWindow.getFileList();
+    int index = files.indexOf(selectedFile);
     LOG.assertTrue(index != -1);
-    int targetIndex;
-    switch (myNavigationType) {
-      case PREV:
-        targetIndex = (index + files.length - 1) % files.length;
-        break;
-      case NEXT:
-        targetIndex = (index + files.length + 1) % files.length;
-        break;
-      case LAST:
-        targetIndex = files.length - 1;
-        break;
-      default:
-        targetIndex = myNavigationType.ordinal();
-    }
-    if (targetIndex < files.length) {
-      editorManager.openFile(files[targetIndex], true);
+    int targetIndex = switch (myNavigationType) {
+      case PREV -> (index + files.size() - 1) % files.size();
+      case NEXT -> (index + files.size() + 1) % files.size();
+      case LAST -> files.size() - 1;
+      default -> myNavigationType.ordinal();
+    };
+    if (targetIndex < files.size()) {
+      editorManager.openFile(files.get(targetIndex), true);
     }
   }
 

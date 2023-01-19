@@ -14,8 +14,6 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionCo
 
 import java.util.Objects;
 
-import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
-
 /**
  * @author Vladislav.Soroka
  */
@@ -85,9 +83,7 @@ public class BeforeSuiteEvent extends AbstractTestEvent {
   @Override
   @NotNull
   protected String findLocationUrl(@Nullable String name, @NotNull String fqClassName) {
-    return name == null
-           ? JavaTestLocator.SUITE_PROTOCOL + SCHEME_SEPARATOR + fqClassName
-           : JavaTestLocator.SUITE_PROTOCOL + SCHEME_SEPARATOR + StringUtil.getQualifiedName(fqClassName, name);
+    return findLocationUrl(JavaTestLocator.SUITE_PROTOCOL, name, fqClassName);
   }
 
   private boolean isHiddenTestNode(String name, SMTestProxy parentTest) {

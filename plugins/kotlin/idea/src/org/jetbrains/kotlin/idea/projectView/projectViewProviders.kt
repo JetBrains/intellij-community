@@ -31,17 +31,22 @@ class KotlinExpandNodeProjectViewProvider : TreeStructureProvider, DumbAware {
         val result = ArrayList<AbstractTreeNode<out Any>>()
 
         for (child in children) {
-            val childValue = child.value?.asKtFile()
+            val value = child.value
+            val ktFile = value?.asKtFile()
 
-            if (childValue != null) {
-                val mainClass = KotlinIconProvider.getSingleClass(childValue)
+            if (ktFile != null) {
+                val mainClass = KotlinIconProvider.getSingleClass(ktFile)
                 if (mainClass != null) {
-                    result.add(KtClassOrObjectTreeNode(childValue.project, mainClass, settings))
+                    result.add(KtClassOrObjectTreeNode(ktFile.project, mainClass, settings))
                 } else {
-                    result.add(KtFileTreeNode(childValue.project, childValue, settings))
+                    result.add(KtFileTreeNode(ktFile.project, ktFile, settings))
                 }
             } else {
-                result.add(child)
+                if (value is KtLightClass) {
+                    result.add(KtInternalFileTreeNode(value.project, value, settings))
+                } else {
+                    result.add(child)
+                }
             }
 
         }

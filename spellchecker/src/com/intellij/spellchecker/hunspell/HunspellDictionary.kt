@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.hunspell
 
 import ai.grazie.spell.lists.hunspell.HunspellWordList
@@ -39,11 +39,15 @@ class HunspellDictionary(path: String, name: String? = null) : Dictionary {
 
     val bundle = loadHunspellBundle(path)
     if (bundle !== null) {
-      this.dict = HunspellWordList(
-        bundle.aff.path,
-        bundle.dic.path,
-        checkCanceled = { ProgressManager.checkCanceled() }
-      )
+      this.dict = bundle.aff.inputStream().use { affix ->
+        bundle.dic.inputStream().use { dictionary ->
+          HunspellWordList(
+            affix,
+            dictionary,
+            checkCanceled = { ProgressManager.checkCanceled() }
+          )
+        }
+      }
 
       val file = findFileByIoFile(bundle.dic, true)!!
       InputStreamReader(file.inputStream, file.charset).use { reader ->

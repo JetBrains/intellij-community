@@ -52,17 +52,10 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    final Boolean decrement = (Boolean)infos[0];
-    return new ManualArrayCopyFix(decrement.booleanValue());
+    return new ManualArrayCopyFix();
   }
 
   private static class ManualArrayCopyFix extends InspectionGadgetsFix {
-
-    private final boolean decrement;
-
-    ManualArrayCopyFix(boolean decrement) {
-      this.decrement = decrement;
-    }
 
     @Override
     @NotNull
@@ -71,7 +64,7 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement forElement = descriptor.getPsiElement();
       final PsiForStatement forStatement = (PsiForStatement)forElement.getParent();
       CommentTracker commentTracker = new CommentTracker();
@@ -87,48 +80,17 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
       }
     }
 
-    private @Nullable @NonNls String buildSystemArrayCopyText(PsiForStatement forStatement, CommentTracker commentTracker) {
-      final PsiExpression condition = forStatement.getCondition();
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)PsiUtil.skipParenthesizedExprDown(condition);
-      if (binaryExpression == null) {
+    private static @Nullable @NonNls String buildSystemArrayCopyText(PsiForStatement forStatement, CommentTracker commentTracker) {
+      final CountingLoop countingLoop = CountingLoop.from(forStatement);
+      if (countingLoop == null) {
         return null;
       }
-      final IElementType tokenType = binaryExpression.getOperationTokenType();
-      final PsiExpression limit;
-      if (decrement ^ JavaTokenType.LT.equals(tokenType) || JavaTokenType.LE.equals(tokenType)) {
-        limit = binaryExpression.getROperand();
-      }
-      else {
-        limit = binaryExpression.getLOperand();
-      }
-      if (limit == null) {
-        return null;
-      }
-      final PsiStatement initialization = forStatement.getInitialization();
-      if (initialization == null) {
-        return null;
-      }
-      if (!(initialization instanceof PsiDeclarationStatement)) {
-        return null;
-      }
-      final PsiDeclarationStatement declaration = (PsiDeclarationStatement)initialization;
-      final PsiElement[] declaredElements = declaration.getDeclaredElements();
-      if (declaredElements.length != 1) {
-        return null;
-      }
-      final PsiElement declaredElement = declaredElements[0];
-      if (!(declaredElement instanceof PsiLocalVariable)) {
-        return null;
-      }
-      final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
-      final String lengthText;
-      final PsiExpression initializer = variable.getInitializer();
-      if (decrement) {
-        lengthText = buildLengthText(initializer, limit, JavaTokenType.LE.equals(tokenType) || JavaTokenType.GE.equals(tokenType), commentTracker);
-      }
-      else {
-        lengthText = buildLengthText(limit, initializer, JavaTokenType.LE.equals(tokenType) || JavaTokenType.GE.equals(tokenType), commentTracker);
-      }
+      final PsiExpression limit = countingLoop.getBound();
+      final PsiExpression initializer = countingLoop.getInitializer();
+      final String lengthText =
+        countingLoop.isDescending()
+        ? buildLengthText(initializer, limit, countingLoop.isIncluding(), commentTracker)
+        : buildLengthText(limit, initializer, countingLoop.isIncluding(), commentTracker);
       if (lengthText == null) {
         return null;
       }
@@ -144,23 +106,13 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
       }
       final PsiExpression rArray = rhs.getArrayExpression();
       final String fromArrayText = commentTracker.text(rArray);
-      final PsiExpression rhsIndexExpression = rhs.getIndexExpression();
-      final PsiExpression strippedRhsIndexExpression = PsiUtil.skipParenthesizedExprDown(rhsIndexExpression);
-      final PsiExpression limitExpression;
-      if (decrement) {
-        limitExpression = limit;
-      }
-      else {
-        limitExpression = initializer;
-      }
-      final String fromOffsetText = buildOffsetText(strippedRhsIndexExpression, variable, limitExpression, decrement &&
-                                         (JavaTokenType.LT.equals(tokenType) || JavaTokenType.GT.equals(tokenType)), commentTracker);
-      final PsiExpression lhsIndexExpression = lhs.getIndexExpression();
-      final PsiExpression strippedLhsIndexExpression = PsiUtil.skipParenthesizedExprDown(lhsIndexExpression);
-      final String toOffsetText =
-        buildOffsetText(strippedLhsIndexExpression, variable, limitExpression,
-                        decrement && (JavaTokenType.LT.equals(tokenType) || JavaTokenType.GT.equals(tokenType)),
-                        commentTracker);
+      final PsiExpression rhsIndexExpression = PsiUtil.skipParenthesizedExprDown(rhs.getIndexExpression());
+      final PsiExpression limitExpression = countingLoop.isDescending() ? limit : initializer;
+      final String fromOffsetText = buildOffsetText(rhsIndexExpression, countingLoop.getCounter(), limitExpression,
+                                                    countingLoop.isDescending() && !countingLoop.isIncluding(), commentTracker);
+      final PsiExpression lhsIndexExpression = PsiUtil.skipParenthesizedExprDown(lhs.getIndexExpression());
+      final String toOffsetText = buildOffsetText(lhsIndexExpression, countingLoop.getCounter(), limitExpression,
+                                                  countingLoop.isDescending() && !countingLoop.isIncluding(), commentTracker);
       return "if(" + lengthText + ">=0)" +
              "System.arraycopy(" + fromArrayText + "," + fromOffsetText + "," + toArrayText + "," + toOffsetText + "," + lengthText + ");";
     }
@@ -272,12 +224,9 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
           }
         }
         final String maxText = buildExpressionText(max, false, commentTracker);
-        if (minValue > 0) {
-          return maxText + '-' + minValue;
-        }
-        else {
-          return maxText + '+' + -minValue;
-        }
+        return minValue > 0
+               ? maxText + '-' + minValue
+               : maxText + '+' + -minValue;
       }
       // - 1 because of the increment inside the com.siyeh.ig.psiutils.CommentTracker.text(com.intellij.psi.PsiExpression, int)
       final String minText = commentTracker.text(min, ParenthesesUtils.ADDITIVE_PRECEDENCE - 1);
@@ -360,7 +309,7 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
       if (!bodyIsArrayCopy(body, countingLoop.getCounter())) {
         return;
       }
-      registerStatementError(statement, Boolean.valueOf(countingLoop.isDescending()));
+      registerStatementError(statement);
     }
 
     private static boolean bodyIsArrayCopy(PsiStatement body, PsiVariable variable) {

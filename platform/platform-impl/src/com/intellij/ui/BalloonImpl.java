@@ -7,8 +7,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.RemoteDesktopService;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.PopupLocationTracker;
 import com.intellij.ide.ui.ScreenAreaConsumer;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.internal.statistic.collectors.fus.ui.BalloonUsageCollector;
 import com.intellij.notification.ActionCenter;
 import com.intellij.openapi.MnemonicHelper;
@@ -36,6 +38,7 @@ import com.intellij.ui.jcef.HwFacadeNonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -284,10 +287,8 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
     if (!cmp.isShowing()) return true;
     if (cmp instanceof MenuElement) return false;
-    if (myActionButtons != null) {
-      for (ActionButton button : myActionButtons) {
-        if (cmp == button) return true;
-      }
+    if (myActionButtons != null && myActionButtons.contains(cmp)) {
+      return true;
     }
     if (UIUtil.isDescendingFrom(cmp, myComp)) return true;
     if (myComp == null || !myComp.isShowing()) return false;
@@ -332,6 +333,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   private final boolean myEnableButtons;
   private final Dimension myPointerSize;
   private final int myCornerToPointerDistance;
+  private int myCornerRadius = -1;
 
   public BalloonImpl(@NotNull JComponent content,
                      @NotNull Color borderColor,
@@ -428,31 +430,19 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   }
 
   public int getLayer() {
-    Integer result = JLayeredPane.DEFAULT_LAYER;
-    switch (myLayer) {
-      case normal:
-        result = JLayeredPane.POPUP_LAYER;
-        break;
-      case top:
-        result = JLayeredPane.DRAG_LAYER;
-        break;
-    }
-
-    return result;
+    return switch (myLayer) {
+      case normal -> JLayeredPane.POPUP_LAYER;
+      case top -> JLayeredPane.DRAG_LAYER;
+    };
   }
 
   public static AbstractPosition getAbstractPositionFor(@NotNull Position position) {
-    switch (position) {
-      case atLeft:
-        return AT_LEFT;
-      case atRight:
-        return AT_RIGHT;
-      case above:
-        return ABOVE;
-      case below:
-      default:
-        return BELOW;
-    }
+    return switch (position) {
+      case atLeft -> AT_LEFT;
+      case atRight -> AT_RIGHT;
+      case above -> ABOVE;
+      case below -> BELOW;
+    };
   }
 
   @Override
@@ -783,7 +773,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     myComp.clear();
     myComp.myAlpha = isAnimationEnabled() ? 0f : -1;
 
-    myComp.setBorder(new EmptyBorder(getShadowBorderInsets()));
+    createComponentBorder();
 
     myLayeredPane.add(myComp);
     if (myZeroPositionInLayer) {
@@ -811,8 +801,19 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         }
       });
     }
+
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    connection.subscribe(LafManagerListener.TOPIC, source -> updateComponent());
+    connection.subscribe(UISettingsListener.TOPIC, uiSettings -> updateComponent());
   }
 
+  private void createComponentBorder() {
+    myComp.setBorder(new EmptyBorder(getShadowBorderInsets()));
+  }
+
+  private void updateComponent() {
+    createComponentBorder();
+  }
 
   @NotNull
   @Override
@@ -836,16 +837,18 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
   @Override
   public void revalidate() {
-    revalidate(myTracker);
+    if (!myDisposed) {
+      revalidate(myTracker);
+    }
   }
 
   @Override
   public void revalidate(@NotNull PositionTracker<Balloon> tracker) {
-    if (ApplicationManager.getApplication().isDisposed()) {
+    if (myDisposed || ApplicationManager.getApplication().isDisposed()) {
       return;
     }
-    RelativePoint newPosition = tracker.recalculateLocation(this);
 
+    RelativePoint newPosition = tracker.recalculateLocation(this);
     if (newPosition != null) {
       Point newPoint = myPosition.getShiftedPoint(newPosition.getPoint(myLayeredPane), myCalloutShift);
       invalidateShadow = !Objects.equals(myTargetPoint, newPoint);
@@ -999,8 +1002,14 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     }
   }
 
+  public void setCornerRadius(int radius) {
+    myCornerRadius = radius;
+  }
 
   private int getArc() {
+    if (myCornerRadius != -1) {
+      return myCornerRadius;
+    }
     return myDialogMode ? DIALOG_ARC.get() : ARC.get();
   }
 
@@ -1718,8 +1727,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     @Override
     protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {
       if (myEnableButtons) {
-        final boolean pressed = myButton.isPressedByMouse();
-        icon.paintIcon(this, g, pressed ? JBUIScale.scale(1) : 0, pressed ? JBUIScale.scale(1) : 0);
+        icon.paintIcon(this, g, 0, 0);
       }
     }
   }

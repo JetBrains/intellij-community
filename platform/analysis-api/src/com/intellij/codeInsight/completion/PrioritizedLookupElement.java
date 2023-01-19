@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * To debug the order of the completion items use '{@code Dump lookup element weights to log}' action when the completion lookup is
  * shown (Ctrl+Alt+Shift+W / Cmd+Alt+Shift+W), the action also copies the debug info to the Clipboard.
  *
- * @author peter
  * @see CompletionContributor
  */
 public final class PrioritizedLookupElement<T extends LookupElement> extends LookupElementDecorator<T> {

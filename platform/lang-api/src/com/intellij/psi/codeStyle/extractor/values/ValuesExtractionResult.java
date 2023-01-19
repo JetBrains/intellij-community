@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Roman.Shein
- */
 public interface ValuesExtractionResult {
 
   @NotNull

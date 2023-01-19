@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PathUtil;
-import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,7 @@ public class LocalFilePath implements FilePath {
   private VirtualFile myCachedFile;
 
   public LocalFilePath(@NotNull String path, boolean isDirectory) {
-    myPath = path.contains(URLUtil.SCHEME_SEPARATOR) ? path : FileUtil.toCanonicalPath(path);
+    myPath = FileUtil.toCanonicalPath(path);
     myIsDirectory = isDirectory;
   }
 
@@ -41,8 +40,8 @@ public class LocalFilePath implements FilePath {
     this(path.toAbsolutePath().toString(), isDirectory);
   }
 
-  private LocalFilePath(@NotNull String path, boolean isDirectory,
-                        @SuppressWarnings("unused") @Nullable Void privateConstructorMarker) {
+  protected LocalFilePath(@NotNull String path, boolean isDirectory,
+                          @SuppressWarnings("unused") @Nullable Void privateConstructorMarker) {
     myPath = path;
     myIsDirectory = isDirectory;
   }

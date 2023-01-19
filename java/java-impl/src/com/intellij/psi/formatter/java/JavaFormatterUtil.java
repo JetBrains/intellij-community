@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
 
-/**
- * @author Denis Zhdanov
- */
 public final class JavaFormatterUtil {
   /**
    * Holds type of AST elements that are considered to be assignments.
@@ -70,16 +67,12 @@ public final class JavaFormatterUtil {
 
   @NotNull
   public static WrapType getWrapType(int wrap) {
-    switch (wrap) {
-      case CommonCodeStyleSettings.WRAP_ALWAYS:
-        return WrapType.ALWAYS;
-      case CommonCodeStyleSettings.WRAP_AS_NEEDED:
-        return WrapType.NORMAL;
-      case CommonCodeStyleSettings.DO_NOT_WRAP:
-        return WrapType.NONE;
-      default:
-        return WrapType.CHOP_DOWN_IF_LONG;
-    }
+    return switch (wrap) {
+      case CommonCodeStyleSettings.WRAP_ALWAYS -> WrapType.ALWAYS;
+      case CommonCodeStyleSettings.WRAP_AS_NEEDED -> WrapType.NORMAL;
+      case CommonCodeStyleSettings.DO_NOT_WRAP -> WrapType.NONE;
+      default -> WrapType.CHOP_DOWN_IF_LONG;
+    };
   }
 
   /**

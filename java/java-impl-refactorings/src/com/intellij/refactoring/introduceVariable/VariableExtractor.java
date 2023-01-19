@@ -5,6 +5,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -79,9 +80,8 @@ final class VariableExtractor {
     myPosition = editor != null ? editor.getCaretModel().getLogicalPosition() : null;
   }
 
-  @NotNull
-  SmartPsiElementPointer<PsiVariable> extractVariable() {
-    if (myExpression.getUserData(IntroduceVariableOnPreviewHandler.INTENTION_PREVIEW_INTRODUCER) == null) {
+  @NotNull SmartPsiElementPointer<PsiVariable> extractVariable() {
+    if (!IntentionPreviewUtils.isPreviewElement(myExpression)) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
     final PsiExpression newExpr = myFieldConflictsResolver.fixInitializer(myExpression);
@@ -119,9 +119,7 @@ final class VariableExtractor {
 
     highlight(var);
 
-    if (!(var instanceof PsiPatternVariable) || PsiUtil.isLanguageLevel16OrHigher(myContainingFile)) {
-      PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
-    }
+    PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
     if (!(var instanceof PsiPatternVariable)) {
       if (mySettings.isDeclareVarType()) {
         PsiTypeElement typeElement = var.getTypeElement();
@@ -352,8 +350,7 @@ final class VariableExtractor {
         }
       }
     }
-    if (anchor instanceof PsiWhileStatement) {
-      PsiWhileStatement whileStatement = (PsiWhileStatement)anchor;
+    if (anchor instanceof PsiWhileStatement whileStatement) {
       PsiExpression condition = whileStatement.getCondition();
       if (condition != null && ContainerUtil.and(allOccurrences, occurrence -> PsiTreeUtil.isAncestor(whileStatement, occurrence, true))) {
         if (firstOccurrence != null && PsiTreeUtil.isAncestor(condition, firstOccurrence, false) &&

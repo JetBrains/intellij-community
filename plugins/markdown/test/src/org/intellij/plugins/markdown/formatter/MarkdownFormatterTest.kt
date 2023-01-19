@@ -3,9 +3,12 @@ package org.intellij.plugins.markdown.formatter
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
@@ -34,6 +37,8 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test punctuation`() = doTest()
 
+  fun `test emphasis`() = doTest()
+
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/formatter/"
   }
@@ -46,7 +51,7 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
   private fun doTest() {
     val before = getTestName(true) + "_before.md"
     val after = getTestName(true) + "_after.md"
-    runWithTemporaryStyleSettings { settings ->
+    runWithTemporaryStyleSettings(project) { settings ->
       settings.apply {
         WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true
         getCommonSettings(MarkdownLanguage.INSTANCE).apply {
@@ -55,23 +60,32 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
         getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).apply {
           WRAP_TEXT_IF_LONG = true
           KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = false
+          // These tests are not aware of the fact that tables can be reformatted now by TablePostFormatProcessor
+          // and wrapping block quotes can be fixed be BlockQuotePostFormatProcessor
+          FORMAT_TABLES = false
+          INSERT_QUOTE_ARROWS_ON_WRAP = false
         }
       }
-      doReformatTest(before, after)
+      configureByFile(before)
+      performReformatting(project, file)
+      checkResultByFile(after)
       //check idempotence of formatter
-      doReformatTest(after, after)
+      performReformatting(project, file)
+      checkResultByFile(after)
     }
-  }
-  private fun runWithTemporaryStyleSettings(block: (CodeStyleSettings) -> Unit) {
-    val settings = CodeStyle.getSettings(project)
-    CodeStyle.doWithTemporarySettings(project, settings, block)
   }
 
-  private fun doReformatTest(before: String, after: String) {
-    configureByFile(before)
-    WriteCommandAction.runWriteCommandAction(project) {
-      CodeStyleManager.getInstance(project).reformat(file)
+  companion object {
+    internal fun runWithTemporaryStyleSettings(project: Project, block: (CodeStyleSettings) -> Unit) {
+      val settings = CodeStyle.getSettings(project)
+      CodeStyle.doWithTemporarySettings(project, settings, block)
     }
-    checkResultByFile(after)
+
+    internal fun performReformatting(project: Project, file: PsiFile) {
+      WriteCommandAction.runWriteCommandAction(project) {
+        CodeStyleManager.getInstance(project).reformatText(file, listOf(file.textRange))
+      }
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    }
   }
 }

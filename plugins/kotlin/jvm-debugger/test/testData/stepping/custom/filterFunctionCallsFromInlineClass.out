@@ -1,76 +1,76 @@
 // IGNORE_BACKEND: JVM_WITH_IR_EVALUATOR
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:40
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:49
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:58
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:69
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:78
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:87
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:98
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:107
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:116
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:127
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:136
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:145
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:167
-LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:176
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:41
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:50
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:59
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:70
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:79
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:88
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:99
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:108
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:117
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:128
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:137
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:146
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:168
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:177
 Run Java
 Connected to the target VM
-filterFunctionCallsFromInlineClass.kt:40
-filterFunctionCallsFromInlineClass.kt:45
-filterFunctionCallsFromInlineClass.kt:6
-filterFunctionCallsFromInlineClass.kt:45
-filterFunctionCallsFromInlineClass.kt:49
-filterFunctionCallsFromInlineClass.kt:54
-filterFunctionCallsFromInlineClass.kt:14
-filterFunctionCallsFromInlineClass.kt:54
-filterFunctionCallsFromInlineClass.kt:58
-filterFunctionCallsFromInlineClass.kt:63
-filterFunctionCallsFromInlineClass.kt:10
-filterFunctionCallsFromInlineClass.kt:63
-filterFunctionCallsFromInlineClass.kt:69
-filterFunctionCallsFromInlineClass.kt:74
-filterFunctionCallsFromInlineClass.kt:22
-filterFunctionCallsFromInlineClass.kt:74
-filterFunctionCallsFromInlineClass.kt:78
-filterFunctionCallsFromInlineClass.kt:83
-filterFunctionCallsFromInlineClass.kt:14
-filterFunctionCallsFromInlineClass.kt:83
-filterFunctionCallsFromInlineClass.kt:87
-filterFunctionCallsFromInlineClass.kt:92
-filterFunctionCallsFromInlineClass.kt:10
-filterFunctionCallsFromInlineClass.kt:92
-filterFunctionCallsFromInlineClass.kt:98
-filterFunctionCallsFromInlineClass.kt:103
-filterFunctionCallsFromInlineClass.kt:22
-filterFunctionCallsFromInlineClass.kt:103
-filterFunctionCallsFromInlineClass.kt:107
-filterFunctionCallsFromInlineClass.kt:112
-filterFunctionCallsFromInlineClass.kt:14
-filterFunctionCallsFromInlineClass.kt:112
-filterFunctionCallsFromInlineClass.kt:116
-filterFunctionCallsFromInlineClass.kt:121
-filterFunctionCallsFromInlineClass.kt:26
-filterFunctionCallsFromInlineClass.kt:121
-filterFunctionCallsFromInlineClass.kt:127
-filterFunctionCallsFromInlineClass.kt:132
-filterFunctionCallsFromInlineClass.kt:22
-filterFunctionCallsFromInlineClass.kt:132
-filterFunctionCallsFromInlineClass.kt:136
-filterFunctionCallsFromInlineClass.kt:141
-filterFunctionCallsFromInlineClass.kt:30
-filterFunctionCallsFromInlineClass.kt:141
-filterFunctionCallsFromInlineClass.kt:145
-filterFunctionCallsFromInlineClass.kt:150
-filterFunctionCallsFromInlineClass.kt:26
-filterFunctionCallsFromInlineClass.kt:150
-filterFunctionCallsFromInlineClass.kt:167
-filterFunctionCallsFromInlineClass.kt:172
-filterFunctionCallsFromInlineClass.kt:155
-filterFunctionCallsFromInlineClass.kt:172
-filterFunctionCallsFromInlineClass.kt:176
-filterFunctionCallsFromInlineClass.kt:181
-filterFunctionCallsFromInlineClass.kt:159
-filterFunctionCallsFromInlineClass.kt:181
+filterFunctionCallsFromInlineClass.kt:41
+filterFunctionCallsFromInlineClass.kt:46
+filterFunctionCallsFromInlineClass.kt:7
+filterFunctionCallsFromInlineClass.kt:46
+filterFunctionCallsFromInlineClass.kt:50
+filterFunctionCallsFromInlineClass.kt:55
+filterFunctionCallsFromInlineClass.kt:15
+filterFunctionCallsFromInlineClass.kt:55
+filterFunctionCallsFromInlineClass.kt:59
+filterFunctionCallsFromInlineClass.kt:64
+filterFunctionCallsFromInlineClass.kt:11
+filterFunctionCallsFromInlineClass.kt:64
+filterFunctionCallsFromInlineClass.kt:70
+filterFunctionCallsFromInlineClass.kt:75
+filterFunctionCallsFromInlineClass.kt:23
+filterFunctionCallsFromInlineClass.kt:75
+filterFunctionCallsFromInlineClass.kt:79
+filterFunctionCallsFromInlineClass.kt:84
+filterFunctionCallsFromInlineClass.kt:15
+filterFunctionCallsFromInlineClass.kt:84
+filterFunctionCallsFromInlineClass.kt:88
+filterFunctionCallsFromInlineClass.kt:93
+filterFunctionCallsFromInlineClass.kt:11
+filterFunctionCallsFromInlineClass.kt:93
+filterFunctionCallsFromInlineClass.kt:99
+filterFunctionCallsFromInlineClass.kt:104
+filterFunctionCallsFromInlineClass.kt:23
+filterFunctionCallsFromInlineClass.kt:104
+filterFunctionCallsFromInlineClass.kt:108
+filterFunctionCallsFromInlineClass.kt:113
+filterFunctionCallsFromInlineClass.kt:15
+filterFunctionCallsFromInlineClass.kt:113
+filterFunctionCallsFromInlineClass.kt:117
+filterFunctionCallsFromInlineClass.kt:122
+filterFunctionCallsFromInlineClass.kt:27
+filterFunctionCallsFromInlineClass.kt:122
+filterFunctionCallsFromInlineClass.kt:128
+filterFunctionCallsFromInlineClass.kt:133
+filterFunctionCallsFromInlineClass.kt:23
+filterFunctionCallsFromInlineClass.kt:133
+filterFunctionCallsFromInlineClass.kt:137
+filterFunctionCallsFromInlineClass.kt:142
+filterFunctionCallsFromInlineClass.kt:31
+filterFunctionCallsFromInlineClass.kt:142
+filterFunctionCallsFromInlineClass.kt:146
+filterFunctionCallsFromInlineClass.kt:151
+filterFunctionCallsFromInlineClass.kt:27
+filterFunctionCallsFromInlineClass.kt:151
+filterFunctionCallsFromInlineClass.kt:168
+filterFunctionCallsFromInlineClass.kt:173
+filterFunctionCallsFromInlineClass.kt:156
+filterFunctionCallsFromInlineClass.kt:173
+filterFunctionCallsFromInlineClass.kt:177
+filterFunctionCallsFromInlineClass.kt:182
+filterFunctionCallsFromInlineClass.kt:160
+filterFunctionCallsFromInlineClass.kt:182
 Disconnected from the target VM
 
 Process finished with exit code 0

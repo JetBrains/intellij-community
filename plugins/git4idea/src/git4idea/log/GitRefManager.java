@@ -16,6 +16,7 @@ import com.intellij.vcs.log.impl.SimpleRefType;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitTag;
 import git4idea.branch.GitBranchType;
@@ -64,6 +65,7 @@ public class GitRefManager implements VcsLogRefManager {
   protected enum RefType {
     OTHER,
     HEAD,
+    CURRENT_BRANCH,
     TAG,
     LOCAL_BRANCH,
     MASTER,
@@ -79,7 +81,7 @@ public class GitRefManager implements VcsLogRefManager {
   public GitRefManager(@NotNull Project project, @NotNull RepositoryManager<GitRepository> repositoryManager) {
     myRepositoryManager = repositoryManager;
     myBranchLayoutComparator = new GitBranchLayoutComparator();
-    myLabelsComparator = new GitLabelComparator();
+    myLabelsComparator = new GitLabelComparator(myRepositoryManager);
     myBranchManager = project.getService(GitBranchManager.class);
   }
 
@@ -360,6 +362,7 @@ public class GitRefManager implements VcsLogRefManager {
   private static class GitLabelComparator extends GitRefComparator {
     private static final RefType[] ORDERED_TYPES = {
       RefType.HEAD,
+      RefType.CURRENT_BRANCH,
       RefType.MASTER,
       RefType.ORIGIN_MASTER,
       RefType.LOCAL_BRANCH,
@@ -367,10 +370,34 @@ public class GitRefManager implements VcsLogRefManager {
       RefType.TAG,
       RefType.OTHER
     };
+    @NotNull private final RepositoryManager<GitRepository> myRepositoryManager;
+
+    private GitLabelComparator(@NotNull RepositoryManager<GitRepository> repositoryManager) {
+      myRepositoryManager = repositoryManager;
+    }
 
     @Override
     protected RefType[] getOrderedTypes() {
       return ORDERED_TYPES;
+    }
+
+    @Override
+    protected @NotNull RefType getType(@NotNull VcsRef ref) {
+      RefType type = super.getType(ref);
+      if (type == RefType.LOCAL_BRANCH || type == RefType.MASTER) {
+        if (isCurrentBranch(ref)) {
+          return RefType.CURRENT_BRANCH;
+        }
+      }
+      return type;
+    }
+
+    private boolean isCurrentBranch(@NotNull VcsRef ref) {
+      GitRepository repo = myRepositoryManager.getRepositoryForRootQuick(ref.getRoot());
+      if (repo == null) return false;
+      GitLocalBranch currentBranch = repo.getCurrentBranch();
+      if (currentBranch == null) return false;
+      return currentBranch.getName().equals(ref.getName());
     }
   }
 
@@ -381,6 +408,7 @@ public class GitRefManager implements VcsLogRefManager {
       RefType.MASTER,
       RefType.LOCAL_BRANCH,
       RefType.TAG,
+      RefType.CURRENT_BRANCH,
       RefType.HEAD,
       RefType.OTHER
     };
@@ -410,7 +438,7 @@ public class GitRefManager implements VcsLogRefManager {
     protected abstract RefType[] getOrderedTypes();
 
     @NotNull
-    private static RefType getType(@NotNull VcsRef ref) {
+    protected RefType getType(@NotNull VcsRef ref) {
       VcsRefType type = ref.getType();
       if (type == HEAD) {
         return RefType.HEAD;

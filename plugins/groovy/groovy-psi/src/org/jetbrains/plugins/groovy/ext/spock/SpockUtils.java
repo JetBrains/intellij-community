@@ -25,9 +25,6 @@ import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.ext.spock.DataVariablesKt.createVariableMap;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class SpockUtils {
 
   public static final String SPEC_CLASS_NAME = "spock.lang.Specification";

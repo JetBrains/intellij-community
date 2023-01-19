@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * @author peter
- */
 public abstract class ScanningIdIndexer implements IdIndexer {
 
   protected abstract WordsScanner createScanner();

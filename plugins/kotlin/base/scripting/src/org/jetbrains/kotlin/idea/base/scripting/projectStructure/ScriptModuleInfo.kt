@@ -7,12 +7,12 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
-import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
-import org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LanguageSettingsOwner
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
+import org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.name.Name
@@ -41,24 +41,23 @@ data class ScriptModuleInfo(
     override val moduleContentScope: GlobalSearchScope
         get() = KotlinScriptSearchScope(project, contentScope)
 
-    override fun dependencies(): List<IdeaModuleInfo> {
-        return arrayListOf<IdeaModuleInfo>(this).apply {
-            val scriptDependentModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
-            scriptDependentModules.forEach {
-                addAll(it.sourceModuleInfos)
-            }
-
-            val scriptDependentLibraries = ScriptAdditionalIdeaDependenciesProvider.getRelatedLibraries(scriptFile, project)
-            scriptDependentLibraries.forEach {
-                addAll(LibraryInfoCache.getInstance(project).get(it))
-            }
-
-            val dependenciesInfo = ScriptDependenciesInfo.ForFile(project, scriptFile, scriptDefinition)
-            add(dependenciesInfo)
-
-            dependenciesInfo.sdk?.let { add(SdkInfo(project, it)) }
+    override fun dependencies(): List<IdeaModuleInfo> = mutableSetOf<IdeaModuleInfo>(this).apply {
+        val scriptDependentModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
+        scriptDependentModules.forEach {
+            addAll(it.sourceModuleInfos)
         }
-    }
+
+        val scriptDependentLibraries = ScriptAdditionalIdeaDependenciesProvider.getRelatedLibraries(scriptFile, project)
+        val libraryInfoCache = LibraryInfoCache.getInstance(project)
+        scriptDependentLibraries.forEach {
+            addAll(libraryInfoCache[it])
+        }
+
+        val dependenciesInfo = ScriptDependenciesInfo.ForFile(project, scriptFile, scriptDefinition)
+        add(dependenciesInfo)
+
+        dependenciesInfo.sdk?.let { add(SdkInfo(project, it)) }
+    }.toList()
 
     override val platform: TargetPlatform
         get() = ScriptingTargetPlatformDetector.getPlatform(project, scriptFile, scriptDefinition)

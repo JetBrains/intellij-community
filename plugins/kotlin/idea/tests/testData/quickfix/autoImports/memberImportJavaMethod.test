@@ -1,7 +1,7 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import function 'Bar.foobar'" "true"
 // ERROR: Unresolved reference: foobar
-
+/* IGNORE_FIR */
 //KT-9009
 
 fun f() {
@@ -22,9 +22,9 @@ public class Bar {
 // FILE: first.after.kt
 import foo.Bar.foobar
 
-// "Import" "true"
+// "Import function 'Bar.foobar'" "true"
 // ERROR: Unresolved reference: foobar
-
+/* IGNORE_FIR */
 //KT-9009
 
 fun f() {

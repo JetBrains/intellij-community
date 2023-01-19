@@ -24,7 +24,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.ImageUtil;
@@ -34,6 +34,7 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
@@ -45,8 +46,8 @@ import java.awt.peer.ComponentPeer;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -227,7 +228,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   static final class MyActionTuner implements ActionConfigurationCustomizer {
     @Override
     public void customize(@NotNull ActionManager actionManager) {
-      if (!SystemInfo.isLinux || ApplicationManager.getApplication().isUnitTestMode() || !isPresented()) {
+      if (!SystemInfoRt.isLinux || ApplicationManager.getApplication().isUnitTestMode() || !isPresented()) {
         return;
       }
 
@@ -248,7 +249,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
   }
 
-  public static GlobalMenuLinux create(@NotNull JFrame frame) {
+  public static @Nullable GlobalMenuLinux create(@NotNull JFrame frame) {
     final long xid = _getX11WindowXid(frame);
     return xid == 0 ? null : new GlobalMenuLinux(xid, frame);
   }
@@ -488,23 +489,16 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   }
 
   private static String _evtype2str(int eventType) {
-    switch (eventType) {
-      case GlobalMenuLib.EVENT_OPENED:
-        return "event-opened";
-      case GlobalMenuLib.EVENT_CLOSED:
-        return "event-closed";
-      case GlobalMenuLib.EVENT_CLICKED:
-        return "event-clicked";
-      case GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW:
-        return "signal-about-to-show";
-      case GlobalMenuLib.SIGNAL_ACTIVATED:
-        return "signal-activated";
-      case GlobalMenuLib.SIGNAL_CHILD_ADDED:
-        return "signal-child-added";
-      case GlobalMenuLib.SIGNAL_SHOWN:
-        return "signal-shown";
-    }
-    return "unknown-event-type-" + eventType;
+    return switch (eventType) {
+      case GlobalMenuLib.EVENT_OPENED -> "event-opened";
+      case GlobalMenuLib.EVENT_CLOSED -> "event-closed";
+      case GlobalMenuLib.EVENT_CLICKED -> "event-clicked";
+      case GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW -> "signal-about-to-show";
+      case GlobalMenuLib.SIGNAL_ACTIVATED -> "signal-activated";
+      case GlobalMenuLib.SIGNAL_CHILD_ADDED -> "signal-child-added";
+      case GlobalMenuLib.SIGNAL_SHOWN -> "signal-shown";
+      default -> "unknown-event-type-" + eventType;
+    };
   }
 
   private static byte[] _icon2png(Icon icon) {
@@ -791,10 +785,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
   private static GlobalMenuLib _loadLibrary() {
     Application app;
-    if (!SystemInfo.isLinux ||
+    if (!SystemInfoRt.isLinux ||
         !(CpuArch.isIntel64() || CpuArch.isArm64()) ||
         (app = ApplicationManager.getApplication()) == null || app.isUnitTestMode() || app.isHeadlessEnvironment() ||
-        Registry.is("linux.native.menu.force.disable") ||
+        Boolean.getBoolean("linux.native.menu.force.disable") ||
         (LoadingState.COMPONENTS_REGISTERED.isOccurred() && !Experiments.getInstance().isFeatureEnabled("linux.native.menu")) ||
         !JnaLoader.isLoaded() ||
         isUnderVMWithSwiftPluginInstalled()) {
@@ -1252,41 +1246,30 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
   }
 
-  private static Object _getPeerField(@NotNull Component object) {
-    try {
-      Field field = Component.class.getDeclaredField("peer");
-      field.setAccessible(true);
-      return field.get(object);
-    }
-    catch (IllegalAccessException | NoSuchFieldException e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
   private static long _getX11WindowXid(@NotNull Window frame) {
     try {
       // getPeer method was removed in jdk9, but 'peer' field still exists
-      final ComponentPeer wndPeer = (ComponentPeer)_getPeerField(frame);
-      if (wndPeer == null) {
+      MethodHandles.Lookup lookup = MethodHandles.lookup();
+      ComponentPeer componentPeer = (ComponentPeer)MethodHandles.privateLookupIn(Component.class, lookup)
+        .findVarHandle(Component.class, "peer", ComponentPeer.class)
+        .get(frame);
+      if (componentPeer == null) {
         // wait a little for X11-peer to be connected
         LOG.debug("frame peer is null, wait for connection");
         return 0;
       }
 
       // sun.awt.X11.XBaseWindow isn't available at all jdks => use reflection
-      if (!wndPeer.getClass().getName().equals("sun.awt.X11.XFramePeer")) {
-        LOG.debug("frame peer isn't instance of XBaseWindow, class of peer: " + wndPeer.getClass());
+      Class<? extends ComponentPeer> componentPeerClass = componentPeer.getClass();
+      if (!componentPeerClass.getName().equals("sun.awt.X11.XFramePeer")) {
+        LOG.info("frame peer isn't instance of XBaseWindow, class of peer: " + componentPeerClass);
         return 0;
       }
 
       // System.out.println("Window id (from XBaseWindow): 0x" + Long.toHexString(((XBaseWindow)frame.getPeer()).getWindow()));
-      final Method method = wndPeer.getClass().getMethod("getWindow");
-      if (method == null) {
-        return 0;
-      }
-
-      return (long)method.invoke(wndPeer);
+      return (long)MethodHandles.privateLookupIn(componentPeerClass, lookup)
+        .findVirtual(componentPeerClass, "getWindow", MethodType.methodType(Long.TYPE))
+        .invoke(componentPeer);
     }
     catch (Throwable e) {
       LOG.error(e);

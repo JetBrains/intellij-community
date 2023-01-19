@@ -15,27 +15,45 @@
  */
 package com.intellij.java.codeInspection;
 
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public abstract class DataFlowInspectionTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected void doTest() {
-    doTestWith(i -> {
-      i.SUGGEST_NULLABLE_ANNOTATIONS = true;
-      i.REPORT_CONSTANT_REFERENCE_VALUES = false;
+    doTestWith((df, cv) -> {
+      df.SUGGEST_NULLABLE_ANNOTATIONS = true;
+      cv.REPORT_CONSTANT_REFERENCE_VALUES = false;
     });
   }
 
-  protected void doTestWith(Consumer<? super DataFlowInspection> inspectionMutator) {
+  protected void doTestWith(BiConsumer<DataFlowInspection, ConstantValueInspection> inspectionMutator) {
     DataFlowInspection inspection = new DataFlowInspection();
-    inspectionMutator.accept(inspection);
-    myFixture.enableInspections(inspection);
+    ConstantValueInspection cvInspection = new ConstantValueInspection();
+    inspectionMutator.accept(inspection, cvInspection);
+    myFixture.enableInspections(inspection, cvInspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
   public void assertIntentionAvailable(String intentionName) {
-    assertTrue(myFixture.getAvailableIntentions().stream().anyMatch(action -> action.getText().equals(intentionName)));
+    assertTrue(ContainerUtil.exists(myFixture.getAvailableIntentions(), action -> action.getText().equals(intentionName)));
+  }
+
+  static void addCheckerAnnotations(JavaCodeInsightTestFixture fixture) {
+    fixture.addClass("package org.checkerframework.checker.nullness.qual;import java.lang.annotation.*;" +
+                     "@Target(ElementType.TYPE_USE)public @interface NonNull {}");
+    fixture.addClass("package org.checkerframework.checker.nullness.qual;import java.lang.annotation.*;" +
+                     "@Target(ElementType.TYPE_USE)public @interface Nullable {}");
+    fixture.addClass("package org.checkerframework.framework.qual;" +
+                     "import java.lang.annotation.*;" +
+                     "enum TypeUseLocation {ALL}" +
+                     "public @interface DefaultQualifier {" +
+                     "  Class<? extends Annotation> value();" +
+                     "  TypeUseLocation[] locations() default {TypeUseLocation.ALL};" +
+                     "}");
   }
 }

@@ -21,9 +21,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class IdReferenceProvider extends PsiReferenceProvider {
   @NonNls public static final String FOR_ATTR_NAME = "for";
   @NonNls public static final String ID_ATTR_NAME = "id";

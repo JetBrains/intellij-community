@@ -1,12 +1,15 @@
 package com.intellij.settingsSync
 
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.*
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.createFile
 import com.intellij.util.io.readText
+import com.intellij.util.io.write
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -51,11 +54,7 @@ internal class GitSettingsLogTest {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText(editorContent)
 
-    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
-      listOf(keymapsFolder, editorXml)
-    }
-    settingsLog.initialize()
-    settingsLog.logExistingSettings()
+    val settingsLog = initializeGitSettingsLog(keymapsFolder, editorXml)
 
     settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
       fileState("keymaps/mykeymap.xml", keymapContent)
@@ -67,10 +66,7 @@ internal class GitSettingsLogTest {
   fun `merge conflict should be resolved as last modified`() {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText("editorContent")
-    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
-      listOf(editorXml)
-    }
-    settingsLog.initialize()
+    val settingsLog = initializeGitSettingsLog(editorXml)
 
     settingsLog.applyIdeState(
       settingsSnapshot {
@@ -93,10 +89,7 @@ internal class GitSettingsLogTest {
   fun `delete-modify merge conflict should be resolved as last modified`() {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText("editorContent")
-    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
-      listOf(editorXml)
-    }
-    settingsLog.initialize()
+    val settingsLog = initializeGitSettingsLog(editorXml)
 
     settingsLog.applyIdeState(
       settingsSnapshot {
@@ -119,10 +112,7 @@ internal class GitSettingsLogTest {
   fun `modify-delete merge conflict should be resolved as last modified`() {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText("editorContent")
-    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
-      listOf(editorXml)
-    }
-    settingsLog.initialize()
+    val settingsLog = initializeGitSettingsLog(editorXml)
 
     settingsLog.applyCloudState(
       settingsSnapshot {
@@ -144,14 +134,11 @@ internal class GitSettingsLogTest {
   fun `date of the snapshot`() {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText("editorContent")
-    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
-      listOf(editorXml)
-    }
-    settingsLog.initialize()
+    val settingsLog = initializeGitSettingsLog(editorXml)
 
     val instant = Instant.ofEpochSecond(100500)
     settingsLog.applyCloudState(
-      settingsSnapshot(SettingsSnapshot.MetaInfo(instant, AppInfo(UUID.randomUUID(), "", "", ""))) {
+      settingsSnapshot(SettingsSnapshot.MetaInfo(instant, AppInfo(UUID.randomUUID(), null, "", "", ""))) {
         fileState("options/editor.xml", "moreCloudEditorContent")
       }, "Remote changes"
     )
@@ -161,45 +148,198 @@ internal class GitSettingsLogTest {
     assertEquals("The date of the snapshot incorrect", instant, snapshot.metaInfo.dateCreated)
   }
 
-  //@Test
-  // todo requires a more previse merge conflict strategy implementation
-  @Suppress("unused")
-  fun `merge conflict should be resolved as last modified for the particular file`() {
+  @Test fun `setBranchPosition should reset the working tree as well`() {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText("editorContent")
-    val lafXml = (configDir / "options" / "laf.xml").createFile()
-    editorXml.writeText("lafContent")
-    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
-      listOf(lafXml, editorXml)
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    val masterPosition = settingsLog.getMasterPosition()
+
+    settingsLog.applyCloudState(
+      settingsSnapshot(SettingsSnapshot.MetaInfo(Instant.ofEpochSecond(100500), AppInfo(UUID.randomUUID(), null, "", "", ""))) {
+        fileState("options/editor.xml", "moreCloudEditorContent")
+      }, "Remote changes"
+    )
+    settingsLog.setCloudPosition(masterPosition)
+
+    assertEquals(masterPosition, settingsLog.getCloudPosition()) // this is just a safety-check that setCloudPosition set the label correctly
+    assertEquals("editorContent", (settingsSyncStorage / "options"/ "editor.xml").readText()) // this is real test that the cloud changes have gone away
+  }
+
+  @Test fun `collectCurrentSnapshot should take the master content`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    val editorXmlFileState = "options/editor.xml"
+    settingsLog.applyCloudState(
+      settingsSnapshot(SettingsSnapshot.MetaInfo(Instant.ofEpochSecond(100500), AppInfo(UUID.randomUUID(), null, "", "", ""))) {
+        fileState(editorXmlFileState, "moreCloudEditorContent")
+      }, "Remote changes"
+    )
+
+    val snapshot = settingsLog.collectCurrentSnapshot()
+    val actualFileState = snapshot.fileStates.find { it.file == editorXmlFileState } as FileState.Modified
+    assertEquals("editorContent", String(actualFileState.content))
+  }
+
+  @Test
+  fun `do not fail if commit signature is requested in global config`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    (settingsSyncStorage / ".git" / "config").writeText("""
+      [commit]
+          gpgsign = true
+      [user]
+          signingkey = KEYHERE
+      [gpg]
+        program = /opt/homebrew/bin/gpg""".trimIndent())
+
+    settingsLog.forceWriteToMaster(
+      settingsSnapshot {
+        fileState("options/editor.xml", "ideEditorContent")
+      }, "Local changes"
+    )
+    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
+      fileState("options/editor.xml", "ideEditorContent")
     }
-    settingsLog.initialize()
+  }
+
+  @Test
+  fun `do not fail if unknown gpg option is written in global config`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    (settingsSyncStorage / ".git" / "config").writeText("""
+      [commit]
+          gpgsign = true
+      [user]
+          signingkey = KEYHERE
+      [gpg]
+	        format = ssh
+      [gpg "ssh"]
+        allowedSignersFile = ~/.config/git/allowed_signers""".trimIndent())
+
+    settingsLog.forceWriteToMaster(
+      settingsSnapshot {
+        fileState("options/editor.xml", "ideEditorContent")
+      }, "Local changes"
+    )
+    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
+      fileState("options/editor.xml", "ideEditorContent")
+    }
+  }
+
+  @Test
+  fun `plugins state is written to the settings log`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    val id = "com.jetbrains.plugin"
+    val dependencies = setOf("com.intellij.modules.lang")
+    settingsLog.forceWriteToMaster(settingsSnapshot {
+      plugin(id, enabled = true, category = SettingsCategory.UI, dependencies = dependencies)
+    }, "Install plugin")
+
+    val snapshot = settingsLog.collectCurrentSnapshot()
+    snapshot.assertSettingsSnapshot {
+      fileState("options/editor.xml", "editorContent")
+      plugin(id, enabled = true, SettingsCategory.UI, dependencies)
+    }
+  }
+
+  @Test
+  fun `merge conflict in plugins-json should be resolved smartly`() {
+    val editorXml = (configDir / "options" / "editor.xml").write("Editor Initial")
+    val settingsLog = initializeGitSettingsLog(editorXml)
 
     settingsLog.applyIdeState(
       settingsSnapshot {
-        fileState("editor.xml", "ideEditorContent")
+        plugin("A", true)
+      }, "Local"
+    )
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        plugin("B", true)
+      }, "Remote"
+    )
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "Editor IDE")
+      }, "Local"
+    )
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("options/laf.xml", "LaF Cloud")
+      }, "Remote"
+    )
+
+    settingsLog.advanceMaster()
+
+    val snapshot = settingsLog.collectCurrentSnapshot()
+    snapshot.assertSettingsSnapshot {
+      fileState("options/editor.xml", "Editor IDE")
+      fileState("options/laf.xml", "LaF Cloud")
+      plugin("A", true)
+      plugin("B", true)
+    }
+  }
+
+  @Test
+  fun `merge conflict should be resolved as last modified for the particular file`() {
+    val editorXml = (configDir / "options" / "editor.xml").write("Editor Initial")
+    val lafXml = (configDir / "options" / "laf.xml").write("LaF Initial")
+    val generalXml = (configDir / "options" / "ide.general.xml").write("General Initial")
+    val diffXml = (configDir / "options" / "diff.xml").write("Diff Initial")
+
+    val settingsLog = initializeGitSettingsLog(lafXml, editorXml, generalXml)
+
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "Editor Ide")
+        fileState("options/ide.general.xml", "General Ide")
       }, "Local changes"
     )
     settingsLog.applyCloudState(
       settingsSnapshot {
-        fileState("laf.xml", "cloudLafContent")
+        fileState("options/laf.xml", "LaF Cloud")
+        fileState("options/diff.xml", "Diff Cloud")
       }, "Remote changes"
     )
     settingsLog.applyCloudState(
       settingsSnapshot {
-        fileState("editor.xml", "cloudEditorContent")
+        fileState("options/editor.xml", "Editor Cloud")
       }, "Remote changes"
     )
     settingsLog.applyIdeState(
       settingsSnapshot {
-        fileState("laf.xml", "ideEditorContent")
+        fileState("options/laf.xml", "LaF Ide")
       }, "Local changes"
     )
 
     settingsLog.advanceMaster()
 
-    assertEquals("Incorrect content", "cloudEditorContent", editorXml.readText())
-    assertEquals("Incorrect content", "ideLafContent", lafXml.readText())
+    assertEquals("Incorrect content", "Editor Cloud", (settingsSyncStorage / "options" / "editor.xml").readText())
+    assertEquals("Incorrect content", "LaF Ide", (settingsSyncStorage / "options" / "laf.xml").readText())
+    assertEquals("Incorrect content", "Diff Cloud", (settingsSyncStorage / "options" / "diff.xml").readText())
+    assertEquals("Incorrect content", "General Ide", (settingsSyncStorage / "options" / "ide.general.xml").readText())
     assertMasterIsMergeOfIdeAndCloud()
+  }
+
+  private fun initializeGitSettingsLog(vararg filesToCopyInitially: Path): GitSettingsLog {
+    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
+      val fileStates = collectFileStatesFromFiles(filesToCopyInitially.toSet(), configDir)
+      SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), null), fileStates, plugins = null, emptySet())
+    }
+    settingsLog.initialize()
+    settingsLog.logExistingSettings()
+    val masterPosition = settingsLog.advanceMaster()
+    settingsLog.setCloudPosition(masterPosition)
+    return settingsLog
   }
 
   private fun assertMasterIsMergeOfIdeAndCloud() {

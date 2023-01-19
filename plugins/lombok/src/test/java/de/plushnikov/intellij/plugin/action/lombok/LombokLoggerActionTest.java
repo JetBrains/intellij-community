@@ -44,7 +44,7 @@ public class LombokLoggerActionTest extends LombokLightActionTestCase {
     doTest();
   }
 
-  private void setTestDialog(TestDialog newValue) {
+  private static void setTestDialog(TestDialog newValue) {
     try {
       // TestDialogManager.setTestDialog(newValue); IntelliJ>=2020.3
       callPerReflection("com.intellij.openapi.ui.TestDialogManager", newValue);
@@ -58,7 +58,7 @@ public class LombokLoggerActionTest extends LombokLightActionTestCase {
     }
   }
 
-  private void callPerReflection(String className, TestDialog newValue) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+  private static void callPerReflection(String className, TestDialog newValue) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     Class<?> dialogManagerClass = Class.forName(className);
     Method setTestDialogMethod = dialogManagerClass.getDeclaredMethod("setTestDialog", TestDialog.class);
     setTestDialogMethod.invoke(null, newValue);

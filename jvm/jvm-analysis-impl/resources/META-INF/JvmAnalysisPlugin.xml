@@ -52,6 +52,17 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit3.super.teardown.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnit3SuperTearDownInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnitMixedFramework"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.junit.mixed.annotations.name"
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnitMixedFrameworkInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.test.junit.JUnitMixedFrameworkInspectionMerger"/>
+    <localInspection language="UAST" enabledByDefault="true" level="INFORMATION" shortName="Junit4Converter"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.junit4.converter.display.name"
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnit4ConverterInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnit5AssertionsConverter"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
@@ -62,12 +73,6 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit5.converter.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnit5ConverterInspection"/>
-    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnconstructableTestCase"
-                     suppressId="UnconstructableJUnitTestCase"
-                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
-                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
-                     key="jvm.inspections.unconstructable.test.case.display.name"
-                     implementationClass="com.intellij.codeInspection.test.junit.JUnitUnconstructableTestCaseInspection"/>
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="IgnoredJUnitTest"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
@@ -150,6 +155,7 @@
     <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
     <codeInsight.externalLibraryResolver implementation="com.intellij.codeInspection.sourceToSink.CheckerQualExternalLibraryResolver"/>
+    <inspectionCustomComponent implementation="com.intellij.codeInsight.options.JavaInspectionButtons"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>

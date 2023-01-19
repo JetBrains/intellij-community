@@ -21,6 +21,8 @@ class CommitStatusPanel(private val commitWorkflowUi: CommitWorkflowUi) : Border
   }
 
   init {
+    isOpaque = false
+
     setupLegend()
     addToRight(commitLegend.component)
 

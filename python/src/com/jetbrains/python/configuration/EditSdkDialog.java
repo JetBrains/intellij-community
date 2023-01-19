@@ -22,7 +22,7 @@ import com.intellij.util.NullableFunction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor;
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +116,7 @@ public class EditSdkDialog extends DialogWrapper {
       var type = TargetEnvironmentConfigurationKt.getTargetType(configuration);
       if (type instanceof BrowsableTargetEnvironmentType) {
         return ((BrowsableTargetEnvironmentType)type).createBrowser(project, label, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-                                                                    myInterpreterPathTextField.getTextField(), () -> configuration, new TargetBrowserHints(true));
+                                                                    myInterpreterPathTextField.getTextField(), () -> configuration, new TargetBrowserHints(true, null));
       }
     }
     return null;

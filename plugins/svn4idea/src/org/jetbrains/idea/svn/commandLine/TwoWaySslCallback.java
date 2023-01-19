@@ -8,9 +8,6 @@ import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.auth.CertificateAuthenticationData;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class TwoWaySslCallback extends UsernamePasswordCallback {
 
   private static final @NonNls String ACCESS_TO_PREFIX = "Access to ";

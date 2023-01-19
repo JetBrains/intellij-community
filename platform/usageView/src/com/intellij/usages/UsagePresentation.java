@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public interface UsagePresentation {
 
@@ -17,15 +18,19 @@ public interface UsagePresentation {
 
   @Tooltip @Nullable String getTooltipText();
 
+  default @Nullable Color getBackgroundColor() {
+    return null;
+  }
+
   /**
-   * If the implementation caches or lazy-loades the text chunks internally, this method gives it a chance to avoid
+   * If the implementation caches or lazy-loads the text chunks internally, this method gives it a chance to avoid
    * re-calculating it synchronously on EDT and return the possibly obsolete data.
    * <p>
    * The component using this presentation might call {@link UsagePresentation#updateCachedPresentation()} in a background
    * thread and then use {@code getCachedPresentation()} to draw the text.
    */
-  default UsageNodePresentation getCachedPresentation() {
-    return new UsageNodePresentation(getIcon(), getText());
+  default @Nullable UsageNodePresentation getCachedPresentation() {
+    return new UsageNodePresentation(getIcon(), getText(), getBackgroundColor());
   }
 
   default void updateCachedPresentation() { }

@@ -11,19 +11,10 @@ import org.jetbrains.io.Decoder
 
 internal const val HEADER_LENGTH = 8
 
-private enum class DecodeRecordState {
-  HEADER,
-  CONTENT
-}
+internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private val responseHandler: FastCgiService) : Decoder() {
 
-internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private val responseHandler: FastCgiService) : Decoder(), Decoder.FullMessageConsumer<Boolean> {
-  private var state = DecodeRecordState.HEADER
-
-  private enum class ProtocolStatus {
-    REQUEST_COMPLETE,
-    CANT_MPX_CONN,
-    OVERLOADED,
-    UNKNOWN_ROLE
+  private object ProtocolStatus {
+    const val REQUEST_COMPLETE = 0
   }
 
   object RecordType {
@@ -40,39 +31,25 @@ internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>,
   private val dataBuffers = Int2ObjectOpenHashMap<ByteBuf>()
 
   override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
-    while (true) {
-      when (state) {
-        DecodeRecordState.HEADER -> {
-          if (paddingLength > 0) {
-            if (input.readableBytes() > paddingLength) {
-              input.skipBytes(paddingLength)
-              paddingLength = 0
-            }
-            else {
-              paddingLength -= input.readableBytes()
-              input.skipBytes(input.readableBytes())
-              return
-            }
-          }
-
-          val buffer = getBufferIfSufficient(input, HEADER_LENGTH, context) ?: return
-          buffer.skipBytes(1)
-          type = buffer.readUnsignedByte().toInt()
-          id = buffer.readUnsignedShort()
-          contentLength = buffer.readUnsignedShort()
-          paddingLength = buffer.readUnsignedByte().toInt()
-          buffer.skipBytes(1)
-          state = DecodeRecordState.CONTENT
-        }
-
-        DecodeRecordState.CONTENT -> {
-          if (contentLength > 0) {
-            if (readContent(input, context, contentLength, this) == null) {
-              return
-            }
-          }
-          state = DecodeRecordState.HEADER
-        }
+    while (input.readableBytes() > 0) {
+      if (contentLength > 0) {
+        val toRead = minOf(contentLength, input.readableBytes())
+        val readFromInput = contentReceived(input, toRead, context)
+        input.skipBytes(toRead - readFromInput)
+        contentLength -= toRead
+      }
+      else if (paddingLength > 0) {
+        val toRead = minOf(paddingLength, input.readableBytes())
+        input.skipBytes(toRead)
+        paddingLength -= toRead
+      }
+      else {
+        input.skipBytes(1) // version, expected to be 1
+        type = input.readUnsignedByte().toInt()
+        id = input.readUnsignedShort()
+        contentLength = input.readUnsignedShort()
+        paddingLength = input.readUnsignedByte().toInt()
+        input.skipBytes(1) // reserved
       }
     }
   }
@@ -96,64 +73,60 @@ internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>,
     }
   }
 
-  override fun contentReceived(buffer: ByteBuf, context: ChannelHandlerContext, isCumulateBuffer: Boolean): Boolean {
+  private fun contentReceived(buffer: ByteBuf, contentInBufferLength: Int, context: ChannelHandlerContext): Int {
     when (type) {
       RecordType.STDOUT -> {
-        var data = dataBuffers.get(id)
-        val sliced = if (isCumulateBuffer) buffer else buffer.slice(buffer.readerIndex(), contentLength)
+        val data = dataBuffers.get(id)
+        val sliced = buffer.slice(buffer.readerIndex(), contentInBufferLength)
         when (data) {
-          null -> dataBuffers.put(id, sliced)
+          null -> {
+            dataBuffers.put(id, sliced)
+          }
           is CompositeByteBuf -> {
             data.addComponent(sliced)
-            data.writerIndex(data.writerIndex() + sliced.readableBytes())
+            data.writerIndex(data.writerIndex() + contentInBufferLength)
           }
           else -> {
-            if (sliced is CompositeByteBuf) {
-              val readable = data.readableBytes()
-              data = sliced.addComponent(0, data)
-              data.writerIndex(data.writerIndex() + readable)
-            }
-            else {
-              // must be computed here before we set data to new composite buffer
-              val newLength = data.readableBytes() + sliced.readableBytes()
-              data = context.alloc().compositeBuffer(Decoder.DEFAULT_MAX_COMPOSITE_BUFFER_COMPONENTS).addComponents(data, sliced)
-              data.writerIndex(data.writerIndex() + newLength)
-            }
-            dataBuffers.put(id, data)
+            val compositeByteBuf = context.alloc().compositeBuffer(DEFAULT_MAX_COMPOSITE_BUFFER_COMPONENTS)
+            compositeByteBuf.addComponent(data)
+            compositeByteBuf.addComponent(sliced)
+            compositeByteBuf.writerIndex(data.writerIndex() + contentInBufferLength)
+            dataBuffers.put(id, compositeByteBuf)
           }
         }
         sliced.retain()
+        return 0
       }
 
       RecordType.STDERR -> {
         try {
-          errorOutputConsumer.consume(buffer.toString(buffer.readerIndex(), contentLength, CharsetUtil.UTF_8))
+          errorOutputConsumer.consume(buffer.toString(buffer.readerIndex(), contentInBufferLength, CharsetUtil.UTF_8))
         }
         catch (e: Throwable) {
           LOG.error(e)
         }
+        return 0
       }
 
       RecordType.END_REQUEST -> {
         val appStatus = buffer.readInt()
         val protocolStatus = buffer.readUnsignedByte().toInt()
-        if (appStatus != 0 || protocolStatus != ProtocolStatus.REQUEST_COMPLETE.ordinal) {
+        if (appStatus != 0 || protocolStatus != ProtocolStatus.REQUEST_COMPLETE) {
           LOG.warn("Protocol status $protocolStatus")
           dataBuffers.remove(id)
           responseHandler.responseReceived(id, null)
         }
-        else if (protocolStatus == ProtocolStatus.REQUEST_COMPLETE.ordinal) {
+        else {
+          assert(protocolStatus == ProtocolStatus.REQUEST_COMPLETE)
           responseHandler.responseReceived(id, dataBuffers.remove(id))
         }
-        else {
-          LOG.warn("protocolStatus $protocolStatus")
-        }
+        return 5
       }
 
       else -> {
         LOG.error("Unknown type $type")
+        return 0
       }
     }
-    return true
   }
 }

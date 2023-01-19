@@ -32,15 +32,6 @@ public abstract class EditorColorsManager {
 
   public abstract boolean isDefaultScheme(EditorColorsScheme scheme);
 
-  /**
-   * @deprecated use {@link #TOPIC} instead
-   */
-  @SuppressWarnings("MethodMayBeStatic")
-  @Deprecated(forRemoval = true)
-  public final void addEditorColorsListener(@NotNull EditorColorsListener listener) {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(TOPIC, listener);
-  }
-
   public abstract boolean isUseOnlyMonospacedFonts();
 
   public abstract void setUseOnlyMonospacedFonts(boolean b);
@@ -60,5 +51,12 @@ public abstract class EditorColorsManager {
    * @throws com.intellij.openapi.util.InvalidDataException If a referenced scheme doesn't exist or is not read-only.
    */
   public void resolveSchemeParent(@NotNull EditorColorsScheme scheme) {
+  }
+
+  /**
+   * Unlike {@code SchemeManager.reload()} guarantees that the currently selected color scheme remains the same unless it is has been
+   * removed as a result of reload.
+   */
+  public void reloadKeepingActiveScheme() {
   }
 }

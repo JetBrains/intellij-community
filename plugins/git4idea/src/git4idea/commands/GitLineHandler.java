@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -100,17 +101,11 @@ public class GitLineHandler extends GitTextHandler {
   /** @deprecated Please use overload {@link #setIgnoreAuthenticationMode(AuthenticationMode)}*/
   @Deprecated(forRemoval = true)
   public void setIgnoreAuthenticationMode(@NotNull GitAuthenticationMode authenticationMode) {
-    switch (authenticationMode) {
-      case NONE:
-        myIgnoreAuthenticationRequest = AuthenticationMode.NONE;
-        break;
-      case SILENT:
-        myIgnoreAuthenticationRequest = AuthenticationMode.SILENT;
-        break;
-      case FULL:
-        myIgnoreAuthenticationRequest = AuthenticationMode.FULL;
-        break;
-    }
+    myIgnoreAuthenticationRequest = switch (authenticationMode) {
+      case NONE -> AuthenticationMode.NONE;
+      case SILENT -> AuthenticationMode.SILENT;
+      case FULL -> AuthenticationMode.FULL;
+    };
   }
 
   @Nullable
@@ -131,18 +126,10 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   /**
-   * @deprecated Do not inherit {@link GitLineHandler}.
-   */
-  @Deprecated(forRemoval = true)
-  protected void onTextAvailable(String text, Key outputType) {
-  }
-
-  /**
    * @param line line content without separators
    * @param isCr whether this line is CR-only separated (typically, a progress message)
    */
   private void onLineAvailable(@NotNull String line, boolean isCr, @NotNull Key outputType) {
-    onTextAvailable(line, outputType);
     if (outputType == ProcessOutputTypes.SYSTEM) return;
 
     // do not log git remote progress
@@ -188,6 +175,10 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   public void overwriteConfig(@NonNls String ... params) {
+    overwriteConfig(Arrays.asList(params));
+  }
+
+  public void overwriteConfig(@NonNls List<String> params) {
     for (String param : params) {
       myCommandLine.getParametersList().prependAll("-c", param);
     }

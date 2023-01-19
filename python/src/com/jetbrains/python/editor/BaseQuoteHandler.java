@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.jetbrains.python.psi.PyStringLiteralUtil;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +46,7 @@ public class BaseQuoteHandler implements MultiCharQuoteHandler {
       }
       if (getOpeningQuotesTokens().contains(iterator.getTokenType())) {
         int start = iterator.getStart();
-        if (offset - start <= PyStringLiteralUtil.MAX_PREFIX_LENGTH) {
+        if (offset - start <= PyStringLiteralCoreUtil.MAX_PREFIX_LENGTH) {
           if (getLiteralStartOffset(text, start) == offset) return true;
         }
       }
@@ -74,7 +74,7 @@ public class BaseQuoteHandler implements MultiCharQuoteHandler {
   }
 
   private static int getLiteralStartOffset(CharSequence text, int start) {
-    return PyStringLiteralUtil.getPrefixEndOffset(text, start);
+    return PyStringLiteralCoreUtil.getPrefixEndOffset(text, start);
   }
 
   @Override

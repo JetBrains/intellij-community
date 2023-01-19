@@ -3,11 +3,10 @@ package com.intellij.codeInsight.hints.settings
 
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.util.getAttributeBooleanValue
 import org.jdom.Element
 
 private object XmlTagHelper {

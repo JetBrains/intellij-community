@@ -14,6 +14,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,15 +24,15 @@ import java.util.Collection;
 import java.util.List;
 
 public final class CheckinHandlerUtil {
-  public static List<VirtualFile> filterOutGeneratedAndExcludedFiles(@NotNull Collection<? extends VirtualFile> files, @NotNull Project project) {
+  public static boolean isGeneratedOrExcluded(@NotNull Project project, @NotNull VirtualFile file) {
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
-    List<VirtualFile> result = new ArrayList<>(files.size());
-    for (VirtualFile file : files) {
-      if (!fileIndex.isExcluded(file) && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project)) {
-        result.add(file);
-      }
-    }
-    return result;
+    return fileIndex.isExcluded(file) || GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project);
+  }
+
+  @NotNull
+  public static List<VirtualFile> filterOutGeneratedAndExcludedFiles(@NotNull Collection<? extends VirtualFile> files,
+                                                                     @NotNull Project project) {
+    return ContainerUtil.filter(files, file -> !isGeneratedOrExcluded(project, file));
   }
 
   public static PsiFile[] getPsiFiles(final Project project, final Collection<? extends VirtualFile> selectedFiles) {

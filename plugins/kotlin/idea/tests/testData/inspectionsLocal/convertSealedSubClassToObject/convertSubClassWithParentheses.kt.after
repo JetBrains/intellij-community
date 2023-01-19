@@ -1,4 +1,4 @@
-// FIX: Convert sealed sub-class to object
+// FIX: Convert sealed subclass to object
 
 sealed class Sealed
 

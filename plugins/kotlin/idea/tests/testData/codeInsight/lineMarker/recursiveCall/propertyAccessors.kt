@@ -25,3 +25,18 @@ class A {
             if (value >= 0) field = value
         }
 }
+
+class Node(val next: Node?) {
+    val last: Node
+        get() = if (next != null) next.<lineMarker descr="Recursive call">last</lineMarker> else this
+
+    private val String.foo: Boolean
+        get() = true
+
+    private val CharSequence.foo: Boolean
+        get() = (this as? String)?.foo ?: false
+
+    private val CharSequence.bar: Boolean
+        get() = (this as? String)?.<lineMarker descr="Recursive call">bar</lineMarker> ?: false
+
+}

@@ -23,9 +23,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author ilyas
- */
 public final class GroovyNameSuggestionUtil {
 
   private GroovyNameSuggestionUtil() {
@@ -59,15 +56,15 @@ public final class GroovyNameSuggestionUtil {
 
   private static void generateVariableNameByTypeInner(PsiType type, Set<String> possibleNames, NameValidator validator) {
     String unboxed = PsiTypesUtil.unboxIfPossible(type.getCanonicalText());
-    if (unboxed != null && !unboxed.equals(type.getCanonicalText())) {
+    if (!unboxed.equals(type.getCanonicalText())) {
       String name = generateNameForBuiltInType(unboxed);
       name = validator.validateName(name, true);
       if (GroovyNamesUtil.isIdentifier(name)) {
         possibleNames.add(name);
       }
     }
-    else if (type instanceof PsiIntersectionType) {
-      for (PsiType psiType : ((PsiIntersectionType)type).getConjuncts()) {
+    else if (type instanceof PsiIntersectionType intersectionType) {
+      for (PsiType psiType : intersectionType.getConjuncts()) {
         generateByType(psiType, possibleNames, validator);
       }
     }

@@ -148,11 +148,11 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());
     List<IssueNavigationLink> oldLinks = navigationConfiguration.getLinks();
     try {
-      navigationConfiguration.setLinks(ContainerUtil.newArrayList(new IssueNavigationLink("ABC-\\d+", "http://example.com/$0"),
-                                                                  new IssueNavigationLink("INVALID-\\d+", "http://example.com/$0/$1")));
+      navigationConfiguration.setLinks(List.of(new IssueNavigationLink("ABC-\\d+", "http://example.com/$0"),
+                                               new IssueNavigationLink("INVALID-\\d+", "http://example.com/$0/$1")));
       configureByFile(getTestName(false) + ".java");
-      List<String> expected = ContainerUtil.newArrayList(
-        "http://example.com/ABC-1123", "http://example.com/ABC-2", "http://example.com/ABC-22", "http://example.com/ABC-11");
+      List<String> expected =
+        List.of("http://example.com/ABC-1123", "http://example.com/ABC-2", "http://example.com/ABC-22", "http://example.com/ABC-11");
       if (Registry.is("ide.symbol.url.references")) {
         List<UrlReference> refs = PlatformTestUtil.collectUrlReferences(getFile());
         assertEquals(expected, ContainerUtil.map(refs, UrlReference::getUrl));

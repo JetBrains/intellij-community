@@ -54,8 +54,10 @@ public class MqPatchTest extends HgPlatformTest {
   public void setUp() throws Exception {
     super.setUp();
     cd(myRepository);
-    appendToHgrc(myRepository, "[extensions]\n" +
-                                "mq=\n");
+    appendToHgrc(myRepository, """
+      [extensions]
+      mq=
+      """);
     HgTestUtil.updateDirectoryMappings(myProject, myRepository);
     updateRepoConfig(myProject, myRepository);
 

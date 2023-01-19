@@ -47,9 +47,9 @@ public final class MarkdownCodeFenceHtmlCache implements Disposable {
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         final var fileTypeRegistry = FileTypeRegistry.getInstance();
         for (final var event: events) {
-          if (event instanceof VFileDeleteEvent) {
-            final var file = event.getFile();
-            if (file != null && fileTypeRegistry.isFileOfType(file, MarkdownFileType.INSTANCE)) {
+          if (event instanceof VFileDeleteEvent fileDeleteEvent) {
+            final var file = fileDeleteEvent.getFile();
+            if (fileTypeRegistry.isFileOfType(file, MarkdownFileType.INSTANCE)) {
               myAdditionalCacheToDelete.addAll(processSourceFileToDelete(file, ContainerUtil.emptyList()));
             }
           }

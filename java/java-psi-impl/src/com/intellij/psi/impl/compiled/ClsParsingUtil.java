@@ -19,9 +19,6 @@ import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public final class ClsParsingUtil {
   private static final Logger LOG = Logger.getInstance(ClsParsingUtil.class);
 

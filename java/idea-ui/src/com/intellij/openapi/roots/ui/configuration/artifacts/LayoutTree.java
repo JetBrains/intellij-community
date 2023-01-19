@@ -23,7 +23,6 @@ import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +32,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource {
@@ -56,14 +56,14 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
 
   @Override
   protected void configureUiHelper(TreeUIHelper helper) {
-    final Convertor<TreePath, String> convertor = path -> {
+    final Function<TreePath, String> f = path -> {
       final SimpleNode node = getNodeFor(path);
       if (node instanceof PackagingElementNode) {
         return ((PackagingElementNode<?>)node).getElementPresentation().getSearchName();
       }
       return "";
     };
-    new TreeSpeedSearch(this, convertor, true);
+    new TreeSpeedSearch(this, true, f);
   }
 
   private List<PackagingElementNode<?>> getNodesToDrag() {

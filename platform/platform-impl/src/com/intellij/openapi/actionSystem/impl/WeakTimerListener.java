@@ -10,11 +10,11 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
 /** @deprecated use {@link com.intellij.openapi.actionSystem.ActionManager#removeTimerListener(TimerListener)} instead */
-@Deprecated(forRemoval = true)
-public class WeakTimerListener implements TimerListener {
+@Deprecated
+class WeakTimerListener implements TimerListener {
   private final Reference<TimerListener> myRef;
 
-  public WeakTimerListener(@NotNull TimerListener delegate) {
+  WeakTimerListener(@NotNull TimerListener delegate) {
     myRef = new WeakReference<>(delegate);
   }
 

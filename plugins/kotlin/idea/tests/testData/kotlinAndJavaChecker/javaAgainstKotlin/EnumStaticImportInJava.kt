@@ -1,4 +1,3 @@
-// ALLOW_AST_ACCESS
 package test.kotlin
 
 public enum class KotlinEnum {

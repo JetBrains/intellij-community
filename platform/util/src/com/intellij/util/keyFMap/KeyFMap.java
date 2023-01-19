@@ -14,8 +14,6 @@ import org.jetbrains.annotations.Nullable;
  *   The hashCode() contract conforms to the hashCode() contract of the {@link java.util.Map} interface:
  *   it's the sum of hash codes of its entries, which in turn is calculated as {@code key.hashCode() ^ value.hashCode()}
  * </p>
- *
- * @author peter
  */
 @Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "KeyFMapRenderer.childrenArray(this)")
 public interface KeyFMap {

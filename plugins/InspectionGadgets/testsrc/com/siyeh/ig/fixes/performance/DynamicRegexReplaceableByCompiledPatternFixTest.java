@@ -13,15 +13,10 @@ public class DynamicRegexReplaceableByCompiledPatternFixTest extends IGQuickFixe
     myFixture.enableInspections(new DynamicRegexReplaceableByCompiledPatternInspection());
     myRelativePath = "performance/replace_with_compiled_pattern";
     myDefaultHint = InspectionGadgetsBundle.message("dynamic.regex.replaceable.by.compiled.pattern.quickfix");
-    myFixture.addClass("package java.util.regex;" +
-                       "public class Pattern {" +
-                       "  public static Pattern compile(String regex, int flags) {\n" +
-                       "    return null;\n" +
-                       "  }" +
-                       "  public Matcher matcher(CharSequence input) {" +
-                       "    return null;" +
-                       "  }" +
-                       "}");
+    myFixture.addClass("""
+                         package java.util.regex;public class Pattern {  public static Pattern compile(String regex, int flags) {
+                             return null;
+                           }  public Matcher matcher(CharSequence input) {    return null;  }}""");
     myFixture.addClass("package java.util.regex;" +
                        "public class Matcher {" +
                        "  public String replaceAll(String replacement) {" +

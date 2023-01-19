@@ -4,9 +4,9 @@ class InClassObject {
     companion object {
         class ClassObjectClass {}
 
-        interface ClassObjectTrait {}
+        interface ClassObjectInterface {}
 
-        interface ClassObjectTraitWithImpl {
+        interface ClassObjectInterfaceWithImpl {
             fun foo() {}
         }
 
@@ -16,6 +16,6 @@ class InClassObject {
 
 // SEARCH_TEXT: ClassObject
 // REF: (in test.InClassObject.Companion).ClassObjectClass
+// REF: (in test.InClassObject.Companion).ClassObjectInterface
+// REF: (in test.InClassObject.Companion).ClassObjectInterfaceWithImpl
 // REF: (in test.InClassObject.Companion).ClassObjectObject
-// REF: (in test.InClassObject.Companion).ClassObjectTrait
-// REF: (in test.InClassObject.Companion).ClassObjectTraitWithImpl

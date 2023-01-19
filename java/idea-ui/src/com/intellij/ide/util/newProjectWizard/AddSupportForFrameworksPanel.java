@@ -55,7 +55,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private JPanel myFrameworksPanel;
   private JLabel myLabel;
 
-  private List<FrameworkSupportInModuleProvider> myProviders;
+  private List<? extends FrameworkSupportInModuleProvider> myProviders;
   private List<FrameworkSupportNodeBase> myRoots;
 
   private final LibrariesContainer myLibrariesContainer;
@@ -124,11 +124,11 @@ public class AddSupportForFrameworksPanel implements Disposable {
     setProviders(providers);
   }
 
-  public void setProviders(List<FrameworkSupportInModuleProvider> providers) {
+  public void setProviders(List<? extends FrameworkSupportInModuleProvider> providers) {
     setProviders(providers, Collections.emptySet(), Collections.emptySet());
   }
 
-  public void setProviders(List<FrameworkSupportInModuleProvider> providers, Set<String> associated, Set<String> preselected) {
+  public void setProviders(List<? extends FrameworkSupportInModuleProvider> providers, Set<String> associated, Set<String> preselected) {
     myProviders = providers;
 
     myAssociatedFrameworks = createNodes(myProviders, associated, preselected);

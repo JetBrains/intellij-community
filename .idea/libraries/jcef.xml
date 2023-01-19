@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="jcef" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps.jcef:jcef:98.3.34+g97a5ae6+chromium-98.0.4758.102-api-1.7" />
+    <properties maven-id="org.jetbrains.intellij.deps.jcef:jcef:104.4.26-g4180781-chromium-104.0.5112.102-api-1.9" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/98.3.34+g97a5ae6+chromium-98.0.4758.102-api-1.7/jcef-98.3.34+g97a5ae6+chromium-98.0.4758.102-api-1.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/104.4.26-g4180781-chromium-104.0.5112.102-api-1.9/jcef-104.4.26-g4180781-chromium-104.0.5112.102-api-1.9.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/98.3.34+g97a5ae6+chromium-98.0.4758.102-api-1.7/jcef-98.3.34+g97a5ae6+chromium-98.0.4758.102-api-1.7-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/104.4.26-g4180781-chromium-104.0.5112.102-api-1.9/jcef-104.4.26-g4180781-chromium-104.0.5112.102-api-1.9-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

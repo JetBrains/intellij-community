@@ -19,9 +19,6 @@ import java.util.Map;
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 
-/**
- * @author Denis Zhdanov
- */
 @SuppressWarnings("JavadocReference")
 public class ModuleData extends AbstractNamedData implements Named, ExternalConfigPathAware, Identifiable {
   @NotNull private final Map<ExternalSystemSourceType, String> compileOutputPaths = new HashMap<>();
@@ -215,7 +212,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
    * @deprecated use {@link JavaModuleData#getLanguageLevel} instead
    */
   @Nullable
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public String getSourceCompatibility() {
     return sourceCompatibility;
   }
@@ -223,7 +220,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   /**
    * @deprecated use {@link JavaModuleData#setLanguageLevel} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public void setSourceCompatibility(@Nullable String sourceCompatibility) {
     this.isSetSourceCompatibility = true;
     this.sourceCompatibility = sourceCompatibility;
@@ -285,19 +282,19 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.sdkName = sdkName;
   }
 
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @SuppressWarnings("MissingDeprecatedAnnotation")
   public boolean isSetSourceCompatibility() {
     return isSetSourceCompatibility;
   }
 
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @SuppressWarnings("MissingDeprecatedAnnotation")
   public boolean isSetTargetCompatibility() {
     return isSetTargetCompatibility;
   }
 
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
   public boolean isSetSdkName() {
     return isSetSdkName;

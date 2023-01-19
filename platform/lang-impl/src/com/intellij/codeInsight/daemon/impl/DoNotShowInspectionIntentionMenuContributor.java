@@ -20,6 +20,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectType;
+import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,8 +37,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -88,9 +92,13 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
       return;
     }
 
+    Collection<ProjectType> projectTypes = ProjectTypeService.getProjectTypes(project);
+
     List<LocalInspectionToolWrapper> intentionTools = new ArrayList<>();
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     for (InspectionToolWrapper<?,?> toolWrapper : profile.getInspectionTools(hostFile)) {
+      if (!toolWrapper.isApplicable(projectTypes)) continue;
+
       if (toolWrapper instanceof GlobalInspectionToolWrapper) {
         toolWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
       }
@@ -109,10 +117,14 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
 
     List<PsiElement> elements = PsiTreeUtil.collectParents(psiElement, PsiElement.class, true, e -> e instanceof PsiDirectory);
     PsiElement elementToTheLeft = psiElement.getContainingFile().findElementAt(offset - 1);
+    @Unmodifiable List<PsiElement> toInspect;
     if (elementToTheLeft != psiElement && elementToTheLeft != null) {
       List<PsiElement> parentsOnTheLeft =
         PsiTreeUtil.collectParents(elementToTheLeft, PsiElement.class, true, e -> e instanceof PsiDirectory || elements.contains(e));
-      elements.addAll(parentsOnTheLeft);
+      toInspect = ContainerUtil.concat(elements, parentsOnTheLeft);
+    }
+    else {
+      toInspect = elements;
     }
 
     Map<@NonNls String, @Nls(capitalization = Nls.Capitalization.Sentence) String> displayNames =
@@ -121,7 +133,7 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
     // indicator can be null when run from EDT
     ProgressIndicator progress = ObjectUtils.notNull(ProgressIndicatorProvider.getGlobalProgressIndicator(), new DaemonProgressIndicator());
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-      InspectionEngine.inspectElements(intentionTools, hostFile, hostFile.getTextRange(), true, true, progress, elements, PairProcessor.alwaysTrue());
+      InspectionEngine.inspectElements(intentionTools, hostFile, hostFile.getTextRange(), true, true, progress, toInspect, PairProcessor.alwaysTrue());
 
     for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
       List<ProblemDescriptor> descriptors = entry.getValue();

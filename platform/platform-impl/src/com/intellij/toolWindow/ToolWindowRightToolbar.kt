@@ -20,5 +20,5 @@ internal class ToolWindowRightToolbar(paneId: String) : ToolWindowToolbar() {
     }
   }
 
-  override fun createBorder() = JBUI.Borders.customLine(getBorderColor(), 1, 1, 0, 0)
+  override fun createBorder() = JBUI.Borders.customLineLeft(getBorderColor())
 }

@@ -16,9 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author ven
- */
 public class TypesSemilattice implements Semilattice<TypeDfaState> {
 
   private final PsiManager myManager;

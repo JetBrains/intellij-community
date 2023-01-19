@@ -21,9 +21,6 @@ import com.intellij.util.ui.ColumnInfo;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 
-/**
- * @author peter
- */
 public abstract class DomColumnInfo<T, Aspect> extends ColumnInfo<T, Aspect> {
   private final TableCellRenderer myRenderer;
 

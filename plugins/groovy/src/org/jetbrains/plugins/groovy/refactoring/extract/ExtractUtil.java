@@ -41,9 +41,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.*;
 
-/**
- * @author ilyas
- */
 public final class ExtractUtil {
   private static final Logger LOG = Logger.getInstance(ExtractUtil.class);
 
@@ -285,7 +282,7 @@ public final class ExtractUtil {
     return result;
   }
 
-  public static GrMethod createMethod(ExtractMethodInfoHelper helper) {
+  public static @NotNull GrMethod createMethod(ExtractMethodInfoHelper helper) {
     StringBuilder buffer = new StringBuilder();
 
     //Add signature

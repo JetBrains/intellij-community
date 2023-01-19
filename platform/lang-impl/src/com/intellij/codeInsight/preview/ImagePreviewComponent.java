@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInsight.preview;
 
 import com.intellij.lang.LangBundle;
@@ -37,7 +36,6 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * @author spleaner
  * @deprecated see {@link PreviewHintProvider} deprecation notice
  */
 @Deprecated
@@ -46,14 +44,13 @@ public final class ImagePreviewComponent extends JPanel implements PreviewHintCo
   private static final Key<SoftReference<BufferedImage>> BUFFERED_IMAGE_REF_KEY = Key.create("Image.bufferedImage");
 
   private static final List<String> supportedExtensions = Arrays.asList(ImageIO.getReaderFormatNames());
-  @NotNull
-  private final BufferedImage myImage;
+  private final @NotNull BufferedImage myImage;
 
   /**
    * @param image buffered image
    * @param imageFileSize File length in bytes.
    */
-  private ImagePreviewComponent(@NotNull final BufferedImage image, final long imageFileSize) {
+  private ImagePreviewComponent(final @NotNull BufferedImage image, final long imageFileSize) {
     setLayout(new BorderLayout());
 
     myImage = (BufferedImage)ImageUtil.ensureHiDPI(image, ScaleContext.create(this));
@@ -93,8 +90,7 @@ public final class ImagePreviewComponent extends JPanel implements PreviewHintCo
     return true;
   }
 
-  @NotNull
-  private static JLabel createLabel(@NotNull final BufferedImage image, long imageFileSize) {
+  private static @NotNull JLabel createLabel(final @NotNull BufferedImage image, long imageFileSize) {
     final int width = image.getWidth();
     final int height = image.getHeight();
     final ColorModel colorModel = image.getColorModel();
@@ -102,27 +98,25 @@ public final class ImagePreviewComponent extends JPanel implements PreviewHintCo
     return new JLabel(LangBundle.message("image.preview.label", width, height, i, StringUtil.formatFileSize(imageFileSize)));
   }
 
-  private static boolean refresh(@NotNull VirtualFile file) throws IOException {
+  private static void refresh(@NotNull VirtualFile file) throws IOException {
     Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);
     SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
     if (loadedTimeStamp == null || loadedTimeStamp < file.getTimeStamp() || SoftReference.dereference(imageRef) == null) {
       try {
-        final byte[] content = file.contentsToByteArray();
-        final BufferedImage image = readImageFromBytes(content);
+        byte[] content = file.contentsToByteArray();
+        BufferedImage image = readImageFromBytes(content);
         file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<>(image));
-        return true;
       }
       finally {
         // We perform loading no more needed
         file.putUserData(TIMESTAMP_KEY, System.currentTimeMillis());
       }
     }
-    return false;
   }
 
   public static @NotNull BufferedImage readImageFromBytes(byte @NotNull [] content) throws IOException {
     try {
-      return ImageUtil.toBufferedImage(SVGLoader.loadWithoutCache(content, JBUIScale.sysScale()));
+      return ImageUtil.toBufferedImage(SVGLoader.INSTANCE.loadWithoutCache(content, JBUIScale.sysScale()));
     }
     catch (IOException ignored) {
     }
@@ -149,7 +143,7 @@ public final class ImagePreviewComponent extends JPanel implements PreviewHintCo
     throw new IOException("Can't read image from given content");
   }
 
-  public static JComponent getPreviewComponent(@Nullable final PsiElement parent) {
+  public static JComponent getPreviewComponent(@Nullable PsiElement parent) {
     if (parent == null) {
       return null;
     }
@@ -183,7 +177,7 @@ public final class ImagePreviewComponent extends JPanel implements PreviewHintCo
   /**
    * This method doesn't use caching, so if you want to use it then you should consider implementing external cache.
    */
-  public static ImagePreviewComponent getPreviewComponent(@NotNull final BufferedImage image, final long imageFileSize) {
+  public static ImagePreviewComponent getPreviewComponent(final @NotNull BufferedImage image, final long imageFileSize) {
     return new ImagePreviewComponent(image, imageFileSize);
   }
 

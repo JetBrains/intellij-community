@@ -16,7 +16,12 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.maven.testFramework.MavenDomTestCase;
+import com.intellij.testFramework.ExtensionTestUtil;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
+import org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory;
+import org.jetbrains.idea.reposearch.DependencySearchService;
+
+import java.util.Collections;
 
 public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
   protected MavenIndicesTestFixture myIndicesFixture;
@@ -24,6 +29,9 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    ExtensionTestUtil.maskExtensions(DependencySearchService.EP_NAME,
+                                     Collections.singletonList(new MavenCompletionProviderFactory()),
+                                     getTestRootDisposable(), false, null);
     myIndicesFixture = createIndicesFixture();
     myIndicesFixture.setUp();
   }

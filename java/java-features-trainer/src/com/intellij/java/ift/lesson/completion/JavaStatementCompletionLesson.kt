@@ -88,8 +88,6 @@ class JavaStatementCompletionLesson
     return trimmedText == "{if(){}}"
   }
 
-  override val suitableTips = listOf("CompleteStatement", "FinishBySmartEnter")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(JavaLessonsBundle.message("java.statement.completion.help.link"),
          LessonUtil.getHelpLink("auto-completing-code.html#statements_completion")),

@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import class 'Some'" "true"
 // ERROR: Unresolved reference: Some
 /* IGNORE_FIR */
 
@@ -21,7 +21,7 @@ public class Some {
 
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import class 'Some'" "true"
 // ERROR: Unresolved reference: Some
 /* IGNORE_FIR */
 

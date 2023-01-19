@@ -21,9 +21,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 
-/**
- * @author peter
- */
 public class DomCollectionProblemDescriptorImpl extends DomElementProblemDescriptorImpl implements DomCollectionProblemDescriptor {
   private final DomCollectionChildDescription myChildDescription;
 

@@ -3,6 +3,7 @@ package com.intellij.ui.components
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager.getApplication
@@ -43,14 +44,14 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   protected val arrowButton: JButton get() = _arrowButton!!
 
   protected var popup: ListPopup? = null
-  protected var showPopupAction: AnAction? = null
+  private var showPopupAction: AnAction? = null
   protected var isPopupShowing: Boolean = false
 
   protected var propertyChangeListener: PropertyChangeListener? = null
   protected var changeListener: ChangeListener? = null
   protected var focusListener: FocusListener? = null
-  protected var arrowButtonActionListener: ActionListener? = null
-  protected var arrowButtonMouseListener: MouseListener? = null
+  private var arrowButtonActionListener: ActionListener? = null
+  private var arrowButtonMouseListener: MouseListener? = null
 
   protected val isSimpleButton: Boolean get() = optionButton.isSimpleButton
 
@@ -318,7 +319,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   open inner class BaseButton : JButton() {
     override fun hasFocus(): Boolean = optionButton.hasFocus()
-    override fun isDefaultButton(): Boolean = optionButton.isDefaultButton
+    override fun isDefaultButton(): Boolean = DarculaButtonUI.isDefaultButton(optionButton)
     override fun getBackground(): Color? = optionButton.background
 
     override fun paint(g: Graphics): Unit = if (isSimpleButton) super.paint(g) else cloneAndPaint(g) { paintNotSimple(it) }

@@ -9,10 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class ShowHintAction extends AnAction {
   private final QuickFixManager myManager;
 
@@ -38,6 +34,11 @@ final class ShowHintAction extends AnAction {
       propertyInspector.stopEditing();
     }
     myManager.showIntentionPopup();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

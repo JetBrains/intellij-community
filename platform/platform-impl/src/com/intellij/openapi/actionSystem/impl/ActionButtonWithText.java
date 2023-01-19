@@ -29,6 +29,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.function.Supplier;
 
 public class ActionButtonWithText extends ActionButton {
   private static final int ICON_TEXT_SPACE = 2;
@@ -44,6 +45,13 @@ public class ActionButtonWithText extends ActionButton {
                               @Nullable Presentation presentation,
                               @NotNull String place,
                               @NotNull Dimension minimumSize) {
+    this(action, presentation, place, () -> minimumSize);
+  }
+
+  public ActionButtonWithText(@NotNull AnAction action,
+                              @Nullable Presentation presentation,
+                              @NotNull String place,
+                              Supplier<? extends @NotNull Dimension> minimumSize) {
     super(action, presentation, place, minimumSize);
     setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : StartupUiUtil.getLabelFont());
     setForeground(UIUtil.getLabelForeground());
@@ -141,7 +149,7 @@ public class ActionButtonWithText extends ActionButton {
     Dimension rv = new Dimension(x2 - x1 + dx, y2 - y1 + dy);
 
     if (shallPaintDownArrow()) {
-      rv.width += AllIcons.General.LinkDropTriangle.getIconWidth()  + JBUI.scale(TEXT_ARROW_SPACE);
+      rv.width += getDownArrowIcon().getIconWidth() + JBUI.scale(TEXT_ARROW_SPACE);
     }
 
     Insets m = getMargins();
@@ -173,7 +181,7 @@ public class ActionButtonWithText extends ActionButton {
   @Override
   public void paintComponent(Graphics g) {
     Icon icon = getIcon();
-    Icon arrowIcon = shallPaintDownArrow() ? AllIcons.General.LinkDropTriangle : null;
+    Icon arrowIcon = shallPaintDownArrow() ? getEnableOrDisable(getDownArrowIcon()) : null;
 
     UISettings.setupAntialiasing(g);
 
@@ -207,8 +215,13 @@ public class ActionButtonWithText extends ActionButton {
     if (arrowIcon != null) {
       int x = Math.max(iconRect.x + iconRect.width, textRect.x + textRect.width) + JBUI.scale(TEXT_ARROW_SPACE);
       int y = textRect.y + (textRect.height - arrowIcon.getIconHeight()) / 2 + 1;
-      arrowIcon.paintIcon(this, g, x, y);
+      getButtonLook().paintIcon(g, this, arrowIcon, x, y);
     }
+  }
+
+  @NotNull
+  private static Icon getDownArrowIcon() { // later can be done protected by demand
+    return AllIcons.General.LinkDropTriangle;
   }
 
   protected Rectangle getButtonRect() {
@@ -225,7 +238,7 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   public Color getInactiveTextColor() {
-    return UIUtil.getInactiveTextColor();
+    return NamedColorUtil.getInactiveTextColor();
   }
 
   public void setHorizontalTextPosition(@MagicConstant(valuesFromClass = SwingConstants.class) int position) {

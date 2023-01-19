@@ -34,9 +34,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class GroovyNamedArgumentProvider {
 
   public static final ExtensionPointName<GroovyNamedArgumentProvider> EP_NAME =

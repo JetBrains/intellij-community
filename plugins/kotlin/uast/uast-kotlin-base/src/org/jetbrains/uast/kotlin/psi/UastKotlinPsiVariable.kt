@@ -29,7 +29,7 @@ class UastKotlinPsiVariable private constructor(
     KotlinLanguage.INSTANCE
 ), PsiLocalVariable {
 
-    val psiParent by lz(psiParentProducer)
+    private val psiParent by lz(psiParentProducer)
 
     private val psiType: PsiType by lz(typeProducer)
 

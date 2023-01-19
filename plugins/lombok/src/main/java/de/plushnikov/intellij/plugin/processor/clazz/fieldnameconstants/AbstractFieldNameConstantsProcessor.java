@@ -1,9 +1,9 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassProcessor {
 
@@ -32,27 +33,34 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     return validateAnnotationOnRightType(psiClass, builder) && LombokProcessorUtil.isLevelVisible(psiAnnotation);
   }
 
-  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private static boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
-      builder.addError(LombokBundle.message("inspection.message.field.name.constants.only.supported.on.class.or.enum"));
+      builder.addErrorMessage("inspection.message.field.name.constants.only.supported.on.class.or.enum");
       return false;
     }
     return true;
   }
 
   @NotNull
-  Collection<PsiField> filterFields(@NotNull PsiClass psiClass, PsiAnnotation psiAnnotation) {
-    final Collection<PsiField> psiFields = new ArrayList<>();
+  Collection<PsiMember> filterMembers(@NotNull PsiClass psiClass, PsiAnnotation psiAnnotation) {
+    final Collection<PsiMember> result = new ArrayList<>();
 
     final boolean onlyExplicitlyIncluded = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "onlyExplicitlyIncluded", false);
 
-    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
+    Collection<? extends PsiMember> psiMembers;
+    if(psiClass.isRecord()) {
+      psiMembers = List.of(psiClass.getRecordComponents());
+    }else{
+      psiMembers =  PsiClassUtil.collectClassFieldsIntern(psiClass);
+    }
+
+    for (PsiMember psiMember : psiMembers) {
       boolean useField = true;
-      PsiModifierList modifierList = psiField.getModifierList();
+      PsiModifierList modifierList = psiMember.getModifierList();
       if (null != modifierList) {
 
         //Skip static fields.
@@ -61,20 +69,20 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
         useField &= !modifierList.hasModifierProperty(PsiModifier.TRANSIENT);
       }
       //Skip fields that start with $
-      useField &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+      useField &= !StringUtil.notNullize(psiMember.getName()).startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
       //Skip fields annotated with @FieldNameConstants.Exclude
-      useField &= !PsiAnnotationSearchUtil.isAnnotatedWith(psiField, FIELD_NAME_CONSTANTS_EXCLUDE);
+      useField &= !PsiAnnotationSearchUtil.isAnnotatedWith(psiMember, FIELD_NAME_CONSTANTS_EXCLUDE);
 
       if (onlyExplicitlyIncluded) {
         //Only use fields annotated with @FieldNameConstants.Include, Include annotation overrides other rules
-        useField = PsiAnnotationSearchUtil.isAnnotatedWith(psiField, FIELD_NAME_CONSTANTS_INCLUDE);
+        useField = PsiAnnotationSearchUtil.isAnnotatedWith(psiMember, FIELD_NAME_CONSTANTS_INCLUDE);
       }
 
       if (useField) {
-        psiFields.add(psiField);
+        result.add(psiMember);
       }
     }
-    return psiFields;
+    return result;
   }
 
   @NotNull
@@ -89,7 +97,7 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
-      if (PsiClassUtil.getNames(filterFields(containingClass, psiAnnotation)).contains(psiField.getName())) {
+      if (PsiClassUtil.getNames(filterMembers(containingClass, psiAnnotation)).contains(psiField.getName())) {
         return LombokPsiElementUsage.USAGE;
       }
     }

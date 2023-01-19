@@ -4,7 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -134,6 +134,17 @@ public class PluginManagerTest {
   }
 
   @Test
+  public void compatibilityPlatform() {
+    assertEquals(SystemInfo.isWindows, checkCompatibility("com.intellij.platform.windows"));
+    assertEquals(SystemInfo.isMac, checkCompatibility("com.intellij.platform.mac"));
+    assertEquals(SystemInfo.isLinux, checkCompatibility("com.intellij.platform.linux"));
+    assertEquals(SystemInfo.isFreeBSD, checkCompatibility("com.intellij.platform.freebsd"));
+    assertEquals(SystemInfo.isSolaris, checkCompatibility("com.intellij.platform.solaris"));
+    assertEquals(SystemInfo.isUnix, checkCompatibility("com.intellij.platform.unix"));
+    assertEquals(SystemInfo.isXWindow, checkCompatibility("com.intellij.platform.xwindow"));
+  }
+
+  @Test
   public void convertExplicitBigNumberInUntilBuildToStar() {
     assertConvertsTo(null, null);
     assertConvertsTo("145", "145");
@@ -209,7 +220,8 @@ public class PluginManagerTest {
     assumeSymLinkCreationIsSupported();
 
     Path configPath = tempDir.getRoot().toPath().resolve("config-link");
-    IoTestUtil.createSymbolicLink(configPath, tempDir.newDirectory("config-target").toPath());
+    @NotNull Path target = tempDir.newDirectory("config-target").toPath();
+    Files.createSymbolicLink(configPath, target);
     DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate(configPath, "a");
     assertThat(configPath.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator());
   }
@@ -255,10 +267,25 @@ public class PluginManagerTest {
     IdeaPluginDescriptor mock = EasyMock.niceMock(IdeaPluginDescriptor.class);
     expect(mock.getSinceBuild()).andReturn(sinceBuild).anyTimes();
     expect(mock.getUntilBuild()).andReturn(untilBuild).anyTimes();
+    expect(mock.getDependencies()).andReturn(Collections.emptyList()).anyTimes();
     replay(mock);
 
     return PluginManagerCore.checkBuildNumberCompatibility(mock,
                                                            Objects.requireNonNull(BuildNumber.fromString(ideVersion)));
+  }
+
+  private static boolean checkCompatibility(@NotNull String platformId) {
+    IdeaPluginDependency platformDependencyMock = EasyMock.niceMock(IdeaPluginDependency.class);
+    expect(platformDependencyMock.getPluginId()).andReturn(PluginId.getId(platformId));
+    replay(platformDependencyMock);
+
+    IdeaPluginDescriptor mock = EasyMock.niceMock(IdeaPluginDescriptor.class);
+    expect(mock.getSinceBuild()).andReturn(null).anyTimes();
+    expect(mock.getUntilBuild()).andReturn(null).anyTimes();
+    expect(mock.getDependencies()).andReturn(Collections.singletonList(platformDependencyMock)).anyTimes();
+    replay(mock);
+
+    return PluginManagerCore.checkBuildNumberCompatibility(mock, BuildNumber.fromString("145")) == null;
   }
 
   private static void assertCompatible(@NotNull String ideVersion,

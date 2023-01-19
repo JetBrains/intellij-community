@@ -15,7 +15,7 @@ public abstract class IntentionsUI {
     return project.getService(IntentionsUI.class);
   }
 
-  public IntentionsUI(@NotNull Project project) {
+  IntentionsUI(@NotNull Project project) {
     myProject = project;
   }
 
@@ -27,11 +27,8 @@ public abstract class IntentionsUI {
       if (cachedIntentions != null && editor == cachedIntentions.getEditor() && file == cachedIntentions.getFile()) {
         return cachedIntentions;
       }
-      else {
-        return new CachedIntentions(myProject, file, editor);
-      }
+      return new CachedIntentions(myProject, file, editor);
     });
-
   }
 
   public void invalidate() {
@@ -39,7 +36,21 @@ public abstract class IntentionsUI {
     hide();
   }
 
+  public void invalidateForEditor(@NotNull Editor editor) {
+    myCachedIntentions.updateAndGet(
+      cachedIntentions -> cachedIntentions != null && editor == cachedIntentions.getEditor() ? null : cachedIntentions);
+    hideForEditor(editor);
+  }
+
   public abstract void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged);
 
   public abstract void hide();
+
+  /**
+   * Hide intention UI for a particular editor
+   * @param editor editor where intention UI might be shown
+   */
+  public void hideForEditor(@NotNull Editor editor) {
+    hide();
+  }
 }

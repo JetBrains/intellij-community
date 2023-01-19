@@ -2,33 +2,33 @@
 
 fun foo() {
     testtest[
-            foofoo, foofoo, foofoo,
-            foofoo, bar,
+        foofoo, foofoo, foofoo,
+        foofoo, bar,
     ]
 
     testtest[
-            foofoo, foofoo, foofoo, foofoo, bar,
+        foofoo, foofoo, foofoo, foofoo, bar,
     ]
 
     testtest[
-            foofoo, foofoo, foofoo, foofoo, bar,
+        foofoo, foofoo, foofoo, foofoo, bar,
     ]
 
     testtest[
-            foofoo, foofoo, foofoo, foofoo,
-            bar,
+        foofoo, foofoo, foofoo, foofoo,
+        bar,
     ]
 
     testtest[
-            foofoo,
+        foofoo,
     ]
 
     testtest[
-            foofoo,
+        foofoo,
     ]
 
     testtest[
-            foofoo,
+        foofoo,
     ]
 
     testtest[foofoo]
@@ -36,8 +36,8 @@ fun foo() {
     testtest[foofoo, testtest[testtest[foofoo]]]
 
     testtest[
-            foofoo, fososos,
-            testtest[testtest[foofoo]],
+        foofoo, fososos,
+        testtest[testtest[foofoo]],
     ]
 
     testtest[foofoo, testtest[testtest[foofoo]], testsa]
@@ -47,13 +47,13 @@ fun foo() {
     useCallable["A", Callable { println["Hello world"] }]
 
     useCallable[
-            "B", "C",
-            Callable {
-                println["Hello world"]
-            },
-            Callable {
-                println["Hello world"]
-            },
+        "B", "C",
+        Callable {
+            println["Hello world"]
+        },
+        Callable {
+            println["Hello world"]
+        },
     ]
 
     useCallable[Callable { println["Hello world"] }]
@@ -61,13 +61,13 @@ fun foo() {
     useCallable[Callable { println["Hello world"] }]
 
     useCallable[
-            Callable {
-                println["Hello world"]
-            },
+        Callable {
+            println["Hello world"]
+        },
     ]
 
     useCallable[
-            Callable { println["Hello world"] },
+        Callable { println["Hello world"] },
     ]
 
     useCallable[Callable { println["Hello world"] }]{
@@ -75,19 +75,19 @@ fun foo() {
     }
 
     useCallable[
-            Callable { println["Hello world"] },
+        Callable { println["Hello world"] },
     ]
 
     useCallable["A", { println["Hello world"] }]
 
     useCallable[
-            "B", "C",
-            {
-                println["Hello world"]
-            },
-            {
-                println["Hello world"]
-            },
+        "B", "C",
+        {
+            println["Hello world"]
+        },
+        {
+            println["Hello world"]
+        },
     ]
 
     useCallable[{ println["Hello world"] }]
@@ -95,157 +95,157 @@ fun foo() {
     useCallable[{ println["Hello world"] }]
 
     useCallable[
-            { println["Hello world"] },
+        { println["Hello world"] },
     ]
 
     useCallable[
-            { println["Hello world"] },
+        { println["Hello world"] },
     ]
 
     useCallable[
-            { println["Hello world"] },
+        { println["Hello world"] },
     ]
 
     useCallable[
-            "A",
-            object : Callable<Unit> {
-                override fun call() {
-                    println["Hello world"]
-                }
-            },
+        "A",
+        object : Callable<Unit> {
+            override fun call() {
+                println["Hello world"]
+            }
+        },
     ]
 
     useCallable[
-            "A",
-            object : Callable<Unit> {
-                override fun call() {
-                    println["Hello world"]
-                }
-            },
+        "A",
+        object : Callable<Unit> {
+            override fun call() {
+                println["Hello world"]
+            }
+        },
     ]
 
     useCallable[
-            "B", "C",
-            object : Callable<Unit> {
-                override fun call() {
-                    println["Hello world"]
-                }
-            },
-            foo[0],
+        "B", "C",
+        object : Callable<Unit> {
+            override fun call() {
+                println["Hello world"]
+            }
+        },
+        foo[0],
     ]
 
     useCallable[
-            object : Callable<Unit> {
-                override fun call() {
-                    println["Hello world"]
-                }
-            },
+        object : Callable<Unit> {
+            override fun call() {
+                println["Hello world"]
+            }
+        },
     ]
 
     useCallable[
-            object : Callable<Unit> {
-                override fun call() {
-                    println["Hello world"]
-                }
-            },
+        object : Callable<Unit> {
+            override fun call() {
+                println["Hello world"]
+            }
+        },
     ]
 
     useCallable[
-            object : Callable<Unit> {
-                override fun call() {
-                    println["Hello world"]
-                }
-            },
+        object : Callable<Unit> {
+            override fun call() {
+                println["Hello world"]
+            }
+        },
     ]
 
     useCallable[
-            object : Callable<Unit> {
-                override fun call() {
-                    println["Hello world"]
-                }
-            },
+        object : Callable<Unit> {
+            override fun call() {
+                println["Hello world"]
+            }
+        },
     ] {
 
     }
 
     useCallable[
-            object : Callable<Unit> {
-                override fun call() {
-                    println["Hello world"]
-                }
-            },
+        object : Callable<Unit> {
+            override fun call() {
+                println["Hello world"]
+            }
+        },
     ]
 
     testtest[
-            foofoo, foofoo, foofoo, foofoo,
-            bar,
-            /*
+        foofoo, foofoo, foofoo, foofoo,
+        bar,
+        /*
     */
-            /* */ foo,
+        /* */ foo,
     ]
 
     testtest[
-            /*
+        /*
     */
-            foofoo, foofoo, foofoo,
-            /*
-
-    */
-            foofoo, bar,
-    ]
-
-    testtest[
-            foofoo, foofoo, foofoo, foofoo, bar,
-            /*
-    */
-    ]
-
-    testtest[
-            foofoo, foofoo, foofoo, foofoo, bar, // awdawda
-    ]
-
-    testtest[
-            foofoo, foofoo, foofoo, foofoo,
-            /*
+        foofoo, foofoo, foofoo,
+        /*
 
     */
-            bar,
+        foofoo, bar,
     ]
 
     testtest[
-            foofoo, // fd
+        foofoo, foofoo, foofoo, foofoo, bar,
+        /*
+    */
     ]
 
     testtest[
-            /**/
-            foofoo,
+        foofoo, foofoo, foofoo, foofoo, bar, // awdawda
+    ]
+
+    testtest[
+        foofoo, foofoo, foofoo, foofoo,
+        /*
+
+    */
+        bar,
+    ]
+
+    testtest[
+        foofoo, // fd
+    ]
+
+    testtest[
+        /**/
+        foofoo,
     ]
 
     testtest[foofoo/**/]
 
     testtest[
-            foofoo, foofoo, foofoo, foofoo,
-            /*
+        foofoo, foofoo, foofoo, foofoo,
+        /*
      */
-            /* */ bar,
+        /* */ bar,
     ]
 
     testtest[
-            foofoo, // fd
+        foofoo, // fd
     ]
 
     testtest[
-            /**/
-            foofoo,
+        /**/
+        foofoo,
     ]
 
     testtest[foofoo/**/]
 
     testtest[
-            foofoo, fososos,
-            /*
+        foofoo, fososos,
+        /*
     */
-            testtest[testtest[foofoo]],
+        testtest[testtest[foofoo]],
     ]
 
     testtest[foofoo, testtest[testtest[foofoo]], /**/testsa]
@@ -253,33 +253,33 @@ fun foo() {
     testtest[foofoo, testtest[testtest[foofoo]]/* */, /**/testsa]
 
     testtest[
-            foofoo, testtest[testtest[foofoo]],
-            /*
+        foofoo, testtest[testtest[foofoo]],
+        /*
     */
-            testsa,
+        testsa,
     ]
 
     testtest[foofoo, seee, testtest[testtest[foofoo]], /**/testsa]
 
     testtest[
-            foofoo, seee, testtest[testtest[foofoo]],
-            /*
+        foofoo, seee, testtest[testtest[foofoo]],
+        /*
     */
-            testsa,
+        testsa,
     ]
 
     useCallable[
-            "B", "C",
-            Callable {
-                println["Hello world"]
-            },
-            /* */
-            Callable {
-                println["Hello world"]
-            },
+        "B", "C",
+        Callable {
+            println["Hello world"]
+        },
+        /* */
+        Callable {
+            println["Hello world"]
+        },
     ]
 
     useCallable[
-            Callable { println["Hello world"] }, // ffd
+        Callable { println["Hello world"] }, // ffd
     ]
 }

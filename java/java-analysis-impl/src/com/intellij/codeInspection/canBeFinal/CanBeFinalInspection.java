@@ -3,8 +3,8 @@ package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -17,7 +17,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance(CanBeFinalInspection.class);
@@ -26,29 +27,6 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   public boolean REPORT_METHODS;
   public boolean REPORT_FIELDS = true;
   @NonNls public static final String SHORT_NAME = "CanBeFinal";
-
-  private final class OptionsPanel extends InspectionOptionsPanel {
-    private final JCheckBox myReportClassesCheckbox;
-    private final JCheckBox myReportMethodsCheckbox;
-    private final JCheckBox myReportFieldsCheckbox;
-
-    private OptionsPanel() {
-      myReportClassesCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.can.be.final.option"));
-      myReportClassesCheckbox.setSelected(REPORT_CLASSES);
-      myReportClassesCheckbox.getModel().addItemListener(e -> REPORT_CLASSES = myReportClassesCheckbox.isSelected());
-      add(myReportClassesCheckbox);
-
-      myReportMethodsCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.can.be.final.option1"));
-      myReportMethodsCheckbox.setSelected(REPORT_METHODS);
-      myReportMethodsCheckbox.getModel().addItemListener(e -> REPORT_METHODS = myReportMethodsCheckbox.isSelected());
-      add(myReportMethodsCheckbox);
-
-      myReportFieldsCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.can.be.final.option2"));
-      myReportFieldsCheckbox.setSelected(REPORT_FIELDS);
-      myReportFieldsCheckbox.getModel().addItemListener(e -> REPORT_FIELDS = myReportFieldsCheckbox.isSelected());
-      add(myReportFieldsCheckbox);
-    }
-  }
 
   private boolean isReportClasses() {
     return REPORT_CLASSES;
@@ -63,8 +41,12 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new OptionsPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("REPORT_CLASSES", JavaAnalysisBundle.message("inspection.can.be.final.option")),
+      checkbox("REPORT_METHODS", JavaAnalysisBundle.message("inspection.can.be.final.option1")),
+      checkbox("REPORT_FIELDS", JavaAnalysisBundle.message("inspection.can.be.final.option2"))
+    );
   }
 
   @Override

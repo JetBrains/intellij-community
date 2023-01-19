@@ -48,9 +48,6 @@ import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author spleaner
- */
 public class FilePathCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance(FilePathCompletionContributor.class);
 
@@ -145,9 +142,6 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
                 final PsiFile[] files = FilenameIndex.getFilesByName(project, name, scope);
 
-                if (files.length <= 0) {
-                  continue;
-                }
                 for (final PsiFile file : files) {
                   ProgressManager.checkCanceled();
                   if (variants.contains(file) && file.getName().startsWith(finalPrefix)) {
@@ -345,7 +339,11 @@ public class FilePathCompletionContributor extends CompletionContributor {
         if (fileReferencePair != null) {
           FileReference ref = fileReferencePair.getFirst();
           context.setTailOffset(ref.getRangeInElement().getEndOffset() + ref.getElement().getTextRange().getStartOffset());
-          ref.bindToElement(myFile);
+          if (ref instanceof FileReferenceWithExtendedCompletion) {
+            ((FileReferenceWithExtendedCompletion)ref).bindToExtendedElement(myFile);
+          } else {
+            ref.bindToElement(myFile);
+          }
         }
       }
     }

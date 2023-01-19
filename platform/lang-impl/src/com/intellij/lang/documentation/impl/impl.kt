@@ -42,7 +42,7 @@ fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> 
 
 internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
   ApplicationManager.getApplication().assertReadAccessAllowed()
-  return DocumentationRequest(createPointer(), presentation)
+  return DocumentationRequest(createPointer(), presentation())
 }
 
 @Internal

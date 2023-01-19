@@ -10,13 +10,13 @@ import org.jetbrains.annotations.NotNull;
 final class ShowAutoImportPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    registrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL,}, null, false, -1);
+    registrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL,Pass.LOCAL_INSPECTIONS}, null, false, -1);
   }
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    boolean canChangeFileSilently = ((HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(file)).canChangeFileSilently();
-
-    return canChangeFileSilently ? new ShowAutoImportPass(file, editor) : null;
+    HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(file);
+    boolean canChangeFileSilently = session.canChangeFileSilently();
+    return canChangeFileSilently ? new ShowAutoImportPass(file, editor, session.getVisibleRange()) : null;
   }
 }

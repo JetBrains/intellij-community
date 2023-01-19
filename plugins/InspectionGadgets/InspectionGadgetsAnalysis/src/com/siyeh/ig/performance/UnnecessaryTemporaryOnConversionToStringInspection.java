@@ -93,7 +93,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection extends BaseInsp
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement().getParent();
       CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementExpression(expression, commentTracker);

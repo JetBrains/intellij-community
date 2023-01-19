@@ -99,97 +99,43 @@ class AnsiTerminalEmulator {
    */
   private void processSgr(int commandCode, Iterator<Integer> sgrCodesIterator) {
     switch (commandCode) {
-      case SGR_COMMAND_RESET:
-        resetTerminal();
-        break;
-      case SGR_COMMAND_BOLD:
-        myWeight = BOLD;
-        break;
-      case SGR_COMMAND_FAINT:
-        myWeight = FAINT;
-        break;
-      case SGR_COMMAND_ITALIC:
-        myIsItalic = true;
-        break;
-      case SGR_COMMAND_UNDERLINE:
-        myUnderline = SINGLE_UNDERLINE;
-        break;
-      case SGR_COMMAND_BLINK_SLOW:
-        myBlink = SLOW_BLINK;
-        break;
-      case SGR_COMMAND_BLINK_RAPID:
-        myBlink = RAPID_BLINK;
-        break;
-      case SGR_COMMAND_INVERSE:
-        myIsInverse = true;
-        break;
-      case SGR_COMMAND_CONCEAL:
-        myIsConseal = true;
-        break;
-      case SGR_COMMAND_CROSS_OUT:
-        myIsCrossedOut = true;
-        break;
-      case SGR_COMMAND_PRIMARY_FONT:
-        myFont = TerminalFont.DEFAULT;
-        break;
-      case SGR_COMMAND_FRAKTUR:
-        myIsFraktur = true;
-        break;
-      case SGR_COMMAND_DOUBLE_UNDERLINE:
+      case SGR_COMMAND_RESET -> resetTerminal();
+      case SGR_COMMAND_BOLD -> myWeight = BOLD;
+      case SGR_COMMAND_FAINT -> myWeight = FAINT;
+      case SGR_COMMAND_ITALIC -> myIsItalic = true;
+      case SGR_COMMAND_UNDERLINE -> myUnderline = SINGLE_UNDERLINE;
+      case SGR_COMMAND_BLINK_SLOW -> myBlink = SLOW_BLINK;
+      case SGR_COMMAND_BLINK_RAPID -> myBlink = RAPID_BLINK;
+      case SGR_COMMAND_INVERSE -> myIsInverse = true;
+      case SGR_COMMAND_CONCEAL -> myIsConseal = true;
+      case SGR_COMMAND_CROSS_OUT -> myIsCrossedOut = true;
+      case SGR_COMMAND_PRIMARY_FONT -> myFont = TerminalFont.DEFAULT;
+      case SGR_COMMAND_FRAKTUR -> myIsFraktur = true;
+      case SGR_COMMAND_DOUBLE_UNDERLINE -> {
         myWeight = Weight.DEFAULT;
         // this is ECMA-48 behaviour. Probably we could make this configurable via flag?
         myUnderline = DOUBLE_UNDERLINE;
-        break;
-      case SGR_COMMAND_NO_BOLD_FAINT:
-        myWeight = Weight.DEFAULT;
-        break;
-      case SGR_COMMAND_NO_ITALIC_FRAKTUR:
+      }
+      case SGR_COMMAND_NO_BOLD_FAINT -> myWeight = Weight.DEFAULT;
+      case SGR_COMMAND_NO_ITALIC_FRAKTUR -> {
         myIsFraktur = false;
         myIsItalic = false;
-        break;
-      case SGR_COMMAND_NO_UNDERLINE:
-        myUnderline = Underline.DEFAULT;
-        break;
-      case SGR_COMMAND_NO_BLINK:
-        myBlink = BlinkSpeed.DEFAULT;
-        break;
-      case SGR_COMMAND_NO_INVERSE:
-        myIsInverse = false;
-        break;
-      case SGR_COMMAND_REVEAL:
-        myIsConseal = false;
-        break;
-      case SGR_COMMAND_NO_CROSS_OUT:
-        myIsCrossedOut = false;
-        break;
-      case SGR_COMMAND_FG_COLOR_ENCODED:
-        myForegroundColor = decodeColor(sgrCodesIterator);
-        break;
-      case SGR_COMMAND_FG_COLOR_DEFAULT:
-        myForegroundColor = null;
-        break;
-      case SGR_COMMAND_BG_COLOR_ENCODED:
-        myBackgroundColor = decodeColor(sgrCodesIterator);
-        break;
-      case SGR_COMMAND_BG_COLOR_DEFAULT:
-        myBackgroundColor = null;
-        break;
-      case SGR_COMMAND_FRAMED:
-        myFrameType = FRAMED;
-        break;
-      case SGR_COMMAND_ENCIRCLED:
-        myFrameType = ENCIRCLED;
-        break;
-      case SGR_COMMAND_OVERLINED:
-        myIsOverlined = true;
-        break;
-      case SGR_COMMAND_NO_FRAMED_ENCIRCLED:
-        myFrameType = NO_FRAME;
-        break;
-      case SGR_COMMAND_NO_OVERLINED:
-        myIsOverlined = false;
-        break;
-      default:
+      }
+      case SGR_COMMAND_NO_UNDERLINE -> myUnderline = Underline.DEFAULT;
+      case SGR_COMMAND_NO_BLINK -> myBlink = BlinkSpeed.DEFAULT;
+      case SGR_COMMAND_NO_INVERSE -> myIsInverse = false;
+      case SGR_COMMAND_REVEAL -> myIsConseal = false;
+      case SGR_COMMAND_NO_CROSS_OUT -> myIsCrossedOut = false;
+      case SGR_COMMAND_FG_COLOR_ENCODED -> myForegroundColor = decodeColor(sgrCodesIterator);
+      case SGR_COMMAND_FG_COLOR_DEFAULT -> myForegroundColor = null;
+      case SGR_COMMAND_BG_COLOR_ENCODED -> myBackgroundColor = decodeColor(sgrCodesIterator);
+      case SGR_COMMAND_BG_COLOR_DEFAULT -> myBackgroundColor = null;
+      case SGR_COMMAND_FRAMED -> myFrameType = FRAMED;
+      case SGR_COMMAND_ENCIRCLED -> myFrameType = ENCIRCLED;
+      case SGR_COMMAND_OVERLINED -> myIsOverlined = true;
+      case SGR_COMMAND_NO_FRAMED_ENCIRCLED -> myFrameType = NO_FRAME;
+      case SGR_COMMAND_NO_OVERLINED -> myIsOverlined = false;
+      default -> {
         if (commandCode >= SGR_COMMAND_FONT1 && commandCode <= SGR_COMMAND_FONT9) {
           myFont = TerminalFont.values()[commandCode - 10];
         }
@@ -212,6 +158,7 @@ class AnsiTerminalEmulator {
           LOG.warn("Unknown command " + commandCode);
           return;
         }
+      }
     }
     mySerializedSgrStateProvider.drop();
   }

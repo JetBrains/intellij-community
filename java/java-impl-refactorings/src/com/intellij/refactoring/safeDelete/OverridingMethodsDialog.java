@@ -35,9 +35,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author dsl
- */
 class OverridingMethodsDialog extends DialogWrapper {
   private final List<? extends UsageInfo> myOverridingMethods;
   private final String[] myMethodText;

@@ -9,7 +9,7 @@ import com.intellij.util.ui.update.Update
 
 internal class GHPRDiffRequestChainProcessor(
   project: Project,
-  val diffRequestModel: GHPRDiffRequestModel
+  private val diffRequestModel: GHPRDiffRequestModel
 ) : MutableDiffRequestChainProcessor(project, null) {
   private val diffChainUpdateQueue =
     MergingUpdateQueue("GHPRDiffRequestChainProcessor", 100, true, null, this).apply {

@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,8 +20,6 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  * @see TextEditor
  */
 public interface FileEditor extends UserDataHolder, Disposable {
@@ -122,6 +121,9 @@ public interface FileEditor extends UserDataHolder, Disposable {
     return null;
   }
 
+  /**
+   * @see com.intellij.openapi.fileEditor.impl.text.StructureViewFileEditorProvider
+   */
   default @Nullable StructureViewBuilder getStructureViewBuilder() {
     return null;
   }
@@ -144,5 +146,12 @@ public interface FileEditor extends UserDataHolder, Disposable {
   default @NotNull List<@NotNull VirtualFile> getFilesToRefresh() {
     VirtualFile file = getFile();
     return file == null ? Collections.emptyList() : Collections.singletonList(file);
+  }
+
+  /**
+   * Returns an action group that will be displayed on the right side of the Editor tabs
+   */
+  default @Nullable ActionGroup getTabActions() {
+    return null;
   }
 }

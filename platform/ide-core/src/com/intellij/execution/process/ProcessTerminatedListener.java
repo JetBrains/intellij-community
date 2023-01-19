@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.Platform;
@@ -20,19 +20,21 @@ public final class ProcessTerminatedListener extends ProcessAdapter {
   private final String myProcessFinishedMessage;
   private final Project myProject;
 
-  private ProcessTerminatedListener(final Project project, final String processFinishedMessage) {
+  private ProcessTerminatedListener(Project project, String processFinishedMessage) {
     myProject = project;
     myProcessFinishedMessage = processFinishedMessage;
   }
 
-  public static void attach(final ProcessHandler processHandler, Project project, final String message) {
-    final ProcessTerminatedListener previousListener = processHandler.getUserData(KEY);
+  public static void attach(final ProcessHandler processHandler, Project project, String message) {
+    ProcessTerminatedListener previousListener = processHandler.getUserData(KEY);
     if (previousListener != null) {
       processHandler.removeProcessListener(previousListener);
-      if (project == null) project = previousListener.myProject;
+      if (project == null) {
+        project = previousListener.myProject;
+      }
     }
 
-    final ProcessTerminatedListener listener = new ProcessTerminatedListener(project, message);
+    ProcessTerminatedListener listener = new ProcessTerminatedListener(project, message);
     processHandler.addProcessListener(listener);
     processHandler.putUserData(KEY, listener);
   }
@@ -57,13 +59,11 @@ public final class ProcessTerminatedListener extends ProcessAdapter {
     }
   }
 
-  @NotNull
-  public static String stringifyExitCode(int exitCode) {
+  public static @NotNull String stringifyExitCode(int exitCode) {
     return stringifyExitCode(Platform.current(), exitCode);
   }
 
-  @NotNull
-  public static String stringifyExitCode(@NotNull Platform platform, int exitCode) {
+  public static @NotNull String stringifyExitCode(@NotNull Platform platform, int exitCode) {
     StringBuilder result = new StringBuilder();
     result.append(exitCode);
 

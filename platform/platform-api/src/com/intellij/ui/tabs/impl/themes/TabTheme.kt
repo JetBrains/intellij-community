@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 
@@ -49,7 +50,7 @@ open class DefaultTabTheme : TabTheme {
     get() = underlinedTabBackground
   override val underlinedTabInactiveForeground: Color
     get() = underlinedTabForeground
-  override val inactiveColoredTabBackground: Color
+  override val inactiveColoredTabBackground: Color?
     get() = JBUI.CurrentTheme.DefaultTabs.inactiveColoredTabBackground()
 }
 
@@ -64,7 +65,7 @@ class EditorTabTheme : TabTheme {
     get() = newUIAware(EditorColorsManager.getInstance().globalScheme.defaultBackground, JBUI.CurrentTheme.EditorTabs.background())
 
   override val borderColor: Color
-    get() = JBUI.CurrentTheme.EditorTabs.borderColor()
+    get() = JBColor.namedColor("EditorTabs.underTabsBorderColor", JBUI.CurrentTheme.EditorTabs.borderColor())
 
   override val underlineColor: Color
     get() = globalScheme.getColor(EditorColors.TAB_UNDERLINE) ?: JBUI.CurrentTheme.EditorTabs.underlineColor()
@@ -105,7 +106,7 @@ class EditorTabTheme : TabTheme {
   override val inactiveColoredTabBackground: Color
     get() = JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground()
 
-  fun <T> newUIAware(newUI: T, oldUI:T):T = if (ExperimentalUI.isNewUI()) newUI else oldUI
+  private fun <T> newUIAware(newUI: T, oldUI:T):T = if (ExperimentalUI.isNewUI()) newUI else oldUI
 }
 
 internal class ToolWindowTabTheme : DefaultTabTheme() {

@@ -15,6 +15,7 @@ class GradleArtifactHandlerContributor : NonCodeMembersContributor() {
 
   companion object {
     const val ourMethodKind: String = "gradle:artifactsConfigurationMethod"
+    const val ARTIFACTS_ORIGIN_INFO: String = "by artifactConfigurationMethod"
   }
 
   override fun getParentClassName(): String = GRADLE_API_ARTIFACT_HANDLER
@@ -42,6 +43,7 @@ class GradleArtifactHandlerContributor : NonCodeMembersContributor() {
         methodKind = ourMethodKind
         containingClass = clazz
         returnType = null
+        originInfo = ARTIFACTS_ORIGIN_INFO
         addParameter("artifactNotation", objectVarargType)
         setBaseIcon(Gradle)
       }

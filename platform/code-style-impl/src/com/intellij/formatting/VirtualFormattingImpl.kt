@@ -19,7 +19,7 @@ var PsiElement.virtualFormattingListener: VirtualFormattingListener?
   set(value) = putUserData(formattingListenerKey, value)
 
 
-class VirtualFormattingModelBuilder(val underlyingBuilder: FormattingModelBuilder,
+class VirtualFormattingModelBuilder(private val underlyingBuilder: FormattingModelBuilder,
                                     val file: PsiFile,
                                     val listener: VirtualFormattingListener) : FormattingModelBuilder {
 

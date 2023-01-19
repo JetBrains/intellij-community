@@ -74,7 +74,7 @@ public class IndentInfo {
     for (int i = 0; i < myLineFeeds; i ++) {
       if (options.KEEP_INDENTS_ON_EMPTY_LINES && i > 0) {
         int spaces = myIndentEmptyLines ? myIndentSpaces + options.INDENT_SIZE : myIndentSpaces;
-        generateLineWhitespace(buffer, options, spaces, 0, true);
+        generateLineWhitespace(buffer, options, spaces, mySpaces, true);
       }
       buffer.append('\n');
     }

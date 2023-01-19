@@ -61,29 +61,18 @@ public abstract class JqlElementImpl extends ASTWrapperPsiElement implements Jql
         assert i != s.length() - 1 : "Trailing backslash";
         char c2 = s.charAt(++i);
         switch (c2) {
-          case ' ':
-          case '\'':
-          case '\"':
-          case '\\':
-            builder.append(c2);
-            break;
-          case 'n':
-            builder.append('\n');
-            break;
-          case 't':
-            builder.append('\t');
-            break;
-          case '\r':
-            builder.append('\r');
-            break;
+          case ' ', '\'', '\"', '\\' -> builder.append(c2);
+          case 'n' -> builder.append('\n');
+          case 't' -> builder.append('\t');
+          case '\r' -> builder.append('\r');
+
           // Only \\uXXXX escape is legal, so character always resides inside BMP
-          case 'u':
+          case 'u' -> {
             assert i < s.length() - 4 : "Incomplete unicode escape sequence: " + s.substring(i - 1);
             builder.append((char)Integer.parseInt(s.substring(i + 1, i + 5), 16));
             i += 4;
-            break;
-          default:
-            throw new AssertionError("Illegal escape at " + s.substring(i));
+          }
+          default -> throw new AssertionError("Illegal escape at " + s.substring(i));
         }
       }
       else {

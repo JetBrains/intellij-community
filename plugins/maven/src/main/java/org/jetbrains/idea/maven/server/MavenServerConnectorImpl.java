@@ -24,14 +24,12 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenServerConnectorImpl extends MavenServerConnector {
   public static final Logger LOG = Logger.getInstance(MavenServerConnectorImpl.class);
-  private final MavenServerDownloadDispatcher
-    myDownloadListener = new MavenServerDownloadDispatcher();
-
   protected final Integer myDebugPort;
 
 
@@ -156,16 +154,6 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     }
   }
 
-  @Override
-  public void addDownloadListener(MavenServerDownloadListener listener) {
-    myDownloadListener.myListeners.add(listener);
-  }
-
-  @Override
-  public void removeDownloadListener(MavenServerDownloadListener listener) {
-    myDownloadListener.myListeners.remove(listener);
-  }
-
   @ApiStatus.Internal
   @Override
   public void stop(boolean wait) {
@@ -204,15 +192,11 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
 
   @Override
   public State getState() {
-    switch (myServerPromise.getState()) {
-      case SUCCEEDED: {
-        return myTerminated.get() ? State.STOPPED : State.RUNNING;
-      }
-      case REJECTED:
-        return State.FAILED;
-      default:
-        return State.STARTING;
-    }
+    return switch (myServerPromise.getState()) {
+      case SUCCEEDED -> myTerminated.get() ? State.STOPPED : State.RUNNING;
+      case REJECTED -> State.FAILED;
+      default -> State.STARTING;
+    };
   }
 
   @Override
@@ -221,16 +205,6 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     return support != null && !support.getActiveConfigurations().isEmpty();
   }
 
-  private static class MavenServerDownloadDispatcher implements MavenServerDownloadListener {
-    private final List<MavenServerDownloadListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
-    @Override
-    public void artifactDownloaded(File file, String relativePath) throws RemoteException {
-      for (MavenServerDownloadListener each : myListeners) {
-        each.artifactDownloaded(file, relativePath);
-      }
-    }
-  }
 
   private class StartServerTask implements Runnable {
     @Override
@@ -271,7 +245,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
           List<DownloadArtifactEvent> artifactEvents = listener.pull();
           if (artifactEvents == null) return;
           for (DownloadArtifactEvent e : artifactEvents) {
-            myDownloadListener.artifactDownloaded(new File(e.getFile()), e.getPath());
+            ApplicationManager.getApplication().getMessageBus().syncPublisher(DOWNLOAD_LISTENER_TOPIC).artifactDownloaded(new File(e.getFile()), e.getPath());
           }
           myDownloadConnectFailedCount.set(0);
         }
@@ -300,16 +274,9 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
           if (logEvents == null) return;
           for (ServerLogEvent e : logEvents) {
             switch (e.getType()) {
-              case PRINT:
-              case INFO:
-                MavenLog.LOG.info(e.getMessage());
-                break;
-              case WARN:
-                MavenLog.LOG.warn(e.getMessage());
-                break;
-              case ERROR:
-                MavenLog.LOG.error(e.getMessage());
-                break;
+              case PRINT, INFO -> MavenLog.LOG.info(e.getMessage());
+              case WARN -> MavenLog.LOG.warn(e.getMessage());
+              case ERROR -> MavenLog.LOG.error(e.getMessage());
             }
           }
           myLoggerConnectFailedCount.set(0);

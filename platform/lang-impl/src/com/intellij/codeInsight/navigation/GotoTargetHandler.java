@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -24,19 +24,22 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.util.RoundedCellRenderer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.util.*;
@@ -54,15 +57,21 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(getFeatureUsedKey());
+    String featureId = getFeatureUsedKey();
+    if (featureId != null) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(featureId);
+    }
 
     try {
       GotoData gotoData = getSourceAndTargetElements(editor, file);
+      Consumer<JBPopup> showPopupProcedure = popup -> {
+        popup.showInBestPositionFor(editor);
+      };
       if (gotoData != null) {
-        show(project, editor, file, gotoData);
+        show(project, editor, file, gotoData, showPopupProcedure);
       }
       else {
-        chooseFromAmbiguousSources(editor, file, data -> show(project, editor, file, data));
+        chooseFromAmbiguousSources(editor, file, data -> show(project, editor, file, data, showPopupProcedure));
       }
     }
     catch (IndexNotReadyException e) {
@@ -74,6 +83,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   protected void chooseFromAmbiguousSources(Editor editor, PsiFile file, Consumer<? super GotoData> successCallback) { }
 
   @NonNls
+  @Nullable
   protected abstract String getFeatureUsedKey();
 
   protected boolean useEditorFont() {
@@ -83,10 +93,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   @Nullable
   protected abstract GotoData getSourceAndTargetElements(Editor editor, PsiFile file);
 
-  private void show(@NotNull Project project,
-                    @NotNull Editor editor,
-                    @NotNull PsiFile file,
-                    @NotNull GotoData gotoData) {
+  protected void show(@NotNull Project project,
+                      @NotNull Editor editor,
+                      @NotNull PsiFile file,
+                      @NotNull GotoData gotoData,
+                      @NotNull Consumer<? super JBPopup> showPopup) {
     if (gotoData.isCanceled) return;
 
     PsiElement[] targets = gotoData.targets;
@@ -103,8 +114,6 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return;
     }
 
-    gotoData.initPresentations();
-
     final String name = ((NavigationItem)gotoData.source).getName();
     final String title = getChooserTitle(gotoData.source, name, targets.length, finished);
 
@@ -112,8 +121,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       Arrays.sort(targets, createComparator(gotoData));
     }
 
+    gotoData.initPresentations();
     List<Object> allElements = new ArrayList<>(targets.length + additionalActions.size());
-    Collections.addAll(allElements, targets);
+    allElements.addAll(gotoData.getPointers());
     allElements.addAll(additionalActions);
 
     final IPopupChooserBuilder<Object> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(allElements);
@@ -127,14 +137,21 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     if (useEditorFont()) {
       builder.setFont(EditorUtil.getEditorFont());
     }
-    builder.setRenderer(new GotoTargetRenderer(gotoData::getPresentation)).
+    builder.setRenderer(new RoundedCellRenderer<>(new GotoTargetRenderer(gotoData::getPresentation))).
       setItemsChosenCallback(selectedElements -> {
         for (Object element : selectedElements) {
           if (element instanceof AdditionalAction) {
             ((AdditionalAction)element).execute();
           }
           else {
-            Navigatable nav = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor((PsiElement)element);
+            Navigatable nav;
+            if (element instanceof Navigatable) {
+              nav = (Navigatable)element;
+            }
+            else {
+              PsiElement psiElement = ((SmartPsiElementPointer<?>)element).getElement();
+              nav = psiElement == null ? null : EditSourceUtil.getDescriptor(psiElement);
+            }
             try {
               if (nav != null && nav.canNavigate()) {
                 navigateToElement(nav);
@@ -150,7 +167,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       withHintUpdateSupply().
       setMovable(true).
       setCancelCallback(() -> {
-        final BackgroundUpdaterTask task = gotoData.listUpdaterTask;
+        final BackgroundUpdaterTaskBase<Object> task = gotoData.listUpdaterTask;
         if (task != null) {
           task.cancelTask();
         }
@@ -168,7 +185,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     JScrollPane pane = builder instanceof PopupChooserBuilder ? ((PopupChooserBuilder<?>)builder).getScrollPane() : null;
     if (pane != null) {
-      pane.setBorder(null);
+      if (!ExperimentalUI.isNewUI()) {
+        pane.setBorder(null);
+      }
       pane.setViewportBorder(null);
     }
 
@@ -176,14 +195,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       Alarm alarm = new Alarm(popup);
       alarm.addRequest(() -> {
         if (!editor.isDisposed()) {
-          popup.showInBestPositionFor(editor);
+          showPopup.consume(popup);
         }
       }, 300);
       gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
     else {
-      popup.showInBestPositionFor(editor);
+      showPopup.consume(popup);
     }
   }
 
@@ -225,7 +244,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   /**
    * @deprecated use {@link #computePresentation}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @SuppressWarnings("rawtypes")
   public static PsiElementListCellRenderer createRenderer(@NotNull GotoData gotoData, @NotNull PsiElement eachTarget) {
     for (GotoTargetRendererProvider eachProvider : GotoTargetRendererProvider.EP_NAME.getExtensionList()) {
@@ -296,9 +315,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     public boolean isCanceled;
 
     private boolean hasDifferentNames;
-    public BackgroundUpdaterTask listUpdaterTask;
+    public BackgroundUpdaterTaskBase<Object> listUpdaterTask;
     protected final Set<String> myNames;
     public Map<Object, TargetPresentation> presentations = new HashMap<>();
+    private List<SmartPsiElementPointer<?>> myPointers;
 
     public GotoData(@NotNull PsiElement source, PsiElement @NotNull [] targets, @NotNull List<AdditionalAction> additionalActions) {
       this.source = source;
@@ -320,16 +340,19 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return hasDifferentNames;
     }
 
-    public boolean addTarget(final PsiElement element) {
-      if (ArrayUtil.find(targets, element) > -1) return false;
+    public SmartPsiElementPointer<PsiElement> addTarget(final PsiElement element) {
+      if (ArrayUtil.find(targets, element) > -1) return null;
       targets = ArrayUtil.append(targets, element);
-      presentations.put(element, ReadAction.compute(() -> computePresentation(element, hasDifferentNames)));
+      SmartPsiElementPointer<PsiElement> pointer = ReadAction.compute(() -> SmartPointerManager.createPointer(element));
+      TargetPresentation presentation = ReadAction.compute(() -> computePresentation(element, hasDifferentNames));
+      presentations.put(element, presentation);
+      presentations.put(pointer, presentation);
       if (!hasDifferentNames && element instanceof PsiNamedElement) {
         final String name = ReadAction.compute(() -> ((PsiNamedElement)element).getName());
         myNames.add(name);
         hasDifferentNames = myNames.size() > 1;
       }
-      return true;
+      return pointer;
     }
 
     public @NotNull TargetPresentation getPresentation(Object value) {
@@ -347,7 +370,19 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     @VisibleForTesting
     public void initPresentations() {
-      presentations.putAll(computePresentationInBackground(source.getProject(), targets, hasDifferentNames));
+      Map<PsiElement, TargetPresentation> map =
+        computePresentationInBackground(source.getProject(), targets, hasDifferentNames);
+      presentations.putAll(map);
+      myPointers = new ArrayList<>(map.keySet().size());
+      for (Map.Entry<PsiElement, TargetPresentation> entry : map.entrySet()) {
+        SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(entry.getKey());
+        myPointers.add(pointer);
+        presentations.put(pointer, entry.getValue());
+      }
+    }
+
+    public List<SmartPsiElementPointer<?>> getPointers() {
+      return myPointers;
     }
   }
 

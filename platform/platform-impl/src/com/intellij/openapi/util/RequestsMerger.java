@@ -2,7 +2,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +19,6 @@ import java.util.Map;
  * - at the moment only one refresh action is being done
  * - if request had been submitted while refresh action was in progress, new refresh action is initiated right after first refresh action finishes
  */
-@SomeQueue
 public final class RequestsMerger {
   private static final Logger LOG = Logger.getInstance(RequestsMerger.class);
 

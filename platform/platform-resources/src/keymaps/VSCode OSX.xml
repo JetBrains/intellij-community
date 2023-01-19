@@ -43,7 +43,6 @@
     <action id="ChangeSplitOrientation">
         <keyboard-shortcut first-keystroke="meta alt 0" />
     </action>
-    <action id="ChangesView.Diff" />
     <action id="ChangesView.GroupBy.Directory" />
     <action id="ChangesView.Move" />
     <action id="ChangesView.Rename">
@@ -144,13 +143,6 @@
     <action id="DomCollectionControl.Edit">
         <keyboard-shortcut first-keystroke="f4" />
     </action>
-    <action id="DomElementsTreeView.DeleteElement">
-        <keyboard-shortcut first-keystroke="delete" />
-        <keyboard-shortcut first-keystroke="back_space" />
-    </action>
-    <action id="DomElementsTreeView.GotoDomElementDeclarationAction">
-        <keyboard-shortcut first-keystroke="f4" />
-    </action>
     <action id="EditSource">
         <keyboard-shortcut first-keystroke="f4" />
     </action>
@@ -206,10 +198,14 @@
         <keyboard-shortcut first-keystroke="ctrl j" />
     </action>
     <action id="EditorLineEnd">
+        <keyboard-shortcut first-keystroke="END"/>
         <keyboard-shortcut first-keystroke="meta right" />
+        <keyboard-shortcut first-keystroke="control E"/>
     </action>
     <action id="EditorLineStart">
+        <keyboard-shortcut first-keystroke="END"/>
         <keyboard-shortcut first-keystroke="meta left" />
+        <keyboard-shortcut first-keystroke="control A"/>
     </action>
     <action id="EditorMatchBrace">
         <keyboard-shortcut first-keystroke="shift meta back_slash" />

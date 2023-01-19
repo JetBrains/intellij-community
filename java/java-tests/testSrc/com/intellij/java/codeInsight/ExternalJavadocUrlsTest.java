@@ -44,27 +44,30 @@ public class ExternalJavadocUrlsTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testVarargs() {
-    doTest("class Test {\n" +
-           "  void <caret>foo(Class<?>... cl) { }\n" +
-           "}",
+    doTest("""
+             class Test {
+               void <caret>foo(Class<?>... cl) { }
+             }""",
 
            "foo(java.lang.Class...)", "foo-java.lang.Class...-");
 
   }
 
   public void testTypeParams() {
-    doTest("class Test {\n" +
-           "  <T> void <caret>sort(T[] a, Comparator<? super T> c) { }\n" +
-           "}\n" +
-           "class Comparator<X>{}",
+    doTest("""
+             class Test {
+               <T> void <caret>sort(T[] a, Comparator<? super T> c) { }
+             }
+             class Comparator<X>{}""",
 
            "sort(T[],Comparator)", "sort-T:A-Comparator-", "sort(T[], Comparator)");
   }
 
   public void testConstructor() {
-    doTest("class Test {\n" +
-           "  Test<caret>() { }\n" +
-           "}",
+    doTest("""
+             class Test {
+               Test<caret>() { }
+             }""",
            "<init>()", "Test--", "Test()");
   }
 

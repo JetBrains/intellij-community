@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -338,14 +337,18 @@ public final class ArtifactUtil {
                                                         boolean processSubstitutions) {
     processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, processor, context, processSubstitutions);
     processPackagingElements(artifact, PackagingElementFactoryImpl.DIRECTORY_COPY_ELEMENT_TYPE, processor, context, processSubstitutions);
-    processPackagingElements(artifact, PackagingElementFactoryImpl.EXTRACTED_DIRECTORY_ELEMENT_TYPE, processor, context, processSubstitutions);
+    processPackagingElements(artifact, PackagingElementFactoryImpl.EXTRACTED_DIRECTORY_ELEMENT_TYPE, processor, context,
+                             processSubstitutions);
   }
 
-  public static Collection<Trinity<Artifact, PackagingElementPath, String>> findContainingArtifactsWithOutputPaths(@NotNull final VirtualFile file,
-                                                                                                                   @NotNull Project project,
-                                                                                                                   final Artifact[] artifacts) {
+  public record ArtifactInfo(@NotNull Artifact artifact, @NotNull PackagingElementPath path, @NotNull String relativeOutputPath) {
+  }
+
+  public static Collection<ArtifactInfo> findContainingArtifactsWithOutputPaths(@NotNull final VirtualFile file,
+                                                                                @NotNull Project project,
+                                                                                final Artifact[] artifacts) {
     final boolean isResourceFile = CompilerConfiguration.getInstance(project).isResourceFile(file);
-    final List<Trinity<Artifact, PackagingElementPath, String>> result = new ArrayList<>();
+    final List<ArtifactInfo> result = new ArrayList<>();
     final PackagingElementResolvingContext context = ArtifactManager.getInstance(project).getResolvingContext();
     for (final Artifact artifact : artifacts) {
       processPackagingElements(artifact, null, new PackagingElementProcessor<>() {
@@ -361,14 +364,14 @@ public final class ArtifactUtil {
               else {
                 relativePath = VfsUtilCore.getRelativePath(file, root, '/');
               }
-              result.add(Trinity.create(artifact, path, relativePath));
+              result.add(new ArtifactInfo(artifact, path, relativePath));
               return false;
             }
           }
           else if (isResourceFile && element instanceof ModuleOutputPackagingElement) {
             final String relativePath = getRelativePathInSources(file, (ModuleOutputPackagingElement)element, context);
             if (relativePath != null) {
-              result.add(Trinity.create(artifact, path, relativePath));
+              result.add(new ArtifactInfo(artifact, path, relativePath));
               return false;
             }
           }

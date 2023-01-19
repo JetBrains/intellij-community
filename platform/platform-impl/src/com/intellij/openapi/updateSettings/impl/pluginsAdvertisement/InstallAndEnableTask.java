@@ -22,7 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-final class InstallAndEnableTask extends Task.Modal {
+public final class InstallAndEnableTask extends Task.Modal {
 
   private final Set<PluginDownloader> myPlugins = new HashSet<>();
   private final @NotNull Set<PluginId> myPluginIds;
@@ -72,6 +72,10 @@ final class InstallAndEnableTask extends Task.Modal {
       PluginsAdvertiser.getLog().info(e);
     }
   }
+
+  public Set<PluginDownloader> getPlugins() { return myPlugins; }
+  public @Nullable List<PluginNode> getCustomPlugins() { return myCustomPlugins; }
+
 
   @Override
   public void onSuccess() {

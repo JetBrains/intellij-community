@@ -1,21 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
-import com.intellij.diagnostic.ActivityCategory
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.runActivity
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SearchTopHitProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider.ApplicationLevelProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider.ProjectLevelProvider
-import com.intellij.ide.ui.search.OptionDescription
-import com.intellij.idea.processExtensions
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.text.StringUtil
@@ -34,7 +30,6 @@ import kotlin.coroutines.coroutineContext
 abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHitProvider {
   companion object {
     // project level here means not that EP itself in project area, but that extensions applicable for project only
-    @JvmField
     val PROJECT_LEVEL_EP = ExtensionPointName<ProjectLevelProvider>("com.intellij.search.projectOptionsTopHitProvider")
 
     @JvmStatic
@@ -65,7 +60,7 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
   }
 
   override fun consumeTopHits(pattern: String, collector: Consumer<Any>, project: Project?) {
-    consumeTopHits(this, pattern, collector, project)
+    consumeTopHits(provider = this, rawPattern = pattern, collector = collector, project = project)
   }
 
   abstract override fun getId(): String
@@ -113,66 +108,65 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
         throw ExtensionNotApplicableException.create()
       }
 
+      @Suppress("DEPRECATION")
       appJob = app.coroutineScope.launch {
         // for application
-        cacheAll(null)
+        runActivity("cache options in application") {
+          val topHitCache = TopHitCache.getInstance()
+          for (extension in SearchTopHitProvider.EP_NAME.filterableLazySequence()) {
+            val aClass = extension.implementationClass ?: continue
+            if (ApplicationLevelProvider::class.java.isAssignableFrom(aClass)) {
+              kotlin.coroutines.coroutineContext.ensureActive()
+              val provider = extension.instance as ApplicationLevelProvider? ?: continue
+              if (provider.preloadNeeded()) {
+                kotlin.coroutines.coroutineContext.ensureActive()
+                topHitCache.getCachedOptions(provider = provider, project = null, pluginDescriptor = extension.pluginDescriptor)
+              }
+            }
+          }
+        }
       }
     }
 
     override suspend fun execute(project: Project) {
       appJob.join()
       // for given project
-      cacheAll(project)
-    }
-  }
-}
-
-private suspend fun cacheAll(project: Project?) {
-  val name = if (project == null) "application" else "project"
-  val activity = StartUpMeasurer.startActivity("cache options in $name", ActivityCategory.DEFAULT)
-  SearchTopHitProvider.EP_NAME.processExtensions { provider, pluginDescriptor ->
-    if (provider is OptionsSearchTopHitProvider && (project == null || provider !is ApplicationLevelProvider)) {
-      val p = provider as OptionsSearchTopHitProvider
-      if (p.preloadNeeded() && (project == null || !project.isDisposed)) {
-        coroutineContext.ensureActive()
-        getCachedOptions(p, project, pluginDescriptor)
-      }
-    }
-  }
-
-  coroutineContext.ensureActive()
-
-  if (project != null) {
-    val cache = ProjectTopHitCache.getInstance(project)
-    OptionsTopHitProvider.PROJECT_LEVEL_EP.processExtensions { provider, pluginDescriptor ->
-      coroutineContext.ensureActive()
-      try {
-        cache.getCachedOptions(provider, project, pluginDescriptor)
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Exception) {
-        if (e is ControlFlowException) {
-          throw e
+      runActivity("cache options in project") {
+        val topHitCache = TopHitCache.getInstance(project)
+        for (extension in SearchTopHitProvider.EP_NAME.filterableLazySequence()) {
+          val aClass = extension.implementationClass ?: continue
+          if (OptionsSearchTopHitProvider::class.java.isAssignableFrom(aClass) &&
+              !ApplicationLevelProvider::class.java.isAssignableFrom(aClass)) {
+            coroutineContext.ensureActive()
+            val provider = extension.instance as OptionsSearchTopHitProvider? ?: continue
+            if (provider.preloadNeeded()) {
+              coroutineContext.ensureActive()
+              topHitCache.getCachedOptions(provider = provider, project = project, pluginDescriptor = extension.pluginDescriptor)
+            }
+          }
         }
-        logger<OptionsTopHitProvider>().error(e)
+
+        coroutineContext.ensureActive()
+
+        val cache = TopHitCache.getInstance(project)
+        PROJECT_LEVEL_EP.processExtensions { provider, pluginDescriptor ->
+          coroutineContext.ensureActive()
+          try {
+            cache.getCachedOptions(provider, project, pluginDescriptor)
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Exception) {
+            if (e is ControlFlowException) {
+              throw e
+            }
+            logger<OptionsTopHitProvider>().error(e)
+          }
+        }
       }
     }
   }
-  activity.end()
-}
-
-private fun getCachedOptions(provider: OptionsSearchTopHitProvider,
-                             project: Project?,
-                             pluginDescriptor: PluginDescriptor?): Collection<OptionDescription> {
-  val cache = if (project == null || provider is ApplicationLevelProvider) {
-    TopHitCache.getInstance()
-  }
-  else {
-    ProjectTopHitCache.getInstance(project)
-  }
-  return cache.getCachedOptions(provider, project, pluginDescriptor)
 }
 
 private fun doConsumeTopHits(provider: OptionsSearchTopHitProvider,
@@ -183,7 +177,10 @@ private fun doConsumeTopHits(provider: OptionsSearchTopHitProvider,
   var pattern = rawPattern
   if (provider.id.startsWith(id) || pattern.startsWith(" ")) {
     pattern = (if (pattern.startsWith(' ')) pattern else pattern.substring(id.length)).trim()
-    consumeTopHitsForApplicableProvider(provider, OptionsTopHitProvider.buildMatcher(pattern), collector, project)
+    consumeTopHitsForApplicableProvider(provider = provider,
+                                        matcher = OptionsTopHitProvider.buildMatcher(pattern),
+                                        collector = collector,
+                                        project = project)
   }
 }
 
@@ -191,7 +188,13 @@ private fun consumeTopHitsForApplicableProvider(provider: OptionsSearchTopHitPro
                                                 matcher: Matcher,
                                                 collector: Consumer<Any>,
                                                 project: Project?) {
-  for (option in getCachedOptions(provider = provider, project = project, pluginDescriptor = null)) {
+  val cache = if (project == null || provider is ApplicationLevelProvider) {
+    TopHitCache.getInstance()
+  }
+  else {
+    TopHitCache.getInstance(project = project)
+  }
+  for (option in cache.getCachedOptions(provider = provider, project = project, pluginDescriptor = null)) {
     if (matcher.matches(option.option)) {
       collector.accept(option)
     }

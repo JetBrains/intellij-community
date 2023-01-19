@@ -8,11 +8,12 @@ import training.ui.welcomeScreen.OnboardingLessonPromoter
 import javax.swing.Icon
 
 class JavaOnboardingTourPromoter : OnboardingLessonPromoter(
-  "java.onboarding", JavaLessonsBundle.message("java.onboarding.lesson.name"), "Java"
+  "java.onboarding", JavaLessonsBundle.message("java.onboarding.lesson.name")
 ) {
   override val promoImage: Icon
     get() = IconLoader.getIcon("img/idea-onboarding-tour.png", JavaOnboardingTourPromoter::class.java.classLoader)
 
   override fun canCreatePromo(isEmptyState: Boolean): Boolean =
-    super.canCreatePromo(isEmptyState) && !ApplicationNamesInfo.getInstance().fullProductNameWithEdition.equals("IDEA Edu")
+    super.canCreatePromo(isEmptyState) &&
+    !ApplicationNamesInfo.getInstance().fullProductNameWithEdition.let { it.equals("IDEA Edu") || it.equals("Aqua") }
 }

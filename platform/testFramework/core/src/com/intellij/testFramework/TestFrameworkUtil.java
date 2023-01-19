@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 
 import java.awt.*;
@@ -63,6 +64,19 @@ public final class TestFrameworkUtil {
     if (aClass.getAnnotation(RunWith.class) != null) return true;
     for (Method method : aClass.getMethods()) {
       if (method.getAnnotation(Test.class) != null) return true;
+    }
+    return false;
+  }
+
+  @TestOnly
+  public static boolean isJUnit5TestClass(@NotNull Class<?> aClass, boolean allowAbstract) {
+    int modifiers = aClass.getModifiers();
+    if (!allowAbstract && (modifiers & Modifier.ABSTRACT) != 0) return false;
+    if ((modifiers & Modifier.PUBLIC) == 0) return false;
+
+    if (aClass.getAnnotation(ExtendWith.class) != null) return true;
+    for (Method method : aClass.getMethods()) {
+      if (method.getAnnotation(org.junit.jupiter.api.Test.class) != null) return true;
     }
     return false;
   }

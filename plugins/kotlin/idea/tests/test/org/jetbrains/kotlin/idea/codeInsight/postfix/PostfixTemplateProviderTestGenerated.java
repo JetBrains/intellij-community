@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.postfix;
 
@@ -66,6 +66,31 @@ public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostf
             runTest("testData/codeInsight/postfix/for.kt");
         }
 
+        @TestMetadata("forIndexed.kt")
+        public void testForIndexed() throws Exception {
+            runTest("testData/codeInsight/postfix/forIndexed.kt");
+        }
+
+        @TestMetadata("forIndexed2.kt")
+        public void testForIndexed2() throws Exception {
+            runTest("testData/codeInsight/postfix/forIndexed2.kt");
+        }
+
+        @TestMetadata("forNumber.kt")
+        public void testForNumber() throws Exception {
+            runTest("testData/codeInsight/postfix/forNumber.kt");
+        }
+
+        @TestMetadata("forNumber2.kt")
+        public void testForNumber2() throws Exception {
+            runTest("testData/codeInsight/postfix/forNumber2.kt");
+        }
+
+        @TestMetadata("forNumberInverse.kt")
+        public void testForNumberInverse() throws Exception {
+            runTest("testData/codeInsight/postfix/forNumberInverse.kt");
+        }
+
         @TestMetadata("forOnMap.kt")
         public void testForOnMap() throws Exception {
             runTest("testData/codeInsight/postfix/forOnMap.kt");
@@ -74,6 +99,11 @@ public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostf
         @TestMetadata("forOnString.kt")
         public void testForOnString() throws Exception {
             runTest("testData/codeInsight/postfix/forOnString.kt");
+        }
+
+        @TestMetadata("forReversed.kt")
+        public void testForReversed() throws Exception {
+            runTest("testData/codeInsight/postfix/forReversed.kt");
         }
 
         @TestMetadata("if.kt")

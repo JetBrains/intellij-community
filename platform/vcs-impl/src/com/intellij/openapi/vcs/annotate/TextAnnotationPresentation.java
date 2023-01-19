@@ -23,6 +23,7 @@ import java.util.List;
 
 public interface TextAnnotationPresentation {
   int getAnnotationLine(int editorLine);
+  int getAnnotationLine(int editorLine, boolean approximate);
   EditorFontType getFontType(int line);
   ColorKey getColor(int line);
   List<AnAction> getActions(int line);

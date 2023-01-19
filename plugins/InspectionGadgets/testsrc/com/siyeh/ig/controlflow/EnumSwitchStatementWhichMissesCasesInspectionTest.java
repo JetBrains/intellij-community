@@ -95,101 +95,107 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
   }
 
   public void testDfaFullyCovered() {
-    doTest("enum E {A, B, C}\n" +
-           "\n" +
-           "class X {\n" +
-           "  void m(E e) {\n" +
-           "    if(e == E.C) return;\n" +
-           "    switch ((e)) {\n" +
-           "      case A:\n" +
-           "      case B:\n" +
-           "    }\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             enum E {A, B, C}
+
+             class X {
+               void m(E e) {
+                 if(e == E.C) return;
+                 switch ((e)) {
+                   case A:
+                   case B:
+                 }
+               }
+             }""");
   }
 
   public void testDfaNotCovered() {
-    doTest("enum E {A, B, C}\n" +
-           "\n" +
-           "class X {\n" +
-           "  void m(E e) {\n" +
-           "    if(e == E.C || e == E.B) return;\n" +
-           "    /*'switch' statement on enum type 'E' misses case 'A'*/switch/**/ (e) {\n" +
-           "    }\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             enum E {A, B, C}
+
+             class X {
+               void m(E e) {
+                 if(e == E.C || e == E.B) return;
+                 /*'switch' statement on enum type 'E' misses case 'A'*/switch/**/ (e) {
+                 }
+               }
+             }""");
   }
 
   public void testDfaPossibleValues() {
-    doTest("enum E {A, B, C}\n" +
-           "\n" +
-           "class X {\n" +
-           "  void m(E e) {\n" +
-           "    if(e == E.A || e == E.B) {\n" +
-           "      switch (e) {\n" +
-           "        case A:\n" +
-           "        case B:\n" +
-           "      }\n" +
-           "    }\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             enum E {A, B, C}
+
+             class X {
+               void m(E e) {
+                 if(e == E.A || e == E.B) {
+                   switch (e) {
+                     case A:
+                     case B:
+                   }
+                 }
+               }
+             }""");
   }
 
   public void testDfaPossibleValuesNotCovered() {
-    doTest("enum E {A, B, C}\n" +
-           "\n" +
-           "class X {\n" +
-           "  void m(E e) {\n" +
-           "    if(e == E.A || e == E.B) {\n" +
-           "      /*'switch' statement on enum type 'E' misses case 'B'*/switch/**/ (e) {\n" +
-           "        case A:\n" +
-           "      }\n" +
-           "    }\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             enum E {A, B, C}
+
+             class X {
+               void m(E e) {
+                 if(e == E.A || e == E.B) {
+                   /*'switch' statement on enum type 'E' misses case 'B'*/switch/**/ (e) {
+                     case A:
+                   }
+                 }
+               }
+             }""");
   }
   
   public void testDfaJoinEphemeral() {
-    doTest("enum X {A, B, C}\n" +
-           "\n" +
-           "class Test {\n" +
-           "  void test(X x, boolean b, boolean c) {\n" +
-           "    if (b) {\n" +
-           "      if (x == null || x == X.A || x == X.B || x == X.C) return;\n" +
-           "    } else if (c) {\n" +
-           "      if (x == null || x == X.A) return;\n" +
-           "    } else {\n" +
-           "      if (x == null || x == X.B) return;\n" +
-           "    }\n" +
-           "    /*'switch' statement on enum type 'X' misses cases: 'A', 'B', and 'C'*/switch/**/ (x) {\n" +
-           "    }\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             enum X {A, B, C}
+
+             class Test {
+               void test(X x, boolean b, boolean c) {
+                 if (b) {
+                   if (x == null || x == X.A || x == X.B || x == X.C) return;
+                 } else if (c) {
+                   if (x == null || x == X.A) return;
+                 } else {
+                   if (x == null || x == X.B) return;
+                 }
+                 /*'switch' statement on enum type 'X' misses cases: 'A', 'B', and 'C'*/switch/**/ (x) {
+                 }
+               }
+             }""");
   }
 
   public void testJava14() {
-    doTest("enum E {A, B, C}\n" +
-           "\n" +
-           "class X {\n" +
-           "  void m(E e) {\n" +
-           "    switch(e) {\n" +
-           "      case A -> {}\n" +
-           "      case B -> {}\n" +
-           "      case C -> {}\n" +
-           "    }\n" +
-           "    /*'switch' statement on enum type 'E' misses case 'C'*/switch/**/(e) {\n" +
-           "      case A -> {}\n" +
-           "      case B -> {}\n" +
-           "    }\n" +
-           "    /*'switch' statement on enum type 'E' misses case 'C'*/switch/**/(e) {\n" +
-           "      case A, B -> {}\n" +
-           "    }\n" +
-           "    /*'switch' statement on enum type 'E' misses case 'C'*/switch/**/(e) {\n" +
-           "      case A, B:break;\n" +
-           "    }\n" +
-           "    \n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             enum E {A, B, C}
+
+             class X {
+               void m(E e) {
+                 switch(e) {
+                   case A -> {}
+                   case B -> {}
+                   case C -> {}
+                 }
+                 /*'switch' statement on enum type 'E' misses case 'C'*/switch/**/(e) {
+                   case A -> {}
+                   case B -> {}
+                 }
+                 /*'switch' statement on enum type 'E' misses case 'C'*/switch/**/(e) {
+                   case A, B -> {}
+                 }
+                 /*'switch' statement on enum type 'E' misses case 'C'*/switch/**/(e) {
+                   case A, B:break;
+                 }
+                \s
+               }
+             }""");
   }
 
 

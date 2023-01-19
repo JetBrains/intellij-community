@@ -25,7 +25,7 @@ public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTempl
           ContainerUtil.newHashSet(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition(),
                                    new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNumberExpressionCondition(),
                                    new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition(
-                                     CommonClassNames.JAVA_LANG_ITERABLE)),
+                                     CommonClassNames.JAVA_UTIL_LIST)),
           LanguageLevel.JDK_1_3, true, provider);
   }
 

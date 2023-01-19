@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.ml.CompletionMlRankingIcons
 import com.intellij.completion.ml.MLCompletionBundle
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.completion.ml.settings.MLCompletionSettingsCollector
@@ -23,9 +24,9 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconManager
+import com.intellij.ui.IconReplacer
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.IconUtil
-import com.intellij.completion.ml.CompletionMlRankingIcons
 import java.awt.Rectangle
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
@@ -132,6 +133,10 @@ class ItemsDecoratorInitializer : LookupTracker() {
 
     override fun getDelegate(): Icon? = baseIcon
     override fun withDelegate(icon: Icon?): LookupCellRenderer.IconDecorator = LeftDecoratedIcon(leftIcon, icon)
+
+    override fun replaceBy(replacer: IconReplacer): LeftDecoratedIcon {
+      return LeftDecoratedIcon(replacer.replaceIcon(leftIcon), replacer.replaceIcon(baseIcon))
+    }
   }
 
   private class StarOpinionNotification : Notification(

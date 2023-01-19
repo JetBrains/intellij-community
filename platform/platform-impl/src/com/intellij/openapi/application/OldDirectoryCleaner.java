@@ -117,23 +117,8 @@ public final class OldDirectoryCleaner {
     }
   }
 
-  private static class DirectoryGroup {
-    private final @NlsSafe String name;
-    private final List<Path> directories;
-    private final long lastUpdated;
-    private final long size;
-    private final int entriesToDelete;
-    private final boolean isInstalled;
-
-    private DirectoryGroup(String name, List<Path> directories, long lastUpdated, long size, int entriesToDelete, boolean isInstalled) {
-      this.name = name;
-      this.directories = directories;
-      this.lastUpdated = lastUpdated;
-      this.size = size;
-      this.entriesToDelete = entriesToDelete;
-      this.isInstalled = isInstalled;
-    }
-
+  private record DirectoryGroup(@NlsSafe String name, List<Path> directories, long lastUpdated, long size, int entriesToDelete,
+                                boolean isInstalled) {
     @Override
     public String toString() {
       return "{" + directories + ' ' + lastUpdated + '}';
@@ -379,13 +364,13 @@ public final class OldDirectoryCleaner {
 
       @Override
       public Object getValueAt(int row, int column) {
-        switch (column) {
-          case 0:  return mySelected.get(row);
-          case 1:  return myGroups.get(row).name;
-          case 2:  return DateFormatUtil.formatBetweenDates(myGroups.get(row).lastUpdated, myNow);
-          case 3:  return StringUtil.formatFileSize(myGroups.get(row).size);
-          default: return null;
-        }
+        return switch (column) {
+          case 0 -> mySelected.get(row);
+          case 1 -> myGroups.get(row).name;
+          case 2 -> DateFormatUtil.formatBetweenDates(myGroups.get(row).lastUpdated, myNow);
+          case 3 -> StringUtil.formatFileSize(myGroups.get(row).size);
+          default -> null;
+        };
       }
 
       @Override

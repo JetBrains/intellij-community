@@ -52,50 +52,44 @@ public final class GitChangesParser {
 
     FileStatus status;
     switch (statusInfo.getType()) {
-      case NEW:
+      case NEW -> {
         before = null;
         status = FileStatus.ADDED;
         after = GitContentRevision.createRevision(filePath, thisRevision, project);
-        break;
-      case MODIFICATION:
+      }
+      case MODIFICATION -> {
         status = FileStatus.MODIFIED;
         before = GitContentRevision.createRevision(filePath, parentRevision, project);
         after = GitContentRevision.createRevision(filePath, thisRevision, project);
-        break;
-      case DELETED:
+      }
+      case DELETED -> {
         status = FileStatus.DELETED;
         before = GitContentRevision.createRevision(filePath, parentRevision, project);
         after = null;
-        break;
-      case MOVED:
+      }
+      case MOVED -> {
         status = FileStatus.MODIFIED;
         String secondPath = statusInfo.getSecondPath();
         final FilePath filePathAfterRename = secondPath == null ? filePath : GitContentRevision.createPath(vcsRoot, secondPath);
         before = GitContentRevision.createRevision(filePath, parentRevision, project);
         after = GitContentRevision.createRevision(filePathAfterRename, thisRevision, project);
-        break;
-      default:
-        throw new AssertionError("Unknown file status: " + statusInfo);
+      }
+      default -> throw new AssertionError("Unknown file status: " + statusInfo);
     }
     return new Change(before, after, status);
   }
 
   @NotNull
   static Change.Type getChangeType(@NotNull GitChangeType type) {
-    switch (type) {
-      case ADDED:
-        return Change.Type.NEW;
-      case TYPE_CHANGED:
-      case MODIFIED:
-        return Change.Type.MODIFICATION;
-      case DELETED:
-        return Change.Type.DELETED;
-      case COPIED:
-      case RENAMED:
-        return Change.Type.MOVED;
-      default:
+    return switch (type) {
+      case ADDED -> Change.Type.NEW;
+      case TYPE_CHANGED, MODIFIED -> Change.Type.MODIFICATION;
+      case DELETED -> Change.Type.DELETED;
+      case COPIED, RENAMED -> Change.Type.MOVED;
+      default -> {
         LOG.error("Unknown git change type: " + type);
-        return Change.Type.MODIFICATION;
-    }
+        yield Change.Type.MODIFICATION;
+      }
+    };
   }
 }

@@ -3,28 +3,12 @@
 package org.jetbrains.kotlin.idea.completion.keywords
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import org.jetbrains.kotlin.idea.completion.breakOrContinueExpressionItems
 import org.jetbrains.kotlin.idea.completion.handlers.createKeywordConstructLookupElement
 import org.jetbrains.kotlin.idea.completion.handlers.withLineIndentAdjuster
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.psiUtil.prevLeaf
 
-@OptIn(ExperimentalStdlibApi::class)
 object DefaultCompletionKeywordHandlerProvider : CompletionKeywordHandlerProvider<CompletionKeywordHandler.NO_CONTEXT>() {
-    private val BREAK_HANDLER =
-        completionKeywordHandler<CompletionKeywordHandler.NO_CONTEXT>(KtTokens.BREAK_KEYWORD) { _, expression, _, _ ->
-            if (expression != null) {
-                breakOrContinueExpressionItems(expression, KtTokens.BREAK_KEYWORD.value)
-            } else emptyList()
-        }
-
-    private val CONTINUE_HANDLER =
-        completionKeywordHandler<CompletionKeywordHandler.NO_CONTEXT>(KtTokens.CONTINUE_KEYWORD) { _, expression, _, _ ->
-            if (expression != null) {
-                breakOrContinueExpressionItems(expression, KtTokens.CONTINUE_KEYWORD.value)
-            } else emptyList()
-        }
-
     private val CONTRACT_HANDLER = completionKeywordHandler<CompletionKeywordHandler.NO_CONTEXT>(KtTokens.CONTRACT_KEYWORD) { _, _, _, _ ->
         emptyList()
     }
@@ -83,12 +67,10 @@ object DefaultCompletionKeywordHandlerProvider : CompletionKeywordHandlerProvide
         }
 
     override val handlers = CompletionKeywordHandlers(
-        BREAK_HANDLER, CONTINUE_HANDLER,
         GETTER_HANDLER, SETTER_HANDLER,
         CONTRACT_HANDLER,
     )
 }
-
 
 private val CompletionParameters.isUseSiteAnnotationTarget
     get() = position.prevLeaf()?.node?.elementType == KtTokens.AT

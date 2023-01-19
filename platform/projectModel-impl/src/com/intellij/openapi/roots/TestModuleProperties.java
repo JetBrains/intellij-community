@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,10 @@ import org.jetbrains.annotations.Nullable;
 public abstract class TestModuleProperties {
   public static TestModuleProperties getInstance(@NotNull Module module) {
     return module.getService(TestModuleProperties.class);
+  }
+
+  public static boolean testModulePropertiesBridgeEnabled() {
+    return Registry.is("workspace.model.test.properties.bridge");
   }
 
   @Nullable

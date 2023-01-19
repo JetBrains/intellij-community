@@ -280,7 +280,7 @@ infix fun <X: Number, Y: Number> X.to(y: Y): Coordinates<X, Y> = Coordinates(thi
 open class MinMax<X: Number, Y: Number> {
 
   lateinit var xMin: X
-  val xMinInitialized
+  private val xMinInitialized
     get() = this::xMin.isInitialized
 
   lateinit var xMax: X
@@ -288,7 +288,7 @@ open class MinMax<X: Number, Y: Number> {
     get() = this::xMax.isInitialized
 
   lateinit var yMin: Y
-  val yMinInitialized
+  private val yMinInitialized
     get() = this::yMin.isInitialized
 
   lateinit var yMax: Y
@@ -305,12 +305,12 @@ open class MinMax<X: Number, Y: Number> {
     processY(y)
   }
 
-  fun processX(x: X) {
+  private fun processX(x: X) {
     xMin = if (!xMinInitialized || xMin.toDouble() > x.toDouble()) x else xMin
     xMax = if (!xMaxInitialized || xMax.toDouble() < x.toDouble()) x else xMax
   }
 
-  fun processY(y: Y) {
+  private fun processY(y: Y) {
     yMin = if (!yMinInitialized || yMin.toDouble() > y.toDouble()) y else yMin
     yMax = if (!yMaxInitialized || yMax.toDouble() < y.toDouble()) y else yMax
   }

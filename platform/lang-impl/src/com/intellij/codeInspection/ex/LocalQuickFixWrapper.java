@@ -10,6 +10,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsActions;
@@ -82,8 +83,15 @@ public class LocalQuickFixWrapper extends QuickFixAction {
 
         removeElements(refElements, project, myToolWrapper);
       };
+      Runnable fixApplicator = () -> ((BatchQuickFix)myFix).applyFix(project, descriptors, collectedElementsToIgnore, refreshViews);
+      if (myFix.startInWriteAction()) {
+        WriteCommandAction.writeCommandAction(project).run(() -> {
+          fixApplicator.run();
+        });
+      } else {
+        fixApplicator.run();
+      }
 
-      ((BatchQuickFix)myFix).applyFix(project, descriptors, collectedElementsToIgnore, refreshViews);
       return;
     }
 

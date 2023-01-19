@@ -41,9 +41,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class GroovyCompilerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final Project myProject;
   private JPanel myMainPanel;

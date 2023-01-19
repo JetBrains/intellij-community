@@ -25,6 +25,8 @@ import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
@@ -54,7 +56,7 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
   private static void calculateFeaturesForUsage(@NotNull Editor editor,
                                                 @NotNull PsiFile file,
                                                 @NotNull Project project,
-                                                @NotNull Ref<PsiFile> featuresDump) {
+                                                @NotNull Ref<? super PsiFile> featuresDump) {
     ProgressManager.getInstance().run(new Task.Modal(project, UsageViewBundle.message(
       "similar.usages.show.usage.features.action.calculating.usage.features.progress.title"), true) {
       @Override
@@ -62,7 +64,9 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
         final Bag features = new Bag();
         Ref<PsiElement> element = new Ref<>();
         ApplicationManager.getApplication().runReadAction(() -> {
-          element.set(file.findElementAt(editor.getCaretModel().getOffset()));
+          PsiReference referenceAt = file.findReferenceAt(editor.getCaretModel().getOffset());
+          if (referenceAt == null) return;
+          element.set(referenceAt.getElement());
           if (!element.isNull()) {
             UsageSimilarityFeaturesProvider.EP_NAME.forEachExtensionSafe(provider -> {
                                                                            features.addAll(provider.getFeatures(element.get()));
@@ -70,6 +74,9 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
             );
           }
         });
+        if (element.isNull()) {
+          return;
+        }
         writeCommandAction(project).compute(() -> {
           ScratchFileService fileService = ScratchFileService.getInstance();
           try {
@@ -79,7 +86,8 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
             featuresDump.set(psiFile);
             final Document document = psiFile != null ? PsiDocumentManager.getInstance(project).getDocument(psiFile) : null;
             if (document != null) {
-              document.insertString(document.getTextLength(), StringUtil.join(features.getBag().object2IntEntrySet(), ",\n"));
+              document.insertString(document.getTextLength(), StringUtil.join(features.getBag().object2IntEntrySet().stream().sorted(
+                Map.Entry.comparingByKey()).collect(Collectors.toList()), ",\n"));
               PsiDocumentManager.getInstance(project).commitDocument(document);
               psiFile.navigate(true);
             }

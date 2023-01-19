@@ -9,7 +9,10 @@ import org.jetbrains.annotations.Nullable;
  * Allows an action to retrieve information about the context in which it was invoked.
  *
  * @see AnActionEvent#getDataContext()
+ * @see com.intellij.openapi.actionSystem.CommonDataKeys
+ * @see com.intellij.openapi.actionSystem.LangDataKeys
  * @see com.intellij.openapi.actionSystem.PlatformDataKeys
+ * @see com.intellij.openapi.actionSystem.PlatformCoreDataKeys
  * @see DataKey
  * @see com.intellij.ide.DataManager
  * @see DataProvider
@@ -19,7 +22,7 @@ public interface DataContext {
   /**
    * Returns the object corresponding to the specified data identifier. Some of the supported
    * data identifiers are defined in the {@link com.intellij.openapi.actionSystem.PlatformDataKeys} class.
-   *
+   * <br>
    * <b>NOTE:</b> For implementation only, prefer {@link DataContext#getData(DataKey)} in client code.
    *
    * @param dataId the data identifier for which the value is requested.

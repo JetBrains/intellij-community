@@ -27,20 +27,6 @@ public final class DeviceIdManager {
   private static final String DEVICE_ID_SHARED_FILE = "PermanentDeviceId";
   private static final String DEVICE_ID_PREFERENCE_KEY = "device_id";
 
-  /**
-   * @deprecated Use {@link DeviceIdManager#getOrGenerateId(DeviceIdToken, String)} with purpose specific id
-   */
-  @Deprecated(forRemoval = true)
-  public static String getOrGenerateId() {
-    try {
-      return getOrGenerateId(null, UNDEFINED);
-    }
-    catch (InvalidDeviceIdTokenException e) {
-      LOG.error(e);
-    }
-    return "";
-  }
-
   public static String getOrGenerateId(@Nullable DeviceIdToken token, @NotNull String recorderId) throws InvalidDeviceIdTokenException {
     assertAllowed(token, recorderId);
 

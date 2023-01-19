@@ -171,6 +171,10 @@ internal sealed class ChangeEntry {
     val newData: WorkspaceEntityData<out WorkspaceEntity>
   ) : ChangeEntry()
 
+  /**
+   * Fields about children or parents contain information only about changes on this particular entity. This means, that if some entity
+   *   is removed, information about its removal is NOT added to the parent using this mechanism
+   */
   data class ReplaceEntity(
     val oldData: WorkspaceEntityData<out WorkspaceEntity>,
     val oldParents: Map<ConnectionId, ParentEntityId>,

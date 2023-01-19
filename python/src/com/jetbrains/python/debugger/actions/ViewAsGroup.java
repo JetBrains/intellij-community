@@ -79,6 +79,11 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     public PyNodeRenderer getRenderer() {
       return myPyNodeRenderer;
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   public ViewAsGroup() {

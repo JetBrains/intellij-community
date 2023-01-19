@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.AbstractScriptElementBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
 import java.util.function.Consumer
 
+@ApiStatus.NonExtendable
 abstract class AbstractGradleBuildScriptBuilderCore<BSB : GradleBuildScriptBuilderCore<BSB>>(
   override val gradleVersion: GradleVersion
 ) : GradleBuildScriptBuilderCore<BSB>, AbstractScriptElementBuilder() {

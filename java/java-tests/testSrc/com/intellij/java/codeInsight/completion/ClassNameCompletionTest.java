@@ -38,9 +38,10 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
   @NeedsIndex.Full
   public void testImportAfterNew() {
     createClass("package pack; public class AAClass {}");
-    createClass("package pack; public class WithInnerAClass{\n" +
-                "  public static class Inner{}\n" +
-                "}");
+    createClass("""
+                  package pack; public class WithInnerAClass{
+                    public static class Inner{}
+                  }""");
 
     String path = "/importAfterNew";
 
@@ -110,10 +111,11 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
   private void addClassesForAfterNewThrowable() {
     createClass("public class OurException extends Throwable{}");
-    createClass("public class OurNotException {\n" +
-                "  public static class InnerException extends Throwable{}\n" +
-                "  public static class InnerNonException{}\n" +
-                "}");
+    createClass("""
+                  public class OurNotException {
+                    public static class InnerException extends Throwable{}
+                    public static class InnerNonException{}
+                  }""");
   }
 
   @NeedsIndex.Full
@@ -311,27 +313,30 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
   @NeedsIndex.Full
   public void testPublicClassInPrivateSuper() {
-    myFixture.addClass("package pkg;\n" +
-                       "public class Sub extends Super {\n" +
-                       "}\n" +
-                       "class Super {\n" +
-                       "  public static class Foo {\n" +
-                       "  }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package pkg;
+                         public class Sub extends Super {
+                         }
+                         class Super {
+                           public static class Foo {
+                           }
+                         }""");
     myFixture.configureByText("Main.java",
-                              "import pkg.*;\n" +
-                              "public class Main {\n" +
-                              "  public static void main(String[] args) {\n" +
-                              "    Sub.F<caret>\n" +
-                              "  }\n" +
-                              "}");
+                              """
+                                import pkg.*;
+                                public class Main {
+                                  public static void main(String[] args) {
+                                    Sub.F<caret>
+                                  }
+                                }""");
     myFixture.completeBasic();
-    myFixture.checkResult("import pkg.*;\n" +
-                          "public class Main {\n" +
-                          "  public static void main(String[] args) {\n" +
-                          "    Sub.Foo\n" +
-                          "  }\n" +
-                          "}");
+    myFixture.checkResult("""
+                            import pkg.*;
+                            public class Main {
+                              public static void main(String[] args) {
+                                Sub.Foo
+                              }
+                            }""");
   }
 
   private void doJavaTest(char toType) {

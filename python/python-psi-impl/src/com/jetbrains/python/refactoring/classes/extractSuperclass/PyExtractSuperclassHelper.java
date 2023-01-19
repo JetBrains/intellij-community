@@ -112,7 +112,7 @@ public final class PyExtractSuperclassHelper {
     return ContainerUtil.exists(clazz.getSuperClassExpressions(), o -> PyNames.OBJECT.equals(o.getName()));
   }
 
-  private static boolean isRefactoredClassInBackedFile(VirtualFile targetFile, PyClass pyClass) {
+  private static boolean isRefactoredClassInBackedFile(@Nullable VirtualFile targetFile, @NotNull PyClass pyClass) {
     VirtualFile file = pyClass.getContainingFile().getVirtualFile();
     return file instanceof BackedVirtualFile &&
            Comparing.equal(((BackedVirtualFile)file).getOriginFile(), targetFile);

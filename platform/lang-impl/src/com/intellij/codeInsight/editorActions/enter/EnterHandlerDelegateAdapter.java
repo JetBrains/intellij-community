@@ -7,9 +7,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class EnterHandlerDelegateAdapter implements EnterHandlerDelegate {
 
   @Override

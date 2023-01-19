@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,11 +136,14 @@ public final class ClassUtils {
     if (aClass == null) {
       return false;
     }
-    if (isImmutableClass(aClass)) return true;
-    return JCiPUtil.isImmutable(aClass, checkDocComment);
+    return isImmutableClass(aClass, checkDocComment);
   }
 
   public static boolean isImmutableClass(@NotNull PsiClass aClass) {
+    return isImmutableClass(aClass, false);
+  }
+
+  private static boolean isImmutableClass(@NotNull PsiClass aClass, boolean checkDocComment) {
     if (aClass.isRecord()) {
       return true;
     }
@@ -149,13 +152,16 @@ public final class ClassUtils {
         (immutableTypes.contains(qualifiedName) || qualifiedName.startsWith("com.google.common.collect.Immutable"))) {
       return true;
     }
+    if (JCiPUtil.isImmutable(aClass, checkDocComment)) {
+      return true;
+    }
 
     return aClass.hasModifierProperty(PsiModifier.FINAL) &&
-           Arrays.stream(aClass.getAllFields())
-             .filter(field -> !field.hasModifierProperty(PsiModifier.STATIC))
-             .allMatch(field -> field.hasModifierProperty(PsiModifier.FINAL) &&
-                                (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) ||
-                                 immutableTypes.contains(field.getType().getCanonicalText())));
+           ContainerUtil.and(aClass.getAllFields(),
+                             field -> !field.hasModifierProperty(PsiModifier.STATIC) &&
+                                      field.hasModifierProperty(PsiModifier.FINAL) &&
+                                      (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) ||
+                                       immutableTypes.contains(field.getType().getCanonicalText())));
   }
 
   public static boolean inSamePackage(@Nullable PsiElement element1, @Nullable PsiElement element2) {
@@ -347,11 +353,12 @@ public final class ClassUtils {
                                                             !m.hasModifierProperty(PsiModifier.PRIVATE) &&
                                                             !m.hasModifierProperty(PsiModifier.STATIC));
     }
-    if (getIfOnlyInvisibleConstructors(aClass).length == 0) {
+    final PsiMethod[] constructors = getIfOnlyInvisibleConstructors(aClass);
+    if (constructors.length != 1) {
       return false;
     }
     final PsiField selfInstance = getIfOneStaticSelfInstance(aClass);
-    return selfInstance != null && newOnlyAssignsToStaticSelfInstance(getIfOnlyInvisibleConstructors(aClass)[0], selfInstance);
+    return selfInstance != null && newOnlyAssignsToStaticSelfInstance(constructors[0], selfInstance);
   }
 
   private static PsiField getIfOneStaticSelfInstance(PsiClass aClass) {
@@ -400,7 +407,7 @@ public final class ClassUtils {
 
   private static boolean newOnlyAssignsToStaticSelfInstance(PsiMethod method, final PsiField field) {
     if (field instanceof LightElement) return true;
-    final Query<PsiReference> search = MethodReferencesSearch.search(method, field.getUseScope(), false);
+    final Query<PsiReference> search = MethodReferencesSearch.search(method, method.getUseScope(), false);
     final NewOnlyAssignedToFieldProcessor processor = new NewOnlyAssignedToFieldProcessor(field);
     search.forEach(processor);
     return processor.isNewOnlyAssignedToField();

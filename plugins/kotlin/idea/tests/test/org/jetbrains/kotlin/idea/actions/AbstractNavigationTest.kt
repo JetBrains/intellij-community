@@ -15,7 +15,7 @@ import java.io.File
 abstract class AbstractNavigationTest : KotlinLightCodeInsightFixtureTestCase() {
     protected abstract fun getSourceAndTargetElements(editor: Editor, file: PsiFile): GotoTargetHandler.GotoData?
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     protected open fun configureExtra(mainFileBaseName: String, mainFileText: String) {
 

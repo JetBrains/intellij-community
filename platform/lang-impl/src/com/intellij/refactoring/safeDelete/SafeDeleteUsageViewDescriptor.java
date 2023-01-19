@@ -8,13 +8,10 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class SafeDeleteUsageViewDescriptor implements UsageViewDescriptor {
-  private final PsiElement[] myElementsToDelete;
+  private final PsiElement @NotNull [] myElementsToDelete;
 
-  public SafeDeleteUsageViewDescriptor(PsiElement[] elementsToDelete) {
+  SafeDeleteUsageViewDescriptor(PsiElement @NotNull [] elementsToDelete) {
     myElementsToDelete = elementsToDelete;
   }
 

@@ -16,8 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class PackagingValidationTestCase extends PackagingElementsTestCase {
-  protected PackagingValidationTestCase() {
+  @Override
+  protected void setUp() throws Exception {
     mySetupModule = true;
+    super.setUp();
   }
 
   protected MockArtifactProblemsHolder validate(CompositePackagingElement<?> root, final ArtifactType artifactType) {

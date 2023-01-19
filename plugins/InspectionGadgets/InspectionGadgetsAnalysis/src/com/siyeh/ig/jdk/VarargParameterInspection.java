@@ -79,7 +79,7 @@ public class VarargParameterInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)element.getParent();
       final PsiParameterList parameterList = method.getParameterList();

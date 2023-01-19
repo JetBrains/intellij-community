@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.find.impl;
 
 import com.intellij.find.*;
@@ -68,7 +67,6 @@ public final class FindInProjectUtil {
   private FindInProjectUtil() {}
 
   public static void setDirectoryName(@NotNull FindModel model, @NotNull DataContext dataContext) {
-    PsiElement psiElement = null;
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -76,6 +74,7 @@ public final class FindInProjectUtil {
       EditorSearchSession session = EditorSearchSession.SESSION_KEY.getData(dataContext);
       if (session != null) editor = session.getEditor();
     }
+    PsiElement psiElement = null;
     if (project != null && editor == null && !DumbServiceImpl.getInstance(project).isDumb()) {
       try {
         psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -251,12 +250,12 @@ public final class FindInProjectUtil {
     if (virtualFile.getFileType().isBinary()) return true; // do not decompile .class files
     Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
     if (document == null) return true;
-    int[] offsetRef = {0};
     ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
     if (current == null) throw new IllegalStateException("must find usages under progress");
     ProgressIndicator indicator = ProgressWrapper.unwrapAll(current);
     TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator);
     int before;
+    int[] offsetRef = {0};
     do {
       tooManyUsagesStatus.pauseProcessingIfTooManyUsages(); // wait for user out of read action
       before = offsetRef[0];
@@ -387,17 +386,14 @@ public final class FindInProjectUtil {
     presentation.setUsageTypeFilteringAvailable(true);
     if (findModel.isReplaceState() && findModel.isRegularExpressions()) {
       presentation.setSearchPattern(findModel.compileRegExp());
-      try {
-        presentation.setReplacePattern(Pattern.compile(findModel.getStringToReplace()));
-      }
-      catch (Exception e) {
-        presentation.setReplacePattern(null);
-      }
+      presentation.setReplaceString(findModel.getStringToReplace());
     }
     else {
       presentation.setSearchPattern(null);
-      presentation.setReplacePattern(null);
+      presentation.setReplaceString(null);
     }
+    presentation.setCaseSensitive(findModel.isCaseSensitive());
+    presentation.setPreserveCase(findModel.isPreserveCase());
     presentation.setReplaceMode(findModel.isReplaceState());
   }
 
@@ -547,9 +543,15 @@ public final class FindInProjectUtil {
       return ActionManager.getInstance().getKeyboardShortcut("FindInPath");
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
+    public @Nullable Object getData(@NotNull String dataId) {
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)slowId -> getSlowData(slowId);
+      }
+      return null;
+    }
+
+    private @Nullable Object getSlowData(@NotNull String dataId) {
       if (UsageView.USAGE_SCOPE.is(dataId)) {
         return getScopeFromModel(myProject, myFindModel);
       }
@@ -648,27 +650,14 @@ public final class FindInProjectUtil {
   }
 
   public static @Nls(capitalization = Title) @NotNull String getPresentableName(@NotNull FindModel.SearchContext searchContext) {
-    @PropertyKey(resourceBundle = "messages.FindBundle") String messageKey = null;
-    switch (searchContext) {
-      case ANY:
-        messageKey = "find.context.anywhere.scope.label";
-        break;
-      case EXCEPT_COMMENTS:
-        messageKey = "find.context.except.comments.scope.label";
-        break;
-      case EXCEPT_STRING_LITERALS:
-        messageKey = "find.context.except.literals.scope.label";
-        break;
-      case EXCEPT_COMMENTS_AND_STRING_LITERALS:
-        messageKey = "find.context.except.comments.and.literals.scope.label";
-        break;
-      case IN_COMMENTS:
-        messageKey = "find.context.in.comments.scope.label";
-        break;
-      case IN_STRING_LITERALS:
-        messageKey = "find.context.in.literals.scope.label";
-        break;
-    }
+    @PropertyKey(resourceBundle = "messages.FindBundle") String messageKey = switch (searchContext) {
+      case ANY -> "find.context.anywhere.scope.label";
+      case EXCEPT_COMMENTS -> "find.context.except.comments.scope.label";
+      case EXCEPT_STRING_LITERALS -> "find.context.except.literals.scope.label";
+      case EXCEPT_COMMENTS_AND_STRING_LITERALS -> "find.context.except.comments.and.literals.scope.label";
+      case IN_COMMENTS -> "find.context.in.comments.scope.label";
+      case IN_STRING_LITERALS -> "find.context.in.literals.scope.label";
+    };
     return FindBundle.message(messageKey);
   }
 }

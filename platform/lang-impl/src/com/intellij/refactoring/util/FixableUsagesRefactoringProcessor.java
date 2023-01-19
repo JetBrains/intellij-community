@@ -47,7 +47,7 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
     return usageArray;
   }
 
-  protected abstract void findUsages(@NotNull List<FixableUsageInfo> usages);
+  protected abstract void findUsages(@NotNull List<? super FixableUsageInfo> usages);
 
   protected static void checkConflicts(final Ref<UsageInfo[]> refUsages, final MultiMap<PsiElement,String> conflicts) {
     for (UsageInfo info : refUsages.get()) {

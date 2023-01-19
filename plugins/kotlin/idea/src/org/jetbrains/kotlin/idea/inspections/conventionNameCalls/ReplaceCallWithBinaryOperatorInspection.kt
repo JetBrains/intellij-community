@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -41,6 +42,7 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.typeUtil.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class ReplaceCallWithBinaryOperatorInspection : AbstractApplicabilityBasedInspection<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java
@@ -121,20 +123,20 @@ class ReplaceCallWithBinaryOperatorInspection : AbstractApplicabilityBasedInspec
         val argument = callExpression.valueArguments.single().getArgumentExpression() ?: return null
         val receiver = element.receiverExpression
 
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         return when (operation) {
             KtTokens.EXCLEQ -> {
                 val prefixExpression = element.getWrappingPrefixExpressionIfAny() ?: return null
-                val newExpression = factory.createExpressionByPattern("$0 != $1", receiver, argument, reformat = false)
+                val newExpression = psiFactory.createExpressionByPattern("$0 != $1", receiver, argument, reformat = false)
                 prefixExpression to newExpression
             }
             in OperatorConventions.COMPARISON_OPERATIONS -> {
                 val binaryParent = element.parent as? KtBinaryExpression ?: return null
-                val newExpression = factory.createExpressionByPattern("$0 ${operation.value} $1", receiver, argument, reformat = false)
+                val newExpression = psiFactory.createExpressionByPattern("$0 ${operation.value} $1", receiver, argument, reformat = false)
                 binaryParent to newExpression
             }
             else -> {
-                val newExpression = factory.createExpressionByPattern("$0 ${operation.value} $1", receiver, argument, reformat = false)
+                val newExpression = psiFactory.createExpressionByPattern("$0 ${operation.value} $1", receiver, argument, reformat = false)
                 element to newExpression
             }
         }
@@ -145,7 +147,8 @@ class ReplaceCallWithBinaryOperatorInspection : AbstractApplicabilityBasedInspec
 
     private fun operation(calleeExpression: KtSimpleNameExpression): KtSingleValueToken? {
         val identifier = calleeExpression.getReferencedNameAsName()
-        val dotQualified = calleeExpression.parent.parent as? KtDotQualifiedExpression ?: return null
+        val dotQualified =
+          calleeExpression.parents.match(KtCallExpression::class, last = KtDotQualifiedExpression::class) ?: return null
         val isOperatorOrCompatible by lazy {
             (calleeExpression.resolveToCall()?.resultingDescriptor as? FunctionDescriptor)?.isOperatorOrCompatible == true
         }

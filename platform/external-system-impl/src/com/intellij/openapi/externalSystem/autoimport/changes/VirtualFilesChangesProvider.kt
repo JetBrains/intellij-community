@@ -16,8 +16,6 @@ class VirtualFilesChangesProvider(private val isIgnoreInternalChanges: Boolean) 
     eventDispatcher.addListener(listener, parentDisposable)
   }
 
-  override fun isProcessRecursively(): Boolean = false
-
   override fun init() = eventDispatcher.multicaster.init()
 
   override fun apply() = eventDispatcher.multicaster.apply()

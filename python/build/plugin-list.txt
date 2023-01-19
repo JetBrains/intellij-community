@@ -15,7 +15,7 @@ intellij.platform.langInjection
 intellij.properties
 intellij.reStructuredText
 intellij.searchEverywhereMl
-intellij.settingsRepository
+intellij.settingsSync
 intellij.sh
 intellij.statsCollector
 intellij.tasks.core
@@ -23,7 +23,6 @@ intellij.terminal
 intellij.textmate
 intellij.toml
 intellij.vcs.git
-intellij.vcs.git.featuresTrainer
 intellij.vcs.github
 intellij.vcs.hg
 intellij.vcs.svn

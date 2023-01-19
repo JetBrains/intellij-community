@@ -66,6 +66,11 @@ public class IdeaLogRecordFormatter extends Formatter {
       result.append('#');
       pos++;
     }
+    if (!loggerName.startsWith("com.intellij", pos) &&
+        !loggerName.startsWith("com.jetbrains", pos) &&
+        !loggerName.startsWith("org.jetbrains", pos)) {
+      return loggerName;
+    }
     while (true) {
       int nextDot = loggerName.indexOf('.', pos);
       if (nextDot < 0) {

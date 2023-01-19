@@ -24,9 +24,9 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleRootsSerializer
 import com.intellij.workspaceModel.storage.DummyParentEntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleCustomImlDataEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assume.assumeTrue
@@ -135,7 +135,7 @@ class ReloadProjectTest {
       val changedFacet = FacetManager.getInstance(module).getFacetByType(MockFacetType.ID)!!
       assertThat(changedFacet.configuration.data).isEqualTo("changed-data")
 
-      val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+      val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
       assumeTrue(entityStorage.entities(ModuleEntity::class.java).single().entitySource is DummyParentEntitySource)
       assumeTrue(entityStorage.entities(ModuleCustomImlDataEntity::class.java).single().entitySource is JpsImportedEntitySource)
       val moduleOptionsEntity = entityStorage.entities(ExternalSystemModuleOptionsEntity::class.java).single()

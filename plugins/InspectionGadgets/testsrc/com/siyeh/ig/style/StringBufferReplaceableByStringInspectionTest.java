@@ -16,9 +16,10 @@ public class StringBufferReplaceableByStringInspectionTest extends LightJavaInsp
   }
 
   public void testFragment() {
-    String text = "StringBuilder <warning descr=\"'StringBuilder sb' can be replaced with 'String'\">sb</warning> = new StringBuilder();\n" +
-                  "sb.append(\"foo\");\n" +
-                  "System.out.println(sb.toString());";
+    String text = """
+      StringBuilder <warning descr="'StringBuilder sb' can be replaced with 'String'">sb</warning> = new StringBuilder();
+      sb.append("foo");
+      System.out.println(sb.toString());""";
     JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(getProject()).createCodeBlockCodeFragment(text, null, true);
     myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile());
     myFixture.testHighlighting(true, false, false);

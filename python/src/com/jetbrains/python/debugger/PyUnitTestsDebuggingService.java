@@ -24,6 +24,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
@@ -183,12 +184,12 @@ final class PyUnitTestsDebuggingService {
       g.setColor(getInlayBackgroundColor());
       g.fillRect(targetRegion.x, targetRegion.y, targetRegion.width, targetRegion.height);
 
-      g.setColor(UIUtil.getErrorForeground());
+      g.setColor(NamedColorUtil.getErrorForeground());
       g.fillRect(targetRegion.x, targetRegion.y, targetRegion.x + RIGHT_BAR_THICKNESS, calcHeightInPixels(inlay));
 
       g.setFont(getFont(inlay.getEditor()));
 
-      g.setColor(UIUtil.getErrorForeground());
+      g.setColor(NamedColorUtil.getErrorForeground());
       drawStringToInlayBox((myIsTestSetUpFail ? getErrorInTestSetUpCaption() : getFailedTestCaption()) + ":", inlay, g, targetRegion);
 
       g.setColor(UIUtil.getToolTipForeground());

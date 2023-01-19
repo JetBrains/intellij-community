@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.imports
 
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.TestMetadataUtil
+import org.jetbrains.kotlin.idea.test.*
 import java.io.File
 
 abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -41,19 +43,37 @@ abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() 
         val file = myFixture.configureByText(mainFile.name, FileUtil.loadFile(mainFile, true))
         val originalText = file.text
 
-        val settings = KotlinCodeInsightSettings.getInstance()
-        val oldValue = settings.addUnambiguousImportsOnTheFly
-        try {
-            setupAutoImportEnvironment(settings, withAutoImport)
+        withCustomCompilerOptions(originalText, project, module) {
+            val settings = KotlinCodeInsightSettings.getInstance()
+            val oldValue = settings.addUnambiguousImportsOnTheFly
+            ConfigLibraryUtil.configureLibrariesByDirective(module, originalText)
 
-            // same as myFixture.doHighlighting() but allow to change PSI during highlighting (due to addUnambiguousImportsOnTheFly)
-            CodeInsightTestFixtureImpl.instantiateAndRun(
-                getFile(),
-                editor, intArrayOf(),
-                /* canChange */ true
-            )
-        } finally {
-            settings.addUnambiguousImportsOnTheFly = oldValue
+            val addKotlinRuntime = InTextDirectivesUtils.findStringWithPrefixes(originalText, "// WITH_STDLIB") != null
+            if (addKotlinRuntime) {
+                ConfigLibraryUtil.configureKotlinRuntimeAndSdk(module, projectDescriptor.sdk!!)
+            }
+
+            try {
+                setupAutoImportEnvironment(settings, withAutoImport)
+
+                // same as myFixture.doHighlighting() but allow to change PSI during highlighting (due to addUnambiguousImportsOnTheFly)
+                CodeInsightTestFixtureImpl.instantiateAndRun(
+                    getFile(),
+                    editor, intArrayOf(),
+                    /* canChange */ true
+                )
+                ReadAction.nonBlocking {
+                    DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(myFixture.file, myFixture.editor)
+                }.submit(AppExecutorUtil.getAppExecutorService()).get()
+                
+            } finally {
+                ConfigLibraryUtil.unconfigureLibrariesByDirective(module, originalText)
+
+                if (addKotlinRuntime) {
+                    ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(module, projectDescriptor.sdk!!)
+                }
+                settings.addUnambiguousImportsOnTheFly = oldValue
+            }
         }
 
         val expectedResult = if (withAutoImport) {

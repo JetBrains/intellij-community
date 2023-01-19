@@ -9,7 +9,7 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class ArgumentNameHintsTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun check(text: String) {
         myFixture.configureByText("A.kt", text)

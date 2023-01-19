@@ -1,14 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.regexp.inspection.DuplicateCharacterInClassInspection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
@@ -31,6 +33,20 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
             variable = 2;
         }
       }""");
+  }
+
+  public void testIntentionPreviewAfterFileChange() {
+    myFixture.configureByText("Test.java", """
+      class Test {
+          void f(Iterable<String> it) {
+            it<caret>;
+          }
+        }""");
+    IntentionAction action = myFixture.findSingleIntention("Iterate over Iterable<String>");
+    myFixture.type("\b\b");
+    PsiDocumentManager.getInstance(getProject()).commitDocument(myFixture.getFile().getViewProvider().getDocument());
+    // should not be available anymore
+    assertPreviewText(action, null);
   }
 
   public void testStaticImportsIntentionPreview() {
@@ -144,7 +160,7 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
         }
 
       }""");
-    IntentionAction action = myFixture.findSingleIntention("Remove 'IOException' from 'test' throws list");
+    IntentionAction action = myFixture.findSingleIntention("Remove 'IOException' from 'test()' throws list");
     assertPreviewText(action, """
       import java.io.IOException;
 
@@ -160,7 +176,7 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
         }
 
       }""");
-    action = myFixture.findSingleIntention("Add 'IOException' to 'A.test' throws list");
+    action = myFixture.findSingleIntention("Add 'IOException' to 'A.test()' throws list");
     assertPreviewText(action, """
       import java.io.IOException;
 
@@ -201,7 +217,7 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
       """);
   }
 
-  private void assertPreviewText(@NotNull IntentionAction action, @Language("JAVA") @NotNull String expectedText) {
+  private void assertPreviewText(@NotNull IntentionAction action, @Language("JAVA") @Nullable String expectedText) {
     assertEquals(expectedText, myFixture.getIntentionPreviewText(action));
   }
 

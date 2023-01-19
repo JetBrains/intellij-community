@@ -7,9 +7,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.sdk.PythonSdkType
 
-/**
- * @author vlan
- */
 class PyRunAnythingCommandCustomizer : RunAnythingCommandCustomizer() {
   override fun customizeCommandLine(workDirectory: VirtualFile,
                                     dataContext: DataContext,

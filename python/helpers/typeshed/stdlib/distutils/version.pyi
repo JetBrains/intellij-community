@@ -1,6 +1,6 @@
 from _typeshed import Self
 from abc import abstractmethod
-from typing import Pattern
+from re import Pattern
 
 class Version:
     def __eq__(self, other: object) -> bool: ...
@@ -23,7 +23,7 @@ class StrictVersion(Version):
     prerelease: tuple[str, int] | None
     def __init__(self, vstring: str | None = ...) -> None: ...
     def parse(self: Self, vstring: str) -> Self: ...
-    def __str__(self) -> str: ...  # noqa Y029
+    def __str__(self) -> str: ...  # noqa: Y029
     def _cmp(self: Self, other: Self | str) -> bool: ...
 
 class LooseVersion(Version):
@@ -32,5 +32,5 @@ class LooseVersion(Version):
     version: tuple[str | int, ...]
     def __init__(self, vstring: str | None = ...) -> None: ...
     def parse(self: Self, vstring: str) -> Self: ...
-    def __str__(self) -> str: ...  # noqa Y029
+    def __str__(self) -> str: ...  # noqa: Y029
     def _cmp(self: Self, other: Self | str) -> bool: ...

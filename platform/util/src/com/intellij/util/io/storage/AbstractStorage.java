@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 
 public abstract class AbstractStorage implements Disposable, Forceable {
@@ -188,8 +189,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         myDataTable.close();
         newDataTable.close();
 
-        Files.delete(oldDataFile);
-        Files.move(newDataFile, oldDataFile);
+        Files.move(newDataFile, oldDataFile, StandardCopyOption.REPLACE_EXISTING);
         myDataTable = new DataTable(oldDataFile, myContext);
       }
       catch (IOException e) {
@@ -318,7 +318,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       else {
         myDataTable.reclaimSpace(currentCapacity);
 
-        int newCapacity = fixedSize ? requiredLength:myCapacityAllocationPolicy.calculateCapacity(requiredLength);
+        int newCapacity = fixedSize ? requiredLength : myCapacityAllocationPolicy.calculateCapacity(requiredLength);
         if (newCapacity < requiredLength) newCapacity = requiredLength;
         address = myDataTable.allocateSpace(newCapacity);
         myRecordsTable.setAddress(record, address);
@@ -347,9 +347,13 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     withReadLock(() -> {
       final int size = myRecordsTable.getSize(record);
       assert size >= 0;
+      final int capacity = myRecordsTable.getCapacity(record);
+      assert capacity >= 0;
+      assert size <= capacity;
       final long address = myRecordsTable.getAddress(record);
       assert address >= 0;
       assert address + size < myDataTable.getFileSize();
+      assert address + capacity < myDataTable.getFileSize();
     });
   }
 

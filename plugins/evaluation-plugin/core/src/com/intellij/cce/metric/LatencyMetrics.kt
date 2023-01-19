@@ -1,11 +1,11 @@
 package com.intellij.cce.metric
 
+import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
 abstract class LatencyMetric(override val name: String) : Metric {
   private val sample = Sample()
-
   override val value: Double
     get() = compute(sample)
 
@@ -13,6 +13,7 @@ abstract class LatencyMetric(override val name: String) : Metric {
     val fileSample = Sample()
     sessions.stream()
       .flatMap { session -> session.lookups.stream() }
+      .filter(::shouldInclude)
       .forEach {
         this.sample.add(it.latency.toDouble())
         fileSample.add(it.latency.toDouble())
@@ -21,16 +22,39 @@ abstract class LatencyMetric(override val name: String) : Metric {
   }
 
   abstract fun compute(sample: Sample): Double
+
+  open fun shouldInclude(lookup: Lookup) = true
 }
 
-class MaxLatencyMetric : LatencyMetric("Max Latency") {
+class MaxLatencyMetric : LatencyMetric(NAME) {
+  override val valueType = MetricValueType.INT
+
   override fun compute(sample: Sample): Double = sample.max()
 
-  override val valueType = MetricValueType.INT
+  companion object {
+    const val NAME = "Max Latency"
+  }
 }
 
-class MeanLatencyMetric : LatencyMetric("Mean Latency") {
+class TotalLatencyMetric : LatencyMetric(NAME) {
+  override val valueType = MetricValueType.DOUBLE
+  override val showByDefault = false
+
+  override fun compute(sample: Sample): Double = sample.sum()
+
+  companion object {
+    const val NAME = "Total Latency"
+  }
+}
+
+class MeanLatencyMetric(private val filterZeroes: Boolean = false) : LatencyMetric(NAME) {
+  override val valueType = MetricValueType.DOUBLE
+
   override fun compute(sample: Sample): Double = sample.mean()
 
-  override val valueType = MetricValueType.DOUBLE
+  override fun shouldInclude(lookup: Lookup) = if (filterZeroes) lookup.latency > 0 else true
+
+  companion object {
+    const val NAME = "Mean Latency"
+  }
 }

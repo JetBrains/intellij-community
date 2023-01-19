@@ -34,6 +34,8 @@ abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Lo
 
   data class RootObject(val id: Long, val reason: RootReason)
 
+  class NavigationException(message: String) : RuntimeException(message)
+
   abstract val id: Long
 
   abstract fun createRootsIterator(): Iterator<RootObject>
@@ -54,17 +56,19 @@ abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Lo
   abstract fun getWeakReferenceId(): Long
   abstract fun getSoftWeakReferenceIndex(): Int
 
-  fun goToInstanceField(@NonNls className: String, @NonNls fieldName: String) {
+  fun goToInstanceField(@NonNls className: String?, @NonNls fieldName: String) {
     val objectId = getInstanceFieldObjectId(className, fieldName)
     goTo(objectId, ReferenceResolution.ALL_REFERENCES)
   }
 
-  fun getInstanceFieldObjectId(@NonNls className: String, @NonNls name: String): Long {
+  fun getInstanceFieldObjectId(@NonNls className: String?, @NonNls name: String): Long {
     val refs = getReferencesCopy()
-    assert(className == getClass().name.substringBeforeLast('!')) { "Expected $className, got ${getClass().name}" }
+    if (className != null && className != getClass().undecoratedName) {
+      throw NavigationException("Expected $className, got ${getClass().undecoratedName}")
+    }
     val indexOfField = getClass().allRefFieldNames(classStore).indexOfFirst { it == name }
     if (indexOfField == -1) {
-      throw IllegalStateException("Can't find field $name in class $className")
+      throw NavigationException("Missing field $name in ${getClass().name}")
     }
     return refs.getLong(indexOfField)
   }
@@ -74,8 +78,12 @@ abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Lo
     goTo(objectId, ReferenceResolution.ALL_REFERENCES)
   }
 
-  private fun getStaticFieldObjectId(className: String, fieldName: String) =
-    classStore[className].objectStaticFields.first { it.name == fieldName }.value
+  private fun getStaticFieldObjectId(className: String, fieldName: String): Long {
+    val staticField =
+      classStore[className].objectStaticFields.firstOrNull { it.name == fieldName }
+      ?: throw NavigationException("Missing static field $fieldName in class $className")
+    return staticField.value
+  }
 
   companion object {
     fun createOnAuxiliaryFiles(parser: HProfEventBasedParser,

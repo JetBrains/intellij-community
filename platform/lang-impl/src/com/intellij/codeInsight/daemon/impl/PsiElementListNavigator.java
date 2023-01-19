@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ListComponentUpdater;
+import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -19,10 +19,12 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -210,8 +212,9 @@ public final class PsiElementListNavigator {
 
       IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(initialTargetsList);
       afterPopupBuilderCreated(builder);
-      if (myListRenderer instanceof PsiElementListCellRenderer) {
-        ((PsiElementListCellRenderer<?>)myListRenderer).installSpeedSearch(builder, true);
+      if (myListRenderer instanceof PsiElementListCellRenderer<?> psiElementListCellRenderer) {
+        psiElementListCellRenderer.installSpeedSearch(builder, true);
+        psiElementListCellRenderer.setUsedInPopup(true);
       }
 
       IPopupChooserBuilder<T> popupChooserBuilder = builder.
@@ -239,8 +242,8 @@ public final class PsiElementListNavigator {
       }
 
       JBPopup popup = popupChooserBuilder.createPopup();
-      if (builder instanceof PopupChooserBuilder) {
-        JBList<NavigatablePsiElement> list = (JBList<NavigatablePsiElement>)((PopupChooserBuilder<?>)builder).getChooserComponent();
+      if (builder instanceof PopupChooserBuilder<?> castedBuilder) {
+        JBList<NavigatablePsiElement> list = (JBList<NavigatablePsiElement>)castedBuilder.getChooserComponent();
         list.setTransferHandler(new TransferHandler() {
           @Override
           protected Transferable createTransferable(JComponent c) {
@@ -249,7 +252,7 @@ public final class PsiElementListNavigator {
             for (int i = 0; i < selectedValues.length; i++) {
               copy[i] = (PsiElement)selectedValues[i];
             }
-            return new PsiCopyPasteManager.MyTransferable(copy);
+            return PsiCopyPasteManager.newTransferable(copy);
           }
 
           @Override
@@ -258,18 +261,24 @@ public final class PsiElementListNavigator {
           }
         });
 
-        JScrollPane pane = ((PopupChooserBuilder<?>)builder).getScrollPane();
-        pane.setBorder(null);
+        JScrollPane pane = castedBuilder.getScrollPane();
+        if (ExperimentalUI.isNewUI()) {
+          list.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+        }
+        else {
+          pane.setBorder(null);
+        }
         pane.setViewportBorder(null);
       }
 
       if (myListUpdaterTask != null) {
-        ListComponentUpdater popupUpdater = builder.getBackgroundUpdater();
-        myListUpdaterTask.init(popup, new ListComponentUpdater() {
+        GenericListComponentUpdater<T> popupUpdater = builder.getBackgroundUpdater();
+        myListUpdaterTask.init(popup, new GenericListComponentUpdater<PsiElement>() {
           @Override
           public void replaceModel(@NotNull List<? extends PsiElement> data) {
-            updatedTargetsList.set((T[])data.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY));
-            popupUpdater.replaceModel(data);
+            T[] array = (T[])data.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY);
+            updatedTargetsList.set(array);
+            popupUpdater.replaceModel(Arrays.asList(array));
           }
 
           @Override

@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
-* @author peter
-*/
 public class SearchRequestCollector {
   private final Object lock = new Object();
   private final List<PsiSearchRequest> myWordRequests = new ArrayList<>();

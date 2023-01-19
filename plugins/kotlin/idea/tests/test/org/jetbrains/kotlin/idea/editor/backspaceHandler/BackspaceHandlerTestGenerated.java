@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.editor.backspaceHandler;
 
@@ -52,6 +52,11 @@ public abstract class BackspaceHandlerTestGenerated extends AbstractBackspaceHan
         @TestMetadata("betweenOpenBraceAndParenthesis.kt")
         public void testBetweenOpenBraceAndParenthesis() throws Exception {
             runTest("testData/editor/backspaceHandler/betweenOpenBraceAndParenthesis.kt");
+        }
+
+        @TestMetadata("FileStart.kt")
+        public void testFileStart() throws Exception {
+            runTest("testData/editor/backspaceHandler/FileStart.kt");
         }
 
         @TestMetadata("rawStringDelete.kt")

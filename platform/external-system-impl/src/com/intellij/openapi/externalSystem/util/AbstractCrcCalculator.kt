@@ -47,7 +47,7 @@ abstract class AbstractCrcCalculator : ExternalSystemCrcCalculator {
   private fun CRC32.update(charSequence: CharSequence) {
     update(charSequence.length)
     for (ch in charSequence) {
-      update(ch.toInt())
+      update(ch.code)
     }
   }
 

@@ -6,17 +6,7 @@ import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.layout.*
-import com.intellij.util.castSafelyTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
-import org.jetbrains.kotlin.idea.intentions.callExpression
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import javax.swing.JComponent
 
 class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsProvider.Settings>() {
@@ -73,26 +63,4 @@ class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsP
 
     override val description: String
         get() = KotlinBundle.message("inlay.kotlin.values.hints")
-}
-
-internal fun KtExpression.isRangeExpression(context: Lazy<BindingContext>? = null): Boolean = getRangeBinaryExpressionType(context) != null
-
-internal fun KtExpression.getRangeBinaryExpressionType(context: Lazy<BindingContext>? = null): RangeKtExpressionType? {
-    val binaryExprName = castSafelyTo<KtBinaryExpression>()?.operationReference?.getReferencedNameAsName()?.asString()
-    val dotQualifiedName = castSafelyTo<KtDotQualifiedExpression>()?.callExpression?.calleeExpression?.text
-    val name = binaryExprName ?: dotQualifiedName
-    return when {
-        binaryExprName == ".." || dotQualifiedName == "rangeTo" -> RangeKtExpressionType.RANGE_TO
-        binaryExprName == "..<" || dotQualifiedName == "rangeUntil" -> RangeKtExpressionType.RANGE_UNTIL
-        name == "downTo" -> RangeKtExpressionType.DOWN_TO
-        name == "until" -> RangeKtExpressionType.UNTIL
-        else -> null
-    }?.takeIf {
-        val notNullContext = context?.value ?: safeAnalyze(BodyResolveMode.PARTIAL)
-        getResolvedCall(notNullContext)?.resultingDescriptor?.fqNameOrNull()?.asString()?.startsWith("kotlin.") == true
-    }
-}
-
-enum class RangeKtExpressionType {
-    RANGE_TO, RANGE_UNTIL, DOWN_TO, UNTIL
 }

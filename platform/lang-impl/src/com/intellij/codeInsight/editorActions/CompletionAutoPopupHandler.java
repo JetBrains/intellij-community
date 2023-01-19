@@ -17,9 +17,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(CompletionAutoPopupHandler.class);
   public static final Key<Boolean> ourTestingAutopopup = Key.create("TestingAutopopup");

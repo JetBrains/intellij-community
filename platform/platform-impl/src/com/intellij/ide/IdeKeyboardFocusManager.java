@@ -1,18 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.keymap.KeymapUtil;
-import org.jetbrains.annotations.NotNull;
-import sun.awt.AppContext;
 
 import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.VetoableChangeListener;
+import java.lang.reflect.Method;
+import java.util.List;
+
 /**
  * We extend the obsolete {@link DefaultFocusManager} class here instead of {@link KeyboardFocusManager} to prevent unwanted overwriting of
  * the default focus traversal policy by careless clients. In case they use the obsolete {@link FocusManager#getCurrentManager} method
@@ -49,31 +47,37 @@ final class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc a
     }
   }
 
-  @Override
-  public boolean postProcessKeyEvent(KeyEvent e) {
-    if (!e.isConsumed() &&
-        KeymapUtil.isEventForAction(e, IdeActions.ACTION_FOCUS_EDITOR) &&
-        EditorsSplitters.activateEditorComponentOnEscape(e.getComponent())) {
-      e.consume();
-    }
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (focusOwner == null || focusOwner instanceof Window) {
-      // Swing doesn't process key bindings when there's no focus component,
-      // or when focus component is a window (as window classes don't inherit from JComponent),
-      // but WHEN_IN_FOCUSED_WINDOW bindings (e.g. main menu accelerators) make sense even in this case.
-      SwingUtilities.processKeyBindings(e);
-    }
-    return super.postProcessKeyEvent(e);
-  }
-
-  @NotNull
-  static IdeKeyboardFocusManager replaceDefault() {
+  static void replaceDefault() {
     KeyboardFocusManager kfm = getCurrentKeyboardFocusManager();
     IdeKeyboardFocusManager ideKfm = new IdeKeyboardFocusManager();
     for (PropertyChangeListener l : kfm.getPropertyChangeListeners()) {
       ideKfm.addPropertyChangeListener(l);
     }
-    AppContext.getAppContext().put(KeyboardFocusManager.class, ideKfm);
-    return (IdeKeyboardFocusManager)getCurrentKeyboardFocusManager();
+    for (VetoableChangeListener l : kfm.getVetoableChangeListeners()) {
+      ideKfm.addVetoableChangeListener(l);
+    }
+    try {
+      Method getDispatchersMethod = KeyboardFocusManager.class.getDeclaredMethod("getKeyEventDispatchers");
+      getDispatchersMethod.setAccessible(true);
+      @SuppressWarnings("unchecked") List<KeyEventDispatcher> dispatchers = (List<KeyEventDispatcher>)getDispatchersMethod.invoke(kfm);
+      if (dispatchers != null) {
+        for (KeyEventDispatcher d : dispatchers) {
+          ideKfm.addKeyEventDispatcher(d);
+        }
+      }
+      Method getPostProcessorsMethod = KeyboardFocusManager.class.getDeclaredMethod("getKeyEventPostProcessors");
+      getPostProcessorsMethod.setAccessible(true);
+      @SuppressWarnings("unchecked") List<KeyEventPostProcessor> postProcessors =
+        (List<KeyEventPostProcessor>)getPostProcessorsMethod.invoke(kfm);
+      if (postProcessors != null) {
+        for (KeyEventPostProcessor p : postProcessors) {
+          ideKfm.addKeyEventPostProcessor(p);
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    KeyboardFocusManager.setCurrentKeyboardFocusManager(ideKfm);
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +30,7 @@ public class MovablePopup {
   private Container myView;
   private boolean myAlwaysOnTop;
   private boolean myHeavyWeight;
+  private boolean myTransparent;
   private boolean myWindowFocusable;
   private boolean myWindowShadow;
 
@@ -75,6 +77,16 @@ public class MovablePopup {
   public void setHeavyWeight(boolean value) {
     if (myHeavyWeight != value) {
       myHeavyWeight = value;
+      disposeAndUpdate(true);
+    }
+  }
+
+  /**
+   * Sets whether this popup should be a transparent window, false by default
+   */
+  public void setTransparent(boolean transparent) {
+    if (myTransparent != transparent) {
+      myTransparent = transparent;
       disposeAndUpdate(true);
     }
   }
@@ -193,7 +205,7 @@ public class MovablePopup {
           SwingUtilities.convertPointFromScreen(location, parent);
           myViewBounds.setLocation(location);
         }
-        myView.setBackground(UIUtil.getLabelBackground());
+        myView.setBackground(myTransparent ? Gray.TRANSPARENT : UIUtil.getLabelBackground());
         myView.setBounds(myViewBounds);
         myView.setVisible(true);
         myViewBounds = null;

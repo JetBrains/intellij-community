@@ -8,6 +8,9 @@ import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddBracesToAllBra
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddBracesToAllBranchesIntention.Companion.targetIfOrWhenExpression
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class RemoveBracesFromAllBranchesIntention : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
@@ -15,8 +18,11 @@ internal class RemoveBracesFromAllBranchesIntention : SelfTargetingIntention<KtE
 ) {
     override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean {
         val targetIfOrWhenExpression = targetIfOrWhenExpression(element) ?: return false
+
         val targetBranchExpressions = targetIfOrWhenExpression.targetBranchExpressions()
         if (targetBranchExpressions.isEmpty() || targetBranchExpressions.any { !RemoveBracesIntention.isApplicableTo(it) }) return false
+        if (caretIsOnSingleTargetBranch(targetIfOrWhenExpression, targetBranchExpressions, caretOffset)) return false
+
         when (targetIfOrWhenExpression) {
             is KtIfExpression -> setTextGetter(KotlinBundle.lazyMessage("remove.braces.from.if.all.statements"))
             is KtWhenExpression -> setTextGetter(KotlinBundle.lazyMessage("remove.braces.from.when.all.entries"))
@@ -35,5 +41,19 @@ internal class RemoveBracesFromAllBranchesIntention : SelfTargetingIntention<KtE
         val branchExpressions = allBranchExpressions()
         if (branchExpressions.size <= 1) return emptyList()
         return branchExpressions.filterIsInstance<KtBlockExpression>()
+    }
+
+    private fun caretIsOnSingleTargetBranch(
+        targetIfOrWhenExpression: KtExpression,
+        targetBranchExpressions: List<KtBlockExpression>,
+        caretOffset: Int,
+    ): Boolean {
+        val singleBranchExpression = targetBranchExpressions.singleOrNull() ?: return false
+        val startOffset = when (targetIfOrWhenExpression) {
+            is KtIfExpression -> singleBranchExpression
+            is KtWhenExpression -> singleBranchExpression.getStrictParentOfType<KtWhenEntry>()
+            else -> null
+        }?.startOffset ?: return false
+        return caretOffset in startOffset..singleBranchExpression.endOffset
     }
 }

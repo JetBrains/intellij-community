@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 
-/**
- * @author peter
- */
 public class DomStringWrapper extends DomWrapper<String>{
   private final GenericDomValue myDomElement;
 

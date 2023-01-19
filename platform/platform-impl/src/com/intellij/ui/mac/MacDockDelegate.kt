@@ -9,48 +9,30 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.impl.SystemDock
+import java.awt.Desktop
 import java.awt.Menu
 import java.awt.MenuItem
 import java.awt.PopupMenu
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
+import java.awt.Taskbar
 
-internal class MacDockDelegate private constructor() : SystemDock.Delegate {
+internal class MacDockDelegate private constructor(private val recentProjectsMenu: Menu) : SystemDock.Delegate {
   companion object {
     private val LOG = logger<MacDockDelegate>()
 
-    @Suppress("SpellCheckingInspection")
-    private val appClass by lazy { MacDockDelegate::class.java.classLoader.loadClass("com.apple.eawt.Application") }
-
     val instance: SystemDock.Delegate by lazy {
-      val result = MacDockDelegate()
+      val dockMenu = PopupMenu("DockMenu")
+      val recentProjectsMenu = Menu("Recent Projects")
       try {
         dockMenu.add(recentProjectsMenu)
-        val lookup = MethodHandles.lookup()
-        val appClass = appClass
-        val app = lookup.findStatic(appClass, "getApplication", MethodType.methodType(appClass)).invoke()
-        lookup.findVirtual(appClass, "setDockMenu", MethodType.methodType(Void.TYPE, PopupMenu::class.java)).invoke(app, dockMenu)
+        if (Taskbar.isTaskbarSupported() /* not supported in CWM/Projector environment */) {
+          Taskbar.getTaskbar().menu = dockMenu
+        }
       }
       catch (e: Exception) {
         LOG.error(e)
       }
 
-      result
-    }
-
-    private val dockMenu = PopupMenu("DockMenu")
-    private val recentProjectsMenu = Menu("Recent Projects")
-
-    private fun activateApplication() {
-      try {
-        val appClass = appClass
-        val lookup = MethodHandles.lookup()
-        val app = lookup.findStatic(appClass, "getApplication", MethodType.methodType(appClass)).invoke()
-        lookup.findVirtual(appClass, "requestForeground", MethodType.methodType(Void.TYPE, java.lang.Boolean.TYPE)).invoke(app, false)
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-      }
+      MacDockDelegate(recentProjectsMenu)
     }
   }
 
@@ -61,7 +43,7 @@ internal class MacDockDelegate private constructor() : SystemDock.Delegate {
       menuItem.addActionListener {
         // Newly opened project won't become an active window, if another application is currently active.
         // This is not what user expects, so we activate our application explicitly.
-        activateApplication()
+        Desktop.getDesktop().requestForeground(false)
         ActionUtil.performActionDumbAwareWithCallbacks(
           action,
           AnActionEvent.createFromAnAction(action, null, ActionPlaces.DOCK_MENU, DataManager.getInstance().getDataContext(null))

@@ -16,39 +16,36 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
-public class WeighingNewActionGroup extends WeighingActionGroup {
+import java.util.function.Supplier;
+
+public class WeighingNewActionGroup extends WeighingActionGroup implements DumbAware {
   private ActionGroup myDelegate;
 
   @Override
   protected ActionGroup getDelegate() {
     if (myDelegate == null) {
       myDelegate = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_NEW);
-      getTemplatePresentation().setText(myDelegate.getTemplatePresentation().getText());
-      setPopup(myDelegate.isPopup());
     }
     return myDelegate;
   }
 
   @Override
-  public boolean isDumbAware() {
-    return true;
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
+    Supplier<? extends TextWithMnemonic> prev = e.getPresentation().getTextWithPossibleMnemonic();
     super.update(e);
-    e.getPresentation().setText(getTemplatePresentation().getText());
+    if (e.getPresentation().getTextWithPossibleMnemonic() != prev) {
+      e.getPresentation().setTextWithMnemonic(prev);
+    }
   }
 
   @Override
   protected boolean shouldBeChosenAnyway(AnAction action) {
     final Class<? extends AnAction> aClass = action.getClass();
     return aClass == CreateFileAction.class || aClass == CreateDirectoryOrPackageAction.class ||
-           "NewModuleInGroupAction".equals(aClass.getSimpleName()); //todo why is it in idea module?
+           "NewModuleInGroupAction".equals(aClass.getSimpleName());
   }
 }

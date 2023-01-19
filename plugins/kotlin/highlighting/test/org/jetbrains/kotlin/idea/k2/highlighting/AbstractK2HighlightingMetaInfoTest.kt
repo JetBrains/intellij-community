@@ -12,7 +12,7 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
 
     override fun isFirPlugin(): Boolean = true
 
-    override fun getDefaultProjectDescriptor() = ProjectDescriptorWithStdlibSources.INSTANCE
+    override fun getDefaultProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
     override fun highlightingFileNameSuffix(testKtFile: File): String {
         val fileContent = testKtFile.readText()

@@ -39,7 +39,7 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
     if (fullPath.startsWith(SSH_PREFIX)) {
       fullPath = fullPath.substring(SSH_PREFIX.length());
       int index = fullPath.indexOf(":");
-      if (index != -1 && index < fullPath.length()) {
+      if (index != -1) {
         fullPath = fullPath.substring(index + 1); // it is like 8080/home/user or 8080C:\Windows
         index = 0;
         while (index < fullPath.length() && Character.isDigit(fullPath.charAt(index))) {
@@ -119,16 +119,6 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
   @Override
   public String getSdkId() {
     return myRemoteSdkProperties.getSdkId();
-  }
-
-  @Override
-  public boolean isInitialized() {
-    return myRemoteSdkProperties.isInitialized();
-  }
-
-  @Override
-  public void setInitialized(boolean initialized) {
-    myRemoteSdkProperties.setInitialized(initialized);
   }
 
   @Override

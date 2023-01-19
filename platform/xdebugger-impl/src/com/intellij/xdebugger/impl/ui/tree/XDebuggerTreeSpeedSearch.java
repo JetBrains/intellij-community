@@ -47,7 +47,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
   private ShortcutSet myOptionShortcutSet;
 
   XDebuggerTreeSpeedSearch(XDebuggerTree tree, Convertor<? super TreePath, String> toStringConvertor) {
-    super(tree, toStringConvertor, PropertiesComponent.getInstance().getBoolean(CAN_EXPAND_PROPERTY, false));
+    super(tree, PropertiesComponent.getInstance().getBoolean(CAN_EXPAND_PROPERTY, false), toStringConvertor.asFunction());
     setComparator(new SpeedSearchComparator(false, false) {
 
       @Override
@@ -257,7 +257,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override

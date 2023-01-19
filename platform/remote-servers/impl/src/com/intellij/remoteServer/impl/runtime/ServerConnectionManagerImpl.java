@@ -22,7 +22,7 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
   @NotNull
   @Override
   public <C extends ServerConfiguration> ServerConnection getOrCreateConnection(@NotNull RemoteServer<C> server) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     ServerConnection connection = myConnections.get(server);
     if (connection == null) {
       connection = doCreateConnection(server, this);
@@ -51,7 +51,7 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
   }
 
   void removeConnection(RemoteServer<?> server) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     myConnections.remove(server);
   }
 
@@ -62,7 +62,7 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
   @NotNull
   @Override
   public Collection<ServerConnection> getConnections() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     return Collections.unmodifiableCollection(myConnections.values());
   }
 

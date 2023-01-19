@@ -118,7 +118,7 @@ abstract class HtmlTagEmbeddedContentProvider(lexer: BaseHtmlLexer) : BaseHtmlEm
             if (i + 1 < end
                 && (if (bufArray != null) bufArray[i] else buf[i]) == '<'
                 && (if (bufArray != null) bufArray[i + 1] else buf[i + 1]) == '/') {
-              baseLexer.start(buf, i, bufferEnd, 0)
+              baseLexer.start(buf, i, bufferEnd, lexer.stateForRestartDuringEmbedmentScan)
               baseLexer.tokenType
               break@FindTagEnd
             }

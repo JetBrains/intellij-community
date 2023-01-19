@@ -66,7 +66,7 @@ public final class GitRefUtil {
 
     String branch = null;
     int start = i;
-    if (start < line.length() && Character.isWhitespace(line.charAt(start++))) {
+    if (Character.isWhitespace(line.charAt(start++))) {
       for (i = start; i < line.length(); i++) {
         char c = line.charAt(i);
         if (Character.isWhitespace(c)) {
@@ -79,12 +79,7 @@ public final class GitRefUtil {
     if (branch == null || !branch.startsWith(REFS_HEADS_PREFIX) && !branch.startsWith(REFS_REMOTES_PREFIX)) {
       return null;
     }
-    return Pair.create(shortBuffer(branch), shortBuffer(hash.trim()));
-  }
-
-  @NotNull
-  private static String shortBuffer(String raw) {
-    return new String(raw);
+    return Pair.create(branch, hash.trim());
   }
 
   @NotNull

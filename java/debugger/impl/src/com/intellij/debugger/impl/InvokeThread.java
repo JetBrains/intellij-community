@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
 
-/**
- * @author lex
- */
 public abstract class InvokeThread<E extends PrioritizedTask> {
   private static final Logger LOG = Logger.getInstance(InvokeThread.class);
 
@@ -48,9 +45,10 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       }
       ourWorkerRequest.set(this);
       try {
-        ConcurrencyUtil.runUnderThreadName("DebuggerManagerThread", ()->
-        myOwner.run(this));
-      } 
+        ConcurrencyUtil.runUnderThreadName("DebuggerManagerThread", () -> {
+          myOwner.run(this);
+        });
+      }
       finally {
         ourWorkerRequest.set(null);
         boolean b = Thread.interrupted(); // reset interrupted status to return into pool
@@ -75,7 +73,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       try {
         myRequestFuture.get();
       }
-      catch(CancellationException ignored) {
+      catch (CancellationException ignored) {
       }
     }
 
@@ -120,21 +118,22 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   protected void startNewWorkerThread() {
     final WorkerThreadRequest<E> workerRequest = new WorkerThreadRequest<>(this);
     myCurrentRequest = workerRequest;
-    workerRequest.setRequestFuture( ApplicationManager.getApplication().executeOnPooledThread(workerRequest) );
+    workerRequest.setRequestFuture(ApplicationManager.getApplication().executeOnPooledThread(workerRequest));
   }
 
   private void run(final @NotNull WorkerThreadRequest threadRequest) {
     try {
       DumbService.getInstance(myProject).runWithAlternativeResolveEnabled(() -> ProgressManager.getInstance().runProcess(() -> {
-        while(true) {
+        while (true) {
           try {
-            if(threadRequest.isStopRequested()) {
+            if (threadRequest.isStopRequested()) {
               break;
             }
 
             final WorkerThreadRequest currentRequest = getCurrentRequest();
-            if(currentRequest != threadRequest) {
-              reportCommandError(new IllegalStateException("Expected " + threadRequest + " instead of " + currentRequest + " closed=" + myEvents.isClosed()));
+            if (currentRequest != threadRequest) {
+              String message = "Expected " + threadRequest + " instead of " + currentRequest + " closed=" + myEvents.isClosed();
+              reportCommandError(new IllegalStateException(message));
               break; // ensure events are processed by one thread at a time
             }
 
@@ -143,7 +142,8 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
           catch (VMDisconnectedException | EventQueueClosedException ignored) {
             break;
           }
-          catch (ProcessCanceledException ignored) {}
+          catch (ProcessCanceledException ignored) {
+          }
           catch (CompletionException e) {
             if (e.getCause() instanceof VMDisconnectedException) {
               break;
@@ -151,7 +151,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
             reportCommandError(e);
           }
           catch (RuntimeException e) {
-            if(e.getCause() instanceof InterruptedException) {
+            if (e.getCause() instanceof InterruptedException) {
               break;
             }
             reportCommandError(e);
@@ -187,24 +187,24 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       LOG.error(e);
     }
     catch (AssertionError ignored) {
-       //do not destroy commands processing
+      //do not destroy commands processing
     }
   }
 
   protected static InvokeThread currentThread() {
     final WorkerThreadRequest request = getCurrentThreadRequest();
-    return request != null? request.getOwner() : null;
+    return request != null ? request.getOwner() : null;
   }
 
   public boolean schedule(@Async.Schedule E r) {
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       LOG.debug("schedule " + r + " in " + this);
     }
     return myEvents.put(r, r.getPriority().ordinal());
   }
 
   public boolean pushBack(E r) {
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       LOG.debug("pushBack " + r + " in " + this);
     }
     return myEvents.pushBack(r, r.getPriority().ordinal());

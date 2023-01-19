@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.lang.typing
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -87,7 +87,7 @@ private fun PsiType.boxIfNecessary(call: GrMethodCall) : PsiType {
   if (this !is PsiPrimitiveType) {
     return this
   }
-  return if (call.invokedExpression.castSafelyTo<GrReferenceExpression>()?.dotTokenType == GroovyElementTypes.T_SAFE_DOT) {
+  return if (call.invokedExpression.asSafely<GrReferenceExpression>()?.dotTokenType == GroovyElementTypes.T_SAFE_DOT) {
     this.box(call)
   } else {
     this

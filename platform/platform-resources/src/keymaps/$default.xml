@@ -479,6 +479,7 @@
     <keyboard-shortcut first-keystroke="control shift F6"/>
   </action>
   <action id="DebugClass"/>
+  <action id="RunCoverage"/>
   <action id="IntroduceField">
     <keyboard-shortcut first-keystroke="control alt F"/>
   </action>
@@ -1161,11 +1162,11 @@
   </action>
 
   <action id="GitNewBranchAction">
-    <keyboard-shortcut first-keystroke="shift N"/>
+    <keyboard-shortcut first-keystroke="control alt N"/>
   </action>
 
-  <action id="GitCheckoutFromInputAction">
-    <keyboard-shortcut first-keystroke="shift U"/>
+  <action id="Git.New.Branch.In.Log">
+    <keyboard-shortcut first-keystroke="control alt N"/>
   </action>
 
   <action id="ChangesView.SetDefault">

@@ -12,9 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
@@ -242,34 +239,6 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
     @Override
     public String toString() {
       return "PsiPackageAccessibilityStatement";
-    }
-  }
-
-  /** @deprecated caching problems; please consider using {@code JavaModuleGraphUtil} methods instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @Nullable LightJavaModule findModule(@NotNull PsiManager manager, @NotNull VirtualFile root) {
-    PsiElement directory = manager.findDirectory(root);
-    if (directory == null) return null;
-    if (root.isInLocalFileSystem()) {
-      return CachedValuesManager.getCachedValue(directory, () -> {
-        VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
-        if (manifest != null) {
-          PsiElement file = manager.findFile(manifest);
-          if (file != null) {
-            String name = claimedModuleName(manifest);
-            LightJavaModule module = name != null ? new LightJavaModule(manager, root, name) : null;
-            return CachedValueProvider.Result.create(module, file);
-          }
-        }
-        return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
-      });
-    }
-    else {
-      return CachedValuesManager.getCachedValue(directory, () -> {
-        LightJavaModule module = new LightJavaModule(manager, root, moduleName(root));
-        return CachedValueProvider.Result.create(module, directory);
-      });
     }
   }
 

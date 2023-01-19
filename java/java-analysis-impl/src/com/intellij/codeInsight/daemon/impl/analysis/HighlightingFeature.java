@@ -48,7 +48,8 @@ public enum HighlightingFeature {
   INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
   PATTERNS_IN_SWITCH(LanguageLevel.JDK_17_PREVIEW, "feature.patterns.in.switch"),
   GUARDED_AND_PARENTHESIZED_PATTERNS(LanguageLevel.JDK_17_PREVIEW, "feature.guarded.and.parenthesised.patterns"),
-  PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_19_PREVIEW, "feature.pattern.guard.and.record.patterns");
+  PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_19_PREVIEW, "feature.pattern.guard.and.record.patterns"),
+  RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_20_PREVIEW, "feature.record.patterns.in.for.each");
 
   public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
   public static final @NonNls String JDK_INTERNAL_JAVAC_PREVIEW_FEATURE = "jdk.internal.javac.PreviewFeature";
@@ -109,18 +110,13 @@ public enum HighlightingFeature {
   @Nullable
   @Contract(pure = true)
   private static HighlightingFeature convertFromPreviewFeatureName(@NotNull @NonNls String feature) {
-    switch (feature) {
-      case "PATTERN_MATCHING_IN_INSTANCEOF":
-        return PATTERNS;
-      case "TEXT_BLOCKS":
-        return TEXT_BLOCKS;
-      case "RECORDS":
-        return RECORDS;
-      case "SEALED_CLASSES":
-        return SEALED_CLASSES;
-      default:
-        return null;
-    }
+    return switch (feature) {
+      case "PATTERN_MATCHING_IN_INSTANCEOF" -> PATTERNS;
+      case "TEXT_BLOCKS" -> TEXT_BLOCKS;
+      case "RECORDS" -> RECORDS;
+      case "SEALED_CLASSES" -> SEALED_CLASSES;
+      default -> null;
+    };
   }
 
   @Nullable

@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.debugger.test.preference
 
 import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils
@@ -67,12 +69,14 @@ private object KotlinVariablesModeSettingsMutator : SettingsMutator<Boolean>(Deb
 
 private object JvmTargetSettingsMutator : SettingsMutator<String>(DebuggerPreferenceKeys.JVM_TARGET) {
     override fun setValue(value: String, project: Project): String {
-        var oldValue: String? = null
-        Kotlin2JvmCompilerArgumentsHolder.getInstance(project).update {
-            oldValue = jvmTarget
-            jvmTarget = value.takeIf { it.isNotEmpty() }
+        return runWriteAction {
+            var oldValue: String? = null
+            Kotlin2JvmCompilerArgumentsHolder.getInstance(project).update {
+                oldValue = jvmTarget
+                jvmTarget = value.takeIf { it.isNotEmpty() }
+            }
+            oldValue ?: ""
         }
-        return oldValue ?: ""
     }
 }
 

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.psi.*
 
-internal class KtDeclarationTreeNode(
+internal class KtDeclarationTreeNode private constructor(
     project: Project?,
     ktDeclaration: KtDeclaration?,
     viewSettings: ViewSettings?
@@ -29,14 +29,14 @@ internal class KtDeclarationTreeNode(
 
     override fun isDeprecated(): Boolean = value?.let { KtPsiUtil.isDeprecated(it) } ?: false
 
-    companion object {
+    internal companion object {
         private val CLASS_INITIALIZER = "<" + KotlinBundle.message("project.view.class.initializer") + ">"
         private val ERROR_NAME = "<" + KotlinBundle.message("project.view.class.error.name") + ">"
 
         private fun String?.orErrorName() = if (!isNullOrBlank()) this else ERROR_NAME
 
         @NlsSafe
-        fun tryGetRepresentableText(declaration: KtDeclaration): String {
+        fun tryGetRepresentableText(declaration: KtDeclaration, renderArguments: Boolean = true): String {
             val settings = declaration.containingKtFile.kotlinCustomSettings
             fun StringBuilder.appendColon() {
                 if (settings.SPACE_BEFORE_TYPE_COLON) append(" ")
@@ -58,21 +58,23 @@ internal class KtDeclarationTreeNode(
                     append('.')
                 }
                 append(name.orErrorName())
-                append("(")
-                val valueParameters = valueParameters
-                valueParameters.forEachIndexed { index, parameter ->
-                    parameter.name?.let { parameterName ->
-                        append(parameterName)
-                        appendColon()
+                if (renderArguments) {
+                    append("(")
+                    val valueParameters = valueParameters
+                    valueParameters.forEachIndexed { index, parameter ->
+                        parameter.name?.let { parameterName ->
+                            append(parameterName)
+                            appendColon()
+                        }
+                        parameter.typeReference?.text?.let { typeReference ->
+                            append(typeReference)
+                        }
+                        if (index != valueParameters.size - 1) {
+                            append(", ")
+                        }
                     }
-                    parameter.typeReference?.text?.let { typeReference ->
-                        append(typeReference)
-                    }
-                    if (index != valueParameters.size - 1) {
-                        append(", ")
-                    }
+                    append(")")
                 }
-                append(")")
 
                 typeReference?.text?.let { returnTypeReference ->
                     appendColon()
@@ -93,9 +95,35 @@ internal class KtDeclarationTreeNode(
                 is KtProperty -> declaration.presentableText()
                 is KtFunction -> declaration.presentableText()
                 is KtObjectDeclaration -> declaration.presentableText()
+                is KtScriptInitializer -> {
+                    val nameReferenceExpression: KtNameReferenceExpression? =
+                        declaration.referenceExpression()
+
+                    val referencedNameAsName = nameReferenceExpression?.getReferencedNameAsName()
+                    referencedNameAsName?.asString() ?: CLASS_INITIALIZER
+                }
+
                 is KtAnonymousInitializer -> CLASS_INITIALIZER
                 else -> declaration.name.orErrorName()
             }
         }
+
+        private fun KtScriptInitializer.referenceExpression(): KtNameReferenceExpression? {
+            val body = body
+            return when (body) {
+                is KtCallExpression -> body.calleeExpression
+                is KtExpression -> body.firstChild
+                else -> null
+            } as? KtNameReferenceExpression
+        }
+
+        fun create(project: Project?,
+                   ktDeclaration: KtDeclaration,
+                   viewSettings: ViewSettings): KtDeclarationTreeNode? =
+            if (ktDeclaration is KtScriptInitializer && ktDeclaration.referenceExpression() == null) {
+                null
+            } else {
+                KtDeclarationTreeNode(project, ktDeclaration, viewSettings)
+            }
     }
 }

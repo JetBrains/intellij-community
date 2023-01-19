@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.importing;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.plugins.advertiser.PluginFeatureEnabler;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -24,7 +24,8 @@ public class ImportSpecBuilder {
   @NotNull private ProgressExecutionMode myProgressExecutionMode;
   @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
-  private boolean isReportRefreshError = true;
+  private boolean isActivateBuildToolWindowOnStart = false;
+  private boolean isActivateBuildToolWindowOnFailure = true;
   private @NotNull ThreeState isNavigateToError = ThreeState.UNSURE;
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
@@ -79,8 +80,13 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  public ImportSpecBuilder activateBuildToolWindowOnStart() {
+    isActivateBuildToolWindowOnStart = true;
+    return this;
+  }
+
   public ImportSpecBuilder dontReportRefreshErrors() {
-    isReportRefreshError = false;
+    isActivateBuildToolWindowOnFailure = false;
     return this;
   }
 
@@ -115,7 +121,8 @@ public class ImportSpecBuilder {
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
     mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
     mySpec.setPreviewMode(isPreviewMode);
-    mySpec.setReportRefreshError(isReportRefreshError);
+    mySpec.setActivateBuildToolWindowOnStart(isActivateBuildToolWindowOnStart);
+    mySpec.setActivateBuildToolWindowOnFailure(isActivateBuildToolWindowOnFailure);
     mySpec.setNavigateToError(isNavigateToError);
     mySpec.setArguments(myArguments);
     mySpec.setVmOptions(myVmOptions);
@@ -139,7 +146,8 @@ public class ImportSpecBuilder {
     myCreateDirectoriesForEmptyContentRoots = spec.shouldCreateDirectoriesForEmptyContentRoots();
     myCallback = spec.getCallback();
     isPreviewMode = spec.isPreviewMode();
-    isReportRefreshError = spec.isReportRefreshError();
+    isActivateBuildToolWindowOnStart = spec.isActivateBuildToolWindowOnStart();
+    isActivateBuildToolWindowOnFailure = spec.isActivateBuildToolWindowOnFailure();
     myArguments = spec.getArguments();
     myVmOptions = spec.getVmOptions();
   }
@@ -160,7 +168,12 @@ public class ImportSpecBuilder {
         return;
       }
       final boolean synchronous = myExecutionMode == ProgressExecutionMode.MODAL_SYNC;
-      ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject, synchronous);
+
+      PluginFeatureEnabler.getInstance(myProject).scheduleEnableSuggested();
+
+      ProjectDataManager.getInstance().importData(externalProject,
+                                                  myProject
+      );
     }
   }
 }

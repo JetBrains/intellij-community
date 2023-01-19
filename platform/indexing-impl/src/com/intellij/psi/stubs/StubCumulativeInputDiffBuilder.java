@@ -31,7 +31,19 @@ class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<Integer,
   public boolean differentiate(@NotNull Map<Integer, SerializedStubTree> newData,
                                @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> addProcessor,
                                @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> updateProcessor,
-                               @NotNull RemovedKeyProcessor<? super Integer> removeProcessor) throws StorageException {
+                               @NotNull RemovedKeyProcessor<? super Integer> removeProcessor) throws StorageException
+  {
+    return differentiate(newData, addProcessor, updateProcessor, removeProcessor, false);
+  }
+
+  /**
+   * @param dryRun if true, won't update the stub indices
+   */
+  public boolean differentiate(@NotNull Map<Integer, SerializedStubTree> newData,
+                               @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> addProcessor,
+                               @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> updateProcessor,
+                               @NotNull RemovedKeyProcessor<? super Integer> removeProcessor,
+                               boolean dryRun) throws StorageException {
     if (!newData.isEmpty()) {
       SerializedStubTree newSerializedStubTree = newData.values().iterator().next();
       if (myCurrentTree != null) {
@@ -39,11 +51,12 @@ class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<Integer,
         removeProcessor.process(myInputId, myInputId);
       }
       addProcessor.process(myInputId, newSerializedStubTree, myInputId);
-      updateStubIndices(newSerializedStubTree);
+      if (!dryRun) updateStubIndices(newSerializedStubTree);
     }
     else {
+      if (myCurrentTree == null) return false; // ?????????
       removeProcessor.process(myInputId, myInputId);
-      updateStubIndices(null);
+      if (!dryRun) updateStubIndices(null);
     }
     return true;
   }

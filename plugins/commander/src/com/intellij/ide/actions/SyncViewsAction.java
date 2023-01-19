@@ -3,6 +3,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.commander.Commander;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -32,5 +33,10 @@ public class SyncViewsAction extends AnAction {
     String id = windowManager.getActiveToolWindowId();
     boolean value=ToolWindowId.COMMANDER.equals(id);
     presentation.setEnabled(value);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

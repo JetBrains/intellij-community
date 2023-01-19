@@ -1,36 +1,37 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+GenericInlineClassParameter
 package filterFunctionCallsFromInlineClass
 
 @JvmInline
-value class A(val str: String) {
-    fun foo(): A {
+value class A<T>(val str: T) {
+    fun foo(): A<T> {
         return this
     }
 
-    private fun foo(i: Int, j: Int): A {
+    private fun foo(i: Int, j: Int): A<T> {
         return this
     }
 
-    fun bar(): A {
+    fun bar(): A<T> {
         return this
     }
 
-    private fun baz(): A {
+    private fun baz(): A<T> {
         return this
     }
 
-    inline fun inlineFoo(): A {
+    inline fun inlineFoo(): A<T> {
         return this
     }
 
-    private inline fun inlineFoo(i: Int, j: Int): A {
+    private inline fun inlineFoo(i: Int, j: Int): A<T> {
         return this
     }
 
-    inline fun inlineBar(): A {
+    inline fun inlineBar(): A<T> {
         return this
     }
 
-    private inline fun inlineBaz(): A {
+    private inline fun inlineBaz(): A<T> {
         return this
     }
 
@@ -151,11 +152,11 @@ value class A(val str: String) {
     }
 }
 
-fun Int.foo(a: A): Int {
+fun Int.foo(a: A<*>): Int {
     return 1
 }
 
-fun Int.bar(a: A): Int {
+fun Int.bar(a: A<*>): Int {
     return 2
 }
 

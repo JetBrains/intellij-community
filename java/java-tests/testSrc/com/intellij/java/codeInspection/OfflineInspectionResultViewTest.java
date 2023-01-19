@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,39 +120,41 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = true;
     InspectionTree tree = updateTree();
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    PlatformTestUtil.assertTreeEqual(tree, "-Inspection Results\n" +
-                                           " -Java\n" +
-                                           "  -Declaration redundancy\n" +
-                                           "   -Unused declaration\n" +
-                                           "    Entry Points\n" +
-                                           "    -testOfflineWithInvalid\n" +
-                                           "     -<default>\n" +
-                                           "      -Test\n" +
-                                           "       -f()\n" +
-                                           "        -D\n" +
-                                           "         -b()\n" +
-                                           "          Variable 'r' is never used.\n" +
-                                           "          -anonymous (Runnable)\n" +
-                                           "           -run()\n" +
-                                           "            Variable 'i' is never used.\n" +
-                                           "       -ff()\n" +
-                                           "        Variable 'a' is never used.\n" +
-                                           "        Variable 'd' is never used.\n" +
-                                           "       -foo()\n" +
-                                           "        Variable 'j' is never used.\n" +
-                                           "       -main(String[])\n" +
-                                           "        Variable 'test' is never used.\n" +
-                                           "  -Probable bugs\n" +
-                                           "   -'equals()' called on itself\n" +
-                                           "    -testOfflineWithInvalid\n" +
-                                           "     -<default>\n" +
-                                           "      -Test\n" +
-                                           "       -m()\n" +
-                                           "        'equals()' called on itself\n" +
-                                           "      -element no longer exists\n" +
-                                           "       '()' called on itself\n"
+    PlatformTestUtil.assertTreeEqual(tree, """
+                                       -Inspection Results
+                                        -Java
+                                         -Declaration redundancy
+                                          -Unused declaration
+                                           Entry Points
+                                           -testOfflineWithInvalid
+                                            -<default>
+                                             -Test
+                                              -f()
+                                               -D
+                                                -b()
+                                                 Variable 'r' is never used.
+                                                 -anonymous (Runnable)
+                                                  -run()
+                                                   Variable 'i' is never used.
+                                              -ff()
+                                               Variable 'a' is never used.
+                                               Variable 'd' is never used.
+                                              -foo()
+                                               Variable 'j' is never used.
+                                              -main(String[])
+                                               Variable 'test' is never used.
+                                         -Probable bugs
+                                          -'equals()' called on itself
+                                           -testOfflineWithInvalid
+                                            -<default>
+                                             -Test
+                                              -m()
+                                               'equals()' called on itself
+                                             -element no longer exists
+                                              '()' called on itself
+                                       """
                                           );
     tree.setSelectionRow(30);
     final ProblemDescriptionNode node = (ProblemDescriptionNode)tree.getSelectionModel().getSelectionPath().getLastPathComponent();
@@ -164,111 +165,118 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = true;
     InspectionTree tree = updateTree();
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    PlatformTestUtil.assertTreeEqual(tree, "-Inspection Results\n" +
-                                           " -Java\n" +
-                                           "  -Declaration redundancy\n" +
-                                           "   -Unused declaration\n" +
-                                           "    Entry Points\n" +
-                                           "    -testOfflineView\n" +
-                                           "     -<default>\n" +
-                                           "      -Test\n" +
-                                           "       -f()\n" +
-                                           "        -D\n" +
-                                           "         -b()\n" +
-                                           "          Variable 'r' is never used.\n" +
-                                           "          -anonymous (Runnable)\n" +
-                                           "           -run()\n" +
-                                           "            Variable 'i' is never used.\n" +
-                                           "       -ff()\n" +
-                                           "        Variable 'a' is never used.\n" +
-                                           "        Variable 'd' is never used.\n" +
-                                           "       -foo()\n" +
-                                           "        Variable 'j' is never used.\n" +
-                                           "       -main(String[])\n" +
-                                           "        Variable 'test' is never used.\n" +
-                                           "  -Probable bugs\n" +
-                                           "   -'equals()' called on itself\n" +
-                                           "    -testOfflineView\n" +
-                                           "     -<default>\n" +
-                                           "      -Test\n" +
-                                           "       -m()\n" +
-                                           "        'equals()' called on itself\n" +
-                                           "      -Test2\n" +
-                                           "       -m123()\n" +
-                                           "        'equals()' called on itself\n"
+    PlatformTestUtil.assertTreeEqual(tree, """
+                                       -Inspection Results
+                                        -Java
+                                         -Declaration redundancy
+                                          -Unused declaration
+                                           Entry Points
+                                           -testOfflineView
+                                            -<default>
+                                             -Test
+                                              -f()
+                                               -D
+                                                -b()
+                                                 Variable 'r' is never used.
+                                                 -anonymous (Runnable)
+                                                  -run()
+                                                   Variable 'i' is never used.
+                                              -ff()
+                                               Variable 'a' is never used.
+                                               Variable 'd' is never used.
+                                              -foo()
+                                               Variable 'j' is never used.
+                                              -main(String[])
+                                               Variable 'test' is never used.
+                                         -Probable bugs
+                                          -'equals()' called on itself
+                                           -testOfflineView
+                                            -<default>
+                                             -Test
+                                              -m()
+                                               'equals()' called on itself
+                                             -Test2
+                                              -m123()
+                                               'equals()' called on itself
+                                       """
                                          );
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = false;
     tree = updateTree();
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    PlatformTestUtil.assertTreeEqual(tree, "-Inspection Results\n" +
-                                           " -Java\n" +
-                                           "  -Declaration redundancy\n" +
-                                           "   -Unused declaration\n" +
-                                           "    Entry Points\n" +
-                                           "    -Test\n" +
-                                           "     -f()\n" +
-                                           "      -D\n" +
-                                           "       -b()\n" +
-                                           "        Variable 'r' is never used.\n" +
-                                           "        -anonymous (Runnable)\n" +
-                                           "         -run()\n" +
-                                           "          Variable 'i' is never used.\n" +
-                                           "     -ff()\n" +
-                                           "      Variable 'a' is never used.\n" +
-                                           "      Variable 'd' is never used.\n" +
-                                           "     -foo()\n" +
-                                           "      Variable 'j' is never used.\n" +
-                                           "     -main(String[])\n" +
-                                           "      Variable 'test' is never used.\n" +
-                                           "  -Probable bugs\n" +
-                                           "   -'equals()' called on itself\n" +
-                                           "    -Test\n" +
-                                           "     'equals()' called on itself\n" +
-                                           "    -Test2\n" +
-                                           "     'equals()' called on itself\n"
+    PlatformTestUtil.assertTreeEqual(tree, """
+                                       -Inspection Results
+                                        -Java
+                                         -Declaration redundancy
+                                          -Unused declaration
+                                           Entry Points
+                                           -Test
+                                            -f()
+                                             -D
+                                              -b()
+                                               Variable 'r' is never used.
+                                               -anonymous (Runnable)
+                                                -run()
+                                                 Variable 'i' is never used.
+                                            -ff()
+                                             Variable 'a' is never used.
+                                             Variable 'd' is never used.
+                                            -foo()
+                                             Variable 'j' is never used.
+                                            -main(String[])
+                                             Variable 'test' is never used.
+                                         -Probable bugs
+                                          -'equals()' called on itself
+                                           -Test
+                                            'equals()' called on itself
+                                           -Test2
+                                            'equals()' called on itself
+                                       """
                                          );
     InspectionRootNode root = tree.getInspectionTreeModel().getRoot();
     root.excludeElement();
     tree.getInspectionTreeModel().traverse(root).forEach(node -> assertTrue("node = " + node, node.isExcluded()));
     myView.getGlobalInspectionContext().getUIOptions().FILTER_RESOLVED_ITEMS = false;
     tree = updateTree();
-    PlatformTestUtil.assertTreeEqual(tree, "-Inspection Results\n"
-                                           + " -Java\n" +
-                                           "  -Declaration redundancy\n" +
-                                           "   -Unused declaration\n" +
-                                           "    Entry Points\n" +
-                                           "    -Test\n" +
-                                           "     -f()\n" +
-                                           "      -D\n" +
-                                           "       -b()\n" +
-                                           "        Variable 'r' is never used.\n" +
-                                           "        -anonymous (Runnable)\n" +
-                                           "         -run()\n" +
-                                           "          Variable 'i' is never used.\n" +
-                                           "     -ff()\n" +
-                                           "      Variable 'a' is never used.\n" +
-                                           "      Variable 'd' is never used.\n" +
-                                           "     -foo()\n" +
-                                           "      Variable 'j' is never used.\n" +
-                                           "     -main(String[])\n" +
-                                           "      Variable 'test' is never used.\n" +
-                                           "  -Probable bugs\n" +
-                                           "   -'equals()' called on itself\n" +
-                                           "    -Test\n" +
-                                           "     'equals()' called on itself\n" +
-                                           "    -Test2\n" +
-                                           "     'equals()' called on itself\n"
+    PlatformTestUtil.assertTreeEqual(tree, """
+                                       -Inspection Results
+                                        -Java
+                                         -Declaration redundancy
+                                          -Unused declaration
+                                           Entry Points
+                                           -Test
+                                            -f()
+                                             -D
+                                              -b()
+                                               Variable 'r' is never used.
+                                               -anonymous (Runnable)
+                                                -run()
+                                                 Variable 'i' is never used.
+                                            -ff()
+                                             Variable 'a' is never used.
+                                             Variable 'd' is never used.
+                                            -foo()
+                                             Variable 'j' is never used.
+                                            -main(String[])
+                                             Variable 'test' is never used.
+                                         -Probable bugs
+                                          -'equals()' called on itself
+                                           -Test
+                                            'equals()' called on itself
+                                           -Test2
+                                            'equals()' called on itself
+                                       """
                                           );
   }
 
   private InspectionTree updateTree() throws InterruptedException {
     myView.update();
+    myView.dispatchTreeUpdate();
     final InspectionTree tree = myView.getTree();
-    TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     return tree;
   }

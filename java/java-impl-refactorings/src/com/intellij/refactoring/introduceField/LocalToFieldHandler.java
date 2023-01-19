@@ -341,26 +341,22 @@ public abstract class LocalToFieldHandler {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
 
         switch (finalInitializerPlace) {
-          case IN_FIELD_DECLARATION:
+          case IN_FIELD_DECLARATION -> {
             appendComments(declarationStatement, myField, myLocal.getInitializer());
             declarationStatement.delete();
-            break;
-
-          case IN_CURRENT_METHOD:
+          }
+          case IN_CURRENT_METHOD -> {
             PsiExpressionStatement statement = createAssignment(myLocal, myFieldName, factory);
             appendComments(declarationStatement, declarationStatement, myLocal.getInitializer());
             if (declarationStatement instanceof PsiDeclarationStatement) {
               declarationStatement.replace(statement);
-            } else {
+            }
+            else {
               myLocal.replace(statement.getExpression());
             }
-            break;
-
-          case IN_CONSTRUCTOR:
-            addInitializationToConstructors(myLocal, myField, enclosingConstructor, factory);
-            break;
-          case IN_SETUP_METHOD:
-            addInitializationToSetUp(myLocal, myField, factory);
+          }
+          case IN_CONSTRUCTOR -> addInitializationToConstructors(myLocal, myField, enclosingConstructor, factory);
+          case IN_SETUP_METHOD -> addInitializationToSetUp(myLocal, myField, factory);
         }
 
         if (enclosingConstructor != null && myInitializerPlace == IN_CONSTRUCTOR) {

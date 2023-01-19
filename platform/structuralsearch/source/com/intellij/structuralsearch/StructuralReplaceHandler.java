@@ -5,9 +5,6 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class StructuralReplaceHandler {
   public abstract void replace(@NotNull ReplacementInfo info, @NotNull ReplaceOptions options);
 

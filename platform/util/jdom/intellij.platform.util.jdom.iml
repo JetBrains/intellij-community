@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Jaxen" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
   </component>
 </module>

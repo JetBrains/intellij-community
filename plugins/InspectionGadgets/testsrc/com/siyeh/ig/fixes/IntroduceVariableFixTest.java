@@ -10,22 +10,26 @@ public class IntroduceVariableFixTest extends LightJavaCodeInsightFixtureTestCas
   public void testIntentionPreview() {
     myFixture.enableInspections(new ChainedMethodCallInspection());
     myFixture.configureByText("Test.java",
-                              "import java.io.File;\n" +
-                              "\n" +
-                              "class X {\n" +
-                              "    int foo(File f) {\n" +
-                              "      return f.getName().lengt<caret>h();\n" +
-                              "    }\n" +
-                              "}");
+                              """
+                                import java.io.File;
+
+                                class X {
+                                    int foo(File f) {
+                                        return f.getName().lengt<caret>h();
+                                    }
+                                }
+                                """);
     IntentionAction action = myFixture.findSingleIntention("Introduce variable");
-    String text = myFixture.getIntentionPreviewText(action);
-    assertEquals("import java.io.File;\n" +
-                 "\n" +
-                 "class X {\n" +
-                 "    int foo(File f) {\n" +
-                 "        String name = f.getName();\n" +
-                 "        return name.length();\n" +
-                 "    }\n" +
-                 "}", text);
+    myFixture.checkPreviewAndLaunchAction(action);
+    myFixture.checkResult("""
+                            import java.io.File;
+
+                            class X {
+                                int foo(File f) {
+                                    String name = f.getName();
+                                    return name.length();
+                                }
+                            }
+                            """);
   }
 }

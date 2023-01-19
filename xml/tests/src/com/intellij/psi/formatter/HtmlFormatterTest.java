@@ -147,13 +147,28 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
 
   public void test13() {
     getHtmlSettings().HTML_KEEP_LINE_BREAKS = false;
-    doTextTest("<root>\n" + "    <aaa/>\n" + "    <aaa></aaa>\n" + "    <aaa/>\n" + "</root>",
-               "<root>\n" + "    <aaa/>\n" + "    <aaa></aaa>\n" + "    <aaa/>\n" + "</root>");
+    doTextTest("""
+                 <root>
+                     <aaa/>
+                     <aaa></aaa>
+                     <aaa/>
+                 </root>""",
+               """
+                 <root>
+                     <aaa/>
+                     <aaa></aaa>
+                     <aaa/>
+                 </root>""");
   }
 
   public void testSpaces() {
     doTextTest("<div> text <div/> text <div> text </div> </div>",
-               "<div> text\n" + "    <div/>\n" + "    text\n" + "    <div> text</div>\n" + "</div>");
+               """
+                 <div> text
+                     <div/>
+                     text
+                     <div> text</div>
+                 </div>""");
   }
 
   public void testClosingDivOnNextLine() {
@@ -164,17 +179,40 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void testLineFeedAfterWrappedTag() {
-    doTextTest("<html><body><table></table></body></html>", "<html>\n" + "<body>\n" + "<table></table>\n" + "</body>\n" + "</html>");
+    doTextTest("<html><body><table></table></body></html>", """
+      <html>
+      <body>
+      <table></table>
+      </body>
+      </html>""");
 
     doTextTest("<html><body><table></table><tag></tag></body></html>",
-               "<html>\n" + "<body>\n" + "<table></table>\n" + "<tag></tag>\n" + "</body>\n" + "</html>");
+               """
+                 <html>
+                 <body>
+                 <table></table>
+                 <tag></tag>
+                 </body>
+                 </html>""");
 
 
     doTextTest("<html><body><table></table> text</body></html>",
-               "<html>\n" + "<body>\n" + "<table></table>\n" + "text\n" + "</body>\n" + "</html>");
+               """
+                 <html>
+                 <body>
+                 <table></table>
+                 text
+                 </body>
+                 </html>""");
 
     doTextTest("<html><body><table></table>text</body></html>",
-               "<html>\n" + "<body>\n" + "<table></table>\n" + "text\n" + "</body>\n" + "</html>");
+               """
+                 <html>
+                 <body>
+                 <table></table>
+                 text
+                 </body>
+                 </html>""");
 
   }
 
@@ -182,11 +220,22 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     getSettings().setDefaultRightMargin(5);
     getHtmlSettings().HTML_TEXT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
-    doTextTest("<html>\n" + "text textV&aelig;lg JE\n" + "</html>", "<html>\n" + "text\n" + "textV&aelig;lg\n" + "JE\n" + "</html>");
+    doTextTest("""
+                 <html>
+                 text textV&aelig;lg JE
+                 </html>""", """
+                 <html>
+                 text
+                 textV&aelig;lg
+                 JE
+                 </html>""");
 
     getSettings().setDefaultRightMargin(2);
 
-    doTextTest("<html><a>&aelig;</a></html>", "<html>\n" + "<a>&aelig;</a>\n" + "</html>");
+    doTextTest("<html><a>&aelig;</a></html>", """
+      <html>
+      <a>&aelig;</a>
+      </html>""");
   }
 
   public void testBody() throws Exception {
@@ -215,13 +264,14 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
                                     
   public void testHtmlReformatDoesntProduceAssertion() {
     @NonNls String fileText =
-      "<html>\n" +
-      "  <head><title>Simple jsp page</title></head>\n" +
-      "  <body>\n" +
-      "<p>Place your co</p>\n" +
-      "<p>ntent here</p>\n" +
-      "</body>\n" +
-      "</html>";
+      """
+        <html>
+          <head><title>Simple jsp page</title></head>
+          <body>
+        <p>Place your co</p>
+        <p>ntent here</p>
+        </body>
+        </html>""";
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("test.html", fileText);
     final XmlTag bodyTag = file.getDocument().getRootTag().getSubTags()[1];
     CodeStyleManager.getInstance(getProject()).reformatRange(
@@ -232,13 +282,14 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
 
   public void testXhtmlReformatDoesntProduceAssertion() {
     @NonNls String fileText =
-      "<html>\n" +
-      "  <head><title>Simple jsp page</title></head>\n" +
-      "  <body>\n" +
-      "<p>Place your co</p>\n" +
-      "<p>ntent here</p>\n" +
-      "</body>\n" +
-      "</html>";
+      """
+        <html>
+          <head><title>Simple jsp page</title></head>
+          <body>
+        <p>Place your co</p>
+        <p>ntent here</p>
+        </body>
+        </html>""";
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("test.xhtml", fileText);
     final XmlTag bodyTag = file.getDocument().getRootTag().getSubTags()[1];
     CodeStyleManager.getInstance(getProject()).reformatRange(
@@ -270,25 +321,27 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
 
   public void testWeb456() {
     doTextTest(
-      "<html>\n" +
-      "<body>\n" +
-      "<label>\n" +
-      "    <textarea>\n" +
-      "This my text which should appear as is\n" +
-      "</textarea>\n" +
-      "</label>\n" +
-      "</body>\n" +
-      "</html>",
+      """
+        <html>
+        <body>
+        <label>
+            <textarea>
+        This my text which should appear as is
+        </textarea>
+        </label>
+        </body>
+        </html>""",
 
-      "<html>\n" +
-      "<body>\n" +
-      "<label>\n" +
-      "    <textarea>\n" +
-      "This my text which should appear as is\n" +
-      "</textarea>\n" +
-      "</label>\n" +
-      "</body>\n" +
-      "</html>"
+      """
+        <html>
+        <body>
+        <label>
+            <textarea>
+        This my text which should appear as is
+        </textarea>
+        </label>
+        </body>
+        </html>"""
     );
   }
 
@@ -298,25 +351,27 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = 3;
     try {
       doTextTest(
-        "<table>\n" +
-        "<tr>\n" +
-        "    <td>Cell 1.</td>\n" +
-        "    <td>Cell 2.</td>\n" +
-        "</tr>\n" +
-        "<tr>\n" +
-        "    <td>Cell 3.</td>\n" +
-        "</tr>\n" +
-        "</table>",
+        """
+          <table>
+          <tr>
+              <td>Cell 1.</td>
+              <td>Cell 2.</td>
+          </tr>
+          <tr>
+              <td>Cell 3.</td>
+          </tr>
+          </table>""",
 
-        "<table>\n" +
-        "<tr>\n" +
-        "<td>Cell 1.</td>\n" +
-        "<td>Cell 2.</td>\n" +
-        "</tr>\n" +
-        "<tr>\n" +
-        "    <td>Cell 3.</td>\n" +
-        "</tr>\n" +
-        "</table>"
+        """
+          <table>
+          <tr>
+          <td>Cell 1.</td>
+          <td>Cell 2.</td>
+          </tr>
+          <tr>
+              <td>Cell 3.</td>
+          </tr>
+          </table>"""
       );
     }
     finally {
@@ -326,47 +381,53 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
 
   public void testWeb12840() {
     doTextTest(
-      "<div \n" +
-      "id=\"some\"\n" +
-      "class=\"some\"\n" +
-      ">",
+      """
+        <div\s
+        id="some"
+        class="some"
+        >""",
 
-      "<div\n" +
-      "        id=\"some\"\n" +
-      "        class=\"some\"\n" +
-      ">"
+      """
+        <div
+                id="some"
+                class="some"
+        >"""
     );
   }
 
   public void testWeb16223() {
     doTextTest(
-      "<img\n" +
-      "id=\"image-id\"\n" +
-      "className=\"thumbnail\"\n" +
-      "src=\"/some/path/to/the/images/image-name.png\"\n" +
-      "alt='image'\n" +
-      "/>",
+      """
+        <img
+        id="image-id"
+        className="thumbnail"
+        src="/some/path/to/the/images/image-name.png"
+        alt='image'
+        />""",
 
-      "<img\n" +
-      "        id=\"image-id\"\n" +
-      "        className=\"thumbnail\"\n" +
-      "        src=\"/some/path/to/the/images/image-name.png\"\n" +
-      "        alt='image'\n" +
-      "/>"
+      """
+        <img
+                id="image-id"
+                className="thumbnail"
+                src="/some/path/to/the/images/image-name.png"
+                alt='image'
+        />"""
     );
   }
 
   public void testWeb12937() {
     doTextTest(
-      "<div id=\"top\"></div><!-- /#top -->\n" +
-      "<div id=\"nav\">\n" +
-      "<div id=\"logo\"></div><!-- /#logo -->\n" +
-      "</div>",
+      """
+        <div id="top"></div><!-- /#top -->
+        <div id="nav">
+        <div id="logo"></div><!-- /#logo -->
+        </div>""",
 
-      "<div id=\"top\"></div><!-- /#top -->\n" +
-      "<div id=\"nav\">\n" +
-      "    <div id=\"logo\"></div><!-- /#logo -->\n" +
-      "</div>"
+      """
+        <div id="top"></div><!-- /#top -->
+        <div id="nav">
+            <div id="logo"></div><!-- /#logo -->
+        </div>"""
     );
   }
 
@@ -377,67 +438,71 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   
   public void test10809() {
     doTextTest(
-      "<p>foobar</p>\n" +
-      "<div>foobar</div>\n" +
-      "<p>foobar</p>\n" +
-      "<div>foobar</div>\n" +
-      "<div>foobar</div>\n" +
-      "<p>foobar</p>\n" +
-      "<p>foobar</p>\n" +
-      "<div>\n" +
-      "    <p>foobar</p>\n" +
-      "    <div>foobar</div>\n" +
-      "    <p>foobar</p>\n" +
-      "    <div>foobar</div>\n" +
-      "    <div>foobar</div>\n" +
-      "    <p>foobar</p>\n" +
-      "    <p>foobar</p>\n" +
-      "</div>",
-      
-      "<p>foobar</p>\n" +
-      "<div>foobar</div>\n" +
-      "<p>foobar</p>\n" +
-      "<div>foobar</div>\n" +
-      "<div>foobar</div>\n" +
-      "<p>foobar</p>\n" +
-      "<p>foobar</p>\n" +
-      "<div>\n" +
-      "    <p>foobar</p>\n" +
-      "    <div>foobar</div>\n" +
-      "    <p>foobar</p>\n" +
-      "    <div>foobar</div>\n" +
-      "    <div>foobar</div>\n" +
-      "    <p>foobar</p>\n" +
-      "    <p>foobar</p>\n" +
-      "</div>"
+      """
+        <p>foobar</p>
+        <div>foobar</div>
+        <p>foobar</p>
+        <div>foobar</div>
+        <div>foobar</div>
+        <p>foobar</p>
+        <p>foobar</p>
+        <div>
+            <p>foobar</p>
+            <div>foobar</div>
+            <p>foobar</p>
+            <div>foobar</div>
+            <div>foobar</div>
+            <p>foobar</p>
+            <p>foobar</p>
+        </div>""",
+
+      """
+        <p>foobar</p>
+        <div>foobar</div>
+        <p>foobar</p>
+        <div>foobar</div>
+        <div>foobar</div>
+        <p>foobar</p>
+        <p>foobar</p>
+        <div>
+            <p>foobar</p>
+            <div>foobar</div>
+            <p>foobar</p>
+            <div>foobar</div>
+            <div>foobar</div>
+            <p>foobar</p>
+            <p>foobar</p>
+        </div>"""
     );
   }
 
   public void testWeb18909() {
-    doTextTest("<!doctype html>\n" +
-               "<html>\n" +
-               "<body>\n" +
-               "<section>\n" +
-               "    <pre><code class=\"language-javascript\">function test(i) {\n" +
-               "    if (i===1) {\n" +
-               "        console.log('output');\n" +
-               "    }\n" +
-               "}</code></pre>\n" +
-               "</section>\n" +
-               "</body>\n" +
-               "</html>",
-               "<!doctype html>\n" +
-               "<html>\n" +
-               "<body>\n" +
-               "<section>\n" +
-               "    <pre><code class=\"language-javascript\">function test(i) {\n" +
-               "    if (i===1) {\n" +
-               "        console.log('output');\n" +
-               "    }\n" +
-               "}</code></pre>\n" +
-               "</section>\n" +
-               "</body>\n" +
-               "</html>");
+    doTextTest("""
+                 <!doctype html>
+                 <html>
+                 <body>
+                 <section>
+                     <pre><code class="language-javascript">function test(i) {
+                     if (i===1) {
+                         console.log('output');
+                     }
+                 }</code></pre>
+                 </section>
+                 </body>
+                 </html>""",
+               """
+                 <!doctype html>
+                 <html>
+                 <body>
+                 <section>
+                     <pre><code class="language-javascript">function test(i) {
+                     if (i===1) {
+                         console.log('output');
+                     }
+                 }</code></pre>
+                 </section>
+                 </body>
+                 </html>""");
   }
 
   public void testSingleQuotes() throws Exception {
@@ -457,75 +522,85 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   
   public void testWeb18213() {
     doTextTest(
-      "<div class=\"s\">\n" +
-      "    <span class=\"loading\"></span>\n" +
-      "        <span>\n" +
-      "        Loading...\n" +
-      "        </span>\n" +
-      "</div>",
+      """
+        <div class="s">
+            <span class="loading"></span>
+                <span>
+                Loading...
+                </span>
+        </div>""",
 
-      "<div class=\"s\">\n" +
-      "    <span class=\"loading\"></span>\n" +
-      "    <span>\n" +
-      "        Loading...\n" +
-      "        </span>\n" +
-      "</div>"
+      """
+        <div class="s">
+            <span class="loading"></span>
+            <span>
+                Loading...
+                </span>
+        </div>"""
     );
   }
 
   public void testSpaceInEmptyTag() {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_SPACE_INSIDE_EMPTY_TAG = true;
-    doTextTest("<div class=\"emptyWithAttributes\"/>\n" +
-               "<div/>\n" +
-               "<div class=\"notEmpty\"></div>", 
-               "<div class=\"emptyWithAttributes\" />\n" +
-               "<div />\n" +
-               "<div class=\"notEmpty\"></div>");
+    doTextTest("""
+                 <div class="emptyWithAttributes"/>
+                 <div/>
+                 <div class="notEmpty"></div>""",
+               """
+                 <div class="emptyWithAttributes" />
+                 <div />
+                 <div class="notEmpty"></div>""");
   }
 
   public void testMultilineTags_NewlinesBeforeAndAfterAttributes() {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
     settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
-    String source = "<div class=\"singleline\" foo=\"1\" bar=\"2\"/>\n" +
-                    "<div class=\"singleline\"></div>\n" +
-                    "<div class=\"multiline\" foo=\"1\"\n" +
-                    "          bar=\"2\"></div>\n" +
-                    "<div class=\"selfClosingMultiline\" foo=\"1\" bar=\"2\"\n" +
-                    "/>\n" +
-                    "<!--void tags-->\n" +
-                    "<input type=\"button\" value=\"Ok\">\n" +
-                    "<br>\n";
+    String source = """
+      <div class="singleline" foo="1" bar="2"/>
+      <div class="singleline"></div>
+      <div class="multiline" foo="1"
+                bar="2"></div>
+      <div class="selfClosingMultiline" foo="1" bar="2"
+      />
+      <!--void tags-->
+      <input type="button" value="Ok">
+      <br>
+      """;
     doTextTest(
       source,
-      "<div class=\"singleline\" foo=\"1\" bar=\"2\"/>\n" +
-      "<div class=\"singleline\"></div>\n" +
-      "<div\n" +
-      "        class=\"multiline\" foo=\"1\"\n" +
-      "        bar=\"2\"\n" +
-      "></div>\n" +
-      "<div\n" +
-      "        class=\"selfClosingMultiline\" foo=\"1\" bar=\"2\"\n" +
-      "/>\n" +
-      "<!--void tags-->\n" +
-      "<input type=\"button\" value=\"Ok\">\n" +
-      "<br>\n");
+      """
+        <div class="singleline" foo="1" bar="2"/>
+        <div class="singleline"></div>
+        <div
+                class="multiline" foo="1"
+                bar="2"
+        ></div>
+        <div
+                class="selfClosingMultiline" foo="1" bar="2"
+        />
+        <!--void tags-->
+        <input type="button" value="Ok">
+        <br>
+        """);
     settings.HTML_SPACE_INSIDE_EMPTY_TAG = true;
     doTextTest(
       source,
-      "<div class=\"singleline\" foo=\"1\" bar=\"2\" />\n" +
-      "<div class=\"singleline\"></div>\n" +
-      "<div\n" +
-      "        class=\"multiline\" foo=\"1\"\n" +
-      "        bar=\"2\"\n" +
-      "></div>\n" +
-      "<div\n" +
-      "        class=\"selfClosingMultiline\" foo=\"1\" bar=\"2\"\n" +
-      "/>\n" +
-      "<!--void tags-->\n" +
-      "<input type=\"button\" value=\"Ok\">\n" +
-      "<br>\n");
+      """
+        <div class="singleline" foo="1" bar="2" />
+        <div class="singleline"></div>
+        <div
+                class="multiline" foo="1"
+                bar="2"
+        ></div>
+        <div
+                class="selfClosingMultiline" foo="1" bar="2"
+        />
+        <!--void tags-->
+        <input type="button" value="Ok">
+        <br>
+        """);
   }
 
   @NotNull

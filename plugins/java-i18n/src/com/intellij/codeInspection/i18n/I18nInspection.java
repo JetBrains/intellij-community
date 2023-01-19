@@ -36,18 +36,17 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
@@ -66,10 +65,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -106,6 +103,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "length").parameterCount(0);
   private static final CallMatcher STRING_EQUALS =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "equals", "equalsIgnoreCase").parameterCount(1);
+  private static final int FIELD_PANEL_COLUMNS = 18;
 
   public boolean ignoreForAssertStatements = true;
   public boolean ignoreForExceptionConstructors = true;
@@ -340,7 +338,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     panel.add(exceptionConstructorCheck);
 
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    panel.add(new FieldPanel(specifiedExceptions,
+    panel.addGrowingX(new FieldPanel(specifiedExceptions,
                              null,
                              JavaI18nBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"),
                              openProjects.length == 0 ? null :
@@ -350,7 +348,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
                                  createIgnoreExceptionsConfigurationDialog(openProjects[0], specifiedExceptions).show();
                                }
                              },
-                             null), "growx, wrap");
+                             null));
 
     panel.add(classRef);
     panel.add(propertyRef);
@@ -364,7 +362,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       new FieldPanel(commentPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.comment.pattern"),
                      JavaI18nBundle.message("inspection.i18n.option.ignore.comment.title"), null,
                      () -> setNonNlsCommentPattern(commentPattern.getText()));
-    panel.add(nonNlsCommentPatternComponent, "growx, wrap");
+    panel.addGrowingX(nonNlsCommentPatternComponent);
 
     final JTextField literalPattern = new ExpandableTextField(text -> Collections.singletonList(text),
                                                               strings -> StringUtil.join(strings, "|"));
@@ -373,16 +371,9 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       new FieldPanel(literalPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.string.pattern"),
                      JavaI18nBundle.message("inspection.i18n.option.ignore.string.title"), null,
                      () -> setNonNlsLiteralPattern(literalPattern.getText()));
-    panel.add(nonNlsStringPatternComponent, "growx, wrap");
+    panel.addGrowingX(nonNlsStringPatternComponent);
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setBorder(null);
-    scrollPane.setPreferredSize(new Dimension(panel.getPreferredSize().width + scrollPane.getVerticalScrollBar().getPreferredSize().width,
-                                              panel.getPreferredSize().height +
-                                              scrollPane.getHorizontalScrollBar().getPreferredSize().height));
-    return scrollPane;
+    return panel;
   }
 
   private DialogWrapper createIgnoreExceptionsConfigurationDialog(final Project project, final JTextField specifiedExceptions) {
@@ -453,27 +444,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
   @NotNull
   private static LocalQuickFix createIntroduceConstantFix() {
-    return new LocalQuickFix() {
-      @Override
-      @NotNull
-      public String getFamilyName() {
-        return IntroduceConstantHandler.getRefactoringNameText();
-      }
-
-      @Override
-      public boolean startInWriteAction() {
-        return false;
-      }
-
-      @Override
-      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-        PsiElement element = descriptor.getPsiElement();
-        if (!(element instanceof PsiExpression)) return;
-
-        PsiExpression[] expressions = {(PsiExpression)element};
-        new IntroduceConstantHandler().invoke(project, expressions);
-      }
-    };
+    return new IntroduceConstantFix();
   }
 
   @Nullable

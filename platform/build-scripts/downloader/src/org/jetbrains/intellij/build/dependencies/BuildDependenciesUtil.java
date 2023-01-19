@@ -28,6 +28,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 import java.util.function.Function;
@@ -42,10 +43,12 @@ public final class BuildDependenciesUtil {
 
   private static final boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
   private static final int octal_0111 = Integer.parseInt("111", 8);
-  private static final boolean isWindows = System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows");
+  public static final boolean isWindows = System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows");
+
+  public static final boolean underTeamCity = System.getenv("TEAMCITY_VERSION") != null;
 
   @SuppressWarnings("HttpUrlsUsage")
-  private static DocumentBuilder createDocumentBuilder() {
+  public static DocumentBuilder createDocumentBuilder() {
     // from https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html#jaxp-documentbuilderfactory-saxparserfactory-and-dom4j
 
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newDefaultInstance();
@@ -93,7 +96,7 @@ public final class BuildDependenciesUtil {
     }
   }
 
-  private static Element getSingleChildElement(Element parent, String tagName) {
+  public static List<Element> getChildElements(Element parent, String tagName) {
     NodeList childNodes = parent.getChildNodes();
 
     ArrayList<Element> result = new ArrayList<>();
@@ -107,6 +110,26 @@ public final class BuildDependenciesUtil {
       }
     }
 
+    return result;
+  }
+
+  public static Element getComponentElement(Element root, String componentName) {
+    //noinspection SSBasedInspection
+    List<Element> elements = getChildElements(root, "component")
+      .stream()
+      .filter(x -> componentName.equals(x.getAttribute("name")))
+      .collect(Collectors.toList());
+
+    if (elements.size() != 1) {
+      throw new IllegalStateException("Expected one and only one component with name '" + componentName + "'");
+    }
+
+    return elements.get(0);
+  }
+
+  public static Element getSingleChildElement(Element parent, String tagName) {
+    List<Element> result = getChildElements(parent, tagName);
+
     if (result.size() != 1) {
       throw new IllegalStateException("Expected one and only one element by tag '" + tagName + "'");
     }
@@ -114,7 +137,17 @@ public final class BuildDependenciesUtil {
     return result.get(0);
   }
 
-  static String getLibraryMavenId(Path libraryXml) {
+  public static Element tryGetSingleChildElement(Element parent, String tagName) {
+    List<Element> result = getChildElements(parent, tagName);
+
+    if (result.size() == 1) {
+      return result.get(0);
+    }
+
+    return null;
+  }
+
+  public static String getLibraryMavenId(Path libraryXml) {
     try {
       DocumentBuilder documentBuilder = createDocumentBuilder();
       Document document = documentBuilder.parse(libraryXml.toFile());
@@ -205,7 +238,7 @@ public final class BuildDependenciesUtil {
     });
   }
 
-  private static void extractTarBasedArchive(Path archiveFile, Path target, boolean stripRoot, Function<InputStream, InputStream> unpacker)
+  private static void extractTarBasedArchive(Path archiveFile, Path target, boolean stripRoot, Function<? super InputStream, ? extends InputStream> unpacker)
     throws Exception {
     try (TarArchiveInputStream archive = new TarArchiveInputStream(
       unpacker.apply(new BufferedInputStream(Files.newInputStream(archiveFile))))) {
@@ -305,7 +338,7 @@ public final class BuildDependenciesUtil {
             // On Windows symlink creation is still gated by various registry keys
 
             if (Files.isRegularFile(resolvedTarget)) {
-              Files.copy(resolvedTarget, entryPath);
+              Files.copy(resolvedTarget, entryPath, StandardCopyOption.REPLACE_EXISTING);
             }
           }
           else {
@@ -314,7 +347,7 @@ public final class BuildDependenciesUtil {
         }
         else if (type == Entry.Type.FILE) {
           try (InputStream is = entry.getInputStream()) {
-            Files.copy(is, entryPath);
+            Files.copy(is, entryPath, StandardCopyOption.REPLACE_EXISTING);
           }
 
           if (isPosix && entry.isExecutable()) {
@@ -440,17 +473,19 @@ public final class BuildDependenciesUtil {
     return s.substring(start, end);
   }
 
+  public static void deleteFileOrFolder(Path file) {
+    try {
+      MoreFiles.deleteRecursively(file, RecursiveDeleteOption.ALLOW_INSECURE);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public static void cleanDirectory(Path directory) throws IOException {
     Files.createDirectories(directory);
     try (Stream<Path> stream = Files.list(directory)) {
-      stream.forEach(path -> {
-        try {
-          MoreFiles.deleteRecursively(path, RecursiveDeleteOption.ALLOW_INSECURE);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      });
+      stream.forEach(BuildDependenciesUtil::deleteFileOrFolder);
     }
   }
 
@@ -479,5 +514,25 @@ public final class BuildDependenciesUtil {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static String directoryContentToString(Path directory, String humanReadableName) {
+    List<Path> contents = listDirectory(directory);
+    StringBuilder sb = new StringBuilder();
+
+    sb.append("Directory contents of ");
+    sb.append(directory.toAbsolutePath());
+    sb.append(" (");
+    sb.append(humanReadableName);
+    sb.append("), ");
+    sb.append(contents.size());
+    sb.append(" entries:");
+
+    for (Path p : contents) {
+      sb.append(Files.isDirectory(p) ? "\nD " : "\nF ");
+      sb.append(p.getFileName().toString());
+    }
+
+    return sb.toString();
   }
 }

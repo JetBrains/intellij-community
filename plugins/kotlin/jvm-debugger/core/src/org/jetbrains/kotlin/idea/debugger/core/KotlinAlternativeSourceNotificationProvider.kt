@@ -20,13 +20,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
-import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils.findFilesWithExactPackage
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinAllFilesScopeProvider
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.platform.js.isJs
+import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.psi.KtFile
@@ -35,33 +35,33 @@ import javax.swing.JComponent
 
 class KotlinAlternativeSourceNotificationProvider : EditorNotificationProvider {
 
-    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
         if (!DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE) {
-            return CONST_NULL
+            return null
         }
 
         val javaSession = DebuggerManagerEx.getInstanceEx(project).context.debuggerSession
         val session = javaSession?.xDebugSession
         if (session == null) {
             AlternativeSourceNotificationProvider.setFileProcessed(file, false)
-            return CONST_NULL
+            return null
         }
 
         val position = session.currentPosition
         if (file != position?.file) {
             AlternativeSourceNotificationProvider.setFileProcessed(file, false)
-            return CONST_NULL
+            return null
         }
 
-        if (DumbService.getInstance(project).isDumb) return CONST_NULL
+        if (DumbService.getInstance(project).isDumb) return null
 
-        val ktFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return CONST_NULL
+        val ktFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return null
         val alternativeKtFiles = findAlternativeKtFiles(ktFile, project, javaSession)
 
         AlternativeSourceNotificationProvider.setFileProcessed(file, true)
 
         if (alternativeKtFiles.size <= 1) {
-            return CONST_NULL
+            return null
         }
 
         val currentFirstAlternatives: Collection<KtFile> = listOf(ktFile) + alternativeKtFiles.filter { it != ktFile }
@@ -149,13 +149,16 @@ private fun findAlternativeKtFiles(ktFile: KtFile, project: Project, javaSession
     val packageFqName = ktFile.packageFqName
     val fileName = ktFile.name
     val platform = ktFile.platform
-    return findFilesWithExactPackage(
-        packageFqName,
-        javaSession.searchScope,
-        project,
-    ).filterTo(HashSet()) {
-        it.name == fileName && it.platformMatches(platform)
-    }
+    val allFilesSearchScope = KotlinAllFilesScopeProvider.getInstance(project).getAllKotlinFilesScope()
+
+    fun matches(file: KtFile): Boolean =
+        file.name == fileName && file.platformMatches(platform)
+
+    val result = HashSet<KtFile>()
+    findFilesWithExactPackage(packageFqName, javaSession.searchScope, project).filterTo(result, ::matches)
+    findFilesWithExactPackage(packageFqName, allFilesSearchScope, project).filterTo(result, ::matches)
+
+    return result
 }
 
 private fun KtFile.platformMatches(otherPlatform: TargetPlatform): Boolean =

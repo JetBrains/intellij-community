@@ -18,6 +18,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorService
 
 internal class LibraryUsageStatisticsProvider(private val project: Project) : DaemonListener {
 
@@ -46,7 +47,7 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
         .inSmartMode(project)
         .expireWith(processedFilesService)
         .coalesceBy(vFile, processedFilesService)
-        .submit(AppExecutorUtil.getAppExecutorService())
+        .submit(boundedExecutor)
     }
   }
 
@@ -56,13 +57,11 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
 
     val psiFile = PsiManager.getInstance(project).findFile(vFile) ?: return null
 
-    val fileType = psiFile.fileType
-    val importProcessor =
-      LibraryUsageImportProcessor.EP_NAME.findFirstSafe { it.isApplicable(fileType) } ?: return null
+    val importProcessor = LibraryUsageImportProcessorBean.INSTANCE.forLanguage(psiFile.language) ?: return null
     val processedLibraryNames = mutableSetOf<String>()
     val usages = mutableListOf<LibraryUsage>()
 
-    val libraryDescriptorFinder = project.service<LibraryDescriptorFinderService>().libraryDescriptorFinder
+    val libraryDescriptorFinder = service<LibraryDescriptorFinderService>()
 
     // we should process simple element imports first, because they can be unambiguously resolved
     val imports = importProcessor.imports(psiFile).sortedByDescending { importProcessor.isSingleElementImport(it) }
@@ -79,7 +78,7 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
       usages += LibraryUsage(
         name = libraryName,
         version = libraryVersion,
-        fileType = fileType,
+        fileType = psiFile.fileType,
       )
     }
 
@@ -96,5 +95,12 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
           !isUnitTestMode && !isHeadlessEnvironment && StatisticsUploadAssistant.isSendAllowed()
         }
       }
+
+    private val boundedExecutor: ExecutorService by lazy {
+      AppExecutorUtil.createBoundedApplicationPoolExecutor(
+        /* name = */ "LibraryUsageStatisticsProvider",
+        /* maxThreads = */ 1,
+      )
+    }
   }
 }

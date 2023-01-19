@@ -161,7 +161,7 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
       }
     }
 
-    val sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdk")) { sdkModificator ->
+    val sdk = projectModelRule.addSdk("sdk") { sdkModificator ->
       sdkModificator.addRoot(classesDir.file, OrderRootType.CLASSES)
       sdkModificator.addRoot(sourcesDir.file, OrderRootType.SOURCES)
     }

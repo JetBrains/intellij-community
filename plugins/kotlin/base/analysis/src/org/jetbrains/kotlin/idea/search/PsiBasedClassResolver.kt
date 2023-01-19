@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.search
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiModifier
@@ -14,9 +15,8 @@ import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.*
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.findTypeAliasByShortName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.getDefaultImports
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -121,7 +121,7 @@ class PsiBasedClassResolver @TestOnly constructor(private val targetClassFqName:
     }
 
     private fun findPotentialTypeAliasConflicts(target: PsiClass) {
-        val candidates = findTypeAliasByShortName(targetShortName, target.project, target.project.allScope())
+        val candidates = KotlinTypeAliasShortNameIndex.get(targetShortName, target.project, target.project.allScope())
         for (candidate in candidates) {
             packagesWithTypeAliases.add(candidate.containingKtFile.packageFqName.asString())
         }

@@ -1,11 +1,9 @@
 package com.intellij.workspaceModel.codegen.fields
 
 import com.intellij.workspaceModel.codegen.javaFullName
-import com.intellij.workspaceModel.codegen.deft.*
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.utils.QualifiedName
 import com.intellij.workspaceModel.codegen.utils.toQualifiedName
-import com.intellij.workspaceModel.codegen.deft.ValueType as OldValueType
 
 val ValueType<*>.javaType: QualifiedName
   get() = when (this) {

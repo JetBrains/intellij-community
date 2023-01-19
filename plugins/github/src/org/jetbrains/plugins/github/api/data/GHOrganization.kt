@@ -6,4 +6,6 @@ class GHOrganization(id: String,
                      override val url: String,
                      override val avatarUrl: String,
                      val name: String?)
-  : GHNode(id), GHActor
+  : GHNode(id), GHActor {
+  override fun getPresentableName(): String = name ?: login
+}

@@ -37,7 +37,7 @@ public final class GroovyOptimizeImportsFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(GroovyPostHighlightingPass.class);
   private final boolean onTheFly;
 
-  public GroovyOptimizeImportsFix(boolean onTheFly) {
+  GroovyOptimizeImportsFix(boolean onTheFly) {
     this.onTheFly = onTheFly;
   }
 
@@ -103,7 +103,9 @@ public final class GroovyOptimizeImportsFix implements IntentionAction {
     Document myDocument = PsiDocumentManager.getInstance(myFile.getProject()).getDocument(myFile);
     boolean errors = containsErrorsPreventingOptimize(myFile, myDocument);
 
-    return !errors && DaemonListeners.canChangeFileSilently(myFile);
+    // computed in GroovyPostHighlightingPass.doCollectInformation()
+    boolean isInContent = true;
+    return !errors && DaemonListeners.canChangeFileSilently(myFile, isInContent);
   }
 
   private static boolean containsErrorsPreventingOptimize(GroovyFile myFile, Document myDocument) {

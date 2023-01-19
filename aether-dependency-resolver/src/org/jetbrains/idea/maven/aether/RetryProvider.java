@@ -13,7 +13,7 @@ public final class RetryProvider {
   /* Exponential backoff retry requirements */
   private static final Random RANDOM = new Random();
   private static final double EXP_BACKOFF_FACTOR = 2;
-  private static final double EXP_BACKOFF_JITTER = 0.3;
+  private static final double EXP_BACKOFF_JITTER = 0.1;
 
   private static final Retry DISABLED_SINGLETON = new Retry() {
     @Override
@@ -85,10 +85,10 @@ public final class RetryProvider {
       }
       catch (Exception e) {
         if (i == maxAttempts) {
-          logger.info("Retry attempts limit exceeded, tried " + maxAttempts + " times. Cause: " + e.getMessage());
+          logger.error("Retry attempts limit exceeded, tried " + maxAttempts + " times. Cause: " + e.getMessage(), e);
           throw e;
         }
-        logger.info("Attempt " + i + " of " + maxAttempts + " failed, retrying in " + effectiveDelay + "ms. Cause: " + e.getMessage());
+        logger.warn("Attempt " + i + " of " + maxAttempts + " failed, retrying in " + effectiveDelay + "ms. Cause: " + e.getMessage(), e);
         effectiveDelay = exponentialBackOff(effectiveDelay, backoffLimitMs);
       }
     }

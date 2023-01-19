@@ -47,9 +47,12 @@ public interface ApplicationEx extends Application {
    * Acquires IW lock if it's not acquired by the current thread.
    *
    * @param invokedClassFqn fully qualified name of the class requiring the write-intent lock.
+   * @return {@code true} if lock was acquired by this call, {@code false} if lock was taken already.
    */
   @ApiStatus.Internal
-  default void acquireWriteIntentLock(@NotNull String invokedClassFqn) { }
+  default boolean acquireWriteIntentLock(@NotNull String invokedClassFqn) {
+    return false;
+  }
 
   /**
    * Releases IW lock.
@@ -209,4 +212,11 @@ public interface ApplicationEx extends Application {
   default boolean isComponentCreated() {
     return true;
   }
+
+  // in some cases we cannot get service by class
+  /**
+   * Light service is not supported.
+   */
+  @ApiStatus.Internal
+  <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
 }

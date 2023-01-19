@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.presentation.java;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProvider;
@@ -8,6 +9,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
@@ -32,7 +34,7 @@ public class ClassPresentationProvider implements ItemPresentationProvider<PsiCl
           PsiClassOwner classOwner = (PsiClassOwner)file;
           String packageName = classOwner.getPackageName();
           if (packageName.isEmpty()) return null;
-          return "(" + packageName + ")";
+          return Registry.is("ide.experimental.ui") ? JavaPsiBundle.message("aux.context.display", packageName) : "(" + packageName + ")";
         }
         return null;
       }

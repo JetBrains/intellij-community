@@ -220,7 +220,8 @@ private fun PsiModifierListOwner?.hasNullabilityAnnotation(): Boolean {
 internal fun updateMethodAnnotations(method: PsiMethod, inputParameters: List<InputParameter>) {
   if (method.returnType !is PsiPrimitiveType) {
     //TODO use dataoutput.nullability instead
-    val resultNullability = CodeFragmentAnalyzer.inferNullability(CodeFragmentAnalyzer.findReturnExpressionsIn(method))
+    val returnedExpressions = PsiUtil.findReturnStatements(method).mapNotNull(PsiReturnStatement::getReturnValue)
+    val resultNullability = CodeFragmentAnalyzer.inferNullability(returnedExpressions)
     ExtractMethodHelper.addNullabilityAnnotation(method, resultNullability)
   }
   val parameters = method.parameterList.parameters

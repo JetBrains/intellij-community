@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -27,6 +28,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class RedundantImplementsInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
@@ -49,14 +52,12 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel checkboxOptionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    checkboxOptionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "ignore.serializable.option"), "ignoreSerializable");
-    checkboxOptionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "ignore.cloneable.option"), "ignoreCloneable");
-    return checkboxOptionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreSerializable", InspectionGadgetsBundle.message(
+        "ignore.serializable.option")),
+      checkbox("ignoreCloneable", InspectionGadgetsBundle.message(
+        "ignore.cloneable.option")));
   }
 
   @Override
@@ -74,7 +75,7 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement implementReference = descriptor.getPsiElement();
       deleteElement(implementReference);
     }

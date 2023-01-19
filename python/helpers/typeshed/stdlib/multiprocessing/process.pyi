@@ -1,5 +1,6 @@
 import sys
-from typing import Any, Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
+from typing import Any
 
 if sys.version_info >= (3, 8):
     __all__ = ["BaseProcess", "current_process", "active_children", "parent_process"]
@@ -14,9 +15,9 @@ class BaseProcess:
     def __init__(
         self,
         group: None = ...,
-        target: Callable[..., Any] | None = ...,
+        target: Callable[..., object] | None = ...,
         name: str | None = ...,
-        args: tuple[Any, ...] = ...,
+        args: Iterable[Any] = ...,
         kwargs: Mapping[str, Any] = ...,
         *,
         daemon: bool | None = ...,
@@ -24,10 +25,8 @@ class BaseProcess:
     def run(self) -> None: ...
     def start(self) -> None: ...
     def terminate(self) -> None: ...
-    if sys.version_info >= (3, 7):
-        def kill(self) -> None: ...
-        def close(self) -> None: ...
-
+    def kill(self) -> None: ...
+    def close(self) -> None: ...
     def join(self, timeout: float | None = ...) -> None: ...
     def is_alive(self) -> bool: ...
     @property

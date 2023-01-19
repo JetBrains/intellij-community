@@ -63,7 +63,7 @@ class XDebugSessionTab3(
   override fun getFramesContentId() = debuggerContentId
 
   private fun getWatchesViewImpl(session: XDebugSessionImpl, watchesIsVariables: Boolean): XWatchesViewImpl {
-    val useSplitterView = (session.debugProcess as? XDebugSessionTabCustomizer)?.bottomLocalsComponentProvider != null
+    val useSplitterView = session.debugProcess.getBottomLocalsComponentProvider() != null
     return if (useSplitterView)
       XSplitterWatchesViewImpl(session, watchesIsVariables, true, withToolbar = false)
     else
@@ -99,7 +99,7 @@ class XDebugSessionTab3(
       isCloseable = false
     }
 
-    val customLayoutOptions = if (Registry.`is`("debugger.new.debug.tool.window.view")) {
+    val customLayoutOptions = if (session.debugProcess.allowFramesViewCustomization()) {
       val optionsCollection = XDebugTabLayoutSettings(session, content, this)
       content.putUserData(CustomContentLayoutSettings.KEY, optionsCollection)
       optionsCollection.threadsAndFramesOptions
@@ -230,6 +230,8 @@ class XDebugSessionTab3(
     }
   }
 
+  // used externally
+  @Suppress("MemberVisibilityCanBePrivate")
   val threadFramesView: XDebugView?
     get() = getView(DebuggerContentInfo.FRAME_CONTENT, XDebugView::class.java)
 

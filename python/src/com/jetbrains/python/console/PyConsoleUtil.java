@@ -25,6 +25,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,8 @@ public final class PyConsoleUtil {
   public static final String EXECUTING_PROMPT = "";
 
   private static final String IPYTHON_PAGING_PROMPT = "---Return to continue, q to quit---";
+
+  public static final @NonNls String ASYNCIO_REPL_ENV = "ASYNCIO_REPL";
 
   private static final String[] PROMPTS = new String[]{
     ORDINARY_PROMPT,
@@ -181,6 +184,11 @@ public final class PyConsoleUtil {
         String textToCursor = document.getText(new TextRange(lineStart, offset));
         e.getPresentation().setEnabled(!CharMatcher.whitespace().matchesAllOf(textToCursor));
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
 
     runCompletions.registerCustomShortcutSet(KeyEvent.VK_TAB, 0, consoleView.getConsoleEditor().getComponent());
@@ -222,6 +230,11 @@ public final class PyConsoleUtil {
         }
         e.getPresentation().setEnabled(enabled);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
 
     anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, consoleView.getConsoleEditor().getComponent());
@@ -255,6 +268,11 @@ public final class PyConsoleUtil {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         printAction.actionPerformed(createActionEvent(e, consoleView));
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
   }

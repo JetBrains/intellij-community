@@ -7,7 +7,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.refactoring.suggested.startOffset
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.text.allOccurrencesOf
 
 @JvmOverloads
@@ -31,7 +31,7 @@ fun PsiFile.findAllReferencesByText(str: String, refOffset: Int = str.length / 2
 
 private fun findInInjected(psiFile: PsiFile, pos: Int): PsiReference? {
   val injected = InjectedLanguageManager.getInstance(psiFile.project).findInjectedElementAt(psiFile, pos) ?: return null
-  val documentWindow = PsiDocumentManager.getInstance(psiFile.project).getDocument(injected.containingFile).castSafelyTo<DocumentWindow>()
+  val documentWindow = PsiDocumentManager.getInstance(psiFile.project).getDocument(injected.containingFile).asSafely<DocumentWindow>()
                        ?: return null
   val hostToInjected = documentWindow.hostToInjected(pos)
   return injected.findReferenceAt(hostToInjected - injected.startOffset)

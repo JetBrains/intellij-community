@@ -1,16 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.metaModel.impl
 
+import com.intellij.devkit.workspaceModel.metaModel.IncorrectObjInterfaceException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.workspaceModel.codegen.deft.meta.*
-import com.intellij.workspaceModel.codegen.deft.meta.impl.*
 import com.intellij.workspaceModel.deft.api.annotations.Default
-import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EqualsBy
-import com.intellij.workspaceModel.storage.PersistentEntityId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.annotations.Open
@@ -22,6 +18,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.resolve.DescriptorUtils.isInterface
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtensionProperty
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
@@ -33,17 +30,16 @@ import java.util.concurrent.ConcurrentHashMap
 
 class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
   private val objModuleByName = ConcurrentHashMap<String, Pair<CompiledObjModule, ModuleDescriptor>>()
-  private val keepUnknownFields: Boolean
-    get() = Registry.`is`("workspace.model.generator.keep.unknown.fields")
 
   private fun getObjClass(entityInterface: ClassDescriptor): ObjClass<*> {
-    val objModule = getObjModule(entityInterface.containingPackage()!!.asString(), entityInterface.module)
+    val containingPackage = entityInterface.containingPackage() ?: error("${entityInterface.fqNameUnsafe.asString()} has no package")
+    val objModule = getObjModule(containingPackage.asString(), entityInterface.module)
     val entityInterfaceName = entityInterface.name.identifier
     return objModule.types.find { it.name == entityInterfaceName } ?: error("Cannot find $entityInterfaceName in $objModule")
   }
 
   override fun getObjModule(packageName: String, module: Module): CompiledObjModule {
-    val sourceInfo = module.productionSourceInfo!!
+    val sourceInfo = module.productionSourceInfo ?: error("No production sources in ${module.name}")
     val resolutionFacade = KotlinCacheService.getInstance(module.project).getResolutionFacadeByModuleInfo(sourceInfo, sourceInfo.platform)!!
     val moduleDescriptor = resolutionFacade.moduleDescriptor
     return getObjModule(packageName, moduleDescriptor)
@@ -98,16 +94,13 @@ class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
           .filterIsInstance<PropertyDescriptor>()
           .filter { it.kind.isReal }
         for ((propertyId, property) in properties.withIndex()) {
-          objType.addField(createOwnProperty(property, propertyId, objType))
+          objType.addField(createOwnProperty(property, propertyId, classDescriptor, objType))
         }
         classDescriptor.typeConstructor.supertypes.forEach { superType ->
           val superDescriptor = superType.constructor.declarationDescriptor
           if (superDescriptor is ClassDescriptor && superDescriptor.isEntityInterface) {
             val superClass = findObjClass(superDescriptor)
             objType.addSuperType(superClass)
-          }
-          else if (superDescriptor != null) {
-            objType.addSuperType(KtInterfaceType(superDescriptor.name.identifier))
           }
         }
         module.addType(objType)
@@ -119,21 +112,26 @@ class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
     }
 
     private fun createExtProperty(extProperty: PropertyDescriptor, receiverClass: ClassDescriptor, extPropertyId: Int): ExtProperty<*, *> {
-      return ExtPropertyImpl(findObjClass(receiverClass), extProperty.name.identifier, convertType(extProperty.type),
+      val valueType = convertType(extProperty.type, "${receiverClass.fqNameSafe.asString()}::${extProperty.name}")
+      return ExtPropertyImpl(findObjClass(receiverClass), extProperty.name.identifier, valueType,
                              computeKind(extProperty), extProperty.isAnnotatedBy(StandardNames.OPEN_ANNOTATION),
-                             false, module, extPropertyId)
+                             false, module, extPropertyId, extProperty.source)
     }
 
-    private fun createOwnProperty(property: PropertyDescriptor, propertyId: Int, receiver: ObjClassImpl<Obj>): OwnProperty<Obj, *> {
-      val valueType = convertType(property.type, property.isAnnotatedBy(StandardNames.CHILD_ANNOTATION))
+    private fun createOwnProperty(property: PropertyDescriptor,
+                                  propertyId: Int,
+                                  classDescriptor: ClassDescriptor,
+                                  receiver: ObjClassImpl<Obj>): OwnProperty<Obj, *> {
+      val valueType = convertType(property.type, "${classDescriptor.fqNameSafe.asString()}::${property.name}", property.isAnnotatedBy(StandardNames.CHILD_ANNOTATION))
       return OwnPropertyImpl(receiver, property.name.identifier, valueType, computeKind(property),
                              property.isAnnotatedBy(StandardNames.OPEN_ANNOTATION), false, false, propertyId,
-                             property.isAnnotatedBy(StandardNames.EQUALS_BY_ANNOTATION))
+                             property.isAnnotatedBy(StandardNames.EQUALS_BY_ANNOTATION), 
+                             property.source)
     }
 
-    private fun convertType(type: KotlinType, hasChildAnnotation: Boolean = false): ValueType<*> {
+    private fun convertType(type: KotlinType, propertyDescription: String, hasChildAnnotation: Boolean = false): ValueType<*> {
       if (type.isMarkedNullable) {
-        return ValueType.Optional(convertType(type.makeNotNullable(), hasChildAnnotation))
+        return ValueType.Optional(convertType(type.makeNotNullable(), propertyDescription, hasChildAnnotation))
       }
       val descriptor = type.constructor.declarationDescriptor
       if (descriptor is ClassDescriptor) {
@@ -141,13 +139,14 @@ class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
         val primitive = ObjTypeConverter.findPrimitive(fqName)
         if (primitive != null) return primitive
         if (fqName == StandardNames.LIST_INTERFACE) {
-          return ValueType.List(convertType(type.arguments.first().type, hasChildAnnotation))
+          return ValueType.List(convertType(type.arguments.first().type, propertyDescription, hasChildAnnotation))
         }
         if (fqName == StandardNames.SET_INTERFACE) {
-          return ValueType.Set(convertType(type.arguments.first().type, hasChildAnnotation))
+          return ValueType.Set(convertType(type.arguments.first().type, propertyDescription, hasChildAnnotation))
         }
         if (fqName == StandardNames.MAP_INTERFACE) {
-          return ValueType.Map(convertType(type.arguments.first().type, hasChildAnnotation), convertType(type.arguments.last().type, hasChildAnnotation))
+          return ValueType.Map(convertType(type.arguments.first().type, propertyDescription, hasChildAnnotation),
+                               convertType(type.arguments.last().type, propertyDescription, hasChildAnnotation))
         }
         if (descriptor.isEntityInterface) {
           return ValueType.ObjRef(type.isAnnotatedBy(StandardNames.CHILD_ANNOTATION) || hasChildAnnotation, //todo leave only one target for @Child annotation 
@@ -158,27 +157,25 @@ class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
           return ValueType.Object<Any>(fqName.asString(), superTypes)
         }
         if (descriptor.kind == ClassKind.ENUM_CLASS) {
-          return ValueType.Blob<Any>(fqName.asString(), emptyList())
+          return ValueType.Enum<Any>(fqName.asString())
         }
         if (descriptor.isData) {
           return ValueType.DataClass<Any>(fqName.asString(), superTypes, createProperties(descriptor))
         }
         if (descriptor.isSealed()) {
           return ValueType.SealedClass<Any>(fqName.asString(), superTypes, descriptor.sealedSubclasses.map { 
-            convertType(it.defaultType) as ValueType.JvmClass<*>
+            convertType(it.defaultType, propertyDescription) as ValueType.JvmClass<*>
           })
         }
-        if (ObjTypeConverter.isKnownInterface(fqName) || keepUnknownFields) {
-          return ValueType.Blob<Any>(fqName.asString(), superTypes)
-        }
+        return ValueType.Blob<Any>(fqName.asString(), superTypes)
       }                             
-      error("Unsupported type $type")
+      throw IncorrectObjInterfaceException("Property '$propertyDescription' has unsupported type '$type'")
     }
 
     private fun createProperties(descriptor: ClassDescriptor): List<ValueType.DataClassProperty> {
       return descriptor.unsubstitutedMemberScope.getContributedDescriptors(DescriptorKindFilter.VARIABLES)
         .filterIsInstance<PropertyDescriptor>()
-        .map { ValueType.DataClassProperty(it.name.identifier, convertType(it.type)) }
+        .map { ValueType.DataClassProperty(it.name.identifier, convertType(it.type, "${descriptor.fqNameSafe.asString()}::${it.name.identifier}")) }
     }
 
     private fun findObjClass(descriptor: ClassDescriptor): ObjClass<*> {
@@ -209,7 +206,7 @@ private fun createObjTypeStub(interfaceDescriptor: ClassDescriptor, module: Comp
     interfaceDescriptor.isAnnotatedBy(StandardNames.OPEN_ANNOTATION) -> ObjClass.Openness.open
     else -> ObjClass.Openness.final
   }
-  return ObjClassImpl(module, interfaceDescriptor.name.identifier, openness)
+  return ObjClassImpl(module, interfaceDescriptor.name.identifier, openness, interfaceDescriptor.source)
 }
 
 private fun Annotated.isAnnotatedBy(fqName: FqName) = annotations.hasAnnotation(fqName)
@@ -230,14 +227,8 @@ private object ObjTypeConverter {
     "kotlin.Char" to ValueType.Char,
     "kotlin.String" to ValueType.String,
   )
-  private val knownInterfaces = setOf(
-    VirtualFileUrl::class.qualifiedName!!,
-    EntitySource::class.qualifiedName!!,
-    PersistentEntityId::class.qualifiedName!!,
-  ).map { FqName(it) }
   
   fun findPrimitive(fqName: FqName): ValueType.Primitive<*>? = primitiveTypes[fqName.asString()]
-  fun isKnownInterface(fqName: FqName): Boolean = fqName in knownInterfaces
 }
 
 private object StandardNames {

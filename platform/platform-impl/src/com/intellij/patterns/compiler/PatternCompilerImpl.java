@@ -121,7 +121,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
     while (curPos <= text.length()) {
       final char ch = curPos++ < text.length() ? text.charAt(curPos - 1) : 0;
       switch (curFrame.state) {
-        case init:
+        case init -> {
           if (Character.isWhitespace(ch)) {
           }
           else if (Character.isJavaIdentifierStart(ch)) {
@@ -131,8 +131,8 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
           else {
             throwError(curPos, ch, "method call expected");
           }
-          break;
-        case name:
+        }
+        case name -> {
           if (Character.isJavaIdentifierPart(ch)) {
             curString.append(ch);
           }
@@ -144,16 +144,16 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
           else {
             throwError(curPos, ch, "'" + curString + ch + "' method name start is invalid, '(' expected");
           }
-          break;
-        case name_end:
+        }
+        case name_end -> {
           if (ch == '(') {
             curFrame.state = State.param_start;
           }
           else if (!Character.isWhitespace(ch)) {
             throwError(curPos, ch, "'(' expected after '" + curFrame.methodName + "'");
           }
-          break;
-        case param_start:
+        }
+        case param_start -> {
           if (Character.isWhitespace(ch)) {
           }
           else if (Character.isDigit(ch) || ch == '-' || ch == '\"') {
@@ -172,8 +172,8 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
           else {
             throwError(curPos, ch, "expression expected in '" + curFrame.methodName + "' call");
           }
-          break;
-        case param_end:
+        }
+        case param_end -> {
           if (ch == ')') {
             curFrame.state = State.invoke;
           }
@@ -183,8 +183,8 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
           else if (!Character.isWhitespace(ch)) {
             throwError(curPos, ch, "')' or ',' expected in '" + curFrame.methodName + "' call");
           }
-          break;
-        case literal:
+        }
+        case literal -> {
           if (curString.charAt(0) == '\"') {
             curString.append(ch);
             if (ch == '\\') {
@@ -207,8 +207,8 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
           else {
             curString.append(ch);
           }
-          break;
-        case escape:
+        }
+        case escape -> {
           if (ch != 0) {
             curString.append(ch);
             curFrame.state = State.literal;
@@ -216,8 +216,8 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
           else {
             throwError(curPos, ch, "unclosed escape sequence");
           }
-          break;
-        case invoke:
+        }
+        case invoke -> {
           curResult = executor.fun(curFrame);
           if (ch == 0 && stack.isEmpty()) {
             //noinspection unchecked
@@ -242,8 +242,8 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
             throwError(curPos, ch, (stack.isEmpty() ? "'.' or <eof>" : "'.' or ')'")
                                    + "expected after '" + curFrame.methodName + "' call");
           }
-          break;
-        case invoke_end:
+        }
+        case invoke_end -> {
           if (ch == 0 && stack.isEmpty()) {
             //noinspection unchecked
             return (T)curResult;
@@ -264,7 +264,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
             throwError(curPos, ch, (stack.isEmpty() ? "'.' or <eof>" : "'.' or ')'")
                                    + "expected after '" + curFrame.methodName + "' call");
           }
-          break;
+        }
       }
     }
     return null;
@@ -514,16 +514,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
   private static final ElementPattern<?> ALWAYS_FALSE = new FalsePattern();
 
-  private static class Node {
-    final Node target;
-    final String method;
-    final Object[] args;
-
-    Node(@Nullable Node target, @Nullable String method, Object @Nullable [] args) {
-      this.target = target;
-      this.method = method;
-      this.args = args;
-    }
+  private record Node(@Nullable Node target, @Nullable String method, Object @Nullable [] args) {
   }
 
   private static class FalsePattern extends InitialPatternCondition<Object> implements ElementPattern<Object> {

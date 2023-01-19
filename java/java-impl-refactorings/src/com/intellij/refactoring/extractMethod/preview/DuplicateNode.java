@@ -4,9 +4,6 @@ package com.intellij.refactoring.extractMethod.preview;
 import com.intellij.refactoring.util.duplicates.Match;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 class DuplicateNode extends FragmentNode {
   private boolean myExcluded;
 

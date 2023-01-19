@@ -3,6 +3,7 @@ package com.intellij.psi.impl.file;
 
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -53,7 +54,9 @@ public final class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
   public boolean isPackage(@NotNull PsiDirectory directory) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
     VirtualFile virtualFile = directory.getVirtualFile();
-    return fileIndex.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.SOURCES) && fileIndex.getPackageNameByDirectory(virtualFile) != null;
+    PackageIndex packageIndex = PackageIndex.getInstance(myManager.getProject());
+    return fileIndex.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.SOURCES) 
+           && packageIndex.getPackageNameByDirectory(virtualFile) != null;
   }
 
   @Override

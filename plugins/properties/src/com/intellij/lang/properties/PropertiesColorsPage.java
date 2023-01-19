@@ -55,10 +55,12 @@ final class PropertiesColorsPage implements ColorSettingsPage {
   @Override
   @NotNull
   public String getDemoText() {
-    return "# This comment starts with '#'\n" +
-           "greetings=Hello\n" +
-           "! This comment starts with '!'\n" +
-           "what\\=to\\=greet : \\'W\\o\\rld\\',\\tUniverse\\n\\uXXXX\n"
+    return """
+      # This comment starts with '#'
+      greetings=Hello
+      ! This comment starts with '!'
+      what\\=to\\=greet : \\'W\\o\\rld\\',\\tUniverse\\n\\uXXXX
+      """
       ;
   }
 

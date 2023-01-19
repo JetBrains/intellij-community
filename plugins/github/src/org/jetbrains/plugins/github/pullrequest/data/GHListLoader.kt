@@ -40,6 +40,7 @@ interface GHListLoader<T> : Disposable {
   @RequiresEdt
   fun addErrorChangeListener(disposable: Disposable, listener: () -> Unit)
 
+  @JvmDefaultWithCompatibility
   interface ListDataListener : EventListener {
     fun onDataAdded(startIdx: Int) {}
     fun onDataUpdated(idx: Int) {}

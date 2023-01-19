@@ -1,7 +1,8 @@
 import sys
 from _typeshed import SupportsRead, _T_co
-from typing import Any, Iterable, NoReturn, Protocol
-from xml.sax.handler import ContentHandler, ErrorHandler
+from collections.abc import Iterable
+from typing import Any, NoReturn, Protocol
+from xml.sax.handler import ContentHandler as ContentHandler, ErrorHandler as ErrorHandler
 from xml.sax.xmlreader import Locator, XMLReader
 
 class _SupportsReadClose(SupportsRead[_T_co], Protocol[_T_co]):

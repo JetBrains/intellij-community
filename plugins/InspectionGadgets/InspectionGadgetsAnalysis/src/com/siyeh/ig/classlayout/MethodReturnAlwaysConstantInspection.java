@@ -35,11 +35,9 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
     @NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager,
     @NotNull GlobalInspectionContext globalContext,
     @NotNull ProblemDescriptionsProcessor processor) {
-    if (!(refEntity instanceof RefMethod)) {
+    if (!(refEntity instanceof RefMethod refMethod)) {
       return null;
     }
-
-    final RefMethod refMethod = (RefMethod)refEntity;
 
     //don't warn on overriders
     if (refMethod.hasSuperMethods()) {
@@ -47,25 +45,23 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
     }
 
     PsiElement element = refMethod.getPsiElement();
-    if (!(element instanceof PsiMethod)) {
+    if (!(element instanceof PsiMethod psiMethod)) {
       return null;
     }
 
-    if (((PsiMethod)element).getBody() == null && refMethod.getDerivedReferences().isEmpty()) {
+    if (psiMethod.getBody() == null && refMethod.getDerivedReferences().isEmpty()) {
       return null;
     }
 
     final Set<RefOverridable> allScopeInheritors = MethodInheritanceUtils.calculateSiblingReferences(refMethod);
     for (RefOverridable siblingReference : allScopeInheritors) {
       PsiElement psi = siblingReference.getPsiElement();
-      if (psi instanceof PsiMethod) {
-        final PsiMethod siblingPsiMethod = (PsiMethod)psi;
+      if (psi instanceof PsiMethod siblingPsiMethod) {
         if (siblingPsiMethod.getBody() != null && !alwaysReturnsConstant(siblingPsiMethod.getBody())) {
           return null;
         }
       }
-      else if (psi instanceof PsiLambdaExpression) {
-        PsiLambdaExpression siblingLambda = (PsiLambdaExpression)psi;
+      else if (psi instanceof PsiLambdaExpression siblingLambda) {
         if (siblingLambda.getBody() != null && !alwaysReturnsConstant(siblingLambda)) {
           return null;
         }
@@ -76,8 +72,7 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
     }
     for (RefOverridable siblingReference : allScopeInheritors) {
       PsiElement psi = siblingReference.getPsiElement();
-      if (!(psi instanceof PsiMethod)) continue;
-      final PsiMethod siblingMethod = (PsiMethod)psi;
+      if (!(psi instanceof PsiMethod siblingMethod)) continue;
       final PsiIdentifier identifier = siblingMethod.getNameIdentifier();
       if (identifier == null) {
         continue;
@@ -92,21 +87,20 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
 
   private static boolean alwaysReturnsConstant(@NotNull PsiCodeBlock body) {
     final PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock(body);
-    if (!(statement instanceof PsiReturnStatement)) {
+    if (!(statement instanceof PsiReturnStatement returnStatement)) {
       return false;
     }
-    final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
     final PsiExpression value = returnStatement.getReturnValue();
     return value != null && PsiUtil.isConstantExpression(value);
   }
 
   private static boolean alwaysReturnsConstant(@NotNull PsiLambdaExpression lambdaExpression) {
     PsiElement body = lambdaExpression.getBody();
-    if (body instanceof PsiCodeBlock) {
-      return alwaysReturnsConstant((PsiCodeBlock)body);
+    if (body instanceof PsiCodeBlock codeBlock) {
+      return alwaysReturnsConstant(codeBlock);
     }
-    if (body instanceof PsiExpression) {
-      return PsiUtil.isConstantExpression((PsiExpression)body);
+    if (body instanceof PsiExpression expression) {
+      return PsiUtil.isConstantExpression(expression);
     }
     return false;
   }

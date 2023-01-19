@@ -43,17 +43,21 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
+import git4idea.remote.hosting.findKnownRepositories
 import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.request.Type
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
+import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.GithubShareDialog
 import org.jetbrains.plugins.github.util.*
@@ -108,7 +112,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       val gitRepository = GithubGitHelper.findGitRepository(project, file)
       val possibleRemotes = gitRepository
         ?.let(project.service<GHHostedRepositoriesManager>()::findKnownRepositories)
-        ?.map { it.gitRemoteUrlCoordinates.url }.orEmpty()
+        ?.map { it.remote.url }.orEmpty()
       if (possibleRemotes.isNotEmpty()) {
         val existingRemotesDialog = GithubExistingRemotesDialog(project, possibleRemotes)
         DialogManager.show(existingRemotesDialog)
@@ -117,9 +121,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
         }
       }
 
-      val authManager = service<GithubAuthenticationManager>()
       val progressManager = service<ProgressManager>()
-      val requestExecutorManager = service<GithubApiRequestExecutorManager>()
       val accountInformationProvider = service<GithubAccountInformationProvider>()
       val gitHelper = service<GithubGitHelper>()
       val git = service<Git>()
@@ -128,23 +130,35 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
         private val loadedInfo = mutableMapOf<GithubAccount, Pair<Boolean, Set<String>>>()
 
         @Throws(IOException::class)
-        override fun invoke(account: GithubAccount, parentComponent: Component) = loadedInfo.getOrPut(account) {
-          val requestExecutor = requestExecutorManager.getExecutor(account, parentComponent) ?: throw ProcessCanceledException()
-          progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
+        override fun invoke(account: GithubAccount, comp: Component) = loadedInfo.getOrPut(account) {
+          loadEnsuringTokenExistsToken(account, comp)
+        }
 
-            val user = requestExecutor.execute(progressManager.progressIndicator, GithubApiRequests.CurrentUser.get(account.server))
-            val names = GithubApiPagesLoader
-              .loadAll(requestExecutor, progressManager.progressIndicator,
-                       GithubApiRequests.CurrentUser.Repos.pages(account.server, Type.OWNER))
-              .mapSmartSet { it.name }
-            user.canCreatePrivateRepo() to names
-          }, GithubBundle.message("share.process.loading.account.info", account), true, project)
+        private fun loadEnsuringTokenExistsToken(account: GithubAccount, comp: Component): Pair<Boolean, Set<String>> {
+          while (true) {
+            try {
+              return progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
+                val token = runBlocking {
+                  service<GHAccountManager>().findCredentials(account) ?: throw GithubMissingTokenException(account)
+                }
+                val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token)
+
+                val user = requestExecutor.execute(progressManager.progressIndicator, GithubApiRequests.CurrentUser.get(account.server))
+                val names = GithubApiPagesLoader
+                  .loadAll(requestExecutor, progressManager.progressIndicator,
+                           GithubApiRequests.CurrentUser.Repos.pages(account.server, Type.OWNER))
+                  .mapSmartSet { it.name }
+                user.canCreatePrivateRepo() to names
+              }, GithubBundle.message("share.process.loading.account.info", account), true, project)
+            }
+            catch (mte: GithubMissingTokenException) {
+              GHAccountsUtil.requestNewToken(account, project, comp) ?: throw mte
+            }
+          }
         }
       }
 
       val shareDialog = GithubShareDialog(project,
-                                          authManager.getAccounts(),
-                                          authManager.getDefaultAccount(project),
                                           gitRepository?.remotes?.map { it.name }?.toSet() ?: emptySet(),
                                           accountInformationLoader)
       DialogManager.show(shareDialog)
@@ -158,11 +172,14 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       val description: String = shareDialog.getDescription()
       val account: GithubAccount = shareDialog.getAccount()!!
 
-      val requestExecutor = requestExecutorManager.getExecutor(account, project) ?: return
       object : Task.Backgroundable(project, GithubBundle.message("share.process")) {
         private lateinit var url: String
 
         override fun run(indicator: ProgressIndicator) {
+          val token = GHCompatibilityUtil.getOrRequestToken(account, project) ?: return
+
+          val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token)
+
           // create GitHub repo (network)
           LOG.info("Creating GitHub repository")
           indicator.text = GithubBundle.message("share.process.creating.repository")

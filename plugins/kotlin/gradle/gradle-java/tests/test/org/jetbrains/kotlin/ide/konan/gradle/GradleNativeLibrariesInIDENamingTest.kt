@@ -67,7 +67,7 @@ private val Module.libraries
 
 private fun assertValidModule(module: Module, projectRoot: String) {
     val (nativeLibraries, otherLibraries) = module.libraries.partition { library ->
-        detectLibraryKind(library.getFiles(OrderRootType.CLASSES)) == KotlinNativeLibraryKind
+        detectLibraryKind(library, module.project) == KotlinNativeLibraryKind
     }
 
     if (module.platform.isNative()) {

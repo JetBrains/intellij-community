@@ -7,7 +7,7 @@ import java.awt.Graphics2D
 import java.awt.geom.Arc2D
 
 internal object GraphicsUtils {
-  fun Graphics2D.clearShapeOverEditor(drawShape: Graphics2D.() -> Unit) {
+  private fun Graphics2D.clearShapeOverEditor(drawShape: Graphics2D.() -> Unit) {
     val originalComposite = composite
     val originalPaint = paint
     composite = AlphaComposite.Src

@@ -12,9 +12,9 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
-import org.jetbrains.plugins.notebooks.visualization.notebookAppearance
+import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.outputs.hoveredCollapsingComponentRect
 import java.awt.BorderLayout
 import java.awt.Cursor
@@ -24,7 +24,7 @@ import javax.swing.SwingUtilities
 
 private class OutputCollapsingGutterMouseListener : EditorMouseListener, EditorMouseMotionListener {
   private val EditorMouseEvent.notebookEditor: EditorEx?
-    get() = editor.takeIf { NotebookCellInlayManager.get(it) != null }.castSafelyTo()
+    get() = editor.takeIf { NotebookCellInlayManager.get(it) != null } as? EditorEx
 
   override fun mousePressed(e: EditorMouseEvent) {
     val editor = e.notebookEditor ?: return
@@ -108,22 +108,22 @@ private class OutputCollapsingGutterMouseListener : EditorMouseListener, EditorM
 
   private fun getCollapsingComponent(editor: EditorEx, point: Point): CollapsingComponent? {
     val surroundingX = if ((editor as EditorImpl).isMirrored) 80 else 0
-    val surroundingComponent: SurroundingComponent =
+    val surroundingComponent =
       editor.contentComponent.getComponentAt(surroundingX, point.y)
-        .castSafelyTo<JComponent>()
+        .asSafely<JComponent>()
         ?.takeIf { it.componentCount > 0 }
         ?.getComponent(0)
-        ?.castSafelyTo()
+        ?.asSafely<SurroundingComponent>()
       ?: return null
 
-    val innerComponent: InnerComponent =
-      (surroundingComponent.layout as BorderLayout).getLayoutComponent(BorderLayout.CENTER).castSafelyTo()
+    val innerComponent =
+      (surroundingComponent.layout as BorderLayout).getLayoutComponent(BorderLayout.CENTER).asSafely<InnerComponent>()
       ?: return null
 
     val y = point.y - SwingUtilities.convertPoint(innerComponent, 0, 0, editor.contentComponent).y
 
-    val collapsingComponent: CollapsingComponent =
-      innerComponent.getComponentAt(0, y).castSafelyTo()
+    val collapsingComponent =
+      innerComponent.getComponentAt(0, y).asSafely<CollapsingComponent>()
       ?: return null
 
     if (!collapsingComponent.isWorthCollapsing) return null

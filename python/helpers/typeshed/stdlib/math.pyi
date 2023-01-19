@@ -1,12 +1,13 @@
 import sys
 from _typeshed import SupportsTrunc
-from typing import Iterable, SupportsFloat, Union, overload
-from typing_extensions import SupportsIndex
+from collections.abc import Iterable
+from typing import SupportsFloat, overload
+from typing_extensions import SupportsIndex, TypeAlias
 
 if sys.version_info >= (3, 8):
-    _SupportsFloatOrIndex = Union[SupportsFloat, SupportsIndex]
+    _SupportsFloatOrIndex: TypeAlias = SupportsFloat | SupportsIndex
 else:
-    _SupportsFloatOrIndex = SupportsFloat
+    _SupportsFloatOrIndex: TypeAlias = SupportsFloat
 
 e: float
 pi: float
@@ -112,10 +113,7 @@ if sys.version_info >= (3, 8):
     def prod(__iterable: Iterable[_SupportsFloatOrIndex], *, start: _SupportsFloatOrIndex = ...) -> float: ...
 
 def radians(__x: _SupportsFloatOrIndex) -> float: ...
-
-if sys.version_info >= (3, 7):
-    def remainder(__x: _SupportsFloatOrIndex, __y: _SupportsFloatOrIndex) -> float: ...
-
+def remainder(__x: _SupportsFloatOrIndex, __y: _SupportsFloatOrIndex) -> float: ...
 def sin(__x: _SupportsFloatOrIndex) -> float: ...
 def sinh(__x: _SupportsFloatOrIndex) -> float: ...
 def sqrt(__x: _SupportsFloatOrIndex) -> float: ...

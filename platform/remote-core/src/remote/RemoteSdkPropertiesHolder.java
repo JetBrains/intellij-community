@@ -105,16 +105,6 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
   }
 
   @Override
-  public boolean isInitialized() {
-    return myInitialized;
-  }
-
-  @Override
-  public void setInitialized(boolean initialized) {
-    myInitialized = initialized;
-  }
-
-  @Override
   public boolean isValid() {
     return myValid;
   }
@@ -139,8 +129,6 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     copy.setHelpersPath(getHelpersPath());
     copy.setHelpersVersionChecked(isHelpersVersionChecked());
 
-    copy.setInitialized(isInitialized());
-
     copy.setValid(isValid());
 
     copy.setRunAsRootViaSudo(isRunAsRootViaSudo());
@@ -150,7 +138,6 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     rootElement.setAttribute(INTERPRETER_PATH, StringUtil.notNullize(getInterpreterPath()));
     rootElement.setAttribute(HELPERS_PATH, StringUtil.notNullize(getHelpersPath()));
 
-    rootElement.setAttribute(INITIALIZED, Boolean.toString(isInitialized()));
     rootElement.setAttribute(VALID, Boolean.toString(isValid()));
     rootElement.setAttribute(RUN_AS_ROOT_VIA_SUDO, Boolean.toString(isRunAsRootViaSudo()));
 
@@ -160,8 +147,6 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
   public void load(Element element) {
     setInterpreterPath(StringUtil.nullize(element.getAttributeValue(INTERPRETER_PATH)));
     setHelpersPath(StringUtil.nullize(element.getAttributeValue(HELPERS_PATH)));
-
-    setInitialized(Boolean.parseBoolean(element.getAttributeValue(INITIALIZED)));
 
     setValid(Boolean.parseBoolean(element.getAttributeValue(VALID)));
 
@@ -208,5 +193,21 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     result = 31 * result + (myValid ? 1 : 0);
     result = 31 * result + myPathMappings.hashCode();
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "RemoteSdkPropertiesHolder{" +
+           "mySdkId='" + mySdkId + '\'' +
+           ", myInterpreterPath='" + myInterpreterPath + '\'' +
+           ", myHelpersPath='" + myHelpersPath + '\'' +
+           ", myHelpersDefaultDirName='" + myHelpersDefaultDirName + '\'' +
+           ", myHelpersVersionChecked=" + myHelpersVersionChecked +
+           ", myRemoteRoots=" + myRemoteRoots +
+           ", myInitialized=" + myInitialized +
+           ", myValid=" + myValid +
+           ", myRunAsRootViaSudo=" + myRunAsRootViaSudo +
+           ", myPathMappings=" + myPathMappings +
+           '}';
   }
 }

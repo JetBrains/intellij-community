@@ -73,7 +73,6 @@ final class EmptyStateProjectsPanel extends BorderLayoutPanel {
     }
 
     addToCenter(mainPanel);
-    addToBottom(createBottomPanelForEmptyState(parentDisposable));
   }
 
   @NotNull
@@ -125,23 +124,5 @@ final class EmptyStateProjectsPanel extends BorderLayoutPanel {
     commentFirstLabel.setOpaque(false);
     commentFirstLabel.setForeground(UIUtil.getContextHelpForeground());
     return commentFirstLabel;
-  }
-
-  private static JPanel createBottomPanelForEmptyState(@NotNull Disposable parentDisposable) {
-    JPanel vPanel = new NonOpaquePanel();
-    vPanel.setLayout(new BoxLayout(vPanel, BoxLayout.PAGE_AXIS));
-    JPanel promoPanel = WelcomeScreenComponentFactory.getSinglePromotion(true);
-    JPanel notification = WelcomeScreenComponentFactory.createNotificationPanel(parentDisposable);
-    if (promoPanel == null) {
-      return notification;
-    }
-    else {
-      vPanel.add(notification);
-      JPanel borderPanel = new NonOpaquePanel();
-      borderPanel.setBorder(JBUI.Borders.empty(8, 16, 16, 16));
-      borderPanel.add(promoPanel);
-      vPanel.add(borderPanel);
-      return vPanel;
-    }
   }
 }

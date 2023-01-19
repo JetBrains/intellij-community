@@ -24,37 +24,43 @@ public class UnnecessaryInheritDocFixTest extends IGQuickFixesTestCase {
 
   public void testRemoveJavaLangImport() {
     doTest(InspectionGadgetsBundle.message("unnecessary.inherit.doc.quickfix"),
-           "  class Example implements Comparable<Example> {\n" +
-           "    /**\n" +
-           "     * {@inheritDoc}<caret>\n" +
-           "     */\n" +
-           "    @Override\n" +
-           "    public int compareTo(Example o) {\n" +
-           "      return 0;\n" +
-           "    }\n" +
-           "  }\n",
+           """
+               class Example implements Comparable<Example> {
+                 /**
+                  * {@inheritDoc}<caret>
+                  */
+                 @Override
+                 public int compareTo(Example o) {
+                   return 0;
+                 }
+               }
+             """,
 
-           "  class Example implements Comparable<Example> {\n" +
-           "    @Override\n" +
-           "    public int compareTo(Example o) {\n" +
-           "      return 0;\n" +
-           "    }\n" +
-           "  }\n"
+           """
+               class Example implements Comparable<Example> {
+                 @Override
+                 public int compareTo(Example o) {
+                   return 0;
+                 }
+               }
+             """
     );
   }
 
   public void testDoNotFixCompletedDoc() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.inherit.doc.quickfix"),
-                               "  class Example implements Comparable<Example> {\n" +
-                               "    /**\n" +
-                               "     * {@inheritDoc}<caret>\n" +
-                               "     * This implementation always returns zero.\n" +
-                               "     */\n" +
-                               "    @Override\n" +
-                               "    public int compareTo(Example o) {\n" +
-                               "      return 0;\n" +
-                               "    }\n" +
-                               "  }\n"
+                               """
+                                   class Example implements Comparable<Example> {
+                                     /**
+                                      * {@inheritDoc}<caret>
+                                      * This implementation always returns zero.
+                                      */
+                                     @Override
+                                     public int compareTo(Example o) {
+                                       return 0;
+                                     }
+                                   }
+                                 """
     );
   }
 }

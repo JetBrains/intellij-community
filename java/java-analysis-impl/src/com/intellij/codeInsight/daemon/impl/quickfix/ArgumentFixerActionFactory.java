@@ -17,16 +17,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author ven
- */
 public abstract class ArgumentFixerActionFactory {
   private static final Logger LOG = Logger.getInstance(ArgumentFixerActionFactory.class);
 
   @Nullable
   protected abstract PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;
 
-  public void registerCastActions(CandidateInfo @NotNull [] candidates, @NotNull PsiCall call, HighlightInfo highlightInfo, final TextRange fixRange) {
+  public void registerCastActions(CandidateInfo @NotNull [] candidates, @NotNull PsiCall call, @NotNull HighlightInfo.Builder highlightInfo, final TextRange fixRange) {
     if (candidates.length == 0) return;
     List<CandidateInfo> methodCandidates = new ArrayList<>(Arrays.asList(candidates));
     PsiExpressionList list = call.getArgumentList();
@@ -124,13 +121,16 @@ public abstract class ArgumentFixerActionFactory {
     }
   }
 
-  private void registerCastIntention(HighlightInfo highlightInfo,
+  private void registerCastIntention(@NotNull HighlightInfo.Builder builder,
                                      TextRange fixRange,
                                      PsiExpressionList list,
                                      Map<Integer, Set<String>> suggestedCasts,
                                      Map.Entry<Integer, PsiType> entry) {
     suggestedCasts.get(entry.getKey()).add(entry.getValue().getCanonicalText());
-    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, createFix(list, entry.getKey(), entry.getValue()));
+    IntentionAction action = createFix(list, entry.getKey(), entry.getValue());
+    if (action != null) {
+      builder.registerFix(action, null, null, fixRange, null);
+    }
   }
 
   private boolean replaceWithCast(PsiExpression[] expressions, PsiCall newCall, Map.Entry<Integer, PsiType> entry) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.analysis
 
 import com.intellij.openapi.diagnostic.Attachment
@@ -10,7 +10,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -31,7 +31,7 @@ internal class DependencyGraphBuilder private constructor(
   private fun createVisitor(scope: LocalScopeContext) =
     DependencyGraphBuilder(scope, currentDepth, dependents, dependencies, implicitReceivers, scopesStates, inlinedVariables)
 
-  inline fun <T> checkedDepthCall(node: UElement, body: () -> T): T {
+  private inline fun <T> checkedDepthCall(node: UElement, body: () -> T): T {
     currentDepth++
     try {
       if (currentDepth > maxBuildDepth) {
@@ -308,7 +308,7 @@ internal class DependencyGraphBuilder private constructor(
     val firstExpression = (node.expressions.first() as? UDeclarationsExpression)
                             ?.declarations
                             ?.first()
-                            ?.castSafelyTo<ULocalVariable>()
+                            ?.asSafely<ULocalVariable>()
                             ?.uastInitializer
                             ?.extractBranchesResultAsDependency() ?: return@checkedDepthCall super.visitExpressionList(node)
     val ifExpression = node.expressions.getOrNull(1)
@@ -857,7 +857,6 @@ private interface UFakeExpression : UExpression, UResolvable {
   override val psi: PsiElement?
     get() = null
 
-  @JvmDefault
   override val uAnnotations: List<UAnnotation>
     get() = emptyList()
 

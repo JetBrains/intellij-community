@@ -44,9 +44,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   public static final String IDEA_BACKGROUND_CONVERT = "idea.background.convert";
   public static final String IDEA_MODELS_PARALLEL_FETCH = "idea.models.parallel.fetch";
 
-  private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new HashSet<ProjectImportModelProvider>();
-  private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new HashSet<ProjectImportModelProvider>();
-  private final Set<Class<?>> myTargetTypes = new HashSet<Class<?>>();
+  private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new LinkedHashSet<ProjectImportModelProvider>();
+  private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new LinkedHashSet<ProjectImportModelProvider>();
+  private final Set<Class<?>> myTargetTypes = new LinkedHashSet<Class<?>>();
   private final boolean myIsPreviewMode;
   private final boolean myIsCompositeBuildsSupported;
   private boolean myUseProjectsLoadedPhase;
@@ -111,12 +111,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       myParallelModelsFetch = Boolean.getBoolean(IDEA_MODELS_PARALLEL_FETCH);
     }
     if (!System.getProperties().containsKey(IDEA_BACKGROUND_CONVERT) || Boolean.getBoolean(IDEA_BACKGROUND_CONVERT)) {
-      myConverterExecutor =  Executors.newSingleThreadExecutor(new ThreadFactory() {
-        @Override
-        public Thread newThread(@NotNull Runnable runnable) {
-          return new Thread(runnable, "idea-tooling-model-converter");
-        }
-      });
+      myConverterExecutor =  Executors.newSingleThreadExecutor(new SimpleThreadFactory());
     }
     configureAdditionalTypes(controller);
     final boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
@@ -715,6 +710,13 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     @Override
     public Object convert(Object object) {
       return object;
+    }
+  }
+
+  private static final class SimpleThreadFactory implements ThreadFactory {
+    @Override
+    public Thread newThread(@NotNull Runnable runnable) {
+      return new Thread(runnable, "idea-tooling-model-converter");
     }
   }
 }

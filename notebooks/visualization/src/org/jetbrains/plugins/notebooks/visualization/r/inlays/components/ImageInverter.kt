@@ -4,9 +4,7 @@
 
 package org.jetbrains.plugins.notebooks.visualization.r.inlays.components
 
-import com.intellij.util.ui.ImageUtil
 import java.awt.Color
-import java.awt.GraphicsConfiguration
 import java.awt.image.BufferedImage
 import java.awt.image.IndexColorModel
 import java.io.ByteArrayInputStream
@@ -15,7 +13,7 @@ import javax.imageio.ImageIO
 import kotlin.math.max
 import kotlin.math.min
 
-class ImageInverter(foreground: Color, background: Color, private val graphicsConfiguration: GraphicsConfiguration? = null) {
+class ImageInverter(foreground: Color, background: Color) {
   private val rgb = FloatArray(3)
   private val hsl = FloatArray(3)
   private val whiteHsl = FloatArray(3)
@@ -41,17 +39,17 @@ class ImageInverter(foreground: Color, background: Color, private val graphicsCo
     val numberOfPixels = colors.size
     val numberOfColorsThreshold = min(numberOfPixels / 3, numberOfColorsInComplexImage)
     val hasAlpha = image.colorModel.hasAlpha()
-    
+
     val averageBrightness = colors.map { getBrightness(it, hasAlpha) }.sum() / numberOfPixels
     val numberOfColors = colors.toSet()
-    
+
     return (averageBrightness > brightnessThreshold && numberOfColors.size < numberOfColorsThreshold) ||
            hasLightBackground(colors, hasAlpha, brightnessThreshold) == true
   }
 
   /**
    * Get part of image for color analysis.
-   * 
+   *
    * For narrow/low images all image pixels are returned.
    * For regular images the result is a concatenation of areas in image corners and at the central area.
    */
@@ -61,7 +59,7 @@ class ImageInverter(foreground: Color, background: Color, private val graphicsCo
       image.getRGB(0, 0, image.width, image.height, colors, 0, image.width)
       return colors
     }
-    
+
     val defaultSpotSize = min(max(image.height / 10, image.width / 10), min(image.height, image.width))
     val spotHeight = min(image.height, defaultSpotSize)
     val spotWidth = min(image.width, defaultSpotSize)
@@ -73,16 +71,16 @@ class ImageInverter(foreground: Color, background: Color, private val graphicsCo
     image.getRGB(image.width - spotWidth, 0, spotWidth, spotHeight, colors, spotSize, spotWidth)
     image.getRGB(0, image.height - spotHeight, spotWidth, spotHeight, colors, 2 * spotSize, spotWidth)
     image.getRGB(image.width - spotWidth, image.height - spotHeight, spotWidth, spotHeight, colors, 3 * spotSize, spotWidth)
-    
+
     // We operate on integers so dividing and multiplication with the same number is not trivial operation 
     val centralSpotX = image.width / spotWidth / 2 * spotWidth
     val centralSpotY = image.height / spotHeight / 2 * spotHeight
-    
+
     image.getRGB(centralSpotX, centralSpotY, spotWidth, spotHeight, colors, 4 * spotSize, spotWidth)
-    
+
     return colors
   }
-  
+
   private fun getBrightness(argb: Int, hasAlpha: Boolean): Float {
     val color = Color(argb, hasAlpha)
     val hsb = FloatArray(3)
@@ -92,30 +90,27 @@ class ImageInverter(foreground: Color, background: Color, private val graphicsCo
 
   /**
    * Try to guess whether the image has light background.
-   * 
+   *
    * The background is defined as a large fraction of pixels with the same color.
    */
   private fun hasLightBackground(colors: IntArray, hasAlpha: Boolean, brightnessThreshold: Double): Boolean? {
     val dominantColorPair = colors.groupBy { it }.maxByOrNull { it.value.size } ?: return null
     val dominantColor = dominantColorPair.key
     val dominantPixels = dominantColorPair.value
-    
+
     return dominantPixels.size.toDouble() / colors.size > 0.5 && getBrightness(dominantColor, hasAlpha) > brightnessThreshold
   }
-  
+
   fun invert(color: Color): Color {
     val alpha = invert(color.rgb)
     val argb = convertHSLtoRGB(hsl, alpha)
     return Color(argb, true)
   }
 
-  fun invert(image: BufferedImage): BufferedImage {
-    val width = ImageUtil.getUserWidth(image)
-    val height = ImageUtil.getUserHeight(image)
-    return ImageUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB).also { outputImage ->
+  fun invert(image: BufferedImage): BufferedImage =
+    createImageWithInvertedPalette(image).also { outputImage ->
       invertInPlace(image, outputImage)
     }
-  }
 
   fun invert(content: ByteArray): ByteArray {
     val image = ImageIO.read(ByteArrayInputStream(content)) ?: return content
@@ -157,7 +152,9 @@ class ImageInverter(foreground: Color, background: Color, private val graphicsCo
       palette[index] = convertHSLtoRGB(hsl, alpha)
     }
 
-    return ImageUtil.createImage(graphicsConfiguration, image.width, image.height, BufferedImage.TYPE_BYTE_INDEXED)
+    // UIUtil.createImage() scales the image for HiDPI. It's undesired in this particular case.
+    @Suppress("UndesirableClassUsage")
+    return BufferedImage(image.width, image.height, BufferedImage.TYPE_BYTE_INDEXED)
   }
 
   // Note: returns alpha, resulting color resides in `hsl`

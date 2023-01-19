@@ -122,7 +122,7 @@ public final class SnippetEditorDecorator implements EditorNotificationProvider 
       myBusConnection = project.getMessageBus().connect();
       myBusConnection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
         @Override
-        public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
+        public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
           reloadModules();
         }
 
@@ -187,12 +187,12 @@ public final class SnippetEditorDecorator implements EditorNotificationProvider 
   }
 
   @Override
-  public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                 @NotNull VirtualFile file) {
     if (ScratchFileService.findRootType(file) instanceof JShellRootType) {
       return editor -> new ConfigurationPane(project, file, editor);
     }
 
-    return CONST_NULL;
+    return null;
   }
 }

@@ -15,9 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
-/**
- * @author ven
- */
 public interface FragmentVariableInfos {
   VariableInfo[] getInputVariableNames();
 

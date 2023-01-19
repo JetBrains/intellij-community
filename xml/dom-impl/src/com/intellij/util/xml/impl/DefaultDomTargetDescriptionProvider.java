@@ -26,9 +26,6 @@ import com.intellij.util.xml.*;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class DefaultDomTargetDescriptionProvider extends PomDescriptionProvider {
   @Override
   public String getElementDescription(@NotNull PomTarget element, @NotNull ElementDescriptionLocation location) {

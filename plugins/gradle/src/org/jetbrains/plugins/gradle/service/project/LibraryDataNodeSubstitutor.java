@@ -83,7 +83,7 @@ public class LibraryDataNodeSubstitutor {
       if (sourceTypePair == null) {
         moduleId = artifactsMap.get(path);
         if (moduleId != null) {
-          targetModuleOutputPaths = ContainerUtil.set(path);
+          targetModuleOutputPaths = Set.of(path);
         }
       }
       else {

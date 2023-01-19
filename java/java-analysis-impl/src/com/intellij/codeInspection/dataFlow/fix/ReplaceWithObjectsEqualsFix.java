@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public final class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
   private final String myQualifierText;
   private final String myReplacementText;

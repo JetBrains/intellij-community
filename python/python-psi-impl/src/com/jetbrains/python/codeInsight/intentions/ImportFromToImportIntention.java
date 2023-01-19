@@ -31,7 +31,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * <li>{@code from ...moduleA.moduleB import names} into {@code from ...moduleA import moduleB}.</li>
  * Qualifies any names imported from that module by module name.
  * <br><small>
- * User: dcheryasov
  * </small>
  */
 public class ImportFromToImportIntention extends PyBaseIntentionAction {
@@ -152,7 +151,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
     if (info.myModuleReference != null) {
       info.myModuleName = PyPsiUtils.toPath(info.myModuleReference);
     }
-    if (info.myModuleReference != null && info.myModuleName != null && info.myFromImportStatement != null) {
+    if (info.myModuleReference != null && info.myFromImportStatement != null) {
       setText(info.getText());
       return true;
     }

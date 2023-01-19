@@ -23,11 +23,15 @@ import java.io.IOException
  * All URLs are considered to be safe for injection if this parameter is null.
  */
 internal class JcefBrowserPipeImpl(
-  private val browser: JBCefBrowserBase,
+  browser: JBCefBrowserBase,
   private val injectionAllowedUrls: List<String>? = null
 ): BrowserPipe {
   private val query = checkNotNull(JBCefJSQuery.create(browser))
   private val receiveSubscribers = hashMapOf<String, MutableList<BrowserPipe.Handler>>()
+
+  private var browserInstance: JBCefBrowserBase? = browser
+  private val browser
+    get() = checkNotNull(browserInstance) { "Browser instance should not be accessed after disposal" }
 
   init {
     Disposer.register(this, query)
@@ -64,7 +68,10 @@ internal class JcefBrowserPipeImpl(
     browser.cefBrowser.executeJavaScript(postToBrowserFunctionCall(raw), null, 0)
   }
 
-  override fun dispose() = Unit
+  override fun dispose() {
+    receiveSubscribers.clear()
+    browserInstance = null
+  }
 
   private fun inject(browser: CefBrowser) {
     val code = query.inject("raw")

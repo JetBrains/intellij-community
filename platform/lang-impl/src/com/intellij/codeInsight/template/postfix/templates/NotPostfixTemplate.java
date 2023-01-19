@@ -41,12 +41,26 @@ public class NotPostfixTemplate extends PostfixTemplateWithExpressionSelector {
     myPsiInfo = info;
   }
 
+  /**
+   * @deprecated use {@link #NotPostfixTemplate(String,String,String,PostfixTemplatePsiInfo,PostfixTemplateExpressionSelector,PostfixTemplateProvider)}
+   */
+  @Deprecated(forRemoval = true)
   public NotPostfixTemplate(@NotNull String name,
                             @NotNull String key,
                             @NotNull String example,
                             @NotNull PostfixTemplatePsiInfo info,
                             @NotNull PostfixTemplateExpressionSelector selector) {
     super(name, key, example, selector);
+    myPsiInfo = info;
+  }
+
+  public NotPostfixTemplate(@Nullable String id,
+                            @NotNull String name,
+                            @NotNull String example,
+                            @NotNull PostfixTemplatePsiInfo info,
+                            @NotNull PostfixTemplateExpressionSelector selector,
+                            @Nullable PostfixTemplateProvider provider) {
+    super(id, name, example, selector, provider);
     myPsiInfo = info;
   }
 

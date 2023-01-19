@@ -45,12 +45,10 @@ public class AddExplicitTypeArgumentsIntention extends BaseElementAtCaretIntenti
     if (parent instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)parent).getTypeArguments().length == 0) {
       PsiMethodCallExpression callExpression = (PsiMethodCallExpression)parent;
       JavaResolveResult result = callExpression.resolveMethodGenerics();
-      if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isApplicable()) {
-        PsiElement method = result.getElement();
+      if (result instanceof MethodCandidateInfo candidateInfo && candidateInfo.isApplicable()) {
+        PsiMethod method = candidateInfo.getElement();
         setText(getFamilyName());
-        return method instanceof PsiMethod && !((PsiMethod)method).isConstructor() && 
-               ((PsiMethod)method).hasTypeParameters() && 
-               AddTypeArgumentsFix.addTypeArguments(callExpression, null) != null;
+        return !method.isConstructor() && method.hasTypeParameters() && AddTypeArgumentsFix.addTypeArguments(callExpression, null) != null;
       }
     }
     return false;

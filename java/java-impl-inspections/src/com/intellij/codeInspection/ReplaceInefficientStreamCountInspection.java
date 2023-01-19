@@ -229,25 +229,12 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       if (countName == null) return;
       PsiMethodCallExpression qualifierCall = getQualifierMethodCall(countCall);
       switch (mySimplificationMode) {
-        case SUM:
-          replaceFlatMap(countName, qualifierCall);
-          break;
-        case COLLECTION_SIZE:
-          replaceSimpleCount(countCall, qualifierCall);
-          break;
-        case ANY_MATCH:
-          replaceFilterCountComparison(qualifierCall, true);
-          break;
-        case NONE_MATCH:
-          replaceFilterCountComparison(qualifierCall, false);
-          break;
-        case IS_PRESENT:
-          replaceSimpleCountComparison(countCall, true);
-          break;
-        case NOT_IS_PRESENT:
-        case IS_EMPTY:
-          replaceSimpleCountComparison(countCall, false);
-          break;
+        case SUM -> replaceFlatMap(countName, qualifierCall);
+        case COLLECTION_SIZE -> replaceSimpleCount(countCall, qualifierCall);
+        case ANY_MATCH -> replaceFilterCountComparison(qualifierCall, true);
+        case NONE_MATCH -> replaceFilterCountComparison(qualifierCall, false);
+        case IS_PRESENT -> replaceSimpleCountComparison(countCall, true);
+        case NOT_IS_PRESENT, IS_EMPTY -> replaceSimpleCountComparison(countCall, false);
       }
     }
 

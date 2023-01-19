@@ -5,7 +5,10 @@ import com.intellij.execution.runToolbar.components.MouseListenerHelper
 import com.intellij.execution.runToolbar.components.TrimmedMiddleLabel
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomPanel
 import com.intellij.openapi.util.Key
@@ -48,8 +51,6 @@ internal class RunToolbarProcessStartedAction : ComboBoxAction(),
     }
   }
 
-  override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup = DefaultActionGroup()
-
   override fun actionPerformed(e: AnActionEvent) {
 
   }
@@ -70,6 +71,7 @@ internal class RunToolbarProcessStartedAction : ComboBoxAction(),
         presentation.isEnabledAndVisible = presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
       }
     }
+    e.presentation.isEnabled = e.presentation.isEnabled && e.isFromActionToolbar
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {

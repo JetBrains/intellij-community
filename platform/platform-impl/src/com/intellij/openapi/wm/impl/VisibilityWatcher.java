@@ -9,10 +9,6 @@ import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class VisibilityWatcher extends ComponentAdapter implements PropertyChangeListener{
   @NonNls protected static final String ANCESTOR_PROPERTY_NAME = "ancestor";
 

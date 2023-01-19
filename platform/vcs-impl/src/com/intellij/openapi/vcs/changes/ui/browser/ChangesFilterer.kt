@@ -330,6 +330,8 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
 
   private class ToggleFilterAction(val filterer: ChangesFilterer, val filter: Filter)
     : ToggleAction(filter.getText(), filter.getDescription(), null), DumbAware {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
     override fun isSelected(e: AnActionEvent): Boolean = filterer.activeFilter == filter
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {

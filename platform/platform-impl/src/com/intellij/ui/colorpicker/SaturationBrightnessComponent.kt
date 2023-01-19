@@ -89,7 +89,7 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
 
   override fun getMinimumSize(): Dimension = JBUI.size(150, 140)
 
-  fun paintPipetteMode(graphics: Graphics) {
+  private fun paintPipetteMode(graphics: Graphics) {
     graphics.color = parent.background
     graphics.fillRect(0,0, width, height)
     val g = graphics.create() as Graphics2D

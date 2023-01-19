@@ -55,7 +55,6 @@ import java.awt.datatransfer.Transferable
 import java.awt.event.MouseEvent
 import java.io.File
 import javax.swing.JComponent
-import javax.swing.text.StyleConstants.setIcon
 import kotlin.math.max
 
 class ShowBlankDiffWindowAction : DumbAwareAction() {
@@ -306,7 +305,7 @@ class ShowBlankDiffWindowDiffExtension : DiffExtension() {
     }
 
     if (viewer is DiffViewerBase) {
-      RecentContentHandler(viewer, helper).install()
+      RecentContentHandler(viewer).install()
     }
   }
 }
@@ -354,7 +353,7 @@ private abstract class DnDHandlerBase(val project: Project?,
     }
   }
 
-  override fun canHandleDrop(transferFlavors: Array<out DataFlavor>): Boolean {
+  override fun canHandleDrop(transferFlavors: Array<DataFlavor>): Boolean {
     return FileCopyPasteUtil.isFileListFlavorAvailable(transferFlavors)
   }
 
@@ -393,8 +392,7 @@ private abstract class DnDHandlerBase(val project: Project?,
   }
 }
 
-private class RecentContentHandler(val viewer: DiffViewerBase,
-                                   val helper: MutableDiffRequestChain.Helper) {
+private class RecentContentHandler(val viewer: DiffViewerBase) {
   fun install() {
     viewer.addListener(MyListener())
   }

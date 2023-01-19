@@ -555,7 +555,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     };
     ExtensionTestUtil.maskExtensions(
       ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS,
-      ContainerUtil.newArrayList(filterProvider),
+      List.of(filterProvider),
       getTestRootDisposable());
 
     myConsole = createConsole(true, getProject());
@@ -578,7 +578,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     ConsoleFilterProvider predefinedProvider = project -> new Filter[] { predefinedFilter };
     ExtensionTestUtil.maskExtensions(
       ConsoleFilterProvider.FILTER_PROVIDERS,
-      ContainerUtil.newArrayList(predefinedProvider),
+      List.of(predefinedProvider),
       getTestRootDisposable());
 
     myConsole = createConsole(true, getProject());

@@ -9,6 +9,9 @@ import java.util.*;
 /**
  * The same as {@link LinkedHashMap} but adapted to store long keys.
  * Null values are not supported.
+ *
+ * NOTE: not the same as {@link java.util.LinkedHashMap} -- this implementation supports .accessOrder,
+ * which re-orders entries on .get() 
  */
 public class LongLinkedHashMap<V> {
   private static final long NULL_KEY = 0L;
@@ -56,7 +59,7 @@ public class LongLinkedHashMap<V> {
     return null;
   }
 
-  public V put(final long key, @NotNull final V value) {
+  public V put(final long key, final @NotNull V value) {
     final Entry<V>[] table = this.table;
     final int hash = hashCode(key);
     final int index = hash % table.length;
@@ -66,7 +69,7 @@ public class LongLinkedHashMap<V> {
         return e.setValue(value);
       }
     }
-    final Entry<V> e = new Entry<V>(key, value, hash);
+    final Entry<V> e = new Entry<>(key, value, hash);
     e.hashNext = table[index];
     table[index] = e;
     final Entry<V> top = this.top;
@@ -127,8 +130,7 @@ public class LongLinkedHashMap<V> {
     return e.value;
   }
 
-  @NotNull
-  public Collection<V> values() {
+  public @NotNull Collection<V> values() {
     return new Values();
   }
 
@@ -154,8 +156,7 @@ public class LongLinkedHashMap<V> {
     return top != null ? top.key : NULL_KEY;
   }
 
-  @Nullable
-  public V getLastValue() {
+  public @Nullable V getLastValue() {
     return top != null ? top.value : null;
   }
 
@@ -220,13 +221,11 @@ public class LongLinkedHashMap<V> {
   }
 
 
-  @NotNull
-  public Set<Entry<V>> entrySet() {
+  public @NotNull Set<Entry<V>> entrySet() {
     return new EntrySet();
   }
 
-  public static class Entry<V> {
-
+  public static final class Entry<V> {
     private final long key;
     private final int keyHash;
     private V value;
@@ -281,10 +280,8 @@ public class LongLinkedHashMap<V> {
   }
 
   private final class EntrySet extends AbstractSet<Entry<V>> {
-
-    @NotNull
     @Override
-    public Iterator<Entry<V>> iterator() {
+    public @NotNull Iterator<Entry<V>> iterator() {
       return new LinkedHashIterator<Entry<V>>() {
         @Override
         public Entry<V> next() {
@@ -337,9 +334,8 @@ public class LongLinkedHashMap<V> {
   }
 
   private final class Values extends AbstractCollection<V> {
-    @NotNull
     @Override
-    public Iterator<V> iterator() {
+    public @NotNull Iterator<V> iterator() {
       return new LinkedHashIterator<V>() {
         @Override
         public V next() {

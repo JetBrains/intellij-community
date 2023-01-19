@@ -10,11 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntStack;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -2344,11 +2340,11 @@ public final class ControlFlowUtil {
 
     boolean depthFirstSearch(final int startOffset, @NotNull BitSet visitedOffsets) {
       // traverse the graph starting with the startOffset
-      IntStack walkThroughStack = new IntStack(Math.max(size() / 2, 2));
+      IntStack walkThroughStack=new IntArrayList(Math.max(size() / 2, 2));
       visitedOffsets.clear();
       walkThroughStack.push(startOffset);
-      while (!walkThroughStack.empty()) {
-        int currentOffset = walkThroughStack.pop();
+      while (!walkThroughStack.isEmpty()) {
+        int currentOffset = walkThroughStack.popInt();
         if (currentOffset < size() && !visitedOffsets.get(currentOffset)) {
           visitedOffsets.set(currentOffset);
           int[] nextOffsets = getNextOffsets(currentOffset);

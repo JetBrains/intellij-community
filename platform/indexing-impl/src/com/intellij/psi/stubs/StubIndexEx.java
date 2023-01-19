@@ -2,6 +2,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,7 +18,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.*;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
@@ -41,8 +41,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.TRACE_OF_STUB_ENTRIES_LOOKUP;
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.lookupStubEntriesStarted;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationFusCollector.TRACE_OF_STUB_ENTRIES_LOOKUP;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationFusCollector.lookupStubEntriesStarted;
 
 @ApiStatus.Internal
 public abstract class StubIndexEx extends StubIndex {
@@ -60,7 +60,6 @@ public abstract class StubIndexEx extends StubIndex {
   }, ConcurrentHashMap::new);
 
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
-  private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
   @ApiStatus.Internal
   abstract void initializeStubIndexes();
@@ -134,7 +133,7 @@ public abstract class StubIndexEx extends StubIndex {
     var trace = lookupStubEntriesStarted(indexKey)
       .withProject(project);
 
-    try (trace) {
+    try {
       boolean dumb = DumbService.isDumb(project);
       if (dumb) {
         if (project instanceof LightEditCompatible) return false;
@@ -183,12 +182,18 @@ public abstract class StubIndexEx extends StubIndex {
       trace.stubTreesDeserializingStarted();
 
       try {
+        Collection<ModelBranch> branches = null;
         while (fileStream.hasNext()) {
           VirtualFile file = fileStream.next();
           assert file != null;
-
-          List<VirtualFile> filesInScope =
-            scope != null ? FileBasedIndexEx.filesInScopeWithBranches(scope, file) : Collections.singletonList(file);
+          List<VirtualFile> filesInScope;
+          if (scope != null) {
+            if (branches == null) branches = scope.getModelBranchesAffectingScope();
+            filesInScope = FileBasedIndexEx.filesInScopeWithBranches(scope, file, branches);
+          }
+          else {
+            filesInScope = Collections.singletonList(file);
+          }
           if (filesInScope.isEmpty()) {
             continue;
           }
@@ -226,6 +231,12 @@ public abstract class StubIndexEx extends StubIndex {
     catch (Throwable t) {
       trace.lookupFailed();
       throw t;
+    }
+    finally {
+      //Not using try-with-resources because in case of exceptions are thrown, .close() needs to be called _after_ catch,
+      //  so .lookupFailed() is invoked on a not-yet-closed trace -- but TWR does the opposite: first close resources, then
+      //  do all catch/finally blocks
+      trace.close();
     }
   }
 
@@ -306,10 +317,7 @@ public abstract class StubIndexEx extends StubIndex {
 
     try {
       @Nullable IdFilter finalIdFilter = idFilter;
-      return myAccessValidator.validate(StubUpdatingIndex.INDEX_ID, () -> FileBasedIndexEx.disableUpToDateCheckIn(() ->
-                                                                                                                    index.processAllKeys(
-                                                                                                                      processor, scope,
-                                                                                                                      finalIdFilter)));
+      return FileBasedIndexEx.disableUpToDateCheckIn(() -> index.processAllKeys(processor, scope, finalIdFilter));
     }
     catch (StorageException e) {
       forceRebuild(e);
@@ -322,33 +330,6 @@ public abstract class StubIndexEx extends StubIndex {
       throw e;
     }
     return true;
-  }
-
-  @Override
-  public @NotNull <Key> IdIterator getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey,
-                                                    @NotNull Key dataKey,
-                                                    final @NotNull Project project,
-                                                    final @Nullable GlobalSearchScope scope) {
-    IntSet result = getContainingIds(indexKey, dataKey, project, null, scope);
-    if (result == null) return IdIterator.EMPTY;
-    return new IdIterator() {
-      final IntIterator iterator = result.iterator();
-
-      @Override
-      public boolean hasNext() {
-        return iterator.hasNext();
-      }
-
-      @Override
-      public int next() {
-        return iterator.nextInt();
-      }
-
-      @Override
-      public int size() {
-        return result.size();
-      }
-    };
   }
 
   @Override
@@ -407,12 +388,9 @@ public abstract class StubIndexEx extends StubIndex {
           return true;
         }
       };
-      myAccessValidator.validate(stubUpdatingIndexId, () -> {
-        trace.totalKeysIndexed(MeasurableIndexStore.keysCountApproximatelyIfPossible(index));
-        // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
-        return FileBasedIndexEx.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(
-          stubUpdatingIndex.getLock().readLock(), () -> index.getData(dataKey).forEach(action)));
-      });
+      trace.totalKeysIndexed(MeasurableIndexStore.keysCountApproximatelyIfPossible(index));
+      // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
+      FileBasedIndexEx.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(stubUpdatingIndex.getLock().readLock(), () -> index.getData(dataKey).forEach(action)));
       return action.result == null ? IntSets.EMPTY_SET : action.result;
     }
     catch (StorageException e) {
@@ -534,4 +512,19 @@ public abstract class StubIndexEx extends StubIndex {
   public boolean areAllProblemsProcessedInTheCurrentThread() {
     return myStubProcessingHelper.areAllProblemsProcessedInTheCurrentThread();
   }
+
+  @ApiStatus.Internal
+  public void cleanCaches() {
+    myCachedStubIds.clear();
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public interface FileUpdateProcessor {
+    void processUpdate(@NotNull VirtualFile file);
+    default void endUpdatesBatch() {}
+  }
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  abstract public @NotNull FileUpdateProcessor getPerFileElementTypeModificationTrackerUpdateProcessor();
 }

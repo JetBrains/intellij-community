@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
@@ -206,9 +207,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
       if (expression == null) return null;
       PsiCodeBlock body = switchCopy.getBody();
       if (body == null) return null;
-      List<PsiSwitchLabeledRuleStatement> rules = StreamEx.of(body.getStatements())
-        .select(PsiSwitchLabeledRuleStatement.class)
-        .toList();
+      List<PsiSwitchLabeledRuleStatement> rules = ContainerUtil.filterIsInstance(body.getStatements(), PsiSwitchLabeledRuleStatement.class);
       List<CommentTracker> branchTrackers = new ArrayList<>();
       IntList caseCounts = new IntArrayList();
       StringJoiner joiner = new StringJoiner("\n");
@@ -233,9 +232,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
       PsiSwitchStatement newBlock = (PsiSwitchStatement)myFactory.createStatementFromText(switchText, mySwitchBlock);
       PsiCodeBlock newBody = newBlock.getBody();
       assert newBody != null;
-      List<PsiSwitchLabelStatement> branches = StreamEx.of(newBody.getStatements())
-        .select(PsiSwitchLabelStatement.class)
-        .toList();
+      List<PsiSwitchLabelStatement> branches = ContainerUtil.filterIsInstance(newBody.getStatements(), PsiSwitchLabelStatement.class);
       int totalCaseStatements = 0;
       for (int i = 0; i < caseCounts.size(); i++) {
         totalCaseStatements += caseCounts.getInt(i);

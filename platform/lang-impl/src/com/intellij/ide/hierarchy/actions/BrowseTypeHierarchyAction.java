@@ -17,7 +17,7 @@ public final class BrowseTypeHierarchyAction extends BrowseHierarchyActionBase {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 
   @Override

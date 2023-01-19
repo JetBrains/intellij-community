@@ -19,6 +19,8 @@ class GenerateTableOfContentsActionTest: LightPlatformCodeInsightTestCase() {
 
   fun `test headers with images`() = doTest()
 
+  fun `test multiple headers with the same text`() = doTest()
+
   private fun doTest() {
     val name = getTestName(true)
     configureByFile("$name.md")

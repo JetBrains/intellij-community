@@ -4,8 +4,8 @@ package org.jetbrains.plugins.github.ui.util
 import com.intellij.UtilBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -13,8 +13,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
@@ -31,7 +29,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.util.CollectionDelta
 import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
@@ -76,12 +73,6 @@ object GHUIUtil {
       GithubIssueState.closed -> GithubBundle.message("issue.state.closed")
     }
 
-  fun focusPanel(panel: JComponent) {
-    val focusManager = IdeFocusManager.findInstanceByComponent(panel)
-    val toFocus = focusManager.getFocusTargetFor(panel) ?: return
-    focusManager.doWhenFocusSettlesDown { focusManager.requestFocus(toFocus, true) }
-  }
-
   fun createIssueLabelLabel(label: GHLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
     background = getLabelBackground(label)
     foreground = getLabelForeground(background)
@@ -93,12 +84,6 @@ object GHUIUtil {
   }
 
   fun getLabelForeground(bg: Color): Color = if (ColorUtil.isDark(bg)) Color.white else Color.black
-
-  fun getFontEM(component: JComponent): Float {
-    val metrics = component.getFontMetrics(component.font)
-    //em dash character
-    return FontLayoutService.getInstance().charWidth2D(metrics, '\u2014'.toInt())
-  }
 
   fun formatActionDate(date: Date): String {
     val prettyDate = DateFormatUtil.formatPrettyDate(date).toLowerCase()
@@ -197,8 +182,6 @@ object GHUIUtil {
     return result
   }
 
-  fun getPRTimelineWidth() = (getFontEM(JLabel()) * 42).toInt()
-
   data class SelectableWrapper<T>(val value: T, var selected: Boolean = false)
 
   sealed class SelectionListCellRenderer<T> : ListCellRenderer<SelectableWrapper<T>>, BorderLayoutPanel() {
@@ -243,13 +226,13 @@ object GHUIUtil {
     class PRReviewers(private val iconsProvider: GHAvatarIconsProvider)
       : SelectionListCellRenderer<GHPullRequestRequestedReviewer>() {
       override fun getText(value: GHPullRequestRequestedReviewer) = value.shortName
-      override fun getIcon(value: GHPullRequestRequestedReviewer) = iconsProvider.getIcon(value.avatarUrl)
+      override fun getIcon(value: GHPullRequestRequestedReviewer) = iconsProvider.getIcon(value.avatarUrl, AVATAR_SIZE)
     }
 
     class Users(private val iconsProvider: GHAvatarIconsProvider)
       : SelectionListCellRenderer<GHUser>() {
       override fun getText(value: GHUser) = value.login
-      override fun getIcon(value: GHUser) = iconsProvider.getIcon(value.avatarUrl)
+      override fun getIcon(value: GHUser) = iconsProvider.getIcon(value.avatarUrl, AVATAR_SIZE)
     }
 
     class Labels : SelectionListCellRenderer<GHLabel>() {

@@ -1,0 +1,61 @@
+{
+  "$schema": "../../web-types-gen/resources/web-types.json",
+  "framework": "vue",
+  "name": "vue",
+  "version": "3.0.0",
+  "js-types-syntax": "typescript",
+  "description-markup": "markdown",
+  "framework-config": {
+    "enable-when": {
+      "file-extensions": [
+        "vue"
+      ]
+    },
+    "canonical-names": {
+      "/html/elements": "kebab-case",
+      "/js/properties": "kebab-case"
+    },
+    "match-names": {
+      "/html/elements": [
+        "kebab-case"
+      ],
+      "/js/properties": [
+        "as-is"
+      ]
+    },
+    "name-variants": {
+      "/js/properties": [
+        "kebab-case"
+      ],
+      "/html/elements": [
+        "PascalCase",
+        "kebab-case"
+      ]
+    }
+  },
+  "contributions": {
+    "html": {
+      "elements": [
+        {
+          "name": "Hello11WoRld"
+        },
+        {
+          "name": "Hello-12WoRld"
+        },
+        {
+          "name": "Hello-13woRld"
+        }
+      ]
+    },
+    "js": {
+      "properties": [
+        {
+          "name": "propOne"
+        },
+        {
+          "name": "propTwo-Three"
+        }
+      ]
+    }
+  }
+}

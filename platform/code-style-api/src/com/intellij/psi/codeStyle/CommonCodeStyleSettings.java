@@ -1128,10 +1128,19 @@ public class CommonCodeStyleSettings {
       document.putUserData(INDENT_OPTIONS_KEY, this);
     }
 
+    /**
+     * @deprecated Use {@link #retrieveFromAssociatedDocument(Document)}
+     */
     @Nullable
+    @Deprecated
     public static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
       Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
+    }
+
+    @Nullable
+    public static IndentOptions retrieveFromAssociatedDocument(@NotNull Document document) {
+      return document.getUserData(INDENT_OPTIONS_KEY);
     }
 
     /**
@@ -1188,13 +1197,5 @@ public class CommonCodeStyleSettings {
 
   void setSoftMargins(List<Integer> values) {
     mySoftMargins.setValues(values);
-  }
-
-  /**
-   * @deprecated Use {@link CodeStyle#getLocalLanguageSettings(Editor, int)}
-   */
-  @Deprecated(forRemoval = true)
-  public static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
-    return CodeStyle.getLocalLanguageSettings(editor, tailOffset);
   }
 }

@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.PackageDirectoryCache;
+import com.intellij.openapi.roots.PackageDirectoryCache;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,9 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public abstract class NonClasspathClassFinder extends PsiElementFinder {
   private static final Logger LOG = Logger.getInstance(NonClasspathClassFinder.class);
   private static final EverythingGlobalScope ALL_SCOPE = new EverythingGlobalScope();

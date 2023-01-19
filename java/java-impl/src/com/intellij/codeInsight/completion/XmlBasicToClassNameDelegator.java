@@ -20,9 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class XmlBasicToClassNameDelegator extends CompletionContributor {
 
   @Override

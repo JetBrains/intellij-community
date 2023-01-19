@@ -32,7 +32,7 @@ class KotlinFacetConfigurationImpl : KotlinFacetConfiguration {
 
         val tabs = arrayListOf<FacetEditorTab>()
         tabs += KotlinFacetEditorProviderService.getInstance(editorContext.project).getEditorTabs(this, editorContext, validatorsManager)
-        KotlinFacetConfigurationExtension.EP_NAME.extensions.flatMapTo(tabs) { it.createEditorTabs(editorContext, validatorsManager) }
+        KotlinFacetConfigurationExtension.EP_NAME.extensionList.flatMapTo(tabs) { it.createEditorTabs(editorContext, validatorsManager) }
         return tabs.toTypedArray()
     }
 }

@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSettings> extends ModuleBuilder {
   @NotNull private final Icon myIcon;
   @NotNull private final ProjectSystemId myExternalSystemId;

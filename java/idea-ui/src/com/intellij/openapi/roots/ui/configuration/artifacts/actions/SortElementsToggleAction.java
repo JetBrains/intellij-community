@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
@@ -35,6 +36,11 @@ public class SortElementsToggleAction extends ToggleAction implements DumbAware 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return myLayoutTreeComponent.isSortElements();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

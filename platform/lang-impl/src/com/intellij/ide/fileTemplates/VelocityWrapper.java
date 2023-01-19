@@ -27,8 +27,6 @@ import java.io.*;
 
 /**
  * Initializes Velocity when it's actually needed. All interaction with Velocity should go through this class.
- *
- * @author peter
  */
 final class VelocityWrapper {
   private static final Logger LOG = Logger.getInstance(VelocityWrapper.class);
@@ -56,6 +54,23 @@ final class VelocityWrapper {
       Velocity.setProperty(RuntimeConstants.INPUT_ENCODING, FileTemplate.ourEncoding);
       Velocity.setProperty(RuntimeConstants.PARSER_POOL_SIZE, 3);
       Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "includes");
+
+      Velocity.setProperty(RuntimeConstants.UBERSPECT_CLASSNAME, "org.apache.velocity.util.introspection.SecureUberspector");
+      Velocity.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_PACKAGES, "java.lang.reflect");
+      Velocity.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_CLASSES, "java.lang.Compiler," +
+                                                                           "java.lang.InheritableThreadLocal," +
+                                                                           "java.lang.Package," +
+                                                                           "java.lang.Process," +
+                                                                           "java.lang.Runtime," +
+                                                                           "java.lang.RuntimePermission," +
+                                                                           "java.lang.SecurityManager," +
+                                                                           "java.lang.System," +
+                                                                           "java.lang.Thread," +
+                                                                           "java.lang.ThreadGroup," +
+                                                                           "java.lang.ThreadLocal," +
+                                                                           "java.lang.Class," +
+                                                                           "java.lang.ClassLoader");
+
       Velocity.setProperty("includes.resource.loader.instance", new ResourceLoader() {
         @Override
         public void init(ExtendedProperties configuration) {

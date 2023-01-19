@@ -11,9 +11,6 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-/**
- * @author Sergey Evdokimov
- */
 public class FilterCopyHandler extends FileCopyingHandler {
   public static final FileCopyingHandler DEFAULT = new FilterCopyHandler(FileFilters.EVERYTHING);
 

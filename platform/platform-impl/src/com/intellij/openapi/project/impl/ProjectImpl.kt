@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
-import com.intellij.diagnostic.*
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -16,8 +17,10 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.client.ClientAwareComponentManager
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
@@ -29,20 +32,24 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
+import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.TimedReference
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import java.lang.Runnable
 import java.nio.file.ClosedFileSystemException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
@@ -64,14 +71,32 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
     private val CREATION_TRACE = Key.create<String>("ProjectImpl.CREATION_TRACE")
 
+    @TestOnly
+    @JvmField
+    val CREATION_TEST_NAME = Key.create<String>("ProjectImpl.CREATION_TEST_NAME")
+
+    @TestOnly
+    @JvmField
+    val USED_TEST_NAMES = Key.create<String>("ProjectImpl.USED_TEST_NAMES")
+
     internal fun CoroutineScope.preloadServicesAndCreateComponents(project: ProjectImpl, preloadServices: Boolean) {
       if (preloadServices) {
+        val app = ApplicationManager.getApplication()
+        if (project.isLight || app.isHeadlessEnvironment || app.isUnitTestMode) {
+          launch {
+            project.serviceAsync<FileEditorManager>().join()
+            project.serviceAsync<WolfTheProblemSolver>().join()
+            project.serviceAsync<DaemonCodeAnalyzer>().join()
+          }
+        }
+
         // for light projects, preload only services that are essential
         // ("await" means "project component loading activity is completed only when all such services are completed")
         project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
                                 activityPrefix = "project ",
                                 syncScope = this,
-                                onlyIfAwait = project.isLight)
+                                onlyIfAwait = project.isLight,
+                                asyncScope = project.asyncPreloadServiceScope)
       }
 
       launch {
@@ -79,6 +104,11 @@ open class ProjectImpl(filePath: Path, projectName: String?)
       }
     }
   }
+
+  // used by Rider
+  @Internal
+  @JvmField
+  val asyncPreloadServiceScope = coroutineScope.childScope()
 
   private val earlyDisposable = AtomicReference(Disposer.newDisposable())
 
@@ -326,6 +356,10 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl) = pluginDescriptor.projectContainerDescriptor
 
+  override fun scheduleSave() {
+    SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(project = this))
+  }
+
   override fun save() {
     val app = ApplicationManagerEx.getApplicationEx()
     if (!app.isSaveAllowed) {
@@ -348,11 +382,21 @@ open class ProjectImpl(filePath: Path, projectName: String?)
   }
 
   @TestOnly
-  override fun getCreationTrace(): String? = getUserData(CREATION_TRACE)
+  override fun getCreationTrace(): String? {
+    val trace = getUserData(CREATION_TRACE)
+    val testName = getUserData(CREATION_TEST_NAME) ?: return trace
+    return "created in test: $testName, used in tests: ${getUserData(USED_TEST_NAMES)}\n $trace"
+  }
 
   private fun storeCreationTrace() {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       putUserData(CREATION_TRACE, ExceptionUtil.currentStackTrace())
     }
+  }
+
+  override fun stopServicePreloading() {
+    super.stopServicePreloading()
+
+    asyncPreloadServiceScope.cancel()
   }
 }

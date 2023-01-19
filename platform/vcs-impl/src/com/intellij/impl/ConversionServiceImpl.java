@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.impl;
 
 import com.intellij.conversion.*;
@@ -8,6 +8,7 @@ import com.intellij.conversion.impl.ProjectConversionUtil;
 import com.intellij.conversion.impl.ui.ConvertProjectDialog;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
@@ -84,14 +85,20 @@ public final class ConversionServiceImpl extends ConversionService {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED;
     }
 
-    Ref<ConversionResult> ref = new Ref<>(ConversionResultImpl.CONVERSION_CANCELED);
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      ConvertProjectDialog dialog = new ConvertProjectDialog(context, converters);
-      dialog.show();
-      if (dialog.isConverted()) {
-        ref.set(new ConversionResultImpl(converters));
-      }
-    });
+    Ref<ConversionResult> ref = new Ref<>();
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      ref.set(new ConversionResultImpl(converters));
+    }
+    else {
+      ref.set(ConversionResultImpl.CONVERSION_CANCELED);
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        ConvertProjectDialog dialog = new ConvertProjectDialog(context, converters);
+        dialog.show();
+        if (dialog.isConverted()) {
+          ref.set(new ConversionResultImpl(converters));
+        }
+      });
+    }
 
     if (!ref.isNull()) {
       try {

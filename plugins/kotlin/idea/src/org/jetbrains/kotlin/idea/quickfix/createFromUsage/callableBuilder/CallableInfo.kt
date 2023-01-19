@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassInfo
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.getResolvableApproximations
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -258,7 +257,8 @@ class ConstructorInfo(
     val targetClass: PsiElement,
     val isPrimary: Boolean = false,
     modifierList: KtModifierList? = null,
-    val withBody: Boolean = false
+    val withBody: Boolean = false,
+    val annotations: List<KtAnnotationEntry> = emptyList()
 ) : CallableInfo("", TypeInfo.Empty, TypeInfo.Empty, Collections.emptyList(), Collections.emptyList(), false, modifierList = modifierList) {
     override val kind: CallableKind get() = CallableKind.CONSTRUCTOR
 
@@ -292,7 +292,7 @@ class PropertyInfo(
         modifierList: KtModifierList?
     ) = copyProperty(receiverTypeInfo, possibleContainers, modifierList)
 
-    fun copyProperty(
+    private fun copyProperty(
         receiverTypeInfo: TypeInfo = this.receiverTypeInfo,
         possibleContainers: List<KtElement> = this.possibleContainers,
         modifierList: KtModifierList? = this.modifierList,

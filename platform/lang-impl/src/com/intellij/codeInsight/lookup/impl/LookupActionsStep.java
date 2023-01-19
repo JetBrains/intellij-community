@@ -16,9 +16,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
-* @author peter
-*/
 public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> implements ClosableByLeftArrow {
   private final LookupImpl myLookup;
   private final LookupElement myLookupElement;

@@ -26,11 +26,13 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.InjectionUtils;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
@@ -85,6 +87,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     }
     List<LineMarkerInfo<?>> lineMarkers = new ArrayList<>();
     FileViewProvider viewProvider = myFile.getViewProvider();
+    int passId = getId();
     for (Language language : viewProvider.getLanguages()) {
       PsiFile root = viewProvider.getPsi(language);
       if (root == null) {
@@ -93,27 +96,28 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
       }
       HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myProject);
       if (!highlightingLevelManager.shouldHighlight(root)) continue;
-      Divider.divideInsideAndOutsideInOneRoot(root, myRestrictRange.toScalarRange(), myPriorityBounds.toScalarRange(),
+      Divider.divideInsideAndOutsideInOneRoot(root, TextRangeScalarUtil.toScalarRange(myRestrictRange), TextRangeScalarUtil.toScalarRange(myPriorityBounds),
            elements -> {
              Collection<LineMarkerProvider> providers = getMarkerProviders(language, myProject);
              List<LineMarkerProvider> providersList = new ArrayList<>(providers);
 
              queryProviders(
                elements.inside, root, providersList, (__, info) -> {
+                 info.updatePass = passId;
                  lineMarkers.add(info);
-               ApplicationManager.getApplication().invokeLater(() -> {
-                 if (isValid()) {
-                   LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
-                 }
-               }, myProject.getDisposed());
-             });
-             queryProviders(elements.outside, root, providersList, (__, info) -> lineMarkers.add(info));
+                 ApplicationManager.getApplication().invokeLater(() -> {
+                   if (isValid()) {
+                     LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
+                   }
+                 }, myProject.getDisposed());
+               });
+             queryProviders(elements.outside, root, providersList,
+                            (__, info) -> {
+                              info.updatePass = passId;
+                              lineMarkers.add(info);
+                            });
              return true;
            });
-    }
-
-    for (LineMarkerInfo<?> info : lineMarkers) {
-      info.updatePass = getId();
     }
 
     myMarkers = mergeLineMarkers(lineMarkers, getDocument());
@@ -202,12 +206,14 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
     if (myMode == Mode.FAST) return;
 
-    Set<PsiFile> visitedInjectedFiles = new HashSet<>();
-    // line markers for injected could be slow
-    for (int i = 0; i < elements.size(); i++) {
-      PsiElement element = elements.get(i);
+    if (InjectionUtils.shouldCollectLineMarkersForInjectedFiles(myFile)) {
+      Set<PsiFile> visitedInjectedFiles = new HashSet<>();
+      // line markers for injected could be slow
+      for (int i = 0; i < elements.size(); i++) {
+        PsiElement element = elements.get(i);
 
-      queryLineMarkersForInjected(element, containingFile, visitedInjectedFiles, consumer);
+        queryLineMarkersForInjected(element, containingFile, visitedInjectedFiles, consumer);
+      }
     }
 
     List<LineMarkerInfo<?>> slowLineMarkers = new NotNullList<>();

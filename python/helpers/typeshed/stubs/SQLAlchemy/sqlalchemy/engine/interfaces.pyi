@@ -1,8 +1,8 @@
+from _typeshed.dbapi import DBAPIConnection, DBAPICursor
 from abc import abstractmethod
 from collections.abc import Callable, Collection, Mapping
 from typing import Any, ClassVar, overload
 
-from ..dbapi import DBAPIConnection, DBAPICursor
 from ..exc import StatementError
 from ..sql.compiler import Compiled as Compiled, IdentifierPreparer, TypeCompiler as TypeCompiler
 from ..sql.ddl import DDLElement

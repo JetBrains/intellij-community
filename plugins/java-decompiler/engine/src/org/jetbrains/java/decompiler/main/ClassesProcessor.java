@@ -273,26 +273,23 @@ public class ClassesProcessor implements CodeConstants {
           for (int i = 0; i < len; i++) {
             Instruction instr = seq.getInstr(i);
             switch (instr.opcode) {
-              case opc_checkcast:
-              case opc_instanceof:
+              case opc_checkcast, opc_instanceof -> {
                 if (cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
                   refCounter++;
                   refNotNew = true;
                 }
-                break;
-              case opc_new:
-              case opc_anewarray:
-              case opc_multianewarray:
+              }
+              case opc_new, opc_anewarray, opc_multianewarray -> {
                 if (cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
                   refCounter++;
                 }
-                break;
-              case opc_getstatic:
-              case opc_putstatic:
+              }
+              case opc_getstatic, opc_putstatic -> {
                 if (cl.qualifiedName.equals(pool.getLinkConstant(instr.operand(0)).classname)) {
                   refCounter++;
                   refNotNew = true;
                 }
+              }
             }
           }
         }

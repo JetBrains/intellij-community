@@ -1,8 +1,10 @@
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from . import elements, roles
 from .base import Options
 from .operators import ColumnOperators
+
+_T = TypeVar("_T")
 
 class LambdaOptions(Options):
     enable_tracking: bool
@@ -94,7 +96,7 @@ class AnalyzedFunction:
     closure_bindparams: Any
     def __init__(self, analyzed_code, lambda_element, apply_propagate_attrs, fn) -> None: ...
 
-class PyWrapper(ColumnOperators[Any]):
+class PyWrapper(ColumnOperators[_T], Generic[_T]):
     fn: Any
     track_bound_values: Any
     def __init__(
@@ -108,6 +110,6 @@ class PyWrapper(ColumnOperators[Any]):
     def __nonzero__(self): ...
     def __getattribute__(self, key): ...
     def __iter__(self): ...
-    def __getitem__(self, key): ...
+    def __getitem__(self, key) -> ColumnOperators[_T]: ...
 
 def insp(lmb): ...

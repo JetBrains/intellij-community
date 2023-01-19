@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.QueueProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,13 +27,11 @@ import static com.intellij.util.concurrency.QueueProcessor.ThreadToUse;
  * To add a task to the queue use {@link #run(Task.Backgroundable)}
  * BackgroundTaskQueue may have a title - this title will be used if the task which is currently running doesn't have a title.
  */
-@SomeQueue
 public class BackgroundTaskQueue {
 
   protected final @NlsContexts.ProgressTitle @NotNull String myTitle;
   protected final @NotNull QueueProcessor<TaskData> myProcessor;
 
-  private final Object TEST_TASK_LOCK = new Object();
   private volatile boolean myForceAsyncInTests;
 
   public BackgroundTaskQueue(@Nullable Project project,
@@ -63,20 +62,8 @@ public class BackgroundTaskQueue {
   public void run(@NotNull Task.Backgroundable task,
                   @NotNull ModalityState modalityState,
                   @Nullable ProgressIndicator indicator) {
-    if (!myForceAsyncInTests && ApplicationManager.getApplication().isUnitTestMode()) {
-      // prohibit simultaneous execution from different threads
-      synchronized (TEST_TASK_LOCK) {
-        getProgressManager().runProcessWithProgressInCurrentThread(task,
-                                                                   indicator != null ? indicator : new EmptyProgressIndicator(),
-                                                                   modalityState);
-      }
-    }
-    else {
-      BackgroundableTaskData taskData = new BackgroundableTaskData(task,
-                                                                   modalityState,
-                                                                   indicator);
-      myProcessor.add(taskData, modalityState);
-    }
+    BackgroundableTaskData taskData = new BackgroundableTaskData(task, modalityState, indicator);
+    myProcessor.add(taskData, modalityState);
   }
 
   @TestOnly

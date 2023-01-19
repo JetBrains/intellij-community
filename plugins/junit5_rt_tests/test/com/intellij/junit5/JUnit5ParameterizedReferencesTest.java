@@ -31,14 +31,16 @@ public class JUnit5ParameterizedReferencesTest extends JUnit5CodeInsightTest {
   @Test
   void resolveToSourceMethod() {
     myFixture.configureByText("ResolveToSourceMethod.java",
-                              "import org.junit.jupiter.params.ParameterizedTest;\n" +
-                              "import org.junit.jupiter.params.provider.MethodSource;\n" +
-                              "class ParameterizedTestsDemo {\n" +
-                              "    @MethodSource(value = {\"cde\", \"ab<caret>c\"})\n" +
-                              "    void testWithProvider(String abc) {}\n" +
-                              "     private static void abc() {}\n" +
-                              "    private static void cde() {}\n" +
-                              "}\n");
+                              """
+                                import org.junit.jupiter.params.ParameterizedTest;
+                                import org.junit.jupiter.params.provider.MethodSource;
+                                class ParameterizedTestsDemo {
+                                    @MethodSource(value = {"cde", "ab<caret>c"})
+                                    void testWithProvider(String abc) {}
+                                     private static void abc() {}
+                                    private static void cde() {}
+                                }
+                                """);
     PsiReference reference = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
     assertNotNull(reference);
     PsiElement resolved = reference.resolve();

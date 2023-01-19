@@ -12,9 +12,6 @@ import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class GroovyPsiEventsTest extends LightJavaCodeInsightFixtureTestCase {
   public void testEditingInDocComment() {
     Ref<Boolean> gotIt = new Ref<>(false);

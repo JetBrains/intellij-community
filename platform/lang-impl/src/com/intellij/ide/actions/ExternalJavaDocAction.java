@@ -3,7 +3,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -75,7 +74,6 @@ public class ExternalJavaDocAction extends AnAction {
         ((ExternalDocumentationHandler)provider).handleExternal(element, originalElement)) {
       return;
     }
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.javadoc.external");
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
     final Component contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {

@@ -31,6 +31,21 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     return new SimpleDumbAwareAction(text, actionPerformed);
   }
 
+  @NotNull
+  public static DumbAwareAction create(@Nullable Icon icon,
+                                       @NotNull Consumer<? super AnActionEvent> actionPerformed) {
+    return new SimpleDumbAwareAction(icon, actionPerformed);
+  }
+
+  @NotNull
+  public static DumbAwareAction create(@Nullable @NlsActions.ActionText String text,
+                                       @Nullable Icon icon,
+                                       @NotNull Consumer<? super AnActionEvent> actionPerformed) {
+    DumbAwareAction action = new SimpleDumbAwareAction(text, actionPerformed);
+    action.getTemplatePresentation().setIcon(icon);
+    return action;
+  }
+
   protected DumbAwareAction() {
     super((Icon)null);
   }
@@ -74,6 +89,12 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     SimpleDumbAwareAction(@NlsActions.ActionText String text,
                           Consumer<? super AnActionEvent> actionPerformed) {
       super(text);
+      myActionPerformed = actionPerformed;
+    }
+
+    SimpleDumbAwareAction(@Nullable Icon icon,
+                          Consumer<? super AnActionEvent> actionPerformed) {
+      super(icon);
       myActionPerformed = actionPerformed;
     }
 

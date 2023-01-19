@@ -23,26 +23,27 @@ import java.util.List;
 
 public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   @Language("JAVA")
-  private static final String CLASS_WITH_ANONYMOUS = "class Foo {\n" +
-                                                     "  Object field;\n" +
-                                                     "  Object o1 = new Object(){};\n" +
-                                                     "  Object o2 = new Object(){};\n" +
-                                                     "  Object o3 = new Object(){};\n" +
-                                                     "  Object o4 = new Object(){};\n" +
-                                                     "  Object o5 = new Object(){};\n" +
-                                                     "  Object o6 = new Object(){};\n" +
-                                                     "  Object o7 = new Object(){};\n" +
-                                                     "  Object o8 = new Object(){};\n" +
-                                                     "  Object o9 = new Object(){};\n" +
-                                                     "  Object o10 = new Object(){};\n" +
-                                                     "  Object o11 = new Object(){};\n" +
-                                                     "  Object o12 = new Object(){};\n" +
-                                                     "  Object o13 = new Object(){\n" +
-                                                     "    int num = 1;\n" +
-                                                     "    Object o1 = new Object(){};\n" +
-                                                     "    Object o2 = new Object(){};\n" +
-                                                     "  };  \n" +
-                                                     "}";
+  private static final String CLASS_WITH_ANONYMOUS = """
+    class Foo {
+      Object field;
+      Object o1 = new Object(){};
+      Object o2 = new Object(){};
+      Object o3 = new Object(){};
+      Object o4 = new Object(){};
+      Object o5 = new Object(){};
+      Object o6 = new Object(){};
+      Object o7 = new Object(){};
+      Object o8 = new Object(){};
+      Object o9 = new Object(){};
+      Object o10 = new Object(){};
+      Object o11 = new Object(){};
+      Object o12 = new Object(){};
+      Object o13 = new Object(){
+        int num = 1;
+        Object o1 = new Object(){};
+        Object o2 = new Object(){};
+      }; \s
+    }""";
   private static final int ANNO_FIELD_COUNT = 13;
   private static final int FIELD_COUNT = 1;
 
@@ -112,217 +113,244 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   }
 
   public void testSuperTypeGrouping() {
-    doTest("abstract class Abstract {\n" +
-           "abstract void toImplement();\n" +
-           "void toOverride(){}}\n" +
-           "class aClass extends Abstract {\n" +
-           "void toImplement(){};\n" +
-           "void toOverride(){};}",
+    doTest("""
+             abstract class Abstract {
+             abstract void toImplement();
+             void toOverride(){}}
+             class aClass extends Abstract {
+             void toImplement(){};
+             void toOverride(){};}""",
 
-           "-Test.java\n" +
-           " -Abstract\n" +
-           "  toImplement(): void\n" +
-           "  toOverride(): void\n" +
-           " -aClass\n" +
-           "  -Abstract\n" +
-           "   toImplement(): void\n" +
-           "  -Abstract\n" +
-           "   toOverride(): void"
+           """
+             -Test.java
+              -Abstract
+               toImplement(): void
+               toOverride(): void
+              -aClass
+               -Abstract
+                toImplement(): void
+               -Abstract
+                toOverride(): void"""
       , true, false);
   }
 
   public void testPropertiesGrouping1() {
-    doPropertiesTest("class Foo { \n" +
-                     "  int i;\n" +
-                     "  void setI(int i){}\n" +
-                     "  int getI(){}" +
-                     " }",
+    doPropertiesTest("""
+                       class Foo {\s
+                         int i;
+                         void setI(int i){}
+                         int getI(){} }""",
 
-                     "-Test.java\n" +
-                     " -Foo\n" +
-                     "  -i: int\n" +
-                     "   setI(int): void\n" +
-                     "   getI(): int\n" +
-                     "   i: int\n");
+                     """
+                       -Test.java
+                        -Foo
+                         -i: int
+                          setI(int): void
+                          getI(): int
+                          i: int
+                       """);
   }
 
   public void testPropertiesGrouping2() {
-    doPropertiesTest("class Foo { \n" +
-                     "  void setI(int i){}\n" +
-                     "  int getI(){}" +
-                     " }",
+    doPropertiesTest("""
+                       class Foo {\s
+                         void setI(int i){}
+                         int getI(){} }""",
 
-                     "-Test.java\n" +
-                     " -Foo\n" +
-                     "  -i: int\n" +
-                     "   setI(int): void\n" +
-                     "   getI(): int\n");
+                     """
+                       -Test.java
+                        -Foo
+                         -i: int
+                          setI(int): void
+                          getI(): int
+                       """);
   }
 
   public void testPropertiesGrouping3() {
-    doPropertiesTest("class Foo { \n" +
-                     "  String i;\n" +
-                     "  void setI(int i){}\n" +
-                     "  int getI(){}" +
-                     " }",
+    doPropertiesTest("""
+                       class Foo {\s
+                         String i;
+                         void setI(int i){}
+                         int getI(){} }""",
 
-                     "-Test.java\n" +
-                     " -Foo\n" +
-                     "  -i: int\n" +
-                     "   setI(int): void\n" +
-                     "   getI(): int\n" +
-                     "  i: String\n");
+                     """
+                       -Test.java
+                        -Foo
+                         -i: int
+                          setI(int): void
+                          getI(): int
+                         i: String
+                       """);
   }
 
   public void testPropertiesGrouping4() {
-    doPropertiesTest("class Foo { \n" +
-                     "  int i;\n" +
-                     "  int getI(){}" +
-                     " }",
+    doPropertiesTest("""
+                       class Foo {\s
+                         int i;
+                         int getI(){} }""",
 
-                     "-Test.java\n" +
-                     " -Foo\n" +
-                     "  -i: int\n" +
-                     "   getI(): int\n" +
-                     "   i: int\n");
+                     """
+                       -Test.java
+                        -Foo
+                         -i: int
+                          getI(): int
+                          i: int
+                       """);
   }
 
   public void testPropertiesGrouping5() {
-    doPropertiesTest("class Foo { \n" +
-                     "  void setI(int i){}\n" +
-                     " }",
+    doPropertiesTest("""
+                       class Foo {\s
+                         void setI(int i){}
+                        }""",
 
-                     "-Test.java\n" +
-                     " -Foo\n" +
-                     "  -i: int\n" +
-                     "   setI(int): void\n");
+                     """
+                       -Test.java
+                        -Foo
+                         -i: int
+                          setI(int): void
+                       """);
   }
 
   public void testPropertiesGrouping6() {
-    doPropertiesTest("class Foo { \n" +
-                     "  void setI(String i){}\n" +
-                     "  int getI(){}" +
-                     " }",
+    doPropertiesTest("""
+                       class Foo {\s
+                         void setI(String i){}
+                         int getI(){} }""",
 
-                     "-Test.java\n" +
-                     " -Foo\n" +
-                     "  -i: String\n" +
-                     "   setI(String): void\n" +
-                     "  -i: int\n" +
-                     "   getI(): int\n");
+                     """
+                       -Test.java
+                        -Foo
+                         -i: String
+                          setI(String): void
+                         -i: int
+                          getI(): int
+                       """);
   }
 
   public void testPropertiesGrouping7() {
-    doPropertiesTest("class Foo { \n" +
-                     "  int i: \n" +
-                     " }",
+    doPropertiesTest("""
+                       class Foo {\s
+                         int i:\s
+                        }""",
 
-                     "-Test.java\n" +
-                     " -Foo\n" +
-                     "  i: int\n");
+                     """
+                       -Test.java
+                        -Foo
+                         i: int
+                       """);
   }
 
   public void testPropertiesGrouping8() {
-    doPropertiesTest("class Foo { \n" +
-                     "  static void setI(int i){}\n" +
-                     "  int getI(){}" +
-                     " }",
+    doPropertiesTest("""
+                       class Foo {\s
+                         static void setI(int i){}
+                         int getI(){} }""",
 
-                     "-Test.java\n" +
-                     " -Foo\n" +
-                     "  -i: int\n" +
-                     "   setI(int): void\n" +
-                     "   getI(): int\n");
+                     """
+                       -Test.java
+                        -Foo
+                         -i: int
+                          setI(int): void
+                          getI(): int
+                       """);
   }
 
   public void testInnerMethodClasses() {
-    doTest("class Foo {\n" +
-           "  void foo(){\n" +
-           "    class Inner implements Runnable {\n" +
-           "      public void run(){}\n" +
-           "    }\n" +
-           "    new Runnable(){\n" +
-           "      public void run(){\n" +
-           "        class Inner2{}" +
-           "      \n}" +
-           "    };\n" +
-           "  }\n" +
-           "}",
+    doTest("""
+             class Foo {
+               void foo(){
+                 class Inner implements Runnable {
+                   public void run(){}
+                 }
+                 new Runnable(){
+                   public void run(){
+                     class Inner2{}     \s
+             }    };
+               }
+             }""",
 
-           "-Test.java\n" +
-           " -Foo\n" +
-           "  -foo(): void\n" +
-           "   -Inner\n" +
-           "    run(): void\n" +
-           "   -$1\n" +
-           "    -run(): void\n" +
-           "     Inner2");
+           """
+             -Test.java
+              -Foo
+               -foo(): void
+                -Inner
+                 run(): void
+                -$1
+                 -run(): void
+                  Inner2""");
   }
 
   public void testCustomRegionsIdea179610() {
     doTest(
-      "public class Main {\n" +
-      "\n" +
-      "    //region with empty row\n" +
-      "\n" +
-      "    private static String filter(String in) {\n" +
-      "        return in.toLowerCase();\n" +
-      "    }\n" +
-      "\n" +
-      "    //endregion\n" +
-      "\n" +
-      "\n" +
-      "    //region without empty row  \n" +
-      "    public static void foo(String p) {\n" +
-      "\n" +
-      "        System.out.println(p);\n" +
-      "        System.out.println(\"heelp\");\n" +
-      "\n" +
-      "    }\n" +
-      "    //endregion\n" +
-      "}",
+      """
+        public class Main {
 
-      "-Test.java\n" +
-      " -Main\n" +
-      "  -with empty row\n" +
-      "   filter(String): String\n" +
-      "  -without empty row\n" +
-      "   foo(String): void"
+            //region with empty row
+
+            private static String filter(String in) {
+                return in.toLowerCase();
+            }
+
+            //endregion
+
+
+            //region without empty row \s
+            public static void foo(String p) {
+
+                System.out.println(p);
+                System.out.println("heelp");
+
+            }
+            //endregion
+        }""",
+
+      """
+        -Test.java
+         -Main
+          -with empty row
+           filter(String): String
+          -without empty row
+           foo(String): void"""
     );
   }
 
   public void testCustomRegionsIdea205350() {
     doTest(
-      "// region Test\n" +
-      "package com.company;\n" +
-      "\n" +
-      "class CustRegionTest {\n" +
-      "   // region Another\n" +
-      "   void foo () { }\n" +
-      "   // endregion\n" +
-      "}\n" +
-      "//endregion",
+      """
+        // region Test
+        package com.company;
 
-      "-Test.java\n" +
-      " -Test\n" +
-      "  -CustRegionTest\n" +
-      "   -Another\n" +
-      "    foo(): void"
+        class CustRegionTest {
+           // region Another
+           void foo () { }
+           // endregion
+        }
+        //endregion""",
+
+      """
+        -Test.java
+         -Test
+          -CustRegionTest
+           -Another
+            foo(): void"""
     );
   }
 
   public void testRecordComponents() {
     doTest(
-      "// region Test\n" +
-      "package com.company;\n" +
-      "\n" +
-      "record R(String s, int i) {}",
+      """
+        // region Test
+        package com.company;
 
-      "-Test.java\n" +
-      " -Test\n" +
-      "  -R\n" +
-      "   s: String\n" +
-      "   i: int"
+        record R(String s, int i) {}""",
+
+      """
+        -Test.java
+         -Test
+          -R
+           s: String
+           i: int"""
     );
   }
 
@@ -334,9 +362,10 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     myFixture.testStructureView(component -> {
       component.setActionActive(InheritedMembersNodeProvider.ID, true);
       PlatformTestUtil.assertTreeEqual(component.getTree(),
-                                       "-I.java\n" +
-                                       " -I\n" +
-                                       "  +Impl");
+                                       """
+                                         -I.java
+                                          -I
+                                           +Impl""");
     });
   }
 
@@ -345,60 +374,62 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     myFixture.testStructureView(svc -> {
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       PlatformTestUtil.assertTreeEqual(svc.getTree(),
-                                       "-Derived.java\n" +
-                                       " -Derived\n" +
-                                       "  +Inner\n" +
-                                       "  f(): void\n" +
-                                       "  g(): void\n" +
-                                       "  setX(int): void\n" +
-                                       "  getX(): int\n" +
-                                       "  setY(int): void\n" +
-                                       "  getY(): int\n" +
-                                       "  setI(int): void\n" +
-                                       "  getI(): int\n" +
-                                       "  toString(): String\n" +
-                                       "  getZ(): int\n" +
-                                       "  setZ(int): void\n" +
-                                       "  getClass(): Class<?>\n" +
-                                       "  hashCode(): int\n" +
-                                       "  equals(Object): boolean\n" +
-                                       "  clone(): Object\n" +
-                                       "  notify(): void\n" +
-                                       "  notifyAll(): void\n" +
-                                       "  wait(long): void\n" +
-                                       "  wait(long, int): void\n" +
-                                       "  wait(): void\n" +
-                                       "  finalize(): void\n" +
-                                       "  x: int\n" +
-                                       "  i: int");
+                                       """
+                                         -Derived.java
+                                          -Derived
+                                           +Inner
+                                           f(): void
+                                           g(): void
+                                           setX(int): void
+                                           getX(): int
+                                           setY(int): void
+                                           getY(): int
+                                           setI(int): void
+                                           getI(): int
+                                           toString(): String
+                                           getZ(): int
+                                           setZ(int): void
+                                           getClass(): Class<?>
+                                           hashCode(): int
+                                           equals(Object): boolean
+                                           clone(): Object
+                                           notify(): void
+                                           notifyAll(): void
+                                           wait(long): void
+                                           wait(long, int): void
+                                           wait(): void
+                                           finalize(): void
+                                           x: int
+                                           i: int""");
       svc.setActionActive(VisibilitySorter.ID, true);
       PlatformTestUtil.assertTreeEqual(svc.getTree(),
-                                       "-Derived.java\n" +
-                                       " -Derived\n" +
-                                       "  +Inner\n" +
-                                       "  f(): void\n" +
-                                       "  g(): void\n" +
-                                       "  setX(int): void\n" +
-                                       "  getX(): int\n" +
-                                       "  setY(int): void\n" +
-                                       "  getY(): int\n" +
-                                       "  setI(int): void\n" +
-                                       "  getI(): int\n" +
-                                       "  toString(): String\n" +
-                                       "  getClass(): Class<?>\n" +
-                                       "  hashCode(): int\n" +
-                                       "  equals(Object): boolean\n" +
-                                       "  notify(): void\n" +
-                                       "  notifyAll(): void\n" +
-                                       "  wait(long): void\n" +
-                                       "  wait(long, int): void\n" +
-                                       "  wait(): void\n" +
-                                       "  getZ(): int\n" +
-                                       "  clone(): Object\n" +
-                                       "  finalize(): void\n" +
-                                       "  setZ(int): void\n" +
-                                       "  x: int\n" +
-                                       "  i: int");
+                                       """
+                                         -Derived.java
+                                          -Derived
+                                           +Inner
+                                           f(): void
+                                           g(): void
+                                           setX(int): void
+                                           getX(): int
+                                           setY(int): void
+                                           getY(): int
+                                           setI(int): void
+                                           getI(): int
+                                           toString(): String
+                                           getClass(): Class<?>
+                                           hashCode(): int
+                                           equals(Object): boolean
+                                           notify(): void
+                                           notifyAll(): void
+                                           wait(long): void
+                                           wait(long, int): void
+                                           wait(): void
+                                           getZ(): int
+                                           clone(): Object
+                                           finalize(): void
+                                           setZ(int): void
+                                           x: int
+                                           i: int""");
     });
   }
 
@@ -410,29 +441,31 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
 
       PlatformTestUtil.assertTreeEqual(svc.getTree(),
-                                       "-Derived.java\n" +
-                                       " -Derived\n" +
-                                       "  +Inner\n" +
-                                       "  +Base\n" +
-                                       "  +Interface\n" +
-                                       "  +Base\n" +
-                                       "  +Object\n" +
-                                       "  +y: int\n" +
-                                       "  x: int\n" +
-                                       "  i: int");
+                                       """
+                                         -Derived.java
+                                          -Derived
+                                           +Inner
+                                           +Base
+                                           +Interface
+                                           +Base
+                                           +Object
+                                           +y: int
+                                           x: int
+                                           i: int""");
 
       svc.setActionActive(VisibilitySorter.ID, true);
       PlatformTestUtil.assertTreeEqual(svc.getTree(),
-                                       "-Derived.java\n" +
-                                       " -Derived\n" +
-                                       "  +Inner\n" +
-                                       "  +Base\n" +
-                                       "  +Base\n" +
-                                       "  +Object\n" +
-                                       "  +Interface\n" +
-                                       "  +y: int\n" +
-                                       "  x: int\n" +
-                                       "  i: int"
+                                       """
+                                         -Derived.java
+                                          -Derived
+                                           +Inner
+                                           +Base
+                                           +Base
+                                           +Object
+                                           +Interface
+                                           +y: int
+                                           x: int
+                                           i: int"""
       );
     });
   }
@@ -449,17 +482,18 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       JTree tree = svc.getTree();
       PlatformTestUtil.expandAll(tree);
       PlatformTestUtil.assertTreeEqual(tree,
-                                       "-Derived.java\n" +
-                                       " -Derived\n" +
-                                       "  Inner\n" +
-                                       "  f(): void\n" +
-                                       "  g(): void\n" +
-                                       "  getI(): int\n" +
-                                       "  getX(): int\n" +
-                                       "  getY(): int\n" +
-                                       "  setI(int): void\n" +
-                                       "  setX(int): void\n" +
-                                       "  setY(int): void");
+                                       """
+                                         -Derived.java
+                                          -Derived
+                                           Inner
+                                           f(): void
+                                           g(): void
+                                           getI(): int
+                                           getX(): int
+                                           getY(): int
+                                           setI(int): void
+                                           setX(int): void
+                                           setY(int): void""");
     });
   }
 
@@ -475,16 +509,17 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       JTree tree = svc.getTree();
       PlatformTestUtil.waitForPromise(TreeUtil.promiseExpand(tree, 2));
       PlatformTestUtil.assertTreeEqual(tree,
-                                       "-Derived.java\n" +
-                                       " -Derived\n" +
-                                       "  +Inner\n" +
-                                       "  +Base\n" +
-                                       "  +Base\n" +
-                                       "  +Interface\n" +
-                                       "  +Object\n" +
-                                       "  +y: int\n" +
-                                       "  i: int\n" +
-                                       "  x: int");
+                                       """
+                                         -Derived.java
+                                          -Derived
+                                           +Inner
+                                           +Base
+                                           +Base
+                                           +Interface
+                                           +Object
+                                           +y: int
+                                           i: int
+                                           x: int""");
     });
   }
 
@@ -500,48 +535,49 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       JTree tree = svc.getTree();
       PlatformTestUtil.expandAll(tree);
       PlatformTestUtil.assertTreeEqual(tree,
-                                       "-Derived.java\n" +
-                                       " -Derived\n" +
-                                       "  -Inner\n" +
-                                       "   -Object\n" +
-                                       "    clone(): Object\n" +
-                                       "    equals(Object): boolean\n" +
-                                       "    finalize(): void\n" +
-                                       "    getClass(): Class<?>\n" +
-                                       "    hashCode(): int\n" +
-                                       "    notify(): void\n" +
-                                       "    notifyAll(): void\n" +
-                                       "    toString(): String\n" +
-                                       "    wait(): void\n" +
-                                       "    wait(long): void\n" +
-                                       "    wait(long, int): void\n" +
-                                       "  -Base\n" +
-                                       "   f(): void\n" +
-                                       "   getX(): int\n" +
-                                       "   setX(int): void\n" +
-                                       "  -Base\n" +
-                                       "   getZ(): int\n" +
-                                       "   setZ(int): void\n" +
-                                       "   toString(): String\n" +
-                                       "  -Interface\n" +
-                                       "   g(): void\n" +
-                                       "   getI(): int\n" +
-                                       "   setI(int): void\n" +
-                                       "  -Object\n" +
-                                       "   clone(): Object\n" +
-                                       "   equals(Object): boolean\n" +
-                                       "   finalize(): void\n" +
-                                       "   getClass(): Class<?>\n" +
-                                       "   hashCode(): int\n" +
-                                       "   notify(): void\n" +
-                                       "   notifyAll(): void\n" +
-                                       "   wait(): void\n" +
-                                       "   wait(long): void\n" +
-                                       "   wait(long, int): void\n" +
-                                       "  getY(): int\n" +
-                                       "  setY(int): void\n" +
-                                       "  i: int\n" +
-                                       "  x: int");
+                                       """
+                                         -Derived.java
+                                          -Derived
+                                           -Inner
+                                            -Object
+                                             clone(): Object
+                                             equals(Object): boolean
+                                             finalize(): void
+                                             getClass(): Class<?>
+                                             hashCode(): int
+                                             notify(): void
+                                             notifyAll(): void
+                                             toString(): String
+                                             wait(): void
+                                             wait(long): void
+                                             wait(long, int): void
+                                           -Base
+                                            f(): void
+                                            getX(): int
+                                            setX(int): void
+                                           -Base
+                                            getZ(): int
+                                            setZ(int): void
+                                            toString(): String
+                                           -Interface
+                                            g(): void
+                                            getI(): int
+                                            setI(int): void
+                                           -Object
+                                            clone(): Object
+                                            equals(Object): boolean
+                                            finalize(): void
+                                            getClass(): Class<?>
+                                            hashCode(): int
+                                            notify(): void
+                                            notifyAll(): void
+                                            wait(): void
+                                            wait(long): void
+                                            wait(long, int): void
+                                           getY(): int
+                                           setY(int): void
+                                           i: int
+                                           x: int""");
     });
   }
 
@@ -558,40 +594,41 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       JTree tree = svc.getTree();
       PlatformTestUtil.expandAll(tree);
       PlatformTestUtil.assertTreeEqual(tree,
-                                       "-Derived.java\n" +
-                                       " -Derived\n" +
-                                       "  -Inner\n" +
-                                       "   -Object\n" +
-                                       "    equals(Object): boolean\n" +
-                                       "    getClass(): Class<?>\n" +
-                                       "    hashCode(): int\n" +
-                                       "    notify(): void\n" +
-                                       "    notifyAll(): void\n" +
-                                       "    toString(): String\n" +
-                                       "    wait(): void\n" +
-                                       "    wait(long): void\n" +
-                                       "    wait(long, int): void\n" +
-                                       "  -Base\n" +
-                                       "   f(): void\n" +
-                                       "   getX(): int\n" +
-                                       "   setX(int): void\n" +
-                                       "  -Base\n" +
-                                       "   toString(): String\n" +
-                                       "  -Interface\n" +
-                                       "   g(): void\n" +
-                                       "   getI(): int\n" +
-                                       "   setI(int): void\n" +
-                                       "  -Object\n" +
-                                       "   equals(Object): boolean\n" +
-                                       "   getClass(): Class<?>\n" +
-                                       "   hashCode(): int\n" +
-                                       "   notify(): void\n" +
-                                       "   notifyAll(): void\n" +
-                                       "   wait(): void\n" +
-                                       "   wait(long): void\n" +
-                                       "   wait(long, int): void\n" +
-                                       "  getY(): int\n" +
-                                       "  setY(int): void");
+                                       """
+                                         -Derived.java
+                                          -Derived
+                                           -Inner
+                                            -Object
+                                             equals(Object): boolean
+                                             getClass(): Class<?>
+                                             hashCode(): int
+                                             notify(): void
+                                             notifyAll(): void
+                                             toString(): String
+                                             wait(): void
+                                             wait(long): void
+                                             wait(long, int): void
+                                           -Base
+                                            f(): void
+                                            getX(): int
+                                            setX(int): void
+                                           -Base
+                                            toString(): String
+                                           -Interface
+                                            g(): void
+                                            getI(): int
+                                            setI(int): void
+                                           -Object
+                                            equals(Object): boolean
+                                            getClass(): Class<?>
+                                            hashCode(): int
+                                            notify(): void
+                                            notifyAll(): void
+                                            wait(): void
+                                            wait(long): void
+                                            wait(long, int): void
+                                           getY(): int
+                                           setY(int): void""");
     });
   }
 
@@ -607,34 +644,35 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       JTree tree = svc.getTree();
       PlatformTestUtil.expandAll(tree);
       PlatformTestUtil.assertTreeEqual(tree,
-                                       "-a.java\n" +
-                                       " -F\n" +
-                                       "  -Comparable\n" +
-                                       "   compareTo(T): int\n" +
-                                       "  -Enum\n" +
-                                       "   clone(): Object\n" +
-                                       "   compareTo(E): int\n" +
-                                       "   equals(Object): boolean\n" +
-                                       "   finalize(): void\n" +
-                                       "   getDeclaringClass(): Class<E>\n" +
-                                       "   hashCode(): int\n" +
-                                       "   name(): String\n" +
-                                       "   ordinal(): int\n" +
-                                       "   toString(): String\n" +
-                                       "   valueOf(Class<T>, String): T\n" +
-                                       "  -F\n" +
-                                       "   valueOf(String): F\n" +
-                                       "   values(): F[]\n" +
-                                       "  -Object\n" +
-                                       "   getClass(): Class<?>\n" +
-                                       "   notify(): void\n" +
-                                       "   notifyAll(): void\n" +
-                                       "   wait(): void\n" +
-                                       "   wait(long): void\n" +
-                                       "   wait(long, int): void\n" +
-                                       "  A: F\n" +
-                                       "  B: F\n" +
-                                       "  C: F");
+                                       """
+                                         -a.java
+                                          -F
+                                           -Comparable
+                                            compareTo(T): int
+                                           -Enum
+                                            clone(): Object
+                                            compareTo(E): int
+                                            equals(Object): boolean
+                                            finalize(): void
+                                            getDeclaringClass(): Class<E>
+                                            hashCode(): int
+                                            name(): String
+                                            ordinal(): int
+                                            toString(): String
+                                            valueOf(Class<T>, String): T
+                                           -F
+                                            valueOf(String): F
+                                            values(): F[]
+                                           -Object
+                                            getClass(): Class<?>
+                                            notify(): void
+                                            notifyAll(): void
+                                            wait(): void
+                                            wait(long): void
+                                            wait(long, int): void
+                                           A: F
+                                           B: F
+                                           C: F""");
     });
   }
 

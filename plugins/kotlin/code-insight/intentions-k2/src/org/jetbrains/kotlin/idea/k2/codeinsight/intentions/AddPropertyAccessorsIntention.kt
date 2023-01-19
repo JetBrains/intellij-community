@@ -3,10 +3,15 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import org.jetbrains.kotlin.analysis.api.annotations.containsAnnotation
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddAccessorApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils.addAccessors
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.ClassId
@@ -15,39 +20,44 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 
-internal abstract class AbstractAddAccessorIntention(private val addGetter: Boolean, private val addSetter: Boolean) :
-    AbstractKotlinApplicatorBasedIntention<KtProperty, KotlinApplicatorInput.Empty>(KtProperty::class) {
-    override fun getApplicator() =
-        AddAccessorApplicator.applicator(addGetter, addSetter).with {
-            isApplicableByPsi { ktProperty ->
-                if (ktProperty.isLocal || ktProperty.hasDelegate() ||
-                    ktProperty.containingClass()?.isInterface() == true ||
-                    ktProperty.containingClassOrObject?.hasExpectModifier() == true ||
-                    ktProperty.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
-                    ktProperty.hasModifier(KtTokens.LATEINIT_KEYWORD) ||
-                    ktProperty.hasModifier(KtTokens.CONST_KEYWORD)
-                ) {
-                    return@isApplicableByPsi false
-                }
-
-                if (ktProperty.typeReference == null && !ktProperty.hasInitializer()) return@isApplicableByPsi false
-                if (addSetter && (!ktProperty.isVar || ktProperty.setter != null)) return@isApplicableByPsi false
-                if (addGetter && ktProperty.getter != null) return@isApplicableByPsi false
-
-                true
-            }
-        }
+internal abstract class AbstractAddAccessorIntention(
+    private val addGetter: Boolean,
+    private val addSetter: Boolean,
+) : AbstractKotlinApplicableIntention<KtProperty>(KtProperty::class) {
+    override fun getFamilyName(): String = AddAccessorUtils.familyAndActionName(addGetter, addSetter)
+    override fun getActionName(element: KtProperty): String = familyName
 
     override fun getApplicabilityRange() = applicabilityTarget { ktProperty: KtProperty ->
         if (ktProperty.hasInitializer()) ktProperty.nameIdentifier else ktProperty
     }
 
-    override fun getInputProvider(): KotlinApplicatorInputProvider<KtProperty, KotlinApplicatorInput.Empty> = inputProvider { ktProperty ->
-        val symbol = ktProperty.getVariableSymbol() as? KtPropertySymbol ?: return@inputProvider null
-        if (symbol.containsAnnotation(JVM_FIELD_CLASS_ID)) return@inputProvider null
+    override fun isApplicableByPsi(element: KtProperty): Boolean {
+        if (element.isLocal ||
+            element.hasDelegate() ||
+            element.containingClass()?.isInterface() == true ||
+            element.containingClassOrObject?.hasExpectModifier() == true ||
+            element.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
+            element.hasModifier(KtTokens.LATEINIT_KEYWORD) ||
+            element.hasModifier(KtTokens.CONST_KEYWORD)
+        ) {
+            return false
+        }
 
-        KotlinApplicatorInput.Empty
+        if (element.typeReference == null && !element.hasInitializer()) return false
+        if (addSetter && (!element.isVar || element.setter != null)) return false
+        if (addGetter && element.getter != null) return false
+
+        return true
     }
+
+    context(KtAnalysisSession)
+    override fun isApplicableByAnalyze(element: KtProperty): Boolean {
+        if (element.annotationEntries.isEmpty()) return true
+        val symbol = element.getVariableSymbol() as? KtPropertySymbol ?: return false
+        return !symbol.hasAnnotation(JVM_FIELD_CLASS_ID)
+    }
+
+    override fun apply(element: KtProperty, project: Project, editor: Editor?) = addAccessors(element, addGetter, addSetter, editor)
 }
 
 private val JVM_FIELD_CLASS_ID = ClassId.topLevel(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)

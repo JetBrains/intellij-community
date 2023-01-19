@@ -3,7 +3,6 @@ package com.intellij.uiDesigner.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -30,10 +29,6 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class UIFormEditor extends UserDataHolderBase implements FileEditor, PossiblyDumbAware {
   private final VirtualFile myFile;
   private final GuiEditor myEditor;
@@ -150,11 +145,6 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     if (component != null) {
       FormEditingUtil.selectSingleComponent(getEditor(), component);
     }
-  }
-
-  @Override
-  public StructureViewBuilder getStructureViewBuilder() {
-    return null;
   }
 
   @Override

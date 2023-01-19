@@ -20,9 +20,6 @@ import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XslTextContextType extends TemplateContextType {
   public XslTextContextType() {
     super(XmlBundle.message("dialog.edit.template.checkbox.xsl.text"));

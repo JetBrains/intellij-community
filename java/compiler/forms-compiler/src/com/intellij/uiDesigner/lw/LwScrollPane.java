@@ -5,10 +5,6 @@ import org.jdom.Element;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class LwScrollPane extends LwContainer {
   LwScrollPane(String className) {
     super(className);

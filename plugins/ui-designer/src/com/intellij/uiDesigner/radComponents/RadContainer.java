@@ -24,10 +24,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class RadContainer extends RadComponent implements IContainer {
   private static final Logger LOG = Logger.getInstance(RadContainer.class);
 

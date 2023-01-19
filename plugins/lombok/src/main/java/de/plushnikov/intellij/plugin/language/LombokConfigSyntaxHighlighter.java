@@ -33,9 +33,8 @@ public class LombokConfigSyntaxHighlighter extends SyntaxHighlighterBase {
     return new LombokConfigLexerAdapter();
   }
 
-  @NotNull
   @Override
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     if (tokenType.equals(LombokConfigTypes.SEPARATOR) || tokenType.equals(LombokConfigTypes.SIGN)) {
       return SEPARATOR_KEYS;
     } else if (tokenType.equals(LombokConfigTypes.CLEAR)) {

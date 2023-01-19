@@ -189,9 +189,10 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testIncludedRootAttributes() {
-    myFixture.addFileToProject("foo.fxml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                   "<?import javafx.scene.layout.*?>\n" +
-                                   "<VBox xmlns:fx=\"http://javafx.com/fxml\"/>");
+    myFixture.addFileToProject("foo.fxml", """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <?import javafx.scene.layout.*?>
+      <VBox xmlns:fx="http://javafx.com/fxml"/>""");
     doTest("layoutY");
   }
 
@@ -315,8 +316,10 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testResourceProperty() {
-    myFixture.addFileToProject("messages.properties", "double.key=123.456\n" +
-                                                      "string.key=Some text\n");
+    myFixture.addFileToProject("messages.properties", """
+      double.key=123.456
+      string.key=Some text
+      """);
     configureAndComplete();
     assertSameElements(myFixture.getLookupElementStrings(), "double.key", "string.key");
   }

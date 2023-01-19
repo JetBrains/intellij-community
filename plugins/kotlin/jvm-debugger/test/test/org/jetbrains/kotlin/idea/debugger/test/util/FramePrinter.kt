@@ -23,6 +23,7 @@ import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
 import com.sun.jdi.ArrayType
 import org.jetbrains.kotlin.idea.debugger.core.GetterDescriptor
 import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.DelegateDescriptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
 import org.jetbrains.kotlin.idea.debugger.test.KOTLIN_LIBRARY_NAME
 import org.jetbrains.kotlin.psi.KtFile
@@ -82,7 +83,7 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
                 node.waitFor(XDebuggerTestUtil.TIMEOUT_MS.toLong())
 
                 val descriptor = if (container is NodeDescriptorProvider) container.descriptor else null
-                val kind = getLabel(descriptor)
+                val kind = getLabel(if (descriptor is DelegateDescriptor) descriptor.delegate else descriptor)
                 val type = (descriptor as? ValueDescriptorImpl)?.declaredType ?: node.myType?.takeIf { it.isNotEmpty() }
                 val value = (computeValue(descriptor) ?: node.myValue).takeIf { it.isNotEmpty() }
                 val sourcePosition = computeSourcePosition(descriptor)
@@ -191,7 +192,7 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
 fun SourcePosition.render(): String {
     val virtualFile = file.originalFile.virtualFile ?: file.viewProvider.virtualFile
 
-    val libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, file.project)
+    val libraryEntry = runReadAction {  LibraryUtil.findLibraryEntry(virtualFile, file.project) }
     if (libraryEntry != null && (libraryEntry is JdkOrderEntry || libraryEntry.presentableName == KOTLIN_LIBRARY_NAME)) {
         val suffix = if (isInCompiledFile()) "COMPILED" else "EXT"
         return FileUtil.getNameWithoutExtension(virtualFile.name) + ".!$suffix!"

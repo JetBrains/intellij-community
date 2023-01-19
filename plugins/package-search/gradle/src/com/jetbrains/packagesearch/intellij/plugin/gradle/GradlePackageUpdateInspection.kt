@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageUpdateInspection
+import com.jetbrains.packagesearch.intellij.plugin.gradle.GradlePackageVersionRangeInspection.Companion.hasSupportFor
 
 internal class GradlePackageUpdateInspection : PackageUpdateInspection() {
 
@@ -28,5 +29,5 @@ internal class GradlePackageUpdateInspection : PackageUpdateInspection() {
         dependencyDeclarationIndexes.coordinatesStartIndex
 
     override fun shouldCheckFile(file: PsiFile): Boolean =
-        GradleProjectModuleOperationProvider.hasSupportFor(file)
+        hasSupportFor(file)
 }

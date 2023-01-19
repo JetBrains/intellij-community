@@ -67,7 +67,7 @@ class ReplaceWithIgnoreCaseEqualsInspection : AbstractKotlinInspection() {
             val binary = descriptor.psiElement as? KtBinaryExpression ?: return
             val (leftCall, _) = binary.left?.callInfo() ?: return
             val (rightCall, _) = binary.right?.callInfo() ?: return
-            val psiFactory = KtPsiFactory(binary)
+            val psiFactory = KtPsiFactory(project)
             val leftReceiver = leftCall.getQualifiedExpressionForSelector()?.receiverExpression
             val rightReceiver = rightCall.getQualifiedExpressionForSelector()?.receiverExpression ?: psiFactory.createThisExpression()
             val newExpression = if (leftReceiver != null) {

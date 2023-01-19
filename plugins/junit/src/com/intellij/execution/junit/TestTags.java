@@ -9,6 +9,7 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -99,7 +100,7 @@ class TestTags extends TestObject {
     createTempFiles(javaParameters);
     if (module != null && configuration.getTestSearchScope() == TestSearchScope.SINGLE_MODULE) {
       try {
-        JUnitStarter.printClassesList(composeDirectoryFilter(module), "", configuration.getPersistentData().getTags().replaceAll(" ", ""), "", myTempFile);
+        ReadAction.run(() -> JUnitStarter.printClassesList(composeDirectoryFilter(module), "", configuration.getPersistentData().getTags().replaceAll(" ", ""), "", myTempFile));
       }
       catch (IOException e) {
         LOG.error(e);
@@ -107,7 +108,7 @@ class TestTags extends TestObject {
     }
     else {
       //tags written automatically inside
-      addClassesListToJavaParameters(Collections.emptyList(), s -> "", "", false, javaParameters);
+      ReadAction.run(() -> addClassesListToJavaParameters(Collections.emptyList(), s -> "", "", false, javaParameters));
     }
     return javaParameters;
   }

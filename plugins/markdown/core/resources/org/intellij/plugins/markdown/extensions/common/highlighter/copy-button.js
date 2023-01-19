@@ -5,10 +5,9 @@
     if (target != null) {
       const encodedContent = target.getAttribute("data-fence-content");
       if (encodedContent != null) {
-        const content = atob(encodedContent);
         console.log("Copied text:");
-        console.log(content);
-        window.__IntelliJTools.messagePipe.post("copy-button/copy", content);
+        console.log(encodedContent);
+        window.__IntelliJTools.messagePipe.post("copy-button/copy", encodedContent);
       }
     }
   });

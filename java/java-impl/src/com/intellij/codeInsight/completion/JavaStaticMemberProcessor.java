@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
-* @author peter
-*/
 public class JavaStaticMemberProcessor extends StaticMemberProcessor {
   private final PsiElement myOriginalPosition;
 
@@ -63,7 +60,7 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
 
         super.handleInsert(context);
       }
-    }.qualifyIfNeeded(ObjectUtils.tryCast(getPosition().getParent(), PsiJavaCodeReferenceElement.class)));
+    }.qualifyIfNeeded(ObjectUtils.tryCast(getPosition().getParent(), PsiJavaCodeReferenceElement.class), containingClass));
   }
 
   private PsiReference createReferenceToMemberName(@NotNull PsiMember member) {

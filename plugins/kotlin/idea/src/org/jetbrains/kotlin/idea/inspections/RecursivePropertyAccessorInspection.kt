@@ -6,8 +6,10 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.codegen.kotlinType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -21,17 +23,21 @@ import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
+import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.types.typeUtil.nullability
 
 class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return simpleNameExpressionVisitor { expression ->
             if (isRecursivePropertyAccess(expression)) {
+                val isExtensionProperty = expression.getStrictParentOfType<KtProperty>()?.receiverTypeReference != null
                 holder.registerProblem(
                     expression,
                     KotlinBundle.message("recursive.property.accessor"),
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    ReplaceWithFieldFix()
+                    if (isExtensionProperty) null else ReplaceWithFieldFix()
                 )
             } else if (isRecursiveSyntheticPropertyAccess(expression)) {
                 holder.registerProblem(
@@ -51,7 +57,7 @@ class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val expression = descriptor.psiElement as KtExpression
-            val factory = KtPsiFactory(expression)
+            val factory = KtPsiFactory(project)
             expression.replace(factory.createExpression("field"))
         }
     }
@@ -89,7 +95,11 @@ class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
             val target = bindingContext[REFERENCE_TARGET, element]
             if (target != bindingContext[DECLARATION_TO_DESCRIPTOR, propertyAccessor.property]) return false
             (element.parent as? KtQualifiedExpression)?.let {
-                if (it.receiverExpression.text != KtTokens.THIS_KEYWORD.value && !it.hasObjectReceiver(bindingContext)) return false
+                val targetReceiverType = (target as? PropertyDescriptorImpl)?.extensionReceiverParameter?.value?.type
+                val receiverKotlinType = it.receiverExpression.kotlinType(bindingContext)?.makeNotNullable()
+                if (receiverKotlinType != null && targetReceiverType != null && !receiverKotlinType.isSubtypeOf(targetReceiverType)) {
+                    return false
+                }
             }
             return isSameAccessor(element, propertyAccessor.isGetter)
         }

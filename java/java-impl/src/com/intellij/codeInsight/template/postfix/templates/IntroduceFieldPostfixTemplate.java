@@ -18,9 +18,8 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
 
   @Override
   protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
-    JavaIntroduceFieldHandlerBase handler;
     var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
-    handler = (JavaIntroduceFieldHandlerBase)supportProvider.getIntroduceFieldHandler();
+    JavaIntroduceFieldHandlerBase handler = (JavaIntroduceFieldHandlerBase)supportProvider.getIntroduceFieldHandler();
     assert handler != null;
     handler.invoke(expression.getProject(), expression, editor);
   }

@@ -53,6 +53,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection impl
       PsiStatement body = statement.getBody();
       if (body == null) return;
       PsiParameter parameter = statement.getIterationParameter();
+      if (parameter == null) return;
       Set<PsiVariable> nonFinalVariables = new HashSet<>();
       nonFinalVariables.add(parameter);
       Set<PsiVariable> declaredVariables = new HashSet<>();
@@ -252,7 +253,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection impl
   private static class IfStatementMissingBreakInLoopFix extends InspectionGadgetsFix {
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiIfStatement ifStatement = tryCast(descriptor.getPsiElement().getParent(), PsiIfStatement.class);
       if (ifStatement == null || ifStatement.getElseBranch() != null) return;
       PsiStatement thenBranch = ifStatement.getThenBranch();

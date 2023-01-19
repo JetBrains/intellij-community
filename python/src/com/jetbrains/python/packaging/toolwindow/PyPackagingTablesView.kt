@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.toolwindow
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.repository.PyPackageRepository
@@ -10,11 +11,13 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTable
 
-class PyPackagingTablesView(private val service: PyPackagingToolWindowService, private val container: JPanel) {
+class PyPackagingTablesView(private val project: Project,
+                            private val container: JPanel,
+                            private val controller: PyPackagingToolWindowPanel) {
   private val repositories: MutableList<PyPackagingTableGroup<DisplayablePackage>> = mutableListOf()
   private val installedPackages = PyPackagingTableGroup(
     object : PyPackageRepository(message("python.toolwindow.packages.installed.label"), "", "") {},
-             PyPackagesTable(PyPackagesTableModel(), service, this))
+             PyPackagesTable(project, PyPackagesTableModel(), this, controller))
   private val invalidRepositories: MutableMap<String, JPanel> = mutableMapOf()
   init {
     installedPackages.addTo(container)
@@ -31,6 +34,7 @@ class PyPackagingTablesView(private val service: PyPackagingToolWindowService, p
       table.expand()
     }
 
+    // todo[akniazev]: selecting a package in 'installed' list might make more sense
     tableToData
       .firstOrNull { (_, data) -> data.exactMatch != -1 }
       ?.let { selectPackage(it.second) }
@@ -55,9 +59,14 @@ class PyPackagingTablesView(private val service: PyPackagingToolWindowService, p
       val existingRepo = findTableForRepo(data.repository)
       val withExpander = if (data.moreItems > 0) data.packages + listOf(ExpandResultNode(data.moreItems, data.repository)) else data.packages
 
-      if (existingRepo != null) existingRepo.items = withExpander
+      if (existingRepo != null) {
+        // recreate order of the repositories -- it might have changed in the package manager (e.g. Sdk switch)
+        existingRepo.removeFrom(container)
+        existingRepo.items = withExpander
+        existingRepo.addTo(container)
+      }
       else {
-        val newTable = PyPackagesTable(PyPackagesTableModel(), service, this)
+        val newTable = PyPackagesTable(project, PyPackagesTableModel(), this, controller)
         newTable.items = withExpander
 
         val newTableGroup = PyPackagingTableGroup(data.repository, newTable)
@@ -112,48 +121,7 @@ class PyPackagingTablesView(private val service: PyPackagingToolWindowService, p
       .forEach { it.table.clearSelection() }
   }
 
-  fun packagesAdded(newPackages: List<InstalledPackage>) {
-    addInstalled(newPackages)
-    repositories.forEach {
-          val selectedRow = it.table.selectedRow
-          it.table.clearSelection()
-          newPackages.forEach { pkg ->
-            val index = it.table.items.indexOfFirst { item -> item.name == pkg.name }
-            if (index != -1) {
-              it.replace(index, pkg)
-            }
-          }
-
-          if (selectedRow != -1) {
-            it.table.setRowSelectionInterval(selectedRow, selectedRow)
-          }
-      }
-  }
-
   private fun findTableForRepo(repository: PyPackageRepository) = repositories.find { it.name == repository.name }
-
-  fun addInstalled(newPackages: List<InstalledPackage>) {
-    installedPackages.table.addRows(newPackages)
-    installedPackages.updateHeaderText(installedPackages.table.items.size)
-  }
-
-  fun packageDeleted(deletedPackage: DisplayablePackage) {
-    val index = installedPackages.items.indexOfFirst { it.name == deletedPackage.name }
-    if (index != -1) {
-      installedPackages.table.removeRow(index)
-      installedPackages.itemsCount?.let {
-        installedPackages.updateHeaderText(it - 1)
-      }
-    }
-
-    repositories.forEach {  repo ->
-      val repoIndex = repo.items.indexOfFirst { it.name == deletedPackage.name }
-      if (repoIndex != -1) {
-        repo.replace(repoIndex, InstallablePackage(deletedPackage.name, deletedPackage.repository))
-      }
-    }
-
-  }
 
   fun selectNextFrom(currentTable: JTable) {
     val targetGroup = when (currentTable) {

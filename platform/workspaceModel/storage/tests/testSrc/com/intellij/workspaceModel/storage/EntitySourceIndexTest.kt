@@ -2,14 +2,10 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.test.addSourceEntity
-import com.intellij.workspaceModel.storage.entities.test.api.ChildSourceEntity
-import com.intellij.workspaceModel.storage.entities.test.api.SampleEntitySource
-import com.intellij.workspaceModel.storage.entities.test.api.SourceEntity
-import com.intellij.workspaceModel.storage.entities.test.api.SourceEntityImpl
+import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.createEntityId
-import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -66,7 +62,7 @@ class EntitySourceIndexTest {
     val diff = createBuilderFrom(builder.toSnapshot())
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
 
-    diff.removeEntity(firstEntity)
+    diff.removeEntity(firstEntity.from(diff))
     assertEquals(firstEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
     assertNull(diff.indexes.entitySourceIndex.getIdsByEntry(oldSource))
 
@@ -86,7 +82,7 @@ class EntitySourceIndexTest {
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
     assertNull(diff.indexes.entitySourceIndex.getIdsByEntry(newSource))
 
-    diff.modifyEntity(firstEntity) {
+    diff.modifyEntity(firstEntity.from(diff)) {
       this.entitySource = newSource
     }
     assertEquals(firstEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())

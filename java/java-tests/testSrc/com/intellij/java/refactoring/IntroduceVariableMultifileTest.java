@@ -26,9 +26,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *  @author dsl
- */
 @HeavyPlatformTestCase.WrapInCommand
 public class IntroduceVariableMultifileTest extends LightMultiFileTestCase {
   @Override

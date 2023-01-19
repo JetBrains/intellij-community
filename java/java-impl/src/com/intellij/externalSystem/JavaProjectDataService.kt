@@ -4,6 +4,7 @@
 package com.intellij.externalSystem
 
 import com.intellij.compiler.CompilerConfiguration
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.project.ProjectData
@@ -15,9 +16,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings
+import com.intellij.pom.java.LanguageLevel
 
 
 class JavaProjectDataService : AbstractProjectDataService<JavaProjectData, Project?>() {
+
   override fun getTargetDataKey(): Key<JavaProjectData> = JavaProjectData.KEY
 
   override fun importData(
@@ -56,15 +60,31 @@ class JavaProjectDataService : AbstractProjectDataService<JavaProjectData, Proje
     val projectSdk = projectRootManager.projectSdk
     val projectSdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(projectSdk)
     val projectSdkLanguageLevel = projectSdkVersion?.maxLanguageLevel
-    val languageLevel = javaProjectData.languageLevel
+    val languageLevel = adjustLevelAndNotify(project, javaProjectData.languageLevel)
+
     val languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(project)
     languageLevelProjectExtension.languageLevel = languageLevel
     languageLevelProjectExtension.default = languageLevel == projectSdkLanguageLevel
   }
 
+
   private fun importTargetBytecodeVersion(project: Project, javaProjectData: JavaProjectData) {
     val compilerConfiguration = CompilerConfiguration.getInstance(project)
     val targetBytecodeVersion = javaProjectData.targetBytecodeVersion
     compilerConfiguration.projectBytecodeTarget = targetBytecodeVersion
+  }
+
+  companion object {
+
+    internal fun adjustLevelAndNotify(project: Project, level: LanguageLevel): LanguageLevel {
+      if (!AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(level)) {
+        val highestAcceptedLevel = AcceptedLanguageLevelsSettings.getHighestAcceptedLevel()
+        if (highestAcceptedLevel.isLessThan(level)) {
+          AcceptedLanguageLevelsSettings.showNotificationToAccept(project, level)
+        }
+        return if (highestAcceptedLevel.isAtLeast(level)) LanguageLevel.HIGHEST else highestAcceptedLevel
+      }
+      return level
+    }
   }
 }

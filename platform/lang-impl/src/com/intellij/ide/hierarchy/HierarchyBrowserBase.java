@@ -18,6 +18,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -101,21 +102,10 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   protected abstract PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
 
   @Nullable
-  protected DefaultMutableTreeNode getSelectedNode() {
-    JTree tree = getCurrentTree();
-    if (tree == null) return null;
-    TreePath path = tree.getSelectionPath();
-    if (path == null) return null;
-    Object lastPathComponent = path.getLastPathComponent();
-    if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return null;
-    return (DefaultMutableTreeNode)lastPathComponent;
-  }
-
-  @Nullable
-  protected final PsiElement getSelectedElement() {
-    DefaultMutableTreeNode node = getSelectedNode();
-    HierarchyNodeDescriptor descriptor = node != null ? getDescriptor(node) : null;
-    return descriptor != null ? getElementFromDescriptor(descriptor) : null;
+  protected final PsiElement getSelectedElement(@NotNull DataContext dataContext) {
+    Object element = ArrayUtil.getFirstElement(dataContext.getData(PlatformCoreDataKeys.SELECTED_ITEMS));
+    if (!(element instanceof HierarchyNodeDescriptor)) return null;
+    return getElementFromDescriptor((HierarchyNodeDescriptor)element);
   }
 
   @Nullable

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -60,7 +61,7 @@ public class AddWithTagFix implements LocalQuickFix {
       String className = "";
       if (epName != null) {
         int pos = epName.lastIndexOf('.');
-        epName = StringUtil.capitalize(pos >= 0 ? epName.substring(pos+1) : epName);
+        epName = StringUtil.capitalize(pos >= 0 ? epName.substring(pos + 1) : epName);
         PsiClass[] classesByName = PsiShortNamesCache.getInstance(project).getClassesByName(epName,
                                                                                             ProjectScope.getAllScope(project));
         if (classesByName.length == 1) {
@@ -72,7 +73,7 @@ public class AddWithTagFix implements LocalQuickFix {
         navTarget = with.getImplements().getXmlAttributeValue();
       }
     }
-    if (navTarget != null) {
+    if (navTarget != null && !IntentionPreviewUtils.isPreviewElement(descriptor.getPsiElement())) {
       PsiNavigateUtil.navigate(navTarget);
     }
   }

@@ -50,7 +50,7 @@ public final class FinalUtils {
       if (!(e instanceof PsiReferenceExpression)) return true;
       PsiReferenceExpression ref = (PsiReferenceExpression)e;
       if (!ref.isReferenceTo(variable)) return true;
-      HighlightInfo highlightInfo = HighlightControlFlowUtil
+      HighlightInfo.Builder highlightInfo = HighlightControlFlowUtil
         .checkVariableInitializedBeforeUsage(ref, variable, uninitializedVarProblems, variable.getContainingFile(), true);
       if (highlightInfo != null) return false;
       if (!PsiUtil.isAccessedForWriting(ref)) return true;
@@ -58,8 +58,8 @@ public final class FinalUtils {
       if (ControlFlowUtil.isVariableAssignedInLoop(ref, variable)) return false;
       if (variable instanceof PsiField) {
         if (PsiUtil.findEnclosingConstructorOrInitializer(ref) == null) return false;
-        PsiElement innerClass = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, ref);
-        if (innerClass != null && innerClass != ((PsiField)variable).getContainingClass()) return false;
+        PsiElement innerScope = HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, ref);
+        if (innerScope != null && innerScope != ((PsiField)variable).getContainingClass()) return false;
       }
       return HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, ref, finalVarProblems) == null;
     };

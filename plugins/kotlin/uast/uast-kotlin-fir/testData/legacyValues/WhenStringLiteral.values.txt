@@ -27,7 +27,3 @@ UFile (package = ) [public final class WhenStringLiteralKt {...]
                                 ULiteralExpression (value = 3) [3] = 3
         UMethod (name = getA) [public static final fun getA() : java.lang.String = UastEmptyExpression]
         UMethod (name = getB) [public static final fun getB() : int = UastEmptyExpression]
-        UMethod (name = <no name provided>) [public static final fun <no name provided>() : void {...}]
-            UBlockExpression [{...}] = "def1"
-                ULiteralExpression (value = "abc1") ["abc1"] = "abc1"
-                ULiteralExpression (value = "def1") ["def1"] = "def1"

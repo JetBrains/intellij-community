@@ -21,9 +21,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-/**
- * @author peter
- */
 @CompileStatic
 class NormalCompletionDfaTest extends NormalCompletionTestCase {
   @NotNull

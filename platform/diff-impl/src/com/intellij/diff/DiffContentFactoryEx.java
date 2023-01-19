@@ -56,6 +56,8 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
   public interface DocumentContentBuilder {
     @NotNull DocumentContentBuilder withFileName(@Nullable String fileName);
 
+    @NotNull DocumentContentBuilder withDefaultCharset(@Nullable Charset charset);
+
     @NotNull DocumentContentBuilder contextByFileType(@Nullable FileType fileType);
 
     @NotNull DocumentContentBuilder contextByFilePath(@Nullable FilePath filePath);
@@ -66,6 +68,15 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
 
     @NotNull DocumentContent buildFromText(@NotNull String text, boolean respectLineSeparators);
 
-    @NotNull DocumentContent buildFromBytes(byte @NotNull [] content, @NotNull Charset charset);
+    @NotNull DocumentContent buildFromBytes(byte @NotNull [] content);
+
+    /**
+     * @deprecated Prefer using {@link #buildFromBytes(byte[])}.
+     */
+    @Deprecated
+    default @NotNull DocumentContent buildFromBytes(byte @NotNull [] content, @NotNull Charset charset) {
+      withDefaultCharset(charset);
+      return buildFromBytes(content);
+    }
   }
 }

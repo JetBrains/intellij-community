@@ -9,13 +9,15 @@ import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
-import com.intellij.ui.NonFocusableCheckBox
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.vcs.commit.CommitSessionCollector
+import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitOption
 import com.intellij.vcs.commit.commitProperty
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import javax.swing.JCheckBox
 import javax.swing.JComponent
 
 private val IS_SKIP_HOOKS_KEY = Key.create<Boolean>("Git.Commit.IsSkipHooks")
@@ -44,12 +46,19 @@ private class GitSkipHooksConfigurationPanel(
     CheckinChangeListSpecificComponent {
 
   private val repositoryManager get() = GitRepositoryManager.getInstance(panel.project)
-  private val runHooks = NonFocusableCheckBox(GitBundle.message("checkbox.run.git.hooks")).apply {
+  private val runHooks = JCheckBox(GitBundle.message("checkbox.run.git.hooks")).apply {
     isSelected = true
     toolTipText = GitBundle.message("tooltip.run.git.hooks")
+    addActionListener {
+      CommitSessionCollector.getInstance(panel.project).logCommitOptionToggled(CommitOption.RUN_HOOKS, isSelected)
+    }
   }
 
-  override fun getComponent(): JComponent = JBUI.Panels.simplePanel(runHooks)
+  override fun getComponent(): JComponent = panel {
+    row {
+      cell(runHooks)
+    }
+  }
 
   private fun refreshAvailability() {
     runHooks.isVisible = repositoryManager.repositories.any { it.hasCommitHooks() }

@@ -2,33 +2,32 @@
 package com.intellij.openapi.ui
 
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.util.CachedImageIcon
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.IconLoader.CachedImageIcon
 import com.intellij.openapi.util.ImageDataByUrlLoader
 import com.intellij.openapi.util.Pair
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.icons.IconTransform
 import com.intellij.ui.icons.ImageDataLoader
-import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.icons.LoadIconParameters
 import com.intellij.util.ImageLoader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Image
-import java.awt.image.ImageFilter
 import java.net.URL
 import javax.swing.Icon
 
 @Suppress("HardCodedStringLiteral")
 @ApiStatus.Internal
-class ImageDataByPathLoader private constructor(val path: String,
-                                                val classLoader: ClassLoader,
+class ImageDataByPathLoader private constructor(private val path: String,
+                                                private val classLoader: ClassLoader,
                                                 private val original: ImageDataByPathLoader?) : ImageDataLoader {
   companion object {
     // cache is not used - image data resolved using cache in any case
     @JvmStatic
     fun findIcon(@NonNls originalPath: String,
                  originalClassLoader: ClassLoader,
-                 cache: MutableMap<Pair<String, ClassLoader>, CachedImageIcon>?): Icon? {
+                 cache: MutableMap<Pair<String, ClassLoader?>, CachedImageIcon>?): Icon? {
       val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
 
       @Suppress("NAME_SHADOWING")
@@ -38,10 +37,18 @@ class ImageDataByPathLoader private constructor(val path: String,
       val classLoader = patched?.second ?: originalClassLoader
       val icon: Icon? = when {
         IconLoader.isReflectivePath(path) -> IconLoader.getReflectiveIcon(path, classLoader)
-        cache == null -> createIcon(originalPath, originalClassLoader, patched, path, classLoader)
+        cache == null -> createIcon(originalPath = originalPath,
+                                    originalClassLoader = originalClassLoader,
+                                    patched = patched,
+                                    path = path,
+                                    classLoader = classLoader)
         else -> {
            cache.computeIfAbsent(Pair(originalPath, originalClassLoader)) {
-            createIcon(it.first, it.second, patched, path, classLoader)
+            createIcon(originalPath = it.first,
+                       originalClassLoader = it.second!!,
+                       patched = patched,
+                       path = path,
+                       classLoader = classLoader)
           }
         }
       }
@@ -53,12 +60,12 @@ class ImageDataByPathLoader private constructor(val path: String,
 
     private fun createIcon(originalPath: @NonNls String,
                            originalClassLoader: ClassLoader,
-                           patched: Pair<String, ClassLoader?>?,
+                           patched: kotlin.Pair<String, ClassLoader?>?,
                            path: String,
                            classLoader: ClassLoader): CachedImageIcon {
       val loader = ImageDataByPathLoader(originalPath, originalClassLoader, null)
       val resolver = if (patched == null) loader else ImageDataByPathLoader(path, classLoader, loader)
-      return CachedImageIcon(null, resolver, null, null)
+      return CachedImageIcon(originalPath = null, resolver = resolver)
     }
 
     private fun normalizePath(patchedPath: String): String {
@@ -79,19 +86,20 @@ class ImageDataByPathLoader private constructor(val path: String,
     }
   }
 
-  override fun loadImage(filters: List<ImageFilter?>,
-                         scaleContext: ScaleContext,
-                         isDark: Boolean): Image? {
+  override fun loadImage(parameters: LoadIconParameters): Image? {
     var flags = ImageLoader.ALLOW_FLOAT_SCALING or ImageLoader.USE_CACHE
-    if (isDark) {
+    if (parameters.isDark) {
       flags = flags or ImageLoader.USE_DARK
     }
-    return ImageLoader.loadImage(path, filters, null, classLoader, flags, scaleContext, !path.endsWith(".svg"))
+    return ImageLoader.loadImage(path = path,
+                                 parameters = parameters,
+                                 classLoader = classLoader,
+                                 flags = flags,
+                                 isUpScaleNeeded = !path.endsWith(".svg"))
   }
 
-  override fun getURL(): URL? {
-    return classLoader.getResource(path)
-  }
+  override val url: URL?
+    get() = classLoader.getResource(path)
 
   override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
     val isOriginal = original == null
@@ -112,9 +120,7 @@ class ImageDataByPathLoader private constructor(val path: String,
 
     if (path != other.path) return false
     if (classLoader != other.classLoader) return false
-    if (original != other.original) return false
-
-    return true
+    return original == other.original
   }
 
   override fun hashCode(): Int {

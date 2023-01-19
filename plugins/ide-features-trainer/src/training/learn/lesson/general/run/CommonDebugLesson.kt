@@ -163,7 +163,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
             invokeLater { debugSession.setBreakpointMuted(false) }  // session is not initialized at this moment
             if (!watchesRemoved) {
-              (debugSession as XDebugSessionImpl).setWatchExpressions(emptyList())
+              (debugSession as XDebugSessionImpl).sessionData.watchExpressions = emptyList()
               watchesRemoved = true
             }
             debugSession.addSessionListener(object : XDebugSessionListener {
@@ -210,6 +210,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     task {
       text(LessonsBundle.message("debug.workflow.evaluate.it", LessonUtil.rawEnter()))
       triggerUI().component l@{ ui: XDebuggerTree ->
+        if (ui.root.childCount == 0) return@l false
         val resultNode = ui.root.getChildAt(0) as? WatchNodeImpl ?: return@l false
         resultNode.expression.expression == needToEvaluate
       }
@@ -481,8 +482,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     ?: checkForBreakpoints()
     ?: checkDebugIsRunning()
   }
-
-  override val suitableTips = listOf("BreakpointSpeedmenu", "QuickEvaluateExpression", "EvaluateExpressionInEditor")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("debug.workflow.help.link"),

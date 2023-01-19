@@ -3,33 +3,38 @@ package com.intellij.settingsSync
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.NioFiles
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
-import com.intellij.util.PathUtil
-import com.intellij.util.io.*
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsStateMerger.mergePluginStates
+import com.intellij.util.io.createFile
+import com.intellij.util.io.readText
+import com.intellij.util.io.write
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.api.errors.EmptyCommitException
-import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.lib.Constants.R_HEADS
-import org.eclipse.jgit.lib.ObjectId
-import org.eclipse.jgit.lib.Ref
-import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.revwalk.filter.RevFilter
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.treewalk.TreeWalk
 import java.nio.charset.StandardCharsets
-import java.nio.file.*
-import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.Path
 import java.time.Instant
 import java.util.regex.Pattern
-import kotlin.io.path.relativeTo
+import kotlin.io.path.div
+import kotlin.io.path.exists
+
 
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
                               private val rootConfigPath: Path,
                               parentDisposable: Disposable,
-                              private val collectFilesToExportFromSettings: () -> Collection<Path>
+                              private val initialSnapshotProvider: (SettingsSnapshot) -> SettingsSnapshot
 ) : SettingsLog, Disposable {
 
   private lateinit var repository: Repository
@@ -38,6 +43,9 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   private val master: Ref get() = repository.findRef(MASTER_REF_NAME)!!
   private val ide: Ref get() = repository.findRef(IDE_REF_NAME)!!
   private val cloud: Ref get() = repository.findRef(CLOUD_REF_NAME)!!
+
+  private val pluginsFile = settingsSyncStorage / METAINFO_FOLDER / PLUGINS_FILE
+  private val json = Json { prettyPrint = true }
 
   init {
     Disposer.register(parentDisposable, this)
@@ -77,45 +85,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
   private fun copyExistingSettings() {
     LOG.info("Copying existing settings from $rootConfigPath to $settingsSyncStorage")
-    git.checkout().setName(IDE_REF_NAME).call()
-
-    val copiedFileSpecs = mutableListOf<String>()
-
-    val filesToExport = collectFilesToExportFromSettings()
-    for (path in filesToExport) {
-      val fileSpec = path.relativeTo(rootConfigPath).toString()
-      if (path.isFile()) {
-        // 'path' is e.g. 'ROOT_CONFIG/options/editor.xml'
-        val target = settingsSyncStorage.resolve(fileSpec)
-        path.copy(target)
-      }
-      else {
-        // 'path' is e.g. 'ROOT_CONFIG/keymaps/'
-        copyDirectory(path, settingsSyncStorage)
-      }
-      copiedFileSpecs.add(fileSpec)
-    }
-
-    if (copiedFileSpecs.isNotEmpty()) {
-      val addCommand = git.add()
-      for (fileSpec in copiedFileSpecs) {
-        val filePattern = PathUtil.toSystemIndependentName(fileSpec)
-        addCommand.addFilepattern(filePattern)
-      }
-      addCommand.call()
-      commit("Copy existing configs", Instant.now())
-    }
-  }
-
-  private fun copyDirectory(dirToCopy: Path, targetDir: Path) {
-    Files.walkFileTree(dirToCopy, object : SimpleFileVisitor<Path>() {
-      override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-        val target = targetDir.resolve(dirToCopy.parent.relativize(file))  // file is mykeymap.xml => target is keymaps/mykeymap.xml
-        NioFiles.createDirectories(target.parent)
-        Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING)
-        return FileVisitResult.CONTINUE
-      }
-    })
+    val snapshot = initialSnapshotProvider(collectCurrentSnapshot())
+    applyState(IDE_REF_NAME, snapshot, "Copy current configs", warnAboutEmptySnapshot = false)
   }
 
   private fun initRepository(repository: Repository?) {
@@ -132,7 +103,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
     val git = Git(repository)
     git.add().addFilepattern(".gitignore").call()
-    git.commit().setMessage("Initial").call()
+    commit("Initial", allowEmpty = false)
   }
 
   override fun applyIdeState(snapshot: SettingsSnapshot, message: String) {
@@ -148,9 +119,11 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     return getMasterPosition()
   }
 
-  private fun applyState(refName: String, snapshot: SettingsSnapshot, message: String) {
+  private fun applyState(refName: String, snapshot: SettingsSnapshot, message: String, warnAboutEmptySnapshot: Boolean = true) {
     if (snapshot.isEmpty()) {
-      LOG.error("Empty snapshot")
+      if (warnAboutEmptySnapshot) {
+        LOG.error("Empty snapshot, requested to apply on branch '$refName' with message '$message'")
+      }
       return
     }
 
@@ -165,23 +138,64 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     val addCommand = git.add()
     for (fileState in snapshot.fileStates) {
       val file = settingsSyncStorage.resolve(fileState.file)
-      when (fileState) {
-        is FileState.Modified -> file.write(fileState.content, 0, fileState.size)
-        is FileState.Deleted -> file.write(DELETED_FILE_MARKER)
-      }
+      writeFileStateContent(fileState, file)
       addCommand.addFilepattern(fileState.file)
     }
+
+    for (additionalFile in snapshot.additionalFiles) {
+      val file = settingsSyncStorage.resolve(METAINFO_FOLDER).resolve(additionalFile.file)
+      writeFileStateContent(additionalFile, file)
+      addCommand.addFilepattern("$METAINFO_FOLDER/${additionalFile.file}")
+    }
+
+    if (snapshot.plugins != null) {
+      val sortedState = SettingsSyncPluginsState(snapshot.plugins.plugins.toSortedMap())
+      val pluginsState = json.encodeToString(sortedState)
+      pluginsFile.write(pluginsState)
+      addCommand.addFilepattern("$METAINFO_FOLDER/$PLUGINS_FILE")
+    }
+
     addCommand.call()
 
-    commit(message, snapshot.metaInfo.dateCreated)
+    val info = snapshot.metaInfo.appInfo
+    val body = if (info != null) {
+      val thisOrThat = if (info.applicationId == SettingsSyncLocalSettings.getInstance().applicationId) "[this]" else "[other]"
+      "\n\n" + """
+        id:     $thisOrThat ${info.applicationId}
+        build:  ${info.buildNumber}
+        user:   ${info.userName}
+        host:   ${info.hostName}
+        config: ${info.configFolder}
+      """.trimIndent()
+    }
+    else {
+      ""
+    }
+    commit("$message$body", snapshot.metaInfo.dateCreated, allowEmpty = false)
   }
 
-  private fun commit(message: String, dateCreated: Instant) {
+  private fun writeFileStateContent(fileState: FileState, fileToWrite: Path) {
+    when (fileState) {
+      is FileState.Modified -> fileToWrite.write(fileState.content)
+      is FileState.Deleted -> fileToWrite.write(DELETED_FILE_MARKER)
+    }
+  }
+
+  private fun commit(message: String, dateCreated: Instant? = null, allowEmpty: Boolean) {
     try {
       // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
-      val commit = git.commit().setMessage(message).setAllowEmpty(false).call()
+      val mockGpgConfig = GpgConfig("", GpgConfig.GpgFormat.OPENPGP, "")
+      val commit = git.commit()
+        .setMessage(message)
+        .setAllowEmpty(allowEmpty)
+        .setNoVerify(true)
+        .setSign(false)
+        .setGpgConfig(mockGpgConfig)
+        .call()
 
-      recordCreationDate(commit, dateCreated)
+      if (dateCreated != null) {
+        recordCreationDate(commit, dateCreated)
+      }
     }
     catch (e: EmptyCommitException) {
       LOG.info("No actual changes in the settings")
@@ -210,13 +224,34 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
   override fun collectCurrentSnapshot(): SettingsSnapshot {
     // todo check repository consistency, e.g. there should be no uncommitted changes
+    git.checkout().setName(MASTER_REF_NAME).setForced(true).call()
 
     val lastModifiedDate = getDate(getBranchTip(master))
-    val files = settingsSyncStorage.toFile().walkTopDown()
-      .onEnter { it.name != ".git" }
+
+    val settingFiles = settingsSyncStorage.toFile().walkTopDown()
+      .onEnter { it.name != ".git" && it.name != METAINFO_FOLDER }
       .filter { it.isFile && it.name != ".gitignore" }
       .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), settingsSyncStorage) }
-    return SettingsSnapshot(MetaInfo(lastModifiedDate, getLocalApplicationInfo()), files)
+
+    val metaInfoFolder = settingsSyncStorage.resolve(METAINFO_FOLDER)
+    val additionalFiles = metaInfoFolder.toFile().walkTopDown()
+      .filter { it.isFile && it.name != PLUGINS_FILE }
+      .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), metaInfoFolder) }
+
+    val pluginsState = readPluginsState()
+    return SettingsSnapshot(MetaInfo(lastModifiedDate, getLocalApplicationInfo()), settingFiles, pluginsState, additionalFiles)
+  }
+
+  private fun readPluginsState(): SettingsSyncPluginsState? {
+    try {
+      if (pluginsFile.exists()) {
+        return json.decodeFromString<SettingsSyncPluginsState>(pluginsFile.readText())
+      }
+    }
+    catch (e: Exception) {
+      LOG.error("Couldn't parse $pluginsFile", e)
+    }
+    return null
   }
 
   override fun getIdePosition(): SettingsLog.Position {
@@ -241,14 +276,25 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     updateBranchPosition(CLOUD_REF_NAME, position)
   }
 
+  override fun setMasterPosition(position: SettingsLog.Position) {
+    updateBranchPosition(MASTER_REF_NAME, position)
+  }
+
   private fun updateBranchPosition(refName: String, targetPosition: SettingsLog.Position): Ref {
     val ref = repository.findRef(refName)!!
     val previousObjectId = ref.objectId
-    val targetObjectId = ObjectId.fromString(targetPosition.id)
-    val refUpdate = repository.updateRef(ref.name)
-    refUpdate.setNewObjectId(targetObjectId)
-    val result = refUpdate.update()
+    val result = repository.updateRef(ref.name).apply {
+      setNewObjectId(ObjectId.fromString(targetPosition.id))
+      isForceUpdate = true
+    }.update()
     LOG.info("Updated position of ${ref.short} from ${previousObjectId.short} to $targetPosition: $result")
+
+    // updateRef() doesn't change the working tree, it only moves the label
+    // Therefore, after we move the refName to a new position, then some local changes can appear,
+    // because the working tree is now compared with another head.
+    // We don't want these local changes => we reset the working copy to the state of the current head.
+    git.reset().setMode(ResetCommand.ResetType.HARD).call()
+
     return repository.findRef(ref.name)!!
   }
 
@@ -262,24 +308,116 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     val mergeResult = git.merge().include(cloud).call()
     LOG.info("Merge of master&ide@${master.objectId.short} with cloud@${cloud.objectId.short}: $mergeResult")
     if (mergeResult.mergeStatus == CONFLICTING) {
-      LOG.info("Merge of master&ide with cloud failed with conflicts. Aborting and merging with simplified last-modified strategy...")
-      abortMerge()
+      val conflictingFiles = mergeResult.conflicts.keys.toMutableList()
+      LOG.info("Merge of master&ide with cloud failed with conflicts in files: ${conflictingFiles}")
 
-      // todo implement more precise last-modified-per-file-strategy: use the version of the file which was
-      // current implementation take the whole YOURS or OTHERS subtree based on the date of the latest commit in ide and cloud branches:
-      // e.g. if the latest commit was made to 'cloud', then 'cloud' (which is OTHERS for this merge) will be used as the source of truth.
-      mergeUsingSimplifiedLastModifiedStrategy()
+      val ideBranchTip = getBranchTip(ide)
+      val cloudBranchTip = getBranchTip(cloud)
+
+      val addCommand = git.add()
+      val pluginJson = conflictingFiles.find { it == "$METAINFO_FOLDER/$PLUGINS_FILE" }
+      if (pluginJson != null) {
+        mergePluginJson(pluginJson, ideBranchTip, cloudBranchTip)
+        addCommand.addFilepattern(pluginJson)
+        conflictingFiles -= pluginJson
+      }
+      mergeFilesOneByOne(conflictingFiles, ideBranchTip, cloudBranchTip)
+      for (file in conflictingFiles) {
+        addCommand.addFilepattern(file)
+      }
+      addCommand.call()
+
+      commit("Merge with conflicts", allowEmpty = true)
     }
     // todo check other statuses and force consistency if needed
     return getPosition(master)
   }
 
-  private fun mergeUsingSimplifiedLastModifiedStrategy() {
-    val ideLastDate = getDate(getBranchTip(ide))
-    val cloudLastDate = getDate(getBranchTip(cloud))
-    val mergeStrategy = if (ideLastDate >= cloudLastDate) MergeStrategy.OURS else MergeStrategy.THEIRS
-    val mergeResult = git.merge().include(cloud).setStrategy(mergeStrategy).call()
-    LOG.info("Merging with the last-modified strategy completed with result: $mergeResult")
+  private fun mergePluginJson(pluginJson: String, ideBranchTip: RevCommit, cloudBranchTip: RevCommit) {
+    val ideContent = getFileContentInBranch(pluginJson, ideBranchTip)
+    val ideState = json.decodeFromString<SettingsSyncPluginsState>(ideContent)
+    val cloudContent = getFileContentInBranch(pluginJson, cloudBranchTip)
+    val cloudState = json.decodeFromString<SettingsSyncPluginsState>(cloudContent)
+    val mergeBaseContent = findMergeBaseContent(pluginJson, ideBranchTip, cloudBranchTip)
+    val baseState = if (mergeBaseContent != null)
+      json.decodeFromString<SettingsSyncPluginsState>(mergeBaseContent)
+      else SettingsSyncPluginsState(emptyMap())
+
+    val mergedState = mergePluginStates(baseState, cloudState, ideState)
+    val mergedContent = json.encodeToString(mergedState)
+    pluginsFile.write(mergedContent)
+  }
+
+  private fun findMergeBaseContent(pluginJson: String, commit1: RevCommit, commit2: RevCommit): String? {
+    val mergeBase = try {
+      findMergeBase(commit1, commit2)
+    }
+    catch (e: Exception) {
+      LOG.warn("Couldn't find the merge base for $pluginJson between $commit1 and $commit2", e)
+      null
+    }
+    if (mergeBase == null) {
+      return null
+    }
+    return getFileContentInBranch(pluginJson, mergeBase)
+  }
+
+  private fun findMergeBase(commit1: RevCommit, commit2: RevCommit): RevCommit? {
+    RevWalk(repository).use { walk ->
+      walk.revFilter = RevFilter.MERGE_BASE
+      walk.markStart(repository.parseCommit(commit1.toObjectId()))
+      walk.markStart(repository.parseCommit(commit2.toObjectId()))
+      return walk.next()
+    }
+  }
+
+  private fun getFileContentInBranch(file: String, branchTip: RevCommit): String {
+    TreeWalk.forPath(repository, file, branchTip.tree).use { treeWalk ->
+      val blobId = treeWalk.getObjectId(0)
+      repository.newObjectReader().use { objectReader ->
+        val objectLoader = objectReader.open(blobId)
+        return String(objectLoader.bytes, StandardCharsets.UTF_8)
+      }
+    }
+  }
+
+  private fun mergeFilesOneByOne(conflictingFiles: Collection<String>, ideTip: RevCommit, cloudTip: RevCommit) {
+    if (conflictingFiles.isEmpty()) {
+      return
+    }
+
+    val ideTipDate = getDate(ideTip)
+    val cloudTipDate = getDate(cloudTip)
+    for (file in conflictingFiles) {
+      val ideTipForFile = getLatestCommitForFile(file, ide)
+      val ideDateForFile = if (ideTipForFile != null) getDate(ideTipForFile) else ideTipDate
+      val cloudTipForFile = getLatestCommitForFile(file, cloud)
+      val cloudDateForFile = if (cloudTipForFile != null) getDate(cloudTipForFile) else cloudTipDate
+
+      val content = if (ideDateForFile >= cloudDateForFile) {
+        LOG.info("File $file was modified later in 'ide' in ${ideTipForFile?.short ?: ideTip.short}")
+        getFileContentInBranch(file, ideTip)
+      } else {
+        LOG.info("File $file was modified later in 'cloud' in ${cloudTipForFile?.short ?: cloudTip.short}")
+        getFileContentInBranch(file, cloudTip)
+      }
+
+      settingsSyncStorage.resolve(file).write(content)
+    }
+  }
+
+  private fun getLatestCommitForFile(filePath: String, branch: Ref): RevCommit? {
+    val commit = git.log()
+      .add(branch.objectId)
+      .setMaxCount(1)
+      .addPath(filePath)
+      .call()
+      .firstOrNull()
+
+    if (commit == null) {
+      LOG.warn("Could not find latest commit for file $filePath in branch $branch")
+    }
+    return commit
   }
 
   private fun getBranchTip(ref: Ref): RevCommit = git.log().add(ref.objectId).setMaxCount(1).call().first()
@@ -335,6 +473,9 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     const val MASTER_REF_NAME = "master"
     const val IDE_REF_NAME = "ide"
     const val CLOUD_REF_NAME = "cloud"
+
+    const val PLUGINS_FILE = "plugins.json"
+    const val METAINFO_FOLDER = ".metainfo"
 
     const val DATE_PREFIX = "date: "
     val DATE_PATTERN = Pattern.compile("$DATE_PREFIX(\\d+)")

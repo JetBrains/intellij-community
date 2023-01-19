@@ -7,8 +7,6 @@ import java.util.EventListener;
 
 /**
  * Defines contract for callback to listen external task notifications.
- *
- * @author Denis Zhdanov
  */
 public interface ExternalSystemTaskNotificationListener extends EventListener {
 

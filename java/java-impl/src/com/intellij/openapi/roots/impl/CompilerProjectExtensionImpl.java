@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -9,8 +9,8 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.WatchedRootsProvider;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -77,21 +77,18 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, path, true);
   }
 
-  @NotNull
-  private static Set<String> getRootsToWatch(@NotNull Project project) {
+  private static Set<String> getRootsToWatch(Project project) {
     Set<String> rootsToWatch = new HashSet<>();
 
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
-      if (extension == null) continue;
-
-      if (!extension.isCompilerOutputPathInherited()) {
+      if (extension != null && !extension.isCompilerOutputPathInherited()) {
         String outputUrl = extension.getCompilerOutputUrl();
-        if (!StringUtil.isEmpty(outputUrl)) {
+        if (outputUrl != null && outputUrl.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
           rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(outputUrl));
         }
         String testOutputUrl = extension.getCompilerOutputUrlForTests();
-        if (!StringUtil.isEmpty(testOutputUrl)) {
+        if (testOutputUrl!= null && testOutputUrl.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
           rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(testOutputUrl));
         }
       }
@@ -101,7 +98,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
     if (extension != null) {
       String compilerOutputUrl = extension.getCompilerOutputUrl();
-      if (compilerOutputUrl != null) {
+      if (compilerOutputUrl != null && compilerOutputUrl.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
         rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(compilerOutputUrl));
       }
     }

@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +22,7 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionIds;
@@ -51,27 +53,27 @@ import java.util.Objects;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
-  @NotNull private final Project myProject;
-  @NotNull private final FilePath myFilePath;
-  @NotNull private final VirtualFile myRoot;
+  private final @NotNull Project myProject;
+  private final @NotNull FilePath myFilePath;
+  private final @NotNull VirtualFile myRoot;
 
-  @NotNull private final FileHistoryModel myFileHistoryModel;
-  @NotNull private final VcsLogUiProperties myProperties;
+  private final @NotNull FileHistoryModel myFileHistoryModel;
+  private final @NotNull VcsLogUiProperties myProperties;
 
-  @NotNull private final VcsLogGraphTable myGraphTable;
-  @NotNull private final FileHistorySpeedSearch mySpeedSearch;
+  private final @NotNull VcsLogGraphTable myGraphTable;
+  private final @NotNull FileHistorySpeedSearch mySpeedSearch;
 
-  @NotNull private final CommitDetailsListPanel myDetailsPanel;
-  @NotNull private final JBSplitter myDetailsSplitter;
+  private final @NotNull CommitDetailsListPanel myDetailsPanel;
+  private final @NotNull JBSplitter myDetailsSplitter;
 
-  @Nullable private FileHistoryEditorDiffPreview myEditorDiffPreview;
+  private @Nullable FileHistoryEditorDiffPreview myEditorDiffPreview;
 
   public FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel, @NotNull VcsLogData logData,
-                          @NotNull FilePath filePath, @NotNull Disposable disposable) {
+                          @NotNull FilePath filePath, @NotNull VirtualFile root, @NotNull Disposable disposable) {
     myProject = logData.getProject();
 
     myFilePath = filePath;
-    myRoot = Objects.requireNonNull(VcsLogUtil.getActualRoot(myProject, myFilePath));
+    myRoot = root;
 
     myFileHistoryModel = fileHistoryModel;
     myProperties = logUi.getProperties();
@@ -97,7 +99,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsPanel = new CommitDetailsListPanel(myProject, this, () -> {
       return new CommitDetailsPanel(commit -> {
         VcsLogContentUtil.runInMainLog(myProject, ui -> {
-          ui.getVcsLog().jumpToCommit(commit.getHash(), commit.getRoot());
+          VcsLogNavigationUtil.jumpToCommit(ui, commit.getHash(), commit.getRoot(), false, true);
         });
         return Unit.INSTANCE;
       });
@@ -106,7 +108,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
                                                     new VcsLogColorManagerImpl(Collections.singleton(myRoot)));
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
-    JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, 0),
+    JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.NONE),
                                                                 logData, logUi.getId(), this);
     myDetailsSplitter.setFirstComponent(tableWithProgress);
     myDetailsSplitter.setSecondComponent(myProperties.get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
@@ -168,10 +170,10 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     }.registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, component);
   }
 
-  @NotNull
-  private JComponent createActionsToolbar() {
+  private @NotNull JComponent createActionsToolbar() {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionIds.FILE_HISTORY_TOOLBAR_ACTION_GROUP));
+    AnAction toolbarActions = CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.FILE_HISTORY_TOOLBAR_ACTION_GROUP);
+    toolbarGroup.add(Objects.requireNonNull(toolbarActions));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.VCS_HISTORY_TOOLBAR_PLACE,
                                                                             toolbarGroup, false);
@@ -179,8 +181,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     return toolbar.getComponent();
   }
 
-  @NotNull
-  public VcsLogGraphTable getGraphTable() {
+  public @NotNull VcsLogGraphTable getGraphTable() {
     return myGraphTable;
   }
 
@@ -217,9 +218,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     return diffPreview;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     return ValueKey.match(dataId)
       .ifEq(VcsDataKeys.CHANGES).or(VcsDataKeys.SELECTED_CHANGES).thenGet(() -> {
         Change change = getSelectedChange();
@@ -251,6 +251,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       .ifEq(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION).then(false)
       .ifEq(VcsLogInternalDataKeys.LOG_DIFF_HANDLER).thenGet(() -> myFileHistoryModel.getDiffHandler())
       .ifEq(EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW).thenGet(() -> myEditorDiffPreview)
+      .ifEq(VcsLogInternalDataKeys.FILE_HISTORY_MODEL).thenGet(() -> myFileHistoryModel.createSnapshot())
       .orNull();
   }
 

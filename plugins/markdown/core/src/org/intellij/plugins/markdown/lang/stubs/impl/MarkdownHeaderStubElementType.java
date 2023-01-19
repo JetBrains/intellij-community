@@ -78,7 +78,7 @@ public class MarkdownHeaderStubElementType extends MarkdownStubElementType<Markd
   public void indexStub(@NotNull MarkdownHeaderStubElement stub, @NotNull IndexSink sink) {
     final var indexedName = stub.getIndexedName();
     if (indexedName != null) {
-      sink.occurrence(HeaderTextIndex.Companion.getKEY(), indexedName);
+      sink.occurrence(HeaderTextIndex.KEY, indexedName);
     }
     final var indexedAnchorReference = stub.getIndexedAnchorReference();
     if (indexedAnchorReference != null) {

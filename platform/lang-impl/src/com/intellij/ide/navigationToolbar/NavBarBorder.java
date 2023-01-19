@@ -36,7 +36,9 @@ public class NavBarBorder implements Border {
 
   @Override
   public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-    if (UISettings.getInstance().getShowMainToolbar()) {
+    UISettings uiSettings = UISettings.getInstance();
+    if (ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBar() && uiSettings.getNavBarLocation() == NavBarLocation.TOP
+        || !ExperimentalUI.isNewUI() && uiSettings.getShowMainToolbar()) {
       g.setColor(BORDER_COLOR);
       g.fillRect(x, y, width, BW.get());
     }
@@ -50,7 +52,7 @@ public class NavBarBorder implements Border {
         return NO_RUN_INSETS;
       }
       else {
-        return JBUI.insets(3, 0, 4, 4);
+        return JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsets();
       }
     }
     else if (!settings.getShowMainToolbar()) {

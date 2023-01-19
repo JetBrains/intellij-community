@@ -26,9 +26,6 @@ import java.io.File;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * @author irengrig
- */
 public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   private MockAbstractVcs myVcs;
   private ProjectLevelVcsManagerImpl myVcsManager;

@@ -27,10 +27,10 @@ class SurroundWithArrayOfWithSpreadOperatorInFunctionFix(
         val argumentName = argument.getArgumentName()?.asName ?: return
         val argumentExpression = argument.getArgumentExpression() ?: return
 
-        val factory = KtPsiFactory(argumentExpression)
+        val psiFactory = KtPsiFactory(project)
 
-        val surroundedWithArrayOf = factory.createExpressionByPattern("$wrapper($0)", argumentExpression)
-        val newArgument = factory.createArgument(surroundedWithArrayOf, argumentName, isSpread = true)
+        val surroundedWithArrayOf = psiFactory.createExpressionByPattern("$wrapper($0)", argumentExpression)
+        val newArgument = psiFactory.createArgument(surroundedWithArrayOf, argumentName, isSpread = true)
 
         argument.replace(newArgument)
     }

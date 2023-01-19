@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,8 +24,10 @@ public abstract class FileEditorManager {
   public static final Key<Boolean> USE_CURRENT_WINDOW = Key.create("OpenFile.searchForOpen");
 
   public static FileEditorManager getInstance(@NotNull Project project) {
-    return project.getComponent(FileEditorManager.class);
+    return project.getService(FileEditorManager.class);
   }
+
+  public abstract @Nullable FileEditorComposite getComposite(@NotNull VirtualFile file);
 
   /**
    * @param file file to open. File should be valid.
@@ -32,6 +35,8 @@ public abstract class FileEditorManager {
    * @return array of opened editors
    */
   public abstract FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor);
+
+  public abstract @NotNull List<@NotNull FileEditor> openFile(@NotNull VirtualFile file);
 
   /**
    * Opens a file.
@@ -55,7 +60,7 @@ public abstract class FileEditorManager {
 
   /**
    * Works as {@link #openFile(VirtualFile, boolean)} but forces opening of text editor (see {@link TextEditor}).
-   * If several text editors are opened, including the default one, default text editor is focused (if requested) and returned.
+   * If several text editors are opened, including the default one, the default text editor is focused (if requested) and returned.
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    *
    * @return opened text editor. The method returns {@code null} in case if text editor wasn't opened.
@@ -73,8 +78,8 @@ public abstract class FileEditorManager {
   /**
    * @return currently selected text editor. The method returns {@code null} in case
    * there is no selected editor at all or selected editor is not a text one.
-   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    */
+  @RequiresEdt
   public abstract @Nullable Editor getSelectedTextEditor();
 
   /**
@@ -103,7 +108,7 @@ public abstract class FileEditorManager {
   }
 
   /**
-   * @return all opened files. Order of files in the array corresponds to the order of editor tabs.
+   * @return all opened files. The order of files in the array corresponds to the order of editor tabs.
    */
   public abstract VirtualFile @NotNull [] getOpenFiles();
 
@@ -114,9 +119,7 @@ public abstract class FileEditorManager {
    * but at the same time editor notifications should be shown to all users.
    */
   @ApiStatus.Experimental
-  public VirtualFile @NotNull [] getOpenFilesWithRemotes() {
-    return getOpenFiles();
-  }
+  public abstract @NotNull List<VirtualFile> getOpenFilesWithRemotes();
 
   public boolean hasOpenFiles() {
     return getOpenFiles().length > 0;
@@ -243,7 +246,7 @@ public abstract class FileEditorManager {
    */
   public abstract @NotNull Project getProject();
 
-  public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, Disposable parentDisposable);
+  public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, @Nullable Disposable parentDisposable);
 
   /**
    * Returns data associated with given editor/caret context. Data providers are registered via
@@ -267,7 +270,7 @@ public abstract class FileEditorManager {
   public abstract void runWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable);
 
   /**
-   * Refreshes the text, colors and icon of the editor tabs representing the specified file.
+   * Refreshes the text, colors, and icon of the editor tabs representing the specified file.
    *
    * @param file refreshed file
    */

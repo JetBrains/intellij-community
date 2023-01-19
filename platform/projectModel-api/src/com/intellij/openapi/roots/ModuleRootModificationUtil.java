@@ -107,6 +107,16 @@ public final class ModuleRootModificationUtil {
   public static void addDependency(@NotNull Module module, @NotNull Library library) {
     addDependency(module, library, DependencyScope.COMPILE, false);
   }
+  
+  public static void removeDependency(@NotNull Module module, @NotNull Library library) {
+    updateModel(module, model -> {
+      LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
+      if (entry == null) {
+        throw new IllegalArgumentException("Library " + library.getName() + " is not found in dependencies of module " + module.getName());
+      }
+      model.removeOrderEntry(entry);
+    });
+  }
 
   public static void addDependency(@NotNull Module module, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
     updateModel(module, model -> {

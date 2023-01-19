@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.openapi.wm.ToolWindowManager
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 
@@ -13,7 +12,7 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
   private val group = NotificationGroupManager.getInstance().getNotificationGroup(groupId)
   private val notification = AtomicReference<Notification>()
 
-  fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project) =
+  fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project?) =
     notify(title, content, project) { }
 
   fun notify(@NotificationTitle title: String,
@@ -56,13 +55,4 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
   fun clear() {
     notification.getAndSet(null)?.expire()
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  @Deprecated("please use `#notify(String, String, Project)` instead")
-  @ApiStatus.ScheduledForRemoval
-  fun notify(@NotificationContent content: String, project: Project?): Boolean {
-    notify("", content, project) { }
-    return true
-  }
-  //</editor-fold>
 }

@@ -31,9 +31,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomChildrenTest extends DomTestCase {
 
   private MyElement createElement(final String xml) throws IncorrectOperationException {

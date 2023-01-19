@@ -18,8 +18,12 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtParameterDefaultValueRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtRendererBodyMemberScopeProvider
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtPropertyAccessorsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KtSingleTypeParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -37,7 +41,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-internal class KotlinDocumentationTarget(val element: PsiElement, val originalElement: PsiElement?) : DocumentationTarget {
+internal class KotlinDocumentationTarget(val element: PsiElement, private val originalElement: PsiElement?) : DocumentationTarget {
     override fun createPointer(): Pointer<out DocumentationTarget> {
         val elementPtr = element.createSmartPointer()
         val originalElementPtr = originalElement?.createSmartPointer()
@@ -47,7 +51,9 @@ internal class KotlinDocumentationTarget(val element: PsiElement, val originalEl
         }
     }
 
-    override val presentation: TargetPresentation get() = targetPresentation(element)
+    override fun presentation(): TargetPresentation {
+        return targetPresentation(element)
+    }
 
     override fun computeDocumentationHint(): String? {
         return computeLocalDocumentation(element, originalElement, true)
@@ -57,22 +63,22 @@ internal class KotlinDocumentationTarget(val element: PsiElement, val originalEl
         get() = element as? Navigatable
 
     override fun computeDocumentation(): DocumentationResult? {
-        val html = computeLocalDocumentation(element, originalElement, false) ?: return null
+        @Suppress("HardCodedStringLiteral") val html =
+            computeLocalDocumentation(element, originalElement, false) ?: return null
         return DocumentationResult.documentation(html)
     }
 
     companion object {
-        internal val RENDERING_OPTIONS = KtDeclarationRendererOptions(
-            typeRendererOptions = KtTypeRendererOptions.SHORT_NAMES,
-            renderUnitReturnType = true,
-            renderDefaultParameterValue = true,
-            renderDeclarationHeader = true,
-            approximateTypes = true
-        )
+        internal val RENDERING_OPTIONS = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+            returnTypeFilter = KtCallableReturnTypeFilter.ALWAYS
+            propertyAccessorsRenderer = KtPropertyAccessorsRenderer.NONE
+            bodyMemberScopeProvider = KtRendererBodyMemberScopeProvider.NONE
+            singleTypeParameterRenderer = KtSingleTypeParameterSymbolRenderer.WITH_COMMA_SEPARATED_BOUNDS
+            parameterDefaultValueRenderer = KtParameterDefaultValueRenderer.THREE_DOTS
+        }
     }
 }
 
-@Nls
 private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiElement?, quickNavigation: Boolean): String? {
     when {
       element is KtFunctionLiteral -> {
@@ -83,7 +89,7 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
                   renderKotlinDeclaration(
                       element,
                       quickNavigation,
-                      symbolFinder = { it -> (it as? KtFunctionLikeSymbol)?.valueParameters?.firstOrNull() })
+                      symbolFinder = { (it as? KtFunctionLikeSymbol)?.valueParameters?.firstOrNull() })
               }
           }
       }
@@ -188,7 +194,7 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
     }
 }
 
-private fun StringBuilder.renderEnumSpecialFunction(
+private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
     originalElement: PsiElement?,
     element: KtClass,
     quickNavigation: Boolean
@@ -236,7 +242,7 @@ private fun findElementWithText(element: PsiElement?, text: String): PsiElement?
 internal fun PsiElement?.isModifier() =
     this != null && parent is KtModifierList && KtTokens.MODIFIER_KEYWORDS_ARRAY.firstOrNull { it.value == text } != null
 
-private fun StringBuilder.renderKotlinDeclaration(
+private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
     declaration: KtDeclaration,
     onlyDefinition: Boolean,
     symbolFinder: KtAnalysisSession.(KtSymbol) -> KtSymbol? = { it },

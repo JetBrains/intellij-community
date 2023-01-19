@@ -13,10 +13,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.Collections.singletonList;
+
 @ApiStatus.Internal
 public class IndexPatternOptimizerImpl implements IndexPatternOptimizer {
   @Override
   public @NotNull List<String> extractStringsToFind(@NotNull String regexp) {
+    // short circuit for known built-in patterns, no need to spin up RegExp parser and its elements
+    if ("\\btodo\\b.*".equals(regexp)) return singletonList("todo");
+    if ("\\bfixme\\b.*".equals(regexp)) return singletonList("fixme");
+
     // TODO some datagrip tests are not passed with unknown reason (no exception in logs but it's)
     if (ApplicationManager.getApplication().isUnitTestMode() && PlatformUtils.isDataGrip()) {
       return Collections.emptyList();

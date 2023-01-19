@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 
 import com.google.common.io.Files
@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.*
@@ -23,18 +24,23 @@ import com.intellij.project.stateStore
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.util.io.URLUtil
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener.Companion.shouldFireRootsChanged
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher.Companion.calculateAffectedEntities
-import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
+import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -104,7 +110,7 @@ private class RootsChangeWatcher(private val project: Project) {
     changedUrlsList.clear()
     changedModuleStorePaths.clear()
 
-    val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+    val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
     for (event in events) {
       when (event) {
         is VFileDeleteEvent ->
@@ -176,21 +182,26 @@ private class RootsChangeWatcher(private val project: Project) {
                                              allRootsWereRemoved: Boolean) {
     val includingJarDirectory = getIncludingJarDirectory(storage, virtualFileUrl)
     if (includingJarDirectory != null) {
-      val entities = if (allRootsWereRemoved) emptyList()
-      else
-        storage.getVirtualFileUrlIndex().findEntitiesByUrl(includingJarDirectory).toList()
-      entityChanges.addAll(entities.map { pair -> pair.first })
+      val entities = storage.getVirtualFileUrlIndex().findEntitiesByUrl(includingJarDirectory).map { it.first.createReference<WorkspaceEntity>() }.toList()
+      entityChanges.addAffectedEntities(entities, allRootsWereRemoved)
       return
     }
 
     val affectedEntities = mutableListOf<EntityWithVirtualFileUrl>()
     calculateAffectedEntities(storage, virtualFileUrl, affectedEntities)
-    virtualFileUrl.subTreeFileUrls.forEach { fileUrl -> calculateAffectedEntities(storage, fileUrl, affectedEntities) }
+    if (allRootsWereRemoved) {
+      entityChanges.addFileToInvalidate(virtualFileUrl.virtualFile)
+    }
+    virtualFileUrl.subTreeFileUrls.forEach { fileUrl -> 
+      if (calculateAffectedEntities(storage, fileUrl, affectedEntities) && allRootsWereRemoved) {
+        entityChanges.addFileToInvalidate(fileUrl.virtualFile)
+      }
+    }
 
-    if (affectedEntities.any { it.propertyName != "entitySource" && shouldFireRootsChanged(it.entity, project) }
+    val indexingServiceEx = EntityIndexingServiceEx.getInstanceEx()
+    if (affectedEntities.any { it.propertyName != "entitySource" && indexingServiceEx.shouldCauseRescan(it.entity, project) }
         || virtualFileUrl.url in projectFilePaths) {
-      val changes = if (allRootsWereRemoved) emptyList() else affectedEntities.map { it.entity }
-      entityChanges.addAll(changes)
+      entityChanges.addAffectedEntities(affectedEntities.map { it.entity.createReference() }, allRootsWereRemoved)
     }
   }
 
@@ -203,6 +214,29 @@ private class RootsChangeWatcher(private val project: Project) {
 
   private fun fireRootsChangeEvent(beforeRootsChanged: Boolean = false, entityChangesStorage: EntityChangeStorage) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
+    val affectedEntities = entityChangesStorage.affectedEntities
+    if (WorkspaceFileIndexEx.IS_ENABLED && affectedEntities.isNotEmpty()) {
+      val workspaceFileIndex = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx
+      if (beforeRootsChanged) {
+        workspaceFileIndex.markDirty(affectedEntities, entityChangesStorage.filesToInvalidate)
+      }
+      else {
+        workspaceFileIndex.markDirty(affectedEntities, entityChangesStorage.filesToInvalidate)
+        workspaceFileIndex.updateDirtyEntities()
+      }
+    }
+    // Keep old behaviour for global libraries
+    if (GlobalLibraryTableBridge.isEnabled() && affectedEntities.isNotEmpty()) {
+      val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
+      val globalLibraryTableBridge = GlobalLibraryTableBridge.getInstance() as GlobalLibraryTableBridgeImpl
+
+      affectedEntities.forEach { entityRef ->
+        val libraryEntity = (entityRef.resolve(entityStorage) as? LibraryEntity) ?: return@forEach
+        if (libraryEntity.tableId.level != LibraryTablesRegistrar.APPLICATION_LEVEL) return@forEach
+        globalLibraryTableBridge.fireRootSetChanged(libraryEntity, entityStorage)
+      }
+    }
+
     val indexingInfo = entityChangesStorage.createIndexingInfo()
     if (indexingInfo != null && !isRootChangeForbidden()) {
       val projectRootManager = ProjectRootManager.getInstance(project) as ProjectRootManagerBridge
@@ -223,10 +257,20 @@ private class RootsChangeWatcher(private val project: Project) {
     val newModuleName = getModuleNameByFilePath(newUrl)
     if (oldModuleName == newModuleName) return
 
+    val oldModuleId = ModuleId(oldModuleName)
     val workspaceModel = WorkspaceModel.getInstance(project)
-    val moduleEntity = workspaceModel.entityStorage.current.resolve(ModuleId(oldModuleName)) ?: return
-    workspaceModel.updateProjectModel { diff ->
-      diff.modifyEntity(moduleEntity) { this.name = newModuleName }
+    val moduleEntity = workspaceModel.currentSnapshot.resolve(oldModuleId)
+    val description = "Update module name when iml file is renamed"
+    if (moduleEntity != null) {
+      workspaceModel.updateProjectModel(description) { diff ->
+        diff.modifyEntity(moduleEntity) { this.name = newModuleName }
+      }
+    }
+    val unloadedModule = workspaceModel.currentSnapshotOfUnloadedEntities.resolve(oldModuleId)
+    if (unloadedModule != null) {
+      workspaceModel.updateUnloadedEntities(description) { diff ->
+        diff.modifyEntity(unloadedModule) { this.name = newModuleName }
+      }
     }
   }
 
@@ -269,15 +313,25 @@ private class RootsChangeWatcher(private val project: Project) {
 }
 
 private class EntityChangeStorage {
-  private var entities: MutableList<WorkspaceEntity>? = null
+  private var entitiesToReindex: MutableList<EntityReference<WorkspaceEntity>>? = null
+  val affectedEntities = HashSet<EntityReference<WorkspaceEntity>>()
+  val filesToInvalidate = HashSet<VirtualFile>()
 
-  private fun initChanges(): MutableList<WorkspaceEntity> = entities ?: (mutableListOf<WorkspaceEntity>().also { entities = it })
+  private fun initChanges(): MutableList<EntityReference<WorkspaceEntity>> = entitiesToReindex ?: (mutableListOf<EntityReference<WorkspaceEntity>>().also { entitiesToReindex = it })
 
-  fun addAll(addedEntities: Collection<WorkspaceEntity>) {
-    initChanges().addAll(addedEntities)
+  fun addAffectedEntities(entities: Collection<EntityReference<WorkspaceEntity>>, allRootsWereRemoved: Boolean) {
+    affectedEntities.addAll(entities)
+    val toReindex = initChanges()
+    if (!allRootsWereRemoved) {
+      toReindex.addAll(entities)
+    }
+  } 
+  
+  fun createIndexingInfo() = entitiesToReindex?.let {
+    EntityIndexingServiceEx.getInstanceEx().createWorkspaceEntitiesRootsChangedInfo(it)
   }
 
-  fun createIndexingInfo() = entities?.let {
-    ProjectRootsChangeListener.WorkspaceEventRescanningInfo(it.map { entity -> EntityChange.Added(entity) }, false)
+  fun addFileToInvalidate(file: VirtualFile?) {
+    file?.let { filesToInvalidate.add(it) }
   }
 }

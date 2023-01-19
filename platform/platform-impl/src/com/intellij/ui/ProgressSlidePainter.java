@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ final class ProgressSlidePainter {
             Thread.onSpinWait();
 
           var slide = myProgressSlides.get(slideIndex);
-          var image = Splash.doLoadImage(slide.url);
+          var image = Splash.doLoadImage(slide.url, JBUIScale.sysScale());
           if (image == null) {
             Logger.getInstance(ProgressSlidePainter.class).error("Cannot load slide by url: " + slide.url);
             myPrefetchedSlides.set(slideIndex, Slide.Empty);

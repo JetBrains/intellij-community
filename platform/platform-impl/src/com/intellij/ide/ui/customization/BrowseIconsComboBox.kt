@@ -19,10 +19,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.ComboboxSpeedSearch
-import com.intellij.ui.IconManager
-import com.intellij.ui.UIBundle
+import com.intellij.ui.*
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -191,7 +188,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
       }
       catch (ex: IOException) {
         thisLogger().warn("Failed to load icon from disk, path: ${iconFile.path}", ex)
-        IconManager.getInstance().stubIcon
+        IconManager.getInstance().getPlatformIcon(PlatformIcons.Stub)
       }
       if (icon != null) {
         val info = ActionIconInfo(icon, iconFile.name, null, iconFile.path)
@@ -215,7 +212,8 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
     if (actionId != null && icon != null) {
       val customIconRef = customActionsSchema.getIconPath(actionId)
       if (StringUtil.isNotEmpty(customIconRef) && selectByCondition { info -> info.iconReference == customIconRef }
-          || selectByCondition { info -> info.actionId == actionId || info.icon == icon }) {
+          || selectByCondition { info -> info.actionId == actionId }
+          || selectByCondition { info -> info.icon == icon }) {
         return
       }
     }

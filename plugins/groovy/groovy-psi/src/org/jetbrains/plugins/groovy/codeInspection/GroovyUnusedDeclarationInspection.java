@@ -4,9 +4,6 @@ package org.jetbrains.plugins.groovy.codeInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 
-/**
- * @author peter
- */
 public class GroovyUnusedDeclarationInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {
 
   public static final String SHORT_NAME = "GroovyUnusedDeclaration";

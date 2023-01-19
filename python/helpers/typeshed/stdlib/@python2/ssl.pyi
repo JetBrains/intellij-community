@@ -1,18 +1,18 @@
 import socket
 import sys
 from _typeshed import Self, StrPath
-from typing import Any, Callable, ClassVar, Iterable, NamedTuple, Optional, Text, Union, overload
+from typing import Any, Callable, ClassVar, Iterable, NamedTuple, Text, Union, overload
 from typing_extensions import Literal
 
 _PCTRTT = tuple[tuple[str, str], ...]
 _PCTRTTT = tuple[_PCTRTT, ...]
-_PeerCertRetDictType = dict[str, Union[str, _PCTRTTT, _PCTRTT]]
-_PeerCertRetType = Union[_PeerCertRetDictType, bytes, None]
+_PeerCertRetDictType = dict[str, str | _PCTRTTT | _PCTRTT]
+_PeerCertRetType = _PeerCertRetDictType | bytes | None
 _EnumRetType = list[tuple[bytes, str, Union[set[str], bool]]]
-_PasswordType = Union[Callable[[], Union[str, bytes]], str, bytes]
+_PasswordType = Union[Callable[[], str | bytes], str, bytes]
 
 _SC1ArgT = SSLSocket
-_SrvnmeCbType = Callable[[_SC1ArgT, Optional[str], SSLSocket], Optional[int]]
+_SrvnmeCbType = Callable[[_SC1ArgT, str | None, SSLSocket], int | None]
 
 class SSLError(OSError):
     library: str
@@ -225,7 +225,12 @@ class SSLContext:
     def load_verify_locations(
         self, cafile: StrPath | None = ..., capath: StrPath | None = ..., cadata: Text | bytes | None = ...
     ) -> None: ...
-    def get_ca_certs(self, binary_form: bool = ...) -> list[_PeerCertRetDictType] | list[bytes]: ...
+    @overload
+    def get_ca_certs(self, binary_form: Literal[False] = ...) -> list[_PeerCertRetDictType]: ...
+    @overload
+    def get_ca_certs(self, binary_form: Literal[True]) -> list[bytes]: ...
+    @overload
+    def get_ca_certs(self, binary_form: bool = ...) -> Any: ...
     def set_default_verify_paths(self) -> None: ...
     def set_ciphers(self, __cipherlist: str) -> None: ...
     def set_alpn_protocols(self, alpn_protocols: Iterable[str]) -> None: ...

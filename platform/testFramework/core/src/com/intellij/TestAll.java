@@ -111,7 +111,7 @@ public class TestAll implements Test {
     this(rootPackage, getClassRoots());
   }
 
-  public TestAll(String rootPackage, List<Path> classesRoots) throws ClassNotFoundException {
+  public TestAll(String rootPackage, List<? extends Path> classesRoots) throws ClassNotFoundException {
     String classFilterName = "tests/testGroups.properties";
     myTestCaseLoader = new TestCaseLoader(classFilterName);
     if (shouldAddFirstAndLastTests()) {
@@ -256,7 +256,7 @@ public class TestAll implements Test {
 
     // to make it easier to reproduce order-dependent failures locally
     System.out.println("------");
-    System.out.println("Running tests:");
+    System.out.println("Running tests classes:");
     for (Class<?> aClass : classes) {
       System.out.println(aClass.getName());
     }
@@ -288,6 +288,8 @@ public class TestAll implements Test {
         e.printStackTrace();
       }
     }
+
+    TestCaseLoader.sendTestRunResultsToNastradamus();
   }
 
   private static TestListener loadDiscoveryListener() {
@@ -317,7 +319,7 @@ public class TestAll implements Test {
     if (recorderClassName != null) {
       try {
         Class<?> recorderClass = Class.forName(recorderClassName);
-        myTestRecorder = (TestRecorder) recorderClass.newInstance();
+        myTestRecorder = (TestRecorder)recorderClass.newInstance();
       }
       catch (Exception e) {
         System.out.println("Error loading test recorder class '" + recorderClassName + "': " + e);
@@ -331,7 +333,8 @@ public class TestAll implements Test {
     int errorCount = testResult.errorCount();
     int count = errorCount + testResult.failureCount() - myIgnoredTests;
     if (count > MAX_FAILURE_TEST_COUNT && MAX_FAILURE_TEST_COUNT >= 0) {
-      addErrorMessage(testResult, "Too many errors (" + count + ", MAX_FAILURE_TEST_COUNT = " + MAX_FAILURE_TEST_COUNT + "). Executed: " + myRunTests + " of " + totalTests);
+      addErrorMessage(testResult, "Too many errors (" + count + ", MAX_FAILURE_TEST_COUNT = " + MAX_FAILURE_TEST_COUNT +
+                                  "). Executed: " + myRunTests + " of " + totalTests);
       testResult.stop();
       return;
     }
@@ -431,7 +434,7 @@ public class TestAll implements Test {
         }
 
         @Nullable
-        private Method findTestMethod(final TestCase testCase) {
+        private static Method findTestMethod(final TestCase testCase) {
           return safeFindMethod(testCase.getClass(), testCase.getName());
         }
       };
@@ -456,8 +459,8 @@ public class TestAll implements Test {
       if ("junit5".equals(System.getProperty("intellij.build.test.runner"))) {
         try {
           cache = (JUnit4TestAdapterCache)Class.forName("com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite")
-                .getMethod("createJUnit4TestAdapterCache")
-                .invoke(null);
+            .getMethod("createJUnit4TestAdapterCache")
+            .invoke(null);
         }
         catch (Throwable e) {
           cache = JUnit4TestAdapterCache.getDefault();

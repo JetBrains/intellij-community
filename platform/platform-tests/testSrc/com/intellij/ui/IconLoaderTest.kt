@@ -8,7 +8,6 @@ import com.intellij.util.ui.EmptyIcon
 import org.junit.Test
 import javax.swing.Icon
 
-@Suppress("UsePropertyAccessSyntax")
 class IconLoaderTest {
   @Test
   fun reflectivePathCheck() {

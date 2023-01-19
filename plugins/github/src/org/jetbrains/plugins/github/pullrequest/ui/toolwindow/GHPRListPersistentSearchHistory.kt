@@ -10,13 +10,21 @@ internal class GHPRListPersistentSearchHistory : SerializablePersistentStateComp
   HistoryState()) {
 
   @Serializable
-  data class HistoryState(val history: List<GHPRListSearchValue> = emptyList())
+  data class HistoryState(val history: List<GHPRListSearchValue> = emptyList(), val lastFilter: GHPRListSearchValue? = null)
+
+  var lastFilter: GHPRListSearchValue?
+    get() = state.lastFilter
+    set(value) {
+      updateState {
+        it.copy(lastFilter = value)
+      }
+    }
 
   var history: List<GHPRListSearchValue>
     get() = state.history.toList()
     set(value) {
       updateState {
-        HistoryState(value.toList())
+        it.copy(history = value)
       }
     }
 }

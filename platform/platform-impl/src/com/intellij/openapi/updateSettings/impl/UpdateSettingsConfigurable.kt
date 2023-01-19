@@ -18,7 +18,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.JBGaps
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
@@ -120,7 +119,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
           customizeSpacingConfiguration(EmptySpacingConfiguration()) {
             row {
               icon(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40, null))
-                .verticalAlign(VerticalAlign.TOP)
+                .align(AlignY.TOP)
                 .customize(customGaps = JBGaps(right = 10))
               panel {
                 row {
@@ -128,7 +127,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
                     .bold()
                 }
                 row {
-                  label(IdeBundle.message("updates.settings.recommend.toolbox.multiline.description"))
+                  text(IdeBundle.message("updates.settings.recommend.toolbox.multiline.description"))
                 }.customize(customRowGaps = VerticalGaps(top = JBUI.scale(3)))
               }
             }.customize(customRowGaps = VerticalGaps(top = JBUI.scale(12)))

@@ -25,6 +25,7 @@ cryptography.x509.CertificateRevocationListBuilder.last_update
 cryptography.x509.CertificateRevocationListBuilder.next_update
 cryptography.x509.CertificateSigningRequestBuilder.__init__
 cryptography.x509.Extension.__init__
+cryptography.x509.ExtensionType.oid  # is a property at runtime, but a different descriptor on subclasses, easier just to pretend it's writeable
 cryptography.x509.Extensions.__init__
 cryptography.x509.NameAttribute.__init__
 cryptography.x509.OCSPExtensionOID

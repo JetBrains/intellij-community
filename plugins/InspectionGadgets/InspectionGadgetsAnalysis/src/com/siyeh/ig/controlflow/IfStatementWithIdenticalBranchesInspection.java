@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -33,27 +33,29 @@ import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 // Not really with identical branches, but also common parts
 public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean myHighlightWhenLastStatementIsCall = false;
 
-  private static final List<IfStatementInspector> ourInspectors = new ArrayList<>(Arrays.asList(
+  private static final List<IfStatementInspector> ourInspectors = List.of(
     ImplicitElse::inspect,
     ThenElse::inspect,
     ElseIf::inspect
-  ));
+  );
 
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.common.if.parts.settings.highlight.when.tail.call"), this, "myHighlightWhenLastStatementIsCall");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myHighlightWhenLastStatementIsCall",
+               JavaAnalysisBundle.message("inspection.common.if.parts.settings.highlight.when.tail.call")));
   }
 
   @NotNull
@@ -613,7 +615,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
   @Nullable
   private static ImplicitElseData getIfWithImplicitElse(@NotNull PsiIfStatement ifStatement,
                                                         PsiStatement @NotNull [] thenStatements,
-                                                        boolean returnsNothing) {
+                                                        String jumpKeyword, boolean basicJumpStatement) {
+    if (!PsiKeyword.RETURN.equals(jumpKeyword) && !PsiKeyword.CONTINUE.equals(jumpKeyword)) return null;
     int statementsLength = thenStatements.length;
     if (statementsLength == 0) return null;
     PsiIfStatement currentIf = ifStatement;
@@ -641,20 +644,23 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       if (enclosingIf == null) break;
       currentIf = enclosingIf;
     }
-    if(conditionHasSideEffects && ifStatement != currentIf) return null;
+    if (conditionHasSideEffects && ifStatement != currentIf) return null;
     // ensure it is last statements in method
     PsiElement parent = currentIf.getParent();
     if (!(parent instanceof PsiCodeBlock)) return null;
-    if (!(parent.getParent() instanceof PsiMethod)) return null;
-    if (!statements.isEmpty()) {
-      if (PsiTreeUtil.getNextSiblingOfType(statements.get(statements.size() - 1), PsiStatement.class) != null) return null;
+    if (PsiKeyword.RETURN.equals(jumpKeyword)) {
+      if (!(parent.getParent() instanceof PsiMethod)) return null;
+      if (!statements.isEmpty()) {
+        if (PsiTreeUtil.getNextSiblingOfType(statements.get(statements.size() - 1), PsiStatement.class) != null) return null;
+      }
     }
-    if (returnsNothing) {
-      // skip possible return;
+    if (PsiKeyword.CONTINUE.equals(jumpKeyword) && !(parent.getParent() instanceof PsiBlockStatement) && !(parent.getParent().getParent() instanceof PsiLoopStatement)) return null;
+    if (basicJumpStatement) {
+      // skip possible jump statement
       if (count == statementsLength || count == statementsLength - 1) return new ImplicitElseData(statements, currentIf);
     }
-    else {
-      if (count == statementsLength) return new ImplicitElseData(statements, currentIf);
+    else if (count == statementsLength) {
+      return new ImplicitElseData(statements, currentIf);
     }
     return null;
   }
@@ -697,9 +703,17 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
                              @NotNull PsiIfStatement ifStatement) {
       if (elseBranch.length != 0 || thenBranch.length == 0) return null;
       PsiStatement lastThenStatement = thenBranch[thenBranch.length - 1];
-      if (!(lastThenStatement instanceof PsiReturnStatement)) return null;
-      boolean returnsNothing = ((PsiReturnStatement)lastThenStatement).getReturnValue() == null;
-      ImplicitElseData implicitElse = getIfWithImplicitElse(ifStatement, thenBranch, returnsNothing);
+      String jumpKeyword = null;
+      boolean basicJumpStatement = false;
+      if (lastThenStatement instanceof PsiReturnStatement) {
+        jumpKeyword = PsiKeyword.RETURN;
+        basicJumpStatement = ((PsiReturnStatement)lastThenStatement).getReturnValue() == null;
+      } else if (lastThenStatement instanceof PsiContinueStatement) {
+        jumpKeyword = PsiKeyword.CONTINUE;
+        basicJumpStatement = ((PsiContinueStatement)lastThenStatement).getLabelIdentifier() == null;
+      }
+      if (jumpKeyword == null) return null;
+      ImplicitElseData implicitElse = getIfWithImplicitElse(ifStatement, thenBranch, jumpKeyword, basicJumpStatement);
       if (implicitElse == null) return null;
       if (implicitElse.myImplicitElseStatements.isEmpty()) return null;
       if (implicitElse.myImplicitElseStatements.size() == 1) {
@@ -738,6 +752,14 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       ExtractCommonIfPartsFix fix = new ExtractCommonIfPartsFix(type, false, isOnTheFly);
       return new IfInspectionResult(ifStatement.getFirstChild(), true, fix, type.getDescriptionMessage(false));
     }
+  }
+
+  @NotNull
+  private static LocalEquivalenceChecker getChecker(PsiStatement[] thenBranch, PsiStatement[] elseBranch) {
+    Set<PsiLocalVariable> localVariables = new HashSet<>();
+    addLocalVariables(localVariables, Arrays.asList(thenBranch));
+    addLocalVariables(localVariables, Arrays.asList(elseBranch));
+    return new LocalEquivalenceChecker(localVariables);
   }
 
   private static final class ThenElse {
@@ -785,14 +807,6 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       }
       return ContainerUtil
         .or(headCommonParts, unit -> unit.haveSideEffects() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
-    }
-
-    @NotNull
-    private static LocalEquivalenceChecker getChecker(PsiStatement[] thenBranch, PsiStatement[] elseBranch) {
-      Set<PsiLocalVariable> localVariables = new HashSet<>();
-      addLocalVariables(localVariables, Arrays.asList(thenBranch));
-      addLocalVariables(localVariables, Arrays.asList(elseBranch));
-      return new LocalEquivalenceChecker(localVariables);
     }
 
     @NotNull
@@ -1171,10 +1185,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       PsiStatement elseIfElseBranch = elseIf.getElseBranch();
       if (elseIfElseBranch == null) return null;
       if (elseIfThen.length != thenStatements.length) return null;
-      Set<PsiLocalVariable> variables = new HashSet<>();
-      addLocalVariables(variables, Arrays.asList(thenStatements));
-      addLocalVariables(variables, Arrays.asList(elseIfThen));
-      LocalEquivalenceChecker equivalence = new LocalEquivalenceChecker(variables);
+      LocalEquivalenceChecker equivalence = getChecker(thenStatements, elseIfThen);
       if (!branchesAreEquivalent(thenStatements, Arrays.asList(elseIfThen), equivalence)) return null;
       return new ElseIf(elseBranch, elseIfElseBranch, elseIfThenBranch, elseIfCondition, equivalence.mySubstitutionTable);
     }

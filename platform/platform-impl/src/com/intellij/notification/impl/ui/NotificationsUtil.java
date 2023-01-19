@@ -26,9 +26,6 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 
-/**
- * @author spleaner
- */
 public final class NotificationsUtil {
   private static final Logger LOG = Logger.getInstance(NotificationsUtil.class);
   private static final int TITLE_LIMIT = 1000;
@@ -190,26 +187,18 @@ public final class NotificationsUtil {
       return icon;
     }
 
-    switch (notification.getType()) {
-      case WARNING:
-        return AllIcons.General.BalloonWarning;
-      case ERROR:
-        return AllIcons.General.BalloonError;
-      case INFORMATION:
-      default:
-        return AllIcons.General.BalloonInformation;
-    }
+    return switch (notification.getType()) {
+      case WARNING -> AllIcons.General.BalloonWarning;
+      case ERROR -> AllIcons.General.BalloonError;
+      case INFORMATION, IDE_UPDATE -> AllIcons.General.BalloonInformation;
+    };
   }
 
   public static @NotNull MessageType getMessageType(@NotNull Notification notification) {
-    switch (notification.getType()) {
-      case WARNING:
-        return MessageType.WARNING;
-      case ERROR:
-        return MessageType.ERROR;
-      case INFORMATION:
-      default:
-        return MessageType.INFO;
-    }
+    return switch (notification.getType()) {
+      case WARNING -> MessageType.WARNING;
+      case ERROR -> MessageType.ERROR;
+      case INFORMATION, IDE_UPDATE -> MessageType.INFO;
+    };
   }
 }

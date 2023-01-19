@@ -27,14 +27,12 @@ import com.jetbrains.python.remote.PythonSshInterpreterManager
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.sdkSeemsValid
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JComboBox
 import javax.swing.JComponent
 
-/**
- * @author vlan
- */
 class PyAddExistingSdkPanel(project: Project?,
                             module: Module?,
                             existingSdks: List<Sdk>,
@@ -132,7 +130,7 @@ class PyAddExistingSdkPanel(project: Project?,
     val selectedSdk = sdk
     val message = when {
       selectedSdk == null -> PyBundle.message("python.sdk.no.interpreter.selection")
-      PythonSdkUtil.isInvalid(selectedSdk) -> PyBundle.message("python.sdk.choose.valid.interpreter")
+      ! selectedSdk.sdkSeemsValid -> PyBundle.message("python.sdk.choose.valid.interpreter")
       else -> return null
     }
     return ValidationInfo(message, sdkComboBox)

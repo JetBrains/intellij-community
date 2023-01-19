@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
@@ -14,6 +14,9 @@ import com.intellij.util.lang.ClasspathCache;
 import com.intellij.util.lang.Resource;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.EDT;
+import kotlinx.coroutines.CoroutineName;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -26,6 +29,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
+import static kotlinx.coroutines.CoroutineScopeKt.CoroutineScope;
+import static kotlinx.coroutines.JobKt.getJob;
+import static kotlinx.coroutines.SupervisorKt.SupervisorJob;
 
 @ApiStatus.Internal
 public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
@@ -69,6 +76,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       "kotlin.coroutines.CoroutineContext$Key",
       "kotlin.Result",
       "kotlin.Result$Failure",
+      "kotlin.Result$Companion",
       // Even though it's internal class, it can leak (and it does) into API surface because it's exposed by public
       // `kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED` property
       "kotlin.coroutines.intrinsics.CoroutineSingletons",
@@ -76,7 +84,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       "kotlin.coroutines.AbstractCoroutineContextKey",
       "kotlin.coroutines.jvm.internal.ContinuationImpl", // IDEA-295189
       "kotlin.coroutines.jvm.internal.BaseContinuationImpl", // IDEA-295189
-      "kotlin.coroutines.jvm.internal.CoroutineStackFrame" // IDEA-295189
+      "kotlin.coroutines.jvm.internal.CoroutineStackFrame", // IDEA-295189
+      "kotlin.time.Duration",
+      "kotlin.time.Duration$Companion"
     ));
     String classes = System.getProperty("idea.kotlin.classes.used.in.signatures");
     if (classes != null) {
@@ -136,7 +146,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   private final @NotNull ClassLoader coreLoader;
 
   private final int instanceId;
-  private volatile int state = ACTIVE;
+  private final CoroutineScope myScope;
 
   @SuppressWarnings("FieldNameHidesFieldInSuperclass")
   private final ResolveScopeManager resolveScopeManager;
@@ -164,6 +174,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     this.packagePrefix = (packagePrefix == null || packagePrefix.endsWith(".")) ? packagePrefix : (packagePrefix + '.');
     this.coreLoader = coreLoader;
     this.libDirectories = libDirectories;
+    myScope = CoroutineScope(SupervisorJob(null).plus(new CoroutineName(pluginId.getIdString() + "@" + instanceId)));
   }
 
   public @NotNull List<String> getLibDirectories() {
@@ -176,14 +187,26 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @Override
+  public @NotNull CoroutineScope getPluginCoroutineScope() {
+    return myScope;
+  }
+
+  @Override
   @ApiStatus.Internal
   public int getState() {
-    return state;
+    Job job = getJob(myScope.getCoroutineContext());
+    return job.isActive() ? ACTIVE
+                          : UNLOAD_IN_PROGRESS;
   }
 
   @ApiStatus.Internal
   public void setState(int state) {
-    this.state = state;
+    if (state == UNLOAD_IN_PROGRESS) {
+      // job.isActive returns `false` after this call
+      getJob(myScope.getCoroutineContext()).cancel(null);
+      return;
+    }
+    throw new IllegalStateException("Unexpected state: " + state);
   }
 
   @Override
@@ -387,6 +410,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
             className.startsWith("kotlin.jvm.internal.MutablePropertyReference") ||
             className.startsWith("kotlin.jvm.internal.PropertyReference") ||
             className.startsWith("kotlin.jvm.internal.TypeReference") ||
+            className.equals("kotlin.jvm.internal.Lambda") ||
             className.startsWith("kotlin.jvm.internal.LocalVariableReference") ||
             className.startsWith("kotlin.jvm.internal.MutableLocalVariableReference") ||
             className.equals("kotlin.jvm.internal.ReflectionFactory") ||
@@ -602,7 +626,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     return getClass().getSimpleName() + "(plugin=" + pluginDescriptor +
            ", packagePrefix=" + packagePrefix +
            ", instanceId=" + instanceId +
-           ", state=" + (state == ACTIVE ? "active" : "unload in progress") +
+           ", state=" + (getState() == ACTIVE ? "active" : "unload in progress") +
            ")";
   }
 

@@ -5,11 +5,11 @@ import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,13 +30,13 @@ import java.util.List;
 public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, TreeSelectionListener {
   private final EventListenerList myListenerList = new EventListenerList();
   private final ComponentTree myTree;
-  private final AbstractTreeBuilder myTreeBuilder;
+  private final StructureTreeModel<TreeContentProvider> myTreeModel;
   private final DesignerActionPanel myActionPanel;
   private boolean myCanvasSelection;
 
-  public TreeEditableArea(ComponentTree tree, AbstractTreeBuilder treeBuilder, DesignerActionPanel actionPanel) {
+  public TreeEditableArea(ComponentTree tree, StructureTreeModel<TreeContentProvider> model, DesignerActionPanel actionPanel) {
     myTree = tree;
-    myTreeBuilder = treeBuilder;
+    myTreeModel = model;
     myActionPanel = actionPanel;
     hookSelection();
   }
@@ -73,7 +73,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
 
   @Override
   public void valueChanged(TreeSelectionEvent e) {
-    if (!myTreeBuilder.isSelectionBeingAdjusted() && ApplicationManager.getApplication().isDispatchThread()) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
       fireSelectionChanged();
     }
   }
@@ -130,32 +130,46 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   }
 
   private Collection<RadComponent> getRawSelection() {
-    return myTreeBuilder.getSelectedElements(RadComponent.class);
+    return TreeUtil.collectSelectedObjectsOfType(myTree, RadComponent.class);
   }
 
   private void setRawSelection(@Nullable Object value) {
+    Runnable finish = () -> {
+      hookSelection();
+      fireSelectionChanged();
+    };
+
     unhookSelection();
-    myTreeBuilder.queueUpdate();
 
-    if (value == null) {
-      myTreeBuilder.select(ArrayUtilRt.EMPTY_OBJECT_ARRAY, null);
-      myTree.clearSelection();
-    }
-    else if (value instanceof RadComponent) {
-      myTreeBuilder.select(value);
-    }
-    else {
-      Collection collection = (Collection)value;
-      myTreeBuilder.select(collection.toArray(), null);
-      if (collection.isEmpty()) {
+    myTreeModel.invalidateAsync().thenRun(() -> {
+      if (value == null) {
         myTree.clearSelection();
+        finish.run();
       }
-    }
+      else if (value instanceof RadComponent) {
+        myTreeModel.select(value, myTree, path -> finish.run());
+      }
+      else {
+        List<TreePath> selection = new ArrayList<>();
+        for (Object element : (Collection)value) {
+          if (element instanceof RadComponent component) {
+            TreePath path = getPath(component);
+            if (path != null) {
+              selection.add(path);
+            }
+          }
+        }
 
-    myTreeBuilder.queueUpdate();
-    hookSelection();
-    fireSelectionChanged();
-  }
+        if (selection.isEmpty()) {
+          myTree.clearSelection();
+        }
+        else {
+          TreeUtil.selectPaths(myTree, selection);
+        }
+        finish.run();
+      }
+    });
+ }
 
   public boolean isCanvasSelection() {
     return myCanvasSelection;
@@ -260,9 +274,11 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   //////////////////////////////////////////////////////////////////////////////////////////
 
   private TreePath getPath(@NotNull RadComponent component) {
-    // TODO: I don't know better way gets tree path for element
-    DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(component);
-    return node == null ? null : new TreePath(node.getPath());
+    if (myTreeModel.getRoot() instanceof DefaultMutableTreeNode root) {
+      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, component);
+      return node == null ? null : new TreePath(node.getPath());
+    }
+    return null;
   }
 
   @Override
@@ -272,7 +288,8 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
       if (feedback == INSERT_SELECTION) {
         myTree.scrollPathToVisible(path);
         if (!myTree.isExpanded(path)) {
-          myTreeBuilder.expand(component, null);
+          myTreeModel.expand(component, myTree, p -> {
+          });
         }
       }
       else {

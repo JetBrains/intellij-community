@@ -75,7 +75,7 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
           LOG.debug("Auto-linked ${projectId.debugName} project")
         }
         withContext(Dispatchers.EDT) {
-          unlinkedProjectAware.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
+          unlinkedProjectAware.linkAndLoadProject(project, externalProjectPath)
         }
         return
       }
@@ -214,7 +214,10 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     private val unlinkedProjectAware: ExternalSystemUnlinkedProjectAware,
     private val parentDisposable: Disposable
   ) : VirtualFileChangesListener {
+
     private lateinit var buildFiles: MutableSet<VirtualFile>
+
+    override fun isProcessRecursively() = true
 
     override fun init() {
       buildFiles = HashSet()
@@ -272,7 +275,7 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     }
   }
 
-  private inline fun <T> forEachExtensionSafe(point: ExtensionPointName<T>, consumer: (T) -> Unit) {
+  private inline fun <T : Any> forEachExtensionSafe(point: ExtensionPointName<T>, consumer: (T) -> Unit) {
     for (item in point.extensionList) {
       try {
         consumer(item)

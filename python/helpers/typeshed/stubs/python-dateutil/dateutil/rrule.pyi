@@ -1,5 +1,7 @@
 import datetime
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
+from typing_extensions import TypeAlias
 
 from ._common import weekday as weekdaybase
 
@@ -13,6 +15,7 @@ SECONDLY: int
 
 class weekday(weekdaybase): ...
 
+weekdays: tuple[weekday, weekday, weekday, weekday, weekday, weekday, weekday]
 MO: weekday
 TU: weekday
 WE: weekday
@@ -81,7 +84,7 @@ class _iterinfo:
     def mtimeset(self, hour, minute, second): ...
     def stimeset(self, hour, minute, second): ...
 
-_rrule = rrule
+_RRule: TypeAlias = rrule
 
 class rruleset(rrulebase):
     class _genitem:
@@ -97,12 +100,12 @@ class rruleset(rrulebase):
         def __ne__(self, other): ...
 
     def __init__(self, cache: bool = ...) -> None: ...
-    def rrule(self, rrule: _rrule): ...
+    def rrule(self, rrule: _RRule): ...
     def rdate(self, rdate): ...
     def exrule(self, exrule): ...
     def exdate(self, exdate): ...
 
 class _rrulestr:
-    def __call__(self, s, **kwargs): ...
+    def __call__(self, s, **kwargs) -> rrule | rruleset: ...
 
 rrulestr: _rrulestr

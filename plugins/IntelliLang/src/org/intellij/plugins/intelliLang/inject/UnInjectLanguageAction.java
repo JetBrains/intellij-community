@@ -3,6 +3,7 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,6 +30,11 @@ public final class UnInjectLanguageAction implements IntentionAction, LowPriorit
   @NotNull
   public String getText() {
     return IntelliLangBundle.message("intelliLang.uninject.language.action.text");
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(IntelliLangBundle.message("intelliLang.uninject.language.action.preview"));
   }
 
   @Override

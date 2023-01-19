@@ -2,8 +2,11 @@ package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -19,13 +22,16 @@ interface ParentNullableEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentNullableEntity, ModifiableWorkspaceEntity<ParentNullableEntity>, ObjBuilder<ParentNullableEntity> {
+  interface Builder : ParentNullableEntity, WorkspaceEntity.Builder<ParentNullableEntity>, ObjBuilder<ParentNullableEntity> {
     override var entitySource: EntitySource
     override var parentData: String
     override var child: ChildNullableEntity?
   }
 
   companion object : Type<ParentNullableEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentNullableEntity {
       val builder = builder()
       builder.parentData = parentData
@@ -50,13 +56,16 @@ interface ChildNullableEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildNullableEntity, ModifiableWorkspaceEntity<ChildNullableEntity>, ObjBuilder<ChildNullableEntity> {
+  interface Builder : ChildNullableEntity, WorkspaceEntity.Builder<ChildNullableEntity>, ObjBuilder<ChildNullableEntity> {
     override var entitySource: EntitySource
     override var childData: String
     override var parentEntity: ParentNullableEntity
   }
 
   companion object : Type<ChildNullableEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildNullableEntity {
       val builder = builder()
       builder.childData = childData

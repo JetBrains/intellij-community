@@ -26,4 +26,9 @@ public class PyFunctionNameMacro extends Macro {
     String name = pyFunction.getName();
     return name == null ? null : new TextResult(name);
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof PythonTemplateContextType;
+  }
 }

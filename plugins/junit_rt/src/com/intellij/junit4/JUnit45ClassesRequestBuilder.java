@@ -54,14 +54,12 @@ public final class JUnit45ClassesRequestBuilder {
                   if (!recursively) return super.runnerForClass(testClass);
                   try {
                     Method ignored = BlockJUnit4ClassRunner.class.getDeclaredMethod("isIgnored", FrameworkMethod.class);
-                    if (ignored != null) {
-                      return new BlockJUnit4ClassRunner(testClass) {
-                        @Override
-                        protected boolean isIgnored(FrameworkMethod child) {
-                          return false;
-                        }
-                      };
-                    }
+                    return new BlockJUnit4ClassRunner(testClass) {
+                      @Override
+                      protected boolean isIgnored(FrameworkMethod child) {
+                        return false;
+                      }
+                    };
                   }
                   catch (NoSuchMethodException ignored) {}
                   //older versions

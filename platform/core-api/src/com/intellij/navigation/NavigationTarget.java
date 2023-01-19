@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.navigation;
 
 import com.intellij.model.Pointer;
@@ -32,7 +32,9 @@ public interface NavigationTarget {
    *
    * @return presentation to render this target in navigation popup
    */
-  @NotNull TargetPresentation getTargetPresentation();
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  @NotNull TargetPresentation presentation();
 
   /**
    * This method is called once before the actual navigation.

@@ -42,6 +42,22 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun testShortenAnonymizedIds() {
+    val data: MutableMap<String, Any> = hashMapOf(
+      "plugin_type" to "PLATFORM",
+      "project" to "74149d0fe0b4e87cd0b0a3e60cefef105d83f26d751f6294d8e565a3352c274b",
+      "file_path" to "8a0c68f0f025dfb4c60782cf55ceeeebf513a222af7802312445dd56fa7f8173",
+      "login_hash" to "93a3d4443412b6d52ba2ebd2e486772a8767778cce8aae37e4bc549bbb96ec2d",
+      "anonymous_id" to "a07abb8885af4858894cb57325d875a636d961f7014c3a93da4b76b033b8e5d8"
+    )
+
+    val action = LogEventAction(eventId, data = data)
+
+    doTestCountCollector("{\"plugin_type\":\"PLATFORM\", \"project\":\"74149d0f...4b\", \"file_path\":\"8a0c68f0...73\", " +
+                         "\"login_hash\":\"93a3d444...2d\", \"anonymous_id\":\"a07abb88...d8\"}", action, data)
+  }
+
+  @Test
   fun testFilterSystemFields() {
     val data: MutableMap<String, Any> = hashMapOf(
       "last" to "1564643442610",

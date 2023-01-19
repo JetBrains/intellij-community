@@ -9,11 +9,11 @@ import com.intellij.lang.properties.IProperty
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.ui.JBColor
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.lazyPub
-import org.jetbrains.plugins.gradle.codeInspection.GradleForeignDelegateInspection.Companion.getDelegationHierarchy
-import org.jetbrains.plugins.gradle.codeInspection.GradleForeignDelegateInspection.Companion.getDelegationSourceCaller
-import org.jetbrains.plugins.gradle.codeInspection.GradleForeignDelegateInspection.DelegationHierarchy
+import org.jetbrains.plugins.gradle.codeInspection.groovy.DelegationHierarchy
+import org.jetbrains.plugins.gradle.codeInspection.groovy.getDelegationHierarchy
+import org.jetbrains.plugins.gradle.codeInspection.groovy.getDelegationSourceCaller
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor
 import org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionConsumer
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
@@ -33,8 +33,8 @@ class GradleCompletionConsumer(position: PsiElement, val delegate: GroovyComplet
       GradleLookupWeigher.setGradleCompletionPriority(newElement, GradleLookupWeigher.DEFAULT_COMPLETION_PRIORITY - 1)
       delegate.consume(newElement)
     }
-    else if (psi is GrLightField && psi.originInfo == GradleExtensionsContributor.propertiesFileOriginInfo) {
-      val property = psi.navigationElement.castSafelyTo<IProperty>() ?: return delegate.consume(element)
+    else if (psi is GrLightField && psi.originInfo == GradleExtensionsContributor.PROPERTIES_FILE_ORIGINAL_INFO) {
+      val property = psi.navigationElement.asSafely<IProperty>() ?: return delegate.consume(element)
       val value = property.value
       val newElement = element.modify { withTailText("=$value").withTypeText(psi.type.presentableText, true) }
       delegate.consume(newElement)
@@ -61,7 +61,7 @@ class GradleCompletionConsumer(position: PsiElement, val delegate: GroovyComplet
   }
 
   private fun LookupElement.fallback(modifier: LookupElementBuilder.() -> LookupElementBuilder): LookupElement {
-    val psi = psiElement.castSafelyTo<PsiNamedElement>() ?: return this
+    val psi = psiElement.asSafely<PsiNamedElement>() ?: return this
     return LookupElementBuilder.createWithIcon(psi).modifier()
   }
 

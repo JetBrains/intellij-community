@@ -49,36 +49,36 @@ public class RepositoryHelperTest {
   @Test
   public void testFullFormat() throws IOException {
     List<PluginNode> list = loadPlugins(
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<plugin-repository>\n" +
-      "  <ff>\"J2EE\"</ff>\n" +
-      "  <category name=\"J2EE\">\n" +
-      "    <idea-plugin downloads=\"1\" size=\"1024\" date=\"1119060380000\" url=\"\">\n" +
-      "      <name>AWS Manager</name>\n" +
-      "      <id>com.jetbrains.ec2manager2</id>\n" +
-      "      <description>...</description>\n" +
-      "      <version>1.0.5</version>\n" +
-      "      <vendor email=\"michael.golubev@jetbrains.com\" url=\"http://www.jetbrains.com\">JetBrains</vendor>\n" +
-      "      <idea-version min=\"n/a\" max=\"n/a\" since-build=\"133.193\"/>\n" +
-      "      <change-notes>...</change-notes>\n" +
-      "      <depends>com.intellij.javaee</depends>\n" +
-      "      <rating>3.5</rating>\n" +
-      "      <download-url>plugin.zip</download-url>\n" +
-      "    </idea-plugin>\n" +
-      "    <idea-plugin downloads=\"6182\" size=\"131276\" date=\"1386612959000\" url=\"\">\n" +
-      "      <name>tc Server Support</name>\n" +
-      "      <id>com.intellij.tc.server</id>\n" +
-      "      <description>...</description>\n" +
-      "      <version>1.2</version>\n" +
-      "      <vendor email=\"\" url=\"http://www.jetbrains.com\">JetBrains</vendor>\n" +
-      "      <idea-version min=\"n/a\" max=\"n/a\" since-build=\"133.193\"/>\n" +
-      "      <change-notes>...</change-notes>\n" +
-      "      <depends>com.intellij.javaee</depends>\n" +
-      "      <rating>00</rating>\n" +
-      "      <downloadUrl>plugin.zip</downloadUrl>\n" +
-      "    </idea-plugin>" +
-      "  </category>\n" +
-      "</plugin-repository>");
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <plugin-repository>
+          <ff>"J2EE"</ff>
+          <category name="J2EE">
+            <idea-plugin downloads="1" size="1024" date="1119060380000" url="">
+              <name>AWS Manager</name>
+              <id>com.jetbrains.ec2manager2</id>
+              <description>...</description>
+              <version>1.0.5</version>
+              <vendor email="michael.golubev@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
+              <idea-version min="n/a" max="n/a" since-build="133.193"/>
+              <change-notes>...</change-notes>
+              <depends>com.intellij.javaee</depends>
+              <rating>3.5</rating>
+              <download-url>plugin.zip</download-url>
+            </idea-plugin>
+            <idea-plugin downloads="6182" size="131276" date="1386612959000" url="">
+              <name>tc Server Support</name>
+              <id>com.intellij.tc.server</id>
+              <description>...</description>
+              <version>1.2</version>
+              <vendor email="" url="http://www.jetbrains.com">JetBrains</vendor>
+              <idea-version min="n/a" max="n/a" since-build="133.193"/>
+              <change-notes>...</change-notes>
+              <depends>com.intellij.javaee</depends>
+              <rating>00</rating>
+              <downloadUrl>plugin.zip</downloadUrl>
+            </idea-plugin>  </category>
+        </plugin-repository>""");
     assertEquals("Loaded plugins: " + StringUtil.join(list, IdeaPluginDescriptor::getName, ", "), 2, list.size());
   }
 
@@ -111,24 +111,27 @@ public class RepositoryHelperTest {
   @Test
   public void testSimpleFormat() throws IOException {
     List<PluginNode> list = loadPlugins(
-      "<plugins>\n" +
-      "  <plugin id=\"my.plugin.1\" url=\"plugin1.zip\" version=\"1.2.3\"/>\n" +
-      "  <plugin id=\"my.plugin.2\" url=\"plugin2.jar\" version=\"4.5.6\">\n" +
-      "    <description>...</description>\n" +
-      "    <depends>my.plugin.1</depends>\n" +
-      "  </plugin>\n" +
-      "  <plugin name=\"broken\"/>\n" +
-      "</plugins>");
+      """
+        <plugins>
+          <plugin id="my.plugin.1" url="plugin1.zip" version="1.2.3"/>
+          <plugin id="my.plugin.2" url="plugin2.jar" version="4.5.6">
+            <description>...</description>
+            <depends>my.plugin.1</depends>
+          </plugin>
+          <plugin name="broken"/>
+        </plugins>""");
     assertEquals(2, list.size());
   }
 
   @Test
   public void testSimpleFormatWithProlog() throws IOException {
     List<PluginNode> list = loadPlugins(
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<plugins>\n" +
-      "  <plugin id=\"org.jetbrains.kotlin\" url=\"kotlin-plugin-0.9.999.zip\" version=\"0.9.999\" />\n" +
-      "</plugins>\n");
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <plugins>
+          <plugin id="org.jetbrains.kotlin" url="kotlin-plugin-0.9.999.zip" version="0.9.999" />
+        </plugins>
+        """);
     assertEquals(1, list.size());
   }
 

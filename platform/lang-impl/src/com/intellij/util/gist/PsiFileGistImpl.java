@@ -38,9 +38,6 @@ import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
   private static final ModificationTracker ourReindexTracker = () -> ((GistManagerImpl)GistManager.getInstance()).getReindexCount();
   private final VirtualFileGist<Data> myPersistence;

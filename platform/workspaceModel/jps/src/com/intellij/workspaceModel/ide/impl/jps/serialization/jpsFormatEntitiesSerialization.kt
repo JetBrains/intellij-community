@@ -7,11 +7,12 @@ import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -39,8 +40,18 @@ interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
   val internalEntitySource: JpsFileEntitySource
   val fileUrl: VirtualFileUrl
   val mainEntityClass: Class<E>
-  fun loadEntities(builder: MutableEntityStorage, reader: JpsFileContentReader, errorReporter: ErrorReporter,
-                   virtualFileManager: VirtualFileUrlManager)
+
+  /**
+   * This method reads configuration files and creates entities that are not added to any builder.
+   *
+   * These entities can be just added to builder, but it's suggested to do it using [checkAndAddToBuilder] because this method
+   *   implements additional actions on adding (e.g. reports error when trying to add a library that already exists).
+   */
+  fun loadEntities(reader: JpsFileContentReader,
+                   errorReporter: ErrorReporter,
+                   virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>>
+  fun checkAndAddToBuilder(builder: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>)
+
   fun saveEntities(mainEntities: Collection<E>,
                    entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                    storage: EntityStorage,
@@ -114,21 +125,34 @@ interface JpsProjectSerializers {
     }
   }
 
-  suspend fun loadAll(reader: JpsFileContentReader, builder: MutableEntityStorage, errorReporter: ErrorReporter, project: Project?): List<EntitySource>
+  suspend fun loadAll(reader: JpsFileContentReader,
+                      builder: MutableEntityStorage,
+                      unloadedEntityBuilder: MutableEntityStorage,
+                      unloadedModuleNames: Set<String>,
+                      errorReporter: ErrorReporter,
+                      project: Project?): List<EntitySource>
 
   fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
                              reader: JpsFileContentReader,
-                             errorReporter: ErrorReporter): Pair<Set<EntitySource>, MutableEntityStorage>
+                             unloadedModuleNames: Set<String>,
+                             errorReporter: ErrorReporter): ReloadingResult
 
   @TestOnly
   fun saveAllEntities(storage: EntityStorage, writer: JpsFileContentWriter)
 
-  fun saveEntities(storage: EntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter)
+  fun saveEntities(storage: EntityStorage, unloadedEntityStorage: EntityStorage, affectedSources: Set<EntitySource>,
+                   writer: JpsFileContentWriter)
   
   fun getAllModulePaths(): List<ModulePath>
 
   fun changeEntitySourcesToDirectoryBasedFormat(builder: MutableEntityStorage)
 }
+
+data class ReloadingResult(
+  val builder: MutableEntityStorage,
+  val unloadedEntityBuilder: MutableEntityStorage,
+  val affectedSources: Set<EntitySource>
+)
 
 interface ErrorReporter {
   fun reportError(@Nls message: String, file: VirtualFileUrl)

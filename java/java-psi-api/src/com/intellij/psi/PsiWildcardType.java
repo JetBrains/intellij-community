@@ -12,8 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a wildcard type, with bounds.
- *
- * @author dsl
  */
 public final class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   public static final String EXTENDS_PREFIX = "? extends ";

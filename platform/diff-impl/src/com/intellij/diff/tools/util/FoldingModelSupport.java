@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -420,13 +421,13 @@ public class FoldingModelSupport {
     final int startOffset = document.getLineStartOffset(start);
     final int endOffset = document.getLineEndOffset(end - 1);
 
-    FoldRegion value = editor.getFoldingModel().addFoldRegion(startOffset, endOffset, PLACEHOLDER);
-    if (value != null) {
-      value.setExpanded(expanded);
-      value.setInnerHighlightersMuted(true);
-      value.putUserData(FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED, Boolean.TRUE);
+    FoldRegion region = editor.getFoldingModel().addFoldRegion(startOffset, endOffset, PLACEHOLDER);
+    if (region != null) {
+      region.setExpanded(expanded);
+      region.setInnerHighlightersMuted(true);
+      FoldingModelImpl.hideGutterRendererForCollapsedRegion(region);
     }
-    return value;
+    return region;
   }
 
   private void runBatchOperation(@NotNull Runnable runnable) {
@@ -1166,16 +1167,12 @@ public class FoldingModelSupport {
    * return: number of context lines. ('-1' - end)
    */
   private static int getRangeShift(int range, int number) {
-    switch (number) {
-      case 0:
-        return range;
-      case 1:
-        return range * 2;
-      case 2:
-        return range * 4;
-      default:
-        return -1;
-    }
+    return switch (number) {
+      case 0 -> range;
+      case 1 -> range * 2;
+      case 2 -> range * 4;
+      default -> -1;
+    };
   }
 
   @Nullable

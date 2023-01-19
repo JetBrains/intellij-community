@@ -22,9 +22,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.projectSyncRows
@@ -36,9 +36,6 @@ import com.jetbrains.python.sdk.add.target.createDetectedSdk
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.BorderLayout
 
-/**
- * @author vlan
- */
 open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
                                            private val module: Module?,
                                            private val existingSdks: List<Sdk>,
@@ -84,7 +81,7 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
     else {
       config?.pythonInterpreterPath?.let { introspectedPythonPath ->
         if (introspectedPythonPath.isNotBlank()) {
-          sdkComboBox.addSdkItem(createDetectedSdk(introspectedPythonPath, isLocal = false))
+          sdkComboBox.addSdkItem(createDetectedSdk(introspectedPythonPath, targetEnvironmentConfiguration))
         }
       }
     }
@@ -94,7 +91,7 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
     val panel = panel {
       row(PySdkBundle.message("python.interpreter.label")) {
         cell(sdkComboBox)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .comment(PyBundle.message("python.sdk.admin.permissions.needed.consider.creating.venv.content"),
                    maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
       }

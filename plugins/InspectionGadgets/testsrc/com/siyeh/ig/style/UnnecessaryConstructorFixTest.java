@@ -16,79 +16,101 @@ public class UnnecessaryConstructorFixTest extends IGQuickFixesTestCase {
 
   public void testRemoveDefaultConstructor() {
     doTest(InspectionGadgetsBundle.message("unnecessary.constructor.remove.quickfix"),
-           "public class Foo {\n" +
-           "    public Foo/**/() {}\n" +
-           "}\n",
-           "public class Foo {\n" +
-           "}\n"
+           """
+             public class Foo {
+                 public Foo/**/() {}
+             }
+             """,
+           """
+             public class Foo {
+             }
+             """
     );
   }
 
   public void testRemoveConstructorCallingSuper() {
     doTest(InspectionGadgetsBundle.message("unnecessary.constructor.remove.quickfix"),
-           "public class Foo {\n" +
-           "    public Foo/**/() {\n" +
-           "      super();\n" +
-           "    }\n" +
-           "}\n",
-           "public class Foo {\n" +
-           "}\n"
+           """
+             public class Foo {
+                 public Foo/**/() {
+                   super();
+                 }
+             }
+             """,
+           """
+             public class Foo {
+             }
+             """
     );
   }
 
   public void testRemoveAnnotatedConstructor() {
     doTest(InspectionGadgetsBundle.message("unnecessary.constructor.remove.quickfix"),
-           "public class Foo {\n" +
-           "    @Deprecated\n" +
-           "    public Foo/**/() {}\n" +
-           "}\n",
-           "public class Foo {\n" +
-           "}\n"
+           """
+             public class Foo {
+                 @Deprecated
+                 public Foo/**/() {}
+             }
+             """,
+           """
+             public class Foo {
+             }
+             """
     );
   }
 
   public void testDoNotFixConstructorWithParameter() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.constructor.remove.quickfix"),
-                               "public class Foo {\n" +
-                               "    public Foo/**/(int i) {}\n" +
-                               "}\n"
+                               """
+                                 public class Foo {
+                                     public Foo/**/(int i) {}
+                                 }
+                                 """
     );
   }
 
   public void testDoNotFixPrivateConstructor() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.constructor.remove.quickfix"),
-                               "public class Foo {\n" +
-                               "    private Foo/**/() {}\n" +
-                               "}\n"
+                               """
+                                 public class Foo {
+                                     private Foo/**/() {}
+                                 }
+                                 """
     );
   }
 
   public void testDoNotFixConstructorAmongOthers() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.constructor.remove.quickfix"),
-                               "public class Foo {\n" +
-                               "    public Foo/**/() {}\n" +
-                               "    public Foo(int i) {}\n" +
-                               "}\n"
+                               """
+                                 public class Foo {
+                                     public Foo/**/() {}
+                                     public Foo(int i) {}
+                                 }
+                                 """
     );
   }
 
   public void testDoNotFixNotEmptyConstructor() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.constructor.remove.quickfix"),
-                               "public class Foo {\n" +
-                               "    public Foo/**/() {\n" +
-                               "      System.out.println(\"foo\");\n" +
-                               "    }\n" +
-                               "}\n"
+                               """
+                                 public class Foo {
+                                     public Foo/**/() {
+                                       System.out.println("foo");
+                                     }
+                                 }
+                                 """
     );
   }
 
   public void testDoNotFixNotEmptySuperCall() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.constructor.remove.quickfix"),
-                               "public class Foo extends java.util.Date {\n" +
-                               "    public Foo/**/() {\n" +
-                               "      super(1, 1, 1);\n" +
-                               "    }\n" +
-                               "}\n"
+                               """
+                                 public class Foo extends java.util.Date {
+                                     public Foo/**/() {
+                                       super(1, 1, 1);
+                                     }
+                                 }
+                                 """
     );
   }
 }

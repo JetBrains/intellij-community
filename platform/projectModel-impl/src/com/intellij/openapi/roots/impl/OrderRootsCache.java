@@ -82,7 +82,7 @@ public class OrderRootsCache {
 
   @ApiStatus.Internal
   public void clearCache() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     disposePointers();
     myRoots.set(null);
   }

@@ -206,131 +206,120 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
       """.trimIndent())
     }
     executeAndWait("help")
-      .assertExecutionTree(
-        "-\n" +
-        " -successful\n" +
-        "  :help"
-      )
+      .assertExecutionTree("""
+        |-
+        | -successful
+        |  :help
+      """.trimMargin())
 
     executeAndWait("--unknown-option help")
-      .assertExecutionTree(
-        "-\n" +
-        " -failed\n" +
-        "  Task '--unknown-option' not found in root project 'project'."
-      )
+      .assertExecutionTree("""
+        |-
+        | -failed
+        |  Task '--unknown-option' not found in root project 'project'.
+      """.trimMargin())
 
     if (isGradleNewerOrSameAs("7.0")) {
       executeAndWait("taskWithArgs")
-        .assertExecutionTree(
-          "-\n" +
-          " -failed\n" +
-          "  :taskWithArgs\n" +
-          "  A problem was found with the configuration of task ':taskWithArgs' (type 'ArgsTask')."
-        )
+        .assertExecutionTree("""
+          |-
+          | -failed
+          |  :taskWithArgs
+          |  A problem was found with the configuration of task ':taskWithArgs' (type 'ArgsTask').
+        """.trimMargin())
     }
     else {
       executeAndWait("taskWithArgs")
-        .assertExecutionTree(
-          "-\n" +
-          " -failed\n" +
-          "  :taskWithArgs\n" +
-          "  No value has been specified for property 'myArgs'"
-        )
+        .assertExecutionTree("""
+          |-
+          | -failed
+          |  :taskWithArgs
+          |  No value has been specified for property 'myArgs'
+        """.trimMargin())
     }
 
     // test known build CLI option before tasks and with task quoted argument with apostrophe (')
     // (<build_option> <task> <arg>='<arg_value>')
     executeAndWait("-q taskWithArgs --my_args='test args'")
-      .assertExecutionTree(
-        "-\n" +
-        " -successful\n" +
-        "  :taskWithArgs"
-      )
-      .assertExecutionTreeNode(
-        "successful",
-        {
-          assertThat(it).matches(
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args='test args' -q'...\n" +
-            "\n" +
-            "(?:Starting Gradle Daemon...\n" +
-            "Gradle Daemon started in .* ms\n)?" +
-            "test args\n" +
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args='test args' -q'.\n"
-          )
-        }
-      )
-      .assertExecutionTreeNode(
-        ":taskWithArgs",
-        {
-          assertEmpty(it) // tasks output routing is not available for quiet mode
-        }
-      )
+      .assertExecutionTree("""
+        |-
+        | -successful
+        |  :taskWithArgs
+      """.trimMargin())
+      .assertExecutionTreeNode("successful") {
+        assertThat(it).matches("""
+          |(\d+):(\d+):(\d+)( AM| PM)?: Executing 'taskWithArgs --my_args='test args' -q'...
+          |
+          |(?:Starting Gradle Daemon...
+          |Gradle Daemon started in .* ms
+          |)?test args
+          |(\d+):(\d+):(\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args='test args' -q'.
+          |
+        """.trimMargin())
+      }
+      .assertExecutionTreeNode(":taskWithArgs") {
+        assertEmpty(it) // tasks output routing is not available for quiet mode
+      }
 
     // test known build CLI option before tasks and with task quoted argument with quote (")
     // (<build_option> <task> <arg>="<arg_value>")
     executeAndWait("--info taskWithArgs --my_args=\"test args\"")
-      .assertExecutionTree(
-        "-\n" +
-        " -successful\n" +
-        "  :taskWithArgs"
-      )
-      .assertExecutionTreeNode(
-        ":taskWithArgs",
-        {
-          assertThat(it).matches(
-            "> Task :taskWithArgs\n" +
-            "Caching disabled for task ':taskWithArgs' because:\n" +
-            " {2}Build cache is disabled\n" +
-            "Task ':taskWithArgs' is not up-to-date because:\n" +
-            " {2}Task has not declared any outputs despite executing actions.\n" +
-            "test args\n" +
-            ":taskWithArgs \\(Thread\\[.*]\\) completed. Took (\\d+).(\\d+) secs.\n\n"
-          )
-        }
-      )
+      .assertExecutionTree("""
+        |-
+        | -successful
+        |  :taskWithArgs
+      """.trimMargin())
+      .assertExecutionTreeNode(":taskWithArgs") {
+        assertThat(it).matches("""
+          |> Task :taskWithArgs
+          |Caching disabled for task ':taskWithArgs' because:
+          | {2}Build cache is disabled
+          |Task ':taskWithArgs' is not up-to-date because:
+          | {2}Task has not declared any outputs despite executing actions.
+          |test args
+          |
+          |
+        """.trimMargin())
+      }
 
     // test with task argument and known build CLI option after tasks
     // (<task> <arg>=<arg_value> <build_option>)
     executeAndWait("taskWithArgs --my_args=test_args --quiet")
-      .assertExecutionTree(
-        "-\n" +
-        " -successful\n" +
-        "  :taskWithArgs"
-      )
-      .assertExecutionTreeNode(
-        "successful",
-        {
-          assertThat(it).matches(
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args=test_args --quiet'...\n" +
-            "\n" +
-            "(?:Starting Gradle Daemon...\n" +
-            "Gradle Daemon started in .* ms\n)?" +
-            "test_args\n" +
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args=test_args --quiet'.\n"
-          )
-        }
-      )
+      .assertExecutionTree("""
+        |-
+        | -successful
+        |  :taskWithArgs
+      """.trimMargin())
+      .assertExecutionTreeNode("successful") {
+        assertThat(it).matches("""
+          |(\d+):(\d+):(\d+)( AM| PM)?: Executing 'taskWithArgs --my_args=test_args --quiet'...
+          |
+          |(?:Starting Gradle Daemon...
+          |Gradle Daemon started in .* ms
+          |)?test_args
+          |(\d+):(\d+):(\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args=test_args --quiet'.
+          |
+        """.trimMargin())
+      }
 
     // test with task argument and known build CLI option after tasks
     // (<task> <arg> <arg_value> <build_option>)
     executeAndWait("taskWithArgs --my_args test_args --quiet")
-      .assertExecutionTree(
-        "-\n" +
-        " -successful\n" +
-        "  :taskWithArgs"
-      )
-      .assertExecutionTreeNode(
-        "successful",
-        {
-          assertThat(it).matches(
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args test_args --quiet'...\n" +
-            "\n" +
-            "(?:Starting Gradle Daemon...\n" +
-            "Gradle Daemon started in .* ms\n)?" +
-            "test_args\n" +
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args test_args --quiet'.\n"
-          )
-        }
-      )
+      .assertExecutionTree("""
+        |-
+        | -successful
+        |  :taskWithArgs
+      """.trimMargin())
+      .assertExecutionTreeNode("successful") {
+        assertThat(it).matches("""
+          |(\d+):(\d+):(\d+)( AM| PM)?: Executing 'taskWithArgs --my_args test_args --quiet'...
+          |
+          |(?:Starting Gradle Daemon...
+          |Gradle Daemon started in .* ms
+          |)?test_args
+          |(\d+):(\d+):(\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args test_args --quiet'.
+          |
+        """.trimMargin())
+      }
   }
 }

@@ -20,9 +20,6 @@ import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class PsiNamePatternCondition<T extends PsiElement> extends PropertyPatternCondition<T, String> {
 
   public PsiNamePatternCondition(@NonNls String methodName, final ElementPattern<String> namePattern) {

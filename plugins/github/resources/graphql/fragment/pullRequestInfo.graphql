@@ -8,13 +8,9 @@ fragment pullRequestInfo on PullRequest {
   }
   createdAt
 
-  reviewRequests(first: 100) {
+  reviews(last: 100) {
     nodes {
-      ... on ReviewRequest {
-        requestedReviewer {
-          ...pullRequestReviewerInfo
-        }
-      }
+      ...pullRequestReview
     }
   }
 

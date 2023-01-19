@@ -38,9 +38,6 @@ public interface FileStatus {
   Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
   /** @deprecated use {@link FileStatus#getColor} */
   @Deprecated(forRemoval = true)
-  Color COLOR_SWITCHED = new Color(8, 151, 143);
-  /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated(forRemoval = true)
   Color COLOR_UNKNOWN = new Color(153, 51, 0);
 
   FileStatus NOT_CHANGED = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED", PlatformEditorBundle

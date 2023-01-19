@@ -1,6 +1,6 @@
 // "Change to 'val'" "false"
-// ACTION: Create extension function 'Delegate.getValue', function 'Delegate.setValue'
-// ACTION: Create member function 'Delegate.getValue', function 'Delegate.setValue'
+// ACTION: Create extension functions 'Delegate.getValue', 'Delegate.setValue'
+// ACTION: Create member functions 'Delegate.getValue', 'Delegate.setValue'
 // ACTION: Introduce import alias
 // ERROR: Type 'Delegate' has no method 'getValue(Nothing?, KProperty<*>)' and thus it cannot serve as a delegate
 // ERROR: Type 'Delegate' has no method 'setValue(Nothing?, KProperty<*>, String)' and thus it cannot serve as a delegate for var (read-write property)

@@ -340,4 +340,16 @@ class B {}""")
     def recordPattern = (PsiDeconstructionPattern)expression.pattern
     assert recordPattern.typeElement.text == "Record"
   }
+
+  void "test foreach pattern"() {
+    def stmt = (PsiForeachPatternStatement)PsiElementFactory.getInstance(project).createStatementFromText("for (Rec(int i) : recs);", null)
+    def declaration = (PsiDeconstructionPattern)stmt.iterationPattern
+    assert declaration.typeElement.text == "Rec"
+  }
+
+  void "test foreach parameter"() {
+    def stmt = (PsiForeachStatement)PsiElementFactory.getInstance(project).createStatementFromText("for (int i : recs);", null)
+    def parameter = (PsiParameter)stmt.iterationParameter
+    assert parameter.typeElement.text == "int"
+  }
 }

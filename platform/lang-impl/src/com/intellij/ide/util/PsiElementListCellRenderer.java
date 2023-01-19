@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
@@ -33,6 +34,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -53,11 +55,12 @@ import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgro
 @DirtyUI
 // extends ListCellRenderer<Object> because it can render strings too
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer<Object> {
+  public static final Key<TargetPresentation> TARGET_PRESENTATION_KEY = Key.create("cell.target.presentation");
   private static final Logger LOG = Logger.getInstance(PsiElementListCellRenderer.class);
   private static final String LEFT = BorderLayout.WEST;
   private static final Pattern CONTAINER_PATTERN = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?");
-  private static final SimpleTextAttributes DEFAULT_ERROR_ATTRIBUTES =
-    new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, UIUtil.getInactiveTextColor(), JBColor.RED);
+  private static final SimpleTextAttributes DEFAULT_ERROR_ATTRIBUTES
+    = new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, NamedColorUtil.getInactiveTextColor(), JBColor.RED);
 
   protected int myRightComponentWidth;
 
@@ -66,7 +69,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
     myBackgroundRenderer =
-      Registry.is("psi.element.list.cell.renderer.background") && !ApplicationManager.getApplication().isHeadlessEnvironment()
+      Registry.is("psi.element.list.cell.renderer.background")
       ? new PsiElementBackgroundListCellRenderer(this)
       : null;
   }
@@ -88,6 +91,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       accessibleContext = new MyAccessibleContext();
     }
     return accessibleContext;
+  }
+
+  public void setUsedInPopup(boolean value) {
+    if (myBackgroundRenderer instanceof PsiElementBackgroundListCellRenderer psiElementRenderer) {
+      psiElementRenderer.setUsedInPopup(value);
+    }
   }
 
   public static class ItemMatchers {
@@ -127,6 +136,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       }
 
       if (value instanceof PsiElement) {
+        //noinspection unchecked
         T element = (T)value;
         @NlsContexts.Label String name = ((PsiElement)value).isValid() ? getElementText(element) : "INVALID";
 
@@ -208,7 +218,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-    if (myBackgroundRenderer != null && value instanceof PsiElement) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && value instanceof PsiElement) {
+      putClientProperty(TARGET_PRESENTATION_KEY, computePresentation((PsiElement)value));
+      return this;
+    }
+    else if (myBackgroundRenderer != null && value instanceof PsiElement) {
       //noinspection unchecked
       return myBackgroundRenderer.getListCellRendererComponent(list, (PsiElement)value, index, isSelected, cellHasFocus);
     }
@@ -217,7 +231,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     myRightComponentWidth = 0;
 
     final TextWithIcon itemLocation;
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
       itemLocation = getItemLocation(value);
     }
     final JLabel locationComponent;
@@ -230,7 +244,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       locationComponent = new JLabel(itemLocation.getText(), itemLocation.getIcon(), SwingConstants.RIGHT);
       locationComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, UIUtil.getListCellHPadding()));
       locationComponent.setHorizontalTextPosition(SwingConstants.LEFT);
-      locationComponent.setForeground(isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
+      locationComponent.setForeground(isSelected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor());
 
       add(locationComponent, BorderLayout.EAST);
       spacer = new JPanel();
@@ -242,7 +256,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
     ListCellRenderer<Object> leftRenderer = new LeftRenderer(value == null ? new ItemMatchers(null, null) : getItemMatchers(list, value));
     Component result;
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
       result = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     }
     final Component leftCellRendererComponent = result;
@@ -265,12 +279,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   public ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
     return new ItemMatchers(MatcherHolder.getAssociatedMatcher(list), null);
   }
-
-  /**
-   * @deprecated method has no effect
-   */
-  @Deprecated(forRemoval = true)
-  protected final void setFocusBorderEnabled(boolean enabled) { }
 
   protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
                                                        JList list,
@@ -353,7 +361,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       String containerText = getContainerText(element, elementText);
       TextWithIcon moduleTextWithIcon = getModuleTextWithIcon(element);
       return (containerText == null ? elementText : elementText + " " + containerText) +
-             (moduleTextWithIcon != null ? moduleTextWithIcon.getText() : "");
+             (moduleTextWithIcon != null ? " " + moduleTextWithIcon.getText() : "");
     });
   }
 
@@ -369,7 +377,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     installSpeedSearch(builder, false);
   }
 
-  public void installSpeedSearch(IPopupChooserBuilder builder, final boolean includeContainerText) {
+  public void installSpeedSearch(@NotNull IPopupChooserBuilder builder, final boolean includeContainerText) {
     builder.setNamerForFiltering(o -> {
       if (o instanceof PsiElement) {
         final String elementText = getElementText((T)o);
@@ -378,16 +386,14 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         }
         return elementText;
       }
-      else {
-        return o.toString();
-      }
+      return o.toString();
     });
   }
 
   @ApiStatus.Internal
-  @SuppressWarnings("unchecked")
   @RequiresReadLock
   public final @NotNull TargetPresentation computePresentation(@NotNull PsiElement element) {
+    //noinspection unchecked
     return targetPresentation(
       (T)element,
       myRenderingInfo,
@@ -397,8 +403,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     );
   }
 
-  private final PsiElementRenderingInfo<T> myRenderingInfo = new PsiElementRenderingInfo<T>() {
-
+  private final PsiElementRenderingInfo<T> myRenderingInfo = new PsiElementRenderingInfo<>() {
     @Override
     public @Nullable Icon getIcon(@NotNull T element) {
       return PsiElementListCellRenderer.this.getIcon(element);

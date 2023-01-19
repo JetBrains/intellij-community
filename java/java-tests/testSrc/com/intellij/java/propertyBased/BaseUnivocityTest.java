@@ -29,6 +29,11 @@ public abstract class BaseUnivocityTest extends AbstractApplyAndRevertTestCase {
     CompilerTestUtil.saveApplicationSettings();
   }
 
+  @Override
+  protected void setUpModule() {
+    // skip: module already exists in Univocity project
+  }
+
   @NotNull
   protected LanguageLevel projectLanguageLevel() {
     return LanguageLevel.JDK_1_8;
@@ -38,10 +43,11 @@ public abstract class BaseUnivocityTest extends AbstractApplyAndRevertTestCase {
   protected String getTestDataPath() {
     File file = new File(PathManager.getHomePath(), "univocity-parsers");
     if (!file.exists()) {
-      fail("Cannot find univocity project:\n" +
-           "  execute this in project home: git clone https://github.com/JetBrains/univocity-parsers.git\n" +
-           "  open the just cloned univocity-parsers project in IntelliJ IDEA, let it download all the libraries, close the IDE\n" +
-           "  execute this in univocity-parsers directory: git reset HEAD --hard");
+      fail("""
+             Cannot find univocity project:
+               execute this in project home: git clone https://github.com/JetBrains/univocity-parsers.git
+               open the just cloned univocity-parsers project in IntelliJ IDEA, let it download all the libraries, close the IDE
+               execute this in univocity-parsers directory: git reset HEAD --hard""");
     }
     return file.getAbsolutePath();
   }

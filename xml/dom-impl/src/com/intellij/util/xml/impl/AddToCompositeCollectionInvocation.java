@@ -8,9 +8,6 @@ import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
-*/
 final class AddToCompositeCollectionInvocation implements Invocation {
   private final CollectionChildDescriptionImpl myMainDescription;
   private final Set<? extends CollectionChildDescriptionImpl> myQnames;

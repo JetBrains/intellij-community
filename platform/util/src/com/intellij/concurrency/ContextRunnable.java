@@ -28,4 +28,9 @@ public final class ContextRunnable implements Runnable {
       myRunnable.run();
     }
   }
+
+  @Override
+  public String toString() {
+    return myRunnable.toString();
+  }
 }

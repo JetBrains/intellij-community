@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,8 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
           if (!project.isDefault() &&
               !ApplicationManager.getApplication().isUnitTestMode() &&
               !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-            saveProjectAndNotify(project);
+            getMainProjectCodeStyle().getModificationTracker().incModificationCount();
+            project.scheduleSave();
           }
           LOG.info("Imported old project code style settings.");
         }
@@ -65,11 +67,6 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
         }
       }
     }
-  }
-
-  private void saveProjectAndNotify(@NotNull Project project) {
-    getMainProjectCodeStyle().getModificationTracker().incModificationCount();
-    project.save();
   }
 
   @Override
@@ -85,6 +82,11 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
     synchronized (myStateLock) {
       return mySettingsMap.get(MAIN_PROJECT_CODE_STYLE_NAME);
     }
+  }
+
+  @Override
+  protected @NotNull MessageBus getMessageBus() {
+    return myProject.getMessageBus();
   }
 
   private void initDefaults() {
@@ -193,5 +195,10 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
       return projectStyleFile.exists();
     }
     return false;
+  }
+
+  @Override
+  protected @Nullable Project getProject() {
+    return myProject;
   }
 }

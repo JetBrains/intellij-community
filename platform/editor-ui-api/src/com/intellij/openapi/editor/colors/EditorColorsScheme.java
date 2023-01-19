@@ -90,13 +90,6 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   @NotNull
   Font getFont(EditorFontType key);
 
-  /**
-   * @deprecated Use {@link #getFontPreferences()} and {@link ModifiableFontPreferences}
-   * to change fonts.
-   */
-  @Deprecated(forRemoval = true)
-  void setFont(EditorFontType key, Font font);
-
   float getLineSpacing();
 
   /**

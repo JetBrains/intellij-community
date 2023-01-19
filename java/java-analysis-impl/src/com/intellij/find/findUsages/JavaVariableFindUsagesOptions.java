@@ -20,9 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class JavaVariableFindUsagesOptions extends JavaFindUsagesOptions {
   public boolean isReadAccess = true;
   public boolean isWriteAccess = true;

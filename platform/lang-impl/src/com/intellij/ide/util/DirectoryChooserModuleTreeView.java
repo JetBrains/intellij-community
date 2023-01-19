@@ -40,9 +40,6 @@ import javax.swing.*;
 import javax.swing.tree.*;
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = (node1, node2) -> {
     final Object o1 = node1.getUserObject();
@@ -80,7 +77,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new MyTreeCellRenderer());
-    new TreeSpeedSearch(myTree, o -> {
+    new TreeSpeedSearch(myTree, true, o -> {
       final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
       if (userObject instanceof Module) {
         return ((Module)userObject).getName();
@@ -89,7 +86,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
         if (userObject == null) return "";
         return userObject.toString();
       }
-    }, true);
+    });
   }
 
   @Override

@@ -255,7 +255,7 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
       if (otherPriority <= myPriority) {
         anchor = modifier;
       }
-      else if (otherPriority > myPriority && anchor != null) {
+      else if (anchor != null) {
         break;
       }
     }

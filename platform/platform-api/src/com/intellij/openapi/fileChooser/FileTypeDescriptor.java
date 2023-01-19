@@ -18,16 +18,17 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ImmutableList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class FileTypeDescriptor extends FileChooserDescriptor {
 
-  private final ImmutableList<String> myExtensions;
+  private final List<String> myExtensions;
 
   public FileTypeDescriptor(@NlsContexts.DialogTitle String title, String @NotNull ... extensions) {
     super(true, false, false, true, false, false);

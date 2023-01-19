@@ -136,10 +136,11 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
       "    pass",
       f -> runWithAdditionalFileInLibDir(
         "os.py",
-        "if windows():\n" +
-        "    import ntpath as path\n" +
-        "else:\n" +
-        "    import posixpath as path",
+        """
+          if windows():
+              import ntpath as path
+          else:
+              import posixpath as path""",
         f1 -> runWithAdditionalFileInLibDir(
           "posixpath.py",
           "def commonpath(paths):\n" +
@@ -183,11 +184,12 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
       (__) ->
         runWithAdditionalFileInSkeletonDir(
           "sys.py",
-          "# encoding: utf-8\n" +
-          "# module sys\n" +
-          "# from (built-in)\n" +
-          "# by generator 1.138\n" +
-          "path = 10",
+          """
+            # encoding: utf-8
+            # module sys
+            # from (built-in)
+            # by generator 1.138
+            path = 10""",
           (___) -> doMultiFileAutoImportTest("Import 'sys'")
         )
     );
@@ -452,10 +454,12 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     };
     runWithAdditionalFileInLibDir(
       "_collections_abc.py",
-      "__all__ = [\"Sized\"]\n" +
-      "__name__ = \"collections.abc\"\n" +
-      "class Sized:\n" +
-      "    pass\n",
+      """
+        __all__ = ["Sized"]
+        __name__ = "collections.abc"
+        class Sized:
+            pass
+        """,
       fileConsumer
     );
   }

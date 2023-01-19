@@ -5,9 +5,11 @@ import com.intellij.codeInsight.unwrap.UnwrapTestCase;
 
 public class UnwrapSynchronizedTest extends UnwrapTestCase {
   public void testUnwrap() {
-    assertUnwrapped("synchronized(foo) {\n" +
-                    "    Sys<caret>tem.gc();\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      synchronized(foo) {
+                          Sys<caret>tem.gc();
+                      }
+                      """,
 
                     "Sys<caret>tem.gc();\n");
   }

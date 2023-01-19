@@ -5,9 +5,7 @@ package org.jetbrains.kotlin.idea.completion.test
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.kotlin.idea.test.CompilerTestDirectives
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
@@ -31,6 +29,7 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
 
         withCustomCompilerOptions(fileText, project, module) {
             assertTrue("\"<caret>\" is missing in file \"$testPath\"", fileText.contains("<caret>"))
+            ConfigLibraryUtil.configureLibrariesByDirective(module, fileText)
 
             executeTest {
                 if (ExpectedCompletionUtils.shouldRunHighlightingBeforeCompletion(fileText)) {
@@ -44,6 +43,7 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
                     defaultInvocationCount(),
                     ignoreProperties = ignoreProperties,
                     additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES + IgnoreTests.DIRECTIVES.FIR_IDENTICAL
+                            + listOf(CONFIGURE_LIBRARY_PREFIX)
                 )
             }
         }

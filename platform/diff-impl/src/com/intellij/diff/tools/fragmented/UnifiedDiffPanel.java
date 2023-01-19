@@ -97,6 +97,6 @@ public class UnifiedDiffPanel extends DiffPanelBase {
   //
 
   public boolean isGoodContent() {
-    return myCurrentCard == GOOD_CONTENT;
+    return myCurrentCard.equals(GOOD_CONTENT);
   }
 }

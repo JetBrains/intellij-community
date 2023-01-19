@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.analysis.AnalysisBundle
@@ -85,17 +85,17 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
       registerToolProvider(provider, pluginDescriptor, factories, null)
     }
-    EP_NAME.addExtensionPointListener(object : ExtensionPointListener<InspectionToolProvider?> {
-      override fun extensionAdded(provider: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
+    EP_NAME.addExtensionPointListener(object : ExtensionPointListener<InspectionToolProvider> {
+      override fun extensionAdded(extension: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
         val added = mutableListOf<InspectionFactory>()
-        registerToolProvider(provider, pluginDescriptor, factories, added)
+        registerToolProvider(extension, pluginDescriptor, factories, added)
         for (supplier in added) {
           fireToolAdded(supplier)
         }
       }
 
-      override fun extensionRemoved(provider: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
-        unregisterInspectionOrProvider(provider, factories)
+      override fun extensionRemoved(extension: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
+        unregisterInspectionOrProvider(extension, factories)
       }
     }, null)
   }
@@ -193,7 +193,7 @@ private fun checkTool(toolWrapper: InspectionToolWrapper<*, *>): String? {
   var message: String? = null
   try {
     val id = toolWrapper.getID()
-    if (id == null || !LocalInspectionTool.isValidID(id)) {
+    if (!LocalInspectionTool.isValidID(id)) {
       message = AnalysisBundle.message("inspection.disabled.wrong.id", toolWrapper.getShortName(), id, LocalInspectionTool.VALID_ID_PATTERN)
     }
   }

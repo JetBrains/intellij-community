@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.codeWithMe.ClientId;
@@ -35,11 +35,15 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,9 +54,10 @@ import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
@@ -61,7 +66,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
+
+import static com.intellij.ide.ShutdownKt.removeListenerOnCompletion;
 
 public final class IdeEventQueue extends EventQueue {
   private static final ExtensionPointName<EventDispatcher> DISPATCHERS_EP =
@@ -74,10 +80,6 @@ public final class IdeEventQueue extends EventQueue {
 
   // IdeEventQueue is created before log configuration - cannot be initialized as a part of IdeEventQueue
   private static final class Logs {
-    static {
-      LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
-    }
-
     private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
     private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".runnables");
   }
@@ -122,6 +124,8 @@ public final class IdeEventQueue extends EventQueue {
     com.intellij.util.EventDispatcher.create(PostEventHook.class);
 
   private final Map<AWTEvent, List<Runnable>> myRunnablesWaitingFocusChange = new HashMap<>();
+
+  private final boolean myDispatchingOnMainThread;
 
   /**
    * Executes given {@code runnable} after all focus activities are finished.
@@ -194,18 +198,12 @@ public final class IdeEventQueue extends EventQueue {
     assert EventQueue.isDispatchThread() : Thread.currentThread();
     EventQueue systemEventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     assert !(systemEventQueue instanceof IdeEventQueue) : systemEventQueue;
+    myDispatchingOnMainThread = Thread.currentThread().getName().contains("AppKit");
     systemEventQueue.push(this);
 
     EDT.updateEdt();
 
-    KeyboardFocusManager keyboardFocusManager = IdeKeyboardFocusManager.replaceDefault();
-    keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", e -> {
-      Application app = ApplicationManager.getApplication();
-      // we can get focus event before application is initialized
-      if (app != null) {
-        app.assertIsDispatchThread();
-      }
-    });
+    IdeKeyboardFocusManager.replaceDefault();
 
     addDispatcher(new WindowsAltSuppressor(), null);
     if (SystemInfoRt.isWindows && Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
@@ -222,6 +220,10 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
+  public boolean isDispatchingOnMainThread() {
+    return myDispatchingOnMainThread;
+  }
+
   private static boolean skipMoveResizeEvents(AWTEvent event) {
     // JList, JTable and JTree paint every cell/row/column using the following method:
     //   CellRendererPane.paintComponent(Graphics, Component, Container, int, int, int, int, boolean)
@@ -230,15 +232,13 @@ public final class IdeEventQueue extends EventQueue {
     // All default and simple renderers do not post specified events,
     // but panel-based renderers have to post events by contract.
     switch (event.getID()) {
-      case ComponentEvent.COMPONENT_MOVED:
-      case ComponentEvent.COMPONENT_RESIZED:
-      case HierarchyEvent.ANCESTOR_MOVED:
-      case HierarchyEvent.ANCESTOR_RESIZED:
+      case ComponentEvent.COMPONENT_MOVED, ComponentEvent.COMPONENT_RESIZED, HierarchyEvent.ANCESTOR_MOVED, HierarchyEvent.ANCESTOR_RESIZED -> {
         Object source = event.getSource();
         if (source instanceof Component &&
             ComponentUtil.getParentOfType(CellRendererPane.class, (Component)source) != null) {
           return true;
         }
+      }
     }
     return false;
   }
@@ -294,6 +294,11 @@ public final class IdeEventQueue extends EventQueue {
     Disposer.register(parentDisposable, () -> myActivityListeners.remove(runnable));
   }
 
+  public void addActivityListener(@NotNull Runnable runnable, @NotNull CoroutineScope coroutineScope) {
+    myActivityListeners.add(runnable);
+    removeListenerOnCompletion(coroutineScope, runnable, myActivityListeners);
+  }
+
   public void addDispatcher(@NotNull EventDispatcher dispatcher, @Nullable Disposable parent) {
     _addProcessor(dispatcher, parent, myDispatchers);
   }
@@ -316,10 +321,6 @@ public final class IdeEventQueue extends EventQueue {
 
   public void addPreprocessor(@NotNull EventDispatcher dispatcher, @Nullable Disposable parent) {
     _addProcessor(dispatcher, parent, myPreProcessors);
-  }
-
-  public void removePreprocessor(@NotNull EventDispatcher dispatcher) {
-    myPreProcessors.remove(dispatcher);
   }
 
   private static void _addProcessor(@NotNull EventDispatcher dispatcher,
@@ -364,6 +365,11 @@ public final class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
+    if (isDispatchingOnMainThread() && !EventQueue.isDispatchThread()) {
+      super.dispatchEvent(e);
+      return;
+    }
+
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     long startedAt = System.currentTimeMillis();
     PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstanceOrNull();
@@ -499,6 +505,9 @@ public final class IdeEventQueue extends EventQueue {
     }
     finally {
       Thread.interrupted();
+      if (e instanceof WindowEvent || e instanceof FocusEvent || e instanceof InputEvent) {
+        processIdleActivityListeners(e);
+      }
       if (performanceWatcher != null) {
         performanceWatcher.edtEventFinished();
       }
@@ -508,7 +517,7 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  private void runCustomProcessors(@NotNull AWTEvent event, @NotNull List<EventDispatcher> processors) {
+  private void runCustomProcessors(@NotNull AWTEvent event, @NotNull List<? extends EventDispatcher> processors) {
     for (EventDispatcher each : processors) {
       try {
         each.dispatch(event);
@@ -605,7 +614,8 @@ public final class IdeEventQueue extends EventQueue {
     AWTEvent event = appIsLoaded() ?
                      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> super.getNextEvent()) :
                      super.getNextEvent();
-    if (isKeyboardEvent(event) && myKeyboardEventsDispatched.incrementAndGet() > myKeyboardEventsPosted.get()) {
+    if (!(isDispatchingOnMainThread() && EventQueue.isDispatchThread()) &&
+        isKeyboardEvent(event) && myKeyboardEventsDispatched.incrementAndGet() > myKeyboardEventsPosted.get()) {
       throw new RuntimeException(event + "; posted: " + myKeyboardEventsPosted + "; dispatched: " + myKeyboardEventsDispatched);
     }
     return event;
@@ -725,9 +735,8 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
-    if (e instanceof WindowEvent || e instanceof FocusEvent || e instanceof InputEvent) {
-      processIdleActivityListeners(e);
-    }
+    // Increment the activity counter before performing the action so that they are called with data providers with fresh data
+    ActivityTracker.getInstance().inc();
 
     if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {
       if (myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
@@ -765,7 +774,7 @@ public final class IdeEventQueue extends EventQueue {
       dispatchMouseEvent(e);
     }
     else {
-      defaultDispatchEvent(e);
+      application.withoutImplicitRead(() -> defaultDispatchEvent(e));
     }
   }
 
@@ -790,6 +799,7 @@ public final class IdeEventQueue extends EventQueue {
                                    MouseEvent.MOUSE_RELEASED == e.getID() ||
                                    MouseEvent.MOUSE_CLICKED == e.getID();
     if (isActivityInputEvent || !(e instanceof InputEvent)) {
+      // Increment the activity counter right before notifying listeners so that the listeners would get data providers with fresh data
       ActivityTracker.getInstance().inc();
     }
     synchronized (myLock) {
@@ -862,14 +872,24 @@ public final class IdeEventQueue extends EventQueue {
 
   private boolean dispatchByCustomDispatchers(@NotNull AWTEvent e) {
     for (EventDispatcher eachDispatcher : myDispatchers) {
-      if (eachDispatcher.dispatch(e)) {
-        return true;
+      try {
+        if (eachDispatcher.dispatch(e)) {
+          return true;
+        }
+      }
+      catch (Throwable t) {
+        processException(t);
       }
     }
 
     for (EventDispatcher eachDispatcher : DISPATCHERS_EP.getExtensionsIfPointIsRegistered()) {
-      if (eachDispatcher.dispatch(e)) {
-        return true;
+      try {
+        if (eachDispatcher.dispatch(e)) {
+          return true;
+        }
+      }
+      catch (Throwable t) {
+        processException(t);
       }
     }
 
@@ -912,9 +932,11 @@ public final class IdeEventQueue extends EventQueue {
   private void defaultDispatchEvent(@NotNull AWTEvent e) {
     try {
       maybeReady();
+      MouseEvent me = e instanceof MouseEvent ? (MouseEvent)e : null;
       KeyEvent ke = e instanceof KeyEvent ? (KeyEvent)e : null;
       boolean consumed = ke == null || ke.isConsumed();
-      if (e instanceof MouseEvent && (((MouseEvent)e).isPopupTrigger() || e.getID() == MouseEvent.MOUSE_PRESSED)) {
+      if (me != null && (me.isPopupTrigger() || e.getID() == MouseEvent.MOUSE_PRESSED) ||
+          ke != null && ke.getKeyCode() == KeyEvent.VK_CONTEXT_MENU) {
         myPopupTriggerTime = System.currentTimeMillis();
       }
       super.dispatchEvent(e);
@@ -954,7 +976,7 @@ public final class IdeEventQueue extends EventQueue {
 
   public void pumpEventsForHierarchy(@NotNull Component modalComponent,
                                      @NotNull Future<?> exitCondition,
-                                     @NotNull Predicate<? super AWTEvent> isCancelEvent) {
+                                     @NotNull Consumer<? super AWTEvent> eventConsumer) {
     assert EventQueue.isDispatchThread();
     if (Logs.LOG.isDebugEnabled()) {
       Logs.LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
@@ -966,9 +988,7 @@ public final class IdeEventQueue extends EventQueue {
         if (!consumed) {
           dispatchEvent(event);
         }
-        if (isCancelEvent.test(event)) {
-          break;
-        }
+        eventConsumer.accept(event);
       }
       catch (Throwable e) {
         Logs.LOG.error(e);
@@ -980,7 +1000,20 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   // return true if consumed
-  private static boolean consumeUnrelatedEvent(@NotNull Component modalComponent, @NotNull AWTEvent event) {
+  @ApiStatus.Internal
+  public static boolean consumeUnrelatedEvent(@Nullable Component modalComponent, @NotNull AWTEvent event) {
+    if (modalComponent == null) {
+      if (event instanceof InputEvent && event.getSource() instanceof Component) {
+        if (Logs.LOG.isDebugEnabled()) {
+          Logs.LOG.debug("pumpEventsForHierarchy.consumed: " + event);
+        }
+        ((InputEvent)event).consume();
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
     boolean consumed = false;
     if (event instanceof InputEvent) {
       Object s = event.getSource();
@@ -1230,24 +1263,24 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private static final class SequencedEventNestedFieldHolder {
-    private static final Method DISPOSE_METHOD;
+    private static final MethodHandle DISPOSE_METHOD;
     private static final Class<?> SEQUENCED_EVENT_CLASS;
 
     private static void invokeDispose(AWTEvent event) {
       try {
         DISPOSE_METHOD.invoke(event);
       }
-      catch (IllegalAccessException | InvocationTargetException e) {
+      catch (Throwable e) {
         throw new RuntimeException(e);
       }
     }
 
     static {
       try {
-        SEQUENCED_EVENT_CLASS = Class.forName("java.awt.SequencedEvent");
-        DISPOSE_METHOD = ReflectionUtil.getDeclaredMethod(SEQUENCED_EVENT_CLASS, "dispose");
+        SEQUENCED_EVENT_CLASS = IdeEventQueue.class.getClassLoader().loadClass("java.awt.SequencedEvent");
+        DISPOSE_METHOD = MethodHandles.privateLookupIn(SEQUENCED_EVENT_CLASS, MethodHandles.lookup()).findVirtual(SEQUENCED_EVENT_CLASS, "dispose", MethodType.methodType(Void.TYPE));
       }
-      catch (ClassNotFoundException e) {
+      catch (Throwable e) {
         throw new RuntimeException(e);
       }
     }

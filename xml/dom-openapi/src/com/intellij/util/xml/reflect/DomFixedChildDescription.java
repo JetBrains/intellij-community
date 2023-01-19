@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 
-/**
- * @author peter
- */
 public interface DomFixedChildDescription extends DomChildrenDescription {
   int getCount();
   JavaMethod getGetterMethod(int index);

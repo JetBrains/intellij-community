@@ -88,6 +88,15 @@ interface UastCodeGenerationPlugin {
    * @return the selector part of the qualified reference after importing
    */
   fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression?
+
+  /**
+   * Initialize the given field with the given parameter inside method's body of the given parameter.
+   * If the parameter is from Kotlin primary constructor and the field and the parameter have the same names,
+   * field declaration is moved to the primary constructor.
+   * If the parameter is from Kotlin primary constructor and the field and the parameter have different names,
+   * Kotlin property is initialized with the parameter.
+   */
+  fun initializeField(uField: UField, uParameter: UParameter): UExpression?
 }
 
 /**
@@ -104,7 +113,6 @@ interface UastElementFactory {
    * Create binary expression, and possibly remove unnecessary parenthesis, so it could become [UPolyadicExpression], e.g
    * [createFlatBinaryExpression] (1 + 2, 2, +) could produce 1 + 2 + 2, which is polyadic expression
    */
-  @JvmDefault
   fun createFlatBinaryExpression(leftOperand: UExpression,
                                  rightOperand: UExpression,
                                  operator: UastBinaryOperator,
@@ -117,12 +125,18 @@ interface UastElementFactory {
 
   fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression?
 
+  /**
+   * Generate method from language-specific text. It's up to the caller to generate the text properly
+   * May return null if not implemented by a specific plugin.
+   */
+  fun createMethodFromText(methodText: String, context: PsiElement?): UMethod? = null
+
   fun createParenthesizedExpression(expression: UExpression,
                                     context: PsiElement?): UParenthesizedExpression?
 
-  fun createReturnExpresion(expression: UExpression?,
-                            inLambda: Boolean = false,
-                            context: PsiElement?): UReturnExpression?
+  fun createReturnExpression(expression: UExpression?,
+                             inLambda: Boolean = false,
+                             context: PsiElement?): UReturnExpression?
 
   fun createLocalVariable(suggestedName: String?,
                           type: PsiType?,

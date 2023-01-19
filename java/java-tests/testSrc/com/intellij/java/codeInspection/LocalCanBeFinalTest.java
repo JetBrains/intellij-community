@@ -3,6 +3,8 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,11 @@ public class LocalCanBeFinalTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testMultiWriteNoRead() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testUnreachableModification() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = true;
     doTest();
@@ -168,5 +175,10 @@ public class LocalCanBeFinalTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testResource() {
     doTest();
+  }
+
+  public void testPatternVariables() {
+    myTool.REPORT_PATTERN_VARIABLES = true;
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
   }
 }

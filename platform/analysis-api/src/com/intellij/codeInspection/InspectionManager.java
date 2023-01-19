@@ -145,18 +145,6 @@ public abstract class InspectionManager {
 
 
   /**
-   * @deprecated use {@link #createProblemDescriptor(PsiElement, TextRange, String, ProblemHighlightType, boolean, LocalQuickFix...)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  @Contract(pure = true)
-  public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            TextRange rangeInElement,
-                                                            @NotNull @InspectionMessage String descriptionTemplate,
-                                                            @NotNull ProblemHighlightType highlightType,
-                                                            LocalQuickFix @Nullable ... fixes);
-
-  /**
    * @deprecated use {@link #createNewGlobalContext()} instead
    */
   @Deprecated(forRemoval = true)

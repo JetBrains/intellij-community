@@ -377,14 +377,22 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         }
         newText.append("*/");
 
-        return bindToText(containingClass, newText);
+        return bindToText(newText);
       }
 
       return PsiDocMethodOrFieldRef.this;
     }
 
-    public PsiElement bindToText(PsiClass containingClass, StringBuffer newText) {
-      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(containingClass.getProject());
+    /**
+     * @deprecated use {@link #bindToText(StringBuffer)} instead
+     */
+    @Deprecated
+    public PsiElement bindToText(@SuppressWarnings("unused") PsiClass containingClass, StringBuffer newText) {
+      return bindToText(newText);
+    }
+    
+    public PsiElement bindToText(StringBuffer newText) {
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
       PsiComment comment = elementFactory.createCommentFromText(newText.toString(), null);
       PsiElement tag = PsiTreeUtil.getChildOfType(comment, PsiDocTag.class);
       PsiElement ref = PsiTreeUtil.getChildOfType(tag, PsiDocMethodOrFieldRef.class);

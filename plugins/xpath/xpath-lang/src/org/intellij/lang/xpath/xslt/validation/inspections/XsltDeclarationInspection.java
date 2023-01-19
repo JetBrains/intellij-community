@@ -43,7 +43,7 @@ public class XsltDeclarationInspection extends XsltInspection {
         if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
         return new XmlElementVisitor() {
             @Override
-            public void visitXmlTag(final XmlTag tag) {
+            public void visitXmlTag(final @NotNull XmlTag tag) {
                 final XmlAttribute nameAttr = tag.getAttribute("name", null);
                 if (nameAttr == null || PsiTreeUtil.hasErrorElements(nameAttr)) return;
 

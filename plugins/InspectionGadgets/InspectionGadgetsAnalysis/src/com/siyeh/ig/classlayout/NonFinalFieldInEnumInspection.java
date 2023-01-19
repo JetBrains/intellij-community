@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 /**
  * @author Bas Leijdekkers
  */
@@ -38,10 +41,9 @@ public class NonFinalFieldInEnumInspection extends BaseInspection {
   public boolean onlyWarnWhenQuickFix = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("non.final.field.in.enum.quickfix.option"), this, "onlyWarnWhenQuickFix"
-    );
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyWarnWhenQuickFix", InspectionGadgetsBundle.message("non.final.field.in.enum.quickfix.option")));
   }
 
   @NotNull

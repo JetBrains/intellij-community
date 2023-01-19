@@ -16,6 +16,7 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,11 @@ class ResourceBundleEditorKeepEmptyValueToggleAction extends CheckboxAction {
   ResourceBundleEditorKeepEmptyValueToggleAction() {
     super(ResourceBundleEditorBundle.message("action.keep.empty.value.description"),
           ResourceBundleEditorBundle.message("action.keep.empty.value.text"), null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

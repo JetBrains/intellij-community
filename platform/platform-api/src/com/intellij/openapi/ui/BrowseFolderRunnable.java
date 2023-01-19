@@ -97,11 +97,25 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
   @NotNull
   @NonNls
   protected String expandPath(@NotNull @NonNls String path) {
+    var descriptor = BrowseFolderDescriptor.asBrowseFolderDescriptor(myFileChooserDescriptor);
+    var convertTextToPath = descriptor.getConvertTextToPath();
+    if (convertTextToPath != null) {
+      return convertTextToPath.invoke(path);
+    }
     return path;
   }
 
   @NotNull
   protected @NlsSafe String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+    var descriptor = BrowseFolderDescriptor.asBrowseFolderDescriptor(myFileChooserDescriptor);
+    var convertFileToText = descriptor.getConvertFileToText();
+    if (convertFileToText != null) {
+      return convertFileToText.invoke(chosenFile);
+    }
+    var convertPathToText = descriptor.getConvertPathToText();
+    if (convertPathToText != null) {
+      return convertPathToText.invoke(chosenFile.getPath());
+    }
     return chosenFile.getPresentableUrl();
   }
 

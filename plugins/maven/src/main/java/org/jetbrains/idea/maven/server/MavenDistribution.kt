@@ -41,8 +41,8 @@ class LocalMavenDistribution(override val mavenHome: Path, override val name: St
 }
 
 internal class WslMavenDistribution(private val wslDistribution: WSLDistribution,
-                           val pathToMaven: String,
-                           override val name: String) : MavenDistribution {
+                                    private val pathToMaven: String,
+                                    override val name: String) : MavenDistribution {
   override val version: String? by lazy {
     MavenUtil.getMavenVersion(wslDistribution.getWindowsPath(pathToMaven))
   }

@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class GantClassFinder extends NonClasspathClassFinder {
   public GantClassFinder(@NotNull Project project) {
     super(project);

@@ -13,13 +13,16 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
 
   constructor(consumer: DoubleConsumer) : this(Easing.LINEAR, consumer)
 
-  fun setVisible(visible: Boolean) {
+  fun setVisible(visible: Boolean, updateVisibility: () -> Unit) {
     if (visible != atomicVisible.getAndSet(visible)) {
       val value = statefulEasing.value
       when {
-        !visible && value > 0.0 -> animator.animate(createHidingAnimation(value))
-        visible && value < 1.0 -> animator.animate(createShowingAnimation(value))
-        else -> animator.stop()
+        !visible && value > 0.0 -> animator.animate(createHidingAnimation(value, updateVisibility))
+        visible && value < 1.0 -> animator.animate(createShowingAnimation(value, updateVisibility))
+        else -> {
+          animator.stop()
+          updateVisibility()
+        }
       }
     }
   }
@@ -31,19 +34,19 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
     }
   }
 
-  protected val showingDelay
+  private val showingDelay
     get() = intValue("ide.animation.showing.delay", 0)
 
-  protected val showingDuration
+  private val showingDuration
     get() = intValue("ide.animation.showing.duration", 130)
 
-  protected val hidingDelay
+  private val hidingDelay
     get() = intValue("ide.animation.hiding.delay", 140)
 
-  protected val hidingDuration
+  private val hidingDuration
     get() = intValue("ide.animation.hiding.duration", 150)
 
-  private fun createShowingAnimation(value: Double) = Animation(consumer).apply {
+  private fun createShowingAnimation(value: Double, updateVisibility: () -> Unit) = Animation(consumer).apply {
     if (value > 0.0) {
       duration = (showingDuration * (1 - value)).roundToInt()
       easing = statefulEasing.coerceIn(value, 1.0)
@@ -53,9 +56,13 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
       duration = showingDuration
       easing = statefulEasing
     }
+  }.runWhenScheduled {
+    if (atomicVisible.get()) { // Most likely not needed, just for consistency with hide. In the worst case we just avoid minor flickering here.
+      updateVisibility()
+    }
   }
 
-  private fun createHidingAnimation(value: Double) = Animation(consumer).apply {
+  private fun createHidingAnimation(value: Double, updateVisibility: () -> Unit) = Animation(consumer).apply {
     if (value < 1.0) {
       duration = (hidingDuration * value).roundToInt()
       easing = statefulEasing.coerceIn(0.0, value).reverse()
@@ -64,6 +71,10 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
       delay = hidingDelay
       duration = hidingDuration
       easing = statefulEasing.reverse()
+    }
+  }.runWhenExpiredOrCancelled {
+    if (!atomicVisible.get()) { // If the animation is cancelled and the component was already made visible, we do NOT want to hide it again!
+      updateVisibility()
     }
   }
 }

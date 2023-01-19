@@ -75,7 +75,7 @@ class AddTestLibQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, Lib
     )
 
     companion object : KotlinSingleIntentionActionFactory() {
-        val KOTLIN_TEST_UNRESOLVED = setOf(
+        private val KOTLIN_TEST_UNRESOLVED = setOf(
             "Asserter", "assertFailsWith", "currentStackTrace", "failsWith", "todo", "assertEquals",
             "assertFails", "assertNot", "assertNotEquals", "assertNotNull", "assertNull", "assertTrue", "expect", "fail", "fails"
         )

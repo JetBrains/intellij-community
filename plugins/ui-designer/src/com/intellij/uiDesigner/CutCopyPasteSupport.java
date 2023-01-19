@@ -31,10 +31,6 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvider{
   private static final Logger LOG = Logger.getInstance(CutCopyPasteSupport.class);
   private static final SAXBuilder SAX_BUILDER = new SAXBuilder();

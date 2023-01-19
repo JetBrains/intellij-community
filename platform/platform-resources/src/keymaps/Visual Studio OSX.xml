@@ -524,4 +524,10 @@
     <keyboard-shortcut first-keystroke="meta R" second-keystroke="meta E" />
   </action>
 
+  <action id="ExpandCollapseToggleAction">
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="M" />
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="control M" />
+
+  </action>
+
 </keymap>

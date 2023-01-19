@@ -1,25 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsHost
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.RecordUniqueValidator
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
@@ -27,12 +23,10 @@ import java.awt.Component
 import java.util.regex.Pattern
 
 
-class GithubShareDialog(project: Project,
-                        accounts: Set<GithubAccount>,
-                        defaultAccount: GithubAccount?,
+class GithubShareDialog(private val project: Project,
                         existingRemotes: Set<String>,
                         private val accountInformationSupplier: (GithubAccount, Component) -> Pair<Boolean, Set<String>>)
-  : DialogWrapper(project), DataProvider {
+  : DialogWrapper(project) {
 
   private val GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+")
 
@@ -50,7 +44,12 @@ class GithubShareDialog(project: Project,
     .apply { records = existingRemotes }
   private var accountInformationLoadingError: ValidationInfo? = null
 
-  private val accountsModel = GHAccountsComboBoxModel(accounts, defaultAccount ?: accounts.firstOrNull())
+  private val accounts = GHAccountsUtil.accounts
+
+  private val accountsModel = CollectionComboBoxModel(
+    accounts.toMutableList(),
+    GHAccountsUtil.getDefaultAccount(project) ?: accounts.firstOrNull()
+  )
 
   init {
     title = message("share.on.github")
@@ -86,34 +85,33 @@ class GithubShareDialog(project: Project,
   override fun createCenterPanel() = panel {
     row(message("share.dialog.repo.name")) {
       cell(repositoryTextField)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .validationOnApply { validateRepository() }
         .resizableColumn()
       cell(privateCheckBox)
     }
     row(message("share.dialog.remote")) {
       cell(remoteTextField)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .validationOnApply { validateRemote() }
     }
     row {
       label(message("share.dialog.description"))
-        .verticalAlign(VerticalAlign.TOP)
+        .align(AlignY.TOP)
       scrollCell(descriptionTextArea)
-        .horizontalAlign(HorizontalAlign.FILL)
-        .verticalAlign(VerticalAlign.FILL)
+        .align(Align.FILL)
     }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
 
     if (accountsModel.size != 1) {
       row(message("share.dialog.share.by")) {
         comboBox(accountsModel)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .validationOnApply { if (accountsModel.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
           .applyToComponent { addActionListener { switchAccount(getAccount()) } }
           .resizableColumn()
 
         if (accountsModel.size == 0) {
-          cell(GHAccountsHost.createAddAccountLink())
+          cell(GHAccountsUtil.createAddAccountLink(project, accountsModel))
         }
       }
     }
@@ -144,10 +142,6 @@ class GithubShareDialog(project: Project,
   override fun getHelpId(): String = "github.share"
   override fun getDimensionServiceKey(): String = "Github.ShareDialog"
   override fun getPreferredFocusedComponent(): JBTextField = repositoryTextField
-
-  override fun getData(dataId: String): Any? =
-    if (GHAccountsHost.KEY.`is`(dataId)) accountsModel
-    else null
 
   @NlsSafe
   fun getRepositoryName(): String = repositoryTextField.text

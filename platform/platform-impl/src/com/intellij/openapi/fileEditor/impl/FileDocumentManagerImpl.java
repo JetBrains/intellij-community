@@ -228,6 +228,11 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     }
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (!myUnsavedDocuments.isEmpty()) {
+      for (Document document : myUnsavedDocuments) {
+        VirtualFile file = getFile(document);
+        if (file == null) continue;
+        unbindFileFromDocument(file, document);
+      }
       myUnsavedDocuments.clear();
       myMultiCaster.unsavedDocumentsDropped();
     }

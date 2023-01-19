@@ -5,14 +5,19 @@ import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModelBase
+import com.intellij.collaboration.ui.util.swingAction
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
+import javax.swing.Action
 
 class GHCommentTextFieldModel(
   project: Project,
   initialText: String,
   private val submitter: (String) -> CompletableFuture<*>
-) : CommentTextFieldModelBase(project, initialText) {
+) : CommentTextFieldModelBase(project, initialText.filter { it != '\r' }) {
 
   constructor(project: Project, submitter: (String) -> CompletableFuture<*>) : this(project, "", submitter)
 
@@ -31,4 +36,21 @@ class GHCommentTextFieldModel(
       isBusy = false
     }
   }
+}
+
+fun GHCommentTextFieldModel.submitAction(name: @Nls String): Action {
+  val submitAction = swingAction(name) {
+    submit()
+  }
+  val submitEnabledListener: () -> Unit = {
+    submitAction.isEnabled = !isBusy && content.text.isNotBlank()
+  }
+  addStateListener(submitEnabledListener)
+  document.addDocumentListener(object : DocumentListener {
+    override fun documentChanged(event: DocumentEvent) {
+      submitEnabledListener()
+    }
+  })
+  submitEnabledListener()
+  return submitAction
 }

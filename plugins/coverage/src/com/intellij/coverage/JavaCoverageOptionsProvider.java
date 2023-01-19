@@ -11,7 +11,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.ClassUtil;
+import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 @State(
   name = "JavaCoverageOptionsProvider",
@@ -47,6 +52,14 @@ public final class JavaCoverageOptionsProvider implements PersistentStateCompone
     return myState.myIgnoreEmptyPrivateConstructors;
   }
 
+  void setExcludeAnnotationPatterns(List<String> patterns) {
+    myState.myExcludeAnnotationPatterns = patterns;
+  }
+
+  public List<String> getExcludeAnnotationPatterns() {
+    return myState.myExcludeAnnotationPatterns;
+  }
+
   public boolean isGeneratedConstructor(String qualifiedName, String methodSignature) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (myState.myIgnoreImplicitConstructors) {
@@ -63,14 +76,27 @@ public final class JavaCoverageOptionsProvider implements PersistentStateCompone
 
   @Override
   public void loadState(@NotNull JavaCoverageOptionsProvider.State state) {
-     myState.myIgnoreEmptyPrivateConstructors = state.myIgnoreEmptyPrivateConstructors;
-     myState.myIgnoreImplicitConstructors = state.myIgnoreImplicitConstructors;
+    myState.myIgnoreEmptyPrivateConstructors = state.myIgnoreEmptyPrivateConstructors;
+    myState.myIgnoreImplicitConstructors = state.myIgnoreImplicitConstructors;
+    myState.myExcludeAnnotationPatterns = listWithDefaultAnnotations(state.myExcludeAnnotationPatterns);
+  }
+
+  @NotNull
+  private static ArrayList<String> listWithDefaultAnnotations(List<String> patterns) {
+    final LinkedHashSet<String> annotations = new LinkedHashSet<>(getDefaultExcludeAnnotationPatterns());
+    annotations.addAll(patterns);
+    return new ArrayList<>(annotations);
   }
 
 
   public static class State {
     public boolean myIgnoreEmptyPrivateConstructors = true;
     public boolean myIgnoreImplicitConstructors = true;
+    public List<String> myExcludeAnnotationPatterns = getDefaultExcludeAnnotationPatterns();
   }
 
+  @NotNull
+  public static List<String> getDefaultExcludeAnnotationPatterns() {
+    return CollectionsKt.mutableListOf("*Generated*");
+  }
 }

@@ -20,7 +20,7 @@ final class ForceIndexRescanningAction extends DumbAwareAction {
                                                            null,
                                                            "Force re-scanning",
                                                            ScanningType.FULL_FORCED);
-    task.queue(project);
+    task.queue();
   }
 
   @Override

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
@@ -214,7 +213,7 @@ public final class StringToConstraintsTransformer {
     options.setSearchPattern(pattern.toString());
   }
 
-  public static int handleCharacterLiteral(@NotNull String criteria, int index, @NotNull StringBuilder pattern) {
+  private static int handleCharacterLiteral(@NotNull String criteria, int index, @NotNull StringBuilder pattern) {
     final int length = criteria.length();
     if (index + 1 < length && criteria.charAt(index + 1) == '\'') {
       // ignore next '
@@ -255,12 +254,8 @@ public final class StringToConstraintsTransformer {
     if (ch == '+' || ch == '*') {
       // this is type axis navigation relation
       switch (ch) {
-        case '+':
-          constraint.setStrictlyWithinHierarchy(true);
-          break;
-        case '*':
-          constraint.setWithinHierarchy(true);
-          break;
+        case '+' -> constraint.setStrictlyWithinHierarchy(true);
+        case '*' -> constraint.setWithinHierarchy(true);
       }
 
       ++index;
@@ -269,22 +264,35 @@ public final class StringToConstraintsTransformer {
     }
 
     if (ch == '[') {
+      int spaces = 0; // balance spaces surrounding content between brackets
+      while (++index < length && criteria.charAt(index) == ' ') spaces++;
+
       // eat complete condition
       boolean quoted = false;
-      int endIndex = index++;
+      boolean closed = false;
+      int endIndex = index - 1;
       while (++endIndex < length) {
         if (criteria.charAt(endIndex - 1) != '\\') {
           ch = criteria.charAt(endIndex);
           if (ch == '"') {
             quoted = !quoted;
           }
-          else if (ch == ']' && !quoted) break;
+          else if (ch == ']' && !quoted) {
+            int j = 1;
+            while (j <= spaces && criteria.charAt(endIndex - j) == ' ') j++;
+            if (j - 1 == spaces) {
+              endIndex -= spaces;
+              closed = true;
+              break;
+            }
+          }
         }
       }
       if (quoted) throw new MalformedPatternException(SSRBundle.message("error.expected.value", "\""));
-      if (ch != ']') throw new MalformedPatternException(SSRBundle.message("error.expected.value", "]"));
+      if (!closed) throw new MalformedPatternException(SSRBundle.message("error.expected.value", " ".repeat(spaces) + "]"));
+      if (index > endIndex) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", "["));
       parseCondition(constraint, criteria.substring(index, endIndex));
-      return endIndex + 1;
+      return endIndex + spaces + 1;
     }
     else {
       // eat reg exp constraint
@@ -364,10 +372,7 @@ public final class StringToConstraintsTransformer {
         }
         if (text.length() == 0) throw new MalformedPatternException(SSRBundle.message("error.argument.expected", option));
         if (quoted) throw new MalformedPatternException(SSRBundle.message("error.expected.value", "\""));
-        if (!closed) {
-          throw new MalformedPatternException(SSRBundle.message("error.expected.value",
-                                                                StringUtil.repeatSymbol(' ', spaces) + ")"));
-        }
+        if (!closed) throw new MalformedPatternException(SSRBundle.message("error.expected.value", " ".repeat(spaces) + ")"));
         handleOption(constraint, option, text.toString(), invert);
         text.setLength(0);
         invert = false;
@@ -425,11 +430,11 @@ public final class StringToConstraintsTransformer {
       }
     }
     else if (option.equals(EXPRTYPE)) {
-      boolean regex = false;
       if (argument.charAt(0) == '*') {
         argument = argument.substring(1);
         constraint.setExprTypeWithinHierarchy(true);
       }
+      boolean regex = false;
       if (argument.charAt(0) == '~') {
         argument = argument.substring(1);
         regex = true;

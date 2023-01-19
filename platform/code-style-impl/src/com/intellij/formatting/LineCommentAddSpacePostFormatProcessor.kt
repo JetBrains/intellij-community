@@ -49,10 +49,10 @@ class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
 
 
 internal class SingleLineCommentFinder(val rangeToReformat: TextRange,
-                                       val languageCodeStyleSettingsProvider: LanguageCodeStyleProvider,
+                                       private val languageCodeStyleSettingsProvider: LanguageCodeStyleProvider,
                                        commenter: Commenter) : PsiRecursiveElementVisitor() {
 
-  val lineCommentPrefixes = commenter.lineCommentPrefixes.map { it.trim() }
+  private val lineCommentPrefixes = commenter.lineCommentPrefixes.map { it.trim() }
   val commentOffsets = arrayListOf<Int>()
 
   override fun visitElement(element: PsiElement) {

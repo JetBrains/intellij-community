@@ -40,6 +40,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandler;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.IndentAwareInjectedFileChangesHandler;
@@ -64,7 +65,7 @@ import java.util.Set;
 /**
  * @author Gregory Shrago
  */
-public class QuickEditHandler extends UserDataHolderBase implements Disposable, DocumentListener {
+public final class QuickEditHandler extends UserDataHolderBase implements Disposable, DocumentListener {
   private final Project myProject;
   private final QuickEditAction myAction;
 
@@ -94,7 +95,7 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
     myEditor = editor;
     myAction = action;
     myOrigDocument = editor.getDocument();
-    Place shreds = InjectedLanguageUtil.getShreds(injectedFile);
+    Place shreds = InjectedLanguageUtilBase.getShreds(injectedFile);
     FileType fileType = injectedFile.getFileType();
     Language language = injectedFile.getLanguage();
     PsiLanguageInjectionHost.Shred firstShred = ContainerUtil.getFirstItem(shreds);
@@ -202,8 +203,8 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
       final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
       final FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
       if (editors.length == 0) {
-        final EditorWindow curWindow = fileEditorManager.getCurrentWindow();
-        mySplittedWindow = curWindow.split(SwingConstants.HORIZONTAL, false, myNewVirtualFile, true);
+        EditorWindow currentWindow = fileEditorManager.getCurrentWindow();
+        mySplittedWindow = Objects.requireNonNull(currentWindow).split(JSplitPane.VERTICAL_SPLIT, false, myNewVirtualFile, true);
       }
       Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myNewVirtualFile, injectedOffset), true);
       // fold missing values
@@ -296,7 +297,7 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
       }
     }
     if (unsplit) {
-      ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).closeFile(myNewVirtualFile, mySplittedWindow, false);
+      ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).closeFile(myNewVirtualFile, mySplittedWindow);
     }
     FileEditorManager.getInstance(myProject).closeFile(myNewVirtualFile);
   }
@@ -356,11 +357,6 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
   @TestOnly
   public PsiFile getNewFile() {
     return myNewFile;
-  }
-
-  @NotNull
-  public Document getFragmentDocument() {
-    return myNewDocument;
   }
 
   public boolean tryReuse(@NotNull PsiFile injectedFile, @NotNull TextRange hostRange) {

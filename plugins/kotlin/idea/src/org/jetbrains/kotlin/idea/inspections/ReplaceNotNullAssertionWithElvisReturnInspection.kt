@@ -76,7 +76,7 @@ class ReplaceNotNullAssertionWithElvisReturnInspection : AbstractKotlinInspectio
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val postfix = descriptor.psiElement.parent as? KtPostfixExpression ?: return
             val base = postfix.baseExpression ?: return
-            val psiFactory = KtPsiFactory(postfix)
+            val psiFactory = KtPsiFactory(project)
             postfix.replaced(
                 psiFactory.createExpressionByPattern(
                     "$0 ?: return$1$2",

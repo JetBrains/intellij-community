@@ -15,7 +15,9 @@ internal open class B {
 
 internal class BB : B()
 internal enum class EE {
-    A, B, C
+    A,
+    B,
+    C
 }
 
 internal class X {

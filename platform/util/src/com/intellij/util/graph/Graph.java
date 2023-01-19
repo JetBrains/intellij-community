@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Iterator;
 
-/**
- * @author dsl
- */
 public interface Graph<Node> extends InboundSemiGraph<Node>, OutboundSemiGraph<Node> {
 
   @Override

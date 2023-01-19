@@ -33,21 +33,24 @@ public class MessageDescriptor extends NodeDescriptorImpl {
   private final int myKind;
   private final Supplier<@NlsContexts.Label String> myMessage;
 
-  public static final MessageDescriptor DEBUG_INFO_UNAVAILABLE = new MessageDescriptor(
-    JavaDebuggerBundle.messagePointer("message.node.debug.info.not.available"));
-  public static final MessageDescriptor LOCAL_VARIABLES_INFO_UNAVAILABLE = new MessageDescriptor(
-    JavaDebuggerBundle.messagePointer("message.node.local.variables.debug.info.not.available")
-  );
-  public static final MessageDescriptor ARRAY_IS_EMPTY = new MessageDescriptor(JavaDebuggerBundle.messagePointer("message.node.empty.array"));
-  public static final MessageDescriptor CLASS_HAS_NO_FIELDS = new MessageDescriptor(
-    JavaDebuggerBundle.messagePointer("message.node.class.has.no.fields"));
-  public static final MessageDescriptor OBJECT_COLLECTED = new MessageDescriptor(JavaDebuggerBundle.messagePointer("message.node.object.collected"));
-  public static final MessageDescriptor EVALUATING = new MessageDescriptor(XDebuggerBundle.messagePointer("xdebugger.building.tree.node.message"));
-  public static final MessageDescriptor THREAD_IS_RUNNING = new MessageDescriptor(JavaDebuggerBundle.messagePointer("message.node.thread.running"));
-  public static final MessageDescriptor THREAD_IS_EMPTY = new MessageDescriptor(
-    JavaDebuggerBundle.messagePointer("message.node.thread.has.no.frames"));
-  public static final MessageDescriptor EVALUATION_NOT_POSSIBLE = new MessageDescriptor(
-    JavaDebuggerBundle.messagePointer("message.node.evaluation.not.possible", WARNING));
+  public static final MessageDescriptor DEBUG_INFO_UNAVAILABLE =
+    new MessageDescriptor(JavaDebuggerBundle.messagePointer("message.node.debug.info.not.available"));
+  public static final MessageDescriptor LOCAL_VARIABLES_INFO_UNAVAILABLE =
+    new MessageDescriptor(JavaDebuggerBundle.messagePointer("message.node.local.variables.debug.info.not.available"));
+  public static final MessageDescriptor ARRAY_IS_EMPTY =
+    new MessageDescriptor(JavaDebuggerBundle.messagePointer("message.node.empty.array"));
+  public static final MessageDescriptor CLASS_HAS_NO_FIELDS =
+    new MessageDescriptor(JavaDebuggerBundle.messagePointer("message.node.class.has.no.fields"));
+  public static final MessageDescriptor OBJECT_COLLECTED =
+    new MessageDescriptor(JavaDebuggerBundle.messagePointer("message.node.object.collected"));
+  public static final MessageDescriptor EVALUATING =
+    new MessageDescriptor(XDebuggerBundle.messagePointer("xdebugger.building.tree.node.message"));
+  public static final MessageDescriptor THREAD_IS_RUNNING =
+    new MessageDescriptor(JavaDebuggerBundle.messagePointer("message.node.thread.running"));
+  public static final MessageDescriptor THREAD_IS_EMPTY =
+    new MessageDescriptor(JavaDebuggerBundle.messagePointer("message.node.thread.has.no.frames"));
+  public static final MessageDescriptor EVALUATION_NOT_POSSIBLE =
+    new MessageDescriptor(JavaDebuggerBundle.messagePointer("message.node.evaluation.not.possible", WARNING));
 
   public MessageDescriptor(Supplier<@NlsContexts.Label String> message) {
     this(message, INFORMATION);

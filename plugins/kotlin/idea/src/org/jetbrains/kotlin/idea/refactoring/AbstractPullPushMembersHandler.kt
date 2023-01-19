@@ -15,10 +15,12 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.lang.ElementsHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class AbstractPullPushMembersHandler(
     @Nls private val refactoringName: String,
@@ -55,7 +57,7 @@ abstract class AbstractPullPushMembersHandler(
         val target = (file.findElementAt(offset) ?: return).parentsWithSelf.firstOrNull {
             it is KtClassOrObject
                     || ((it is KtNamedFunction || it is KtProperty) && it.parent is KtClassBody)
-                    || it is KtParameter && it.hasValOrVar() && it.ownerFunction is KtPrimaryConstructor
+                    || it.safeAs<KtParameter>()?.isConstructorDeclaredProperty() == true
         }
 
         if (target == null) {

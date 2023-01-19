@@ -185,6 +185,7 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
         }
     }
 
+    @Suppress("ActionIsNotPreviewFriendly")
     private class AddExecutionLocalFix(
         file: XmlFile,
         val module: Module,
@@ -204,6 +205,7 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
         }
     }
 
+    @Suppress("ActionIsNotPreviewFriendly")
     private class FixExecutionPhaseLocalFix(val execution: MavenDomPluginExecution, val newPhase: String) : LocalQuickFix {
         override fun getName() = KotlinMavenBundle.message("fix.execution.phase.name", newPhase)
 
@@ -214,6 +216,7 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
         }
     }
 
+    @Suppress("ActionIsNotPreviewFriendly")
     private class AddJavaExecutionsLocalFix(val module: Module, file: XmlFile, val kotlinPlugin: MavenDomPlugin) : LocalQuickFix {
         private val pointer = file.createSmartPointer()
 
@@ -226,6 +229,7 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
         }
     }
 
+    @Suppress("ActionIsNotPreviewFriendly")
     private class FixAddStdlibLocalFix(pomFile: XmlFile, val id: String, val version: String?) : LocalQuickFix {
         private val pointer = pomFile.createSmartPointer()
 
@@ -238,6 +242,7 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
         }
     }
 
+    @Suppress("ActionIsNotPreviewFriendly")
     private class ConfigurePluginExecutionLocalFix(
         val module: Module,
         xmlFile: XmlFile,

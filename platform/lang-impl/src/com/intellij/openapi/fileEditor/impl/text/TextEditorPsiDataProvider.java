@@ -56,7 +56,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (e.isDisposed() || !(e instanceof EditorEx)) {
       return null;
     }
-    VirtualFile file = ((EditorEx)e).getVirtualFile();
+    VirtualFile file = e.getVirtualFile();
     if (file == null || !file.isValid()) return null;
 
     if (HOST_EDITOR.is(dataId)) {
@@ -106,7 +106,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (e.isDisposed() || !(e instanceof EditorEx)) {
       return null;
     }
-    VirtualFile file = ((EditorEx)e).getVirtualFile();
+    VirtualFile file = e.getVirtualFile();
     if (file == null || !file.isValid()) return null;
 
     Project project = e.getProject();

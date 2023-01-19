@@ -20,7 +20,7 @@ public class MockLocalVariable extends MockMirror implements LocalVariable {
   public MockLocalVariable(MockVirtualMachine virtualMachine, PsiVariable psiVariable) {
     this(virtualMachine, psiVariable.getName(), MockType.createType(virtualMachine, psiVariable.getType()), null);
   }
-  
+
   public MockLocalVariable(final MockVirtualMachine virtualMachine, String name, MockType type, MockValue value) {
     super(virtualMachine);
     myName = name;
@@ -55,7 +55,7 @@ public class MockLocalVariable extends MockMirror implements LocalVariable {
 
   @Override
   public boolean isVisible(StackFrame stackFrame) {
-    return ((MockStackFrame) stackFrame).visibleVariables().contains(this);
+    return ((MockStackFrame)stackFrame).visibleVariables().contains(this);
   }
 
   @Override

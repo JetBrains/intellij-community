@@ -10,6 +10,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -193,7 +194,7 @@ public class SvnMergeInfoRootPanelManual {
       myLocalArea.setForeground(JBColor.RED);
       myLocalArea.setText(message("label.select.target.working.copy"));
     } else {
-      myLocalArea.setForeground(UIUtil.getInactiveTextColor());
+      myLocalArea.setForeground(NamedColorUtil.getInactiveTextColor());
       myLocalArea.setText(local);
       myBranchToLocal.put(url, local);
     }

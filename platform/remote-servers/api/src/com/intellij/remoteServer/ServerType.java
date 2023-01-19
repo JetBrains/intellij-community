@@ -23,15 +23,16 @@ import java.util.Comparator;
 import java.util.List;
 
 public abstract class ServerType<C extends ServerConfiguration> {
+
   public static final ExtensionPointName<ServerType<?>> EP_NAME = ExtensionPointName.create("com.intellij.remoteServer.type");
 
-  private final String myId;
+  private final @NotNull @NonNls String myId;
 
-  protected ServerType(String id) {
+  protected ServerType(@NotNull @NonNls String id) {
     myId = id;
   }
 
-  public final String getId() {
+  public final @NotNull @NonNls String getId() {
     return myId;
   }
 

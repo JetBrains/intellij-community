@@ -18,7 +18,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 private val LOG = logger<WorkspaceModelGenerator>()
 
 object WorkspaceModelGenerator {
-  private const val GENERATED_FOLDER_NAME = "gen"
+  const val GENERATED_FOLDER_NAME = "gen"
 
   fun generate(project: Project, module: Module) {
     val acceptedSourceRoots = getSourceRoot(module)
@@ -59,7 +59,6 @@ object WorkspaceModelGenerator {
         val sourceFolderType = if (sourceFolder.isTestSource) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE
         contentEntry.addSourceFolder(generatedFolder, sourceFolderType, properties)
         WriteAction.run<RuntimeException>(modifiableModel::commit)
-        module.project.save()
         return generatedFolder
       }
     }

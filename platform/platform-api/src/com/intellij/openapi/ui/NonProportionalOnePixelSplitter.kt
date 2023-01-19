@@ -29,7 +29,7 @@ class NonProportionalOnePixelSplitter(
   private val minSize get() = if (orientation) minimumSize.height else minimumSize.width
 
   // hack
-  var maxRetryCount = 100
+  private var maxRetryCount = 100
 
   private var addNotifyTimestamp: Long = 0
 

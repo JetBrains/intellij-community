@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
@@ -16,6 +17,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBMenu;
@@ -146,6 +148,7 @@ public final class ActionMenu extends JBMenu {
       mySpecialMenu.setInvoker(this);
       popupListener = createWinListener(mySpecialMenu);
       ReflectionUtil.setField(JMenu.class, this, JPopupMenu.class, "popupMenu", mySpecialMenu);
+      UiInspectorUtil.registerProvider(mySpecialMenu, () -> UiInspectorUtil.collectActionGroupInfo("Menu", myGroup.getAction(), myPlace));
     }
     return super.getPopupMenu();
   }
@@ -218,7 +221,7 @@ public final class ActionMenu extends JBMenu {
     if (icon != null && settings != null && settings.getShowIconsInMenus()) {
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
+        icon = IconLoader.INSTANCE.getMenuBarIcon(icon, myUseDarkIcons);
       } else if (shouldConvertIconToDarkVariant()) {
         icon = IconLoader.getDarkIcon(icon, true);
       }
@@ -232,7 +235,7 @@ public final class ActionMenu extends JBMenu {
           setDisabledIcon(myPresentation.getDisabledIcon());
         }
         else {
-          setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
+          setDisabledIcon(IconLoader.getDisabledIcon(icon));
         }
         if (myScreenMenuPeer != null) myScreenMenuPeer.setIcon(icon);
       }
@@ -244,7 +247,7 @@ public final class ActionMenu extends JBMenu {
   }
 
   static boolean isShowNoIcons() {
-    return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons");
+    return SystemInfo.isMac && (Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons") || ExperimentalUI.isNewUI());
   }
 
   static boolean isAligned() {
@@ -275,13 +278,11 @@ public final class ActionMenu extends JBMenu {
 
     if (mySubElementSelector != null) {
       switch (e.getID()) {
-        case MouseEvent.MOUSE_PRESSED:
+        case MouseEvent.MOUSE_PRESSED -> {
           mySubElementSelector.ignoreNextSelectionRequest();
           shouldCancelIgnoringOfNextSelectionRequest = true;
-          break;
-        case MouseEvent.MOUSE_ENTERED:
-          mySubElementSelector.ignoreNextSelectionRequest(getDelay() * 2);
-          break;
+        }
+        case MouseEvent.MOUSE_ENTERED -> mySubElementSelector.ignoreNextSelectionRequest(getDelay() * 2);
       }
     }
 

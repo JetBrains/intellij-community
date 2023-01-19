@@ -30,9 +30,6 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 
-/**
- * @author Denis Zhdanov
- */
 public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor, DumbAware {
 
   private static final List<StaticImporter> IMPORTERS = asList(new SingleMemberStaticImporter(), new OnDemandStaticImporter());

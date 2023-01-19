@@ -152,9 +152,7 @@ public final class TypeConstraints {
       PsiType normalized = normalizeType(psiType.getDeepComponentType());
       int dimensions = psiType.getArrayDimensions();
       if (normalized instanceof PsiIntersectionType) {
-        PsiType[] types = StreamEx.of(((PsiIntersectionType)normalized).getConjuncts())
-          .map(t -> PsiTypesUtil.createArrayType(t, dimensions))
-          .toArray(PsiType.EMPTY_ARRAY);
+        PsiType[] types = ContainerUtil.map2Array(((PsiIntersectionType)normalized).getConjuncts(), PsiType.EMPTY_ARRAY, t -> PsiTypesUtil.createArrayType(t, dimensions));
         return PsiIntersectionType.createIntersection(true, types);
       }
       return PsiTypesUtil.createArrayType(normalized, dimensions);
@@ -166,8 +164,7 @@ public final class TypeConstraints {
       return normalizeType(wildcardType.getUpperBound());
     }
     if (psiType instanceof PsiIntersectionType intersectionType) {
-      PsiType[] types =
-        StreamEx.of(intersectionType.getConjuncts()).map(TypeConstraints::normalizeType).toArray(PsiType.EMPTY_ARRAY);
+      PsiType[] types = ContainerUtil.map2Array(intersectionType.getConjuncts(), PsiType.EMPTY_ARRAY, TypeConstraints::normalizeType);
       if (types.length > 0) {
         return PsiIntersectionType.createIntersection(true, types);
       }
@@ -209,12 +206,15 @@ public final class TypeConstraints {
     String name = classDef.getQualifiedName();
     if (name != null) {
       switch (name) {
-        case JAVA_LANG_OBJECT:
+        case JAVA_LANG_OBJECT -> {
           return EXACTLY_OBJECT;
-        case JAVA_LANG_CLONEABLE:
+        }
+        case JAVA_LANG_CLONEABLE -> {
           return ArraySuperInterface.CLONEABLE;
-        case JAVA_IO_SERIALIZABLE:
+        }
+        case JAVA_IO_SERIALIZABLE -> {
           return ArraySuperInterface.SERIALIZABLE;
+        }
       }
     }
     return new ExactClass(classDef, false);
@@ -374,26 +374,17 @@ public final class TypeConstraints {
     public DfType getUnboxedType() {
       String name = classDef.getQualifiedName();
       if (name == null) return DfType.BOTTOM;
-      switch (name) {
-        case JAVA_LANG_BOOLEAN:
-          return DfTypes.BOOLEAN;
-        case JAVA_LANG_INTEGER:
-          return DfTypes.INT;
-        case JAVA_LANG_LONG:
-          return DfTypes.LONG;
-        case JAVA_LANG_DOUBLE:
-          return DfTypes.DOUBLE;
-        case JAVA_LANG_FLOAT:
-          return DfTypes.FLOAT;
-        case JAVA_LANG_BYTE:
-          return DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.BYTE)));
-        case JAVA_LANG_SHORT:
-          return DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.SHORT)));
-        case JAVA_LANG_CHARACTER:
-          return DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.CHAR)));
-        default:
-          return DfType.BOTTOM;
-      }
+      return switch (name) {
+        case JAVA_LANG_BOOLEAN -> DfTypes.BOOLEAN;
+        case JAVA_LANG_INTEGER -> DfTypes.INT;
+        case JAVA_LANG_LONG -> DfTypes.LONG;
+        case JAVA_LANG_DOUBLE -> DfTypes.DOUBLE;
+        case JAVA_LANG_FLOAT -> DfTypes.FLOAT;
+        case JAVA_LANG_BYTE -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.BYTE)));
+        case JAVA_LANG_SHORT -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.SHORT)));
+        case JAVA_LANG_CHARACTER -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.CHAR)));
+        default -> DfType.BOTTOM;
+      };
     }
 
     @Override

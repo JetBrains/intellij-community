@@ -16,7 +16,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.junit.Test
 import java.util.*
 
-@Suppress("UsePropertyAccessSyntax")
 internal class XmlSerializerMapTest {
   @Test
   fun `empty map`() {

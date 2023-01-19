@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -15,9 +15,9 @@ public final class ComponentSerializationUtil {
   @NotNull
   public static <S> Class<S> getStateClass(@NotNull Class<? extends PersistentStateComponent> aClass) {
     TypeVariable<Class<PersistentStateComponent>> variable = PersistentStateComponent.class.getTypeParameters()[0];
-    Type type = ReflectionUtil.resolveVariableInHierarchy(variable, aClass);
+    Type type = ClassUtil.resolveVariableInHierarchy(variable, aClass);
     assert type != null : aClass;
-    @SuppressWarnings("unchecked") Class<S> result = (Class<S>)ReflectionUtil.getRawType(type);
+    @SuppressWarnings("unchecked") Class<S> result = (Class<S>)ClassUtil.getRawType(type);
     if (result == Object.class) {
       //noinspection unchecked
       return (Class<S>)aClass;

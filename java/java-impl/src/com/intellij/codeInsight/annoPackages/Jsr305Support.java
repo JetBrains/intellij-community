@@ -51,14 +51,13 @@ public class Jsr305Support implements AnnotationPackageSupport {
   @Nullable
   private static Nullability getJsr305QualifierNullability(@NotNull PsiAnnotation qualifier) {
     String qName = qualifier.getQualifiedName();
-    if (qName == null || !qName.startsWith("javax.annotation.")) return null;
-
-    if (qName.equals(JAVAX_ANNOTATION_NULLABLE) &&
-        NullableNotNullManager.getInstance(qualifier.getProject()).getNullables().contains(qName)) {
+    if (qName == null) return null;
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(qualifier.getProject());
+    if (qName.equals(JAVAX_ANNOTATION_NULLABLE) && manager.getNullables().contains(qName)) {
       return Nullability.NULLABLE;
     }
     if (qName.equals(JAVAX_ANNOTATION_NONNULL)) return extractNullityFromWhenValue(qualifier);
-    return null;
+    return manager.getAnnotationNullability(qName).orElse(null);
   }
 
   public static boolean isNullabilityNickName(@NotNull PsiClass candidate) {
@@ -103,13 +102,10 @@ public class Jsr305Support implements AnnotationPackageSupport {
   @NotNull
   @Override
   public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
-    switch (nullability) {
-      case NOT_NULL:
-        return Collections.singletonList(JAVAX_ANNOTATION_NONNULL);
-      case NULLABLE:
-        return Arrays.asList(JAVAX_ANNOTATION_NULLABLE, "javax.annotation.CheckForNull");
-      default:
-        return Collections.emptyList();
-    }
+    return switch (nullability) {
+      case NOT_NULL -> Collections.singletonList(JAVAX_ANNOTATION_NONNULL);
+      case NULLABLE -> Arrays.asList(JAVAX_ANNOTATION_NULLABLE, "javax.annotation.CheckForNull");
+      case UNKNOWN -> Collections.emptyList();
+    };
   }
 }

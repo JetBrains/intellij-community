@@ -8,8 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileChangeAdapter;
@@ -29,14 +28,11 @@ import java.util.*;
 final class InspectionProfilerDataHolder {
   private static final Logger LOG = Logger.getInstance(InspectionProfilerDataHolder.class);
 
-  private static class InspectionFileData {
-    private final @NotNull Latencies @NotNull [/*3*/] latencies; // ERROR,WARNING,OTHER
-    private final Map<String, PsiElement> favoriteElement; // tool id -> PsiElement which produced some diagnostics during last run
-
-    private InspectionFileData(@NotNull Latencies @NotNull [] latencies, @NotNull Map<String, PsiElement> favoriteElement) {
-      this.latencies = latencies;
-      this.favoriteElement = favoriteElement;
-    }
+  /**
+   * @param latencies       ERROR,WARNING,OTHER
+   * @param favoriteElement tool id -> PsiElement which produced some diagnostics during last run
+   */
+  private record InspectionFileData(@NotNull Latencies @NotNull [] latencies, @NotNull Map<String, PsiElement> favoriteElement) {
   }
 
   // store all data locally to be able to clear fast
@@ -64,7 +60,7 @@ final class InspectionProfilerDataHolder {
         clearProfileData();
       }
     });
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
         clearProfileData();

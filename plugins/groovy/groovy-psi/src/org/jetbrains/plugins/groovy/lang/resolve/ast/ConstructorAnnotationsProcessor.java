@@ -26,9 +26,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.GrVisibilityUtils.getVisibility;
-/**
- * @author peter
- */
 public class ConstructorAnnotationsProcessor implements AstTransformationSupport {
 
   @Override

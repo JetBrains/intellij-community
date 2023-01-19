@@ -4,24 +4,27 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 
-interface ModuleTestEntity : WorkspaceEntityWithPersistentId {
+interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
   val name: String
 
   val contentRoots: List<@Child ContentRootTestEntity>
   val facets: List<@Child FacetTestEntity>
 
-  override val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
-    get() = ModuleTestEntityPersistentId(name)
+  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+    get() = ModuleTestEntitySymbolicId(name)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ModuleTestEntity, ModifiableWorkspaceEntity<ModuleTestEntity>, ObjBuilder<ModuleTestEntity> {
+  interface Builder : ModuleTestEntity, WorkspaceEntity.Builder<ModuleTestEntity>, ObjBuilder<ModuleTestEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var contentRoots: List<ContentRootTestEntity>
@@ -29,6 +32,9 @@ interface ModuleTestEntity : WorkspaceEntityWithPersistentId {
   }
 
   companion object : Type<ModuleTestEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleTestEntity {
       val builder = builder()
       builder.name = name
@@ -52,7 +58,7 @@ interface ContentRootTestEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ContentRootTestEntity, ModifiableWorkspaceEntity<ContentRootTestEntity>, ObjBuilder<ContentRootTestEntity> {
+  interface Builder : ContentRootTestEntity, WorkspaceEntity.Builder<ContentRootTestEntity>, ObjBuilder<ContentRootTestEntity> {
     override var entitySource: EntitySource
     override var module: ModuleTestEntity
     override var sourceRootOrder: SourceRootTestOrderEntity?
@@ -60,6 +66,9 @@ interface ContentRootTestEntity : WorkspaceEntity {
   }
 
   companion object : Type<ContentRootTestEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ContentRootTestEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -81,13 +90,16 @@ interface SourceRootTestOrderEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SourceRootTestOrderEntity, ModifiableWorkspaceEntity<SourceRootTestOrderEntity>, ObjBuilder<SourceRootTestOrderEntity> {
+  interface Builder : SourceRootTestOrderEntity, WorkspaceEntity.Builder<SourceRootTestOrderEntity>, ObjBuilder<SourceRootTestOrderEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var contentRoot: ContentRootTestEntity
   }
 
   companion object : Type<SourceRootTestOrderEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SourceRootTestOrderEntity {
       val builder = builder()
       builder.data = data
@@ -111,13 +123,16 @@ interface SourceRootTestEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SourceRootTestEntity, ModifiableWorkspaceEntity<SourceRootTestEntity>, ObjBuilder<SourceRootTestEntity> {
+  interface Builder : SourceRootTestEntity, WorkspaceEntity.Builder<SourceRootTestEntity>, ObjBuilder<SourceRootTestEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var contentRoot: ContentRootTestEntity
   }
 
   companion object : Type<SourceRootTestEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SourceRootTestEntity {
       val builder = builder()
       builder.data = data
@@ -134,27 +149,27 @@ fun MutableEntityStorage.modifyEntity(entity: SourceRootTestEntity, modification
   SourceRootTestEntity.Builder::class.java, entity, modification)
 //endregion
 
-data class ModuleTestEntityPersistentId(val name: String) : PersistentEntityId<ModuleTestEntity> {
+data class ModuleTestEntitySymbolicId(val name: String) : SymbolicEntityId<ModuleTestEntity> {
   override val presentableName: String
     get() = name
 }
 
-data class FacetTestEntityPersistentId(val name: String) : PersistentEntityId<FacetTestEntity> {
+data class FacetTestEntitySymbolicId(val name: String) : SymbolicEntityId<FacetTestEntity> {
   override val presentableName: String
     get() = name
 }
 
-interface FacetTestEntity : WorkspaceEntityWithPersistentId {
+interface FacetTestEntity : WorkspaceEntityWithSymbolicId {
   val data: String
   val moreData: String
   val module: ModuleTestEntity
 
-  override val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
-    get() = FacetTestEntityPersistentId(data)
+  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+    get() = FacetTestEntitySymbolicId(data)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FacetTestEntity, ModifiableWorkspaceEntity<FacetTestEntity>, ObjBuilder<FacetTestEntity> {
+  interface Builder : FacetTestEntity, WorkspaceEntity.Builder<FacetTestEntity>, ObjBuilder<FacetTestEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var moreData: String
@@ -162,6 +177,9 @@ interface FacetTestEntity : WorkspaceEntityWithPersistentId {
   }
 
   companion object : Type<FacetTestEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, moreData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetTestEntity {
       val builder = builder()
       builder.data = data

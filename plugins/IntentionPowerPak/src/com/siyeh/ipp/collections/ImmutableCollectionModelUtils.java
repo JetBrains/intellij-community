@@ -312,12 +312,11 @@ final class ImmutableCollectionModelUtils {
     }
 
     public String getText() {
-      switch (myType) {
-        case MAP: return "new HashMap<>()";
-        case LIST: return "new ArrayList<>()";
-        case SET: return "new HashSet<>()";
-        default: throw new AssertionError();
-      }
+      return switch (myType) {
+        case MAP -> "new HashMap<>()";
+        case LIST -> "new ArrayList<>()";
+        case SET -> "new HashSet<>()";
+      };
     }
   }
 

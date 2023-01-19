@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes;
 
 import com.intellij.openapi.project.Project;
@@ -12,7 +12,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.Optional;
 
-public class LanguageLevelQuickFixFactory {
+public final class LanguageLevelQuickFixFactory {
 
   @Nullable
   public static LanguageLevelQuickFix getInstance(@NotNull Project project, @NotNull MavenProject mavenProject) {

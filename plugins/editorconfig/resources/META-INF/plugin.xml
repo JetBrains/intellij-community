@@ -408,6 +408,8 @@ To create an EditorConfig file in a directory, right-click this directory and se
                      key="inspection.file.encoding.mismatch.name"
                      enabledByDefault="true"
                      groupKey="editorconfig.inspection.group"/>
+
+    <statistics.counterUsagesCollector implementationClass="org.editorconfig.configmanagement.EditorConfigUsagesCollector"/>
   </extensions>
 
 

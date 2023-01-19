@@ -31,22 +31,24 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
 
         PlatformTestUtil.assertTreeEqual(
           svc.getTree(),
-          "-Class1.java\n" +
-          " -Class1\n" +
-          "  getValue(): int\n" +
-          "  getClass(): Class<?>\n" +
-          "  hashCode(): int\n" +
-          "  equals(Object): boolean\n" +
-          "  clone(): Object\n" +
-          "  toString(): String\n" +
-          "  notify(): void\n" +
-          "  notifyAll(): void\n" +
-          "  wait(long): void\n" +
-          "  wait(long, int): void\n" +
-          "  wait(): void\n" +
-          "  finalize(): void\n" +
-          "  myField1: boolean\n" +
-          "  myField2: boolean\n");
+          """
+            -Class1.java
+             -Class1
+              getValue(): int
+              getClass(): Class<?>
+              hashCode(): int
+              equals(Object): boolean
+              clone(): Object
+              toString(): String
+              notify(): void
+              notifyAll(): void
+              wait(long): void
+              wait(long, int): void
+              wait(): void
+              finalize(): void
+              myField1: boolean
+              myField2: boolean
+            """);
 
         svc.setActionActive(InheritedMembersNodeProvider.ID, false);
         svc.setActionActive(InheritedMembersNodeProvider.ID, true);
@@ -55,31 +57,37 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
 
         PlatformTestUtil.assertTreeEqual(
           svc.getTree(),
-          "-Class1.java\n" +
-          " -Class1\n" +
-          "  getValue(): int\n" +
-          "  myField1: boolean\n" +
-          "  myField2: boolean\n");
+          """
+            -Class1.java
+             -Class1
+              getValue(): int
+              myField1: boolean
+              myField2: boolean
+            """);
 
         svc.setActionActive(PublicElementsFilter.ID, true);
 
         PlatformTestUtil.assertTreeEqual(
           svc.getTree(),
-          "-Class1.java\n" +
-          " -Class1\n" +
-          "  getValue(): int\n" +
-          "  myField1: boolean\n" +
-          "  myField2: boolean\n");
+          """
+            -Class1.java
+             -Class1
+              getValue(): int
+              myField1: boolean
+              myField2: boolean
+            """);
 
         svc.setActionActive(PublicElementsFilter.ID, false);
 
         PlatformTestUtil.assertTreeEqual(
           svc.getTree(),
-          "-Class1.java\n" +
-          " -Class1\n" +
-          "  getValue(): int\n" +
-          "  myField1: boolean\n" +
-          "  myField2: boolean\n");
+          """
+            -Class1.java
+             -Class1
+              getValue(): int
+              myField1: boolean
+              myField2: boolean
+            """);
       }
     });
   }
@@ -94,40 +102,44 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
         tree.collapseRow(2);
         PlatformTestUtil.assertTreeEqual(
           tree,
-          "-Class2.java\n" +
-          " -Class2\n" +
-          "  +InnerClass1\n" +
-          "  +InnerClass2\n" +
-          "  getValue(): int\n" +
-          "  getClass(): Class<?>\n" +
-          "  hashCode(): int\n" +
-          "  equals(Object): boolean\n" +
-          "  clone(): Object\n" +
-          "  toString(): String\n" +
-          "  notify(): void\n" +
-          "  notifyAll(): void\n" +
-          "  wait(long): void\n" +
-          "  wait(long, int): void\n" +
-          "  wait(): void\n" +
-          "  finalize(): void\n" +
-          "  myField1: boolean\n" +
-          "  myField2: boolean\n" +
-          "  myField3: boolean\n" +
-          "  myField4: boolean\n");
+          """
+            -Class2.java
+             -Class2
+              +InnerClass1
+              +InnerClass2
+              getValue(): int
+              getClass(): Class<?>
+              hashCode(): int
+              equals(Object): boolean
+              clone(): Object
+              toString(): String
+              notify(): void
+              notifyAll(): void
+              wait(long): void
+              wait(long, int): void
+              wait(): void
+              finalize(): void
+              myField1: boolean
+              myField2: boolean
+              myField3: boolean
+              myField4: boolean
+            """);
 
         svc.setActionActive(InheritedMembersNodeProvider.ID, false);
 
         PlatformTestUtil.assertTreeEqual(
           svc.getTree(),
-          "-Class2.java\n" +
-          " -Class2\n" +
-          "  +InnerClass1\n" +
-          "  +InnerClass2\n" +
-          "  getValue(): int\n" +
-          "  myField1: boolean\n" +
-          "  myField2: boolean\n" +
-          "  myField3: boolean\n" +
-          "  myField4: boolean\n");
+          """
+            -Class2.java
+             -Class2
+              +InnerClass1
+              +InnerClass2
+              getValue(): int
+              myField1: boolean
+              myField2: boolean
+              myField3: boolean
+              myField4: boolean
+            """);
       }
     });
   }
@@ -140,21 +152,25 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
 
         PlatformTestUtil.assertTreeEqual(
           svc.getTree(),
-          "-Class2.java\n" +
-          " -Class2\n" +
-          "  __myPrivateFiield: int\n" +
-          "  _myProtectedField: int\n" +
-          "  myPublicField: int\n");
+          """
+            -Class2.java
+             -Class2
+              __myPrivateFiield: int
+              _myProtectedField: int
+              myPublicField: int
+            """);
 
         svc.setActionActive(VisibilitySorter.ID, true);
 
         PlatformTestUtil.assertTreeEqual(
           svc.getTree(),
-          "-Class2.java\n" +
-          " -Class2\n" +
-          "  myPublicField: int\n" +
-          "  _myProtectedField: int\n" +
-          "  __myPrivateFiield: int\n");
+          """
+            -Class2.java
+             -Class2
+              myPublicField: int
+              _myProtectedField: int
+              __myPrivateFiield: int
+            """);
       }
     });
   }
@@ -167,13 +183,15 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
 
         PlatformTestUtil.assertTreeEqual(
           svc.getTree(),
-          "-Class2.java\n" +
-          " -Class2\n" +
-          "  Class2()\n" +
-          "  af(): void\n" +
-          "  zf(): void\n" +
-          "  ab: int\n" +
-          "  z: int\n"
+          """
+            -Class2.java
+             -Class2
+              Class2()
+              af(): void
+              zf(): void
+              ab: int
+              z: int
+            """
         );
       }
     });

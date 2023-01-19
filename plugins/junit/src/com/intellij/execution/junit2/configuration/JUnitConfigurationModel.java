@@ -9,6 +9,8 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -22,8 +24,10 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -31,6 +35,7 @@ import javax.swing.text.PlainDocument;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 
 // Author: dyoma
@@ -225,90 +230,78 @@ public class JUnitConfigurationModel {
   }
 
   public static @NotNull @NlsContexts.Label String getKindName(int value) {
-    switch (value) {
-      case ALL_IN_PACKAGE:
-        return JUnitBundle.message("junit.configuration.kind.all.in.package");
-      case DIR:
-        return JUnitBundle.message("junit.configuration.kind.all.in.directory");
-      case PATTERN:
-        return JUnitBundle.message("junit.configuration.kind.by.pattern");
-      case CLASS:
-        return JUnitBundle.message("junit.configuration.kind.class");
-      case METHOD:
-        return JUnitBundle.message("junit.configuration.kind.method");
-      case CATEGORY:
-        return JUnitBundle.message("junit.configuration.kind.category");
-      case UNIQUE_ID:
-        return JUnitBundle.message("junit.configuration.kind.by.unique.id");
-      case TAGS:
-        return JUnitBundle.message("junit.configuration.kind.by.tags");
-      case BY_SOURCE_POSITION:
-        return "Through source location"; //NON-NLS internal option
-      case BY_SOURCE_CHANGES:
-        return "Over changes in sources"; //NON-NLS internal option
-    }
-    throw new IllegalArgumentException(String.valueOf(value));
+    return switch (value) {
+      case ALL_IN_PACKAGE -> JUnitBundle.message("junit.configuration.kind.all.in.package");
+      case DIR -> JUnitBundle.message("junit.configuration.kind.all.in.directory");
+      case PATTERN -> JUnitBundle.message("junit.configuration.kind.by.pattern");
+      case CLASS -> JUnitBundle.message("junit.configuration.kind.class");
+      case METHOD -> JUnitBundle.message("junit.configuration.kind.method");
+      case CATEGORY -> JUnitBundle.message("junit.configuration.kind.category");
+      case UNIQUE_ID -> JUnitBundle.message("junit.configuration.kind.by.unique.id");
+      case TAGS -> JUnitBundle.message("junit.configuration.kind.by.tags");
+      case BY_SOURCE_POSITION -> "Through source location"; //NON-NLS internal option
+      case BY_SOURCE_CHANGES -> "Over changes in sources"; //NON-NLS internal option
+      default -> throw new IllegalArgumentException(String.valueOf(value));
+    };
   }
 
   public static @NotNull @NlsContexts.Label String getRepeatModeName(@NotNull @NonNls String value) {
-    switch (value) {
-      case RepeatCount.ONCE:
-        return JUnitBundle.message("junit.configuration.repeat.mode.once");
-      case RepeatCount.N:
-        return JUnitBundle.message("junit.configuration.repeat.mode.n.times");
-      case RepeatCount.UNTIL_FAILURE:
-        return JUnitBundle.message("junit.configuration.repeat.mode.until.failure");
-      case RepeatCount.UNLIMITED:
-        return JUnitBundle.message("junit.configuration.repeat.mode.until.stopped");
-    }
+    return JUnitBundle.message(switch (value) {
+      case RepeatCount.ONCE -> "junit.configuration.repeat.mode.once";
+      case RepeatCount.N -> "junit.configuration.repeat.mode.n.times";
+      case RepeatCount.UNTIL_FAILURE -> "junit.configuration.repeat.mode.until.failure";
+      case RepeatCount.UNLIMITED -> "junit.configuration.repeat.mode.until.stopped";
+      default -> throw new IllegalArgumentException(value);
+    });
 
-    throw new IllegalArgumentException(value);
   }
 
   public static @NotNull @NlsContexts.Label String getForkModeName(@NotNull @NonNls String value) {
-    switch (value) {
-      case JUnitConfiguration.FORK_NONE:
-        return JUnitBundle.message("junit.configuration.fork.mode.none");
-      case JUnitConfiguration.FORK_METHOD:
-        return JUnitBundle.message("junit.configuration.fork.mode.method");
-      case JUnitConfiguration.FORK_KLASS:
-        return JUnitBundle.message("junit.configuration.fork.mode.class");
-      case JUnitConfiguration.FORK_REPEAT:
-        return JUnitBundle.message("junit.configuration.fork.mode.repeat");
-    }
-
-    throw new IllegalArgumentException(value);
+    return JUnitBundle.message(switch (value) {
+      case JUnitConfiguration.FORK_NONE -> "junit.configuration.fork.mode.none";
+      case JUnitConfiguration.FORK_METHOD -> "junit.configuration.fork.mode.method";
+      case JUnitConfiguration.FORK_KLASS -> "junit.configuration.fork.mode.class";
+      case JUnitConfiguration.FORK_REPEAT -> "junit.configuration.fork.mode.repeat";
+      default -> throw new IllegalArgumentException(value);
+    });
   }
 
-  public void reloadTestKindModel(JComboBox<Integer> comboBox, Module module) {
+  public void reloadTestKindModel(JComboBox<Integer> comboBox, Module module, @Nullable Runnable onDone) {
     int selectedIndex = comboBox.getSelectedIndex();
-    final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
-    aModel.addElement(ALL_IN_PACKAGE);
-    aModel.addElement(DIR);
-    aModel.addElement(PATTERN);
-    aModel.addElement(CLASS);
-    aModel.addElement(METHOD);
+    ReadAction.nonBlocking(() -> {
+      final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
+      aModel.addElement(ALL_IN_PACKAGE);
+      aModel.addElement(DIR);
+      aModel.addElement(PATTERN);
+      aModel.addElement(CLASS);
+      aModel.addElement(METHOD);
 
-    GlobalSearchScope searchScope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
-                                                   : GlobalSearchScope.allScope(myProject);
+      GlobalSearchScope searchScope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
+                                                     : GlobalSearchScope.allScope(myProject);
 
-    if (myProject.isDefault() || JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
-      aModel.addElement(CATEGORY);
-    }
+      if (myProject.isDefault() || JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
+        aModel.addElement(CATEGORY);
+      }
 
-    if (myProject.isDefault() ||
-        JUnitUtil.isJUnit5(searchScope, myProject) ||
-        TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
-      aModel.addElement(UNIQUE_ID);
-      aModel.addElement(TAGS);
-    }
+      if (myProject.isDefault() ||
+          JUnitUtil.isJUnit5(searchScope, myProject) ||
+          TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
+        aModel.addElement(UNIQUE_ID);
+        aModel.addElement(TAGS);
+      }
 
-    if (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
-      aModel.addElement(BY_SOURCE_POSITION);
-      aModel.addElement(BY_SOURCE_CHANGES);
-    }
-    comboBox.setModel(aModel);
-    comboBox.setSelectedIndex(selectedIndex);
+      if (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
+        aModel.addElement(BY_SOURCE_POSITION);
+        aModel.addElement(BY_SOURCE_CHANGES);
+      }
+      return aModel;
+    }).finishOnUiThread(ModalityState.any(), model -> {
+      comboBox.setModel(model);
+      comboBox.setSelectedIndex(selectedIndex == -1 ? myType : selectedIndex);
+      if (onDone != null) {
+        onDone.run();
+      }
+    }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   public boolean disableModuleClasspath(boolean wholeProjectSelected) {

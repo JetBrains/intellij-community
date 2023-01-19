@@ -65,12 +65,14 @@ public class RelativeRectangle {
   /**
    * @deprecated Use the overload that takes a DevicePoint, which handles locations on different screens with different scaling factors
    */
-  @Deprecated()
+  @Deprecated
   public boolean contains(final RelativePoint relativePoint) {
     return contains(new DevicePoint(relativePoint));
   }
 
   public boolean contains(final DevicePoint devicePoint) {
+    // Get this rectangle and the device point in their own screen coordinate systems. If the rectangle is going to contain the device
+    // point, then they must be on the same screen, and will therefore be in the same coordinate system, and it's safe to compare.
     return getScreenRectangle().contains(devicePoint.getLocationOnScreen());
   }
 }

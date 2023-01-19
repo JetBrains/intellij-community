@@ -9,18 +9,14 @@ import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.associatedModulePath
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 
 /**
  * Configurable for local Python interpreter.
@@ -51,7 +47,7 @@ class PythonLocalInterpreterConfigurable(private val project: Project, private v
                                 project,
                                 PythonSdkType.getInstance().homeChooserDescriptor) { it.name }
         .bindText(::interpreterPath)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
     }
     val sdkFlavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.homePath)
     if (sdkFlavor is VirtualEnvSdkFlavor || sdkFlavor is CondaEnvSdkFlavor) {

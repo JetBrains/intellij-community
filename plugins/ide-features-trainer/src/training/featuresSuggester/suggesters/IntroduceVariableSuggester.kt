@@ -1,15 +1,12 @@
 package training.featuresSuggester.suggesters
 
-import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.PsiElement
 import training.featuresSuggester.FeatureSuggesterBundle
 import training.featuresSuggester.NoSuggestion
 import training.featuresSuggester.SuggesterSupport
-import training.featuresSuggester.SuggestingUtils.asString
 import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.*
 import training.util.WeakReferenceDelegator
-import java.awt.datatransfer.DataFlavor
 
 class IntroduceVariableSuggester : AbstractFeatureSuggester() {
   override val id: String = "Introduce variable"
@@ -17,10 +14,10 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
 
   override val message = FeatureSuggesterBundle.message("introduce.variable.message")
   override val suggestingActionId = "IntroduceVariable"
-  override val suggestingTipFileName = "IntroduceVariable.html"
+  override val suggestingTipId = suggestingActionId
   override val minSuggestingIntervalDays = 14
 
-  override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
+  override val languages = listOf("JAVA", "kotlin", "Python", "JavaScript", "ECMAScript 6")
 
   private class ExtractedExpressionData(var exprText: String, changedStatement: PsiElement) {
     var changedStatement: PsiElement? by WeakReferenceDelegator(changedStatement)
@@ -49,7 +46,7 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
     when (action) {
       is BeforeEditorTextRemovedAction -> {
         with(action) {
-          val deletedText = getCopiedContent(textFragment.text) ?: return NoSuggestion
+          val deletedText = textFragment.text.takeIf { it.isNotBlank() }?.trim() ?: return NoSuggestion
           val psiFile = this.psiFile ?: return NoSuggestion
           val contentOffset = caretOffset + textFragment.text.indexOfFirst { it != ' ' && it != '\n' }
           val curElement = psiFile.findElementAt(contentOffset) ?: return NoSuggestion
@@ -58,6 +55,12 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
               langSupport.getTopmostStatementWithText(curElement, deletedText) ?: return NoSuggestion
             extractedExprData = ExtractedExpressionData(textFragment.text, changedStatement)
           }
+        }
+      }
+      is EditorCutAction -> {
+        val data = extractedExprData ?: return NoSuggestion
+        if (data.exprText != action.text.trim()) {
+          extractedExprData = null
         }
       }
       is ChildReplacedAction -> {
@@ -103,20 +106,6 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
       else -> NoSuggestion
     }
     return NoSuggestion
-  }
-
-  private fun getCopiedContent(text: String): String? {
-    if (text.isBlank()) return null
-    val content = text.trim()
-    val copyPasteManager = CopyPasteManager.getInstance()
-    return if (copyPasteManager.areDataFlavorsAvailable(DataFlavor.stringFlavor) &&
-               content == copyPasteManager.contents?.asString()?.trim()
-    ) {
-      content
-    }
-    else {
-      null
-    }
   }
 
   private fun SuggesterSupport.isVariableDeclarationAdded(action: ChildReplacedAction): Boolean {

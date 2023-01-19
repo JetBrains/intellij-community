@@ -85,7 +85,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     return filePath != null ? getTestDataPath() + "/" + filePath : null;
   }
 
-  private void checkHighlighting(ExpectedHighlightingData data, String filePath) {
+  private void checkHighlighting(@NotNull ExpectedHighlightingData data, String filePath) {
     data.init();
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();

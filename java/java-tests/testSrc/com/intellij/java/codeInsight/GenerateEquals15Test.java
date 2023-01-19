@@ -19,9 +19,6 @@ import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.psi.PsiField;
 import com.intellij.util.Functions;
 
-/**
- * @author dsl
- */
 public class GenerateEquals15Test extends GenerateEqualsTestCase {
   public void testArraysFromJava15() {
     doTest(new int[]{0, 1, 2}, new int[]{0, 1, 2}, new int[0], false);

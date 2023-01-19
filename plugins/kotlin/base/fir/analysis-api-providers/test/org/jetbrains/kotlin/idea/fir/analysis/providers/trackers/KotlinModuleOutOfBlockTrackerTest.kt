@@ -9,19 +9,19 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
-import junit.framework.Assert
 import org.jetbrains.kotlin.analysis.providers.createModuleWithoutDependenciesOutOfBlockModificationTracker
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.util.sourceRoots
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
+import org.junit.Assert
 import java.io.File
 
 class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory(): File = error("Should not be called")
+
+    override fun isFirPlugin(): Boolean = true
 
     fun testThatModuleOutOfBlockChangeInfluenceOnlySingleModule() {
         val moduleA = createModuleInTmpDir("a") {
@@ -51,6 +51,188 @@ class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
             "Out of block modification count for module C without out of block should not change after typing, modification count is ${moduleCWithTracker.modificationCount}",
             moduleCWithTracker.changed()
         )
+    }
+
+    fun testThatDeleteSymbolInBodyDoesNotLeadToOutOfBlockChange() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt", "fun main() {\n" +
+                            "val v = <caret>\n" +
+                            "}"
+                )
+            )
+        }
+
+        val moduleAWithTracker = ModuleWithModificationTracker(moduleA)
+
+        val file = "${moduleA.sourceRoots.first().url}/${"main.kt"}"
+        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        val ktFile = PsiManager.getInstance(moduleA.project).findFile(virtualFile) as KtFile
+        configureByExistingFile(virtualFile)
+        backspace()
+        PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
+
+        Assert.assertFalse(
+            "Out of block modification count for module A should not change after deleting, modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+        Assert.assertEquals("fun main() {\n" +
+                                    "val v =\n" + 
+                                    "}", ktFile.text)
+    }
+
+    //1. outside function
+    //2. in function identifier
+    fun testWhitespace() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt", "class Main {" +
+                            "    fun main() {}\n" +
+                            "}"
+                )
+            )
+        }
+
+        val moduleAWithTracker = ModuleWithModificationTracker(moduleA)
+
+        val file = "${moduleA.sourceRoots.first().url}/${"main.kt"}"
+        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        val ktFile = PsiManager.getInstance(moduleA.project).findFile(virtualFile) as KtFile
+        configureByExistingFile(virtualFile)
+        val singleFunction = (ktFile.declarations[0] as KtClass).declarations.single()
+        val startOffset = singleFunction.textRange.startOffset
+        editor.caretModel.moveToOffset(startOffset)
+        backspace()
+        PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
+
+        Assert.assertFalse(
+            "Out of block modification count for module A should not change after deleting, modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+        Assert.assertEquals("class Main {   fun main() {}\n" +
+                                    "}", ktFile.text)
+
+        editor.caretModel.moveToOffset(startOffset + "fun ".length)
+        type(" ")
+        PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
+        Assert.assertTrue(
+            "Out of block modification count for module A should change after adding space in identifier, modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+        Assert.assertEquals("class Main {   fun m ain() {}\n" +
+                                    "}", ktFile.text)
+
+    }
+
+    fun testCommentFunction() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt", "class Main {" +
+                            "    fun main() {}\n" +
+                            "}"
+                )
+            )
+        }
+
+        val moduleAWithTracker = ModuleWithModificationTracker(moduleA)
+
+        val file = "${moduleA.sourceRoots.first().url}/${"main.kt"}"
+        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        val ktFile = PsiManager.getInstance(moduleA.project).findFile(virtualFile) as KtFile
+        configureByExistingFile(virtualFile)
+        val singleFunction = (ktFile.declarations[0] as KtClass).declarations.single()
+        val startOffset = singleFunction.textRange.startOffset
+        editor.caretModel.moveToOffset(startOffset)
+        type("//")
+        PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
+
+        Assert.assertTrue(
+            "Out of block modification count for module A should change after commenting, modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+    }
+
+    fun testLocalCommentType() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt", "class Main {\n" +
+                            "    fun main() {\n" +
+                            "      class Local {}\n" +
+                            "    }\n" +
+                            "}"
+                )
+            )
+        }
+
+        val moduleAWithTracker = ModuleWithModificationTracker(moduleA)
+
+        val file = "${moduleA.sourceRoots.first().url}/${"main.kt"}"
+        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        val ktFile = PsiManager.getInstance(moduleA.project).findFile(virtualFile) as KtFile
+        configureByExistingFile(virtualFile)
+        val singleFunction = (ktFile.declarations[0] as KtClass).declarations.single() as KtFunction
+        val startOffset = (singleFunction.bodyBlockExpression?.lBrace?.textOffset ?: 0) + 2
+        editor.caretModel.moveToOffset(startOffset)
+        type("//")
+        PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
+
+        Assert.assertFalse(
+            "Out of block modification count for module A should not change after commenting, local classes are not available outside of the method," +
+                    "modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+    }
+
+    fun testCommentType() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt", "class Main {}"
+                )
+            )
+        }
+        val moduleAWithTracker = ModuleWithModificationTracker(moduleA)
+        val file = "${moduleA.sourceRoots.first().url}/${"main.kt"}"
+        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        configureByExistingFile(virtualFile)
+        editor.caretModel.moveToOffset(0)
+        type("//")
+        PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
+
+        Assert.assertTrue(
+            "Out of block modification count for module A should change after commenting, local classes are not available outside of the method," +
+                    "modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+    }
+    
+    fun testThatAddModifierDoesLeadToOutOfBlockChange() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt", "<caret>inline fun main() {}"
+                )
+            )
+        }
+
+        val moduleAWithTracker = ModuleWithModificationTracker(moduleA)
+
+        val file = "${moduleA.sourceRoots.first().url}/${"main.kt"}"
+        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        val ktFile = PsiManager.getInstance(moduleA.project).findFile(virtualFile) as KtFile
+        configureByExistingFile(virtualFile)
+        type("private ")
+        PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
+
+        Assert.assertTrue(
+            "Out of block modification count for module A should be changed after specifying return type, modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+        Assert.assertEquals("private inline fun main() {}", ktFile.text)
     }
 
     fun testThatInEveryModuleOutOfBlockWillHappenAfterContentRootChange() {
@@ -128,7 +310,7 @@ class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
         Assert.assertEquals(textAfterTyping, ktFile.text)
     }
 
-    abstract class WithModificationTracker(protected val modificationTracker: ModificationTracker) {
+    abstract class WithModificationTracker(private val modificationTracker: ModificationTracker) {
         private val initialModificationCount = modificationTracker.modificationCount
         val modificationCount: Long get() = modificationTracker.modificationCount
 

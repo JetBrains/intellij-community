@@ -2,6 +2,7 @@
 package com.intellij.designer;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
@@ -23,6 +24,11 @@ public abstract class ToggleEditorModeAction extends ToggleAction {
     myManager = manager;
     myProject = project;
     myAnchor = anchor;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

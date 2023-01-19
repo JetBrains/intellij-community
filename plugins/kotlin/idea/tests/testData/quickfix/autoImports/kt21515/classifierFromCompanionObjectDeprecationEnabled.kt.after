@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import class 'FromBarCompanion'" "true"
 // LANGUAGE_VERSION: 1.3
 
 package foo

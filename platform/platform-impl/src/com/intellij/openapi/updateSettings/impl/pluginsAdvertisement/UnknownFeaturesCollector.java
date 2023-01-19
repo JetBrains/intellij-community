@@ -3,8 +3,9 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,37 +13,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @State(name = "UnknownFeatures", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 @Service
 public final class UnknownFeaturesCollector implements PersistentStateComponent<Element> {
+
   private static final @NonNls String FEATURE_ID = "featureType";
   private static final @NonNls String IMPLEMENTATION_NAME = "implementationName";
 
-  private final Set<UnknownFeature> myUnknownFeatures = new HashSet<>();
+  private final Set<UnknownFeature> myUnknownFeatures = ContainerUtil.newConcurrentSet();
   private final Set<UnknownFeature> myIgnoredUnknownFeatures = new HashSet<>();
 
-  public static UnknownFeaturesCollector getInstance(Project project) {
+  public static @NotNull UnknownFeaturesCollector getInstance(@NotNull Project project) {
     return project.getService(UnknownFeaturesCollector.class);
   }
 
-  public void registerUnknownFeature(@NonNls @NotNull String featureType,
-                                     @NonNls @NotNull String implementationName,
-                                     @Nls @NotNull String featureDisplayName) {
-    registerUnknownFeature(featureType, featureDisplayName, implementationName, null);
+  @ApiStatus.Internal
+  public boolean registerUnknownFeature(@NotNull UnknownFeature feature) {
+    return !isIgnored(feature) && myUnknownFeatures.add(feature);
   }
 
-  public void registerUnknownFeature(@NonNls @NotNull String featureType,
-                                     @Nls @NotNull String featureDisplayName,
-                                     @NonNls @NotNull String implementationName,
-                                     @Nls @Nullable String implementationDisplayName) {
-    UnknownFeature feature = new UnknownFeature(featureType,
-                                                featureDisplayName,
-                                                implementationName,
-                                                implementationDisplayName);
-    if (!isIgnored(feature)) {
-      myUnknownFeatures.add(feature);
-    }
+  @ApiStatus.Experimental
+  public boolean unregisterUnknownFeature(@NotNull UnknownFeature feature) {
+    return myUnknownFeatures.remove(feature);
   }
 
   public boolean isIgnored(@NotNull UnknownFeature feature) {
@@ -55,6 +49,13 @@ public final class UnknownFeaturesCollector implements PersistentStateComponent<
 
   public @NotNull Set<UnknownFeature> getUnknownFeatures() {
     return Collections.unmodifiableSet(myUnknownFeatures);
+  }
+
+  @ApiStatus.Experimental
+  public @NotNull Set<UnknownFeature> getUnknownFeaturesOfType(@NotNull @NonNls String featureType) {
+    return myUnknownFeatures.stream()
+      .filter(feature -> feature.getFeatureType().equals(featureType))
+      .collect(Collectors.toUnmodifiableSet());
   }
 
   @Override

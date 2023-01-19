@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.psi.KtCodeFragment
@@ -57,12 +56,16 @@ class OldFragmentCompilerCodegen(
     override fun computeFragmentParameters(
         executionContext: ExecutionContext,
         codeFragment: KtCodeFragment,
-        bindingContext: BindingContext,
-        status: EvaluationStatus
-    ) =
-        CodeFragmentParameterAnalyzer(executionContext, codeFragment, bindingContext, status).analyze()
+        bindingContext: BindingContext
+    ): CodeFragmentParameterInfo {
+        return CodeFragmentParameterAnalyzer(executionContext, codeFragment, bindingContext).analyze()
+    }
 
-    override fun extractResult(methodDescriptor: FunctionDescriptor, parameterInfo: CodeFragmentParameterInfo, generationState: GenerationState): CodeFragmentCompiler.CompilationResult {
+    override fun extractResult(
+        methodDescriptor: FunctionDescriptor,
+        parameterInfo: CodeFragmentParameterInfo,
+        generationState: GenerationState
+    ): CodeFragmentCompiler.CompilationResult {
         val classes = collectGeneratedClasses(generationState)
         val methodSignature = getMethodSignature(methodDescriptor, parameterInfo, generationState)
         val functionSuffixes = getLocalFunctionSuffixes(parameterInfo.parameters, generationState.typeMapper)

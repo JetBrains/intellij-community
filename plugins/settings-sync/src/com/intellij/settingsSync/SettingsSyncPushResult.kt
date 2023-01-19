@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 sealed class SettingsSyncPushResult {
-  object Success : SettingsSyncPushResult() {
+  class Success(val serverVersionId: String?) : SettingsSyncPushResult() {
     override fun toString(): String = "SUCCESS"
   }
 

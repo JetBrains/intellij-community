@@ -111,7 +111,7 @@ public final class RefactoringUtil {
         protected abstract void visitXPathExpression(XPathExpression expr);
 
         @Override
-        public void visitXmlAttribute(XmlAttribute attribute) {
+        public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
             if (XsltSupport.isXPathAttribute(attribute)) {
                 final PsiFile[] xpathFiles = XsltSupport.getFiles(attribute);
                 for (PsiFile xpathFile : xpathFiles) {

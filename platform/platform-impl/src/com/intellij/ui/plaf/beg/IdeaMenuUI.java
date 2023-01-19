@@ -13,6 +13,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,9 +23,6 @@ import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicMenuUI;
 import java.awt.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class IdeaMenuUI extends BasicMenuUI {
   private static final Rectangle ourZeroRect = new Rectangle(0, 0, 0, 0);
   private static final Rectangle ourTextRect = new Rectangle();
@@ -91,10 +89,16 @@ public class IdeaMenuUI extends BasicMenuUI {
 
     selectionBackground = JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
     if (isHeaderMenu()) {
+      menuItem.setBackground(getMenuBackgroundColor());
       menuItem.setForeground(JBColor.namedColor("MainMenu.foreground", UIManager.getColor("Menu.foreground")));
       selectionForeground = JBColor.namedColor("MainMenu.selectionForeground", selectionForeground);
       selectionBackground = JBColor.namedColor("MainMenu.selectionBackground", selectionBackground);
     }
+  }
+
+  @ApiStatus.Internal
+  static public @NotNull Color getMenuBackgroundColor() {
+    return JBColor.namedColor("MainMenu.background", UIManager.getColor("Menu.background"));
   }
 
   private boolean isHeaderMenu() {

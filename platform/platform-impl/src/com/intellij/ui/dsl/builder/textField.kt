@@ -2,23 +2,20 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.observable.util.lockOrSkip
-import com.intellij.openapi.observable.util.transform
-import com.intellij.openapi.observable.util.whenTextChanged
+import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.forTextComponent
 import com.intellij.openapi.ui.validation.trimParameter
 import com.intellij.ui.dsl.ValidationException
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
+import com.intellij.ui.dsl.builder.impl.DslComponentPropertyInternal
 import com.intellij.ui.dsl.catchValidationException
 import com.intellij.ui.dsl.stringToInt
 import com.intellij.ui.dsl.validateIntInRange
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JTextField
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty0
@@ -30,20 +27,16 @@ import com.intellij.openapi.observable.util.whenTextChangedFromUi as whenTextCha
 const val COLUMNS_TINY = 6
 
 /**
- * Columns for text components with short width (used instead of deprecated [GrowPolicy.SHORT_TEXT])
+ * Columns for text components with short width
  */
 const val COLUMNS_SHORT = 18
 
 /**
- * Columns for text components with medium width (used instead of deprecated [GrowPolicy.MEDIUM_TEXT])
+ * Columns for text components with medium width
  */
 const val COLUMNS_MEDIUM = 25
 
 const val COLUMNS_LARGE = 36
-
-@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval
-fun <T : JTextComponent> Cell<T>.bindText(property: GraphProperty<String>) = bindText(property)
 
 fun <T : JTextComponent> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {
   installValidationRequestor(property)
@@ -62,15 +55,19 @@ fun <T : JTextComponent> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T
   return bind(JTextComponent::getText, JTextComponent::setText, prop)
 }
 
-@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval
-fun <T : JTextComponent> Cell<T>.bindIntText(property: GraphProperty<Int>): Cell<T> = bindIntText(property)
-
 fun <T : JTextComponent> Cell<T>.bindIntText(property: ObservableMutableProperty<Int>): Cell<T> {
   installValidationRequestor(property)
+  val stringProperty = property
+    .backwardFilter { component.isIntInRange(it) }
+    .toStringIntProperty()
   return applyToComponent {
-    bind(property.transform({ it.toString() }, { component.getValidatedIntValue(it) }))
+    bind(stringProperty)
   }
+}
+
+fun <T : JTextComponent> Cell<T>.bindIntText(prop: MutableProperty<Int>): Cell<T> {
+  return bindText({ prop.get().toString() },
+                  { value -> catchValidationException { prop.set(component.getValidatedIntValue(value)) } })
 }
 
 fun <T : JTextComponent> Cell<T>.bindIntText(prop: KMutableProperty0<Int>): Cell<T> {
@@ -105,33 +102,14 @@ fun <T : JTextField> T.columns(columns: Int) = apply {
 @Throws(ValidationException::class)
 private fun JTextComponent.getValidatedIntValue(value: String): Int {
   val result = stringToInt(value)
-  val range = getClientProperty(DSL_INT_TEXT_RANGE_PROPERTY) as? IntRange
+  val range = getClientProperty(DslComponentPropertyInternal.INT_TEXT_RANGE) as IntRange?
   range?.let { validateIntInRange(result, it) }
   return result
 }
 
-private fun JTextComponent.bind(property: ObservableMutableProperty<String>) {
-  text = property.get()
-  // See: IDEA-238573 removed cyclic update of UI components that bound with properties
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      text = it
-    }
-  }
-  whenTextChanged {
-    mutex.lockOrSkip {
-      // Catch transformed GraphProperties, e.g. for intTextField
-      catchValidationException {
-        property.set(text)
-      }
-    }
-  }
-}
-
-private fun <T : JTextComponent> Cell<T>.bindIntText(prop: MutableProperty<Int>): Cell<T> {
-  return bindText({ prop.get().toString() },
-                  { value -> catchValidationException { prop.set(component.getValidatedIntValue(value)) } })
+private fun JTextComponent.isIntInRange(value: Int): Boolean {
+  val range = getClientProperty(DslComponentPropertyInternal.INT_TEXT_RANGE) as IntRange?
+  return range == null || value in range
 }
 
 fun <T : JTextComponent> Cell<T>.trimmedTextValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =

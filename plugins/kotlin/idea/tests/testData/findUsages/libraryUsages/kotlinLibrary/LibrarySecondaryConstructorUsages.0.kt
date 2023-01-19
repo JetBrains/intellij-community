@@ -17,3 +17,5 @@ fun test() {
     val a: A = <caret>A()
     val aa = A(1)
 }
+
+// FIR_COMPARISON

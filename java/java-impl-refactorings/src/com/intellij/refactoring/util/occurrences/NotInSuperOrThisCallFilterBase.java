@@ -22,9 +22,6 @@ import com.intellij.psi.PsiMethodCallExpression;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public abstract class NotInSuperOrThisCallFilterBase implements OccurrenceFilter {
   @Override
   public boolean isOK(@NotNull PsiExpression occurrence) {

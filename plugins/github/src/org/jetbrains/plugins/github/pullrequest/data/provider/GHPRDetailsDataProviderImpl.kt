@@ -3,6 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.SimpleEventListener
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.EventDispatcher
@@ -12,13 +14,9 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRDetailsService
-import com.intellij.collaboration.ui.SimpleEventListener
-import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
-import kotlin.properties.Delegates
 
 class GHPRDetailsDataProviderImpl(private val detailsService: GHPRDetailsService,
                                   private val pullRequestId: GHPRIdentifier,
@@ -27,14 +25,14 @@ class GHPRDetailsDataProviderImpl(private val detailsService: GHPRDetailsService
 
   private val detailsLoadedEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
-  override var loadedDetails by Delegates.observable<GHPullRequest?>(null) { _, _, _ ->
-    detailsLoadedEventDispatcher.multicaster.eventOccurred()
-  }
+  @Volatile
+  override var loadedDetails: GHPullRequest? = null
     private set
 
   private val detailsRequestValue = LazyCancellableBackgroundProcessValue.create { indicator ->
     detailsService.loadDetails(indicator, pullRequestId).successOnEdt {
       loadedDetails = it
+      detailsLoadedEventDispatcher.multicaster.eventOccurred()
       it
     }
   }
@@ -49,6 +47,7 @@ class GHPRDetailsDataProviderImpl(private val detailsService: GHPRDetailsService
     }
     detailsRequestValue.overrideProcess(future.successOnEdt {
       loadedDetails = it
+      detailsLoadedEventDispatcher.multicaster.eventOccurred()
       it
     })
     return future

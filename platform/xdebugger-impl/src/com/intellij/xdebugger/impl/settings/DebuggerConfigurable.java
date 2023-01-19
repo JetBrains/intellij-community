@@ -181,11 +181,11 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   private static String getDefaultCategoryHelpTopic(DebuggerSettingsCategory category) {
-    switch (category) {
-      case STEPPING: return "reference.idesettings.debugger.stepping";
-      case HOTSWAP: return "reference.idesettings.debugger.hotswap";
-      default: return null;
-    }
+    return switch (category) {
+      case STEPPING -> "reference.idesettings.debugger.stepping";
+      case HOTSWAP -> "reference.idesettings.debugger.hotswap";
+      default -> null;
+    };
   }
 
   @Nls

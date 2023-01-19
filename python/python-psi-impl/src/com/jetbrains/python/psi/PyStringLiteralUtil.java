@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -31,16 +30,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public final class PyStringLiteralUtil {
-  /**
-   * Valid string prefix characters (lowercased) as defined in Python lexer.
-   */
-  public static final String PREFIX_CHARACTERS = "ubcrf";
-  /**
-   * Maximum length of a string prefix as defined in Python lexer.
-   */
-  public static final int MAX_PREFIX_LENGTH = 3;
-  private static final ImmutableList<String> QUOTES = ImmutableList.of("'''", "\"\"\"", "'", "\"");
+public final class PyStringLiteralUtil extends PyStringLiteralCoreUtil {
 
   private static final Logger LOG = Logger.getInstance(PyStringLiteralUtil.class);
 
@@ -79,46 +69,6 @@ public final class PyStringLiteralUtil {
   }
 
   /**
-   * Handles unicode and raw strings
-   *
-   * @return false if no quotes found, true otherwise
-   *         sdfs -> false
-   *         ur'x' -> true
-   *         "string" -> true
-   */
-
-  public static boolean isQuoted(@Nullable String text) {
-    return text != null && getQuotes(text) != null;
-  }
-
-  /**
-   * Returns a pair where the first element is the prefix combined with the opening quote and the second is the closing quote.
-   * <p>
-   * If the given string literal is not properly quoted, e.g. the closing quote has fewer quotes as opposed to the
-   * opening one, or it's missing altogether this method returns null.
-   * <p>
-   * Examples:
-   * <pre>
-   *   ur"foo" -> ("ur, ")
-   *   ur'bar -> null
-   *   """baz""" -> (""", """)
-   *   '''quux' -> null
-   * </pre>
-   */
-  @Nullable
-  public static Pair<String, String> getQuotes(@NotNull String text) {
-    final String prefix = getPrefix(text);
-    final String mainText = text.substring(prefix.length());
-    for (String quote : QUOTES) {
-      final Pair<String, String> quotes = getQuotes(mainText, prefix, quote);
-      if (quotes != null) {
-        return quotes;
-      }
-    }
-    return null;
-  }
-
-  /**
    * Returns the range of the string literal text between the opening quote and the closing one.
    * If the closing quote is either missing or mismatched, this range spans until the end of the literal.
    */
@@ -140,41 +90,8 @@ public final class PyStringLiteralUtil {
     return new TextRange(startOffset, endOffset);
   }
 
-  /**
-   * Finds the end offset of the string prefix starting from {@code startOffset} in the given char sequence.
-   * String prefix may contain only up to {@link #MAX_PREFIX_LENGTH} characters from {@link #PREFIX_CHARACTERS}
-   * (case insensitively).
-   *
-   * @return end offset of found string prefix
-   */
-  public static int getPrefixEndOffset(@NotNull CharSequence text, int startOffset) {
-    int offset;
-    for (offset = startOffset; offset < Math.min(startOffset + MAX_PREFIX_LENGTH, text.length()); offset++) {
-      if (PREFIX_CHARACTERS.indexOf(Character.toLowerCase(text.charAt(offset))) < 0) {
-        break;
-      }
-    }
-    return offset;
-  }
-
   public static int getPrefixLength(@NotNull String text) {
     return getPrefixEndOffset(text, 0);
-  }
-
-  @NotNull
-  public static String getPrefix(@NotNull CharSequence text) {
-    return getPrefix(text, 0);
-  }
-
-  /**
-   * Extracts string prefix from the given char sequence using {@link #getPrefixEndOffset(CharSequence, int)}.
-   *
-   * @return extracted string prefix
-   * @see #getPrefixEndOffset(CharSequence, int)
-   */
-  @NotNull
-  public static String getPrefix(@NotNull CharSequence text, int startOffset) {
-    return text.subSequence(startOffset, getPrefixEndOffset(text, startOffset)).toString();
   }
 
   /**
@@ -212,16 +129,6 @@ public final class PyStringLiteralUtil {
     return quote == '"' ? '\'' : '"';
   }
 
-  @Nullable
-  private static Pair<String, String> getQuotes(@NotNull String text, @NotNull String prefix, @NotNull String quote) {
-    final int length = text.length();
-    final int n = quote.length();
-    if (length >= 2 * n && text.startsWith(quote) && text.endsWith(quote)) {
-      return Pair.create(prefix + text.substring(0, n), text.substring(length - n));
-    }
-    return null;
-  }
-
   public static TextRange getTextRange(PsiElement element) {
     if (element instanceof PyStringLiteralExpression) {
       final List<TextRange> ranges = ((PyStringLiteralExpression)element).getStringValueTextRanges();
@@ -254,14 +161,5 @@ public final class PyStringLiteralUtil {
     else {
       return o.getText();
     }
-  }
-
-  public static String stripQuotesAroundValue(String text) {
-    Pair<String, String> quotes = getQuotes(text);
-    if (quotes == null) {
-      return text;
-    }
-
-    return text.substring(quotes.first.length(), text.length() - quotes.second.length());
   }
 }

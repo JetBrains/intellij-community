@@ -1,8 +1,8 @@
 // "Make 'a' abstract" "true-preview"
 import java.io.*;
 
-class <caret>a {
+class a {
   void f() {
   }
-  abstract void f2();
+  abstract<caret> void f2();
 }

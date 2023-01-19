@@ -12,10 +12,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
-import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.GridBag
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
@@ -115,7 +112,7 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
   }
 
   private inner class AccountItemRenderer : JPanel(GridBagLayout()), ListCellRenderer<AccountMenuItem.Account> {
-    private val listSelectionForeground = UIUtil.getListSelectionForeground(true)
+    private val listSelectionForeground = NamedColorUtil.getListSelectionForeground(true)
 
     val avatarLabel = JLabel()
     val titleComponent = JLabel().apply {

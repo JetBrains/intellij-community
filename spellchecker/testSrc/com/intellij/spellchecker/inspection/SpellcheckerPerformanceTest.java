@@ -31,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.stream.IntStream;
 
-/**
- * @author peter
- */
 public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase {
   @Override
   protected void setUp() throws Exception {

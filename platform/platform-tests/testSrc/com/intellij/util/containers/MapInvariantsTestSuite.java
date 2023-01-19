@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.Factory;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -26,7 +25,6 @@ public class MapInvariantsTestSuite {
     return Arrays.asList(
       name("Our HashMap", HashMap::new),
       name("Our ConcurrentHashMap", () -> ConcurrentCollectionFactory.createConcurrentMap()),
-      name("Our LinkedHashMap", LinkedHashMap::new),
       name("ConcurrentFactoryMap (on ConcurrentHashMap)", () -> ConcurrentFactoryMap.createMap(k -> "val_" + k))
     );
   }

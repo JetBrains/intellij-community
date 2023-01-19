@@ -9,7 +9,9 @@ import com.intellij.ide.impl.ProjectViewSelectInGroupTarget
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys.TOOL_WINDOW
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.project.DumbAwareAction
@@ -42,7 +44,7 @@ internal class SelectFileAction : DumbAwareAction() {
       }
       SELECT_OPENED_FILE -> {
         val view = getView(event)
-        event.presentation.isEnabled = view?.selectOpenedFile != null
+        event.presentation.isEnabled = event.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR) != null
         event.presentation.isVisible = view?.isSelectOpenedFileEnabled == true
         event.project?.let { project ->
           if (event.presentation.isVisible && getFirstKeyboardShortcutText(id).isEmpty()) {
@@ -57,6 +59,7 @@ internal class SelectFileAction : DumbAwareAction() {
     }
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   private data class Selector(val target: SelectInTarget, val context: SelectInContext)
 

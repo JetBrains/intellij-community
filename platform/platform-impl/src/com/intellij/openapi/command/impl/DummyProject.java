@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBus;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.GlobalScope;
@@ -86,11 +87,6 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public @NotNull PicoContainer getPicoContainer() {
     throw new UnsupportedOperationException("getPicoContainer is not implement in : " + getClass());
   }
@@ -149,6 +145,16 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
     //noinspection unchecked
     return (Class<T>)Class.forName(className);
+  }
+
+  @Override
+  public <T> @NotNull T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
+    try {
+      return ReflectionUtil.newInstance(loadClass(className, pluginDescriptor));
+    }
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

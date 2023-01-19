@@ -16,6 +16,7 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -35,7 +36,7 @@ public interface IconManager {
     IconManagerHelper.deactivate();
   }
 
-  @NotNull Icon getStubIcon();
+  @NotNull Icon getPlatformIcon(@NotNull PlatformIcons id);
 
   @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass);
 
@@ -59,6 +60,10 @@ public interface IconManager {
     return source;
   }
 
+  /**
+   * @param param Unique key that WILL BE USED to cache the icon instance.
+   *              Prefer passing unique objects over {@link String} or {@link Integer} to avoid accidental clashes with another module.
+   */
   @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> iconProducer);
 
   @NotNull RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags);
@@ -116,8 +121,12 @@ final class DummyIconManager implements IconManager {
   }
 
   @Override
-  public @NotNull Icon getStubIcon() {
-    return DummyIcon.INSTANCE;
+  public @NotNull Icon getPlatformIcon(@NotNull PlatformIcons id) {
+    String path = id.testId;
+    if (path == null) {
+      path = id.name();
+    }
+    return new DummyIcon(path);
   }
 
   @Override
@@ -166,8 +175,7 @@ final class DummyIconManager implements IconManager {
     return new DummyRowIcon(icons);
   }
 
-  private static class DummyIcon implements ScalableIcon {
-    static final DummyIcon INSTANCE = new DummyIcon("<DummyIcon>");
+  private static class DummyIcon implements ScalableIcon, com.intellij.openapi.util.DummyIcon {
     private final String path;
 
     private DummyIcon(@NotNull String path) {
@@ -195,7 +203,7 @@ final class DummyIconManager implements IconManager {
 
     @Override
     public boolean equals(Object obj) {
-      return this == obj || (obj instanceof DummyIcon && ((DummyIcon)obj).path == path);
+      return this == obj || (obj instanceof DummyIcon && Objects.equals(((DummyIcon)obj).path, path));
     }
 
     @Override
@@ -251,14 +259,14 @@ final class DummyIconManager implements IconManager {
     }
 
     @Override
-    public Icon @NotNull [] getAllIcons() {
+    public @NotNull List<Icon> getAllIcons() {
       List<Icon> list = new ArrayList<>();
       for (Icon element : icons) {
         if (element != null) {
           list.add(element);
         }
       }
-      return list.toArray(new Icon[0]);
+      return list;
     }
 
     @Override
@@ -277,6 +285,12 @@ final class DummyIconManager implements IconManager {
     @Override
     public String toString() {
       return "Row icon. myIcons=" + Arrays.asList(icons);
+    }
+
+    @NotNull
+    @Override
+    public Icon replaceBy(@NotNull IconReplacer replacer) {
+      return this;
     }
   }
 }

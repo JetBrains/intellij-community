@@ -54,7 +54,7 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiLan
   }
 
   @Override
-  public PsiLanguageInjectionHost updateText(@NotNull final String text) {
+  public PsiLanguageInjectionHost updateText(@NotNull String text) {
     return (PsiCommentImpl)replaceWithText(text);
   }
 

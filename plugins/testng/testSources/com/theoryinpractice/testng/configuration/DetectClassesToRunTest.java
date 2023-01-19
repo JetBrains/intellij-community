@@ -54,10 +54,10 @@ public class DetectClassesToRunTest extends LightJavaCodeInsightFixtureTestCase 
 
   public void testBeforeClassIsIncludedIfRunOnlyOneMethod() throws Exception {
     final PsiClass aClass =
-      myFixture.addClass("package a; public class AConfig {" +
-                         "@org.testng.annotations.BeforeClass public void setup(){}\n" +
-                         "@org.testng.annotations.Test public void testOne(){}\n" +
-                         "}");
+      myFixture.addClass("""
+                           package a; public class AConfig {@org.testng.annotations.BeforeClass public void setup(){}
+                           @org.testng.annotations.Test public void testOne(){}
+                           }""");
     doTestMethodConfiguration(aClass, aClass.getMethods()[1]);
   }
 
@@ -88,40 +88,40 @@ public class DetectClassesToRunTest extends LightJavaCodeInsightFixtureTestCase 
 
   public void testOneMethodWithDependencies() throws Exception {
     final PsiClass aClass =
-      myFixture.addClass("package a; public class ATest {" +
-                         "  @org.testng.annotations.Test\n" +
-                         "  public void testTwo(){}\n " +
-                         "  @org.testng.annotations.Test(dependsOnMethods=\"testTwo\")\n" +
-                         "  public void testOne(){}\n" +
-                         "}");
+      myFixture.addClass("""
+                           package a; public class ATest {  @org.testng.annotations.Test
+                             public void testTwo(){}
+                              @org.testng.annotations.Test(dependsOnMethods="testTwo")
+                             public void testOne(){}
+                           }""");
     doTestMethodConfiguration(aClass, aClass.getMethods());
   }
 
   public void testDependsOnGroupDontIncludeForeignClass() throws Exception {
     final PsiClass aClass =
-      myFixture.addClass("package a; public class ATest {" +
-                         "  @org.testng.annotations.Test(groups = { \"g1\" })\n" +
-                         "  public void testTwo(){}\n " +
-                         "  @org.testng.annotations.Test(dependsOnGroups = {\"g1\" })\n" +
-                         "  public void testOne(){}\n" +
-                         "}");
-    myFixture.addClass("package a; public class ForeignTest {" +
-                       "  @org.testng.annotations.Test(groups = { \"g1\" })\n" +
-                       "  public void testForth(){}\n " +
-                       "}");
+      myFixture.addClass("""
+                           package a; public class ATest {  @org.testng.annotations.Test(groups = { "g1" })
+                             public void testTwo(){}
+                              @org.testng.annotations.Test(dependsOnGroups = {"g1" })
+                             public void testOne(){}
+                           }""");
+    myFixture.addClass("""
+                         package a; public class ForeignTest {  @org.testng.annotations.Test(groups = { "g1" })
+                           public void testForth(){}
+                          }""");
     doTestClassConfiguration(aClass);
   }
 
   public void testBeforeGroups() throws Exception {
     final PsiClass aClass =
-       myFixture.addClass("package a; public class ATest {" +
-                         "  @org.testng.annotations.Test(groups = { \"g1\" })\n" +
-                         "  public void testOne(){}\n" +
-                         "}");
-    final PsiClass configClass = myFixture.addClass("package a; public class ConfigTest {" +
-                                                 "  @org.testng.annotations.BeforeGroups(groups = { \"g1\" })\n" +
-                                                 "  public void testTwo(){}\n " +
-                                                 "}");
+       myFixture.addClass("""
+                            package a; public class ATest {  @org.testng.annotations.Test(groups = { "g1" })
+                              public void testOne(){}
+                            }""");
+    final PsiClass configClass = myFixture.addClass("""
+                                                      package a; public class ConfigTest {  @org.testng.annotations.BeforeGroups(groups = { "g1" })
+                                                        public void testTwo(){}
+                                                       }""");
     doTestMethodConfiguration(aClass, configClass, configClass.getMethods()[0], aClass.getMethods());
   }
 
@@ -151,27 +151,28 @@ public class DetectClassesToRunTest extends LightJavaCodeInsightFixtureTestCase 
 
   public void testRerunFailedParameterized() {
     @SuppressWarnings("TestNGDataProvider") final PsiClass aClass =
-      myFixture.addClass("package a; " +
-                         "import org.testng.annotations.DataProvider;\n" +
-                         "import org.testng.annotations.Test;\n" +
-                         "\n" +
-                         "import static org.testng.Assert.assertEquals;\n" +
-                         "\n" +
-                         "public class ATest {\n" +
-                         "\n" +
-                         "    @DataProvider\n" +
-                         "    public Object[][] testData() {\n" +
-                         "        return new Object[][]{\n" +
-                         "                {1},\n" +
-                         "                {2},\n" +
-                         "        };\n" +
-                         "    }\n" +
-                         "\n" +
-                         "    @Test(dataProvider = \"testData\")\n" +
-                         "    public void test(int in) {\n" +
-                         "        assertEquals(in, 0);\n" +
-                         "    }\n" +
-                         "}\n");
+      myFixture.addClass("""
+                           package a; import org.testng.annotations.DataProvider;
+                           import org.testng.annotations.Test;
+
+                           import static org.testng.Assert.assertEquals;
+
+                           public class ATest {
+
+                               @DataProvider
+                               public Object[][] testData() {
+                                   return new Object[][]{
+                                           {1},
+                                           {2},
+                                   };
+                               }
+
+                               @Test(dataProvider = "testData")
+                               public void test(int in) {
+                                   assertEquals(in, 0);
+                               }
+                           }
+                           """);
 
     final LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>> classes = new LinkedHashMap<>();
     classes.put(aClass, new HashMap<>());

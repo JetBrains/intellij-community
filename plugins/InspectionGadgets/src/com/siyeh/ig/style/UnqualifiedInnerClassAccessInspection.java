@@ -3,6 +3,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -20,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 /**
  * @author Bas Leijdekkers
  */
@@ -29,9 +32,9 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
   public boolean ignoreReferencesToLocalInnerClasses = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unqualified.inner.class.access.option"),
-                                          this, "ignoreReferencesToLocalInnerClasses");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreReferencesToLocalInnerClasses", InspectionGadgetsBundle.message("unqualified.inner.class.access.option")));
   }
 
   @Override
@@ -60,7 +63,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiJavaCodeReferenceElement)) {
         return;

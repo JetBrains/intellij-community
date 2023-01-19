@@ -1,4 +1,4 @@
-// "Make 'foo' return 'int'" "true-preview"
+// "Make 'foo()' return 'int'" "true-preview"
 abstract class A {
   private int condition(boolean flag) {
     return flag ? foo()<caret> : bar();

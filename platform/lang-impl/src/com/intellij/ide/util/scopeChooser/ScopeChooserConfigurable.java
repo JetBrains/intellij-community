@@ -240,7 +240,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     });
     super.initTree();
     myTree.setShowsRootHandles(false);
-    new TreeSpeedSearch(myTree, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName(), true);
+    new TreeSpeedSearch(myTree, true, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName());
 
     myTree.getEmptyText().setText(IdeBundle.message("scopes.no.scoped"));
   }

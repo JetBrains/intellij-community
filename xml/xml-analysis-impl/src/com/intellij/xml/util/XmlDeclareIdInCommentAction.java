@@ -35,9 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author spleaner
- */
 public class XmlDeclareIdInCommentAction implements LocalQuickFix {
   private final String myId;
 

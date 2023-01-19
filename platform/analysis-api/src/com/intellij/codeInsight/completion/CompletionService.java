@@ -21,8 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * For completion FAQ, see {@link CompletionContributor}.
- *
- * @author peter
  */
 public abstract class CompletionService {
   public static final Key<CompletionStatistician> STATISTICS_KEY = Key.create("completion");
@@ -72,11 +70,15 @@ public abstract class CompletionService {
       if (customSorter != null) {
         result = result.withRelevanceSorter(customSorter);
       }
-      contributor.fillCompletionVariants(parameters, result);
+      getVariantsFromContributor(parameters, contributor, result);
       if (result.isStopped()) {
         return;
       }
     }
+  }
+
+  protected void getVariantsFromContributor(CompletionParameters params, CompletionContributor contributor, CompletionResultSet result) {
+    contributor.fillCompletionVariants(params, result);
   }
 
   protected abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
@@ -99,7 +101,6 @@ public abstract class CompletionService {
    */
   public void performCompletion(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
     final Set<LookupElement> lookupSet = ContainerUtil.newConcurrentSet();
-
     AtomicBoolean typoTolerant = new AtomicBoolean();
 
     BatchConsumer<CompletionResult> batchConsumer = new BatchConsumer<>() {

@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public final class ClassContextFilter {
 
   public static ContextFilter fromClassPattern(ElementPattern pattern) {

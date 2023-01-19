@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -12,7 +13,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.AddSelfQuickFix;
 import com.jetbrains.python.inspections.quickfix.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
@@ -21,16 +21,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * Looks for the 'self' or its equivalents.
- *
- * @author dcheryasov
  */
 public class PyMethodParametersInspection extends PyInspection {
-  public @NlsSafe String MCS = "mcs";
-  public @NlsSafe String METACLS = "metacls";
+  private static final @NlsSafe String MODE_MCS = "mcs";
+  private static final @NlsSafe String MODE_METACLS = "metacls";
+  
+  public String MCS = MODE_MCS;
 
   @Nullable
   public static PyMethodParametersInspection getInstance(@NotNull PsiElement element) {
@@ -39,16 +39,14 @@ public class PyMethodParametersInspection extends PyInspection {
     return (PyMethodParametersInspection)inspectionProfile.getUnwrappedTool(toolName, element);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
+  public @NotNull OptPane getOptionsPane() {
     //TODO: simplify this (drop this?)
     // it should offer only one default option mcs or metacls, inspection should accept both
-    return PythonUiService.getInstance().createComboBoxWithLabel(PyPsiBundle.message("INSP.method.parameters.metaclass.method.first.argument.name"),
-                                                   new String[]{MCS, METACLS}, MCS,
-                                   item -> {
-                                     MCS = (String)item;
-                                   });
+    return pane(
+      dropdown("MCS", PyPsiBundle.message("INSP.method.parameters.metaclass.method.first.argument.name"),
+               option(MODE_MCS, MODE_MCS), option(MODE_METACLS, MODE_METACLS))
+    );
   }
 
   @NotNull
@@ -59,9 +57,9 @@ public class PyMethodParametersInspection extends PyInspection {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
-  public class Visitor extends PyInspectionVisitor {
+  private class Visitor extends PyInspectionVisitor {
 
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+    private Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
 
@@ -165,9 +163,6 @@ public class PyMethodParametersInspection extends PyInspection {
               }
             }
             else if (!flags.isStaticMethod() && !first_param.isPositionalContainer() && !PyNames.CANONICAL_SELF.equals(pname)) {
-              if (flags.isMetaclassMethod() && CLS.equals(pname)) {
-                return;   // accept either 'self' or 'cls' for all methods in metaclass
-              }
               registerProblem(
                 PyUtil.sure(params[0].getNode()).getPsi(),
                 PyPsiBundle.message("INSP.usually.named.self"),

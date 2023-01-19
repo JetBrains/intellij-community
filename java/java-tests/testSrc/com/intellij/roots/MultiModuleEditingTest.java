@@ -190,7 +190,7 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
     }
 
     @Override
-    public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
+    public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
       for (Module module : modules) {
         myLog.add("+" + module.getName());
       }

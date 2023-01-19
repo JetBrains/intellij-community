@@ -28,9 +28,6 @@ import com.intellij.util.indexing.FileBasedIndex
 import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.MagicConstant
 
-/**
- * @author peter
- */
 @CompileStatic
 class MagicConstantCompletion4Test extends LightJavaCodeInsightFixtureTestCase {
   LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {

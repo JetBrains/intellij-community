@@ -4,14 +4,11 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lang.injection.general.Injection;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.FallbackInjectionPerformer;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 final class DefaultLanguageInjectionPerformer implements FallbackInjectionPerformer {
@@ -47,9 +44,9 @@ final class DefaultLanguageInjectionPerformer implements FallbackInjectionPerfor
       return false;
     }
 
-    List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> trinities =
-      Collections.singletonList(Trinity.create(host, injectedLanguage, manipulator.getRangeInElement(host)));
-    InjectorUtils.registerInjection(language, trinities, containingFile, registrar);
+    List<InjectorUtils.InjectionInfo> infos =
+      List.of(new InjectorUtils.InjectionInfo(host, injectedLanguage, manipulator.getRangeInElement(host)));
+    InjectorUtils.registerInjection(language, containingFile, infos, registrar);
     if (support != null) {
       InjectorUtils.registerSupport(support, false, context, language);
     }

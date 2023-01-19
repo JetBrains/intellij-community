@@ -23,6 +23,8 @@ import com.intellij.util.CachedValueImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/** @deprecated Use {@link DefaultActionGroup} or {@link ActionGroup} directly */
+@Deprecated(forRemoval = true)
 public abstract class ComputableActionGroup extends ActionGroup implements DumbAware {
   private CachedValue<AnAction[]> myChildren;
 

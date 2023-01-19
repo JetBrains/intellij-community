@@ -422,12 +422,12 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       }
       final List<PackagingElement<?>> toSelect = new ArrayList<>();
       editLayout(() -> {
-        draggingObject.beforeDrop();
         final CompositePackagingElement<?> parent = getOrCreateModifiableParent(targetElement, targetNode);
         for (PackagingElement<?> element : draggingObject.createPackagingElements(myContext)) {
           toSelect.add(element);
           parent.addOrFindChild(element);
         }
+        draggingObject.beforeDrop();
       });
       updateAndSelect(targetNode, toSelect);
       myArtifactsEditor.getSourceItemsTree().rebuildTree();

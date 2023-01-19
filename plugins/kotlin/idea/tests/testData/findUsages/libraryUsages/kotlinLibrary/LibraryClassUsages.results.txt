@@ -1,3 +1,6 @@
+[B.class] Constructor delegation reference 7 public constructor(n: kotlin.Int) { /* compiled code */ }
+[BB.class] Constructor delegation reference 7 public constructor() { /* compiled code */ }
+[LibraryClassUsages.0.kt] Constructor delegation reference 11 constructor(n: Int) : super(n)
 [LibraryClassUsages.0.kt] Local variable declaration 17 val a: A = A()
 [LibraryClassUsages.0.kt] New instance creation 17 val a: A = A()
 [LibraryClassUsages.0.kt] New instance creation 18 val aa = A(1)

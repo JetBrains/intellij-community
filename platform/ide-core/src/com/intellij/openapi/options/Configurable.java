@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -7,10 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -124,8 +121,10 @@ import java.util.Collection;
  * @see ShowSettingsUtil
  */
 public interface Configurable extends UnnamedConfigurable {
-  ExtensionPointName<ConfigurableEP<Configurable>> APPLICATION_CONFIGURABLE = new ExtensionPointName<>("com.intellij.applicationConfigurable");
-  ProjectExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE = new ProjectExtensionPointName<>("com.intellij.projectConfigurable");
+  ExtensionPointName<ConfigurableEP<Configurable>> APPLICATION_CONFIGURABLE =
+    new ExtensionPointName<>("com.intellij.applicationConfigurable");
+  ProjectExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE =
+    new ProjectExtensionPointName<>("com.intellij.projectConfigurable");
 
   /**
    * Returns the visible name of the configurable component.
@@ -171,6 +170,13 @@ public interface Configurable extends UnnamedConfigurable {
   }
 
   /**
+   * This marker interface tells the Settings dialog to show a Beta icon for the configurable.
+   */
+  interface Beta {
+
+  }
+
+  /**
    * This marker interface notifies the Settings dialog to not add an empty border to the Swing form.
    * Required when the Swing form is a tabbed pane.
    */
@@ -185,7 +191,7 @@ public interface Configurable extends UnnamedConfigurable {
   interface VariableProjectAppLevel {
     /**
      * @return True if current settings apply to the current project (enable "For current project" indicator), false for application-level
-     *         (IDE) settings.
+     * (IDE) settings.
      */
     boolean isProjectLevel();
   }
@@ -193,13 +199,12 @@ public interface Configurable extends UnnamedConfigurable {
   /**
    * The interface is used for configurable that depends on some dynamic extension points.
    * If a configurable implements the interface by default the configurable will re-created after adding / removing extensions for the EP.
-   *
+   * <p>
    * Examples: postfix template configurable. If we have added a plugin with new postfix templates we have to re-create the configurable
    * (but only if the content of the configurable was loaded)
    *
    * @apiNote if the configurable is not marked as dynamic=true it must not initialize EP-depend resources in the constructor.
    * This interface also can be used with {@link ConfigurableProvider}.
-   *
    */
   interface WithEpDependencies {
     /**
@@ -208,34 +213,28 @@ public interface Configurable extends UnnamedConfigurable {
     @NotNull Collection<BaseExtensionPointName<?>> getDependencies();
   }
 
-  default boolean isModified(@NotNull JTextField textField, @NotNull String value) {
-    return !StringUtil.equals(textField.getText().trim(), value);
-  }
+  /**
+   * Ask opened configurable to focus on a control with a specified label.
+   * It could be a tab name, name of the tree item, checkbox label, etc.
+   * The configurable may or may not ignore this request.
+   * Default implementation does nothing.
+   *
+   * @param label localized label name of the control to focus on.
+   */
+  default void focusOn(@NotNull @Nls String label) {
 
-  default boolean isModified(@NotNull JTextField textField, int value, @NotNull UINumericRange range) {
-    try {
-      int currentValue = Integer.parseInt(textField.getText().trim());
-      return range.fit(currentValue) == currentValue && currentValue != value;
-    }
-    catch (NumberFormatException e) {
-      return false;
-    }
-  }
-
-  default boolean isModified(@NotNull JToggleButton toggleButton, boolean value) {
-    return toggleButton.isSelected() != value;
   }
 
   interface TopComponentController {
     TopComponentController EMPTY = new TopComponentController() {
       @Override
-      public void setLeftComponent(@Nullable Component component) {}
+      public void setLeftComponent(@Nullable Component component) { }
 
       @Override
-      public void showProgress(boolean start) {}
+      public void showProgress(boolean start) { }
 
       @Override
-      public void showProject(boolean hasProject) {}
+      public void showProject(boolean hasProject) { }
     };
 
     void setLeftComponent(@Nullable Component component);
@@ -252,4 +251,62 @@ public interface Configurable extends UnnamedConfigurable {
 
     @NotNull Component getCenterComponent(@NotNull TopComponentController controller);
   }
+
+
+  static boolean isFieldModified(@NotNull JTextField textField, @NotNull String initialValue) {
+    return !StringUtil.equals(textField.getText().trim(), initialValue);
+  }
+
+  static boolean isFieldModified(@NotNull JTextField textField, int initialValue, @NotNull UINumericRange range) {
+    try {
+      int currentValue = Integer.parseInt(textField.getText().trim());
+      return range.fit(currentValue) == currentValue && currentValue != initialValue;
+    }
+    catch (NumberFormatException e) {
+      return false;
+    }
+  }
+
+  static boolean isFieldModified(@NotNull JTextField textField, int initialValue) {
+    try {
+      int fieldValue = Integer.parseInt(textField.getText().trim());
+      return fieldValue != initialValue;
+    }
+    catch (NumberFormatException e) {
+      return false;
+    }
+  }
+
+  static boolean isCheckboxModified(@NotNull JCheckBox checkbox, boolean initialValue) {
+    return checkbox.isSelected() != initialValue;
+  }
+
+
+  //region Deprecated
+
+  /**
+   * @deprecated Prefer using {@link #isFieldModified(JTextField, String)}
+   */
+  @Deprecated(forRemoval = true)
+  default boolean isModified(@NotNull JTextField textField, @NotNull String initialValue) {
+    return isFieldModified(textField, initialValue);
+  }
+
+  /**
+   * @deprecated Prefer using {@link #isFieldModified(JTextField, int, UINumericRange)}
+   */
+  @Deprecated(forRemoval = true)
+  default boolean isModified(@NotNull JTextField textField, int initialValue, @NotNull UINumericRange range) {
+    return isFieldModified(textField, initialValue, range);
+  }
+
+  /**
+   * @deprecated Prefer using {@link #isCheckboxModified(JCheckBox, boolean)}
+   */
+  @Deprecated(forRemoval = true)
+  default boolean isModified(@NotNull JToggleButton toggleButton, boolean initialValue) {
+    return toggleButton.isSelected() != initialValue;
+  }
+
+  //endregion
 }

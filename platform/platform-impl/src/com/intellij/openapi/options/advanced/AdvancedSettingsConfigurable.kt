@@ -20,11 +20,10 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
 import javax.swing.AbstractButton
@@ -71,7 +70,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     val result = panel {
       row {
         cell(searchField)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .resizableColumn()
         checkBox(ApplicationBundle.message("checkbox.advanced.settings.modified"))
           .actionListener { _, component ->
@@ -82,10 +81,9 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
       nothingFoundRow = row {
         label(ApplicationBundle.message("search.advanced.settings.nothing.found"))
-          .horizontalAlign(HorizontalAlign.CENTER)
-          .verticalAlign(VerticalAlign.CENTER)
+          .align(Align.CENTER)
           .applyToComponent {
-            foreground = UIUtil.getInactiveTextColor()
+            foreground = NamedColorUtil.getInactiveTextColor()
           }
       }.visible(false)
 
@@ -93,8 +91,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
         val scrollable = ScrollPaneFactory.createScrollPane(extensionsSettings, true)
         scrollable.preferredSize = Dimension(JBUI.scale(300), JBUI.scale(200))
         cell(scrollable)
-          .horizontalAlign(HorizontalAlign.FILL)
-          .verticalAlign(VerticalAlign.FILL)
+          .align(Align.FILL)
       }.resizableRow()
     }
     result.registerIntegratedPanel(extensionsSettings)
@@ -133,6 +130,8 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
               actionButton(resetAction)
                 .applyToComponent {
                   setMinimumButtonSize(Dimension(minSize, minSize))
+                  // Revert button is a little higher than checkbox, so disable default additional vertical gaps for the button
+                  putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(false, false))
                 }
                 .visibleIf(advancedSetting.isDefault.not())
             }
@@ -212,16 +211,21 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     applyFilter(searchField.text, onlyShowModified)
   }
 
+  private fun resetFilter() {
+    for (settingsGroup in settingsGroups) {
+      settingsGroup.groupRow.visible(true)
+      updateMatchText(settingsGroup.title, settingsGroup.text, null)
+      for (settingsRow in settingsGroup.settingsRows) {
+        settingsRow.setVisible(true)
+        updateMatchText(settingsRow.component, settingsRow.text, null)
+      }
+    }
+    nothingFoundRow.visible(false)
+  }
+
   private fun applyFilter(searchText: String?, onlyShowModified: Boolean) {
     if (searchText.isNullOrBlank() && !onlyShowModified) {
-      for (groupPanel in settingsGroups) {
-        groupPanel.groupRow.visible(true)
-        for (settingsRow in groupPanel.settingsRows) {
-          settingsRow.setVisible(true)
-          updateMatchText(settingsRow.component, settingsRow.text, null)
-        }
-      }
-      nothingFoundRow.visible(false)
+      resetFilter()
       return
     }
 
@@ -232,9 +236,9 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
     for (settingsGroup in settingsGroups) {
       var groupVisible = false
-      val groupNameMatched = !onlyShowModified && isMatch(filterWords, settingsGroup.text)
-      if (groupNameMatched) {
-        updateMatchText(settingsGroup.title, settingsGroup.text, searchText)
+      val groupNameMatched = isMatch(filterWords, settingsGroup.text)
+      updateMatchText(settingsGroup.title, settingsGroup.text, searchText)
+      if (!onlyShowModified && groupNameMatched) {
         matchCount++
         groupVisible = true
       }
@@ -244,7 +248,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
         val textMatches = searchText == null || isMatch(filterWords, settingsRow.text)
         val idMatches = searchText == null || (filterWordsUnstemmed.isNotEmpty() && idWords.containsAll(filterWordsUnstemmed))
         val modifiedMatches = if (onlyShowModified) !settingsRow.isDefaultPredicate() else true
-        val matches = groupNameMatched || ((textMatches || idMatches) && modifiedMatches)
+        val matches = (groupNameMatched || textMatches || idMatches) && modifiedMatches
         settingsRow.setVisible(matches)
         if (matches) {
           matchCount++

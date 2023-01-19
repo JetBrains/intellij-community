@@ -235,7 +235,7 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
       super(project, grouping);
     }
 
-    public void setGenericNodes(@NotNull Collection<GenericChangesBrowserNode> nodes, @Nullable ChangesBrowserNode.Tag tag) {
+    public void setGenericNodes(@NotNull Collection<? extends GenericChangesBrowserNode> nodes, @Nullable ChangesBrowserNode.Tag tag) {
       ChangesBrowserNode<?> parentNode = createTagNode(tag);
 
       for (GenericChangesBrowserNode node : sorted(nodes, comparing(data -> data.getFilePath(), PATH_COMPARATOR))) {

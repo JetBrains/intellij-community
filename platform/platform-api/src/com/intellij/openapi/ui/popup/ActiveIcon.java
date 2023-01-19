@@ -16,13 +16,16 @@
 
 package com.intellij.openapi.ui.popup;
 
+import com.intellij.ui.IconReplacer;
+import com.intellij.ui.icons.ReplaceableIcon;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class ActiveIcon implements Icon {
+public class ActiveIcon implements Icon, ReplaceableIcon {
 
   private boolean myActive = true;
 
@@ -35,6 +38,11 @@ public class ActiveIcon implements Icon {
 
   public ActiveIcon(@Nullable final Icon regular, @Nullable final Icon inactive) {
     setIcons(regular, inactive);
+  }
+
+  protected ActiveIcon(@NotNull ActiveIcon another) {
+    this(another.myRegular, another.myInactive);
+    myActive = another.myActive;
   }
 
   protected void setIcons(@Nullable final Icon regular, @Nullable final Icon inactive) {
@@ -56,6 +64,14 @@ public class ActiveIcon implements Icon {
 
   public void setActive(final boolean active) {
     myActive = active;
+  }
+
+  @Override
+  public @NotNull ActiveIcon replaceBy(@NotNull IconReplacer replacer) {
+    Icon regular = replacer.replaceIcon(myRegular);
+    ActiveIcon icon = new ActiveIcon(regular, myRegular == myInactive ? regular : replacer.replaceIcon(myInactive));
+    icon.myActive = myActive;
+    return icon;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -30,9 +30,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-/**
- * @author lex
- */
 public class RequestManagerImpl extends DebugProcessAdapterImpl implements RequestManager {
   private static final Logger LOG = Logger.getInstance(RequestManagerImpl.class);
 
@@ -76,10 +73,10 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   @Nullable
   public static Requestor findRequestor(EventRequest request) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return request != null? (Requestor)request.getProperty(REQUESTOR) : null;
+    return request != null ? (Requestor)request.getProperty(REQUESTOR) : null;
   }
 
-  private static void addClassFilter(EventRequest request, String pattern){
+  private static void addClassFilter(EventRequest request, String pattern) {
     if (request instanceof ExceptionRequest) {
       ((ExceptionRequest)request).addClassFilter(pattern);
     }
@@ -94,7 +91,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
-  private static void addClassExclusionFilter(EventRequest request, String pattern){
+  private static void addClassExclusionFilter(EventRequest request, String pattern) {
     if (request instanceof ExceptionRequest) {
       ((ExceptionRequest)request).addClassExclusionFilter(pattern);
     }
@@ -110,7 +107,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   private void addLocatableRequest(FilteredRequestor requestor, EventRequest request) {
-    if(DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
+    if (DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
       request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
     }
     else {
@@ -124,7 +121,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       request.addCountFilter(requestor.getCountFilter());
     }
 
-    if (requestor.isClassFiltersEnabled() && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/ ) {
+    if (requestor.isClassFiltersEnabled() && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/) {
       addClassFilters(request, requestor.getClassFilters(), requestor.getClassExclusionFilters());
     }
 
@@ -239,11 +236,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public void deleteRequest(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myRequestWarnings.remove(requestor);
-    if(!myDebugProcess.isAttached()) {
+    if (!myDebugProcess.isAttached()) {
       return;
     }
     final Set<EventRequest> requests = myRequestorToBelongedRequests.remove(requestor);
-    if(requests == null) {
+    if (requests == null) {
       return;
     }
     for (final EventRequest request : requests) {
@@ -362,7 +359,8 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         }
       }
       return enabler.apply(request);
-    } catch (InternalException e) {
+    }
+    catch (InternalException e) {
       switch (e.errorCode()) {
         case JvmtiError.DUPLICATE : LOG.info(e); break;
 

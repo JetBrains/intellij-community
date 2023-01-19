@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.CommonClassNames.*;
 
-/**
-* @author peter
-*/
 class CollectionsUtilityMethodsProvider {
   private final PsiElement myElement;
   private final PsiType myExpectedType;

@@ -1,12 +1,12 @@
-interface Trait {
+interface Interface {
     val member: String
 }
 
-class Klass: Trait {
+class Klass: Interface {
     override val member: String = ":)"
 }
 
 fun main(args: Array<String>) {
-    val t: Trait = Klass()
+    val t: Interface = Klass()
     println(t.member)
 }

@@ -18,9 +18,6 @@ package com.intellij.ide.highlighter.custom.tokens;
 
 import com.intellij.psi.tree.IElementType;
 
-/**
- * @author dsl
- */
 public class TokenInfo {
   private int myStart;
   private int myEnd;

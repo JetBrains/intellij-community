@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.visibility;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiRecordUtil;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class ParameterHidingMemberVariableInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -72,19 +75,15 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.setters.option"),
-                             "m_ignoreForPropertySetters");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.superclass.option"),
-                             "m_ignoreInvisibleFields");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.constructors.option"),
-                             "m_ignoreForConstructors");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.abstract.methods.option"),
-                             "m_ignoreForAbstractMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.static.parameters.option"),
-                             "m_ignoreStaticMethodParametersHidingInstanceFields");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreForPropertySetters", InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.setters.option")),
+      checkbox("m_ignoreInvisibleFields", InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.superclass.option")),
+      checkbox("m_ignoreForConstructors", InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.constructors.option")),
+      checkbox("m_ignoreForAbstractMethods",
+               InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.abstract.methods.option")),
+      checkbox("m_ignoreStaticMethodParametersHidingInstanceFields",
+               InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.static.parameters.option")));
   }
 
   @Override

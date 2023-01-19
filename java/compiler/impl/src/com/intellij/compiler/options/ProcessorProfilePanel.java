@@ -300,11 +300,11 @@ public class ProcessorProfilePanel extends JPanel {
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case 0: return JavaCompilerBundle.message("settings.column.option.name");
-        case 1: return JavaCompilerBundle.message("settings.column.value");
-      }
-      return super.getColumnName(column);
+      return switch (column) {
+        case 0 -> JavaCompilerBundle.message("settings.column.option.name");
+        case 1 -> JavaCompilerBundle.message("settings.column.value");
+        default -> super.getColumnName(column);
+      };
     }
 
     @Override
@@ -329,23 +329,19 @@ public class ProcessorProfilePanel extends JPanel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      switch (columnIndex) {
-        case 0: return myRows.get(rowIndex).key;
-        case 1: return myRows.get(rowIndex).value;
-      }
-      return null;
+      return switch (columnIndex) {
+        case 0 -> myRows.get(rowIndex).key;
+        case 1 -> myRows.get(rowIndex).value;
+        default -> null;
+      };
     }
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       if (aValue != null) {
         switch (columnIndex) {
-          case 0:
-            myRows.get(rowIndex).key = (String)aValue;
-            break;
-          case 1:
-            myRows.get(rowIndex).value = (String)aValue;
-            break;
+          case 0 -> myRows.get(rowIndex).key = (String)aValue;
+          case 1 -> myRows.get(rowIndex).value = (String)aValue;
         }
       }
     }

@@ -43,7 +43,7 @@ class NullChecksToSafeCallInspection : AbstractKotlinInspection() {
             if (!FileModificationService.getInstance().preparePsiElementForWrite(expression)) return
             val (lte, rte, isAnd) = collectNullCheckExpressions(expression) ?: return
             val parent = expression.parent
-            expression.replaced(KtPsiFactory(lte).buildExpression {
+            expression.replaced(KtPsiFactory(lte.project).buildExpression {
                 appendExpression(lte)
                 appendFixedText("?.")
                 appendExpression(rte.selectorExpression)

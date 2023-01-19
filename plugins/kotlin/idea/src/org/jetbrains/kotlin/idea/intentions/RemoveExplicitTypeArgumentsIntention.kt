@@ -7,14 +7,17 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueDescriptor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.diagnostics.Errors.*
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.isAnnotatedDeep
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.*
@@ -25,6 +28,7 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
@@ -52,11 +56,25 @@ class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArg
     }
 }
 
+/**
+ * Related tests:
+ * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.RemoveExplicitTypeArguments]
+ * [org.jetbrains.kotlin.idea.intentions.IntentionTestGenerated.RemoveExplicitTypeArguments]
+ * [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated.DeprecatedSymbolUsage.Imports.testAddImportForOperator]
+ * [org.jetbrains.kotlin.idea.quickfix.QuickFixTestGenerated.DeprecatedSymbolUsage.TypeArguments.WholeProject.testClassConstructor]
+ * [org.jetbrains.kotlin.idea.refactoring.inline.InlineTestGenerated]
+ * [org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated.ExtractFunction]
+ * [org.jetbrains.kotlin.nj2k.*]
+ */
 class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentIntention<KtTypeArgumentList>(
     KtTypeArgumentList::class.java,
     KotlinBundle.lazyMessage("remove.explicit.type.arguments")
 ) {
     companion object {
+        private val INLINE_REIFIED_FUNCTIONS_WITH_INSIGNIFICANT_TYPE_ARGUMENTS: Set<String> = setOf(
+            "kotlin.arrayOf"
+        )
+
         fun isApplicableTo(element: KtTypeArgumentList, approximateFlexible: Boolean): Boolean {
             val callExpression = element.parent as? KtCallExpression ?: return false
             val typeArguments = callExpression.typeArguments
@@ -66,6 +84,12 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
             val resolutionFacade = callExpression.getResolutionFacade()
             val bindingContext = resolutionFacade.analyze(callExpression, BodyResolveMode.PARTIAL_WITH_CFA)
             val originalCall = callExpression.getResolvedCall(bindingContext) ?: return false
+
+            originalCall.resultingDescriptor.let {
+                if (it.isInlineFunctionWithReifiedTypeParameters() &&
+                    it.fqNameSafe.asString() !in INLINE_REIFIED_FUNCTIONS_WITH_INSIGNIFICANT_TYPE_ARGUMENTS
+                ) return false
+            }
 
             val (contextExpression, expectedType) = findContextToAnalyze(callExpression, bindingContext)
             val resolutionScope = contextExpression.getResolutionScope(bindingContext, resolutionFacade)
@@ -100,14 +124,22 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
                 }
             }
 
-            return args.size == newArgs.size && args.values.zip(newArgs.values).all { (argType, newArgType) ->
-                equalTypes(argType, newArgType)
-            }
+            return args.size == newArgs.size &&
+                    args.values.zip(newArgs.values).all { (argType, newArgType) -> equalTypes(argType, newArgType) } &&
+                    (newBindingContext.diagnostics.asSequence() - bindingContext.diagnostics).none {
+                        it.factory == INFERRED_INTO_DECLARED_UPPER_BOUNDS || it.factory == UNRESOLVED_REFERENCE ||
+                                it.factory == BUILDER_INFERENCE_STUB_RECEIVER ||
+                                // just for sure because its builder inference related
+                                it.factory == COULD_BE_INFERRED_ONLY_WITH_UNRESTRICTED_BUILDER_INFERENCE
+                    }
         }
+
+        private fun CallableDescriptor.isInlineFunctionWithReifiedTypeParameters(): Boolean =
+            this is FunctionDescriptor && isInline && typeParameters.any { it.isReified }
 
         private fun findContextToAnalyze(expression: KtExpression, bindingContext: BindingContext): Pair<KtExpression, KotlinType?> {
             for (element in expression.parentsWithSelf) {
-                if (element !is KtExpression) continue
+                if (element !is KtExpression || element is KtEnumEntry) continue
 
                 if (element.getQualifiedExpressionForSelector() != null) continue
                 if (element is KtFunctionLiteral) continue
@@ -165,7 +197,7 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
         element.delete()
 
         if (isBetweenLambdaArguments) {
-            prevCallExpression?.replace(KtPsiFactory(element).createExpressionByPattern("($0)", prevCallExpression))
+            prevCallExpression?.replace(KtPsiFactory(element.project).createExpressionByPattern("($0)", prevCallExpression))
         }
     }
 }

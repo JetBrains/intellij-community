@@ -20,9 +20,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
-/**
- * @author ven
- */
 public final class CachedValuesManagerImpl extends CachedValuesManager {
   private static final Object NULL = new Object();
 

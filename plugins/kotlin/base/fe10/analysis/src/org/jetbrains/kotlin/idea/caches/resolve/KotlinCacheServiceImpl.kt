@@ -30,23 +30,21 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.useCompositeAnalysis
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesSourceInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.util.GlobalFacadeModuleFilters
 import org.jetbrains.kotlin.idea.caches.resolve.util.contextWithCompositeExceptionTracker
 import org.jetbrains.kotlin.idea.caches.trackers.outOfBlockModificationCount
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.*
@@ -55,15 +53,13 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.diagnostics.KotlinSuppressCache
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.sumByLong
 
 internal val LOG = Logger.getInstance(KotlinCacheService::class.java)
 
 data class PlatformAnalysisSettingsImpl(
     val platform: TargetPlatform,
-    val sdk: Sdk?,
-    val isAdditionalBuiltInFeaturesSupported: Boolean,
+    val sdk: Sdk?
 ) : PlatformAnalysisSettings
 
 object CompositeAnalysisSettings : PlatformAnalysisSettings
@@ -71,13 +67,12 @@ object CompositeAnalysisSettings : PlatformAnalysisSettings
 fun createPlatformAnalysisSettings(
     project: Project,
     platform: TargetPlatform,
-    sdk: Sdk?,
-    isAdditionalBuiltInFeaturesSupported: Boolean
+    sdk: Sdk?
 ): PlatformAnalysisSettings {
     return if (project.useCompositeAnalysis) {
         CompositeAnalysisSettings
     } else {
-        PlatformAnalysisSettingsImpl(platform, sdk, isAdditionalBuiltInFeaturesSupported)
+        PlatformAnalysisSettingsImpl(platform, sdk)
     }
 }
 
@@ -124,8 +119,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         val moduleInfo = files.first().moduleInfo
         val settings = PlatformAnalysisSettingsImpl(
             platform,
-            moduleInfo.sdk,
-            moduleInfo.supportsAdditionalBuiltInsMembers(project)
+            moduleInfo.sdk()
         )
 
         if (!canGetFacadeWithForcedPlatform(elements, files, moduleInfo, platform)) {
@@ -221,11 +215,10 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     ): ProjectResolutionFacade {
         val sdk = dependenciesModuleInfo.sdk
         val platform = JvmPlatforms.defaultJvmPlatform // TODO: Js scripts?
-        val settings = createPlatformAnalysisSettings(project, platform, sdk, true)
+        val settings = createPlatformAnalysisSettings(project, platform, sdk)
 
         val dependenciesForScriptDependencies = listOf(
             LibraryModificationTracker.getInstance(project),
-            ProjectRootModificationTracker.getInstance(project),
             ScriptDependenciesModificationTracker.getInstance(project)
         )
 
@@ -248,7 +241,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             //TODO: provide correct trackers
             dependencies = dependenciesForScriptDependencies,
             moduleFilter = { it == dependenciesModuleInfo },
-            invalidateOnOOCB = true
+            invalidateOnOOCB = false
         )
     }
 
@@ -286,17 +279,13 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             project, modulesContext, settings,
             reuseDataFrom = facadeForLibraries,
             moduleFilter = moduleFilters::moduleFacadeFilter,
-            dependencies = listOf(
-                LibraryModificationTracker.getInstance(project),
-                ProjectRootModificationTracker.getInstance(project)
-            ),
+            dependencies = listOf(ProjectRootModificationTracker.getInstance(project)),
             invalidateOnOOCB = true
         )
     }
 
     private fun IdeaModuleInfo.platformSettings(targetPlatform: TargetPlatform) = createPlatformAnalysisSettings(
-        this@KotlinCacheServiceImpl.project, targetPlatform, sdk,
-        supportsAdditionalBuiltInsMembers(this@KotlinCacheServiceImpl.project)
+        this@KotlinCacheServiceImpl.project, targetPlatform, sdk()
     )
 
     private fun facadeForModules(settings: PlatformAnalysisSettings) =
@@ -403,7 +392,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                 )
             }
 
-            specialModuleInfo is LibrarySourceInfo || specialModuleInfo === NotUnderContentRootModuleInfo -> {
+            specialModuleInfo is LibrarySourceInfo || specialModuleInfo is NotUnderContentRootModuleInfo -> {
                 val librariesFacade = librariesFacade(settings)
                 val debugName = "facadeForSpecialModuleInfo (LibrarySourceInfo or NotUnderContentRootModuleInfo)"
                 val globalContext = librariesFacade.globalContext.contextWithCompositeExceptionTracker(project, debugName)
@@ -632,5 +621,3 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         return if (contextFile is KtCodeFragment) contextFile.getContextFile() else contextFile
     }
 }
-
-val IdeaModuleInfo.sdk: Sdk? get() = dependencies().firstIsInstanceOrNull<SdkInfo>()?.sdk

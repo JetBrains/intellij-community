@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
-/**
- * @author Irina.Chernushina
- */
 public class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinnerConfigurable {
   public VcsContentAnnotationConfigurable(Project project) {
     super(project, VcsBundle.message("settings.checkbox.show.changed.in.last"), VcsBundle.message("settings.checkbox.measure.days"));

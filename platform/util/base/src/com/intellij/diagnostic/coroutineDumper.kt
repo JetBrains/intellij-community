@@ -22,14 +22,16 @@ fun enableCoroutineDump() {
   DebugProbes.install()
 }
 
-fun dumpCoroutines(): String? {
+@JvmOverloads
+fun dumpCoroutines(scope: CoroutineScope? = null): String? {
   if (!DebugProbes.isInstalled) {
     return null
   }
   val charset = StandardCharsets.UTF_8.name()
   val outputStream = ByteArrayOutputStream()
   PrintStream(BufferedOutputStream(outputStream), true, charset).use { out ->
-    dumpCoroutines(out)
+    val jobTree = jobTree(scope).toList()
+    dumpCoroutines(jobTree, out)
   }
   return outputStream.toString(charset)
 }
@@ -61,8 +63,7 @@ fun dumpCoroutines(): String? {
  * but [CoroutineInfo.lastObservedStackTrace] doesn't enhance the trace with dump of last thread,
  * which is crucial for detecting stuck [runBlocking] coroutines.
  */
-private fun dumpCoroutines(out: PrintStream) {
-  val jobTree = jobTree().toList()
+private fun dumpCoroutines(jobTree: List<JobTreeNode>, out: PrintStream) {
   for ((job: Job, info: DebugCoroutineInfo?, level: Int) in jobTree) {
     if (level == 0) {
       out.println()
@@ -108,7 +109,7 @@ private data class JobTreeNode(
   val level: Int,
 )
 
-private fun jobTree(): Sequence<JobTreeNode> {
+private fun jobTree(scope: CoroutineScope? = null): Sequence<JobTreeNode> {
   val coroutineInfos = DebugProbesImpl.dumpCoroutinesInfo()
 
   // adapted from kotlinx.coroutines.debug.internal.DebugProbesImpl.hierarchyToString
@@ -116,9 +117,15 @@ private fun jobTree(): Sequence<JobTreeNode> {
     .filter { it.context[Job] != null }
     .associateBy { it.context.job }
 
-  val rootJobs = jobToStack.keys.mapTo(LinkedHashSet()) {
-    it.rootJob()
+  val rootJobs = if (scope != null) {
+    setOf(scope.coroutineContext.job)
   }
+  else {
+    jobToStack.keys.mapTo(LinkedHashSet()) {
+      it.rootJob()
+    }
+  }
+
   return sequence {
     for (job in rootJobs) {
       jobTree(job, jobToStack, 0)

@@ -20,7 +20,7 @@ class ChangeObjectToClassFix(element: KtObjectDeclaration) : KotlinQuickFixActio
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val objectDeclaration = element ?: return
-        val psiFactory = KtPsiFactory(objectDeclaration)
+        val psiFactory = KtPsiFactory(project)
         objectDeclaration.getObjectKeyword()?.replace(psiFactory.createClassKeyword())
         objectDeclaration.replace(psiFactory.createClass(objectDeclaration.text))
     }

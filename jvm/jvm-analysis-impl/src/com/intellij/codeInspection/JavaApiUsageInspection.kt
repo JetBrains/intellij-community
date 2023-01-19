@@ -6,6 +6,10 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
+import com.intellij.codeInspection.options.OptDropdown
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.*
+import com.intellij.codeInspection.options.OptionController
 import com.intellij.java.JavaBundle
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
@@ -15,21 +19,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaVersionService
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
-import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jdom.Element
 import org.jetbrains.uast.*
-import java.awt.BorderLayout
-import java.awt.event.ActionListener
-import javax.swing.*
 
 /**
  * In order to add the support for new API in the most recent JDK execute:
@@ -47,55 +43,24 @@ import javax.swing.*
 class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.ERROR
 
-  override fun createOptionsPanel(): JComponent {
-    val projectRb = JRadioButton(JavaBundle.message("radio.button.respecting.to.project.language.level.settings"))
-    val customRb = JRadioButton(JavaBundle.message("radio.button.higher.than"))
-    val panel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false)).apply {
-      add(JLabel(JavaBundle.message("label.forbid.api.usages")))
-      add(projectRb)
-      add(customRb)
-      ButtonGroup().apply {
-        add(projectRb)
-        add(customRb)
-      }
-    }
+  private var effectiveLanguageLevel: LanguageLevel? = null
 
-    val llCombo = object : ComboBox<LanguageLevel>(LanguageLevel.values()) {
-      override fun setEnabled(b: Boolean) {
-        if (b == customRb.isSelected) {
-          super.setEnabled(b)
-        }
-      }
-    }.apply {
-      selectedItem = if (effectiveLanguageLevel != null) effectiveLanguageLevel else LanguageLevel.JDK_1_3
-      renderer = SimpleListCellRenderer.create("") { obj -> obj.presentableText }
-      addActionListener { effectiveLanguageLevel = selectedItem as LanguageLevel }
-    }
-
-
-    val comboPanel = JPanel(BorderLayout()).apply {
-      border = JBUI.Borders.emptyLeft(20)
-      add(llCombo, BorderLayout.WEST)
-    }
-    panel.add(comboPanel)
-
-    val actionListener = ActionListener {
-      if (projectRb.isSelected) {
-        effectiveLanguageLevel = null
-      }
-      else {
-        effectiveLanguageLevel = llCombo.selectedItem as LanguageLevel
-      }
-      UIUtil.setEnabled(comboPanel, !projectRb.isSelected, true)
-    }
-    projectRb.addActionListener(actionListener)
-    customRb.addActionListener(actionListener)
-    projectRb.isSelected = effectiveLanguageLevel == null
-    customRb.isSelected = effectiveLanguageLevel != null
-    UIUtil.setEnabled(comboPanel, !projectRb.isSelected, true)
-    return panel
+  override fun getOptionsPane(): OptPane {
+    var levels: List<OptDropdown.Option> = LanguageLevel.values().map { option(it.name, it.presentableText) }
+    levels = listOf(option("null", JavaBundle.message("label.forbid.api.usages.project"))) + levels
+    return pane(
+      dropdown("effectiveLanguageLevel", JavaBundle.message("label.forbid.api.usages"), *levels.toTypedArray())
+    )
   }
 
+  override fun getOptionController(): OptionController {
+    return super.getOptionController().onValue(
+      "effectiveLanguageLevel",
+      { effectiveLanguageLevel?.name ?: "null" },
+      { value -> effectiveLanguageLevel = if (value == "null") null else LanguageLevel.valueOf(value) }
+    )
+  }
+  
   override fun readSettings(node: Element) {
     val element = node.getChild(EFFECTIVE_LL)
     if (element != null) {
@@ -161,13 +126,12 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       val sourcePsi = method.sourcePsi ?: return
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
-      val sinceLanguageLevel = overriddenMethods.mapNotNull { overriddenMethod ->
+      val lastIncompatibleLevel = overriddenMethods.mapNotNull { overriddenMethod ->
         LanguageLevelUtil.getLastIncompatibleLanguageLevel(overriddenMethod, languageLevel)
       }.minOrNull() ?: return
       val toHighlight = overrideAnnotation?.uastAnchor?.sourcePsi ?: method.uastAnchor?.sourcePsi ?: return
-      val jdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(sourcePsi) ?: return
-      if (checkSdkLevel(sinceLanguageLevel, jdkVersion)) return
-      registerError(toHighlight, sinceLanguageLevel, holder, isOnTheFly)
+      if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return
+      registerError(toHighlight, lastIncompatibleLevel, holder, isOnTheFly)
     }
   }
 
@@ -179,10 +143,9 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       val sourcePsi = sourceNode.sourcePsi ?: return
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
-      val sinceLanguageLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(constructor, languageLevel) ?: return
-      val jdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(sourcePsi) ?: return
-      if (checkSdkLevel(sinceLanguageLevel, jdkVersion)) return
-      registerError(sourcePsi, sinceLanguageLevel, holder, isOnTheFly)
+      val lastIncompatibleLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(constructor, languageLevel) ?: return
+      if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return
+      registerError(sourcePsi, lastIncompatibleLevel, holder, isOnTheFly)
     }
 
     override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
@@ -190,10 +153,9 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       if (target !is PsiMember) return
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
-      val sinceLanguageLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(target, languageLevel)
-      if (sinceLanguageLevel != null) {
-        val jdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(sourcePsi) ?: return
-        if (checkSdkLevel(sinceLanguageLevel, jdkVersion)) return
+      val lastIncompatibleLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(target, languageLevel)
+      if (lastIncompatibleLevel != null) {
+        if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return
         val psiClass = if (qualifier != null) {
           PsiUtil.resolveClassInType(qualifier.getExpressionType())
         }
@@ -206,7 +168,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
             if (isIgnored(superClass)) return
           }
         }
-        registerError(sourcePsi, sinceLanguageLevel, holder, isOnTheFly)
+        registerError(sourcePsi, lastIncompatibleLevel, holder, isOnTheFly)
       }
       else if (target is PsiClass && !languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
         for (generifiedClass in generifiedClasses) {
@@ -240,8 +202,10 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
   /** Only runs in production because tests have incorrect SDKs when no mock SDK is available. */
-  private fun checkSdkLevel(sinceLanguageLevel: LanguageLevel, jdkVersion: JavaSdkVersion) =
-    sinceLanguageLevel.isAtLeast(jdkVersion.maxLanguageLevel) && !ApplicationManager.getApplication().isUnitTestMode
+  private fun shouldReportSinceLevelForElement(lastIncompatibleLevel: LanguageLevel, context: PsiElement): Boolean? {
+    val jdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(context) ?: return null
+    return lastIncompatibleLevel.isAtLeast(jdkVersion.maxLanguageLevel) && !ApplicationManager.getApplication().isUnitTestMode
+  }
 
   private fun registerError(reference: PsiElement, sinceLanguageLevel: LanguageLevel, holder: ProblemsHolder, isOnTheFly: Boolean) {
     val targetLanguageLevel = LanguageLevelUtil.getNextLanguageLevel(sinceLanguageLevel) ?: run {
@@ -258,12 +222,14 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     holder.registerProblem(reference, message, fix)
   }
 
+  fun getEffectiveLanguageLevel(module: Module): LanguageLevel {
+    return effectiveLanguageLevel ?: LanguageLevelUtil.getEffectiveLanguageLevel(module)
+  }
+
   companion object {
     private val overrideModifierLanguages = listOf("kotlin", "scala")
 
     private val logger = logger<JavaApiUsageInspection>()
-
-    private var effectiveLanguageLevel: LanguageLevel? = null
 
     private const val EFFECTIVE_LL = "effectiveLL"
 
@@ -272,9 +238,5 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     private val generifiedClasses = setOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
 
     private val defaultMethods = setOf("java.util.Iterator#remove()")
-
-    fun getEffectiveLanguageLevel(module: Module): LanguageLevel {
-      return effectiveLanguageLevel ?: LanguageLevelUtil.getEffectiveLanguageLevel(module)
-    }
   }
 }

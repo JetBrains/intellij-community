@@ -12,9 +12,6 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public final class UsageViewNodeTextLocation extends ElementDescriptionLocation {
   private UsageViewNodeTextLocation() { }
 

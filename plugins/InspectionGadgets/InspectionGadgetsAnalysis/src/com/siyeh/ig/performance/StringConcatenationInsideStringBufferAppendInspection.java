@@ -66,7 +66,7 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodNameElement = descriptor.getPsiElement();
       final PsiReferenceExpression methodExpression = (PsiReferenceExpression)methodNameElement.getParent();
       if (methodExpression == null) {

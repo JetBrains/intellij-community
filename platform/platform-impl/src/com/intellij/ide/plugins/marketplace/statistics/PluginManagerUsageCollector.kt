@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins.marketplace.statistics
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginEnableDisableAction
+import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.enums.PluginsGroupType
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum
@@ -24,9 +24,9 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = EVENT_GROUP
 
   companion object {
-    private val EVENT_GROUP = EventLogGroup("plugin.manager", 3)
+    private val EVENT_GROUP = EventLogGroup("plugin.manager", 5)
     private val PLUGINS_GROUP_TYPE = EventFields.Enum<PluginsGroupType>("group")
-    private val ENABLE_DISABLE_ACTION = EventFields.Enum<PluginEnableDisableAction>("states") { it.name }
+    private val ENABLE_DISABLE_ACTION = EventFields.Enum<PluginEnabledState>("enabled_state")
     private val ACCEPTANCE_RESULT = EventFields.Enum<DialogAcceptanceResultEnum>("acceptance_result")
     private val PLUGIN_SOURCE = EventFields.Enum<InstallationSourceEnum>("source")
     private val PREVIOUS_VERSION = PluginVersionEventField("previous_version")
@@ -64,13 +64,17 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
     @JvmStatic
     fun pluginsStateChanged(
       descriptors: Collection<IdeaPluginDescriptor>,
-      action: PluginEnableDisableAction,
+      enable: Boolean,
       project: Project? = null,
     ) {
-      descriptors.asSequence().map {
-        getPluginInfoByDescriptor(it)
-      }.forEach {
-        PLUGIN_STATE_CHANGED.getIfInitializedOrNull()?.log(project, it, action)
+      PLUGIN_STATE_CHANGED.getIfInitializedOrNull()?.let { event ->
+        descriptors.forEach { descriptor ->
+          event.log(
+            project,
+            getPluginInfoByDescriptor(descriptor),
+            PluginEnabledState.getState(enable, descriptor.isOnDemand),
+          )
+        }
       }
     }
 

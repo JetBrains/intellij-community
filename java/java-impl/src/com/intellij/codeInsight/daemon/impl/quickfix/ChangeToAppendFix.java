@@ -60,7 +60,7 @@ public class ChangeToAppendFix extends LocalQuickFixAndIntentionActionOnPsiEleme
     }
     return QuickFixBundle.message("change.to.append.text",
                                   ChangeToAppendUtil.buildAppendExpression(assignmentExpression.getRExpression(),
-                                                                           getTypeInfo().myUseStringValueOf,
+                                                                           getTypeInfo().useStringValueOf,
                                                                            new StringBuilder(assignmentExpression.getLExpression().getText())));
   }
 
@@ -75,7 +75,7 @@ public class ChangeToAppendFix extends LocalQuickFixAndIntentionActionOnPsiEleme
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return JavaTokenType.PLUSEQ == myTokenType && getTypeInfo().myAppendable;
+    return JavaTokenType.PLUSEQ == myTokenType && getTypeInfo().appendable;
   }
 
   @Override
@@ -111,13 +111,6 @@ public class ChangeToAppendFix extends LocalQuickFixAndIntentionActionOnPsiEleme
     return new TypeInfo(false, false);
   }
 
-  private static class TypeInfo {
-    private final boolean myAppendable;
-    private final boolean myUseStringValueOf;
-
-    TypeInfo(boolean appendable, boolean useStringValueOf) {
-      myAppendable = appendable;
-      myUseStringValueOf = useStringValueOf;
-    }
+  private record TypeInfo(boolean appendable, boolean useStringValueOf) {
   }
 }

@@ -49,9 +49,10 @@ public class GradleEnvironmentTest extends GradleImportingTestCase {
   }
 
   private void importAndRunTask(@NotNull Map<String, String> passedEnv, StringBuilder gradleEnv) throws IOException {
-    importProject("task printEnv() {\n" +
-                  "  doLast { println System.getenv().toMapString()}\n" +
-                  "}");
+    importProject("""
+                    task printEnv() {
+                      doLast { println System.getenv().toMapString()}
+                    }""");
 
     ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
     Module module = getModule("project");

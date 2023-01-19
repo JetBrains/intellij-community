@@ -4,40 +4,50 @@ import com.intellij.configurationStore.getDefaultStoragePathSpec
 import com.intellij.configurationStore.serializeStateInto
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
 import com.intellij.util.toBufferExposingByteArray
 import com.intellij.util.xmlb.Constants
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import org.junit.Assert
+import org.junit.Assert.assertEquals
 import java.nio.charset.StandardCharsets
 import java.time.Instant
 
 @ApiStatus.Internal
-fun SettingsSnapshot.assertSettingsSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
+fun SettingsSnapshot.assertSettingsSnapshot(buildExpectedSnapshot: SettingsSnapshotBuilder.() -> Unit) {
   val settingsSnapshotBuilder = SettingsSnapshotBuilder()
-  settingsSnapshotBuilder.build()
+  settingsSnapshotBuilder.buildExpectedSnapshot()
+  assertFileStates(settingsSnapshotBuilder.fileStates, fileStates)
+  assertFileStates(settingsSnapshotBuilder.additionalFiles, additionalFiles)
+  assertEquals(settingsSnapshotBuilder.plugins, plugins?.plugins ?: emptyMap<PluginId, PluginData>())
+}
+
+private fun assertFileStates(expectedFileStates: List<FileState>, actualFileStates: Set<FileState>) {
   val transformation = { fileState: FileState ->
     val content = if (fileState is FileState.Modified) String(fileState.content, StandardCharsets.UTF_8) else DELETED_FILE_MARKER
     fileState.file to content
   }
-  val actualMap = this.fileStates.associate(transformation).toSortedMap()
-  val expectedMap = settingsSnapshotBuilder.fileStates.associate(transformation).toSortedMap()
+  val actualMap = actualFileStates.associate(transformation).toSortedMap()
+  val expectedMap = expectedFileStates.associate(transformation).toSortedMap()
   if (actualMap != expectedMap) {
     val missingKeys = expectedMap.keys - actualMap.keys
     val extraKeys = actualMap.keys - expectedMap.keys
     val message = StringBuilder()
     if (missingKeys.isNotEmpty()) message.append("Missing: $missingKeys\n")
     if (extraKeys.isNotEmpty()) message.append("Extra: $extraKeys\n")
-    Assert.assertEquals("Incorrect snapshot: $message", expectedMap, actualMap)
+    assertEquals("Incorrect snapshot: $message", expectedMap, actualMap)
   }
 }
 
 internal fun PersistentStateComponent<*>.toFileState() : FileState {
   val file = PathManager.OPTIONS_DIRECTORY + "/" + getDefaultStoragePathSpec(this::class.java)
   val content = this.serialize()
-  return FileState.Modified(file, content, content.size)
+  return FileState.Modified(file, content)
 }
 
 internal val <T> PersistentStateComponent<T>.name: String
@@ -57,12 +67,17 @@ internal fun settingsSnapshot(metaInfo: MetaInfo = MetaInfo(Instant.now(), getLo
                               build: SettingsSnapshotBuilder.() -> Unit) : SettingsSnapshot {
   val builder = SettingsSnapshotBuilder()
   builder.build()
-  return SettingsSnapshot(metaInfo, builder.fileStates.toSet())
+  return SettingsSnapshot(metaInfo, builder.fileStates.toSet(),
+                          if (builder.pluginInformationExists) SettingsSyncPluginsState(builder.plugins) else null,
+                          builder.additionalFiles.toSet())
 }
 
 @ApiStatus.Internal
 class SettingsSnapshotBuilder {
   val fileStates = mutableListOf<FileState>()
+  val plugins = mutableMapOf<PluginId, PluginData>()
+  var pluginInformationExists = false
+  val additionalFiles = mutableListOf<FileState>()
 
   fun fileState(function: () -> PersistentStateComponent<*>) {
     val component : PersistentStateComponent<*> = function()
@@ -75,6 +90,21 @@ class SettingsSnapshotBuilder {
 
   fun fileState(file: String, content: String) {
     val byteArray = content.toByteArray()
-    fileState(FileState.Modified(file, byteArray, byteArray.size))
+    fileState(FileState.Modified(file, byteArray))
+  }
+
+  fun plugin(id: String,
+             enabled: Boolean = true,
+             category: SettingsCategory = SettingsCategory.PLUGINS,
+             dependencies: Set<String> = emptySet()): Pair<PluginId, PluginData> {
+    pluginInformationExists = true
+    val pluginId = PluginId.getId(id)
+    val pluginData = PluginData(enabled, category, dependencies)
+    plugins[pluginId] = pluginData
+    return pluginId to pluginData
+  }
+
+  fun additionalFile(file: String, content: String) {
+    additionalFiles += FileState.Modified(file, content.toByteArray())
   }
 }

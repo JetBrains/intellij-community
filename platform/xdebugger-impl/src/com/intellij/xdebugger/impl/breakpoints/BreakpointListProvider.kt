@@ -15,7 +15,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SizedIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SingleAlarm
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerBundle.message
 import com.intellij.xdebugger.XDebuggerManager
@@ -186,7 +186,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
     override fun update(presentation: PresentationData) {
       presentation.setIcon(value.icon)
       presentation.presentableText = value.displayText
-      if (!value.isEnabled) presentation.forcedTextForeground = UIUtil.getInactiveTextColor()
+      if (!value.isEnabled) presentation.forcedTextForeground = NamedColorUtil.getInactiveTextColor()
     }
   }
 }

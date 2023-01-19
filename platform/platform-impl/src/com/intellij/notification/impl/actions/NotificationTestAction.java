@@ -82,20 +82,50 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
       Action balloon = new AbstractAction("Balloon Examples") {
         @Override
         public void actionPerformed(ActionEvent e) {
-          setExamples("// Example 1\nIcon:/toolwindows/toolWindowChanges.png\nTitle:Deleted Branch\nContent:Unmerged commits discarded\n" +
-                      "Actions:Restore,View Commits,Delete Tracked Branch\n\n" +
-                      "// Example 2\nType:warn\nTitle:Title\nSubtitle:Subtitle\nContent:Foo<br>Bar\nSticky\n--\n" +
-                      "// Description\nType:info/error/warn\nIcon:\nTitle:\nSubtitle:\n" +
-                      "Content:\nContent:\nActions:\nSticky\n--\n");
+          setExamples("""
+                        // Example 1
+                        Icon:/toolwindows/toolWindowChanges.png
+                        Title:Deleted Branch
+                        Content:Unmerged commits discarded
+                        Actions:Restore,View Commits,Delete Tracked Branch
+
+                        // Example 2
+                        Type:warn
+                        Title:Title
+                        Subtitle:Subtitle
+                        Content:Foo<br>Bar
+                        Sticky
+                        --
+                        // Description
+                        Type:info/error/warn
+                        Icon:
+                        Title:
+                        Subtitle:
+                        Content:
+                        Content:
+                        Actions:
+                        Sticky
+                        --
+                        """);
         }
       };
       Action toolwindow = new AbstractAction("Toolwindow Examples") {
         @Override
         public void actionPerformed(ActionEvent e) {
-          setExamples("// Example\nToolwindow\nContent:Build completed successfully in 7 s 851 ms\n--\n" +
-                      "// Description: Notifications shows for toolwindow TODO\n" +
-                      "Toolwindow\nType:info/error/warn\nIcon:\nTitle:\n" +
-                      "Content:\nContent:\n--\n");
+          setExamples("""
+                        // Example
+                        Toolwindow
+                        Content:Build completed successfully in 7 s 851 ms
+                        --
+                        // Description: Notifications shows for toolwindow TODO
+                        Toolwindow
+                        Type:info/error/warn
+                        Icon:
+                        Title:
+                        Content:
+                        Content:
+                        --
+                        """);
         }
       };
       return new Action[]{balloon, toolwindow};

@@ -58,8 +58,8 @@ public final class IdeUiServiceImpl extends IdeUiService {
 
   @Override
   public boolean isFileRecentlyChanged(Project project, VirtualFile file) {
-    IdeDocumentHistoryImpl documentHistory = (IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(project);
-    return documentHistory.isRecentlyChanged(file);
+    IdeDocumentHistory documentHistory = IdeDocumentHistory.getInstance(project);
+    return documentHistory instanceof IdeDocumentHistoryImpl && ((IdeDocumentHistoryImpl)documentHistory).isRecentlyChanged(file);
   }
 
   @Override
@@ -85,6 +85,11 @@ public final class IdeUiServiceImpl extends IdeUiService {
   @Override
   public @NotNull DataContext createCustomizedDataContext(@NotNull DataContext dataContext, @NotNull DataProvider dataProvider) {
     return CustomizedDataContext.create(dataContext, dataProvider);
+  }
+
+  @Override
+  public void initUpdateSession(@NotNull AnActionEvent event) {
+    Utils.initUpdateSession(event);
   }
 
   @Override

@@ -11,11 +11,11 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
                         UIdentifier (Identifier (process)) [UIdentifier (Identifier (process))]
                         USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] = external invoke(t)(Undetermined)
                         USimpleNameReferenceExpression (identifier = t) [t] = Undetermined
-        UMethod (name = functionWithVararg) [public static fun functionWithVararg(@org.jetbrains.annotations.Nullable i: int, @org.jetbrains.annotations.NotNull t: T[]) : T {...}]
+        UMethod (name = functionWithVararg) [public static fun functionWithVararg(@org.jetbrains.annotations.Nullable i: int, @org.jetbrains.annotations.Nullable t: T[]) : T {...}]
             UParameter (name = i) [@org.jetbrains.annotations.Nullable var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
-            UParameter (name = t) [@org.jetbrains.annotations.NotNull var t: T[]]
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UParameter (name = t) [@org.jetbrains.annotations.Nullable var t: T[]]
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return t[0]] = Nothing
                     UArrayAccessExpression [t[0]] = Undetermined

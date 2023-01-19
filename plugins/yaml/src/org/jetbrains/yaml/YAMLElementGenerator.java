@@ -69,7 +69,7 @@ public class YAMLElementGenerator {
   @NotNull
   public YAMLFile createDummyYamlWithText(@NotNull String text) {
     return (YAMLFile) PsiFileFactory.getInstance(myProject)
-      .createFileFromText("temp." + YAMLFileType.YML.getDefaultExtension(), YAMLFileType.YML, text, LocalTimeCounter.currentTime(), true);
+      .createFileFromText("temp." + YAMLFileType.YML.getDefaultExtension(), YAMLFileType.YML, text, LocalTimeCounter.currentTime(), false);
   }
 
   @NotNull

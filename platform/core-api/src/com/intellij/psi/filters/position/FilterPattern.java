@@ -22,9 +22,6 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class FilterPattern extends ObjectPattern<Object,FilterPattern> {
   @Nullable private final ElementFilter myFilter;
 

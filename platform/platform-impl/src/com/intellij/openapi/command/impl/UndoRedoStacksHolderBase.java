@@ -17,15 +17,15 @@ import java.util.*;
 public abstract class UndoRedoStacksHolderBase<E> {
   protected static final Logger LOG = Logger.getInstance(UndoRedoStacksHolderBase.class);
 
-  protected final Key<LinkedList<E>> STACK_IN_DOCUMENT_KEY = Key.create("STACK_IN_DOCUMENT_KEY");
+  private final Key<LinkedList<E>> STACK_IN_DOCUMENT_KEY = Key.create("STACK_IN_DOCUMENT_KEY");
 
-  protected final boolean myUndo;
+  final boolean myUndo;
 
   // strongly reference local files for which we can undo file removal
   // document without files and nonlocal files are stored without strong reference
-  protected final Map<DocumentReference, LinkedList<E>> myDocumentStacks = CollectionFactory.createSmallMemoryFootprintMap();
-  protected final Collection<Document> myDocumentsWithStacks = new WeakList<>();
-  protected final Collection<VirtualFile> myNonlocalVirtualFilesWithStacks = new WeakList<>();
+  final Map<DocumentReference, LinkedList<E>> myDocumentStacks = CollectionFactory.createSmallMemoryFootprintMap();
+  final Collection<Document> myDocumentsWithStacks = new WeakList<>();
+  final Collection<VirtualFile> myNonlocalVirtualFilesWithStacks = new WeakList<>();
 
   UndoRedoStacksHolderBase(boolean isUndo) {
     myUndo = isUndo;
@@ -41,11 +41,11 @@ public abstract class UndoRedoStacksHolderBase<E> {
     LinkedList<E> result;
     VirtualFile file = r.getFile();
 
-    if (!file.isInLocalFileSystem()) {
-      result = addWeaklyTrackedEmptyStack(file, myNonlocalVirtualFilesWithStacks);
+    if (file.isInLocalFileSystem()) {
+      result = myDocumentStacks.computeIfAbsent(r, __ -> new LinkedList<>());
     }
     else {
-      result = myDocumentStacks.computeIfAbsent(r, __ -> new LinkedList<>());
+      result = addWeaklyTrackedEmptyStack(file, myNonlocalVirtualFilesWithStacks);
     }
 
     return result;
@@ -70,11 +70,12 @@ public abstract class UndoRedoStacksHolderBase<E> {
     return result;
   }
 
-  protected String getStacksDescription() {
+  @NotNull
+  String getStacksDescription() {
     return myUndo ? "undo stacks" : "redo stacks";
   }
 
-  protected void removeEmptyStacks() {
+  void removeEmptyStacks() {
     myDocumentStacks.entrySet().removeIf(each -> each.getValue().isEmpty());
     // make sure the following entrySet iteration will not go over empty buckets.
     CollectionFactory.trimMap(myDocumentStacks);

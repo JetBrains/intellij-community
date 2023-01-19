@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.ide.util.EditorHelper
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
@@ -82,12 +83,12 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
     protected open val callableInfo: CallableInfo?
         get() = throw UnsupportedOperationException()
 
-    protected fun callableInfos(): List<CallableInfo> =
+    private fun callableInfos(): List<CallableInfo> =
         callableInfoReference?.get() ?: callableInfos.also {
             callableInfoReference = WeakReference(it)
         }
 
-    protected fun notEmptyCallableInfos() = callableInfos().takeIf { it.isNotEmpty() }
+    private fun notEmptyCallableInfos() = callableInfos().takeIf { it.isNotEmpty() }
 
     private var initialized: Boolean = false
 
@@ -96,24 +97,9 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
         val callableInfos = notEmptyCallableInfos() ?: return ""
         val callableInfo = callableInfos.first()
         val receiverTypeInfo = callableInfo.receiverTypeInfo
-        val renderedCallables = callableInfos.map {
+        val renderedCallablesByKind = callableInfos.groupBy({ it.kind }, valueTransform = {
             buildString {
-                if (it.isAbstract) {
-                    append(KotlinBundle.message("text.abstract"))
-                    append(' ')
-                }
-
-                val kind = when (it.kind) {
-                    CallableKind.FUNCTION -> KotlinBundle.message("text.function")
-                    CallableKind.PROPERTY -> KotlinBundle.message("text.property")
-                    CallableKind.CONSTRUCTOR -> KotlinBundle.message("text.secondary.constructor")
-                    else -> throw AssertionError("Unexpected callable info: $it")
-                }
-                append(kind)
-
                 if (it.name.isNotEmpty()) {
-                    append(" '")
-
                     val receiverType = if (!receiverTypeInfo.isOfThis) {
                         CallableBuilderConfiguration(callableInfos, element, isExtension = isExtension)
                             .createBuilder()
@@ -139,16 +125,17 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                         }
                     }
 
-                    append("${it.name}'")
+                    append(it.name)
                 }
             }
-        }
+        })
 
         return buildString {
             append(KotlinBundle.message("text.create"))
             append(' ')
 
-            if (!callableInfos.any { it.isAbstract }) {
+            val isAbstract = callableInfos.any { it.isAbstract }
+            if (!isAbstract) {
                 if (isExtension) {
                     append(KotlinBundle.message("text.extension"))
                     append(' ')
@@ -156,9 +143,24 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                     append(KotlinBundle.message("text.member"))
                     append(' ')
                 }
+            } else {
+                append(KotlinBundle.message("text.abstract"))
+                append(' ')
             }
 
-            renderedCallables.joinTo(this)
+            renderedCallablesByKind.entries.joinTo(this) {
+                val kind = it.key
+                val names = it.value.filter { name -> name.isNotEmpty() }
+                val pluralIndex = if (names.size > 1) 2 else 1
+                val kindText =
+                    when(kind) {
+                        CallableKind.FUNCTION -> KotlinBundle.message("text.function.0", pluralIndex)
+                        CallableKind.CONSTRUCTOR -> KotlinBundle.message("text.secondary.constructor")
+                        CallableKind.PROPERTY -> KotlinBundle.message("text.property.0", pluralIndex)
+                        else -> throw AssertionError("Unexpected callable info: $it")
+                    }
+                if (names.isEmpty()) kindText else "$kindText ${names.joinToString { name -> "'$name'" }}"
+            }
         }
     })
 
@@ -221,9 +223,10 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
 
     private fun getDeclaration(descriptor: ClassifierDescriptor, project: Project): PsiElement? {
         if (descriptor is FunctionClassDescriptor) {
+            val contextElement = element ?: error("Context element is not found")
             val psiFactory = KtPsiFactory(project)
             val syntheticClass = psiFactory.createClass(IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.render(descriptor))
-            return psiFactory.createAnalyzableFile("${descriptor.name.asString()}.kt", "", element!!).add(syntheticClass)
+            return psiFactory.createFile("${descriptor.name.asString()}.kt", "").add(syntheticClass)
         }
         return DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor)
     }
@@ -247,6 +250,8 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
+
+    override fun startInWriteAction(): Boolean = false
 
     override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean {
         checkIsInitialized()
@@ -301,8 +306,12 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                     val receiverClass = it.second as? KtClass
                     if (staticContextRequired && receiverClass?.isWritable == true) {
                         val hasCompanionObject = receiverClass.companionObjects.isNotEmpty()
-                        val companionObject = receiverClass.getOrCreateCompanionObject()
-                        if (!hasCompanionObject && this@CreateCallableFromUsageFixBase.isExtension) companionObject.body?.delete()
+                        val companionObject = runWriteAction {
+                            val companionObject = receiverClass.getOrCreateCompanionObject()
+                            if (!hasCompanionObject && this@CreateCallableFromUsageFixBase.isExtension) companionObject.body?.delete()
+
+                            companionObject
+                        }
                         val classValueType = (companionObject.descriptor as? ClassDescriptor)?.classValueType
                         val receiverTypeCandidate = if (classValueType != null) TypeCandidate(classValueType) else it.first
                         CallablePlacement.WithReceiver(receiverTypeCandidate)

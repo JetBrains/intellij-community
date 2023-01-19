@@ -245,7 +245,7 @@ public final class ApplyPatchAction extends DumbAwareAction {
         }, commitContext);
       }
       catch (IOException e) {
-        LOG.error(e);
+        LOG.warn(e);
         return ApplyFilePatch.FAILURE;
       }
     });

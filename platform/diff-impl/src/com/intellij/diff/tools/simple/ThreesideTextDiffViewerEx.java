@@ -75,14 +75,6 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
 
   @Override
   @RequiresEdt
-  protected void onDispose() {
-    destroyChangedBlocks();
-    myFoldingModel.destroy();
-    super.onDispose();
-  }
-
-  @Override
-  @RequiresEdt
   protected void processContextHints() {
     super.processContextHints();
     myInitialScrollHelper.processContext(myRequest);
@@ -432,7 +424,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
 
     @Nullable
     public Data createState(@Nullable List<? extends MergeLineFragment> fragments,
-                            @NotNull List<LineOffsets> lineOffsets,
+                            @NotNull List<? extends LineOffsets> lineOffsets,
                             @NotNull FoldingModelSupport.Settings settings) {
       int[] lineCount = new int[myEditors.length];
       for (int i = 0; i < myEditors.length; i++) {

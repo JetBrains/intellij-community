@@ -22,9 +22,6 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final String JAVA_LANG_REFLECT_METHOD = "java.lang.reflect.Method";

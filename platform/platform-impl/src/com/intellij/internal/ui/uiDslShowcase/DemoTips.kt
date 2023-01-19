@@ -8,8 +8,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBUI
 
 @Suppress("DialogTitleCapitalization")
@@ -58,7 +56,7 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
         textField()
           .gap(RightGap.SMALL)
           .resizableColumn()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
         val action = object : DumbAwareAction(AllIcons.Actions.QuickfixOffBulb) {
           override fun actionPerformed(e: AnActionEvent) {
           }
@@ -69,19 +67,19 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
       row("Row 2:") {
         textField()
           .gap(RightGap.SMALL)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
         cell()
       }.layout(RowLayout.PARENT_GRID)
         .rowComment("Last textField occupies only one column like the previous textField")
     }
 
-    group("Use Panel.row(EMPTY_LABEL) if label is empty") {
+    group("""Use Panel.row("") if label is empty""") {
       row("Row 1:") {
         textField()
       }
-      row(EMPTY_LABEL) {
+      row("") {
         textField()
-      }.rowComment("""Don't use row(""), because it creates unnecessary label component in layout""")
+      }
     }
     group("Use Cell.widthGroup to use the same width") {
       row {
@@ -89,7 +87,7 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
       }
       row {
         button("Button") {}.widthGroup("GroupName")
-      }.rowComment("All components from the same width group will have the same width equals to maximum width from the group. Cannot be used together with HorizontalAlign.FILL")
+      }.rowComment("All components from the same width group will have the same width equals to maximum width from the group. Cannot be used together with AlignX.FILL")
     }
     row {
       panel {
@@ -106,7 +104,7 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
           }.bind({ value }, { value = it })
         }
       }.gap(RightGap.COLUMNS)
-        .verticalAlign(VerticalAlign.TOP)
+        .align(AlignY.TOP)
         .resizableColumn()
       panel {
         group("Default radio button") {
@@ -122,7 +120,7 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
             }
           }.bind({ value }, { value = it })
         }
-      }.verticalAlign(VerticalAlign.TOP)
+      }.align(AlignY.TOP)
         .resizableColumn()
     }
   }

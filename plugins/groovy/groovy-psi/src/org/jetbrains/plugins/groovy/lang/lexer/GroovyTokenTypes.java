@@ -8,8 +8,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 /**
  * Interface that contains all tokens returned by GroovyLexer
- *
- * @author ilyas
  */
 public interface GroovyTokenTypes {
 
@@ -52,8 +50,6 @@ public interface GroovyTokenTypes {
   /* **************************************************************************************************
  *  Strings & regular expressions
  * ****************************************************************************************************/
-
-  @Deprecated(forRemoval = true) IElementType mSTRING_LITERAL = STRING_SQ;
 
   IElementType mGSTRING_BEGIN = GSTRING_BEGIN;
   IElementType mGSTRING_CONTENT = GSTRING_CONTENT;

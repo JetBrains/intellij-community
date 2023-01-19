@@ -3,6 +3,7 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
@@ -41,16 +42,17 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
 
   public void testExport() throws Exception {
 
-    addTestFile("Foo.java", "class Foo {\n" +
-                            "\n" +
-                            "    void m() {\n" +
-                            "        int i = 0 == 0 ? 0 : 0;\n" +
-                            "        int i2 = 0 == 0 ? 0 : 0;\n" +
-                            "        int i3 = 0 == 0 ? 0 : 0;\n" +
-                            "        int i4 = 0 == 0 ? 0 : 0;\n" +
-                            "        int i5 = 0 == 0 ? 0 : 0;\n" +
-                            "    }\n" +
-                            "}");
+    addTestFile("Foo.java", """
+      class Foo {
+
+          void m() {
+              int i = 0 == 0 ? 0 : 0;
+              int i2 = 0 == 0 ? 0 : 0;
+              int i3 = 0 == 0 ? 0 : 0;
+              int i4 = 0 == 0 ? 0 : 0;
+              int i5 = 0 == 0 ? 0 : 0;
+          }
+      }""");
 
     InspectionManager im = InspectionManager.getInstance(getProject());
     AnalysisScope scope = new AnalysisScope(getProject());
@@ -71,71 +73,71 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
     ProgressManager.getInstance().runProcess(() -> context.launchInspectionsOffline(scope, outputPath, false, resultFiles), new ProgressWindow(false, getProject()));
     assertSize(2, resultFiles);
 
-    Element dfaResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("ConstantConditions.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);
+    Element dfaResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("ConstantValue.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);
     Element unnCondResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("SimplifiableConditionalExpression.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);
 
-    Element expectedDfaResults = JDOMUtil.load("<problems>" +
-                                               "<problem>\n" +
-                                               "  <file>Foo.java</file>\n" +
-                                               "  <line>6</line>\n" +
-                                               "  <problem_class>Constant conditions &amp; exceptions</problem_class>\n" +
-                                               "  <description>Condition &lt;code&gt;0 == 0&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>\n" +
-                                               "</problem>\n" +
-                                               "<problem>\n" +
-                                               "  <file>Foo.java</file>\n" +
-                                               "  <line>7</line>\n" +
-                                               "  <problem_class>Constant conditions &amp; exceptions</problem_class>\n" +
-                                               "  <description>Condition &lt;code&gt;0 == 0&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>\n" +
-                                               "</problem>\n" +
-                                               "<problem>\n" +
-                                               "  <file>Foo.java</file>\n" +
-                                               "  <line>8</line>\n" +
-                                               "  <problem_class>Constant conditions &amp; exceptions</problem_class>\n" +
-                                               "  <description>Condition &lt;code&gt;0 == 0&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>\n" +
-                                               "</problem>\n" +
-                                               "<problem>\n" +
-                                               "  <file>Foo.java</file>\n" +
-                                               "  <line>4</line>\n" +
-                                               "  <problem_class>Constant conditions &amp; exceptions</problem_class>\n" +
-                                               "  <description>Condition &lt;code&gt;0 == 0&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>\n" +
-                                               "</problem>\n" +
-                                               "<problem>\n" +
-                                               "  <file>Foo.java</file>\n" +
-                                               "  <line>5</line>\n" +
-                                               "  <problem_class>Constant conditions &amp; exceptions</problem_class>\n" +
-                                               "  <description>Condition &lt;code&gt;0 == 0&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>\n" +
-                                               "</problem>" +
-                                               "</problems>");
-    Element expectedUnnCondResults = JDOMUtil.load("<problems><problem>\n" +
-                                                   "  <file>Foo.java</file>\n" +
-                                                   "  <line>4</line>\n" +
-                                                   "  <problem_class>Redundant conditional expression</problem_class>\n" +
-                                                   "  <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>\n" +
-                                                   "</problem>\n" +
-                                                   "<problem>\n" +
-                                                   "  <file>Foo.java</file>\n" +
-                                                   "  <line>5</line>\n" +
-                                                   "  <problem_class>Redundant conditional expression</problem_class>\n" +
-                                                   "  <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>\n" +
-                                                   "</problem>\n" +
-                                                   "<problem>\n" +
-                                                   "  <file>Foo.java</file>\n" +
-                                                   "  <line>6</line>\n" +
-                                                   "  <problem_class>Redundant conditional expression</problem_class>\n" +
-                                                   "  <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>\n" +
-                                                   "</problem>\n" +
-                                                   "<problem>\n" +
-                                                   "  <file>Foo.java</file>\n" +
-                                                   "  <line>7</line>\n" +
-                                                   "  <problem_class>Redundant conditional expression</problem_class>\n" +
-                                                   "  <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>\n" +
-                                                   "</problem>\n" +
-                                                   "<problem>\n" +
-                                                   "  <file>Foo.java</file>\n" +
-                                                   "  <line>8</line>\n" +
-                                                   "  <problem_class>Redundant conditional expression</problem_class>\n" +
-                                                   "  <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>\n" +
-                                                   "</problem></problems>");
+    Element expectedDfaResults = JDOMUtil.load("""
+                                                 <problems><problem>
+                                                   <file>Foo.java</file>
+                                                   <line>6</line>
+                                                   <problem_class>Constant values</problem_class>
+                                                   <description>Condition &lt;code&gt;0 == 0&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
+                                                 </problem>
+                                                 <problem>
+                                                   <file>Foo.java</file>
+                                                   <line>7</line>
+                                                   <problem_class>Constant values</problem_class>
+                                                   <description>Condition &lt;code&gt;0 == 0&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
+                                                 </problem>
+                                                 <problem>
+                                                   <file>Foo.java</file>
+                                                   <line>8</line>
+                                                   <problem_class>Constant values</problem_class>
+                                                   <description>Condition &lt;code&gt;0 == 0&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
+                                                 </problem>
+                                                 <problem>
+                                                   <file>Foo.java</file>
+                                                   <line>4</line>
+                                                   <problem_class>Constant values</problem_class>
+                                                   <description>Condition &lt;code&gt;0 == 0&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
+                                                 </problem>
+                                                 <problem>
+                                                   <file>Foo.java</file>
+                                                   <line>5</line>
+                                                   <problem_class>Constant values</problem_class>
+                                                   <description>Condition &lt;code&gt;0 == 0&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
+                                                 </problem></problems>""");
+    Element expectedUnnCondResults = JDOMUtil.load("""
+                                                     <problems><problem>
+                                                       <file>Foo.java</file>
+                                                       <line>4</line>
+                                                       <problem_class>Simplifiable conditional expression</problem_class>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                     </problem>
+                                                     <problem>
+                                                       <file>Foo.java</file>
+                                                       <line>5</line>
+                                                       <problem_class>Simplifiable conditional expression</problem_class>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                     </problem>
+                                                     <problem>
+                                                       <file>Foo.java</file>
+                                                       <line>6</line>
+                                                       <problem_class>Simplifiable conditional expression</problem_class>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                     </problem>
+                                                     <problem>
+                                                       <file>Foo.java</file>
+                                                       <line>7</line>
+                                                       <problem_class>Simplifiable conditional expression</problem_class>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                     </problem>
+                                                     <problem>
+                                                       <file>Foo.java</file>
+                                                       <line>8</line>
+                                                       <problem_class>Simplifiable conditional expression</problem_class>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                     </problem></problems>""");
 
     InspectionTestUtil.compareWithExpected(expectedDfaResults, dfaResults, false);
     InspectionTestUtil.compareWithExpected(expectedUnnCondResults, unnCondResults, false);
@@ -156,6 +158,6 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
   }
 
   private static @NotNull List<InspectionToolWrapper<?, ?>> getTools() {
-    return Arrays.asList(new LocalInspectionToolWrapper(new DataFlowInspection()), new LocalInspectionToolWrapper(new SimplifiableConditionalExpressionInspection()));
+    return Arrays.asList(new LocalInspectionToolWrapper(new ConstantValueInspection()), new LocalInspectionToolWrapper(new SimplifiableConditionalExpressionInspection()));
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
@@ -29,17 +29,17 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class InfiniteLoopStatementInspection extends BaseInspection {
   public boolean myIgnoreInThreadTopLevel = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.infinite.loop.option"), this, "myIgnoreInThreadTopLevel");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myIgnoreInThreadTopLevel", JavaAnalysisBundle.message("inspection.infinite.loop.option")));
   }
 
   @Override
@@ -93,6 +93,9 @@ public class InfiniteLoopStatementInspection extends BaseInspection {
         return;
       }
       if (ControlFlowUtils.containsSystemExit(statement)) {
+        return;
+      }
+      if (PsiTreeUtil.getParentOfType(statement, PsiSwitchExpression.class) != null && ControlFlowUtils.containsYield(statement)) {
         return;
       }
       if (myIgnoreInThreadTopLevel) {

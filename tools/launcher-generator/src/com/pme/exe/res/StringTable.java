@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 
 package com.pme.exe.res;
 
-import com.pme.exe.Bin;
+import com.pme.exe.Bin.WCharStringSP;
 
 import java.io.*;
 
@@ -27,41 +27,30 @@ import java.io.*;
  * Time: 12:43:28 PM
  */
 public class StringTable {
-    String[] strings = new String[16];
+    final WCharStringSP[] strings = new WCharStringSP[16];
 
     public StringTable(byte[] bytes) throws IOException {
       ByteArrayInputStream bytesStream = new ByteArrayInputStream(bytes);
       DataInputStream stream = new DataInputStream(bytesStream);
-      Bin.Word count = new Bin.Word();
       for (int i = 0; i < 16; ++i) {
-        count.read(stream);
-        if ( count.getValue() != 0 ){
-          Bin.Txt txt = new Bin.Txt("", (int)(count.getValue() * 2));
-          txt.read( stream );
-          strings[i] = txt.getText();
-        } else {
-          strings[i] = "";
-        }
+        strings[i] = new WCharStringSP();
+        strings[i].read(stream);
       }
     }
 
     public void setString( int index, String string ){
-      strings[index] = string;
+      strings[index].setValue(string);
     }
 
     public byte[] getBytes() throws IOException {
       int size = 0;
-      for ( int i = 0; i < strings.length; ++i){
-        size += 2 + strings[i].length() * 2;
+      for (WCharStringSP string : strings) {
+        size += string.sizeInBytes();
       }
       ByteArrayOutputStream bytesStream = new ByteArrayOutputStream(size);
       DataOutputStream stream = new DataOutputStream(bytesStream);
-      for ( int i = 0; i < strings.length; ++i){
-        int count = strings[i].length();
-        new Bin.Word().setValue( count ).write( stream );
-        if ( count != 0 ){
-          new Bin.Txt( "", strings[i] ).write( stream );
-        }
+      for (WCharStringSP string : strings) {
+        string.write(stream);
       }
       return bytesStream.toByteArray();
     }

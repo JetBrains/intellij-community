@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.statusBar;
 
 import com.intellij.ide.GeneralSettings;
@@ -27,7 +27,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 
-public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget.TextPresentation, LightEditorListener {
+public final class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget.TextPresentation, LightEditorListener {
   private final LightEditorManager myLightEditorManager;
   private StatusBar myStatusBar;
 
@@ -35,9 +35,8 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
     myLightEditorManager = editorManager;
   }
 
-  @NotNull
   @Override
-  public String ID() {
+  public @NotNull String ID() {
     return "light.edit.autosave";
   }
 
@@ -49,19 +48,12 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
   }
 
   @Override
-  public void dispose() {
-  }
-
-  @NlsContexts.Tooltip
-  @Nullable
-  @Override
-  public String getTooltipText() {
+  public @NlsContexts.Tooltip @Nullable String getTooltipText() {
     return IdeBundle.message("tooltip.autosave.mode");
   }
 
-  @Nullable
   @Override
-  public Consumer<MouseEvent> getClickConsumer() {
+  public @Nullable Consumer<MouseEvent> getClickConsumer() {
     return event -> {
       Component widgetComp = event.getComponent();
       if (widgetComp != null) {
@@ -74,9 +66,8 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
     };
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return ApplicationBundle.message("light.edit.autosave.widget.text",
                                      (LightEditService.getInstance().isAutosaveMode() ?
                                       ApplicationBundle.message("light.edit.autosave.widget.on") :
@@ -88,9 +79,8 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
     return Component.LEFT_ALIGNMENT;
   }
 
-  @Nullable
   @Override
-  public WidgetPresentation getPresentation() {
+  public @Nullable WidgetPresentation getPresentation() {
     return this;
   }
 

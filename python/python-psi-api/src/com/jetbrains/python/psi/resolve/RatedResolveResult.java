@@ -10,7 +10,6 @@ import java.util.Objects;
 
 /**
  * Provides a way to sort results of multi-resolve.
- * User: dcheryasov
  */
 public class RatedResolveResult implements ResolveResult {
   private final int myRate;

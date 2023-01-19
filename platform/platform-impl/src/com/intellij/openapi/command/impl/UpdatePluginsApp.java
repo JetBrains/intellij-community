@@ -7,9 +7,8 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
-import org.jvnet.winp.Main;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -20,9 +19,8 @@ import java.util.Set;
  * Works in two stages. On the first run, it collects available updates and writes an update script. The second run needs
  * {@code idea.force.plugin.updates = "true"} system property to apply the updates.
  *
- * @author Konstantin Bulenkov
- * @see Main#FORCE_PLUGIN_UPDATES
- * @see Main#installPluginUpdates()
+ * @see AppMode#FORCE_PLUGIN_UPDATES
+ * @see com.intellij.idea.Main#installPluginUpdates
  */
 final class UpdatePluginsApp implements ApplicationStarter {
   @Override
@@ -51,15 +49,26 @@ final class UpdatePluginsApp implements ApplicationStarter {
       return;
     }
 
-    Set<String> filter = new HashSet<>(args.subList(1, args.size()));
-    if (!filter.isEmpty()) {
-      availableUpdates = ContainerUtil.filter(availableUpdates, downloader -> filter.contains(downloader.getId().getIdString()));
+    Collection<PluginDownloader> pluginsToUpdate;
+    if (args.size() > 1) {
+      Set<String> filter = new HashSet<>(args.subList(1, args.size()));
+      pluginsToUpdate = availableUpdates.stream()
+        .filter(downloader -> filter.contains(downloader.getId().getIdString()))
+        .toList();
+    }
+    else {
+      pluginsToUpdate = availableUpdates;
     }
 
     log("Plugins to update:");
-    availableUpdates.forEach(d -> log("\t" + d.getPluginName()));
+    pluginsToUpdate.forEach(d -> log("\t" + d.getPluginName()));
 
-    if (UpdateInstaller.installPluginUpdates(availableUpdates, new EmptyProgressIndicator())) {
+    Ref<Boolean> installed = Ref.create();
+    PluginDownloader.runSynchronouslyInBackground(() -> {
+      installed.set(UpdateInstaller.installPluginUpdates(pluginsToUpdate, new EmptyProgressIndicator()));
+    });
+
+    if (installed.get()) {
       System.exit(0);
     }
     else {

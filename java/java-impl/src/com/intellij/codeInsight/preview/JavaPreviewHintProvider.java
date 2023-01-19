@@ -92,32 +92,20 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
                 if (i == 1 && values[0] > 255) {
                   c = new Color(values[0]);
                 } else {
-                  switch (values.length) {
-                    case 1:
-                      c = new Color(values[0]);
-                      break;
-                    case 3:
-                      c = new Color(values[0], values[1], values[2]);
-                      break;
-                    case 4:
-                      c = new Color(values[0], values[1], values[2], values[3]);
-                      break;
-                    default:
-                      break;
-                  }
+                  c = switch (values.length) {
+                    case 1 -> new Color(values[0]);
+                    case 3 -> new Color(values[0], values[1], values[2]);
+                    case 4 -> new Color(values[0], values[1], values[2], values[3]);
+                    default -> null;
+                  };
                 }
               }
               else if (j == expressions.length) {
-                switch (values2.length) {
-                  case 3:
-                    c = new Color(values2[0], values2[1], values2[2]);
-                    break;
-                  case 4:
-                    c = new Color(values2[0], values2[1], values2[2], values2[3]);
-                    break;
-                  default:
-                    break;
-                }
+                c = switch (values2.length) {
+                  case 3 -> new Color(values2[0], values2[1], values2[2]);
+                  case 4 -> new Color(values2[0], values2[1], values2[2], values2[3]);
+                  default -> null;
+                };
               }
 
               if (c != null) {

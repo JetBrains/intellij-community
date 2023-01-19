@@ -33,13 +33,15 @@ public interface ProjectManagerListener extends EventListener {
   /**
    * Invoked on project close.
    *
-   * @param project closing project
+   * Consider using {@link ProjectCloseListener}
    */
   default void projectClosed(@NotNull Project project) {
   }
 
   /**
-   * Invoked on project close before any closing activities
+   * Invoked on project close before any closing activities.
+   *
+   * Consider using {@link ProjectCloseListener}
    */
   default void projectClosing(@NotNull Project project) {
   }

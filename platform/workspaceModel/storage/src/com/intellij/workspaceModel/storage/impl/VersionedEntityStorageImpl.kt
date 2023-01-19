@@ -145,7 +145,7 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
       return snapshotCache.cache
     }
 
-  override val current: EntityStorage
+  override val current: EntityStorageSnapshot
     get() = currentPointer.storage
 
   override val base: EntityStorage
@@ -192,8 +192,8 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
 }
 
 private class VersionedStorageChangeImpl(entityStorage: VersionedEntityStorage,
-                                         override val storageBefore: EntityStorage,
-                                         override val storageAfter: EntityStorage,
+                                         override val storageBefore: EntityStorageSnapshot,
+                                         override val storageAfter: EntityStorageSnapshot,
                                          private val changes: Map<Class<*>, List<EntityChange<*>>>) : VersionedStorageChange(
   entityStorage) {
   @Suppress("UNCHECKED_CAST")

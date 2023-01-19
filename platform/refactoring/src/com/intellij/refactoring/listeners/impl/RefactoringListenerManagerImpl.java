@@ -11,9 +11,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class RefactoringListenerManagerImpl extends RefactoringListenerManager {
   private final List<RefactoringElementListenerProvider> myListenerProviders = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Project myProject;
@@ -25,11 +22,6 @@ public class RefactoringListenerManagerImpl extends RefactoringListenerManager {
   @Override
   public void addListenerProvider(RefactoringElementListenerProvider provider) {
     myListenerProviders.add(provider);
-  }
-
-  @Override
-  public void removeListenerProvider(RefactoringElementListenerProvider provider) {
-    myListenerProviders.remove(provider);
   }
 
   public RefactoringTransaction startTransaction() {

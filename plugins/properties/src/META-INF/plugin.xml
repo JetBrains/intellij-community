@@ -136,6 +136,9 @@
 
     <psi.referenceContributor language="Properties" implementation="com.intellij.lang.properties.PropertiesWebReferenceContributor"/>
 
+    <liveTemplateContext contextId="Properties" implementation="com.intellij.lang.properties.template.PropertiesContextType"/>
+    <structuralsearch.profile implementation="com.intellij.lang.properties.structuralsearch.PropertiesStructuralSearchProfile"/>
+
     <intentionAction>
       <language>Properties</language>
       <className>com.intellij.lang.properties.actions.CopyPropertyValueToClipboardIntention</className>

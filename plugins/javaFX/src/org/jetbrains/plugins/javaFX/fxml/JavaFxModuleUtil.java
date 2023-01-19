@@ -25,9 +25,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class JavaFxModuleUtil {
   public static boolean isInJavaFxProject(@NotNull PsiFile file) {
     final Project project = file.getProject();

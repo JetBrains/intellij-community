@@ -43,8 +43,6 @@ import org.jetbrains.annotations.NotNull;
  *     }
  *   }
  * </pre>
- * 
- * @author Denis Zhdanov
  */
 public class ForStatementFixer implements Fixer {
 

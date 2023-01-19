@@ -2,14 +2,16 @@
 package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
-import com.intellij.util.containers.DisposableWrapperList
+import com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-abstract class AbstractObservableBooleanProperty : AbstractObservableProperty<Boolean>(), BooleanProperty {
+@ApiStatus.NonExtendable
+abstract class AbstractObservableBooleanProperty :
+  AbstractObservableProperty<Boolean>(),
+  ObservableBooleanProperty {
 
-  private val setListeners = DisposableWrapperList<() -> Unit>()
-  private val resetListeners = DisposableWrapperList<() -> Unit>()
+  private val setDispatcher = SingleEventDispatcher.create()
+  private val resetDispatcher = SingleEventDispatcher.create()
 
   protected fun fireChangeEvents(oldValue: Boolean, newValue: Boolean) {
     when {
@@ -19,27 +21,15 @@ abstract class AbstractObservableBooleanProperty : AbstractObservableProperty<Bo
     fireChangeEvent(newValue)
   }
 
-  private fun fireSetEvent() {
-    setListeners.forEach { it() }
-  }
+  private fun fireSetEvent() =
+    setDispatcher.fireEvent()
 
-  override fun afterSet(listener: () -> Unit) {
-    setListeners.add(listener)
-  }
+  override fun afterSet(parentDisposable: Disposable?, listener: () -> Unit) =
+    setDispatcher.whenEventHappened(parentDisposable, listener)
 
-  override fun afterSet(listener: () -> Unit, parentDisposable: Disposable) {
-    setListeners.add(listener, parentDisposable)
-  }
+  private fun fireResetEvent() =
+    resetDispatcher.fireEvent()
 
-  private fun fireResetEvent() {
-    resetListeners.forEach { it() }
-  }
-
-  override fun afterReset(listener: () -> Unit) {
-    resetListeners.add(listener)
-  }
-
-  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {
-    resetListeners.add(listener, parentDisposable)
-  }
+  override fun afterReset(parentDisposable: Disposable?, listener: () -> Unit) =
+    resetDispatcher.whenEventHappened(parentDisposable, listener)
 }

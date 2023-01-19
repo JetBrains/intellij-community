@@ -1,11 +1,13 @@
 import sys
 from _typeshed import ReadableBuffer
+from collections.abc import Callable
 from types import ModuleType
-from typing import Any, AnyStr, Callable, Union, overload
+from typing import Any, AnyStr, overload
+from typing_extensions import TypeAlias
 
 # TODO more precise type for object of hashlib
-_Hash = Any
-_DigestMod = Union[str, Callable[[], _Hash], ModuleType]
+_Hash: TypeAlias = Any
+_DigestMod: TypeAlias = str | Callable[[], _Hash] | ModuleType
 
 trans_5C: bytes
 trans_36: bytes
@@ -38,6 +40,4 @@ class HMAC:
 def compare_digest(__a: ReadableBuffer, __b: ReadableBuffer) -> bool: ...
 @overload
 def compare_digest(__a: AnyStr, __b: AnyStr) -> bool: ...
-
-if sys.version_info >= (3, 7):
-    def digest(key: bytes, msg: ReadableBuffer, digest: str) -> bytes: ...
+def digest(key: bytes, msg: ReadableBuffer, digest: _DigestMod) -> bytes: ...

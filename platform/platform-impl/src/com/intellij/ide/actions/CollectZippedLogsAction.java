@@ -42,7 +42,7 @@ import java.util.function.Consumer;
 
 public class CollectZippedLogsAction extends AnAction implements DumbAware {
   private static final String CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog";
-  private static final String NOTIFICATION_GROUP = "Collect Zipped Logs";
+  public static final String NOTIFICATION_GROUP = "Collect Zipped Logs";
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

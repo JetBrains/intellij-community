@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author vlan
- */
 public interface StructuredDocString {
 
   String getSummary();
@@ -95,12 +92,20 @@ public interface StructuredDocString {
   @Nullable
   String getRaisedExceptionDescription(@Nullable String exceptionName); // for formatter
 
-  // getAttributes
-  // getAttributeSubstrings
-  // getAttributeType(name)
-  // getAttributeTypeSubstring(name)
   @Nullable
   String getAttributeDescription(); // for formatter
+
+  @Nullable
+  String getAttributeDescription(@Nullable String name);
+
+  @NotNull
+  List<String> getAttributes();
+
+  @NotNull
+  List<Substring> getAttributeSubstrings();
+
+  // getAttributeType(name)
+  // getAttributeTypeSubstring(name)
 
   // Tags related methods
 }

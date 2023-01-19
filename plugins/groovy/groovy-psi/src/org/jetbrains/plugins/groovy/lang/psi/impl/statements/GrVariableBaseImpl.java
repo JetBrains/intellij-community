@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableStubBase;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * @author ilyas
- */
 public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends GrStubElementBase<T> implements GrVariable, StubBasedPsiElement<T> {
   protected static final Logger LOG = Logger.getInstance(GrVariableBaseImpl.class);
 

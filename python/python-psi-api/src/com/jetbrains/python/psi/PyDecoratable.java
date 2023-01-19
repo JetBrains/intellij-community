@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * TODO: Add description
- * User: dcheryasov
  */
 public interface PyDecoratable {
   @Nullable

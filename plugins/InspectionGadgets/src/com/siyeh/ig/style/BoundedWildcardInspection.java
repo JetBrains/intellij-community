@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,9 +35,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * {@code "void process(Processor<T> p)"  -> "void process(Processor<? super T> p)"}
@@ -117,7 +119,6 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       if (candidate == null) return;
       PsiMethod method = candidate.method;
 
-      PsiClassReferenceType clone = suggestMethodParameterType(candidate, isExtends);
 
       if (!isOverriddenOrOverrides) {
         PsiField field = findFieldAssignedFromMethodParameter(candidate.methodParameter, method);
@@ -126,15 +127,11 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         }
 
         PsiTypeElement methodParameterTypeElement = candidate.methodParameter.getTypeElement();
+        PsiClassReferenceType clone = suggestMethodParameterType(candidate, isExtends);
         replaceType(project, methodParameterTypeElement, clone);
         return;
       }
 
-      int[] i = {0};
-      List<ParameterInfoImpl> parameterInfos = ContainerUtil.map(method.getParameterList().getParameters(),
-                                                                 p -> ParameterInfoImpl.create(i[0]++)
-                                                                   .withName(p.getName())
-                                                                   .withType(p.getType()));
       int index = method.getParameterList().getParameterIndex(candidate.methodParameter);
       if (index == -1) return;
 
@@ -143,13 +140,17 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       if (superMethod != method) {
         method = superMethod;
         candidate = candidate.getSuperMethodVarianceCandidate(superMethod);
-        clone = suggestMethodParameterType(candidate, isExtends);
-        i[0] = 0;
-        parameterInfos = ContainerUtil.map(superMethod.getParameterList().getParameters(), 
-                                           p -> ParameterInfoImpl.create(i[0]++).withName(p.getName()).withType(p.getType()));
       }
-      parameterInfos.set(index, ParameterInfoImpl.create(index).withName(candidate.methodParameter.getName()).withType(clone));
-
+      PsiClassReferenceType clone = suggestMethodParameterType(candidate, isExtends);
+      int[] i = {0};
+      String candidateName = candidate.methodParameter.getName();
+      List<ParameterInfoImpl> parameterInfos = ContainerUtil.map(superMethod.getParameterList().getParameters(),
+                                                                 p -> {
+                                                                   int i1 = i[0]++;
+                                                                   return ParameterInfoImpl.create(i1)
+                                                                     .withName(i1 == index ? candidateName : p.getName())
+                                                                     .withType(i1 == index ? clone : p.getType());
+                                                                 });
       JavaChangeSignatureDialog
         dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, false, null/*todo?*/);
       dialog.setParameterInfos(parameterInfos);
@@ -455,13 +456,11 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     return Pair.createNonNull(field, type);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("bounded.wildcard.report.invariant.option"), "REPORT_INVARIANT_CLASSES");
-    panel.addCheckbox(InspectionGadgetsBundle.message("bounded.wildcard.report.private.option"), "REPORT_PRIVATE_METHODS");
-    panel.addCheckbox(InspectionGadgetsBundle.message("bounded.wildcard.report.instance.option"), "REPORT_INSTANCE_METHODS");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("REPORT_INVARIANT_CLASSES", InspectionGadgetsBundle.message("bounded.wildcard.report.invariant.option")),
+      checkbox("REPORT_PRIVATE_METHODS", InspectionGadgetsBundle.message("bounded.wildcard.report.private.option")),
+      checkbox("REPORT_INSTANCE_METHODS", InspectionGadgetsBundle.message("bounded.wildcard.report.instance.option")));
   }
 }

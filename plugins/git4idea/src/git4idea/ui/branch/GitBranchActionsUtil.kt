@@ -2,11 +2,10 @@
 package git4idea.ui.branch
 
 import com.intellij.dvcs.branch.GroupingKey
-import com.intellij.dvcs.branch.isGroupingEnabled
-import com.intellij.dvcs.branch.setGrouping
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
@@ -118,15 +117,11 @@ internal abstract class BranchGroupingAction(private val key: GroupingKey,
     return ActionUpdateThread.EDT
   }
 
-  abstract fun setSelected(e: AnActionEvent, key: GroupingKey, state: Boolean)
-
   override fun isSelected(e: AnActionEvent) =
-    e.project?.let { GitVcsSettings.getInstance(it).branchSettings.isGroupingEnabled(key) } ?: false
+    e.project?.service<GitBranchManager>()?.isGroupingEnabled(key) ?: false
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
-    val branchSettings = GitVcsSettings.getInstance(project).branchSettings
-    branchSettings.setGrouping(key, state)
-    setSelected(e, key, state)
+    project.service<GitBranchManager>().setGrouping(key, state)
   }
 }

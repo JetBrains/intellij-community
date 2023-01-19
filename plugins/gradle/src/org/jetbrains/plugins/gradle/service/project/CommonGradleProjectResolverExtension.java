@@ -21,7 +21,7 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.externalSystem.util.PathPrefixTreeMap;
+import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.roots.DependencyScope;
@@ -37,6 +37,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.prefix.map.MutablePrefixTreeMap;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.gradle.tooling.model.DomainObjectSet;
@@ -63,6 +64,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleModuleData;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -74,7 +76,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
-import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.MODULES_OUTPUTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
@@ -367,7 +368,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       sourceSetContentRoots = addExternalProjectContentRoots(gradleModule, ideModule, externalProject);
     }
 
-    PathPrefixTreeMap<ContentRootData> contentRootIndex = new PathPrefixTreeMap<>();
+    MutablePrefixTreeMap<String, ContentRootData> contentRootIndex = CanonicalPathPrefixTreeFactory.INSTANCE.createMap();
     for (DataNode<ContentRootData> contentRootDataNode : ExternalSystemApiUtil.findAll(ideModule, ProjectKeys.CONTENT_ROOT)) {
       ContentRootData contentRootData = contentRootDataNode.getData();
       contentRootIndex.set(contentRootData.getRootPath(), contentRootData);
@@ -440,7 +441,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       ContentRootData contentRootData = contentRootDataNode.getData();
       existsContentRoots.add(contentRootData.getRootPath());
     }
-    for (ContentRootData ideContentRoot : contentRootIndex.getValues()) {
+    for (ContentRootData ideContentRoot : contentRootIndex.values()) {
       if (!existsContentRoots.contains(ideContentRoot.getRootPath())) {
         ideModule.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
       }
@@ -585,7 +586,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         }
       });
       if (outputDirs.stream().anyMatch(path -> FileUtil.isAncestor(ideaOutDir, new File(path), false))) {
-        excludeOutDir(ideModule, ideaOutDir);
+        GradleUtil.excludeOutDir(ideModule, ideaOutDir);
       }
       return;
     }
@@ -635,7 +636,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       }
 
       if (!resolverCtx.isDelegatedBuild() && !inheritOutputDirs && (outputDir == null || testOutputDir == null)) {
-        excludeOutDir(ideModule, ideaOutDir);
+        GradleUtil.excludeOutDir(ideModule, ideaOutDir);
       }
     }
 
@@ -660,35 +661,23 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @Nullable
   private static File getGradleOutputDir(@Nullable ExternalSourceDirectorySet sourceDirectorySet) {
     if (sourceDirectorySet == null) return null;
-    String firstExistingLang = sourceDirectorySet.getSrcDirs().stream()
+    Set<File> srcDirs = sourceDirectorySet.getSrcDirs();
+    Collection<File> outputDirectories = sourceDirectorySet.getGradleOutputDirs();
+    String firstExistingLang = srcDirs.stream()
+      .sorted()
       .filter(File::exists)
       .findFirst()
       .map(File::getName)
       .orElse(null);
 
     if (firstExistingLang == null) {
-      return ContainerUtil.getFirstItem(sourceDirectorySet.getGradleOutputDirs());
+      return ContainerUtil.getFirstItem(outputDirectories);
     }
 
-    return sourceDirectorySet.getGradleOutputDirs().stream()
+    return outputDirectories.stream()
       .filter(f -> f.getPath().contains(firstExistingLang))
       .findFirst()
-      .orElse(ContainerUtil.getFirstItem(sourceDirectorySet.getGradleOutputDirs()));
-  }
-
-  private static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
-    ContentRootData excludedContentRootData;
-    DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
-    if (contentRootDataDataNode == null ||
-        !FileUtil.isAncestor(new File(contentRootDataDataNode.getData().getRootPath()), ideaOutDir, false)) {
-      excludedContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, ideaOutDir.getPath());
-      ideModule.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData);
-    }
-    else {
-      excludedContentRootData = contentRootDataDataNode.getData();
-    }
-
-    excludedContentRootData.storePath(ExternalSystemSourceType.EXCLUDED, ideaOutDir.getPath());
+      .orElse(ContainerUtil.getFirstItem(outputDirectories));
   }
 
   @Override
@@ -848,7 +837,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @NotNull
   @Override
   public Set<Class<?>> getExtraProjectModelClasses() {
-    return newLinkedHashSet(
+    return ContainerUtil.newLinkedHashSet(
       BuildScriptClasspathModel.class,
       GradleExtensions.class,
       ExternalTestsModel.class,
@@ -862,12 +851,12 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @NotNull
   @Override
   public ProjectImportModelProvider getModelProvider() {
-    return new ClassSetImportModelProvider(getExtraProjectModelClasses(), newLinkedHashSet(ExternalProject.class, IdeaProject.class));
+    return new ClassSetImportModelProvider(getExtraProjectModelClasses(), ContainerUtil.newLinkedHashSet(ExternalProject.class, IdeaProject.class));
   }
 
   @Override
   public Set<Class<?>> getTargetTypes() {
-    return newLinkedHashSet(
+    return ContainerUtil.newLinkedHashSet(
       ExternalProjectDependency.class,
       ExternalLibraryDependency.class,
       FileCollectionDependency.class,
@@ -909,7 +898,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
    * @param dirs             directories which paths should be stored at the given content root
    * @throws IllegalArgumentException if specified by {@link ContentRootData#storePath(ExternalSystemSourceType, String)}
    */
-  private static void populateContentRoot(@NotNull final PathPrefixTreeMap<ContentRootData> contentRootIndex,
+  private static void populateContentRoot(@NotNull final MutablePrefixTreeMap<String, ContentRootData> contentRootIndex,
                                           @NotNull final ExternalSystemSourceType type,
                                           @Nullable final Iterable<? extends IdeaSourceDirectory> dirs)
     throws IllegalArgumentException {
@@ -933,12 +922,14 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         LOG.debug(e);
       }
       String path = FileUtil.toCanonicalPath(dir.getDirectory().getPath());
-      if (contentRootIndex.getAllAncestorKeys(path).isEmpty()) {
+      List<String> contentRoots = new ArrayList<>(contentRootIndex.getAncestorKeys(path));
+      if (contentRoots.isEmpty()) {
         ContentRootData contentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, path);
         contentRootIndex.set(path, contentRootData);
+        contentRoots.add(path);
       }
-      List<String> ancestors = contentRootIndex.getAllAncestorKeys(path);
-      String contentRootPath = ancestors.get(ancestors.size() - 1);
+      String contentRootPath = ContainerUtil.getLastItem(contentRoots);
+      assert contentRootPath != null;
       ContentRootData contentRoot = contentRootIndex.get(contentRootPath);
       assert contentRoot != null;
       contentRoot.storePath(dirSourceType, path);
@@ -1138,7 +1129,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       library.addPath(LibraryPathType.DOC, javadocPath.getPath());
     }
 
-    if (level == LibraryLevel.PROJECT && !linkProjectLibrary(resolverCtx, ideProject, library)) {
+    if (level == LibraryLevel.PROJECT && !linkProjectLibrary(ideProject, library)) {
       level = LibraryLevel.MODULE;
     }
 

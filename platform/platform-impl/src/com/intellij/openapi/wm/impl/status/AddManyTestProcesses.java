@@ -12,9 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 @SuppressWarnings("HardCodedStringLiteral")
 public class AddManyTestProcesses extends DumbAwareAction {
   public AddManyTestProcesses() {

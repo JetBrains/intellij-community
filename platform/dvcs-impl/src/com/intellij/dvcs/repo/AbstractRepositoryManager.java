@@ -1,30 +1,39 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.repo;
 
 import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public abstract class AbstractRepositoryManager<T extends Repository>
   implements RepositoryManager<T>, Disposable {
 
-  @NotNull private final AbstractVcs myVcs;
-  @NotNull private final String myRepoDirName;
-  @NotNull private final VcsRepositoryManager myGlobalRepositoryManager;
+  private final @NotNull Project myProject;
+  private final @NotNull VcsKey myVcsKey;
+  private final @NotNull String myRepoDirName;
+  private final @NotNull VcsRepositoryManager myGlobalRepositoryManager;
 
-  protected AbstractRepositoryManager(@NotNull AbstractVcs vcs, @NotNull String repoDirName) {
-    myGlobalRepositoryManager = VcsRepositoryManager.getInstance(vcs.getProject());
-    myVcs = vcs;
+  protected AbstractRepositoryManager(@NotNull Project project,
+                                      @NotNull VcsKey vcsKey,
+                                      @NotNull @NonNls String repoDirName) {
+    myGlobalRepositoryManager = VcsRepositoryManager.getInstance(project);
+    myProject = project;
+    myVcsKey = vcsKey;
     myRepoDirName = repoDirName;
   }
 
@@ -33,23 +42,20 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   @Override
-  @Nullable
   @RequiresBackgroundThread
-  public T getRepositoryForRoot(@Nullable VirtualFile root) {
+  public @Nullable T getRepositoryForRoot(@Nullable VirtualFile root) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForRoot(root));
   }
 
   @Override
-  @Nullable
   @CalledInAny
-  public T getRepositoryForRootQuick(@Nullable VirtualFile root) {
+  public @Nullable T getRepositoryForRootQuick(@Nullable VirtualFile root) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForRootQuick(root));
   }
 
   @Override
-  @Nullable
   @CalledInAny
-  public T getRepositoryForRootQuick(@Nullable FilePath rootPath) {
+  public @Nullable T getRepositoryForRootQuick(@Nullable FilePath rootPath) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForRootQuick(rootPath));
   }
 
@@ -69,40 +75,34 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   @Override
-  @Nullable
   @RequiresBackgroundThread
-  public T getRepositoryForFile(@Nullable VirtualFile file) {
+  public @Nullable T getRepositoryForFile(@Nullable VirtualFile file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file));
   }
 
-  @Nullable
   @CalledInAny
-  public T getRepositoryForFileQuick(@Nullable VirtualFile file) {
+  public @Nullable T getRepositoryForFileQuick(@Nullable VirtualFile file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFileQuick(file));
   }
 
   @Override
-  @Nullable
   @RequiresBackgroundThread
-  public T getRepositoryForFile(@Nullable FilePath file) {
+  public @Nullable T getRepositoryForFile(@Nullable FilePath file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, false));
   }
 
   @Override
-  @Nullable
   @CalledInAny
-  public T getRepositoryForFileQuick(@Nullable FilePath file) {
+  public @Nullable T getRepositoryForFileQuick(@Nullable FilePath file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, true));
   }
 
-  @NotNull
-  protected List<T> getRepositories(Class<T> type) {
+  protected @NotNull List<T> getRepositories(Class<T> type) {
     return ContainerUtil.findAll(myGlobalRepositoryManager.getRepositories(), type);
   }
 
-  @NotNull
   @Override
-  public abstract List<T> getRepositories();
+  public abstract @NotNull List<T> getRepositories();
 
   @Override
   public boolean moreThanOneRoot() {
@@ -126,9 +126,10 @@ public abstract class AbstractRepositoryManager<T extends Repository>
     });
   }
 
-  @Nullable
-  private T validateAndGetRepository(@Nullable Repository repository) {
-    if (repository == null || !myVcs.equals(repository.getVcs())) return null;
+  private @Nullable T validateAndGetRepository(@Nullable Repository repository) {
+    if (repository == null || !myVcsKey.equals(repository.getVcs().getKeyInstanceMethod())) {
+      return null;
+    }
     return ReadAction.compute(() -> {
       VirtualFile root = repository.getRoot();
       if (root.isValid()) {
@@ -141,9 +142,9 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   @Override
-  @NotNull
-  public AbstractVcs getVcs() {
-    return myVcs;
+  public @NotNull AbstractVcs getVcs() {
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).findVcsByName(myVcsKey.getName());
+    return Objects.requireNonNull(vcs);
   }
 
   /**

@@ -75,7 +75,7 @@ public class BoxingBoxedValueInspection extends BaseInspection implements Cleanu
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiCallExpression parent = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, PsiNewExpression.class);
       if (parent == null) {

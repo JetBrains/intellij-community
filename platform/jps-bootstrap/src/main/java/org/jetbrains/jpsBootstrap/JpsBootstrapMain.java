@@ -5,6 +5,7 @@ package org.jetbrains.jpsBootstrap;
 import com.google.common.hash.Hashing;
 import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,7 +15,9 @@ import org.apache.commons.cli.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging;
 import org.jetbrains.intellij.build.dependencies.JdkDownloader;
+import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -30,7 +33,11 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.*;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.underTeamCity;
+import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.getJpsArtifactsResolutionRetryProperties;
+import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.getTeamCitySystemProperties;
+import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.toBooleanChecked;
 
 @SuppressWarnings({"SameParameterValue"})
 public class JpsBootstrapMain {
@@ -139,7 +146,7 @@ public class JpsBootstrapMain {
     }
 
     String verboseEnv = System.getenv(JPS_BOOTSTRAP_VERBOSE);
-    JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
+    BuildDependenciesLogging.setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
 
     String communityHomeString = System.getenv(COMMUNITY_HOME_ENV);
     if (communityHomeString == null) {
@@ -157,7 +164,7 @@ public class JpsBootstrapMain {
 
   private Path downloadJdk() {
     Path jdkHome;
-    if (JpsBootstrapUtil.underTeamCity) {
+    if (underTeamCity) {
       jdkHome = JdkDownloader.getJdkHome(communityHome);
       SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
         "jps.bootstrap.java.home", jdkHome.toString()
@@ -179,6 +186,19 @@ public class JpsBootstrapMain {
     if (onlyDownloadJdk) {
       return;
     }
+
+    /*
+     * Enable dependencies resolution retries while building buildscript.
+     * Don't override settings properties if they're already present in System.properties(), in additionalSystemProperties or
+     * in additionalSystemPropertiesFromPropertiesFile.
+     */
+    Properties resolverRetrySettingsProperties = getJpsArtifactsResolutionRetryProperties(
+      additionalSystemPropertiesFromPropertiesFile,
+      additionalSystemProperties,
+      System.getProperties()
+    );
+    resolverRetrySettingsProperties.forEach((k, v) -> System.setProperty((String) k, (String) v));
+
     Path kotlincHome = KotlinCompiler.downloadAndExtractKotlinCompiler(communityHome);
 
     JpsModel model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome, kotlincHome);
@@ -192,7 +212,40 @@ public class JpsBootstrapMain {
     writeJavaArgfile(moduleRuntimeClasspath);
   }
 
-  private void writeJavaArgfile(List<File> moduleRuntimeClasspath) throws IOException {
+  private void removeOpenedPackage(List<String> openedPackages, String openedPackage, List<String> unknownPackages) {
+    if (!openedPackages.remove(openedPackage)) {
+      unknownPackages.add(openedPackage);
+    }
+  }
+
+  private List<String> getOpenedPackages() throws Exception {
+    Path openedPackagesPath = communityHome.getCommunityRoot().resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt");
+    List<String> openedPackages = ContainerUtil.filter(Files.readAllLines(openedPackagesPath), it -> !it.isBlank());
+    List<String> unknownPackages = new ArrayList<>();
+
+    if (!SystemInfo.isWindows) {
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED", unknownPackages);
+    }
+    if (!SystemInfo.isMac) {
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED", unknownPackages);
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/com.apple.eawt.event=ALL-UNNAMED", unknownPackages);
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/com.apple.laf=ALL-UNNAMED", unknownPackages);
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED", unknownPackages);
+    }
+    if (!SystemInfo.isLinux) {
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/com.sun.java.swing.plaf.gtk=ALL-UNNAMED", unknownPackages);
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED", unknownPackages);
+      removeOpenedPackage(openedPackages,"--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED", unknownPackages);
+    }
+    if (!unknownPackages.isEmpty()) {
+      throw new Exception(String.format("OS specific opened packages: ['%s'] not found in '%s'. " +
+          "Probably you need to clean up OS-specific package names in org.jetbrains.jpsBootstrap.JpsBootstrapMain",
+        String.join("','", unknownPackages), openedPackagesPath));
+    }
+    return openedPackages;
+  }
+
+  private void writeJavaArgfile(List<File> moduleRuntimeClasspath) throws Exception {
     Properties systemProperties = new Properties();
 
     if (underTeamCity) {
@@ -204,13 +257,21 @@ public class JpsBootstrapMain {
     systemProperties.putIfAbsent("file.encoding", "UTF-8"); // just in case
     systemProperties.putIfAbsent("java.awt.headless", "true");
 
+    /*
+     * Add dependencies resolution retries properties to argfile.
+     * Don't override them if they're already present in additionalSystemProperties or in additionalSystemPropertiesFromPropertiesFile.
+     */
+    Properties resolverRetrySettingsProperties = getJpsArtifactsResolutionRetryProperties(
+      additionalSystemPropertiesFromPropertiesFile,
+      additionalSystemProperties
+    );
+    systemProperties.putAll(resolverRetrySettingsProperties);
+
     List<String> args = new ArrayList<>();
     args.add("-ea");
     args.add("-Xmx" + buildTargetXmx);
 
-    Path openedPackagesPath = communityHome.getCommunityRoot().resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt");
-    List<String> openedPackages = ContainerUtil.filter(Files.readAllLines(openedPackagesPath), it -> !it.isBlank());
-    args.addAll(openedPackages);
+    args.addAll(getOpenedPackages());
 
     args.addAll(convertPropertiesToCommandLineArgs(systemProperties));
 
@@ -233,7 +294,7 @@ public class JpsBootstrapMain {
 
   private void downloadOrBuildClasses(JpsModule module, JpsModel model, Path kotlincHome) throws Throwable {
     String fromJpsBuildEnvValue = System.getenv(JpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME);
-    boolean runJpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue);
+    boolean runJpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue) || ProjectStamps.PORTABLE_CACHES;
 
     String manifestJsonUrl = System.getenv(ClassesFromCompileInc.MANIFEST_JSON_URL_ENV_NAME);
     if (manifestJsonUrl != null && manifestJsonUrl.isBlank()) {
@@ -322,7 +383,7 @@ public class JpsBootstrapMain {
     }
     IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
     ConsoleHandler consoleHandler = new ConsoleHandler();
-    consoleHandler.setFormatter(new IdeaLogRecordFormatter(layout, false));
+    consoleHandler.setFormatter(new IdeaLogRecordFormatter(false, layout));
     consoleHandler.setLevel(java.util.logging.Level.WARNING);
     rootLogger.addHandler(consoleHandler);
   }

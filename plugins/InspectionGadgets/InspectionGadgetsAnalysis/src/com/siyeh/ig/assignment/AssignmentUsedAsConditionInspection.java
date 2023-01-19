@@ -50,7 +50,7 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiAssignmentExpression expression = (PsiAssignmentExpression)descriptor.getPsiElement();
       final PsiExpression leftExpression = expression.getLExpression();
       final PsiExpression rightExpression = expression.getRExpression();

@@ -40,7 +40,7 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
               if (searchScope.contains(virtualFile)) {
                 file.accept(new XmlRecursiveElementVisitor() {
                   @Override
-                  public void visitXmlAttributeValue(final XmlAttributeValue value) {
+                  public void visitXmlAttributeValue(final @NotNull XmlAttributeValue value) {
                     final PsiReference reference = value.getReference();
                     if (reference != null) {
                       final PsiElement resolve = reference.resolve();

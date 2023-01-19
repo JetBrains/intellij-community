@@ -10,7 +10,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.notebooks.visualization.notebookAppearance
+import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.outputs.hoveredCollapsingComponentRect
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.ResizeController
 import org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer
@@ -79,7 +79,7 @@ internal class CollapsingComponent(
   }
 
   val mainComponent: JComponent get() = getComponent(0) as JComponent
-  val stubComponent: JComponent get() = getComponent(1) as JComponent
+  private val stubComponent: JComponent get() = getComponent(1) as JComponent
 
   val isWorthCollapsing: Boolean get() = !isSeen || mainComponent.height >= MIN_HEIGHT_TO_COLLAPSE
 

@@ -26,7 +26,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  *
  * References are soft: used only for code completion and ignored during code inspection.
  *
- * @author vlan
  */
 open class PySoftFileReferenceContributor : PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {

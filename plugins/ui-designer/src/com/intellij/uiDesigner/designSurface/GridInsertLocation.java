@@ -283,13 +283,12 @@ public class GridInsertLocation extends GridDropLocation {
     int displayRow = myRow + getContainer().getGridLayoutManager().getCellIndexBase();
     int displayColumn = myColumn + getContainer().getGridLayoutManager().getCellIndexBase();
     String displayName = getContainer().getDisplayName();
-    switch(myMode) {
-      case ColumnBefore: return UIDesignerBundle.message("insert.feedback.before.col", displayName, displayRow, displayColumn);
-      case ColumnAfter:  return UIDesignerBundle.message("insert.feedback.after.col", displayName, displayRow, displayColumn);
-      case RowBefore:    return UIDesignerBundle.message("insert.feedback.before.row", displayName, displayColumn, displayRow);
-      case RowAfter:     return UIDesignerBundle.message("insert.feedback.after.row", displayName, displayColumn, displayRow);
-    }
-    return null;
+    return switch (myMode) {
+      case ColumnBefore -> UIDesignerBundle.message("insert.feedback.before.col", displayName, displayRow, displayColumn);
+      case ColumnAfter -> UIDesignerBundle.message("insert.feedback.after.col", displayName, displayRow, displayColumn);
+      case RowBefore -> UIDesignerBundle.message("insert.feedback.before.row", displayName, displayColumn, displayRow);
+      case RowAfter -> UIDesignerBundle.message("insert.feedback.after.row", displayName, displayColumn, displayRow);
+    };
   }
 
   public static Rectangle getInsertFeedbackPosition(final GridInsertMode mode, final RadContainer container, final Rectangle cellRect,
@@ -301,37 +300,34 @@ public class GridInsertLocation extends GridDropLocation {
     Rectangle rc = feedbackRect;
     int w=4;
     switch (mode) {
-      case ColumnBefore:
-        rc = new Rectangle(vGridLines [cellRect.x] - w, feedbackRect.y - INSERT_ARROW_SIZE,
+      case ColumnBefore -> {
+        rc = new Rectangle(vGridLines[cellRect.x] - w, feedbackRect.y - INSERT_ARROW_SIZE,
                            2 * w, feedbackRect.height + 2 * INSERT_ARROW_SIZE);
-        if (cellRect.x > 0 && manager.isGapCell(container, false, cellRect.x-1)) {
-          rc.translate(-(vGridLines [cellRect.x] - vGridLines [cellRect.x-1]) / 2, 0);
+        if (cellRect.x > 0 && manager.isGapCell(container, false, cellRect.x - 1)) {
+          rc.translate(-(vGridLines[cellRect.x] - vGridLines[cellRect.x - 1]) / 2, 0);
         }
-        break;
-
-      case ColumnAfter:
-        rc = new Rectangle(vGridLines [cellRect.x + cellRect.width+1] - w, feedbackRect.y - INSERT_ARROW_SIZE,
+      }
+      case ColumnAfter -> {
+        rc = new Rectangle(vGridLines[cellRect.x + cellRect.width + 1] - w, feedbackRect.y - INSERT_ARROW_SIZE,
                            2 * w, feedbackRect.height + 2 * INSERT_ARROW_SIZE);
-        if (cellRect.x < manager.getGridColumnCount(container)-1 && manager.isGapCell(container, false, cellRect.x+1)) {
-          rc.translate((vGridLines [cellRect.x+2] - vGridLines [cellRect.x+1]) / 2, 0);
+        if (cellRect.x < manager.getGridColumnCount(container) - 1 && manager.isGapCell(container, false, cellRect.x + 1)) {
+          rc.translate((vGridLines[cellRect.x + 2] - vGridLines[cellRect.x + 1]) / 2, 0);
         }
-        break;
-
-      case RowBefore:
-        rc = new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines [cellRect.y] - w,
+      }
+      case RowBefore -> {
+        rc = new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines[cellRect.y] - w,
                            feedbackRect.width + 2 * INSERT_ARROW_SIZE, 2 * w);
-        if (cellRect.y > 0 && manager.isGapCell(container, true, cellRect.y-1)) {
-          rc.translate(0, -(hGridLines [cellRect.y] - hGridLines [cellRect.y-1]) / 2);
+        if (cellRect.y > 0 && manager.isGapCell(container, true, cellRect.y - 1)) {
+          rc.translate(0, -(hGridLines[cellRect.y] - hGridLines[cellRect.y - 1]) / 2);
         }
-        break;
-
-      case RowAfter:
-        rc = new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines [cellRect.y+cellRect.height+1] - w,
+      }
+      case RowAfter -> {
+        rc = new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines[cellRect.y + cellRect.height + 1] - w,
                            feedbackRect.width + 2 * INSERT_ARROW_SIZE, 2 * w);
-        if (cellRect.y < manager.getGridRowCount(container)-1 && manager.isGapCell(container, true, cellRect.y+1)) {
-          rc.translate(0, (hGridLines [cellRect.y+2] - hGridLines [cellRect.y+1]) / 2);
+        if (cellRect.y < manager.getGridRowCount(container) - 1 && manager.isGapCell(container, true, cellRect.y + 1)) {
+          rc.translate(0, (hGridLines[cellRect.y + 2] - hGridLines[cellRect.y + 1]) / 2);
         }
-        break;
+      }
     }
 
     return rc;
@@ -470,12 +466,12 @@ public class GridInsertLocation extends GridDropLocation {
     final RadContainer parent = myContainer.getParent();
     if (parent.getLayoutManager().isGrid()) {
       final GridConstraints c = myContainer.getConstraints();
-      switch(direction) {
-        case LEFT: return new GridInsertLocation(parent, c.getRow(), c.getColumn(), GridInsertMode.ColumnBefore);
-        case RIGHT: return new GridInsertLocation(parent, c.getRow(), c.getColumn()+c.getColSpan()-1, GridInsertMode.ColumnAfter);
-        case UP: return new GridInsertLocation(parent, c.getRow(), c.getColumn(), GridInsertMode.RowBefore);
-        case DOWN: return new GridInsertLocation(parent, c.getRow()+c.getRowSpan()-1, c.getColumn(), GridInsertMode.RowAfter);
-      }
+      return switch (direction) {
+        case LEFT -> new GridInsertLocation(parent, c.getRow(), c.getColumn(), GridInsertMode.ColumnBefore);
+        case RIGHT -> new GridInsertLocation(parent, c.getRow(), c.getColumn() + c.getColSpan() - 1, GridInsertMode.ColumnAfter);
+        case UP -> new GridInsertLocation(parent, c.getRow(), c.getColumn(), GridInsertMode.RowBefore);
+        case DOWN -> new GridInsertLocation(parent, c.getRow() + c.getRowSpan() - 1, c.getColumn(), GridInsertMode.RowAfter);
+      };
     }
     return null;
   }

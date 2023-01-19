@@ -30,9 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.StringTokenizer;
 
-/**
- * @author peter
- */
 public final class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance(CreateClassOrPackageFix.class);
   private final List<? extends PsiDirectory> myWritableDirectoryList;

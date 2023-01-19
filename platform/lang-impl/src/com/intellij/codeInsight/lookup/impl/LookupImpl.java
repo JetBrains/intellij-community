@@ -15,6 +15,7 @@ import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
 import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -63,6 +64,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -80,19 +83,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final Project myProject;
   private final Editor myEditor;
   private final Object myUiLock = new Object();
-  private final JBList<LookupElement> myList = new JBList<LookupElement>(new CollectionListModelWithBatchUpdate<>()) {
-    // 'myList' is focused when "Screen Reader" mode is enabled
-    @Override
-    protected void processKeyEvent(@NotNull final KeyEvent e) {
-      myEditor.getContentComponent().dispatchEvent(e); // let the editor handle actions properly for the lookup list
-    }
-
-    @NotNull
-    @Override
-    protected ExpandableItemsHandler<Integer> createExpandableItemsHandler() {
-      return new CompletionExtender(this);
-    }
-  };
+  private final JBList<LookupElement> myList = new LookupList();
   final LookupCellRenderer myCellRenderer;
 
   private final List<LookupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -455,6 +446,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     updateListHeight(listModel);
 
     myList.setSelectedIndex(toSelect);
+    if (GeneralSettings.getInstance().isSupportScreenReaders()) {
+      AccessibleContext context = myList.getAccessibleContext();
+      Accessible child = context.getAccessibleChild(myList.getSelectedIndex());
+      context.firePropertyChange(AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY, null, child);
+    }
     return !ContainerUtil.equalsIdentity(oldModel, items);
   }
 
@@ -1268,6 +1264,30 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       Font font = StartupUiUtil.getLabelFont();
       RelativeFont relativeFont = RelativeFont.NORMAL.scale(JBUI.CurrentTheme.CompletionPopup.Advertiser.fontSizeOffset());
       return relativeFont.derive(font);
+    }
+  }
+
+  /**
+   * List implementation for lookup. Normally, this list is not focused. However,
+   * it gains focus when "Screen Reader" mode is enabled. So we need to delegate
+   * key events and declare a permanent component to provide proper data context for actions.
+   */
+  private class LookupList extends JBList<LookupElement> implements DependentTransientComponent {
+    LookupList() { super(new CollectionListModelWithBatchUpdate<>()); }
+
+    @Override
+    protected void processKeyEvent(@NotNull final KeyEvent e) {
+      myEditor.getContentComponent().dispatchEvent(e);
+    }
+
+    @Override
+    protected @NotNull ExpandableItemsHandler<Integer> createExpandableItemsHandler() {
+      return new CompletionExtender(this);
+    }
+
+    @Override
+    public @NotNull Component getPermanentComponent() {
+      return myEditor.getContentComponent();
     }
   }
 }
