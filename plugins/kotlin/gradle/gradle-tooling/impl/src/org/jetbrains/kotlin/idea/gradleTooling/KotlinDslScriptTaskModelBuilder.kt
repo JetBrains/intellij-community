@@ -36,7 +36,6 @@ class KotlinDslScriptTaskModelBuilder : AbstractModelBuilderService() {
             val tasks = HashSet(startParameter.taskNames)
             tasks.add(PREPARATION_TASK_NAME)
             startParameter.setTaskNames(tasks)
-            reportFUSMetricByJMX("reportBoolean", "boolean", "BUILD_PREPARE_KOTLIN_BUILD_SCRIPT_MODEL", true, null, null)
         }
         return null
     }
