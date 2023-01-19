@@ -323,6 +323,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   public void testPatternUsedInSubsequentCondition() {
     doTest(null);
   }
+  
+  public void testSplitMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
+  
+  public void testDontSplitNotMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
 
   private void doTestStopEditing(Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
