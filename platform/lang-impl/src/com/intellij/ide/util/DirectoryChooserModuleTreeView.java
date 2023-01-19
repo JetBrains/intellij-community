@@ -212,7 +212,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
           append(fragment.getText(),
                  fragment.isCommon() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
-        setIcon(wrapper.getIcon(myFileIndex));
+        setIcon(wrapper.getIcon());
       }
       else if (value instanceof Module) {
         final Module module = (Module)value;
