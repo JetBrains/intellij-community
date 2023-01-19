@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.system.measureTimeMillis
 
 object OrphanageWorkerEntitySource : EntitySource
 
@@ -57,7 +58,11 @@ class Orphanage(private val project: Project) {
   }
 
   companion object {
-    val use: Boolean by lazy { Registry.`is`("ide.workspace.model.separate.component.for.roots", false) }
+    var benchmarkMode = false
+    val preUpdateTimes = ArrayList<Long>()
+    val updateTimes = ArrayList<Long>()
+    val use: Boolean
+      get() = Registry.`is`("ide.workspace.model.separate.component.for.roots", false) || benchmarkMode
     val log = logger<Orphanage>()
   }
 }
@@ -66,36 +71,47 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
 
     if (!Orphanage.use) return
+    val adders: List<EntityAdder>
+    val changedModules: List<ModuleEntity>
 
-    // Do not move to the field! They should be created every time! (or the code should be refactored)
-    val adders = listOf(
-      ContentRootAdder(project),
-      SourceRootAdder(project),
-      ExcludeRootAdder(project),
-    )
+    val preUpdateTime = measureTimeMillis {
+      // Do not move to the field! They should be created every time! (or the code should be refactored)
+      adders = listOf(
+        ContentRootAdder(project),
+        SourceRootAdder(project),
+        ExcludeRootAdder(project),
+      )
 
-    val changedModules = event.getChanges(ModuleEntity::class.java)
-      .filterIsInstance<EntityChange.Added<ModuleEntity>>()
-      .map { it.entity }
+      changedModules = event.getChanges(ModuleEntity::class.java)
+        .filterIsInstance<EntityChange.Added<ModuleEntity>>()
+        .map { it.entity }
 
-    adders.forEach { it.collectParentChanges(event) }
+      adders.forEach { it.collectParentChanges(event) }
+    }
 
     if (adders.any { it.anyEntitiesToMove() }) {
-      runLaterAndWrite {
-        val orphanage = project.workspaceModel.orphanage.entityStorage.pointer.storage
-        val orphanModules = changedModules.mapNotNull {
-          orphanage.resolve(it.symbolicId)
-        }
-        adders.forEach { it.collectOrphanRoots(orphanModules, true) }
+      if (Orphanage.benchmarkMode) Orphanage.preUpdateTimes += preUpdateTime
+      if (preUpdateTime > 1_000) log.warn("Orphanage preparation took $preUpdateTime ms")
 
-        if (adders.any { it.anyUpdates() }) {
-          project.workspaceModel.updateProjectModel("Move orphan elements") { storage ->
-            adders.forEach { it.addToBuilder(storage) }
+      runLaterAndWrite {
+        val updateTime = measureTimeMillis {
+          val orphanage = project.workspaceModel.orphanage.entityStorage.pointer.storage
+          val orphanModules = changedModules.mapNotNull {
+            orphanage.resolve(it.symbolicId)
+          }
+          adders.forEach { it.collectOrphanRoots(orphanModules, true) }
+
+          if (adders.any { it.anyUpdates() }) {
+            project.workspaceModel.orphanage.update {
+              adders.forEach { adder -> adder.cleanOrphanage(it) }
+            }
+            project.workspaceModel.updateProjectModel("Move orphan elements") { storage ->
+              adders.forEach { it.addToBuilder(storage) }
+            }
           }
         }
-        project.workspaceModel.orphanage.update {
-          adders.forEach { adder -> adder.cleanOrphanage(it) }
-        }
+        if (Orphanage.benchmarkMode) Orphanage.updateTimes += updateTime
+        if (updateTime > 1_000) log.warn("Orphanage update took $preUpdateTime ms")
       }
     }
   }
@@ -107,6 +123,10 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
         run()
       }
     }
+  }
+
+  companion object {
+    val log = logger<OrphanListener>()
   }
 }
 
@@ -272,21 +292,16 @@ private class SourceRootAdder(private val project: Project) : EntityAdder {
   override fun cleanOrphanage(builder: MutableEntityStorage) {
 
     entitiesToRemoveFromOrphanage.forEach {
-      val moduleId = it.contentRoot.module.symbolicId
-      val contentUrl = it.contentRoot.url
+      val module = it.contentRoot.module
+      val content = it.contentRoot
 
       builder.removeEntity(it)
 
-      val module = builder.resolve(moduleId) ?: return@forEach
+      if (content.sourceRoots.isEmpty() || (content.sourceRoots.size == 1 && content.sourceRoots.single().url == it.url)) {
+        builder.removeEntity(content)
 
-      // TODO: Another o^2?
-      val root = module.contentRoots.firstOrNull { it.url == contentUrl } ?: return@forEach
-      if (root.sourceRoots.isEmpty() && root.excludedUrls.isEmpty()) {
-        builder.removeEntity(root)
-
-        val moduleAgain = builder.resolve(moduleId) ?: return@forEach
-        if (moduleAgain.contentRoots.isEmpty()) {
-          builder.removeEntity(moduleAgain)
+        if (module.contentRoots.isEmpty() || module.contentRoots.singleOrNull()?.url == content.url) {
+          builder.removeEntity(module)
         }
       }
     }
