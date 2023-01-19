@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.util;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.navigation.NavigationItem;
@@ -86,7 +87,7 @@ public class AnnotateFix implements LocalQuickFix {
       annotation = (PsiAnnotation)JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotation);
 
       final PsiAnnotationParameterList list = annotation.getParameterList();
-      if (requirement != InitializerRequirement.NONE_REQUIRED && myArgList == null) {
+      if (requirement != InitializerRequirement.NONE_REQUIRED && myArgList == null && !IntentionPreviewUtils.isIntentionPreviewActive()) {
         ((NavigationItem)list).navigate(true);
       }
     }
