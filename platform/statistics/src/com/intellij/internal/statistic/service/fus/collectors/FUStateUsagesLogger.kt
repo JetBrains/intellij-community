@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "UnstableApiUsage", "ReplacePutWithAssignment")
 
 package com.intellij.internal.statistic.service.fus.collectors
@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -58,7 +59,7 @@ class FUStateUsagesLogger private constructor(): UsagesCollectorConsumer {
               }
 
               launch {
-                val metrics = usagesCollector.getMetrics(project, null)
+                val metrics = blockingContext { usagesCollector.getMetrics(project, null) }
                 logMetricsOrError(project = project,
                                   recorderLoggers = recorderLoggers,
                                   usagesCollector = usagesCollector,
