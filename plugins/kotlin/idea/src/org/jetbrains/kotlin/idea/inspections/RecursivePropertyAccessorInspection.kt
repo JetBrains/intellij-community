@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.codegen.kotlinType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -99,14 +99,14 @@ class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
             val target = bindingContext[REFERENCE_TARGET, element]
             if (target != bindingContext[DECLARATION_TO_DESCRIPTOR, propertyAccessor.property]) return false
             (element.parent as? KtQualifiedExpression)?.let {
-                val targetReceiverType = (target as? PropertyDescriptorImpl)?.extensionReceiverParameter?.value?.type
+                val targetReceiverType = (target as? PropertyDescriptor)?.extensionReceiverParameter?.value?.type
                 val receiverKotlinType = it.receiverExpression.kotlinType(bindingContext)?.makeNotNullable()
                 if (anyRecursionTypes) {
                     if (receiverKotlinType != null && targetReceiverType != null && !receiverKotlinType.isSubtypeOf(targetReceiverType)) {
                         return false
                     }
                 } else {
-                    if (it.receiverExpression.text != KtTokens.THIS_KEYWORD.value &&
+                    if (!it.receiverExpression.textMatches(KtTokens.THIS_KEYWORD.value) &&
                         !it.hasObjectReceiver(bindingContext) &&
                         (targetReceiverType == null || receiverKotlinType?.isSubtypeOf(targetReceiverType) == false)) {
                         return false
