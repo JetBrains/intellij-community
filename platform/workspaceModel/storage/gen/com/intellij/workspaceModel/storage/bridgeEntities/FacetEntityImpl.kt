@@ -311,7 +311,7 @@ class FacetEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetEntity
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return FacetEntity(name, moduleId, facetType, entitySource) {
       this.configurationXmlTag = this@FacetEntityData.configurationXmlTag
-      this.module = parents.filterIsInstance<ModuleEntity>().single()
+      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
       this.underlyingFacet = parents.filterIsInstance<FacetEntity>().singleOrNull()
     }
   }

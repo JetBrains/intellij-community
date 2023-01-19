@@ -238,7 +238,7 @@ class ExcludeUrlOrderEntityData : WorkspaceEntityData<ExcludeUrlOrderEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ExcludeUrlOrderEntity(order, entitySource) {
-      this.contentRoot = parents.filterIsInstance<ContentRootEntity>().single()
+      parents.filterIsInstance<ContentRootEntity>().singleOrNull()?.let { this.contentRoot = it }
     }
   }
 

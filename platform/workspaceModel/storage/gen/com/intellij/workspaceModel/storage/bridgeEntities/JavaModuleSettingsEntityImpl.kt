@@ -259,7 +259,7 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
       this.compilerOutput = this@JavaModuleSettingsEntityData.compilerOutput
       this.compilerOutputForTests = this@JavaModuleSettingsEntityData.compilerOutputForTests
       this.languageLevelId = this@JavaModuleSettingsEntityData.languageLevelId
-      this.module = parents.filterIsInstance<ModuleEntity>().single()
+      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
     }
   }
 

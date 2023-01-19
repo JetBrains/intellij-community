@@ -206,7 +206,7 @@ class NamedChildEntityData : WorkspaceEntityData<NamedChildEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return NamedChildEntity(childProperty, entitySource) {
-      this.parentEntity = parents.filterIsInstance<NamedEntity>().single()
+      parents.filterIsInstance<NamedEntity>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

@@ -473,7 +473,7 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ContentRootEntity(url, excludedPatterns, entitySource) {
-      this.module = parents.filterIsInstance<ModuleEntity>().single()
+      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
     }
   }
 

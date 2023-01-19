@@ -203,7 +203,7 @@ class SourceRootTestOrderEntityData : WorkspaceEntityData<SourceRootTestOrderEnt
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return SourceRootTestOrderEntity(data, entitySource) {
-      this.contentRoot = parents.filterIsInstance<ContentRootTestEntity>().single()
+      parents.filterIsInstance<ContentRootTestEntity>().singleOrNull()?.let { this.contentRoot = it }
     }
   }
 

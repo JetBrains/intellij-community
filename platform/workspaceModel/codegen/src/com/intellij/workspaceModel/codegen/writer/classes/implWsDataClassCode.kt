@@ -136,7 +136,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
             if (parentType is ValueType.Optional) {
               line("this.${it.name} = parents.filterIsInstance<${parentType.type.javaType}>().singleOrNull()")
             } else {
-              line("this.${it.name} = parents.filterIsInstance<${parentType.javaType}>().single()")
+              line("parents.filterIsInstance<${parentType.javaType}>().singleOrNull()?.let { this.${it.name} = it }")
             }
           }
         }
