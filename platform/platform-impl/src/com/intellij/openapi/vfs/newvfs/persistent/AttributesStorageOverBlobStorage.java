@@ -840,7 +840,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
   protected byte[] readAttributeValue(final int attributesRecordId,
                                       final int fileId,
                                       final int attributeId) throws IOException {
-    final byte[] attributeValueBytes = storage.readRecord(attributesRecordId, buffer -> {
+    return storage.readRecord(attributesRecordId, buffer -> {
       final AttributesRecord attributesRecord = new AttributesRecord(buffer);
       assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
                                                         " != backref fileId(" + attributesRecord.backRefFileId + ")";
@@ -863,7 +863,6 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
         )
       );
     });
-    return attributeValueBytes;
   }
 
   @VisibleForTesting
