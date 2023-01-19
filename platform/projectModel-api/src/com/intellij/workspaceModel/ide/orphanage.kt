@@ -89,7 +89,7 @@ class EntitiesOrphanage(private val project: Project) {
     val use: Boolean
       get() = Registry.`is`("ide.workspace.model.separate.component.for.roots", false) || benchmarkMode
     val log = logger<EntitiesOrphanage>()
-    
+
     fun getInstance(project: Project) = project.service<EntitiesOrphanage>()
   }
 }
@@ -128,10 +128,10 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
           }
           adders.forEach { it.collectOrphanRoots(orphanModules, true) }
 
+          EntitiesOrphanage.getInstance(project).update {
+            adders.forEach { adder -> adder.cleanOrphanage(it) }
+          }
           if (adders.any { it.anyUpdates() }) {
-            EntitiesOrphanage.getInstance(project).update {
-              adders.forEach { adder -> adder.cleanOrphanage(it) }
-            }
             project.workspaceModel.updateProjectModel("Move orphan elements") { storage ->
               adders.forEach { it.addToBuilder(storage) }
             }
@@ -319,16 +319,18 @@ private class SourceRootAdder(private val project: Project) : EntityAdder {
   override fun cleanOrphanage(builder: MutableEntityStorage) {
 
     entitiesToRemoveFromOrphanage.forEach {
-      val module = it.contentRoot.module
-      val content = it.contentRoot
+      // This should be done before remove
+      val contentRootReference = it.contentRoot.createReference<ContentRootEntity>()
+      val moduleReference = it.contentRoot.module.createReference<ModuleEntity>()
 
       builder.removeEntity(it)
 
-      if ((content.sourceRoots.isEmpty() || (content.sourceRoots.size == 1 && content.sourceRoots.single().url == it.url))
-          && content.excludedUrls.isEmpty()) {
+      val content = contentRootReference.resolve(builder) ?: return@forEach
+      if (content.sourceRoots.isEmpty() && content.excludedUrls.isEmpty()) {
         builder.removeEntity(content)
 
-        if (module.contentRoots.isEmpty() || module.contentRoots.singleOrNull()?.url == content.url) {
+        val module = moduleReference.resolve(builder) ?: return@forEach
+        if (module.contentRoots.isEmpty()) {
           builder.removeEntity(module)
         }
       }
@@ -416,16 +418,18 @@ private class ExcludeRootAdder(private val project: Project) : EntityAdder {
 
   override fun cleanOrphanage(builder: MutableEntityStorage) {
     entitiesToRemoveFromOrphanage.forEach {
-      val module = it.contentRoot!!.module
-      val content = it.contentRoot!!
+      // This should be done before removing
+      val moduleReference = it.contentRoot?.module?.createReference<ModuleEntity>()
+      val contentReference = it.contentRoot?.createReference<ContentRootEntity>()
 
       builder.removeEntity(it)
 
-      if ((content.excludedUrls.isEmpty() || (content.excludedUrls.size == 1 && content.excludedUrls.single().url == it.url))
-          && content.sourceRoots.isEmpty()) {
+      val content = contentReference?.resolve(builder) ?: return@forEach
+      if (content.excludedUrls.isEmpty() && content.sourceRoots.isEmpty()) {
         builder.removeEntity(content)
 
-        if (module.contentRoots.isEmpty() || module.contentRoots.singleOrNull()?.url == content.url) {
+        val module = moduleReference?.resolve(builder) ?: return@forEach
+        if (module.contentRoots.isEmpty()) {
           builder.removeEntity(module)
         }
       }
