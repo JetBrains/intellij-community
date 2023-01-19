@@ -69,7 +69,7 @@ class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
     }
 
     private fun isRecursiveCall(element: KtElement): Boolean {
-        if (RecursivePropertyAccessorInspection.isRecursivePropertyAccess(element)) return true
+        if (RecursivePropertyAccessorInspection.isRecursivePropertyAccess(element, anyRecursionTypes = true)) return true
         if (RecursivePropertyAccessorInspection.isRecursiveSyntheticPropertyAccess(element)) return true
         // Fast check for names without resolve
         val resolveName = getCallNameFromPsi(element) ?: return false

@@ -25,13 +25,12 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
-import org.jetbrains.kotlin.types.typeUtil.nullability
 
 class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return simpleNameExpressionVisitor { expression ->
-            if (isRecursivePropertyAccess(expression)) {
+            if (isRecursivePropertyAccess(expression, anyRecursionTypes = false)) {
                 val isExtensionProperty = expression.getStrictParentOfType<KtProperty>()?.receiverTypeReference != null
                 holder.registerProblem(
                     expression,
@@ -86,7 +85,12 @@ class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
             return false
         }
 
-        fun isRecursivePropertyAccess(element: KtElement): Boolean {
+        @Deprecated("use isRecursivePropertyAccess(KtElement, Boolean) instead",
+                    replaceWith = ReplaceWith("isRecursivePropertyAccess(element, false)"))
+        fun isRecursivePropertyAccess(element: KtElement): Boolean =
+            isRecursivePropertyAccess(element, false)
+
+        fun isRecursivePropertyAccess(element: KtElement, anyRecursionTypes: Boolean): Boolean {
             if (element !is KtSimpleNameExpression) return false
             val propertyAccessor = element.getParentOfType<KtDeclarationWithBody>(true) as? KtPropertyAccessor ?: return false
             if (element.text != propertyAccessor.property.name) return false
@@ -97,8 +101,16 @@ class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
             (element.parent as? KtQualifiedExpression)?.let {
                 val targetReceiverType = (target as? PropertyDescriptorImpl)?.extensionReceiverParameter?.value?.type
                 val receiverKotlinType = it.receiverExpression.kotlinType(bindingContext)?.makeNotNullable()
-                if (receiverKotlinType != null && targetReceiverType != null && !receiverKotlinType.isSubtypeOf(targetReceiverType)) {
-                    return false
+                if (anyRecursionTypes) {
+                    if (receiverKotlinType != null && targetReceiverType != null && !receiverKotlinType.isSubtypeOf(targetReceiverType)) {
+                        return false
+                    }
+                } else {
+                    if (it.receiverExpression.text != KtTokens.THIS_KEYWORD.value &&
+                        !it.hasObjectReceiver(bindingContext) &&
+                        (targetReceiverType == null || receiverKotlinType?.isSubtypeOf(targetReceiverType) == false)) {
+                        return false
+                    }
                 }
             }
             return isSameAccessor(element, propertyAccessor.isGetter)
