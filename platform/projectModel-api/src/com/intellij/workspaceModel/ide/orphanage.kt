@@ -319,7 +319,8 @@ private class SourceRootAdder(private val project: Project) : EntityAdder {
 
       builder.removeEntity(it)
 
-      if (content.sourceRoots.isEmpty() || (content.sourceRoots.size == 1 && content.sourceRoots.single().url == it.url)) {
+      if ((content.sourceRoots.isEmpty() || (content.sourceRoots.size == 1 && content.sourceRoots.single().url == it.url))
+          && content.excludedUrls.isEmpty()) {
         builder.removeEntity(content)
 
         if (module.contentRoots.isEmpty() || module.contentRoots.singleOrNull()?.url == content.url) {
@@ -409,23 +410,18 @@ private class ExcludeRootAdder(private val project: Project) : EntityAdder {
   }
 
   override fun cleanOrphanage(builder: MutableEntityStorage) {
-
     entitiesToRemoveFromOrphanage.forEach {
-      val moduleId = it.contentRoot!!.module.symbolicId
-      val contentUrl = it.contentRoot!!.url
+      val module = it.contentRoot!!.module
+      val content = it.contentRoot!!
 
       builder.removeEntity(it)
 
-      val module = builder.resolve(moduleId) ?: return@forEach
+      if ((content.excludedUrls.isEmpty() || (content.excludedUrls.size == 1 && content.excludedUrls.single().url == it.url))
+          && content.sourceRoots.isEmpty()) {
+        builder.removeEntity(content)
 
-      // TODO: Another o^2?
-      val root = module.contentRoots.firstOrNull { it.url == contentUrl } ?: return@forEach
-      if (root.sourceRoots.isEmpty() && root.excludedUrls.isEmpty()) {
-        builder.removeEntity(root)
-
-        val moduleAgain = builder.resolve(moduleId) ?: return@forEach
-        if (moduleAgain.contentRoots.isEmpty()) {
-          builder.removeEntity(moduleAgain)
+        if (module.contentRoots.isEmpty() || module.contentRoots.singleOrNull()?.url == content.url) {
+          builder.removeEntity(module)
         }
       }
     }
