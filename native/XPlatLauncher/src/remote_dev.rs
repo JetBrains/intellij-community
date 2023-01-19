@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
+use lazy_static::lazy_static;
 use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, read_file_to_end};
 use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, LaunchConfiguration};
 use crate::docker::is_running_in_docker;
@@ -155,7 +156,34 @@ impl DefaultLaunchConfiguration {
 
 struct IjStarterCommand {
     ij_command: String,
-    is_project_path_required: bool
+    is_project_path_required: bool,
+    is_arguments_required: bool,
+}
+
+impl std::fmt::Display for IjStarterCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let path = if self.is_project_path_required {"/path/to/project"} else { "" };
+        let args = if self.is_arguments_required {"[arguments...]"} else { "" };
+        write!(f, "{} {}", path, args)
+    }
+}
+
+lazy_static! {
+    static ref KNOWN_IJ_COMMANDS: HashMap<&'static str, IjStarterCommand> = {
+    let map = HashMap::from([
+            ("run", IjStarterCommand {ij_command: "cwmHostNoLobby".to_string(), is_project_path_required: true, is_arguments_required: true}),
+            ("status", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+            ("cwmHostStatus", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+            ("dumpLaunchParameters", IjStarterCommand {ij_command: "dump-launch-parameters".to_string(), is_project_path_required: false, is_arguments_required: false}),
+            ("warmup", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
+            ("warm-up", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
+            ("invalidate-caches", IjStarterCommand {ij_command: "invalidateCaches".to_string(), is_project_path_required: true, is_arguments_required: false}),
+            ("installPlugins", IjStarterCommand {ij_command: "installPlugins".to_string(), is_project_path_required: false, is_arguments_required: true}),
+            ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: true, is_arguments_required: false}),
+            ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ]);
+        map
+    };
 }
 
 impl RemoteDevLaunchConfiguration {
@@ -168,23 +196,12 @@ impl RemoteDevLaunchConfiguration {
         }
 
         let remote_dev_starter_command = args[1].as_str();
-        let is_project_required_by_known_commands = HashMap::from([
-            ("registerBackendLocationForGateway", ("", false)),
-            ("run", ("cwmHostNoLobby", true)),
-            ("status", ("cwmHostStatus", false)),
-            ("cwmHostStatus", ("cwmHostStatus", false)),
-            ("dumpLaunchParameters", ("dump-launch-parameters", false)),
-            ("warmup", ("warmup", true)),
-            ("warm-up", ("warmup", true)),
-            ("invalidate-caches", ("invalidateCaches", true)),
-            ("installPlugins", ("installPlugins", false)),
-            ("stop", ("exit", true)),
-        ]);
 
-        let ij_starter_command = match is_project_required_by_known_commands.get(remote_dev_starter_command) {
-            Some((ij_command, is_project_path_required)) => IjStarterCommand {
-                ij_command: ij_command.to_string(),
-                is_project_path_required: *is_project_path_required
+        let ij_starter_command = match KNOWN_IJ_COMMANDS.get(remote_dev_starter_command) {
+            Some(ij_starter_command) => IjStarterCommand {
+                ij_command: ij_starter_command.ij_command.to_string(),
+                is_project_path_required: ij_starter_command.is_project_path_required,
+                is_arguments_required: ij_starter_command.is_arguments_required
             },
             None => {
                 print_help();
@@ -503,34 +520,12 @@ pub struct RemoteDevArgs {
     pub ij_args: Vec<String>
 }
 
-struct RemoteDevCommand {
-    pub command_name: String,
-    pub is_project_path_needed: bool,
-    pub is_arguments_needed: bool,
-}
-
-impl std::fmt::Display for RemoteDevCommand {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let path = if self.is_project_path_needed {"/path/to/project"} else { "" };
-        let args = if self.is_arguments_needed {"[arguments...]"} else { "" };
-        write!(f, "{} {} {}", self.command_name, path, args)
-    }
-}
-
 fn print_help() {
-    let remote_dev_commands = vec![
-        RemoteDevCommand {command_name: "run".to_string(), is_project_path_needed: true, is_arguments_needed: true},
-        RemoteDevCommand {command_name: "status".to_string(), is_project_path_needed: false, is_arguments_needed: false},
-        RemoteDevCommand {command_name: "warm-up".to_string(), is_project_path_needed: true, is_arguments_needed: true},
-        RemoteDevCommand {command_name: "invalidate-caches".to_string(), is_project_path_needed: true, is_arguments_needed: false},
-        RemoteDevCommand {command_name: "installPlugins".to_string(), is_project_path_needed: false, is_arguments_needed: false}, // todo: change name to '-'case
-        RemoteDevCommand {command_name: "stop".to_string(), is_project_path_needed: true, is_arguments_needed: false},
-        RemoteDevCommand {command_name: "registerBackendLocationForGateway".to_string(), is_project_path_needed: false, is_arguments_needed: false},
-    ];
+    let remote_dev_commands = &KNOWN_IJ_COMMANDS;
     let mut remote_dev_commands_message = String::from("\nExamples:\n");
-    for remote_dev_command in remote_dev_commands {
-        let command_string = format!("\t./remote-dev-server {}\n", remote_dev_command);
-        remote_dev_commands_message.push_str(command_string.as_str());
+    for (command_name, command_parameters) in remote_dev_commands.iter() {
+        let command_string = format!("\t./remote-dev-server {command_name} {command_parameters}\n");
+        remote_dev_commands_message.push_str(command_string.as_str())
     }
 
     let remote_dev_environment_variables = columns::Columns::from(vec![
@@ -550,7 +545,7 @@ fn print_help() {
     ]).base_tabsize_in(0);
     let remote_dev_environment_variables_message = format!("Environment variables:\n{remote_dev_environment_variables}");
 
-    let help_message = "\nUsage: ./remote-dev-server [ij_command_name] [/path/to/project] args";
+    let help_message = "\nUsage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]";
     println!("{help_message}{remote_dev_commands_message}{remote_dev_environment_variables_message}");
 }
 

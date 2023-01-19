@@ -3254,6 +3254,7 @@ dependencies = [
  "jni",
  "jni-sys",
  "junction",
+ "lazy_static",
  "libloading",
  "log",
  "native-dialog",
