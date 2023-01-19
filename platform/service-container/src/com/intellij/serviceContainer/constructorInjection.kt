@@ -7,6 +7,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.messages.MessageBus
+import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.lang.Deprecated
 import java.lang.reflect.Constructor
@@ -54,20 +55,34 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
     }
     else {
       var isErrorLogged = false
-      @Suppress("UNCHECKED_CAST")
-      return constructor.newInstance(*Array(parameterTypes.size) {
+      val params: Array<Any?> = Array<Any?>(parameterTypes.size) {
         val parameterType = parameterTypes.get(it)
-        if (!isErrorLogged && !ComponentManager::class.java.isAssignableFrom(parameterType) && parameterType != MessageBus::class.java) {
-          isErrorLogged = true
-          LOG.warn("Do not use constructor injection (requestorClass=${aClass.name})")
+        when {
+          ComponentManager::class.java === parameterType -> {
+            componentManager
+          }
+          parameterType === MessageBus::class.java -> {
+            componentManager.messageBus
+          }
+          parameterType === CoroutineScope::class.java -> {
+            componentManager.instanceCoroutineScope(aClass)
+          }
+          else -> {
+            if (!isErrorLogged && !ComponentManager::class.java.isAssignableFrom(parameterType)) {
+              isErrorLogged = true
+              LOG.warn("Do not use constructor injection (requestorClass=${aClass.name})")
+            }
+            parameterResolver.resolveInstance(componentManager = componentManager,
+                                              requestorKey = requestorKey,
+                                              requestorClass = aClass,
+                                              requestorConstructor = constructor,
+                                              expectedType = parameterType,
+                                              pluginId = pluginId)
+          }
         }
-        parameterResolver.resolveInstance(componentManager = componentManager,
-                                          requestorKey = requestorKey,
-                                          requestorClass = aClass,
-                                          requestorConstructor = constructor,
-                                          expectedType = parameterType,
-                                          pluginId = pluginId)
-      }) as T
+      }
+      @Suppress("UNCHECKED_CAST")
+      return constructor.newInstance(*params) as T
     }
   }
   catch (e: InvocationTargetException) {
