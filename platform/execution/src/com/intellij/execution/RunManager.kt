@@ -22,7 +22,7 @@ abstract class RunManager {
     fun getInstance(project: Project): RunManager {
       if (IS_RUN_MANAGER_INITIALIZED.get(project) != true && !project.isDefault) {
         // https://gist.github.com/develar/5bcf39b3f0ec08f507ec112d73375f2b
-        LOG.error("Must be not called before project components initialized")
+        LOG.warn("Must be not called before project components initialized")
       }
       return project.getService(RunManager::class.java)
     }
