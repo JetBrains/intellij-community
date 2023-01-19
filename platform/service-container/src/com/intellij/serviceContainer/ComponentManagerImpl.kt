@@ -1480,8 +1480,7 @@ abstract class ComponentManagerImpl(
 
     val containerScope = getCoroutineScope()
     val intersectionName = "$debugString x ${pluginScope.coroutineContext[CoroutineName]?.name}"
-    val intersectionScope = CoroutineScope(SupervisorJob() + CoroutineName(intersectionName)).also {
-      it.attachAsChildTo(containerScope)
+    val intersectionScope = containerScope.childScope(CoroutineName(intersectionName)).also {
       it.attachAsChildTo(pluginScope)
     }
     while (true) {
