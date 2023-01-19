@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
 import com.intellij.util.io.Decompressor
-import com.intellij.util.io.ZipUtil
 import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -47,7 +46,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.*
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
-import java.io.FileOutputStream
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -57,7 +55,6 @@ import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.function.Predicate
 import java.util.stream.Collectors
-import java.util.zip.ZipOutputStream
 
 class BuildTasksImpl(context: BuildContext) : BuildTasks {
   private val context = context as BuildContextImpl
@@ -613,7 +610,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
       val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
 
       if (context.productProperties.buildDocAuthoringAssets)
-        buildInspectopediaArtifacts(distributionJARsBuilder, context)
+        buildAdditionalAuthoringArtifacts(distributionJARsBuilder, context)
 
       if (context.shouldBuildDistributions()) {
         val entries = distributionJARsBuilder.buildJARs(context)
@@ -1200,22 +1197,28 @@ fun getModulesToCompile(buildContext: BuildContext): Set<String> {
   return result
 }
 
-// Captures information about all available inspections in a JSON format as part of Inspectopedia project. This is later used by Qodana and other tools.
-private suspend fun buildInspectopediaArtifacts(builder: DistributionJARsBuilder,
-                                                context: BuildContext) {
+// Captures information about all available inspections in a JSON format as part of Inspectopedia project.
+// This is later used by Qodana and other tools. Keymaps are extracted as XML file and also used in help authoring.
+private suspend fun buildAdditionalAuthoringArtifacts(builder: DistributionJARsBuilder,
+                                                      context: BuildContext) {
+
+  val commands = listOf(Pair("inspectopedia-generator", "inspections-${context.applicationInfo.productCode.lowercase()}"),
+                        Pair("keymap", "keymap-${context.applicationInfo.productCode.lowercase()}"))
 
   val ideClasspath = builder.createIdeClassPath(context)
-  val tempDir = context.paths.tempDir.resolve("inspectopedia-generator")
-  val inspectionsPath = tempDir.resolve("inspections-${context.applicationInfo.productCode.lowercase()}")
+  val temporaryBuildDirectory = context.paths.tempDir
 
-  runApplicationStarter(context = context,
-                        tempDir = tempDir,
-                        ideClasspath = ideClasspath,
-                        arguments = listOf("inspectopedia-generator", inspectionsPath.toAbsolutePath().toString()))
+  commands.forEach {
+    val temporaryStepDirectory = temporaryBuildDirectory.resolve(it.first)
+    val targetPath = temporaryStepDirectory.resolve(it.second)
 
-  val targetFile = context.paths.artifactDir.resolve("inspections-${context.applicationInfo.productCode.lowercase()}.zip").toFile()
+    runApplicationStarter(context = context,
+                          tempDir = temporaryStepDirectory,
+                          ideClasspath = ideClasspath,
+                          arguments = listOf(it.first, targetPath.toAbsolutePath().toString()))
 
-  ZipOutputStream(FileOutputStream(targetFile)).use { zip ->
-    ZipUtil.addDirToZipRecursively(zip, targetFile, inspectionsPath.toFile(), "", null, null)
+    val targetFile = context.paths.artifactDir.resolve("${it.second}.zip")
+
+    zipWithCompression(targetFile = targetFile, dirs = mapOf(targetPath to ""))
   }
 }
