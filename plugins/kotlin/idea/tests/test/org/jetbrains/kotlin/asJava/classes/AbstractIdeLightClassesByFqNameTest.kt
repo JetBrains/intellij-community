@@ -7,12 +7,14 @@ import com.intellij.psi.PsiModifierList
 import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.kotlin.asJava.elements.*
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.junit.Assume
 import java.io.File
 import kotlin.test.assertNotNull
 
@@ -26,6 +28,11 @@ abstract class AbstractIdeLightClassesByFqNameTest : KotlinLightCodeInsightFixtu
         }
 
         val fileText = File(testDataDirectory, fileName).readText()
+        Assume.assumeFalse(
+            "The test is not supported",
+            InTextDirectivesUtils.isDirectiveDefined(fileText, LightClassTestCommon.SKIP_IDE_TEST_DIRECTIVE),
+        )
+
         withCustomCompilerOptions(fileText, project, module) {
             val testFiles = if (File(testDataDirectory, extraFilePath).isFile) listOf(fileName, extraFilePath) else listOf(fileName)
             myFixture.configureByFiles(*testFiles.toTypedArray())
