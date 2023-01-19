@@ -534,7 +534,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       addExecutorActions(this,
                          executor -> new ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(executor, myConfiguration, false),
                          myExecutorFilter);
-      addSeparator();
+      addSeparator(ExperimentalUI.isNewUI() ? ExecutionBundle.message("choose.run.popup.separator") : null);
 
       Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
       addAction(new ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, myConfiguration, true));
