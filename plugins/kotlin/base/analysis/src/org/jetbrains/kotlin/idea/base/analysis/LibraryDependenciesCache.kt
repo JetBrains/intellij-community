@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntity
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.idea.configuration.isMavenized
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private class LibraryDependencyCandidatesAndSdkInfos(
@@ -85,16 +86,53 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     private fun computeLibrariesAndSdksUsedWith(libraryInfo: LibraryInfo): LibraryDependencies {
         val libraryDependencyCandidatesAndSdkInfos = computeLibrariesAndSdksUsedWithNoFilter(libraryInfo)
 
-        // Maven is Gradle Metadata unaware, and therefore needs stricter filter. See KTIJ-15758
-        val libraryDependenciesFilter = if (project.isMavenized)
-            StrictEqualityForPlatformSpecificCandidatesFilter
-        else
-            DefaultLibraryDependenciesFilter union SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
+        val additionalDependenciesForLibrarySources: List<LibraryInfo>
+        val libraryDependenciesFilter: LibraryDependenciesFilter
+
+        when {
+            // Maven is Gradle Metadata unaware and needs special handling. See KTIJ-15758, KTIJ-23874
+            project.isMavenized -> {
+                libraryDependenciesFilter = StrictEqualityForPlatformSpecificCandidatesFilter
+                additionalDependenciesForLibrarySources =
+                    stdlibJvmDependencies(libraryInfo, libraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates)
+            }
+
+            else -> {
+                libraryDependenciesFilter =
+                    DefaultLibraryDependenciesFilter union SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
+                additionalDependenciesForLibrarySources = emptyList()
+            }
+        }
+
         val libraries = libraryDependenciesFilter(
             libraryInfo.platform,
             libraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates
         ).flatMap { it.libraries }
-        return LibraryDependencies(libraryInfo, libraries, libraryDependencyCandidatesAndSdkInfos.sdkInfos.toList())
+
+        return LibraryDependencies(
+            libraryInfo,
+            libraries,
+            libraryDependencyCandidatesAndSdkInfos.sdkInfos.toList(),
+            additionalDependenciesForLibrarySources
+        )
+    }
+
+    /**
+     * Workaround for separate publishing of standard library sources (KTIJ-23874).
+     * Common parts of the standard library have to be provided as a dependency, but only in the context of a search scope for sources.
+     */
+    private fun stdlibJvmDependencies(
+        libraryInfo: LibraryInfo,
+        allDependencyCandidates: Set<LibraryDependencyCandidate>,
+    ): List<LibraryInfo> {
+        if (!libraryInfo.platform.isJvm()) return emptyList()
+
+        val stdlibCache = KotlinStdlibCache.getInstance(libraryInfo.project)
+        if (!stdlibCache.isStdlib(libraryInfo)) return emptyList()
+
+        return allDependencyCandidates.flatMap { candidate ->
+            candidate.libraries.filter { library -> stdlibCache.isStdlibDependency(library) }
+        }
     }
 
     //NOTE: used LibraryRuntimeClasspathScope as reference
@@ -183,6 +221,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         override fun checkValueValidity(value: LibraryDependencies) {
             value.libraries.forEach { it.checkValidity() }
+            value.sourcesOnlyDependencies.forEach { it.checkValidity() }
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
