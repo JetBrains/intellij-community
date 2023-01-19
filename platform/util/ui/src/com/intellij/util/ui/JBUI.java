@@ -1313,6 +1313,36 @@ public final class JBUI {
       }
     }
 
+    public static final class VersionControl {
+
+      public static final class Log {
+        public static int rowHeight() {
+          return getInt(rowHeightKey(), defaultRowHeight());
+        }
+
+        public static @NotNull String rowHeightKey() {
+          return "VersionControl.Log.Commit.rowHeight";
+        }
+
+        public static int defaultRowHeight() {
+          return 26;
+        }
+
+        public static int verticalPadding() {
+          return getInt(verticalPaddingKey(), defaultVerticalPadding());
+        }
+
+        public static @NotNull String verticalPaddingKey() {
+          return "VersionControl.Log.Commit.verticalPadding";
+        }
+
+        public static int defaultVerticalPadding() {
+          return 7;
+        }
+      }
+
+    }
+
     public static final class Link {
       public static final @NotNull Color FOCUSED_BORDER_COLOR = JBColor.namedColor("Link.focusedBorderColor", Component.FOCUSED_BORDER_COLOR);
 

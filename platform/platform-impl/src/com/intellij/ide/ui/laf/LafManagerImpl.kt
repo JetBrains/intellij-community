@@ -674,6 +674,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     // toolwindows
     defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), JBUI.CurrentTheme.ToolWindow.defaultHeaderHeight())
     defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), JBUI.CurrentTheme.ToolWindow.defaultHeaderFont())
+    // VCS log
+    defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), JBUI.CurrentTheme.VersionControl.Log.defaultRowHeight())
+    defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), JBUI.CurrentTheme.VersionControl.Log.defaultVerticalPadding())
     if (UISettings.getInstance().uiDensity == UIDensity.COMPACT) {
       // main toolbar
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34))
@@ -697,6 +700,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // toolwindows
       defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), 32)
       defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), JBFont.medium())
+      // VCS log
+      defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), 22)
+      defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), 4)
     }
   }
 
