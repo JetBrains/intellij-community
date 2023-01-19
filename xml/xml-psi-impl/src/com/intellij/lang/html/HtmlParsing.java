@@ -46,7 +46,7 @@ public class HtmlParsing {
     parseProlog();
 
     PsiBuilder.Marker error = null;
-    while (!eof()) {
+    while (shouldContinueMainLoop()) {
       final IElementType tt = token();
       if (tt == XmlTokenType.XML_START_TAG_START) {
         error = flushError(error);
@@ -166,7 +166,7 @@ public class HtmlParsing {
     assert token() == XmlTokenType.XML_START_TAG_START : "Tag start expected";
     String originalTagName;
     PsiBuilder.Marker xmlText = null;
-    while (!eof() && shouldContinueParsingTag()) {
+    while (shouldContinueMainLoop() && shouldContinueParsingTag()) {
       final IElementType tt = token();
       if (tt == XmlTokenType.XML_START_TAG_START) {
         xmlText = terminateText(xmlText);
@@ -345,6 +345,11 @@ public class HtmlParsing {
       endName = null;
     }
     return endName;
+  }
+
+  @ApiStatus.OverrideOnly
+  protected boolean shouldContinueMainLoop() {
+    return !eof();
   }
 
   protected boolean shouldContinueParsingTag() {
