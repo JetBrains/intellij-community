@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -165,9 +166,8 @@ class OrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @ParameterizedTest
-  @ValueSource(booleans = [true, false])
-  fun `adding content root to removed module`(orphanBeforeUpdate: Boolean) {
+  @Test
+  fun `adding content root to removed module`() {
     val url = virtualFileManager.fromUrl("/123")
     runWriteAction {
       projectModel.project.workspaceModel.orphanage.update { builder ->
