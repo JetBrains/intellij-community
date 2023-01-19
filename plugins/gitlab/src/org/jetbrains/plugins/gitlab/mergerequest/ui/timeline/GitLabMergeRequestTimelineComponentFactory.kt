@@ -75,10 +75,10 @@ object GitLabMergeRequestTimelineComponentFactory {
     }
   }
 
-  private suspend fun createItemComponent(project: Project,
-                                          cs: CoroutineScope,
-                                          avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                          item: GitLabMergeRequestTimelineItemViewModel): JComponent =
+  private fun createItemComponent(project: Project,
+                                  cs: CoroutineScope,
+                                  avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+                                  item: GitLabMergeRequestTimelineItemViewModel): JComponent =
     when (item) {
       is GitLabMergeRequestTimelineItemViewModel.Immutable -> {
         val content = createContent(item)

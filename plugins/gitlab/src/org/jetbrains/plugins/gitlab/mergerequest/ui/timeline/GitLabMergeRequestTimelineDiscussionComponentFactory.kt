@@ -4,10 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.EditableComponentFactory
-import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.SimpleHtmlPane
-import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
@@ -20,6 +17,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.JBDateFormat
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -32,16 +30,17 @@ import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteAdminActionsViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 
 @OptIn(ExperimentalCoroutinesApi::class)
 object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
-  suspend fun create(project: Project,
-                     cs: CoroutineScope,
-                     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                     item: GitLabMergeRequestTimelineItemViewModel.Discussion): JComponent {
+  fun create(project: Project,
+             cs: CoroutineScope,
+             avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+             item: GitLabMergeRequestTimelineItemViewModel.Discussion): JComponent {
     val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, item).apply {
       border = JBUI.Borders.empty(Replies.ActionsFolded.VERTICAL_PADDING, 0)
       bindVisibility(cs, item.repliesFolded)
@@ -87,11 +86,9 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       bindVisibility(cs, item.repliesFolded.inverted())
     }
 
-    //TODO: dynamic icon
-    val constAuthor = item.author.first()
-    return CodeReviewChatItemUIUtil.build(CodeReviewChatItemUIUtil.ComponentType.FULL,
-                                          { avatarIconsProvider.getIcon(constAuthor, it) },
-                                          contentPanel) {
+    return CodeReviewChatItemUIUtil.buildDynamic(CodeReviewChatItemUIUtil.ComponentType.FULL,
+                                                 { item.author.createIconValue(cs, avatarIconsProvider, it) },
+                                                 contentPanel) {
       withHeader(createTitleTextPane(cs, item.author, item.date), actionsPanel)
     }.let {
       VerticalListPanel().apply {
@@ -100,6 +97,15 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       }
     }
   }
+
+  private fun Flow<GitLabUserDTO>.createIconValue(cs: CoroutineScope, iconsProvider: IconsProvider<GitLabUserDTO>, size: Int) =
+    SingleValueModel<Icon>(EmptyIcon.create(size)).apply {
+      cs.launch {
+        collect {
+          value = iconsProvider.getIcon(it, size)
+        }
+      }
+    }
 
   private fun createRepliesActionsPanel(cs: CoroutineScope,
                                         avatarIconsProvider: IconsProvider<GitLabUserDTO>,

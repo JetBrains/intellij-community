@@ -8,6 +8,7 @@ import java.util.*
 
 sealed interface GitLabMergeRequestTimelineItemViewModel {
 
+  val id: String
   val date: Date
 
   sealed interface Immutable : GitLabMergeRequestTimelineItemViewModel {
@@ -17,6 +18,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
   class StateEvent(
     val event: GitLabResourceStateEventDTO
   ) : Immutable {
+    override val id: String = "StateEvent:" + event.id.toString()
     override val actor: GitLabUserDTO = event.user
     override val date: Date = event.createdAt
   }
@@ -24,6 +26,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
   class LabelEvent(
     val event: GitLabResourceLabelEventDTO
   ) : Immutable {
+    override val id: String = "LabelEvent:" + event.id.toString()
     override val actor: GitLabUserDTO = event.user
     override val date: Date = event.createdAt
   }
@@ -31,6 +34,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
   class MilestoneEvent(
     val event: GitLabResourceMilestoneEventDTO
   ) : Immutable {
+    override val id: String = "MilestoneEvent:" + event.id.toString()
     override val actor: GitLabUserDTO = event.user
     override val date: Date = event.createdAt
   }
@@ -40,6 +44,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
   ) : Immutable {
     private val firstNote = discussion.notes.first()
 
+    override val id: String = "SystemDiscussion:" + discussion.id
     override val actor: GitLabUserDTO = firstNote.author
     override val date: Date = discussion.createdAt
 
@@ -52,6 +57,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
   ) : GitLabMergeRequestTimelineItemViewModel,
       GitLabMergeRequestTimelineDiscussionViewModel
       by GitLabMergeRequestTimelineDiscussionViewModelImpl(parentCs, discussion) {
+    override val id: String = "Discussion:" + discussion.id
     override val date: Date = discussion.createdAt
   }
 }

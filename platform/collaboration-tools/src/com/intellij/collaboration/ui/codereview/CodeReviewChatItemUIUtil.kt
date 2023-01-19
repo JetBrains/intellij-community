@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithLimitedSize
 import com.intellij.collaboration.ui.JPanelWithBackground
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.ui.ColorUtil
@@ -102,15 +103,24 @@ object CodeReviewChatItemUIUtil {
       get() = iconSize + iconGap
   }
 
-  fun build(type: ComponentType, iconProvider: (Int) -> Icon, content: JComponent, init: Builder.() -> Unit): JComponent =
-    Builder(type, iconProvider, content).apply(init).build()
+  fun build(type: ComponentType,
+            iconProvider: (iconSize: Int) -> Icon,
+            content: JComponent,
+            init: Builder.() -> Unit): JComponent =
+    buildDynamic(type, { iconSize -> SingleValueModel(iconProvider(iconSize)) }, content, init)
+
+  fun buildDynamic(type: ComponentType,
+                   iconValueProvider: (iconSize: Int) -> SingleValueModel<Icon>,
+                   content: JComponent,
+                   init: Builder.() -> Unit): JComponent =
+    Builder(type, iconValueProvider, content).apply(init).build()
 
   /**
    * One-time use builder, be careful not to leak [header]
    */
   class Builder(
     private val type: ComponentType,
-    private val iconProvider: (Int) -> Icon,
+    private val iconValueProvider: (Int) -> SingleValueModel<Icon>,
     private val content: JComponent
   ) {
     /**
@@ -142,9 +152,12 @@ object CodeReviewChatItemUIUtil {
       }.wrapIfNotNull(header) { comp, (title, actions) ->
         ComponentFactory.wrapWithHeader(comp, title, actions)
       }.let {
-        val iconLabel = JLabel(iconProvider(type.iconSize)).apply {
+        val iconLabel = JLabel().apply {
           toolTipText = iconTooltip
           border = JBUI.Borders.emptyRight(type.iconGap)
+          iconValueProvider(type.iconSize).addAndInvokeListener { newIcon ->
+            icon = newIcon
+          }
         }
         val iconPanel = simplePanel().addToTop(iconLabel).andTransparent()
         simplePanel(it).addToLeft(iconPanel).andTransparent()
