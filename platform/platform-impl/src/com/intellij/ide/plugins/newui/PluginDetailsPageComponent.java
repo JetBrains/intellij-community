@@ -79,6 +79,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private final BaselinePanel myNameAndButtons;
   private JButton myRestartButton;
   private InstallButton myInstallButton;
+  private final SuggestedIdeBanner mySuggestedIdeBanner = new SuggestedIdeBanner();
   private JButton myUpdateButton;
   private JComponent myGearButton;
   private JButton myEnableDisableButton;
@@ -218,10 +219,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   private static CustomLineBorder createMainBorder() {
-    return new CustomLineBorder(JBColor.border(), JBUI.insets(1, 0, 0, 0)) {
+    return new CustomLineBorder(JBColor.border(), JBUI.insetsTop(1)) {
       @Override
       public Insets getBorderInsets(Component c) {
-        return JBUI.insets(15, 20, 0, 0);
+        return JBUI.insets(15, 20, 0, 20);
       }
     };
   }
@@ -242,6 +243,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myHomePage = new LinkPanel(linkPanel, false);
 
     topPanel.add(myNameAndButtons);
+    topPanel.add(mySuggestedIdeBanner, VerticalLayout.FILL_HORIZONTAL);
 
     myNameAndButtons.add(myVersion1 = new JBLabel().setCopyable(true));
 
@@ -879,11 +881,16 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
     select(0, true);
 
+    String suggestedCommercialIde = null;
+
     if (myPlugin instanceof PluginNode) {
-      if (((PluginNode)myPlugin).getSuggestedCommercialIde() != null) {
-        myInstallButton.setText(IdeBundle.message("action.AnActionButton.text.upgrade"));
+      suggestedCommercialIde = ((PluginNode)myPlugin).getSuggestedCommercialIde();
+      if (suggestedCommercialIde != null) {
+        myInstallButton.setVisible(false);
       }
     }
+
+    mySuggestedIdeBanner.suggestIde(suggestedCommercialIde);
   }
 
   private enum EmptyState {

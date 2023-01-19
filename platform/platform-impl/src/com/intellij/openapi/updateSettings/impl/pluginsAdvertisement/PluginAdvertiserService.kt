@@ -36,8 +36,8 @@ sealed interface PluginAdvertiserService {
 
     internal fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
       return when (activeProductCode) {
-        "IC", "IE", "AS" -> "IU"
-        "PC", "PE" -> "PY"
+        "IC", "AS" -> "IU"
+        "PC" -> "PY"
         else -> null
       }
     }
