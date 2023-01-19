@@ -6,7 +6,7 @@ fun main(args: Array<String>) {
     // RESULT: 1: I
     // STEP_INTO: 2
     a.foo { a }
-        //Breakpoint!
+        //Breakpoint! (lambdaOrdinal = -1)
         .foo { a }
 }
 
@@ -16,5 +16,3 @@ class A {
     }
 }
 
-
-// IGNORE_FOR_INDY_LAMBDAS
