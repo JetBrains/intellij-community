@@ -86,9 +86,6 @@ public class MergeAllWindowsAction extends DumbAwareAction {
     public void appStarted() {
       if (JdkEx.isTabbingModeAvailable()) {
         IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
-        if (frames.length == 0) {
-          return;
-        }
 
         if (frames.length > 1) {
           for (IdeFrame frame : frames) {
@@ -96,10 +93,10 @@ public class MergeAllWindowsAction extends DumbAwareAction {
               return;
             }
           }
-        }
 
-        if (Foundation.invoke("NSWindow", "userTabbingPreference").intValue() == 2/*NSWindowUserTabbingPreferenceInFullScreen*/) {
-          mergeAllWindows(Objects.requireNonNull(((ProjectFrameHelper)frames[0]).getFrame()), false);
+          if (Foundation.invoke("NSWindow", "userTabbingPreference").intValue() == 2/*NSWindowUserTabbingPreferenceInFullScreen*/) {
+            mergeAllWindows(Objects.requireNonNull(((ProjectFrameHelper)frames[0]).getFrame()), false);
+          }
         }
       }
     }
