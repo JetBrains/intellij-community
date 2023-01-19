@@ -1,10 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.extensions.*
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.LOG
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
@@ -15,10 +13,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.ProjectPostStartupActivity
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
@@ -28,7 +24,6 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.util.PathUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
-import kotlin.coroutines.EmptyCoroutineContext
 
 @VisibleForTesting
 class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
@@ -91,14 +86,12 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
   ): Pair<List<ExternalSystemUnlinkedProjectAware>, List<ExternalSystemUnlinkedProjectAware>> {
     val linkedProjects = ArrayList<ExternalSystemUnlinkedProjectAware>()
     val unlinkedProjects = ArrayList<ExternalSystemUnlinkedProjectAware>()
-    EP_NAME.forEachExtensionSafe(project) { extension, extensionDisposable ->
-      coroutineScope(extensionDisposable) {
-        when {
-          extension.isLinkedProject(project, externalProjectPath) ->
-            linkedProjects.add(extension)
-          extension.hasBuildFiles(project, externalProjectPath) ->
-            unlinkedProjects.add(extension)
-        }
+    EP_NAME.forEachExtensionSafe(project) { extension, _ ->
+      when {
+        extension.isLinkedProject(project, externalProjectPath) ->
+          linkedProjects.add(extension)
+        extension.hasBuildFiles(project, externalProjectPath) ->
+          unlinkedProjects.add(extension)
       }
     }
     return linkedProjects to unlinkedProjects
@@ -127,11 +120,11 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
       }
   }
 
-  private fun showNotificationWhenNonEmptyProjectUnlinked(project: Project) {
+  private suspend fun showNotificationWhenNonEmptyProjectUnlinked(project: Project) {
     EP_NAME.withEachExtensionSafe(project) { extension, extensionDisposable ->
       extension.subscribe(project, object : ExternalSystemProjectLinkListener {
         override fun onProjectUnlinked(externalProjectPath: String) {
-          submit(extensionDisposable) {
+          launch(extensionDisposable) {
             showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, extension)
           }
         }
@@ -139,7 +132,7 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     }
   }
 
-  private fun expireNotificationWhenProjectLinked(project: Project) {
+  private suspend fun expireNotificationWhenProjectLinked(project: Project) {
     EP_NAME.withEachExtensionSafe(project) { extension, extensionDisposable ->
       extension.subscribe(project, object : ExternalSystemProjectLinkListener {
         override fun onProjectLinked(externalProjectPath: String) {
@@ -151,14 +144,12 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
   }
 
   private fun showNotificationWhenBuildToolPluginEnabled(project: Project, externalProjectPath: String) {
-    EP_NAME.whenExtensionAdded(project) { extension, extensionDisposable ->
-      submit(extensionDisposable) {
-        showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, extension)
-      }
+    EP_NAME.whenExtensionAdded(project) { extension, _ ->
+      showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, extension)
     }
   }
 
-  private fun showNotificationWhenNewBuildFileCreated(project: Project, externalProjectPath: String) {
+  private suspend fun showNotificationWhenNewBuildFileCreated(project: Project, externalProjectPath: String) {
     EP_NAME.withEachExtensionSafe(project) { extension, extensionDisposable ->
       val listener = NewBuildFilesListener(project, externalProjectPath, extension)
       installAsyncVirtualFileListener(listener, extensionDisposable)
@@ -212,26 +203,6 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
         LOG.debug("Found unlinked ${projectId.debugName} project; buildFile=$buildFile")
       }
       return buildFile != null
-    }
-
-    private suspend fun <R> coroutineScope(parentDisposable: Disposable, action: suspend CoroutineScope.() -> R): R {
-      val task = submit(parentDisposable, action)
-      return task.await()
-    }
-
-    private fun <R> submit(parentDisposable: Disposable, action: suspend CoroutineScope.() -> R): Deferred<R> {
-      val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-      val disposable = Disposer.newDisposable(parentDisposable, "CoroutineScope")
-      val task = coroutineScope.async(start = CoroutineStart.LAZY) {
-        disposable.use {
-          action()
-        }
-      }
-      Disposer.register(disposable, Disposable {
-        task.cancel("disposed")
-      })
-      task.start()
-      return task
     }
   }
 }
