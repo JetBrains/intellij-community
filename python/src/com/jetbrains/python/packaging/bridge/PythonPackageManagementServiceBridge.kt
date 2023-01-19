@@ -37,6 +37,9 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
 
 
   override fun getInstalledPackagesList(): List<InstalledPackage> {
+    if (manager.installedPackages.isEmpty()) runBlocking {
+      manager.reloadPackages()
+    }
     if (isConda) {
       if (useConda) {
        return manager.installedPackages.asSequence()
@@ -69,11 +72,12 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
 
   override fun getAllPackages(): List<RepoPackage> {
     if (isConda && useConda) {
+      val settings = PyPackagingSettings.getInstance(project)
       val cache = service<CondaPackageCache>()
       return manager
         .repositoryManager
         .packagesFromRepository(CondaPackageRepository)
-        .map { RepoPackage(it, null, cache[it]?.firstOrNull()) }
+        .map { RepoPackage(it, null, settings.selectLatestVersion(cache[it] ?: emptyList())) }
     }
 
     val hasRepositories = manager
@@ -207,7 +211,7 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
     }
   }
 
-  override fun shouldFetchLatestVersionsForOnlyInstalledPackages(): Boolean = !isConda && useConda
+  override fun shouldFetchLatestVersionsForOnlyInstalledPackages(): Boolean = !(isConda && useConda)
 
   override fun dispose() {
     scope.cancel()
