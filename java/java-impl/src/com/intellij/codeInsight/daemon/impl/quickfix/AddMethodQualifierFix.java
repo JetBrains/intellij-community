@@ -55,17 +55,11 @@ public class AddMethodQualifierFix implements IntentionAction {
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiMethodCallExpression element = myMethodCall.getElement();
-    List<PsiVariable> candidates = new ArrayList<>(myCandidates);
-    if (element == null || candidates.isEmpty()) {
+    if (element == null || myCandidates.isEmpty()) {
       return IntentionPreviewInfo.EMPTY;
     }
-
     PsiMethodCallExpression copyExpression = PsiTreeUtil.findSameElementInCopy(element, file);
-    PsiVariable copyVariable = PsiTreeUtil.findSameElementInCopy(candidates.get(0), file);
-    if (copyVariable == null) {
-      return IntentionPreviewInfo.EMPTY;
-    }
-    replaceWithQualifier(copyVariable, copyExpression);
+    replaceWithQualifier(myCandidates.get(0), copyExpression);
     return IntentionPreviewInfo.DIFF;
   }
 
