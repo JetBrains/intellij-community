@@ -153,7 +153,7 @@ abstract class ComponentManagerImpl(
   internal var componentContainerIsReadonly: String? = null
 
   private val coroutineScope: CoroutineScope? = when {
-    parent == null -> mainScope?.childScope(Dispatchers.Default) ?: CoroutineScope(SupervisorJob())
+    parent == null -> CoroutineScope(SupervisorJob(parent = mainScope?.coroutineContext?.job) + Dispatchers.Default)
     parent.parent == null -> parent.coroutineScope!!.childScope()
     else -> null
   }
