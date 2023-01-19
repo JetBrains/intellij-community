@@ -773,7 +773,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
         if (forbidSplitFor(file)) {
           closeFile(file)
         }
-        return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file, this)
+        return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file) { editorWindow ->
+          openFileImpl2(window = editorWindow, file = file, options = options)
+        }
       }
       if (mode == OpenMode.RIGHT_SPLIT) {
         val result = openInRightSplit(file)
@@ -839,7 +841,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     if (forbidSplitFor(file)) {
       closeFile(file)
     }
-    return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file, this).retrofit()
+    return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file) { editorWindow ->
+      openFileImpl2(editorWindow, file, FileEditorOpenOptions(requestFocus = true))
+    }.retrofit()
   }
 
   private fun openInRightSplit(file: VirtualFile): FileEditorComposite? {
