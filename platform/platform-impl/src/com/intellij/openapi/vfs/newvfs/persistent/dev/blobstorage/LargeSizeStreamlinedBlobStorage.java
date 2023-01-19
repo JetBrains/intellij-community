@@ -751,7 +751,12 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
 
   @Override
   public int getStorageVersion() throws IOException {
-    return readHeaderInt(HEADER_OFFSET_STORAGE_VERSION);
+    pagedStorage.lockRead();
+    try {
+      return readHeaderInt(HEADER_OFFSET_STORAGE_VERSION);
+    }finally {
+      pagedStorage.unlockRead();
+    }
   }
 
   @Override
@@ -1283,28 +1288,34 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
       finally {
         headerPage.unlock();
       }
+      pagedStorage.force();
     }
     finally {
-      pagedStorage.lockWrite();
+      pagedStorage.unlockWrite();
     }
-    pagedStorage.force();
   }
 
   @Override
   public void close() throws IOException {
-    //.close() methods are better to be idempotent, i.e. not throw exceptions on repeating calls,
-    // but just silently ignore attempts to 'close already closed'. And pagedStorage conforms with
-    // that. But in .force() we write file status and other header fields, and without .closed
-    // flag we'll do that even on already closed pagedStorage, which leads to exception.
-    if (!closed.get()) {
-      force();
-      openTelemetryCallback.close();
-      closed.set(true);
-    }
+    pagedStorage.lockWrite();
+    try {
+      //.close() methods are better to be idempotent, i.e. not throw exceptions on repeating calls,
+      // but just silently ignore attempts to 'close already closed'. And pagedStorage conforms with
+      // that. But in .force() we write file status and other header fields, and without .closed
+      // flag we'll do that even on already closed pagedStorage, which leads to exception.
+      if (!closed.get()) {
+        force();
+        openTelemetryCallback.close();
+        closed.set(true);
+      }
 
-    //MAYBE RC: it shouldn't be this class's responsibility to close pagedStorage, since not this class creates it?
-    //          Better whoever creates it -- is responsible for closing it?
-    pagedStorage.close();
+      //MAYBE RC: it shouldn't be this class's responsibility to close pagedStorage, since not this class creates it?
+      //          Better whoever creates it -- is responsible for closing it?
+      pagedStorage.close();
+    }
+    finally {
+      pagedStorage.unlockWrite();
+    }
   }
 
   @Override
@@ -1395,6 +1406,7 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
     checkLength(newRecordLength);
 
     final int offsetOnPage = pagedStorage.getOffsetInPage(newRecordOffset);
+    pagedStorage.lockWrite();
     try {
       final DirectBufferWrapper page = pagedStorage.getByteBuffer(newRecordOffset, /*forWrite: */ true);
       try {
@@ -1410,6 +1422,8 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
       }
     }
     finally {
+      pagedStorage.unlockWrite();
+
       recordsAllocated.incrementAndGet();
       totalLiveRecordsCapacityBytes.addAndGet(actualRecordCapacity);
       totalLiveRecordsPayloadBytes.addAndGet(newRecordLength);
@@ -1465,15 +1479,21 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
     final int offsetInPage = pagedStorage.getOffsetInPage(recordOffset);
     final int remainingOnPage = pageSize - offsetInPage;
 
-    final DirectBufferWrapper page = pagedStorage.getByteBuffer(recordOffset, /*forWrite: */ true);
+    pagedStorage.lockWrite();
     try {
-      final int capacity = remainingOnPage - paddingRecord.headerSize();
-      paddingRecord.putRecord(page.getBuffer(), offsetInPage, capacity, 0, NULL_ID, null);
-      page.fileSizeMayChanged(offsetInPage + paddingRecord.headerSize());
-      page.markDirty();
+      final DirectBufferWrapper page = pagedStorage.getByteBuffer(recordOffset, /*forWrite: */ true);
+      try {
+        final int capacity = remainingOnPage - paddingRecord.headerSize();
+        paddingRecord.putRecord(page.getBuffer(), offsetInPage, capacity, 0, NULL_ID, null);
+        page.fileSizeMayChanged(offsetInPage + paddingRecord.headerSize());
+        page.markDirty();
+      }
+      finally {
+        page.unlock();
+      }
     }
     finally {
-      page.unlock();
+      pagedStorage.unlockWrite();
     }
   }
 
