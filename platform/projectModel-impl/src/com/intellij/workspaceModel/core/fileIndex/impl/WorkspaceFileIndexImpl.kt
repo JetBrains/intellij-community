@@ -27,8 +27,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 
 class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx, Disposable.Default {
   companion object {
-    @JvmStatic
-    val EP_NAME = ExtensionPointName<WorkspaceFileIndexContributor<*>>("com.intellij.workspaceModel.fileIndexContributor")
+    val EP_NAME: ExtensionPointName<WorkspaceFileIndexContributor<*>> = ExtensionPointName("com.intellij.workspaceModel.fileIndexContributor")
     private val BRANCH_INDEX_DATA_KEY = Key.create<Pair<Long, WorkspaceFileIndexData>>("BRANCH_WORKSPACE_FILE_INDEX")
   }
 
@@ -36,31 +35,37 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   private var indexData: WorkspaceFileIndexData? = null 
 
   init {
-    project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
         val data = indexData
         if (data != null && DirectoryIndexImpl.shouldResetOnEvents(events)) {
           data.clearPackageDirectoryCache()
-          if (events.any { DirectoryIndexImpl.isIgnoredFileCreated(it) }) {
+          if (events.any(DirectoryIndexImpl::isIgnoredFileCreated)) {
             data.resetFileCache()
           }
         }
       }
     })
-    LowMemoryWatcher.register({
-      indexData?.onLowMemory()
-    }, project)
+    LowMemoryWatcher.register({ indexData?.onLowMemory() }, project)
     val clearData = Runnable { indexData = null }
     EP_NAME.addChangeListener(clearData, this)
     CustomEntityProjectModelInfoProvider.EP.addChangeListener(clearData, this)
   }
 
   override fun isInWorkspace(file: VirtualFile): Boolean {
-    return findFileSet(file, true, true, true, true) != null
+    return findFileSet(file = file,
+                       honorExclusion = true,
+                       includeContentSets = true,
+                       includeExternalSets = true,
+                       includeExternalSourceSets = true) != null
   }
 
   override fun isInContent(file: VirtualFile): Boolean {
-    return findFileSet(file, true, true, false, false) != null
+    return findFileSet(file = file,
+                       honorExclusion = true,
+                       includeContentSets = true,
+                       includeExternalSets = false,
+                       includeExternalSourceSets = false) != null
   }
 
   override fun getContentFileSetRoot(file: VirtualFile, honorExclusion: Boolean): VirtualFile? {
@@ -156,7 +161,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     var pair = branch.getUserData(BRANCH_INDEX_DATA_KEY)
     val modCount = branch.branchedVfsStructureModificationCount
     if (pair == null || pair.first != modCount) {
-      pair = Pair.create(modCount, WorkspaceFileIndexData(contributors, branch.project, RootFileSupplier.forBranch(branch)))
+      pair = Pair(modCount, WorkspaceFileIndexData(contributors, branch.project, RootFileSupplier.forBranch(branch)))
       branch.putUserData(BRANCH_INDEX_DATA_KEY, pair)
     }
     return pair.second
