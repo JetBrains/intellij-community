@@ -1654,7 +1654,7 @@ public final class JBUI {
       }
 
       @NotNull
-      public static String rowHeightKey() {
+      static String rowHeightKey() {
         return "Tree.rowHeight";
       }
 
