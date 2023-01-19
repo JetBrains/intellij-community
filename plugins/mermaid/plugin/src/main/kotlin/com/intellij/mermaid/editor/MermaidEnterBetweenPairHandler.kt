@@ -7,6 +7,7 @@ import com.intellij.codeInsight.highlighting.BraceMatcher
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil
 import com.intellij.mermaid.lang.formatter.MermaidSemanticEditorPosition
 import com.intellij.mermaid.lang.lexer.MermaidTokens
+import com.intellij.mermaid.lang.psi.MermaidFile
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
@@ -24,7 +25,7 @@ class MermaidEnterBetweenPairHandler : EnterHandlerDelegateAdapter() {
     dataContext: DataContext,
     originalHandler: EditorActionHandler?
   ): EnterHandlerDelegate.Result {
-    if (!CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
+    if (file !is MermaidFile || !CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
       return EnterHandlerDelegate.Result.Continue
     }
     val document = editor.document
