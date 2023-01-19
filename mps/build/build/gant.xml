@@ -179,6 +179,19 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
+        <property name="trustedPathsSettings"
+                  value="${basedir}/patches/TrustedPathsSettings.patch"/>
+        <echo message="Applying ${trustedPathsSettings}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${trustedPathsSettings}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${trustedPathsSettings}"/>
+        </exec>
+
         <property name="patchProjectsTabFactory"
                   value="${basedir}/patches/MPS-35212-ProjectsTabFactory.patch"/>
         <echo message="Applying ${patchProjectsTabFactory}"/>
