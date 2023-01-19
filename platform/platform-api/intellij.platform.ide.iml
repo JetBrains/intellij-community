@@ -30,5 +30,6 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.remote.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
   </component>
 </module>
