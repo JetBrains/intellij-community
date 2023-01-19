@@ -398,11 +398,26 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
   @Override
   public boolean setFlags(final int recordId,
                           final @PersistentFS.Attributes int newFlags) throws IOException {
-    final boolean reallyChanged = getIntField(recordId, FLAGS_OFFSET) != newFlags;
-    if (reallyChanged) {
-      setIntField(recordId, FLAGS_OFFSET, newFlags);
+    final long recordOffsetInFile = recordOffsetInFile(recordId);
+    final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
+    try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
+      page.lockPageForWrite();
+      try {
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
+        final int storedFlags = pageBuffer.getInt(recordOffsetOnPage + FLAGS_OFFSET);
+        final boolean reallyChanged = storedFlags != newFlags;
+        if (reallyChanged) {
+          pageBuffer.putInt(recordOffsetOnPage + FLAGS_OFFSET, newFlags);
+          incrementRecordVersion(pageBuffer, recordOffsetOnPage);
+
+          page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
+        }
+        return reallyChanged;
+      }
+      finally {
+        page.unlockPageForWrite();
+      }
     }
-    return reallyChanged;
   }
 
   @Override
@@ -418,11 +433,25 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
   @Override
   public boolean setLength(final int recordId,
                            final long newLength) throws IOException {
-    final boolean reallyChanged = getLongField(recordId, LENGTH_OFFSET) != newLength;
-    if (reallyChanged) {
-      setLongField(recordId, LENGTH_OFFSET, newLength);
+    final long recordOffsetInFile = recordOffsetInFile(recordId);
+    final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
+    try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
+      page.lockPageForWrite();
+      try {
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
+        final long storedLength = pageBuffer.getLong(recordOffsetOnPage + LENGTH_OFFSET);
+        final boolean reallyChanged = storedLength != newLength;
+        if (reallyChanged) {
+          pageBuffer.putLong(recordOffsetOnPage + LENGTH_OFFSET, newLength);
+          incrementRecordVersion(pageBuffer, recordOffsetOnPage);
+          page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
+        }
+        return reallyChanged;
+      }
+      finally {
+        page.unlockPageForWrite();
+      }
     }
-    return reallyChanged;
   }
 
   @Override
@@ -433,11 +462,25 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
   @Override
   public boolean setTimestamp(final int recordId,
                               final long newTimestamp) throws IOException {
-    final boolean reallyChanged = getLongField(recordId, TIMESTAMP_OFFSET) != newTimestamp;
-    if (reallyChanged) {
-      setLongField(recordId, TIMESTAMP_OFFSET, newTimestamp);
+    final long recordOffsetInFile = recordOffsetInFile(recordId);
+    final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
+    try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
+      page.lockPageForWrite();
+      try {
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
+        final long storedTimestamp = pageBuffer.getLong(recordOffsetOnPage + TIMESTAMP_OFFSET);
+        final boolean reallyChanged = storedTimestamp != newTimestamp;
+        if (reallyChanged) {
+          pageBuffer.putLong(recordOffsetOnPage + TIMESTAMP_OFFSET, newTimestamp);
+          incrementRecordVersion(pageBuffer, recordOffsetOnPage);
+          page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
+        }
+        return reallyChanged;
+      }
+      finally {
+        page.unlockPageForWrite();
+      }
     }
-    return reallyChanged;
   }
 
   @Override
@@ -457,12 +500,27 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
 
   @Override
   public boolean setContentRecordId(final int recordId,
-                                    final int contentRef) throws IOException {
-    final boolean reallyChanged = getIntField(recordId, CONTENT_REF_OFFSET) != contentRef;
-    if (reallyChanged) {
-      setIntField(recordId, CONTENT_REF_OFFSET, contentRef);
+                                    final int newContentRef) throws IOException {
+    final long recordOffsetInFile = recordOffsetInFile(recordId);
+    final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
+    try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
+      page.lockPageForWrite();
+      try {
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
+        final int storedContentRefId = pageBuffer.getInt(recordOffsetOnPage + CONTENT_REF_OFFSET);
+        final boolean reallyChanged = storedContentRefId != newContentRef;
+        if (reallyChanged) {
+          pageBuffer.putInt(recordOffsetOnPage + CONTENT_REF_OFFSET, newContentRef);
+          incrementRecordVersion(pageBuffer, recordOffsetOnPage);
+
+          page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
+        }
+        return reallyChanged;
+      }
+      finally {
+        page.unlockPageForWrite();
+      }
     }
-    return reallyChanged;
   }
 
   @Override
@@ -476,15 +534,23 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
     final int recordOffsetOnPage = recordOffsetOnPage(recordId);
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
-      page.putInt(recordOffsetOnPage + PARENT_REF_OFFSET, parentId);
-      page.putInt(recordOffsetOnPage + NAME_REF_OFFSET, nameId);
-      page.putInt(recordOffsetOnPage + FLAGS_OFFSET, flags);
-      if (overwriteAttrRef) {
-        page.putInt(recordOffsetOnPage + ATTR_REF_OFFSET, 0);
+      page.lockPageForWrite();
+      try {
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
+        pageBuffer.putInt(recordOffsetOnPage + PARENT_REF_OFFSET, parentId);
+        pageBuffer.putInt(recordOffsetOnPage + NAME_REF_OFFSET, nameId);
+        pageBuffer.putInt(recordOffsetOnPage + FLAGS_OFFSET, flags);
+        if (overwriteAttrRef) {
+          pageBuffer.putInt(recordOffsetOnPage + ATTR_REF_OFFSET, 0);
+        }
+        pageBuffer.putLong(recordOffsetOnPage + TIMESTAMP_OFFSET, timestamp);
+        pageBuffer.putLong(recordOffsetOnPage + LENGTH_OFFSET, length);
+        incrementRecordVersion(pageBuffer, recordOffsetOnPage);
+        page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
       }
-      page.putLong(recordOffsetOnPage + TIMESTAMP_OFFSET, timestamp);
-      page.putLong(recordOffsetOnPage + LENGTH_OFFSET, length);
-      incrementRecordVersion(page, recordOffsetOnPage);
+      finally {
+        page.unlockPageForWrite();
+      }
     }
   }
 
@@ -670,8 +736,16 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
-      page.putLong(recordOffsetOnPage + fieldRelativeOffset, fieldValue);
-      incrementRecordVersion(page, recordOffsetOnPage);
+      page.lockPageForWrite();
+      try {
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
+        pageBuffer.putLong(recordOffsetOnPage + fieldRelativeOffset, fieldValue);
+        incrementRecordVersion(pageBuffer, recordOffsetOnPage);
+        page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
+      }
+      finally {
+        page.unlockPageForWrite();
+      }
     }
   }
 
@@ -680,7 +754,14 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ false)) {
-      return page.getLong(recordOffsetOnPage + fieldRelativeOffset);
+      page.lockPageForRead();
+      try {
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
+        return pageBuffer.getLong(recordOffsetOnPage + fieldRelativeOffset);
+      }
+      finally {
+        page.unlockPageForRead();
+      }
     }
   }
 
@@ -690,8 +771,16 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
-      page.putInt(recordOffsetOnPage + fieldRelativeOffset, fieldValue);
-      incrementRecordVersion(page, recordOffsetOnPage);
+      page.lockPageForWrite();
+      try {
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
+        pageBuffer.putInt(recordOffsetOnPage + fieldRelativeOffset, fieldValue);
+        incrementRecordVersion(pageBuffer, recordOffsetOnPage);
+        page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
+      }
+      finally {
+        page.unlockPageForWrite();
+      }
     }
   }
 
@@ -700,13 +789,25 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ false)) {
-      return page.getInt(recordOffsetOnPage + fieldRelativeOffset);
+      page.lockPageForRead();
+      try {
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
+        return pageBuffer.getInt(recordOffsetOnPage + fieldRelativeOffset);
+      }
+      finally {
+        page.unlockPageForRead();
+      }
     }
   }
 
   private void incrementRecordVersion(final @NotNull Page page,
                                       final int recordOffsetOnPage) {
     page.putInt(recordOffsetOnPage + MOD_COUNT_OFFSET, globalModCount.incrementAndGet());
+  }
+
+  private void incrementRecordVersion(final @NotNull ByteBuffer pageBuffer,
+                                      final int recordOffsetOnPage) {
+    pageBuffer.putInt(recordOffsetOnPage + MOD_COUNT_OFFSET, globalModCount.incrementAndGet());
   }
 
   //============ header fields access: ============================================================ //
