@@ -83,13 +83,7 @@ class SocketLock(@JvmField val configPathUnresolved: Path, @JvmField val systemP
 
   fun dispose() {
     log("enter: dispose()")
-    var server: BuiltInServer? = null
-    try {
-      server = getServer()
-    }
-    catch (ignored: Exception) {
-    }
-
+    val server: BuiltInServer? = runCatching { getServer() }.getOrNull()
     try {
       if (lockedFiles.isEmpty()) {
         lockPortFiles()
@@ -163,7 +157,7 @@ class SocketLock(@JvmField val configPathUnresolved: Path, @JvmField val systemP
    * Unlocking of port files (via [.unlockPortFiles]) happens either after builtin server init, or on app termination.
    *
    * Because of that, we do not care about non-starting Netty leading to infinite lock handling, as the IDE is not ready to
-   * accept connections anyway; on app termination the locks will be released.
+   * accept connections anyway; on app termination, the locks will be released.
    */
   @Suppress("KDocUnresolvedReference")
   @Synchronized
@@ -371,6 +365,7 @@ private class MyChannelInboundHandler(lockedPaths: Array<Path>,
               }
 
               try {
+                @Suppress("RAW_RUN_BLOCKING")
                 runBlocking {
                   commandProcessor()(list).await()
                 }

@@ -93,11 +93,7 @@ public final class ConfigImportHelper {
   private static final String PLIST = "Info.plist";
   private static final String PLUGINS = "plugins";
   private static final String SYSTEM = "system";
-  private static final Set<String> SESSION_FILES = Set.of(PORT_FILE,
-                                                          PORT_LOCK_FILE,
-                                                          TOKEN_FILE,
-                                                          USER_WEB_TOKEN,
-                                                          BundledPluginsState.BUNDLED_PLUGINS_FILENAME);
+  private static final Set<String> SESSION_FILES = Set.of(PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN);
 
   private ConfigImportHelper() { }
 
@@ -1168,6 +1164,7 @@ public final class ConfigImportHelper {
   private static boolean shouldSkipFileDuringImport(Path path, @Nullable ConfigImportSettings settings) {
     String fileName = path.getFileName().toString();
     return SESSION_FILES.contains(fileName) ||
+           fileName.equals(BundledPluginsState.BUNDLED_PLUGINS_FILENAME) ||
            fileName.equals(ExpiredPluginsState.EXPIRED_PLUGINS_FILENAME) ||
            fileName.startsWith(CHROME_USER_DATA) ||
            fileName.endsWith(".jdk") && fileName.startsWith(String.valueOf(ApplicationNamesInfo.getInstance().getScriptName())) ||
