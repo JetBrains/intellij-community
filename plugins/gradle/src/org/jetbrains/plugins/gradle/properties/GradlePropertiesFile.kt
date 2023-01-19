@@ -27,39 +27,7 @@ object GradlePropertiesFile : BasePropertiesFile<GradleProperties>() {
   fun getProperties(serviceDirectoryStr: String?, externalProjectPath: Path) =
     findAndMergeProperties(getPossiblePropertiesFiles(serviceDirectoryStr, externalProjectPath))
 
-  private fun findAndMergeProperties(possiblePropertiesFiles: List<Path>): GradleProperties {
-    return possiblePropertiesFiles
-      .asSequence()
-      .map { it.toAbsolutePath().normalize() }
-      .map(::loadGradleProperties)
-      .reduce(::mergeGradleProperties)
-  }
-
-  private fun getPossiblePropertiesFiles(project: Project, externalProjectPath: Path): List<Path> {
-    return listOfNotNull(
-      getGradleServiceDirectoryPath(project),
-      getGradleHomePropertiesPath(),
-      getGradleProjectPropertiesPath(externalProjectPath)
-    )
-  }
-
-  private fun getPossiblePropertiesFiles(serviceDirectoryStr: String?, externalProjectPath: Path): List<Path> {
-    return listOfNotNull(
-      getGradleServiceDirectoryPath(serviceDirectoryStr),
-      getGradleHomePropertiesPath(),
-      getGradleProjectPropertiesPath(externalProjectPath)
-    )
-  }
-
-  private fun getGradleServiceDirectoryPath(project: Project): Path? {
-    val gradleUserHome = GradleLocalSettings.getInstance(project).gradleUserHome ?: return null
-    return Paths.get(gradleUserHome, propertiesFileName)
-  }
-
-  private fun getGradleServiceDirectoryPath(serviceDirectoryStr: String?) =
-    serviceDirectoryStr?.let { Paths.get(serviceDirectoryStr, propertiesFileName) }
-
-  private fun getGradleHomePropertiesPath(): Path? {
+  fun getGradleUserHomePropertiesPath(): Path? {
     val gradleUserHome = Environment.getVariable(GradleConstants.SYSTEM_DIRECTORY_PATH_KEY)
     if (gradleUserHome != null) {
       return Paths.get(gradleUserHome, propertiesFileName)
@@ -71,6 +39,38 @@ object GradlePropertiesFile : BasePropertiesFile<GradleProperties>() {
     }
     return null
   }
+
+  private fun findAndMergeProperties(possiblePropertiesFiles: List<Path>): GradleProperties {
+    return possiblePropertiesFiles
+      .asSequence()
+      .map { it.toAbsolutePath().normalize() }
+      .map(::loadGradleProperties)
+      .reduce(::mergeGradleProperties)
+  }
+
+  private fun getPossiblePropertiesFiles(project: Project, externalProjectPath: Path): List<Path> {
+    return listOfNotNull(
+      getGradleServiceDirectoryPath(project),
+      getGradleUserHomePropertiesPath(),
+      getGradleProjectPropertiesPath(externalProjectPath)
+    )
+  }
+
+  private fun getPossiblePropertiesFiles(serviceDirectoryStr: String?, externalProjectPath: Path): List<Path> {
+    return listOfNotNull(
+      getGradleServiceDirectoryPath(serviceDirectoryStr),
+      getGradleUserHomePropertiesPath(),
+      getGradleProjectPropertiesPath(externalProjectPath)
+    )
+  }
+
+  private fun getGradleServiceDirectoryPath(project: Project): Path? {
+    val gradleUserHome = GradleLocalSettings.getInstance(project).gradleUserHome ?: return null
+    return Paths.get(gradleUserHome, propertiesFileName)
+  }
+
+  private fun getGradleServiceDirectoryPath(serviceDirectoryStr: String?) =
+    serviceDirectoryStr?.let { Paths.get(serviceDirectoryStr, propertiesFileName) }
 
   private fun getGradleProjectPropertiesPath(externalProjectPath: Path) =
     externalProjectPath.resolve(propertiesFileName)
