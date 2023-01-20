@@ -16,6 +16,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -44,9 +46,7 @@ import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -373,6 +373,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       public @NotNull Class<?> getTargetClass() {
         return handler.getPsiElement().getClass();
       }
+
+      @Override
+      public @NotNull List<EventPair<?>> getEventData() {
+        return List.of(UsageViewStatisticsCollector.PRIMARY_TARGET.with(handler.getPsiElement().getClass()),
+                       EventFields.Language.with(handler.getPsiElement().getLanguage()));
+      }
     };
   }
 
@@ -414,7 +420,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     AbstractPopup popup = createUsagePopup(usageView, showUsagesPopupData, itemChosenCallback, tableResizer);
 
     popup.addResizeListener(() -> manuallyResized.set(true), popup);
-
+    Ref<Long> popupShownTime = new Ref<>();
+    popup.addListener(new JBPopupListener() {
+      @Override
+      public void onClosed(@NotNull LightweightWindowEvent event) {
+        Object usageNode = table.getModel().getValueAt(table.getSelectedRow(), 0);
+        UsageInfo2UsageAdapter usageAdapter = getSelectedUsageAdapter(ObjectUtils.tryCast(usageNode, UsageNode.class));
+        UsageViewStatisticsCollector.logPopupClosed(project, usageView, event.isOk(),
+                                                    usageAdapter,
+                                                    popupShownTime.get(), actionHandler.getEventData());
+      }
+    });
     ProgressIndicator indicator = new ProgressIndicatorBase();
     if (!popup.isDisposed()) {
       Disposer.register(popup, usageView);
@@ -423,7 +439,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       // show popup only if find usages takes more than 300ms, otherwise it would flicker needlessly
       EdtScheduledExecutorService.getInstance().schedule(() -> {
         if (!usageView.isDisposed()) {
-          showPopupIfNeedTo(popup, parameters.popupPosition);
+          showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTime);
         }
       }, ourPopupDelayTimeout, TimeUnit.MILLISECONDS);
     }
@@ -438,7 +454,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       List<Usage> copy;
       synchronized (usages) {
         // open up popup as soon as the first usage has been found
-        if (!popup.isVisible() && (usages.isEmpty() || !showPopupIfNeedTo(popup, parameters.popupPosition))) {
+        if (!popup.isVisible() && (usages.isEmpty() || !showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTime))) {
           return;
         }
         addUsageNodes(usageView.getRoot(), usageView, nodes);
@@ -618,9 +634,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     return __ -> false;
   }
 
-  private static boolean showPopupIfNeedTo(@NotNull JBPopup popup, @NotNull RelativePoint popupPosition) {
+  private static boolean showPopupIfNeedTo(@NotNull JBPopup popup, @NotNull RelativePoint popupPosition, Ref<Long> popupShownTime) {
     if (!popup.isDisposed() && !popup.isVisible()) {
       popup.show(popupPosition);
+      popupShownTime.set(System.currentTimeMillis());
       return true;
     }
     return false;
@@ -1030,6 +1047,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
   private static int getFilteredOutNodeCount(@NotNull List<? extends Usage> usages, @NotNull UsageViewImpl usageView) {
     return (int)usages.stream().filter(usage -> !usageView.isVisible(usage)).count();
+  }
+
+  private static @Nullable UsageInfo2UsageAdapter getSelectedUsageAdapter(@Nullable UsageNode usageNode) {
+    UsageInfo2UsageAdapter usageAdapter = null;
+    if (usageNode != null) {
+      usageAdapter = ObjectUtils.tryCast(usageNode.getUsage(), UsageInfo2UsageAdapter.class);
+    }
+    return usageAdapter;
   }
 
   private static int getUsageOffset(@NotNull Usage usage) {
