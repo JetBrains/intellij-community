@@ -204,6 +204,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     }
     Arrays.sort(delays)
     int avg = ArrayUtil.averageAmongMedians(delays, 3)
-    assert avg == 0 : "Seems there's is a significant delay between becoming smart and waitForSmartMode() return. Delays in ms:\n"+Arrays.toString(delays)+"\n"
+    assert avg == 0: "Seems there's is a significant delay between becoming smart and waitForSmartMode() return. Delays in ms:\n" +
+                     Arrays.toString(delays) + "\n"
   }
 }
