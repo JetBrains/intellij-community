@@ -84,9 +84,6 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         librarySrcDirectory = File(testAppDirectory, "libSrc").apply { mkdirs() }
         libraryOutputDirectory = File(testAppDirectory, "lib").apply { mkdirs() }
 
-        if (InTextDirectivesUtils.isIgnoredIndyLambdas(lambdasGenerationScheme(), dataFile())) {
-            return
-        }
         if (isK2Plugin) {
             IgnoreTests.runTestIfNotDisabledByFileDirective(
                 dataFile().toPath(),
