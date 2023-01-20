@@ -99,6 +99,3 @@ fun <T> T.samIntLambda(l: SamLambda) {
     l.run()
 }
 // IGNORE_K2
-
-// TODO(Roman.Efremov): fix return in subsequent commits
-// IGNORE_FOR_INDY_LAMBDAS

@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -36,6 +37,7 @@ import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
@@ -353,12 +355,27 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                 }
                 else -> ApplicabilityResult.UNKNOWN
             }
-        } || hasImplicitReturnOnLine(lineNumber)
+        } || hasImplicitReturnOnLine(this, lineNumber)
     }
 
-    private fun KtFunction.hasImplicitReturnOnLine(lineNumber: Int): Boolean {
-        // TODO(Roman.Efremov): implement better check for implicit return in subsequent commits
-        return getLineNumber(start = false) == lineNumber
+    private fun hasImplicitReturnOnLine(function: KtFunction, lineNumber: Int): Boolean {
+        if (function !is KtFunctionLiteral || function.getLineNumber(start = false) != lineNumber) {
+            return false
+        }
+        val isUnitReturnType = analyze(function) {
+            val functionalType = function.getFunctionalType()
+            (functionalType as? KtFunctionalType)?.returnType?.isUnit == true
+        }
+        if (!isUnitReturnType) {
+            // We always must specify return explicitly
+            return false
+        }
+        // This check does not cover some more complex cases (e.g. "if" or "when" block expressions)
+        return function.lastStatementSkippingComments() !is KtReturnExpression
+    }
+
+    private fun KtFunction.lastStatementSkippingComments(): KtElement? {
+        return bodyBlockExpression?.childrenOfType<KtElement>()?.lastOrNull()
     }
 
     private fun List<KtFunction>.getSamLambdaWithIndex(index: Int): KtFunction? {
