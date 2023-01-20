@@ -157,7 +157,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
         final RecordAccessor recordAccessor = new RecordAccessor(recordId, recordOffsetOnPage, page);
         final boolean updated = updater.updateRecord(recordAccessor);
         if (updated) {
-          incrementRecordVersion(page, recordOffsetOnPage);
+          incrementRecordVersion(recordAccessor.pageBuffer, recordOffsetOnPage);
           page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
         }
         return trueRecordId;
@@ -359,7 +359,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
     return recordId;
   }
 
-  // 'one field at a time' operations -- 
+  // 'one field at a time' operations
 
   @Override
   public void setAttributeRecordId(final int recordId,
@@ -490,7 +490,18 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
 
   @Override
   public void markRecordAsModified(final int recordId) throws IOException {
-    setIntField(recordId, MOD_COUNT_OFFSET, globalModCount.incrementAndGet());
+    final long recordOffsetInFile = recordOffsetInFile(recordId);
+    final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
+    try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
+      page.lockPageForWrite();
+      try {
+        incrementRecordVersion(page, recordOffsetOnPage + MOD_COUNT_OFFSET);
+        page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
+      }
+      finally {
+        page.unlockPageForWrite();
+      }
+    }
   }
 
   @Override
@@ -545,7 +556,9 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
         }
         pageBuffer.putLong(recordOffsetOnPage + TIMESTAMP_OFFSET, timestamp);
         pageBuffer.putLong(recordOffsetOnPage + LENGTH_OFFSET, length);
+
         incrementRecordVersion(pageBuffer, recordOffsetOnPage);
+
         page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
       }
       finally {
@@ -558,7 +571,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
   public void cleanRecord(final int recordId) throws IOException {
     allocatedRecordsCount.updateAndGet(allocatedRecords -> Math.max(recordId + 1, allocatedRecords));
 
-    //fill record with zeros, by 4 bytes at once:
+    //fill record with zeroes, by 4 bytes at once:
     assert RECORD_SIZE_IN_BYTES % Integer.BYTES == 0 : "RECORD_SIZE_IN_BYTES(=" + RECORD_SIZE_IN_BYTES + ") is expected to be 32-aligned";
     final int recordSizeInInts = RECORD_SIZE_IN_BYTES / Integer.BYTES;
 
@@ -567,10 +580,13 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
     try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
       page.lockPageForWrite();
       try {
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
         for (int wordNo = 0; wordNo < recordSizeInInts; wordNo++) {
           final int offsetOfWord = recordOffsetOnPage + wordNo * Integer.BYTES;
-          page.putInt(offsetOfWord, 0);
+          pageBuffer.putInt(offsetOfWord, 0);
         }
+        
+        page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
       }
       finally {
         page.unlockPageForWrite();
