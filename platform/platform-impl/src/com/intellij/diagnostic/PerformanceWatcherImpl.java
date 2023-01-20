@@ -441,7 +441,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
   }
 
   @NotNull
-  static List<StackTraceElement> getStacktraceCommonPart(final @NotNull List<StackTraceElement> commonPart,
+  static List<? extends StackTraceElement> getStacktraceCommonPart(final @NotNull List<? extends StackTraceElement> commonPart,
                                                          final StackTraceElement @NotNull [] stackTraceElements) {
     for (int i = 0; i < commonPart.size() && i < stackTraceElements.length; i++) {
       StackTraceElement el1 = commonPart.get(commonPart.size() - i - 1);
@@ -622,7 +622,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
     }
 
     private String getFreezePlaceSuffix() {
-      List<StackTraceElement> stacktraceCommonPart = null;
+      List<? extends StackTraceElement> stacktraceCommonPart = null;
       SamplingTask task = myDumpTask;
       if (task == null) {
         return "";
