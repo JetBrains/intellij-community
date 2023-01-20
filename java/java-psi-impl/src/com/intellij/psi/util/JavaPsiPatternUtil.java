@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.JavaVarTypeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -381,7 +382,7 @@ public final class JavaPsiPatternUtil {
       if (patternType instanceof PsiClassType) {
         PsiSubstitutor substitutor = ((PsiClassType)patternType).resolveGenerics().getSubstitutor();
         PsiType recordComponentType = recordComponent.getType();
-        return GenericsUtil.getVariableTypeByExpressionType(substitutor.substitute(recordComponentType));
+        return JavaVarTypeUtil.getUpwardProjection(substitutor.substitute(recordComponentType));
       }
     }
     return null;

@@ -272,7 +272,7 @@ public final class JavaResolveUtil {
           if (resultClass.hasTypeParameters()) {
             PsiSubstitutor substitutor = resolveResult.getSubstitutor();
             result[i] = pattern != null && ref.getTypeParameterCount() == 0 
-                        ? PatternInference.inferPatternType(resolveResult, pattern, resultClass, getContextType(pattern))
+                        ? PatternInference.inferPatternGenerics(resolveResult, pattern, resultClass, getContextType(pattern))
                         : new CandidateInfo(resolveResult, substitutor) {
                           @NotNull
                           @Override
