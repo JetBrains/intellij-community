@@ -11,19 +11,18 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 /**
  * @author Konstantin Bulenkov
  */
-abstract class SetDensityAction(val density: UIDensity): DumbAwareToggleAction() {
+class ToggleCompactModeAction: DumbAwareToggleAction() {
 
-  override fun isSelected(e: AnActionEvent) = UISettings.getInstance().uiDensity == density
+  override fun isSelected(e: AnActionEvent) = UISettings.getInstance().uiDensity == UIDensity.COMPACT
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    if (state && !isSelected(e)) {
-      UISettings.getInstance().uiDensity = density
+    val value = UISettings.getInstance().uiDensity
+    val newValue = if (state) UIDensity.COMPACT else UIDensity.DEFAULT
+    if (newValue != value) {
+      UISettings.getInstance().uiDensity = newValue
       LafManager.getInstance().applyDensity()
     }
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }
-
-class SetDefaultDensityAction: SetDensityAction(UIDensity.DEFAULT)
-class SetCompactDensityAction: SetDensityAction(UIDensity.COMPACT)
