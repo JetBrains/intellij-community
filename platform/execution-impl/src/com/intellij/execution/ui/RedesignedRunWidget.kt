@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ColorUtil
@@ -78,12 +77,6 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
   }
 
   override fun update(e: AnActionEvent) {
-    if (!Registry.`is`("ide.experimental.ui.redesigned.run.widget")) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-    e.presentation.isEnabled = false
-
     e.presentation.putClientProperty(runToolbarDataKey, isSomeRunningNow(e))
   }
 
