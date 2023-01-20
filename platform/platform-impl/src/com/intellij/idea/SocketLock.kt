@@ -41,7 +41,7 @@ private const val PATHS_EOT_RESPONSE = "---"
 private const val ACTIVATE_COMMAND = "activate "
 private const val OK_RESPONSE = "ok"
 
-class SocketLock(@JvmField val configPathUnresolved: Path, @JvmField val systemPathUnresolved: Path) {
+class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path) {
   companion object {
     /**
      * Name of an environment variable that will be set by the Windows launcher and will contain the working directory the
@@ -66,10 +66,6 @@ class SocketLock(@JvmField val configPathUnresolved: Path, @JvmField val systemP
   @Volatile
   var serverFuture: Deferred<BuiltInServer>? = null
     private set
-
-  private val configPath = tryResolve(configPathUnresolved)
-  private val systemPath = tryResolve(systemPathUnresolved)
-  private fun tryResolve(path: Path): Path = runCatching { path.toRealPath() }.getOrDefault(path)
 
   init {
     if (configPath == systemPath) {
