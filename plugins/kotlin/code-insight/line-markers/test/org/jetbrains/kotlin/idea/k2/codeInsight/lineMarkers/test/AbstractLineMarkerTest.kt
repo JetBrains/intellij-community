@@ -13,8 +13,8 @@ abstract class AbstractLineMarkerTest : NewLightKotlinCodeInsightFixtureTestCase
         get() = KotlinPluginKind.FIR_PLUGIN
 
     protected fun performTest() {
-        myFixture.configureByDefaultFile()
         myFixture.configureDependencies()
+        myFixture.configureByDefaultFile()
         val document = editor.document
         val data = KotlinExpectedHighlightingData(document)
         data.init()
