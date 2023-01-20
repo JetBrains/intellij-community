@@ -653,30 +653,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   private fun applyDensity(defaults: UIDefaults) {
-    // main toolbar
-    defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.CurrentTheme.Toolbar.defaultExperimentalToolbarButtonSize())
-    defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), JBUI.CurrentTheme.Toolbar.defaultExperimentalToolbarButtonIconSize())
-    // minimize/maximize/close buttons size set by the theme
-    // tool window stripes
-    defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), JBUI.CurrentTheme.Toolbar.defaultStripeToolbarButtonSize())
-    defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSizeKey(), JBUI.CurrentTheme.Toolbar.defaultStripeToolbarButtonIconSize())
-    defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingKey(), JBUI.CurrentTheme.Toolbar.defaultStripeToolbarButtonIconPadding())
-    // Run Widget
-    defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarHeight())
-    defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarBorderHeight())
-    // tree row height set by the theme
-    // status bar
-    // widget insets set by the theme
-    defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), JBUI.CurrentTheme.StatusBar.Breadcrumbs.defaultNavBarInsets())
-    // editor tabs
-    // tab insets set by the theme
-    defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), JBUI.CurrentTheme.EditorTabs.defaultFont())
-    // toolwindows
-    defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), JBUI.CurrentTheme.ToolWindow.defaultHeaderHeight())
-    defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), JBUI.CurrentTheme.ToolWindow.defaultHeaderFont())
-    // VCS log
-    defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), JBUI.CurrentTheme.VersionControl.Log.defaultRowHeight())
-    defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), JBUI.CurrentTheme.VersionControl.Log.defaultVerticalPadding())
     if (UISettings.getInstance().uiDensity == UIDensity.COMPACT) {
       // main toolbar
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34))
