@@ -65,6 +65,10 @@ public abstract class GroupedElementsRenderer implements Accessible {
     updateSelection(isSelected, myComponent, myTextLabel);
     myRendererComponent.setPreferredWidth(preferredForcedWidth);
 
+    UIUtil.uiTraverser(myRendererComponent).forEach(comp -> {
+      if (comp instanceof JComponent) ((JComponent)comp).updateUI();
+    });
+
     return myRendererComponent;
   }
 
