@@ -329,7 +329,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
   }
 
   private fun findContainerFor(devicePoint: DevicePoint, content: DockableContent<*>): DockContainer? {
-    val containers = containers.toMutableList()
+    val containers = getAllContainers().toMutableList()
     getFileManagerContainer()?.let(containers::add)
 
     val startDragContainer = currentDragSession?.startDragContainer
