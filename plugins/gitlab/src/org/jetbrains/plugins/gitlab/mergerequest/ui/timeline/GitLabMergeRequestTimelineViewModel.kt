@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
-import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.mapCaching
+import com.intellij.collaboration.async.modelFlow
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -13,20 +15,21 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestSta
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussionsModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
-import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 interface GitLabMergeRequestTimelineViewModel {
   val timelineLoadingFlow: Flow<LoadingState?>
 
-  fun startLoading()
-  fun reset()
+  fun requestLoad()
 
   sealed interface LoadingState {
     object Loading : LoadingState
     class Error(val exception: Throwable) : LoadingState
-    class Result(val items: List<GitLabMergeRequestTimelineItemViewModel>) : LoadingState
+    class Result(val items: Flow<List<GitLabMergeRequestTimelineItemViewModel>>) : LoadingState
   }
 }
+
+private val LOG = logger<GitLabMergeRequestTimelineViewModel>()
 
 class LoadAllGitLabMergeRequestTimelineViewModel(
   parentCs: CoroutineScope,
@@ -35,100 +38,87 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 ) : GitLabMergeRequestTimelineViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
-  private var loadingRequestState = MutableStateFlow<Flow<List<GitLabMergeRequestTimelineItemViewModel>>?>(null)
+  private val timelineLoadingRequests = MutableSharedFlow<Unit>(1)
 
   private val discussionsDataProvider = GitLabMergeRequestDiscussionsModelImpl(cs, connection, mr)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override val timelineLoadingFlow: Flow<LoadingState?> =
-    loadingRequestState.transformLatest { itemsFlow ->
-      if (itemsFlow == null) {
-        emit(null)
-        return@transformLatest
-      }
-
+  override val timelineLoadingFlow: Flow<LoadingState> =
+    timelineLoadingRequests.transformLatest {
       emit(LoadingState.Loading)
 
-      // so it's not a supervisor
       coroutineScope {
-        itemsFlow.catch {
-          emit(LoadingState.Error(it))
-        }.collectLatest {
-          emit(LoadingState.Result(it))
+        val result = try {
+          LoadingState.Result(createItemsFlow(this).mapToVms(this).stateIn(this))
         }
+        catch (ce: CancellationException) {
+          throw ce
+        }
+        catch (e: Exception) {
+          LoadingState.Error(e)
+        }
+        emit(result)
+        awaitCancellation()
       }
-    }
+    }.modelFlow(cs, LOG)
 
   @RequiresEdt
-  override fun startLoading() {
-    loadingRequestState.update {
-      it ?: createItemsFlow()
+  override fun requestLoad() {
+    cs.launch {
+      timelineLoadingRequests.emit(Unit)
     }
   }
 
-  private fun createItemsFlow(): Flow<List<GitLabMergeRequestTimelineItemViewModel>> {
+  /**
+   * Load all simple events and discussions and subscribe to user discussions changes
+   */
+  private suspend fun createItemsFlow(cs: CoroutineScope): Flow<List<GitLabMergeRequestTimelineItem>> {
     val api = connection.apiClient
     val project = connection.repo.repository
 
-    val discussionsFlow = discussionsDataProvider.userDiscussions.mapScoped { discussions ->
-      val discussionsScope = this
-      discussions.map {
-        GitLabMergeRequestTimelineItemViewModel.Discussion(discussionsScope, it)
+    val simpleEventsRequest = cs.async(Dispatchers.IO) {
+      val vms = ConcurrentLinkedQueue<GitLabMergeRequestTimelineItem>()
+      launch {
+        discussionsDataProvider.systemDiscussions.first()
+          .map { GitLabMergeRequestTimelineItem.SystemDiscussion(it) }
+          .also { vms.addAll(it) }
       }
+
+      launch {
+        api.loadMergeRequestStateEvents(project, mr).body()
+          .map { GitLabMergeRequestTimelineItem.StateEvent(it) }
+          .also { vms.addAll(it) }
+      }
+
+      launch {
+        api.loadMergeRequestLabelEvents(project, mr).body()
+          .map { GitLabMergeRequestTimelineItem.LabelEvent(it) }
+          .also { vms.addAll(it) }
+      }
+
+      launch {
+        api.loadMergeRequestMilestoneEvents(project, mr).body()
+          .map { GitLabMergeRequestTimelineItem.MilestoneEvent(it) }
+          .also { vms.addAll(it) }
+      }
+      vms
     }
 
-    val simpleEventsFlow: Flow<List<GitLabMergeRequestTimelineItemViewModel.Immutable>> =
-      channelFlow {
-        launch {
-          discussionsDataProvider.systemDiscussions.collect { discussions ->
-            send(discussions.map { GitLabMergeRequestTimelineItemViewModel.SystemDiscussion(it) })
-          }
-        }
-
-        launch {
-          api.loadMergeRequestStateEvents(project, mr).body().let { events ->
-            events.map { GitLabMergeRequestTimelineItemViewModel.StateEvent(it) }
-          }.also {
-            send(it)
-          }
-        }
-
-        launch {
-          api.loadMergeRequestStateEvents(project, mr).body().let { events ->
-            events.map { GitLabMergeRequestTimelineItemViewModel.StateEvent(it) }
-          }.also {
-            send(it)
-          }
-        }
-
-        launch {
-          api.loadMergeRequestLabelEvents(project, mr).body().let { events ->
-            events.map { GitLabMergeRequestTimelineItemViewModel.LabelEvent(it) }
-          }.also {
-            send(it)
-          }
-        }
-
-        launch {
-          api.loadMergeRequestMilestoneEvents(project, mr).body().let { events ->
-            events.map { GitLabMergeRequestTimelineItemViewModel.MilestoneEvent(it) }
-          }.also {
-            send(it)
-          }
-        }
-      }.flowOn(Dispatchers.IO)
-
-
-    return combine(discussionsFlow, simpleEventsFlow) { discussions, simpleEvents ->
-      TreeSet(Comparator.comparing(GitLabMergeRequestTimelineItemViewModel::date)).apply {
-        addAll(simpleEvents)
-        addAll(discussions)
-      }.toList()
+    return discussionsDataProvider.userDiscussions.map { discussions ->
+      (simpleEventsRequest.await() + discussions.map(GitLabMergeRequestTimelineItem::UserDiscussion)).sortedBy { it.date }
     }
   }
 
-  @RequiresEdt
-  override fun reset() {
-    loadingRequestState.value = null
-  }
+  private suspend fun Flow<List<GitLabMergeRequestTimelineItem>>.mapToVms(cs: CoroutineScope) =
+    mapCaching(
+      GitLabMergeRequestTimelineItem::id,
+      { createVm(cs, it) },
+      { if (this is GitLabMergeRequestTimelineItemViewModel.Discussion) destroy() }
+    )
+
+  private fun createVm(cs: CoroutineScope, item: GitLabMergeRequestTimelineItem): GitLabMergeRequestTimelineItemViewModel =
+    when (item) {
+      is GitLabMergeRequestTimelineItem.Immutable -> GitLabMergeRequestTimelineItemViewModel.Immutable(item)
+      is GitLabMergeRequestTimelineItem.UserDiscussion -> GitLabMergeRequestTimelineItemViewModel.Discussion(cs, item.discussion)
+    }
 }

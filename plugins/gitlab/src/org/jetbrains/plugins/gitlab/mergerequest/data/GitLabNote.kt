@@ -18,46 +18,48 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.updateNote
 import java.util.*
 
 interface GitLabNote {
+  val id: String
   val author: GitLabUserDTO
   val createdAt: Date
   val canAdmin: Boolean
 
   val body: StateFlow<String>
 
-  suspend fun updateBody(newText: String)
+  suspend fun setBody(newText: String)
   suspend fun delete()
+
+  suspend fun update(item: GitLabNoteDTO)
 }
+
+private val LOG = logger<GitLabDiscussion>()
 
 class LoadedGitLabNote(
   parentCs: CoroutineScope,
   private val connection: GitLabProjectConnection,
   private val eventSink: suspend (GitLabNoteEvent) -> Unit,
-  private val note: GitLabNoteDTO
+  private val noteData: GitLabNoteDTO
 ) : GitLabNote {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e ->
-    logger<GitLabDiscussion>().info(e.localizedMessage)
-  })
+  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
   private val operationsGuard = Mutex()
 
-  override val author: GitLabUserDTO = note.author
-  override val createdAt: Date = note.createdAt
-  override val canAdmin: Boolean = note.userPermissions.adminNote
+  override val id: String = noteData.id
+  override val author: GitLabUserDTO = noteData.author
+  override val createdAt: Date = noteData.createdAt
+  override val canAdmin: Boolean = noteData.userPermissions.adminNote
 
-  private val _body = MutableStateFlow(note.body)
+  private val _body = MutableStateFlow(noteData.body)
   override val body: StateFlow<String> = _body.asStateFlow()
 
-  override suspend fun updateBody(newText: String) {
+  override suspend fun setBody(newText: String) {
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          connection.apiClient.updateNote(connection.repo.repository, note.id, newText).getResultOrThrow()
+          connection.apiClient.updateNote(connection.repo.repository, noteData.id, newText).getResultOrThrow()
         }
       }
-      withContext(NonCancellable) {
-        _body.value = newText
-      }
+      _body.value = newText
     }
   }
 
@@ -65,16 +67,26 @@ class LoadedGitLabNote(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          connection.apiClient.deleteNote(connection.repo.repository, note.id).getResultOrThrow()
+          connection.apiClient.deleteNote(connection.repo.repository, noteData.id).getResultOrThrow()
         }
       }
-      withContext(NonCancellable) {
-        eventSink(GitLabNoteEvent.NoteDeleted(note.id))
-      }
+      eventSink(GitLabNoteEvent.Deleted(noteData.id))
     }
   }
 
-  suspend fun destroy() {
-    cs.coroutineContext[Job]!!.cancelAndJoin()
+  override suspend fun update(item: GitLabNoteDTO) {
+    _body.value = item.body
   }
+
+  suspend fun destroy() {
+    try {
+      cs.coroutineContext[Job]!!.cancelAndJoin()
+    }
+    catch (ce: CancellationException) {
+      // ignore, cuz we don't want to cancel the invoker
+    }
+  }
+
+  override fun toString(): String =
+    "LoadedGitLabNote(id='$id', author=$author, createdAt=$createdAt, body=${body.value})"
 }

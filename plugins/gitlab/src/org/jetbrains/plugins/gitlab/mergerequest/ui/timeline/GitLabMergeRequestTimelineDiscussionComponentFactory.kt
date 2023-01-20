@@ -40,12 +40,12 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
   fun create(project: Project,
              cs: CoroutineScope,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-             item: GitLabMergeRequestTimelineItemViewModel.Discussion): JComponent {
-    val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, item).apply {
+             discussion: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
+    val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, discussion).apply {
       border = JBUI.Borders.empty(Replies.ActionsFolded.VERTICAL_PADDING, 0)
-      bindVisibility(cs, item.repliesFolded)
+      bindVisibility(cs, discussion.repliesFolded)
     }
-    val mainNoteVm = item.mainNote
+    val mainNoteVm = discussion.mainNote
     val textPanel = createNoteTextPanel(cs, mainNoteVm.flatMapLatest { it.htmlBody })
 
     // oh well... probably better to make a suitable API in EditableComponentFactory, but that would look ugly
@@ -66,30 +66,16 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
     val actionsPanel = createNoteActions(cs, mainNoteVm)
 
-    val repliesPanel = VerticalListPanel().apply {
-      cs.launch {
-        item.replies.combine(item.repliesFolded) { replies, folded ->
-          if (!folded) replies else emptyList()
-        }.collectLatest { notes ->
-          coroutineScope {
-            val notesScope = this
-            removeAll()
-            notes.forEach {
-              add(createNoteItem(project, notesScope, avatarIconsProvider, it))
-            }
-            revalidate()
-            repaint()
-            awaitCancellation()
-          }
-        }
-      }
-      bindVisibility(cs, item.repliesFolded.inverted())
+    val repliesPanel = ComponentListPanelFactory.createVertical(cs, discussion.replies, GitLabNoteViewModel::id, 0) { noteCs, noteVm ->
+      createNoteItem(project, noteCs, avatarIconsProvider, noteVm)
+    }.apply {
+      bindVisibility(cs, discussion.repliesFolded.inverted())
     }
 
     return CodeReviewChatItemUIUtil.buildDynamic(CodeReviewChatItemUIUtil.ComponentType.FULL,
-                                                 { item.author.createIconValue(cs, avatarIconsProvider, it) },
+                                                 { discussion.author.createIconValue(cs, avatarIconsProvider, it) },
                                                  contentPanel) {
-      withHeader(createTitleTextPane(cs, item.author, item.date), actionsPanel)
+      withHeader(createTitleTextPane(cs, discussion.author, discussion.date), actionsPanel)
     }.let {
       VerticalListPanel().apply {
         add(it)
@@ -109,7 +95,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
   private fun createRepliesActionsPanel(cs: CoroutineScope,
                                         avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                        item: GitLabMergeRequestTimelineItemViewModel.Discussion): JComponent {
+                                        item: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
     val authorsLabel = JLabel().apply {
       bindVisibility(cs, item.replies.map { it.isNotEmpty() })
 

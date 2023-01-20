@@ -2,5 +2,5 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 sealed interface GitLabDiscussionEvent {
-  class DiscussionDeleted(val discussionId: String) : GitLabDiscussionEvent
+  class Deleted(val discussionId: String) : GitLabDiscussionEvent
 }

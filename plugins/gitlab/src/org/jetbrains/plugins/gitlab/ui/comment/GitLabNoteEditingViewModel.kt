@@ -40,7 +40,7 @@ class GitLabNoteEditingViewModelImpl(parentCs: CoroutineScope,
       val newText = text.first()
       _state.value = GitLabNoteEditingViewModel.SubmissionState.Loading
       try {
-        note.updateBody(newText)
+        note.setBody(newText)
         _state.value = null
         onDone()
       }
@@ -54,6 +54,11 @@ class GitLabNoteEditingViewModelImpl(parentCs: CoroutineScope,
   }
 
   override suspend fun destroy() {
-    cs.coroutineContext[Job]!!.cancelAndJoin()
+    try {
+      cs.coroutineContext[Job]!!.cancelAndJoin()
+    }
+    catch (e: CancellationException) {
+      // ignore, cuz we don't want to cancel the invoker
+    }
   }
 }
