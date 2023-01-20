@@ -40,7 +40,8 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
       Logger.getInstance(IStubElementType.class)
         .error("All stub element types should be created before index initialization is complete.\n" +
                "Please add the " + aClass + " with external ID " + getExternalId() + " containing stub element type constants to \"stubElementTypeHolder\" extension.\n" +
-               "Registered extensions: " + StubElementTypeHolderEP.EP_NAME.getExtensionList());
+               "Registered extensions: " + StubElementTypeHolderEP.EP_NAME.getExtensionList() + "\n" +
+               "Registered lazy ids: " + ourLazyExternalIds);
     }
   }
 
