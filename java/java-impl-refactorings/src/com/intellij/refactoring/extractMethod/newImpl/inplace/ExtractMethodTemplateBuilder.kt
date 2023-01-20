@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
@@ -23,7 +24,7 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
 
 data class TemplateField(val fieldRange: TextRange,
-                         val updateRanges: List<TextRange>,
+                         val updateRanges: List<TextRange> = emptyList(),
                          val completionHint: @NlsContexts.PopupAdvertisement String? = null,
                          val completionNames: List<String> = emptyList(),
                          val validator: (TextRange) -> Boolean = { true }
@@ -44,9 +45,6 @@ data class TemplateField(val fieldRange: TextRange,
 data class ExtractMethodTemplateBuilder(
   private val editor: Editor,
   private val commandName: @NlsContexts.Command String,
-  private val completionNames: List<String> = emptyList(),
-  private val completionAdvertisement: @NlsContexts.PopupAdvertisement String? = null,
-  private val validator: (TemplateState) -> Boolean = { true },
   private val onBroken: () -> Unit = {},
   private val onSuccess: () -> Unit = {},
   private val disposable: Disposable = Disposer.newDisposable(),
@@ -87,6 +85,7 @@ data class ExtractMethodTemplateBuilder(
           builder.replaceElement(range, "Secondary$j", " Primary$i", false)
         }
       }
+      builder.setVariableOrdering { first, second -> StringUtil.compare(first.name, second.name, false) }
       val template = builder.buildInlineTemplate()
       template.isToShortenLongNames = false
       template.isToReformat = false

@@ -1,8 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring
 
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.codeInsight.template.impl.actions.NextVariableAction
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
@@ -335,7 +339,10 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
 
   private fun finishTemplate(templateState: TemplateState){
     try {
-      templateState.gotoEnd(false)
+      LookupManager.getActiveLookup(templateState.editor)?.hideLookup(true)
+      val dataContext = DataManager.getInstance().getDataContext(editor.component)
+      val event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, Presentation(), dataContext)
+      ActionManager.getInstance().getAction("NextTemplateVariable").actionPerformed(event)
       UIUtil.dispatchAllInvocationEvents()
     } catch (ignore: RefactoringErrorHintException) {
     }
@@ -345,6 +352,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     WriteCommandAction.runWriteCommandAction(project) {
       val range = templateState.currentVariableRange!!
       editor.document.replaceString(range.startOffset, range.endOffset, name)
+      templateState.update()
     }
   }
 
