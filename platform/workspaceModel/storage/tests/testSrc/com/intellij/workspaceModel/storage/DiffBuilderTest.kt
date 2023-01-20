@@ -168,7 +168,7 @@ class DiffBuilderTest {
   @RepeatedTest(10)
   fun `add dependency without changing entities`() {
     val source = createEmptyBuilder()
-    val parent = source.addSampleEntity("Another entity")
+    source.addSampleEntity("Another entity")
     source.addChildSampleEntity("String", null)
 
     val target = createBuilderFrom(source)
@@ -255,7 +255,7 @@ class DiffBuilderTest {
     val thrown = assertThrows<Throwable> {
       source.applyDiff(target)
     }
-    assertEquals(thrown.cause!!.javaClass, AddDiffException::class.java)
+    assertEquals(thrown.cause?.javaClass, AddDiffException::class.java, "Exception: ${thrown.stackTraceToString()}")
   }
 
   @RepeatedTest(10)
@@ -272,7 +272,7 @@ class DiffBuilderTest {
     val thrown = assertThrows<Throwable> {
       source.applyDiff(target)
     }
-    assertEquals(thrown.cause!!.javaClass, AddDiffException::class.java)
+    assertEquals(thrown.cause?.javaClass, AddDiffException::class.java, "Exception: ${thrown.stackTraceToString()}")
   }
 
   @RepeatedTest(10)
