@@ -584,6 +584,10 @@ private class EditorTabs(
 
   private inner class EditorTabLabel(private val info: TabInfo) : SingleHeightLabel(this, info) {
 
+    init {
+      updateFont()
+    }
+
     override fun updateUI() {
       super.updateUI()
       updateFont()
