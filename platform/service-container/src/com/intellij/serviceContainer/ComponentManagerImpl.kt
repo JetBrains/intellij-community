@@ -140,10 +140,10 @@ abstract class ComponentManagerImpl(
   @Volatile
   private var isServicePreloadingCancelled = false
 
-  private val debugString: String get() = "${javaClass.name}@${System.identityHashCode(this)}"
+  private fun debugString(short: Boolean = false): String = "${if (short) javaClass.simpleName else javaClass.name}@${System.identityHashCode(this)}"
 
   @Suppress("LeakingThis")
-  internal val serviceParentDisposable = Disposer.newDisposable("services of $debugString")
+  internal val serviceParentDisposable = Disposer.newDisposable("services of ${debugString()}")
 
   protected open val isLightServiceSupported = parent?.parent == null
   protected open val isMessageBusSupported = parent?.parent == null
@@ -1480,7 +1480,7 @@ abstract class ComponentManagerImpl(
     }
 
     val containerScope = getCoroutineScope()
-    val intersectionName = "$debugString x ${pluginScope.coroutineContext[CoroutineName]?.name}"
+    val intersectionName = "(${debugString(short = true)} x ${pluginScope.coroutineContext[CoroutineName]?.name})"
     val intersectionScope = containerScope.namedChildScope(intersectionName).also {
       it.attachAsChildTo(pluginScope)
     }

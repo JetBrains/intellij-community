@@ -73,7 +73,11 @@ fun CoroutineScope.attachAsChildTo(secondaryParent: CoroutineScope) {
   val childJob = this.coroutineContext.job
 
   // Prevent parent completion while child is not completed.
-  secondaryParent.launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+  secondaryParent.launch(
+    CoroutineName("child handle '${coroutineContext[CoroutineName]?.name}'") +
+    Dispatchers.Default,
+    start = CoroutineStart.UNDISPATCHED,
+  ) {
     withContext(NonCancellable) {
       childJob.join()
     }
