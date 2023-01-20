@@ -65,7 +65,6 @@ import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.contains
 import org.jetbrains.kotlin.types.typeUtil.isInterface
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.KotlinUastTypeMapper
 import org.jetbrains.uast.kotlin.psi.UastDescriptorLightMethod
@@ -181,7 +180,7 @@ internal fun KotlinType.toPsiType(
         Logger.getInstance("org.jetbrains.uast.kotlin.KotlinInternalUastUtils")
             .error(
                 "initialising ClsTypeElementImpl with null-file parent = $psiTypeParent (of ${psiTypeParent.javaClass}) " +
-                        "containing class = ${psiTypeParent.safeAs<PsiMethod>()?.containingClass}, " +
+                        "containing class = ${(psiTypeParent as? PsiMethod)?.containingClass}, " +
                         "containing lightDeclaration = $containingLightDeclaration (of ${containingLightDeclaration?.javaClass}), " +
                         "context = $context (of ${context.javaClass})"
             )

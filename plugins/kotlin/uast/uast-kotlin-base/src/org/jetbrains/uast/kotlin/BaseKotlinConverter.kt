@@ -18,8 +18,7 @@ import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.internal.UElementAlternative
@@ -137,7 +136,7 @@ interface BaseKotlinConverter {
 
                 is UastKotlinPsiParameterBase<*> -> {
                     el<UParameter> {
-                        element.ktOrigin.safeAs<KtTypeReference>()?.let { convertReceiverParameter(it) }
+                        (element.ktOrigin as? KtTypeReference)?.let { convertReceiverParameter(it) }
                     }
                 }
 
@@ -377,12 +376,12 @@ interface BaseKotlinConverter {
                 } ?:
                 // Of course, it is a hack to pick-up KotlinUParameter from another declaration
                 // instead of creating it directly with `givenParent`, but anyway better than have unexpected nulls here
-                element.parent.safeAs<KtParameterList>()?.parent?.safeAs<KtCallableDeclaration>()
+                element.parentAs<KtParameterList>()?.parentAs<KtCallableDeclaration>()
                     ?.toUElementOfType<ULambdaExpression>()?.valueParameters
                     ?.find { it.name == element.name }
             },
             alternative catch@{
-                val uCatchClause = element.parent?.parent?.safeAs<KtCatchClause>()?.toUElementOfType<UCatchClause>() ?: return@catch null
+                val uCatchClause = element.parent?.parentAs<KtCatchClause>()?.toUElementOfType<UCatchClause>() ?: return@catch null
                 uCatchClause.parameters.firstOrNull { it.sourcePsi == element }
             },
             *convertToPropertyAlternatives(LightClassUtil.getLightClassPropertyMethods(element), givenParent)
@@ -719,9 +718,7 @@ interface BaseKotlinConverter {
                 }
 
                 is KtSuperTypeCallEntry -> {
-                    val objectLiteralExpression = element.parent.safeAs<KtSuperTypeList>()
-                        ?.parent?.safeAs<KtObjectDeclaration>()
-                        ?.parent?.safeAs<KtObjectLiteralExpression>()
+                    val objectLiteralExpression = element.getParentObjectLiteralExpression()
                     if (objectLiteralExpression != null)
                         el<UObjectLiteralExpression> { KotlinUObjectLiteralExpression(objectLiteralExpression, givenParent) }
                     else
@@ -750,7 +747,7 @@ interface BaseKotlinConverter {
                     when {
                         element.elementType in identifiersTokens -> {
                             if (element.elementType != KtTokens.OBJECT_KEYWORD ||
-                                element.getParentOfType<KtObjectDeclaration>(false)?.nameIdentifier == null
+                                element.getNonStrictParentOfType<KtObjectDeclaration>()?.nameIdentifier == null
                             )
                                 el<UIdentifier>(build(::KotlinUIdentifier))
                             else null

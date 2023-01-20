@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.multiResolveResults
 
@@ -52,7 +51,7 @@ sealed class KotlinUAnnotationBase<T : KtCallElement>(
     }
 
     override fun convertParent(): UElement? {
-        sourcePsi.parent.safeAs<KtAnnotatedExpression>()?.let { annotatedExpression ->
+        sourcePsi.parentAs<KtAnnotatedExpression>()?.let { annotatedExpression ->
             return annotatedExpression.baseExpression?.let {
                 baseResolveProviderService.baseKotlinConverter.convertExpression(it, null, DEFAULT_EXPRESSION_TYPES_LIST)
             }
