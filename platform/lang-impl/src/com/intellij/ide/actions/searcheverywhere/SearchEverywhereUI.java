@@ -200,7 +200,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   @NotNull
   private SearchListener createListenerWrapper() {
     SearchListener wrapper = AdvancedSettings.getBoolean("search.everywhere.wait.for.contributors")
-                             ? new WaitForContributorsListenerWrapper(mySearchListener, myListModel)
+                             ? new WaitForContributorsListenerWrapper(mySearchListener, myListModel,
+                                                                      WaitForContributorsListenerWrapper.DEFAULT_WAIT_TIMEOUT_MS,
+                                                                      WaitForContributorsListenerWrapper.DEFAULT_THROTTLING_TIMEOUT_MS,
+                                                                      () -> getSearchPattern())
                              : new ThrottlingListenerWrapper(mySearchListener);
 
     if (Registry.is("search.everywhere.detect.slow.contributors")) {
