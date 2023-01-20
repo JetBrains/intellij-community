@@ -572,6 +572,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   private NamesByExprInfo suggestVariableNameByExpression(@NotNull PsiExpression expr, @Nullable VariableKind variableKind) {
     final LinkedHashSet<String> names = new LinkedHashSet<>();
+    ContainerUtil.addIfNotNull(names, suggestVariableNameFromConstant(expr, variableKind));
     ContainerUtil.addIfNotNull(names, suggestVariableNameFromLiterals(expr));
 
     NamesByExprInfo byExpr = suggestVariableNameByExpressionOnly(expr, variableKind, false);
@@ -589,6 +590,19 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     String propertyName = byExpr.propertyName != null ? byExpr.propertyName : byExprPlace.propertyName;
     return new NamesByExprInfo(propertyName, names);
+  }
+
+  @Nullable
+  private static String suggestVariableNameFromConstant(@NotNull PsiExpression expr, @Nullable VariableKind kind) {
+    if (kind == null || kind == VariableKind.LOCAL_VARIABLE) {
+      return null;
+    }
+    PsiExpression expression = PsiUtil.skipParenthesizedExprDown(expr);
+    if (expression instanceof PsiReferenceExpression referenceExpression &&
+        referenceExpression.resolve() instanceof PsiEnumConstant enumConstant) {
+      return normalizeTypeName(getTypeName(enumConstant.getType()));
+    }
+    return null;
   }
 
   @Nullable
@@ -1167,6 +1181,12 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @NotNull
+  @Override
+  public Collection<String> suggestSemanticNames(@NotNull PsiExpression expression, @NotNull VariableKind kind) {
+    return suggestVariableNameByExpression(expression, kind).names;
+  }
+
+  @NotNull
   private Collection<String> suggestSemanticNamesByType(@Nullable PsiType type, @NotNull VariableKind kind) {
     return type == null ? Collections.emptyList() : doSuggestNamesByType(type, kind);
   }
@@ -1174,13 +1194,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @Override
   @NotNull
   public SuggestedNameInfo suggestNames(@NotNull Collection<String> semanticNames, @NotNull VariableKind kind, @Nullable PsiType type) {
-    final Iterable<String> allSemanticNames;
-    if (kind == VariableKind.LOCAL_VARIABLE || !isEnum(type)) {
-      allSemanticNames = ContainerUtil.concat(semanticNames, suggestSemanticNamesByType(type, kind));
-    }
-    else {
-      allSemanticNames = ContainerUtil.concat(suggestSemanticNamesByType(type, kind), semanticNames);
-    }
+    final Iterable<String> allSemanticNames = ContainerUtil.concat(
+      semanticNames,
+      suggestSemanticNamesByType(type, kind)
+    );
 
     final Set<String> suggestions = new LinkedHashSet<>(getSuggestionsByNames(allSemanticNames, kind, true));
     final String propertyName = ContainerUtil.getFirstItem(semanticNames);
@@ -1195,12 +1212,6 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         JavaStatisticsManager.incVariableNameUseCount(name, kind, propertyName, type);
       }
     };
-  }
-
-  private static boolean isEnum(PsiType type) {
-    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-    if (aClass == null) return false;
-    return aClass.isEnum();
   }
 
   @NonNls
