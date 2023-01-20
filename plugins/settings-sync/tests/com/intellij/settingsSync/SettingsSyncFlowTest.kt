@@ -114,8 +114,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     SettingsSyncSettings.getInstance().syncEnabled = true
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
-    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(),
-                                                                                      isDeleted = true), emptySet(), null, emptySet()))
+    val metaInfo = SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true)
+    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(metaInfo, emptySet(), null, emptyMap(), emptySet()))
     syncSettingsAndWait()
 
     assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
@@ -342,7 +342,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
   @Test fun `migration should respect deletion on server`() {
     val deletionSnapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true),
-                                            emptySet(), null, emptySet())
+                                            emptySet(), null, emptyMap(), emptySet())
     remoteCommunicator.prepareFileOnServer(deletionSnapshot)
 
     val migration = migrationFromLafXml()

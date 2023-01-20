@@ -4,7 +4,9 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
+import com.intellij.testFramework.registerExtension
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -13,7 +15,13 @@ import java.util.*
 import kotlin.random.Random
 
 @RunWith(JUnit4::class)
-class SettingsSnapshotZipSerializerTest {
+internal class SettingsSnapshotZipSerializerTest : SettingsSyncTestBase() {
+
+  @Before
+  internal fun initFields() {
+    val settingsProvider = SettingsProviderTest.TestSettingsProvider()
+    application.registerExtension(SettingsProvider.SETTINGS_PROVIDER_EP, settingsProvider, disposable)
+  }
 
   @Test
   fun `serialize snapshot to zip`() {
@@ -25,13 +33,11 @@ class SettingsSnapshotZipSerializerTest {
       fileState("file.xml", "File")
       plugin("com.jetbrains.CyanTheme", false, SettingsCategory.UI, setOf("com.intellij.modules.lang"))
       additionalFile("newformat.json", "New format")
+      provided("test", SettingsProviderTest.TestState("just value"))
     }
     val zip = SettingsSnapshotZipSerializer.serializeToZip(snapshot)
 
     val actualSnapshot = SettingsSnapshotZipSerializer.extractFromZip(zip)
-    assertEquals(snapshot.metaInfo, actualSnapshot.metaInfo)
-    assertEquals(snapshot.plugins, actualSnapshot.plugins)
-    assertEquals(snapshot.fileStates, actualSnapshot.fileStates)
-    assertEquals(snapshot.additionalFiles, actualSnapshot.additionalFiles)
+    assertSettingsSnapshotsEqual(snapshot, actualSnapshot)
   }
 }

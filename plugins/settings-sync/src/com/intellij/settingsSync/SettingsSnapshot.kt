@@ -22,6 +22,9 @@ import java.util.*
  * if the snapshot is received by this IDE, this state is applied to the current IDE.
  * `null` means there is no information about plugins in this snapshot.
  *
+ * @param settingsFromProviders Settings from [SettingsProvider]s.
+ * It is a map from provider's `id` to the state class holding actual settings.
+ *
  * @param additionalFiles Additional files which don't directly represent IDE settings, they are placed into the `settingsSync/.metainfo`
  * folder, are stored in the history, and are sent back to the server. These files can be not processed by the Setting Sync, but they are
  * preserved during synchronization.
@@ -30,6 +33,7 @@ import java.util.*
 data class SettingsSnapshot(val metaInfo: MetaInfo,
                             val fileStates: Set<FileState>,
                             val plugins: SettingsSyncPluginsState?,
+                            val settingsFromProviders: Map</*SettingsProvider ID*/ String, Any>,
                             val additionalFiles: Set<FileState>) {
 
   data class MetaInfo(val dateCreated: Instant, val appInfo: AppInfo?, val isDeleted: Boolean = false)
@@ -41,7 +45,10 @@ data class SettingsSnapshot(val metaInfo: MetaInfo,
     val hostName: String,
     val configFolder: String)
 
-  fun isEmpty(): Boolean = fileStates.isEmpty() && (plugins == null || plugins.plugins.isEmpty()) && additionalFiles.isEmpty()
+  fun isEmpty(): Boolean = fileStates.isEmpty()
+                           && (plugins == null || plugins.plugins.isEmpty())
+                           && settingsFromProviders.isEmpty()
+                           && additionalFiles.isEmpty()
 
   fun isDeleted(): Boolean {
     return metaInfo.isDeleted

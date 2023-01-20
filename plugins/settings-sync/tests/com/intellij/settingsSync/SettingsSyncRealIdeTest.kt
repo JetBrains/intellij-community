@@ -1,13 +1,10 @@
 package com.intellij.settingsSync
 
-import com.intellij.configurationStore.ApplicationStoreImpl
-import com.intellij.configurationStore.StateLoadPolicy
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -16,41 +13,22 @@ import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
-import com.intellij.testFramework.replaceService
 import com.intellij.util.io.readText
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.charset.Charset
-import java.nio.file.Path
 import java.time.Instant
-import java.util.concurrent.CountDownLatch
 import kotlin.io.path.div
 import kotlin.io.path.exists
 
 @RunWith(JUnit4::class)
-internal class SettingsSyncTest : SettingsSyncTestBase() {
-  private lateinit var componentStore: TestComponentStore
-
-  @Before
-  fun setupComponentStore() {
-    componentStore = TestComponentStore(configDir)
-    application.replaceService(IComponentStore::class.java, componentStore, disposable)
-  }
-
-  private fun initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit) {
-    val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, configDir, enabledCondition = { true })
-    val controls = SettingsSyncMain.init(application, disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
-    updateChecker = controls.updateChecker
-    bridge = controls.bridge
-    bridge.initialize(initMode)
-  }
+internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @Test
   fun `settings are pushed`() {
@@ -201,7 +179,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
       isSaveOnFrameDeactivation = false
     }.toFileState()
     remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
-                                                            setOf(fileState), null, emptySet()))
+                                                            setOf(fileState), null, emptyMap(), emptySet()))
 
     waitForSettingsToBeApplied(generalSettings) {
       SettingsSynchronizer.syncSettings()
@@ -331,7 +309,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
       isSaveOnFrameDeactivation = false
     }.toFileState()
     remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
-                                                            setOf(fileState), null, emptySet()))
+                                                            setOf(fileState), null, emptyMap(), emptySet()))
     //remoteCommunicator.offline = false
 
     executeAndWaitUntilPushed {
@@ -359,62 +337,5 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
   //@Test
   fun `only changed components should be reloaded`() {
     TODO()
-  }
-
-  private fun waitForSettingsToBeApplied(vararg componentsToReinit: PersistentStateComponent<*>, execution: () -> Unit) {
-    val cdl = CountDownLatch(1)
-    componentStore.reinitLatch = cdl
-
-    execution()
-
-    assertTrue("Didn't await until new settings are applied", cdl.wait())
-
-    val reinitedComponents = componentStore.reinitedComponents
-    for (componentToReinit in componentsToReinit) {
-      val componentName = componentToReinit.name
-      assertTrue("Reinitialized components don't contain $componentName among those: $reinitedComponents",
-                 reinitedComponents.contains(componentName))
-    }
-  }
-
-  private fun <T : PersistentStateComponent<*>> T.init(): T {
-    componentStore.initComponent(this, null, null)
-    return this
-  }
-
-  private fun <State, Component : PersistentStateComponent<State>> Component.initModifyAndSave(modifier: State.() -> Unit): Component {
-    this.init()
-    this.state!!.modifier()
-    runBlocking {
-      componentStore.save()
-    }
-    return this
-  }
-
-  private fun <State, Component : PersistentStateComponent<State>> Component.withState(stateApplier: State.() -> Unit): Component {
-    stateApplier(this.state!!)
-    return this
-  }
-
-
-  private class TestComponentStore(configDir: Path) : ApplicationStoreImpl() {
-    override val loadPolicy: StateLoadPolicy
-      get() = StateLoadPolicy.LOAD
-
-    val reinitedComponents = mutableListOf<String>()
-    lateinit var reinitLatch: CountDownLatch
-
-    init {
-      setPath(configDir)
-    }
-
-    override fun reinitComponents(componentNames: Set<String>,
-                                  changedStorages: Set<StateStorage>,
-                                  notReloadableComponents: Collection<String>) {
-      super.reinitComponents(componentNames, changedStorages, notReloadableComponents)
-
-      reinitedComponents.addAll(componentNames)
-      if (::reinitLatch.isInitialized) reinitLatch.countDown()
-    }
   }
 }

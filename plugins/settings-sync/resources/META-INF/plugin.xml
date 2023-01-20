@@ -55,6 +55,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.settingsSyncMigration" interface="com.intellij.settingsSync.SettingsSyncMigration" dynamic="true"/>
+    <extensionPoint interface="com.intellij.settingsSync.SettingsProvider" dynamic="true" name="settingsProvider"/>
   </extensionPoints>
 
   <actions>
