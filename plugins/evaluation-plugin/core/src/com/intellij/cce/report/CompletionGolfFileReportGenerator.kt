@@ -46,6 +46,14 @@ class CompletionGolfFileReportGenerator(
               }
             }
           }
+          if (fileEvaluations.size > 1) {
+            div("cg-evaluations") {
+              label("labelText") { +"Evaluations:" }
+              fileEvaluations.forEachIndexed { i, info ->
+                span("cg-evaluation-title") { +"${i + 1}. ${info.evaluationType}; " }
+              }
+            }
+          }
         }
         code("cg-file cg-delimiter-integral") {
           table {
