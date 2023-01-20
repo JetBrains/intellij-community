@@ -36,13 +36,14 @@ import org.jetbrains.kotlin.util.match
 
 internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     override fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean {
-
-        if (searchTarget is KtObjectDeclaration && searchTarget.isCompanion()) {
-            val invokeOperatorCandidate = psiReference.resolve() ?: return false
-            if (invokeOperatorCandidate is KtNamedFunction && invokeOperatorCandidate.name == OperatorNameConventions.INVOKE.asString()) {
-                analyze(searchTarget) {
+        if (searchTarget is KtObjectDeclaration && searchTarget.isCompanion() && psiReference is KtSymbolBasedReference) {
+            analyze(psiReference.element) {
+                //don't resolve to psi to avoid symbol -> psi, psi -> symbol conversion
+                //which doesn't work well for e.g. kotlin.FunctionN classes due to mapping in
+                //`org.jetbrains.kotlin.analysis.api.fir.FirDeserializedDeclarationSourceProvider`
+                val invokeSymbol = psiReference.resolveToSymbol() ?: return false
+                if (invokeSymbol is KtFunctionSymbol && invokeSymbol.name == OperatorNameConventions.INVOKE) {
                     val searchTargetContainerSymbol = searchTarget.getSymbol() as? KtClassOrObjectSymbol ?: return false
-                    val invokeSymbol = invokeOperatorCandidate.getSymbol() as? KtFunctionSymbol ?: return false
 
                     fun KtClassOrObjectSymbol.isInheritorOrSelf(
                         superSymbol: KtClassOrObjectSymbol?
