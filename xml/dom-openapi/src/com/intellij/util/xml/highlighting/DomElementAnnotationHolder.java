@@ -4,7 +4,6 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
@@ -60,13 +59,6 @@ public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDe
   @NotNull
   DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference);
 
-  /**
-   * Is useful only if called from {@link DomElementsAnnotator} instance.
-   * @deprecated use {@link #getAnnotationHolder()} isntead
-   */
-  @Deprecated
-  @NotNull
-  Annotation createAnnotation(@NotNull DomElement element, HighlightSeverity severity, @Nullable @InspectionMessage String message);
   @NotNull
   AnnotationHolder getAnnotationHolder();
 
