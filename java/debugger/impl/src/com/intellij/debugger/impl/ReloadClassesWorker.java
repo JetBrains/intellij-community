@@ -229,7 +229,9 @@ class ReloadClassesWorker {
       myVirtualMachineProxy = virtualMachineProxy;
     }
 
-    public void processClass(@NotNull String qualifiedName, @NotNull File file) throws Throwable {
+    public void processClass(@NotNull String qualifiedName, @NotNull File file)
+      throws IOException, LinkageError, UnsupportedOperationException {
+
       final List<ReferenceType> vmClasses = myVirtualMachineProxy.classesByName(qualifiedName);
       if (vmClasses.isEmpty()) {
         return;
@@ -245,18 +247,24 @@ class ReloadClassesWorker {
       }
 
       int redefinedVersionsCount = 0;
-      Throwable error = null;
+      LinkageError error = null;
+      UnsupportedOperationException exception = null;
       for (ReferenceType vmClass : vmClasses) {
         try {
           myVirtualMachineProxy.redefineClasses(Collections.singletonMap(vmClass, content));
           redefinedVersionsCount++;
         }
-        catch (Throwable t) {
-          error = t;
+        catch (LinkageError e) {
+          error = e;
+        }
+        catch (UnsupportedOperationException e) {
+          exception = e;
         }
       }
       if (redefinedVersionsCount == 0) {
-        throw error;
+        if (error != null) throw error;
+        assert exception != null;
+        throw exception;
       }
 
       if (redefinedVersionsCount < vmClasses.size()) {
@@ -265,13 +273,13 @@ class ReloadClassesWorker {
       myProcessedClassesCount++;
     }
 
-    public void processPending() throws Throwable {
+    public void processPending() throws LinkageError, UnsupportedOperationException {
       if (myRedefineMap.size() > 0) {
         processChunk();
       }
     }
 
-    private void processChunk() throws Throwable {
+    private void processChunk() throws LinkageError, UnsupportedOperationException {
       // reload this portion of classes and clear the map to free memory
       try {
         myVirtualMachineProxy.redefineClasses(myRedefineMap);
