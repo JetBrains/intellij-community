@@ -58,6 +58,11 @@ public final class PluginManager {
     return PluginManagerCore.isPluginInstalled(id);
   }
 
+  /**
+   * Tries to determine from which plugin does {@code aClass} come. Note that this method always returns {@code null} if IDE or tests are 
+   * started from sources, because in that case the single classloader loads classes from all the plugins. So if you know ID of the plugin,
+   * it's better to use {@link #findEnabledPlugin(PluginId)} instead.
+   */
   public static @Nullable PluginDescriptor getPluginByClass(@NotNull Class<?> aClass) {
     ClassLoader loader = aClass.getClassLoader();
     return loader instanceof PluginAwareClassLoader ? ((PluginAwareClassLoader)loader).getPluginDescriptor() : null;
