@@ -33,7 +33,8 @@ class KeepTabOpenAction : DumbAwareAction() {
 
   private fun getActionState(e: AnActionEvent): ActionState? {
     val project = e.project ?: return null
-    val virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE) ?: return null
+    val fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR) ?: return null
+    val virtualFile = fileEditor.file
     val editorManager = FileEditorManagerEx.getInstanceEx(project)
     val currentWindow = e.getData(EditorWindow.DATA_KEY) ?: editorManager.currentWindow ?: return null
     val composite = currentWindow.getComposite(virtualFile) ?: return null
