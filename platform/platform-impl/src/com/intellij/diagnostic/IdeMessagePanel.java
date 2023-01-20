@@ -18,7 +18,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
-import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -220,7 +219,7 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
     layoutData.textColor = JBUI.CurrentTheme.Notification.Error.FOREGROUND;
     layoutData.fillColor = JBUI.CurrentTheme.Notification.Error.BACKGROUND;
     layoutData.borderColor = JBUI.CurrentTheme.Notification.Error.BORDER_COLOR;
-    layoutData.closeAll = () -> ((BalloonLayoutImpl)layout).closeAll();
+    layoutData.closeAll = () -> layout.closeAll();
     layoutData.showSettingButton = true;
 
     balloon = NotificationsManagerImpl.createBalloon(frame, notification, false, false, new Ref<>(layoutData), project);
