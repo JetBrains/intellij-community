@@ -7,18 +7,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.isModuleUnloaded
 import com.intellij.workspaceModel.ide.impl.virtualFile
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
@@ -50,7 +47,7 @@ object IndexableEntityProviderMethods {
           builders.addAll(provider.getIteratorBuildersForExistingModule(entity, entityStorage, project))
         }
       }
-      addIteratorsFromWorkspaceFileIndexContributors(builders, entity, entityStorage, project)
+      // so far there are no WorkspaceFileIndexContributors giving module roots, so requesting them is time-consuming and useless
       return IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
     }
     else {
@@ -59,30 +56,6 @@ object IndexableEntityProviderMethods {
         return emptyList()
       }
       return ModuleIndexableFilesIteratorImpl.getModuleIterators(module)
-    }
-  }
-
-  private fun addIteratorsFromWorkspaceFileIndexContributors(builders: MutableList<IndexableEntityProvider.IndexableIteratorBuilder>,
-                                                             moduleEntity: ModuleEntity,
-                                                             entityStorage: EntityStorage,
-                                                             project: Project) {
-    if (!WorkspaceFileIndexEx.IS_ENABLED) {
-      return
-    }
-    val module: Module = moduleEntity.findModule(entityStorage) ?: return
-
-    val settings = IndexingRootsCollectionUtil.IndexingRootsCollectionSettings()
-    settings.collectModuleUnawareContent = false
-    settings.collectExternalEntities = false
-    settings.collectExternalSourceEntities = false
-    settings.retainModuleContentCondition = Condition { data -> data.module == module }
-    val roots = IndexingRootsCollectionUtil.collectRootsFromWorkspaceFileIndexContributors(project,
-                                                                                           entityStorage,
-                                                                                           settings)
-    if (!roots.moduleRoots.isEmpty()) {
-      val description = roots.moduleRoots.iterator().next()
-      builders.addAll(
-        IndexableIteratorBuilders.forModuleRootsFileBased((description.module as ModuleBridge).moduleEntityId, description.roots))
     }
   }
 
