@@ -24,15 +24,14 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class InterfaceMemberDependencyGraph<T extends PsiMember, M extends MemberInfoBase<T>> implements MemberDependencyGraph<T, M> {
-  protected HashSet<T> myInterfaceDependencies;
-  protected HashMap<T,HashSet<T>> myMembersToInterfacesMap = new HashMap<>();
-  protected HashSet<PsiClass> myImplementedInterfaces;
-  protected HashMap<PsiClass,HashSet<T>> myMethodsFromInterfaces;
-  protected PsiClass myClass;
+  private HashSet<T> myInterfaceDependencies;
+  private HashMap<T,HashSet<T>> myMembersToInterfacesMap = new HashMap<>();
+  private final HashSet<PsiClass> myImplementedInterfaces;
+  private final HashMap<PsiClass,HashSet<T>> myMethodsFromInterfaces;
+  private final PsiClass myClass;
 
   public InterfaceMemberDependencyGraph(PsiClass aClass) {
     myClass = aClass;
@@ -41,7 +40,7 @@ public class InterfaceMemberDependencyGraph<T extends PsiMember, M extends Membe
   }
 
   @Override
-  public void memberChanged(M memberInfo) {
+  public synchronized void memberChanged(M memberInfo) {
     if (ClassMembersUtil.isImplementedInterface(memberInfo)) {
       final PsiClass aClass = (PsiClass) memberInfo.getMember();
       myInterfaceDependencies = null;
@@ -56,19 +55,21 @@ public class InterfaceMemberDependencyGraph<T extends PsiMember, M extends Membe
   }
 
   @Override
-  public Set<? extends T> getDependent() {
+  public synchronized Set<? extends T> getDependent() {
     if(myInterfaceDependencies == null) {
-      myInterfaceDependencies = new HashSet<>();
-      myMembersToInterfacesMap = new HashMap<>();
+      HashSet<T> dependencies = new HashSet<>();
+      HashMap<T, HashSet<T>> membersToInterfacesMap = new HashMap<>();
       for (final PsiClass implementedInterface : myImplementedInterfaces) {
-        addInterfaceDeps(implementedInterface);
+        addInterfaceDeps(implementedInterface, dependencies, membersToInterfacesMap);
       }
+      myInterfaceDependencies = dependencies;
+      myMembersToInterfacesMap = membersToInterfacesMap;
     }
     return myInterfaceDependencies;
   }
 
   @Override
-  public Set<? extends T> getDependenciesOf(PsiMember member) {
+  public synchronized Set<? extends T> getDependenciesOf(PsiMember member) {
     final Set dependent = getDependent();
     if(dependent.contains(member)) return myMembersToInterfacesMap.get(member);
     return null;
@@ -81,7 +82,7 @@ public class InterfaceMemberDependencyGraph<T extends PsiMember, M extends Membe
     return RefactoringBundle.message("interface.member.dependency.required.by.interfaces.list", dependencies.size(), interfaces);
   }
 
-  protected void addInterfaceDeps(PsiClass intf) {
+  private void addInterfaceDeps(PsiClass intf, HashSet<T> dependencies, HashMap<T, HashSet<T>> membersToInterfacesMap) {
     HashSet<T> interfaceMethods = myMethodsFromInterfaces.get(intf);
 
     if(interfaceMethods == null) {
@@ -90,14 +91,14 @@ public class InterfaceMemberDependencyGraph<T extends PsiMember, M extends Membe
       myMethodsFromInterfaces.put(intf, interfaceMethods);
     }
     for (T method : interfaceMethods) {
-      HashSet<T> interfaces = myMembersToInterfacesMap.get(method);
+      HashSet<T> interfaces = membersToInterfacesMap.get(method);
       if (interfaces == null) {
         interfaces = new HashSet<>();
-        myMembersToInterfacesMap.put(method, interfaces);
+        membersToInterfacesMap.put(method, interfaces);
       }
       interfaces.add((T)intf);
     }
-    myInterfaceDependencies.addAll(interfaceMethods);
+    dependencies.addAll(interfaceMethods);
   }
 
   private void buildInterfaceMethods(HashSet<T> interfaceMethods, PsiClass intf) {

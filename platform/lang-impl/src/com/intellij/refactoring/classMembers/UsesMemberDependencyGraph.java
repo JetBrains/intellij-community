@@ -32,10 +32,10 @@ import java.util.Set;
 
 public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extends PsiElement, M extends MemberInfoBase<T>> implements MemberDependencyGraph<T, M> {
   private static final Logger LOG = Logger.getInstance(UsesMemberDependencyGraph.class);
-  protected HashSet<T> mySelectedNormal;
-  protected HashSet<T> mySelectedAbstract;
-  protected HashSet<T> myDependencies = null;
-  protected HashMap<T, HashSet<T>> myDependenciesToDependentMap = null;
+  private final HashSet<T> mySelectedNormal;
+  private final HashSet<T> mySelectedAbstract;
+  private HashSet<T> myDependencies = null;
+  private HashMap<T, HashSet<T>> myDependenciesToDependentMap = null;
   private final boolean myRecursive;
   private final MemberDependenciesStorage<T, C> myMemberDependenciesStorage;
 
@@ -46,19 +46,22 @@ public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extend
     myMemberDependenciesStorage = new MemberDependenciesStorage<>(aClass, superClass);
   }
 
-
   @Override
-  public Set<? extends T> getDependent() {
+  public synchronized Set<? extends T> getDependent() {
     if (myDependencies == null) {
-      myDependencies = new HashSet<>();
-      myDependenciesToDependentMap = new HashMap<>();
-      buildDeps(null, mySelectedNormal);
+      HashSet<T> dependencies = new HashSet<>();
+      HashMap<T, HashSet<T>> dependenciesToDependentMap = new HashMap<>();
+
+      buildDeps(mySelectedNormal, dependencies, dependenciesToDependentMap);
+
+      myDependencies = dependencies;
+      myDependenciesToDependentMap = dependenciesToDependentMap;
     }
     return myDependencies;
   }
 
   @Override
-  public Set<? extends T> getDependenciesOf(T member) {
+  public synchronized Set<? extends T> getDependenciesOf(T member) {
     final Set dependent = getDependent();
     if(!dependent.contains(member)) return null;
     return myDependenciesToDependentMap.get(member);
@@ -73,52 +76,61 @@ public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extend
   }
 
 
-  private void buildDeps(T sourceElement, Set<? extends T> members) {
+  private void buildDeps(Set<? extends T> members, HashSet<T> allDependencies, HashMap<T, HashSet<T>> dependenciesToDependentMap) {
     if (myRecursive) {
-      buildDepsRecursively(sourceElement, members);
+      buildDepsRecursively(null, members, myDependencies, myDependenciesToDependentMap);
     }
     else {
       for (final T member : members) {
         final Set<T> dependencies = myMemberDependenciesStorage.getMemberDependencies(member);
         if (dependencies != null) {
           for (final T dependency : dependencies) {
-            addDependency(dependency, member);
+            addDependency(dependency, member, allDependencies, dependenciesToDependentMap);
           }
         }
       }
     }
   }
 
-  private void buildDepsRecursively(final T sourceElement, @Nullable final Set<? extends T> members) {
+  private void buildDepsRecursively(final T sourceElement,
+                                    @Nullable final Set<? extends T> members,
+                                    HashSet<T> dependencies,
+                                    HashMap<T, HashSet<T>> dependenciesToDependentMap) {
     if (members != null) {
       for (T member : members) {
-        if (!myDependencies.contains(member)) {
-          addDependency(member, sourceElement);
+        if (!dependencies.contains(member)) {
+          addDependency(member, sourceElement, dependencies, dependenciesToDependentMap);
           if (!mySelectedAbstract.contains(member)) {
-            buildDepsRecursively(member, myMemberDependenciesStorage.getMemberDependencies(member));
+            buildDepsRecursively(member,
+                                 myMemberDependenciesStorage.getMemberDependencies(member),
+                                 dependencies,
+                                 dependenciesToDependentMap);
           }
         }
       }
     }
   }
 
-  private void addDependency(final T member, final T sourceElement) {
+  private void addDependency(final T member,
+                             final T sourceElement,
+                             HashSet<T> dependencies,
+                             HashMap<T, HashSet<T>> dependenciesToDependentMap) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(member.toString());
     }
-    myDependencies.add(member);
+    dependencies.add(member);
     if (sourceElement != null) {
-      HashSet<T> relations = myDependenciesToDependentMap.get(member);
+      HashSet<T> relations = dependenciesToDependentMap.get(member);
       if (relations == null) {
         relations = new HashSet<>();
-        myDependenciesToDependentMap.put(member, relations);
+        dependenciesToDependentMap.put(member, relations);
       }
       relations.add(sourceElement);
     }
   }
 
   @Override
-  public void memberChanged(M memberInfo) {
+  public synchronized void memberChanged(M memberInfo) {
     final ClassMembersRefactoringSupport support =
       LanguageDependentMembersRefactoringSupport.INSTANCE.forLanguage(memberInfo.getMember().getLanguage());
     if (support != null && support.isProperMember(memberInfo)) {
