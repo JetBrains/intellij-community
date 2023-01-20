@@ -30,17 +30,17 @@ file ::= [FRONTMATTER EOL] start
 private start ::= EOL start | directive start | diagram
 
 private diagram ::= pieHeader [pieDocument]
-	| JOURNEY [journeyDocument]
-	| flowchartHeader [flowchartDocument]
-	| SEQUENCE [sequenceDocument]
-	| CLASS_DIAGRAM classDocument
-	| STATE_DIAGRAM [stateDocument]
-	| ENTITY_RELATIONSHIP [erDocument]
-	| GANTT [ganttDocument]
-	| REQUIREMENT_DIAGRAM [requirementDocument]
-	| gitGraphHeader [gitGraphDocument]
-	| c4Header c4Document
-	| MINDMAP mindmapDocument
+  | JOURNEY [journeyDocument]
+  | flowchartHeader [flowchartDocument]
+  | SEQUENCE [sequenceDocument]
+  | CLASS_DIAGRAM classDocument
+  | STATE_DIAGRAM [stateDocument]
+  | ENTITY_RELATIONSHIP [erDocument]
+  | GANTT [ganttDocument]
+  | REQUIREMENT_DIAGRAM [requirementDocument]
+  | gitGraphHeader [gitGraphDocument]
+  | c4Header c4Document
+  | MINDMAP mindmapDocument
 
 titleStatement ::= TITLE complexTitleValue
 complexTitleValue ::= TITLE_VALUE+
@@ -53,19 +53,19 @@ pieDocument ::= pieLines { implements="com.intellij.mermaid.lang.psi.MermaidDiag
 private pieLines ::= pieLine [pieLines]
 private pieLine ::= pieStatement [EOL] | EOL
 pieStatement ::= string COLON VALUE
-	| titleStatement
-	| directive
-	| accStatement
+  | titleStatement
+  | directive
+  | accStatement
 
 
 journeyDocument ::= journeyLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private journeyLines ::= (journeyLine | IGNORED) [journeyLines]
 private journeyLine ::= journeyStatement [EOL] | EOL
 journeyStatement ::= journeyDataStatement
-	| journeySectionStatement
-	| titleStatement
-	| directive
-	| accStatement
+  | journeySectionStatement
+  | titleStatement
+  | directive
+  | accStatement
 
 journeyDataStatement ::= complexTaskName COLON (IGNORED | journeyTaskData [COLON journeyNamedData? (COLON journeyTaskData?)*])
 
@@ -91,14 +91,14 @@ flowchartDocument ::= flowchartLines { implements="com.intellij.mermaid.lang.psi
 private flowchartLines ::= (flowchartLine | IGNORED) [flowchartLines]
 private flowchartLine ::= flowchartStatement [separator] | separator
 flowchartStatement ::= vertexStatement (SEMICOLON vertexStatement)*
-	| subgraphStatement
-	| styleStatement
-	| linkStyleStatement
-	| classDefStatement
-	| flowchartClassStatement
-	| flowchartClickStatement
+  | subgraphStatement
+  | styleStatement
+  | linkStyleStatement
+  | classDefStatement
+  | flowchartClassStatement
+  | flowchartClickStatement
 //	| directive
-	| accStatement
+  | accStatement
 
 private separator ::= EOL | SEMICOLON
 vertexStatement ::= nodeStatement [flowchartLinkStatement vertexStatement]
@@ -106,19 +106,19 @@ flowchartLinkStatement ::= START_ARROW complexLinkText ARROW | ARROW [SEP comple
 nodeStatement ::= vertex STYLE_SEPARATOR STYLE_TARGET | vertex [AMPERSAND nodeStatement]
 vertex ::= complexIdentifier [vertexText]
 vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
-							| OPEN_ROUND nodeText CLOSE_ROUND
-							| STADIUM_START nodeText STADIUM_END
-							| SUBROUTINE_START nodeText SUBROUTINE_END
-							| CYLINDER_START nodeText CYLINDER_END
-							| CIRCLE_START nodeText CIRCLE_END
-							| ASYMMETRIC_START nodeText CLOSE_SQUARE
-							| DIAMOND_START nodeText DIAMOND_END
-							| HEXAGON_START nodeText HEXAGON_END
-							| TRAP_START nodeText INV_TRAP_END
-              | INV_TRAP_START nodeText TRAP_END
-							| TRAP_START nodeText TRAP_END
-							| INV_TRAP_START nodeText INV_TRAP_END
-							| DOUBLE_CIRCLE_START nodeText DOUBLE_CIRCLE_END
+  | OPEN_ROUND nodeText CLOSE_ROUND
+  | STADIUM_START nodeText STADIUM_END
+  | SUBROUTINE_START nodeText SUBROUTINE_END
+  | CYLINDER_START nodeText CYLINDER_END
+  | CIRCLE_START nodeText CIRCLE_END
+  | ASYMMETRIC_START nodeText CLOSE_SQUARE
+  | DIAMOND_START nodeText DIAMOND_END
+  | HEXAGON_START nodeText HEXAGON_END
+  | TRAP_START nodeText INV_TRAP_END
+  | INV_TRAP_START nodeText TRAP_END
+  | TRAP_START nodeText TRAP_END
+  | INV_TRAP_START nodeText INV_TRAP_END
+  | DOUBLE_CIRCLE_START nodeText DOUBLE_CIRCLE_END
 nodeText ::= ALIAS+ | DOUBLE_QUOTE ALIAS+ DOUBLE_QUOTE
 complexLinkText ::= LINK_TEXT+
 
@@ -129,7 +129,7 @@ subgraphDocument ::= subgraphLines { implements="com.intellij.mermaid.lang.psi.M
 private subgraphLines ::= (subgraphLine | IGNORED) [subgraphLines]
 private subgraphLine ::= subgraphInnerStatement [separator] | separator
 private subgraphInnerStatement ::= flowchartStatement
-	| directionStatement
+  | directionStatement
 
 styleStatement ::= STYLE STYLE_TARGET styleOptions
 
@@ -147,22 +147,22 @@ sequenceDocument ::= sequenceLines { implements="com.intellij.mermaid.lang.psi.M
 private sequenceLines ::= (sequenceLine | IGNORED) [sequenceLines]
 private sequenceLine ::= sequenceStatement [separator] | separator
 sequenceStatement ::= actorStatement
-	| signalStatement
-	| AUTONUMBER (OFF | [NUM] [NUM])
-	| ACTIVATE complexIdentifier
-	| DEACTIVATE complexIdentifier
-	| noteStatement
-	| linksStatement
-	| linkStatement
-	| loopStatement
-	| rectStatement
-	| optStatement
-	| breakStatement
-	| altStatement
-	| parStatement
-	| criticalStatement
-	| directive
-	| accStatement
+  | signalStatement
+  | AUTONUMBER (OFF | [NUM] [NUM])
+  | ACTIVATE complexIdentifier
+  | DEACTIVATE complexIdentifier
+  | noteStatement
+  | linksStatement
+  | linkStatement
+  | loopStatement
+  | rectStatement
+  | optStatement
+  | breakStatement
+  | altStatement
+  | parStatement
+  | criticalStatement
+  | directive
+  | accStatement
 
 idAlias ::= ALIAS+
 
@@ -213,7 +213,7 @@ classDiagramStatement ::= directionStatement
   | classDiagramNoteStatement
   | directive
   | classDiagramClickStatement
-	| accStatement
+  | accStatement
 
 classDiagramIdentifier ::= CLASS_ID {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
@@ -265,16 +265,16 @@ relation ::= [cardinality] [relationTypeLeft] lineType [relationTypeRight] [card
 cardinality ::= maybeEmptyString
 
 relationTypeLeft ::= AGGREGATION
-    | EXTENSION_START
-    | COMPOSITION
-    | DEPENDENCY_START
-    | LOLLIPOP
+  | EXTENSION_START
+  | COMPOSITION
+  | DEPENDENCY_START
+  | LOLLIPOP
 
 relationTypeRight ::= AGGREGATION
-    | EXTENSION_END
-    | COMPOSITION
-    | DEPENDENCY_END
-    | LOLLIPOP
+  | EXTENSION_END
+  | COMPOSITION
+  | DEPENDENCY_END
+  | LOLLIPOP
 
 lineType ::= LINE | DOTTED_LINE
 
@@ -293,7 +293,7 @@ stateDiagramStatement ::= stateDeclaration
   | cssClassStatement
   | directionStatement
   | directive
-	| accStatement
+  | accStatement
 
 stateDeclaration ::= stateId COLON complexLabel
   | STATE description AS stateId
@@ -331,10 +331,10 @@ erDocument ::= erLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagra
 private erLines ::= erLine [erLines]
 private erLine ::= erStatement [EOL] | EOL
 erStatement ::= erIdentifier relationship erIdentifier COLON (complexLabel | maybeEmptyString)
-	| entityDeclaration
-	| erIdentifier
-	| directive
-	| accStatement
+  | entityDeclaration
+  | erIdentifier
+  | directive
+  | accStatement
 
 erIdentifier ::= ID | string {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
@@ -365,9 +365,9 @@ ganttStatement ::= DATE_FORMAT
   | TICK_INTERVAL
   | ganttSectionStatement
   | ganttDataStatement
-	| directive
-	| ganttClickStatement
-	| accStatement
+  | directive
+  | ganttClickStatement
+  | accStatement
 
 ganttDataStatement ::= complexTaskName COLON recTaskData
 
@@ -384,8 +384,8 @@ private requirementLine ::= requirementStatement [EOL] | EOL
 requirementStatement ::= requirementDef
   | elementDef
   | relationshipDef
-	| directive
-	| accStatement
+  | directive
+  | accStatement
 
 requirementDef ::= requirementType identifier OPEN_CURLY EOL requirementBody? CLOSE_CURLY
 requirementType ::= REQUIREMENT
@@ -427,12 +427,12 @@ gitGraphDocument ::= gitGraphLines { implements="com.intellij.mermaid.lang.psi.M
 private gitGraphLines ::= gitGraphLine [gitGraphLines]
 private gitGraphLine ::= gitGraphStatement [IGNORED] [EOL] | [IGNORED] EOL
 gitGraphStatement ::= commitStatement
-	| mergeStatement
-	| cherryPickStatement
-	| branchStatement
-	| checkoutStatement
-	| directive
-	| accStatement
+  | mergeStatement
+  | cherryPickStatement
+  | branchStatement
+  | checkoutStatement
+  | directive
+  | accStatement
 
 gitGraphBranchIdentifier ::= identifier | DOUBLE_QUOTE quotedBranchIdentifier DOUBLE_QUOTE
 quotedBranchIdentifier ::= STRING_VALUE {
@@ -573,42 +573,42 @@ c4Header ::= C4_CONTEXT
 c4Document ::= c4Lines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private c4Lines ::= c4Line [c4Lines]
 private c4Line ::= c4Statement [EOL] | EOL
-c4Statement ::= PERSON c4Attributes 
-  | PERSON_EXT c4Attributes 
-  | SYSTEM c4Attributes 
-  | SYSTEM_DB c4Attributes 
-  | SYSTEM_QUEUE c4Attributes 
-  | SYSTEM_EXT c4Attributes 
-  | SYSTEM_EXT_DB c4Attributes 
-  | SYSTEM_EXT_QUEUE c4Attributes 
-  | CONTAINER c4Attributes 
-  | CONTAINER_DB c4Attributes 
-  | CONTAINER_QUEUE c4Attributes 
-  | CONTAINER_EXT c4Attributes 
-  | CONTAINER_EXT_DB c4Attributes 
-  | CONTAINER_EXT_QUEUE c4Attributes 
-  | COMPONENT c4Attributes 
-  | COMPONENT_DB c4Attributes 
-  | COMPONENT_QUEUE c4Attributes 
-  | COMPONENT_EXT c4Attributes 
-  | COMPONENT_EXT_DB c4Attributes 
-  | COMPONENT_EXT_QUEUE c4Attributes 
+c4Statement ::= PERSON c4Attributes
+  | PERSON_EXT c4Attributes
+  | SYSTEM c4Attributes
+  | SYSTEM_DB c4Attributes
+  | SYSTEM_QUEUE c4Attributes
+  | SYSTEM_EXT c4Attributes
+  | SYSTEM_EXT_DB c4Attributes
+  | SYSTEM_EXT_QUEUE c4Attributes
+  | CONTAINER c4Attributes
+  | CONTAINER_DB c4Attributes
+  | CONTAINER_QUEUE c4Attributes
+  | CONTAINER_EXT c4Attributes
+  | CONTAINER_EXT_DB c4Attributes
+  | CONTAINER_EXT_QUEUE c4Attributes
+  | COMPONENT c4Attributes
+  | COMPONENT_DB c4Attributes
+  | COMPONENT_QUEUE c4Attributes
+  | COMPONENT_EXT c4Attributes
+  | COMPONENT_EXT_DB c4Attributes
+  | COMPONENT_EXT_QUEUE c4Attributes
   | boundaryStatement
-  | REL c4Attributes 
-  | BIREL c4Attributes 
-  | REL_U c4Attributes 
-  | REL_D c4Attributes 
-  | REL_L c4Attributes 
-  | REL_R c4Attributes 
-  | REL_B c4Attributes 
-  | REL_INDEX c4Attributes 
-  | UPDATE_EL_STYLE c4Attributes 
-  | UPDATE_REL_STYLE c4Attributes 
-  | UPDATE_LAYOUT_CONFIG c4Attributes 
+  | REL c4Attributes
+  | BIREL c4Attributes
+  | REL_U c4Attributes
+  | REL_D c4Attributes
+  | REL_L c4Attributes
+  | REL_R c4Attributes
+  | REL_B c4Attributes
+  | REL_INDEX c4Attributes
+  | UPDATE_EL_STYLE c4Attributes
+  | UPDATE_REL_STYLE c4Attributes
+  | UPDATE_LAYOUT_CONFIG c4Attributes
   | titleStatement
-	| directionStatement
-	| directive
-	| accStatement
+  | directionStatement
+  | directive
+  | accStatement
 
 c4Attributes ::= OPEN_ROUND c4AttributesRec CLOSE_ROUND
 private c4AttributesRec ::= [c4Attr] [COMMA c4AttributesRec]
@@ -653,15 +653,15 @@ directiveValue ::= maybeEmptyString | DIRECTIVE_TEXT | object
 object ::= OPEN_CURLY directiveContent CLOSE_CURLY
 
 flowchartClickStatement ::= CLICK [CLICK_DATA] [HREF] string [string] [LINK_TARGET]
-	| CLICK [CALL] CLICK_DATA [callbackArgs] string
-	| CLICK CLICK_DATA [CALL? CLICK_DATA callbackArgs?] [string]
+  | CLICK [CALL] CLICK_DATA [callbackArgs] string
+  | CLICK CLICK_DATA [CALL? CLICK_DATA callbackArgs?] [string]
 
 ganttClickStatement ::= CLICK CLICK_DATA (CALL CLICK_DATA callbackArgs | HREF string)
 
 classDiagramClickStatement ::= CLICK CLICK_DATA CALL CLICK_DATA callbackArgs [string]
-	| CLICK CLICK_DATA HREF string [string] [LINK_TARGET]
-	| CALLBACK CLICK_DATA string [string]
-	| LINK CLICK_DATA string [string] [LINK_TARGET]
+  | CLICK CLICK_DATA HREF string [string] [LINK_TARGET]
+  | CALLBACK CLICK_DATA string [string]
+  | LINK CLICK_DATA string [string] [LINK_TARGET]
 
 callbackArgs ::= OPEN_ROUND [callbackArg] (COMMA callbackArg)* CLOSE_ROUND
 private callbackArg ::= CLICK_DATA | string
@@ -676,9 +676,9 @@ string ::= DOUBLE_QUOTE STRING_VALUE DOUBLE_QUOTE
 private maybeEmptyString ::= DOUBLE_QUOTE DOUBLE_QUOTE | string
 
 complexIdentifier ::= ID+ {
-	mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 identifier ::= ID {
-	mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 

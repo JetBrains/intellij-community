@@ -135,26 +135,26 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 
 <flowchart_body, gantt, class_diagram, class_name> {
-	"click" { yypushstate(click); return CLICK; }
+  "click" { yypushstate(click); return CLICK; }
 }
 
 <pie> {
-	"title" { yybegin(pie_title); return TITLE; }
+  "title" { yybegin(pie_title); return TITLE; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   "showData" { return Pie.SHOW_DATA; }
   ":" { yybegin(value); return COLON; }
 }
 <journey> {
-	"title" { yypushstate(title); return TITLE; }
+  "title" { yypushstate(title); return TITLE; }
   "section" { yypushstate(section); return SECTION; }
   ":" { yybegin(journey_task); return COLON; }
   [^\s#:;]+ { return TASK_NAME; }
 }
 <flowchart, direction_value, simple_direction_value> {
-	"LR" |
-	"RL" |
-	"TB" |
-	"BT" { return DIR; }
+  "LR" |
+  "RL" |
+  "TB" |
+  "BT" { return DIR; }
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
 <direction_value, simple_direction_value> {
@@ -164,12 +164,12 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\n\r] { yybegin(flowchart_body); return EOL; }
 }
 <flowchart, direction_value> {
-	"TD" |
-	"BR" |
-	"<" |
-	">" |
-	"^" |
-	"v" { return DIR; }
+  "TD" |
+  "BR" |
+  "<" |
+  ">" |
+  "^" |
+  "v" { return DIR; }
 }
 <flowchart> {
   ";" { yybegin(flowchart_body); return SEMICOLON; }
@@ -194,7 +194,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\S\n\r]+ { yybegin(title_value); return WHITE_SPACE; }
 }
 <title_value> {
-	\s?(#[^\n\r]*)/[\n\r]? { return IGNORED; }
+  \s?(#[^\n\r]*)/[\n\r]? { return IGNORED; }
   [\n\r] { yypopstate(); return EOL; }
   [^\s#;]+ { return TITLE_VALUE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
@@ -203,17 +203,17 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\S\n\r]+ { yybegin(section_title); return WHITE_SPACE; }
 }
 <section_title> {
-	\s?(#[^\n\r]*)/[\n\r]? { return IGNORED; }
+  \s?(#[^\n\r]*)/[\n\r]? { return IGNORED; }
   [\n\r] { yypopstate(); return EOL; }
   [^\s#:;]+ { return SECTION_TITLE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
 <journey_task> {
-	(#[^\n\r]*)/[\n\r]? { return IGNORED; }
+  (#[^\n\r]*)/[\n\r]? { return IGNORED; }
   ":" { return COLON; }
   "," { return COMMA; }
-	[^\S\n\r]+ { return WHITE_SPACE; }
-	[^\s#:;,]+ { return TASK_DATA; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
+  [^\s#:;,]+ { return TASK_DATA; }
   [\n\r] { yybegin(journey); return EOL; }
 }
 
@@ -226,23 +226,23 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
   "linkStyle" { yybegin(link_style); return Flowchart.LINK_STYLE; }
   "style" { yybegin(style); return Flowchart.STYLE; }
-	"classDef" { yybegin(style); return CLASS_DEF; }
+  "classDef" { yybegin(style); return CLASS_DEF; }
 
   "class" { yybegin(flowchart_class); return CLASS; }
 
-	"&"/\s { return Flowchart.AMPERSAND; }
+  "&"/\s { return Flowchart.AMPERSAND; }
 
-	[^\s\n\r;:%\[({><\^\|\-\=\.]+/[xo<]?\-\-|[xo<]?\=\=|[xo<]?\-\. { return ID; }
-	[^\s\n\r;:%\[({><\^\|\-\=\.]+ { return ID; }
-	[\-\=\.] { return ID; }
-	:|:: { return ID; }
+  [^\s\n\r;:%\[({><\^\|\-\=\.]+/[xo<]?\-\-|[xo<]?\=\=|[xo<]?\-\. { return ID; }
+  [^\s\n\r;:%\[({><\^\|\-\=\.]+ { return ID; }
+  [\-\=\.] { return ID; }
+  :|:: { return ID; }
 
   ":::" { yybegin(flowchart_class_val); return STYLE_SEPARATOR; }
 
-	"[" { yybegin(node_text); return OPEN_SQUARE; }
+  "[" { yybegin(node_text); return OPEN_SQUARE; }
   "(" { yybegin(node_text); return OPEN_ROUND; }
   "([" { yybegin(node_text); return Flowchart.STADIUM_START; }
-	"[[" { yybegin(node_text); return Flowchart.SUBROUTINE_START; }
+  "[[" { yybegin(node_text); return Flowchart.SUBROUTINE_START; }
   "[(" { yybegin(node_text); return Flowchart.CYLINDER_START; }
   "((" { yybegin(node_text); return Flowchart.CIRCLE_START; }
   ">" { yybegin(node_text); return Flowchart.ASYMMETRIC_START; }
@@ -252,9 +252,9 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "[\\" { yybegin(node_text); return Flowchart.INV_TRAP_START; }
   "(((" { yybegin(node_text); return Flowchart.DOUBLE_CIRCLE_START; }
 
-	"|" { yybegin(link_text); return Flowchart.SEP; }
+  "|" { yybegin(link_text); return Flowchart.SEP; }
 
-	[xo<]?\-\-+[-xo>] { return ARROW; }
+  [xo<]?\-\-+[-xo>] { return ARROW; }
   [xo<]?\=\=+[=xo>] { return ARROW; }
   [xo<]?\-?\.+\-[xo>]? { return ARROW; }
   [xo<]?\-\- { yybegin(link_text); return Flowchart.START_ARROW; }
@@ -263,8 +263,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 }
 <node_text> {
-	[\"] { yybegin(node_quoted_text); return DOUBLE_QUOTE; }
-	[^\s\n\r;\])\"\}]+[^\s\n\r;\])\"\}/\\] { return ALIAS; }
+  [\"] { yybegin(node_quoted_text); return DOUBLE_QUOTE; }
+  [^\s\n\r;\])\"\}]+[^\s\n\r;\])\"\}/\\] { return ALIAS; }
   [^\S\n\r]+ { return WHITE_SPACE; }
   "]" { yybegin(flowchart_body); return CLOSE_SQUARE; }
   ")" { yybegin(flowchart_body); return CLOSE_ROUND; }
@@ -279,47 +279,47 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   ")))" { yybegin(flowchart_body); return Flowchart.DOUBLE_CIRCLE_END; }
 }
 <node_quoted_text> {
-	[\"] { yybegin(node_text); return DOUBLE_QUOTE; }
+  [\"] { yybegin(node_text); return DOUBLE_QUOTE; }
   [^\s\"]* { return ALIAS; }
   [^\S\n\r]+ { return WHITE_SPACE; }
 }
 <link_text> {
-	[^\s;\[\]()\"|{}\-\=\.]+/\-\-+[-xo>]|\=\=+[=xo>]|\-?\.+\-[xo>] { yybegin(flowchart_body); return Flowchart.LINK_TEXT; }
+  [^\s;\[\]()\"|{}\-\=\.]+/\-\-+[-xo>]|\=\=+[=xo>]|\-?\.+\-[xo>] { yybegin(flowchart_body); return Flowchart.LINK_TEXT; }
   [^\s;\[\]()\"|{}\-\=\.]+ { return Flowchart.LINK_TEXT; }
   [^\s;\[\]()\"|{}\-\=\.]+/\| { return Flowchart.LINK_TEXT; }
   [\-\=\.] { return Flowchart.LINK_TEXT; }
   [^\S\n\r]+ { return WHITE_SPACE; }
   [^\S\n\r]+/\-\-+[-xo>]|\=\=+[=xo>]|\-?\.+\-[xo>] { yybegin(flowchart_body); return WHITE_SPACE; }
-	[\"] { yybegin(link_quoted_text); return DOUBLE_QUOTE; }
+  [\"] { yybegin(link_quoted_text); return DOUBLE_QUOTE; }
   "|" { yybegin(flowchart_body); return Flowchart.SEP; }
 }
 <link_quoted_text> {
-	[\"] { yybegin(link_text); return DOUBLE_QUOTE; }
+  [\"] { yybegin(link_text); return DOUBLE_QUOTE; }
   [^\s\"]* { return Flowchart.LINK_TEXT; }
   [^\S\n\r]+ { return WHITE_SPACE; }
 }
 <style> {
-	"default" { yybegin(style_opt); return DEFAULT; }
-	[^\s;\n]+ { yybegin(style_opt); return Flowchart.STYLE_TARGET; }
+  "default" { yybegin(style_opt); return DEFAULT; }
+  [^\s;\n]+ { yybegin(style_opt); return Flowchart.STYLE_TARGET; }
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
 <link_style> {
   [^\S\r\n]+ { yybegin(link_style_target); return WHITE_SPACE; }
 }
 <link_style_target> {
-	"default" { return Flowchart.STYLE_TARGET; }
-	\d+ { return Flowchart.STYLE_TARGET; }
+  "default" { return Flowchart.STYLE_TARGET; }
+  \d+ { return Flowchart.STYLE_TARGET; }
   "," { return COMMA; }
   [^\S\r\n]+ { yybegin(style_opt); return WHITE_SPACE; }
 }
 <style_opt> {
-	[^\s,:;][^,:\n\r;]*/: { return Flowchart.STYLE_OPT; }
+  [^\s,:;][^,:\n\r;]*/: { return Flowchart.STYLE_OPT; }
   ":" { yybegin(style_value); return COLON; }
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
 <style_value> {
-	[^\S\n\r]+ { return WHITE_SPACE; }
-	[^\s,:;][^,:\n\r;]* { return Flowchart.STYLE_VAL; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
+  [^\s,:;][^,:\n\r;]* { return Flowchart.STYLE_VAL; }
   "," { yybegin(style_opt); return COMMA; }
   ";" { yybegin(flowchart_body); return SEMICOLON; }
   [\n\r] { yybegin(flowchart_body); return EOL; }
@@ -328,13 +328,13 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\S\n\r]+ { yybegin(flowchart_class_target); return WHITE_SPACE; }
 }
 <flowchart_class_target> {
-	[^\s\n\r,;\[({><\^\|]+ { return ID; }
+  [^\s\n\r,;\[({><\^\|]+ { return ID; }
   "," { return COMMA; }
 
   [^\S\n\r]+ { yybegin(flowchart_class_val); return WHITE_SPACE; }
 }
 <flowchart_class_val> {
-	[^\s;\n\r]+ { return Flowchart.STYLE_TARGET; }
+  [^\s;\n\r]+ { return Flowchart.STYLE_TARGET; }
   \s { yybegin(flowchart_body); return WHITE_SPACE; }
   ";" { yybegin(flowchart_body); return SEMICOLON; }
   [\n\r] { yybegin(flowchart_body); return EOL; }
@@ -342,7 +342,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 //---sequence---------------------------------------------------------------------
 <sequence> {
-	"participant" { yybegin(sequence_id); return Sequence.PARTICIPANT; }
+  "participant" { yybegin(sequence_id); return Sequence.PARTICIPANT; }
   "actor" { yybegin(sequence_id); return Sequence.ACTOR; }
   "activate" { return Sequence.ACTIVATE; }
   "deactivate" { return Sequence.DEACTIVATE; }
@@ -350,7 +350,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "right of" { return RIGHT_OF; }
   "left of" { return LEFT_OF; }
   "over" { return Sequence.OVER; }
-	"loop" { yybegin(sequence_message); return Sequence.LOOP; }
+  "loop" { yybegin(sequence_message); return Sequence.LOOP; }
   "alt" { yybegin(sequence_message); return Sequence.ALT; }
   "else" { yybegin(sequence_message); return Sequence.ELSE; }
   "opt" { yybegin(sequence_message); return Sequence.OPT; }
@@ -365,7 +365,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "link" { return LINK; }
   "links" { yybegin(sequence_links); return Sequence.LINKS; }
 
-	[^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)?+ { return ID; }
+  [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)?+ { return ID; }
 
   ":" { yybegin(sequence_message); return COLON; }
   "+" { return PLUS; }
@@ -389,27 +389,27 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\n\r] { yypopstate(); return EOL; }
 }
 <sequence_id, sequence_alias, sequence_message, sequence> {
-	\s?(#[^\n\r]*)/[\n\r]? { yybegin(sequence); return IGNORED; }
+  \s?(#[^\n\r]*)/[\n\r]? { yybegin(sequence); return IGNORED; }
   [\n\r] { yybegin(sequence); return EOL; }
   ";" { yybegin(sequence); return SEMICOLON; }
 }
 <sequence_id> {
-	"as" { yybegin(sequence_alias); return AS; }
-	[^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)? { return ID; }
-	[^\S\n\r]+ { return WHITE_SPACE; }
+  "as" { yybegin(sequence_alias); return AS; }
+  [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)? { return ID; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
 }
 <sequence_alias> {
   [^#\s;]* { return ALIAS; }
-	[^\S\n\r]+ { return WHITE_SPACE; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
 }
 <sequence_message> {
-	[^\S\n\r]+ { return WHITE_SPACE; }
-	[^#\s;]* { return Sequence.MESSAGE; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
+  [^#\s;]* { return Sequence.MESSAGE; }
 }
 <sequence_links> {
-	[^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)? { return ID; }
+  [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)? { return ID; }
   ":" { yybegin(sequence_links_values); return COLON; }
-	[^\S\n\r]+ { return WHITE_SPACE; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
 }
 <sequence_links_values> {
   "{" { return OPEN_CURLY; }
@@ -417,7 +417,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   ":" { return COLON; }
   "," { return COMMA; }
-	[^\S\n\r]+ { return WHITE_SPACE; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
 }
 
 //---class------------------------------------------------------------------------
@@ -433,7 +433,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\w_]+ { yypopstate(); return ID; }
 }
 <class_diagram, class_name> {
-	"class" { yypushstate(class_name); return CLASS; }
+  "class" { yypushstate(class_name); return CLASS; }
   "direction" { yypushstate(direction_value); return DIRECTION; }
   [\w_]+ { yypushstate(class_name); return ClassDiagram.CLASS_ID; }
 }
@@ -472,15 +472,15 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\n\r] { yypopstate(); return EOL; }
 }
 <generic> {
-	"~" { yypopstate(); return TILDA; }
+  "~" { yypopstate(); return TILDA; }
   [^\s~]* { return ClassDiagram.GENERIC_TYPE; }
-	[^\S\n\r]+ { return WHITE_SPACE; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
 
 }
 <annotation> {
-	\w+ { return ANNOTATION_VALUE; }
-	">>" { yypopstate(); return ANNOTATION_END; }
-	[^\S\n\r]+ { return WHITE_SPACE; }
+  \w+ { return ANNOTATION_VALUE; }
+  ">>" { yypopstate(); return ANNOTATION_END; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
 }
 <class_name> {
   "<|" { return ClassDiagram.EXTENSION_START; }
@@ -507,9 +507,9 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
 <description> {
-	[^\s]+ { return LABEL; }
+  [^\s]+ { return LABEL; }
   [^\s]+/[\n\r] { yypopstate(); return LABEL; }
-	[^\S\n\r]+ { return WHITE_SPACE; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
   [^\S\n\r]+/[\n\r] { yypopstate(); return WHITE_SPACE; }
 }
 
@@ -537,8 +537,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "*"/"]" { return STAR; }
   "]" { return CLOSE_SQUARE; }
   [^\-\{\[\s\":,\.,<>][^\-\{\}\s\":\.,<>]* { return ID; }
-	"-->" { return ARROW; }
-	"--" { return StateDiagram.DIVIDER; }
+  "-->" { return ARROW; }
+  "--" { return StateDiagram.DIVIDER; }
 
   ":::" { return STYLE_SEPARATOR; }
 }
@@ -550,11 +550,11 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <note_content, simple_note_content> {
   ([^\s:][^\s]?)* { return NOTE_CONTENT; }
-	[^\S\n\r]+ { return WHITE_SPACE; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
 }
 <note_content> {
   "end note" { yypopstate(); return END; }
-	":" { yybegin(simple_note_content); return COLON; }
+  ":" { yybegin(simple_note_content); return COLON; }
   [\n\r] { return EOL; }
 }
 <simple_note_content> {
@@ -620,8 +620,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "{" { yybegin(entity_attributes); return OPEN_CURLY; }
 }
 <entity_attributes> {
-	"FK" | "PK" { return EntityRelationship.ATTR_KEY; }
-	[a-zA-Z][\w\-\[\]]* { return ATTRIBUTE_WORD; }
+  "FK" | "PK" { return EntityRelationship.ATTR_KEY; }
+  [a-zA-Z][\w\-\[\]]* { return ATTRIBUTE_WORD; }
   [~] { yypushstate(generic); return TILDA; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   "}" { yybegin(entity_relationship); return CLOSE_CURLY; }
@@ -636,12 +636,12 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 //---gantt------------------------------------------------------------------------
 <gantt> {
   "title" { yypushstate(title); return TITLE; }
-	"dateFormat"\s[^#\n;]+ { return Gantt.DATE_FORMAT; }
-	"axisFormat"\s[^#\n;]+ { return Gantt.AXIS_FORMAT; }
-	"includes"\s[^#\n;]+ { return Gantt.INCLUDES; }
-	"excludes"\s[^#\n;]+ { return Gantt.EXCLUDES; }
-	"todayMarker"\s[^\n;]+ { return Gantt.TODAY_MARKER; }
-	"tickInterval"\s[^#\n;]+ { return Gantt.TICK_INTERVAL; }
+  "dateFormat"\s[^#\n;]+ { return Gantt.DATE_FORMAT; }
+  "axisFormat"\s[^#\n;]+ { return Gantt.AXIS_FORMAT; }
+  "includes"\s[^#\n;]+ { return Gantt.INCLUDES; }
+  "excludes"\s[^#\n;]+ { return Gantt.EXCLUDES; }
+  "todayMarker"\s[^\n;]+ { return Gantt.TODAY_MARKER; }
+  "tickInterval"\s[^#\n;]+ { return Gantt.TICK_INTERVAL; }
   "section" { yypushstate(section); return SECTION; }
   [^\s#:;]+ { return TASK_NAME; }
   ":" { yybegin(gantt_task_data); return COLON; }
@@ -656,13 +656,13 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 //---requirement------------------------------------------------------------------
 <requirement_diagram> {
-	"requirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.REQUIREMENT; }
+  "requirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.REQUIREMENT; }
   "functionalRequirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.FUNCTIONAL_REQUIREMENT; }
   "interfaceRequirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.INTERFACE_REQUIREMENT; }
   "performanceRequirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.PERFORMANCE_REQUIREMENT; }
   "physicalRequirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.PHYSICAL_REQUIREMENT; }
-	"designConstraint"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.DESIGN_CONSTRAINT; }
-	"element"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(req_element); return Requirement.ELEMENT; }
+  "designConstraint"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.DESIGN_CONSTRAINT; }
+  "element"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(req_element); return Requirement.ELEMENT; }
   "contains"/\s*\- { return Requirement.CONTAINS; }
   "copies"/\s*\- { return Requirement.COPIES; }
   "derives"/\s*\- { return Requirement.DERIVES; }
@@ -680,31 +680,31 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "}" { yybegin(requirement_diagram); return CLOSE_CURLY; }
 }
 <requirement> {
-	"id" { return ID_KEYWORD; }
+  "id" { return ID_KEYWORD; }
   "text" { return Requirement.TEXT; }
-	"risk" { yybegin(requirement_constant_value); return Requirement.RISK; }
+  "risk" { yybegin(requirement_constant_value); return Requirement.RISK; }
   "verifymethod" { yybegin(requirement_constant_value); return Requirement.VERIFY_METHOD; }
 }
 <req_element> {
-	"type" { return TYPE; }
+  "type" { return TYPE; }
   "docref" { return Requirement.DOCREF; }
 }
 <requirement_diagram, requirement, req_element> {
-	[\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   [\w][^\s\{\<\>\-\=:;]* { return ID; }
 }
 <requirement_value> {
-	[\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
-	[\w][^\s\{\<\>\-\=]* { return LABEL; }
+  [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  [\w][^\s\{\<\>\-\=]* { return LABEL; }
   [^\S\r\n]+ { return WHITE_SPACE; }
   [\n\r] { yypopstate(); return EOL; }
 }
 <requirement_constant_value> {
   ":" { return COLON; }
   [^\S\r\n]+ { return WHITE_SPACE; }
-	"high" { yybegin(requirement); return Requirement.HIGH; }
-	"medium" { yybegin(requirement); return Requirement.MEDIUM; }
-	"low" { yybegin(requirement); return Requirement.LOW; }
+  "high" { yybegin(requirement); return Requirement.HIGH; }
+  "medium" { yybegin(requirement); return Requirement.MEDIUM; }
+  "low" { yybegin(requirement); return Requirement.LOW; }
   "analysis" { yybegin(requirement); return Requirement.ANALYSIS; }
   "inspection" { yybegin(requirement); return Requirement.INSPECTION; }
   "test" { yybegin(requirement); return Requirement.TEST; }
@@ -713,7 +713,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 //---gitgraph---------------------------------------------------------------------
 <gitgraph> {
-	"commit" { return GitGraph.COMMIT; }
+  "commit" { return GitGraph.COMMIT; }
   "id" { return ID_KEYWORD; }
   "type" { return TYPE; }
   "tag" { return GitGraph.TAG; }
@@ -723,7 +723,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "merge" { return GitGraph.MERGE; }
   "cherry-pick" { return GitGraph.CHERRY_PICK; }
   "checkout" { return GitGraph.CHECKOUT; }
-      
+
   "NORMAL" { return GitGraph.NORMAL; }
   "REVERSE" { return GitGraph.REVERSE; }
   "HIGHLIGHT" { return GitGraph.HIGHLIGHT; }
@@ -751,49 +751,49 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "SystemQueue" { yybegin(system_queue); return C4.SYSTEM_QUEUE; }
   "SystemDb" { yybegin(system_db); return C4.SYSTEM_DB; }
   "System" { yybegin(system); return C4.SYSTEM; }
-  
+
   "Boundary" { yybegin(boundary); return C4.BOUNDARY; }
   "Enterprise_Boundary" { yybegin(enterprise_boundary); return C4.ENTERPRISE_BOUNDARY; }
   "System_Boundary" { yybegin(system_boundary); return C4.SYSTEM_BOUNDARY; }
-  
+
   "ContainerQueue_Ext" { yybegin(container_ext_queue); return C4.CONTAINER_EXT_QUEUE; }
   "ContainerDb_Ext" { yybegin(container_ext_db); return C4.CONTAINER_EXT_DB; }
   "Container_Ext" { yybegin(container_ext); return C4.CONTAINER_EXT; }
   "ContainerQueue" { yybegin(container_queue); return C4.CONTAINER_QUEUE; }
   "ContainerDb" { yybegin(container_db); return C4.CONTAINER_DB; }
   "Container" { yybegin(container); return C4.CONTAINER; }
-  
+
   "Container_Boundary" { yybegin(container_boundary); return C4.CONTAINER_BOUNDARY; }
-  
+
   "ComponentQueue_Ext" { yybegin(component_ext_queue); return C4.COMPONENT_EXT_QUEUE; }
   "ComponentDb_Ext" { yybegin(component_ext_db); return C4.COMPONENT_EXT_DB; }
   "Component_Ext" { yybegin(component_ext); return C4.COMPONENT_EXT; }
   "ComponentQueue" { yybegin(component_queue); return C4.COMPONENT_QUEUE; }
   "ComponentDb" { yybegin(component_db); return C4.COMPONENT_DB; }
   "Component" { yybegin(component); return C4.COMPONENT; }
-  
+
   "Deployment_Node" { yybegin(node); return C4.NODE; }
   "Node" { yybegin(node); return C4.NODE; }
   "Node_L" { yybegin(node_l); return C4.NODE_L; }
   "Node_R" { yybegin(node_r); return C4.NODE_R; }
-  
-  
-  "Rel" { yybegin(rel); return C4.REL; } 
-  "BiRel" { yybegin(birel); return C4.BIREL; } 
-  "Rel_Up" { yybegin(rel_u); return C4.REL_U; }  
-  "Rel_U" { yybegin(rel_u); return C4.REL_U; }  
-  "Rel_Down" { yybegin(rel_d); return C4.REL_D; }  
-  "Rel_D" { yybegin(rel_d); return C4.REL_D; }  
-  "Rel_Left" { yybegin(rel_l); return C4.REL_L; }  
-  "Rel_L" { yybegin(rel_l); return C4.REL_L; }  
-  "Rel_Right" { yybegin(rel_r); return C4.REL_R; }  
-  "Rel_R" { yybegin(rel_r); return C4.REL_R; }  
-  "Rel_Back" { yybegin(rel_b); return C4.REL_B; }  
-  "RelIndex" { yybegin(rel_index); return C4.REL_INDEX; } 
-  
-  "UpdateElementStyle" { yybegin(update_el_style); return C4.UPDATE_EL_STYLE; }  
-  "UpdateRelStyle" { yybegin(update_rel_style); return C4.UPDATE_REL_STYLE; } 
-  "UpdateLayoutConfig" { yybegin(update_layout_config); return C4.UPDATE_LAYOUT_CONFIG; } 
+
+
+  "Rel" { yybegin(rel); return C4.REL; }
+  "BiRel" { yybegin(birel); return C4.BIREL; }
+  "Rel_Up" { yybegin(rel_u); return C4.REL_U; }
+  "Rel_U" { yybegin(rel_u); return C4.REL_U; }
+  "Rel_Down" { yybegin(rel_d); return C4.REL_D; }
+  "Rel_D" { yybegin(rel_d); return C4.REL_D; }
+  "Rel_Left" { yybegin(rel_l); return C4.REL_L; }
+  "Rel_L" { yybegin(rel_l); return C4.REL_L; }
+  "Rel_Right" { yybegin(rel_r); return C4.REL_R; }
+  "Rel_R" { yybegin(rel_r); return C4.REL_R; }
+  "Rel_Back" { yybegin(rel_b); return C4.REL_B; }
+  "RelIndex" { yybegin(rel_index); return C4.REL_INDEX; }
+
+  "UpdateElementStyle" { yybegin(update_el_style); return C4.UPDATE_EL_STYLE; }
+  "UpdateRelStyle" { yybegin(update_rel_style); return C4.UPDATE_REL_STYLE; }
+  "UpdateLayoutConfig" { yybegin(update_layout_config); return C4.UPDATE_LAYOUT_CONFIG; }
 
   "{" { return OPEN_CURLY; }
   "}" { return CLOSE_CURLY; }
@@ -860,7 +860,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <click> {
   "call" { return CALL; }
   "href" { return HREF; }
-	"(" { return OPEN_ROUND; }
+  "(" { return OPEN_ROUND; }
   ")" { return CLOSE_ROUND; }
   "," { return COMMA; }
   \" { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
