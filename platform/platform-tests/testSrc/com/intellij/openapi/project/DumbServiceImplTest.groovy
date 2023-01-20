@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.ArrayUtil
@@ -206,5 +207,40 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     int avg = ArrayUtil.averageAmongMedians(delays, 3)
     assert avg == 0: "Seems there's is a significant delay between becoming smart and waitForSmartMode() return. Delays in ms:\n" +
                      Arrays.toString(delays) + "\n"
+  }
+
+  void "test cancelAllTasksAndWait cancels all the tasks submitted via queueTask from other threads with no race"() {
+    DumbServiceImpl dumbService = getDumbService()
+    AtomicBoolean queuedTaskInvoked = new AtomicBoolean(false)
+    AtomicBoolean dumbTaskFinished = new AtomicBoolean(false)
+
+    Thread t1 = new Thread({
+                             dumbService.queueTask(
+                               new DumbModeTask() {
+                                 @Override
+                                 void performInDumbMode(@NotNull ProgressIndicator indicator) {
+                                   queuedTaskInvoked.set(true)
+                                 }
+
+                                 @Override
+                                 void dispose() {
+                                   dumbTaskFinished.set(true)
+                                 }
+                               }
+                             )
+                           }, "Test thread 1")
+
+    // we are on Write thread without write action
+    t1.start()
+    PlatformTestUtil.waitWithEventsDispatching("dumbService.queueTask didn't complete in 5 seconds", { !t1.isAlive() }, 5)
+    assertFalse("Thread should have completed", t1.isAlive())
+
+    // this should also cancel the task submitted by t1. There is no race: t1 definitely submitted this task and the thread itself finished.
+    dumbService.cancelAllTasksAndWait()
+
+    PlatformTestUtil.waitWithEventsDispatching("DumbModeTask didn't complete in 5 seconds", dumbTaskFinished::get, 5)
+
+    assertTrue(dumbTaskFinished.get())
+    assertFalse(queuedTaskInvoked.get())
   }
 }
