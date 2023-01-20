@@ -114,6 +114,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return;
     }
 
+    gotoData.initPresentations();
+
     final String name = ((NavigationItem)gotoData.source).getName();
     final String title = getChooserTitle(gotoData.source, name, targets.length, finished);
 
@@ -121,7 +123,6 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       Arrays.sort(targets, createComparator(gotoData));
     }
 
-    gotoData.initPresentations();
     List<Object> allElements = new ArrayList<>(targets.length + additionalActions.size());
     allElements.addAll(gotoData.getPointers());
     allElements.addAll(additionalActions);
