@@ -19,7 +19,8 @@ abstract class PersistentFSRecordsStorage {
     LOCK_FREE,
     IN_MEMORY,
 
-    OVER_LOCK_FREE_FILE_CACHE
+    OVER_LOCK_FREE_FILE_CACHE,
+    OVER_MMAPPED_FILE
   }
 
   static final RecordsStorageKind
@@ -30,6 +31,7 @@ abstract class PersistentFSRecordsStorage {
       case REGULAR, IN_MEMORY -> PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
       case LOCK_FREE -> PersistentFSLockFreeRecordsStorage.RECORD_SIZE;
       case OVER_LOCK_FREE_FILE_CACHE -> PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES;
+      case OVER_MMAPPED_FILE -> PersistentFSRecordsLockFreeOverMMappedFile.RECORD_SIZE_IN_BYTES;
     };
   }
 
@@ -42,6 +44,7 @@ abstract class PersistentFSRecordsStorage {
       case IN_MEMORY -> new PersistentInMemoryFSRecordsStorage(file, /*max size: */1 << 24);
 
       case OVER_LOCK_FREE_FILE_CACHE -> createLockFreeStorage(file);
+      case OVER_MMAPPED_FILE -> new PersistentFSRecordsLockFreeOverMMappedFile(file, PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_PAGE_SIZE);
     };
   }
 
@@ -136,6 +139,9 @@ abstract class PersistentFSRecordsStorage {
 
   //TODO RC: why we need this method? Record modification is detected by actual modification -- there
   //         are (seems to) no way to modify record bypassing it.
+  //         We use the method to mark file record modified there something derived is modified -- e.g.
+  //         children attribute or content. This looks suspicious to me: why we need to update _file_
+  //         record version in those cases?
   abstract void markRecordAsModified(int fileId) throws IOException;
 
   abstract int getContentRecordId(int fileId) throws IOException;

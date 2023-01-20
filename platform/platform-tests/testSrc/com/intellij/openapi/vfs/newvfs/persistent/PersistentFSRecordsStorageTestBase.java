@@ -57,6 +57,19 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   }
 
   @Test
+  public void singleWrittenRecord_MakeStorageDirty_AndForceMakeItNonDirtyAgain() throws Exception {
+    final int recordId = storage.allocateRecord();
+    final FSRecord recordOriginal = generateRecordFields(recordId);
+
+    recordOriginal.updateInStorage(storage);
+    assertTrue("Record is written -- storage must be dirty",
+               storage.isDirty());
+    storage.force();
+    assertFalse(".force() is called -> storage must be !dirty",
+               storage.isDirty());
+  }
+
+  @Test
   public void manyRecordsWritten_CouldBeReadBackUnchanged() throws Exception {
     final FSRecord[] records = new FSRecord[maxRecordsToInsert];
 
@@ -177,7 +190,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   /* =================== PERSISTENCE: values are kept through close-and-reopen =============================== */
 
   @Test
-  public void emptyStorageRemainsEmptyButHeaderFieldsStillRestored_AfterStorageClosedAndReopened() throws IOException {
+  public void emptyStorageRemains_EmptyButHeaderFieldsStillRestored_AfterStorageClosedAndReopened() throws IOException {
     final int version = 10;
     final int connectionStatus = PersistentFSHeaders.CONNECTED_MAGIC;
 
@@ -281,8 +294,8 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
     public void updateInStorage(final PersistentFSRecordsStorage storage) throws IOException {
       //storage.fillRecord(id, this.timestamp, this.length, this.flags, this.nameRef, this.parentRef, false);
-      if (storage instanceof PersistentFSRecordsOverLockFreePagedStorage) {
-        final PersistentFSRecordsOverLockFreePagedStorage newStorage = (PersistentFSRecordsOverLockFreePagedStorage)storage;
+      if (storage instanceof IPersistentFSRecordsStorage) {
+        final IPersistentFSRecordsStorage newStorage = (IPersistentFSRecordsStorage)storage;
         newStorage.updateRecord(id, record -> {
           record.setParent(this.parentRef);
           record.setNameId(this.nameRef);
