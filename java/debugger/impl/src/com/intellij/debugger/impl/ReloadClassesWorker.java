@@ -112,8 +112,7 @@ class ReloadClassesWorker {
         if (debugProcess.isDetached() || debugProcess.isDetaching()) {
           break;
         }
-        if (redefineProcessor.getProcessedClassesCount() == 0 && myProgress.isCancelled()) {
-          // once at least one class has been actually reloaded, do not interrupt the whole process
+        if (redefineProcessor.mayCancel() && myProgress.isCancelled()) {
           break;
         }
         processedEntriesCount++;
@@ -128,8 +127,7 @@ class ReloadClassesWorker {
         }
       }
 
-      if (redefineProcessor.getProcessedClassesCount() == 0 && myProgress.isCancelled()) {
-        // once at least one class has been actually reloaded, do not interrupt the whole process
+      if (redefineProcessor.mayCancel() && myProgress.isCancelled()) {
         return;
       }
 
@@ -282,6 +280,11 @@ class ReloadClassesWorker {
       finally {
         myRedefineMap.clear();
       }
+    }
+
+    public boolean mayCancel() {
+      // once at least one class has been actually reloaded, do not interrupt the whole process
+      return myProcessedClassesCount == 0;
     }
 
     public int getProcessedClassesCount() {
