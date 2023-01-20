@@ -64,7 +64,7 @@ abstract class JavaScriptDebugAware {
   open val isOnlySourceMappedBreakpoints: Boolean
     get() = true
 
-  fun canGetEvaluationInfo(file: PsiFile): Boolean = file.fileType == fileType
+  open fun canGetEvaluationInfo(file: PsiFile): Boolean = file.fileType == fileType
 
   open fun getEvaluationInfo(element: PsiElement, document: Document, expressionInfoFactory: ExpressionInfoFactory): Promise<ExpressionInfo?>? = null
 
