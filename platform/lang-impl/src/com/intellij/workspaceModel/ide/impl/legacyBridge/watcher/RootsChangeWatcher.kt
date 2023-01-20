@@ -20,9 +20,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.*
-import com.intellij.project.stateStore
 import com.intellij.serviceContainer.AlreadyDisposedException
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.util.io.URLUtil
@@ -55,21 +53,11 @@ private val LOG = logger<RootsChangeWatcher>()
 @Service(Service.Level.PROJECT)
 private class RootsChangeWatcher(private val project: Project) {
   private val moduleManager by lazy(LazyThreadSafetyMode.NONE) { ModuleManager.getInstance(project) }
-  private val projectFilePaths = CollectionFactory.createFilePathSet()
   private val virtualFileManager = VirtualFileUrlManager.getInstance(project)
   private val virtualFileUrlWatcher = VirtualFileUrlWatcher.getInstance(project)
 
   private val changedUrlsList = ContainerUtil.createConcurrentList<Pair<String, String>>()
   private val changedModuleStorePaths = ContainerUtil.createConcurrentList<Pair<Module, Path>>()
-
-  init {
-    val store = project.stateStore
-    val projectFilePath = store.projectFilePath
-    if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName?.toString()) {
-      projectFilePaths.add(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(projectFilePath.toString())))
-      projectFilePaths.add(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(store.workspacePath.toString())))
-    }
-  }
 
   class RootsChangeWatcherDelegator : AsyncFileListener {
     override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
@@ -198,8 +186,7 @@ private class RootsChangeWatcher(private val project: Project) {
     }
 
     val indexingServiceEx = EntityIndexingServiceEx.getInstanceEx()
-    if (affectedEntities.any { it.propertyName != "entitySource" && indexingServiceEx.shouldCauseRescan(it.entity, project) }
-        || virtualFileUrl.url in projectFilePaths) {
+    if (affectedEntities.any { it.propertyName != "entitySource" && indexingServiceEx.shouldCauseRescan(it.entity, project) }) {
       entityChanges.addAffectedEntities(affectedEntities.map { it.entity.createReference() }, allRootsWereRemoved)
     }
   }
