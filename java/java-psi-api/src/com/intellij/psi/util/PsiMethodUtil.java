@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
@@ -40,6 +40,12 @@ public final class PsiMethodUtil {
     return null;
   }
 
+  /**
+   * ATTENTION: does not check the method name equals "main"
+   *
+   * @param method  the method to check
+   * @return true, if the method satisfies a main method signature. false, otherwise
+   */
   public static boolean isMainMethod(final PsiMethod method) {
     if (method == null || method.getContainingClass() == null) return false;
     if (!PsiType.VOID.equals(method.getReturnType())) return false;
