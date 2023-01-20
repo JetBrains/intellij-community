@@ -74,7 +74,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       }
 
       Map<@NonNls String, @NlsContexts.ConfigurableName String> map = new HashMap<>();
-      for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true)) {
+      for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true, true)) {
         if (configurable instanceof SearchableConfigurable) {
           map.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
         }
