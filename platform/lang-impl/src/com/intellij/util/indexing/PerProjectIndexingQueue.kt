@@ -230,7 +230,7 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
   }
 
   fun clear() {
-    val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles()
+    val (_, _, currentLatch) = getAndResetQueuedFiles()
     currentLatch?.countDown() // release DumbModeWhileScanning if it has already been queued or running
   }
 
@@ -293,10 +293,6 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
 
   @TestOnly
   class TestCompanion(private val q: PerProjectIndexingQueue) {
-    companion object {
-      val DUMB_MODE_THRESHOLD = PerProjectIndexingQueue.DUMB_MODE_THRESHOLD
-    }
-
     fun getAndResetQueuedFiles(): Triple<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int, CountDownLatch?> {
       return q.getAndResetQueuedFiles()
     }
