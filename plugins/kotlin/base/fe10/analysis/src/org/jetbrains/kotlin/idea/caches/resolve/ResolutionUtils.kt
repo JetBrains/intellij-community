@@ -206,7 +206,7 @@ fun ResolutionFacade.resolveImportReference(
     fqName: FqName
 ): Collection<DeclarationDescriptor> {
     val importDirective = KtPsiFactory(project).createImportDirective(ImportPath(fqName, false))
-    val qualifiedExpressionResolver = this.getFrontendService(moduleDescriptor, QualifiedExpressionResolver::class.java)
+    val qualifiedExpressionResolver = this.getFrontendService(QualifiedExpressionResolver::class.java)
     return qualifiedExpressionResolver.processImportReference(
         importDirective,
         moduleDescriptor,

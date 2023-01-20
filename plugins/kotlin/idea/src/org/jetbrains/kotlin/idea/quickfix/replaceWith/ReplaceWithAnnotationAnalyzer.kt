@@ -57,10 +57,9 @@ object ReplaceWithAnnotationAnalyzer {
         val psiFactory = KtPsiFactory(resolutionFacade.project)
         val expression = psiFactory.createExpressionIfPossible(replaceWith.pattern) ?: return null
 
-        val module = resolutionFacade.moduleDescriptor
         val scope = buildScope(resolutionFacade, replaceWith, symbolDescriptor) ?: return null
 
-        val expressionTypingServices = resolutionFacade.getFrontendService(module, ExpressionTypingServices::class.java)
+        val expressionTypingServices = resolutionFacade.getFrontendService(ExpressionTypingServices::class.java)
 
         fun analyzeExpression(ignore: KtExpression) = expression.analyzeInContext(
             scope,
