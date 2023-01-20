@@ -21,6 +21,31 @@ fun CoroutineScope.childScope(context: CoroutineContext = EmptyCoroutineContext,
   return CoroutineScope(parentContext + job + context)
 }
 
+@Internal
+fun CoroutineScope.namedChildScope(
+  name: String,
+  context: CoroutineContext = EmptyCoroutineContext,
+  supervisor: Boolean = true,
+): CoroutineScope {
+  // `launch` allows to see actual coroutine with its context (and name!)
+  // in the coroutine dump instead of "SupervisorJobImpl{Active}@598294b2"
+  // https://github.com/Kotlin/kotlinx.coroutines/issues/3428
+  lateinit var result: CoroutineScope
+  launch(context + CoroutineName(name), start = CoroutineStart.UNDISPATCHED) {
+    if (supervisor) {
+      supervisorScope {
+        result = this@supervisorScope
+        awaitCancellation() // keep it alive
+      }
+    }
+    else {
+      result = this@launch
+      awaitCancellation() // keep it alive
+    }
+  }
+  return result
+}
+
 /**
  * Makes [this] scope job behave as if it was a child of [secondaryParent] job
  * as per the coroutine framework parent-child [Job] relation:

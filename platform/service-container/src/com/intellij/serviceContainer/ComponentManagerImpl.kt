@@ -31,6 +31,7 @@ import com.intellij.util.childScope
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.namedChildScope
 import com.intellij.util.runSuppressing
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
@@ -1469,7 +1470,7 @@ abstract class ComponentManagerImpl(
     // The parent scope should become cancelled only when the container is disposed, or the plugin is unloaded.
     // Leaking the parent scope might lead to premature cancellation.
     // Fool proofing: a fresh child scope is created per instance to avoid leaking the parent to clients.
-    return intersectionScope.childScope(CoroutineName(pluginClass.name))
+    return intersectionScope.namedChildScope(pluginClass.name)
   }
 
   private fun intersectionCoroutineScope(pluginScope: CoroutineScope): CoroutineScope {
@@ -1480,7 +1481,7 @@ abstract class ComponentManagerImpl(
 
     val containerScope = getCoroutineScope()
     val intersectionName = "$debugString x ${pluginScope.coroutineContext[CoroutineName]?.name}"
-    val intersectionScope = containerScope.childScope(CoroutineName(intersectionName)).also {
+    val intersectionScope = containerScope.namedChildScope(intersectionName).also {
       it.attachAsChildTo(pluginScope)
     }
     while (true) {
