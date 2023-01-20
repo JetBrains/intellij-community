@@ -1,12 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.quickfix;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.UnresolvedReferenceQuickFixUpdaterImpl;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -44,7 +45,7 @@ public class UnresolvedQuickFixProviderTest extends LightDaemonAnalyzerTestCase 
   public void testUnresolvedReferenceQuickFixProviderMustRegisterItsQuickFixesLazily() {
     Disposable resolveInBackground = Disposer.newDisposable();
     ((UnresolvedReferenceQuickFixUpdaterImpl)UnresolvedReferenceQuickFixUpdater.getInstance(getProject())).stopUntil(resolveInBackground);
-    UnresolvedReferenceQuickFixProvider.EP_NAME.getPoint().registerExtension(new MyVerySlowQuickFixProvider(), getTestRootDisposable());
+    ExtensionPointName.create("com.intellij.codeInsight.unresolvedReferenceQuickFixProvider").getPoint().registerExtension(new MyVerySlowQuickFixProvider(), getTestRootDisposable());
     int N = 1000;
     String unresolvedDeclarations = IntStream.range(0, N).mapToObj(i-> "public UnknownClassNumber" + i + " var" + i + ";\n").collect(Collectors.joining());
     @Language("JAVA")

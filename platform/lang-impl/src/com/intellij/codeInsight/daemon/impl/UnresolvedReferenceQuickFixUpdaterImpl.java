@@ -150,13 +150,13 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
   }
 
   @TestOnly
-  public void stopUntil(@NotNull Disposable disposable) {
+  void stopUntil(@NotNull Disposable disposable) {
     enabled = false;
     Disposer.register(disposable, ()->enabled=true);
   }
 
   @TestOnly
-  public void waitForBackgroundJobIfStartedInTests(@NotNull HighlightInfo info) throws InterruptedException {
+  void waitForBackgroundJobIfStartedInTests(@NotNull HighlightInfo info) throws InterruptedException {
     PsiReference reference = info.unresolvedReference;
     if (reference == null) return;
     Job<?> job = reference.getElement().getUserData(JOB);
