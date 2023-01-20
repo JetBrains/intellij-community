@@ -274,6 +274,32 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
+  fun `test register generated folder when there is a nested generated annotation folder`() {
+    val root = "/project"
+
+    val mainGeneratedFolder = "/project/generated"
+    val mainNestedAnnotationsFolder = "/project/generated/annotations"
+
+    val testGeneratedFolder = "/project/test-generated"
+    val testNestedAnnotationsFolder = "/project/test-generated/test-annotations"
+
+    val contentRoots = collect(projectRoots = listOf(root),
+                               mainGeneratedSourceFolders = listOf(mainGeneratedFolder),
+                               mainGeneratedAnnotationSourceFolders = listOf(mainNestedAnnotationsFolder),
+                               testGeneratedSourceFolders = listOf(testGeneratedFolder),
+                               testGeneratedAnnotationSourceFolders = listOf(testNestedAnnotationsFolder),
+                               )
+
+    assertContentRoots(contentRoots,
+                       listOf(ContentRootTestData(
+                         expectedPath = root,
+                         expectedMainGeneratedFolders = listOf(mainGeneratedFolder),
+                         expectedTestGeneratedFolders = listOf(testGeneratedFolder),
+                         ))
+    )
+  }
+
+  @Test
   fun `test do not register generated folder with a nested source, but create a root`() {
     val root = "/root1"
 
@@ -534,6 +560,8 @@ class ContentRootCollectorTest : MavenTestCase() {
                       testResourceFolders: List<String> = emptyList(),
                       mainGeneratedSourceFolders: List<String> = emptyList(),
                       testGeneratedSourceFolders: List<String> = emptyList(),
+                      mainGeneratedAnnotationSourceFolders: List<String> = emptyList(),
+                      testGeneratedAnnotationSourceFolders: List<String> = emptyList(),
                       excludeFolders: List<String> = emptyList(),
                       excludeAndPreventSubfoldersFolders: List<String> = emptyList()): Collection<ContentRootCollector.ContentRootResult> {
     val folders = mutableListOf<ContentRootCollector.ImportedFolder>()
@@ -545,11 +573,17 @@ class ContentRootCollectorTest : MavenTestCase() {
     mainGeneratedSourceFolders.forEach {
       folders.add(ContentRootCollector.GeneratedSourceFolder(it, JavaSourceRootType.SOURCE))
     }
+    mainGeneratedAnnotationSourceFolders.forEach {
+      folders.add(ContentRootCollector.GeneratedSourceFolder(it, JavaSourceRootType.SOURCE, true))
+    }
 
     testSourceFolders.forEach { folders.add(ContentRootCollector.SourceFolder(it, JavaSourceRootType.TEST_SOURCE)) }
     testResourceFolders.forEach { folders.add(ContentRootCollector.SourceFolder(it, JavaResourceRootType.TEST_RESOURCE)) }
     testGeneratedSourceFolders.forEach {
       folders.add(ContentRootCollector.GeneratedSourceFolder(it, JavaSourceRootType.TEST_SOURCE))
+    }
+    testGeneratedAnnotationSourceFolders.forEach {
+      folders.add(ContentRootCollector.GeneratedSourceFolder(it, JavaSourceRootType.TEST_SOURCE, true))
     }
 
     excludeFolders.forEach { folders.add(ContentRootCollector.ExcludedFolder(it)) }
