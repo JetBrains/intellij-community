@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.SmartList
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.lz
@@ -39,9 +38,9 @@ open class UastFakeLightMethod(
                         private val myExtendsList by lz {
                             super.getExtendsList().apply {
                                 p.extendsBound?.let { extendsBound ->
-                                    baseResolveProviderService.resolveToType(extendsBound, this@UastFakeLightMethod)
-                                        ?.safeAs<PsiClassType>()
-                                        ?.let { addReference(it) }
+                                    val psiType =
+                                        baseResolveProviderService.resolveToType(extendsBound, this@UastFakeLightMethod)
+                                    (psiType as? PsiClassType)?.let { addReference(it) }
                                 }
                             }
                         }
@@ -123,7 +122,7 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
 
     init {
         this.containingClass = containingClass
-        if (original.safeAs<KtNamedFunction>()?.isTopLevel == true) {
+        if ((original as? KtNamedFunction)?.isTopLevel == true) {
             addModifier(PsiModifier.STATIC)
         }
     }

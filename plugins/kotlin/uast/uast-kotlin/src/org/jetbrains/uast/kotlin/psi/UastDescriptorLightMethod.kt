@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.kotlin.PsiTypeConversionConfiguration
 import org.jetbrains.uast.kotlin.TypeOwnerKind
 import org.jetbrains.uast.kotlin.lz
@@ -32,12 +31,13 @@ internal class UastDescriptorLightMethod(
                         private val myExtendsList by lz {
                             super.getExtendsList().apply {
                                 p.upperBounds.forEach { bound ->
-                                    bound.toPsiType(
-                                        this@UastDescriptorLightMethod,
-                                        context,
-                                        PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
-                                    ).safeAs<PsiClassType>()
-                                        ?.let { addReference(it) }
+                                    val psiType =
+                                        bound.toPsiType(
+                                            this@UastDescriptorLightMethod,
+                                            context,
+                                            PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
+                                        )
+                                    (psiType as? PsiClassType)?.let { addReference(it) }
                                 }
                             }
                         }

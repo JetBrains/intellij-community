@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
@@ -44,7 +43,7 @@ internal fun convertParentImpl(
 
     }
 
-    if (psi is KtLightElement<*, *> && uElement.sourcePsi.safeAs<KtClassOrObject>()?.isLocal == true) {
+    if (psi is KtLightElement<*, *> && (uElement.sourcePsi as? KtClassOrObject)?.isLocal == true) {
         val originParent = psi.kotlinOrigin?.parent
         parent = when (originParent) {
             null -> parent
@@ -185,7 +184,7 @@ internal fun convertParentImpl(
     }
 
     if (result is USwitchClauseExpressionWithBody && !isInConditionBranch(element, result)) {
-        val uYieldExpression = result.body.expressions.lastOrNull().safeAs<UYieldExpression>()
+        val uYieldExpression = result.body.expressions.lastOrNull() as? UYieldExpression
         if (uYieldExpression != null && uYieldExpression.expression == element)
             return uYieldExpression
 
@@ -241,4 +240,24 @@ private fun findAnnotationClassFromConstructorParameter(
         return languagePlugin.convertElementWithParent(containingClass, null) as? UClass
     }
     return null
+}
+
+/**
+ * Return the immediate parent of the given type
+ *
+ * Unlike [PsiElement#getParentOfType] variants that find the closest parent of the type (may include itself),
+ * this util is looking for the immediate parent only, hence a drop-in replacement of `parent.safeAs<T>()`.
+ * Note that `safeAs` becomes error-level opt-in due to the unsafe cast in certain platforms.
+ */
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+inline fun <reified T : PsiElement> PsiElement?.parentAs() : @kotlin.internal.NoInfer T? = this?.parent as? T
+
+/**
+ * Returns parent [KtObjectLiteralExpression] for the given [KtSuperTypeCallEntry]
+ *
+ * E.g., `object : MyInterface { ... }`
+ * this returns [KtObjectLiteralExpression] for that `object` from [KtSuperTypeCallEntry] of `MyInterface`
+ */
+internal fun KtSuperTypeCallEntry.getParentObjectLiteralExpression(): KtObjectLiteralExpression? {
+    return parentAs<KtSuperTypeList>().parentAs<KtObjectDeclaration>().parentAs<KtObjectLiteralExpression>()
 }
