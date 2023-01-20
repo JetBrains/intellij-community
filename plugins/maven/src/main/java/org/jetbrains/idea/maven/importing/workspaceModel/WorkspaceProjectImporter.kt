@@ -315,8 +315,6 @@ internal class WorkspaceProjectImporter(
 
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
 
-    currentStorage.replaceBySource({ it is MavenProjectsTreeEntitySource }, newStorage)
-
     // Now we have some modules with duplicating content roots. One content root existed before and another one exported from maven.
     //   We need to move source roots and excludes from existing content roots to the exported content roots and remove (obsolete) existing.
     modulesWithDuplicatingRoots.asSequence()
@@ -484,6 +482,7 @@ internal class WorkspaceProjectImporter(
 
     private fun isMavenEntity(it: EntitySource) =
       (it as? JpsImportedEntitySource)?.externalSystemId == WorkspaceModuleImporter.EXTERNAL_SOURCE_ID
+      || it is MavenProjectsTreeEntitySource
 
     private fun readMavenExternalSystemData(storage: EntityStorage) =
       importedEntities(storage, ExternalSystemModuleOptionsEntity::class.java)
