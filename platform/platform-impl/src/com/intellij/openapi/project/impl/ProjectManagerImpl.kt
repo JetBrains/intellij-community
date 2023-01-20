@@ -712,7 +712,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   private suspend fun notifyRecentManager(project: Project, openTimestamp: Long) {
-    RecentProjectsManagerBase.getInstanceEx().projectOpened(project, openTimestamp)
+    (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.projectOpened(project, openTimestamp)
     dispatchEarlyNotifications()
   }
 
