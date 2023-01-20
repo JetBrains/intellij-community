@@ -254,6 +254,8 @@ final class PersistentFSConnection {
     return myPersistentFSPaths;
   }
 
+  //TODO RC: we use it to mark file record modified there something derived is modified -- i.e. children attribute
+  //         or content. This looks suspicious to me: why we need to update _file_ record version in those cases?
   public void markRecordAsModified(int fileId) throws IOException {
     getRecords().markRecordAsModified(fileId);
     markDirty();
