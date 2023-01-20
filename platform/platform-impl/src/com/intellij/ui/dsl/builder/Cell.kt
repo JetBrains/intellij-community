@@ -29,9 +29,11 @@ enum class LabelPosition {
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): Cell<T>
 
   override fun align(align: Align): Cell<T>
@@ -132,6 +134,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, prop: MutableProperty<V>): Cell<T>
 
   @Deprecated("Use overloaded method")
+  @ApiStatus.ScheduledForRemoval
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
 
   /**

@@ -22,9 +22,11 @@ interface Placeholder : CellBase<Placeholder> {
   override fun enabled(isEnabled: Boolean): Placeholder
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Placeholder
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): Placeholder
 
   override fun align(align: Align): Placeholder

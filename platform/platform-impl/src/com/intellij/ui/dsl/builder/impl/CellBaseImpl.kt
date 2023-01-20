@@ -61,12 +61,14 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
   }
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T> {
     this.horizontalAlign = horizontalAlign
     return this
   }
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T> {
     this.verticalAlign = verticalAlign
     return this

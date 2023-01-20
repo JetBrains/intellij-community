@@ -56,12 +56,14 @@ internal class CellImpl<T : JComponent>(
   val onChangeManager = OnChangeManager(component)
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellImpl<T> {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): CellImpl<T> {
     super.verticalAlign(verticalAlign)
     return this

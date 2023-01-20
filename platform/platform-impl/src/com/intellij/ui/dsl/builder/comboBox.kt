@@ -14,6 +14,7 @@ import kotlin.reflect.KMutableProperty0
 import com.intellij.openapi.observable.util.whenItemSelectedFromUi as whenItemSelectedFromUiImpl
 
 @Deprecated("Use overloaded method")
+@ScheduledForRemoval
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(binding: PropertyBinding<T?>): Cell<C> {
   return bindItem(MutableProperty(binding.get, binding.set))
 }

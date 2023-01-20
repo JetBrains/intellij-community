@@ -73,12 +73,14 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
   }
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): SegmentedButton<T> {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): SegmentedButton<T> {
     super.verticalAlign(verticalAlign)
     return this

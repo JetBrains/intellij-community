@@ -17,6 +17,7 @@ import javax.swing.JLabel
  * Empty label parameter for [Panel.row] method in case label is omitted.
  */
 @Deprecated("Use \"\" instead of this constant")
+@ApiStatus.ScheduledForRemoval
 val EMPTY_LABEL = ""
 
 @ApiStatus.NonExtendable
@@ -32,9 +33,11 @@ interface Panel : CellBase<Panel> {
   override fun enabledIf(predicate: ComponentPredicate): Panel
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Panel
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): Panel
 
   override fun align(align: Align): Panel
@@ -77,6 +80,7 @@ interface Panel : CellBase<Panel> {
   fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null, column3: (Row.() -> Unit)? = null): Row
 
   @Deprecated(message = "Use overloaded method or group/groupRowsRange instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval
   fun separator(@NlsContexts.Separator title: String? = null, background: Color? = null): Row
 
   /**
