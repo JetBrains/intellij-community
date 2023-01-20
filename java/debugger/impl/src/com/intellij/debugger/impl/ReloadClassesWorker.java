@@ -267,6 +267,12 @@ class ReloadClassesWorker {
       myProcessedClassesCount++;
     }
 
+    public void processPending() throws Throwable {
+      if (myRedefineMap.size() > 0) {
+        processChunk();
+      }
+    }
+
     private void processChunk() throws Throwable {
       // reload this portion of classes and clear the map to free memory
       try {
@@ -275,12 +281,6 @@ class ReloadClassesWorker {
       }
       finally {
         myRedefineMap.clear();
-      }
-    }
-
-    public void processPending() throws Throwable {
-      if (myRedefineMap.size() > 0) {
-        processChunk();
       }
     }
 
