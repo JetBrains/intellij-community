@@ -8,6 +8,7 @@ import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -51,6 +52,7 @@ import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_
 import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchTypeUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
+import git4idea.ui.branch.tree.GitBranchesTreeRenderer.Companion.getText
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.overrideBuiltInAction
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectFirstLeaf
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectLastLeaf
@@ -152,15 +154,13 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   override fun createContent(): JComponent {
-    tree = Tree(treeStep.treeModel).also {
+    tree = BranchesTree(treeStep.treeModel).also {
       configureTreePresentation(it)
       overrideTreeActions(it)
       addTreeListeners(it)
       Disposer.register(this) {
         it.model = null
       }
-      val topBorder = if (step.title.isNullOrEmpty()) JBUIScale.scale(5) else 0
-      it.border = JBUI.Borders.empty(topBorder, JBUIScale.scale(22), 0, 0)
     }
     searchPatternStateFlow = MutableStateFlow(null)
     speedSearch.installSupplyTo(tree, false)
@@ -368,6 +368,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   private fun configureTreePresentation(tree: JTree) = with(tree) {
+    val topBorder = if (step.title.isNullOrEmpty()) JBUIScale.scale(5) else 0
+    border = JBUI.Borders.empty(topBorder, JBUIScale.scale(22), 0, 0)
     background = JBUI.CurrentTheme.Popup.BACKGROUND
 
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_BACKGROUND, Supplier { JBUI.CurrentTheme.Tree.background(true, true) })
@@ -661,6 +663,23 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   override fun createWarning(text: String): JComponent {
     return DvcsBranchesDivergedBanner.create("reference.VersionControl.Git.SynchronousBranchControl", text)
+  }
+
+  private inner class BranchesTree(model: TreeModel) : Tree(model) {
+
+    override fun convertValueToText(value: Any?,
+                                    selected: Boolean,
+                                    expanded: Boolean,
+                                    leaf: Boolean,
+                                    row: Int,
+                                    hasFocus: Boolean): String {
+      return when (value) {
+        null -> ""
+        is ItemPresentation -> value.presentableText.orEmpty()
+        is GitBranch -> value.name
+        else -> getText(value, treeStep.treeModel, treeStep.repositories) ?: ""
+      }
+    }
   }
 
   private val am
