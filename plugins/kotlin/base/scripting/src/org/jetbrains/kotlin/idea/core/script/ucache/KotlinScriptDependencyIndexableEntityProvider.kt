@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.openapi.project.Project
@@ -7,6 +7,7 @@ import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIterato
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import org.jetbrains.kotlin.idea.core.script.dependencies.useWorkspaceFileContributor
 
 /**
  * See recommendations for custom entities indexing
@@ -17,17 +18,26 @@ class KotlinScriptDependencyIndexableEntityProvider : IndexableEntityProvider.Ex
     override fun getEntityClass(): Class<KotlinScriptEntity> = KotlinScriptEntity::class.java
 
     override fun getAddedEntityIteratorBuilders(entity: KotlinScriptEntity, project: Project): Collection<IndexableIteratorBuilder> =
-        buildList {
-            fillWithLibsDiff(project, entity)
+        if (useWorkspaceFileContributor()) {
+            emptyList()
+        } else {
+            buildList {
+                fillWithLibsDiff(project, entity)
+            }
         }
 
     override fun getReplacedEntityIteratorBuilders(
         oldEntity: KotlinScriptEntity,
         newEntity: KotlinScriptEntity,
         project: Project
-    ): Collection<IndexableIteratorBuilder> = buildList {
-        fillWithLibsDiff(project, newEntity, oldEntity)
-    }
+    ): Collection<IndexableIteratorBuilder> =
+        if (useWorkspaceFileContributor()) {
+            emptyList()
+        } else {
+            buildList {
+                fillWithLibsDiff(project, newEntity, oldEntity)
+            }
+        }
 
     override fun getIteratorBuildersForExistingModule(
         entity: ModuleEntity,
