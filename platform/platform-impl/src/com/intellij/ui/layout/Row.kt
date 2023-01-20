@@ -27,11 +27,11 @@ interface BaseBuilder {
 
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun buttonGroup(init: () -> Unit) {
-    buttonGroup(null, init)
+    withButtonGroup(null, ButtonGroup(), init)
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun buttonGroup(@NlsContexts.BorderTitle title:String? = null, init: () -> Unit) {
     withButtonGroup(title, ButtonGroup(), init)
   }
@@ -52,7 +52,7 @@ interface RowBuilder : BaseBuilder {
   fun createNoteOrCommentRow(component: JComponent): Row
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun checkBoxGroup(@Nls title: String?, body: () -> Unit)
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -99,7 +99,7 @@ interface RowBuilder : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun commentRow(@Nls text: String) {
     createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true, -1, true))
   }
@@ -108,7 +108,7 @@ interface RowBuilder : BaseBuilder {
    * Creates a nested UI DSL panel, with a grid which is independent of this pane.
    */
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun nestedPanel(@NlsContexts.BorderTitle title: String? = null, init: LayoutBuilder.() -> Unit): CellBuilder<DialogPanel>
 
   @Deprecated("Use Kotlin UI DSL Version 2")
