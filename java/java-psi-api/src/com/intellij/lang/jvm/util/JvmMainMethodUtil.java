@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.util;
 
 import com.intellij.lang.jvm.*;
@@ -30,7 +30,7 @@ public final class JvmMainMethodUtil {
   }
 
   private static boolean canBeMainClass(@NotNull JvmClass clazz) {
-    if (clazz.getName() == null) return false; // anonymous classes
+    if (clazz.getQualifiedName() == null) return false; // anonymous and local classes
     final JvmClassKind kind = clazz.getClassKind();
     if (kind == JvmClassKind.ANNOTATION) return false;
     return clazz.getContainingClass() == null || clazz.hasModifier(JvmModifier.STATIC);
