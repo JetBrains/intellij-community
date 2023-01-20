@@ -59,7 +59,7 @@ object ContentRootCollector {
         }
         else if (prev is GeneratedSourceFolder && curr is UserOrGeneratedSourceFolder) {
           // prefer generated folder to annotations subfolder
-          if (curr.isAnnotationFolder) {
+          if (curr is GeneratedSourceFolder && curr.isAnnotationFolder) {
             return@forEach
           }
           // don't add generated folder when there are sub source folder
@@ -125,7 +125,7 @@ object ContentRootCollector {
     }
   }
 
-  abstract class UserOrGeneratedSourceFolder(path: String, val type: JpsModuleSourceRootType<*>, rank: Int, internal var isAnnotationFolder: Boolean = false) : ImportedFolder(path, rank) {
+  abstract class UserOrGeneratedSourceFolder(path: String, val type: JpsModuleSourceRootType<*>, rank: Int) : ImportedFolder(path, rank) {
     override fun compareTo(other: ImportedFolder): Int {
       val result = super.compareTo(other)
       if (result != 0 || other !is UserOrGeneratedSourceFolder) return result
@@ -150,7 +150,7 @@ object ContentRootCollector {
   class ProjectRootFolder(path: String) : ImportedFolder(path, 0)
   class SourceFolder(path: String, type: JpsModuleSourceRootType<*>) : UserOrGeneratedSourceFolder(path, type, 1)
   class ExcludedFolderAndPreventSubfolders(path: String) : BaseExcludedFolder(path, 2)
-  class GeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>) : UserOrGeneratedSourceFolder(path, type, 3)
+  class GeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>, val isAnnotationFolder: Boolean = false) : UserOrGeneratedSourceFolder(path, type, 3)
   class ExcludedFolder(path: String) : BaseExcludedFolder(path, 4)
 
   class ContentRootResult(val path: String,

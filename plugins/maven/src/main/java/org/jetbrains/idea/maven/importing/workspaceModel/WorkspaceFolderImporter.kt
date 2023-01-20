@@ -42,12 +42,6 @@ internal class WorkspaceFolderImporter(
     addContentRoot(cachedFolders, allFolders)
     addCachedFolders(moduleType, cachedFolders, allFolders)
 
-    val annotationDirectories = setOf(mavenProject.getAnnotationProcessorDirectory(true),
-                                      mavenProject.getAnnotationProcessorDirectory(false))
-      .map { FileUtil.toSystemIndependentName(it) }
-    allFolders.filter { annotationDirectories.contains(it.path) && it is ContentRootCollector.UserOrGeneratedSourceFolder }
-      .forEach { (it as ContentRootCollector.UserOrGeneratedSourceFolder).isAnnotationFolder = true }
-
     for (root in ContentRootCollector.collect(allFolders)) {
       val excludedUrls = root.excludeFolders.map { exclude -> virtualFileUrlManager.fromPath(exclude.path) }
       val contentRootEntity = builder.addContentRootEntity(virtualFileUrlManager.fromPath(root.path),
@@ -264,7 +258,7 @@ internal class WorkspaceFolderImporter(
                                           val type: JpsModuleSourceRootType<*>) {
     fun addAnnotationFolder(dir: File) {
       when (setting) {
-        SUBFOLDER, AUTODETECT -> addIfDirectoryExists(dir)
+        SUBFOLDER, AUTODETECT -> addIfDirectoryExists(dir, true)
         else -> {}
       }
     }
@@ -295,9 +289,9 @@ internal class WorkspaceFolderImporter(
       }
     }
 
-    private fun addIfDirectoryExists(dir: File) {
+    private fun addIfDirectoryExists(dir: File, isAnnotationFolder: Boolean = false) {
       if (dir.isDirectory) {
-        result.add(ContentRootCollector.GeneratedSourceFolder(dir.path, type))
+        result.add(ContentRootCollector.GeneratedSourceFolder(dir.path, type, isAnnotationFolder))
       }
     }
   }

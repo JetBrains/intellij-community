@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.importing.tree
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.maven.testFramework.MavenTestCase
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.importing.workspaceModel.ContentRootCollector
 import org.jetbrains.idea.maven.importing.workspaceModel.ContentRootCollector.collect
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
