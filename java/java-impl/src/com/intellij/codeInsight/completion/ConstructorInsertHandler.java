@@ -18,6 +18,8 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -38,8 +40,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -311,11 +313,13 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
       if (DumbService.getInstance(project).isDumb()) return;
 
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-      final PsiAnonymousClass
-        aClass = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiAnonymousClass.class, false);
-      if (aClass == null) return;
-      CommandProcessor.getInstance().executeCommand(project, () -> SlowOperations.allowSlowOperations(() -> {
-        final Collection<CandidateInfo> candidatesToImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
+      SmartPsiElementPointer<PsiAnonymousClass> pointer = getAnonymousClassPointer(editor, file);
+      if (pointer == null) return;
+      record OverrideContext(@NotNull PsiAnonymousClass aClass, @NotNull Collection<CandidateInfo> candidatesToImplement) {}
+      ReadAction.nonBlocking(() -> {
+        PsiAnonymousClass anonymousClass = pointer.getElement();
+        if (anonymousClass == null) return null;
+        final Collection<CandidateInfo> candidatesToImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(anonymousClass, true);
         for (Iterator<CandidateInfo> iterator = candidatesToImplement.iterator(); iterator.hasNext(); ) {
           final CandidateInfo candidate = iterator.next();
           final PsiElement element = candidate.getElement();
@@ -323,27 +327,41 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
             iterator.remove();
           }
         }
-        boolean invokeOverride = candidatesToImplement.isEmpty();
-        if (invokeOverride) {
-          OverrideImplementUtil.chooseAndOverrideOrImplementMethods(project, editor, aClass, false);
-        }
-        else {
-          ApplicationManagerEx.getApplicationEx()
-            .runWriteActionWithCancellableProgressInDispatchThread(getCommandName(), project, editor.getComponent(), indicator -> {
-              try {
-                List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
-                List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
-                List<PsiGenerationInfo<PsiMethod>> resultMembers =
-                  GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
-                resultMembers.get(0).positionCaret(editor, true);
-              }
-              catch (IncorrectOperationException ioe) {
-                LOG.error(ioe);
-              }
-            });
-        }
-      }), getCommandName(), getCommandName(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+        return new OverrideContext(anonymousClass, candidatesToImplement);
+      }).finishOnUiThread(ModalityState.NON_MODAL, context -> {
+        if (context == null) return;
+        CommandProcessor.getInstance().executeCommand(project, () -> {
+          PsiAnonymousClass anonymousClass = context.aClass;
+          boolean invokeOverride = context.candidatesToImplement.isEmpty();
+          if (invokeOverride) {
+            OverrideImplementUtil.chooseAndOverrideOrImplementMethods(project, editor, anonymousClass, false);
+          }
+          else {
+            ApplicationManagerEx.getApplicationEx()
+              .runWriteActionWithCancellableProgressInDispatchThread(getCommandName(), project, editor.getComponent(), indicator -> {
+                try {
+                  List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(
+                    anonymousClass, context.candidatesToImplement, false);
+                  List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
+                  List<PsiGenerationInfo<PsiMethod>> resultMembers =
+                    GenerateMembersUtil.insertMembersBeforeAnchor(anonymousClass, null, prototypes);
+                  resultMembers.get(0).positionCaret(editor, true);
+                }
+                catch (IncorrectOperationException ioe) {
+                  LOG.error(ioe);
+                }
+              });
+          }
+        }, getCommandName(), getCommandName(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+      }).submit(AppExecutorUtil.getAppExecutorService());
     };
+  }
+
+  @Nullable
+  private static SmartPsiElementPointer<PsiAnonymousClass> getAnonymousClassPointer(Editor editor, PsiFile file) {
+    final PsiAnonymousClass
+      aClass = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiAnonymousClass.class, false);
+    return aClass == null ? null : SmartPointerManager.createPointer(aClass);
   }
 
   @Contract("null -> false")

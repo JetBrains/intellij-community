@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -630,6 +631,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
         }""");
     configure();
     type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
@@ -925,6 +927,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     configure();
     assertStringItems("Zzoo", "Zzoo.Impl");
     type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
