@@ -49,7 +49,7 @@ import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.*
@@ -785,7 +785,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       }
     }
 
-    if (windowToOpenIn == null && (options.reuseOpen || !getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER))) {
+    if (windowToOpenIn == null && (options.reuseOpen || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER))) {
       windowToOpenIn = findWindowInAllSplitters(file)
     }
     if (windowToOpenIn == null) {
@@ -802,8 +802,11 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     for (splitters in getAllSplitters()) {
       for (window in splitters.getWindows()) {
         if (isFileOpenInWindow(file, window)) {
-          return if (getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)) window else activeCurrentWindow
+          if (AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)) {
+            return window
+          }
           // return a window from here so that we don't look for it again in getOrCreateCurrentWindow
+          return activeCurrentWindow
         }
       }
     }
