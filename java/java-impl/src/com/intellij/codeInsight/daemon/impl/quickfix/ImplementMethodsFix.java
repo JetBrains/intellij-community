@@ -107,23 +107,21 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
         return true;
       }
     };
+    final Collection<CandidateInfo> overrideImplement;
+    final PsiClass aClass;
     if (copy instanceof PsiEnumConstant enumConstant) {
       final PsiClass containingClass = enumConstant.getContainingClass();
       if (containingClass == null) return IntentionPreviewInfo.EMPTY;
-      final Collection<CandidateInfo> overrideImplement =
-        OverrideImplementExploreUtil.getMapToOverrideImplement(containingClass, true, false).values();
-      final List<PsiMethodMember> members = getMap(overrideImplement);
-      final PsiClass aClass = enumConstant.getOrCreateInitializingClass();
-      OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, members, options);
-    }
-    else if (copy instanceof PsiClass aClass) {
-      final Collection<CandidateInfo> overrideImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
-      final List<PsiMethodMember> members = getMap(overrideImplement);
-      OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, members, options);
+      aClass = enumConstant.getOrCreateInitializingClass();
+      overrideImplement = OverrideImplementExploreUtil.getMapToOverrideImplement(containingClass, true, false).values();
     }
     else {
-      return IntentionPreviewInfo.EMPTY;
+      if (!(copy instanceof PsiClass psiClass)) return IntentionPreviewInfo.EMPTY;
+      aClass = psiClass;
+      overrideImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(psiClass, true);
     }
+    final List<PsiMethodMember> members = getMap(overrideImplement);
+    OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, members, options);
     return IntentionPreviewInfo.DIFF;
   }
 
