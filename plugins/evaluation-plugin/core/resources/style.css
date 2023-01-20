@@ -335,6 +335,18 @@ pre {
   opacity: 0.2;
 }
 
+.cg .duplicate {
+  opacity: 0.2
+}
+
+.cg .duplicate:hover {
+  opacity: 1
+}
+
+.tr-delimiter {
+  opacity: 0.5;
+}
+
 .thresholds > button {
   border: none;
   padding: 0;

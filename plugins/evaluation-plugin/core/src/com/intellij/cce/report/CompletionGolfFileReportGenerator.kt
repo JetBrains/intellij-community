@@ -21,16 +21,6 @@ class CompletionGolfFileReportGenerator(
 
   override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String {
     return createHTML().body {
-      if (fileEvaluations.size > 1) {
-        div {
-          label("labelText") { +"For session:" }
-        }
-        div("tab") {
-          fileEvaluations.forEachIndexed { index, info ->
-            tabButton(info.evaluationType, index == 0)
-          }
-        }
-      }
       div("cg") {
         div {
           style = "display: flex; gap: 12px;"
@@ -59,9 +49,7 @@ class CompletionGolfFileReportGenerator(
         }
         code("cg-file cg-delimiter-integral") {
           table {
-            fileEvaluations.forEach {
-              getTable(it, text, it.evaluationType)
-            }
+            getTable(fileEvaluations, text)
           }
         }
       }
@@ -87,29 +75,42 @@ class CompletionGolfFileReportGenerator(
     }
   }
 
-  private fun TABLE.getTable(info: FileEvaluationInfo, fullText: String, evaluationId: String) {
+  private fun TABLE.getTable(infos: List<FileEvaluationInfo>, fullText: String) {
     tbody("evalContent") {
-      id = evaluationId
       var offset = 0
       var lineNumbers = 0
-      info.sessionsInfo.sessions.forEach { session ->
+      val firstInfo = infos.first()
+      for (sessionIndex in firstInfo.sessionsInfo.sessions.indices) {
+        val session = firstInfo.sessionsInfo.sessions[sessionIndex]
         val text = fullText.substring(offset, session.offset)
         val tab = text.lines().last().dropWhile { it == '\n' }
         val tail = fullText.drop(session.offset + session.expectedText.length).takeWhile { it != '\n' }
 
         lineNumbers += defaultText(text, lineNumbers)
 
-        val movesNormalised = MovesCountNormalised().evaluate(listOf(session))
-        val statsClass = Threshold.getClass(movesNormalised)
-        tr(statsClass) {
-          td("line-numbers") {
-            attributes["data-line-numbers"] = lineNumbers.toString()
+        val curSessions = infos.map { it.sessionsInfo.sessions[sessionIndex] }
+        val movesNormalizedAll = curSessions.map { MovesCountNormalised().evaluate(listOf(it)) }
+        for ((curSession, movesNormalised) in curSessions.zip(movesNormalizedAll)) {
+          var rowClasses = Threshold.getClass(movesNormalised)
+          if (curSessions.size > 1 && movesNormalizedAll.distinct().size == 1) {
+            rowClasses = "$rowClasses duplicate"
           }
-          td("code-line") {
-            prepareLine(session, tab, movesNormalised)
-            if (tail.isNotEmpty()) {
-              pre("ib") { +tail }
+          tr(rowClasses) {
+            td("line-numbers") {
+              attributes["data-line-numbers"] = lineNumbers.toString()
             }
+            td("code-line") {
+              prepareLine(curSession, tab, movesNormalised)
+              if (tail.isNotEmpty()) {
+                pre("ib") { +tail }
+              }
+            }
+          }
+        }
+        if (curSessions.size > 1) {
+          tr("tr-delimiter") {
+            td()
+            td("line-code") { hr() }
           }
         }
 
