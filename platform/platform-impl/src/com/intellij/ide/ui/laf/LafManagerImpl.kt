@@ -668,7 +668,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // trees
       defaults.put(JBUI.CurrentTheme.Tree.rowHeightKey(), 22)
       // lists
-      defaults.put("List.rowHeight", 22)
+      defaults.put("List.rowHeight", 24)
       // status bar
       defaults.put(JBUI.CurrentTheme.StatusBar.Widget.insetsKey(), JBUI.insets(4, 8, 3, 8))
       defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), JBUI.insets(1, 0, 1, 4))
@@ -679,7 +679,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), 32)
       defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), JBFont.medium())
       // VCS log
-      defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), 22)
+      defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), 24)
       defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), 4)
     }
   }
