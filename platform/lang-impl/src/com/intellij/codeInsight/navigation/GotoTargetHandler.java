@@ -342,16 +342,27 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     public SmartPsiElementPointer<PsiElement> addTarget(final PsiElement element) {
       if (ArrayUtil.find(targets, element) > -1) return null;
-      targets = ArrayUtil.append(targets, element);
-      SmartPsiElementPointer<PsiElement> pointer = ReadAction.compute(() -> SmartPointerManager.createPointer(element));
-      TargetPresentation presentation = ReadAction.compute(() -> computePresentation(element, hasDifferentNames));
-      presentations.put(element, presentation);
-      presentations.put(pointer, presentation);
+
       if (!hasDifferentNames && element instanceof PsiNamedElement) {
         final String name = ReadAction.compute(() -> ((PsiNamedElement)element).getName());
         myNames.add(name);
         hasDifferentNames = myNames.size() > 1;
+        if (hasDifferentNames) {
+          for (PsiElement target : targets) {
+            initPresentation(target, true);
+          }
+        }
       }
+
+      targets = ArrayUtil.append(targets, element);
+      return initPresentation(element, hasDifferentNames);
+    }
+
+    private SmartPsiElementPointer<PsiElement> initPresentation(PsiElement target, boolean hasDifferentNames) {
+      SmartPsiElementPointer<PsiElement> pointer = ReadAction.compute(() -> SmartPointerManager.createPointer(target));
+      TargetPresentation presentation = ReadAction.compute(() -> computePresentation(target, hasDifferentNames));
+      presentations.put(target, presentation);
+      presentations.put(pointer, presentation);
       return pointer;
     }
 
