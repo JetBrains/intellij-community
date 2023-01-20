@@ -270,12 +270,12 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     if (!dir.isDirectory) return null
 
     val fileSet = when (val info = getFileInfo(dir, true, true, true, true)) {
-                    is WorkspaceFileSetWithCustomData<*> -> info.takeIf { it.data is JvmPackageRootData }
-                    is MultipleWorkspaceFileSets -> info.find(JvmPackageRootData::class.java)
+                    is WorkspaceFileSetWithCustomData<*> -> info.takeIf { it.data is JvmPackageRootDataInternal }
+                    is MultipleWorkspaceFileSets -> info.find(JvmPackageRootDataInternal::class.java)
                     else -> null
                   } ?: return null
 
-    val packagePrefix = (fileSet.data as JvmPackageRootData).packagePrefix
+    val packagePrefix = (fileSet.data as JvmPackageRootDataInternal).packagePrefix
     val packageName = VfsUtilCore.getRelativePath(dir, fileSet.root, '.') 
                       ?: error("${dir.presentableUrl} is not under ${fileSet.root.presentableUrl}")
     return when {
@@ -318,7 +318,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                                  customData: WorkspaceFileSetData?) {
       val fileSet = WorkspaceFileSetImpl(root, kind, entity.createReference(), storageKind, customData ?: DummyWorkspaceFileSetData)
       fileSets.putValue(root, fileSet)
-      if (customData is JvmPackageRootData) {
+      if (customData is JvmPackageRootDataInternal) {
         fileSetsByPackagePrefix.addFileSet(customData.packagePrefix, fileSet)
       }
     }
@@ -369,7 +369,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                                  entity: WorkspaceEntity,
                                  customData: WorkspaceFileSetData?) {
       fileSets.removeValueIf(root) { it is WorkspaceFileSetImpl && isOriginatedFrom(it, entity) }
-      if (customData is JvmPackageRootData) {
+      if (customData is JvmPackageRootDataInternal) {
         fileSetsByPackagePrefix.removeByPrefixAndReference(customData.packagePrefix, entity.createReference())
       }
     }

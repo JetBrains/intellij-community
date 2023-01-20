@@ -9,6 +9,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRoot
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import org.jetbrains.annotations.ApiStatus
 
 class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity>, PlatformInternalWorkspaceFileIndexContributor {
   override val entityClass: Class<ContentRootEntity>
@@ -68,7 +69,13 @@ interface ModuleContentOrSourceRootData: WorkspaceFileSetData {
  */
 interface ModuleOrLibrarySourceRootData: WorkspaceFileSetData
 
-internal interface JvmPackageRootData: WorkspaceFileSetData {
+/**
+ * Marks files sets which correspond to JVM packages. This interface will be removed from the platform when we get rid of Java-specific
+ * methods like [com.intellij.openapi.roots.ProjectFileIndex.getPackageNameByDirectory] in the platform API, so plugins must use
+ * [com.intellij.java.workspaceModel.fileIndex.JvmPackageRootData] instead. 
+ */
+@ApiStatus.Internal
+interface JvmPackageRootDataInternal: WorkspaceFileSetData {
   val packagePrefix: String
 }
 
@@ -80,4 +87,4 @@ internal data class ModuleSourceRootData(
   val rootType: String,
   override val packagePrefix: String,
   val forGeneratedSources: Boolean
-) : ModuleContentOrSourceRootData, ModuleOrLibrarySourceRootData, JvmPackageRootData
+) : ModuleContentOrSourceRootData, ModuleOrLibrarySourceRootData, JvmPackageRootDataInternal

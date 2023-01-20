@@ -85,10 +85,10 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
 }
 
 internal class LibrarySourceRootFileSetData(projectLibraryId: LibraryId?, packagePrefix: String) 
-  : LibraryRootFileSetData(projectLibraryId, packagePrefix), ModuleOrLibrarySourceRootData, JvmPackageRootData
+  : LibraryRootFileSetData(projectLibraryId, packagePrefix), ModuleOrLibrarySourceRootData, JvmPackageRootDataInternal
 
 internal open class LibraryRootFileSetData(private val projectLibraryId: LibraryId?,
-                                           override val packagePrefix: String) : UnloadableFileSetData, JvmPackageRootData {
+                                           override val packagePrefix: String) : UnloadableFileSetData, JvmPackageRootDataInternal {
   override fun isUnloaded(project: Project): Boolean {
     return projectLibraryId != null && !ModuleDependencyIndex.getInstance(project).hasDependencyOn(projectLibraryId) 
   }

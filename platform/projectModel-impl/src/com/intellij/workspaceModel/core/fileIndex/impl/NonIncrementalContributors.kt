@@ -62,7 +62,7 @@ internal class NonIncrementalContributors(private val project: Project,
             sets.forEach { set ->
               fileSets.putValue(root, set)
               val fileSet = set as? WorkspaceFileSetImpl
-              if (fileSet != null && fileSet.data is JvmPackageRootData) {
+              if (fileSet != null && fileSet.data is JvmPackageRootDataInternal) {
                 fileSetsByPackagePrefix.addFileSet("", fileSet)
               }
             }
