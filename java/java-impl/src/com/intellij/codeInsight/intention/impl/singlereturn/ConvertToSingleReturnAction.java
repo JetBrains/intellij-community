@@ -48,7 +48,7 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiElement element = getElement(editor, file);
     PsiCodeBlock block = findBlock(element);
     if (block == null) return IntentionPreviewInfo.EMPTY;
     PsiCodeBlock replacement = generateBody(project, block, new EmptyProgressIndicator());
