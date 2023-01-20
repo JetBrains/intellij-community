@@ -170,7 +170,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         @NlsSafe
         val description = JvmTarget.DEFAULT.description
         jvmTargets.selectedItem = description
-        ir = JCheckBox(KotlinJvmBundle.message("checkbox.text.ir"), true)
+        ir = JCheckBox(KotlinJvmBundle.message("checkbox.text.ir"), false)
 
         setText(DEFAULT_TEXT)
         initOptionsPanel()
