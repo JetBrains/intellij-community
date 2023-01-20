@@ -260,6 +260,7 @@ input[type=checkbox], input[type=radio] {
 
 .labelText {
   font-size: 18px;
+  margin-right: 4px;
 }
 
 .evalContent {
@@ -387,7 +388,7 @@ pre {
   margin-right: 8px;
   padding: 0 7px;
   font-size: 12px;
-  line-height: 20px;
+  line-height: 22px;
   white-space: nowrap;
   background: #fafafa;
   border: 1px solid #d9d9d9;

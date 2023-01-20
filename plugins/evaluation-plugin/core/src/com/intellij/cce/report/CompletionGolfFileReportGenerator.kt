@@ -50,7 +50,7 @@ class CompletionGolfFileReportGenerator(
             div("cg-evaluations") {
               label("labelText") { +"Evaluations:" }
               fileEvaluations.forEachIndexed { i, info ->
-                span("cg-evaluation-title") { +"${i + 1}. ${info.evaluationType}; " }
+                span("cg-evaluation-title") { +"${i + 1}. ${info.evaluationType}" }
               }
             }
           }
