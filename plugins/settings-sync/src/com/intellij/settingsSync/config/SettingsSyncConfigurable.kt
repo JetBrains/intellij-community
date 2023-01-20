@@ -163,10 +163,8 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         indent {
           buttonsGroup {
             row {
-              val edition = ApplicationNamesInfo.getInstance().editionName
-              val suffix = if (edition != null) " " + edition.removeSuffix(" Edition") else ""
-              val productName = ApplicationNamesInfo.getInstance().fullProductName + suffix
-              radioButton(message("settings.cross.product.sync.choice.only.this.product", productName), false)
+              radioButton(
+                message("settings.cross.product.sync.choice.only.this.product", ApplicationNamesInfo.getInstance().fullProductName), false)
             }
             row {
               radioButton(message("settings.cross.product.sync.choice.all.products"), true)
