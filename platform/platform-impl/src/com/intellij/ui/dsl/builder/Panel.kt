@@ -117,7 +117,7 @@ interface Panel : CellBase<Panel> {
    */
   fun group(title: JBLabel, indent: Boolean = true, init: Panel.() -> Unit): Row
 
-  @Deprecated("Use overloaded group(...) instead")
+  @Deprecated("Use overloaded group(...) instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun group(@NlsContexts.BorderTitle title: String? = null,
             indent: Boolean = true,
@@ -147,7 +147,7 @@ interface Panel : CellBase<Panel> {
                        indent: Boolean = true,
                        init: Panel.() -> Unit): CollapsibleRow
 
-  @Deprecated("Use buttonsGroup(...) instead")
+  @Deprecated("Use buttonsGroup(...) instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null,
                       indent: Boolean = title != null, init: Panel.() -> Unit)

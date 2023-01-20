@@ -139,6 +139,10 @@ abstract class Row : Cell(), RowBuilder {
    * Indent for child rows of this row, expressed in steps (multiples of [SpacingConfiguration.indentLevel]). Replaces indent
    * calculated from row nesting.
    */
+  @get:Deprecated("Use Kotlin UI DSL Version 2")
+  @get:ApiStatus.ScheduledForRemoval
+  @set:Deprecated("Use Kotlin UI DSL Version 2")
+  @set:ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var subRowIndent: Int
 
@@ -168,6 +172,7 @@ abstract class Row : Cell(), RowBuilder {
    *
    * @param isFullWidth If `true`, the cell occupies the full width of the enclosing component.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   inline fun cell(isVerticalFlow: Boolean = false, isFullWidth: Boolean = false, init: InnerCell.() -> Unit) {
     setCellMode(true, isVerticalFlow, isFullWidth)
@@ -189,6 +194,7 @@ enum class GrowPolicy {
   MEDIUM_TEXT
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun Row.enableIf(predicate: ComponentPredicate) {
   enabled = predicate()

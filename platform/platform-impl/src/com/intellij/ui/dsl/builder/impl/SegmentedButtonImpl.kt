@@ -17,8 +17,6 @@ import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelectedFromUi
 import com.intellij.ui.dsl.gridLayout.Constraints
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.dsl.validation.impl.CompoundCellValidation
 import com.intellij.util.ui.accessibility.ScreenReader
@@ -70,20 +68,6 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
     comboBox.renderer = listCellRenderer { text = renderer(it) }
     segmentedButtonComponent.isOpaque = false
     rebuild()
-  }
-
-  @Deprecated("Use align method instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): SegmentedButton<T> {
-    super.horizontalAlign(horizontalAlign)
-    return this
-  }
-
-  @Deprecated("Use align method instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun verticalAlign(verticalAlign: VerticalAlign): SegmentedButton<T> {
-    super.verticalAlign(verticalAlign)
-    return this
   }
 
   override fun align(align: Align): SegmentedButton<T> {
