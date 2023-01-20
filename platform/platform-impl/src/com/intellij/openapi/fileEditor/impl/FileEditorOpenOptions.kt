@@ -12,7 +12,6 @@ data class FileEditorOpenOptions(
   @JvmField var pin: Boolean? = null,
   @JvmField var index: Int = -1,
   @JvmField val isExactState: Boolean = false,
-  @JvmField var isReopeningOnStartup: Boolean = false,
 ) {
   fun clone() = copy()  // no arg copying for Java
 
