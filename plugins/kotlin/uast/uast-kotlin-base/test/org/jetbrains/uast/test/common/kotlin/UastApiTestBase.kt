@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.kotlin.utils.addToStdlib.cast
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
@@ -532,7 +531,7 @@ interface UastApiTestBase : UastPluginSelection {
                 append(m.name).append(" -> ")
                 fun PsiType.typeWithExtends(): String = buildString {
                     append(this@typeWithExtends)
-                    this@typeWithExtends.safeAs<PsiClassType>()?.resolve()?.extendsList?.referencedTypes?.takeIf { it.isNotEmpty() }
+                    (this@typeWithExtends as? PsiClassType)?.resolve()?.extendsList?.referencedTypes?.takeIf { it.isNotEmpty() }
                         ?.let { e ->
                             append(" extends ")
                             append(e.joinToString(", ") { it.typeWithExtends() })
