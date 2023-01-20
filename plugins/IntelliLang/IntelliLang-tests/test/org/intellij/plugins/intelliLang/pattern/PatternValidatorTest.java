@@ -55,6 +55,29 @@ public class PatternValidatorTest extends LightJavaCodeInsightFixtureTestCase {
     """, "Annotate with '@Subst'");
   }
 
+  public void testAddLocalVariableFix() {
+    quickFixTest("""
+    import org.intellij.lang.annotations.Pattern;
+      
+    class X {
+      @Pattern("[0-9]+")
+      public static String createValue(int i) {
+          return 123 + String.value<caret>Of(i);
+      }
+    }
+    """, """
+    import org.intellij.lang.annotations.Pattern;
+    
+    class X {
+      @Pattern("[0-9]+")
+      public static String createValue(int i) {
+          String s = String.valueOf(i);
+          return 123 + s;
+      }
+    }
+    """, "Introduce variable");
+  }
+
   public void highlightTest(String text) {
     myFixture.configureByText("X.java", text);
     myFixture.testHighlighting();
