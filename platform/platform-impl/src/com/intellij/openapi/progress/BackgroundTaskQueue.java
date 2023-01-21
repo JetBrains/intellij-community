@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.progress;
 
@@ -37,7 +37,7 @@ public class BackgroundTaskQueue {
   public BackgroundTaskQueue(@Nullable Project project,
                              @NlsContexts.ProgressTitle @NotNull String title) {
     myTitle = title;
-    myProcessor = new QueueProcessor<>(TaskData::accept,
+    myProcessor = new QueueProcessor<>((taskData, continuation) -> taskData.accept(continuation),
                                        true,
                                        ThreadToUse.AWT,
                                        project != null ? project.getDisposed() : ApplicationManager.getApplication().getDisposed());
