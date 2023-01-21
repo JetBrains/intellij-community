@@ -1,4 +1,4 @@
-// "Implement method 'foo'" "true-preview"
+// "Implement method 'foo'" "true"
 
 abstract class A<T> {
     abstract String foo(T t);
