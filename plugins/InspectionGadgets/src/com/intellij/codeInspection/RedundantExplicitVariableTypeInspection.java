@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -62,6 +62,11 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
           if (!typeElement.isInferredType()) {
             @NotNull PsiPattern @NotNull [] patterns = deconstructionList.getDeconstructionComponents();
             int index = ArrayUtil.indexOf(patterns, deconstructionComponent);
+            // We need a copy of the entire pattern, not just the pattern variable, as we will
+            // replace the variable type with 'var' inside the 'doCheck' method by calling the
+            // 'IntroduceVariableUtil#expandDiamondsAndReplaceExplicitTypeWithVar' method.
+            // Without the record pattern as context, we will not be able to get the type of
+            // the deconstruction component variable when calling the 'getNormalizedType' method.
             PsiDeconstructionPattern deconstructionCopy = (PsiDeconstructionPattern)deconstruction.copy();
             PsiPattern componentCopy = deconstructionCopy.getDeconstructionList().getDeconstructionComponents()[index];
             doCheck(variable, Objects.requireNonNull(JavaPsiPatternUtil.getPatternVariable(componentCopy)), typeElement);
