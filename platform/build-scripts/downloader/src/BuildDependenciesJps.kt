@@ -46,7 +46,9 @@ object BuildDependenciesJps {
     val classes = BuildDependenciesUtil.getSingleChildElement(library, "CLASSES")
     val roots = BuildDependenciesUtil.getChildElements(classes, "root")
       .mapNotNull { it.getAttribute("url") }
-      .map { it.removePrefix("jar:/").removeSuffix("/").removeSuffix("!")
+      .map { it
+        .removePrefix("jar:/")
+        .trim('!', '/')
         .replace("\$MAVEN_REPOSITORY\$", getMavenRepositoryMacro()) }
       .map { Path.of(it) }
 
