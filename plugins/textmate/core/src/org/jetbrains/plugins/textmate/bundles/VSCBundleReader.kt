@@ -60,13 +60,14 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
       val plist = resourceLoader(grammar.path)?.let { readPlist(it.buffered(), CompositePlistReader(), grammar.path) }
                   ?: return@mapNotNull null
 
-      val fileNameMatchers = languages[grammar.language]?.let { language ->
-        language.extensions.map { TextMateFileNameMatcher.Extension(it.removePrefix(".")) } +
-        language.filenames.map { TextMateFileNameMatcher.Name(it) } +
-        language.filenamePatterns.map { TextMateFileNameMatcher.Pattern(it) }
+      val language = languages[grammar.language]
+      val fileNameMatchers = language?.let {
+        it.extensions.map { extension -> TextMateFileNameMatcher.Extension(extension.removePrefix(".")) } +
+        it.filenames.map { fileName -> TextMateFileNameMatcher.Name(fileName) } +
+        it.filenamePatterns.map { pattern -> TextMateFileNameMatcher.Pattern(pattern) }
       } ?: emptyList()
 
-      TextMateGrammar(fileNameMatchers = fileNameMatchers, plist = plist, overrideScopeName = grammar.scopeName)
+      TextMateGrammar(fileNameMatchers = fileNameMatchers, plist = plist, overrideName = language?.aliases?.firstOrNull(), overrideScopeName = grammar.scopeName)
     }
   }
 
@@ -160,6 +161,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
 data class VSCodeExtensionLanguage(val id: VSCodeExtensionLanguageId,
                                    val filenames: List<String> = emptyList(),
                                    val extensions: List<String> = emptyList(),
+                                   val aliases: List<String> = emptyList(),
                                    val filenamePatterns: List<String> = emptyList(),
                                    val configuration: String?)
 
