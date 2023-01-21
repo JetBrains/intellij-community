@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
@@ -119,6 +120,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @NotNull
   @Override
   public final SettingsEditor<T> getConfigurationEditor() {
+    if (Registry.is("ide.new.run.config", false)) {
+      // TODO: actually, we should return result of `PythonExtendedConfigurationEditor.create()` call, but it produces side effects
+      // investigation needed PY-17716
+      return createConfigurationEditor();
+    }
     final SettingsEditor<T> runConfigurationEditor = PythonExtendedConfigurationEditor.create(createConfigurationEditor());
 
     final SettingsEditorGroup<T> group = new SettingsEditorGroup<>();
