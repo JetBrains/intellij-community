@@ -149,6 +149,7 @@ open class SavedPatchesUi(project: Project,
     if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return changesBrowser.editorTabPreview
     if (SAVED_PATCH_SELECTED_PATCH.`is`(dataId)) return selectedPatchObjectOrNull()
     if (SAVED_PATCHES_UI.`is`(dataId)) return this
+    if (SAVED_PATCH_CHANGES.`is`(dataId)) return changesBrowser.getData(dataId)
     return null
   }
 
