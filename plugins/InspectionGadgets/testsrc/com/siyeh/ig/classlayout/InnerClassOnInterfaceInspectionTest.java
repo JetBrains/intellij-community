@@ -16,6 +16,6 @@ public class InnerClassOnInterfaceInspectionTest extends LightJavaInspectionTest
   public void testPreview() {
     myFixture.configureByText("I.java", "interface I { interface Inn<caret>er { } }");
     IntentionAction action = myFixture.findSingleIntention("Move class");
-    myFixture.checkIntentionPreviewHtml(action, "Move inner class Inner to the top level of a package of your choice or to an another class.");
+    myFixture.checkIntentionPreviewHtml(action, "Move inner class 'Inner' to the top level of a package of your choice or to an another class.");
   }
 }

@@ -30,6 +30,6 @@ public class MultipleTopLevelClassesInFileInspectionTest extends LightJavaInspec
   public void testPreview() {
     myFixture.configureByText("X.java", "public class X {} class Y<caret> {}");
     IntentionAction action = myFixture.findSingleIntention("Move class");
-    myFixture.checkIntentionPreviewHtml(action, "Move class Y to a new file in a package of your choice or convert it to an inner class of an existing one.");
+    myFixture.checkIntentionPreviewHtml(action, "Move class 'Y' to a new file in a package of your choice or convert it to an inner class of an existing one.");
   }
 }

@@ -24,12 +24,12 @@ public class ProtectedInnerClassInspectionTest extends LightJavaInspectionTestCa
   public void testPreviewStaticClass() {
     myFixture.configureByText("Outer.java", "public class Outer { protected static class N<caret>ested {} }");
     IntentionAction action = myFixture.findSingleIntention("Move class");
-    myFixture.checkIntentionPreviewHtml(action, "Move inner class Nested to the top level of a package of your choice or to an another class.");
+    myFixture.checkIntentionPreviewHtml(action, "Move inner class 'Nested' to the top level of a package of your choice or to an another class.");
   }
 
   public void testPreviewNonStaticClass() {
     myFixture.configureByText("Outer.java", "public class Outer { protected class In<caret>ner {} }");
     IntentionAction action = myFixture.findSingleIntention("Move class");
-    myFixture.checkIntentionPreviewHtml(action, "Move inner class Inner to the top level of a package of your choice.");
+    myFixture.checkIntentionPreviewHtml(action, "Move inner class 'Inner' to the top level of a package of your choice.");
   }
 }
