@@ -175,9 +175,7 @@ class DockableEditorTabbedContainer internal constructor(
       }
     }
     recordDragStats(if (dropIntoNewlyCreatedWindow) -1 else SwingConstants.CENTER, sameWindow)
-    val openOptions = FileEditorOpenOptions()
-      .withIndex(index)
-      .withRequestFocus()
+    val openOptions = FileEditorOpenOptions(index = index, requestFocus = true)
     splitters.manager.openFileImpl2(window, file, openOptions)
     window.setFilePinned(file = file, pinned = dropInBetweenPinnedTabs ?: dockableEditor.isPinned)
   }
