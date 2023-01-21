@@ -12,7 +12,10 @@ import javax.swing.JComponent
 interface TerminalWidget : ComponentContainer {
   val terminalTitle: TerminalTitle
 
-  val windowSize: WinSize
+  /**
+   * terminal size; null, if the terminal size is 0x0, e.g. the component is not laid out yet
+   */
+  val windowSize: WinSize?
 
   fun connectToTty(ttyConnector: TtyConnector)
 

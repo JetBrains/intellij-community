@@ -448,11 +448,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       myTtyConnectorAccessor.setTtyConnector(ttyConnector);
     }
 
-    @NotNull
     @Override
-    public WinSize getWindowSize() {
+    public @Nullable WinSize getWindowSize() {
       Dimension size = widget().getTerminalPanel().getTerminalSizeFromComponent();
-      return size != null ? new WinSize(size.width, size.height) : new WinSize(0, 0);
+      return size != null ? new WinSize(size.width, size.height) : null;
     }
 
     @Override

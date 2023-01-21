@@ -241,7 +241,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (myProject.isDisposed()) return;
       try {
-        T process = createProcess(new TerminalProcessOptions(directory, size.getColumns(), size.getRows()));
+        T process = createProcess(new TerminalProcessOptions(directory,
+                                                             size != null ? size.getColumns() : null,
+                                                             size != null ? size.getRows() : null));
         TtyConnector connector = createTtyConnector(process);
 
         ApplicationManager.getApplication().invokeLater(() -> {
