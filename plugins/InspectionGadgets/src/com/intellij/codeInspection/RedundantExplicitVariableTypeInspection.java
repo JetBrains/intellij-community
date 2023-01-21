@@ -45,7 +45,6 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
       public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         PsiParameter parameter = statement.getIterationParameter();
-        if (parameter == null) return;
         PsiTypeElement typeElement = parameter.getTypeElement();
         if (typeElement != null && !typeElement.isInferredType()) {
           PsiForeachStatement copy = (PsiForeachStatement)statement.copy();
