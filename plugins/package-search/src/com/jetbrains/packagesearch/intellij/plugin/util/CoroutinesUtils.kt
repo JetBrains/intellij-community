@@ -28,49 +28,17 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.util.flow.throttle
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.data.LoadingContainer
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.AsyncModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.scan
-import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -164,26 +132,7 @@ internal suspend fun <R> MutableStateFlow<LoadingContainer.LoadingState>.whileLo
     }
 }
 
-internal fun <T> Flow<T>.debounceBatch(duration: Duration) = channelFlow {
-    val mutex = Mutex()
-    val buffer = mutableListOf<T>()
-    var job: Job? = null
-    collect {
-        mutex.withLock {
-            buffer.add(it)
-            job?.cancel()
-            job = launch {
-                delay(duration)
-                mutex.withLock {
-                    send(buffer.toList())
-                    buffer.clear()
-                }
-            }
-        }
-    }
-}
-
-internal suspend fun <T> withBackgroundLoadingBar(
+internal suspend inline fun <T> withBackgroundLoadingBar(
     project: Project,
     @Nls title: String,
     @Nls upperMessage: String? = null,
