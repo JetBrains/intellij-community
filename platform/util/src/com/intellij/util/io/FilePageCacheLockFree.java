@@ -430,13 +430,24 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
 
   /**
-   * Method tries to unmap and reclaim all pages of a given PagesTable. It moves all pages
-   * to {@link PageImpl#STATE_ABOUT_TO_UNMAP} state, and if page has usageCount=0 -> reclaim it immediately.
-   * Pages with usageCount > 0 are not reclaimed, and method returns false if there is at least one
-   * such a page. Method is designed to be called repeatedly, until all pages are reclaimed.
+   * Method tries to unmap and reclaim all pages of a given PagesTable. It is basically for a
+   * 'finalize & cleanup' after page storage owning pagesTable is closed -- i.e. it is known
+   * there will be no new clients of storage pages, and current clients are about to release
+   * their pages soon.
+   * <p/>
+   * Since some pages could be still in use, there is no guarantee the method could reclaim
+   * all pages right now -- hence, the method is designed to be called repeatedly, until it
+   * returns true, which means all pages are reclaimed.
+   * <p/>
+   * Method moves all pages to {@link PageImpl#STATE_ABOUT_TO_UNMAP} state, and if page has
+   * usageCount=0 -> reclaim it immediately. Pages with usageCount > 0 are not reclaimed, and
+   * the method returns false if there is at least one such a page.
+   *
+   * @return true if all pages are reclaimed, false if there are some pages that are still in
+   * use and can be reclaimed right now -- so method should be called again, later
    */
   boolean tryToReclaimAll(final @NotNull PagesTable pagesTable) {
-    pagesTable.pagesLock().writeLock().lock();
+    pagesTable.pagesLock().lock();
     try {
       final AtomicReferenceArray<PageImpl> pages = pagesTable.pages();
       boolean somePagesStillInUse = false;
@@ -514,7 +525,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       return somePagesStillInUse;
     }
     finally {
-      pagesTable.pagesLock().writeLock().unlock();
+      pagesTable.pagesLock().unlock();
     }
   }
 

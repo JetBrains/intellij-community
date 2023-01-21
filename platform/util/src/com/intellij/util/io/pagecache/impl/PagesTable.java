@@ -14,7 +14,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntFunction;
 
 import static java.util.stream.Collectors.joining;
@@ -51,7 +51,7 @@ public class PagesTable {
 
   //TODO RC: seems like we don't need R-W lock here -- simple lock is enough, even intrinsic one
   //         The only method we use readLock is .flushAll(), and it looks like it is flawed anyway
-  private transient final ReentrantReadWriteLock pagesLock = new ReentrantReadWriteLock();
+  private transient final ReentrantLock pagesLock = new ReentrantLock();
 
 
   public PagesTable(final int initialSize) {
@@ -82,25 +82,18 @@ public class PagesTable {
   }
 
   public void flushAll() throws IOException {
-    //MAYBE RC: do we really need readLock here? Seems like we could skip the lock, but it
-    //          is hard to define semantics of that .flush() implementation -- i.e. new pages could
-    //          be created and inserted in parallel, and those pages will or will not be flushed, depending
-    //          on there in .pages array they are inserted, and there iteration index is at the moment of
-    //          insertion.
-    //          ...But really even with readLock we have the same issue: some of already existent pages
-    //          could be modified in parallel, and such a modifications will or will not be flushed depending
-    //          on the location of the modified pages, and current iteration index.
-    pagesLock.readLock().lock();
-    try {
-      for (int i = 0; i < pages.length(); i++) {
-        final Page page = pages.get(i);
-        if (page != null && page.isDirty()) {
-          page.flush();
-        }
+    //RC: it is hard to define semantics of .flush() implementation in a concurrent environment.
+    //    I.e. new pages could be created and inserted in parallel, and those pages will or will
+    //    not be flushed, depending on there in .pages array they are inserted, and there the
+    //    iteration index is at the moment of insertion. And pages just flushed could become
+    //    dirty again even before the loop is finished.
+    //    But I see no simple way to fix it, apart from returning to global lock protecting all
+    //    writes -- which is exactly what we're escaping from by moving to concurrent implementation.
+    for (int i = 0; i < pages.length(); i++) {
+      final Page page = pages.get(i);
+      if (page != null && page.isDirty()) {
+        page.flush();
       }
-    }
-    finally {
-      pagesLock.readLock().unlock();
     }
   }
 
@@ -109,13 +102,13 @@ public class PagesTable {
     final int expectedTableSize = (int)(alivePagesCount / loadFactor);
     if (expectedTableSize >= MIN_TABLE_SIZE
         && expectedTableSize * SHRINK_FACTOR < pages.length()) {
-      pagesLock.writeLock().lock();
+      pagesLock.lock();
       try {
         rehashToSize(expectedTableSize);
         return true;
       }
       finally {
-        pagesLock.writeLock().unlock();
+        pagesLock.unlock();
       }
     }
     return false;
@@ -125,7 +118,7 @@ public class PagesTable {
     return pages;
   }
 
-  public ReentrantReadWriteLock pagesLock() {
+  public ReentrantLock pagesLock() {
     return pagesLock;
   }
 
@@ -141,7 +134,7 @@ public class PagesTable {
     // 3) load page outside the pagesLock, under per-page lock
     final IntRef insertionIndexRef = new IntRef();
     final PageImpl blankPage;
-    pagesLock.writeLock().lock();
+    pagesLock.lock();
     try {
       final PageImpl alreadyInsertedPage = findPageOrInsertionIndex(this.pages, pageIndex, insertionIndexRef);
       if (alreadyInsertedPage != null) {
@@ -160,15 +153,16 @@ public class PagesTable {
           final int newTableSize = (int)((pagesCount / loadFactor) * GROWTH_FACTOR);
           rehashToSize(newTableSize);
 
-          //RC: we need not only enlargement, but also shrinking! PageTable grows big temporarily,
-          //    while we read the file intensively -- but after that period the table should shrink.
-          //    Contrary to the enlargement, shrinking is better to be implemented by maintenance
-          //    thread, in background. This is because a lot of entries in the enlarged table
-          //    would be tombstones (pages already reclaimed, but entries remain) and maintaining
-          //    the count of those tombstones is not convenient -- Page status changes are generally
-          //    detached from PageTable logic, and better be kept that way. But the maintenance thread
-          //    regularly scans all the pages anyway, so it could easily count (tombstones vs alive)
-          //    entries, and trigger shrinking if there are <30-40% entries are alive.
+          //RC: page table need not only enlargement, but also shrinking. PageTable grows big
+          //    temporarily, while we read the file intensively -- but after that period the
+          //    table should shrink. Contrary to the enlargement, shrinking is implemented by
+          //    maintenance thread, in the background. This is because a lot of entries in the
+          //    enlarged table would be tombstones (pages already reclaimed, but entries remain)
+          //    and maintaining the count of those tombstones is not convenient -- Page status
+          //    changes (...->tombstone) are generally detached from PageTable logic, and better
+          //    be kept that way. But the maintenance thread regularly scans all the pages anyway,
+          //    so it could easily count (tombstones vs alive) entries, and trigger shrinking if
+          //    there are <30-40% entries are alive.
         }
       }
       else {
@@ -179,7 +173,7 @@ public class PagesTable {
       }
     }
     finally {
-      pagesLock.writeLock().unlock();
+      pagesLock.unlock();
     }
 
     blankPage.pageLock().writeLock().lock();
@@ -211,7 +205,7 @@ public class PagesTable {
   //@GuardedBy(pagesLock.writeLock)
 
   private void rehashToSize(final int newPagesSize) {
-    assert pagesLock.writeLock().isHeldByCurrentThread() : "Must hold writeLock while rehashing";
+    assert pagesLock.isHeldByCurrentThread() : "Must hold writeLock while rehashing";
 
     final AtomicReferenceArray<PageImpl> newPages = new AtomicReferenceArray<>(newPagesSize);
     final int pagesCopied = rehashWithoutTombstones(pages, newPages);

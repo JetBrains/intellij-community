@@ -606,16 +606,18 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
   public void close() throws IOException {
     force();
     storage.close();
-
-    //TODO RC: do we need method like 'unmap', which forcibly unmaps pages, or it is enough to rely on
-    //         JVM which will unmap pages eventually, as they collected by GC? Forcibly unmap allows
-    //         to 'clean after youself', but carries a risk if JVM crash if somebody still tries to
-    //         access pages. Seems like the best solution would be to provide 'unmap' as dedicated
-    //         method, not as a part of .close() -- so it could be used in e.g. tests, and in cases
-    //         there we could 100% guarantee no usages anymore. But in regular use VFS exists for
-    //         the whole life of app, hence it is better to let JVM unmap pages on shutdown, and not
-    //         carry the risk of JVM crush after too eager unmapping.
   }
+
+  //TODO RC: do we need method like 'unmap', which forcibly unmaps pages, or it is enough to rely
+  //         on JVM which will unmap pages eventually, as they collected by GC?
+  //         Forcible unmap allows to 'clean after yourself', but carries a risk if JVM crash if
+  //         somebody still tries to access pages.
+  //         Seems like the best solution would be to provide 'unmap' as dedicated method, not
+  //         as a part of .close() -- so it could be used in e.g. tests, and in cases there we
+  //         could 100% guarantee no usages anymore. But in regular use VFS exists for
+  //         the whole life of app, hence better to let JVM unmap pages on shutdown, and not
+  //         carry the risk of JVM crush after too eager unmapping.
+
 
   // =============== implementation: addressing ========================================================= //
 
@@ -794,9 +796,12 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
     }
   }
 
-  public static class MMappedFileStorage {
+  protected static class MMappedFileStorage {
     private final Path storagePath;
+
     private final int pageSize;
+    private final int pageSizeMask;
+    private final int pageSizeBits;
 
     private final FileChannel channel;
 
@@ -804,13 +809,21 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
 
     private volatile long length;
 
-    private MMappedFileStorage(final Path path,
-                               final int pageSize) throws IOException {
+    public MMappedFileStorage(final Path path,
+                              final int pageSize) throws IOException {
       if (pageSize <= 0) {
         throw new IllegalArgumentException("pageSize(=" + pageSize + ") must be >0");
       }
-      this.storagePath = path;
+      if (Integer.bitCount(pageSize) != 1) {
+        throw new IllegalArgumentException("pageSize(=" + pageSize + ") must be a power of 2");
+      }
+
+      pageSizeBits = Integer.numberOfTrailingZeros(pageSize);
+      pageSizeMask = pageSize - 1;
       this.pageSize = pageSize;
+
+      this.storagePath = path;
+      
       final long length = Files.exists(path) ? Files.size(path) : 0;
 
       final long maxSize = RECORD_SIZE_IN_BYTES * (long)Integer.MAX_VALUE;
@@ -841,7 +854,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
     }
 
     public @NotNull Page pageByOffset(final long offsetInFile) throws IOException {
-      final int pageIndex = (int)(offsetInFile / pageSize);
+      final int pageIndex = (int)(offsetInFile >> pageSizeBits);
 
       Page page = pages.get(pageIndex);
       if (page == null) {
@@ -856,12 +869,12 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
       return page;
     }
 
-    public void close() throws IOException {
-      channel.close();
+    public int toOffsetInPage(final long offsetInFile) {
+      return (int)(offsetInFile & pageSizeMask);
     }
 
-    public int toOffsetInPage(final long offsetInFile) {
-      return (int)(offsetInFile % pageSize);
+    public void close() throws IOException {
+      channel.close();
     }
 
     public class Page implements AutoCloseable {
