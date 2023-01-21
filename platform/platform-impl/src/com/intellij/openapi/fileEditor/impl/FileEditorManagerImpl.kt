@@ -1103,9 +1103,8 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       IdeDocumentHistory.getInstance(project).onSelectionChanged()
     }
 
-    options.pin?.let {
-      window.setFilePinned(file = file, pinned = it)
-    }
+    window.setFilePinned(composite, pinned = options.pin)
+
     if (newEditor) {
       val messageBus = project.messageBus
       messageBus.syncPublisher(FileOpenedSyncListener.TOPIC).fileOpenedSync(this, file, editorsWithProviders)

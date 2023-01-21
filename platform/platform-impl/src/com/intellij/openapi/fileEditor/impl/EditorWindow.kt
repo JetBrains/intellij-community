@@ -392,14 +392,14 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     // open only selected file in the new splitter instead of opening all tabs
     val nextFile = virtualFile ?: selectedComposite!!.file
     val currentState = selectedComposite?.currentStateAsHistoryEntry()?.takeIf { it.file == nextFile }
+    val openOptions = FileEditorOpenOptions(requestFocus = focusNew,
+                                            isExactState = true,
+                                            pin = isFileOpen(nextFile) && isFilePinned(nextFile))
     val editors = fileEditorManager.openFileImpl4(window = result,
                                                   _file = nextFile,
                                                   entry = currentState,
-                                                  options = FileEditorOpenOptions(requestFocus = focusNew, isExactState = true)).allEditors
+                                                  options = openOptions).allEditors
     syncCaretIfPossible(editors)
-    if (isFileOpen(nextFile)) {
-      result.setFilePinned(nextFile, isFilePinned(nextFile))
-    }
     if (!focusNew) {
       result.setSelectedComposite(composite = selectedComposite!!, focusEditor = true)
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
@@ -828,16 +828,20 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   fun isFileOpen(file: VirtualFile): Boolean = getComposite(file) != null
 
   fun isFilePinned(file: VirtualFile): Boolean {
-    return (getComposite(file) ?: throw IllegalArgumentException("file is not open: ${file.path}")).isPinned
+    return requireNotNull(getComposite(file)) { "file is not open: ${file.path}" }.isPinned
   }
 
   fun setFilePinned(file: VirtualFile, pinned: Boolean) {
-    val composite = getComposite(file) ?: throw IllegalArgumentException("file is not open: ${file.path}")
+    val composite = requireNotNull(getComposite(file)) { "file is not open: ${file.path}" }
+    setFilePinned(composite, pinned)
+  }
+
+  internal fun setFilePinned(composite: EditorComposite, pinned: Boolean) {
     val wasPinned = composite.isPinned
     composite.isPinned = pinned
     if (composite.isPreview && pinned) {
       composite.isPreview = false
-      owner.updateFileColorAsync(file)
+      owner.updateFileColorAsync(composite.file)
     }
     if (wasPinned != pinned && ApplicationManager.getApplication().isDispatchThread) {
       (tabbedPane.tabs as? JBTabsImpl)?.doLayout()

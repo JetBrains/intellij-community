@@ -11,7 +11,7 @@ data class FileEditorOpenOptions(
   @JvmField val reuseOpen: Boolean = false,
   @JvmField val usePreviewTab: Boolean = false,
   @JvmField val requestFocus: Boolean = false,
-  @JvmField val pin: Boolean? = null,
+  @JvmField val pin: Boolean = false,
   @JvmField val index: Int = -1,
   @JvmField val isExactState: Boolean = false,
 ) {
@@ -23,7 +23,7 @@ data class FileEditorOpenOptions(
   @Contract(pure = true) @JvmOverloads fun withReuseOpen(value: Boolean = true)           = copy(reuseOpen = value)
   @Contract(pure = true) @JvmOverloads fun withUsePreviewTab(value: Boolean = true)       = copy(usePreviewTab = value)
   @Contract(pure = true) @JvmOverloads fun withRequestFocus(value: Boolean = true)        = copy(requestFocus = value)
-  @Contract(pure = true)               fun withPin(value: Boolean?)                       = copy(pin = value)
+  @Contract(pure = true)               fun withPin(value: Boolean = true)                 = copy(pin = value)
   @Contract(pure = true)               fun withIndex(value: Int)                          = copy(index = value)
   // @formatter:on
 }
