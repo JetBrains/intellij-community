@@ -2009,21 +2009,19 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiElement parent = deconstructionPattern.getParent();
     if (parent instanceof PsiForeachPatternStatement forEach) {
       add(checkFeature(deconstructionPattern, HighlightingFeature.RECORD_PATTERNS_IN_FOR_EACH));
-      if (!myHolder.hasErrorResults()) {
-        PsiTypeElement typeElement = JavaPsiPatternUtil.getPatternTypeElement(deconstructionPattern);
-        if (typeElement == null) return;
-        PsiType patternType = typeElement.getType();
-        PsiExpression iteratedValue = forEach.getIteratedValue();
-        PsiType itemType = iteratedValue == null ? null : JavaGenericsUtil.getCollectionItemType(iteratedValue);
-        if (itemType == null) return;
-        checkForEachPatternApplicable(deconstructionPattern, patternType, itemType);
-        if (!myHolder.hasErrorResults()) {
-          if (!PatternsInSwitchBlockHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern))) {
-            String description = JavaErrorBundle.message("pattern.is.not.exhaustive", JavaHighlightUtil.formatType(patternType),
-                                                         JavaHighlightUtil.formatType(itemType));
-            add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(deconstructionPattern).descriptionAndTooltip(description));
-          }
-        }
+      if (myHolder.hasErrorResults()) return;
+      PsiTypeElement typeElement = JavaPsiPatternUtil.getPatternTypeElement(deconstructionPattern);
+      if (typeElement == null) return;
+      PsiType patternType = typeElement.getType();
+      PsiExpression iteratedValue = forEach.getIteratedValue();
+      PsiType itemType = iteratedValue == null ? null : JavaGenericsUtil.getCollectionItemType(iteratedValue);
+      if (itemType == null) return;
+      checkForEachPatternApplicable(deconstructionPattern, patternType, itemType);
+      if (myHolder.hasErrorResults()) return;
+      if (!PatternsInSwitchBlockHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern))) {
+        String description = JavaErrorBundle.message("pattern.is.not.exhaustive", JavaHighlightUtil.formatType(patternType),
+                                                     JavaHighlightUtil.formatType(itemType));
+        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(deconstructionPattern).descriptionAndTooltip(description));
       }
     }
   }
