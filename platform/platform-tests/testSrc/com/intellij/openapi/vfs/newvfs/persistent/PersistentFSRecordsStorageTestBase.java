@@ -80,13 +80,13 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     }
 
     final Map<FSRecord, FSRecord> incorrectlyReadBackRecords = new HashMap<>();
-    for (int i = 0; i < records.length; i++) {
-      final FSRecord recordOriginal = records[i];
+    for (final FSRecord recordOriginal : records) {
       final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
       if (!recordOriginal.equalsExceptModCount(recordReadBack)) {
         incorrectlyReadBackRecords.put(recordOriginal, recordReadBack);
       }
     }
+    
     if (!incorrectlyReadBackRecords.isEmpty()) {
       fail("Records read back should be all equal to their originals, but " + incorrectlyReadBackRecords.size() +
            " different: \n" +

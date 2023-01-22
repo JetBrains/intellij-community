@@ -127,7 +127,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
   public <R, E extends Throwable> R readRecord(final int recordId,
                                                final @NotNull RecordReader<R, E> reader) throws E, IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
-    final int recordOffsetOnPage = recordOffsetOnPage(recordId);
+    final int recordOffsetOnPage = toOffsetOnPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
       final RecordAccessor recordAccessor = new RecordAccessor(recordId, recordOffsetOnPage, page);
       return reader.readRecord(recordAccessor);
@@ -141,7 +141,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
                              allocateRecord() :
                              recordId;
     final long recordOffsetInFile = recordOffsetInFile(recordId);
-    final int recordOffsetOnPage = recordOffsetOnPage(recordId);
+    final int recordOffsetOnPage = toOffsetOnPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
       //RC: hope EscapeAnalysis removes the allocation here:
       final RecordAccessor recordAccessor = new RecordAccessor(recordId, recordOffsetOnPage, page);
@@ -472,8 +472,8 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
                          final int nameId,
                          final int parentId,
                          final boolean overwriteAttrRef) throws IOException {
-    final int recordOffsetOnPage = recordOffsetOnPage(recordId);
     final long recordOffsetInFile = recordOffsetInFile(recordId);
+    final int recordOffsetOnPage = toOffsetOnPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
       final ByteBuffer pageBuffer = page.rawPageBuffer();
       INT_HANDLE.setVolatile(pageBuffer, recordOffsetOnPage + PARENT_REF_OFFSET, parentId);
@@ -507,8 +507,8 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
     assert RECORD_SIZE_IN_BYTES % Integer.BYTES == 0 : "RECORD_SIZE_IN_BYTES(=" + RECORD_SIZE_IN_BYTES + ") is expected to be 32-aligned";
     final int recordSizeInInts = RECORD_SIZE_IN_BYTES / Integer.BYTES;
 
-    final int recordOffsetOnPage = recordOffsetOnPage(recordId);
     final long recordOffsetInFile = recordOffsetInFile(recordId);
+    final int recordOffsetOnPage = toOffsetOnPage(recordId);
     try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
       final ByteBuffer pageBuffer = page.rawPageBuffer();
       for (int wordNo = 0; wordNo < recordSizeInInts; wordNo++) {
@@ -649,24 +649,10 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
     return recordOffsetInFileUnchecked(recordId);
   }
 
-  private int recordOffsetOnPage(final int recordId) throws IndexOutOfBoundsException {
-    checkRecordIdIsValid(recordId);
-
-    final int recordsOnHeaderPage = (pageSize - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
-    if (recordId < recordsOnHeaderPage) {
-      return HEADER_SIZE + recordId * RECORD_SIZE_IN_BYTES;
-    }
-
-    //as-if there were no header:
-    final int recordsOnLastPage = recordId % recordsPerPage;
-
-    //header on the first page "push out" few records:
-    final int recordsExcessBecauseOfHeader = recordsPerPage - recordsOnHeaderPage;
-
-    //so the last page could turn into +1 page:
-    final int recordsReallyOnLastPage = recordsOnLastPage + recordsExcessBecauseOfHeader;
-    return (recordsReallyOnLastPage % recordsPerPage) * RECORD_SIZE_IN_BYTES;
+  private int toOffsetOnPage(final long recordOffsetInFile) {
+    return (int)(recordOffsetInFile % pageSize);
   }
+
 
   private void checkRecordIdIsValid(final int recordId) throws IndexOutOfBoundsException {
     if (!(NULL_ID < recordId && recordId < allocatedRecordsCount.get())) {
