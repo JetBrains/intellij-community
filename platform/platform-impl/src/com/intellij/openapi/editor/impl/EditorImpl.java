@@ -1350,7 +1350,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!(highlighter instanceof EmptyEditorHighlighter)) {
       EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
     }
+
+    EditorHighlighter oldHighlighter = myHighlighter;
     myHighlighter = highlighter;
+    myPropertyChangeSupport.firePropertyChange(EditorEx.PROP_HIGHLIGHTER, oldHighlighter, highlighter);
 
     if (myPanel != null) {
       reinitSettings();
