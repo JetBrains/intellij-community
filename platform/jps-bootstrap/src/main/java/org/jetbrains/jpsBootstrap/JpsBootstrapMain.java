@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging;
 import org.jetbrains.intellij.build.dependencies.JdkDownloader;
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -34,7 +35,6 @@ import java.util.logging.Handler;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.*;
-import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.underTeamCity;
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.getJpsArtifactsResolutionRetryProperties;
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.getTeamCitySystemProperties;
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.toBooleanChecked;
@@ -55,6 +55,8 @@ public class JpsBootstrapMain {
   private static final Option OPT_ONLY_DOWNLOAD_JDK = Option.builder().longOpt("download-jdk").desc("Download project JDK and exit").build();
   private static final List<Option> ALL_OPTIONS =
     Arrays.asList(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_PROPERTIES_FILE, OPT_JAVA_ARGFILE_TARGET, OPT_BUILD_TARGET_XMX, OPT_ONLY_DOWNLOAD_JDK);
+
+  static final boolean underTeamCity = TeamCityHelper.INSTANCE.isUnderTeamCity();
 
   private static Options createCliOptions() {
     Options opts = new Options();
@@ -79,7 +81,7 @@ public class JpsBootstrapMain {
       fatal(ExceptionUtil.getThrowableText(t));
 
       // Better diagnostics for local users
-      if (!underTeamCity) {
+      if (!TeamCityHelper.INSTANCE.isUnderTeamCity()) {
         System.err.println("\n###### ERROR EXIT due to FATAL error: " + t.getMessage() + "\n");
         String work = jpsBootstrapWorkDir == null ? "PROJECT_HOME/build/jps-bootstrap-work" : jpsBootstrapWorkDir.toString();
         System.err.println("###### You may try to delete caches at " + work + " and retry");
@@ -171,7 +173,7 @@ public class JpsBootstrapMain {
       );
       System.out.println(setParameterServiceMessage.asString());
       setParameterServiceMessage = new SetParameterServiceMessage(
-        "jps.bootstrap.java.executable", JdkDownloader.getJavaExecutable(jdkHome).toString());
+        "jps.bootstrap.java.executable", JdkDownloader.INSTANCE.getJavaExecutable(jdkHome).toString());
       System.out.println(setParameterServiceMessage.asString());
     }
     else {
@@ -219,7 +221,7 @@ public class JpsBootstrapMain {
   }
 
   private List<String> getOpenedPackages() throws Exception {
-    Path openedPackagesPath = communityHome.getCommunityRoot().resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt");
+    Path openedPackagesPath = communityHome.communityRoot.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt");
     List<String> openedPackages = ContainerUtil.filter(Files.readAllLines(openedPackagesPath), it -> !it.isBlank());
     List<String> unknownPackages = new ArrayList<>();
 

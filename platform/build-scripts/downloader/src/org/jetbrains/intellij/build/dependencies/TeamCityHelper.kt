@@ -1,103 +1,76 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.dependencies;
+package org.jetbrains.intellij.build.dependencies
 
-import com.google.common.base.Suppliers;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.google.common.base.Suppliers
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.loadPropertiesFile
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.function.Supplier
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Supplier;
-
-@SuppressWarnings("unused")
+@Suppress("unused")
 @ApiStatus.Internal
-public final class TeamCityHelper {
-  public static final boolean isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null;
-
-  public static @Nullable Path getCheckoutDirectory() {
+object TeamCityHelper {
+  val isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null
+  val checkoutDirectory: Path?
+    get() {
+      if (!isUnderTeamCity) {
+        return null
+      }
+      val name = "teamcity.build.checkoutDir"
+      val value = systemProperties[name]
+      if (value == null || value.isEmpty()) {
+        throw RuntimeException("TeamCity system property " + name + "was not found while running under TeamCity")
+      }
+      val file = Path.of(value)
+      if (!Files.isDirectory(file)) {
+        throw RuntimeException("TeamCity system property $name contains non existent directory: $file")
+      }
+      return file
+    }
+  val systemProperties: Map<String, String>
+    get() = systemPropertiesValue.get()
+  val allProperties: Map<String, String>
+    get() = allPropertiesValue.get()
+  val tempDirectory: Path?
+    get() {
+      val systemProperties = systemProperties
+      if (systemProperties.isEmpty()) {
+        return null
+      }
+      val propertyName = "teamcity.build.tempDir"
+      val tempPath = systemProperties[propertyName]
+                     ?: throw IllegalStateException("TeamCity must provide system property $propertyName")
+      return Path.of(tempPath)
+    }
+  private val systemPropertiesValue: Supplier<Map<String, String>> = Suppliers.memoize {
     if (!isUnderTeamCity) {
-      return null;
+      return@memoize HashMap<String, String>()
     }
-
-    String name = "teamcity.build.checkoutDir";
-
-    String value = getSystemProperties().get(name);
-    if (value == null || value.isEmpty()) {
-      throw new RuntimeException("TeamCity system property " + name + "was not found while running under TeamCity");
-    }
-
-    Path file = Path.of(value);
-    if (!Files.isDirectory(file)) {
-      throw new RuntimeException("TeamCity system property " + name + " contains non existent directory: " + file);
-    }
-
-    return file;
-  }
-
-  static @NotNull Map<String, String> getSystemProperties() {
-    return systemPropertiesValue.get();
-  }
-
-  public static @NotNull Map<String, String> getAllProperties() {
-    return allPropertiesValue.get();
-  }
-
-  public static @Nullable Path getTempDirectory() {
-    Map<String, String> systemProperties = getSystemProperties();
-    if (systemProperties.isEmpty()) {
-      return null;
-    }
-
-    String propertyName = "teamcity.build.tempDir";
-
-    String tempPath = systemProperties.get(propertyName);
-    if (tempPath == null) {
-      throw new IllegalStateException("TeamCity must provide system property " + propertyName);
-    }
-
-    return Path.of(tempPath);
-  }
-
-  private static final Supplier<Map<String, String>> systemPropertiesValue = Suppliers.memoize(() -> {
-    if (!isUnderTeamCity) {
-      return new HashMap<>();
-    }
-
-    String systemPropertiesEnvName = "TEAMCITY_BUILD_PROPERTIES_FILE";
-
-    String systemPropertiesFile = System.getenv(systemPropertiesEnvName);
+    val systemPropertiesEnvName = "TEAMCITY_BUILD_PROPERTIES_FILE"
+    val systemPropertiesFile = System.getenv(systemPropertiesEnvName)
     if (systemPropertiesFile == null || systemPropertiesFile.isEmpty()) {
-      throw new RuntimeException("TeamCity environment variable " + systemPropertiesEnvName + "was not found while running under TeamCity");
+      throw RuntimeException("TeamCity environment variable " + systemPropertiesEnvName + "was not found while running under TeamCity")
     }
-
-    Path file = Path.of(systemPropertiesFile);
+    val file = Path.of(systemPropertiesFile)
     if (!Files.exists(file)) {
-      throw new RuntimeException("TeamCity system properties file is not found: " + file);
+      throw RuntimeException("TeamCity system properties file is not found: $file")
     }
-
-    return BuildDependenciesUtil.loadPropertiesFile(file);
-  });
-
-  private static final Supplier<Map<String, String>> allPropertiesValue = Suppliers.memoize(() -> {
+    loadPropertiesFile(file)
+  }
+  private val allPropertiesValue: Supplier<Map<String, String>> = Suppliers.memoize {
     if (!isUnderTeamCity) {
-      return new HashMap<>();
+      return@memoize HashMap<String, String>()
     }
-
-    String propertyName = "teamcity.configuration.properties.file";
-
-    String value = getSystemProperties().get(propertyName);
+    val propertyName = "teamcity.configuration.properties.file"
+    val value = systemProperties[propertyName]
     if (value == null || value.isEmpty()) {
-      throw new RuntimeException("TeamCity system property '" + propertyName + " is not found");
+      throw RuntimeException("TeamCity system property '$propertyName is not found")
     }
-
-    Path file = Path.of(value);
+    val file = Path.of(value)
     if (!Files.exists(file)) {
-      throw new RuntimeException("TeamCity configuration properties file was not found: " + file);
+      throw RuntimeException("TeamCity configuration properties file was not found: $file")
     }
-
-    return BuildDependenciesUtil.loadPropertiesFile(file);
-  });
+    loadPropertiesFile(file)
+  }
 }

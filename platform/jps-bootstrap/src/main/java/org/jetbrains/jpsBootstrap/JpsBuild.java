@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.*;
-import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.underTeamCity;
+import static org.jetbrains.jpsBootstrap.JpsBootstrapMain.underTeamCity;
 
 public final class JpsBuild {
   public static final String CLASSES_FROM_JPS_BUILD_ENV_NAME = "JPS_BOOTSTRAP_CLASSES_FROM_JPS_BUILD";
@@ -50,7 +50,7 @@ public final class JpsBuild {
 
     // Set IDEA home path to something or JPS can't instantiate ClasspathBoostrap.java for Groovy JPS
     // which calls PathManager.getLibPath() (it should not)
-    System.setProperty(PathManager.PROPERTY_HOME_PATH, communityRoot.getCommunityRoot().toString());
+    System.setProperty(PathManager.PROPERTY_HOME_PATH, communityRoot.communityRoot.toString());
 
     System.setProperty("kotlin.incremental.compilation", "true");
     System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true");

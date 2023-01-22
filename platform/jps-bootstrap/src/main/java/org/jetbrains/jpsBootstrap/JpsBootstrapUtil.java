@@ -11,7 +11,7 @@ import java.util.Properties;
 import java.util.concurrent.*;
 
 import static org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.info;
-import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.underTeamCity;
+import static org.jetbrains.jpsBootstrap.JpsBootstrapMain.underTeamCity;
 
 public final class JpsBootstrapUtil {
   public static final String TEAMCITY_BUILD_PROPERTIES_FILE_ENV = "TEAMCITY_BUILD_PROPERTIES_FILE";

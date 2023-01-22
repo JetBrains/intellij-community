@@ -7,7 +7,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.io.FileUtils
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.downloadFileToCacheLocation
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFileToCacheLocation
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.getTargetFile
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.getUriForMavenArtifact
 import org.jetbrains.intellij.build.suspendingRetryWithExponentialBackOff
 import java.nio.file.Files
 import java.nio.file.Path

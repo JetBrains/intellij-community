@@ -1,37 +1,27 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.dependencies;
+package org.jetbrains.intellij.build.dependencies
 
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Files
+import java.nio.file.Path
 
 /**
  * Special wrapper not to mix community root with other parameters
  */
 @ApiStatus.Internal
-public final class BuildDependenciesCommunityRoot {
-  @NotNull
-  private final Path communityRoot;
+class BuildDependenciesCommunityRoot(communityRoot: Path) {
+  @JvmField
+  val communityRoot: Path
 
-  public @NotNull Path getCommunityRoot() {
-    return communityRoot;
+  init {
+    val probeFile = communityRoot.resolve("intellij.idea.community.main.iml")
+    check(!Files.notExists(probeFile)) { "community root was not found at $communityRoot" }
+    this.communityRoot = communityRoot
   }
 
-  public BuildDependenciesCommunityRoot(@NotNull Path communityRoot) {
-    Path probeFile = communityRoot.resolve("intellij.idea.community.main.iml");
-    if (Files.notExists(probeFile)) {
-      throw new IllegalStateException("community root was not found at " + communityRoot);
-    }
-
-    this.communityRoot = communityRoot;
-  }
-
-  @Override
-  public String toString() {
+  override fun toString(): String {
     return "BuildDependenciesCommunityRoot{" +
            "communityRoot=" + communityRoot +
-           '}';
+           '}'
   }
 }
