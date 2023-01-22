@@ -236,6 +236,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
    * but 'put' methods use relative buffer access, and move buffer position (because this is that expected
    * by calling code)
    */
+  @VisibleForTesting
   protected static class AttributesRecord {
 
     public static final int RECORD_FILE_ID_OFFSET = 0;
@@ -340,6 +341,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
     }
   }
 
+  @VisibleForTesting
   protected static class AttributeEntry {
     //Entry binary format:
     //    We try hard to be as compact as possible. This is because we have really a lot of very small attributes:

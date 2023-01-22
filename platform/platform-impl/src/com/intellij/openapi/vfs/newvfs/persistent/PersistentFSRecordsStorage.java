@@ -97,7 +97,6 @@ abstract class PersistentFSRecordsStorage {
    */
   abstract int allocateRecord();
 
-  //TODO RC: offset constant named ATTR_REF, but accessor is attributeRecord -- which one is correct, REFERENCE or RECORD?
   abstract void setAttributeRecordId(int fileId, int recordId) throws IOException;
 
   abstract int getAttributeRecordId(int fileId) throws IOException;
@@ -123,7 +122,6 @@ abstract class PersistentFSRecordsStorage {
   /**
    * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
    */
-  //RC: why 'put' not 'set'?
   abstract boolean setLength(int fileId, long length) throws IOException;
 
   abstract long getTimestamp(int fileId) throws IOException;
@@ -132,7 +130,6 @@ abstract class PersistentFSRecordsStorage {
   /**
    * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
    */
-  //RC: why 'put' not 'set'?
   abstract boolean setTimestamp(int fileId, long timestamp) throws IOException;
 
   abstract int getModCount(int fileId) throws IOException;

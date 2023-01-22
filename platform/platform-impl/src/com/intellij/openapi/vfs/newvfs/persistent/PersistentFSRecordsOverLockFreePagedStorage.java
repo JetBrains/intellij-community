@@ -380,6 +380,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
   @Override
   public void setParent(final int recordId,
                         final int parentId) throws IOException {
+    checkRecordIdIsValid(parentId);
     setIntField(recordId, PARENT_REF_OFFSET, parentId);
   }
 
@@ -712,12 +713,12 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
   }
 
   private long recordOffsetInFile(final int recordId) throws IndexOutOfBoundsException {
-    checkRecordId(recordId);
+    checkRecordIdIsValid(recordId);
     return recordOffsetInFileUnchecked(recordId);
   }
 
   private int recordOffsetOnPage(final int recordId) throws IndexOutOfBoundsException {
-    checkRecordId(recordId);
+    checkRecordIdIsValid(recordId);
 
     final int recordsOnHeaderPage = (pageSize - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
     if (recordId < recordsOnHeaderPage) {
@@ -735,7 +736,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
     return (recordsReallyOnLastPage % recordsPerPage) * RECORD_SIZE_IN_BYTES;
   }
 
-  private void checkRecordId(final int recordId) throws IndexOutOfBoundsException {
+  private void checkRecordIdIsValid(final int recordId) throws IndexOutOfBoundsException {
     if (!(NULL_ID < recordId && recordId < allocatedRecordsCount.get())) {
       throw new IndexOutOfBoundsException(
         "recordId(=" + recordId + ") is outside of allocated IDs range [0, " + allocatedRecordsCount + ")");

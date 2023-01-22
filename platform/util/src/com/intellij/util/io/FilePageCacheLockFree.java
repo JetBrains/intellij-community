@@ -444,10 +444,10 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * the method returns false if there is at least one such a page.
    *
    * @return true if all pages are reclaimed, false if there are some pages that are still in
-   * use and can be reclaimed right now -- so method should be called again, later
+   * use and can't be reclaimed right now -- so method should be called again, later
    */
   boolean tryToReclaimAll(final @NotNull PagesTable pagesTable) {
-    pagesTable.pagesLock().lock();
+    pagesTable.pagesLock().lock();      //RC: Do we need a lock here really?
     try {
       final AtomicReferenceArray<PageImpl> pages = pagesTable.pages();
       boolean somePagesStillInUse = false;

@@ -31,6 +31,8 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
   implements IPersistentFSRecordsStorage {
 
   //FIXME RC: check is id=0 valid for FSRecords? Better to use 0, as all other storages use NULL_ID=0
+  //          seems like id=0 is valid, but not used by PersistentFSRecordsStorage, because legacy implementations
+  //          use 0-th record as a header.
   public static final int NULL_ID = -1;
 
   /* ================ RECORD FIELDS LAYOUT (in ints = 4 bytes) ======================================== */
@@ -366,6 +368,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
   @Override
   public void setParent(final int recordId,
                         final int parentId) throws IOException {
+    checkRecordIdIsValid(parentId);
     setIntField(recordId, PARENT_REF_OFFSET, parentId);
   }
 
@@ -575,8 +578,8 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
     final boolean anythingChanged = globalModCount.get() > 0;
     if (recordsCount == 0 && !anythingChanged) {
       //Try to mimic other implementations behavior: they return actual file size, which is 0
-      //  before first record allocated -- should be >0, since even no-record storage contains
-      //  header, but other implementations use 0-th record as header...
+      //  before first record allocated -- really it should be >0, since even no-record storage
+      //  contains _header_, but other implementations use 0-th record as header...
       //TODO RC: it is better to have recordsCount() method
       return 0;
     }
@@ -618,7 +621,6 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
   //         the whole life of app, hence better to let JVM unmap pages on shutdown, and not
   //         carry the risk of JVM crush after too eager unmapping.
 
-
   // =============== implementation: addressing ========================================================= //
 
   /** Without recordId bounds checking */
@@ -643,12 +645,12 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
   }
 
   private long recordOffsetInFile(final int recordId) throws IndexOutOfBoundsException {
-    checkRecordId(recordId);
+    checkRecordIdIsValid(recordId);
     return recordOffsetInFileUnchecked(recordId);
   }
 
   private int recordOffsetOnPage(final int recordId) throws IndexOutOfBoundsException {
-    checkRecordId(recordId);
+    checkRecordIdIsValid(recordId);
 
     final int recordsOnHeaderPage = (pageSize - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
     if (recordId < recordsOnHeaderPage) {
@@ -666,7 +668,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
     return (recordsReallyOnLastPage % recordsPerPage) * RECORD_SIZE_IN_BYTES;
   }
 
-  private void checkRecordId(final int recordId) throws IndexOutOfBoundsException {
+  private void checkRecordIdIsValid(final int recordId) throws IndexOutOfBoundsException {
     if (!(NULL_ID < recordId && recordId < allocatedRecordsCount.get())) {
       throw new IndexOutOfBoundsException(
         "recordId(=" + recordId + ") is outside of allocated IDs range [0, " + allocatedRecordsCount + ")");
@@ -823,7 +825,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
       this.pageSize = pageSize;
 
       this.storagePath = path;
-      
+
       final long length = Files.exists(path) ? Files.size(path) : 0;
 
       final long maxSize = RECORD_SIZE_IN_BYTES * (long)Integer.MAX_VALUE;
