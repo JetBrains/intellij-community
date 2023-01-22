@@ -44,6 +44,7 @@ open class AssetsProcessorImpl : AssetsProcessor {
       when (asset) {
         is GeneratorTemplateFile -> generateSources(outputDirectory, asset, templateProperties)
         is GeneratorResourceFile -> generateSources(outputDirectory, asset)
+        is GeneratorFile -> generateSources(outputDirectory, asset)
         is GeneratorEmptyDirectory -> generateSources(outputDirectory, asset)
       }
     }
@@ -77,6 +78,16 @@ open class AssetsProcessorImpl : AssetsProcessor {
 
   private fun generateSources(outputDirectory: Path, asset: GeneratorEmptyDirectory): Path {
     return findOrCreateDirectory(outputDirectory, asset.targetFileName)
+  }
+
+  private fun generateSources(outputDirectory: Path, asset: GeneratorFile): Path {
+    try {
+      val file = findOrCreateFile(outputDirectory, asset.targetFileName)
+      writeBytes(file, asset.content)
+      return file
+    } catch (e: Throwable) {
+      throw ResourceProcessingException(e)
+    }
   }
 
   protected open fun writeText(file: Path, content: String) {

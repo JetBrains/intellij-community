@@ -17,6 +17,13 @@ data class GeneratorResourceFile(
   val resource: URL
 ) : GeneratorAsset()
 
+class GeneratorFile(
+  override val targetFileName: String,
+  val content: ByteArray
+) : GeneratorAsset() {
+  constructor(targetFileName: String, contents: String) : this(targetFileName, contents.encodeToByteArray())
+}
+
 data class GeneratorEmptyDirectory(
   override val targetFileName: String
 ) : GeneratorAsset()
