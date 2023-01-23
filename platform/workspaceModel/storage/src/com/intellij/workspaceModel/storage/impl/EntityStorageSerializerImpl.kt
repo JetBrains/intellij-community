@@ -382,16 +382,15 @@ class EntityStorageSerializerImpl(
       SerializationResult.Fail(e.message)
     }
     finally {
-      flush(output)
+      closeOutput(output)
     }
   }
 
-  internal fun flush(output: Output) {
+  internal fun closeOutput(output: Output) {
     try {
-      output.flush()
+      output.close()
     }
     catch (e: KryoException) {
-      output.reset()
       LOG.warn("Exception at project serialization", e)
       SerializationResult.Fail(e.message)
     }

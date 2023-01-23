@@ -232,7 +232,7 @@ private fun EntityStorageSerializerImpl.serializeDiffLog(file: Path, log: Change
     kryo.writeClassAndObject(output, log)
   }
   finally {
-    flush(output)
+    closeOutput(output)
   }
 }
 
@@ -251,7 +251,7 @@ private fun EntityStorageSerializerImpl.serializeClassToIntConverter(file: Path)
     kryo.writeClassAndObject(output, mapData)
   }
   finally {
-    flush(output)
+    closeOutput(output)
   }
 }
 
