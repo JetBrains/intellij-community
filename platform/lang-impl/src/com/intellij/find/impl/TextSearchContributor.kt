@@ -12,7 +12,6 @@ import com.intellij.ide.actions.SearchEverywhereClassifier
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.createContext
 import com.intellij.ide.util.RunOnceUtil
-import com.intellij.ide.util.scopeChooser.Option
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeModel
 import com.intellij.openapi.Disposable
@@ -161,7 +160,8 @@ internal class TextSearchContributor(
   }
 
   private fun createScopes() = mutableListOf<ScopeDescriptor>().apply {
-    addAll(ScopeModel.getScopeDescriptors(project, createContext(project, psiContext), setOf(Option.LIBRARIES, Option.EMPTY_SCOPES)))
+    addAll(ScopeModel.getScopeDescriptors(project, createContext(project, psiContext),
+                                          setOf(ScopeModel.Option.LIBRARIES, ScopeModel.Option.EMPTY_SCOPES)))
   }
 
   override fun getScope() = selectedScopeDescriptor

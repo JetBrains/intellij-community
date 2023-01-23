@@ -17,15 +17,15 @@ import org.jetbrains.concurrency.Promise
 import java.util.function.Predicate
 
 
-enum class Option {
-  LIBRARIES,
-  SEARCH_RESULTS,
-  FROM_SELECTION,
-  USAGE_VIEW,
-  EMPTY_SCOPES
-}
-
 class ScopeModel(options: Set<Option>) {
+
+  enum class Option {
+    LIBRARIES,
+    SEARCH_RESULTS,
+    FROM_SELECTION,
+    USAGE_VIEW,
+    EMPTY_SCOPES
+  }
 
   private val options = mutableSetOf<Option>().apply { addAll(options) }
   private lateinit var project: Project
