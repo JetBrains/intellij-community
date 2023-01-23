@@ -43,7 +43,6 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
   }
 
   private fun checkForFirstToken(expectedLine: String, suggestions: List<Suggestion>, prefix: String): Pair<String, Int>? {
-    var res: Pair<String, Int>? = null
     val expectedToken = firstToken(expectedLine)
 
     if (expectedToken.isEmpty()) {
@@ -53,10 +52,12 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
     suggestions.forEachIndexed { index, suggestion ->
       val suggestionToken = firstToken(suggestion.text.drop(prefix.length))
 
-      findResult(suggestionToken, expectedToken, index, res)?.let { res = it }
+      if (suggestionToken == expectedToken) {
+        return suggestionToken to index
+      }
     }
 
-    return res
+    return null
   }
 
   private fun findResult(suggestion: String, expected: String, index: Int, res: Pair<String, Int>?): Pair<String, Int>? {
