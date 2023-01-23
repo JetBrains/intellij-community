@@ -11,7 +11,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -61,7 +60,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   private ResolveSnapshotProvider.ResolveSnapshot mySnapshot;
   private TextRange mySelectedRange;
   protected Language myLanguage;
-  private SuggestedNameInfo mySuggestedNameInfo;
+  private @Nullable SuggestedNameInfo mySuggestedNameInfo;
 
   public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename,
                                 @NotNull Editor editor) {
@@ -99,6 +98,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       return true;
     });
   }
+
   protected final boolean processDefaultAdditionalElementsToRename(@NotNull Processor<? super Pair<PsiElement, TextRange>> stringUsages) {
     final String stringToSearch = myElementToRename.getName();
     if (!StringUtil.isEmptyOrSpaces(stringToSearch)) {
@@ -265,14 +265,11 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   @Override
   protected MyLookupExpression createLookupExpression(PsiElement selectedElement) {
-    if (myNameSuggestions == null && myElementToRename != null) {
-      myNameSuggestions = new LinkedHashSet<>();
-      mySuggestedNameInfo =
-        ActionUtil.underModalProgress(selectedElement.getProject(),
-                                      RefactoringBundle.message("progress.title.collecting.suggested.names"),
-                                      () -> NameSuggestionProvider.suggestNames(myElementToRename, selectedElement, myNameSuggestions));
-    }
-    return new MyLookupExpression(getInitialName(), myNameSuggestions, myElementToRename, selectedElement, shouldSelectAll(), myAdvertisementText);
+    MyLookupExpression lookupExpression =
+      new MyLookupExpression(getInitialName(), myNameSuggestions, myElementToRename, selectedElement, shouldSelectAll(),
+                             myAdvertisementText);
+    mySuggestedNameInfo = lookupExpression.getSuggestedNameInfo();
+    return lookupExpression;
   }
 
   protected void performRefactoringRename(String newName, StartMarkAction markAction) {
