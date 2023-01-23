@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.util.application.runReadActionIfNeeded
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -50,14 +49,9 @@ interface KotlinApplicableToolWithContext<ELEMENT : KtElement, CONTEXT> : Kotlin
 
 internal fun <ELEMENT : KtElement, CONTEXT> KotlinApplicableToolWithContext<ELEMENT, CONTEXT>.prepareContextWithAnalyze(
     element: ELEMENT,
-    needsReadAction: Boolean,
-): CONTEXT? =
-    runReadActionIfNeeded(needsReadAction) {
-        analyze(element) { prepareContext(element) }
-    }
+): CONTEXT? = analyze(element) { prepareContext(element) }
 
 @OptIn(KtAllowAnalysisOnEdt::class)
 internal fun <ELEMENT : KtElement, CONTEXT> KotlinApplicableToolWithContext<ELEMENT, CONTEXT>.prepareContextWithAnalyzeAllowEdt(
     element: ELEMENT,
-    needsReadAction: Boolean,
-): CONTEXT? = allowAnalysisOnEdt { prepareContextWithAnalyze(element, needsReadAction) }
+): CONTEXT? = allowAnalysisOnEdt { prepareContextWithAnalyze(element) }

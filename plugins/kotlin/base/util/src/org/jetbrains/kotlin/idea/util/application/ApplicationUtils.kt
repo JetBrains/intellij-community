@@ -27,16 +27,6 @@ fun <T> runWriteAction(action: () -> T): T {
 }
 
 /**
- * Run [action] under a read action if needed, and run outside an action otherwise.
- */
-fun <T> runReadActionIfNeeded(isNeeded: Boolean, action: () -> T): T {
-    if (isNeeded) {
-        return ApplicationManager.getApplication().runReadAction<T>(action)
-    }
-    return action()
-}
-
-/**
  * Run [action] under a write action if needed, and run outside an action otherwise.
  */
 fun <T> runWriteActionIfNeeded(isNeeded: Boolean, action: () -> T): T {

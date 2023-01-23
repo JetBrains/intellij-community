@@ -18,7 +18,7 @@ abstract class AbstractKotlinApplicableIntentionWithContext<ELEMENT : KtElement,
 ) : AbstractKotlinApplicableIntentionBase<ELEMENT>(elementType), KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
     final override fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean {
         if (!super.isApplicableTo(element, caretOffset)) return false
-        val context = prepareContextWithAnalyzeAllowEdt(element, needsReadAction = false) ?: return false
+        val context = prepareContextWithAnalyzeAllowEdt(element) ?: return false
 
         val actionText = getActionName(element, context)
         setTextGetter { actionText }
@@ -26,7 +26,7 @@ abstract class AbstractKotlinApplicableIntentionWithContext<ELEMENT : KtElement,
     }
 
     final override fun applyTo(element: ELEMENT, project: Project, editor: Editor?) {
-        val context = prepareContextWithAnalyzeAllowEdt(element, needsReadAction = true) ?: return
+        val context = prepareContextWithAnalyzeAllowEdt(element) ?: return
         runWriteActionIfNeeded(shouldApplyInWriteAction() && element.isPhysical) {
             apply(element, context, project, editor)
         }
