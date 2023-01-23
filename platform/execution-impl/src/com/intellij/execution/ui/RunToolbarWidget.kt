@@ -918,10 +918,6 @@ enum class RunState {
   }
 }
 
-private fun isPersistedTask(env: ExecutionEnvironment): Boolean {
-  return getPersistedConfiguration(env.runnerAndConfigurationSettings) != null
-}
-
 private fun getPersistedConfiguration(configuration: RunnerAndConfigurationSettings?): RunnerAndConfigurationSettings? {
   var conf: RunProfile = (configuration ?: return null).configuration
   conf = ExecutionManagerImpl.getDelegatedRunProfile(conf) ?: conf
