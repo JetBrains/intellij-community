@@ -2,70 +2,70 @@ MODULES
     project
     project.commonMain
         externalProjectId = project
-        languageLevel = 1.8
-        apiLevel = 1.8
+        languageLevel = 1.7
+        apiLevel = 1.7
         mppVersion = M3
         targetPlatform = JVM (1.8)/Native (general)
     project.commonTest
         externalProjectId = project
-        languageLevel = 1.8
-        apiLevel = 1.8
+        languageLevel = 1.7
+        apiLevel = 1.7
         mppVersion = M3
         additionalVisibleModuleNames = project:commonMain
         targetPlatform = JVM (1.8)/Native (general)
     project.jvmMain
         externalProjectId = project
-        languageLevel = 1.8
-        apiLevel = 1.8
+        languageLevel = 1.7
+        apiLevel = 1.7
         mppVersion = M3
         dependsOnModuleNames = project:commonMain
         targetPlatform = JVM (1.8)
     project.jvmTest
         externalProjectId = project
-        languageLevel = 1.8
-        apiLevel = 1.8
+        languageLevel = 1.7
+        apiLevel = 1.7
         mppVersion = M3
         dependsOnModuleNames = project:commonTest
         targetPlatform = JVM (1.8)
     project.linuxX64Main
         externalProjectId = project
-        languageLevel = 1.8
-        apiLevel = 1.8
+        languageLevel = 1.7
+        apiLevel = 1.7
         mppVersion = M3
         dependsOnModuleNames = project:commonMain
         targetPlatform = Native (linux_x64)
     project.linuxX64Test
         externalProjectId = project
-        languageLevel = 1.8
-        apiLevel = 1.8
+        languageLevel = 1.7
+        apiLevel = 1.7
         mppVersion = M3
         dependsOnModuleNames = project:commonTest
         targetPlatform = Native (linux_x64)
     project.macosX64Main
         externalProjectId = project
-        languageLevel = 1.8
-        apiLevel = 1.8
+        languageLevel = 1.7
+        apiLevel = 1.7
         mppVersion = M3
         dependsOnModuleNames = project:commonMain
         targetPlatform = Native (macos_x64)
     project.macosX64Test
         externalProjectId = project
-        languageLevel = 1.8
-        apiLevel = 1.8
+        languageLevel = 1.7
+        apiLevel = 1.7
         mppVersion = M3
         dependsOnModuleNames = project:commonTest
         targetPlatform = Native (macos_x64)
     project.mingwX64Main
         externalProjectId = project
-        languageLevel = 1.8
-        apiLevel = 1.8
+        languageLevel = 1.7
+        apiLevel = 1.7
         mppVersion = M3
         dependsOnModuleNames = project:commonMain
         targetPlatform = Native (mingw_x64)
     project.mingwX64Test
         externalProjectId = project
-        languageLevel = 1.8
-        apiLevel = 1.8
+        languageLevel = 1.7
+        apiLevel = 1.7
         mppVersion = M3
         dependsOnModuleNames = project:commonTest
         targetPlatform = Native (mingw_x64)
