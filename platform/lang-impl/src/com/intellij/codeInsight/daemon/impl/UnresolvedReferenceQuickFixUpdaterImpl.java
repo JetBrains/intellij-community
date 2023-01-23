@@ -9,6 +9,7 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,6 +65,11 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
 
   public void registerQuickFixesLater(@NotNull PsiReference ref, @NotNull HighlightInfo.Builder info) {
     ((HighlightInfoB)info).setUnresolvedReference(ref);
+  }
+
+  @Override
+  public void registerQuickFixesLater(@NotNull PsiReference ref, @NotNull AnnotationBuilder builder) {
+    ((B)builder).unresolvedReference(ref);
   }
 
   @Override

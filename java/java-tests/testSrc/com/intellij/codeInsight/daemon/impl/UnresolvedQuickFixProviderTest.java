@@ -6,11 +6,17 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
+import com.intellij.lang.annotation.AnnotationBuilder;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
@@ -74,5 +80,43 @@ public class UnresolvedQuickFixProviderTest extends LightDaemonAnalyzerTestCase 
     UIUtil.dispatchAllInvocationEvents();
     assertSize(N, errors);
     assertNotEmpty(regFixCalled);
+  }
+
+  public void testUnresolvedReferenceQuickFixProviderMustWorkForAnnotatorsToo() {
+    ExtensionPointName.create("com.intellij.codeInsight.unresolvedReferenceQuickFixProvider").getPoint().registerExtension(new MyVerySlowQuickFixProvider(), getTestRootDisposable());
+    @Language("JAVA")
+    String text = """
+      package x;
+      class MyClass {
+        public MyClass var1;
+      }
+      """;
+    ALLOW_UNRESOLVED_REFERENCE_QUICK_FIXES = false;
+    regFixCalled.clear();
+    configureFromFileText("X.java", text);
+
+    ALLOW_UNRESOLVED_REFERENCE_QUICK_FIXES = true;
+    DaemonRespondToChangesTest.useAnnotatorsIn(JavaLanguage.INSTANCE, new DaemonRespondToChangesTest.MyRecordingAnnotator[]{
+      new MyClassAnnotator()}, ()->{
+      getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("MyClass var1"));
+      DaemonCodeAnalyzer.getInstance(getProject()).restart();
+      List<HighlightInfo> errors = highlightErrors();
+      assertOneElement(errors);
+      CodeInsightTestFixtureImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(getFile(), getEditor());
+      UIUtil.dispatchAllInvocationEvents();
+      assertNotEmpty(regFixCalled);
+    });
+  }
+
+  public static class MyClassAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiReference && element.getText().equals("MyClass")) {
+        AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "my class");
+        UnresolvedReferenceQuickFixUpdater.getInstance(element.getProject()).registerQuickFixesLater((PsiReference)element, builder);
+        builder.create();
+        this.iDidIt();
+      }
+    }
   }
 }
