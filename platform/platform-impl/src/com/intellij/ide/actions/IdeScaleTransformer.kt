@@ -3,6 +3,10 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
@@ -11,14 +15,12 @@ import com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager
 import com.intellij.ui.scale.JBUIScale
 import kotlin.math.round
 
-
-object IdeScaleTransformer {
-  const val DEFAULT_SCALE = 1.0f
-  private const val SCALING_STEP = 0.25f
+@State(name = "IdeScaleTransformer", storages = [Storage("ideScaleTransformer.xml")])
+class IdeScaleTransformer : PersistentStateComponent<IdeScaleTransformer.PersistedScale> {
 
   @Volatile
   private var current: ScalingParameters? = null
-  private var savedOriginalConsoleFontSize: Float? = null
+  private var savedOriginalConsoleFontSize: Float = -1f
 
   val currentScale: Float
     get() = current?.scale ?: DEFAULT_SCALE
@@ -53,7 +55,6 @@ object IdeScaleTransformer {
     }
   }
 
-  @JvmStatic
   fun scaleToEditorFontSize(fontSize: Float, performBeforeTweaking: () -> Unit) {
     if (fontSize <= globalEditorFontSize) {
       scale(DEFAULT_SCALE, performBeforeTweaking)
@@ -69,7 +70,6 @@ object IdeScaleTransformer {
   private fun scale(newScaleFactor: Float, performBeforeTweaking: (() -> Unit)? = null) {
     prepareTweaking()
     performBeforeTweaking?.invoke()
-    val savedOriginalConsoleFontSize = savedOriginalConsoleFontSize ?: return
     val newParameters = ScalingParameters.ScaleOriented(newScaleFactor, savedOriginalConsoleFontSize)
     performTweaking(newParameters)
   }
@@ -95,6 +95,31 @@ object IdeScaleTransformer {
     UISettings.getInstance().fireUISettingsChanged()
     LafManager.getInstance().updateUI()
     EditorUtil.reinitSettings()
+  }
+
+  class PersistedScale {
+    var scaleFactor: Float = DEFAULT_SCALE
+    var savedOriginalConsoleFontSize: Float = -1f
+  }
+
+  override fun getState(): PersistedScale =
+    PersistedScale().also {
+      it.scaleFactor = currentScale
+      it.savedOriginalConsoleFontSize = savedOriginalConsoleFontSize
+    }
+
+  override fun loadState(state: PersistedScale) {
+    savedOriginalConsoleFontSize = state.savedOriginalConsoleFontSize
+    current = ScalingParameters.ScaleOriented(state.scaleFactor, state.savedOriginalConsoleFontSize)
+  }
+
+  companion object {
+    const val DEFAULT_SCALE = 1.0f
+    private const val SCALING_STEP = 0.25f
+
+    @JvmStatic
+    val instance: IdeScaleTransformer
+      get() = service<IdeScaleTransformer>()
   }
 }
 

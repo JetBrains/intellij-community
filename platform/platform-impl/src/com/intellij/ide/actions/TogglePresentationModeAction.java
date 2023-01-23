@@ -58,7 +58,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
                      ? settings.getPresentationModeFontSize()
                      : EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
 
-    IdeScaleTransformer.scaleToEditorFontSize(fontSize, () -> {
+    IdeScaleTransformer.getInstance().scaleToEditorFontSize(fontSize, () -> {
       settings.setPresentationMode(inPresentation);
       return null;
     });

@@ -11,7 +11,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.WelcomeWizardUtil
-import com.intellij.ide.actions.IdeScaleTransformer.currentScale
+import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -766,6 +766,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
   private fun patchLafFonts(uiDefaults: UIDefaults) {
     val uiSettings = UISettings.getInstance()
+    val currentScale = IdeScaleTransformer.instance.currentScale
     if (uiSettings.overrideLafFonts || currentScale != 1f) {
       storeOriginalFontDefaults(uiDefaults)
       val fontSize = uiSettings.fontSize2D * currentScale

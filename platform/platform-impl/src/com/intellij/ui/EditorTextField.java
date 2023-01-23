@@ -706,7 +706,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       editor.getColorsScheme().setEditorFontSize(getFont().getSize());
       return;
     }
-    float currentEditorFontSize = IdeScaleTransformer.INSTANCE.getCurrentEditorFontSize();
+    float currentEditorFontSize = IdeScaleTransformer.getInstance().getCurrentEditorFontSize();
     if (editor.getColorsScheme().getEditorFontSize2D() != currentEditorFontSize) {
       editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true);
       editor.setFontSize(currentEditorFontSize);

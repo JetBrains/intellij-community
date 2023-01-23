@@ -23,10 +23,10 @@ class ZoomInIdeAction : ZoomIdeAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabled = e.presentation.isEnabled &&
-                               IdeScaleTransformer.currentScale < MAX_SCALE
+                               IdeScaleTransformer.instance.currentScale < MAX_SCALE
   }
   override fun actionPerformed(e: AnActionEvent) {
-    IdeScaleTransformer.zoomIn()
+    IdeScaleTransformer.instance.zoomIn()
   }
 }
 
@@ -34,11 +34,11 @@ class ZoomOutIdeAction : ZoomIdeAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabled = e.presentation.isEnabled &&
-                               IdeScaleTransformer.currentScale > IdeScaleTransformer.DEFAULT_SCALE
+                               IdeScaleTransformer.instance.currentScale > IdeScaleTransformer.DEFAULT_SCALE
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    IdeScaleTransformer.zoomOut()
+    IdeScaleTransformer.instance.zoomOut()
   }
 }
 
@@ -46,10 +46,10 @@ class ResetIdeScaleAction : ZoomIdeAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabled = e.presentation.isEnabled &&
-                               IdeScaleTransformer.currentScale != IdeScaleTransformer.DEFAULT_SCALE
+                               IdeScaleTransformer.instance.currentScale != IdeScaleTransformer.DEFAULT_SCALE
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    IdeScaleTransformer.reset()
+    IdeScaleTransformer.instance.reset()
   }
 }
