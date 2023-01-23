@@ -12,13 +12,16 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext
 import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
+import org.jetbrains.idea.maven.importing.workspaceModel.ARTIFACT_MODEL_KEY
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 
-val FACET_DETECTION_DISABLED_KEY = Key.create<MutableMap<MavenWorkspaceFacetConfigurator, Boolean>>("FACET_DETECTION_DISABLED_KEY")
+private val FACET_DETECTION_DISABLED_KEY = Key.create<MutableMap<MavenWorkspaceFacetConfigurator, Boolean>>("FACET_DETECTION_DISABLED_KEY")
 
+@ApiStatus.Internal
 interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
   fun isApplicable(mavenProject: MavenProject): Boolean
   fun isFacetDetectionDisabled(project: Project): Boolean
@@ -66,7 +69,7 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
       val moduleType = moduleWithType.type
       if (moduleType.containsCode) {
         val module = moduleWithType.module
-        preProcess(context.storage, module, project, mavenProject, context.artifactModel)
+        preProcess(context.storage, module, project, mavenProject, ARTIFACT_MODEL_KEY[context])
       }
     }
   }
@@ -75,7 +78,7 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
     val project = context.project
     if (isFacetDetectionDisabled(project)) return
 
-    val artifactModel = context.artifactModel
+    val artifactModel = ARTIFACT_MODEL_KEY[context]
     val resolvingContext = object : DefaultPackagingElementResolvingContext(project) {
       override fun getArtifactModel(): ArtifactModel {
         return artifactModel

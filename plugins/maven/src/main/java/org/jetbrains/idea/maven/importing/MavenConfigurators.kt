@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -131,19 +130,15 @@ interface MavenWorkspaceConfigurator {
     val mavenProjectsTree: MavenProjectsTree
   }
 
-  interface ArtifactModelContext {
-    val artifactModel: ModifiableArtifactModel
-  }
-
   interface ModelContext<S : EntityStorage, M> : Context<S> {
     val mavenProjectsWithModules: Sequence<MavenProjectWithModules<M>>
     fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T>
   }
 
-  interface MutableModelContext : ModelContext<MutableEntityStorage, ModuleEntity>, ArtifactModelContext
+  interface MutableModelContext : ModelContext<MutableEntityStorage, ModuleEntity>
   interface AppliedModelContext : ModelContext<EntityStorage, Module>
 
-  interface MutableMavenProjectContext : Context<MutableEntityStorage>, ArtifactModelContext {
+  interface MutableMavenProjectContext : Context<MutableEntityStorage> {
     val mavenProjectWithModules: MavenProjectWithModules<ModuleEntity>
   }
 }
