@@ -64,7 +64,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
 
   public static final int RECORD_SIZE_IN_BYTES = LENGTH_OFFSET + LENGTH_SIZE;
 
-  public static final int DEFAULT_PAGE_SIZE = 1 << 26;//64Mb
+  public static final int DEFAULT_MAPPED_CHUNK_SIZE = 1 << 26;//64Mb
 
   private static final VarHandle INT_HANDLE = MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.nativeOrder());
   private static final VarHandle LONG_HANDLE = MethodHandles.byteBufferViewVarHandle(long[].class, ByteOrder.nativeOrder());
@@ -105,11 +105,11 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
 
 
   public PersistentFSRecordsLockFreeOverMMappedFile(final @NotNull Path path,
-                                                    final int pageSize) throws IOException {
-    this.storage = new MMappedFileStorage(path, pageSize);
+                                                    final int mappedChunkSize) throws IOException {
+    this.storage = new MMappedFileStorage(path, mappedChunkSize);
 
-    this.pageSize = pageSize;
-    recordsPerPage = pageSize / RECORD_SIZE_IN_BYTES;
+    this.pageSize = mappedChunkSize;
+    recordsPerPage = mappedChunkSize / RECORD_SIZE_IN_BYTES;
 
     final int recordsCountInStorage = getIntHeaderField(HEADER_RECORDS_ALLOCATED);
     final int modCount = getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET);

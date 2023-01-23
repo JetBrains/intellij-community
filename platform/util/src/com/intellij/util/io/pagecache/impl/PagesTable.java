@@ -43,14 +43,11 @@ public class PagesTable {
   private int pagesCount = 0;
 
   /**
-   * Content: Page{state: NOT_READY | READY_FOR_USE | TO_UNMAP}.
    * Reads are non-blocking, writes must be guarded by .pagesLock
    */
   @NotNull
   private volatile AtomicReferenceArray<PageImpl> pages;
 
-  //TODO RC: seems like we don't need R-W lock here -- simple lock is enough, even intrinsic one
-  //         The only method we use readLock is .flushAll(), and it looks like it is flawed anyway
   private transient final ReentrantLock pagesLock = new ReentrantLock();
 
 
