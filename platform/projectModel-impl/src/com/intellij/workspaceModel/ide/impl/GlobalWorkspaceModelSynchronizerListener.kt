@@ -8,6 +8,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
 import kotlin.reflect.KClass
@@ -20,7 +21,8 @@ class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : W
     if (globalWorkspaceModel.isFromGlobalWorkspaceModel) return
 
     if (isContainingGlobalEntities(event, LibraryEntity::class)
-        || isContainingGlobalEntities(event, LibraryPropertiesEntity::class)) {
+        || isContainingGlobalEntities(event, LibraryPropertiesEntity::class)
+        || isContainingGlobalEntities(event, ExcludeUrlEntity::class)) {
       globalWorkspaceModel.syncEntitiesWithProject(project)
     }
   }

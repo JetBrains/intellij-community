@@ -237,7 +237,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       if (GlobalLibraryTableBridge.isEnabled()) {
         childActivity = childActivity?.endAndStart("applying entities from global storage")
         val mutableStorage = MutableEntityStorage.create()
-        GlobalWorkspaceModel.getInstance().applyStateToBuilder(mutableStorage)
+        GlobalWorkspaceModel.getInstance().applyStateToProjectBuilder(project, mutableStorage)
         builder.addDiff(mutableStorage)
       }
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")

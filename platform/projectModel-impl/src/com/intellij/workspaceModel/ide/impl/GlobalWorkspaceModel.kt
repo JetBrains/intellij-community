@@ -10,14 +10,19 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.workspaceModel.ide.GlobalWorkspaceModelCache
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicLong
@@ -140,39 +145,64 @@ class GlobalWorkspaceModel: Disposable {
     globalWorkspaceModelCache?.scheduleCacheSave()
     isFromGlobalWorkspaceModel = true
     ProjectManager.getInstance().openProjects.forEach { project ->
-      if (!project.isDisposed) {
-        applyStateToProject(project, WorkspaceModel.getInstance(project))
-      }
+      if (!project.isDisposed) applyStateToProject(project)
     }
     isFromGlobalWorkspaceModel = false
   }
 
-  fun applyStateToProject(targetProject: Project, workspaceModel: WorkspaceModel) {
+  fun applyStateToProject(targetProject: Project) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
     if (targetProject === filteredProject) {
       return
     }
 
+    val workspaceModel = WorkspaceModel.getInstance(targetProject)
+    val entitiesCopyAtBuilder = copyEntitiesToEmptyStorage(entityStorage.current,
+                                                           VirtualFileUrlManager.getInstance(targetProject))
     LOG.info("Sync global entities with project: ${targetProject.name}")
     workspaceModel.updateProjectModel("Apply entities from global storage") { builder ->
-      builder.replaceBySource(globalEntitiesFilter, entityStorage.current)
+      builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
   }
 
-  fun applyStateToBuilder(targetBuilder: MutableEntityStorage) {
+  fun applyStateToProjectBuilder(project: Project, targetBuilder: MutableEntityStorage) {
     LOG.info("Sync global entities with mutable entity storage")
-    targetBuilder.replaceBySource(globalEntitiesFilter, entityStorage.current)
+    targetBuilder.replaceBySource(globalEntitiesFilter, copyEntitiesToEmptyStorage(entityStorage.current, VirtualFileUrlManager.getInstance(project)))
   }
 
   fun syncEntitiesWithProject(sourceProject: Project) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     filteredProject = sourceProject
     LOG.info("Apply changes from project: ${sourceProject.name}")
+    val entitiesCopyAtBuilder = copyEntitiesToEmptyStorage(WorkspaceModel.getInstance(sourceProject).currentSnapshot,
+                                                           VirtualFileUrlManager.getGlobalInstance())
     updateModel("Sync entities with global storage") { builder ->
-      builder.replaceBySource(globalEntitiesFilter, WorkspaceModel.getInstance(sourceProject).currentSnapshot)
+      builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
     filteredProject = null
+  }
+
+  private fun copyEntitiesToEmptyStorage(storage: EntityStorage, vfuManager: VirtualFileUrlManager): MutableEntityStorage {
+    val mutableEntityStorage = MutableEntityStorage.create()
+    storage.entities(LibraryEntity::class.java).forEach { libraryEntity ->
+      if (!globalEntitiesFilter.invoke(libraryEntity.entitySource)) return@forEach
+      val libraryRootsCopy = libraryEntity.roots.map { root ->
+        LibraryRoot(root.url.createCopyAtManager(vfuManager), root.type, root.inclusionOptions)
+      }
+
+      val entitySourceCopy = (libraryEntity.entitySource as JpsFileEntitySource.ExactGlobalFile).copy(vfuManager)
+      val excludedRootsCopy = libraryEntity.excludedRoots.map { it.copy(entitySourceCopy, vfuManager) }
+      val libraryPropertiesCopy = libraryEntity.libraryProperties?.copy(entitySourceCopy)
+      val libraryEntityCopy = LibraryEntity(libraryEntity.name, libraryEntity.tableId, libraryRootsCopy, entitySourceCopy) {
+        excludedRoots = excludedRootsCopy
+        libraryProperties = libraryPropertiesCopy
+      }
+      mutableEntityStorage.addEntity(libraryEntityCopy)
+      val libraryBridge = storage.libraryMap.getDataByEntity(libraryEntity)
+      if (libraryBridge != null) mutableEntityStorage.mutableLibraryMap.addIfAbsent(libraryEntityCopy, libraryBridge)
+    }
+    return mutableEntityStorage
   }
 
   private fun logErrorOnEventHandling(action: () -> Unit) {
@@ -189,3 +219,18 @@ class GlobalWorkspaceModel: Disposable {
     fun getInstance(): GlobalWorkspaceModel = ApplicationManager.getApplication().service()
   }
 }
+
+private fun VirtualFileUrl.createCopyAtManager(manager: VirtualFileUrlManager): VirtualFileUrl = manager.fromUrl(url)
+
+private fun ExcludeUrlEntity.copy(entitySource: EntitySource, manager: VirtualFileUrlManager): ExcludeUrlEntity =
+  ExcludeUrlEntity(url.createCopyAtManager(manager), entitySource)
+
+private fun LibraryPropertiesEntity.copy(entitySource: EntitySource): LibraryPropertiesEntity {
+  val originalPropertiesXmlTag = propertiesXmlTag
+  return LibraryPropertiesEntity(libraryType, entitySource) {
+    this.propertiesXmlTag = originalPropertiesXmlTag
+  }
+}
+
+private fun JpsFileEntitySource.ExactGlobalFile.copy(manager: VirtualFileUrlManager): JpsFileEntitySource.ExactGlobalFile =
+  JpsFileEntitySource.ExactGlobalFile(file.createCopyAtManager(manager))

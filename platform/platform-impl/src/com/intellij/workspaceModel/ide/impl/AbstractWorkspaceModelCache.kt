@@ -25,9 +25,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
 
 @ApiStatus.Internal
-abstract class AbstractWorkspaceModelCache(cacheVersionsContributor: () -> Map<String, String> = { emptyMap() }) {
-  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver,
-                                                                                VirtualFileUrlManager.getGlobalInstance(),
+abstract class AbstractWorkspaceModelCache(vfuManager: VirtualFileUrlManager,
+                                           cacheVersionsContributor: () -> Map<String, String> = { emptyMap() }) {
+  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, vfuManager,
                                                                                 cacheVersionsContributor)
 
   internal fun loadCache(file: Path, invalidateGlobalCachesMarkerFile: Path, invalidateCachesMarkerFile: Path): EntityStorage? {

@@ -24,7 +24,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
 
 @ApiStatus.Internal
-class WorkspaceModelCacheImpl(private val project: Project) : AbstractWorkspaceModelCache(WorkspaceModelCacheImpl::collectExternalCacheVersions),
+class WorkspaceModelCacheImpl(private val project: Project) : AbstractWorkspaceModelCache(VirtualFileUrlManager.getInstance(project),
+                                                                                          WorkspaceModelCacheImpl::collectExternalCacheVersions),
                                                               WorkspaceModelCache, Disposable {
   override val enabled = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
   private val saveAlarm = SingleAlarm.pooledThreadSingleAlarm(1000, this) { this.doCacheSaving() }

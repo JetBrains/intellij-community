@@ -10,12 +10,14 @@ import com.intellij.util.SingleAlarm
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.isConsistent
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
-class GlobalWorkspaceModelCacheImpl : AbstractWorkspaceModelCache(), GlobalWorkspaceModelCache, Disposable {
+class GlobalWorkspaceModelCacheImpl : AbstractWorkspaceModelCache(VirtualFileUrlManager.getGlobalInstance()),
+                                      GlobalWorkspaceModelCache, Disposable {
   private val saveAlarm = SingleAlarm.pooledThreadSingleAlarm(1000, this) { this.doCacheSaving() }
   private val cacheFile by lazy { PathManager.getSystemDir().resolve("$DATA_DIR_NAME/cache.data") }
 
