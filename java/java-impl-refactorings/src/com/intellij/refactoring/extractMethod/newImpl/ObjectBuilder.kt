@@ -1,8 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
+import com.intellij.codeInsight.hint.EditorCodePreview
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
@@ -11,6 +15,11 @@ import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplateBuilder
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addPreview
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createCodeHighlighting
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createGreedyRangeMarker
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getLinesFromTextRange
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.navigateToTemplateVariable
 import com.intellij.refactoring.extractMethod.newImpl.inplace.TemplateField
 import com.siyeh.ig.psiutils.TypeUtils
 
@@ -33,8 +42,7 @@ interface ObjectBuilder {
       require(scope.isNotEmpty())
       val objectBuilder: ObjectBuilder = RecordObjectBuilder.create(variables, scope) ?: return
       val file = scope.first().containingFile
-      val rangeMarker = file.viewProvider.document.createRangeMarker(scope.first().textRange.startOffset, scope.last().textRange.endOffset)
-      rangeMarker.apply { isGreedyToLeft = true; isGreedyToRight = true; }
+      val extractRange = createGreedyRangeMarker(file.viewProvider.document, scope.first().textRange.union(scope.last().textRange))
       val editorState = EditorState(editor)
       WriteCommandAction.writeCommandAction(file.project).run<Throwable> {
         try {
@@ -42,14 +50,37 @@ interface ObjectBuilder {
           val introducedVariableReferences = replacements.map { replacement ->
             objectBuilder.findVariableReferenceInReplacement(replacement) ?: throw IllegalStateException()
           }
+          val disposable = Disposer.newDisposable()
+          val preview = createPreview(editor, introducedClass, declaration, replacements)
+          Disposer.register(disposable, preview)
           ExtractMethodTemplateBuilder(editor, ExtractMethodHandler.getRefactoringName())
             .onBroken { editorState.revert() }
+            .onSuccess { invokeLater { MethodExtractor ().doExtract(file, extractRange.textRange) } }
+            .disposeWithTemplate(disposable)
             .createTemplate(file, createTemplateFields(editor, introducedClass, declaration, introducedVariableReferences))
         } catch (e: Throwable) {
           editorState.revert()
           throw e
         }
       }
+    }
+
+    private fun createPreview(editor: Editor, introducedClass: PsiClass, declaration: PsiVariable, replacedReferences: List<PsiExpression>): EditorCodePreview {
+      val preview = EditorCodePreview.create(editor)
+      val classHighlighting = InplaceExtractUtils.createInsertedHighlighting(editor, introducedClass.textRange)
+      Disposer.register(preview, classHighlighting)
+      val rangeToNavigate = introducedClass.nameIdentifier?.textRange?.endOffset ?: introducedClass.textRange.startOffset
+      val classLines = getLinesFromTextRange(editor.document, introducedClass.textRange)
+      addPreview(preview, editor, classLines, rangeToNavigate)
+      val declarationHighlighting = InplaceExtractUtils.createInsertedHighlighting(editor, declaration.textRange)
+      Disposer.register(preview, declarationHighlighting)
+      val declarationLines = getLinesFromTextRange(editor.document, declaration.textRange)
+      preview.addPreview(declarationLines, onClickAction = { navigateToTemplateVariable(editor) })
+      replacedReferences.forEach { replacement ->
+        val highlighting = createCodeHighlighting(editor, replacement.textRange, DiffColors.DIFF_MODIFIED)
+        Disposer.register(preview, highlighting)
+      }
+      return preview
     }
 
     private fun introduceObjectForVariables(builder: ObjectBuilder, variables: List<PsiVariable>, placeForDeclaration: PsiElement): IntroduceObjectResult {
