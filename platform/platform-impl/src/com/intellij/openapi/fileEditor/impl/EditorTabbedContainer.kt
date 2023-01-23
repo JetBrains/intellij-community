@@ -594,10 +594,12 @@ private class EditorTabs(
     }
 
     private fun updateFont() {
-      val font = JBUI.CurrentTheme.EditorTabs.font()
-      GuiUtils.iterateChildren(this, { c ->
-        c.font = font
-      })
+      if (ExperimentalUI.isNewUI()) {
+        val font = JBUI.CurrentTheme.EditorTabs.font()
+        GuiUtils.iterateChildren(this, { c ->
+          c.font = font
+        })
+      }
     }
 
     override fun getPreferredHeight(): Int {
