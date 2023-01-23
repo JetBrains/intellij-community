@@ -10,6 +10,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderConten
 abstract class NotUnderContentRootModuleInfo : IdeaModuleInfo, NonSourceModuleInfoBase {
     companion object {
         @JvmField
-        val INSTANCE: NotUnderContentRootModuleInfo = NewNotUnderContentRootModuleInfo(ProjectManager.getInstance().defaultProject)
+        val INSTANCE: NotUnderContentRootModuleInfo = NewNotUnderContentRootModuleInfo(ProjectManager.getInstance().defaultProject, null)
     }
 }
