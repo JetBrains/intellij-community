@@ -6,6 +6,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.hint.EditorCodePreview
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
@@ -19,6 +20,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -104,10 +106,14 @@ object InplaceExtractUtils {
   }
 
   fun createInsertedHighlighting(editor: Editor, range: TextRange): Disposable {
-    val project = editor.project ?: return Disposable {}
+    return createCodeHighlighting(editor, range, DiffColors.DIFF_INSERTED)
+  }
+
+  fun createCodeHighlighting(editor: Editor, range: TextRange, color: TextAttributesKey): Disposable {
+    val project = editor.project ?: return Disposer.newDisposable()
     val highlighters = SmartList<RangeHighlighter>()
     val manager = HighlightManager.getInstance(project)
-    manager.addOccurrenceHighlight(editor, range.startOffset, range.endOffset, DiffColors.DIFF_INSERTED, 0, highlighters)
+    manager.addOccurrenceHighlight(editor, range.startOffset, range.endOffset, color, 0, highlighters)
     return Disposable {
       highlighters.forEach { highlighter -> manager.removeSegmentHighlighter(editor, highlighter) }
     }
@@ -200,6 +206,11 @@ object InplaceExtractUtils {
     if (settingsChange != null) {
       InplaceExtractMethodCollector.settingsChanged.log(project, settingsChange)
     }
+  }
+
+  fun navigateToTemplateVariable(editor: Editor) {
+    val textRange = TemplateManagerImpl.getTemplateState(editor)?.currentVariableRange ?: return
+    navigateToEditorOffset(editor, textRange.endOffset)
   }
 
   private fun navigateToEditorOffset(editor: Editor, offset: Int?) {
