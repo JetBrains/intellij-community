@@ -1,13 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
 
 class GHPROpenPullRequestTimelineAction
-  : DumbAwareAction(GithubBundle.messagePointer("pull.request.view.timeline.action"),
+  : DumbAwareAction(CollaborationToolsBundle.messagePointer("review.details.view.timeline.action"),
                     GithubBundle.messagePointer("pull.request.view.conversations.action.description"),
                     null) {
 

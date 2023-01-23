@@ -39,6 +39,7 @@ import javax.swing.text.DefaultCaret
 import kotlin.properties.Delegates
 
 object CollaborationToolsUIUtil {
+  val animatedLoadingIcon = AnimatedIcon.Default.INSTANCE
 
   /**
    * Connects [searchTextField] to a [list] to be used as a filter
@@ -256,6 +257,14 @@ fun HorizontalListPanel(gap: Int = 0): JPanel =
   ScrollablePanel(ListLayout.horizontal(gap)).apply {
     isOpaque = false
   }
+
+/**
+ * Loading label with animated icon
+ */
+@Suppress("FunctionName")
+fun LoadingLabel(): JLabel = JLabel(CollaborationToolsUIUtil.animatedLoadingIcon).apply {
+  name = "Animated loading panel"
+}
 
 /**
  * Scrollpane without background and borders

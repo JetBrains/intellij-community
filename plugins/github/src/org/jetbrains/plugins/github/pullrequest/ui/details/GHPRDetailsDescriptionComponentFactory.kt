@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.openapi.actionSystem.ActionManager
@@ -12,7 +13,6 @@ import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
@@ -26,7 +26,7 @@ internal object GHPRDetailsDescriptionComponentFactory {
       bindText(scope, reviewDetailsVM.descriptionState)
     }
 
-    val timelineLink = ActionLink(GithubBundle.message("pull.request.view.timeline.action")) {
+    val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
       val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return@ActionLink
       ActionUtil.invokeAction(action, it.source as ActionLink, ActionPlaces.UNKNOWN, null, null)
     }.apply {

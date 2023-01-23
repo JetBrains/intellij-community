@@ -5,10 +5,9 @@ import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.collaboration.util.withQuery
 import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceLabelEventDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceMilestoneEventDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceStateEventDTO
+import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.api.restApiUri
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
@@ -19,6 +18,18 @@ suspend fun GitLabApi.loadMergeRequests(project: GitLabProjectCoordinates,
   val uri = project.restApiUri.resolveRelative("merge_requests").withQuery(searchQuery)
   val request = request(uri).GET().build()
   return loadJsonList(request)
+}
+
+suspend fun GitLabApi.loadMergeRequest(
+  project: GitLabProjectCoordinates,
+  mergeRequestId: GitLabMergeRequestId
+): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
+  val parameters = mapOf(
+    "projectId" to project.projectPath.fullPath(),
+    "mergeRequestId" to mergeRequestId.iid
+  )
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.getMergeRequest, parameters)
+  return loadGQLResponse(request, GitLabMergeRequestResult::class.java, "project")
 }
 
 suspend fun GitLabApi.loadMergeRequestStateEvents(project: GitLabProjectCoordinates,
@@ -43,4 +54,9 @@ suspend fun GitLabApi.loadMergeRequestMilestoneEvents(project: GitLabProjectCoor
   val uri = project.restApiUri.resolveRelative("merge_requests").resolveRelative(mr.iid).resolveRelative("resource_milestone_events")
   val request = request(uri).GET().build()
   return loadJsonList(request)
+}
+
+private class GitLabMergeRequestResult(mergeRequest: GitLabMergeRequestDTO, errors: List<String>?)
+  : GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>(errors) {
+  override val value = mergeRequest
 }

@@ -3,10 +3,13 @@ package org.jetbrains.plugins.gitlab.api
 
 object GitLabGQLQueries {
   const val getCurrentUser = "graphql/query/getCurrentUser.graphql"
-  const val getProjectMembers = "graphql/query/getProjectMembers.graphql"
-  const val getProjectLabels = "graphql/query/getProjectLabels.graphql"
+  const val getMergeRequest = "graphql/query/getMergeRequest.graphql"
   const val getMergeRequestDiscussions = "graphql/query/getMergeRequestDiscussions.graphql"
+  const val getProjectLabels = "graphql/query/getProjectLabels.graphql"
+  const val getProjectMembers = "graphql/query/getProjectMembers.graphql"
+
   const val toggleMergeRequestDiscussionResolve = "graphql/query/toggleMergeRequestDiscussionResolve.graphql"
-  const val updateNote = "graphql/query/updateNote.graphql"
+
   const val destroyNote = "graphql/query/destroyNote.graphql"
+  const val updateNote = "graphql/query/updateNote.graphql"
 }
