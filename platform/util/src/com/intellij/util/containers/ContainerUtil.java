@@ -123,7 +123,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * Please use {@link List#of(Object[])} or {@link Arrays#asList(Object[])} instead as more immutable
+   * Please use more immutable {@link List#of(Object[])} or {@link Arrays#asList(Object[])} instead
    */
   @SafeVarargs
   @Contract(pure = true)
@@ -465,7 +465,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated use {@link List#of(Object)} or {@link Collections#singletonList(Object)} as more memory-consious alternatives
+   * @deprecated use more standard/memory-conscious alternatives {@link List#of(Object)} or {@link Collections#singletonList(Object)} instead
 
    * DO NOT REMOVE this method until {@link ContainerUtil#immutableList(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
@@ -2109,7 +2109,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * Please use {@link Set#of(Object[])} instead
+   * Please use immutable {@link Set#of(Object[])} instead
    * If you need a mutable {@link Set} please use {@link HashSet#HashSet()};
    * If you need a mutable {@link Set} pre-populated with elements, use {@link #newHashSet}
    */
