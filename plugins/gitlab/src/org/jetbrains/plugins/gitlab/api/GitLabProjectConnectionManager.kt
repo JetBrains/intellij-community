@@ -23,7 +23,7 @@ internal class GitLabProjectConnectionManager(project: Project) :
 
   private val connectionFactory = ValidatingHostedGitRepositoryConnectionFactory(project.serviceGet<GitLabProjectsManager>(),
                                                                                  serviceGet<GitLabAccountManager>()) { project, account, tokenState ->
-    val apiClient = GitLabApi { tokenState.value }
+    val apiClient = GitLabApiImpl { tokenState.value }
     val currentUser = apiClient.getCurrentUser(project.repository.serverPath) ?: error("Unable to load current user")
     GitLabProjectConnection(this, project, account, currentUser, apiClient, tokenState)
   }
