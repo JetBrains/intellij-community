@@ -70,6 +70,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsLeadingWhitespacesShown;
   private Boolean myIsInnerWhitespacesShown;
   private Boolean myIsTrailingWhitespacesShown;
+  private Boolean myIsSelectionWhitespacesShown;
   private Boolean myIndentGuidesShown;
   private Boolean myIsAnimatedScrolling;
   private Boolean myIsAdditionalPageAtBottom;
@@ -167,6 +168,18 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setTrailingWhitespaceShown(boolean val) {
     myIsTrailingWhitespacesShown = Boolean.valueOf(val);
+  }
+
+  @Override
+  public boolean isSelectionWhitespaceShown() {
+    return myIsSelectionWhitespacesShown != null
+           ? myIsSelectionWhitespacesShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isSelectionWhitespacesShown();
+  }
+
+  @Override
+  public void setSelectionWhitespaceShown(boolean val) {
+    myIsSelectionWhitespacesShown = Boolean.valueOf(val);
   }
 
   @Override
