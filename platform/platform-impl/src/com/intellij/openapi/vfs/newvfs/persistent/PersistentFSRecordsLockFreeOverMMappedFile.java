@@ -493,9 +493,8 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
   public void markRecordAsModified(final int recordId) throws IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    final int fieldOffsetInPage = recordOffsetOnPage + MOD_COUNT_OFFSET;
     try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      incrementRecordVersion(page.rawPageBuffer(), fieldOffsetInPage);
+      incrementRecordVersion(page.rawPageBuffer(), recordOffsetOnPage);
     }
   }
 
@@ -577,7 +576,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
     final int recordsCount = allocatedRecordsCount.get();
     final boolean anythingChanged = globalModCount.get() > 0;
     if (recordsCount == 0 && !anythingChanged) {
-      //Try to mimic other implementations behavior: they return actual file size, which is 0
+      //Try to mimic other implementations' behavior: they return actual file size, which is 0
       //  before first record allocated -- really it should be >0, since even no-record storage
       //  contains _header_, but other implementations use 0-th record as header...
       //TODO RC: it is better to have recordsCount() method

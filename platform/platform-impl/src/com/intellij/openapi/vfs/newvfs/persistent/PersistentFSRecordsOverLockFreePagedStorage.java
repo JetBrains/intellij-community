@@ -496,7 +496,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
     try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
       page.lockPageForWrite();
       try {
-        incrementRecordVersion(page, recordOffsetOnPage + MOD_COUNT_OFFSET);
+        incrementRecordVersion(page.rawPageBuffer(), recordOffsetOnPage);
         page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
       }
       finally {
@@ -815,11 +815,6 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
         page.unlockPageForRead();
       }
     }
-  }
-
-  private void incrementRecordVersion(final @NotNull Page page,
-                                      final int recordOffsetOnPage) {
-    page.putInt(recordOffsetOnPage + MOD_COUNT_OFFSET, globalModCount.incrementAndGet());
   }
 
   private void incrementRecordVersion(final @NotNull ByteBuffer pageBuffer,
