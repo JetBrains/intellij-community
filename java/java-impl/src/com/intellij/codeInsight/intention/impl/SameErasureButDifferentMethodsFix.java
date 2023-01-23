@@ -54,11 +54,13 @@ public class SameErasureButDifferentMethodsFix extends LocalQuickFixAndIntention
       return null;
     }
     StringBuilder builder = new StringBuilder();
+    PsiCodeBlock body = method.getBody();
+    PsiParameterList list = method.getParameterList();
     for (PsiElement child : method.getChildren()) {
-      if (child == method.getBody()) {
+      if (child == body) {
         break;
       }
-      if (child == method.getParameterList() && infos != null) {
+      if (child == list && infos != null) {
         StringJoiner joiner = new StringJoiner(", ", "(", ")");
         for (ParameterInfoImpl info : infos) {
           joiner.add(info.getTypeText() + " " + info.getName());
