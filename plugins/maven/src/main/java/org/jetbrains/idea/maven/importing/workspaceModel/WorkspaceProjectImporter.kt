@@ -71,9 +71,11 @@ internal class WorkspaceProjectImporter(
   override fun importProject(): List<MavenProjectsProcessorTask> {
     MavenLog.LOG.info("Importing Maven project using Workspace API")
 
+    val migratedToExternalStorage = migrateToExternalStorageIfNeeded()
+
     val storageBeforeImport = WorkspaceModel.getInstance(myProject).currentSnapshot
 
-    val projectChangesInfo = collectProjectChanges(storageBeforeImport, projectsToImportWithChanges)
+    val projectChangesInfo = collectProjectChanges(storageBeforeImport, projectsToImportWithChanges, migratedToExternalStorage)
 
     if (!projectChangesInfo.hasChanges) return emptyList()
 
@@ -118,6 +120,27 @@ internal class WorkspaceProjectImporter(
 
   }
 
+  private fun migrateToExternalStorageIfNeeded(): Boolean {
+    var migratedToExternalStorage = false
+    val externalStorageManager = myProject.getService(ExternalStorageConfigurationManager::class.java)
+    if (!externalStorageManager.isEnabled) {
+      ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true)
+      migratedToExternalStorage = true
+
+      if (!externalStorageManager.isEnabled) {
+        MavenLog.LOG.error(
+          "Can't migrate the project to external project files storage: ExternalStorageConfigurationManager.isEnabled=false")
+      }
+      else if (!myProject.isExternalStorageEnabled) {
+        MavenLog.LOG.warn("Can't migrate the project to external project files storage: Project.isExternalStorageEnabled=false")
+      }
+      else {
+        MavenLog.LOG.info("Project has been migrated to external project files storage")
+      }
+    }
+    return migratedToExternalStorage
+  }
+
   private data class ProjectChangesInfo(val hasChanges: Boolean, val allProjectsToChanges: Map<MavenProject, MavenProjectChanges>) {
     val projectFilePaths : List<String> get() = allProjectsToChanges.keys.map { it.path }
     val changedProjectsOnly : Iterable<MavenProject> get() = allProjectsToChanges
@@ -128,7 +151,8 @@ internal class WorkspaceProjectImporter(
   }
 
   private fun collectProjectChanges(storageBeforeImport: EntityStorage,
-                                    originalProjectsChanges: Map<MavenProject, MavenProjectChanges>): ProjectChangesInfo {
+                                    originalProjectsChanges: Map<MavenProject, MavenProjectChanges>,
+                                    migratededToExternalStorage: Boolean): ProjectChangesInfo {
     val mavenProjectsTreeSettingsEntity = storageBeforeImport.entities(MavenProjectsTreeSettingsEntity::class.java).firstOrNull()
     val projectFilesFromPreviousImport = mavenProjectsTreeSettingsEntity?.importedFilePaths ?: listOf()
 
@@ -149,24 +173,7 @@ internal class WorkspaceProjectImporter(
       }
     }
 
-    var hasChanges = allProjectsToChanges.values.any { it.hasChanges() }
-
-    val externalStorageManager = myProject.getService(ExternalStorageConfigurationManager::class.java)
-    if (!externalStorageManager.isEnabled) {
-      ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true)
-      hasChanges = true
-
-      if (!externalStorageManager.isEnabled) {
-        MavenLog.LOG.error(
-          "Can't migrate the project to external project files storage: ExternalStorageConfigurationManager.isEnabled=false")
-      }
-      else if (!myProject.isExternalStorageEnabled) {
-        MavenLog.LOG.warn("Can't migrate the project to external project files storage: Project.isExternalStorageEnabled=false")
-      }
-      else {
-        MavenLog.LOG.info("Project has been migrated to external project files storage")
-      }
-    }
+    val hasChanges = allProjectsToChanges.values.any { it.hasChanges() } || migratededToExternalStorage
 
     return ProjectChangesInfo(hasChanges, allProjectsToChanges)
   }
