@@ -12,8 +12,7 @@ import org.jetbrains.kotlin.tooling.core.extrasKeyOf
 /**
  * All extras owned and maintained by the Kotlin team.
  */
-class KotlinExtrasSerializationService :
-    KotlinExtrasSerializationService {
+class KotlinGradlePluginExtrasSerializationService : KotlinExtrasSerializationService {
     override fun IdeaKotlinExtrasSerializationExtensionBuilder.extensions() {
         /* For adding debug Strings to entities */
         register(extrasKeyOf("kotlin.debug"), IdeaKotlinExtrasSerializer.javaIoSerializable())
