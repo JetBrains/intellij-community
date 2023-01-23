@@ -77,10 +77,25 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       bindVisibility(cs, vm.repliesFolded.inverted())
     }
 
+    val titlePanel = HorizontalListPanel(CodeReviewCommentUIUtil.Title.HORIZONTAL_GAP).apply {
+      add(createTitleTextPane(cs, vm.author, vm.date))
+
+      vm.resolveVm?.resolved?.let { resolvedFlow ->
+        bindChild(cs, resolvedFlow) { _, resolved ->
+          if (resolved) {
+            CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.resolved.tag"))
+          }
+          else {
+            null
+          }
+        }
+      }
+    }
+
     return CodeReviewChatItemUIUtil.buildDynamic(ComponentType.FULL,
                                                  { vm.author.createIconValue(cs, avatarIconsProvider, it) },
                                                  contentPanel) {
-      withHeader(createTitleTextPane(cs, vm.author, vm.date), actionsPanel)
+      withHeader(titlePanel, actionsPanel)
     }.let {
       VerticalListPanel().apply {
         add(it)
