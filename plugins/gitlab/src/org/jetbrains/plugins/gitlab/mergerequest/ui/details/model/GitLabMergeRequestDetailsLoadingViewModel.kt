@@ -47,9 +47,9 @@ internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
     coroutineScope {
       val result = try {
         val data = scope.async(Dispatchers.IO) {
-          api.loadMergeRequest(project, mergeRequestId).getResultOrThrow()
+          api.loadMergeRequest(project, mergeRequestId)
         }
-        val mergeRequest = LoadedGitLabMergeRequest(scope, connection, data.await())
+        val mergeRequest = LoadedGitLabMergeRequest(scope, connection, data.await().body()!!)
         val detailsVm = GitLabMergeRequestDetailsViewModelImpl(scope, connection.currentUser, mergeRequest)
         LoadingState.Result(detailsVm)
       }

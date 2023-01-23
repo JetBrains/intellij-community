@@ -70,3 +70,23 @@ suspend fun GitLabApi.deleteNote(
   val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.destroyNote, parameters)
   return loadGQLResponse(request, GitLabGraphQLMutationResultDTO.Empty::class.java, "destroyNote")
 }
+
+suspend fun GitLabApi.addNote(
+  project: GitLabProjectCoordinates,
+  mergeRequestGid: String,
+  body: String
+): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabDiscussionDTO>?> {
+  val parameters = mapOf(
+    "noteableId" to mergeRequestGid,
+    "body" to body
+  )
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.createNote, parameters)
+  return loadGQLResponse(request, CreateNoteResult::class.java, "createNote")
+}
+
+private class CreateNoteResult(note: NoteHolder, errors: List<String>?)
+  : GitLabGraphQLMutationResultDTO<GitLabDiscussionDTO>(errors) {
+  override val value = note.discussion
+}
+
+private class NoteHolder(val discussion: GitLabDiscussionDTO)

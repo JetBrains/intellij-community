@@ -9,6 +9,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 
 @GraphQLFragment("/graphql/fragment/mergeRequest.graphql")
 class GitLabMergeRequestDTO(
+  val id: String,
   override val iid: String,
   val title: String,
   val description: String,
@@ -20,7 +21,8 @@ class GitLabMergeRequestDTO(
   val author: GitLabUserDTO,
   approvedBy: UserCoreConnection,
   reviewers: ReviewerConnection,
-  commits: CommitConnection
+  commits: CommitConnection,
+  val userPermissions: UserPermissions
 ) : GitLabMergeRequestId {
   val approvedBy: List<GitLabUserDTO> = approvedBy.nodes
 
@@ -36,4 +38,8 @@ class GitLabMergeRequestDTO(
 
   class CommitConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabCommitDTO>)
     : GraphQLConnectionDTO<GitLabCommitDTO>(pageInfo, nodes)
+
+  data class UserPermissions(
+    val createNote: Boolean
+  )
 }

@@ -7,6 +7,7 @@ import com.intellij.collaboration.util.withQuery
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.api.restApiUri
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
@@ -24,13 +25,13 @@ suspend fun GitLabApi.loadMergeRequests(project: GitLabProjectCoordinates,
 suspend fun GitLabApi.loadMergeRequest(
   project: GitLabProjectCoordinates,
   mergeRequestId: GitLabMergeRequestId
-): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
+): HttpResponse<out GitLabMergeRequestDTO?> {
   val parameters = mapOf(
     "projectId" to project.projectPath.fullPath(),
     "mergeRequestId" to mergeRequestId.iid
   )
   val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.getMergeRequest, parameters)
-  return loadGQLResponse(request, GitLabMergeRequestResult::class.java, "project")
+  return loadGQLResponse(request, GitLabMergeRequestDTO::class.java, "project", "mergeRequest")
 }
 
 suspend fun GitLabApi.loadMergeRequestStateEvents(project: GitLabProjectCoordinates,

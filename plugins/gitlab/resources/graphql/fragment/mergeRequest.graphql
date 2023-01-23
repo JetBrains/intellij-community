@@ -1,4 +1,5 @@
 fragment mergeRequest on MergeRequest {
+  id
   iid
   title
   description
@@ -42,5 +43,8 @@ fragment mergeRequest on MergeRequest {
     nodes {
       ...glCommit
     }
+  }
+  userPermissions {
+    createNote
   }
 }

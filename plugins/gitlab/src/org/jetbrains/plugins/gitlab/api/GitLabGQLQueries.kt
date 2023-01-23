@@ -10,6 +10,7 @@ object GitLabGQLQueries {
 
   const val toggleMergeRequestDiscussionResolve = "graphql/query/toggleMergeRequestDiscussionResolve.graphql"
 
+  const val createNote = "graphql/query/createNote.graphql"
   const val destroyNote = "graphql/query/destroyNote.graphql"
   const val updateNote = "graphql/query/updateNote.graphql"
 

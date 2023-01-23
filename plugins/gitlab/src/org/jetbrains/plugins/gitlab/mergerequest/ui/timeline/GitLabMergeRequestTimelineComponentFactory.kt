@@ -2,26 +2,43 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.ui.*
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.ComponentListPanelFactory
+import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
+import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.ui.util.bindChild
+import com.intellij.collaboration.ui.util.bindEnabled
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
+import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -31,41 +48,75 @@ object GitLabMergeRequestTimelineComponentFactory {
              cs: CoroutineScope,
              vm: GitLabMergeRequestTimelineViewModel,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>): JComponent {
-    val panel = Wrapper().apply {
-      isOpaque = true
-      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
-        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-      }
-    }
+    val timelinePanel = Wrapper()
 
     cs.launch {
       vm.timelineLoadingFlow.mapScoped { state ->
         when (state) {
           LoadingState.Loading -> {
-            JLabel(AnimatedIcon.Default())
+            JLabel(AnimatedIcon.Default()).apply {
+              border = Borders.empty(ComponentType.FULL.paddingInsets)
+            }
           }
           is LoadingState.Error -> {
-            SimpleHtmlPane(state.exception.localizedMessage)
+            SimpleHtmlPane(state.exception.localizedMessage).apply {
+              border = Borders.empty(ComponentType.FULL.paddingInsets)
+            }
           }
           is LoadingState.Result -> {
             ComponentListPanelFactory.createVertical(this, state.items, GitLabMergeRequestTimelineItemViewModel::id) { cs, item ->
               createItemComponent(project, cs, avatarIconsProvider, item)
-            }.let {
-              TransparentScrollPane(it)
             }
           }
           else -> null
         }
       }.collect {
-        panel.setContent(it)
-        panel.repaint()
+        timelinePanel.setContent(it)
+        timelinePanel.repaint()
       }
     }
 
-    return panel.also {
+    val panel = VerticalListPanel(0).apply {
+      add(timelinePanel)
+    }
+
+    panel.bindChild(cs, vm.newNoteVm, null) { noteCs, editVm ->
+      editVm?.let { createNewNoteField(project, avatarIconsProvider, noteCs, it) }
+    }
+
+    return ScrollPaneFactory.createScrollPane(panel, true).apply {
+      viewport.isOpaque = false
+      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
+        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      }
+    }.also {
       UiNotifyConnector.doWhenFirstShown(it) {
         vm.requestLoad()
       }
+    }
+  }
+
+  private fun createNewNoteField(project: Project,
+                                 iconsProvider: IconsProvider<GitLabUserDTO>,
+                                 noteCs: CoroutineScope,
+                                 editVm: NewGitLabNoteViewModel): JComponent {
+    val submitAction = swingAction(CollaborationToolsBundle.message("review.comments.reply.action")) {
+      editVm.submit()
+    }.apply {
+      bindEnabled(noteCs, editVm.state.map { it != GitLabNoteEditingViewModel.SubmissionState.Loading })
+    }
+
+    val actions = CommentInputActionsComponentFactory.Config(
+      primaryAction = MutableStateFlow(submitAction),
+      submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
+                                                                     CommentInputActionsComponentFactory.submitShortcutText))
+    )
+
+    val itemType = ComponentType.FULL
+    val icon = CommentTextFieldFactory.IconConfig.of(itemType, iconsProvider, editVm.currentUser)
+
+    return GitLabNoteEditorComponentFactory.create(project, noteCs, editVm, actions, icon).apply {
+      border = Borders.empty(itemType.inputPaddingInsets)
     }
   }
 
@@ -78,7 +129,7 @@ object GitLabMergeRequestTimelineComponentFactory {
         val immutatebleItem = item.item
         val content = createContent(immutatebleItem)
 
-        CodeReviewChatItemUIUtil.build(CodeReviewChatItemUIUtil.ComponentType.FULL,
+        CodeReviewChatItemUIUtil.build(ComponentType.FULL,
                                        { avatarIconsProvider.getIcon(immutatebleItem.actor, it) },
                                        content) {
           withHeader(createTitleTextPane(immutatebleItem.actor, immutatebleItem.date))

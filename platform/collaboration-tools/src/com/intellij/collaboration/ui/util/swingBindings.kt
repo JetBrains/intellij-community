@@ -142,6 +142,14 @@ fun JButton.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   }
 }
 
+fun Action.bindEnabled(scope: CoroutineScope, enabledFlow: Flow<Boolean>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    enabledFlow.collect {
+      isEnabled = it
+    }
+  }
+}
+
 fun Wrapper.bindContent(scope: CoroutineScope, contentFlow: Flow<JComponent>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     contentFlow.collect {

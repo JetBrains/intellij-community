@@ -11,11 +11,18 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDTO
+import org.jetbrains.plugins.gitlab.api.getResultOrThrow
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.addNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestDiscussions
 
 interface GitLabMergeRequestDiscussionsModel {
   val userDiscussions: Flow<Collection<GitLabDiscussion>>
   val systemDiscussions: Flow<Collection<GitLabDiscussionDTO>>
+
+  val canCreateNotes: Boolean
+
+  suspend fun addNote(body: String)
 }
 
 private val LOG = logger<GitLabMergeRequestDiscussionsModel>()
@@ -23,10 +30,12 @@ private val LOG = logger<GitLabMergeRequestDiscussionsModel>()
 class GitLabMergeRequestDiscussionsModelImpl(
   parentCs: CoroutineScope,
   private val connection: GitLabProjectConnection,
-  private val mr: GitLabMergeRequestId
+  private val mr: GitLabMergeRequestDTO
 ) : GitLabMergeRequestDiscussionsModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+
+  override val canCreateNotes: Boolean = mr.userPermissions.createNote
 
   private val discussionEvents = MutableSharedFlow<GitLabDiscussionEvent>()
   private val nonEmptyDiscussionsData: Flow<List<GitLabDiscussionDTO>> =
@@ -35,7 +44,14 @@ class GitLabMergeRequestDiscussionsModelImpl(
       launch(start = CoroutineStart.UNDISPATCHED) {
         discussionEvents.collectLatest { e ->
           when (e) {
-            is GitLabDiscussionEvent.Deleted -> discussions.removeIf { it.id == e.discussionId }
+            is GitLabDiscussionEvent.Deleted -> {
+              discussions.removeIf { it.id == e.discussionId }
+              LOG.debug("Discussion removed: ${e.discussionId}")
+            }
+            is GitLabDiscussionEvent.Added -> {
+              discussions.add(e.discussion)
+              LOG.debug("New discussion added: ${e.discussion}")
+            }
           }
           send(discussions)
         }
@@ -64,6 +80,18 @@ class GitLabMergeRequestDiscussionsModelImpl(
     }.map { discussions ->
       discussions.filter { it.notes.isNotEmpty() }
     }.foldToList()
+
+  override suspend fun addNote(body: String) {
+    withContext(cs.coroutineContext) {
+      withContext(Dispatchers.IO) {
+        connection.apiClient.addNote(connection.repo.repository, mr.id, body).getResultOrThrow()
+      }.also {
+        withContext(NonCancellable) {
+          discussionEvents.emit(GitLabDiscussionEvent.Added(it))
+        }
+      }
+    }
+  }
 
   private fun <T> Flow<List<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }
 }
