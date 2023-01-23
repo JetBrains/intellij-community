@@ -124,7 +124,7 @@ internal fun <T, R> Flow<T>.modifiedBy(
     return flatMapLatest { modifierFlow.scan(it) { a, b -> loadingFlow?.whileLoading { transform(a, b) } ?: transform(a, b) } }
 }
 
-internal inline fun <T, R> Flow<T>.map(loadingContainer: LoadingContainer, crossinline transform: suspend (value: T) -> R): Flow<R> {
+internal fun <T, R> Flow<T>.map(loadingContainer: LoadingContainer, transform: suspend (value: T) -> R): Flow<R> {
     val loadingFlow = loadingContainer.addLoadingState()
     return map { loadingFlow.whileLoading { transform(it) } }
 }
@@ -155,7 +155,7 @@ internal fun <T> Flow<T>.stateInAndCatchAndLog(
         .stateIn(scope, started, initialValue)
 }
 
-internal suspend inline fun <R> MutableStateFlow<LoadingContainer.LoadingState>.whileLoading(action: () -> R): R {
+internal suspend fun <R> MutableStateFlow<LoadingContainer.LoadingState>.whileLoading(action: suspend () -> R): R {
     emit(LoadingContainer.LoadingState.LOADING)
     return try {
         action()
@@ -164,7 +164,7 @@ internal suspend inline fun <R> MutableStateFlow<LoadingContainer.LoadingState>.
     }
 }
 
-internal inline fun <reified T> Flow<T>.debounceBatch(duration: Duration) = channelFlow {
+internal fun <T> Flow<T>.debounceBatch(duration: Duration) = channelFlow {
     val mutex = Mutex()
     val buffer = mutableListOf<T>()
     var job: Job? = null
@@ -183,7 +183,7 @@ internal inline fun <reified T> Flow<T>.debounceBatch(duration: Duration) = chan
     }
 }
 
-internal suspend inline fun <T> withBackgroundLoadingBar(
+internal suspend fun <T> withBackgroundLoadingBar(
     project: Project,
     @Nls title: String,
     @Nls upperMessage: String? = null,
@@ -191,7 +191,7 @@ internal suspend inline fun <T> withBackgroundLoadingBar(
     isSafe: Boolean = true,
     isIndeterminate: Boolean = true,
     isPausable: Boolean = false,
-    action: BackgroundLoadingBarController.() -> T
+    action: suspend BackgroundLoadingBarController.() -> T
 ): T {
     val controller = showBackgroundLoadingBar(
         project = project,
