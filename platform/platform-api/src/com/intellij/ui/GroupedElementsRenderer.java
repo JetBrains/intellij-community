@@ -7,6 +7,7 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -30,10 +31,12 @@ public abstract class GroupedElementsRenderer implements Accessible {
   @Deprecated
   protected JComponent myComponent;
   protected MyComponent myRendererComponent;
+  private UpdateScaleHelper updateScaleHelper;
 
   protected ErrorLabel myTextLabel;
 
   public GroupedElementsRenderer() {
+    updateScaleHelper = new UpdateScaleHelper();
     myRendererComponent = new MyComponent();
 
     myComponent = createItemComponent();
@@ -65,9 +68,7 @@ public abstract class GroupedElementsRenderer implements Accessible {
     updateSelection(isSelected, myComponent, myTextLabel);
     myRendererComponent.setPreferredWidth(preferredForcedWidth);
 
-    UIUtil.uiTraverser(myRendererComponent).forEach(comp -> {
-      if (comp instanceof JComponent) ((JComponent)comp).updateUI();
-    });
+    updateScaleHelper.saveScaleAndUpdateUIIfChanged(myRendererComponent);
 
     return myRendererComponent;
   }
