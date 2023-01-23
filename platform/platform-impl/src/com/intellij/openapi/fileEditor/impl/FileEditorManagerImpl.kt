@@ -119,7 +119,10 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @State(name = "FileEditorManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-open class FileEditorManagerImpl(private val project: Project) : FileEditorManagerEx(), PersistentStateComponent<Element?>, Disposable {
+open class FileEditorManagerImpl(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+) : FileEditorManagerEx(), PersistentStateComponent<Element?>, Disposable {
   enum class OpenMode {
     NEW_WINDOW, RIGHT_SPLIT, DEFAULT
   }
@@ -132,7 +135,10 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   private val isInitialized = AtomicBoolean()
 
-  private val dockable = lazy { DockableEditorTabbedContainer(mainSplitters, false, coroutineScope) }
+  private val dockable = lazy {
+    DockableEditorTabbedContainer(splitters = mainSplitters, disposeWhenEmpty = false, coroutineScope = coroutineScope)
+  }
+
   private val selectionHistory = SelectionHistory()
 
   private val fileUpdateChannel: MergingUpdateChannel<VirtualFile> = MergingUpdateChannel(delay = 50.milliseconds) { toUpdate ->
@@ -175,9 +181,6 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   private var contentFactory: DockableEditorContainerFactory? = null
   private val openedComposites = CopyOnWriteArrayList<EditorComposite>()
   private val listenerList = MessageListenerList(project.messageBus, FileEditorManagerListener.FILE_EDITOR_MANAGER)
-
-  @Suppress("DEPRECATION")
-  private val coroutineScope: CoroutineScope = project.coroutineScope.childScope()
 
   private val splitterFlow = MutableSharedFlow<EditorsSplitters>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
