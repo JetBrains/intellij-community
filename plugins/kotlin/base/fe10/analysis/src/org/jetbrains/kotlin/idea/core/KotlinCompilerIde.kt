@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
+import org.jetbrains.kotlin.idea.core.util.InlineFunctionAnalyzer
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.platform.isCommon
@@ -109,16 +109,30 @@ class KotlinCompilerIde(
         val configuration = initialConfiguration.copy().apply {
             put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
         }
+        val isIrBackend = configuration.getBoolean(JVMConfigurationKeys.IR)
 
         // The binding context needs to be built from all files with reachable inline functions, as such files may contain classes whose
         // descriptors must be available in the binding context for the IR backend. Note that the full bytecode is only generated for
-        // `file` because of filtering in `generateClassFilter`, regardless of classes defined in other files.
-        val toProcess = analyzeInlinedFunctions(resolutionFacade, file, configuration.getBoolean(CommonConfigurationKeys.DISABLE_INLINE))
+        // `file` because of filtering in `generateClassFilter`, while only select declarations from other files are generated if needed
+        // by the backend.
+        val inlineAnalyzer = InlineFunctionAnalyzer(
+            resolutionFacade,
+            analyzeOnlyReifiedInlineFunctions = configuration.getBoolean(CommonConfigurationKeys.DISABLE_INLINE),
+        ).apply { analyze(file) }
+        val toProcess = inlineAnalyzer.allFiles()
         val bindingContext = resolutionFacade.analyzeWithAllCompilerChecks(toProcess).bindingContext
+
+        // The IR backend will try to regenerate object literals defined in inline functions from generated class files during inlining.
+        // Hence, we need to be aware of which object declarations are defined in the relevant inline functions.
+        val inlineObjectDeclarations = when {
+            isIrBackend -> inlineAnalyzer.inlineObjectDeclarations()
+            else -> setOf()
+        }
+        val inlineObjectDeclarationFiles = inlineObjectDeclarations.mapTo(mutableSetOf()) { it.containingKtFile }
 
         val generateClassFilter = object : GenerationState.GenerateClassFilter() {
             override fun shouldGeneratePackagePart(ktFile: KtFile): Boolean {
-                return file === ktFile
+                return file === ktFile || inlineObjectDeclarationFiles.contains(ktFile)
             }
 
             override fun shouldAnnotateClass(processingClassOrObject: KtClassOrObject): Boolean {
@@ -126,7 +140,8 @@ class KotlinCompilerIde(
             }
 
             override fun shouldGenerateClass(processingClassOrObject: KtClassOrObject): Boolean {
-                return processingClassOrObject.containingKtFile === file
+                return processingClassOrObject.containingKtFile === file ||
+                       processingClassOrObject is KtObjectDeclaration && inlineObjectDeclarations.contains(processingClassOrObject)
             }
 
             override fun shouldGenerateScript(script: KtScript): Boolean {
@@ -137,7 +152,7 @@ class KotlinCompilerIde(
         }
 
         val codegenFactory = when {
-            configuration.getBoolean(JVMConfigurationKeys.IR) -> createJvmIrCodegenFactory(configuration)
+            isIrBackend -> createJvmIrCodegenFactory(configuration)
             else -> DefaultCodegenFactory
         }
 
