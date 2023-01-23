@@ -1,25 +1,49 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.conversion;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.conversion
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.project.Project
+import java.nio.file.Path
 
-import java.nio.file.Path;
+abstract class ConversionService {
+  abstract fun convertSilently(projectPath: Path, conversionListener: ConversionListener): ConversionResult
 
-public abstract class ConversionService {
-  public static @Nullable ConversionService getInstance() {
-    return ApplicationManager.getApplication().getService(ConversionService.class);
+  @Throws(CannotConvertException::class)
+  abstract suspend fun convert(projectPath: Path): ConversionResult
+
+  abstract fun convertModule(project: Project, moduleFile: Path): ConversionResult
+
+  abstract fun saveConversionResult(projectPath: Path)
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): ConversionService? = serviceOrNull<ConversionService>()
+  }
+}
+
+interface ConversionResult {
+  fun conversionNotNeeded(): Boolean
+
+  fun openingIsCanceled(): Boolean
+
+  fun postStartupActivity(project: Project)
+}
+
+
+class CannotConvertException : RuntimeException {
+  @JvmOverloads
+  constructor(message: String, cause: Throwable? = null) : super(message, cause)
+  constructor(cause: Throwable) : super(cause)
+}
+
+interface ConversionListener {
+  fun conversionNeeded()
+
+  fun successfullyConverted(backupDir: Path) {
   }
 
-  @NotNull
-  public abstract ConversionResult convertSilently(@NotNull Path projectPath, @NotNull ConversionListener conversionListener);
+  fun error(message: String)
 
-  public abstract @NotNull ConversionResult convert(@NotNull Path projectPath) throws CannotConvertException;
-
-  @NotNull
-  public abstract ConversionResult convertModule(@NotNull Project project, @NotNull Path moduleFile);
-
-  public abstract void saveConversionResult(@NotNull Path projectPath);
+  fun cannotWriteToFiles(readonlyFiles: List<Path>) {
+  }
 }

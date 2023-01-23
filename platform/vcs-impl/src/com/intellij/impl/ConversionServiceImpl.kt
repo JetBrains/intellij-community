@@ -8,6 +8,7 @@ import com.intellij.conversion.impl.ProjectConversionUtil
 import com.intellij.conversion.impl.ui.ConvertProjectDialog
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -16,13 +17,15 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.project.ProjectStoreOwner
 import it.unimi.dsi.fastutil.objects.Object2LongMaps
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Supplier
 
-class ConversionServiceImpl : ConversionService() {
-  override fun convertSilently(projectPath: Path, listener: ConversionListener): ConversionResult {
+internal class ConversionServiceImpl : ConversionService() {
+  override fun convertSilently(projectPath: Path, conversionListener: ConversionListener): ConversionResult {
     try {
       val context = ConversionContextImpl(projectPath)
       val runners = isConversionNeeded(context)
@@ -30,14 +33,14 @@ class ConversionServiceImpl : ConversionService() {
         return ConversionResultImpl.CONVERSION_NOT_NEEDED
       }
 
-      listener.conversionNeeded()
+      conversionListener.conversionNeeded()
       val affectedFiles = HashSet<Path>()
       for (runner in runners) {
         runner.collectAffectedFiles(affectedFiles)
       }
       val readOnlyFiles = ConversionRunner.getReadOnlyFiles(affectedFiles)
       if (!readOnlyFiles.isEmpty()) {
-        listener.cannotWriteToFiles(readOnlyFiles)
+        conversionListener.cannotWriteToFiles(readOnlyFiles)
         return ConversionResultImpl.ERROR_OCCURRED
       }
 
@@ -50,21 +53,21 @@ class ConversionServiceImpl : ConversionService() {
         }
       }
       context.saveFiles(affectedFiles)
-      listener.successfullyConverted(backupDir)
+      conversionListener.successfullyConverted(backupDir)
       context.saveConversionResult()
       return ConversionResultImpl(runners)
     }
     catch (e: CannotConvertException) {
-      listener.error(e.message!!)
+      conversionListener.error(e.message!!)
     }
     catch (e: IOException) {
-      listener.error(e.message!!)
+      conversionListener.error(e.message!!)
     }
     return ConversionResultImpl.ERROR_OCCURRED
   }
 
   @Throws(CannotConvertException::class)
-  override fun convert(projectPath: Path): ConversionResult {
+  override suspend fun convert(projectPath: Path): ConversionResult {
     if (ApplicationManager.getApplication().isHeadlessEnvironment ||
         !ConverterProvider.EP_NAME.hasAnyExtensions() ||
         !Files.exists(projectPath)) {
@@ -83,7 +86,7 @@ class ConversionServiceImpl : ConversionService() {
     }
     else {
       result = ConversionResultImpl.CONVERSION_CANCELED
-      ApplicationManager.getApplication().invokeAndWait {
+      withContext(Dispatchers.EDT) {
         val dialog = ConvertProjectDialog(context, converters)
         dialog.show()
         if (dialog.isConverted) {
@@ -91,6 +94,7 @@ class ConversionServiceImpl : ConversionService() {
         }
       }
     }
+
     try {
       context.saveConversionResult()
     }
