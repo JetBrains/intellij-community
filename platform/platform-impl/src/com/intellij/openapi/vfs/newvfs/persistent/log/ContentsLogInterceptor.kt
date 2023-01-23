@@ -34,7 +34,7 @@ class ContentsLogInterceptor(
         }
 
         private fun interceptClose(result: OperationResult<Unit>) {
-          val data = sdo.getResultingBuffer().toBytes()
+          val data = sdo.asByteArraySequence().toBytes()
           processor.enqueue {
             descriptorStorage.writeDescriptor(VfsOperationTag.CONTENT_WRITE_STREAM) {
               val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
@@ -56,7 +56,7 @@ class ContentsLogInterceptor(
         }
 
         private fun interceptClose(result: OperationResult<Unit>) {
-          val data = sdo.getResultingBuffer().toBytes()
+          val data = sdo.asByteArraySequence().toBytes()
           processor.enqueue {
             descriptorStorage.writeDescriptor(VfsOperationTag.CONTENT_WRITE_STREAM_2) {
               val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
@@ -78,7 +78,7 @@ class ContentsLogInterceptor(
         }
 
         private fun interceptClose(result: OperationResult<Unit>) {
-          val data = ias.getResultingBuffer().toBytes()
+          val data = ias.asByteArraySequence().toBytes()
           processor.enqueue {
             descriptorStorage.writeDescriptor(VfsOperationTag.CONTENT_APPEND_STREAM) {
               val payloadRef = payloadStorage.writePayload(data.size.toLong()) {

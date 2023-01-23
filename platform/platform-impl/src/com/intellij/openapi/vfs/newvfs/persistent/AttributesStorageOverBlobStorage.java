@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.UnsyncByteArrayBackedOutputStreamMarker;
+import com.intellij.util.io.RepresentableAsByteArraySequence;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
@@ -615,7 +615,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     }
   }
 
-  private final class AttributeOutputStreamImpl extends DataOutputStream implements UnsyncByteArrayBackedOutputStreamMarker {
+  private final class AttributeOutputStreamImpl extends DataOutputStream implements RepresentableAsByteArraySequence {
     @NotNull
     private final PersistentFSConnection connection;
     @NotNull
@@ -662,8 +662,8 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
 
     @NotNull
     @Override
-    public ByteArraySequence getResultingBuffer() {
-      return ((BufferExposingByteArrayOutputStream)out).getResultingBuffer();
+    public ByteArraySequence asByteArraySequence() {
+      return ((BufferExposingByteArrayOutputStream)out).asByteArraySequence();
     }
   }
 

@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.UnsyncByteArrayBackedOutputStreamMarker;
+import com.intellij.util.io.RepresentableAsByteArraySequence;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.io.storage.Storage;
@@ -226,7 +226,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
   }
   /* ==================================== implementation =================================================================== */
 
-  private final class AttributeOutputStreamImpl extends DataOutputStream implements UnsyncByteArrayBackedOutputStreamMarker {
+  private final class AttributeOutputStreamImpl extends DataOutputStream implements RepresentableAsByteArraySequence {
     private final PersistentFSConnection connection;
     @NotNull
     private final FileAttribute myAttribute;
@@ -410,8 +410,8 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
 
     @NotNull
     @Override
-    public ByteArraySequence getResultingBuffer() {
-      return ((BufferExposingByteArrayOutputStream)out).getResultingBuffer();
+    public ByteArraySequence asByteArraySequence() {
+      return ((BufferExposingByteArrayOutputStream)out).asByteArraySequence();
     }
   }
 

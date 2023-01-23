@@ -11,7 +11,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class UnsyncByteArrayOutputStream extends OutputStream implements UnsyncByteArrayBackedOutputStreamMarker {
+public class UnsyncByteArrayOutputStream extends OutputStream implements RepresentableAsByteArraySequence {
   protected byte[] myBuffer;
   protected int myCount;
   private boolean myIsShared;
@@ -116,7 +116,7 @@ public class UnsyncByteArrayOutputStream extends OutputStream implements UnsyncB
 
   @NotNull
   @Override
-  public ByteArraySequence getResultingBuffer() {
+  public ByteArraySequence asByteArraySequence() {
     return toByteArraySequence();
   }
 }

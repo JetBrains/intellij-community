@@ -22,7 +22,7 @@ class AttributesLogInterceptor(
         }
 
         private fun interceptClose(result: OperationResult<Unit>) {
-          val data = aos.getResultingBuffer().toBytes()
+          val data = aos.asByteArraySequence().toBytes()
           processor.enqueue {
             descriptorStorage.writeDescriptor(VfsOperationTag.ATTR_WRITE_ATTR) {
               coroutineScope {

@@ -412,8 +412,8 @@ public abstract class AbstractStorage implements IStorage {
 
     @NotNull
     @Override
-    public ByteArraySequence getResultingBuffer() {
-      return getByteStream().getResultingBuffer();
+    public ByteArraySequence asByteArraySequence() {
+      return getByteStream().asByteArraySequence();
     }
   }
 
@@ -438,8 +438,8 @@ public abstract class AbstractStorage implements IStorage {
 
     @NotNull
     @Override
-    public ByteArraySequence getResultingBuffer() {
-      return getByteStream().getResultingBuffer();
+    public ByteArraySequence asByteArraySequence() {
+      return getByteStream().asByteArraySequence();
     }
   }
 

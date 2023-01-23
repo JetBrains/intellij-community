@@ -3,6 +3,6 @@ package com.intellij.util.io
 
 import com.intellij.openapi.util.io.ByteArraySequence
 
-interface UnsyncByteArrayBackedOutputStreamMarker {
-  fun getResultingBuffer(): ByteArraySequence
+interface RepresentableAsByteArraySequence {
+  fun asByteArraySequence(): ByteArraySequence
 }
