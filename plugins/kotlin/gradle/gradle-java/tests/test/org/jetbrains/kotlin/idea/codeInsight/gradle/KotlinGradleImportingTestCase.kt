@@ -293,10 +293,9 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
     companion object {
         const val AFTER_SUFFIX = ".after"
 
-        const val MINIMAL_SUPPORTED_GRADLE_PLUGIN_VERSION = "1.3.0"
         const val LATEST_STABLE_GRADLE_PLUGIN_VERSION = "1.3.70"
 
-        val SUPPORTED_GRADLE_VERSIONS: List<Array<Any>> = listOf(arrayOf("4.9"), arrayOf("5.6.4"), arrayOf("6.0.1"))
+        val SUPPORTED_GRADLE_VERSIONS: List<Array<Any>> = listOf(arrayOf("5.6.4"), arrayOf("6.0.1"))
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
