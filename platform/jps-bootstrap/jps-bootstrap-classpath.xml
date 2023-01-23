@@ -71,9 +71,6 @@
     </resolver:resolve>
 
     <delete dir="${classes.dir}" />
-    <mkdir dir="${classes.dir}/java" />
-    <mkdir dir="${classes.dir}/kotlin" />
-
     <java
       classname="org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
       classpathref="classpath.kotlin.compiler"
@@ -88,24 +85,12 @@
       <arg path="${jps.bootstrap.dir}/src/main/java" />
       <arg path="${community.home}/platform/build-scripts/downloader/src" />
       <arg value="-d" />
-      <arg value="${classes.dir}/kotlin" />
+      <arg value="${classes.dir}" />
     </java>
-    <javac
-      destdir="${classes.dir}/java"
-      encoding="UTF-8"
-      release="11"
-      debug="true"
-      includeantruntime="false"
-      classpathref="classpath.buildscripts">
-      <classpath path="${classes.dir}/kotlin" />
-      <src path="${jps.bootstrap.dir}/src/main/java" />
-      <src path="${community.home}/platform/build-scripts/downloader/src" />
-    </javac>
 
     <delete file="${classes.dir}.jar" />
     <zip destfile="${classes.dir}.jar">
-      <fileset dir="${classes.dir}/java" />
-      <fileset dir="${classes.dir}/kotlin" />
+      <fileset dir="${classes.dir}" />
     </zip>
 
     <mkdir dir="${uber.dir}" />
