@@ -3,12 +3,9 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
@@ -16,14 +13,18 @@ import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
-import java.awt.Cursor
+import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.JScrollPane
+import kotlin.math.max
 
 class TerminalPromptPanel(private val project: Project,
+                          private val settings: JBTerminalSystemSettingsProviderBase,
                           private val commandExecutor: TerminalCommandExecutor) : JPanel(), ComponentContainer {
   private val document: Document
   private val editor: EditorImpl
@@ -31,33 +32,20 @@ class TerminalPromptPanel(private val project: Project,
 
   init {
     document = DocumentImpl("", true)
-    editor = createEditor(document)
+    editor = TerminalUiUtils.createEditor(document, project, settings)
     editor.putUserData(KEY, this)  // to access this panel from editor action handlers
     Disposer.register(this, editor.disposable)
+
+    val innerBorder = JBUI.Borders.customLine(UIUtil.getTextFieldBackground(), 6, 0, 6, 0)
+    val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
+    border = JBUI.Borders.compound(outerBorder, innerBorder)
 
     layout = BorderLayout()
     add(editor.component, BorderLayout.CENTER)
   }
 
-  private fun createEditor(document: Document): EditorImpl {
-    val editor = EditorFactory.getInstance().createEditor(document, project, EditorKind.CONSOLE) as EditorImpl
-    editor.isScrollToCaret = false
-    editor.setCustomCursor(this, Cursor.getDefaultCursor())
-    editor.scrollPane.border = JBUI.Borders.empty()
-    editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-    editor.gutterComponentEx.isPaintBackground = false
-    editor.settings.apply {
-      isShowingSpecialChars = false
-      isLineNumbersShown = false
-      setGutterIconsShown(false)
-      isRightMarginShown = false
-      isFoldingOutlineShown = false
-      isCaretRowShown = false
-      additionalLinesCount = 0
-      additionalColumnsCount = 0
-      isBlockCursor = true
-    }
-    return editor
+  fun reset() {
+    document.setText("")
   }
 
   fun handleEnterPressed() {
@@ -107,6 +95,17 @@ class TerminalPromptPanel(private val project: Project,
 
   fun isFocused(): Boolean {
     return editor.contentComponent.hasFocus()
+  }
+
+  fun getContentSize(): Dimension {
+    return Dimension(editor.component.width, editor.contentComponent.height)
+  }
+
+  override fun getPreferredSize(): Dimension {
+    val baseSize = super.getPreferredSize()
+    JBInsets.addTo(baseSize, insets)
+    val lineCount = max(editor.document.lineCount, 1)
+    return Dimension(baseSize.width, lineCount * editor.lineHeight + insets.top + insets.bottom)
   }
 
   override fun getComponent(): JComponent = this

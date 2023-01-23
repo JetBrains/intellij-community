@@ -8,21 +8,29 @@ import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.util.Alarm
+import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
-import com.intellij.util.ui.ImageUtil
 import com.jediterm.terminal.RequestOrigin
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.awt.image.BufferedImage
 import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.math.ceil
+import javax.swing.JScrollBar
+import javax.swing.JScrollPane
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
 import kotlin.math.max
 
 class TerminalBlocksContainer(private val project: Project,
                               private val settings: JBTerminalSystemSettingsProviderBase) : JPanel(), ComponentContainer {
+  private val blocksPanel: JPanel
+  private val scrollPane: JBScrollPane
   private val promptPanel: TerminalPromptPanel
   private var runningPanel: TerminalPanel? = null
 
@@ -34,22 +42,40 @@ class TerminalBlocksContainer(private val project: Project,
         }
       }
     }
-    promptPanel = TerminalPromptPanel(project, commandExecutor)
+    promptPanel = TerminalPromptPanel(project, settings, commandExecutor)
     Disposer.register(this, promptPanel)
 
+    blocksPanel = object : JPanel(VerticalLayout(0)) {
+      override fun getBackground(): Color {
+        return UIUtil.getTextFieldBackground()
+      }
+    }
+
+    scrollPane = JBScrollPane(blocksPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
+    stickScrollBarToBottom(scrollPane.verticalScrollBar)
+
     layout = BorderLayout()
-    add(promptPanel, BorderLayout.CENTER)
+    add(scrollPane, BorderLayout.CENTER)
+    add(promptPanel, BorderLayout.SOUTH)
   }
 
   private fun startTerminalSession(command: String) {
-    val visibleRect = promptPanel.preferredFocusableComponent.visibleRect
-    val componentSize = Dimension(visibleRect.width, visibleRect.height)
-    val size = calculateTerminalSize(componentSize)
+    val componentSize = promptPanel.getContentSize()
+    val charSize = TerminalUiUtils.calculateCharSize(settings.terminalFont, settings.lineSpacing)
+    val size = calculateTerminalSize(componentSize, charSize)
+
     val session = TerminalSession(project, settings, size)
     session.start()
     session.executeCommand(command)
+
     invokeLater {
       installRunningPanel(session)
+
+      // Close session in one second just to demonstrate finished block
+      val closeSession: () -> Unit = {
+        commandExecutionFinished(session)
+      }
+      Alarm(Alarm.ThreadToUse.SWING_THREAD).addRequest(closeSession, 1000)
     }
   }
 
@@ -60,9 +86,8 @@ class TerminalBlocksContainer(private val project: Project,
 
     panel.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
-        val visibleRect = panel.preferredFocusableComponent.visibleRect
-        val componentSize = Dimension(visibleRect.width, visibleRect.height)
-        val newSize = calculateTerminalSize(componentSize)
+        val componentSize = panel.getContentSize()
+        val newSize = calculateTerminalSize(componentSize, panel.charSize)
         ensureTermMinimumSize(newSize)
 
         val model = session.model
@@ -75,35 +100,31 @@ class TerminalBlocksContainer(private val project: Project,
       }
     })
 
-    removeAll()
-    add(panel, BorderLayout.CENTER)
-    revalidate()
-    repaint()
+    promptPanel.isVisible = false
+    blocksPanel.add(panel, VerticalLayout.BOTTOM)
+    blocksPanel.revalidate()
 
     IdeFocusManager.getInstance(project).requestFocus(panel.preferredFocusableComponent, true)
   }
 
-  private fun calculateTerminalSize(componentSize: Dimension): Dimension {
-    val charSize = calculateCharSize()
+  private fun commandExecutionFinished(session: TerminalSession) {
+    Disposer.dispose(session)
+
+    runningPanel?.makeReadOnly() ?: error("Running panel is null")
+    runningPanel = null
+
+    promptPanel.reset()
+    promptPanel.isVisible = true
+    revalidate()
+    repaint()
+
+    IdeFocusManager.getInstance(project).requestFocus(promptPanel.preferredFocusableComponent, true)
+  }
+
+  private fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension): Dimension {
     val width = componentSize.width / charSize.width
     val height = componentSize.height / charSize.height
     return Dimension(width, height)
-  }
-
-  private fun calculateCharSize(): Dimension {
-    val img: BufferedImage = ImageUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB)
-    val graphics = img.createGraphics().also { it.font = settings.terminalFont }
-    try {
-      val metrics = graphics.fontMetrics
-      val width = metrics.charWidth('W')
-      val metricsHeight = metrics.height
-      val height = ceil(metricsHeight * settings.lineSpacing).toInt()
-      return Dimension(width, height)
-    }
-    finally {
-      img.flush()
-      graphics.dispose()
-    }
   }
 
   private fun ensureTermMinimumSize(size: Dimension) {
@@ -112,6 +133,10 @@ class TerminalBlocksContainer(private val project: Project,
 
   fun isFocused(): Boolean {
     return promptPanel.isFocused()
+  }
+
+  override fun getBackground(): Color {
+    return UIUtil.getTextFieldBackground()
   }
 
   override fun getComponent(): JComponent = this
@@ -125,5 +150,34 @@ class TerminalBlocksContainer(private val project: Project,
 
   override fun dispose() {
 
+  }
+
+  private fun stickScrollBarToBottom(verticalScrollBar: JScrollBar) {
+    verticalScrollBar.model.addChangeListener(object : ChangeListener {
+      var preventRecursion: Boolean = false
+      var prevValue: Int = 0
+      var prevMaximum: Int = 0
+      var prevExtent: Int = 0
+
+      override fun stateChanged(e: ChangeEvent?) {
+        if (preventRecursion) return
+
+        val model = verticalScrollBar.model
+        val maximum = model.maximum
+        val extent = model.extent
+
+        if (extent != prevExtent || maximum != prevMaximum) {
+          if (prevValue == prevMaximum - prevExtent) {
+            preventRecursion = true
+            model.value = maximum - extent
+            preventRecursion = false
+          }
+        }
+
+        prevValue = model.value
+        prevMaximum = model.maximum
+        prevExtent = model.extent
+      }
+    })
   }
 }

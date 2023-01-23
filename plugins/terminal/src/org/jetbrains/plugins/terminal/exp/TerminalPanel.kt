@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
@@ -11,7 +12,10 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
@@ -26,7 +30,9 @@ import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.emulator.ColorPalette
@@ -38,10 +44,11 @@ import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelListener
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.JScrollPane
 import javax.swing.KeyStroke
+import kotlin.math.max
 
 class TerminalPanel(private val project: Project,
                     private val settings: JBTerminalSystemSettingsProviderBase,
@@ -50,6 +57,11 @@ class TerminalPanel(private val project: Project,
   private val document: Document
   private val editor: EditorImpl
 
+  private val runningDisposable: Disposable = Disposer.newDisposable()
+
+  val charSize: Dimension
+    get() = Dimension(editor.charHeight, editor.lineHeight)
+
   private val palette: ColorPalette
     get() = settings.terminalColorPalette
 
@@ -57,12 +69,16 @@ class TerminalPanel(private val project: Project,
 
   init {
     document = DocumentImpl("", true)
-    editor = createEditor(document)
+    editor = TerminalUiUtils.createEditor(document, project, settings)
     Disposer.register(this, editor.disposable)
 
     setupContentListener()
     setupEventDispatcher()
     setupMouseListener()
+
+    val innerBorder = JBUI.Borders.customLine(UIUtil.getTextFieldBackground(), 6, 0, 6, 0)
+    val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
+    border = JBUI.Borders.compound(outerBorder, innerBorder)
 
     layout = BorderLayout()
     add(editor.component, BorderLayout.CENTER)
@@ -70,26 +86,10 @@ class TerminalPanel(private val project: Project,
     updateEditorContent()
   }
 
-  private fun createEditor(document: Document): EditorImpl {
-    val editor = EditorFactory.getInstance().createEditor(document, project, EditorKind.CONSOLE) as EditorImpl
-    editor.isScrollToCaret = false
-    editor.setCustomCursor(this, Cursor.getDefaultCursor())
-    editor.scrollPane.border = JBUI.Borders.empty()
-    editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-    //editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_NEVER
-    editor.gutterComponentEx.isPaintBackground = false
-    editor.settings.apply {
-      isShowingSpecialChars = false
-      isLineNumbersShown = false
-      setGutterIconsShown(false)
-      isRightMarginShown = false
-      isFoldingOutlineShown = false
-      isCaretRowShown = false
-      additionalLinesCount = 0
-      additionalColumnsCount = 0
-      isBlockCursor = true
-    }
-    return editor
+  fun makeReadOnly() {
+    editor.setCaretEnabled(false)
+    editor.isViewer = true
+    Disposer.dispose(runningDisposable)
   }
 
   private fun setupContentListener() {
@@ -164,7 +164,7 @@ class TerminalPanel(private val project: Project,
       editor.setCaretEnabled(false)
     }
     else {
-      editor.setCaretEnabled(true)
+      editor.setCaretEnabled(model.isCursorVisible)
       val line = model.historyLinesCount + model.cursorY - 1
       editor.caretModel.moveToLogicalPosition(LogicalPosition(line, model.cursorX))
       editor.scrollingModel.scrollToCaret(ScrollType.CENTER_DOWN)
@@ -201,6 +201,8 @@ class TerminalPanel(private val project: Project,
 
   private fun setupEventDispatcher() {
     // Key events forwarding from the editor to terminal panel
+    val dispatcherDisposable = Disposable { eventDispatcher.unregister() }
+    Disposer.register(runningDisposable, dispatcherDisposable)
     editor.addFocusListener(object : FocusChangeListener {
       override fun focusGained(editor: Editor) {
         if (settings.overrideIdeShortcuts()) {
@@ -221,7 +223,7 @@ class TerminalPanel(private val project: Project,
         eventDispatcher.unregister()
         SaveAndSyncHandler.getInstance().scheduleRefresh()
       }
-    })
+    }, runningDisposable)
   }
 
   override fun processKeyEvent(e: KeyEvent) {
@@ -254,7 +256,7 @@ class TerminalPanel(private val project: Project,
           eventsHandler.handleMouseReleased(p.column, p.line + historyLinesCount(), event.mouseEvent)
         }
       }
-    })
+    }, runningDisposable)
 
     editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
       override fun mouseMoved(event: EditorMouseEvent) {
@@ -270,18 +272,33 @@ class TerminalPanel(private val project: Project,
           eventsHandler.handleMouseDragged(p.column, p.line + historyLinesCount(), event.mouseEvent)
         }
       }
-    })
+    }, runningDisposable)
 
-    editor.scrollPane.addMouseWheelListener { event ->
+    val mouseWheelListener = MouseWheelListener { event ->
       if (settings.enableMouseReporting() && isRemoteMouseAction(event)) {
         editor.selectionModel.removeSelection()
         val p = editor.xyToLogicalPosition(event.point)
         eventsHandler.handleMouseWheelMoved(p.column, p.line + historyLinesCount(), event)
       }
     }
+    editor.scrollPane.addMouseWheelListener(mouseWheelListener)
+    Disposer.register(runningDisposable, Disposable {
+      editor.scrollPane.removeMouseWheelListener(mouseWheelListener)
+    })
   }
 
   fun isFocused(): Boolean = editor.contentComponent.hasFocus()
+
+  fun getContentSize(): Dimension {
+    return Dimension(editor.component.width, editor.contentComponent.height)
+  }
+
+  override fun getPreferredSize(): Dimension {
+    val baseSize = super.getPreferredSize()
+    JBInsets.addTo(baseSize, insets)
+    val lineCount = max(editor.document.lineCount, 1)
+    return Dimension(baseSize.width, lineCount * editor.lineHeight + insets.top + insets.bottom)
+  }
 
   override fun getComponent(): JComponent = this
 
