@@ -47,7 +47,6 @@ import com.jediterm.terminal.ui.*;
 import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.Pair;
-import com.pty4j.WinSize;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -449,9 +448,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     }
 
     @Override
-    public @Nullable WinSize getWindowSize() {
-      TermSize size = widget().getTerminalPanel().getTerminalSizeFromComponent();
-      return size != null ? new WinSize(size.getColumns(), size.getRows()) : null;
+    public @Nullable TermSize getTermSize() {
+      return widget().getTerminalPanel().getTerminalSizeFromComponent();
     }
 
     @Override

@@ -30,9 +30,9 @@ import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.ui.TerminalSession;
-import com.pty4j.WinSize;
 import com.pty4j.windows.WinPtyException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -78,7 +78,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   private void doRun() {
     // Create Server process
     try {
-      final T process = createProcess(new TerminalProcessOptions(null, null, null), null);
+      final T process = createProcess(new TerminalProcessOptions(null, null), null);
 
       UIUtil.invokeLaterIfNeeded(() -> initConsoleUI(process));
     }
@@ -236,14 +236,12 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   private void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @Nullable String directory) {
     ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
-    WinSize size = terminalWidget.getWindowSize();
+    TermSize size = terminalWidget.getTermSize();
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (myProject.isDisposed()) return;
       try {
-        T process = createProcess(new TerminalProcessOptions(directory,
-                                                             size != null ? size.getColumns() : null,
-                                                             size != null ? size.getRows() : null));
+        T process = createProcess(new TerminalProcessOptions(directory, size));
         TtyConnector connector = createTtyConnector(process);
 
         ApplicationManager.getApplication().invokeLater(() -> {
