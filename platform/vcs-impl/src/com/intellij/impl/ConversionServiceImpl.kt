@@ -80,17 +80,19 @@ internal class ConversionServiceImpl : ConversionService() {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED
     }
 
-    var result: ConversionResultImpl
+    val result: ConversionResultImpl
     if (ApplicationManagerEx.isInIntegrationTest()) {
       result = ConversionResultImpl(converters)
     }
     else {
-      result = ConversionResultImpl.CONVERSION_CANCELED
-      withContext(Dispatchers.EDT) {
+      result = withContext(Dispatchers.EDT) {
         val dialog = ConvertProjectDialog(context, converters)
         dialog.show()
         if (dialog.isConverted) {
-          result = ConversionResultImpl(converters)
+          ConversionResultImpl(converters)
+        }
+        else {
+          ConversionResultImpl.CONVERSION_CANCELED
         }
       }
     }
@@ -211,7 +213,7 @@ private fun isConversionNeeded(context: ConversionContextImpl): List<ConversionR
 
     val runners = ArrayList<ConversionRunner>()
     val point = ConverterProvider.EP_NAME.point as ExtensionPointImpl<ConverterProvider>
-    point.processIdentifiableImplementations { supplier: Supplier<out ConverterProvider?>, id: String? ->
+    point.processIdentifiableImplementations { supplier, id ->
       val providerId = getProviderId(supplier, id)
       if (!performedConversionIds.contains(providerId)) {
         val provider = supplier.get()
