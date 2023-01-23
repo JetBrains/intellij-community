@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleUtil
@@ -43,7 +44,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.util.*
 
-class NewKotlinFileAction : CreateFileFromTemplateAction(
+internal class NewKotlinFileAction : CreateFileFromTemplateAction(
     KotlinBundle.message("action.new.file.text"),
     KotlinBundle.message("action.new.file.description"),
     KotlinFileType.INSTANCE.icon
@@ -109,11 +110,12 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
             )
         }
 
-        builder.addKind(
-            KotlinBundle.message("action.new.file.dialog.data.class.title"),
-            KotlinIcons.CLASS,
-            "Kotlin Data Class"
-        )
+        builder
+            .addKind(
+                KotlinBundle.message("action.new.file.dialog.data.class.title"),
+                KotlinIcons.CLASS,
+                "Kotlin Data Class"
+            )
             .addKind(
                 KotlinBundle.message("action.new.file.dialog.enum.title"),
                 KotlinIcons.ENUM,
@@ -133,6 +135,16 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
                 KotlinBundle.message("action.new.file.dialog.object.title"),
                 KotlinIcons.OBJECT,
                 "Kotlin Object"
+            )
+            .addKind(
+                KotlinBundle.message("action.new.script.name"),
+                KotlinIcons.SCRIPT,
+                "Kotlin Script"
+            )
+            .addKind(
+                KotlinBundle.message("action.new.worksheet.name"),
+                KotlinIcons.SCRIPT,
+                "Kotlin Worksheet"
             )
 
         builder.setValidator(NameValidator)
@@ -163,121 +175,120 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
 
     override fun createFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory) =
         createFileFromTemplateWithStat(name, template, dir)
+}
 
-    companion object {
-        private object NameValidator : InputValidatorEx {
-            override fun getErrorText(inputString: String): String? {
-                if (inputString.trim().isEmpty()) {
-                    return KotlinBundle.message("action.new.file.error.empty.name")
-                }
-
-                val parts: List<String> = inputString.split(*FQNAME_SEPARATORS)
-                if (parts.any { it.trim().isEmpty() }) {
-                    return KotlinBundle.message("action.new.file.error.empty.name.part")
-                }
-
-                return null
-            }
-
-            override fun checkInput(inputString: String): Boolean = true
-
-            override fun canClose(inputString: String): Boolean = getErrorText(inputString) == null
+private object NameValidator : InputValidatorEx {
+    override fun getErrorText(inputString: String): String? {
+        if (inputString.trim().isEmpty()) {
+            return KotlinBundle.message("action.new.file.error.empty.name")
         }
 
-        @get:TestOnly
-        val nameValidator: InputValidatorEx
-            get() = NameValidator
+        val parts: List<String> = inputString.split(*FQNAME_SEPARATORS)
+        if (parts.any { it.trim().isEmpty() }) {
+            return KotlinBundle.message("action.new.file.error.empty.name.part")
+        }
 
-        private fun findOrCreateTarget(dir: PsiDirectory, name: String, directorySeparators: CharArray): Pair<String, PsiDirectory> {
-            var className = removeKotlinExtensionIfPresent(name)
-            var targetDir = dir
+        return null
+    }
 
-            for (splitChar in directorySeparators) {
-                if (splitChar in className) {
-                    val names = className.trim().split(splitChar)
+    override fun checkInput(inputString: String): Boolean = true
 
-                    for (dirName in names.dropLast(1)) {
-                        targetDir = targetDir.findSubdirectory(dirName) ?: runWriteAction {
-                            targetDir.createSubdirectory(dirName)
-                        }
-                    }
+    override fun canClose(inputString: String): Boolean = getErrorText(inputString) == null
+}
 
-                    className = names.last()
-                    break
+@get:TestOnly
+val createFileNameValidator: InputValidatorEx
+    get() = NameValidator
+
+private fun findOrCreateTarget(dir: PsiDirectory, name: String, directorySeparators: CharArray): Pair<String, PsiDirectory> {
+    var className = removeKotlinExtensionIfPresent(name)
+    var targetDir = dir
+
+    for (splitChar in directorySeparators) {
+        if (splitChar in className) {
+            val names = className.trim().split(splitChar)
+
+            for (dirName in names.dropLast(1)) {
+                targetDir = targetDir.findSubdirectory(dirName) ?: runWriteAction {
+                    targetDir.createSubdirectory(dirName)
                 }
             }
-            return Pair(className, targetDir)
+
+            className = names.last()
+            break
         }
+    }
+    return Pair(className, targetDir)
+}
 
-        private fun removeKotlinExtensionIfPresent(name: String): String = when {
-            name.endsWith(".$KOTLIN_WORKSHEET_EXTENSION") -> name.removeSuffix(".$KOTLIN_WORKSHEET_EXTENSION")
-            name.endsWith(".$STD_SCRIPT_SUFFIX") -> name.removeSuffix(".$STD_SCRIPT_SUFFIX")
-            name.endsWith(".${KotlinFileType.EXTENSION}") -> name.removeSuffix(".${KotlinFileType.EXTENSION}")
-            else -> name
-        }
+const val KOTLIN_WORKSHEET_EXTENSION: String = "ws.kts"
 
-        private fun createFromTemplate(dir: PsiDirectory, className: String, template: FileTemplate): PsiFile? {
-            val project = dir.project
-            val defaultProperties = FileTemplateManager.getInstance(project).defaultProperties
+private fun removeKotlinExtensionIfPresent(name: String): String = when {
+    name.endsWith(".$KOTLIN_WORKSHEET_EXTENSION") -> name.removeSuffix(".$KOTLIN_WORKSHEET_EXTENSION")
+    name.endsWith(".$STD_SCRIPT_SUFFIX") -> name.removeSuffix(".$STD_SCRIPT_SUFFIX")
+    name.endsWith(".${KotlinFileType.EXTENSION}") -> name.removeSuffix(".${KotlinFileType.EXTENSION}")
+    else -> name
+}
 
-            val properties = Properties(defaultProperties)
+private fun createKotlinFileFromTemplate(dir: PsiDirectory, className: String, template: FileTemplate): PsiFile? {
+    val project = dir.project
+    val defaultProperties = FileTemplateManager.getInstance(project).defaultProperties
 
-            val element = try {
-                CreateFromTemplateDialog(
-                    project, dir, template,
-                    AttributesDefaults(className).withFixedName(true),
-                    properties
-                ).create()
-            } catch (e: IncorrectOperationException) {
-                throw e
-            } catch (e: Exception) {
-                LOG.error(e)
-                return null
-            }
+    val properties = Properties(defaultProperties)
 
-            return element?.containingFile
-        }
+    val element = try {
+        CreateFromTemplateDialog(
+            project, dir, template,
+            AttributesDefaults(className).withFixedName(true),
+            properties
+        ).create()
+    } catch (e: IncorrectOperationException) {
+        throw e
+    } catch (e: Exception) {
+        logger<NewKotlinFileAction>().error(e)
+        return null
+    }
 
-        private val FILE_SEPARATORS = charArrayOf('/', '\\')
-        private val FQNAME_SEPARATORS = charArrayOf('/', '\\', '.')
+    return element?.containingFile
+}
 
-        fun createFileFromTemplateWithStat(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
-            KotlinCreateFileFUSCollector.logFileTemplate(template.name)
-            return createFileFromTemplate(name, template, dir)
-        }
+private val FILE_SEPARATORS: CharArray = charArrayOf('/', '\\')
+private val FQNAME_SEPARATORS: CharArray = charArrayOf('/', '\\', '.')
 
+private fun createFileFromTemplateWithStat(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
+    KotlinCreateFileFUSCollector.logFileTemplate(template.name)
+    return createKotlinFileFromTemplate(name, template, dir)
+}
 
-        fun createFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
-            val directorySeparators = when (template.name) {
-                "Kotlin File" -> FILE_SEPARATORS
-                else -> FQNAME_SEPARATORS
-            }
-            val (className, targetDir) = findOrCreateTarget(dir, name, directorySeparators)
+fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
+    val directorySeparators = when (template.name) {
+        "Kotlin File" -> FILE_SEPARATORS
+        else -> FQNAME_SEPARATORS
+    }
+    val (className, targetDir) = findOrCreateTarget(dir, name, directorySeparators)
 
-            val service = DumbService.getInstance(dir.project)
-            return service.computeWithAlternativeResolveEnabled<PsiFile?, Throwable> {
-                val adjustedDir = CreateTemplateInPackageAction.adjustDirectory(targetDir, JavaModuleSourceRootTypes.SOURCES)
-                val psiFile = createFromTemplate(adjustedDir, className, template)
-                if (psiFile is KtFile) {
-                    val singleClass = psiFile.declarations.singleOrNull() as? KtClass
-                    if (singleClass != null && !singleClass.isEnum() && !singleClass.isInterface() && name.contains("Abstract")) {
-                        runWriteAction {
-                            singleClass.addModifier(KtTokens.ABSTRACT_KEYWORD)
-                        }
-                    }
+    val service = DumbService.getInstance(dir.project)
+    return service.computeWithAlternativeResolveEnabled<PsiFile?, Throwable> {
+        val adjustedDir = CreateTemplateInPackageAction.adjustDirectory(targetDir, JavaModuleSourceRootTypes.SOURCES)
+        val psiFile = createKotlinFileFromTemplate(adjustedDir, className, template)
+        if (psiFile is KtFile) {
+            val singleClass = psiFile.declarations.singleOrNull() as? KtClass
+            if (singleClass != null && !singleClass.isEnum() && !singleClass.isInterface() && name.contains("Abstract")) {
+                runWriteAction {
+                    singleClass.addModifier(KtTokens.ABSTRACT_KEYWORD)
                 }
-                JavaCreateTemplateInPackageAction.setupJdk(adjustedDir, psiFile)
-                val module = ModuleUtil.findModuleForFile(psiFile)
-                val configurator = KotlinProjectConfigurator.EP_NAME.extensions.firstOrNull()
-                if (module != null && configurator != null) {
-                    DumbService.getInstance(module.project).runWhenSmart {
-                        if (configurator.getStatus(module.toModuleGroup()) == ConfigureKotlinStatus.CAN_BE_CONFIGURED) {
-                            configurator.configure(module.project, emptyList())
-                        }
-                    }
-                }
-                return@computeWithAlternativeResolveEnabled psiFile
             }
         }
+        JavaCreateTemplateInPackageAction.setupJdk(adjustedDir, psiFile)
+        val module = ModuleUtil.findModuleForFile(psiFile)
+        val configurator = KotlinProjectConfigurator.EP_NAME.extensions.firstOrNull()
+        if (module != null && configurator != null) {
+            DumbService.getInstance(module.project).runWhenSmart {
+                if (configurator.getStatus(module.toModuleGroup()) == ConfigureKotlinStatus.CAN_BE_CONFIGURED) {
+                    configurator.configure(module.project, emptyList())
+                }
+            }
+        }
+        return@computeWithAlternativeResolveEnabled psiFile
     }
 }

@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.NewKotlinFileAction
+import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplate
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -217,7 +218,7 @@ class ExtractSuperRefactoring(
         val newClass = if (targetParent is PsiDirectory) {
             val file = targetParent.findFile(extractInfo.targetFileName) ?: run {
                 val template = FileTemplateManager.getInstance(project).getInternalTemplate("Kotlin File")
-                NewKotlinFileAction.createFileFromTemplate(extractInfo.targetFileName, template, targetParent) ?: return null
+                createKotlinFileFromTemplate(extractInfo.targetFileName, template, targetParent) ?: return null
             }
             file.add(prototype) as KtClass
         } else {
