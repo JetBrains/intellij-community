@@ -3,4 +3,6 @@
     <module name="intellij.devkit.core"/>
     <plugin id="org.jetbrains.kotlin"/>
   </dependencies>
+
+  <resource-bundle>messages.DevKitKotlinBundle</resource-bundle>
 </idea-plugin>
