@@ -26,7 +26,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.IconReplacer
 import com.intellij.ui.RetrievableIcon
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBDimension
@@ -74,7 +73,7 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
     return createRunActionToolbar {
       presentation.getClientProperty(runToolbarDataKey) ?: false
     }.component.let {
-      Wrapper(it).apply { border = JBUI.Borders.empty(RunWidgetDefaults.toolbarBorderHeight(), 12, RunWidgetDefaults.toolbarBorderHeight(), 2) }
+      DynamicBorderWrapper(it) { JBUI.Borders.empty(RunWidgetDefaults.toolbarBorderHeight(), 12, RunWidgetDefaults.toolbarBorderHeight(), 2) }
     }
   }
 

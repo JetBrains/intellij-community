@@ -411,8 +411,8 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
       }
       isPaintEnable = false
       isCombined = true
-    }.let { Wrapper(it).apply {
-      border = JBUI.Borders.empty(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) JBUI.CurrentTheme.RunWidget.toolbarBorderHeight() else 7,6)
+    }.let { DynamicBorderWrapper(it) {
+      JBUI.Borders.empty(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) JBUI.CurrentTheme.RunWidget.toolbarBorderHeight() else 7,6)
     } }
   }
 
