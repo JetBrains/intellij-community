@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -24,6 +23,7 @@ import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
 import training.ui.views.LearnPanel
 import training.ui.views.ModulesPanel
+import training.util.enableLessonsAndPromoters
 import training.util.getActionById
 import java.awt.Color
 import java.util.concurrent.TimeUnit
@@ -98,7 +98,7 @@ private class ScrollModulesPanel(val modulesPanel: ModulesPanel?) :
 
 
 private fun adjustModulesPanel(contentPanel: JPanel): JPanel {
-  if (!ExperimentalUI.isNewUI()) {
+  if (enableLessonsAndPromoters) {
     return contentPanel
   }
   return JPanel().apply {
