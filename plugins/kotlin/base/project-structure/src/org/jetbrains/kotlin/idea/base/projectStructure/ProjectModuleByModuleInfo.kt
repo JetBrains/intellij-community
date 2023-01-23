@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
@@ -180,6 +181,8 @@ internal class NotUnderContentRootModuleByModuleInfo(
     private val moduleInfo: IdeaModuleInfo,
     provider: ProjectStructureProviderIdeImpl
 ) : KtModuleByModuleInfoBase(moduleInfo, provider), KtNotUnderContentRootModule {
+    override val name: String get() = moduleInfo.name.asString()
+    override val file: PsiFile? get() = (moduleInfo as? NotUnderContentRootModuleInfo)?.file
     override val moduleDescription: String get() = "Non under content root module"
     override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
     override val project: Project get() = moduleInfo.project
