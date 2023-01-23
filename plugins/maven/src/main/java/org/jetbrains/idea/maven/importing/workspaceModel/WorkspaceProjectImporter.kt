@@ -152,7 +152,7 @@ internal class WorkspaceProjectImporter(
 
   private fun collectProjectChanges(storageBeforeImport: EntityStorage,
                                     originalProjectsChanges: Map<MavenProject, MavenProjectChanges>,
-                                    migratededToExternalStorage: Boolean): ProjectChangesInfo {
+                                    migratedToExternalStorage: Boolean): ProjectChangesInfo {
     val mavenProjectsTreeSettingsEntity = storageBeforeImport.entities(MavenProjectsTreeSettingsEntity::class.java).firstOrNull()
     val projectFilesFromPreviousImport = mavenProjectsTreeSettingsEntity?.importedFilePaths ?: listOf()
 
@@ -173,7 +173,7 @@ internal class WorkspaceProjectImporter(
       }
     }
 
-    val hasChanges = allProjectsToChanges.values.any { it.hasChanges() } || migratededToExternalStorage
+    val hasChanges = allProjectsToChanges.values.any { it.hasChanges() } || migratedToExternalStorage
 
     return ProjectChangesInfo(hasChanges, allProjectsToChanges)
   }
