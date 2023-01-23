@@ -9,10 +9,11 @@ import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
 import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.kotlin.tooling.core.toKotlinVersion
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.io.File
 
-internal fun foldKonanDist(orderEntries: List<String>, module: Module): List<String> {
+internal fun PrinterContext.foldKonanDist(orderEntries: List<String>, module: Module): List<String> {
     val platform = module.platform
     if (!platform.isNative()) return orderEntries
 
@@ -52,7 +53,7 @@ internal fun foldKonanDist(orderEntries: List<String>, module: Module): List<Str
  * green on non-mac hosts, but also generate properly-looking testdata for Apple-targets on non-Mac hosts,
  * which will also make test pass (and run proper assertions!) when it will be run on actual Mac host
  */
-private fun expectedKonanDistForHostAndTarget(target: TargetPlatform): Set<String> {
+private fun PrinterContext.expectedKonanDistForHostAndTarget(target: TargetPlatform): Set<String> {
     require(target.isNative()) { "Can't get expected Kotlin/Native Distribution content for non-Native platform $target" }
 
     val konanTargets = target.componentPlatforms
@@ -68,14 +69,21 @@ private fun expectedKonanDistForHostAndTarget(target: TargetPlatform): Set<Strin
         distributionsToCommonize.reduce { result, next -> result intersect next }
 }
 
-private fun expectedKonanDistForFamily(family: Family): Set<String> {
-    val fileWithDistForFamily = File(PATH_TO_EXPECTED_KONAN_DIST_CONTENTS, family.name.toLowerCaseAsciiOnly() + ".txt")
-    check(fileWithDistForFamily.exists()) {
+private fun PrinterContext.expectedKonanDistForFamily(family: Family): Set<String> {
+    val versionClassifier = kotlinGradlePluginVersion.toKotlinVersion().toString()
+
+    val moreSpecificDist = File(PATH_TO_EXPECTED_KONAN_DIST_CONTENTS, family.name.toLowerCaseAsciiOnly() + "-$versionClassifier.txt")
+        .takeIf { it.exists() }
+
+    val defaultDist = File(PATH_TO_EXPECTED_KONAN_DIST_CONTENTS, family.name.toLowerCaseAsciiOnly() + ".txt")
+
+    val chosenDist = moreSpecificDist ?: defaultDist
+    check(chosenDist.exists()) {
         "Can't find file with serialized expected Kotlin/Native Distribution content for $family, " +
-                "looked at: ${fileWithDistForFamily.canonicalPath}"
+                "looked at: ${chosenDist.canonicalPath}"
     }
 
-    return fileWithDistForFamily.readLines().toSet()
+    return chosenDist.readLines().toSet()
 }
 
 private const val NATIVE_DISTRIBUTION_STUB_ENTRY = "Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB"
