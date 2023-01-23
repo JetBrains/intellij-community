@@ -18,13 +18,20 @@ interface KotlinTestPropertiesService {
     val kotlinGradlePluginVersion: KotlinToolingVersion
 
     companion object {
-        fun constructFromEnvironment(): KotlinTestPropertiesService {
-            val agpVersion = AndroidGradlePluginVersionTestsProperty.resolveFromEnvironment()
+        fun constructFromEnvironment(
+            agpVersionOverride: AndroidGradlePluginVersionTestsProperty.Values? = null,
+            gradleVersionOverride: GradleVersionTestsProperty.Values? = null,
+            kgpVersionOverride: KotlinGradlePluginVersionTestsProperty.Values? = null,
+        ): KotlinTestPropertiesService {
+            val agpVersion = agpVersionOverride?.version
+                ?: AndroidGradlePluginVersionTestsProperty.resolveFromEnvironment()
 
-            val gradleVersionRaw = GradleVersionTestsProperty.resolveFromEnvironment()
+            val gradleVersionRaw = gradleVersionOverride?.version
+                ?: GradleVersionTestsProperty.resolveFromEnvironment()
             val gradleVersion = GradleVersion.version(gradleVersionRaw)
 
-            val kgpVersionRaw = KotlinGradlePluginVersionTestsProperty.resolveFromEnvironment()
+            val kgpVersionRaw = kgpVersionOverride?.version
+                ?: KotlinGradlePluginVersionTestsProperty.resolveFromEnvironment()
             val kgpVersion = KotlinToolingVersion(kgpVersionRaw)
 
             val simpleProperties = SimpleProperties(gradleVersion, kgpVersion)
