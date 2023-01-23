@@ -187,7 +187,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       traverseNodesAndExpand()
       expandPreviouslyExpandedBranches()
     }
-    super.updateSpeedSearchColors(!haveBranches)
+    val model = tree.model
+    super.updateSpeedSearchColors(model.getChildCount(model.root) == 0)
     if (!pattern.isNullOrBlank()) {
       tree.emptyText.text = GitBundle.message("git.branches.popup.tree.no.branches", pattern)
     }
