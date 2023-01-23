@@ -220,9 +220,11 @@ classDiagramIdentifier ::= CLASS_ID {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 
-classStatement ::= CLASS classDiagramIdentifier [generic] [STYLE_SEPARATOR ID] [OPEN_CURLY EOL classMembersDocument? CLOSE_CURLY] {
+classStatement ::= CLASS classDiagramIdentifier [generic] [STYLE_SEPARATOR ID] [classBlock] {
   implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder"
 }
+
+classBlock ::= OPEN_CURLY EOL? classMembersDocument? CLOSE_CURLY
 
 memberStatement ::= classDiagramIdentifier [generic] COLON memberAttribute { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierHolder" }
 

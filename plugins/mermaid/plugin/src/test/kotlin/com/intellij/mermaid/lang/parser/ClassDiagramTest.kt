@@ -36,4 +36,6 @@ class ClassDiagramTest : MermaidParserTestCase("class") {
   fun `test complex attribute`() = doTest(true)
 
   fun `test notes`() = doTest(true)
+
+  fun `test blocks are parsed without first newline`() = doTest(true)
 }
