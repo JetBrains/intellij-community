@@ -3,21 +3,19 @@ package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.jetbrains.kotlin.gradle.idea.proto.Extras
 import org.jetbrains.kotlin.gradle.idea.proto.toByteArray
-import org.jetbrains.kotlin.gradle.idea.serialize.IdeaKotlinSerializationContext
 import org.jetbrains.kotlin.idea.gradleTooling.serialization.ideaKotlinSerializationContextOrNull
-import org.jetbrains.kotlin.idea.gradleTooling.serialization.withIdeaKotlinSerializationContext
 import org.jetbrains.kotlin.tooling.core.*
 import java.io.Serializable
 
 /**
- * Implementation of [MutableExtras] which supports transport from the Gradle to the IntelliJ process using the
- * [IdeaKotlinSerializationContext] provided by IntelliJ calling into [withIdeaKotlinSerializationContext] when
- * serializing / deserializing
+ * Special implementation of [MutableExtras] designed for transprting extras from Gradles model builder process
+ * into the IDE. This implementation supports [Serializable] by using the Serialization context provided by IntelliJ/Kotlin IDE plugin.
+ * Serialized extras from the Kotlin Gradle Plugin will be contained within by a special key.
  */
 class IdeaKotlinExtras private constructor(private val extras: MutableExtras) : MutableExtras by extras, Serializable {
 
     companion object {
-        private val serializedExtrasKey = extrasKeyOf<ByteArray>(IdeaKotlinExtras::class.java.name)
+        private val binaryExtras = extrasKeyOf<ByteArray>(IdeaKotlinExtras::class.java.name)
 
         fun empty() = IdeaKotlinExtras(mutableExtrasOf())
 
@@ -26,25 +24,25 @@ class IdeaKotlinExtras private constructor(private val extras: MutableExtras) : 
         fun wrap(extras: MutableExtras) = IdeaKotlinExtras(extras)
 
         fun from(data: ByteArray?) = if (data == null) IdeaKotlinExtras(mutableExtrasOf())
-        else IdeaKotlinExtras(mutableExtrasOf(serializedExtrasKey withValue data))
+        else IdeaKotlinExtras(mutableExtrasOf(binaryExtras withValue data))
     }
 
     private fun writeReplace(): Any {
         return Surrogate(
             extras = ideaKotlinSerializationContextOrNull?.let { extras.toByteArray(it) },
-            serializedExtras = extras[serializedExtrasKey]
+            binaryExtras = extras[binaryExtras]
         )
     }
 
     private class Surrogate(
         private val extras: ByteArray?,
-        private val serializedExtras: ByteArray?,
+        private val binaryExtras: ByteArray?,
     ) : Serializable {
         private fun readResolve(): Any {
             val context = ideaKotlinSerializationContextOrNull ?: return IdeaKotlinExtras(mutableExtrasOf())
             val extrasEntries = if (extras != null) context.Extras(extras)?.entries.orEmpty() else emptySet()
-            val serializedExtrasEntries = if (serializedExtras != null) context.Extras(serializedExtras)?.entries.orEmpty() else emptySet()
-            return IdeaKotlinExtras((extrasEntries + serializedExtrasEntries).toMutableExtras())
+            val binaryExtrasEntries = if (binaryExtras != null) context.Extras(binaryExtras)?.entries.orEmpty() else emptySet()
+            return IdeaKotlinExtras((extrasEntries + binaryExtrasEntries).toMutableExtras())
         }
     }
 }
