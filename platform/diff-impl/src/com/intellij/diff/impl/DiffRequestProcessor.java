@@ -447,12 +447,15 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   @NotNull
   protected List<AnAction> getNavigationActions() {
-    List<AnAction> actions = ContainerUtil.newArrayList(
+    List<AnAction> actions = List.of(
       new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(),
       Separator.getInstance(),
       new MyPrevChangeAction(), new MyNextChangeAction());
 
-    ContainerUtil.addIfNotNull(actions, createGoToChangeAction());
+    AnAction goToChangeAction = createGoToChangeAction();
+    if (goToChangeAction != null) {
+      actions = ContainerUtil.append(actions, goToChangeAction);
+    }
 
     return actions;
   }
@@ -641,7 +644,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     return myPanel;
   }
 
-  @Nullable
+  @NotNull
   public JComponent getPreferredFocusedComponent() {
     JComponent component = myState.getPreferredFocusedComponent();
     JComponent fallback = myToolbar.getComponent();

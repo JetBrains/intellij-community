@@ -41,7 +41,7 @@ public class PropertiesUtil {
                                                                 return List.of(locale.getLanguage());
                                                               }
                                                             })));
-    locales.addAll(ContainerUtil.newArrayList(Locale.getISOLanguages()));
+    locales.addAll(List.of(Locale.getISOLanguages()));
     return locales;
   });
 

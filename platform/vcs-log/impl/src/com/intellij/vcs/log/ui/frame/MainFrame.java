@@ -410,9 +410,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private class MyFocusPolicy extends ComponentsListFocusTraversalPolicy {
     @Override
     protected @NotNull List<Component> getOrderedComponents() {
-      return ContainerUtil.newArrayList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent(),
-                                        myDiffPreview.getPreviewDiff().getPreferredFocusedComponent(),
-                                        myFilterUi.getTextFilterComponent());
+      return List.of(myGraphTable,
+                     myChangesBrowser.getPreferredFocusedComponent(),
+                     myDiffPreview.getPreviewDiff().getPreferredFocusedComponent(),
+                     myFilterUi.getTextFilterComponent());
     }
   }
 

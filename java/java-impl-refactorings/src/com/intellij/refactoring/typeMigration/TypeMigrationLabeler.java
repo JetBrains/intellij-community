@@ -455,7 +455,7 @@ public class TypeMigrationLabeler {
 
     if (expr instanceof PsiConditionalExpression) {
       final PsiConditionalExpression condExpr = (PsiConditionalExpression)expr;
-      for (PsiExpression e : ContainerUtil.newArrayList(condExpr.getThenExpression(), condExpr.getElseExpression())) {
+      for (PsiExpression e : new PsiExpression[]{condExpr.getThenExpression(), condExpr.getElseExpression()}) {
         if (e != null) {
           migrateExpressionType(e, migrationType, place, alreadyProcessed, false);
         }

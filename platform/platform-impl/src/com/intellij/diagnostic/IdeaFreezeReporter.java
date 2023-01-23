@@ -192,7 +192,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       StackTraceElement[] edtStack = dump.getEDTStackTrace();
       if (edtStack != null) {
         if (myStacktraceCommonPart == null) {
-          myStacktraceCommonPart = Arrays.asList(edtStack);
+          myStacktraceCommonPart = List.of(edtStack);
         }
         else {
           myStacktraceCommonPart = PerformanceWatcherImpl.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);

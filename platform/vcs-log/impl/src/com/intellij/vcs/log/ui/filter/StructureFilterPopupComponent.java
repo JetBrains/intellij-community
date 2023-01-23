@@ -198,7 +198,7 @@ public class StructureFilterPopupComponent
                                                             new DefaultActionGroup(structureActions));
 
     int position = roots.size() > 15 ? actionsList.size() : actionsList.size() - 2;
-    actionsList.addAll(position, ContainerUtil.newArrayList(new Separator(VcsLogBundle.messagePointer("vcs.log.filter.roots")),
+    actionsList.addAll(position, List.of(new Separator(VcsLogBundle.messagePointer("vcs.log.filter.roots")),
                                                             new DefaultActionGroup(rootActions)));
     return new DefaultActionGroup(actionsList);
   }

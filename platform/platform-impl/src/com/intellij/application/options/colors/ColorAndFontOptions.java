@@ -39,7 +39,6 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -202,7 +201,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @NotNull
   @Override
   public Collection<BaseExtensionPointName<?>> getDependencies() {
-    return ContainerUtil.newArrayList(ColorSettingsPage.EP_NAME, ColorAndFontPanelFactory.EP_NAME, ColorAndFontDescriptorsProvider.EP_NAME);
+    return List.of(ColorSettingsPage.EP_NAME, ColorAndFontPanelFactory.EP_NAME, ColorAndFontDescriptorsProvider.EP_NAME);
   }
 
   public static boolean isReadOnly(@NotNull final EditorColorsScheme scheme) {

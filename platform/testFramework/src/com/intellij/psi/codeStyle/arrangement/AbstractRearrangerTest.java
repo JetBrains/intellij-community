@@ -50,7 +50,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
   }
 
   protected static StdArrangementRuleAliasToken alias(@NotNull String id, StdArrangementMatchRule @NotNull ... rules) {
-    return new StdArrangementRuleAliasToken(id, id, ContainerUtil.newArrayList(rules));
+    return new StdArrangementRuleAliasToken(id, id, List.of(rules));
   }
 
   @NotNull

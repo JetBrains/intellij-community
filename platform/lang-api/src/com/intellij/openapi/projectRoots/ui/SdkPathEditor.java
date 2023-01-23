@@ -5,9 +5,10 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 public class SdkPathEditor extends PathEditor {
   private final @NlsContexts.TabTitle String myDisplayName;
@@ -39,7 +40,7 @@ public class SdkPathEditor extends PathEditor {
 
   public void reset(@Nullable SdkModificator modificator) {
     if (modificator != null) {
-      resetPath(ContainerUtil.newArrayList(modificator.getRoots(myOrderRootType)));
+      resetPath(Arrays.asList(modificator.getRoots(myOrderRootType)));
     }
     else {
       setEnabled(false);

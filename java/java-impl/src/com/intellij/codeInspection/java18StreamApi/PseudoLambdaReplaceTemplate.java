@@ -79,7 +79,7 @@ public final class PseudoLambdaReplaceTemplate {
   }
 
   public static List<PseudoLambdaReplaceTemplate> getAllTemplates() {
-    return ContainerUtil.newArrayList(MAP, FILTER, FIND, ALL_MATCH, ANY_MATCH);
+    return List.of(MAP, FILTER, FIND, ALL_MATCH, ANY_MATCH);
   }
 
   public ValidationInfo validate(final PsiMethod method) {
