@@ -170,7 +170,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                                 analyzeWithReadAction(declaration) {
                                     fun KtType.containsClassType(clazz: PsiClass?): Boolean {
                                         if (clazz == null) return false
-                                        return this is KtNonErrorClassType && (clazz.isEquivalentTo(getPsiClassOfKtType(this)) || this.ownTypeArguments.any { arg ->
+                                        return this is KtNonErrorClassType && (clazz.unwrapped?.isEquivalentTo(classSymbol.psi) == true || ownTypeArguments.any { arg ->
                                             when (arg) {
                                                 is KtStarTypeProjection -> false
                                                 is KtTypeArgumentWithVariance -> arg.type.containsClassType(clazz)
