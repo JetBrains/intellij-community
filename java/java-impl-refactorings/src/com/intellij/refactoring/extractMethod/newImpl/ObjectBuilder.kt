@@ -7,7 +7,9 @@ import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplateBuilder
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
 import com.intellij.refactoring.extractMethod.newImpl.inplace.TemplateField
 import com.siyeh.ig.psiutils.TypeUtils
 
@@ -40,17 +42,13 @@ interface ObjectBuilder {
       }
     }
 
-    private inline fun <reified T: PsiElement> PsiElement.addAfter(element: T): T {
-      return parent.addAfter(element, this) as T
-    }
-
     private fun runTemplate(editor: Editor, introducedClass: PsiClass, declaration: PsiVariable, replacedReferences: List<PsiExpression>, objectBuilder: ObjectBuilder) {
       val declarationPointer = SmartPointerManager.createPointer(declaration)
       val classPointer = SmartPointerManager.createPointer(introducedClass)
       val replacedPointers = replacedReferences.map(SmartPointerManager::createPointer)
       PsiDocumentManager.getInstance(declaration.project).doPostponedOperationsAndUnblockDocument(editor.document)
 
-
+      val file = classPointer.element?.containingFile ?: throw IllegalStateException()
       val variable = declarationPointer.element
       val classReference = (variable?.initializer as? PsiNewExpression)?.classReference?.element
       val declarationType = variable?.typeElement
@@ -60,11 +58,23 @@ interface ObjectBuilder {
         .mapNotNull{ replacementPointer -> replacementPointer.element }
         .mapNotNull{ replacedReference -> objectBuilder.findVariableReferenceInReplacement(replacedReference) }
       val fields = listOf(
-        TemplateField(classReference!!.textRange, listOfNotNull(declarationType, classIdentifier).map(PsiElement::getTextRange)),
-        TemplateField(variableName!!.textRange, variableReferences.map(PsiElement::getTextRange))
+        TemplateField(
+          classReference!!.textRange,
+          listOfNotNull(declarationType, classIdentifier).map(PsiElement::getTextRange),
+          validator = { variableRange -> InplaceExtractUtils.checkClassReference(editor, file, variableRange) }
+        ),
+        TemplateField(
+          variableName!!.textRange,
+          variableReferences.map(PsiElement::getTextRange),
+          validator = { variableRange -> InplaceExtractUtils.checkVariableIdentifier(editor, file, variableRange) }
+        )
       )
-      ExtractMethodTemplateBuilder(editor, "WrapVariablesWithObject")
+      ExtractMethodTemplateBuilder(editor, ExtractMethodHandler.getRefactoringName())
         .createTemplate(declaration.containingFile, fields)
+    }
+
+    private inline fun <reified T: PsiElement> PsiElement.addAfter(element: T): T {
+      return parent.addAfter(element, this) as T
     }
   }
 }
