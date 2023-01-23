@@ -24,7 +24,7 @@ public abstract class DvcsBranchManager {
     myProject = project;
     myBranchSettings = settings;
     for (BranchType type : branchTypes) {
-      Collection<String> predefinedFavoriteBranches = myPredefinedFavoriteBranches.getOrDefault(type, new HashSet<>());
+      Collection<String> predefinedFavoriteBranches = myPredefinedFavoriteBranches.computeIfAbsent(type, __ -> new HashSet<>());
 
       for (String branchName : getDefaultBranchNames(type)) {
         if (!StringUtil.isEmptyOrSpaces(branchName)) {
