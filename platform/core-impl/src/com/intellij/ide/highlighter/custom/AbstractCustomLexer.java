@@ -20,7 +20,7 @@ public class AbstractCustomLexer extends LexerBase {
   protected TokenInfo myCurrentToken;
   protected int myPosition;
 
-  public AbstractCustomLexer(List<TokenParser> tokenParsers) {
+  public AbstractCustomLexer(List<? extends TokenParser> tokenParsers) {
     myTokenParsers = tokenParsers.toArray(new TokenParser[0]);
   }
 
