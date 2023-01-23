@@ -22,6 +22,7 @@ import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -33,12 +34,15 @@ class UnindexedFilesIndexer extends DumbModeTask {
   private final Project myProject;
   private final FileBasedIndexImpl myIndex;
   private final Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles;
+  private final @NonNls @NotNull String indexingReason;
 
   UnindexedFilesIndexer(Project project,
-                        Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles) {
+                        Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles,
+                        @NonNls @NotNull String indexingReason) {
     myProject = project;
     myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     this.providerToFiles = providerToFiles;
+    this.indexingReason = indexingReason;
   }
 
   void indexFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
@@ -124,7 +128,7 @@ class UnindexedFilesIndexer extends DumbModeTask {
     if (!IndexInfrastructure.hasIndices()) {
       return;
     }
-    ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(myProject, "Async indexing", ScanningType.REFRESH);
+    ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(myProject, indexingReason, ScanningType.REFRESH);
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender != null) {
@@ -173,7 +177,10 @@ class UnindexedFilesIndexer extends DumbModeTask {
       mergedFilesToIndex.put(e.getKey(), mergedList);
     }
 
-    return new UnindexedFilesIndexer(myProject, mergedFilesToIndex);
+    String mergedReason = "Merged " + StringUtil.trimStart(indexingReason, "Merged ") +
+             " with " + StringUtil.trimStart(otherIndexingTask.indexingReason, "Merged ");
+
+    return new UnindexedFilesIndexer(myProject, mergedFilesToIndex, mergedReason);
   }
 
   private static double getPowerForSmoothProgressIndicator() {

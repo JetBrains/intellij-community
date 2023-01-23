@@ -76,8 +76,9 @@ public final class FileBasedIndexProjectHandler {
       indicator.setIndeterminate(false);
       indicator.setText(IndexingBundle.message("progress.indexing.updating"));
 
+      String indexingReason = "On refresh of files in " + myProject.getName();
       ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(myProject,
-                                                                                         "On refresh of files in " + myProject.getName(),
+                                                                                         indexingReason,
                                                                                          ScanningType.REFRESH);
 
       IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
@@ -109,7 +110,7 @@ public final class FileBasedIndexProjectHandler {
         //
         // Fair amount of FileBasedIndexProjectHandler.scheduleReindexingInDumbMode invocations are observed during massive refresh (e.g. branch change).
         // In practice, we observe 2-3 scanning tasks followed by a single indexing task.
-        new UnindexedFilesIndexer(myProject, files).indexFiles(projectIndexingHistory, indicator);
+        new UnindexedFilesIndexer(myProject, files, indexingReason).indexFiles(projectIndexingHistory, indicator);
       }
       catch (Exception e) {
         projectIndexingHistory.setWasInterrupted(true);

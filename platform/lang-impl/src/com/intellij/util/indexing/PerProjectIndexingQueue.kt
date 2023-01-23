@@ -201,11 +201,11 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
     }
   }
 
-  fun flushNow() {
+  fun flushNow(reason: String) {
     val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles()
     try {
       if (totalFiles > 0) {
-        UnindexedFilesIndexer(project, filesInQueue).queue(project)
+        UnindexedFilesIndexer(project, filesInQueue, reason).queue(project)
       }
       else {
         LOG.info("Finished for " + project.name + ". No files to index with loading content.")
@@ -219,7 +219,8 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
     val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles()
     try {
       if (totalFiles > 0) {
-        UnindexedFilesIndexer(project, filesInQueue).indexFiles(projectIndexingHistory, indicator)
+        val indexingReason = projectIndexingHistory.indexingReason ?: "Flushing queue of project ${project.name}"
+        UnindexedFilesIndexer(project, filesInQueue, indexingReason).indexFiles(projectIndexingHistory, indicator)
       }
       else {
         LOG.info("Finished for " + project.name + ". No files to index with loading content.")

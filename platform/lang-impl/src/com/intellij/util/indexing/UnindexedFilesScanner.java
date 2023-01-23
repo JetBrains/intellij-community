@@ -259,7 +259,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
 
     if (shouldScanInSmartMode()) {
       // Switch to dumb mode and index
-      myProject.getService(PerProjectIndexingQueue.class).flushNow();
+      myProject.getService(PerProjectIndexingQueue.class).flushNow(myIndexingReason);
     }
     else {
       // Already in dumb mode. Just invoke indexer

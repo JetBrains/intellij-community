@@ -51,8 +51,8 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     map2.put(iter2, f2);
     map2.put(iterShared, fShared.subList(1, 3));
 
-    task1 = new UnindexedFilesIndexer(getProject(), map1);
-    task2 = new UnindexedFilesIndexer(getProject(), map2);
+    task1 = new UnindexedFilesIndexer(getProject(), map1, "test task1");
+    task2 = new UnindexedFilesIndexer(getProject(), map2, "test task2");
   }
 
   public void testTryMergeIndexingTasks() {
