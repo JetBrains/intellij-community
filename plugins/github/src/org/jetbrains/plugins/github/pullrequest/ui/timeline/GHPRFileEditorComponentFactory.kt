@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
-import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.SingleValueModel
@@ -10,6 +9,7 @@ import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
@@ -33,7 +33,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineIt
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRTimelineFileEditor
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory.AvatarConfig
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldModel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.submitAction
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
@@ -228,8 +227,10 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       primaryAction = MutableStateFlow(model.submitAction(GithubBundle.message("action.comment.text"))),
       submitHint = MutableStateFlow(GithubBundle.message("pull.request.comment.hint", submitShortcutText))
     )
-    val avatarConfig = AvatarConfig(avatarIconsProvider, currentUser, CodeReviewChatItemUIUtil.ComponentType.FULL)
-    return GHCommentTextFieldFactory(model).create(actions, avatarConfig)
+    val icon = CommentTextFieldFactory.IconConfig.of(CodeReviewChatItemUIUtil.ComponentType.FULL,
+                                                     avatarIconsProvider, currentUser.avatarUrl)
+
+    return GHCommentTextFieldFactory(model).create(actions, icon)
   }
 
   private fun createItemComponentFactory(project: Project,

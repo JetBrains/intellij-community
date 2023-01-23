@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -88,16 +89,20 @@ object CommentTextFieldFactory {
     class ScrollToComponent(val component: JComponent) : ScrollOnChangePolicy()
   }
 
-  fun <T> wrapWithLeftIcon(componentType: CodeReviewChatItemUIUtil.ComponentType, item: JComponent,
-                           iconProvider: IconsProvider<T>, iconKey: T, iconTooltip: @Nls String? = null): JComponent {
-    val iconLabel = JLabel(iconProvider.getIcon(iconKey, componentType.iconSize)).apply {
-      toolTipText = iconTooltip
-    }
-
-    return JPanel(CommentFieldWithIconLayout(componentType.iconGap - CollaborationToolsUIUtil.getFocusBorderInset())).apply {
+  fun wrapWithLeftIcon(config: IconConfig, item: JComponent): JComponent {
+    val (icon, iconGap) = config
+    val iconLabel = JLabel(icon)
+    return JPanel(CommentFieldWithIconLayout(iconGap - CollaborationToolsUIUtil.getFocusBorderInset())).apply {
       isOpaque = false
       add(CommentFieldWithIconLayout.ICON, iconLabel)
       add(CommentFieldWithIconLayout.ITEM, item)
+    }
+  }
+
+  data class IconConfig(val icon: Icon, val gap: Int) {
+    companion object {
+      fun <T> of(type: CodeReviewChatItemUIUtil.ComponentType, iconsProvider: IconsProvider<T>, iconKey: T): IconConfig =
+        IconConfig(iconsProvider.getIcon(iconKey, type.iconSize), type.iconGap)
     }
   }
 }

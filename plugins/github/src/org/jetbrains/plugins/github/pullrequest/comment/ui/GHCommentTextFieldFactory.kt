@@ -3,17 +3,16 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithProgressOverlay
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory.create
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory.wrapWithLeftIcon
-import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 
 class GHCommentTextFieldFactory(private val model: GHCommentTextFieldModel) {
 
-  fun create(inputActions: CommentInputActionsComponentFactory.Config, avatar: AvatarConfig? = null): JComponent {
+  fun create(inputActions: CommentInputActionsComponentFactory.Config,
+             avatar: CommentTextFieldFactory.IconConfig? = null): JComponent {
     val textField = create(model.project, model.document)
 
     CollaborationToolsUIUtil.installValidator(textField, model.errorValue.map { it?.localizedMessage })
@@ -23,14 +22,9 @@ class GHCommentTextFieldFactory(private val model: GHCommentTextFieldModel) {
       inputField
     }
     else {
-      wrapWithLeftIcon(avatar.componentType, inputField,
-                       avatar.avatarIconsProvider, avatar.user.avatarUrl, avatar.user.getPresentableName())
+      wrapWithLeftIcon(avatar, inputField)
     }
 
     return CommentInputActionsComponentFactory.attachActions(field, inputActions)
   }
-
-  data class AvatarConfig(val avatarIconsProvider: GHAvatarIconsProvider,
-                          val user: GHUser,
-                          val componentType: CodeReviewChatItemUIUtil.ComponentType = CodeReviewChatItemUIUtil.ComponentType.COMPACT)
 }

@@ -12,6 +12,7 @@ import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.util.swingAction
@@ -181,9 +182,11 @@ object GHPRReviewThreadComponent {
       additionalActions = MutableStateFlow(listOf(unResolveAction)),
       submitHint = MutableStateFlow(GithubBundle.message("pull.request.review.thread.reply.hint", submitShortcutText))
     )
+    val icon = CommentTextFieldFactory.IconConfig.of(
+      CodeReviewChatItemUIUtil.ComponentType.COMPACT, avatarIconsProvider, currentUser.avatarUrl
+    )
 
-    return GHCommentTextFieldFactory(textFieldModel)
-      .create(actions, GHCommentTextFieldFactory.AvatarConfig(avatarIconsProvider, currentUser))
+    return GHCommentTextFieldFactory(textFieldModel).create(actions, icon)
   }
 
   fun getCollapsedThreadActionsComponent(reviewDataProvider: GHPRReviewDataProvider,
