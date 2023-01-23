@@ -663,6 +663,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   public static VirtualFile getCorrectedVcsRoot(@NotNull GitRepositoryManager repositoryManager,
                                                 @NotNull VirtualFile detectedRoot,
                                                 @NotNull FilePath path) {
+    if (path.isDirectory()) return detectedRoot;
     GitRepository repository = repositoryManager.getRepositoryForRootQuick(path);
     if (repository != null && repository.getRoot().equals(detectedRoot)) {
       GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);

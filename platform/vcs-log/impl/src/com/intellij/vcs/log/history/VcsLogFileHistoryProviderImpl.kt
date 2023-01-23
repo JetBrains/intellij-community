@@ -75,7 +75,7 @@ private class VcsLogDirectoryHistoryProvider(private val project: Project) : Vcs
         if (!dataManager.roots.contains(root) ||
             !VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY.getOrDefault(dataManager.getLogProvider(root))) return null
 
-        val correctedPath = getCorrectedPath(project, path, root, false)
+        val correctedPath = getCorrectedPath(project, path, false)
         if (!correctedPath.isDirectory) return null
 
         if (path.virtualFile == root) {
@@ -116,7 +116,7 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
     if (!isNewHistoryEnabled() || paths.size != 1) return false
 
     val root = VcsLogUtil.getActualRoot(project, paths.single()) ?: return false
-    val correctedPath = getCorrectedPath(project, paths.single(), root, revisionNumber != null)
+    val correctedPath = getCorrectedPath(project, paths.single(), revisionNumber != null)
     if (correctedPath.isDirectory) return false
 
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
@@ -128,7 +128,7 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
     if (paths.size != 1) return
 
     val root = VcsLogUtil.getActualRoot(project, paths.first())!!
-    val path = getCorrectedPath(project, paths.single(), root, revisionNumber != null)
+    val path = getCorrectedPath(project, paths.single(), revisionNumber != null)
     if (path.isDirectory) return
 
     val hash = revisionNumber?.let { HashImpl.build(it) }
@@ -173,18 +173,9 @@ private fun VcsLogUiEx.jumpToNearestCommit(storage: VcsLogStorage, hash: Hash, r
   }, SettableFuture.create(), silently, true)
 }
 
-private fun getCorrectedPath(project: Project, path: FilePath, root: VirtualFile,
-                             isRevisionHistory: Boolean): FilePath {
-  var correctedPath = path
-  if (root != VcsUtil.getVcsRootFor(project, correctedPath) && correctedPath.isDirectory) {
-    correctedPath = VcsUtil.getFilePath(correctedPath.path, false)
-  }
-
-  if (!isRevisionHistory) {
-    return VcsUtil.getLastCommitPath(project, correctedPath)
-  }
-
-  return correctedPath
+private fun getCorrectedPath(project: Project, path: FilePath, isRevisionHistory: Boolean): FilePath {
+  if (isRevisionHistory) return path
+  return VcsUtil.getLastCommitPath(project, path)
 }
 
 private fun triggerFileHistoryUsage(project: Project, paths: Collection<FilePath>, hash: Hash?) {
