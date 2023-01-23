@@ -45,7 +45,8 @@ class JavaTestDiffProvider : JvmTestDiffProvider() {
       if (argIndex != null && argIndex != -1) call.argumentList.expressions.getOrNull(argIndex) else null
     }
     if (expr is PsiLiteralExpression) return expr
-    if (expr is PsiPolyadicExpression && expr.operands.all { it is PsiLiteralExpression }) return expr
+    // disabled for now
+    //if (expr is PsiPolyadicExpression && expr.operands.all { it is PsiLiteralExpression }) return expr
     if (expr is PsiReference) {
       val resolved = expr.resolve()
       if (resolved is PsiVariable) {
