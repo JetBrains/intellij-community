@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.NonSourceModuleInfoBase
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
@@ -9,10 +11,22 @@ import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAna
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.idea.caches.project.NotUnderContentRootModuleInfo as OldNotUnderContentRootModuleInfo
 
-data class NotUnderContentRootModuleInfo(override val project: Project) : OldNotUnderContentRootModuleInfo(), IdeaModuleInfo, NonSourceModuleInfoBase {
+class NotUnderContentRootModuleInfo(
+    override val project: Project,
+    file: KtFile?
+) : OldNotUnderContentRootModuleInfo(), IdeaModuleInfo, NonSourceModuleInfoBase {
+    @Deprecated("Backing 'KtFile' expected")
+    constructor(project: Project) : this(project, null)
+
+    private val filePointer: SmartPsiElementPointer<KtFile>? = file?.let { SmartPointerManager.createPointer(it) }
+
+    val file: KtFile?
+        get() = filePointer?.element
+
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.OTHER
 
@@ -33,4 +47,20 @@ data class NotUnderContentRootModuleInfo(override val project: Project) : OldNot
 
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = platform.single().findAnalyzerServices()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as NotUnderContentRootModuleInfo
+
+        if (project != other.project) return false
+        return file == other.file
+    }
+
+    override fun hashCode(): Int {
+        var result = project.hashCode()
+        result = 31 * result + (file?.hashCode() ?: 0)
+        return result
+    }
 }

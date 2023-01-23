@@ -308,7 +308,9 @@ class KotlinConsoleRunner(
         }
 
     private fun configureFileDependencies(psiFile: KtFile) {
-        psiFile.forcedModuleInfo = module.testSourceInfo ?: module.productionSourceInfo ?: NotUnderContentRootModuleInfo(project)
+        psiFile.forcedModuleInfo = module.testSourceInfo
+            ?: module.productionSourceInfo
+            ?: NotUnderContentRootModuleInfo(psiFile.project, psiFile)
     }
 }
 
