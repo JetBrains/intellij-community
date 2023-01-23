@@ -124,7 +124,11 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
-    <extrasSerialization implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.serialize.KotlinExtrasSerializationService"/>
+    <extrasSerialization implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.serialize.KotlinGradlePluginExtrasSerializationService"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea.gradleTooling">
+    <serialization.IdeaKotlinSerializationContext implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.serialize.IntellijIdeaKotlinSerializationContext"/>
   </extensions>
 
   <actions>
