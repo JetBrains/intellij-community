@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Project
+import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import org.gradle.internal.build.BuildState
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
@@ -78,7 +80,17 @@ class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
     }
 
     private fun Project.addTasksToStartParameter(taskNames: Iterable<String>) {
-        project.gradle.startParameter.setTaskNames(project.gradle.startParameter.taskNames.toSet() + taskNames)
+        if (project.gradle.parent == null) {
+            /* Root of composite build: We can just add the task name */
+            project.gradle.startParameter.setTaskNames(project.gradle.startParameter.taskNames.toSet() + taskNames)
+        } else {
+            /* This is an included build. Referencing the task path explicitly */
+            val rootBuild = generateSequence(project.gradle) { it.parent }.last()
+            val buildId = (project as ProjectInternal).services.get(BuildState::class.java).buildIdentifier
+            val projectPathPart = if (rootProject != project) project.path else ""
+            val absoluteTaskPaths = taskNames.map { taskName -> ":${buildId.name}$projectPathPart:$taskName" }
+            rootBuild.startParameter.setTaskNames(rootBuild.startParameter.taskNames.toSet() + absoluteTaskPaths)
+        }
     }
 
     override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
