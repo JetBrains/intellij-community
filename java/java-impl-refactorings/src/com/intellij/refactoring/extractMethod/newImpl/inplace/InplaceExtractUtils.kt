@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.hint.EditorCodePreview
+import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
@@ -30,19 +32,76 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.range
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.Nls
 import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
 
 object InplaceExtractUtils {
+
+  private fun showErrorHint(editor: Editor, offset: Int, message: @Nls String) {
+    val options = HintManager.HIDE_BY_ESCAPE or HintManager.HIDE_BY_TEXT_CHANGE
+    HintManager.getInstance().showErrorHint(editor, message, offset, offset, HintManager.ABOVE, options, 0)
+  }
+
+  private fun checkIdentifierName(editor: Editor, file: PsiFile, variableRange: TextRange): Boolean {
+    val project = file.project
+    val referenceName = file.viewProvider.document.getText(variableRange)
+    if (! PsiNameHelper.getInstance(project).isIdentifier(referenceName)) {
+      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("template.error.invalid.identifier.name"))
+      return false
+    }
+    return true
+  }
+
+  fun checkReferenceIdentifier(editor: Editor, file: PsiFile, variableRange: TextRange): Boolean {
+    if (!checkIdentifierName(editor, file, variableRange)) {
+      return false
+    }
+    val reference = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiReferenceExpression::class.java, false)
+    val resolvedElements = reference?.multiResolve(false)
+    if (resolvedElements?.size != 1) {
+      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("extract.method.error.method.conflict"))
+      return false
+    }
+    return true
+  }
+
+  fun checkVariableIdentifier(editor: Editor, file: PsiFile, variableRange: TextRange): Boolean {
+    if (!checkIdentifierName(editor, file, variableRange)) {
+      return false
+    }
+    val variable = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiVariable::class.java, false)
+    if (variable != null && HighlightUtil.checkVariableAlreadyDefined(variable) != null) {
+      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("template.error.variable.already.defined"))
+      return false
+    }
+    return true
+  }
+
+  fun checkClassReference(editor: Editor, file: PsiFile, variableRange: TextRange): Boolean {
+    if (!checkIdentifierName(editor, file, variableRange)) {
+      return false
+    }
+    val name = editor.document.getText(variableRange)
+    val containingClass = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiClass::class.java, false)
+    val conflictsInParentClasses = generateSequence(containingClass?.containingClass) { parentClass -> parentClass.containingClass }
+      .map { parentClass -> parentClass.findInnerClassByName(name, false) }
+      .toList()
+    val conflictsInSameClass = PsiTreeUtil.findChildrenOfType(file, PsiClass::class.java).filter { psiClass -> psiClass.name == name }
+    if (conflictsInSameClass.size + conflictsInParentClasses.size > 1) {
+      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("template.error.class.already.defined"))
+      return false
+    }
+    return true
+  }
 
   fun createInsertedHighlighting(editor: Editor, range: TextRange): Disposable {
     val project = editor.project ?: return Disposable {}

@@ -173,7 +173,7 @@ class ExtractKotlinFunctionHandler(
             val call = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, KtCallExpression::class.java, false)
             val name = file.viewProvider.document.getText(variableRange)
             return if (! KotlinNamesValidator().isIdentifier(name, file.project)) {
-                JavaRefactoringBundle.message("extract.method.error.invalid.name")
+                JavaRefactoringBundle.message("template.error.invalid.identifier.name")
             } else if (call?.resolveToCall() == null) {
                 JavaRefactoringBundle.message("extract.method.error.method.conflict")
             } else {

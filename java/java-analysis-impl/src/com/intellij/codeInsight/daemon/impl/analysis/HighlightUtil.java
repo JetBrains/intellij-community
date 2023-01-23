@@ -660,7 +660,7 @@ public final class HighlightUtil {
     return StringUtil.join(unhandled, JavaHighlightUtil::formatType, ", ");
   }
 
-  static HighlightInfo.Builder checkVariableAlreadyDefined(@NotNull PsiVariable variable) {
+  public static HighlightInfo.Builder checkVariableAlreadyDefined(@NotNull PsiVariable variable) {
     if (variable instanceof ExternallyDefinedPsiElement) return null;
     PsiVariable oldVariable = null;
     PsiElement declarationScope = null;
