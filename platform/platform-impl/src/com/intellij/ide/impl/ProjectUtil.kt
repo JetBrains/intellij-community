@@ -303,8 +303,13 @@ object ProjectUtil {
       }
     }
 
-    processor.openProjectAsync(virtualFile, options.projectToClose, options.forceOpenInNewFrame)?.let {
-      return it.orElse(null)
+    try {
+      return processor.openProjectAsync(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
+    }
+    catch (e: UnsupportedOperationException) {
+      if (e != ProjectOpenProcessor.unimplementedOpenAsync) {
+        throw e
+      }
     }
 
     return withContext(Dispatchers.EDT) {

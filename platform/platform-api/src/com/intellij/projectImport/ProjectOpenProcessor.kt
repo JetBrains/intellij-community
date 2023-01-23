@@ -8,8 +8,8 @@ import com.intellij.openapi.ui.MessageConstants
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import java.util.*
 import javax.swing.Icon
 
 abstract class ProjectOpenProcessor {
@@ -29,6 +29,9 @@ abstract class ProjectOpenProcessor {
         provider.canOpenProject(file) && (!onlyIfExistingProjectFile || provider.isProjectFile(file))
       }
     }
+
+    @Internal
+    val unimplementedOpenAsync: UnsupportedOperationException = UnsupportedOperationException()
   }
 
   abstract val name: @Nls String
@@ -73,13 +76,10 @@ abstract class ProjectOpenProcessor {
    */
   abstract fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project?
 
-  /**
-   * Return not null Optional if supported.
-   */
   open suspend fun openProjectAsync(virtualFile: VirtualFile,
                                     projectToClose: Project?,
-                                    forceOpenInNewFrame: Boolean): Optional<Project>? {
-    return null
+                                    forceOpenInNewFrame: Boolean): Project? {
+    throw unimplementedOpenAsync
   }
 
   /**
