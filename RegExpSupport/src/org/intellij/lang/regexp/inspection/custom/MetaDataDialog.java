@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -109,10 +109,10 @@ public class MetaDataDialog extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
     if (getOKAction().isEnabled()) {
-      myConfiguration.name = getName();
-      myConfiguration.description = getDescription();
-      myConfiguration.suppressId = getSuppressId();
-      myConfiguration.problemDescriptor = getProblemDescriptor();
+      myConfiguration.setName(getName());
+      myConfiguration.setDescription(getDescription());
+      myConfiguration.setSuppressId(getSuppressId());
+      myConfiguration.setProblemDescriptor(getProblemDescriptor());
     }
   }
 

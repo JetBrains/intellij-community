@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -181,7 +181,7 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
     Collections.swap(patterns, index, newIndex);
     model.fireContentsChanged(list);
     list.setSelectedIndex(newIndex);
-    //saveChangesToProfile(list);
+    saveChangesToProfile(list);
   }
 
   private void performAdd(JList<InspectionPattern> list, @NotNull AnActionButton b) {
@@ -194,8 +194,8 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
 
   private void performRemove(JList<InspectionPattern> list) {
     final List<InspectionPattern> patterns = myConfiguration.getPatterns();
-    for (InspectionPattern configuration : list.getSelectedValuesList()) {
-      patterns.remove(configuration);
+    for (InspectionPattern pattern : list.getSelectedValuesList()) {
+      myConfiguration.removePattern(pattern);
     }
     final int size = patterns.size();
     final int maxIndex = list.getMaxSelectionIndex();
@@ -278,9 +278,8 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
       final RegExpDialog dialog = new RegExpDialog(project, true, defaultPattern);
       if (!dialog.showAndGet()) return;
 
-      final InspectionPattern configuration = dialog.getPattern();
-      final List<InspectionPattern> patterns = myConfiguration.getPatterns();
-      patterns.add(configuration);
+      final InspectionPattern pattern = dialog.getPattern();
+      myConfiguration.addPattern(pattern);
       ((MyListModel)myList.getModel()).fireContentsChanged(myList);
       saveChangesToProfile(myList);
     }
@@ -299,15 +298,6 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
 
     public void fireContentsChanged(Object source) {
       fireContentsChanged(source, -1, -1);
-    }
-
-    public void swap(int first, int second) {
-      if (second == -1) return;
-      final List<InspectionPattern> patterns = myConfiguration.getPatterns();
-      final InspectionPattern one = patterns.get(first);
-      final InspectionPattern two = patterns.get(second);
-      patterns.set(second, one);
-      patterns.set(first, two);
     }
   }
 }
