@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.localCanBeFinal;
 
 import com.intellij.codeInspection.*;
@@ -210,6 +210,9 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
         super.visitPatternVariable(variable);
         if (!REPORT_PATTERN_VARIABLES) return;
+        if (PsiTreeUtil.getParentOfType(variable, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
+          return;
+        }
         PsiElement context = PsiTreeUtil.getParentOfType(variable,
                                                          PsiInstanceOfExpression.class,
                                                          PsiCaseLabelElementList.class,
