@@ -7,10 +7,13 @@ import com.intellij.feedback.common.dialog.*
 import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
 import com.intellij.feedback.productivityMetric.bundle.ProductivityFeedbackBundle
 import com.intellij.feedback.productivityMetric.statistics.ProductivityMetricCountCollector
+import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI.DISABLE_SETTING_FOREGROUND
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.util.ui.JBEmptyBorder
@@ -19,6 +22,7 @@ import com.intellij.util.ui.JBUI
 import kotlinx.serialization.json.*
 import javax.swing.Action
 import javax.swing.JComponent
+import javax.swing.JList
 
 class ProductivityFeedbackDialog(
   private val project: Project?,
@@ -115,8 +119,19 @@ class ProductivityFeedbackDialog(
           .bold()
       }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
       row {
-        comboBox(List(8) { ProductivityFeedbackBundle.message("dialog.combobox.item.${it + 1}") })
+        val renderer = object : SimpleListCellRenderer<String>() {
+          override fun customize(list: JList<out String>, @NlsContexts.Label value: String?, index: Int, selected: Boolean, hasFocus: Boolean) {
+            if (value == null) {
+              text = ProductivityFeedbackBundle.message("dialog.combobox.placeholder")
+              foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+            } else {
+              text = value
+            }
+          }
+        }
+        comboBox(List(8) { ProductivityFeedbackBundle.message("dialog.combobox.item.${it + 1}") }, renderer)
           .applyToComponent {
+            putClientProperty(DISABLE_SETTING_FOREGROUND, true)
             selectedItem = null
             columns(COLUMNS_MEDIUM)
           }.whenItemSelectedFromUi {
