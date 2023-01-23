@@ -33,7 +33,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.util.*
 import kotlin.test.assertContains
-import kotlin.test.assertFalse
+import kotlin.test.fail
 
 
 // TODO: Cover case in com.intellij.workspaceModel.ide.impl.jps.serialization.JpsSplitModuleAndContentRoot.load module without java custom settings
@@ -93,11 +93,15 @@ class ImlCreationPropertyTest {
         if (moduleEntity.isEmpty) {
           if (moduleEntity.isExternal) {
             val file = prj.cache.modules.resolve("${moduleEntity.name}.xml").toFile()
-            assertFalse(file.exists(), "File should not exist ${file}. Content: ${file.readText()}")
+            if (file.exists()) {
+              fail("File should not exist ${file}. Content: ${file.readText()}")
+            }
           }
           else {
             val file = prj.resolve("${moduleEntity.name}.iml").toFile()
-            assertFalse(file.exists(), "File should not exist ${file}. Content: ${file.readText()}")
+            if (file.exists()) {
+              fail("File should not exist ${file}. Content: ${file.readText()}")
+            }
           }
         }
         else {

@@ -543,8 +543,8 @@ class JpsSplitModuleAndContentRootTest {
   @TestFor(classes = [JavaModuleSettingsEntity::class, ModuleImlFileEntitiesSerializer::class, JavaSettingsSerializer::class])
   @Test
   fun `load module without java custom settings`() {
-    checkSaveProjectAfterChange("after/imlWithoutJavaSettings", "after/imlWithoutJavaSettings") { _, orphanage, _ ->
-      val javaSettings = orphanage.entities(ModuleEntity::class.java).single().javaSettings
+    checkSaveProjectAfterChange("after/imlWithoutJavaSettings", "after/imlWithoutJavaSettings") { builder, orphanage, _ ->
+      val javaSettings = builder.entities(ModuleEntity::class.java).single().javaSettings
       assertNull(javaSettings)
     }
   }

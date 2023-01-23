@@ -149,19 +149,22 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                      moduleEntity: ModuleEntity.Builder,
                                      exceptionCollector: MutableList<Throwable>,
   ): ModuleEntity.Builder {
-    val source = getOtherEntitiesEntitySource(reader)
-    if (moduleEntity.isEmpty) {
-      val newModuleEntity = ModuleEntity(moduleEntity.name, emptyList(), OrphanageWorkerEntitySource) as ModuleEntity.Builder
-      runCatchingXmlIssues(exceptionCollector) {
-        loadAdditionalContentRoots(newModuleEntity, reader, virtualFileManager, source)
-      }
-      return newModuleEntity
+    val source = runCatchingXmlIssues(exceptionCollector) {
+      getOtherEntitiesEntitySource(reader)
+    } ?: return moduleEntity
+
+    val roots = runCatchingXmlIssues(exceptionCollector) {
+      loadAdditionalContentRoots(moduleEntity, reader, virtualFileManager, source)
     }
-    else {
-      runCatchingXmlIssues(exceptionCollector) {
-        loadAdditionalContentRoots(moduleEntity, reader, virtualFileManager, source)
-      }
-      return moduleEntity
+
+    if (roots == null) return moduleEntity
+    return if (moduleEntity.isEmpty) {
+      ModuleEntity(moduleEntity.name, emptyList(), OrphanageWorkerEntitySource) {
+        this.contentRoots = roots
+      } as ModuleEntity.Builder
+    } else {
+      moduleEntity.contentRoots += roots
+      moduleEntity
     }
   }
 
@@ -302,13 +305,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     reader: JpsFileContentReader,
     virtualFileManager: VirtualFileUrlManager,
     contentRootEntitySource: EntitySource,
-  ) {
-    val additionalElements = reader.loadComponent(fileUrl.url, ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME, getBaseDirPath())?.clone()
-    if (additionalElements != null) {
-      val additionalContentRoots = loadContentRootEntities(moduleEntity, additionalElements, virtualFileManager, contentRootEntitySource)
-
-      moduleEntity.contentRoots += additionalContentRoots
-    }
+  ): List<ContentRootEntity>? {
+    val additionalElements = reader.loadComponent(fileUrl.url, ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME, getBaseDirPath())?.clone() ?: return null
+    return loadContentRootEntities(moduleEntity, additionalElements, virtualFileManager, contentRootEntitySource)
   }
 
   private fun getOtherEntitiesEntitySource(reader: JpsFileContentReader): EntitySource {

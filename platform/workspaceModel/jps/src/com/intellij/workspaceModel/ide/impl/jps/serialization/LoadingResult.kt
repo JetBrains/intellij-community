@@ -35,12 +35,12 @@ inline fun <T> JpsFileEntitiesSerializer<*>.runCatchingXmlIssues(body: () -> T):
 
 @Suppress("UnusedReceiverParameter")
 @OptIn(ExperimentalContracts::class)
-inline fun <T> JpsFileEntitiesSerializer<*>.runCatchingXmlIssues(exceptionsCollector: MutableCollection<Throwable>,body: () -> T) {
+inline fun <T> JpsFileEntitiesSerializer<*>.runCatchingXmlIssues(exceptionsCollector: MutableCollection<Throwable>,body: () -> T): T? {
   contract {
     callsInPlace(body, InvocationKind.EXACTLY_ONCE)
   }
   try {
-    body()
+    return body()
   }
   catch (e: JDOMException) {
     exceptionsCollector.add(e)
@@ -48,4 +48,5 @@ inline fun <T> JpsFileEntitiesSerializer<*>.runCatchingXmlIssues(exceptionsColle
   catch (e: IOException) {
     exceptionsCollector.add(e)
   }
+  return null
 }
