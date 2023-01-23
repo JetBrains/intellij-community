@@ -63,6 +63,10 @@ abstract class DistributedTestHostBase() {
     private val logger = Logger.getInstance(DistributedTestHostBase::class.java)
 
     const val screenshotOnFailureFileName = "ScreenshotOnFailure"
+
+    fun getDistributedTestPort(): Int? =
+      (System.getProperty(AgentConstants.protocolPortEnvVar)
+       ?: System.getenv(AgentConstants.protocolPortEnvVar))?.toIntOrNull()
   }
 
   protected abstract val projectOrNull: Project?
@@ -81,8 +85,7 @@ abstract class DistributedTestHostBase() {
       false -> InetAddress.getLoopbackAddress()
     }
 
-    val port = (System.getProperty(AgentConstants.protocolPortEnvVar)
-                ?: System.getenv(AgentConstants.protocolPortEnvVar))?.toIntOrNull()
+    val port = getDistributedTestPort()
 
     if (port != null) {
       logger.info("Queue creating protocol on $hostAddress:$port")
