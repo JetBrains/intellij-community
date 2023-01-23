@@ -26,7 +26,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabDiscussionResolveViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import javax.swing.Icon
@@ -162,7 +162,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
   }
 
   private fun createUnResolveLink(cs: CoroutineScope,
-                                  vm: GitLabMergeRequestDiscussionResolveViewModel): LinkLabel<Any> =
+                                  vm: GitLabDiscussionResolveViewModel): LinkLabel<Any> =
     LinkLabel<Any>("", null) { _, _ ->
       vm.changeResolvedState()
     }.apply {
@@ -220,7 +220,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
   private fun createReplyField(project: Project,
                                cs: CoroutineScope,
                                vm: NewGitLabNoteViewModel,
-                               resolveVm: GitLabMergeRequestDiscussionResolveViewModel?,
+                               resolveVm: GitLabDiscussionResolveViewModel?,
                                iconsProvider: IconsProvider<GitLabUserDTO>): JComponent {
     val submitAction = swingAction(CollaborationToolsBundle.message("review.comments.reply.action")) {
       vm.submit()
@@ -253,7 +253,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }
   }
 
-  private val GitLabMergeRequestDiscussionResolveViewModel.actionTextFlow
+  private val GitLabDiscussionResolveViewModel.actionTextFlow
     get() = resolved.map { resolved ->
       if (resolved) {
         CollaborationToolsBundle.message("review.comments.unresolve.action")

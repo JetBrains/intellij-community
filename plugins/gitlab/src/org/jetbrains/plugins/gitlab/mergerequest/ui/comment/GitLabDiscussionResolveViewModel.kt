@@ -8,15 +8,15 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
-interface GitLabMergeRequestDiscussionResolveViewModel {
+interface GitLabDiscussionResolveViewModel {
   val resolved: Flow<Boolean>
   val busy: Flow<Boolean>
 
   fun changeResolvedState()
 }
 
-class GitLabMergeRequestDiscussionResolveViewModelImpl(parentCs: CoroutineScope, private val discussion: GitLabDiscussion)
-  : GitLabMergeRequestDiscussionResolveViewModel {
+class GitLabDiscussionResolveViewModelImpl(parentCs: CoroutineScope, private val discussion: GitLabDiscussion)
+  : GitLabDiscussionResolveViewModel {
 
   override val resolved: Flow<Boolean> = discussion.resolved
 
