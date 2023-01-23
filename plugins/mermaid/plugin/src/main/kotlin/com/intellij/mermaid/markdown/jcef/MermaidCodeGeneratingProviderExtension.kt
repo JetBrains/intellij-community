@@ -1,8 +1,13 @@
 package com.intellij.mermaid.markdown.jcef
 
+import com.intellij.mermaid.lang.lexer.MermaidLexer
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets
+import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
 import com.intellij.ui.ColorUtil
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
@@ -18,12 +23,58 @@ internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFen
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
-    val hash = MarkdownUtil.md5(raw, "") + determineTheme()
+    val text = removeIcons(raw)
+    val hash = MarkdownUtil.md5(text, "") + determineTheme()
     val key = getUniqueFile("mermaid", hash, "svg").toFile()
     return when {
       key.exists() -> "<img src=\"${key.toURI()}\"/>"
-      else -> createRawContentElement(hash, raw)
+      else -> createRawContentElement(hash, text)
     }
+  }
+
+  private fun removeIcons(raw: String): String {
+    val lexer = MermaidLexer()
+    lexer.start(raw)
+
+    while (lexer.tokenType in MermaidTokenTypeSets.WHITE_SPACES || lexer.tokenType == MermaidTokens.OPEN_DIRECTIVE) {
+      if (lexer.tokenType == MermaidTokens.OPEN_DIRECTIVE) {
+        while (lexer.tokenType != MermaidTokens.CLOSE_DIRECTIVE) {
+          lexer.advance()
+        }
+      }
+
+      lexer.advance()
+    }
+
+    if (lexer.tokenType != MermaidTokens.Mindmap.MINDMAP) {
+      return raw
+    }
+
+    val iconTokens = TokenSet.create(
+      MermaidTokens.Mindmap.OPEN_ICON,
+      MermaidTokens.Mindmap.ICON_VALUE,
+      MermaidTokens.Mindmap.CLOSE_ICON
+    )
+
+    return buildList<Pair<String, IElementType?>> {
+      add(lexer.tokenText to lexer.tokenType)
+
+      while (lexer.tokenType != null) {
+        lexer.advance()
+        when (lexer.tokenType) {
+          !in iconTokens -> add(lexer.tokenText to lexer.tokenType)
+
+          MermaidTokens.Mindmap.OPEN_ICON -> {
+            while (lastOrNull()?.second == MermaidTokens.WHITE_SPACE) {
+              removeLast()
+            }
+            if (lastOrNull()?.second == MermaidTokens.EOL) {
+              removeLast()
+            }
+          }
+        }
+      }
+    }.joinToString(separator = "") { it.first }
   }
 
   fun store(key: String, content: ByteArray) {
