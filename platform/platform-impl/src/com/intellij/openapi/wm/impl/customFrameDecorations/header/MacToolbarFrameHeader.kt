@@ -6,6 +6,9 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
@@ -29,7 +32,7 @@ private const val GAP_FOR_BUTTONS = 80
 private const val DEFAULT_HEADER_HEIGHT = 40
 
 internal class MacToolbarFrameHeader(private val frame: JFrame,
-                                     root: JRootPane) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
+                                     private val root: JRootPane) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
   private val ideMenu: IdeMenuBar = IdeMenuBar()
   private var toolbar: MainToolbar? = null
   private val headerTitle = SimpleCustomDecorationPath(frame)
@@ -45,6 +48,16 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     addHeaderTitle()
     toolbar = createToolBar()
     updateVisibleCard()
+
+    val rKey = Registry.get("apple.awt.newFullScreeControls")
+    System.setProperty(rKey.key, java.lang.Boolean.toString(rKey.asBoolean()))
+    rKey.addListener(
+      object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          System.setProperty(rKey.key, java.lang.Boolean.toString(rKey.asBoolean()))
+          updateBorders()
+        }
+      }, this)
   }
 
   private fun createToolBar(): MainToolbar {
@@ -136,8 +149,15 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   override fun getHeaderBackground(active: Boolean) = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)
 
   private fun updateBorders() {
-    border = JBUI.Borders.emptyLeft(GAP_FOR_BUTTONS)
-    headerTitle.updateBorders(GAP_FOR_BUTTONS)
+    val isFullscreen = root.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) != null
+    if (isFullscreen && !Registry.`is`("apple.awt.newFullScreeControls")) {
+      border = JBUI.Borders.empty()
+      headerTitle.updateBorders(0)
+    }
+    else {
+      border = JBUI.Borders.emptyLeft(GAP_FOR_BUTTONS)
+      headerTitle.updateBorders(GAP_FOR_BUTTONS)
+    }
     toolbar?.let { it.border = JBUI.Borders.empty() }
   }
 
