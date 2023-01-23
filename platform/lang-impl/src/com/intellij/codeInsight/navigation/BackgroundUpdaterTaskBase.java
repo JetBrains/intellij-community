@@ -3,6 +3,7 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -104,11 +105,14 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   private boolean tryAppendUsage(@NotNull T element) {
     final UsageView view = myUsageView.get();
     if (view != null && !((UsageViewImpl)view).isDisposed()) {
-      Usage usage = createUsage(element);
-      if (usage == null)
-        return false;
-      ApplicationManager.getApplication().runReadAction(() -> view.appendUsage(usage));
-      return true;
+      return ReadAction.compute(() -> {
+        Usage usage = createUsage(element);
+        if (usage == null) {
+          return false;
+        }
+        view.appendUsage(usage);
+        return true;
+      });
     }
     return false;
   }
