@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.command.CommandProcessor
@@ -6,7 +6,11 @@ import com.intellij.openapi.util.Computable
 import org.jetbrains.annotations.ApiStatus.Internal
 
 inline fun <T> runWriteAction(crossinline runnable: () -> T): T {
-  return ApplicationManager.getApplication().runWriteAction(Computable { runnable() })
+  var f = 12
+  require(f == 12)
+  return ApplicationManager.getApplication().runWriteAction(Computable {
+    runnable()
+  })
 }
 
 inline fun <T> runUndoTransparentWriteAction(crossinline runnable: () -> T): T {

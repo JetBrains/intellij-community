@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.impl
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
@@ -10,16 +11,23 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LO
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ModuleAttachListener
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Path
 
-class VcsModuleAttachListener : ModuleAttachListener {
-  override fun afterAttach(module: Module, primaryModule: Module?, imlFile: Path) {
+private class VcsModuleAttachListener : ModuleAttachListener {
+  override fun afterAttach(module: Module, primaryModule: Module?, imlFile: Path, tasks: MutableList<suspend () -> Unit>) {
     primaryModule ?: return
 
     val dotIdeaDirParent = imlFile.parent?.parent?.let { LocalFileSystem.getInstance().findFileByPath(it.toString()) }
     if (dotIdeaDirParent != null) {
-      addVcsMapping(primaryModule, dotIdeaDirParent)
+      tasks.add {
+        // todo check and modify addVcsMapping (use EDT only if needed)
+        withContext(Dispatchers.EDT) {
+          addVcsMapping(primaryModule, dotIdeaDirParent)
+        }
+      }
     }
   }
 

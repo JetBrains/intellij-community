@@ -11,28 +11,26 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isProjectDirectoryExistsUsingIo
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.io.File
 import java.nio.file.Path
-import java.nio.file.Paths
 
 /**
  * This action is enabled when confirmOpenNewProject option is set in settings to either OPEN_PROJECT_NEW_WINDOW or
  * OPEN_PROJECT_SAME_WINDOW, so there is no dialog shown on open directory action, which makes attaching a new project impossible.
  * This action provides a way to do that in this case.
- *
- * @author traff
  */
 open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachProject.text")), DumbAware {
   override fun update(e: AnActionEvent) {
@@ -61,11 +59,12 @@ open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachPr
     }
     if (preselectedDirectory == null) {
       val defaultProjectDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
-      preselectedDirectory =
-        if (StringUtil.isNotEmpty(defaultProjectDirectory))
-          VfsUtil.findFileByIoFile(File(defaultProjectDirectory), true)
-        else
-          VfsUtil.findFileByIoFile(File(SystemProperties.getUserHome()), true)
+      preselectedDirectory = if (defaultProjectDirectory.isEmpty()) {
+        VfsUtil.findFileByIoFile(File(SystemProperties.getUserHome()), true)
+      }
+      else {
+        VfsUtil.findFileByIoFile(File(defaultProjectDirectory), true)
+      }
     }
 
     FileChooser.chooseFiles(descriptor, project, preselectedDirectory) {
@@ -78,8 +77,9 @@ open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachPr
 
   companion object {
     @JvmStatic
-    val TO_SELECT_KEY = Key.create<Path>("attach_to_select_key")
+    val TO_SELECT_KEY: Key<Path> = Key.create("attach_to_select_key")
 
+    @RequiresEdt
     fun attachProject(virtualFile: VirtualFile, project: Project) {
       var baseDir: VirtualFile? = virtualFile
       if (!virtualFile.isDirectory) {
@@ -97,7 +97,9 @@ open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachPr
                                  IdeBundle.message("dialog.title.attach.project.error"))
       }
       else {
-        PlatformProjectOpenProcessor.attachToProject(project, Paths.get(FileUtil.toSystemDependentName(baseDir.path)), null)
+        runBlockingModal(project, ActionsBundle.message("action.AttachProject.text")) {
+          attachToProjectAsync(projectToClose = project, projectDir = Path.of(FileUtil.toSystemDependentName(baseDir.path)))
+        }
       }
     }
   }

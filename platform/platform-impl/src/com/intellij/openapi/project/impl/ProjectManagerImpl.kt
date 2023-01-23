@@ -61,6 +61,7 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
+import com.intellij.platform.attachToProjectAsync
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
@@ -542,6 +543,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       // write current PID to file to kill the process if it hangs
       if (IS_CHILD_PROCESS) {
         val pid = ProcessHandle.current().pid()
+
         @Suppress("SpellCheckingInspection")
         val file = PathManager.getSystemDir().resolve("pids.txt")
         withContext(Dispatchers.IO) {
@@ -864,7 +866,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           }
         }
         GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH -> {
-          if (withContext(Dispatchers.EDT) { PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, options.callback) }) {
+          if (attachToProjectAsync(projectToClose = projectToClose, projectDir = projectDir, callback = options.callback)) {
             return true
           }
         }
@@ -873,7 +875,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     else {
       val mode = GeneralSettings.getInstance().confirmOpenNewProject
       if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH && projectDir != null &&
-          withContext(Dispatchers.EDT) { PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, options.callback) }) {
+          attachToProjectAsync(projectToClose = projectToClose, projectDir = projectDir, callback = options.callback)) {
         return true
       }
 
