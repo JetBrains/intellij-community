@@ -8,10 +8,17 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
+import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplateBuilder
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
 import com.intellij.refactoring.extractMethod.newImpl.inplace.TemplateField
 import com.siyeh.ig.psiutils.TypeUtils
+
+data class IntroduceObjectResult(
+  val introducedClass: PsiClass,
+  val variableDeclaration: PsiVariable,
+  val replacedReferences: List<PsiExpression>
+)
 
 interface ObjectBuilder {
   fun createClass(): PsiClass
@@ -28,49 +35,61 @@ interface ObjectBuilder {
       val file = scope.first().containingFile
       val rangeMarker = file.viewProvider.document.createRangeMarker(scope.first().textRange.startOffset, scope.last().textRange.endOffset)
       rangeMarker.apply { isGreedyToLeft = true; isGreedyToRight = true; }
-      val project = variables.first().project
-      WriteCommandAction.writeCommandAction(project).run<Throwable> {
-        val referenceReplacements = objectBuilder.getAffectedReferences()
-          .map { reference -> reference.replace(objectBuilder.createReferenceReplacement(reference)) as PsiExpression }
-        val classAnchor = PsiTreeUtil.getParentOfType(variables.first(), PsiMethod::class.java) ?: throw IllegalStateException()
-        val addedClass = classAnchor.addAfter(objectBuilder.createClass())
-        val declarationAnchor = scope.last()
-        val variableDeclaration = declarationAnchor.addAfter(objectBuilder.createDeclaration())
-        val variable = variableDeclaration.declaredElements.first() as PsiVariable
-
-        runTemplate(editor, addedClass, variable, referenceReplacements, objectBuilder)
+      val editorState = EditorState(editor)
+      WriteCommandAction.writeCommandAction(file.project).run<Throwable> {
+        try {
+          val (introducedClass, declaration, replacements) = introduceObjectForVariables(objectBuilder, variables, scope.last())
+          val introducedVariableReferences = replacements.map { replacement ->
+            objectBuilder.findVariableReferenceInReplacement(replacement) ?: throw IllegalStateException()
+          }
+          ExtractMethodTemplateBuilder(editor, ExtractMethodHandler.getRefactoringName())
+            .onBroken { editorState.revert() }
+            .createTemplate(file, createTemplateFields(editor, introducedClass, declaration, introducedVariableReferences))
+        } catch (e: Throwable) {
+          editorState.revert()
+          throw e
+        }
       }
     }
 
-    private fun runTemplate(editor: Editor, introducedClass: PsiClass, declaration: PsiVariable, replacedReferences: List<PsiExpression>, objectBuilder: ObjectBuilder) {
-      val declarationPointer = SmartPointerManager.createPointer(declaration)
-      val classPointer = SmartPointerManager.createPointer(introducedClass)
-      val replacedPointers = replacedReferences.map(SmartPointerManager::createPointer)
-      PsiDocumentManager.getInstance(declaration.project).doPostponedOperationsAndUnblockDocument(editor.document)
+    private fun introduceObjectForVariables(builder: ObjectBuilder, variables: List<PsiVariable>, placeForDeclaration: PsiElement): IntroduceObjectResult {
+      val referenceReplacements = builder.getAffectedReferences()
+        .map { reference -> reference.replace(builder.createReferenceReplacement(reference)) as PsiExpression }
+      val classAnchor = PsiTreeUtil.getParentOfType(variables.first(), PsiMember::class.java) ?: throw IllegalStateException()
+      val introducedClass = classAnchor.addAfter(builder.createClass())
+      val declaration = placeForDeclaration.addAfter(builder.createDeclaration())
+      val variableDeclaration = declaration.declaredElements.first() as PsiVariable
 
-      val file = classPointer.element?.containingFile ?: throw IllegalStateException()
-      val variable = declarationPointer.element
-      val classReference = (variable?.initializer as? PsiNewExpression)?.classReference?.element
-      val declarationType = variable?.typeElement
-      val classIdentifier = classPointer.element?.nameIdentifier
-      val variableName = variable?.nameIdentifier
-      val variableReferences = replacedPointers
-        .mapNotNull{ replacementPointer -> replacementPointer.element }
-        .mapNotNull{ replacedReference -> objectBuilder.findVariableReferenceInReplacement(replacedReference) }
-      val fields = listOf(
-        TemplateField(
-          classReference!!.textRange,
-          listOfNotNull(declarationType, classIdentifier).map(PsiElement::getTextRange),
-          validator = { variableRange -> InplaceExtractUtils.checkClassReference(editor, file, variableRange) }
-        ),
-        TemplateField(
-          variableName!!.textRange,
-          variableReferences.map(PsiElement::getTextRange),
-          validator = { variableRange -> InplaceExtractUtils.checkVariableIdentifier(editor, file, variableRange) }
-        )
+      val variablePointer = SmartPointerManager.createPointer(variableDeclaration)
+      val classPointer = SmartPointerManager.createPointer(introducedClass)
+      val replacedPointers = referenceReplacements.map(SmartPointerManager::createPointer)
+      val document = placeForDeclaration.containingFile.viewProvider.document
+      PsiDocumentManager.getInstance(declaration.project).doPostponedOperationsAndUnblockDocument(document)
+      return IntroduceObjectResult(
+        classPointer.element ?: throw IllegalStateException(),
+        variablePointer.element ?: throw IllegalStateException(),
+        replacedPointers.map { pointer -> pointer.element ?: throw IllegalStateException() }
       )
-      ExtractMethodTemplateBuilder(editor, ExtractMethodHandler.getRefactoringName())
-        .createTemplate(declaration.containingFile, fields)
+    }
+
+    private fun createTemplateFields(editor: Editor,
+                                     introducedClass: PsiClass,
+                                     declaration: PsiVariable,
+                                     referencesToDeclaration: List<PsiReferenceExpression>): List<TemplateField> {
+      val file = introducedClass.containingFile
+      val classReference = (declaration.initializer as? PsiNewExpression)?.classReference?.element ?: throw IllegalStateException()
+      val variableName = declaration.nameIdentifier ?: throw IllegalStateException()
+      val typeNameField = TemplateField(
+        classReference.textRange,
+        listOfNotNull(declaration.typeElement, introducedClass.nameIdentifier).map(PsiElement::getTextRange),
+        validator = { variableRange -> InplaceExtractUtils.checkClassReference(editor, file, variableRange) }
+      )
+      val variableNameField = TemplateField(
+        variableName.textRange,
+        referencesToDeclaration.map(PsiElement::getTextRange),
+        validator = { variableRange -> InplaceExtractUtils.checkVariableIdentifier(editor, file, variableRange) }
+      )
+      return listOf(typeNameField, variableNameField)
     }
 
     private inline fun <reified T: PsiElement> PsiElement.addAfter(element: T): T {
