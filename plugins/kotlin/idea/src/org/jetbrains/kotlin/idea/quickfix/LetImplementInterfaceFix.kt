@@ -75,7 +75,7 @@ class LetImplementInterfaceFix(
 
         val newElement = point.element ?: return
         val implementMembersHandler = ImplementMembersHandler()
-        if (implementMembersHandler.collectMembersToGenerate(newElement).isEmpty()) return
+        if (implementMembersHandler.collectMembersToGenerateUnderProgress(newElement).isEmpty()) return
 
         if (editor != null) {
             editor.caretModel.moveToOffset(element.textRange.startOffset)
