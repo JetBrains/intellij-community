@@ -82,7 +82,7 @@ public abstract class FileReferenceHelper {
   }
 
   @NotNull
-  public Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile file) {
+  public Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile hostFile) {
     return getRoots(module);
   }
 
