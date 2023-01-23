@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectImport
 
 import com.intellij.ide.IdeCoreBundle
@@ -15,7 +15,7 @@ import javax.swing.Icon
 abstract class ProjectOpenProcessor {
   companion object {
     @JvmField
-    val EXTENSION_POINT_NAME = ExtensionPointName<ProjectOpenProcessor>("com.intellij.projectOpenProcessor")
+    val EXTENSION_POINT_NAME: ExtensionPointName<ProjectOpenProcessor> = ExtensionPointName("com.intellij.projectOpenProcessor")
 
     @JvmStatic
     fun getImportProvider(file: VirtualFile): ProjectOpenProcessor? = getImportProvider(file = file, onlyIfExistingProjectFile = false)
@@ -34,7 +34,7 @@ abstract class ProjectOpenProcessor {
   abstract val name: @Nls String
 
   /**
-   * @return true if this open processor should be ranked over general .idea and .ipr files even if those exist.
+   * @return true, if this open processor should be ranked over general .idea and .ipr files even if those exist.
    */
   open val isStrongProjectInfoHolder: Boolean
     get() = false
@@ -66,7 +66,7 @@ abstract class ProjectOpenProcessor {
    * Create an instance of the project, configure the project according to the needs of this ProjectOpenProcessor, and open it.
    *
    * If this processor calls some potentially untrusted code, then the processor should show a confirmation warning to the user,
-   * allowing to load the project in some sort of "preview mode", where the user will be able to view the code, but nothing dangerous
+   *  allowing us to load the project in some sort of "preview mode", where the user will be able to view the code, but nothing dangerous
    * will be executed automatically. See TrustedProjects#confirmOpeningUntrustedProject().
    *
    * @return The created project, or null if it was not possible to create a project for some reason.
@@ -85,7 +85,7 @@ abstract class ProjectOpenProcessor {
   /**
    * Allow opening a directory directly if the project files are located in that directory.
    *
-   * @return true if project files are searched inside the selected directory, false if the project files must be selected directly.
+   * @return true, if project files are searched inside the selected directory, false if the project files must be selected directly.
    */
   open fun lookForProjectsInDirectory(): Boolean = true
 
