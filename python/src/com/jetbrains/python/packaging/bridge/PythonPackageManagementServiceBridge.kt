@@ -163,10 +163,12 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
   }
 
   private fun findRepositoryForPackage(name: String): PyPackageRepository {
+    if (manager is CondaPackageManager && useConda) return CondaPackageRepository
     return manager
       .repositoryManager
       .packagesByRepository()
-      .firstOrNull { (repo, packages) -> repo !is PyPIPackageRepository && name in packages }
+      .filterNot { it.first is CondaPackageRepository || it.first is PyPIPackageRepository }
+      .firstOrNull { (_, packages) -> name in packages }
       ?.first ?: PyPIPackageRepository
   }
 
