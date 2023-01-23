@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection.suppression
 
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
@@ -23,12 +23,13 @@ class GradleGroovyTrafficLightRendererContributor : TrafficLightRendererContribu
 
 }
 
-private class GradleGroovyTrafficLightRenderer(file: PsiFile, editor: Editor) : TrafficLightRenderer(file.project, editor) {
-  val linkedProjectPath: String? = file.getLinkedGradleProjectPath()
+private class GradleGroovyTrafficLightRenderer(val file: PsiFile, editor: Editor) : TrafficLightRenderer(file.project, editor) {
+  val linkedProjectPath: String? get() = file.getLinkedGradleProjectPath()
   override fun getStatus(): AnalyzerStatus {
-    if (linkedProjectPath == null) return super.getStatus()
+    val thisLinkedProjectPath = linkedProjectPath
+    if (thisLinkedProjectPath == null) return super.getStatus()
     val service = project.service<GradleSuspendTypecheckingService>()
-    if (!service.isSuspended(linkedProjectPath)) return super.getStatus()
+    if (!service.isSuspended(thisLinkedProjectPath)) return super.getStatus()
     return AnalyzerStatus(AllIcons.RunConfigurations.TestIgnored, GradleInspectionBundle.message("traffic.light.inspections.disabled"), GradleInspectionBundle.message("traffic.light.inspections.disabled.description"), uiController)
     .withAnalyzingType(AnalyzingType.PARTIAL)
   }
