@@ -17,9 +17,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionException
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionExceptionCause
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionStackTraceElement
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.util.application
 import com.intellij.util.ui.ImageUtil
@@ -284,27 +281,5 @@ abstract class DistributedTestHostBase() {
                                     NotificationType.INFORMATION)
     Notifications.Bus.notify(notification)
     return notification
-  }
-
-  private fun Throwable.toModel(): RdTestSessionException {
-    fun getRdTestStackTraceElement(trace: Array<StackTraceElement>?): List<RdTestSessionStackTraceElement> =
-      trace?.map { it ->
-        RdTestSessionStackTraceElement(it.className, it.methodName, it.fileName.orEmpty(), it.lineNumber)
-      } ?: emptyList()
-
-    val rdTestSessionExceptionCause = this.cause?.let { cause ->
-      RdTestSessionExceptionCause(
-        cause.javaClass.typeName,
-        cause.message,
-        getRdTestStackTraceElement(cause.stackTrace)
-      )
-    }
-
-    return RdTestSessionException(
-      this.javaClass.typeName,
-      this.message,
-      getRdTestStackTraceElement(this.stackTrace),
-      rdTestSessionExceptionCause
-    )
   }
 }
