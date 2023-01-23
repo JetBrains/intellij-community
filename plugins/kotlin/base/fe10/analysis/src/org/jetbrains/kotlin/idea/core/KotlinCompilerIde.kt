@@ -38,7 +38,7 @@ import java.util.zip.ZipOutputStream
 class KotlinCompilerIde(
     private val file: KtFile,
     private val initialConfiguration: CompilerConfiguration = getDefaultCompilerConfiguration(file),
-    private val factory: ClassBuilderFactory = ClassBuilderFactories.BINARIES,
+    private val classBuilderFactory: ClassBuilderFactory = ClassBuilderFactories.BINARIES,
     private val resolutionFacadeProvider: (KtFile) -> ResolutionFacade? = { file.getResolutionFacade() },
     private val classFilesOnly: Boolean = false,
     private val shouldStubUnboundIrSymbols: Boolean = false,
@@ -99,7 +99,11 @@ class KotlinCompilerIde(
         }
     }
 
-    fun compile(): GenerationState? {
+    fun compile(): GenerationState? = compileImpl(traceClassFileOrigins = false)?.first
+
+    fun compileTracingOrigin(): Pair<GenerationState, ClassFileOrigins>? = compileImpl(traceClassFileOrigins = true)
+
+    private fun compileImpl(traceClassFileOrigins: Boolean): Pair<GenerationState, ClassFileOrigins>? {
         val project = file.project
         val platform = file.platform
 
@@ -156,13 +160,21 @@ class KotlinCompilerIde(
             else -> DefaultCodegenFactory
         }
 
-        val state = GenerationState.Builder(project, factory, resolutionFacade.moduleDescriptor, bindingContext, toProcess, configuration)
-            .generateDeclaredClassFilter(generateClassFilter)
+        val originTracingClassBuilderFactory = if (traceClassFileOrigins) OriginTracingClassBuilderFactory(classBuilderFactory) else null
+
+        val state = GenerationState.Builder(
+            project,
+            originTracingClassBuilderFactory ?: classBuilderFactory,
+            resolutionFacade.moduleDescriptor,
+            bindingContext,
+            toProcess,
+            configuration,
+        ).generateDeclaredClassFilter(generateClassFilter)
             .codegenFactory(codegenFactory)
             .build()
 
         KotlinCodegenFacade.compileCorrectFiles(state)
-        return state
+        return Pair(state, originTracingClassBuilderFactory?.classFileOrigins ?: emptyMap())
     }
 
     /**
