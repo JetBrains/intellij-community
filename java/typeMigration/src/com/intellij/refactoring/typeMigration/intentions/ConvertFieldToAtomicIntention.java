@@ -5,11 +5,14 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -58,6 +61,20 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   @Override
   public Priority getPriority() {
     return Priority.LOW;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiVariable variable = getVariable(getElement(editor, file));
+    if (variable == null) return IntentionPreviewInfo.EMPTY;
+    PsiType type = variable.getType();
+    String toType = myFromToMap.get(type);
+    if (toType == null) return IntentionPreviewInfo.EMPTY;
+    String variableName = variable.getName();
+    String presentableText = StringUtil.getShortName(toType);
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, null,
+                                               type.getCanonicalText() + " " + variableName,
+                                               presentableText + " " + variableName + " = new " + presentableText + "(...)");
   }
 
   @Override
