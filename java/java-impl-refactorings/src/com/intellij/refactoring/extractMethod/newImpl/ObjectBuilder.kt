@@ -2,21 +2,24 @@
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplateBuilder
+import com.intellij.refactoring.extractMethod.newImpl.inplace.TemplateField
 import com.siyeh.ig.psiutils.TypeUtils
-import com.siyeh.ig.psiutils.VariableAccessUtils
 
 interface ObjectBuilder {
   fun createClass(): PsiClass
   fun createDeclaration(): PsiDeclarationStatement
-  fun createReferenceReplacement(reference: PsiExpression): PsiExpression
-  fun getAffectedReferences(): List<PsiExpression>
+  fun createReferenceReplacement(reference: PsiReferenceExpression): PsiExpression
+  fun findVariableReferenceInReplacement(replacement: PsiExpression): PsiReferenceExpression?
+  fun getAffectedReferences(): List<PsiReferenceExpression>
 
   companion object {
-    fun run(variables: List<PsiVariable>, scope: List<PsiElement>){
+    fun run(editor: Editor, variables: List<PsiVariable>, scope: List<PsiElement>){
       require(variables.isNotEmpty())
       require(scope.isNotEmpty())
       val objectBuilder: ObjectBuilder = RecordObjectBuilder.create(variables, scope) ?: return
@@ -25,23 +28,48 @@ interface ObjectBuilder {
       rangeMarker.apply { isGreedyToLeft = true; isGreedyToRight = true; }
       val project = variables.first().project
       WriteCommandAction.writeCommandAction(project).run<Throwable> {
-        val references = objectBuilder.getAffectedReferences()
-        references.forEach {
-          it.replace(objectBuilder.createReferenceReplacement(it))
-        }
-        val record = objectBuilder.createClass()
-        val anchor = PsiTreeUtil.getParentOfType(variables.first(), PsiMethod::class.java)
-        anchor?.parent?.addAfter(record, anchor)
-        val variableDeclaration = objectBuilder.createDeclaration()
-        val last = scope.last()
-        last.parent.addAfter(variableDeclaration, last)
+        val referenceReplacements = objectBuilder.getAffectedReferences()
+          .map { reference -> reference.replace(objectBuilder.createReferenceReplacement(reference)) as PsiExpression }
+        val classAnchor = PsiTreeUtil.getParentOfType(variables.first(), PsiMethod::class.java) ?: throw IllegalStateException()
+        val addedClass = classAnchor.addAfter(objectBuilder.createClass())
+        val declarationAnchor = scope.last()
+        val variableDeclaration = declarationAnchor.addAfter(objectBuilder.createDeclaration())
+        val variable = variableDeclaration.declaredElements.first() as PsiVariable
+
+        runTemplate(editor, addedClass, variable, referenceReplacements, objectBuilder)
       }
-      //invokeLater { MethodExtractor().doExtract(file, rangeMarker.textRange) }
+    }
+
+    private inline fun <reified T: PsiElement> PsiElement.addAfter(element: T): T {
+      return parent.addAfter(element, this) as T
+    }
+
+    private fun runTemplate(editor: Editor, introducedClass: PsiClass, declaration: PsiVariable, replacedReferences: List<PsiExpression>, objectBuilder: ObjectBuilder) {
+      val declarationPointer = SmartPointerManager.createPointer(declaration)
+      val classPointer = SmartPointerManager.createPointer(introducedClass)
+      val replacedPointers = replacedReferences.map(SmartPointerManager::createPointer)
+      PsiDocumentManager.getInstance(declaration.project).doPostponedOperationsAndUnblockDocument(editor.document)
+
+
+      val variable = declarationPointer.element
+      val classReference = (variable?.initializer as? PsiNewExpression)?.classReference?.element
+      val declarationType = variable?.typeElement
+      val classIdentifier = classPointer.element?.nameIdentifier
+      val variableName = variable?.nameIdentifier
+      val variableReferences = replacedPointers
+        .mapNotNull{ replacementPointer -> replacementPointer.element }
+        .mapNotNull{ replacedReference -> objectBuilder.findVariableReferenceInReplacement(replacedReference) }
+      val fields = listOf(
+        TemplateField(classReference!!.textRange, listOfNotNull(declarationType, classIdentifier).map(PsiElement::getTextRange)),
+        TemplateField(variableName!!.textRange, variableReferences.map(PsiElement::getTextRange))
+      )
+      ExtractMethodTemplateBuilder(editor, "WrapVariablesWithObject")
+        .createTemplate(declaration.containingFile, fields)
     }
   }
 }
 
-class RecordObjectBuilder(private val record: PsiClass, private val references: List<PsiExpression>): ObjectBuilder {
+class RecordObjectBuilder(private val record: PsiClass, private val references: List<PsiReferenceExpression>): ObjectBuilder {
 
   companion object {
 
@@ -61,12 +89,12 @@ class RecordObjectBuilder(private val record: PsiClass, private val references: 
       return record
     }
 
-    private fun findAffectedReferences(variables: List<PsiVariable>, startingElement: PsiElement?): List<PsiExpression> {
+    private fun findAffectedReferences(variables: List<PsiVariable>, startingElement: PsiElement?): List<PsiReferenceExpression> {
       val startingPoint = startingElement?.textRange?.startOffset ?: return emptyList()
       return  variables.flatMap { findAffectedReferences(it, startingPoint) }
     }
 
-    private fun findAffectedReferences(variable: PsiVariable, startingOffset: Int): List<PsiExpression> {
+    private fun findAffectedReferences(variable: PsiVariable, startingOffset: Int): List<PsiReferenceExpression> {
       val references = ReferencesSearch.search(variable)
         .mapNotNull { it.element as? PsiReferenceExpression }
         .filter { reference -> reference.textRange.startOffset >= startingOffset }
@@ -95,10 +123,14 @@ class RecordObjectBuilder(private val record: PsiClass, private val references: 
     return factory.createVariableDeclarationStatement("result", TypeUtils.getType(record), expression)
   }
 
-  override fun createReferenceReplacement(reference: PsiExpression): PsiExpression {
+  override fun createReferenceReplacement(reference: PsiReferenceExpression): PsiExpression {
     return PsiElementFactory.getInstance(reference.project).createExpressionFromText("result.${reference.text}()", reference.context)
   }
 
-  override fun getAffectedReferences(): List<PsiExpression> = references
-}
+  override fun findVariableReferenceInReplacement(replacement: PsiExpression): PsiReferenceExpression? {
+    val place = replacement.textRange.startOffset
+    return PsiTreeUtil.findElementOfClassAtOffset(replacement.containingFile, place, PsiReferenceExpression::class.java, false)
+  }
 
+  override fun getAffectedReferences(): List<PsiReferenceExpression> = references
+}

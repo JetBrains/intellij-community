@@ -80,7 +80,7 @@ class MethodExtractor {
       return selectOptionWithTargetClass(editor, allOptionsToExtract)
     }
     catch (e: ExtractMultipleVariablesException) {
-      invokeLater { ObjectBuilder.run(e.variables, e.scope) }
+      invokeLater { ObjectBuilder.run(editor, e.variables, e.scope) }
       return null
     }
     catch (e: ExtractException) {
