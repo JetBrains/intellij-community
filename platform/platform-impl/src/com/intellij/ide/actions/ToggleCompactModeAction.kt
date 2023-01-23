@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.ui.ExperimentalUI
 
 /**
  * @author Konstantin Bulenkov
@@ -22,6 +23,11 @@ class ToggleCompactModeAction: DumbAwareToggleAction() {
       UISettings.getInstance().uiDensity = newValue
       LafManager.getInstance().applyDensity()
     }
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isEnabledAndVisible = ExperimentalUI.isNewUI()
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT

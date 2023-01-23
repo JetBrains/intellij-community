@@ -733,7 +733,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     patchFileChooserStrings(uiDefaults)
     patchLafFonts(uiDefaults)
     patchTreeUI(uiDefaults)
-    applyDensity(uiDefaults)
+    if (ExperimentalUI.isNewUI()) {
+      applyDensity(uiDefaults)
+    }
 
     //should be called last because this method modifies uiDefault values
     patchHiDPI(uiDefaults)
