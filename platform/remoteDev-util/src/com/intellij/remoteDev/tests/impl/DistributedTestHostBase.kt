@@ -39,13 +39,11 @@ import java.util.concurrent.TimeoutException
 import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 
-
 class DistributedTestHost(private val agentProject: Project) : DistributedTestHostBase() {
   override val projectOrNull: Project
     get() = agentProject
   override val project: Project
     get() = agentProject
-
 }
 
 class DistributedTestHostGateway : DistributedTestHostBase() {
@@ -53,12 +51,10 @@ class DistributedTestHostGateway : DistributedTestHostBase() {
     get() = null
   override val project: Project
     get() = error("Project shouldn't be referenced for gateway")
-
 }
 
 @ApiStatus.Internal
-abstract class DistributedTestHostBase() {
-
+abstract class DistributedTestHostBase {
   companion object {
     private val logger = Logger.getInstance(DistributedTestHostBase::class.java)
 
