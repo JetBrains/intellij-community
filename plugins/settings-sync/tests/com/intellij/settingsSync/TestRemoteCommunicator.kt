@@ -21,8 +21,8 @@ internal abstract class TestRemoteCommunicator : SettingsSyncRemoteCommunicator 
 
   protected fun settingsPushed(snapshot: SettingsSnapshot) {
     if (::pushedLatch.isInitialized) {
-      pushedLatch.countDown()
       pushedSnapshot = snapshot
+      pushedLatch.countDown()
     }
   }
 
