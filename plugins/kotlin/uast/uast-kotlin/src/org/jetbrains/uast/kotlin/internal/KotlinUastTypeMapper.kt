@@ -5,7 +5,7 @@
 package org.jetbrains.uast.kotlin.internal
 
 import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
-import org.jetbrains.kotlin.builtins.functions.FunctionClassKind
+import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.codegen.signature.AsmTypeFactory
 import org.jetbrains.kotlin.codegen.signature.JvmSignatureWriter
@@ -145,8 +145,8 @@ object KotlinUastTypeMapper {
 
         if (classDescriptor is FunctionClassDescriptor) {
             if (classDescriptor.hasBigArity ||
-                classDescriptor.functionKind == FunctionClassKind.KFunction ||
-                classDescriptor.functionKind == FunctionClassKind.KSuspendFunction
+                classDescriptor.functionKind == FunctionTypeKind.KFunction ||
+                classDescriptor.functionKind == FunctionTypeKind.KSuspendFunction
             ) {
                 // kotlin.reflect.KFunction{n}<P1, ..., Pn, R> is mapped to kotlin.reflect.KFunction<R> (for all n), and
                 // kotlin.Function{n}<P1, ..., Pn, R> is mapped to kotlin.jvm.functions.FunctionN<R> (for n > 22).
