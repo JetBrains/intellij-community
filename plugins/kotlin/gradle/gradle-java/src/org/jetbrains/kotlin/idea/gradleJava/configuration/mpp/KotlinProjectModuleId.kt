@@ -28,8 +28,17 @@ fun KotlinProjectModuleId(resolverContext: ProjectResolverContext, gradleIdeaMod
     KotlinProjectModuleId(GradleProjectResolverUtil.getModuleId(resolverContext, gradleIdeaModule))
 
 fun KotlinProjectModuleId(coordinates: IdeaKotlinProjectCoordinates): KotlinProjectModuleId {
-    val prefix = if (coordinates.buildId != ":") coordinates.buildId else ""
-    return KotlinProjectModuleId(prefix + GradleProjectResolverUtil.getModuleId(coordinates.projectPath, coordinates.projectName))
+    /* Only include buildId as prefix if the coordinates point to an included build (root is ':') */
+    val buildIdPrefix = if (coordinates.buildId != ":") coordinates.buildId else ""
+
+    /*
+    Only include project for root build or subprojects in composite builds.
+    The root project of an included build is just identified by the buildId alone!
+     */
+    val projectPart = if (coordinates.buildId == ":" || coordinates.projectPath != ":")
+        GradleProjectResolverUtil.getModuleId(coordinates.projectPath, coordinates.projectName) else ""
+
+    return KotlinProjectModuleId(buildIdPrefix + projectPart)
 }
 
 @OptIn(UnsafeApi::class)
