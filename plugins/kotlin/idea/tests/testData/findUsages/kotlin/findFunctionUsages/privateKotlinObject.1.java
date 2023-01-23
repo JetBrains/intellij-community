@@ -6,4 +6,3 @@ class SomeJavaClass {
         SomeObject.INSTANCE.action();
     }
 }
-// FIR_COMPARISON

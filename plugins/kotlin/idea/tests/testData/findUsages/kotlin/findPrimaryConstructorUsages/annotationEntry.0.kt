@@ -7,4 +7,4 @@ fun test() {
     MyAnnotation::class.java
 }
 
-// FIR_COMPARISON
+

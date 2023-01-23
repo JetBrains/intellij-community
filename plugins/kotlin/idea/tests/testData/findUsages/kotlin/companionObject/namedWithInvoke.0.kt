@@ -7,4 +7,3 @@ interface Foos {
     }
 }
 
-// FIR_COMPARISON

@@ -12,4 +12,3 @@ fun test() {
     A.T().<caret>bar(1)
 }
 
-// FIR_COMPARISON

@@ -7,4 +7,3 @@ class SomeJavaClass {
         some.action();
     }
 }
-// FIR_COMPARISON

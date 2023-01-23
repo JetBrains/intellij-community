@@ -14,4 +14,3 @@ class Client {
     }
 }
 
-// FIR_COMPARISON

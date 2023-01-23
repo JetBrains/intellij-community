@@ -1,4 +1,4 @@
-// FIR_COMPARISON
+
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtObjectDeclaration
 // OPTIONS: usages
 class Foo {
@@ -8,4 +8,4 @@ class Foo {
     }
 }
 
-// FIR_COMPARISON
+

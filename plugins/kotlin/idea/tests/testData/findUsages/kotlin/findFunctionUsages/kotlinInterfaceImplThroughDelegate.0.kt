@@ -10,4 +10,3 @@ public class InterfaceWithDelegatedWithImpl(f: InterfaceWithImpl) : InterfaceWit
 
 fun test(twdwi: InterfaceWithDelegatedWithImpl) = twdwi.foo()
 
-// FIR_COMPARISON

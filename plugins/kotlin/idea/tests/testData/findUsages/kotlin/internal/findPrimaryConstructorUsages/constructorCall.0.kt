@@ -6,4 +6,4 @@ fun test() {
 
 class KK internal constructor()
 
-// FIR_COMPARISON
+

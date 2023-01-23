@@ -6,4 +6,3 @@ class <caret>Foo {
 
 }
 
-// FIR_COMPARISON

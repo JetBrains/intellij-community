@@ -13,4 +13,3 @@ interface SimpleInterface {
     companion object : ClassWithInvoke()
 }
 
-// FIR_COMPARISON

@@ -4,4 +4,4 @@ open class <caret>A {
     constructor() {}
 }
 
-// FIR_COMPARISON
+

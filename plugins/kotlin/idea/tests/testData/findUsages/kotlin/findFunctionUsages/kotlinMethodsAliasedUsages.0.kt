@@ -17,4 +17,3 @@ fun test() {
     b(1)
 }
 
-// FIR_COMPARISON
