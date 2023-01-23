@@ -152,8 +152,8 @@ class MavenImportingManager(val project: Project) {
           getWaitingPromise().setError("Cancelled")
         }
         else {
-          MavenLog.LOG.error(e)
           getWaitingPromise().setError(e)
+          MavenLog.LOG.error(e)
         }
       }
       finally {
