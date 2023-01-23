@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui
 
 import com.intellij.application.subscribe
+import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.JComponentOverlay
 import com.intellij.ide.ui.AntialiasingType
@@ -16,14 +17,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.content.Content
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
-import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.HTMLEditorKitBuilder
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.intellij.lang.annotations.Language
@@ -244,6 +244,19 @@ object CollaborationToolsUIUtil {
    * Must be used only as a property: `get()`
    */
   fun getSize(oldUI: Int, newUI: Int): Int = if (ExperimentalUI.isNewUI()) newUI else oldUI
+
+  fun createTagLabel(text: @Nls String): JComponent =
+    JLabel(text).apply {
+      font = JBFont.small()
+      foreground = UIUtil.getContextHelpForeground()
+      border = JBUI.Borders.empty(0, 4)
+    }.let {
+      RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
+        border = JBUI.Borders.empty()
+        background = UIUtil.getPanelBackground()
+        add(it)
+      }
+    }
 }
 
 @Suppress("FunctionName")

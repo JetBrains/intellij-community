@@ -66,6 +66,11 @@ object CodeReviewCommentUIUtil {
     }
   }
 
+  object Title {
+    const val HORIZONTAL_GAP = 8
+    const val GROUP_HORIZONTAL_GAP = 12
+  }
+
   object Actions {
     const val HORIZONTAL_GAP = 8
   }

@@ -1,14 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -40,14 +40,8 @@ object GHPRReviewCommentComponent {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
-    val pendingLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.pending")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = JBUI.CurrentTheme.Validator.warningBackgroundColor()
-    }.andOpaque()
-    val resolvedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.resolved")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-    }.andOpaque()
+    val pendingLabel = CollaborationToolsUIUtil.createTagLabel(GithubBundle.message("pull.request.review.comment.pending"))
+    val resolvedLabel = CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.resolved.tag"))
 
     val commentWrapper = Wrapper().apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
@@ -80,14 +74,14 @@ object GHPRReviewCommentComponent {
       isVisible = comment.canBeDeleted
     }
 
-    val actionsPanel = HorizontalListPanel(8).apply {
+    val actionsPanel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
       isVisible = editButton.isVisible && deleteButton.isVisible
 
       add(editButton)
       add(deleteButton)
     }
 
-    val title = HorizontalListPanel(12).apply {
+    val title = HorizontalListPanel(CodeReviewCommentUIUtil.Title.HORIZONTAL_GAP).apply {
       add(titlePane)
       add(pendingLabel)
       add(resolvedLabel)
