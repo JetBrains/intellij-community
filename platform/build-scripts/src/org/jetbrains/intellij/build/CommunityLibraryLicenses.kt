@@ -915,7 +915,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("find-classes-model"),
     jetbrainsLibrary("find-classes-model-experimental"),
     jetbrainsLibrary("find-file-model"),
-    jetbrainsLibrary("find-file-model-experimental"),
+    //jetbrainsLibrary("find-file-model-experimental"),  - IDEA-309409 means that for now no experimental model exists for ranking files
     jetbrainsLibrary("git-learning-project"),
     jetbrainsLibrary("intellij.remoterobot.remote.fixtures"),
     jetbrainsLibrary("intellij.remoterobot.robot.server.core"),
