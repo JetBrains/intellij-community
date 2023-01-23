@@ -329,6 +329,11 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       actionGroup.addAll(((BuildView)executionConsole).getSwitchActions());
       actionGroup.add(BuildTreeFilters.createFilteringActionsGroup((BuildView)executionConsole));
     }
+    RunConfigurationTaskState taskState = myConfiguration.getUserData(RunConfigurationTaskState.getKEY());
+    if (taskState != null && consoleView != null) {
+      actionGroup.addAll(taskState.createCustomActions(processHandler, consoleView, executor));
+    }
+
     DefaultExecutionResult executionResult = new DefaultExecutionResult(executionConsole, processHandler, actionGroup.getChildren(null));
     executionResult.setRestartActions(restartActions);
     return executionResult;

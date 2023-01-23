@@ -2,11 +2,13 @@
 package com.intellij.task
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.Executor
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.ui.ExecutionConsole
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 
@@ -31,4 +33,6 @@ interface RunConfigurationTaskState {
   fun handleCreatedTargetEnvironment(environment: TargetEnvironment, targetProgressIndicator: TargetProgressIndicator): String?
 
   fun processExecutionResult(handler: ProcessHandler, console: ExecutionConsole)
+
+  fun createCustomActions(handler: ProcessHandler, console: ExecutionConsole, executor: Executor?): List<AnAction> = emptyList()
 }
