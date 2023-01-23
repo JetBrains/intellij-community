@@ -34,13 +34,13 @@ private class LoggingStringTemplateAsArgumentVisitor(
     if (valueArguments.isEmpty()) return true
     var stringExpression = valueArguments[0]
     var indexStringExpression = 0
-    if (!canBePattern(stringExpression.getExpressionType())) {
+    if (!canBeText(stringExpression.getExpressionType())) {
       if (valueArguments.size < 2) {
         return true
       }
       stringExpression = valueArguments[1]
       indexStringExpression = 1
-      if (!canBePattern(stringExpression.getExpressionType())) {
+      if (!canBeText(stringExpression.getExpressionType())) {
         return true
       }
     }
@@ -61,7 +61,7 @@ private class LoggingStringTemplateAsArgumentVisitor(
            !stringExpression.operands.all { it is ULiteralExpression }
   }
 
-  private fun canBePattern(expressionType: PsiType?): Boolean {
+  private fun canBeText(expressionType: PsiType?): Boolean {
     if (
       expressionType?.equalsToText(CommonClassNames.JAVA_LANG_STRING) == true ||
       expressionType?.equalsToText(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE) == true
