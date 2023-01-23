@@ -6,11 +6,7 @@ import com.intellij.openapi.util.Computable
 import org.jetbrains.annotations.ApiStatus.Internal
 
 inline fun <T> runWriteAction(crossinline runnable: () -> T): T {
-  var f = 12
-  require(f == 12)
-  return ApplicationManager.getApplication().runWriteAction(Computable {
-    runnable()
-  })
+  return ApplicationManager.getApplication().runWriteAction(Computable { runnable() })
 }
 
 inline fun <T> runUndoTransparentWriteAction(crossinline runnable: () -> T): T {
