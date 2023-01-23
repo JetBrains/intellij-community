@@ -60,7 +60,6 @@ import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.tooling.core.Extras
-import org.jetbrains.kotlin.tooling.core.closure
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -681,9 +680,10 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 Some dependencies are represented as IdeaKotlinProjectArtifactDependency.
                 Such dependencies can be resolved to the actual source sets that built this artifact.
                  */
-                val projectArtifactDependencyResolver = KotlinProjectArtifactDependencyResolver(ideProject)
+                val projectArtifactDependencyResolver = KotlinProjectArtifactDependencyResolver()
                 val resolvedDependencies = dependencies[sourceSet.name].flatMap { dependency ->
-                    if (dependency is IdeaKotlinProjectArtifactDependency) projectArtifactDependencyResolver.resolve(dependency)
+                    if (dependency is IdeaKotlinProjectArtifactDependency)
+                        projectArtifactDependencyResolver.resolve(ideProject, sourceSetDataNode, dependency)
                     else listOf(dependency)
                 }
 
