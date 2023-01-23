@@ -822,12 +822,27 @@ private fun updateSystemDockMenu() {
 
 private fun validateRecentProjects(modCounter: LongAdder, map: MutableMap<String, RecentProjectMetaInfo>) {
   val limit = AdvancedSettings.getInt("ide.max.recent.projects")
-  if (limit < 1 || map.size <= limit) {
+  var toRemove = map.size - limit
+  if (limit < 1 || toRemove <= 0) {
     return
   }
 
-  var toRemove = map.size - limit
-  if (map.values.removeIf { !it.opened && toRemove++ >= 0 }) {
-    modCounter.increment()
+  val iterator = map.values.iterator()
+  while (true) {
+    if (!iterator.hasNext()) {
+      break
+    }
+
+    val info = iterator.next()
+    if (info.opened) {
+      continue
+    }
+
+    iterator.remove()
+    toRemove--
+
+    if (toRemove <= 0) {
+      break
+    }
   }
 }
