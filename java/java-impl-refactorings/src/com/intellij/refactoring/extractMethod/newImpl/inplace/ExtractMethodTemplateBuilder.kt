@@ -80,9 +80,9 @@ data class ExtractMethodTemplateBuilder(
         val defaultText = document.getText(templateField.fieldRange)
         val completionNames = templateField.completionNames
         val expression = ConstantNode(defaultText).withLookupStrings(completionNames).withPopupAdvertisement(templateField.completionHint)
-        builder.replaceRange(templateField.fieldRange, "Primary$i", expression, true)
+        builder.replaceRange(templateField.fieldRange, "Primary_$i", expression, true)
         templateField.updateRanges.forEachIndexed { j, range ->
-          builder.replaceElement(range, "Secondary$j", " Primary$i", false)
+          builder.replaceElement(range, "Secondary_${i}_${j}", " Primary_$i", false)
         }
       }
       builder.setVariableOrdering { first, second -> StringUtil.compare(first.name, second.name, false) }
