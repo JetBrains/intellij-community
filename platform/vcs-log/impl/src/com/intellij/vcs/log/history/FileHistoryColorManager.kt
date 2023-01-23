@@ -12,7 +12,7 @@ import com.intellij.vcsUtil.VcsFileUtil
 import java.awt.Color
 
 internal class FileHistoryColorManager(private val root: VirtualFile, private val path: FilePath) : VcsLogColorManager {
-  private var baseColorManager = VcsLogColorManagerImpl(setOf(path))
+  private var baseColorManager: VcsLogColorManager = VcsLogColorManagerImpl(setOf(path))
 
   override fun getPathColor(path: FilePath): Color {
     return baseColorManager.getPathColor(path)

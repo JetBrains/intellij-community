@@ -66,10 +66,10 @@ open class RepositoryChangesBrowserNode(repository: Repository,
   override fun getTextPresentation(): String = getShortRepositoryName(getUserObject())
 
   companion object {
-    fun getColorManager(project: Project): VcsLogColorManagerImpl = VcsProjectLog.getInstance(project).logManager?.colorManager ?: VcsLogColorManagerImpl(
+    fun getColorManager(project: Project): VcsLogColorManager = VcsProjectLog.getInstance(project).logManager?.colorManager ?: VcsLogColorManagerImpl(
       findLogProviders(ProjectLevelVcsManager.getInstance(project).allVcsRoots.asList(), project).keys)
 
     fun getRepositoryIcon(repository: Repository, colorManager: VcsLogColorManager = getColorManager(repository.project)) =
-      ColorIcon(ICON_SIZE, VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(repository.root)))
+      ColorIcon(ICON_SIZE, colorManager.getRootColor(repository.root))
   }
 }

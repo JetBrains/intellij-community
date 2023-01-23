@@ -48,7 +48,7 @@ public final class VcsLogManager implements Disposable {
   private final @Nullable PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> myRecreateMainLogHandler;
 
   private final @NotNull VcsLogData myLogData;
-  private final @NotNull VcsLogColorManagerImpl myColorManager;
+  private final @NotNull VcsLogColorManager myColorManager;
   private @Nullable VcsLogTabsWatcher myTabsLogRefresher;
   private final @NotNull PostponableLogRefresher myPostponableRefresher;
   private final @NotNull VcsLogStatusBarProgress myStatusBarProgress;
@@ -115,7 +115,7 @@ public final class VcsLogManager implements Disposable {
     return myLogData;
   }
 
-  public @NotNull VcsLogColorManagerImpl getColorManager() {
+  public @NotNull VcsLogColorManager getColorManager() {
     return myColorManager;
   }
 
