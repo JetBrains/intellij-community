@@ -11,6 +11,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import java.net.http.HttpResponse
 
@@ -90,3 +91,23 @@ private class CreateNoteResult(note: NoteHolder, errors: List<String>?)
 }
 
 private class NoteHolder(val discussion: GitLabDiscussionDTO)
+
+suspend fun GitLabApi.createReplyNote(
+  project: GitLabProjectCoordinates,
+  mergeRequestGid: String,
+  discussionId: String,
+  body: String
+): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabNoteDTO>?> {
+  val parameters = mapOf(
+    "noteableId" to mergeRequestGid,
+    "discussionId" to discussionId,
+    "body" to body
+  )
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.createReplyNote, parameters)
+  return loadGQLResponse(request, CreateReplyNoteResult::class.java, "createNote")
+}
+
+private class CreateReplyNoteResult(note: GitLabNoteDTO, errors: List<String>?)
+  : GitLabGraphQLMutationResultDTO<GitLabNoteDTO>(errors) {
+  override val value = note
+}

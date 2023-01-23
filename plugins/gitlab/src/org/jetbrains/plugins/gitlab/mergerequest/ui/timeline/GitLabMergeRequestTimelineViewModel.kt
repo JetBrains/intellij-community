@@ -94,7 +94,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 
   override val newNoteVm: Flow<NewGitLabNoteViewModel?> =
     discussionsDataFlow.transformLatest { discussions ->
-      if (discussions.canCreateNotes) {
+      if (discussions.canAddNotes) {
         coroutineScope {
           val editVm = NewGitLabNoteViewModelImpl(this, connection.currentUser, discussions)
           emit(editVm)
@@ -159,7 +159,9 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 
   private fun createVm(cs: CoroutineScope, item: GitLabMergeRequestTimelineItem): GitLabMergeRequestTimelineItemViewModel =
     when (item) {
-      is GitLabMergeRequestTimelineItem.Immutable -> GitLabMergeRequestTimelineItemViewModel.Immutable(item)
-      is GitLabMergeRequestTimelineItem.UserDiscussion -> GitLabMergeRequestTimelineItemViewModel.Discussion(cs, item.discussion)
+      is GitLabMergeRequestTimelineItem.Immutable ->
+        GitLabMergeRequestTimelineItemViewModel.Immutable(item)
+      is GitLabMergeRequestTimelineItem.UserDiscussion ->
+        GitLabMergeRequestTimelineItemViewModel.Discussion(cs, currentUser, item.discussion)
     }
 }

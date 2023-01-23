@@ -15,6 +15,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDi
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModelImpl
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModelImpl
+import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModelImpl
 import java.util.*
 
 interface GitLabMergeRequestTimelineDiscussionViewModel {
@@ -26,7 +28,8 @@ interface GitLabMergeRequestTimelineDiscussionViewModel {
 
   val repliesFolded: Flow<Boolean>
 
-  val resolvedVm: GitLabMergeRequestDiscussionResolveViewModel?
+  val resolveVm: GitLabMergeRequestDiscussionResolveViewModel?
+  val newNoteVm: NewGitLabNoteViewModel?
 
   fun setRepliesFolded(folded: Boolean)
 
@@ -37,6 +40,7 @@ private val LOG = logger<GitLabMergeRequestTimelineDiscussionViewModel>()
 
 class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   parentCs: CoroutineScope,
+  currentUser: GitLabUserDTO,
   discussion: GitLabDiscussion
 ) : GitLabMergeRequestTimelineDiscussionViewModel {
 
@@ -63,8 +67,11 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     )
     .modelFlow(cs, LOG)
 
-  override val resolvedVm: GitLabMergeRequestDiscussionResolveViewModel? =
+  override val resolveVm: GitLabMergeRequestDiscussionResolveViewModel? =
     if (discussion.canResolve) GitLabMergeRequestDiscussionResolveViewModelImpl(cs, discussion) else null
+
+  override val newNoteVm: NewGitLabNoteViewModel? =
+    if(discussion.canAddNotes) NewGitLabNoteViewModelImpl(cs, currentUser, discussion) else null
 
   override fun setRepliesFolded(folded: Boolean) {
     _repliesFolded.value = folded

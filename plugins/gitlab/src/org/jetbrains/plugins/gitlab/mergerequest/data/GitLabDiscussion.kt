@@ -11,12 +11,14 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestDiscussionResolve
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.createReplyNote
 import java.util.*
 
-interface GitLabDiscussion {
+interface GitLabDiscussion : GitLabNotesContainer {
   val id: String
 
   val createdAt: Date
@@ -34,6 +36,7 @@ class LoadedGitLabDiscussion(
   parentCs: CoroutineScope,
   private val connection: GitLabProjectConnection,
   private val eventSink: suspend (GitLabDiscussionEvent) -> Unit,
+  private val mr: GitLabMergeRequestDTO,
   private val discussionData: GitLabDiscussionDTO
 ) : GitLabDiscussion {
   init {
@@ -54,8 +57,9 @@ class LoadedGitLabDiscussion(
     launch(start = CoroutineStart.UNDISPATCHED) {
       noteEvents.collectLatest { event ->
         when (event) {
+          is GitLabNoteEvent.Added -> notesData.add(event.note)
           is GitLabNoteEvent.Deleted -> notesData.removeIf { it.id == event.noteId }
-          is GitLabNoteEvent.NotesChanged -> {
+          is GitLabNoteEvent.Changed -> {
             notesData.clear()
             notesData.addAll(event.notes)
           }
@@ -82,6 +86,8 @@ class LoadedGitLabDiscussion(
       )
       .modelFlow(cs, LOG)
 
+  override val canAddNotes: Boolean = mr.userPermissions.createNote
+
   // a little cheat that greatly simplifies the implementation
   override val canResolve: Boolean = discussionData.notes.first().let { it.resolvable && it.userPermissions.resolveNote }
   override val resolved: Flow<Boolean> =
@@ -98,7 +104,19 @@ class LoadedGitLabDiscussion(
           connection.apiClient
             .changeMergeRequestDiscussionResolve(connection.repo.repository, discussionData.id, !resolved).getResultOrThrow()
         }
-        noteEvents.emit(GitLabNoteEvent.NotesChanged(result.notes))
+        noteEvents.emit(GitLabNoteEvent.Changed(result.notes))
+      }
+    }
+  }
+
+  override suspend fun addNote(body: String) {
+    withContext(cs.coroutineContext) {
+      withContext(Dispatchers.IO) {
+        connection.apiClient.createReplyNote(connection.repo.repository, mr.id, id, body).getResultOrThrow()
+      }.also {
+        withContext(NonCancellable) {
+          noteEvents.emit(GitLabNoteEvent.Added(it))
+        }
       }
     }
   }

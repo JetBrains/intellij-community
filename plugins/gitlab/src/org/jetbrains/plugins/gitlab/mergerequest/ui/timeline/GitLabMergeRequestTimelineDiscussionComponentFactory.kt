@@ -6,9 +6,11 @@ import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.util.*
@@ -26,10 +28,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteAdminActionsViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.*
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -40,12 +39,12 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
   fun create(project: Project,
              cs: CoroutineScope,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-             discussion: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
-    val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, discussion).apply {
+             vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
+    val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, vm).apply {
       border = JBUI.Borders.empty(Replies.ActionsFolded.VERTICAL_PADDING, 0)
-      bindVisibility(cs, discussion.repliesFolded)
+      bindVisibility(cs, vm.repliesFolded)
     }
-    val mainNoteVm = discussion.mainNote
+    val mainNoteVm = vm.mainNote
     val textPanel = createNoteTextPanel(cs, mainNoteVm.flatMapLatest { it.htmlBody })
 
     // oh well... probably better to make a suitable API in EditableComponentFactory, but that would look ugly
@@ -66,20 +65,27 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
     val actionsPanel = createNoteActions(cs, mainNoteVm)
 
-    val repliesPanel = ComponentListPanelFactory.createVertical(cs, discussion.replies, GitLabNoteViewModel::id) { noteCs, noteVm ->
+    val repliesPanel = ComponentListPanelFactory.createVertical(cs, vm.replies, GitLabNoteViewModel::id) { noteCs, noteVm ->
       createNoteItem(project, noteCs, avatarIconsProvider, noteVm)
     }.apply {
-      bindVisibility(cs, discussion.repliesFolded.inverted())
+      bindVisibility(cs, vm.repliesFolded.inverted())
     }
 
-    return CodeReviewChatItemUIUtil.buildDynamic(CodeReviewChatItemUIUtil.ComponentType.FULL,
-                                                 { discussion.author.createIconValue(cs, avatarIconsProvider, it) },
+    val replyField = vm.newNoteVm?.let {
+      createReplyField(project, cs, it, vm.resolveVm, avatarIconsProvider)
+    }?.apply {
+      bindVisibility(cs, vm.repliesFolded.inverted())
+    }
+
+    return CodeReviewChatItemUIUtil.buildDynamic(ComponentType.FULL,
+                                                 { vm.author.createIconValue(cs, avatarIconsProvider, it) },
                                                  contentPanel) {
-      withHeader(createTitleTextPane(cs, discussion.author, discussion.date), actionsPanel)
+      withHeader(createTitleTextPane(cs, vm.author, vm.date), actionsPanel)
     }.let {
       VerticalListPanel().apply {
         add(it)
         add(repliesPanel)
+        replyField?.let(::add)
       }
     }
   }
@@ -95,29 +101,31 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
   private fun createRepliesActionsPanel(cs: CoroutineScope,
                                         avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                        item: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
+                                        vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
     val authorsLabel = JLabel().apply {
-      bindVisibility(cs, item.replies.map { it.isNotEmpty() })
+      bindVisibility(cs, vm.replies.map { it.isNotEmpty() })
 
-      val repliesAuthors = item.replies.map { replies ->
+      val repliesAuthors = vm.replies.map { replies ->
         val authors = LinkedHashSet<GitLabUserDTO>()
         replies.mapTo(authors) { it.author }
       }
 
       bindIcon(cs, repliesAuthors.map { authors ->
         authors.map {
-          avatarIconsProvider.getIcon(it, CodeReviewChatItemUIUtil.ComponentType.COMPACT.iconSize)
+          avatarIconsProvider.getIcon(it, ComponentType.COMPACT.iconSize)
         }.nullize()?.let {
           OverlaidOffsetIconsIcon(it)
         }
       })
     }
 
+    val hasRepliesOrCanCreateNewFlow = vm.replies.map { it.isNotEmpty() || vm.newNoteVm != null }
+
     val repliesLink = LinkLabel<Any>("", null, LinkListener { _, _ ->
-      item.setRepliesFolded(false)
+      vm.setRepliesFolded(false)
     }).apply {
-      bindVisibility(cs, item.replies.map { it.isNotEmpty() })
-      bindText(cs, item.replies.map { replies ->
+      bindVisibility(cs, hasRepliesOrCanCreateNewFlow)
+      bindText(cs, vm.replies.map { replies ->
         val replyCount = replies.size
         if (replyCount == 0) {
           CollaborationToolsBundle.message("review.comments.reply.action")
@@ -131,8 +139,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val lastReplyDateLabel = JLabel().apply {
       foreground = UIUtil.getContextHelpForeground()
     }.apply {
-      bindVisibility(cs, item.replies.map { it.isNotEmpty() })
-      bindText(cs, item.replies.mapNotNull { replies ->
+      bindVisibility(cs, vm.replies.map { it.isNotEmpty() })
+      bindText(cs, vm.replies.mapNotNull { replies ->
         replies.lastOrNull()?.createdAt?.let { JBDateFormat.getFormatter().formatPrettyDateTime(it) }
       })
     }
@@ -142,12 +150,12 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       add(repliesLink)
       add(lastReplyDateLabel)
     }.apply {
-      bindVisibility(cs, item.replies.map { it.isNotEmpty() })
+      bindVisibility(cs, hasRepliesOrCanCreateNewFlow)
     }
     return HorizontalListPanel(Replies.ActionsFolded.HORIZONTAL_GROUP_GAP).apply {
       add(repliesActions)
 
-      item.resolvedVm?.let {
+      vm.resolveVm?.let {
         createUnResolveLink(cs, it).also(::add)
       }
     }
@@ -160,14 +168,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }.apply {
       isFocusable = true
       bindDisabled(cs, vm.busy)
-      bindText(cs, vm.resolved.map { resolved ->
-        if (resolved) {
-          CollaborationToolsBundle.message("review.comments.unresolve.action")
-        }
-        else {
-          CollaborationToolsBundle.message("review.comments.resolve.action")
-        }
-      })
+      bindText(cs, vm.actionTextFlow)
     }
 
   private fun createNoteItem(project: Project,
@@ -187,7 +188,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }
 
     val actionsPanel = createNoteActions(cs, flowOf(vm))
-    return CodeReviewChatItemUIUtil.build(CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY,
+    return CodeReviewChatItemUIUtil.build(ComponentType.FULL_SECONDARY,
                                           { avatarIconsProvider.getIcon(vm.author, it) },
                                           contentPanel) {
       withHeader(createTitleTextPane(vm.author, vm.createdAt), actionsPanel)
@@ -215,6 +216,52 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }
     return panel
   }
+
+  private fun createReplyField(project: Project,
+                               cs: CoroutineScope,
+                               vm: NewGitLabNoteViewModel,
+                               resolveVm: GitLabMergeRequestDiscussionResolveViewModel?,
+                               iconsProvider: IconsProvider<GitLabUserDTO>): JComponent {
+    val submitAction = swingAction(CollaborationToolsBundle.message("review.comments.reply.action")) {
+      vm.submit()
+    }.apply {
+      bindEnabled(cs, vm.state.map { it != GitLabNoteEditingViewModel.SubmissionState.Loading })
+    }
+
+    val resolveAction = resolveVm?.let {
+      swingAction(CollaborationToolsBundle.message("review.comments.resolve.action")) {
+        resolveVm.changeResolvedState()
+      }
+    }?.apply {
+      bindEnabled(cs, resolveVm.busy.inverted())
+      bindText(cs, resolveVm.actionTextFlow)
+    }
+
+    val actions = CommentInputActionsComponentFactory.Config(
+      primaryAction = MutableStateFlow(submitAction),
+      additionalActions = MutableStateFlow(listOfNotNull(resolveAction)),
+      submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
+                                                                     CommentInputActionsComponentFactory.submitShortcutText))
+    )
+    val itemType = ComponentType.FULL_SECONDARY
+    val icon = CommentTextFieldFactory.IconConfig.of(itemType, iconsProvider, vm.currentUser)
+
+    return GitLabNoteEditorComponentFactory.create(project, cs, vm, actions, icon).let {
+      CollaborationToolsUIUtil.wrapWithLimitedSize(it, maxWidth = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+    }.apply {
+      border = JBUI.Borders.empty(itemType.inputPaddingInsets)
+    }
+  }
+
+  private val GitLabMergeRequestDiscussionResolveViewModel.actionTextFlow
+    get() = resolved.map { resolved ->
+      if (resolved) {
+        CollaborationToolsBundle.message("review.comments.unresolve.action")
+      }
+      else {
+        CollaborationToolsBundle.message("review.comments.resolve.action")
+      }
+    }
 
   private fun createNoteTextPanel(cs: CoroutineScope, textFlow: Flow<@Nls String>): JComponent =
     SimpleHtmlPane().apply {

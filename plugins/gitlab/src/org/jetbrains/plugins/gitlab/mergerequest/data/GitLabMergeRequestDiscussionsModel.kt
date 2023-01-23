@@ -16,13 +16,9 @@ import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.addNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestDiscussions
 
-interface GitLabMergeRequestDiscussionsModel {
+interface GitLabMergeRequestDiscussionsModel: GitLabNotesContainer {
   val userDiscussions: Flow<Collection<GitLabDiscussion>>
   val systemDiscussions: Flow<Collection<GitLabDiscussionDTO>>
-
-  val canCreateNotes: Boolean
-
-  suspend fun addNote(body: String)
 }
 
 private val LOG = logger<GitLabMergeRequestDiscussionsModel>()
@@ -35,7 +31,7 @@ class GitLabMergeRequestDiscussionsModelImpl(
 
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
-  override val canCreateNotes: Boolean = mr.userPermissions.createNote
+  override val canAddNotes: Boolean = mr.userPermissions.createNote
 
   private val discussionEvents = MutableSharedFlow<GitLabDiscussionEvent>()
   private val nonEmptyDiscussionsData: Flow<List<GitLabDiscussionDTO>> =
@@ -64,7 +60,7 @@ class GitLabMergeRequestDiscussionsModelImpl(
       .mapFiltered { !it.notes.first().system }
       .mapCaching(
         GitLabDiscussionDTO::id,
-        { LoadedGitLabDiscussion(cs, connection, { discussionEvents.emit(it) }, it) },
+        { LoadedGitLabDiscussion(cs, connection, { discussionEvents.emit(it) }, mr, it) },
         LoadedGitLabDiscussion::destroy
       )
       .modelFlow(cs, LOG)

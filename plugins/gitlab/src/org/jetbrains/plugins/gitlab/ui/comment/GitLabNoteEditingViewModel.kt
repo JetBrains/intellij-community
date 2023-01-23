@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussionsModel
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotesContainer
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
 interface GitLabNoteEditingViewModel {
@@ -86,8 +86,8 @@ interface NewGitLabNoteViewModel : GitLabNoteEditingViewModel {
 
 class NewGitLabNoteViewModelImpl(parentCs: CoroutineScope,
                                  override val currentUser: GitLabUserDTO,
-                                 discussionsModel: GitLabMergeRequestDiscussionsModel)
-  : NewGitLabNoteViewModel, GitLabNoteEditingViewModelBase(parentCs, "", discussionsModel::addNote) {
+                                 notesContainer: GitLabNotesContainer)
+  : NewGitLabNoteViewModel, GitLabNoteEditingViewModelBase(parentCs, "", notesContainer::addNote) {
   override suspend fun onDone() {
     text.value = ""
   }
