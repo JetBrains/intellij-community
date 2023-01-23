@@ -48,7 +48,7 @@ object GitLabMergeRequestTimelineComponentFactory {
             SimpleHtmlPane(state.exception.localizedMessage)
           }
           is LoadingState.Result -> {
-            ComponentListPanelFactory.createVertical(this, state.items, GitLabMergeRequestTimelineItemViewModel::id, 0) { cs, item ->
+            ComponentListPanelFactory.createVertical(this, state.items, GitLabMergeRequestTimelineItemViewModel::id) { cs, item ->
               createItemComponent(project, cs, avatarIconsProvider, item)
             }.let {
               TransparentScrollPane(it)

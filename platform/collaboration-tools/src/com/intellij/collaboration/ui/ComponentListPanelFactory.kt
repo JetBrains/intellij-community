@@ -14,7 +14,7 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
 object ComponentListPanelFactory {
-  fun <T : Any> createVertical(model: ListModel<T>, gap: Int, componentFactory: (T) -> JComponent): JPanel {
+  fun <T : Any> createVertical(model: ListModel<T>, gap: Int = 0, componentFactory: (T) -> JComponent): JPanel {
     val panel = VerticalListPanel(gap)
 
     model.addListDataListener(object : ListDataListener {
@@ -57,7 +57,7 @@ object ComponentListPanelFactory {
   fun <T : Any> createVertical(parentCs: CoroutineScope,
                                items: Flow<List<T>>,
                                itemKeyExtractor: ((T) -> Any),
-                               gap: Int,
+                               gap: Int = 0,
                                componentFactory: suspend (CoroutineScope, T) -> JComponent): JPanel {
     val cs = parentCs.childScope(Dispatchers.Main)
     val panel = VerticalListPanel(gap)

@@ -66,7 +66,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
     val actionsPanel = createNoteActions(cs, mainNoteVm)
 
-    val repliesPanel = ComponentListPanelFactory.createVertical(cs, discussion.replies, GitLabNoteViewModel::id, 0) { noteCs, noteVm ->
+    val repliesPanel = ComponentListPanelFactory.createVertical(cs, discussion.replies, GitLabNoteViewModel::id) { noteCs, noteVm ->
       createNoteItem(project, noteCs, avatarIconsProvider, noteVm)
     }.apply {
       bindVisibility(cs, discussion.repliesFolded.inverted())

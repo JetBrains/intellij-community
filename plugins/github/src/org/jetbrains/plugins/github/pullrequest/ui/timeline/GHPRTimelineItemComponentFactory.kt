@@ -324,7 +324,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                                                      CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
 
 
-    val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, 0, commentComponentFactory)
+    val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, componentFactory = commentComponentFactory)
 
     val commentsPanel = if (reviewDataProvider.canComment()) {
       val actionsComponent = GHPRReviewThreadComponent
