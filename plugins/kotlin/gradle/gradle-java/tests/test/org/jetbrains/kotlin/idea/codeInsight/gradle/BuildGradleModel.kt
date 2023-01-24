@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.tooling.core.Extras
-import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
@@ -117,7 +116,7 @@ fun <T : Any> buildGradleModel(
 
 
         val allModels = runBlocking {
-            suspendCoroutine<ProjectImportAction.AllModels> { continuation ->
+            suspendCoroutine { continuation ->
                 val buildActionResultHandler = object : ResultHandler<ProjectImportAction.AllModels> {
                     override fun onComplete(result: ProjectImportAction.AllModels) {
                         continuation.resume(result)
@@ -139,4 +138,8 @@ fun <T : Any> buildGradleModel(
 
 private fun BuildGradleModelDebuggerOptions.toJvmArgumentString(): String {
     return "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${if (suspend) "y" else "n"},address=${port}"
+}
+
+fun <T : Any, R : Any> BuiltGradleModel<T>.map(mapper: (T) -> R): BuiltGradleModel<R> {
+    return BuiltGradleModel(modules.mapValues { (_, value) -> if (value == null) null else mapper(value) })
 }
