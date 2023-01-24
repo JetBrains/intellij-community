@@ -452,6 +452,9 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
 
     editorKit = createEditorKit(useContrastColors, iconsMap)
 
+    putClientProperty("caretWidth", 0)
+
+    var additionalWidthAdded = false
     setTextAndUpdateLayout(htmlBuilder)
     if (getRootView().getPreferredSpan(X_AXIS) > maxWidth) {
       setTextAndUpdateLayout(htmlBuilder, maxWidth)
@@ -460,12 +463,14 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
         setTextAndUpdateLayout(htmlBuilder, EXTENDED_MAX_WIDTH)
         rows = getRows()
       }
-      val width = rows.maxOfOrNull { it.getPreferredSpan(X_AXIS) } ?: maxWidth.toFloat()
+      val width = rows.maxOfOrNull { it.getPreferredSpan(X_AXIS) + ADDITIONAL_WIDTH } ?: maxWidth.toFloat()
       setTextAndUpdateLayout(htmlBuilder, width.toInt())
+      additionalWidthAdded = true
     }
 
     val root = getRootView()
-    preferredSize = Dimension(root.getPreferredSpan(X_AXIS).toInt(), root.getPreferredSpan(Y_AXIS).toInt())
+    val width = root.getPreferredSpan(X_AXIS).toInt() + if (additionalWidthAdded) 0 else ADDITIONAL_WIDTH
+    preferredSize = Dimension(width, root.getPreferredSpan(Y_AXIS).toInt())
   }
 
   private fun createEditorKit(useContrastColors: Boolean, iconsMap: Map<Int, Icon>): HTMLEditorKit {
@@ -521,6 +526,12 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
     isFocusable = false
     isEditable = false
     border = null
+  }
+
+  companion object {
+    // We need to make the resulting width little more than preferred,
+    // because size is calculated by summing up floats and there can be rounding problems
+    private const val ADDITIONAL_WIDTH = 1
   }
 }
 
