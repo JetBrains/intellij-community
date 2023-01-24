@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.gradle.codeInsight;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -32,5 +34,5 @@ public interface GradlePluginDescriptionsExtension {
    * @return A map from Gradle plugin names to their descriptions.
    */
   @NotNull
-  Map<String, String> getPluginDescriptions();
+  Map<@NlsSafe String, @NlsContexts.DetailedDescription String> getPluginDescriptions();
 }
