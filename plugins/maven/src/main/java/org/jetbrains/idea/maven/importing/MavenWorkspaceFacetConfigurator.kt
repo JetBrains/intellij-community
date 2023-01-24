@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.project.PackagingModel
 import com.intellij.openapi.externalSystem.service.project.ArtifactExternalDependenciesImporterImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.packaging.artifacts.ArtifactModel
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.packaging.elements.PackagingElementResolvingContext
@@ -42,7 +43,8 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
               mavenTree: MavenProjectsTree,
               mavenProjectToModuleName: Map<MavenProject, String>,
               packagingModel: PackagingModel,
-              postTasks: MutableList<MavenProjectsProcessorTask>) {
+              postTasks: MutableList<MavenProjectsProcessorTask>,
+              userDataHolder: UserDataHolderBase) {
   }
 
   fun isFacetDetectionDisabled(context: Context<*>): Boolean {
@@ -108,15 +110,11 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
                   mavenTree,
                   mavenProjectToModuleName,
                   packagingModel,
-                  postTasks)
+                  postTasks,
+                  context as UserDataHolderBase)
         }
       }
     }
-
-    if (null == context.getUserData(POST_TASKS_KEY)) {
-      context.putUserData(POST_TASKS_KEY, mutableListOf())
-    }
-    postTasks.forEach { context.getUserData(POST_TASKS_KEY)!!.add(it as MavenPostTask) }
   }
 
   class FacetPackagingModel(private val myArtifactModel: ModifiableArtifactModel,
