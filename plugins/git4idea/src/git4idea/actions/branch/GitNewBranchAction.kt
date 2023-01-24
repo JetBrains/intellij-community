@@ -20,7 +20,9 @@ class GitNewBranchAction
   override fun update(e: AnActionEvent) {
     val project = e.project
     val repositories = getAffectedRepositories(e)
-    e.presentation.isEnabledAndVisible = project != null && !repositories.isEmpty() && !repositories.all(GitRepository::isFresh)
+    val visible = project != null && !repositories.isEmpty()
+    e.presentation.isVisible = visible
+    e.presentation.isEnabled = visible && !repositories.all(GitRepository::isFresh)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

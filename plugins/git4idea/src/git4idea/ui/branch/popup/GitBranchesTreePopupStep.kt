@@ -205,7 +205,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
                                   repositories: List<GitRepository>): List<PopupFactoryImpl.ActionItem> {
       val dataContext = createDataContext(project, repositories)
       val actionItems = ActionPopupStep
-        .createActionItems(actionGroup, dataContext, false, false, false, false, ACTION_PLACE, null)
+        .createActionItems(actionGroup, dataContext, false, false, true, false, ACTION_PLACE, null)
 
       if (actionItems.singleOrNull()?.action == Utils.EMPTY_MENU_FILLER) {
         return emptyList()
