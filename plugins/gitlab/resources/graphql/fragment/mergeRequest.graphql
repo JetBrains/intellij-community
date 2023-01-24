@@ -33,4 +33,14 @@ fragment mergeRequest on MergeRequest {
       ...user
     }
   }
+
+  commits(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...glCommit
+    }
+  }
 }

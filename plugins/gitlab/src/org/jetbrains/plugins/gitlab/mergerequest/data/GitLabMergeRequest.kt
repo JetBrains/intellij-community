@@ -14,10 +14,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.GitLabMergeRequestNewState
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.mergeRequestApprove
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.mergeRequestUnApprove
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.mergeRequestUpdate
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 
 private val LOG = logger<GitLabMergeRequest>()
 
@@ -35,6 +32,8 @@ internal interface GitLabMergeRequest {
   val url: String
   val author: GitLabUserDTO
 
+  suspend fun merge()
+
   suspend fun approve()
 
   suspend fun unApprove()
@@ -42,6 +41,8 @@ internal interface GitLabMergeRequest {
   suspend fun close()
 
   suspend fun reopen()
+
+  suspend fun setReviewers(reviewers: List<GitLabUserDTO>)
 }
 
 internal class LoadedGitLabMergeRequest(
@@ -68,17 +69,25 @@ internal class LoadedGitLabMergeRequest(
   override val url: String = mergeRequest.webUrl
   override val author: GitLabUserDTO = mergeRequest.author
 
+  override suspend fun merge() {
+    withContext(scope.coroutineContext + Dispatchers.IO) {
+      val updatedMergeRequest = api.mergeRequestAccept(project, mergeRequestState.value)
+        .getResultOrThrow()
+      mergeRequestState.value = updatedMergeRequest
+    }
+  }
+
   override suspend fun approve() {
     withContext(scope.coroutineContext + Dispatchers.IO) {
-      val updatedMergeRequest = api.mergeRequestApprove(project, mergeRequestState.value)
-      mergeRequestState.value = updatedMergeRequest.body() // TODO: check status code?
+      api.mergeRequestApprove(project, mergeRequestState.value)
+      // TODO: update `approvedBy`
     }
   }
 
   override suspend fun unApprove() {
     withContext(scope.coroutineContext + Dispatchers.IO) {
-      val updatedMergeRequest = api.mergeRequestUnApprove(project, mergeRequestState.value)
-      mergeRequestState.value = updatedMergeRequest.body() // TODO: check status code?
+      api.mergeRequestUnApprove(project, mergeRequestState.value)
+      // TODO: update `approvedBy`
     }
   }
 
@@ -93,6 +102,14 @@ internal class LoadedGitLabMergeRequest(
   override suspend fun reopen() {
     withContext(scope.coroutineContext + Dispatchers.IO) {
       val updatedMergeRequest = api.mergeRequestUpdate(project, mergeRequestState.value, GitLabMergeRequestNewState.OPEN)
+        .getResultOrThrow()
+      mergeRequestState.value = updatedMergeRequest
+    }
+  }
+
+  override suspend fun setReviewers(reviewers: List<GitLabUserDTO>) {
+    withContext(scope.coroutineContext + Dispatchers.IO) {
+      val updatedMergeRequest = api.mergeRequestSetReviewers(project, mergeRequestState.value, reviewers)
         .getResultOrThrow()
       mergeRequestState.value = updatedMergeRequest
     }

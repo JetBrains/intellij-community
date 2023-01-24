@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.gap
 import com.intellij.ui.components.ActionLink
@@ -12,7 +13,9 @@ import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
+import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabProjectDetailsLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -21,6 +24,8 @@ internal object GitLabMergeRequestDetailsComponentFactory {
   fun create(
     scope: CoroutineScope,
     detailsVm: GitLabMergeRequestDetailsViewModel,
+    projectDetailsLoader: GitLabProjectDetailsLoader,
+    avatarIconsProvider: IconsProvider<GitLabUserDTO>,
     backToListAction: () -> Unit,
     openTimeLineAction: (GitLabMergeRequestId, Boolean) -> Unit
   ): JComponent {
@@ -69,7 +74,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
                  right = ReviewDetailsUIUtil.indentRight,
                  top = 4,
                  bottom = ReviewDetailsUIUtil.gapBetweenCheckAndActions))
-      add(GitLabMergeRequestDetailsActionsComponentFactory.create(scope, detailsReviewFlowVm),
+      add(GitLabMergeRequestDetailsActionsComponentFactory.create(scope, detailsReviewFlowVm, projectDetailsLoader, avatarIconsProvider),
           CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft - 2,
                            right = ReviewDetailsUIUtil.indentRight,
                            bottom = ReviewDetailsUIUtil.indentBottom))

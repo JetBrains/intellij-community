@@ -13,6 +13,8 @@ import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
 internal interface GitLabMergeRequestReviewFlowViewModel {
   val isBusy: StateFlow<Boolean>
+
+  val currentUser: GitLabUserDTO
   val author: GitLabUserDTO
 
   val approvedBy: Flow<List<GitLabUserDTO>>
@@ -21,6 +23,8 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
   val state: StateFlow<GitLabMergeRequestState>
   val isApproved: StateFlow<Boolean>
 
+  fun merge()
+
   fun approve()
 
   fun unApprove()
@@ -28,11 +32,15 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
   fun close()
 
   fun reopen()
+
+  fun setReviewers(reviewers: List<GitLabUserDTO>)
+
+  fun setMyselfAsReviewer()
 }
 
 internal class GitLabMergeRequestReviewFlowViewModelImpl(
   parentScope: CoroutineScope,
-  currentUser: GitLabUserDTO,
+  override val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestReviewFlowViewModel {
   private val scope = parentScope.childScope()
@@ -58,6 +66,10 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     .map { it.isNotEmpty() }
     .stateIn(scope, SharingStarted.Lazily, false)
 
+  override fun merge() = runAction {
+    mergeRequest.merge()
+  }
+
   override fun approve() = runAction {
     mergeRequest.approve()
   }
@@ -72,6 +84,14 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override fun reopen() = runAction {
     mergeRequest.reopen()
+  }
+
+  override fun setReviewers(reviewers: List<GitLabUserDTO>) = runAction {
+    mergeRequest.setReviewers(reviewers) // TODO: implement via CollectionDelta
+  }
+
+  override fun setMyselfAsReviewer() = runAction {
+    mergeRequest.setReviewers(listOf(currentUser)) // TODO: implement via CollectionDelta
   }
 
   private fun runAction(action: suspend () -> Unit) {

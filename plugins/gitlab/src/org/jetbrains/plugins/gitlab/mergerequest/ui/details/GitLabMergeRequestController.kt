@@ -3,6 +3,9 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
+import com.intellij.collaboration.ui.icon.CachingIconsProvider
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindContent
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ModalityState
@@ -11,13 +14,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.panels.Wrapper
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
+import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabProjectDetailsLoader
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabFilesController
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowTabViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel.LoadingState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsPanelFactory
+import org.jetbrains.plugins.gitlab.providers.GitLabImageLoader
 
 internal class GitLabMergeRequestController(
   project: Project,
@@ -58,7 +64,8 @@ internal class GitLabMergeRequestController(
   }
 
   fun openMergeRequest(mergeRequestId: GitLabMergeRequestId) {
-    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(scope, listVm.connection, mergeRequestId).apply {
+    val connection = listVm.connection
+    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(scope, connection, mergeRequestId).apply {
       requestLoad()
     }
 
@@ -67,9 +74,16 @@ internal class GitLabMergeRequestController(
         LoadingState.Loading -> LoadingLabel()
         is LoadingState.Error -> SimpleHtmlPane(loadingState.exception.localizedMessage)
         is LoadingState.Result -> {
+          val projectDetailsLoader = GitLabProjectDetailsLoader(connection)
+          val avatarIconsProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(
+            AsyncImageIconsProvider(scope, GitLabImageLoader(connection.apiClient, connection.repo.repository.serverPath))
+          )
+
           GitLabMergeRequestDetailsComponentFactory.create(
             scope,
             loadingState.detailsVm,
+            projectDetailsLoader,
+            avatarIconsProvider,
             ::openMergeRequestsList,
             openTimeLineAction = { mergeRequestId, focus -> filesController.openTimeline(mergeRequestId, focus) }
           )

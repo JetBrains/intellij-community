@@ -91,7 +91,7 @@ internal class GitLabToolWindowTabViewModel(parentCs: CoroutineScope,
         currentUser = connection.currentUser,
         historyModel = GitLabMergeRequestsFiltersHistoryModel(GitLabMergeRequestsPersistentFiltersHistory()),
         avatarIconsProvider = avatarIconsProvider,
-        projectDetailsLoader = GitLabProjectDetailsLoader(connection.apiClient, connection.repo.repository)
+        projectDetailsLoader = GitLabProjectDetailsLoader(connection)
       )
 
       val listVm: GitLabMergeRequestsListViewModel = GitLabMergeRequestsListViewModelImpl(

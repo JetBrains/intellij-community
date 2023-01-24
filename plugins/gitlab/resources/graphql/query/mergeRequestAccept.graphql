@@ -1,0 +1,12 @@
+mutation ($projectId: ID!, $mergeRequestId: String!, $sha: String!) {
+  mergeRequestAccept(input: {
+    projectPath: $projectId,
+    iid: $mergeRequestId,
+    sha: $sha
+  }) {
+    mergeRequest {
+      ...mergeRequest
+    }
+    errors
+  }
+}

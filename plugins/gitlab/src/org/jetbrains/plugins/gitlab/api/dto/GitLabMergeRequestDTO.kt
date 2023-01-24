@@ -19,15 +19,21 @@ class GitLabMergeRequestDTO(
   val state: GitLabMergeRequestState,
   val author: GitLabUserDTO,
   approvedBy: UserCoreConnection,
-  reviewers: ReviewerConnection
+  reviewers: ReviewerConnection,
+  commits: CommitConnection
 ) : GitLabMergeRequestId {
   val approvedBy: List<GitLabUserDTO> = approvedBy.nodes
 
   val reviewers: List<GitLabUserDTO> = reviewers.nodes
+
+  val commits: List<GitLabCommitDTO> = commits.nodes
 
   class UserCoreConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabUserDTO>)
     : GraphQLConnectionDTO<GitLabUserDTO>(pageInfo, nodes)
 
   class ReviewerConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabUserDTO>)
     : GraphQLConnectionDTO<GitLabUserDTO>(pageInfo, nodes)
+
+  class CommitConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabCommitDTO>)
+    : GraphQLConnectionDTO<GitLabCommitDTO>(pageInfo, nodes)
 }
