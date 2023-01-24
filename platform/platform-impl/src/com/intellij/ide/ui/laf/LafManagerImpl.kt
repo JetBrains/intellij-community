@@ -660,6 +660,15 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       return // re-applying the same density would break HiDPI-scalable values like Tree.rowHeight
     }
     defaults.put(densityKey, newDensity.name)
+    if (newDensity == UIDensity.DEFAULT) {
+      // Special case: we need to set this one to its default value even in non-compact mode, UNLESS it was already set by the theme.
+      // If it's null, it can't be properly patched in patchRowHeight, which looks ugly with larger UI fonts.
+      val vcsLogHeight = defaults.get(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey())
+      // don't want to rely on putIfAbsent here, as UIDefaults is a rather messy combination of multiple hash tables
+      if (vcsLogHeight == null) {
+        defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), JBUI.CurrentTheme.VersionControl.Log.defaultRowHeight())
+      }
+    }
     if (newDensity == UIDensity.COMPACT) {
       // main toolbar
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34))
@@ -1276,6 +1285,7 @@ private fun patchHiDPI(defaults: UIDefaults) {
   patchRowHeight(defaults, "List.rowHeight", prevRowHeightScale)
   patchRowHeight(defaults, "Table.rowHeight", prevRowHeightScale)
   patchRowHeight(defaults, JBUI.CurrentTheme.Tree.rowHeightKey(), prevRowHeightScale)
+  patchRowHeight(defaults, JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), prevRowHeightScale)
   if (prevScale == scale(1f) && prevScaleVal != null) {
     return
   }
