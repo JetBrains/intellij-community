@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -10,10 +10,8 @@ import com.intellij.ide.dnd.DnDAware
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.ui.Divider
@@ -29,15 +27,16 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.*
 import java.awt.datatransfer.StringSelection
 import java.awt.event.*
 import java.util.*
 import javax.swing.*
 import javax.swing.text.html.HTMLEditorKit
-import kotlin.time.Duration.Companion.milliseconds
 
 class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
   private val mouseListeners = ArrayList<EventListener>()
@@ -228,7 +227,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
         return true
       }
     }
-    return  e is MouseEvent && dispatchMouseEvent(e)
+    return e is MouseEvent && dispatchMouseEvent(e)
   }
 
   private fun dispatchMouseEvent(event: MouseEvent): Boolean {
@@ -583,6 +582,8 @@ private class IdePaneLoadingLayer(
 ) {
   companion object {
     private const val ALPHA = 0.5f
+    private const val totalFrames = 12
+    private const val opacityPerFrame: Float = ALPHA / totalFrames
   }
 
   private var currentAlpha = ALPHA
@@ -600,7 +601,7 @@ private class IdePaneLoadingLayer(
           return@launch
         }
 
-        val icon = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val icon = withContext(RawSwingDispatcher) {
           val icon: AsyncProcessIcon = object : AsyncProcessIcon.Big("Loading") {
             init {
               isOpaque = false
@@ -623,13 +624,13 @@ private class IdePaneLoadingLayer(
           }
 
           override fun paintNow(frame: Int, totalFrames: Int) {
-            currentAlpha = ALPHA - (((frame + 1).toFloat() / totalFrames.toFloat()) * ALPHA)
+            currentAlpha = ALPHA - (frame * opacityPerFrame)
             icon.paintImmediately(icon.bounds)
           }
-        }.run(totalFrames = 10, cycle = (if (RemoteDesktopService.isRemoteSession()) 2500 else 500).milliseconds)
+        }.run(totalFrames = totalFrames, cycleDuration = if (RemoteDesktopService.isRemoteSession()) 2_520 else 5004)
       }
       finally {
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        withContext(RawSwingDispatcher) {
           icon?.let {
             icon = null
             pane.remove(it)
@@ -652,14 +653,18 @@ private class IdePaneLoadingLayer(
       g.setColor(JBColor.PanelBackground)
       g.fillRect(0, 0, pane.width, pane.height)
     }
-    else {
-      // we draw image as semi-transparent, but we cannot show what is actually happens, so, we hide it using non-transparent background
+    else if (currentAlpha == ALPHA) {
+      // we draw image as semi-transparent, but we cannot show what is actually happening, so, we hide it using a non-transparent background
       g.color = JBColor.PanelBackground
       g.fillRect(0, 0, pane.width, pane.height)
 
       (g as Graphics2D).composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, currentAlpha)
 
-      //g.drawImage(selfie, 0, 0, null)
+      StartupUiUtil.drawImage(g, selfie)
+    }
+    else {
+      // end animation
+      (g as Graphics2D).composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, currentAlpha)
       StartupUiUtil.drawImage(g, selfie)
     }
   }
