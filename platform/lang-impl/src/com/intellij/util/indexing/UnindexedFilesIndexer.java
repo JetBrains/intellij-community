@@ -29,6 +29,10 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
+/**
+ * UnindexedFilesIndexer is to index files: explicitly provided (see providerToFiles in constructor), and implicitly marked as dirty, e.g.
+ * by VFS (as reported by FileBasedIndexImpl#getFilesToUpdate).
+ */
 class UnindexedFilesIndexer extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesIndexer.class);
   private final Project myProject;
@@ -36,6 +40,16 @@ class UnindexedFilesIndexer extends DumbModeTask {
   private final Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles;
   private final @NonNls @NotNull String indexingReason;
 
+  UnindexedFilesIndexer(Project project,
+                        @NonNls @NotNull String indexingReason) {
+    this(project, Collections.emptyMap(), indexingReason);
+  }
+
+  /**
+   * if providerToFiles is empty, only FileBasedIndexImpl#getFilesToUpdate files will be indexed.
+   * <p>
+   * if providerToFiles is not empty, providerToFiles files will be indexed in the first order, then files reported by FileBasedIndexImpl#getFilesToUpdate
+   */
   UnindexedFilesIndexer(Project project,
                         Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles,
                         @NonNls @NotNull String indexingReason) {
@@ -47,11 +61,6 @@ class UnindexedFilesIndexer extends DumbModeTask {
 
   void indexFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
                   @NotNull ProgressIndicator indicator) {
-    int totalFiles = providerToFiles.values().stream().mapToInt(Collection::size).sum();
-    if (totalFiles == 0) {
-      LOG.info("Finished for " + myProject.getName() + ". No files to index with loading content.");
-      return;
-    }
     if (SystemProperties.getBooleanProperty("idea.indexes.pretendNoFiles", false)) {
       LOG.info("Finished for " + myProject.getName() + ". System property 'idea.indexes.pretendNoFiles' is enabled.");
       return;
@@ -93,6 +102,19 @@ class UnindexedFilesIndexer extends DumbModeTask {
     if (!fileSets.isEmpty()) {
       doIndexFiles(projectIndexingHistory, progressIndicator, indexUpdateRunner, fileSets);
     }
+
+    // Order is important: getRefreshedFiles may return some subset of getExplicitlyRequestedFilesSets files (e.g. new files)
+    // We first index explicitly requested files, this will also mark indexed files as "up-to-date", then we index remaining dirty files
+    fileSets = getRefreshedFiles(projectIndexingHistory);
+    if (!fileSets.isEmpty()) {
+      doIndexFiles(projectIndexingHistory, progressIndicator, indexUpdateRunner, fileSets);
+    }
+  }
+
+  private List<IndexUpdateRunner.FileSet> getRefreshedFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory) {
+    String filesetName = "Refreshed files";
+    Collection<VirtualFile> files = new ProjectChangedFilesScanner(myProject).scan(projectIndexingHistory, filesetName);
+    return Collections.singletonList(new IndexUpdateRunner.FileSet(myProject, filesetName, files));
   }
 
   @NotNull
@@ -188,7 +210,7 @@ class UnindexedFilesIndexer extends DumbModeTask {
     }
 
     String mergedReason = "Merged " + StringUtil.trimStart(indexingReason, "Merged ") +
-             " with " + StringUtil.trimStart(otherIndexingTask.indexingReason, "Merged ");
+                          " with " + StringUtil.trimStart(otherIndexingTask.indexingReason, "Merged ");
 
     return new UnindexedFilesIndexer(myProject, mergedFilesToIndex, mergedReason);
   }
