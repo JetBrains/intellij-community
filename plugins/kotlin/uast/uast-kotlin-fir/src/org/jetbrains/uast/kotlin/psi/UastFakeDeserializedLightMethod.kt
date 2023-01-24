@@ -8,7 +8,7 @@ import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.psi.KtFunction
 
 /**
- * An abstraction similar to [UastDescriptorLightMethod], but with the original, deserialized source PSI of [KtFunction].
+ * An abstraction similar to [UastFakeDescriptorLightMethod], but with the original, deserialized source PSI of [KtFunction].
  *
  * Technically, we can just reuse [UastFakeLightMethod] as-is, which is, however, used as a fake UAST node for methods
  * that are in source, but not converted/supported by light classes (e.g., due to the presence of @JvmSynthetic).
