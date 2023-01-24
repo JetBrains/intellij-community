@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFacto
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.StatusText
 import kotlinx.coroutines.CoroutineScope
@@ -15,7 +16,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
-import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -28,7 +28,7 @@ internal class GHPRListPanelController(
   private val repository: String,
   private val emptyText: StatusText,
   private val listComponent: JComponent,
-  private val mainPanel: JPanel,
+  private val mainPanel: Wrapper,
   listenersDisposable: Disposable
 ) {
   private val loadingState: MutableStateFlow<Boolean> = MutableStateFlow(listLoader.loading)
@@ -46,7 +46,8 @@ internal class GHPRListPanelController(
 
     scope.launch {
       errorState.collect { error ->
-        update(error)
+        mainPanel.setContent(if (error != null) errorPanel else listComponent)
+        mainPanel.repaint()
       }
     }
     scope.launch {
@@ -54,14 +55,6 @@ internal class GHPRListPanelController(
         updateEmptyText(isLoading, searchValue)
       }
     }
-  }
-
-  private fun update(error: Throwable?) {
-    mainPanel.removeAll()
-    val visibleComponent = if (error != null) errorPanel else listComponent
-    mainPanel.add(visibleComponent, BorderLayout.CENTER)
-    mainPanel.revalidate()
-    mainPanel.repaint()
   }
 
   private fun updateEmptyText(isLoading: Boolean, searchValue: GHPRListSearchValue) {
