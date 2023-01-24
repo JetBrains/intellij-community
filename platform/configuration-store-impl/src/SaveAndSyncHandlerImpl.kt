@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
@@ -8,7 +8,6 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.SaveAndSyncHandlerListener
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManager
@@ -18,10 +17,12 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.TaskCancellation
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
@@ -30,13 +31,13 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.project.stateStore
 import com.intellij.util.application
-import com.intellij.util.cancelOnDispose
+import com.intellij.util.awaitCancellation
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
-import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -44,10 +45,10 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-private const val LISTEN_DELAY = 15
+private val LISTEN_DELAY = 15.milliseconds
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
+internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
   private val refreshRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -64,8 +65,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   private val forceExecuteImmediatelyState = AtomicBoolean()
 
   init {
-    @Suppress("DEPRECATION")
-    ApplicationManager.getApplication().coroutineScope.launch {
+    coroutineScope.launch {
       launch(CoroutineName("refresh requests flow processing")) {
         // not collectLatest - wait for previous execution
         refreshRequests
@@ -109,7 +109,13 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
       withContext(Dispatchers.EDT) {
         addListeners(GeneralSettings.getInstance())
       }
-    }.cancelOnDispose(this)
+    }
+
+    coroutineScope.awaitCancellation {
+      if (refreshSessionId != -1L) {
+        RefreshQueue.getInstance().cancelSession(refreshSessionId)
+      }
+    }
   }
 
   /**
@@ -163,25 +169,15 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
       }
     }
 
-    var disposable: Disposable? = null
+    IdeEventQueue.getInstance().addIdleListener(runnable = idleListener,
+                                                delaySupplier = { settings.inactiveTimeout.seconds },
+                                                parentScope = coroutineScope.childScope())
 
-    fun addIdleListener() {
-      IdeEventQueue.getInstance().addIdleListener(idleListener, settings.inactiveTimeout * 1000)
-      disposable = Disposable { IdeEventQueue.getInstance().removeIdleListener(idleListener) }
-      Disposer.register(this, disposable!!)
-    }
-
-    settings.addPropertyChangeListener(GeneralSettings.PROP_INACTIVE_TIMEOUT, this, PropertyChangeListener {
-      disposable?.let { Disposer.dispose(it) }
-      addIdleListener()
-    })
-
-    addIdleListener()
-    if (LISTEN_DELAY >= (settings.inactiveTimeout * 1000)) {
+    if (LISTEN_DELAY >= (settings.inactiveTimeout.seconds)) {
       idleListener.run()
     }
 
-    val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
+    val busConnection = ApplicationManager.getApplication().messageBus.connect(coroutineScope)
     busConnection.subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
       override fun applicationDeactivated(ideFrame: IdeFrame) {
         externalChangesModificationTracker.incModificationCount()
@@ -189,7 +185,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
           return
         }
 
-        // for web development it is crucially important to save documents on frame deactivation as early as possible
+        // for web development, it is crucially important to save documents on frame deactivation as early as possible
         (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
 
         if (addToSaveQueue(saveAppAndProjectsSettingsTask)) {
@@ -233,7 +229,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
 
   /**
    * On app or project closing save is performed. In EDT. It means that if there is already running save in a pooled thread,
-   * deadlock may be occurred because some save activities requires EDT with modality state "not modal" (by intention).
+   * deadlock may occur because some saving activities require EDT with modality state "not modal" (by intention).
    */
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
     if (!ApplicationManager.getApplication().isDispatchThread) {
@@ -286,12 +282,6 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
       requestSave()
     }
     return isSavedSuccessfully
-  }
-
-  override fun dispose() {
-    if (refreshSessionId != -1L) {
-      RefreshQueue.getInstance().cancelSession(refreshSessionId)
-    }
   }
 
   private fun canSyncOrSave(): Boolean {

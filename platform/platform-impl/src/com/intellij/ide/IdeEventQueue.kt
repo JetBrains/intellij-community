@@ -17,10 +17,7 @@ import com.intellij.ide.dnd.DnDManagerImpl
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.InvocationUtil
 import com.intellij.openapi.components.serviceIfCreated
@@ -41,24 +38,30 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.ui.ComponentUtil
-import com.intellij.util.Alarm
 import com.intellij.util.SystemProperties
+import com.intellij.util.awaitCancellation
+import com.intellij.util.childScope
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.job
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import sun.awt.AppContext
 import java.awt.*
 import java.awt.event.*
+import java.lang.Runnable
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -66,6 +69,9 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 import javax.swing.*
 import javax.swing.plaf.basic.ComboPopup
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @Suppress("FunctionName")
 class IdeEventQueue private constructor() : EventQueue() {
@@ -73,12 +79,9 @@ class IdeEventQueue private constructor() : EventQueue() {
    * Adding/Removing of "idle" listeners should be thread safe.
    */
   private val lock = Any()
-  private val idleListeners = ContainerUtil.createLockFreeCopyOnWriteList<Runnable>()
   private val activityListeners = ContainerUtil.createLockFreeCopyOnWriteList<Runnable>()
-  private val idleRequestsAlarm = Alarm()
-  private val listenerToRequest = HashMap<Runnable, MyFireIdleRequest>()
+  private val listenerToRequest = Collections.synchronizedMap(LinkedHashMap<Runnable, FireIdleRequest>())
 
-  // IdleListener -> MyFireIdleRequest
   val keyEventDispatcher: IdeKeyEventDispatcher = IdeKeyEventDispatcher(this)
   val mouseEventDispatcher: IdeMouseEventDispatcher = IdeMouseEventDispatcher()
   val popupManager: IdePopupManager = IdePopupManager()
@@ -204,29 +207,49 @@ class IdeEventQueue private constructor() : EventQueue() {
     AppContext.getAppContext().put("PostEventQueue", postEventQueue)
   }
 
+  @Obsolete
   fun addIdleListener(runnable: Runnable, timeoutMillis: Int) {
     require(timeoutMillis > 0 && TimeUnit.MILLISECONDS.toHours(timeoutMillis.toLong()) < 24) {
       "This timeout value is unsupported: $timeoutMillis"
     }
 
+    // we expect that addIdleListener will be called only when application is loaded
+    @Suppress("DEPRECATION")
+    val coroutineScope = ApplicationManager.getApplication().coroutineScope
+    val delay = timeoutMillis.toDuration(DurationUnit.MILLISECONDS)
+
     synchronized(lock) {
-      idleListeners.add(runnable)
-      val request = MyFireIdleRequest(runnable, timeoutMillis)
+      val request = FireIdleRequest(runnable = runnable, delaySupplier = { delay }, coroutineScope = coroutineScope.childScope())
       listenerToRequest[runnable] = request
-      EdtInvocationManager.invokeLaterIfNeeded { idleRequestsAlarm.addRequest(request, timeoutMillis) }
+      request.restart()
+    }
+  }
+
+  @OptIn(IntellijInternalApi::class)
+  fun addIdleListener(runnable: Runnable, delaySupplier: () -> Duration, parentScope: CoroutineScope) {
+    val scope = parentScope.childScope()
+    val request = FireIdleRequest(runnable = runnable, delaySupplier = delaySupplier, coroutineScope = scope)
+    synchronized(lock) {
+      listenerToRequest[runnable] = request
+      scope.awaitCancellation {
+        synchronized(lock) {
+          listenerToRequest.remove(runnable)
+        }
+      }
+
+      request.restart()
     }
   }
 
   fun removeIdleListener(runnable: Runnable) {
     synchronized(lock) {
-      val wasRemoved = idleListeners.remove(runnable)
-      if (!wasRemoved) {
+      val request = listenerToRequest.remove(runnable)
+      if (request == null) {
         Logs.LOG.error("unknown runnable: $runnable")
       }
-
-      val request = listenerToRequest.remove(runnable)
-      Logs.LOG.assertTrue(request != null)
-      idleRequestsAlarm.cancelRequest(request!!)
+      else {
+        request.cancel()
+      }
     }
   }
 
@@ -603,15 +626,8 @@ class IdeEventQueue private constructor() : EventQueue() {
   @ApiStatus.Experimental
   fun restartIdleTimer() {
     synchronized(lock) {
-      idleRequestsAlarm.cancelAllRequests()
-      for (idleListener in idleListeners) {
-        val request = listenerToRequest[idleListener]
-        if (request == null) {
-          Logs.LOG.error("There is no request for $idleListener")
-        }
-        else {
-          idleRequestsAlarm.addRequest(request, request.timeout, ModalityState.NON_MODAL)
-        }
+      for (request in listenerToRequest.values) {
+        request.restart()
       }
     }
   }
@@ -734,20 +750,6 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   fun interface EventDispatcher {
     fun dispatch(e: AWTEvent): Boolean
-  }
-
-  private inner class MyFireIdleRequest(@JvmField val runnable: Runnable, @JvmField val timeout: Int) : Runnable {
-    override fun run() {
-      runnable.run()
-      synchronized(lock) {
-        // do not reschedule if not interested anymore
-        if (idleListeners.contains(runnable)) {
-          idleRequestsAlarm.addRequest(this, timeout, ModalityState.NON_MODAL)
-        }
-      }
-    }
-
-    override fun toString(): String = "Fire idle request. delay: $timeout; runnable: $runnable"
   }
 
   val idleTime: Long
@@ -1225,4 +1227,34 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
     }
     return !dispatch
   }
+}
+
+private class FireIdleRequest(@JvmField val runnable: Runnable,
+                              private val delaySupplier: () -> Duration,
+                              private val coroutineScope: CoroutineScope) {
+  private val requests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  init {
+    coroutineScope.launch {
+      requests
+        .collectLatest {
+          val delay = delaySupplier()
+          require(delay != Duration.ZERO && delay.inWholeHours < 24) { "This delay value is unsupported: $delay" }
+          delay(delay)
+          withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+            runnable.run()
+          }
+        }
+    }
+  }
+
+  fun cancel() {
+    coroutineScope.cancel()
+  }
+
+  fun restart() {
+    check(requests.tryEmit(Unit))
+  }
+
+  override fun toString(): String = "Fire idle request. delaySupplier: $delaySupplier; runnable: $runnable"
 }
