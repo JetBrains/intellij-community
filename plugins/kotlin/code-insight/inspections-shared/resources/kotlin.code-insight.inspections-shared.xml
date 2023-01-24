@@ -187,7 +187,7 @@
             implementationClass="org.jetbrains.kotlin.idea.inspections.EnumValuesSoftDeprecateInJavaInspection"
             groupPath="Kotlin"
             groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
-            enabledByDefault="false"
+            enabledByDefault="true"
             cleanupTool="false"
             level="WARNING"
             language="JAVA"
