@@ -52,7 +52,7 @@ interface ObjectBuilder {
         .createPopupChooserBuilder(listOf(Chooser.Yes, Chooser.No))
         .setItemChosenCallback { item ->
           if (item == Chooser.Yes) {
-            doExtract(editor, variables, scope)
+            doExtract(editor, variables.sortedBy { variable -> variable.textRange.startOffset }, scope)
           }
         }
         .setMovable(true)
@@ -100,7 +100,7 @@ interface ObjectBuilder {
       val classHighlighting = InplaceExtractUtils.createInsertedHighlighting(editor, introducedClass.textRange)
       Disposer.register(preview, classHighlighting)
       val rangeToNavigate = introducedClass.nameIdentifier?.textRange?.endOffset ?: introducedClass.textRange.startOffset
-      val classLines = getLinesFromTextRange(editor.document, introducedClass.textRange)
+      val classLines = getLinesFromTextRange(editor.document, introducedClass.textRange, maxLength = 4)
       addPreview(preview, editor, classLines, rangeToNavigate)
       val declarationHighlighting = InplaceExtractUtils.createInsertedHighlighting(editor, declaration.textRange)
       Disposer.register(preview, declarationHighlighting)
