@@ -27,8 +27,8 @@ import org.jetbrains.kotlin.type.MapPsiToAsmDesc
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedLightMethod
-import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
-import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 
 val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
     UastLanguagePlugin.getInstances().single { it.language == KotlinLanguage.INSTANCE } as FirKotlinUastLanguagePlugin?
@@ -87,14 +87,14 @@ internal fun KtAnalysisSession.toPsiMethod(
             psi.primaryConstructor?.getRepresentativeLightMethod()?.let { return it }
             val lc = psi.toLightClass() ?: return null
             lc.constructors.firstOrNull()?.let { return it }
-            if (psi.isLocal) UastFakeLightPrimaryConstructor(psi, lc) else null
+            if (psi.isLocal) UastFakeSourceLightPrimaryConstructor(psi, lc) else null
         }
         is KtFunction -> {
             // For JVM-invisible methods, such as @JvmSynthetic, LC conversion returns nothing, so fake it
             fun handleLocalOrSynthetic(source: KtFunction): PsiMethod? {
                 val ktModule = source.getKtModule(context.project)
                 if (ktModule !is KtSourceModule) return null
-                return getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
+                return getContainingLightClass(source)?.let { UastFakeSourceLightMethod(source, it) }
             }
 
             when {
