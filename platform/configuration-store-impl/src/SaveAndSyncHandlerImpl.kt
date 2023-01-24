@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.project.stateStore
 import com.intellij.util.application
-import com.intellij.util.awaitCancellation
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -111,7 +111,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       }
     }
 
-    coroutineScope.awaitCancellation {
+    coroutineScope.awaitCancellationAndInvoke {
       if (refreshSessionId != -1L) {
         RefreshQueue.getInstance().cancelSession(refreshSessionId)
       }

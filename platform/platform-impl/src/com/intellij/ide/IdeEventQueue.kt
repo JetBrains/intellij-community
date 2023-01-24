@@ -39,7 +39,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.awaitCancellation
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.childScope
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
@@ -231,7 +231,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     val request = FireIdleRequest(runnable = runnable, delaySupplier = delaySupplier, coroutineScope = scope)
     synchronized(lock) {
       listenerToRequest[runnable] = request
-      scope.awaitCancellation {
+      scope.awaitCancellationAndInvoke {
         synchronized(lock) {
           listenerToRequest.remove(runnable)
         }
