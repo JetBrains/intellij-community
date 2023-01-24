@@ -5,5 +5,8 @@ import com.intellij.collaboration.api.dto.GraphQLFragment
 
 @GraphQLFragment("/graphql/fragment/glCommit.graphql")
 class GitLabCommitDTO(
-  val sha: String
+  val sha: String,
+  val shortId: String,
+  val title: String?,
+  val description: String?
 )

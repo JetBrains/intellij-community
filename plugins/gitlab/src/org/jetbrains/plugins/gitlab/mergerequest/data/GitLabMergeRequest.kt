@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
+import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
@@ -27,6 +28,7 @@ internal interface GitLabMergeRequest {
   val state: Flow<GitLabMergeRequestState>
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: Flow<List<GitLabUserDTO>>
+  val commits: Flow<List<GitLabCommitDTO>>
 
   val number: String
   val url: String
@@ -64,6 +66,7 @@ internal class LoadedGitLabMergeRequest(
   override val state: Flow<GitLabMergeRequestState> = mergeRequestState.map { it.state }
   override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequestState.map { it.approvedBy }
   override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestState.map { it.reviewers }
+  override val commits: Flow<List<GitLabCommitDTO>> = mergeRequestState.map { it.commits }
 
   override val number: String = mergeRequest.iid
   override val url: String = mergeRequest.webUrl

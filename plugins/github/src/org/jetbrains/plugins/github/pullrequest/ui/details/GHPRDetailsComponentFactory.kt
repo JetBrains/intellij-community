@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.gap
@@ -83,10 +82,10 @@ internal object GHPRDetailsComponentFactory {
         left = ReviewDetailsUIUtil.indentLeft,
         right = ReviewDetailsUIUtil.indentRight,
         bottom = ReviewDetailsUIUtil.gapBetweenCommitsAndCommitInfo))
-      add(commitInfo, CC().growX().maxHeight("$commitInfoMaxHeight").gap(
+      add(commitInfo, CC().growX().maxHeight("${ReviewDetailsUIUtil.commitInfoMaxHeight}").gap(
         left = ReviewDetailsUIUtil.indentLeft,
         right = ReviewDetailsUIUtil.indentRight,
-        bottom = gapBetweenCommitInfoAndCommitsBrowser))
+        bottom = ReviewDetailsUIUtil.gapBetweenCommitInfoAndCommitsBrowser))
       add(commitFilesBrowserComponent, CC().grow().push())
       add(statusChecks, CC().growX().maxHeight("${ReviewDetailsUIUtil.statusChecksMaxHeight}").gap(
         left = ReviewDetailsUIUtil.indentLeft,
@@ -101,8 +100,4 @@ internal object GHPRDetailsComponentFactory {
       PopupHandler.installPopupMenu(this, DefaultActionGroup(GHPRReloadDetailsAction()), "GHPRDetailsPopup")
     }
   }
-
-  private val gapBetweenCommitInfoAndCommitsBrowser: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 12, newUI = 12)
-
-  private val commitInfoMaxHeight: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 100, newUI = 100)
 }

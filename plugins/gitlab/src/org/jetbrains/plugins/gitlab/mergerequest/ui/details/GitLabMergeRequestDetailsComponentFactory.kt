@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.gap
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +32,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
   ): JComponent {
     val detailsInfoVm = detailsVm.detailsInfoVm
     val detailsReviewFlowVm = detailsVm.detailsReviewFlowVm
+    val commitsVm = detailsVm.commitsVm
 
     val backToListActionLink = ActionLink(CollaborationToolsBundle.message("review.details.view.back.to.list")) {
       backToListAction()
@@ -38,6 +40,11 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     // TODO: temporary empty panel
     val emptyPanel = JBUI.Panels.simplePanel().apply {
       background = UIUtil.getListBackground()
+    }
+    val commitsAndBranches = JPanel(HorizontalLayout(0)).apply {
+      isOpaque = false
+      add(GitLabMergeRequestDetailsCommitsComponentFactory.create(scope, commitsVm), HorizontalLayout.LEFT)
+      add(GitLabMergeRequestDetailsBranchComponentFactory.create(scope, detailsInfoVm), HorizontalLayout.RIGHT)
     }
 
     val layout = MigLayout(
@@ -63,10 +70,16 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft,
                            right = ReviewDetailsUIUtil.indentRight,
                            bottom = ReviewDetailsUIUtil.gapBetweenDescriptionAndCommits))
-      add(GitLabMergeRequestDetailsBranchComponentFactory.create(scope, detailsInfoVm),
+      add(commitsAndBranches,
           CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft,
                            right = ReviewDetailsUIUtil.indentRight,
                            bottom = ReviewDetailsUIUtil.gapBetweenCommitsAndCommitInfo))
+
+      add(GitLabMergeRequestDetailsCommitInfoComponentFactory.create(scope, commitsVm),
+          CC().growX().maxHeight("${ReviewDetailsUIUtil.commitInfoMaxHeight}")
+            .gap(left = ReviewDetailsUIUtil.indentLeft,
+                 right = ReviewDetailsUIUtil.indentRight,
+                 bottom = ReviewDetailsUIUtil.gapBetweenCommitInfoAndCommitsBrowser))
       add(emptyPanel, CC().grow().push()) // TODO: remove
       add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(scope, detailsInfoVm),
           CC().growX().maxHeight("${ReviewDetailsUIUtil.statusChecksMaxHeight}")
