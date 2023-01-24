@@ -258,7 +258,13 @@ private inline fun processTemplates(files: Sequence<String>,
 
     val filename = path.substring(if (prefix.isEmpty()) 0 else prefix.length + 1, path.length - FTManager.TEMPLATE_EXTENSION_SUFFIX.length)
     val extension = FileUtilRt.getExtension(filename)
-    val templateName = filename.substring(0, filename.length - extension.length - 1)
+
+    val templateName = if (extension.isNotEmpty()) { // can be empty, e.g. Dockerfile
+      filename.substring(0, filename.length - extension.length - 1)
+    } else {
+      filename
+    }
+
     val descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths)
     val template = DefaultTemplate(name = templateName,
                                    extension = extension,
