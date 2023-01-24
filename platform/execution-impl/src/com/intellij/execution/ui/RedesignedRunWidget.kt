@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
@@ -22,6 +23,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.IconReplacer
@@ -170,6 +172,11 @@ private class DisabledIcon(private val width: Int, private val height: Int, priv
 
 private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () -> Boolean) : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color {
+    if (!isContrastRunWidget) {
+      if (!buttonIsRunning(component)) {
+        return getHeaderBackgroundColor(component, state)
+      }
+    }
 
     val color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
 
@@ -181,6 +188,10 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
   }
 
   override fun paintBackground(g: Graphics, component: JComponent, @ActionButtonComponent.ButtonState state: Int) {
+    if (!isContrastRunWidget) {
+      super.paintBackground(g, component, state)
+      return
+    }
     val rect = Rectangle(component.size)
     val color = getStateBackground(component, state)
 
@@ -217,16 +228,28 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     }
   }
 
-  override fun getDisabledIcon(icon: Icon): Icon = DisabledIcon(icon.iconWidth, icon.iconHeight) {
-    IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND)
+  override fun getDisabledIcon(icon: Icon): Icon {
+    if (!isContrastRunWidget) {
+      return super.getDisabledIcon(icon)
+    }
+    return DisabledIcon(icon.iconWidth, icon.iconHeight) {
+      IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND)
+    }
   }
 
   override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
+    if (!isContrastRunWidget && ((actionButton as? ActionButton)?.action as? ExecutorRegistryImpl.ExecutorAction) == null) {
+      return super.paintIcon(g, actionButton, icon, x, y)
+    }
     if (icon.iconWidth == 0 || icon.iconHeight == 0) {
       return
     }
 
-    val toStrokeIcon = if (icon is DisabledIcon) icon else IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.FOREGROUND)
+    val toStrokeIcon = if (icon is DisabledIcon) icon else {
+      val resultColor = if (!isContrastRunWidget && !buttonIsRunning(actionButton)) JBUI.CurrentTheme.RunWidget.RUN_MODE_ICON
+      else JBUI.CurrentTheme.RunWidget.FOREGROUND
+      IconUtil.toStrokeIcon(icon, resultColor)
+    }
 
     super.paintIcon(g, actionButton, toStrokeIcon, x, y)
   }
@@ -328,6 +351,15 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
     val action = ActionManager.getInstance().getAction("RunConfiguration")
     val runConfigAction = action as? RunConfigurationsComboBoxAction ?: return
     runConfigAction.update(e)
+    val icon = e.presentation.icon
+    if (icon != null) {
+      e.presentation.icon = if (icon is InvalidRunConfigurationIcon) {
+        InvalidRunConfigurationIcon(IconUtil.toStrokeIcon(icon.mainIcon, JBUI.CurrentTheme.RunWidget.FOREGROUND))
+      }
+      else {
+        IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.FOREGROUND)
+      }
+    }
     e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description"))
   }
 
@@ -378,3 +410,7 @@ private fun getRunWidgetBackgroundColor(isRunning: Boolean): Color = if (isRunni
   JBUI.CurrentTheme.RunWidget.RUNNING_BACKGROUND
 else
   JBUI.CurrentTheme.RunWidget.BACKGROUND
+
+private fun buttonIsRunning(component: Any): Boolean =
+  (component as? ActionButton)?.presentation?.getClientProperty(ExecutorRegistryImpl.EXECUTOR_ACTION_STATUS) ==
+    ExecutorRegistryImpl.ExecutorActionStatus.RUNNING
