@@ -13,8 +13,6 @@ interface GHPRToolWindowTabComponentController {
 
   fun viewList(requestFocus: Boolean = true)
 
-  fun refreshList()
-
   fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean = true): GHPRCommitBrowserComponentController?
 
   fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean)

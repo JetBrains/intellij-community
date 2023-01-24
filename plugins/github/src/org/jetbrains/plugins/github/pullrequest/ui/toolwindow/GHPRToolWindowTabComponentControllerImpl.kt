@@ -54,6 +54,7 @@ internal class GHPRToolWindowTabComponentControllerImpl(
     DataManager.registerDataProvider(wrapper) { dataId ->
       when {
         GHPRActionKeys.PULL_REQUESTS_TAB_CONTROLLER.`is`(dataId) -> this
+        GHPRActionKeys.PULL_REQUESTS_LIST_CONTROLLER.`is`(dataId) -> GHPRListControllerImpl(dataContext)
         else -> null
       }
     }
@@ -91,11 +92,6 @@ internal class GHPRToolWindowTabComponentControllerImpl(
     if (requestFocus) {
       CollaborationToolsUIUtil.focusPanel(wrapper.targetComponent)
     }
-  }
-
-  override fun refreshList() {
-    dataContext.listLoader.reset()
-    dataContext.repositoryDataService.resetData()
   }
 
   override fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean): GHPRCommitBrowserComponentController? {
