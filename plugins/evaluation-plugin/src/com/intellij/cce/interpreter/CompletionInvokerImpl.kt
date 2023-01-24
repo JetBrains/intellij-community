@@ -280,7 +280,11 @@ class CompletionInvokerImpl(private val project: Project,
 
     val insertedText = if (lookupString.contains('>')) lookupString.replace(Regex("<.+>"), "")
     else lookupString
-    return Suggestion(insertedText, presentationText, sourceFromPresentation(presentation))
+    return Suggestion(insertedText,
+                      presentationText,
+                      sourceFromPresentation(presentation),
+                      scoreFromPresentation(presentation)
+    )
   }
 
   private fun sourceFromPresentation(presentation: LookupElementPresentation): SuggestionSource {
@@ -294,5 +298,8 @@ class CompletionInvokerImpl(private val project: Project,
       else -> SuggestionSource.STANDARD
     }
   }
+
+  private fun scoreFromPresentation(presentation: LookupElementPresentation): Double? =
+    presentation.tailText?.filter { it.isDigit() || it == '.' }?.toDoubleOrNull()
 }
 
