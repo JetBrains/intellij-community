@@ -68,6 +68,9 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
       return AllIcons.Actions.Refresh;
     }
 
+    if (value == SET_NO_MAPPING_FOR_FILE) {
+      return AllIcons.Vcs.Ignore_file;
+    }
     return EMPTY_ICON;
   }
 
@@ -96,6 +99,10 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
       }
       else if (selectedValue == LOAD_REMOTE) {
         return doFinalStep(() -> myService.triggerUpdateRemote());
+      }
+      else if (selectedValue == SET_NO_MAPPING_FOR_FILE) {
+        removeMapping(selectedValue, myVirtualFile, myProject);
+        return doFinalStep(() -> myService.reset());
       }
       else {
         setMapping(selectedValue, myVirtualFile, myProject);
@@ -150,6 +157,14 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
   public void setEmptyText(@NotNull StatusText emptyText) {
   }
 
+  private static void removeMapping(@Nullable JsonSchemaInfo selectedValue, @Nullable VirtualFile virtualFile, @NotNull Project project) {
+    if (selectedValue == SET_NO_MAPPING_FOR_FILE) {
+      JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
+      UserDefinedJsonSchemaConfiguration existingMapping = configuration.findMappingForFile(virtualFile);
+      if (existingMapping == null) return;
+      configuration.removeConfiguration(existingMapping);
+    }
+  }
   protected void setMapping(@Nullable JsonSchemaInfo selectedValue, @Nullable VirtualFile virtualFile, @NotNull Project project) {
     assert virtualFile != null: "override this method to do without a virtual file!";
     JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
