@@ -163,9 +163,12 @@ public final class ContainerUtil {
     return new ArrayList<>(size);
   }
 
+  /**
+   * create an immutable {@link List} with elements from {@code elements[start]...elements[end-1]} sub-array.
+   */
   @Contract(pure = true)
   @Unmodifiable
-  public static @NotNull <T> List<T> newArrayList(T @NotNull [] elements, int start, int end) {
+  public static @NotNull <T> List<T> subArrayAsList(T @NotNull [] elements, int start, int end) {
     if (start < 0 || start > end || end > elements.length) {
       throw new IllegalArgumentException("start:" + start + " end:" + end + " length:" + elements.length);
     }

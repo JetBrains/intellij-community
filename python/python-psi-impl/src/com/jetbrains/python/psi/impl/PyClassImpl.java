@@ -175,7 +175,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (isSixWithMetaclassCall(expression)) {
       final PyExpression[] arguments = ((PyCallExpression)expression).getArguments();
       if (arguments.length > 1) {
-        return ContainerUtil.newArrayList(arguments, 1, arguments.length);
+        return ContainerUtil.subArrayAsList(arguments, 1, arguments.length);
       }
       else {
         return Collections.emptyList();
