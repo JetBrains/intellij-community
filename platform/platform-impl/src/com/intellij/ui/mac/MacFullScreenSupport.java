@@ -10,8 +10,12 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 /**
+ * Please don't remove this class.
+ * Used in com.intellij.openapi.ui.FrameWrapper#createContents()
+ *
  * @author Alexander Lobas
  */
+@SuppressWarnings("unused")
 public class MacFullScreenSupport implements FullScreeSupport {
   private FullScreenListener myListener;
   private boolean myIsFullScreen;
