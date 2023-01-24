@@ -25,7 +25,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.util.awaitCancellation
+import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -274,7 +274,7 @@ private fun CoroutineScope.showModalIndicator(
       },
     )
 
-    awaitCancellation {
+    awaitCancellationAndInvoke {
       dialog.close(DialogWrapper.OK_EXIT_CODE)
     }
 
@@ -296,7 +296,7 @@ private fun CoroutineScope.showModalIndicator(
       val previousFocusOwner = SwingUtilities.getWindowAncestor(focusComponent)?.mostRecentFocusOwner
       focusComponent.requestFocusInWindow()
       if (previousFocusOwner != null) {
-        awaitCancellation {
+        awaitCancellationAndInvoke {
           previousFocusOwner.requestFocusInWindow()
         }
       }
