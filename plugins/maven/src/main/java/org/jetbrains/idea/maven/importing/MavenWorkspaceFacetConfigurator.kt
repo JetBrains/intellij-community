@@ -83,10 +83,21 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
     }
     val packagingModel: PackagingModel = FacetPackagingModel(artifactModel, resolvingContext)
     val mavenProjectsWithModules = context.mavenProjectsWithModules
-    val mavenProjectToModuleName = mavenProjectsWithModules.associateBy({ it.mavenProject }, { it.modules.first().module.name })
     val storage = context.storage
     val mavenTree = context.mavenProjectsTree
     val postTasks = mutableListOf<MavenProjectsProcessorTask>()
+
+    fun mavenModuleTypeOrder(type: MavenModuleType): Int = when (type) {
+      StandardMavenModuleType.SINGLE_MODULE -> 0
+      StandardMavenModuleType.MAIN_ONLY -> 1
+      StandardMavenModuleType.TEST_ONLY -> 2
+      StandardMavenModuleType.COMPOUND_MODULE -> 3
+      StandardMavenModuleType.AGGREGATOR -> 4
+    }
+
+    val mavenProjectToModuleName = mavenProjectsWithModules.associateBy({ it.mavenProject }, {
+      it.modules.minByOrNull { moduleWithType -> mavenModuleTypeOrder(moduleWithType.type) }!!.module.name
+    })
 
     for (mavenProjectWithModules in mavenProjectsWithModules) {
       val mavenProject = mavenProjectWithModules.mavenProject
