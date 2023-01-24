@@ -770,7 +770,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       PsiClass aClass = method.getContainingClass();
       if (aClass != null) {
-        add(GenericsHighlightUtil.checkDefaultMethodOverrideEquivalentToObjectNonPrivate(myLanguageLevel, aClass, method, identifier));
+        add(GenericsHighlightUtil.checkDefaultMethodOverridesMemberOfJavaLangObject(myLanguageLevel, aClass, method, identifier));
       }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -431,30 +431,32 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkDefaultMethodOverrideEquivalentToObjectNonPrivate(@NotNull LanguageLevel languageLevel,
-                                                                              @NotNull PsiClass aClass,
-                                                                              @NotNull PsiMethod method,
-                                                                              @NotNull PsiElement methodIdentifier) {
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && aClass.isInterface() && method.hasModifierProperty(PsiModifier.DEFAULT)) {
-      return checkDefaultMethodOverrideEquivalentToObjectNonPrivate(methodIdentifier, method.getHierarchicalMethodSignature());
+  static HighlightInfo.Builder checkDefaultMethodOverridesMemberOfJavaLangObject(@NotNull LanguageLevel languageLevel,
+                                                                                 @NotNull PsiClass aClass,
+                                                                                 @NotNull PsiMethod method,
+                                                                                 @NotNull PsiElement methodIdentifier) {
+    if (languageLevel.isLessThan(LanguageLevel.JDK_1_8) || !aClass.isInterface() || !method.hasModifierProperty(PsiModifier.DEFAULT)) {
+      return null;
     }
-    return null;
+    return doesMethodOverrideMemberOfJavaLangObject(method)
+           ? HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+             .descriptionAndTooltip(JavaErrorBundle.message("default.method.overrides.object.member", method.getName()))
+             .range(methodIdentifier)
+           : null;
   }
 
-  @Nullable
-  private static HighlightInfo.Builder checkDefaultMethodOverrideEquivalentToObjectNonPrivate(@NotNull PsiElement methodIdentifier, HierarchicalMethodSignature sig) {
-    for (HierarchicalMethodSignature methodSignature : sig.getSuperSignatures()) {
+  private static boolean doesMethodOverrideMemberOfJavaLangObject(@NotNull PsiMethod method) {
+    for (HierarchicalMethodSignature methodSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
       PsiMethod objectMethod = methodSignature.getMethod();
       PsiClass containingClass = objectMethod.getContainingClass();
-      if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) && objectMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .descriptionAndTooltip(JavaErrorBundle.message("default.method.overrides.object.member", sig.getName()))
-          .range(methodIdentifier);
+      if (containingClass != null &&
+          CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
+          objectMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return true;
       }
-      HighlightInfo.Builder inHierarchy = checkDefaultMethodOverrideEquivalentToObjectNonPrivate(methodIdentifier, methodSignature);
-      if (inHierarchy != null) return inHierarchy;
+      if (doesMethodOverrideMemberOfJavaLangObject(objectMethod)) return true;
     }
-    return null;
+    return false;
   }
 
   /**
