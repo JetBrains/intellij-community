@@ -12,7 +12,6 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep
 import com.intellij.openapi.externalSystem.service.ui.completion.*
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -366,7 +365,6 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       it.configureBuildScript()
     }
 
-    ExternalProjectsManagerImpl.setupCreatedProject(project)
     builder.commit(project)
   }
 

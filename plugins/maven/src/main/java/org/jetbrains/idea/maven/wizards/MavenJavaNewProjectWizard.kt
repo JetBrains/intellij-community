@@ -12,14 +12,11 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
@@ -77,17 +74,14 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         name = parentStep.name
         contentEntryPath = "${parentStep.path}/${parentStep.name}"
 
+        isCreatingNewProject = context.isCreatingNewProject
+
         parentProject = parentData
         aggregatorProject = parentData
         projectId = MavenId(groupId, artifactId, version)
         isInheritGroupId = parentData?.mavenId?.groupId == groupId
         isInheritVersion = parentData?.mavenId?.version == version
       }
-
-      ExternalProjectsManagerImpl.setupCreatedProject(project)
-      MavenProjectsManager.setupCreatedMavenProject(project)
-      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
-
       builder.commit(project)
     }
   }
