@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
@@ -176,6 +177,11 @@ class RecordObjectBuilder(private val record: PsiClass, private val references: 
       val project = variables.first().project
       val factory = PsiElementFactory.getInstance(project)
       val record = factory.createRecord("Result")
+      val typeParameters = variables.mapNotNull { variable -> variable.type as? PsiClassReferenceType }.filterNot { type -> type.isRaw }
+      typeParameters.forEach { type ->
+        val typeParameter = factory.createTypeParameter(type.name, emptyArray())
+        record.typeParameterList?.add(typeParameter)
+      }
       val header = variables.joinToString(separator = ", ") { variable -> "${variable.type.canonicalText} ${variable.name}" }
       record.recordHeader?.replace(factory.createRecordHeaderFromText(header, record))
       return record
@@ -239,6 +245,11 @@ class ClassObjectBuilder(private val pojoClass: PsiClass, private val references
       val project = variables.first().project
       val factory = PsiElementFactory.getInstance(project)
       val pojoClass = factory.createClass("Result")
+      val typeParameters = variables.mapNotNull { variable -> variable.type as? PsiClassReferenceType }.filterNot { type -> type.isRaw }
+      typeParameters.forEach { type ->
+        val typeParameter = factory.createTypeParameter(type.name, emptyArray())
+        pojoClass.typeParameterList?.add(typeParameter)
+      }
       variables.forEach { variable ->
         val field = factory.createField(variable.name!!, variable.type)
         field.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true)
