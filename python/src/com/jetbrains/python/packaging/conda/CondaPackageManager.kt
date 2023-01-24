@@ -79,6 +79,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
       .map { line -> line.split("\\s+".toRegex()) }
       .filterNot { it.size < 2 }
       .map { CondaPackage(it[0], it[1], installedWithPip = (it.size >= 4 && it[3] == "pypi")) }
+      .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER, CondaPackage::name))
       .toList()
   }
 
