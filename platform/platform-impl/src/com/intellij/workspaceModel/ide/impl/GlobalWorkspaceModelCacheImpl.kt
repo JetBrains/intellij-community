@@ -16,10 +16,10 @@ import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
-class GlobalWorkspaceModelCacheImpl : AbstractWorkspaceModelCache(VirtualFileUrlManager.getGlobalInstance()),
-                                      GlobalWorkspaceModelCache, Disposable {
+class GlobalWorkspaceModelCacheImpl : GlobalWorkspaceModelCache, Disposable {
   private val saveAlarm = SingleAlarm.pooledThreadSingleAlarm(1000, this) { this.doCacheSaving() }
   private val cacheFile by lazy { PathManager.getSystemDir().resolve("$DATA_DIR_NAME/cache.data") }
+  private val cacheSerializer = WorkspaceModelCacheSerializer(VirtualFileUrlManager.getGlobalInstance())
 
   init {
     LOG.debug("Global Model Cache at $cacheFile")
@@ -38,14 +38,18 @@ class GlobalWorkspaceModelCacheImpl : AbstractWorkspaceModelCache(VirtualFileUrl
     }
 
     if (!cachesInvalidated.get()) {
-      saveCache(storage, cacheFile)
+      cacheSerializer.saveCacheToFile(storage, cacheFile)
     }
     else {
       Files.deleteIfExists(cacheFile)
     }
   }
 
-  override fun loadCache(): EntityStorage? = loadCache(cacheFile, invalidateCachesMarkerFile, invalidateCachesMarkerFile)
+  override fun loadCache(): EntityStorage? {
+    if (ApplicationManager.getApplication().isUnitTestMode) return null
+    return cacheSerializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateCachesMarkerFile)
+  }
+
   override fun dispose() = Unit
 
   companion object {

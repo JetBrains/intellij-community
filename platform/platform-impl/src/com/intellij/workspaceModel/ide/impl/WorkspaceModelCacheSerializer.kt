@@ -4,19 +4,18 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.getGlobalInstance
+import com.intellij.workspaceModel.ide.WorkspaceModelCacheVersion
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -24,13 +23,11 @@ import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
 
-@ApiStatus.Internal
-abstract class AbstractWorkspaceModelCache(vfuManager: VirtualFileUrlManager,
-                                           cacheVersionsContributor: () -> Map<String, String> = { emptyMap() }) {
+class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
   private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, vfuManager,
-                                                                                cacheVersionsContributor)
+                                                                                ::collectExternalCacheVersions)
 
-  internal fun loadCache(file: Path, invalidateGlobalCachesMarkerFile: Path, invalidateCachesMarkerFile: Path): EntityStorage? {
+  internal fun loadCacheFromFile(file: Path, invalidateGlobalCachesMarkerFile: Path, invalidateCachesMarkerFile: Path): EntityStorage? {
     val cacheFileAttributes = file.basicAttributesIfExists() ?: return null
 
     val invalidateCachesMarkerFileAttributes = invalidateGlobalCachesMarkerFile.basicAttributesIfExists()
@@ -44,10 +41,7 @@ abstract class AbstractWorkspaceModelCache(vfuManager: VirtualFileUrlManager,
     LOG.debug("Loading cache from $file")
 
     val start = System.currentTimeMillis()
-    val deserializationResult = serializer.deserializeCache(file)
-    LOG.debug { "Loaded cache from $file in ${System.currentTimeMillis() - start}ms" }
-
-    return deserializationResult
+    return serializer.deserializeCache(file)
       .onSuccess {
         if (it != null) {
           LOG.debug("Loaded cache from $file in ${System.currentTimeMillis() - start}ms")
@@ -60,13 +54,13 @@ abstract class AbstractWorkspaceModelCache(vfuManager: VirtualFileUrlManager,
   }
 
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
-  internal fun saveCache(storage: EntityStorageSnapshot, file: Path) {
+  internal fun saveCacheToFile(storage: EntityStorageSnapshot, file: Path, userPreProcessor: Boolean = false) {
     LOG.debug("Saving Workspace model cache to $file")
     val dir = file.parent
     Files.createDirectories(dir)
     val tmpFile = Files.createTempFile(dir, "cache", ".tmp")
     try {
-      val serializationResult = serializer.serializeCache(tmpFile, cachePreProcess(storage))
+      val serializationResult = serializer.serializeCache(tmpFile, if (userPreProcessor) cachePreProcess(storage) else storage)
       if (serializationResult is SerializationResult.Fail<*>) {
         LOG.warn("Workspace model cache was not serialized: ${serializationResult.info}")
       }
@@ -114,9 +108,17 @@ abstract class AbstractWorkspaceModelCache(vfuManager: VirtualFileUrlManager,
       return classloader.loadClass(name)
     }
   }
+
+  companion object {
+    private val WORKSPACE_MODEL_CACHE_VERSION_EP = ExtensionPointName<WorkspaceModelCacheVersion>("com.intellij.workspaceModel.cache.version")
+
+    fun collectExternalCacheVersions(): Map<String, String> {
+      return WORKSPACE_MODEL_CACHE_VERSION_EP.extensionList.associate { it.getId() to it.getVersion() }
+    }
+  }
 }
 
-private val LOG = logger<AbstractWorkspaceModelCache>()
+private val LOG = logger<WorkspaceModelCacheSerializer>()
 
 internal fun invalidateCaches(cachesInvalidatedMarkerBoolean: AtomicBoolean, invalidateCachesMarkerFile: Path) {
   cachesInvalidatedMarkerBoolean.set(true)

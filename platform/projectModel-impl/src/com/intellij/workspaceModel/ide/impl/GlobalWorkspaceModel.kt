@@ -30,7 +30,12 @@ import kotlin.system.measureTimeMillis
 
 @ApiStatus.Internal
 class GlobalWorkspaceModel: Disposable {
+  /**
+   * Store link to the project from which changes came from. It's needed to avoid redundant changes application at [applyStateToProject]
+   */
   private var filteredProject: Project? = null
+
+  // Marker indicating that changes came from global storage
   internal var isFromGlobalWorkspaceModel: Boolean = false
   private val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()
   private val globalEntitiesFilter = { entitySource: EntitySource -> entitySource is JpsGlobalFileEntitySource }
@@ -70,11 +75,9 @@ class GlobalWorkspaceModel: Disposable {
     }
     entityStorage = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
 
-    val callback = if (ApplicationManager.getApplication()::class.qualifiedName != "com.intellij.openapi.application.impl.ServerApplication"){
-      JpsGlobalModelSynchronizer.getInstance().loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
-    } else null
+    val callback = JpsGlobalModelSynchronizer.getInstance().loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
     entityStorage.replaceSilently(mutableEntityStorage.toSnapshot())
-    callback?.invoke()
+    callback.invoke()
   }
 
   fun updateModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
@@ -160,8 +163,7 @@ class GlobalWorkspaceModel: Disposable {
     val workspaceModel = WorkspaceModel.getInstance(targetProject)
     val entitiesCopyAtBuilder = copyEntitiesToEmptyStorage(entityStorage.current,
                                                            VirtualFileUrlManager.getInstance(targetProject))
-    LOG.info("Sync global entities with project: ${targetProject.name}")
-    workspaceModel.updateProjectModel("Apply entities from global storage") { builder ->
+    workspaceModel.updateProjectModel("Sync global entities with project: ${targetProject.name}") { builder ->
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
   }
@@ -174,10 +176,9 @@ class GlobalWorkspaceModel: Disposable {
   fun syncEntitiesWithProject(sourceProject: Project) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     filteredProject = sourceProject
-    LOG.info("Apply changes from project: ${sourceProject.name}")
     val entitiesCopyAtBuilder = copyEntitiesToEmptyStorage(WorkspaceModel.getInstance(sourceProject).currentSnapshot,
                                                            VirtualFileUrlManager.getGlobalInstance())
-    updateModel("Sync entities with global storage") { builder ->
+    updateModel("Sync entities from project ${sourceProject.name} with global storage") { builder ->
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
     filteredProject = null
