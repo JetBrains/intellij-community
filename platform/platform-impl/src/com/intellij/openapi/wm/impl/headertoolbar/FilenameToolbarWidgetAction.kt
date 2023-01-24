@@ -22,6 +22,7 @@ import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.ui.*
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Cursor
@@ -107,6 +108,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
             component.icon = icon
             fg = if (selected) null else status.color
           }
+          component.iconTextGap = JBUI.scale(4)
 
           if (fg == null) {
             if (isInToolbar) {
