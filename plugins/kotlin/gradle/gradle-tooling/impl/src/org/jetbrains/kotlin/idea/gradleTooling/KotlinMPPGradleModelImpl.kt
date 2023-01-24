@@ -215,17 +215,17 @@ data class KotlinTargetImpl(
     override fun toString() = name
 
     constructor(target: KotlinTarget, cloningCache: MutableMap<Any, Any>) : this(
-      target.name,
-      target.presetName,
-      target.disambiguationClassifier,
-      KotlinPlatform.byId(target.platform.id) ?: KotlinPlatform.COMMON,
-      target.compilations.map { initialCompilation ->
+        target.name,
+        target.presetName,
+        target.disambiguationClassifier,
+        KotlinPlatform.byId(target.platform.id) ?: KotlinPlatform.COMMON,
+        target.compilations.map { initialCompilation ->
             (cloningCache[initialCompilation] as? KotlinCompilation)
                 ?: KotlinCompilationImpl(initialCompilation, cloningCache).also {
                     cloningCache[initialCompilation] = it
                 }
         }.toList(),
-      target.testRunTasks.map { initialTestTask ->
+        target.testRunTasks.map { initialTestTask ->
             (cloningCache[initialTestTask] as? KotlinTestRunTask)
                 ?: KotlinTestRunTaskImpl(
                     initialTestTask.taskName,
@@ -234,7 +234,7 @@ data class KotlinTargetImpl(
                     cloningCache[initialTestTask] = it
                 }
         },
-      target.nativeMainRunTasks.map { initialTestTask ->
+        target.nativeMainRunTasks.map { initialTestTask ->
             (cloningCache[initialTestTask] as? KotlinNativeMainRunTask)
                 ?: KotlinNativeMainRunTaskImpl(
                     initialTestTask.taskName,
@@ -245,9 +245,9 @@ data class KotlinTargetImpl(
                     cloningCache[initialTestTask] = it
                 }
         },
-      KotlinTargetJarImpl(target.jar?.archiveFile),
-      target.konanArtifacts.map { KonanArtifactModelImpl(it) }.toList(),
-      IdeaKotlinExtras.copy(target.extras)
+        KotlinTargetJarImpl(target.jar?.archiveFile),
+        target.konanArtifacts.map { KonanArtifactModelImpl(it) }.toList(),
+        IdeaKotlinExtras.copy(target.extras)
     )
 }
 
