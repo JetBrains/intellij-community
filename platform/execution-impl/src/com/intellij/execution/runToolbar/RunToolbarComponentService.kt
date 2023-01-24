@@ -7,9 +7,11 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.ui.ExperimentalUI
 
 internal class RunToolbarComponentService(private val project: Project): Disposable {
   companion object {
@@ -20,6 +22,12 @@ internal class RunToolbarComponentService(private val project: Project): Disposa
     get() = RunToolbarSlotManager.getInstance(project)
 
   init {
+
+    if(ExperimentalUI.isNewUI()) {
+      val actionManager = ActionManager.getInstance()
+      actionManager.unregisterAction("RunToolbarWidgetAction")
+    }
+
     if (ToolbarSettings.getInstance().isAvailable) {
       project.messageBus.connect(this).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
         override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
