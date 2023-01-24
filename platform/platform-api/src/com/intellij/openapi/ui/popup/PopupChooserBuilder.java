@@ -72,6 +72,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private boolean myModalContext;
   private boolean myCloseOnEnter = true;
   private boolean myCancelOnWindowDeactivation = true;
+  private boolean myCancelOnOtherWindowOpen = true;
   private boolean myUseForXYLocation;
   private @Nullable Processor<? super JBPopup> myCouldPin;
   private int myVisibleRowCount = 15;
@@ -413,7 +414,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       .setKeyboardActions(myKeyboardActions)
       .setMayBeParent(myMayBeParent)
       .setLocateWithinScreenBounds(true)
-      .setCancelOnOtherWindowOpen(true)
+      .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)
       .setModalContext(myModalContext)
       .setCancelOnWindowDeactivation(myCancelOnWindowDeactivation)
       .setCancelOnClickOutside(myCancelOnClickOutside)
@@ -555,6 +556,12 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   public PopupChooserBuilder<T> setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation) {
     myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
+    return this;
+  }
+
+  @Override
+  public IPopupChooserBuilder<T> setCancelOnOtherWindowOpen(boolean cancelOnWindow) {
+    myCancelOnOtherWindowOpen = cancelOnWindow;
     return this;
   }
 
