@@ -13,6 +13,7 @@ import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsCompo
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
+import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.*
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
@@ -32,6 +33,7 @@ import org.jetbrains.plugins.gitlab.ui.comment.*
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JPanel
 
 @OptIn(ExperimentalCoroutinesApi::class)
 object GitLabMergeRequestTimelineDiscussionComponentFactory {
@@ -42,10 +44,12 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
              vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
     val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, vm).apply {
       border = JBUI.Borders.empty(Replies.ActionsFolded.VERTICAL_PADDING, 0)
-      bindVisibility(cs, vm.repliesFolded)
+      bindVisibility(cs, vm.collapsed)
     }
     val mainNoteVm = vm.mainNote
-    val textPanel = createNoteTextPanel(cs, mainNoteVm.flatMapLatest { it.htmlBody })
+    val textPanel = createNoteTextPanel(cs, mainNoteVm.flatMapLatest { it.htmlBody }).let {
+      collapseDiscussionTextIfNeeded(cs, vm, it)
+    }
 
     // oh well... probably better to make a suitable API in EditableComponentFactory, but that would look ugly
     val actionAndEditVmsFlow: Flow<Pair<GitLabNoteAdminActionsViewModel, GitLabNoteEditingViewModel>?> =
@@ -68,13 +72,13 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val repliesPanel = ComponentListPanelFactory.createVertical(cs, vm.replies, GitLabNoteViewModel::id) { noteCs, noteVm ->
       createNoteItem(project, noteCs, avatarIconsProvider, noteVm)
     }.apply {
-      bindVisibility(cs, vm.repliesFolded.inverted())
+      bindVisibility(cs, vm.collapsed.inverted())
     }
 
     val replyField = vm.newNoteVm?.let {
       createReplyField(project, cs, it, vm.resolveVm, avatarIconsProvider)
     }?.apply {
-      bindVisibility(cs, vm.repliesFolded.inverted())
+      bindVisibility(cs, vm.collapsed.inverted())
     }
 
     val titlePanel = HorizontalListPanel(CodeReviewCommentUIUtil.Title.HORIZONTAL_GAP).apply {
@@ -282,6 +286,36 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     SimpleHtmlPane().apply {
       bindText(cs, textFlow)
     }
+
+  private fun collapseDiscussionTextIfNeeded(cs: CoroutineScope, vm: GitLabMergeRequestTimelineDiscussionViewModel,
+                                             textPane: JComponent): JComponent {
+    val resolveVm = vm.resolveVm
+    if (resolveVm == null) return textPane
+
+    return JPanel(null).apply {
+      name = "Text pane wrapper"
+      isOpaque = false
+      layout = SizeRestrictedSingleComponentLayout().apply {
+        cs.launch {
+          combine(vm.collapsed, resolveVm.resolved) { folded, resolved ->
+            folded && resolved
+          }.collect {
+            if (it) {
+              textPane.foreground = UIUtil.getContextHelpForeground()
+              maxHeight = UIUtil.getUnscaledLineHeight(textPane) * 2
+            }
+            else {
+              textPane.foreground = UIUtil.getLabelForeground()
+              maxHeight = null
+            }
+            revalidate()
+            repaint()
+          }
+        }
+      }
+      add(textPane)
+    }
+  }
 
   private fun createEditNoteActions(actionsVm: GitLabNoteAdminActionsViewModel,
                                     editVm: GitLabNoteEditingViewModel) =

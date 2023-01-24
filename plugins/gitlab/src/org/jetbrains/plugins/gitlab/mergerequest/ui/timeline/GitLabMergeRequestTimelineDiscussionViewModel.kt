@@ -26,7 +26,7 @@ interface GitLabMergeRequestTimelineDiscussionViewModel {
   val mainNote: Flow<GitLabNoteViewModel>
   val replies: Flow<List<GitLabNoteViewModel>>
 
-  val repliesFolded: Flow<Boolean>
+  val collapsed: Flow<Boolean>
 
   val resolveVm: GitLabDiscussionResolveViewModel?
   val newNoteVm: NewGitLabNoteViewModel?
@@ -56,7 +56,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val author: Flow<GitLabUserDTO> = mainNote.map { it.author }
 
   private val _repliesFolded = MutableStateFlow(true)
-  override val repliesFolded: Flow<Boolean> = _repliesFolded.asStateFlow()
+  override val collapsed: Flow<Boolean> = _repliesFolded.asStateFlow()
 
   override val replies: Flow<List<GitLabNoteViewModel>> = discussion.notes
     .map { it.drop(1) }
