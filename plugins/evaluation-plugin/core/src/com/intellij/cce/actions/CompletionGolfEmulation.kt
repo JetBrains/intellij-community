@@ -64,6 +64,10 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
     if (suggestion.isEmpty() || !expected.startsWith(suggestion)) {
       return null
     }
+    val firstExpectedToken = firstToken(expected)
+    if (firstExpectedToken.isNotEmpty() && suggestion.length < firstExpectedToken.length) {
+      return null
+    }
 
     val possibleResult = suggestion to index
 
