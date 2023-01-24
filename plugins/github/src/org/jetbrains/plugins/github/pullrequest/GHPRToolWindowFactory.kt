@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.content.Content
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.Dispatchers
@@ -52,7 +53,8 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
       isCloseable = false
       setDisposer(Disposer.newDisposable("reviews tab disposable"))
     }
-    configureContent(project, content)
+    val contentController = configureContent(project, content)
+    ClientProperty.put(toolWindow.component, GHPRToolWindowTabController.KEY, contentController)
     contentManager.addContent(content)
   }
 
@@ -64,15 +66,14 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
     toolWindow.setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
   }
 
-  private fun configureContent(project: Project, content: Content) {
+  private fun configureContent(project: Project, content: Content): GHPRToolWindowTabController {
     val scope = DisposingScope(content)
     val repositoriesManager = project.service<GHHostedRepositoriesManager>()
     val connectionManager = project.service<GHRepositoryConnectionManager>()
     val accountManager = service<GHAccountManager>()
     val vm = GHPRToolWindowTabViewModel(scope, repositoriesManager, accountManager, connectionManager, project.service())
 
-    val controller = GHPRToolWindowTabControllerImpl(scope, project, vm, content)
-    content.putUserData(GHPRToolWindowTabController.KEY, controller)
+    return GHPRToolWindowTabControllerImpl(scope, project, vm, content)
   }
 
   override fun shouldBeAvailable(project: Project): Boolean = false
