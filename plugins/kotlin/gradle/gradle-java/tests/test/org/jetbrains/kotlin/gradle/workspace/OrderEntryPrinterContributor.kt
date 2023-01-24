@@ -83,14 +83,21 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
 
     private fun PrinterContext.isStdlibModule(orderEntry: OrderEntry): Boolean {
         val name = presentableNameWithoutVersion(orderEntry)
-        return name in STDLIB_MODULES || name.startsWith(NATIVE_STDLIB_PREFIX)
+        return name in STDLIB_MODULES
+                || name.startsWith(NATIVE_STDLIB_PREFIX_OLD_IMPORT)
+                || name.startsWith(NATIVE_STDLIB_KGP_BASED_IMPORT)
     }
 
     private fun PrinterContext.isKotlinTestModule(orderEntry: OrderEntry): Boolean =
         presentableNameWithoutVersion(orderEntry) in KOTLIN_TEST_MODULES
 
-    private fun PrinterContext.isKonanDistModule(orderEntry: OrderEntry): Boolean =
-        !isStdlibModule(orderEntry) && NATIVE_DISTRIBUTION_LIBRARY_PATTERN.matches(orderEntry.presentableName)
+    private fun isKonanDistModule(orderEntry: OrderEntry): Boolean {
+        val name = orderEntry.presentableName
+        // NB: we deliberately look for 'stdlib' substring instead of `!isStdlibModule(orderEntry)`
+        // to make sure that if format of stdlib-entry unexpectedly changes, we won't mismatch it
+        // with K/N Dist
+        return "stdlib" !in name && NATIVE_DISTRIBUTION_LIBRARY_PATTERN.matches(name)
+    }
 
     private fun PrinterContext.presentableNameWithoutVersion(orderEntry: OrderEntry): String =
         orderEntry.presentableName.replace(kotlinGradlePluginVersion.toString(), "{{KGP_VERSION}}")
@@ -142,8 +149,10 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
             "Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}}",
             "Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}}",
         )
-        // K/N stdlib has suffix of platform, so plain contains wouldn't work
-        private val NATIVE_STDLIB_PREFIX: String = "Kotlin/Native {{KGP_VERSION}} - stdlib"
+        // Old import: Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+        // KGP based import: Kotlin/Native: stdlib (COMPILE)
+        private val NATIVE_STDLIB_PREFIX_OLD_IMPORT: String = "Kotlin/Native {{KGP_VERSION}} - stdlib"
+        private val NATIVE_STDLIB_KGP_BASED_IMPORT: String = "Kotlin/Native: stdlib"
 
         private val KOTLIN_TEST_MODULES = setOf(
             "Gradle: org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}}",
