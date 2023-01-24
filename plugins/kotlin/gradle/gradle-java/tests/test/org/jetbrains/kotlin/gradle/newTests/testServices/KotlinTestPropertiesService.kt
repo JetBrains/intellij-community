@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.newTests.testServices
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.newTests.resolveFromEnvironment
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.DevModeTweaksImpl
 import org.jetbrains.kotlin.gradle.newTests.testProperties.AndroidGradlePluginVersionTestsProperty
 import org.jetbrains.kotlin.gradle.newTests.testProperties.GradleVersionTestsProperty
 import org.jetbrains.kotlin.gradle.newTests.testProperties.KotlinGradlePluginVersionTestsProperty
@@ -18,19 +19,17 @@ interface KotlinTestPropertiesService {
     val kotlinGradlePluginVersion: KotlinToolingVersion
 
     companion object {
-        fun constructFromEnvironment(
-            agpVersionOverride: AndroidGradlePluginVersionTestsProperty.Values? = null,
-            gradleVersionOverride: GradleVersionTestsProperty.Values? = null,
-            kgpVersionOverride: KotlinGradlePluginVersionTestsProperty.Values? = null,
-        ): KotlinTestPropertiesService {
-            val agpVersion = agpVersionOverride?.version
+        fun constructFromEnvironment(): KotlinTestPropertiesService {
+            val devModeTweaks = DevModeTweaksImpl()
+
+            val agpVersion = devModeTweaks.overrideAgpVersion?.version
                 ?: AndroidGradlePluginVersionTestsProperty.resolveFromEnvironment()
 
-            val gradleVersionRaw = gradleVersionOverride?.version
+            val gradleVersionRaw = devModeTweaks.overrideGradleVersion?.version
                 ?: GradleVersionTestsProperty.resolveFromEnvironment()
             val gradleVersion = GradleVersion.version(gradleVersionRaw)
 
-            val kgpVersionRaw = kgpVersionOverride?.version
+            val kgpVersionRaw = devModeTweaks.overrideKgpVersion?.version
                 ?: KotlinGradlePluginVersionTestsProperty.resolveFromEnvironment()
             val kgpVersion = KotlinToolingVersion(kgpVersionRaw)
 

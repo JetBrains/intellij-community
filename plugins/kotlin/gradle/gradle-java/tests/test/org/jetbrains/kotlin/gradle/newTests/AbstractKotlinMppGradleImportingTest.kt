@@ -28,9 +28,8 @@ import java.io.PrintStream
 @RunWith(KotlinMppTestsJUnit4Runner::class)
 @TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
 abstract class AbstractKotlinMppGradleImportingTest :
-    GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,HighlightingCheckDsl,
-    TestWithKotlinPluginAndGradleVersions
-{
+    GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl, HighlightingCheckDsl,
+    TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl {
     val kotlinTestPropertiesService: KotlinTestPropertiesService = KotlinTestPropertiesService.constructFromEnvironment()
 
     final override val gradleVersion: String
@@ -81,7 +80,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
             """.trimMargin()
         )
 
-        configureByFiles(testDataDirectoryService.testDataDirectory())
+        configureByFiles(testDataDirectoryService.testDataDirectory(), configuration)
 
         configuration.getConfiguration(LinkedProjectPathsTestsFeature).linkedProjectPaths.forEach {
             gradleProjectLinkingService.linkGradleProject(it, importedProjectRoot.toNioPath(), importedProject)
@@ -120,8 +119,12 @@ abstract class AbstractKotlinMppGradleImportingTest :
             "-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
     }
 
-    private fun configureByFiles(rootDir: File): List<VirtualFile> {
+    private fun configureByFiles(rootDir: File, testConfiguration: TestConfiguration): List<VirtualFile> {
         assert(rootDir.exists()) { "Directory ${rootDir.path} doesn't exist" }
+        val devModeConfig = testConfiguration.getConfiguration(DevModeTestFeature)
+        val writeTestProjectTo = devModeConfig.writeTestProjectTo
+        val rootForProjectCopy = computeRootForProjectCopy(writeTestProjectTo, devModeConfig)
+        rootForProjectCopy?.mkdirs()
 
         return rootDir.walk().mapNotNull {
             when {
@@ -132,7 +135,14 @@ abstract class AbstractKotlinMppGradleImportingTest :
                         clearTextFromDiagnosticMarkup(FileUtil.loadFile(it, /* convertLineSeparators = */ true)),
                         it
                     )
-                    val virtualFile = createProjectSubFile(it.path.substringAfter(rootDir.path + File.separator), text)
+                    val relativeToRoot = it.path.substringAfter(rootDir.path + File.separator)
+                    val virtualFile = createProjectSubFile(relativeToRoot, text)
+                    if (rootForProjectCopy != null) {
+                        val output = File(rootForProjectCopy, relativeToRoot)
+                        output.parentFile.mkdirs()
+                        output.createNewFile()
+                        output.writeText(text)
+                    }
 
                     // Real file with expected testdata allows to throw nicer exceptions in
                     // case of mismatch, as well as open interactive diff window in IDEA
@@ -144,6 +154,28 @@ abstract class AbstractKotlinMppGradleImportingTest :
                 else -> null
             }
         }.toList()
+    }
+
+    private fun computeRootForProjectCopy(
+        writeTestProjectTo: File?,
+        devModeConfig: DevModeTweaksImpl
+    ): File? {
+        if (writeTestProjectTo == null) return null
+
+        val rootForProjectCopy = File(writeTestProjectTo, testDirectoryName)
+
+        when {
+            !writeTestProjectTo.isDirectory ->
+                error("Trying to write test project to ${writeTestProjectTo.canonicalPath}, but it's not a directory")
+
+            rootForProjectCopy.exists() && devModeConfig.overwriteExistingProjectCopy ->
+                rootForProjectCopy.deleteRecursively()
+
+            rootForProjectCopy.exists() && rootForProjectCopy.listFiles().isNotEmpty() && !devModeConfig.overwriteExistingProjectCopy ->
+                error("Asked to write test project to ${rootForProjectCopy.canonicalPath}, but it's not empty and 'overwriteExisting = true' isn't specified")
+        }
+
+       return rootForProjectCopy
     }
 
     final override fun importProject(skipIndexing: Boolean?) {
