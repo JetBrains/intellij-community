@@ -20,6 +20,13 @@ class IdeScaleTransformer : PersistentStateComponent<IdeScaleTransformer.Persist
 
   @Volatile
   private var current: ScalingParameters? = null
+    set(value) {
+      field = value
+      if (value?.shouldPersist == true) parametersToPersist = value
+    }
+
+  @Volatile
+  private var parametersToPersist: ScalingParameters? = null
   private var savedOriginalConsoleFontSize: Float = -1f
 
   val currentScale: Float
@@ -47,6 +54,10 @@ class IdeScaleTransformer : PersistentStateComponent<IdeScaleTransformer.Persist
 
   fun reset() {
     scale(DEFAULT_SCALE)
+  }
+
+  fun resetToLastPersistedScale(performBeforeTweaking: () -> Unit) {
+    scale(parametersToPersist?.scale ?: DEFAULT_SCALE, performBeforeTweaking)
   }
 
   private fun prepareTweaking() {
@@ -104,7 +115,7 @@ class IdeScaleTransformer : PersistentStateComponent<IdeScaleTransformer.Persist
 
   override fun getState(): PersistedScale =
     PersistedScale().also {
-      it.scaleFactor = currentScale
+      it.scaleFactor = parametersToPersist?.scale ?: DEFAULT_SCALE
       it.savedOriginalConsoleFontSize = savedOriginalConsoleFontSize
     }
 
@@ -126,6 +137,7 @@ class IdeScaleTransformer : PersistentStateComponent<IdeScaleTransformer.Persist
 private abstract class ScalingParameters {
   abstract val scale: Float
   abstract val consoleFontSize: Float
+  open val shouldPersist = true
   open val editorFont: Float
     get() = scaledEditorFontSize(EditorColorsManager.getInstance().globalScheme.editorFontSize2D)
 
@@ -141,6 +153,7 @@ private abstract class ScalingParameters {
   class FontOriented(override val editorFont: Float) : ScalingParameters() {
     override val scale: Float get() = JBUIScale.getFontScale(editorFont)
     override val consoleFontSize: Float get() = editorFont
+    override val shouldPersist = false
     override fun scaledEditorFontSize(fontSize: Float): Float = editorFont
   }
 }
