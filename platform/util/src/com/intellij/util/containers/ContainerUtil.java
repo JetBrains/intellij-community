@@ -2083,7 +2083,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated use {@link Collections#emptySet()}
+   * @deprecated use {@link Collections#emptySet()} or {@link Set#of()} instead
 
    * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
@@ -2096,7 +2096,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated use {@link Collections#singleton(Object)}
+   * @deprecated use {@link Collections#singleton(Object)} or {@link Set#of} instead
 
    * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
