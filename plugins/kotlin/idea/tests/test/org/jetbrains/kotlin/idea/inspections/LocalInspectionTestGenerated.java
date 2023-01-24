@@ -4952,6 +4952,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/featureDisabled.kt");
         }
 
+        @TestMetadata("forEachInsideEnumBody.kt")
+        public void testForEachInsideEnumBody() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/forEachInsideEnumBody.kt");
+        }
+
         @TestMetadata("forLoop.kt")
         public void testForLoop() throws Exception {
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/forLoop.kt");

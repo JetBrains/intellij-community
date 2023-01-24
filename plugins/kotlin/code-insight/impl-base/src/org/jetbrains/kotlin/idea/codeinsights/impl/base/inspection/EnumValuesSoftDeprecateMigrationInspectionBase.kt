@@ -10,13 +10,16 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
-import org.jetbrains.kotlin.idea.base.codeInsight.isSoftDeprecatedEnumValuesMethod
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
+import org.jetbrains.kotlin.idea.base.codeInsight.isSoftDeprecatedEnumValuesMethod
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.migration.MigrationInfo
@@ -205,7 +208,7 @@ abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinIn
         )
 
         private fun PsiElement.qualifiedOrSimpleValuesCall() =
-            if (parent is KtDotQualifiedExpression) parent // EnumClass.values()
-            else this                                      // values()
+            if ((parent as? KtDotQualifiedExpression)?.selectorExpression === this) parent // EnumClass.values()
+            else this // values()
     }
 }
