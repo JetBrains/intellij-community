@@ -65,7 +65,7 @@ internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl:
 
 private const val LIBRARY_TABLE_COMPONENT_NAME = "libraryTable"
 
-internal class JpsGlobalLibrariesFileSerializer(entitySource: JpsFileEntitySource.ExactGlobalFile)
+internal class JpsGlobalLibrariesFileSerializer(entitySource: JpsGlobalFileEntitySource)
   : JpsLibraryEntitiesSerializer(entitySource.file, entitySource,
                                  LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL)),
     JpsFileEntityTypeSerializer<LibraryEntity> {

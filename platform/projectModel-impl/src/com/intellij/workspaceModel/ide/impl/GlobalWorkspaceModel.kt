@@ -33,7 +33,7 @@ class GlobalWorkspaceModel: Disposable {
   private var filteredProject: Project? = null
   internal var isFromGlobalWorkspaceModel: Boolean = false
   private val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()
-  private val globalEntitiesFilter = { entitySource: EntitySource -> entitySource is JpsFileEntitySource.ExactGlobalFile }
+  private val globalEntitiesFilter = { entitySource: EntitySource -> entitySource is JpsGlobalFileEntitySource }
 
   val entityStorage: VersionedEntityStorageImpl
   val currentSnapshot: EntityStorageSnapshot
@@ -191,7 +191,7 @@ class GlobalWorkspaceModel: Disposable {
         LibraryRoot(root.url.createCopyAtManager(vfuManager), root.type, root.inclusionOptions)
       }
 
-      val entitySourceCopy = (libraryEntity.entitySource as JpsFileEntitySource.ExactGlobalFile).copy(vfuManager)
+      val entitySourceCopy = (libraryEntity.entitySource as JpsGlobalFileEntitySource).copy(vfuManager)
       val excludedRootsCopy = libraryEntity.excludedRoots.map { it.copy(entitySourceCopy, vfuManager) }
       val libraryPropertiesCopy = libraryEntity.libraryProperties?.copy(entitySourceCopy)
       val libraryEntityCopy = LibraryEntity(libraryEntity.name, libraryEntity.tableId, libraryRootsCopy, entitySourceCopy) {
@@ -232,5 +232,5 @@ private fun LibraryPropertiesEntity.copy(entitySource: EntitySource): LibraryPro
   }
 }
 
-private fun JpsFileEntitySource.ExactGlobalFile.copy(manager: VirtualFileUrlManager): JpsFileEntitySource.ExactGlobalFile =
-  JpsFileEntitySource.ExactGlobalFile(file.createCopyAtManager(manager))
+private fun JpsGlobalFileEntitySource.copy(manager: VirtualFileUrlManager): JpsGlobalFileEntitySource =
+  JpsGlobalFileEntitySource(file.createCopyAtManager(manager))

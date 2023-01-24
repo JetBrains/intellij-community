@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsGlobalFileEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.EntityChange
@@ -34,7 +34,7 @@ class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : W
         is EntityChange.Replaced -> change.newEntity
         is EntityChange.Removed -> change.oldEntity
       }
-      entity.entitySource is JpsFileEntitySource.ExactGlobalFile
+      entity.entitySource is JpsGlobalFileEntitySource
     }
   }
 }

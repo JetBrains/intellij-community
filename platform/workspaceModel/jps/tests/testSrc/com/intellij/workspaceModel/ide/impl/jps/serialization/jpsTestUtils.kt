@@ -384,7 +384,7 @@ internal fun checkSaveProjectAfterChange(originalProjectFile: File,
   assertDirectoryMatches(projectData.projectDir, expectedDir, emptySet(), emptyList())
 }
 
-internal fun copyAndLoadGlobalEntities(originalFile: String? = null, expectedFile: String? = null, testDir: File, parentDisposable: Disposable, action: (JpsFileEntitySource.ExactGlobalFile) -> Unit) {
+internal fun copyAndLoadGlobalEntities(originalFile: String? = null, expectedFile: String? = null, testDir: File, parentDisposable: Disposable, action: (JpsGlobalFileEntitySource) -> Unit) {
   val optionsFolder = testDir.resolve("options")
   PathManager.setExplicitConfigPath(testDir.absolutePath)
   ApplicationManager.getApplication().stateStore.setPath(testDir.toPath())
@@ -405,7 +405,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null, expectedFil
   // Entity source for global entities
   val virtualFileManager = VirtualFileUrlManager.getGlobalInstance()
   val globalLibrariesFile = virtualFileManager.fromUrl("$testDir/options/applicationLibraries.xml")
-  val entitySource = JpsFileEntitySource.ExactGlobalFile(globalLibrariesFile)
+  val entitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
 
   action(entitySource)
 
