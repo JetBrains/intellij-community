@@ -1,249 +1,193 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide;
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "FunctionName")
 
-import com.intellij.codeWithMe.ClientId;
-import com.intellij.concurrency.ThreadContext;
-import com.intellij.diagnostic.EventWatcher;
-import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.ide.actions.MaximizeActiveDialogAction;
-import com.intellij.ide.dnd.DnDManager;
-import com.intellij.ide.dnd.DnDManagerImpl;
-import com.intellij.ide.plugins.StartupAbortedException;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.InvocationUtil;
-import com.intellij.openapi.diagnostic.ControlFlowException;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
-import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
-import com.intellij.openapi.keymap.impl.KeyState;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.FocusManagerImpl;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EDT;
-import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.UIUtil;
-import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import sun.awt.AppContext;
+package com.intellij.ide
 
-import javax.swing.*;
-import javax.swing.plaf.basic.ComboPopup;
-import java.awt.*;
-import java.awt.event.*;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Constructor;
-import java.util.List;
-import java.util.Queue;
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
+import com.intellij.codeWithMe.ClientId.Companion.current
+import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
+import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.concurrency.resetThreadContext
+import com.intellij.diagnostic.EventWatcher
+import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.ide.MnemonicUsageCollector.Companion.logMnemonicUsed
+import com.intellij.ide.actions.MaximizeActiveDialogAction
+import com.intellij.ide.dnd.DnDManager
+import com.intellij.ide.dnd.DnDManagerImpl
+import com.intellij.ide.plugins.StartupAbortedException
+import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.InvocationUtil
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
+import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher
+import com.intellij.openapi.keymap.impl.KeyState
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.util.*
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.impl.FocusManagerImpl
+import com.intellij.ui.ComponentUtil
+import com.intellij.util.Alarm
+import com.intellij.util.SystemProperties
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
+import sun.awt.AppContext
+import java.awt.*
+import java.awt.event.*
+import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Consumer
+import javax.swing.*
+import javax.swing.plaf.basic.ComboPopup
 
-import static com.intellij.ide.ShutdownKt.removeListenerOnCompletion;
-
-public final class IdeEventQueue extends EventQueue {
-  private static final ExtensionPointName<EventDispatcher> DISPATCHERS_EP =
-    new ExtensionPointName<>("com.intellij.ideEventQueueDispatcher");
-
-  private static final boolean ourDefaultEventWithWrite = true;
-
-  private static final boolean ourSkipMetaPressOnLinux = Boolean.getBoolean("keymap.skip.meta.press.on.linux");
-  private static TransactionGuardImpl ourTransactionGuard;
-
-  // IdeEventQueue is created before log configuration - cannot be initialized as a part of IdeEventQueue
-  private static final class Logs {
-    private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
-    private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".runnables");
-  }
-
+@Suppress("FunctionName")
+class IdeEventQueue private constructor() : EventQueue() {
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
    */
-  private final Object myLock = new Object();
+  private val lock = Any()
+  private val idleListeners = ContainerUtil.createLockFreeCopyOnWriteList<Runnable>()
+  private val activityListeners = ContainerUtil.createLockFreeCopyOnWriteList<Runnable>()
+  private val idleRequestsAlarm = Alarm()
+  private val listenerToRequest = HashMap<Runnable, MyFireIdleRequest>()
 
-  private final List<Runnable> myIdleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<Runnable> myActivityListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Alarm myIdleRequestsAlarm = new Alarm();
-  private final Map<Runnable, MyFireIdleRequest> myListenerToRequest = new HashMap<>();
   // IdleListener -> MyFireIdleRequest
-  private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher(this);
-  private final IdeMouseEventDispatcher myMouseEventDispatcher = new IdeMouseEventDispatcher();
-  private final IdePopupManager myPopupManager = new IdePopupManager();
-  private long myPopupTriggerTime = -1;
+  val keyEventDispatcher: IdeKeyEventDispatcher = IdeKeyEventDispatcher(this)
+  val mouseEventDispatcher: IdeMouseEventDispatcher = IdeMouseEventDispatcher()
+  val popupManager: IdePopupManager = IdePopupManager()
+
+  @get:Internal
+  var popupTriggerTime: Long = -1
+    private set
 
   /**
-   * Counter of processed events. It is used to assert that data context lives only inside single
-   * <p/>
-   * Swing event.
+   * Counter of processed events. It is used to assert that data context lives only inside a single Swing event.
    */
-  private int myEventCount;
-  final AtomicInteger myKeyboardEventsPosted = new AtomicInteger();
-  final AtomicInteger myKeyboardEventsDispatched = new AtomicInteger();
-  private boolean myIsInInputEvent;
-  private @NotNull AWTEvent myCurrentEvent = new InvocationEvent(this, EmptyRunnable.getInstance());
-  private @Nullable AWTEvent myCurrentSequencedEvent;
-  private volatile long myLastActiveTime = System.nanoTime();
-  private long myLastEventTime = System.currentTimeMillis();
-  private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<EventDispatcher> myPreProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Set<Runnable> myReady = new HashSet<>();
-  private final HoverService myHoverService = new HoverService();
-  private boolean myKeyboardBusy;
-  private boolean myWinMetaPressed;
-  private int myInputMethodLock;
-  private final com.intellij.util.EventDispatcher<PostEventHook> myPostEventListeners =
-    com.intellij.util.EventDispatcher.create(PostEventHook.class);
+  var eventCount: Int = 0
 
-  private final Map<AWTEvent, List<Runnable>> myRunnablesWaitingFocusChange = new HashMap<>();
+  @VisibleForTesting
+  @JvmField
+  val keyboardEventPosted: AtomicInteger = AtomicInteger()
 
-  private final boolean myDispatchingOnMainThread;
+  @VisibleForTesting
+  @JvmField
+  val keyboardEventDispatched = AtomicInteger()
 
-  /**
-   * Executes given {@code runnable} after all focus activities are finished.
-   *
-   * @apiNote be careful with this method. It may run {@code runnable} synchronously in the context of the current thread, or may queue
-   * runnable until the focus events queue is empty. In the latter case runnable is going to be run while processing the last focus
-   * event from the queue, without any context, e.g. outside the write-safe context. Consider using safer {@link IdeFocusManager#doWhenFocusSettlesDown(Runnable, ModalityState)}
-   */
-  public void executeWhenAllFocusEventsLeftTheQueue(@NotNull Runnable runnable) {
-    ifFocusEventsInTheQueue(e -> {
-      List<Runnable> runnables = myRunnablesWaitingFocusChange.get(e);
-      if (runnables != null) {
-        if (Logs.FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-          Logs.FOCUS_AWARE_RUNNABLES_LOG.debug("We have already had a runnable for the event: " + e);
-        }
-        runnables.add(runnable);
-      }
-      else {
-        runnables = new ArrayList<>();
-        runnables.add(runnable);
-        myRunnablesWaitingFocusChange.put(e, runnables);
-      }
-    }, runnable);
-  }
+  private var isInInputEvent = false
+  var trueCurrentEvent: AWTEvent = InvocationEvent(this, EmptyRunnable.getInstance())
+    private set
 
-  public @NotNull String runnablesWaitingForFocusChangeState() {
-    return Strings.join(focusEventsList, event -> "[" + event.getID() + "; " + event.getSource().getClass().getName() + "]", ", ");
-  }
+  private var currentSequencedEvent: AWTEvent? = null
 
-  private @Nullable AWTEvent getLastFocusGainedEvent() {
-    AWTEvent result = null;
-    for (AWTEvent event : focusEventsList) {
-      if (event.getID() == FocusEvent.FOCUS_GAINED) {
-        result = event;
-      }
+  @Volatile
+  private var lastActiveTime = System.nanoTime()
+  private var lastEventTime = System.currentTimeMillis()
+  private val dispatchers = ContainerUtil.createLockFreeCopyOnWriteList<EventDispatcher>()
+  private val postProcessors = ContainerUtil.createLockFreeCopyOnWriteList<EventDispatcher>()
+  private val preProcessors = ContainerUtil.createLockFreeCopyOnWriteList<EventDispatcher>()
+  private val ready = HashSet<Runnable>()
+  private val hoverService = HoverService()
+  private var keyboardBusy = false
+  private var winMetaPressed = false
+  private var inputMethodLock = 0
+  private val postEventListeners = ContainerUtil.createLockFreeCopyOnWriteList<PostEventHook>()
+  private val runnablesWaitingFocusChange = HashMap<AWTEvent, MutableList<Runnable>>()
+
+  private val focusEventList = ConcurrentLinkedQueue<AWTEvent>()
+
+  @Internal
+  @JvmField
+  val isDispatchingOnMainThread: Boolean = Thread.currentThread().name.contains("AppKit")
+
+  companion object {
+    @JvmStatic
+    private val _instance by lazy { IdeEventQueue() }
+
+    @JvmStatic
+    fun getInstance(): IdeEventQueue = _instance
+
+    // used for GuiTests to stop IdeEventQueue when application is disposed already
+    @JvmStatic
+    fun applicationClose() {
+      appIsLoaded = false
     }
-    return result;
   }
 
-  private void ifFocusEventsInTheQueue(@NotNull Consumer<? super AWTEvent> yes, @NotNull Runnable no) {
-    AWTEvent lastFocusGainedEvent = getLastFocusGainedEvent();
+  /**
+   * Executes given `runnable` after all focus activities are finished.
+   *
+   * @apiNote be careful with this method. It may run `runnable` synchronously in the context of the current thread, or may queue
+   * runnable until the focus events queue is empty. In the latter case, runnable is going to be run while processing the last focus
+   * event from the queue, without any context, e.g. outside the write-safe context. Consider using safer [IdeFocusManager.doWhenFocusSettlesDown]
+   */
+  fun executeWhenAllFocusEventsLeftTheQueue(runnable: Runnable) {
+    ifFocusEventsInTheQueue(
+      yes = { e ->
+        var runnables = runnablesWaitingFocusChange[e]
+        if (runnables == null) {
+          runnables = mutableListOf()
+          runnables.add(runnable)
+          runnablesWaitingFocusChange[e] = runnables
+        }
+        else {
+          Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "We have already had a runnable for the event: $e" }
+          runnables.add(runnable)
+        }
+      },
+      no = runnable,
+    )
+  }
 
+  private fun runnablesWaitingForFocusChangeState(): String {
+    return focusEventList.joinToString(separator = ", ") { event -> "[${event.id}; ${event.source.javaClass.name}]" }
+  }
+
+  private fun getLastFocusGainedEvent(): AWTEvent? = focusEventList.lastOrNull { it.id == FocusEvent.FOCUS_GAINED }
+
+  private fun ifFocusEventsInTheQueue(yes: (AWTEvent) -> Unit, no: Runnable) {
+    val lastFocusGainedEvent = getLastFocusGainedEvent()
     if (lastFocusGainedEvent != null) {
-      if (Logs.FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-        Logs.FOCUS_AWARE_RUNNABLES_LOG.debug(
-          "Focus event list (trying to execute runnable): " + runnablesWaitingForFocusChangeState() + "\n" +
-          "    runnable saved for : [" + lastFocusGainedEvent.getID() + "; " +
-          lastFocusGainedEvent.getSource() + "] -> " + no.getClass().getName());
+      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug {
+        "Focus event list (trying to execute runnable): ${runnablesWaitingForFocusChangeState()}\n" +
+        "runnable saved for : [${lastFocusGainedEvent.id}; ${lastFocusGainedEvent.source}] -> ${no.javaClass.name}"
       }
-      yes.accept(lastFocusGainedEvent);
+      yes(lastFocusGainedEvent)
     }
     else {
-      if (Logs.FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-        Logs.FOCUS_AWARE_RUNNABLES_LOG.debug(
-          "No focus gained event in the queue runnable is run on EDT if needed : " + no.getClass().getName());
-      }
-      EdtInvocationManager.invokeLaterIfNeeded(no);
+      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : " + no.javaClass.name }
+      EdtInvocationManager.invokeLaterIfNeeded(no)
     }
   }
 
-  private static final class IdeEventQueueHolder {
-    private static final IdeEventQueue INSTANCE = new IdeEventQueue();
-  }
-
-  public static IdeEventQueue getInstance() {
-    return IdeEventQueueHolder.INSTANCE;
-  }
-
-  private IdeEventQueue() {
-    assert EventQueue.isDispatchThread() : Thread.currentThread();
-    EventQueue systemEventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    assert !(systemEventQueue instanceof IdeEventQueue) : systemEventQueue;
-    myDispatchingOnMainThread = Thread.currentThread().getName().contains("AppKit");
-    systemEventQueue.push(this);
-
-    EDT.updateEdt();
-
-    IdeKeyboardFocusManager.replaceDefault();
-
-    addDispatcher(new WindowsAltSuppressor(), null);
-    if (SystemInfoRt.isWindows && Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
-      // 'Windows+Up' shortcut would maximize active dialog under Win 7+
-      addDispatcher(new WindowsUpMaximizer(), null);
-    }
-    addDispatcher(new EditingCanceller(), null);
-    //addDispatcher(new UIMouseTracker(), null);
-
-    abracadabraDaberBoreh();
-
-    if (SystemProperties.getBooleanProperty("skip.move.resize.events", true)) {
-      myPostEventListeners.addListener(IdeEventQueue::skipMoveResizeEvents);
-    }
-  }
-
-  public boolean isDispatchingOnMainThread() {
-    return myDispatchingOnMainThread;
-  }
-
-  private static boolean skipMoveResizeEvents(AWTEvent event) {
-    // JList, JTable and JTree paint every cell/row/column using the following method:
-    //   CellRendererPane.paintComponent(Graphics, Component, Container, int, int, int, int, boolean)
-    // This method sets bounds to a renderer component and invokes the following internal method:
-    //   Component.notifyNewBounds
-    // All default and simple renderers do not post specified events,
-    // but panel-based renderers have to post events by contract.
-    switch (event.getID()) {
-      case ComponentEvent.COMPONENT_MOVED, ComponentEvent.COMPONENT_RESIZED, HierarchyEvent.ANCESTOR_MOVED, HierarchyEvent.ANCESTOR_RESIZED -> {
-        Object source = event.getSource();
-        if (source instanceof Component &&
-            ComponentUtil.getParentOfType(CellRendererPane.class, (Component)source) != null) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  private void abracadabraDaberBoreh() {
+  @Suppress("SpellCheckingInspection")
+  private fun abracadabraDaberBoreh() {
     // We need to track if there are KeyBoardEvents in IdeEventQueue
     // So we want to intercept all events posted to IdeEventQueue and increment counters
     // However, the regular control flow goes like this:
@@ -253,561 +197,401 @@ public final class IdeEventQueue extends EventQueue {
     //  - replace "PostEventQueue" value in AppContext with this new PostEventQueue
     // After that the control flow goes like this:
     //    PostEventQueue.flush() -> IdeEventQueue.postEvent() -> We intercepted event, incremented counters.
-    try {
-      Class<?> aClass = Class.forName("sun.awt.PostEventQueue");
-      Constructor<?> constructor = aClass.getDeclaredConstructor(EventQueue.class);
-      constructor.setAccessible(true);
-      Object postEventQueue = constructor.newInstance(this);
-      AppContext.getAppContext().put("PostEventQueue", postEventQueue);
+    val aClass = Class.forName("sun.awt.PostEventQueue")
+    val constructor = aClass.getDeclaredConstructor(EventQueue::class.java)
+    constructor.isAccessible = true
+    val postEventQueue = constructor.newInstance(this)
+    AppContext.getAppContext().put("PostEventQueue", postEventQueue)
+  }
+
+  fun addIdleListener(runnable: Runnable, timeoutMillis: Int) {
+    require(timeoutMillis > 0 && TimeUnit.MILLISECONDS.toHours(timeoutMillis.toLong()) < 24) {
+      "This timeout value is unsupported: $timeoutMillis"
     }
-    catch (Exception e) {
-      throw new RuntimeException(e);
+
+    synchronized(lock) {
+      idleListeners.add(runnable)
+      val request = MyFireIdleRequest(runnable, timeoutMillis)
+      listenerToRequest[runnable] = request
+      EdtInvocationManager.invokeLaterIfNeeded { idleRequestsAlarm.addRequest(request, timeoutMillis) }
     }
   }
 
-  public void addIdleListener(final @NotNull Runnable runnable, final int timeoutMillis) {
-    if (timeoutMillis <= 0 || TimeUnit.MILLISECONDS.toHours(timeoutMillis) >= 24) {
-      throw new IllegalArgumentException("This timeout value is unsupported: " + timeoutMillis);
-    }
-    synchronized (myLock) {
-      myIdleListeners.add(runnable);
-      final MyFireIdleRequest request = new MyFireIdleRequest(runnable, timeoutMillis);
-      myListenerToRequest.put(runnable, request);
-      EdtInvocationManager.invokeLaterIfNeeded(() -> myIdleRequestsAlarm.addRequest(request, timeoutMillis));
-    }
-  }
-
-  public void removeIdleListener(final @NotNull Runnable runnable) {
-    synchronized (myLock) {
-      final boolean wasRemoved = myIdleListeners.remove(runnable);
+  fun removeIdleListener(runnable: Runnable) {
+    synchronized(lock) {
+      val wasRemoved = idleListeners.remove(runnable)
       if (!wasRemoved) {
-        Logs.LOG.error("unknown runnable: " + runnable);
+        Logs.LOG.error("unknown runnable: $runnable")
       }
-      final MyFireIdleRequest request = myListenerToRequest.remove(runnable);
-      Logs.LOG.assertTrue(request != null);
-      myIdleRequestsAlarm.cancelRequest(request);
+
+      val request = listenerToRequest.remove(runnable)
+      Logs.LOG.assertTrue(request != null)
+      idleRequestsAlarm.cancelRequest(request!!)
     }
   }
 
-  public void addActivityListener(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
-    myActivityListeners.add(runnable);
-    Disposer.register(parentDisposable, () -> myActivityListeners.remove(runnable));
+  fun addActivityListener(runnable: Runnable, parentDisposable: Disposable) {
+    activityListeners.add(runnable)
+    Disposer.register(parentDisposable) { activityListeners.remove(runnable) }
   }
 
-  public void addActivityListener(@NotNull Runnable runnable, @NotNull CoroutineScope coroutineScope) {
-    myActivityListeners.add(runnable);
-    removeListenerOnCompletion(coroutineScope, runnable, myActivityListeners);
-  }
-
-  public void addDispatcher(@NotNull EventDispatcher dispatcher, @Nullable Disposable parent) {
-    _addProcessor(dispatcher, parent, myDispatchers);
-  }
-
-  public void removeDispatcher(@NotNull EventDispatcher dispatcher) {
-    myDispatchers.remove(dispatcher);
-  }
-
-  public boolean containsDispatcher(@NotNull EventDispatcher dispatcher) {
-    return myDispatchers.contains(dispatcher);
-  }
-
-  public void addPostprocessor(@NotNull EventDispatcher dispatcher, @Nullable Disposable parent) {
-    _addProcessor(dispatcher, parent, myPostProcessors);
-  }
-
-  public void removePostprocessor(@NotNull EventDispatcher dispatcher) {
-    myPostProcessors.remove(dispatcher);
-  }
-
-  public void addPreprocessor(@NotNull EventDispatcher dispatcher, @Nullable Disposable parent) {
-    _addProcessor(dispatcher, parent, myPreProcessors);
-  }
-
-  private static void _addProcessor(@NotNull EventDispatcher dispatcher,
-                                    @Nullable Disposable parent,
-                                    @NotNull Collection<? super EventDispatcher> set) {
-    set.add(dispatcher);
-    if (parent != null) {
-      Disposer.register(parent, () -> set.remove(dispatcher));
+  fun addActivityListener(runnable: Runnable, coroutineScope: CoroutineScope) {
+    activityListeners.add(runnable)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      activityListeners.remove(runnable)
     }
   }
 
-  public int getEventCount() {
-    return myEventCount;
+  fun addDispatcher(dispatcher: EventDispatcher, parent: Disposable?) {
+    _addProcessor(dispatcher, parent, dispatchers)
   }
 
-  public void setEventCount(int evCount) {
-    myEventCount = evCount;
+  fun removeDispatcher(dispatcher: EventDispatcher) {
+    dispatchers.remove(dispatcher)
   }
 
-  public @NotNull AWTEvent getTrueCurrentEvent() {
-    return myCurrentEvent;
+  fun containsDispatcher(dispatcher: EventDispatcher): Boolean {
+    return dispatchers.contains(dispatcher)
   }
 
-  private static boolean ourAppIsLoaded;
-
-  private static boolean appIsLoaded() {
-    if (ourAppIsLoaded) {
-      return true;
-    }
-
-    if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      ourAppIsLoaded = true;
-      return true;
-    }
-    return ourAppIsLoaded;
+  fun addPostprocessor(dispatcher: EventDispatcher, parent: Disposable?) {
+    _addProcessor(dispatcher, parent, postProcessors)
   }
 
-  // used for GuiTests to stop IdeEventQueue when application is disposed already
-  public static void applicationClose() {
-    ourAppIsLoaded = false;
+  fun removePostprocessor(dispatcher: EventDispatcher) {
+    postProcessors.remove(dispatcher)
   }
 
-  @Override
-  public void dispatchEvent(@NotNull AWTEvent e) {
-    if (isDispatchingOnMainThread() && !EventQueue.isDispatchThread()) {
-      super.dispatchEvent(e);
-      return;
+  fun addPreprocessor(dispatcher: EventDispatcher, parent: Disposable?) {
+    _addProcessor(dispatcher, parent, preProcessors)
+  }
+
+  public override fun dispatchEvent(e: AWTEvent) {
+    var event = e
+
+    if (isDispatchingOnMainThread && !isDispatchThread()) {
+      super.dispatchEvent(event)
+      return
     }
 
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
-    long startedAt = System.currentTimeMillis();
-    PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstanceOrNull();
-    EventWatcher eventWatcher = EventWatcher.getInstanceOrNull();
+    val startedAt = System.currentTimeMillis()
+    val performanceWatcher = PerformanceWatcher.getInstanceOrNull()
+    val eventWatcher = EventWatcher.getInstanceOrNull()
     try {
-      if (performanceWatcher != null) {
-        performanceWatcher.edtEventStarted();
-      }
-      if (eventWatcher != null) {
-        eventWatcher.edtEventStarted(e, startedAt);
-      }
-
-      fixNestedSequenceEvent(e);
+      performanceWatcher?.edtEventStarted()
+      eventWatcher?.edtEventStarted(event, startedAt)
+      fixNestedSequenceEvent(event)
       // Add code below if you need
 
       // Update EDT if it changes (might happen after Application disposal)
-      EDT.updateEdt();
-
-      if (e.getID() == WindowEvent.WINDOW_ACTIVATED
-          || e.getID() == WindowEvent.WINDOW_DEICONIFIED
-          || e.getID() == WindowEvent.WINDOW_OPENED) {
-        ActiveWindowsWatcher.addActiveWindow((Window)e.getSource());
+      EDT.updateEdt()
+      if (event.id == WindowEvent.WINDOW_ACTIVATED || event.id == WindowEvent.WINDOW_DEICONIFIED || event.id == WindowEvent.WINDOW_OPENED) {
+        ActiveWindowsWatcher.addActiveWindow(event.source as Window)
       }
 
-      if (isMetaKeyPressedOnLinux(e)) return;
-
-      if (e.getSource() instanceof TrayIcon) {
-        dispatchTrayIconEvent(e);
-        return;
+      if (isMetaKeyPressedOnLinux(event)) {
+        return
       }
 
-      checkForTimeJump(startedAt);
-      myHoverService.process(e);
+      if (event.source is TrayIcon) {
+        dispatchTrayIconEvent(event)
+        return
+      }
+
+      checkForTimeJump(startedAt)
+      hoverService.process(event)
 
       if (!appIsLoaded()) {
         try {
-          super.dispatchEvent(e);
+          super.dispatchEvent(event)
         }
-        catch (Throwable t) {
-          processException(t);
+        catch (t: Throwable) {
+          processException(t)
         }
-        return;
+        return
       }
 
-      e = mapEvent(e);
-      AWTEvent metaEvent = mapMetaState(e);
-      if (metaEvent != null && Registry.is("keymap.windows.as.meta")) {
-        e = metaEvent;
+      event = mapEvent(event)
+      val metaEvent = mapMetaState(event)
+      if (metaEvent != null && Registry.`is`("keymap.windows.as.meta", false)) {
+        event = metaEvent
       }
-      if (SystemInfoRt.isMac && e instanceof InputEvent) {
-        disableAltGrUnsupportedOnMac(e);
+      if (SystemInfoRt.isMac && event is InputEvent) {
+        disableAltGrUnsupportedOnMac(event)
       }
 
-      boolean wasInputEvent = myIsInInputEvent;
-      myIsInInputEvent = isInputEvent(e);
-      AWTEvent oldEvent = myCurrentEvent;
-      myCurrentEvent = e;
-
-      AWTEvent finalE1 = e;
-      Runnable runnable = InvocationUtil.extractRunnable(e);
-      Class<? extends Runnable> runnableClass = runnable != null ? runnable.getClass() : Runnable.class;
-      Runnable processEventRunnable = () -> {
-        ProgressManager progressManager;
-        Application app = ApplicationManager.getApplication();
-        if (app != null && !app.isDisposed()) {
-          ProgressManager p = null;
+      val wasInputEvent = isInInputEvent
+      isInInputEvent = isInputEvent(event)
+      val oldEvent = trueCurrentEvent
+      trueCurrentEvent = event
+      val finalEvent = event
+      val runnable = InvocationUtil.extractRunnable(event)
+      val runnableClass = runnable?.javaClass ?: Runnable::class.java
+      val processEventRunnable = Runnable {
+        val app = ApplicationManager.getApplication()
+        val progressManager: ProgressManager? = if (app != null && !app.isDisposed) {
           try {
-            p = ProgressManager.getInstance();
+            ProgressManager.getInstance()
           }
-          catch (RuntimeException ex) {
-            Logs.LOG.warn("app services aren't yet initialized", ex);
+          catch (ex: RuntimeException) {
+            Logs.LOG.warn("app services aren't yet initialized", ex)
+            null
           }
-          progressManager = p;
         }
         else {
-          progressManager = null;
+          null
         }
 
         try {
-          runCustomProcessors(finalE1, myPreProcessors);
-
-          performActivity(finalE1, () -> {
+          runCustomProcessors(finalEvent, preProcessors)
+          performActivity(finalEvent) {
             if (progressManager != null) {
-              progressManager.computePrioritized(() -> {
-                _dispatchEvent(finalE1);
-                return null;
-              });
+              progressManager.computePrioritized(ThrowableComputable<Any?, RuntimeException> {
+                _dispatchEvent(finalEvent)
+                null
+              })
             }
             else {
-              _dispatchEvent(finalE1);
+              _dispatchEvent(finalEvent)
             }
-          });
+          }
         }
-        catch (Throwable t) {
-          processException(t);
+        catch (t: Throwable) {
+          processException(t)
         }
         finally {
-          myIsInInputEvent = wasInputEvent;
-          myCurrentEvent = oldEvent;
-
-          if (myCurrentSequencedEvent == finalE1) {
-            myCurrentSequencedEvent = null;
+          isInInputEvent = wasInputEvent
+          trueCurrentEvent = oldEvent
+          if (currentSequencedEvent === finalEvent) {
+            currentSequencedEvent = null
           }
-
-          runCustomProcessors(finalE1, myPostProcessors);
-
-          if (finalE1 instanceof KeyEvent) {
-            maybeReady();
+          runCustomProcessors(finalEvent, postProcessors)
+          if (finalEvent is KeyEvent) {
+            maybeReady()
           }
           if (eventWatcher != null && runnable != null && !InvocationUtil.isFlushNow(runnable)) {
-            eventWatcher.logTimeMillis(runnableClass != Runnable.class ? runnableClass.getName() : finalE1.toString(),
+            eventWatcher.logTimeMillis(if (runnableClass == Runnable::class.java) finalEvent.toString() else runnableClass.name,
                                        startedAt,
-                                       runnableClass);
+                                       runnableClass)
           }
         }
-
-        if (isFocusEvent(finalE1)) {
-          onFocusEvent(finalE1);
+        if (isFocusEvent(finalEvent)) {
+          onFocusEvent(finalEvent)
         }
-      };
+      }
 
       if (runnableClass == InvocationUtil.REPAINT_PROCESSING_CLASS) {
-        processEventRunnable.run();
-        return;
+        processEventRunnable.run()
+        return
       }
 
-      if (ourDefaultEventWithWrite) {
-        ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(processEventRunnable);
+      if (defaultEventWithWrite) {
+        ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(processEventRunnable)
       }
       else {
-        processEventRunnable.run();
+        processEventRunnable.run()
       }
     }
     finally {
-      Thread.interrupted();
-      if (e instanceof WindowEvent || e instanceof FocusEvent || e instanceof InputEvent) {
-        processIdleActivityListeners(e);
+      Thread.interrupted()
+      if (event is WindowEvent || event is FocusEvent || event is InputEvent) {
+        processIdleActivityListeners(event)
       }
-      if (performanceWatcher != null) {
-        performanceWatcher.edtEventFinished();
-      }
-      if (eventWatcher != null) {
-        eventWatcher.edtEventFinished(e, System.currentTimeMillis());
-      }
+      performanceWatcher?.edtEventFinished()
+      eventWatcher?.edtEventFinished(event, System.currentTimeMillis())
     }
   }
 
-  private void runCustomProcessors(@NotNull AWTEvent event, @NotNull List<? extends EventDispatcher> processors) {
-    for (EventDispatcher each : processors) {
+  private fun runCustomProcessors(event: AWTEvent, processors: List<EventDispatcher>) {
+    for (each in processors) {
       try {
-        each.dispatch(event);
+        each.dispatch(event)
       }
-      catch (Throwable t) {
-        processException(t);
+      catch (t: Throwable) {
+        processException(t)
       }
     }
   }
 
   // Fixes IDEA-218430: nested sequence events cause deadlock
-  private void fixNestedSequenceEvent(@NotNull AWTEvent e) {
-    if (e.getClass() == SequencedEventNestedFieldHolder.SEQUENCED_EVENT_CLASS) {
-      if (myCurrentSequencedEvent != null) {
-        AWTEvent sequenceEventToDispose = myCurrentSequencedEvent;
-        myCurrentSequencedEvent = null; // Set to null BEFORE dispose b/c `dispose` can dispatch events internally
-        SequencedEventNestedFieldHolder.invokeDispose(sequenceEventToDispose);
+  private fun fixNestedSequenceEvent(e: AWTEvent) {
+    if (e.javaClass == SequencedEventNestedFieldHolder.SEQUENCED_EVENT_CLASS) {
+      if (currentSequencedEvent != null) {
+        val sequenceEventToDispose = currentSequencedEvent!!
+        currentSequencedEvent = null // Set to null BEFORE dispose b/c `dispose` can dispatch events internally
+        SequencedEventNestedFieldHolder.invokeDispose(sequenceEventToDispose)
       }
-      myCurrentSequencedEvent = e;
+      currentSequencedEvent = e
     }
   }
 
-  private static void dispatchTrayIconEvent(@NotNull AWTEvent e) {
-    if (e instanceof ActionEvent) {
-      for (ActionListener listener : ((TrayIcon)e.getSource()).getActionListeners()) {
-        listener.actionPerformed((ActionEvent)e);
-      }
-    }
-  }
-
-  private static void disableAltGrUnsupportedOnMac(@NotNull AWTEvent e) {
-    if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH) {
-      ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
-    }
-    IdeKeyEventDispatcher.removeAltGraph((InputEvent)e);
-  }
-
-  private void onFocusEvent(@NotNull AWTEvent event) {
-    if (Logs.FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + runnablesWaitingForFocusChangeState());
-    }
-    List<AWTEvent> events = new ArrayList<>();
-    while (!focusEventsList.isEmpty()) {
-      AWTEvent f = focusEventsList.poll();
-      events.add(f);
-      if (f.equals(event)) {
-        break;
+  private fun onFocusEvent(event: AWTEvent) {
+    Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "Focus event list (execute on focus event): " + runnablesWaitingForFocusChangeState() }
+    val events = mutableListOf<AWTEvent>()
+    while (!focusEventList.isEmpty()) {
+      val f = focusEventList.poll()
+      events.add(f)
+      if (f == event) {
+        break
       }
     }
 
-    for (AWTEvent entry : events) {
-      List<Runnable> runnables = myRunnablesWaitingFocusChange.remove(entry);
-      if (runnables == null) {
-        continue;
-      }
-
-      for (Runnable r : runnables) {
-        if (r != null && !(r instanceof ExpirableRunnable && ((ExpirableRunnable)r).isExpired())) {
+    for (entry in events) {
+      val runnables = runnablesWaitingFocusChange.remove(entry) ?: continue
+      for (r in runnables) {
+        if (r !is ExpirableRunnable || !r.isExpired) {
           try {
-            r.run();
+            r.run()
           }
-          catch (Throwable e) {
-            processException(e);
+          catch (e: Throwable) {
+            processException(e)
           }
         }
       }
     }
   }
 
-  private static boolean isMetaKeyPressedOnLinux(@NotNull AWTEvent e) {
-    if (!ourSkipMetaPressOnLinux) {
-      return false;
+  // as we rely on system time monotonicity in many places, let's log anomalies at least
+  private fun checkForTimeJump(now: Long) {
+    if (lastEventTime > now + 1000) {
+      Logs.LOG.warn("System clock's jumped back by ~${(lastEventTime - now) / 1000} sec")
     }
-
-    boolean metaIsPressed = e instanceof InputEvent && (((InputEvent)e).getModifiersEx() & InputEvent.META_DOWN_MASK) != 0;
-    boolean typedKeyEvent = e.getID() == KeyEvent.KEY_TYPED;
-    return SystemInfoRt.isLinux && typedKeyEvent && metaIsPressed;
+    lastEventTime = now
   }
 
-  // as we rely on system time monotonicity in many places let's log anomalies at least.
-  private void checkForTimeJump(long now) {
-    if (myLastEventTime > now + 1000) {
-      Logs.LOG.warn("System clock's jumped back by ~" + (myLastEventTime - now) / 1000 + " sec");
-    }
-    myLastEventTime = now;
-  }
-
-  private static boolean isInputEvent(@NotNull AWTEvent e) {
-    return e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
-  }
-
-  @Override
-  public @NotNull AWTEvent getNextEvent() throws InterruptedException {
-    AWTEvent event = appIsLoaded() ?
-                     ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> super.getNextEvent()) :
-                     super.getNextEvent();
-    if (!(isDispatchingOnMainThread() && EventQueue.isDispatchThread()) &&
-        isKeyboardEvent(event) && myKeyboardEventsDispatched.incrementAndGet() > myKeyboardEventsPosted.get()) {
-      throw new RuntimeException(event + "; posted: " + myKeyboardEventsPosted + "; dispatched: " + myKeyboardEventsDispatched);
-    }
-    return event;
-  }
-
-  static void performActivity(@NotNull AWTEvent e, @NotNull Runnable runnable) {
-    TransactionGuardImpl transactionGuard = ourTransactionGuard;
-    if (transactionGuard == null && appIsLoaded()) {
-      Application app = ApplicationManager.getApplication();
-      if (app != null && !app.isDisposed()) {
-        ourTransactionGuard = transactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
-      }
-    }
-    if (transactionGuard == null) {
-      runnable.run();
+  override fun getNextEvent(): AWTEvent {
+    val event = if (appIsLoaded()) {
+      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite<AWTEvent, InterruptedException> { super.getNextEvent() }
     }
     else {
-      transactionGuard.performActivity(isInputEvent(e) || e instanceof ItemEvent || e instanceof FocusEvent, runnable);
+      super.getNextEvent()
     }
+    if (!(isDispatchingOnMainThread && isDispatchThread()) &&
+        isKeyboardEvent(event) &&
+        keyboardEventDispatched.incrementAndGet() > keyboardEventPosted.get()) {
+      throw RuntimeException("$event; posted: $keyboardEventPosted; dispatched: $keyboardEventDispatched")
+    }
+    return event
   }
 
-  private void processException(@NotNull Throwable t) {
+  private fun processException(exception: Throwable) {
+    var t = exception
     if (isTestMode()) {
-      ExceptionUtil.rethrow(t);
+      throw t
     }
 
-    if (t instanceof ControlFlowException && Boolean.getBoolean("report.control.flow.exceptions.in.edt")) {
+    if (t is ControlFlowException && java.lang.Boolean.getBoolean("report.control.flow.exceptions.in.edt")) {
       // 'bare' ControlFlowException-s are not reported
-      t = new RuntimeException(t);
+      t = RuntimeException(t)
     }
-    StartupAbortedException.processException(t);
-  }
-
-  private static @NotNull AWTEvent mapEvent(@NotNull AWTEvent e) {
-    return SystemInfoRt.isXWindow && e instanceof MouseEvent && ((MouseEvent)e).getButton() > 3 ? mapXWindowMouseEvent((MouseEvent)e) : e;
-  }
-
-  private static @NotNull AWTEvent mapXWindowMouseEvent(MouseEvent src) {
-    if (src.getButton() < 6) {
-      // Convert these events(buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
-      return new MouseWheelEvent(src.getComponent(), MouseEvent.MOUSE_WHEEL, src.getWhen(),
-                                 src.getModifiers() | InputEvent.SHIFT_DOWN_MASK, src.getX(), src.getY(),
-                                 0, false, MouseWheelEvent.WHEEL_UNIT_SCROLL, src.getClickCount(), src.getButton() == 4 ? -1 : 1);
-    }
-
-    // Here we "shift" events with buttons 6 and 7 to similar events with buttons 4 and 5
-    // See java.awt.InputEvent#BUTTON_DOWN_MASK, 1<<14 is 4th physical button, 1<<15 is 5th.
-    //noinspection MagicConstant
-    return new MouseEvent(src.getComponent(), src.getID(), src.getWhen(), src.getModifiers() | (1 << 8 + src.getButton()),
-                          src.getX(), src.getY(), 1, src.isPopupTrigger(), src.getButton() - 2);
+    StartupAbortedException.processException(t)
   }
 
   /**
-   * Here we try to use 'Windows' key like modifier, so we patch events with modifier 'Meta'
+   * Here we try to use 'Windows' a key like modifier, so we patch events with modifier 'Meta'
    * when 'Windows' key was pressed and still is not released.
    *
    * @param e event to be patched
-   * @return new 'patched' event if need, otherwise null
-   * <p>
-   * Note: As side-effect this method tracks special flag for 'Windows' key state that is valuable on itself
+   * @return new 'patched' event if you need, otherwise null
+   *
+   * Note: As side effect this method tracks a special flag for 'Windows' key state that is valuable on itself
    */
-  private @Nullable AWTEvent mapMetaState(@NotNull AWTEvent e) {
-    if (myWinMetaPressed) {
-      Application app = ApplicationManager.getApplication();
-
-      boolean weAreNotActive = app == null || !app.isActive();
-      weAreNotActive |= e instanceof FocusEvent && ((FocusEvent)e).getOppositeComponent() == null;
+  private fun mapMetaState(e: AWTEvent): AWTEvent? {
+    if (winMetaPressed) {
+      val app = ApplicationManager.getApplication()
+      var weAreNotActive = app == null || !app.isActive
+      weAreNotActive = weAreNotActive or (e is FocusEvent && e.oppositeComponent == null)
       if (weAreNotActive) {
-        myWinMetaPressed = false;
-        return null;
+        winMetaPressed = false
+        return null
       }
     }
 
-    if (e instanceof KeyEvent) {
-      KeyEvent ke = (KeyEvent)e;
-      if (ke.getKeyCode() == KeyEvent.VK_WINDOWS) {
-        if (ke.getID() == KeyEvent.KEY_PRESSED) myWinMetaPressed = true;
-        if (ke.getID() == KeyEvent.KEY_RELEASED) myWinMetaPressed = false;
-        return null;
+    if (e is KeyEvent) {
+      if (e.keyCode == KeyEvent.VK_WINDOWS) {
+        if (e.id == KeyEvent.KEY_PRESSED) winMetaPressed = true
+        if (e.id == KeyEvent.KEY_RELEASED) winMetaPressed = false
+        return null
       }
-      if (myWinMetaPressed) {
-        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), UIUtil.getAllModifiers(ke) | Event.META_MASK,
-                            ke.getKeyCode(),
-                            ke.getKeyChar(), ke.getKeyLocation());
+      if (winMetaPressed) {
+        @Suppress("DEPRECATION")
+        return KeyEvent(e.component, e.id, e.getWhen(), UIUtil.getAllModifiers(e) or Event.META_MASK,
+                        e.keyCode,
+                        e.keyChar, e.keyLocation)
       }
     }
 
-    if (myWinMetaPressed && e instanceof MouseEvent && ((MouseEvent)e).getButton() != 0) {
-      MouseEvent me = (MouseEvent)e;
-      return new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), UIUtil.getAllModifiers(me)  | Event.META_MASK,
-                            me.getX(), me.getY(),
-                            me.getClickCount(), me.isPopupTrigger(), me.getButton());
+    if (winMetaPressed && e is MouseEvent && e.button != 0) {
+      @Suppress("DEPRECATION")
+      return MouseEvent(e.component, e.id, e.getWhen(), UIUtil.getAllModifiers(e) or Event.META_MASK,
+                        e.x, e.y,
+                        e.clickCount, e.isPopupTrigger, e.button)
     }
-
-    return null;
+    return null
   }
 
-  private void _dispatchEvent(@NotNull AWTEvent e) {
-    if (e.getID() == MouseEvent.MOUSE_DRAGGED && appIsLoaded()) {
-      DnDManagerImpl dndManager = (DnDManagerImpl)DnDManager.getInstance();
-      if (dndManager != null) {
-        dndManager.setLastDropHandler(null);
+  private fun _dispatchEvent(e: AWTEvent) {
+    if (e.id == MouseEvent.MOUSE_DRAGGED && appIsLoaded()) {
+      (DnDManager.getInstance() as? DnDManagerImpl)?.lastDropHandler = null
+    }
+    eventCount++
+    keyboardBusy = e is KeyEvent || keyboardEventPosted.get() > keyboardEventDispatched.get()
+    if (e is KeyEvent) {
+      if (e.getID() == KeyEvent.KEY_RELEASED && e.keyCode == KeyEvent.VK_SHIFT) {
+        mouseEventDispatcher.resetHorScrollingTracker()
       }
     }
+    if (e is MouseWheelEvent && processMouseWheelEvent(e)) {
+      return
+    }
 
-    myEventCount++;
-
-    myKeyboardBusy = e instanceof KeyEvent || myKeyboardEventsPosted.get() > myKeyboardEventsDispatched.get();
-
-    if (e instanceof KeyEvent) {
-      if (e.getID() == KeyEvent.KEY_RELEASED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_SHIFT) {
-        myMouseEventDispatcher.resetHorScrollingTracker();
+    // increment the activity counter before performing the action so that they are called with data providers with fresh data
+    ActivityTracker.getInstance().inc()
+    if (popupManager.isPopupActive && popupManager.dispatch(e)) {
+      if (keyEventDispatcher.isWaitingForSecondKeyStroke) {
+        keyEventDispatcher.state = KeyState.STATE_INIT
       }
+      return
     }
 
-    if (e instanceof MouseWheelEvent && processMouseWheelEvent((MouseWheelEvent)e)) {
-      return;
+    if (e is WindowEvent) {
+      processAppActivationEvent(e)
     }
-
-    // Increment the activity counter before performing the action so that they are called with data providers with fresh data
-    ActivityTracker.getInstance().inc();
-
-    if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {
-      if (myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
-        myKeyEventDispatcher.setState(KeyState.STATE_INIT);
-      }
-      return;
-    }
-
-    if (e instanceof WindowEvent) {
-      processAppActivationEvent((WindowEvent)e);
-    }
-
     if (dispatchByCustomDispatchers(e)) {
-      return;
+      return
+    }
+    if (e is InputMethodEvent && SystemInfoRt.isMac && keyEventDispatcher.isWaitingForSecondKeyStroke) {
+      return
     }
 
-    if (e instanceof InputMethodEvent && SystemInfoRt.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
-      return;
+    val application = ApplicationManager.getApplication()
+    if (e is ComponentEvent && appIsLoaded && !application.isHeadlessEnvironment) {
+      (application.serviceIfCreated<WindowManager>() as WindowManagerEx?)?.dispatchComponentEvent(e)
     }
-
-    Application application = ApplicationManager.getApplication();
-    if (e instanceof ComponentEvent &&
-        ourAppIsLoaded &&
-        !application.isHeadlessEnvironment()) {
-      WindowManagerEx windowManager = (WindowManagerEx)application.getServiceIfCreated(WindowManager.class);
-      if (windowManager != null) {
-        windowManager.dispatchComponentEvent((ComponentEvent)e);
-      }
-    }
-
-    if (e instanceof KeyEvent) {
-      dispatchKeyEvent(e);
-    }
-    else if (e instanceof MouseEvent) {
-      dispatchMouseEvent(e);
-    }
-    else {
-      application.withoutImplicitRead(() -> defaultDispatchEvent(e));
+    when (e) {
+      is KeyEvent -> dispatchKeyEvent(e)
+      is MouseEvent -> dispatchMouseEvent(e)
+      else -> application.withoutImplicitRead { defaultDispatchEvent(e) }
     }
   }
 
-  private static boolean processMouseWheelEvent(@NotNull MouseWheelEvent e) {
-    MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
-    if (selectedPath.length <= 0 || selectedPath[0] instanceof ComboPopup) {
-      return false;
-    }
-
-    e.consume();
-    Component component = selectedPath[0].getComponent();
-    if (component instanceof JBPopupMenu) {
-      ((JBPopupMenu)component).processMouseWheelEvent(e);
-    }
-    return true;
-  }
-
-  private void processIdleActivityListeners(@NotNull AWTEvent e) {
-    boolean isActivityInputEvent = KeyEvent.KEY_PRESSED == e.getID() ||
-                                   KeyEvent.KEY_TYPED == e.getID() ||
-                                   MouseEvent.MOUSE_PRESSED == e.getID() ||
-                                   MouseEvent.MOUSE_RELEASED == e.getID() ||
-                                   MouseEvent.MOUSE_CLICKED == e.getID();
-    if (isActivityInputEvent || !(e instanceof InputEvent)) {
+  private fun processIdleActivityListeners(e: AWTEvent) {
+    val isActivityInputEvent = KeyEvent.KEY_PRESSED == e.id ||
+                               KeyEvent.KEY_TYPED == e.id ||
+                               MouseEvent.MOUSE_PRESSED == e.id ||
+                               MouseEvent.MOUSE_RELEASED == e.id ||
+                               MouseEvent.MOUSE_CLICKED == e.id
+    if (isActivityInputEvent || e !is InputEvent) {
       // Increment the activity counter right before notifying listeners so that the listeners would get data providers with fresh data
-      ActivityTracker.getInstance().inc();
+      ActivityTracker.getInstance().inc()
     }
-    synchronized (myLock) {
-      restartIdleTimer();
+    synchronized(lock) {
+      restartIdleTimer()
       if (isActivityInputEvent) {
-        myLastActiveTime = System.nanoTime();
-        for (Runnable activityListener : myActivityListeners) {
-          activityListener.run();
+        lastActiveTime = System.nanoTime()
+        for (activityListener in activityListeners) {
+          activityListener.run()
         }
       }
     }
@@ -817,574 +601,628 @@ public final class IdeEventQueue extends EventQueue {
    * Notify the event queue that IDE shouldn't be considered idle at this moment.
    */
   @ApiStatus.Experimental
-  public void restartIdleTimer() {
-    synchronized (myLock) {
-      myIdleRequestsAlarm.cancelAllRequests();
-      for (Runnable idleListener : myIdleListeners) {
-        final MyFireIdleRequest request = myListenerToRequest.get(idleListener);
+  fun restartIdleTimer() {
+    synchronized(lock) {
+      idleRequestsAlarm.cancelAllRequests()
+      for (idleListener in idleListeners) {
+        val request = listenerToRequest[idleListener]
         if (request == null) {
-          Logs.LOG.error("There is no request for " + idleListener);
+          Logs.LOG.error("There is no request for $idleListener")
         }
         else {
-          myIdleRequestsAlarm.addRequest(request, request.getTimeout(), ModalityState.NON_MODAL);
+          idleRequestsAlarm.addRequest(request, request.timeout, ModalityState.NON_MODAL)
         }
       }
     }
   }
 
-  private void dispatchKeyEvent(@NotNull AWTEvent e) {
-    if (myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
-      ((KeyEvent)e).consume();
+  private fun dispatchKeyEvent(e: AWTEvent) {
+    if (keyEventDispatcher.dispatchKeyEvent(e as KeyEvent)) {
+      e.consume()
     }
-    defaultDispatchEvent(e);
+    defaultDispatchEvent(e)
   }
 
-  private void dispatchMouseEvent(@NotNull AWTEvent e) {
-    MouseEvent me = (MouseEvent)e;
-
-    if (me.getID() == MouseEvent.MOUSE_PRESSED && me.getModifiers() > 0 && me.getModifiersEx() == 0) {
-      resetGlobalMouseEventTarget(me);
+  private fun dispatchMouseEvent(e: AWTEvent) {
+    val me = e as MouseEvent
+    @Suppress("DEPRECATION")
+    if (me.id == MouseEvent.MOUSE_PRESSED && me.modifiers > 0 && me.modifiersEx == 0) {
+      resetGlobalMouseEventTarget(me)
     }
-    if (IdeMouseEventDispatcher.patchClickCount(me) && me.getID() == MouseEvent.MOUSE_CLICKED) {
-      redispatchLater(me);
+    if (IdeMouseEventDispatcher.patchClickCount(me) && me.id == MouseEvent.MOUSE_CLICKED) {
+      redispatchLater(me)
     }
-    if (!myMouseEventDispatcher.dispatchMouseEvent(me)) {
-      defaultDispatchEvent(e);
+    if (!mouseEventDispatcher.dispatchMouseEvent(me)) {
+      defaultDispatchEvent(e)
     }
   }
 
   /**
-   * {@link java.awt.LightweightDispatcher#processMouseEvent} uses a recent 'active' component
-   * from inner WeakReference (see {@link LightweightDispatcher#mouseEventTarget}) even if the component has been already removed from component hierarchy.
+   * [java.awt.LightweightDispatcher.processMouseEvent] uses a recent 'active' component
+   * from inner WeakReference (see [LightweightDispatcher.mouseEventTarget]) even if the component has been already removed from component hierarchy.
    * So we have to reset this WeakReference with synthetic event just before processing of the actual event
    */
-  private void resetGlobalMouseEventTarget(MouseEvent me) {
-    super.dispatchEvent(new MouseEvent(me.getComponent(), MouseEvent.MOUSE_MOVED, me.getWhen(), 0, me.getX(), me.getY(), 0, false, 0));
+  private fun resetGlobalMouseEventTarget(me: MouseEvent) {
+    super.dispatchEvent(MouseEvent(me.component, MouseEvent.MOUSE_MOVED, me.getWhen(), 0, me.x, me.y, 0, false, 0))
   }
 
-  private void redispatchLater(MouseEvent me) {
-    MouseEvent toDispatch =
-      new MouseEvent(me.getComponent(), me.getID(), System.currentTimeMillis(), me.getModifiers(), me.getX(), me.getY(), 1,
-                     me.isPopupTrigger(), me.getButton());
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> dispatchEvent(toDispatch));
+  private fun redispatchLater(me: MouseEvent) {
+    @Suppress("DEPRECATION")
+    val toDispatch = MouseEvent(me.component, me.id, System.currentTimeMillis(), me.modifiers, me.x, me.y, 1, me.isPopupTrigger, me.button)
+    SwingUtilities.invokeLater { dispatchEvent(toDispatch) }
   }
 
-  private boolean dispatchByCustomDispatchers(@NotNull AWTEvent e) {
-    for (EventDispatcher eachDispatcher : myDispatchers) {
+  private fun dispatchByCustomDispatchers(e: AWTEvent): Boolean {
+    for (eachDispatcher in dispatchers) {
       try {
         if (eachDispatcher.dispatch(e)) {
-          return true;
+          return true
         }
       }
-      catch (Throwable t) {
-        processException(t);
+      catch (t: Throwable) {
+        processException(t)
       }
     }
-
-    for (EventDispatcher eachDispatcher : DISPATCHERS_EP.getExtensionsIfPointIsRegistered()) {
+    for (eachDispatcher in DISPATCHER_EP.extensionsIfPointIsRegistered) {
       try {
         if (eachDispatcher.dispatch(e)) {
-          return true;
+          return true
         }
       }
-      catch (Throwable t) {
-        processException(t);
+      catch (t: Throwable) {
+        processException(t)
       }
     }
-
-    return false;
+    return false
   }
 
-  private static void processAppActivationEvent(@NotNull WindowEvent event) {
-    ApplicationActivationStateManager.updateState(event);
-
-    if (event.getID() != WindowEvent.WINDOW_DEACTIVATED && event.getID() != WindowEvent.WINDOW_LOST_FOCUS) {
-      return;
-    }
-
-    Window eventWindow = event.getWindow();
-    Component focusOwnerInDeactivatedWindow = eventWindow.getMostRecentFocusOwner();
-    if (focusOwnerInDeactivatedWindow == null) {
-      return;
-    }
-
-    if (!appIsLoaded()) {
-      return;
-    }
-
-    WindowManagerEx windowManager = (WindowManagerEx)ApplicationManager.getApplication().getServiceIfCreated(WindowManager.class);
-    if (windowManager == null) {
-      return;
-    }
-
-    Component frame = ComponentUtil.findUltimateParent(eventWindow);
-    for (ProjectFrameHelper frameHelper : windowManager.getProjectFrameHelpers()) {
-      if (frame == frameHelper.getFrame()) {
-        IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
-        if (focusManager instanceof FocusManagerImpl) {
-          ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation((Window)frame, focusOwnerInDeactivatedWindow);
-        }
-      }
-    }
-  }
-
-  private void defaultDispatchEvent(@NotNull AWTEvent e) {
+  private fun defaultDispatchEvent(e: AWTEvent) {
     try {
-      maybeReady();
-      MouseEvent me = e instanceof MouseEvent ? (MouseEvent)e : null;
-      KeyEvent ke = e instanceof KeyEvent ? (KeyEvent)e : null;
-      boolean consumed = ke == null || ke.isConsumed();
-      if (me != null && (me.isPopupTrigger() || e.getID() == MouseEvent.MOUSE_PRESSED) ||
-          ke != null && ke.getKeyCode() == KeyEvent.VK_CONTEXT_MENU) {
-        myPopupTriggerTime = System.currentTimeMillis();
+      maybeReady()
+      val me = if (e is MouseEvent) e else null
+      val ke = if (e is KeyEvent) e else null
+      val consumed = ke == null || ke.isConsumed
+      if (me != null && (me.isPopupTrigger || e.id == MouseEvent.MOUSE_PRESSED) || ke != null && ke.keyCode == KeyEvent.VK_CONTEXT_MENU) {
+        popupTriggerTime = System.currentTimeMillis()
       }
-      super.dispatchEvent(e);
+      super.dispatchEvent(e)
       // collect mnemonics statistics only if key event was processed above
-      if (!consumed && ke.isConsumed() && KeyEvent.KEY_PRESSED == ke.getID()) {
-        MnemonicUsageCollector.logMnemonicUsed(ke);
+      if (!consumed && ke!!.isConsumed && KeyEvent.KEY_PRESSED == ke.id) {
+        logMnemonicUsed(ke)
       }
     }
-    catch (Throwable t) {
-      processException(t);
+    catch (t: Throwable) {
+      processException(t)
     }
   }
 
-  @ApiStatus.Internal
-  public long getPopupTriggerTime() {
-    return myPopupTriggerTime;
-  }
-
-  @ApiStatus.Internal
-  public void flushQueue() {
-    if (!EventQueue.isDispatchThread()) {
-      throw new IllegalStateException("Must be called from EDT but got: " + Thread.currentThread());
-    }
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+  @Internal
+  fun flushQueue() {
+    EDT.assertIsEdt()
+    resetThreadContext().use {
       while (true) {
-        AWTEvent event = peekEvent();
-        if (event == null) return;
+        peekEvent() ?: return
         try {
-          dispatchEvent(getNextEvent());
+          dispatchEvent(nextEvent)
         }
-        catch (Exception e) {
-          Logs.LOG.error(e); //?
+        catch (e: Exception) {
+          Logs.LOG.error(e)
         }
       }
     }
   }
 
-  public void pumpEventsForHierarchy(@NotNull Component modalComponent,
-                                     @NotNull Future<?> exitCondition,
-                                     @NotNull Consumer<? super AWTEvent> eventConsumer) {
-    assert EventQueue.isDispatchThread();
-    if (Logs.LOG.isDebugEnabled()) {
-      Logs.LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
-    }
-    while (!exitCondition.isDone()) {
+  fun pumpEventsForHierarchy(modalComponent: Component, exitCondition: Future<*>, eventConsumer: Consumer<AWTEvent>) {
+    EDT.assertIsEdt()
+    Logs.LOG.debug { "pumpEventsForHierarchy($modalComponent, $exitCondition)" }
+
+    while (!exitCondition.isDone) {
       try {
-        AWTEvent event = getNextEvent();
-        boolean consumed = consumeUnrelatedEvent(modalComponent, event);
+        val event = nextEvent
+        val consumed = consumeUnrelatedEvent(modalComponent, event)
         if (!consumed) {
-          dispatchEvent(event);
+          dispatchEvent(event)
         }
-        eventConsumer.accept(event);
+        eventConsumer.accept(event)
       }
-      catch (Throwable e) {
-        Logs.LOG.error(e);
+      catch (e: Throwable) {
+        Logs.LOG.error(e)
       }
     }
-    if (Logs.LOG.isDebugEnabled()) {
-      Logs.LOG.debug("pumpEventsForHierarchy.exit(" + modalComponent + ", " + exitCondition + ")");
-    }
+    Logs.LOG.debug { "pumpEventsForHierarchy.exit($modalComponent, $exitCondition)" }
   }
 
-  // return true if consumed
-  @ApiStatus.Internal
-  public static boolean consumeUnrelatedEvent(@Nullable Component modalComponent, @NotNull AWTEvent event) {
-    if (modalComponent == null) {
-      if (event instanceof InputEvent && event.getSource() instanceof Component) {
-        if (Logs.LOG.isDebugEnabled()) {
-          Logs.LOG.debug("pumpEventsForHierarchy.consumed: " + event);
-        }
-        ((InputEvent)event).consume();
-        return true;
-      }
-      else {
-        return false;
-      }
-    }
-    boolean consumed = false;
-    if (event instanceof InputEvent) {
-      Object s = event.getSource();
-      if (s instanceof Component) {
-        Component c = (Component)s;
-        Window modalWindow = SwingUtilities.windowForComponent(modalComponent);
-        while (c != null && c != modalWindow) c = c.getParent();
-        if (c == null) {
-          consumed = true;
-          if (Logs.LOG.isDebugEnabled()) {
-            Logs.LOG.debug("pumpEventsForHierarchy.consumed: " + event);
-          }
-          ((InputEvent)event).consume();
-        }
-      }
-    }
-    return consumed;
+  fun interface EventDispatcher {
+    fun dispatch(e: AWTEvent): Boolean
   }
 
-  @FunctionalInterface
-  public interface EventDispatcher {
-    boolean dispatch(@NotNull AWTEvent e);
-  }
-
-  private final class MyFireIdleRequest implements Runnable {
-    private final Runnable myRunnable;
-    private final int myTimeout;
-
-
-    MyFireIdleRequest(@NotNull Runnable runnable, final int timeout) {
-      myTimeout = timeout;
-      myRunnable = runnable;
-    }
-
-
-    @Override
-    public void run() {
-      myRunnable.run();
-      synchronized (myLock) {
+  private inner class MyFireIdleRequest(@JvmField val runnable: Runnable, @JvmField val timeout: Int) : Runnable {
+    override fun run() {
+      runnable.run()
+      synchronized(lock) {
         // do not reschedule if not interested anymore
-        if (myIdleListeners.contains(myRunnable)) {
-          myIdleRequestsAlarm.addRequest(this, myTimeout, ModalityState.NON_MODAL);
+        if (idleListeners.contains(runnable)) {
+          idleRequestsAlarm.addRequest(this, timeout, ModalityState.NON_MODAL)
         }
       }
     }
 
-    public int getTimeout() {
-      return myTimeout;
-    }
-
-    @Override
-    public String toString() {
-      return "Fire idle request. delay: " + getTimeout() + "; runnable: " + myRunnable;
-    }
+    override fun toString(): String = "Fire idle request. delay: $timeout; runnable: $runnable"
   }
 
-  public long getIdleTime() {
-    return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - myLastActiveTime);
-  }
-
-  public @NotNull IdePopupManager getPopupManager() {
-    return myPopupManager;
-  }
-
-  public @NotNull IdeKeyEventDispatcher getKeyEventDispatcher() {
-    return myKeyEventDispatcher;
-  }
-
-  public @NotNull IdeMouseEventDispatcher getMouseEventDispatcher() {
-    return myMouseEventDispatcher;
-  }
+  val idleTime: Long
+    get() = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastActiveTime)
 
   /**
-   * Same as {@link #blockNextEvents(MouseEvent, IdeEventQueue.BlockMode)} with {@code blockMode} equal to {@code COMPLETE}.
+   * When `blockMode` is `COMPLETE`, blocks following related mouse events completely, when `blockMode` is
+   * `ACTIONS` only blocks performing actions bound to corresponding mouse shortcuts.
    */
-  public void blockNextEvents(@NotNull MouseEvent e) {
-    blockNextEvents(e, BlockMode.COMPLETE);
-  }
-
   /**
-   * When {@code blockMode} is {@code COMPLETE}, blocks following related mouse events completely, when {@code blockMode} is
-   * {@code ACTIONS} only blocks performing actions bound to corresponding mouse shortcuts.
+   * Same as [.blockNextEvents] with `blockMode` equal to `COMPLETE`.
    */
-  public void blockNextEvents(@NotNull MouseEvent e, @NotNull BlockMode blockMode) {
-    myMouseEventDispatcher.blockNextEvents(e, blockMode);
+  @JvmOverloads
+  fun blockNextEvents(e: MouseEvent, blockMode: BlockMode = BlockMode.COMPLETE) {
+    mouseEventDispatcher.blockNextEvents(e, blockMode)
   }
 
-  private boolean isReady() {
-    return !myKeyboardBusy && myKeyEventDispatcher.isReady();
-  }
+  private val isReady: Boolean
+    get() = !keyboardBusy && keyEventDispatcher.isReady
 
-  public void maybeReady() {
-    if (myReady.isEmpty() || !isReady()) return;
-
-    invokeReadyHandlers();
-  }
-
-  private void invokeReadyHandlers() {
-    Runnable[] ready = myReady.toArray(ArrayUtil.EMPTY_RUNNABLE_ARRAY);
-    myReady.clear();
-
-    for (Runnable each : ready) {
-      each.run();
+  fun maybeReady() {
+    if (ready.isNotEmpty() && isReady) {
+      invokeReadyHandlers()
     }
   }
 
-  public void doWhenReady(@NotNull Runnable runnable) {
-    if (EventQueue.isDispatchThread()) {
-      myReady.add(runnable);
-      maybeReady();
+  private fun invokeReadyHandlers() {
+    val ready = ready.toTypedArray()
+    this.ready.clear()
+    for (each in ready) {
+      each.run()
+    }
+  }
+
+  fun doWhenReady(runnable: Runnable) {
+    if (isDispatchThread()) {
+      ready.add(runnable)
+      maybeReady()
     }
     else {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
-        myReady.add(runnable);
-        maybeReady();
-      });
-    }
-  }
-
-  public boolean isPopupActive() {
-    return myPopupManager.isPopupActive();
-  }
-
-  private static final class WindowsAltSuppressor implements EventDispatcher {
-    private boolean myWaitingForAltRelease;
-    private Robot myRobot;
-
-    @Override
-    public boolean dispatch(@NotNull AWTEvent e) {
-      return e instanceof KeyEvent && dispatchKeyEvent((KeyEvent)e);
-    }
-
-    private boolean dispatchKeyEvent(@NotNull KeyEvent ke) {
-      boolean dispatch = true;
-      final Component component = ke.getComponent();
-      boolean pureAlt = ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | InputEvent.ALT_MASK) == InputEvent.ALT_MASK;
-      if (!pureAlt) {
-        myWaitingForAltRelease = false;
+      SwingUtilities.invokeLater {
+        ready.add(runnable)
+        maybeReady()
       }
-      else {
-        UISettings uiSettings = UISettings.getInstanceOrNull();
-        if (uiSettings == null ||
-            !SystemInfoRt.isWindows ||
-            !Registry.is("actionSystem.win.suppressAlt") ||
-            !(uiSettings.getHideToolStripes() || uiSettings.getPresentationMode())) {
-          return false;
-        }
-
-        if (ke.getID() == KeyEvent.KEY_PRESSED) {
-          dispatch = !myWaitingForAltRelease;
-        }
-        else if (ke.getID() == KeyEvent.KEY_RELEASED) {
-          if (myWaitingForAltRelease) {
-            myWaitingForAltRelease = false;
-            dispatch = false;
-          }
-          else if (component != null) {
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(() -> {
-              try {
-                final Window window = ComponentUtil.getWindow(component);
-                if (window == null || !window.isActive()) {
-                  return;
-                }
-                myWaitingForAltRelease = true;
-                if (myRobot == null) {
-                  myRobot = new Robot();
-                }
-                myRobot.keyPress(KeyEvent.VK_ALT);
-                myRobot.keyRelease(KeyEvent.VK_ALT);
-              }
-              catch (AWTException e1) {
-                Logs.LOG.debug(e1);
-              }
-            });
-          }
-        }
-      }
-      return !dispatch;
     }
   }
+
+  val isPopupActive: Boolean
+    get() = popupManager.isPopupActive
 
   //Windows OS doesn't support a Windows+Up/Down shortcut for dialogs, so we provide a workaround
-  private final class WindowsUpMaximizer implements EventDispatcher {
-    @SuppressWarnings("SSBasedInspection")
-    @Override
-    public boolean dispatch(@NotNull AWTEvent e) {
-      if (myWinMetaPressed
-          && e instanceof KeyEvent
-          && e.getID() == KeyEvent.KEY_RELEASED
-          && (((KeyEvent)e).getKeyCode() == KeyEvent.VK_UP || ((KeyEvent)e).getKeyCode() == KeyEvent.VK_DOWN)) {
-        Component parent = ComponentUtil.getWindow(((KeyEvent)e).getComponent());
-        if (parent instanceof JDialog) {
-          final JDialog dialog = (JDialog)parent;
-          SwingUtilities.invokeLater(() -> {
-            if (((KeyEvent)e).getKeyCode() == KeyEvent.VK_UP) {
-              MaximizeActiveDialogAction.maximize(dialog);
+  private inner class WindowsUpMaximizer : EventDispatcher {
+    override fun dispatch(e: AWTEvent): Boolean {
+      if ((winMetaPressed
+           && e is KeyEvent && e.getID() == KeyEvent.KEY_RELEASED) && (e.keyCode == KeyEvent.VK_UP || e.keyCode == KeyEvent.VK_DOWN)) {
+        val parent: Component? = ComponentUtil.getWindow(e.component)
+        if (parent is JDialog) {
+          SwingUtilities.invokeLater {
+            if (e.keyCode == KeyEvent.VK_UP) {
+              MaximizeActiveDialogAction.maximize(parent)
             }
             else {
-              MaximizeActiveDialogAction.normalize(dialog);
+              MaximizeActiveDialogAction.normalize(parent)
             }
-          });
-          return true;
+          }
+          return true
         }
       }
-      return false;
+      return false
     }
   }
 
-  //We have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
-  private static final class EditingCanceller implements EventDispatcher {
-    @Override
-    public boolean dispatch(@NotNull AWTEvent e) {
-      return e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE &&
-             !getInstance().getPopupManager().isPopupActive() && cancelCellEditing();
-    }
+  val isInputMethodEnabled: Boolean
+    get() = !SystemInfoRt.isMac || inputMethodLock == 0
 
-    private static boolean cancelCellEditing() {
-      final Component owner = ComponentUtil.findParentByCondition(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(),
-                                                                  component -> component instanceof JTable || component instanceof JTree);
-
-      if (owner instanceof JTable && ((JTable)owner).isEditing()) {
-        ((JTable)owner).editingCanceled(null);
-        return true;
-      }
-      if (owner instanceof JTree && ((JTree)owner).isEditing()) {
-        ((JTree)owner).cancelEditing();
-        return true;
-      }
-      return false;
-    }
+  fun disableInputMethods(parentDisposable: Disposable) {
+    inputMethodLock++
+    Disposer.register(parentDisposable) { inputMethodLock-- }
   }
 
-  public boolean isInputMethodEnabled() {
-    return !SystemInfoRt.isMac || myInputMethodLock == 0;
+  override fun postEvent(event: AWTEvent) {
+    doPostEvent(event)
   }
-
-  public void disableInputMethods(@NotNull Disposable parentDisposable) {
-    myInputMethodLock++;
-    Disposer.register(parentDisposable, () -> myInputMethodLock--);
-  }
-
-  @Override
-  public void postEvent(@NotNull AWTEvent event) {
-    doPostEvent(event);
-  }
-
-  private static final class SequencedEventNestedFieldHolder {
-    private static final MethodHandle DISPOSE_METHOD;
-    private static final Class<?> SEQUENCED_EVENT_CLASS;
-
-    private static void invokeDispose(AWTEvent event) {
-      try {
-        DISPOSE_METHOD.invoke(event);
-      }
-      catch (Throwable e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    static {
-      try {
-        SEQUENCED_EVENT_CLASS = IdeEventQueue.class.getClassLoader().loadClass("java.awt.SequencedEvent");
-        DISPOSE_METHOD = MethodHandles.privateLookupIn(SEQUENCED_EVENT_CLASS, MethodHandles.lookup()).findVirtual(SEQUENCED_EVENT_CLASS, "dispose", MethodType.methodType(Void.TYPE));
-      }
-      catch (Throwable e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
-
-  private static boolean isFocusEvent(@NotNull AWTEvent e) {
-    return
-      e.getID() == FocusEvent.FOCUS_GAINED ||
-      e.getID() == FocusEvent.FOCUS_LOST ||
-      e.getID() == WindowEvent.WINDOW_ACTIVATED ||
-      e.getID() == WindowEvent.WINDOW_DEACTIVATED ||
-      e.getID() == WindowEvent.WINDOW_LOST_FOCUS ||
-      e.getID() == WindowEvent.WINDOW_GAINED_FOCUS;
-  }
-
-  private final Queue<AWTEvent> focusEventsList = new ConcurrentLinkedQueue<>();
 
   // return true if posted, false if consumed immediately
-  boolean doPostEvent(@NotNull AWTEvent event) {
-    for (PostEventHook listener : myPostEventListeners.getListeners()) {
-      if (listener.consumePostedEvent(event)) {
-        return false;
+  fun doPostEvent(event: AWTEvent): Boolean {
+    for (listener in postEventListeners) {
+      if (listener(event)) {
+        return false
       }
     }
-
-    if (event instanceof InvocationEvent && !ClientId.isCurrentlyUnderLocalId()) {
-      // only do wrapping trickery with non-local events to preserve correct behaviour - local events will get dispatched under local ID anyways
-      ClientId clientId = ClientId.getCurrent();
-      super.postEvent(new InvocationEvent(event.getSource(), () -> {
-        try (AccessToken ignored = ClientId.withClientId(clientId)) {
-          dispatchEvent(event);
-        }
-      }));
-      return true;
+    if (event is InvocationEvent && !isCurrentlyUnderLocalId) {
+      // only do wrapping trickery with non-local events to preserve correct behaviour -
+      // local events will get dispatched under local ID anyway
+      val clientId = current
+      super.postEvent(InvocationEvent(event.getSource()) { withClientId(clientId).use { dispatchEvent(event) } })
+      return true
     }
-
-    if (event instanceof KeyEvent) {
-      myKeyboardEventsPosted.incrementAndGet();
+    if (event is KeyEvent) {
+      keyboardEventPosted.incrementAndGet()
     }
-
     if (isFocusEvent(event)) {
-      focusEventsList.add(event);
+      focusEventList.add(event)
     }
-
-    super.postEvent(event);
-
-    return true;
+    super.postEvent(event)
+    return true
   }
 
-  /**
-   * @deprecated Does nothing currently
-   */
-  @Deprecated
-  public void flushDelayedKeyEvents() { }
-
-  private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
-    return event instanceof KeyEvent;
+  @Deprecated("Does nothing currently")
+  fun flushDelayedKeyEvents() {
   }
 
-  private Boolean myTestMode;
+  private var myTestMode: Boolean? = null
 
-  private boolean isTestMode() {
-    Boolean testMode = myTestMode;
-    if (testMode != null) return testMode;
+  init {
+    assert(isDispatchThread()) { Thread.currentThread() }
+    val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
+    assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
+    systemEventQueue.push(this)
+    EDT.updateEdt()
+    IdeKeyboardFocusManager.replaceDefault()
+    addDispatcher(WindowsAltSuppressor(), null)
+    if (SystemInfoRt.isWindows && java.lang.Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
+      // 'Windows+Up' shortcut would maximize active dialog under Win 7+
+      addDispatcher(WindowsUpMaximizer(), null)
+    }
+    addDispatcher(EditingCanceller(), null)
+    //addDispatcher(new UIMouseTracker(), null);
+    abracadabraDaberBoreh()
+    if (SystemProperties.getBooleanProperty("skip.move.resize.events", true)) {
+      postEventListeners.add(::skipMoveResizeEvents)
+    }
+  }
 
-    Application application = ApplicationManager.getApplication();
-    if (application == null) return false;
-
-    testMode = application.isUnitTestMode();
-    myTestMode = testMode;
-    return testMode;
+  private fun isTestMode(): Boolean {
+    var testMode = myTestMode
+    if (testMode != null) {
+      return testMode
+    }
+    val application = ApplicationManager.getApplication() ?: return false
+    testMode = application.isUnitTestMode
+    myTestMode = testMode
+    return testMode
   }
 
   @TestOnly
-  void executeInProductionModeEvenThoughWeAreInTests(@NotNull Runnable runnable) {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    myTestMode = false;
+  fun executeInProductionModeEvenThoughWeAreInTests(runnable: Runnable) {
+    assert(ApplicationManager.getApplication().isUnitTestMode)
+    myTestMode = false
     try {
-      runnable.run();
+      runnable.run()
     }
     finally {
-      myTestMode = true;
+      myTestMode = true
     }
   }
 
   /**
-   * @see IdeEventQueue#blockNextEvents(MouseEvent, IdeEventQueue.BlockMode)
+   * @see IdeEventQueue.blockNextEvents
    */
-  public enum BlockMode {
-    COMPLETE, ACTIONS
+  enum class BlockMode {
+    COMPLETE,
+    ACTIONS
   }
 
-  /**
-   * An absolute guru API, please avoid using it at all cost.
-   */
-  @FunctionalInterface
-  public interface PostEventHook extends EventListener {
-    /**
-     * @return true if event is handled by the listener and should't be added to event queue at all
-     */
-    boolean consumePostedEvent(@NotNull AWTEvent event);
+  fun addPostEventListener(listener: PostEventHook, parentDisposable: Disposable) {
+    postEventListeners.add(listener)
+    Disposer.register(parentDisposable) {
+      postEventListeners.remove(listener)
+    }
+  }
+}
+
+// IdeEventQueue is created before log configuration - cannot be initialized as a part of IdeEventQueue
+private object Logs {
+  val LOG: Logger = logger<IdeEventQueue>()
+
+  val FOCUS_AWARE_RUNNABLES_LOG: Logger = Logger.getInstance(IdeEventQueue::class.java.name + ".runnables")
+}
+
+/**
+ * An absolute guru API, please avoid using it at all costs.
+ * @return true, if event is handled by the listener and shouldn't be added to an event queue at all
+ */
+typealias PostEventHook = (event: AWTEvent) -> Boolean
+
+private val DISPATCHER_EP = ExtensionPointName<IdeEventQueue.EventDispatcher>("com.intellij.ideEventQueueDispatcher")
+
+private const val defaultEventWithWrite = true
+
+private val isSkipMetaPressOnLinux = java.lang.Boolean.getBoolean("keymap.skip.meta.press.on.linux")
+
+private var transactionGuard: TransactionGuardImpl? = null
+
+private fun skipMoveResizeEvents(event: AWTEvent): Boolean {
+  // JList, JTable and JTree paint every cell/row/column using the following method:
+  //   CellRendererPane.paintComponent(Graphics, Component, Container, int, int, int, int, boolean)
+  // This method sets bounds to a renderer component and invokes the following internal method:
+  //   Component.notifyNewBounds
+  // All default and simple renderers do not post specified events,
+  // but panel-based renderers have to post events by contract.
+  when (event.id) {
+    ComponentEvent.COMPONENT_MOVED, ComponentEvent.COMPONENT_RESIZED, HierarchyEvent.ANCESTOR_MOVED, HierarchyEvent.ANCESTOR_RESIZED -> {
+      val source = event.source
+      if (source is Component && ComponentUtil.getParentOfType(CellRendererPane::class.java, source) != null) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
+private fun _addProcessor(dispatcher: IdeEventQueue.EventDispatcher,
+                          parent: Disposable?,
+                          set: MutableCollection<IdeEventQueue.EventDispatcher>) {
+  set.add(dispatcher)
+  if (parent != null) {
+    Disposer.register(parent) { set.remove(dispatcher) }
+  }
+}
+
+private var appIsLoaded = false
+
+private fun appIsLoaded(): Boolean {
+  return when {
+    appIsLoaded -> true
+    LoadingState.COMPONENTS_LOADED.isOccurred -> {
+      appIsLoaded = true
+      true
+    }
+    else -> appIsLoaded
+  }
+}
+
+private fun dispatchTrayIconEvent(e: AWTEvent) {
+  if (e is ActionEvent) {
+    for (listener in (e.getSource() as TrayIcon).actionListeners) {
+      listener.actionPerformed(e)
+    }
+  }
+}
+
+private fun disableAltGrUnsupportedOnMac(e: AWTEvent) {
+  if (e is KeyEvent && e.keyCode == KeyEvent.VK_ALT_GRAPH) {
+    e.keyCode = KeyEvent.VK_ALT
+  }
+  IdeKeyEventDispatcher.removeAltGraph((e as InputEvent))
+}
+
+private fun isMetaKeyPressedOnLinux(e: AWTEvent): Boolean {
+  if (!isSkipMetaPressOnLinux) {
+    return false
   }
 
-  public void addPostEventListener(@NotNull PostEventHook listener, @NotNull Disposable parentDisposable) {
-    myPostEventListeners.addListener(listener, parentDisposable);
+  val metaIsPressed = e is InputEvent && e.modifiersEx and InputEvent.META_DOWN_MASK != 0
+  val typedKeyEvent = e.id == KeyEvent.KEY_TYPED
+  return SystemInfoRt.isLinux && typedKeyEvent && metaIsPressed
+}
+
+private fun isInputEvent(e: AWTEvent): Boolean {
+  return e is InputEvent || e is InputMethodEvent || e is WindowEvent || e is ActionEvent
+}
+
+internal fun performActivity(e: AWTEvent, runnable: Runnable) {
+  var transactionGuard = transactionGuard
+  if (transactionGuard == null && appIsLoaded()) {
+    val app = ApplicationManager.getApplication()
+    if (app != null && !app.isDisposed) {
+      transactionGuard = TransactionGuard.getInstance() as TransactionGuardImpl
+      com.intellij.ide.transactionGuard = transactionGuard
+    }
+  }
+
+  if (transactionGuard == null) {
+    runnable.run()
+  }
+  else {
+    transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnable)
+  }
+}
+
+private fun mapEvent(e: AWTEvent): AWTEvent {
+  return if (SystemInfoRt.isXWindow && e is MouseEvent && e.button > 3) mapXWindowMouseEvent(e) else e
+}
+
+private fun mapXWindowMouseEvent(src: MouseEvent): AWTEvent {
+  if (src.button < 6) {
+    // Convert these events(buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
+    @Suppress("DEPRECATION")
+    return MouseWheelEvent(src.component, MouseEvent.MOUSE_WHEEL, src.getWhen(),
+                           src.modifiers or InputEvent.SHIFT_DOWN_MASK, src.x, src.y,
+                           0, false, MouseWheelEvent.WHEEL_UNIT_SCROLL, src.clickCount,
+                           if (src.button == 4) -1 else 1)
+  }
+  else {
+    // Here we "shift" events with buttons 6 and 7 to similar events with buttons 4 and 5
+    // See java.awt.InputEvent#BUTTON_DOWN_MASK, 1<<14 is 4th physical button, 1<<15 is 5th.
+    @Suppress("DEPRECATION")
+    return MouseEvent(src.component, src.id, src.getWhen(),
+                      src.modifiers or (1 shl 8 + src.button),
+                      src.x, src.y, 1, src.isPopupTrigger, src.button - 2)
+  }
+}
+
+private fun processMouseWheelEvent(e: MouseWheelEvent): Boolean {
+  val selectedPath = MenuSelectionManager.defaultManager().selectedPath
+  if (selectedPath.isEmpty() || selectedPath[0] is ComboPopup) {
+    return false
+  }
+
+  e.consume()
+  (selectedPath[0].component as? JBPopupMenu)?.processMouseWheelEvent(e)
+  return true
+}
+
+private fun processAppActivationEvent(event: WindowEvent) {
+  ApplicationActivationStateManager.updateState(event)
+  if (event.id != WindowEvent.WINDOW_DEACTIVATED && event.id != WindowEvent.WINDOW_LOST_FOCUS) {
+    return
+  }
+
+  val eventWindow = event.window
+  val focusOwnerInDeactivatedWindow = eventWindow.mostRecentFocusOwner ?: return
+  if (!appIsLoaded()) {
+    return
+  }
+
+  val windowManager = ApplicationManager.getApplication().serviceIfCreated<WindowManager>() as WindowManagerEx? ?: return
+  val frame = ComponentUtil.findUltimateParent(eventWindow)
+  for (frameHelper in windowManager.projectFrameHelpers) {
+    if (frame === frameHelper.frame) {
+      val focusManager = IdeFocusManager.getGlobalInstance()
+      if (focusManager is FocusManagerImpl) {
+        focusManager.setLastFocusedAtDeactivation(frame as Window, focusOwnerInDeactivatedWindow)
+      }
+    }
+  }
+}
+
+private fun isFocusEvent(e: AWTEvent): Boolean {
+  return e.id == FocusEvent.FOCUS_GAINED ||
+         e.id == FocusEvent.FOCUS_LOST ||
+         e.id == WindowEvent.WINDOW_ACTIVATED ||
+         e.id == WindowEvent.WINDOW_DEACTIVATED ||
+         e.id == WindowEvent.WINDOW_LOST_FOCUS ||
+         e.id == WindowEvent.WINDOW_GAINED_FOCUS
+}
+
+private fun isKeyboardEvent(event: AWTEvent): Boolean = event is KeyEvent
+
+// return true if consumed
+internal fun consumeUnrelatedEvent(modalComponent: Component?, event: AWTEvent): Boolean {
+  if (modalComponent == null) {
+    if (event is InputEvent && event.getSource() is Component) {
+      Logs.LOG.debug { "pumpEventsForHierarchy.consumed: $event" }
+      event.consume()
+      return true
+    }
+    else {
+      return false
+    }
+  }
+
+  var consumed = false
+  if (event is InputEvent) {
+    val s = event.getSource()
+    if (s is Component) {
+      var c: Component? = s
+      val modalWindow = SwingUtilities.windowForComponent(modalComponent)
+      while (c != null && c !== modalWindow) {
+        c = c.parent
+      }
+      if (c == null) {
+        consumed = true
+        Logs.LOG.debug { "pumpEventsForHierarchy.consumed: $event" }
+        event.consume()
+      }
+    }
+  }
+  return consumed
+}
+
+private object SequencedEventNestedFieldHolder {
+  private val DISPOSE_METHOD: MethodHandle
+
+  @JvmField
+  val SEQUENCED_EVENT_CLASS: Class<*> = SequencedEventNestedFieldHolder::class.java.classLoader.loadClass("java.awt.SequencedEvent")
+
+  fun invokeDispose(event: AWTEvent) {
+    DISPOSE_METHOD.invoke(event)
+  }
+
+  init {
+    DISPOSE_METHOD = MethodHandles.privateLookupIn(SEQUENCED_EVENT_CLASS, MethodHandles.lookup())
+      .findVirtual(SEQUENCED_EVENT_CLASS, "dispose", MethodType.methodType(Void.TYPE))
+  }
+}
+
+// we have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
+private class EditingCanceller : IdeEventQueue.EventDispatcher {
+  override fun dispatch(e: AWTEvent): Boolean {
+    return e is KeyEvent && e.getID() == KeyEvent.KEY_PRESSED && e.keyCode == KeyEvent.VK_ESCAPE &&
+           !IdeEventQueue.getInstance().popupManager.isPopupActive && cancelCellEditing()
+  }
+}
+
+private fun cancelCellEditing(): Boolean {
+  val owner = ComponentUtil.findParentByCondition(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner) { component ->
+    component is JTable || component is JTree
+  }
+  return when {
+    owner is JTable && owner.isEditing -> {
+      owner.editingCanceled(null)
+      true
+    }
+    owner is JTree && owner.isEditing -> {
+      owner.cancelEditing()
+      true
+    }
+    else -> false
+  }
+}
+
+private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
+  private var waitingForAltRelease = false
+  private var robot: Robot? = null
+
+  override fun dispatch(e: AWTEvent): Boolean = e is KeyEvent && dispatchKeyEvent(e)
+
+  private fun dispatchKeyEvent(ke: KeyEvent): Boolean {
+    @Suppress("DEPRECATION")
+    val pureAlt = ke.keyCode == KeyEvent.VK_ALT && ke.modifiers or InputEvent.ALT_MASK == InputEvent.ALT_MASK
+    if (!pureAlt) {
+      waitingForAltRelease = false
+      return false
+    }
+
+    val uiSettings = UISettings.instanceOrNull
+    if (uiSettings == null ||
+        !SystemInfoRt.isWindows ||
+        !Registry.`is`("actionSystem.win.suppressAlt") ||
+        !(uiSettings.hideToolStripes || uiSettings.presentationMode)) {
+      return false
+    }
+
+    val component = ke.component
+    var dispatch = true
+    if (ke.id == KeyEvent.KEY_PRESSED) {
+      dispatch = !waitingForAltRelease
+    }
+    else if (ke.id == KeyEvent.KEY_RELEASED) {
+      if (waitingForAltRelease) {
+        waitingForAltRelease = false
+        dispatch = false
+      }
+      else if (component != null) {
+        SwingUtilities.invokeLater {
+          try {
+            val window = ComponentUtil.getWindow(component)
+            if (window == null || !window.isActive) {
+              return@invokeLater
+            }
+            waitingForAltRelease = true
+            if (robot == null) {
+              robot = Robot()
+            }
+            robot!!.keyPress(KeyEvent.VK_ALT)
+            robot!!.keyRelease(KeyEvent.VK_ALT)
+          }
+          catch (e1: AWTException) {
+            Logs.LOG.debug(e1)
+          }
+        }
+      }
+    }
+    return !dispatch
   }
 }

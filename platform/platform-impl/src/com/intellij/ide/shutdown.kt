@@ -13,7 +13,6 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -73,9 +72,3 @@ private fun dumpCoroutinesLater(debugString: String): Job {
   }
 }
 
-@Internal
-internal fun <T> removeListenerOnCompletion(coroutineScope: CoroutineScope, listener: T, listeners: MutableList<T>) {
-  coroutineScope.coroutineContext.job.invokeOnCompletion {
-    listeners.remove(listener)
-  }
-}

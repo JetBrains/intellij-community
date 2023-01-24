@@ -4,6 +4,7 @@ package com.intellij.openapi.progress.impl
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.consumeUnrelatedEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.JobProvider
@@ -335,7 +336,7 @@ private fun IdeEventQueue.pumpEventsForHierarchy(
   assert(EventQueue.isDispatchThread())
   while (!exitCondition()) {
     val event: AWTEvent = nextEvent
-    val consumed = IdeEventQueue.consumeUnrelatedEvent(modalComponent(), event)
+    val consumed = consumeUnrelatedEvent(modalComponent(), event)
     if (!consumed) {
       dispatchEvent(event)
     }
