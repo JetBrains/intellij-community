@@ -186,7 +186,7 @@ private fun convertWindowStateToDescriptor(it: WindowInfoImpl): ToolWindowDescri
     isSplit = it.isSplit,
 
     type = it.type,
-    internalType = it.type,
+    internalType = it.internalType,
     contentUiType = when(it.contentUiType) {
       ToolWindowContentUiType.TABBED -> ToolWindowDescriptor.ToolWindowContentUiType.TABBED
       ToolWindowContentUiType.COMBO -> ToolWindowDescriptor.ToolWindowContentUiType.COMBO
@@ -227,7 +227,7 @@ private fun convertWindowDescriptorsToWindowInfos(list: List<ToolWindowDescripto
       isSplit = it.isSplit
 
       type = it.type
-      internalType = it.type
+      internalType = it.internalType
       contentUiType = when (it.contentUiType) {
         ToolWindowDescriptor.ToolWindowContentUiType.TABBED -> ToolWindowContentUiType.TABBED
         ToolWindowDescriptor.ToolWindowContentUiType.COMBO -> ToolWindowContentUiType.COMBO
