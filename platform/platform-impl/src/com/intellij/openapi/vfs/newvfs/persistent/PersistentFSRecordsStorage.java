@@ -44,7 +44,7 @@ abstract class PersistentFSRecordsStorage {
       case IN_MEMORY -> new PersistentInMemoryFSRecordsStorage(file, /*max size: */1 << 24);
 
       case OVER_LOCK_FREE_FILE_CACHE -> createLockFreeStorage(file);
-      case OVER_MMAPPED_FILE -> new PersistentFSRecordsLockFreeOverMMappedFile(file, PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_PAGE_SIZE);
+      case OVER_MMAPPED_FILE -> new PersistentFSRecordsLockFreeOverMMappedFile(file, PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE);
     };
   }
 
