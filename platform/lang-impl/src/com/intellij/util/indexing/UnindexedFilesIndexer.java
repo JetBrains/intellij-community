@@ -89,6 +89,14 @@ class UnindexedFilesIndexer extends DumbModeTask {
       " for indexing of " + myProject.getName());
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, numberOfIndexingThreads);
 
+    List<IndexUpdateRunner.FileSet> fileSets = getExplicitlyRequestedFilesSets();
+    if (!fileSets.isEmpty()) {
+      doIndexFiles(projectIndexingHistory, progressIndicator, indexUpdateRunner, fileSets);
+    }
+  }
+
+  @NotNull
+  private List<IndexUpdateRunner.FileSet> getExplicitlyRequestedFilesSets() {
     ArrayList<IndexableFilesIterator> providers = new ArrayList<>(providerToFiles.keySet());
     List<IndexUpdateRunner.FileSet> fileSets = new ArrayList<>();
     for (IndexableFilesIterator provider : providers) {
@@ -98,11 +106,13 @@ class UnindexedFilesIndexer extends DumbModeTask {
         fileSets.add(new IndexUpdateRunner.FileSet(myProject, provider.getDebugName(), providerFiles, progressText));
       }
     }
+    return fileSets;
+  }
 
-    if (fileSets.isEmpty()) {
-      return;
-    }
-
+  private void doIndexFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+                            @NotNull ProgressIndicator progressIndicator,
+                            IndexUpdateRunner indexUpdateRunner,
+                            List<IndexUpdateRunner.FileSet> fileSets) {
     IndexUpdateRunner.IndexingInterruptedException exception = null;
     try {
       indexUpdateRunner.indexFiles(myProject, fileSets, progressIndicator, projectIndexingHistory);
