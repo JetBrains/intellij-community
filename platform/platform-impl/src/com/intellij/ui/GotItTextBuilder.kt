@@ -5,6 +5,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.lang.documentation.DocumentationMarkup
 import org.jetbrains.annotations.Nls
 import java.net.URL
+import javax.swing.Icon
 import javax.swing.KeyStroke
 
 interface GotItTextBuilder {
@@ -31,6 +32,11 @@ interface GotItTextBuilder {
   fun icon(iconId: String): String = """<icon src="$iconId"/>"""
 
   /**
+   * Adds an inline icon.
+   */
+  fun icon(icon: Icon): String
+
+  /**
    * Adds an inline link with [text]. [action] will be executed on click.
    */
   fun link(@Nls text: String, action: () -> Unit): String
@@ -45,10 +51,20 @@ internal class GotItTextBuilderImpl : GotItTextBuilder {
   private val linkActions: MutableMap<Int, () -> Unit> = mutableMapOf()
   private var curLinkId: Int = 0
 
+  private val icons: MutableMap<Int, Icon> = mutableMapOf()
+  private var curIconId: Int = 0
+
   override fun link(@Nls text: String, action: () -> Unit): String {
     linkActions[curLinkId] = action
     return """<a href="${curLinkId++}">$text</a>"""
   }
 
+  override fun icon(icon: Icon): String {
+    icons[curIconId] = icon
+    return """<icon src="${curIconId++}"/>"""
+  }
+
   fun getLinkActions(): Map<Int, () -> Unit> = linkActions
+
+  fun getIcons(): Map<Int, Icon> = icons
 }
