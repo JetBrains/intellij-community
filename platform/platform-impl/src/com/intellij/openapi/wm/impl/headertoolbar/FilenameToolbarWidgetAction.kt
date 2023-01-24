@@ -64,18 +64,20 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     val project = ProjectUtil.getProjectForComponent(component)
     if (project != null) {
       val recentFiles = getInstance(project).fileList.asReversed()
-      val files = recentFiles.subList(1, recentFiles.lastIndex)
-      val renderer = SimpleColoredComponent()
-      JBPopupFactory.getInstance().createPopupChooserBuilder(files)
-        .setRenderer(ListCellRenderer { list, file, index, isSelected, cellHasFocus -> renderer.apply {
-          clear()
-          ipad = JBInsets.create(4, 12)
-          file as VirtualFile
-          applyFor(renderer, file, isSelected, isInToolbar = false)
-        } })
-        .setItemChosenCallback { t -> FileEditorManager.getInstance(project).openFile(t!!, true) }
-        .createPopup()
-        .showUnderneathOf(component)
+      if (recentFiles.size > 1) {
+        val files = recentFiles.subList(1, recentFiles.lastIndex + 1)
+        val renderer = SimpleColoredComponent()
+        JBPopupFactory.getInstance().createPopupChooserBuilder(files)
+          .setRenderer(ListCellRenderer { _, file, _, isSelected, _ -> renderer.apply {
+            clear()
+            ipad = JBInsets.create(4, 12)
+            file as VirtualFile
+            applyFor(renderer, file, isSelected, isInToolbar = false)
+          } })
+          .setItemChosenCallback { t -> FileEditorManager.getInstance(project).openFile(t!!, true) }
+          .createPopup()
+          .showUnderneathOf(component)
+      }
     }
   }
 
