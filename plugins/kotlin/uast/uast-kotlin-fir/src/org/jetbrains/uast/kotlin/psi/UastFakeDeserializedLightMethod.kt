@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtFunction
  * To keep the semantics of [UastFakeSourceLightMethod], here we introduce a dummy abstraction as a placeholder.
  */
 internal class UastFakeDeserializedLightMethod(
-    original: KtFunction,
+    private val original: KtFunction,
     containingClass: PsiClass,
 ) : UastFakeSourceLightMethod(original, containingClass) {
     override fun toString(): String = "${this::class.simpleName} of ${original.name}"
