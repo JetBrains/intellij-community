@@ -20,12 +20,14 @@ import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI.Borders
+import com.intellij.util.ui.StyleSheetUtil
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -157,7 +159,7 @@ object GitLabMergeRequestTimelineComponentFactory {
         val commits = lines[2]
         return VerticalListPanel().apply {
           add(SimpleHtmlPane(title))
-          add(StatusMessageComponentFactory.create(SimpleHtmlPane(commits)))
+          add(StatusMessageComponentFactory.create(createCommitsListPane(commits)))
         }
       }
       catch (e: Exception) {
@@ -166,6 +168,12 @@ object GitLabMergeRequestTimelineComponentFactory {
     }
     return StatusMessageComponentFactory.create(SimpleHtmlPane(GitLabUIUtil.convertToHtml(content)))
   }
+
+  private val noUlGapsStyleSheet by lazy {
+    StyleSheetUtil.loadStyleSheet("""ul {margin: 0}""")
+  }
+
+  private fun createCommitsListPane(commits: @NlsSafe String) = SimpleHtmlPane(noUlGapsStyleSheet, commits)
 
   private fun createLabeledEventContent(item: GitLabMergeRequestTimelineItem.LabelEvent): JComponent {
     val text = when (item.event.actionEnum) {

@@ -18,7 +18,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.content.Content
 import com.intellij.ui.speedSearch.NameFilteringListModel
@@ -36,6 +35,7 @@ import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.text.DefaultCaret
+import javax.swing.text.html.StyleSheet
 import kotlin.properties.Delegates
 
 object CollaborationToolsUIUtil {
@@ -293,9 +293,15 @@ fun TransparentScrollPane(content: JComponent): JScrollPane =
  * Read-only editor pane intended to display simple HTML snippet
  */
 @Suppress("FunctionName")
-fun SimpleHtmlPane(@Language("HTML") body: @Nls String? = null): JEditorPane =
+fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, @Language("HTML") body: @Nls String? = null): JEditorPane =
   JEditorPane().apply {
-    editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
+    editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().apply {
+      if (additionalStyleSheet != null) {
+        val defaultStyleSheet = StyleSheetUtil.getDefaultStyleSheet()
+        additionalStyleSheet.addStyleSheet(defaultStyleSheet)
+        withStyleSheet(additionalStyleSheet)
+      }
+    }.build()
 
     isEditable = false
     isOpaque = false
@@ -311,6 +317,12 @@ fun SimpleHtmlPane(@Language("HTML") body: @Nls String? = null): JEditorPane =
       setHtmlBody(body)
     }
   }
+
+/**
+ * Read-only editor pane intended to display simple HTML snippet
+ */
+@Suppress("FunctionName")
+fun SimpleHtmlPane(@Language("HTML") body: @Nls String? = null): JEditorPane = SimpleHtmlPane(null, body)
 
 fun JEditorPane.setHtmlBody(@Language("HTML") body: @Nls String) {
   if (body.isEmpty()) {
