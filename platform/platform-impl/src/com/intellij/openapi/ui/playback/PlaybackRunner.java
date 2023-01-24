@@ -3,20 +3,19 @@ package com.intellij.openapi.ui.playback;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.UiActivityMonitor;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.*;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.Alarm;
-import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.StringTokenizer;
 import io.opentelemetry.context.Context;
@@ -31,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 public class PlaybackRunner {
@@ -62,7 +62,7 @@ public class PlaybackRunner {
 
   private final Map<String, String> myRegistryValues = new HashMap<>();
 
-  protected final Disposable myOnStop = Disposer.newDisposable();
+  protected final CheckedDisposable myOnStop = Disposer.newCheckedDisposable();
 
   public PlaybackRunner(String script,
                         StatusCallback callback,
@@ -234,9 +234,11 @@ public class PlaybackRunner {
               int delay = getDelay(cmd);
               if (delay > 0) {
                 if (SwingUtilities.isEventDispatchThread()) {
-                  new SingleAlarm(Context.current().wrap(() -> {
-                    executeFrom(cmdIndex + 1, context.getBaseDir());
-                  }), delay, myOnStop, Alarm.ThreadToUse.SWING_THREAD).request();
+                  EdtScheduledExecutorService.getInstance().schedule(Context.current().wrap(() -> {
+                    if (!myOnStop.isDisposed()) {
+                      executeFrom(cmdIndex + 1, context.getBaseDir());
+                    }
+                  }), delay, TimeUnit.MILLISECONDS);
                 }
                 else {
                   LockSupport.parkUntil(System.currentTimeMillis() + delay);
