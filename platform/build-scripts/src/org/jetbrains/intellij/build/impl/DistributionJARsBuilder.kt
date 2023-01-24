@@ -224,8 +224,7 @@ Android Studio: don't patch ApplicationNamesInfo yet */
       if (e.path.startsWith(pluginLayoutRoot)) {
         val relPath = pluginLayoutRoot.relativize(e.path)
         // For plugins our classloader load jars only from lib folder
-        val parent = relPath.parent
-        if ((parent?.parent) == null && (relPath.parent.toString() == "lib")) {
+        if (relPath.nameCount == 3 && relPath.getName(1).toString() == "lib") {
           pluginsEntries.add(e)
         }
       }
@@ -451,7 +450,7 @@ internal suspend fun generateProjectStructureMapping(context: BuildContext,
     for (plugin in allPlugins) {
       if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, withEphemeral = true, context = context)) {
         entries.addAll(layoutDistribution(layout = plugin,
-                                          targetDirectory = pluginLayoutRoot,
+                                          targetDirectory = pluginLayoutRoot.resolve(plugin.directoryName),
                                           copyFiles = false,
                                           simplify = false,
                                           moduleOutputPatcher = moduleOutputPatcher,
