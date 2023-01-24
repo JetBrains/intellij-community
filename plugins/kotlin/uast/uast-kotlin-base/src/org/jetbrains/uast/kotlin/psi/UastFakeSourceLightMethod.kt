@@ -22,10 +22,10 @@ import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.lz
 
 @ApiStatus.Internal
-open class UastFakeLightMethod(
+open class UastFakeSourceLightMethod(
     original: KtFunction,
     containingClass: PsiClass,
-) : UastFakeLightMethodBase<KtFunction>(original, containingClass) {
+) : UastFakeSourceLightMethodBase<KtFunction>(original, containingClass) {
 
     private val _typeParameterList by lz {
         KotlinLightTypeParameterListBuilder(this).also { paramList ->
@@ -40,8 +40,10 @@ open class UastFakeLightMethod(
                         private val myExtendsList by lz {
                             super.getExtendsList().apply {
                                 p.extendsBound?.let { extendsBound ->
-                                    val psiType =
-                                        baseResolveProviderService.resolveToType(extendsBound, this@UastFakeLightMethod)
+                                    val psiType = baseResolveProviderService.resolveToType(
+                                        extendsBound,
+                                        this@UastFakeSourceLightMethod
+                                    )
                                     (psiType as? PsiClassType)?.let { addReference(it) }
                                 }
                             }
@@ -58,7 +60,7 @@ open class UastFakeLightMethod(
 
     private val _parameterList: PsiParameterList by lz {
         object : LightParameterListBuilder(original.manager, original.language) {
-            override fun getParent(): PsiElement = this@UastFakeLightMethod
+            override fun getParent(): PsiElement = this@UastFakeSourceLightMethod
             override fun getContainingFile(): PsiFile = parent.containingFile
 
             init {
@@ -68,7 +70,7 @@ open class UastFakeLightMethod(
                     this.addParameter(
                         UastKotlinPsiParameterBase(
                             "\$this\$${original.name}",
-                            baseResolveProviderService.resolveToType(receiver, this@UastFakeLightMethod)
+                            baseResolveProviderService.resolveToType(receiver, this@UastFakeSourceLightMethod)
                                 ?: UastErrorType,
                             parameterList,
                             receiver
@@ -77,7 +79,7 @@ open class UastFakeLightMethod(
                 }
 
                 for ((i, p) in original.valueParameters.withIndex()) {
-                    val type = baseResolveProviderService.getType(p, this@UastFakeLightMethod, isForFake = true)
+                    val type = baseResolveProviderService.getType(p, this@UastFakeSourceLightMethod, isForFake = true)
                         ?: UastErrorType
                     val adjustedType = if (p.isVarArg && type is PsiArrayType)
                         PsiEllipsisType(type.componentType, type.annotationProvider)
@@ -103,15 +105,15 @@ open class UastFakeLightMethod(
 }
 
 @ApiStatus.Internal
-class UastFakeLightPrimaryConstructor(
+class UastFakeSourceLightPrimaryConstructor(
     original: KtClassOrObject,
     lightClass: PsiClass,
-) : UastFakeLightMethodBase<KtClassOrObject>(original, lightClass) {
+) : UastFakeSourceLightMethodBase<KtClassOrObject>(original, lightClass) {
     override fun isConstructor(): Boolean = true
 }
 
 @ApiStatus.Internal
-abstract class UastFakeLightMethodBase<T: KtDeclaration>(
+abstract class UastFakeSourceLightMethodBase<T: KtDeclaration>(
     val original: T,
     containingClass: PsiClass,
 ) : LightMethodBuilder(
@@ -210,7 +212,7 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as UastFakeLightMethodBase<*>
+        other as UastFakeSourceLightMethodBase<*>
 
         if (original != other.original) return false
 
