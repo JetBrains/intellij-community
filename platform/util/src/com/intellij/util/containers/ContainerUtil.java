@@ -123,10 +123,11 @@ public final class ContainerUtil {
   }
 
   /**
-   * Please use more immutable {@link List#of(Object[])} or {@link Arrays#asList(Object[])} instead
+   * @deprecated Use more immutable {@link List#of(Object[])} or {@link Arrays#asList(Object[])} instead
    */
   @SafeVarargs
   @Contract(pure = true)
+  @Deprecated
   public static @NotNull <E> ArrayList<E> newArrayList(E @NotNull ... array) {
     return new ArrayList<>(Arrays.asList(array));
   }
