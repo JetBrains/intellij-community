@@ -50,7 +50,7 @@ kotlin {
         }
         jvmMain {
             dependencies {
-                implementation kotlin('stdlib-jvm')
+                implementation kotlin('stdlib')
             }
         }
         jvmTest {

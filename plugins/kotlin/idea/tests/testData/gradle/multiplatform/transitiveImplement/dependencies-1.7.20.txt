@@ -5,7 +5,6 @@ MODULES
     project.project1.main
     project.project1.test
         project.project1.main (COMPILE)
-        project.project1.main (RUNTIME)
     project.project2
     project.project2.custom
         project.project1.custom (refines, COMPILE)
@@ -16,7 +15,6 @@ MODULES
         project.project1.main (COMPILE)
         project.project1.test (refines, COMPILE)
         project.project2.main (COMPILE)
-        project.project2.main (RUNTIME)
         project.project1.main (COMPILE)
     project.project3
     project.project3.custom
@@ -32,7 +30,6 @@ MODULES
         project.project1.test (COMPILE)
         project.project2.test (COMPILE)
         project.project3.main (COMPILE)
-        project.project3.main (RUNTIME)
         project.project2.main (COMPILE)
         project.project1.main (COMPILE)
 
