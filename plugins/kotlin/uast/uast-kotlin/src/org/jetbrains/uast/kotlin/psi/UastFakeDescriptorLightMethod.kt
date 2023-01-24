@@ -4,6 +4,7 @@ package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.*
+import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.classes.toLightAnnotation
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
@@ -88,7 +89,10 @@ internal class UastFakeDescriptorLightMethod(
                             p.type.toPsiType(
                                 this@UastFakeDescriptorLightMethod,
                                 context,
-                                PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
+                                PsiTypeConversionConfiguration(
+                                    TypeOwnerKind.DECLARATION,
+                                    typeMappingMode = KtTypeMappingMode.VALUE_PARAMETER
+                                )
                             ),
                             parameterList,
                             p
@@ -148,7 +152,10 @@ internal abstract class UastFakeDescriptorLightMethodBase<T: CallableMemberDescr
         original.returnType?.toPsiType(
             this,
             context,
-            PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
+            PsiTypeConversionConfiguration(
+                TypeOwnerKind.DECLARATION,
+                typeMappingMode = KtTypeMappingMode.RETURN_TYPE
+            )
         )
     }
 
