@@ -507,7 +507,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSReco
     final int recordSizeInInts = RECORD_SIZE_IN_BYTES / Integer.BYTES;
 
     final long recordOffsetInFile = recordOffsetInFile(recordId);
-    final int recordOffsetOnPage = toOffsetOnPage(recordId);
+    final int recordOffsetOnPage = toOffsetOnPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
       final ByteBuffer pageBuffer = page.rawPageBuffer();
       for (int wordNo = 0; wordNo < recordSizeInInts; wordNo++) {
