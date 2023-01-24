@@ -6,7 +6,6 @@ import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.ide.util.MemberChooser
-import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.lang.LanguageCodeInsightActionHandler
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
@@ -16,7 +15,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
@@ -29,10 +30,11 @@ abstract class AbstractGenerateMembersHandler<T : ClassMember> : LanguageCodeIns
     fun collectMembersToGenerateUnderProgress(classOrObject: KtClassOrObject): Collection<T> {
         return ProgressManager.getInstance().runProcessWithProgressSynchronously<Collection<T>, RuntimeException>(
             { runReadAction { collectMembersToGenerate(classOrObject) } },
-            JavaAnalysisBundle.message("dialog.progress.collect.members.to.generate"), true, classOrObject.project
+            KotlinBundle.message("dialog.progress.collect.members.to.generate"), true, classOrObject.project
         )
     }
 
+    @RequiresBackgroundThread(generateAssertion = false)
     abstract fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<T>
 
     abstract fun generateMembers(editor: Editor, classOrObject: KtClassOrObject, selectedElements: Collection<T>, copyDoc: Boolean)
