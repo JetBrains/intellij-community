@@ -46,6 +46,10 @@ class CompletionGolfFileReportGenerator(
               }
             }
           }
+          div("cg-perfect-line") {
+            span { +perfectLineSign }
+            label("labelText") { +" - perfect line" }
+          }
           if (fileEvaluations.size > 1) {
             div("cg-evaluations") {
               label("labelText") { +"Evaluations:" }
@@ -159,25 +163,21 @@ class CompletionGolfFileReportGenerator(
     div("line-stats") {
       val movesCount = MovesCount().evaluate(listOf(session))
       val totalLatency = TotalLatencyMetric().evaluate(listOf(session))
+      val isPerfectLine = PerfectLine().evaluate(listOf(session)) == 1
 
       val info = mutableListOf<String>().apply {
-        add((movesNormalised * 100).format() + "%")
+        add("${(movesNormalised * 100).format()}%".padEnd(4, ' '))
         add("$movesCount act")
         add((totalLatency / 1000).format() + "s")
+        add(if (isPerfectLine) perfectLineSign else "")
       }
 
-      if (info.isNotEmpty()) {
-        i {
-          style = "display: flex;"
-          pre("no-select") { +"    #  " }
-          pre("stats-value") {
-            style = "padding-inline: 4px;"
-            +StringEscapeUtils.escapeHtml(
-              info.joinToString(separator = "\t", prefix = "", postfix = "\t") {
-                it.padEnd(4, ' ')
-              }
-            )
-          }
+      i {
+        style = "display: flex;"
+        pre("no-select") { +"    #  " }
+        pre("stats-value") {
+          style = "padding-inline: 4px;"
+          +info.joinToString(separator = "\t", prefix = "", postfix = "\t")
         }
       }
     }
@@ -228,6 +228,8 @@ class CompletionGolfFileReportGenerator(
   private fun Double.format() = DecimalFormat("0.##").format(this)
 
   companion object {
+    const val perfectLineSign: String = "\uD83C\uDF89" // :tada emoji
+
     private enum class Threshold(val value: Double) {
       EXCELLENT(System.getenv("CG_THRESHOLD_EXCELLENT")?.toDouble() ?: 0.15),
       GOOD(System.getenv("CG_THRESHOLD_GOOD")?.toDouble() ?: 0.25),
