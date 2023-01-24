@@ -7,6 +7,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 internal interface GitLabMergeRequestDetailsViewModel {
   val titleState: Flow<String>
   val descriptionState: Flow<String>
+  val targetBranch: Flow<String>
+  val sourceBranch: Flow<String>
 
   val number: String
   val url: String
@@ -15,6 +17,8 @@ internal interface GitLabMergeRequestDetailsViewModel {
 internal class GitLabMergeRequestDetailsViewModelImpl(mergeRequest: GitLabMergeRequest) : GitLabMergeRequestDetailsViewModel {
   override val titleState: Flow<String> = mergeRequest.title
   override val descriptionState: Flow<String> = mergeRequest.description
+  override val targetBranch: Flow<String> = mergeRequest.targetBranch
+  override val sourceBranch: Flow<String> = mergeRequest.sourceBranch
 
   override val number: String = mergeRequest.number
   override val url: String = mergeRequest.url

@@ -10,4 +10,6 @@ class GitLabMergeRequestDTO(
   val title: String,
   val description: String,
   val webUrl: String,
+  val targetBranch: String,
+  val sourceBranch: String
 ) : GitLabMergeRequestId

@@ -82,7 +82,7 @@ internal object GHPRDetailsComponentFactory {
       add(commitsAndBranches, CC().growX().gap(
         left = ReviewDetailsUIUtil.indentLeft,
         right = ReviewDetailsUIUtil.indentRight,
-        bottom = gapBetweenCommitsAndCommitInfo))
+        bottom = ReviewDetailsUIUtil.gapBetweenCommitsAndCommitInfo))
       add(commitInfo, CC().growX().maxHeight("$commitInfoMaxHeight").gap(
         left = ReviewDetailsUIUtil.indentLeft,
         right = ReviewDetailsUIUtil.indentRight,
@@ -104,7 +104,6 @@ internal object GHPRDetailsComponentFactory {
 
   private val indentBottom: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 15, newUI = 18)
 
-  private val gapBetweenCommitsAndCommitInfo: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 9, newUI = 15)
   private val gapBetweenCommitInfoAndCommitsBrowser: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 12, newUI = 12)
   private val gapBetweenCommitsBrowserAndStatusChecks: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 4, newUI = 4)
   private val gapBetweenCheckAndActions: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 10, newUI = 10)

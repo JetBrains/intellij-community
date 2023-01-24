@@ -9,6 +9,8 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDTO
 internal interface GitLabMergeRequest {
   val title: Flow<String>
   val description: Flow<String>
+  val targetBranch: Flow<String>
+  val sourceBranch: Flow<String>
 
   val number: String
   val url: String
@@ -19,6 +21,8 @@ internal class LoadedGitLabMergeRequest(mergeRequest: GitLabMergeRequestDTO) : G
 
   override val title: Flow<String> = mergeRequestState.map { it.title }
   override val description: Flow<String> = mergeRequestState.map { it.description }
+  override val targetBranch: Flow<String> = mergeRequestState.map { it.targetBranch }
+  override val sourceBranch: Flow<String> = mergeRequestState.map { it.sourceBranch }
 
   override val number: String = mergeRequest.iid
   override val url: String = mergeRequest.webUrl

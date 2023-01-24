@@ -55,6 +55,10 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft,
                            right = ReviewDetailsUIUtil.indentRight,
                            bottom = ReviewDetailsUIUtil.gapBetweenDescriptionAndCommits))
+      add(GitLabMergeRequestDetailsBranchComponentFactory.create(scope, detailsVm),
+          CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft,
+                           right = ReviewDetailsUIUtil.indentRight,
+                           bottom = ReviewDetailsUIUtil.gapBetweenCommitsAndCommitInfo))
       add(emptyPanel, CC().grow().push()) // TODO: remove
     }
   }

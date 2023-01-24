@@ -3,4 +3,7 @@ fragment mergeRequest on MergeRequest {
   title
   description
   webUrl
+
+  targetBranch
+  sourceBranch
 }
