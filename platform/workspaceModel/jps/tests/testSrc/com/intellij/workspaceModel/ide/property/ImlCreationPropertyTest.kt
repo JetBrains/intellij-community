@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.property
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
@@ -70,7 +72,7 @@ class ImlCreationPropertyTest {
   fun createAndSave() {
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
-        tempDir.toFile().listFiles().forEach { it.deleteRecursively() }
+        tempDir.toFile().listFiles()?.forEach { it.deleteRecursively() }
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
         env.executeCommands(Generator.constant(CreateAndSave(workspace)))
       }
@@ -90,7 +92,7 @@ class ImlCreationPropertyTest {
         assertContains(modulesXml, "${moduleEntity.name}.iml", ignoreCase = true,
                        "Link to module.iml is not found in modules.xml. ${moduleEntity.name}")
 
-        if (moduleEntity.isEmpty) {
+        if (moduleEntity.isEmpty && !javaPluginPresent()) {
           if (moduleEntity.isExternal) {
             val file = prj.cache.modules.resolve("${moduleEntity.name}.xml").toFile()
             if (file.exists()) {
@@ -192,6 +194,8 @@ class ImlCreationPropertyTest {
     }
   }
 }
+
+private fun javaPluginPresent() = PluginManagerCore.getPlugin(PluginId.findId("com.intellij.java")) != null
 
 internal val newEmptyWorkspace: Generator<MutableEntityStorage>
   get() = Generator.constant(MutableEntityStorage.create())
