@@ -7,11 +7,9 @@ import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleUtil
@@ -21,18 +19,19 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.InputValidatorEx
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
@@ -81,61 +80,78 @@ internal class NewKotlinFileAction : CreateFileFromTemplateAction(
         }
     }
 
-    private fun KtFile.editor() =
+    private fun KtFile.editor(): Editor? =
         FileEditorManager.getInstance(this.project).selectedTextEditor?.takeIf { it.document == this.viewProvider.document }
 
     override fun buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {
-        builder.setTitle(KotlinBundle.message("action.new.file.dialog.title"))
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.class.title"),
-                KotlinIcons.CLASS,
-                "Kotlin Class"
-            )
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.file.title"),
-                KotlinFileType.INSTANCE.icon,
-                "Kotlin File"
-            )
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.interface.title"),
-                KotlinIcons.INTERFACE,
-                "Kotlin Interface"
-            )
+        val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
+        val isInSourceRoot = projectFileIndex.isInSourceContent(directory.virtualFile) ||
+                CreateTemplateInPackageAction.isInContentRoot(directory.virtualFile, projectFileIndex)
 
-        if (project.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)) {
-            builder.addKind(
-                KotlinBundle.message("action.new.file.dialog.sealed.interface.title"),
-                KotlinIcons.INTERFACE,
-                "Kotlin Sealed Interface"
-            )
+        val sealedTemplatesEnabled = RegistryManager.getInstance().`is`("kotlin.create.sealed.templates.enabled")
+
+        builder.setTitle(KotlinBundle.message("action.new.file.dialog.title"))
+
+        if (isInSourceRoot) {
+            builder
+                .addKind(
+                    KotlinBundle.message("action.new.file.dialog.class.title"),
+                    KotlinIcons.CLASS,
+                    "Kotlin Class"
+                )
+                .addKind(
+                    KotlinBundle.message("action.new.file.dialog.file.title"),
+                    KotlinFileType.INSTANCE.icon,
+                    "Kotlin File"
+                )
+                .addKind(
+                    KotlinBundle.message("action.new.file.dialog.interface.title"),
+                    KotlinIcons.INTERFACE,
+                    "Kotlin Interface"
+                )
+
+            if (sealedTemplatesEnabled && project.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)) {
+                builder.addKind(
+                    KotlinBundle.message("action.new.file.dialog.sealed.interface.title"),
+                    KotlinIcons.INTERFACE,
+                    "Kotlin Sealed Interface"
+                )
+            }
+
+            builder
+                .addKind(
+                    KotlinBundle.message("action.new.file.dialog.data.class.title"),
+                    KotlinIcons.CLASS,
+                    "Kotlin Data Class"
+                )
+                .addKind(
+                    KotlinBundle.message("action.new.file.dialog.enum.title"),
+                    KotlinIcons.ENUM,
+                    "Kotlin Enum"
+                )
+
+            if (sealedTemplatesEnabled) {
+                builder.addKind(
+                    KotlinBundle.message("action.new.file.dialog.sealed.class.title"),
+                    KotlinIcons.CLASS,
+                    "Kotlin Sealed Class"
+                )
+            }
+
+            builder
+                .addKind(
+                    KotlinBundle.message("action.new.file.dialog.annotation.title"),
+                    KotlinIcons.ANNOTATION,
+                    "Kotlin Annotation"
+                )
+                .addKind(
+                    KotlinBundle.message("action.new.file.dialog.object.title"),
+                    KotlinIcons.OBJECT,
+                    "Kotlin Object"
+                )
         }
 
         builder
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.data.class.title"),
-                KotlinIcons.CLASS,
-                "Kotlin Data Class"
-            )
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.enum.title"),
-                KotlinIcons.ENUM,
-                "Kotlin Enum"
-            )
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.sealed.class.title"),
-                KotlinIcons.CLASS,
-                "Kotlin Sealed Class"
-            )
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.annotation.title"),
-                KotlinIcons.ANNOTATION,
-                "Kotlin Annotation"
-            )
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.object.title"),
-                KotlinIcons.OBJECT,
-                "Kotlin Object"
-            )
             .addKind(
                 KotlinBundle.message("action.new.script.name"),
                 KotlinIcons.SCRIPT,
@@ -153,28 +169,23 @@ internal class NewKotlinFileAction : CreateFileFromTemplateAction(
     override fun getActionName(directory: PsiDirectory, newName: String, templateName: String): String =
         KotlinBundle.message("action.new.file.text")
 
-    override fun isAvailable(dataContext: DataContext): Boolean {
-        if (super.isAvailable(dataContext)) {
-            val ideView = LangDataKeys.IDE_VIEW.getData(dataContext)!!
-            val project = PlatformDataKeys.PROJECT.getData(dataContext)!!
-            val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
-            return ideView.directories.any {
-                projectFileIndex.isInSourceContent(it.virtualFile) ||
-                CreateTemplateInPackageAction.isInContentRoot(it.virtualFile, projectFileIndex)
-            }
-        }
-
-        return false
-    }
-
     override fun hashCode(): Int = 0
 
     override fun equals(other: Any?): Boolean = other is NewKotlinFileAction
 
     override fun startInWriteAction() = false
 
-    override fun createFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory) =
-        createFileFromTemplateWithStat(name, template, dir)
+    override fun createFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
+        val targetTemplate = if ("Kotlin Worksheet" != template.name) {
+            template
+        } else {
+            object : FileTemplate by template {
+                override fun getExtension(): String = KOTLIN_WORKSHEET_EXTENSION
+            }
+        }
+
+        return createFileFromTemplateWithStat(name, targetTemplate, dir)
+    }
 }
 
 private object NameValidator : InputValidatorEx {
@@ -263,8 +274,11 @@ private fun createFileFromTemplateWithStat(name: String, template: FileTemplate,
 fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
     val directorySeparators = when (template.name) {
         "Kotlin File" -> FILE_SEPARATORS
+        "Kotlin Worksheet" -> FILE_SEPARATORS
+        "Kotlin Script" -> FILE_SEPARATORS
         else -> FQNAME_SEPARATORS
     }
+
     val (className, targetDir) = findOrCreateTarget(dir, name, directorySeparators)
 
     val service = DumbService.getInstance(dir.project)

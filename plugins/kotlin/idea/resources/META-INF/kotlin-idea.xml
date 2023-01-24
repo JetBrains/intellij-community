@@ -5,5 +5,9 @@
             default="true"
             groupKey="group.advanced.settings.kotlin"
             bundle="messages.KotlinIdeaBundle"/>
+
+    <registryKey key="kotlin.create.sealed.templates.enabled"
+                 defaultValue="false"
+                 description="Enables dedicated Sealed class/interface templates in File-New-Kotlin File"/>
   </extensions>
 </idea-plugin>
