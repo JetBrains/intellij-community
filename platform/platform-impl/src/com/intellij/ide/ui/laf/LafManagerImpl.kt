@@ -653,7 +653,14 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   private fun applyDensity(defaults: UIDefaults) {
-    if (UISettings.getInstance().uiDensity == UIDensity.COMPACT) {
+    val densityKey = "ui.density"
+    val oldDensityName = defaults.get(densityKey) as? String
+    val newDensity = UISettings.getInstance().uiDensity
+    if (oldDensityName == newDensity.name) {
+      return // re-applying the same density would break HiDPI-scalable values like Tree.rowHeight
+    }
+    defaults.put(densityKey, newDensity.name)
+    if (newDensity == UIDensity.COMPACT) {
       // main toolbar
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34))
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
