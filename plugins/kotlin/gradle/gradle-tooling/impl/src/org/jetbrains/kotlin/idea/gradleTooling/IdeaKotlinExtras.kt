@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.tooling.core.*
 import java.io.Serializable
 
 /**
- * Special implementation of [MutableExtras] designed for transprting extras from Gradles model builder process
+ * Special implementation of [MutableExtras] designed for transporting extras from Gradle's model builder process
  * into the IDE. This implementation supports [Serializable] by using the Serialization context provided by IntelliJ/Kotlin IDE plugin.
  * Serialized extras from the Kotlin Gradle Plugin will be contained within by a special key.
  */
