@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -228,7 +229,18 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       if (virtualFile != null) return Collections.singletonList(virtualFile);
     }
 
-    return ContainerUtil.createMaybeSingletonList(resolveSchemaFromOtherSources(file));
+    VirtualFile schemaFromOtherSources = resolveSchemaFromOtherSources(file);
+    if (schemaFromOtherSources != null) {
+      return ContainerUtil.createMaybeSingletonList(schemaFromOtherSources);
+    }
+
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+    if (psiFile == null) {
+      return Collections.emptyList();
+    }
+    else {
+      return ContainerUtil.createMaybeSingletonList(getDynamicSchemaForFile(psiFile));
+    }
   }
 
   @NotNull
