@@ -472,8 +472,10 @@ public class RootsChangedTest extends JavaModuleTestCase {
       entry.addSourceFolder(resourceUrl, JavaResourceRootType.RESOURCE);
       entry.addSourceFolder(testResourceUrl, JavaResourceRootType.TEST_RESOURCE);
 
-      model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(outputUrl);
-      model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(testOutputUrl);
+      CompilerModuleExtension moduleExtension = model.getModuleExtension(CompilerModuleExtension.class);
+      moduleExtension.inheritCompilerOutputPath(false);
+      moduleExtension.setCompilerOutputPath(outputUrl);
+      moduleExtension.setCompilerOutputPathForTests(testOutputUrl);
     });
 
     checkRootChangedOnDirCreationDeletion(contentRoot, excludedUrl, 1);

@@ -2,9 +2,12 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
@@ -44,6 +47,12 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    * Forces the index to update entities marked by [markDirty]. Must be called during execution of the same Write Action as [markDirty].
    */
   fun updateDirtyEntities()
+
+  /**
+   * Analyzes changes in VFS and determines how the index must be updated.
+   */
+  @RequiresReadLock
+  fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? 
 
   /**
    * Returns package name for [directory] if it's located under source root or classes root of Java library, or `null` otherwise.
@@ -109,4 +118,9 @@ internal sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo 
 @ApiStatus.Internal
 interface WorkspaceFileSetVisitor {
   fun visitIncludedRoot(fileSet: WorkspaceFileSet)
+}
+
+@ApiStatus.Internal
+interface VfsChangeApplier: AsyncFileListener.ChangeApplier {
+  val entitiesToReindex: List<EntityReference<WorkspaceEntity>>
 }

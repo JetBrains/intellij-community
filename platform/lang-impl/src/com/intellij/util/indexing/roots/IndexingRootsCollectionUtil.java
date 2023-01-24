@@ -306,6 +306,12 @@ public class IndexingRootsCollectionUtil {
       }
 
       @Override
+    public void registerExcludedRoot(@NotNull VirtualFileUrl excludedRoot,
+                                     @NotNull WorkspaceFileKind excludedFrom,
+                                     @NotNull WorkspaceEntity entity) {
+    }
+
+    @Override
       public void registerExcludedRoot(@NotNull VirtualFile excludedRoot,
                                        @NotNull WorkspaceFileKind excludedFrom,
                                        @NotNull WorkspaceEntity entity) {
@@ -322,6 +328,12 @@ public class IndexingRootsCollectionUtil {
                                              @NotNull Function1<? super VirtualFile, Boolean> condition,
                                              @NotNull WorkspaceEntity entity) {
 
+      }
+
+      @Override
+      public void registerExclusionCondition(@NotNull VirtualFileUrl root,
+                                             @NotNull Function1<? super VirtualFile, Boolean> condition,
+                                             @NotNull WorkspaceEntity entity) {
       }
     };
 

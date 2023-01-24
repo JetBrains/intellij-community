@@ -182,6 +182,10 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     indexData?.updateDirtyEntities()
   }
 
+  override fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? {
+    return indexData?.analyzeVfsChanges(events)
+  }
+
   fun onEntitiesChanged(event: VersionedStorageChange, storageKind: EntityStorageKind) {
     indexData?.onEntitiesChanged(event, storageKind)
   }
