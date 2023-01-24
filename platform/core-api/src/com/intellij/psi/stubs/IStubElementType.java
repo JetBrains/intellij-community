@@ -4,6 +4,7 @@ package com.intellij.psi.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
@@ -67,9 +68,14 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
 
   static @NotNull List<StubFieldAccessor> loadRegisteredStubElementTypes() {
     List<StubFieldAccessor> result = new ArrayList<>();
+
+    List<String> debugStr = new ArrayList<>();
     StubElementTypeHolderEP.EP_NAME.processWithPluginDescriptor((bean, pluginDescriptor) -> {
-      bean.initializeOptimized(pluginDescriptor, result);
+      int accessorCount = bean.initializeOptimized(pluginDescriptor, result);
+      debugStr.add(accessorCount + " in " + bean.holderClass);
     });
+    Logger.getInstance(IStubElementType.class).debug("Lazy stub element types loaded: " + StringUtil.join(debugStr, ", "));
+
 
     Set<String> lazyIds = new HashSet<>(result.size());
     for (StubFieldAccessor accessor : result) {
