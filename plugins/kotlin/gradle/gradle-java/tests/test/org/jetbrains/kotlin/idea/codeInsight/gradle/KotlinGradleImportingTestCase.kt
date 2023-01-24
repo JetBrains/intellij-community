@@ -23,6 +23,7 @@ import com.intellij.testFramework.VfsTestUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBinary
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -34,7 +35,9 @@ import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assume
 import org.junit.runners.Parameterized
+import java.io.ByteArrayInputStream
 import java.io.File
+import java.io.ObjectInputStream
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
@@ -183,7 +186,8 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
     protected fun buildKotlinMPPGradleModel(
         debuggerOptions: BuildGradleModelDebuggerOptions? = null
-    ): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel(debuggerOptions)
+    ): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel<KotlinMPPGradleModelBinary>(debuggerOptions)
+        .map { model -> ObjectInputStream(ByteArrayInputStream(model.data)).readObject() as KotlinMPPGradleModel }
 
     protected fun getSourceRootInfos(moduleName: String): List<Pair<String, JpsModuleSourceRootType<*>>> {
         return ModuleRootManager.getInstance(getModule(moduleName)).contentEntries.flatMap { contentEntry ->
@@ -282,10 +286,10 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
                                            override fun onFailure() {
                                                future.complete(taskErrOutput.toString())
                                            }
-                                       }, ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+                                       }, ProgressExecutionMode.IN_BACKGROUND_ASYNC
+            )
             return future.get(10, TimeUnit.SECONDS)
-        }
-        finally {
+        } finally {
             notificationManager.removeNotificationListener(stdErrListener)
         }
     }

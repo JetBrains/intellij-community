@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.jetbrains.kotlin.gradle.idea.proto.tcs.IdeaKotlinDependency
+import org.jetbrains.kotlin.gradle.idea.proto.tcs.toByteArray
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.serialization.ideaKotlinSerializationContext
 import java.io.Serializable
@@ -13,9 +14,17 @@ sealed interface IdeaKotlinDependenciesContainer {
 
 private data class IdeaKotlinDeserializedDependenciesContainer(
     private val dependencies: Map<String, Set<IdeaKotlinDependency>>
-) : IdeaKotlinDependenciesContainer {
+) : IdeaKotlinDependenciesContainer, Serializable {
     override fun get(sourceSetName: String): Set<IdeaKotlinDependency> {
         return dependencies[sourceSetName].orEmpty()
+    }
+
+    private fun writeReplace(): Any {
+        return IdeaKotlinDependenciesContainerSurrogate(dependencies.mapValues { (_, dependencies) ->
+            dependencies.map { dependency ->
+                dependency.toByteArray(ideaKotlinSerializationContext)
+            }
+        })
     }
 }
 
@@ -29,18 +38,18 @@ class IdeaKotlinSerializedDependenciesContainer(
     }
 
     private fun writeReplace(): Any {
-        return Surrogate(dependencies)
+        return IdeaKotlinDependenciesContainerSurrogate(dependencies)
     }
+}
 
-    private class Surrogate(private val dependencies: Map<String, List<ByteArray>>) : Serializable {
-        private fun readResolve(): Any {
-            val deserializedDependencies = dependencies.mapValues { (_, dependencies) ->
-                dependencies.mapNotNull { dependency ->
-                    ideaKotlinSerializationContext.IdeaKotlinDependency(dependency)
-                }.toSet()
-            }
-
-            return IdeaKotlinDeserializedDependenciesContainer(deserializedDependencies)
+private class IdeaKotlinDependenciesContainerSurrogate(private val dependencies: Map<String, List<ByteArray>>) : Serializable {
+    private fun readResolve(): Any {
+        val deserializedDependencies = dependencies.mapValues { (_, dependencies) ->
+            dependencies.mapNotNull { dependency ->
+                ideaKotlinSerializationContext.IdeaKotlinDependency(dependency)
+            }.toSet()
         }
+
+        return IdeaKotlinDeserializedDependenciesContainer(deserializedDependencies)
     }
 }
