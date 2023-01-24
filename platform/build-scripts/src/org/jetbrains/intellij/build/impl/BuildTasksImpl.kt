@@ -143,14 +143,9 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
  * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
  */
 suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
-  val pluginLayoutRoot = withContext(Dispatchers.IO) {
-    Files.createDirectories(context.paths.tempDir)
-    Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
-  }
   writeProjectStructureReport(
     entries = generateProjectStructureMapping(context = context,
-                                              state = DistributionBuilderState(pluginsToPublish = emptySet(), context = context),
-                                              pluginLayoutRoot = pluginLayoutRoot),
+                                              state = DistributionBuilderState(pluginsToPublish = emptySet(), context = context)),
     file = targetFile,
     buildPaths = context.paths
   )

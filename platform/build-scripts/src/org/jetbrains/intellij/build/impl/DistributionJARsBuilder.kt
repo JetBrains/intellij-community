@@ -217,15 +217,12 @@ class DistributionJARsBuilder {
     // for some reasons maybe duplicated paths - use set
     val classPath = LinkedHashSet<String>()
     val pluginLayouts = context.productProperties.productLayout.pluginLayouts
-    val pluginLayoutRoot: Path = withContext(Dispatchers.IO) {
-      Files.createDirectories(context.paths.tempDir)
-      Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
-    }
     val nonPluginsEntries = mutableListOf<DistributionFileEntry>()
     val pluginsEntries = mutableListOf<DistributionFileEntry>()
-    for (e in generateProjectStructureMapping(context = context, state = state, pluginLayoutRoot = pluginLayoutRoot)) {
-      if (e.path.startsWith(pluginLayoutRoot)) {
-        val relPath = pluginLayoutRoot.relativize(e.path)
+    val pluginsDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
+    for (e in generateProjectStructureMapping(context = context, state = state)) {
+      if (e.path.startsWith(pluginsDir)) {
+        val relPath = pluginsDir.relativize(e.path)
         // For plugins our classloader load jars only from lib folder
         if (relPath.nameCount == 3 && relPath.getName(1).toString() == "lib") {
           pluginsEntries.add(e)
@@ -439,9 +436,7 @@ class DistributionJARsBuilder {
   }
 }
 
-internal suspend fun generateProjectStructureMapping(context: BuildContext,
-                                                     state: DistributionBuilderState,
-                                                     pluginLayoutRoot: Path): List<DistributionFileEntry> {
+internal suspend fun generateProjectStructureMapping(context: BuildContext, state: DistributionBuilderState): List<DistributionFileEntry> {
   val moduleOutputPatcher = ModuleOutputPatcher()
   return coroutineScope {
     val libDirLayout = async {
@@ -452,8 +447,9 @@ internal suspend fun generateProjectStructureMapping(context: BuildContext,
     val entries = ArrayList<DistributionFileEntry>()
     for (plugin in allPlugins) {
       if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, withEphemeral = true, context = context)) {
+        val targetDirectory = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY).resolve(plugin.directoryName)
         entries.addAll(layoutDistribution(layout = plugin,
-                                          targetDirectory = pluginLayoutRoot.resolve(plugin.directoryName),
+                                          targetDirectory = targetDirectory,
                                           copyFiles = false,
                                           simplify = false,
                                           moduleOutputPatcher = moduleOutputPatcher,
