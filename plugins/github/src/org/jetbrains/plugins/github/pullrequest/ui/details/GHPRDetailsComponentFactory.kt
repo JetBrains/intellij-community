@@ -96,13 +96,11 @@ internal object GHPRDetailsComponentFactory {
       add(state, CC().growX().pushX().minHeight("pref").gap(
         left = ReviewDetailsUIUtil.indentLeft - 2,
         right = ReviewDetailsUIUtil.indentRight,
-        bottom = indentBottom))
+        bottom = ReviewDetailsUIUtil.indentBottom))
 
       PopupHandler.installPopupMenu(this, DefaultActionGroup(GHPRReloadDetailsAction()), "GHPRDetailsPopup")
     }
   }
-
-  private val indentBottom: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 15, newUI = 18)
 
   private val gapBetweenCommitInfoAndCommitsBrowser: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 12, newUI = 12)
 

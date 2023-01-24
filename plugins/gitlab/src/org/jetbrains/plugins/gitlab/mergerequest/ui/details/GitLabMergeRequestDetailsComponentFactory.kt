@@ -24,6 +24,9 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     backToListAction: () -> Unit,
     openTimeLineAction: (GitLabMergeRequestId, Boolean) -> Unit
   ): JComponent {
+    val detailsInfoVm = detailsVm.detailsInfoVm
+    val detailsReviewFlowVm = detailsVm.detailsReviewFlowVm
+
     val backToListActionLink = ActionLink(CollaborationToolsBundle.message("review.details.view.back.to.list")) {
       backToListAction()
     }
@@ -46,26 +49,30 @@ internal object GitLabMergeRequestDetailsComponentFactory {
 
       add(backToListActionLink, CC().growX())
 
-      add(GitLabMergeRequestDetailsTitleComponentFactory.create(scope, detailsVm),
+      add(GitLabMergeRequestDetailsTitleComponentFactory.create(scope, detailsInfoVm),
           CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft,
                            right = ReviewDetailsUIUtil.indentRight,
                            top = ReviewDetailsUIUtil.indentTop,
                            bottom = ReviewDetailsUIUtil.gapBetweenTitleAndDescription))
-      add(GitLabMergeRequestDetailsDescriptionComponentFactory.create(scope, detailsVm, openTimeLineAction),
+      add(GitLabMergeRequestDetailsDescriptionComponentFactory.create(scope, detailsInfoVm, openTimeLineAction),
           CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft,
                            right = ReviewDetailsUIUtil.indentRight,
                            bottom = ReviewDetailsUIUtil.gapBetweenDescriptionAndCommits))
-      add(GitLabMergeRequestDetailsBranchComponentFactory.create(scope, detailsVm),
+      add(GitLabMergeRequestDetailsBranchComponentFactory.create(scope, detailsInfoVm),
           CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft,
                            right = ReviewDetailsUIUtil.indentRight,
                            bottom = ReviewDetailsUIUtil.gapBetweenCommitsAndCommitInfo))
       add(emptyPanel, CC().grow().push()) // TODO: remove
-      add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(scope, detailsVm),
+      add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(scope, detailsInfoVm),
           CC().growX().maxHeight("${ReviewDetailsUIUtil.statusChecksMaxHeight}")
             .gap(left = ReviewDetailsUIUtil.indentLeft,
                  right = ReviewDetailsUIUtil.indentRight,
                  top = 4,
                  bottom = ReviewDetailsUIUtil.gapBetweenCheckAndActions))
+      add(GitLabMergeRequestDetailsActionsComponentFactory.create(scope, detailsReviewFlowVm),
+          CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft - 2,
+                           right = ReviewDetailsUIUtil.indentRight,
+                           bottom = ReviewDetailsUIUtil.indentBottom))
     }
   }
 }

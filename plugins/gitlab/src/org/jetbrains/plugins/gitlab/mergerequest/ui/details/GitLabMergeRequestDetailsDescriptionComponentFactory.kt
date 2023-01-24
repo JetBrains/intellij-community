@@ -9,20 +9,20 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsInfoViewModel
 import javax.swing.JComponent
 
 internal object GitLabMergeRequestDetailsDescriptionComponentFactory {
   fun create(
     scope: CoroutineScope,
-    detailsVm: GitLabMergeRequestDetailsViewModel,
+    detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel,
     openTimeLineAction: (GitLabMergeRequestId, Boolean) -> Unit
   ): JComponent {
     val descriptionPanel = SimpleHtmlPane().apply {
-      bindText(scope, detailsVm.descriptionState)
+      bindText(scope, detailsInfoVm.description)
     }
     val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
-      openTimeLineAction(GitLabMergeRequestId.Simple(detailsVm.number), true)
+      openTimeLineAction(GitLabMergeRequestId.Simple(detailsInfoVm.number), true)
     }.apply {
       border = JBUI.Borders.emptyTop(4)
     }

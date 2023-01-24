@@ -25,7 +25,7 @@ internal interface GitLabMergeRequestDetailsLoadingViewModel {
   sealed interface LoadingState {
     object Loading : LoadingState
     class Error(val exception: Throwable) : LoadingState
-    class Result(val detailsVm: GitLabMergeRequestDetailsViewModel) : LoadingState
+    class Result(val detailsVm: GitLabMergeRequestDetailsViewModelImpl) : LoadingState
   }
 }
 
@@ -49,8 +49,8 @@ internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
         val data = scope.async(Dispatchers.IO) {
           api.loadMergeRequest(project, mergeRequestId).getResultOrThrow()
         }
-        val mergeRequest = LoadedGitLabMergeRequest(data.await())
-        val detailsVm = GitLabMergeRequestDetailsViewModelImpl(mergeRequest)
+        val mergeRequest = LoadedGitLabMergeRequest(scope, connection, data.await())
+        val detailsVm = GitLabMergeRequestDetailsViewModelImpl(scope, connection.currentUser, mergeRequest)
         LoadingState.Result(detailsVm)
       }
       catch (ce: CancellationException) {

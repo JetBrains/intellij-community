@@ -7,7 +7,7 @@ import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.icons.AllIcons
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsInfoViewModel
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -16,20 +16,20 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
   private const val STATUSES_GAP = 10
   private const val STATUS_COMPONENT_BORDER = 5
 
-  fun create(scope: CoroutineScope, detailsVm: GitLabMergeRequestDetailsViewModel): JComponent {
+  fun create(scope: CoroutineScope, detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel): JComponent {
     return VerticalListPanel(STATUSES_GAP).apply {
-      add(createConflictsComponent(scope, detailsVm))
+      add(createConflictsComponent(scope, detailsInfoVm))
     }
   }
 
-  private fun createConflictsComponent(scope: CoroutineScope, detailsVm: GitLabMergeRequestDetailsViewModel): JComponent {
+  private fun createConflictsComponent(scope: CoroutineScope, detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel): JComponent {
     return JLabel().apply {
       isOpaque = false
       name = "Review conflicts label"
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
       text = CollaborationToolsBundle.message("review.details.status.conflicts")
-      bindVisibility(scope, detailsVm.hasConflicts)
+      bindVisibility(scope, detailsInfoVm.hasConflicts)
     }
   }
 }

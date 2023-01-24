@@ -1,27 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
 internal interface GitLabMergeRequestDetailsViewModel {
-  val titleState: Flow<String>
-  val descriptionState: Flow<String>
-  val targetBranch: Flow<String>
-  val sourceBranch: Flow<String>
-  val hasConflicts: Flow<Boolean>
-
-  val number: String
-  val url: String
+  val detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel
+  val detailsReviewFlowVm: GitLabMergeRequestReviewFlowViewModel
 }
 
-internal class GitLabMergeRequestDetailsViewModelImpl(mergeRequest: GitLabMergeRequest) : GitLabMergeRequestDetailsViewModel {
-  override val titleState: Flow<String> = mergeRequest.title
-  override val descriptionState: Flow<String> = mergeRequest.description
-  override val targetBranch: Flow<String> = mergeRequest.targetBranch
-  override val sourceBranch: Flow<String> = mergeRequest.sourceBranch
-  override val hasConflicts: Flow<Boolean> = mergeRequest.hasConflicts
-
-  override val number: String = mergeRequest.number
-  override val url: String = mergeRequest.url
+internal class GitLabMergeRequestDetailsViewModelImpl(
+  scope: CoroutineScope,
+  currentUser: GitLabUserDTO,
+  mergeRequest: GitLabMergeRequest
+) : GitLabMergeRequestDetailsViewModel {
+  override val detailsInfoVm = GitLabMergeRequestDetailsInfoViewModelImpl(mergeRequest)
+  override val detailsReviewFlowVm = GitLabMergeRequestReviewFlowViewModelImpl(scope, currentUser, mergeRequest)
 }

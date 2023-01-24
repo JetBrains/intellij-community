@@ -8,4 +8,29 @@ fragment mergeRequest on MergeRequest {
   sourceBranch
 
   conflicts
+  state
+
+  author {
+    ...user
+  }
+
+  approvedBy(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...user
+    }
+  }
+
+  reviewers(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...user
+    }
+  }
 }

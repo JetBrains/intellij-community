@@ -11,16 +11,16 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsInfoViewModel
 import javax.swing.JComponent
 
 internal object GitLabMergeRequestDetailsTitleComponentFactory {
-  fun create(scope: CoroutineScope, detailsVm: GitLabMergeRequestDetailsViewModel): JComponent {
+  fun create(scope: CoroutineScope, detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel): JComponent {
     return SimpleHtmlPane().apply {
       name = "Review details title panel"
       font = JBFont.h2().asBold()
-      bindTextHtml(scope, detailsVm.titleState.map { title ->
-        createTitleText(title, detailsVm.number, detailsVm.url)
+      bindTextHtml(scope, detailsInfoVm.title.map { title ->
+        createTitleText(title, detailsInfoVm.number, detailsInfoVm.url)
       })
     }
   }

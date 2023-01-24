@@ -11,7 +11,7 @@ import com.intellij.ui.components.JBLabel
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsInfoViewModel
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -19,9 +19,9 @@ import javax.swing.JLabel
 internal object GitLabMergeRequestDetailsBranchComponentFactory {
   private const val COMPONENTS_GAP = 4
 
-  fun create(scope: CoroutineScope, detailsVm: GitLabMergeRequestDetailsViewModel): JComponent {
-    val targetBranchComponent = createBranchLabel(scope, detailsVm.targetBranch)
-    val sourceBranchComponent = createBranchLabel(scope, detailsVm.sourceBranch)
+  fun create(scope: CoroutineScope, detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel): JComponent {
+    val targetBranchComponent = createBranchLabel(scope, detailsInfoVm.targetBranch)
+    val sourceBranchComponent = createBranchLabel(scope, detailsInfoVm.sourceBranch)
 
     return HorizontalListPanel(COMPONENTS_GAP).apply {
       add(targetBranchComponent)

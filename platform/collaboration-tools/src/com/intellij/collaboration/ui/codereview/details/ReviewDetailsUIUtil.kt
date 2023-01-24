@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 
 object ReviewDetailsUIUtil {
   val indentTop: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 12, newUI = 16)
+  val indentBottom: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 15, newUI = 18)
   val indentLeft: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 13, newUI = 17)
   val indentRight: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 13, newUI = 13)
 
