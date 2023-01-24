@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -40,10 +41,13 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
+val isContrastRunWidget: Boolean get() = AdvancedSettings.getBoolean("contrast.run.widget")
+
 private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
+  val toolbarId = if (isContrastRunWidget) "ContrastRunToolbarMainActionGroup" else "RunToolbarMainActionGroup"
   return ActionManager.getInstance().createActionToolbar(
     ActionPlaces.MAIN_TOOLBAR,
-    ActionManager.getInstance().getAction("RunToolbarMainActionGroup") as ActionGroup,
+    ActionManager.getInstance().getAction(toolbarId) as ActionGroup,
     true
   ).apply {
     targetComponent = null
@@ -51,8 +55,15 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
     layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     if (this is ActionToolbarImpl) {
       isOpaque = false
-      setMinimumButtonSize { JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight()) }
-      setActionButtonBorder(JBUI.Borders.empty())
+      setMinimumButtonSize {
+        JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(isContrastRunWidget), JBUI.CurrentTheme.RunWidget.toolbarHeight())
+      }
+      if (isContrastRunWidget) {
+        setActionButtonBorder(JBUI.Borders.empty())
+      }
+      else {
+        setActionButtonBorder(2, JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
+      }
       setSeparatorCreator { RunToolbarSeparator(isCurrentConfigurationRunning) }
       setCustomButtonLook(RunWidgetButtonLook(isCurrentConfigurationRunning))
       border = null
@@ -62,18 +73,25 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
 
 private val runToolbarDataKey = Key.create<Boolean>("run-toolbar-data")
 
+private val contrastModeEnabled = Key.create<Boolean>("contrast-run-widget")
+
 private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent): Unit = error("Should not be invoked")
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return createRunActionToolbar {
+    presentation.putClientProperty(contrastModeEnabled, isContrastRunWidget)
+    val toolbar = createRunActionToolbar {
       presentation.getClientProperty(runToolbarDataKey) ?: false
-    }.component.let {
-      DynamicBorderWrapper(it) { JBUI.Borders.empty(JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 12,
-                                                    JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 2) }
     }
+    return if (isContrastRunWidget) {
+      DynamicBorderWrapper(toolbar.component) {
+        JBUI.Borders.empty(JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 12,
+                           JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 2)
+      }
+    }
+    else toolbar.component
   }
 
   override fun update(e: AnActionEvent) {
@@ -106,6 +124,10 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    if (presentation.getClientProperty(contrastModeEnabled) != isContrastRunWidget) {
+      (component.parent as? ActionToolbarImpl)?.clearPresentationCache()
+      return
+    }
     val data = presentation.getClientProperty(runToolbarDataKey) ?: return
     val dataPropertyName = "old-run-toolbar-data"
     val oldData = component.getClientProperty(dataPropertyName) as? Boolean

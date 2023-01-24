@@ -1641,11 +1641,17 @@
       <action class="com.intellij.execution.ui.StopWithDropDownAction" id="StopWithDropDown"/>
     </group>
 
-    <group id="RunToolbarMainActionGroup">
+    <group id="ContrastRunToolbarMainActionGroup">
       <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
       <separator/>
       <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" />
       <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
+    </group>
+
+    <group id="RunToolbarMainActionGroup">
+      <reference ref="RedesignedRunConfigurationSelector"/>
+      <reference ref="RunToolbarTopLevelExecutorActionGroup"/>
+      <reference ref="MoreRunToolbarActions"/>
     </group>
 
     <group id="ExecutionTargetsToolbarGroup" searchable="false" popup="false">

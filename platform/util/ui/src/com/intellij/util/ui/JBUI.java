@@ -1772,8 +1772,8 @@ public final class JBUI {
         return 5;
       }
 
-      public static int actionButtonWidth() {
-        return getInt(actionButtonWidthKey(), defaultActionButtonWidth());
+      public static int actionButtonWidth(boolean isContrastWidget) {
+        return getInt(actionButtonWidthKey(), defaultActionButtonWidth(isContrastWidget));
       }
 
       @NotNull
@@ -1781,8 +1781,8 @@ public final class JBUI {
         return "RunWidget.actionButtonWidth";
       }
 
-      public static int defaultActionButtonWidth() {
-        return 36;
+      public static int defaultActionButtonWidth(boolean isContrastWidget) {
+        return isContrastWidget ? 36 : 30;
       }
 
       public static int configurationSelectorWidth() {
