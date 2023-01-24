@@ -2,13 +2,13 @@ package transitiveStory.bottomActual.mppBeginning
 
 val moduleName = "top-mpp"
 val commonInt = 42
-expect val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.dummyiOSMain, multimod-hmpp.top-mpp.jsMain, multimod-hmpp.top-mpp.jvm18Main, multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain] module'")!>sourceSetName<!>: String
+expect val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.dummyiOSMain, multimod-hmpp.top-mpp.jsMain, multimod-hmpp.top-mpp.jvm18Main, multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain] modules'")!>sourceSetName<!>: String
 
-expect open class <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] module'"), LINE_MARKER("descr='Has subclasses'")!>BottomActualDeclarations<!>() {
-    val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] module'")!>simpleVal<!>: Int
+expect open class <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'"), LINE_MARKER("descr='Has subclasses'")!>BottomActualDeclarations<!>() {
+    val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'")!>simpleVal<!>: Int
 
-    companion object <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] module'")!>Compainon<!> {
-        val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] module'")!>inTheCompanionOfBottomActualDeclarations<!>: String
+    companion object <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'")!>Compainon<!> {
+        val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'")!>inTheCompanionOfBottomActualDeclarations<!>: String
     }
 }
 
