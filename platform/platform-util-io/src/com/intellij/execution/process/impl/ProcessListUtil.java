@@ -186,7 +186,8 @@ public final class ProcessListUtil {
     // 12  S user ./command argument list
 
     return parseCommandOutput(COMM_LIST_COMMAND,
-                              commandOnly -> parseCommandOutput(COMMAND_LIST_COMMAND, full -> parseMacOutput(commandOnly, full)));
+                              commandOnly -> parseCommandOutput(COMMAND_LIST_COMMAND,
+                                                                full -> parseMacOutput(commandOnly, full, getCurrentUser())));
   }
 
   public static @Nullable List<ProcessInfo> parseMacOutput(@NotNull String commandOnly, @NotNull String full) {
