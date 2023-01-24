@@ -23,7 +23,7 @@ import com.intellij.vcs.branch.BranchPresentation.getSingleTooltip
 import com.intellij.vcs.log.impl.VcsLogManager.findLogProviders
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogColorManager
-import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
+import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
 import java.awt.Color
 
 private val ICON_SIZE = scale(14)
@@ -66,8 +66,13 @@ open class RepositoryChangesBrowserNode(repository: Repository,
   override fun getTextPresentation(): String = getShortRepositoryName(getUserObject())
 
   companion object {
-    fun getColorManager(project: Project): VcsLogColorManager = VcsProjectLog.getInstance(project).logManager?.colorManager ?: VcsLogColorManagerImpl(
-      findLogProviders(ProjectLevelVcsManager.getInstance(project).allVcsRoots.asList(), project).keys)
+    fun getColorManager(project: Project): VcsLogColorManager {
+      val colorManager = VcsProjectLog.getInstance(project).logManager?.colorManager
+      if (colorManager != null) return colorManager
+
+      val roots = findLogProviders(ProjectLevelVcsManager.getInstance(project).allVcsRoots.asList(), project).keys
+      return VcsLogColorManagerFactory.create(roots)
+    }
 
     fun getRepositoryIcon(repository: Repository, colorManager: VcsLogColorManager = getColorManager(repository.project)) =
       ColorIcon(ICON_SIZE, colorManager.getRootColor(repository.root))
