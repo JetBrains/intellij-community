@@ -25,7 +25,9 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
     if (!symbolTargets.isNullOrEmpty()) {
       return symbolTargets.first()
     }
-    val sourceElement = file.findElementAt(editor.caretModel.offset)
+    val caretOffset = editor.caretModel.offset
+    val sourceElement = file.findElementAt(caretOffset)
+                        ?: caretOffset.takeIf { it > 0 }.let { file.findElementAt(caretOffset - 1) }
     val targetElement = DocumentationManager.getElementFromLookup(project, editor, file, lookupElement)
                         ?: return null
     return psiDocumentationTarget(targetElement, sourceElement)
