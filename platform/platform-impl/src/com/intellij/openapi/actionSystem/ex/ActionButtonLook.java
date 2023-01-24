@@ -23,6 +23,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -94,15 +95,15 @@ public abstract class ActionButtonLook {
   }
 
   public void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
-    if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet()) return;
+    Color color = getStateBackground(component, state);
+    if (color == null) return;
     Rectangle rect = new Rectangle(component.getSize());
     JBInsets.removeFrom(rect, component.getInsets());
-    Color color = getStateBackground(component, state);
     paintLookBackground(g, rect, color);
   }
 
-  protected Color getStateBackground(JComponent component, int state) {
-    return state == ActionButtonComponent.NORMAL ? component.getBackground() :
+  protected @Nullable Color getStateBackground(JComponent component, int state) {
+    return state == ActionButtonComponent.NORMAL ? (component.isBackgroundSet() ? component.getBackground() : null) :
                   state == ActionButtonComponent.PUSHED ? JBUI.CurrentTheme.ActionButton.pressedBackground() :
                   JBUI.CurrentTheme.ActionButton.hoverBackground();
   }

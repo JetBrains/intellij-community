@@ -271,9 +271,9 @@ internal object SegmentedButtonLook : IdeaActionButtonLook() {
     // Border is painted in parent
   }
 
-  override fun getStateBackground(component: JComponent, state: Int): Color {
+  override fun getStateBackground(component: JComponent, state: Int): Color? {
     if (!component.isEnabled) {
-      return component.background
+      return if (component.isBackgroundSet) component.background else null
     }
 
     val focused = component.parent?.hasFocus() == true
@@ -283,7 +283,7 @@ internal object SegmentedButtonLook : IdeaActionButtonLook() {
       ActionButtonComponent.PUSHED ->
         if (focused) JBUI.CurrentTheme.SegmentedButton.FOCUSED_SELECTED_BUTTON_COLOR
         else JBUI.CurrentTheme.SegmentedButton.SELECTED_BUTTON_COLOR
-      else -> component.background
+      else -> if (component.isBackgroundSet) component.background else null
     }
   }
 }

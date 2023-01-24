@@ -171,7 +171,7 @@ private class DisabledIcon(private val width: Int, private val height: Int, priv
 }
 
 private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () -> Boolean) : IdeaActionButtonLook() {
-  override fun getStateBackground(component: JComponent, state: Int): Color {
+  override fun getStateBackground(component: JComponent, state: Int): Color? {
     if (!isContrastRunWidget) {
       if (!buttonIsRunning(component)) {
         return getHeaderBackgroundColor(component, state)

@@ -21,8 +21,8 @@ private val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter =  {
   if (isDarkHeader()) UIUtil.GrayFilter(-70, -70, 100) else UIUtil.getGrayFilter()
 }
 
-fun getHeaderBackgroundColor(component: JComponent, state: Int): Color = when (state) {
-  ActionButtonComponent.NORMAL -> component.background
+fun getHeaderBackgroundColor(component: JComponent, state: Int): Color? = when (state) {
+  ActionButtonComponent.NORMAL -> if (component.isBackgroundSet) component.background else null
   ActionButtonComponent.PUSHED -> UIManager.getColor("MainToolbar.Icon.pressedBackground")
                                   ?: UIManager.getColor("ActionButton.pressedBackground")
   else -> UIManager.getColor("MainToolbar.Icon.hoverBackground")
@@ -33,7 +33,7 @@ internal class HeaderToolbarButtonLook(
   private val iconSize: () -> Int = { JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize() }
 ) : IdeaActionButtonLook() {
 
-  override fun getStateBackground(component: JComponent, state: Int): Color = getHeaderBackgroundColor(component, state)
+  override fun getStateBackground(component: JComponent, state: Int): Color? = getHeaderBackgroundColor(component, state)
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
   override fun getButtonArc(): JBValue = JBValue.Float(0f)
