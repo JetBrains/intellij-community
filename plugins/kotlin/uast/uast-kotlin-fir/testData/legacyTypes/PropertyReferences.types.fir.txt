@@ -26,11 +26,11 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
                     USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int
                 UPrefixExpression (operator = ++) [++a.mutableProp] : PsiType:int
                     UQualifiedReferenceExpression [a.mutableProp] : PsiType:int
-                        USimpleNameReferenceExpression (identifier = a) [a] : PsiType:Unit
+                        USimpleNameReferenceExpression (identifier = a) [a] : PsiType:A
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
                 UPostfixExpression (operator = --) [a.mutableProp--] : PsiType:int
                     UQualifiedReferenceExpression [a.mutableProp] : PsiType:int
-                        USimpleNameReferenceExpression (identifier = a) [a] : PsiType:Unit
+                        USimpleNameReferenceExpression (identifier = a) [a] : PsiType:A
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
         UMethod (name = ext) [public static final fun ext(@org.jetbrains.annotations.NotNull $this$ext: A) : void {...}]
             UParameter (name = $this$ext) [@org.jetbrains.annotations.NotNull var $this$ext: A]
