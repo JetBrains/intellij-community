@@ -4,10 +4,17 @@ package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.*
+import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.asJava.classes.toLightAnnotation
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.types.typeUtil.TypeNullability
+import org.jetbrains.kotlin.types.typeUtil.nullability
+import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.uast.kotlin.PsiTypeConversionConfiguration
 import org.jetbrains.uast.kotlin.TypeOwnerKind
 import org.jetbrains.uast.kotlin.lz
@@ -96,31 +103,58 @@ internal class UastFakeDescriptorLightMethod(
 }
 
 internal abstract class UastFakeDescriptorLightMethodBase<T: CallableMemberDescriptor>(
-    internal val original: T,
+    private val original: T,
     containingClass: PsiClass,
-    protected val context: KtElement,
-) : LightMethodBuilder(
-    containingClass.manager, containingClass.language, original.name.identifier,
+    private val context: KtElement,
+) : UastFakeLightMethodBase(
+    containingClass.manager,
+    containingClass.language,
+    original.name.identifier,
     LightParameterListBuilder(containingClass.manager, containingClass.language),
-    LightModifierList(containingClass.manager)
+    LightModifierList(containingClass.manager),
+    containingClass
 ) {
 
     init {
-        this.containingClass = containingClass
         if (original.dispatchReceiverParameter == null) {
             addModifier(PsiModifier.STATIC)
         }
     }
 
-    override fun getReturnType(): PsiType? {
-        return original.returnType?.toPsiType(
+    override fun isUnitFunction(): Boolean {
+        return original is FunctionDescriptor && _returnType == PsiTypes.voidType()
+    }
+
+    override fun computeNullability(): KtTypeNullability? {
+        return when (original.returnType?.nullability()) {
+            null -> null
+            TypeNullability.NOT_NULL -> KtTypeNullability.NON_NULLABLE
+            TypeNullability.NULLABLE -> KtTypeNullability.NULLABLE
+            else -> KtTypeNullability.UNKNOWN
+        }
+    }
+
+    override fun computeAnnotations(annotations: SmartList<PsiAnnotation>) {
+        original.annotations.mapTo(annotations) { annoDescriptor ->
+            annoDescriptor.toLightAnnotation(this)
+        }
+    }
+
+    override fun isConstructor(): Boolean {
+        return original is ConstructorDescriptor
+    }
+
+    private val _returnType: PsiType? by lz {
+        original.returnType?.toPsiType(
             this,
             context,
             PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
         )
     }
 
-    override fun getParent(): PsiElement? = containingClass
+    override fun getReturnType(): PsiType? {
+        return _returnType
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
