@@ -614,6 +614,12 @@
             </action>
             <separator/>
             <action id="ToggleCompactMode" class="com.intellij.ide.actions.ToggleCompactModeAction" />
+          </group>
+          <group id="ZoomIDE" class="com.intellij.ide.actions.ZoomIdeActionGroup">
+            <separator/>
+            <action id="CurrentIdeScaleAction" class="com.intellij.ide.actions.CurrentIdeScaleAction">
+              <synonym key="action.CurrentIdeScaleAction.text"/>
+            </action>
             <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
               <synonym key="action.ZoomInIdeAction.text"/>
             </action>
