@@ -89,7 +89,7 @@ public class ImplementationViewComponent extends JPanel {
     return myElements != null && myElements.length > 0;
   }
 
-  private record FileDescriptor(@NotNull VirtualFile file, @NotNull TargetPresentation element) {
+  private record FileDescriptor(@NotNull VirtualFile file, int index, @NotNull TargetPresentation element) {
   }
 
   public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements,
@@ -353,10 +353,10 @@ public class ImplementationViewComponent extends JPanel {
       VirtualFile file = element.getContainingFile();
       if (file == null) continue;
       if (names.size() > 1) {
-        files.add(new FileDescriptor(file, getPresentation(element)));
+        files.add(new FileDescriptor(file, candidates.size(), getPresentation(element)));
       }
       else {
-        files.add(new FileDescriptor(file, getPresentation(element.getContainingMemberOrSelf())));
+        files.add(new FileDescriptor(file, candidates.size(), getPresentation(element.getContainingMemberOrSelf())));
       }
       candidates.add(element);
     }
