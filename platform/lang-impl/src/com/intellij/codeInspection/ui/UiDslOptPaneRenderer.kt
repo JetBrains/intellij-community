@@ -142,6 +142,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         }
       }
     }
+      .layout(RowLayout.PARENT_GRID)
       .applyIf(withBottomGap) { bottomGap(BottomGap.SMALL) }
       .applyIf(component.hasResizableRow) { resizableRow() }
 
