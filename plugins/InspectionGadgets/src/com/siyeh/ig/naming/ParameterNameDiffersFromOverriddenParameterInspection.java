@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,22 +124,23 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
           continue;
         }
         final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiParameter parameter) || !(parameter.getDeclarationScope() instanceof PsiMethod)) {
+        if (!(target instanceof PsiParameter targetParameter) || !(targetParameter.getDeclarationScope() instanceof PsiMethod)) {
           continue;
         }
-        final String parameterName = parameters[i].getName();
+        final PsiParameter parameter = parameters[i];
+        final String parameterName = parameter.getName();
         if (m_ignoreSingleCharacterNames && parameterName.length() == 1) {
           continue;
         }
-        final PsiParameter targetParameter = (PsiParameter)target;
-        if (!targetParameter.getName().equals(parameterName)) {
-          int type = constructorCall
-                     ? PsiUtil.isJavaToken(methodExpression.getReferenceNameElement(), JavaTokenType.SUPER_KEYWORD)
-                       ? SUPER_CONSTRUCTOR
-                       : OVERLOADED_CONSTRUCTOR
-                     : OVERLOADED_METHOD;
-          registerVariableError(targetParameter, parameterName, type);
+        if (targetParameter.getName().equals(parameterName) || !targetParameter.getType().equals(parameter.getType())) {
+          continue;
         }
+        int type = constructorCall
+                   ? PsiUtil.isJavaToken(methodExpression.getReferenceNameElement(), JavaTokenType.SUPER_KEYWORD)
+                     ? SUPER_CONSTRUCTOR
+                     : OVERLOADED_CONSTRUCTOR
+                   : OVERLOADED_METHOD;
+        registerVariableError(targetParameter, parameterName, type);
       }
     }
 
@@ -154,11 +155,15 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
       final PsiParameter[] superParameters = superParameterList.getParameters();
       for (int i = 0; i < parameters.length; i++) {
         final PsiParameter parameter = parameters[i];
-        final String superParameterName = superParameters[i].getName();
+        final PsiParameter superParameter = superParameters[i];
+        final String superParameterName = superParameter.getName();
         if (superParameterName.equals(parameter.getName())) {
           continue;
         }
         if (m_ignoreSingleCharacterNames && superParameterName.length() == 1) {
+          continue;
+        }
+        if (!parameter.getType().equals(superParameter.getType())) {
           continue;
         }
         registerVariableError(parameter, superParameterName, SUPER_METHOD);

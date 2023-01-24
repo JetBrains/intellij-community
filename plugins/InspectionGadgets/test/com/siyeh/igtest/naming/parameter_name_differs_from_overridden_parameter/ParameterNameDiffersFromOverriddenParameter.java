@@ -1,9 +1,11 @@
-class Super {
+class Super<T> {
   Super() {
   }
 
   Super(int a, int b) {
   }
+
+  Super(T tttt) {}
 
   void overloaded(String <warning descr="Parameter name 'str' is different from parameter 'boo' in the overloaded method">str</warning>) {
     overloaded(str, 0);
@@ -12,9 +14,14 @@ class Super {
   void overloaded(String boo, int start) {
 
   }
+
+  public void method(T <warning descr="Parameter name 't' is different from parameter 'other' in the overloaded method">t</warning>) {
+    method(t, 1);
+  }
+  public void method(T other, int i) {}
 }
 
-class Sub extends Super {
+class Sub extends Super<String> {
   Sub(int <warning descr="Parameter name 'c' is different from parameter 'a' in the super constructor">c</warning>, int b) {
     super(c, b);
   }
@@ -22,9 +29,24 @@ class Sub extends Super {
   Sub(int a, int b, int c) {
   }
 
+  Sub(String ssss) { // type is now concrete, allow a different name
+    super(ssss);
+  }
+
   @Override
   void overloaded(String <warning descr="Parameter name 'string' is different from parameter 'str' in the super method">string</warning>) {
   }
+
+  @Override
+  public void method(String s) {} // type is now concrete, allow a different name
+}
+class Sub2<S> extends Super<S> {
+  Sub2(S other) { // no warn on type parameters
+    super(other);
+  }
+
+  @Override
+  public void method(S other) {} // no warn on type parameters
 }
 
 class A<T> {
@@ -33,7 +55,7 @@ class A<T> {
 }
 
 class B<T> extends A<T> {
-  B(T <warning descr="Parameter name 'street' is different from parameter 'name' in the super constructor">street</warning>,
+  B(T street, // no warn on type parameters
     int <warning descr="Parameter name 'number' is different from parameter 'age' in the super constructor">number</warning>) {
     super(street, number);
   }
