@@ -266,7 +266,8 @@ public class HtmlParsing {
           if (!parentTagName.equals(endName) && !endName.endsWith(COMPLETION_NAME)) {
             final boolean isOptionalTagEnd = HtmlUtil.isOptionalEndForHtmlTagL(parentTagName);
             final boolean hasChancesToMatch =
-              HtmlUtil.isOptionalEndForHtmlTagL(endName) ? childTerminatesParentInStack(endName) : isTagNameFurtherInStack(endName);
+              HtmlUtil.isOptionalEndForHtmlTagL(endName) ? childTerminatesParentInStack(endName)
+                                                         : isTagNameFurtherInStack(endName, myTagNamesStack);
             if (hasChancesToMatch) {
               footer.rollbackTo();
               if (!isOptionalTagEnd) {
@@ -393,8 +394,8 @@ public class HtmlParsing {
     return myTagNamesStack.size();
   }
 
-  protected boolean isTagNameFurtherInStack(@NotNull String endName) {
-    return myTagNamesStack.contains(endName);
+  protected boolean isTagNameFurtherInStack(@NotNull String endName, @NotNull Stack<@NotNull String> tagNames) {
+    return tagNames.contains(endName);
   }
 
   protected void doneTag() {
