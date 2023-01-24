@@ -149,8 +149,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
                                           shortcutSupplier, project == null ? null : new ShowInFindToolWindowAction(), this);
 
     init();
-    List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
+    myHintHelper = new HintHelper(mySearchField);
 
+    List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
     SearchListener wrapperListener = createListenerWrapper();
     mySearcher = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
                  ? new MixedResultsSearcher(wrapperListener, run -> ApplicationManager.getApplication().invokeLater(run),
@@ -181,7 +182,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     myResultsList.addListSelectionListener(mySelectionTracker);
     mySearchTypingListener = new SearchFieldTypingListener();
     mySearchField.addKeyListener(mySearchTypingListener);
-    myHintHelper = new HintHelper(mySearchField);
 
     myMlService = SearchEverywhereMlService.getInstance();
     if (myMlService != null) {
