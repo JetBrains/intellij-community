@@ -29,7 +29,7 @@ internal class DemoComponent(private val model: DemoModel) : BorderLayoutPanel()
     text = model.demoValue
   }
   private val jLabel = JBLabel(model.demoValue)
-  private val updateButton = JButton("Update").apply {
+  private val updateButton = JButton().apply {
     addActionListener {
       this@DemoComponent.model.demoValue = textField.text
       jLabel.text = this@DemoComponent.model.demoValue
@@ -39,7 +39,7 @@ internal class DemoComponent(private val model: DemoModel) : BorderLayoutPanel()
 
   init {
     val panel = FormBuilder()
-      .addLabeledComponent("Hello", textField)
+      .addComponent(textField)
       .addComponent(jLabel)
       .addComponent(updateButton)
       .panel
