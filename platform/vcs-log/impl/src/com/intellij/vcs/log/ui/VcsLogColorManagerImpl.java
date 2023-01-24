@@ -72,8 +72,7 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
       LOG.error("No color record for path " + path + ". All paths: " + myPaths2Colors);
       color = getDefaultRootColor();
     }
-    Color baseColor = color; // effectively final
-    return JBColor.lazy(() -> ColorUtil.mix(baseColor, UIUtil.getTableBackground(), 0.75));
+    return color;
   }
 
   private static @NotNull Color getDefaultRootColor() {

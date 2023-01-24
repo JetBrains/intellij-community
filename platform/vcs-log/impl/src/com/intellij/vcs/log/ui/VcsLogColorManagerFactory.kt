@@ -11,14 +11,30 @@ import java.awt.Color
 object VcsLogColorManagerFactory {
   @JvmStatic
   fun create(roots: Set<VirtualFile>): VcsLogColorManager {
-    return VcsLogColorManagerImpl(roots, CLASSIC_ROOT_COLORS)
+    return ClassicUiVcsLogColorManager.forRoots(roots)
   }
 
   @JvmStatic
   fun create(paths: Collection<FilePath>): VcsLogColorManager {
-    return VcsLogColorManagerImpl(paths, CLASSIC_ROOT_COLORS)
+    return ClassicUiVcsLogColorManager.forPaths(paths)
   }
+}
 
-  private val CLASSIC_ROOT_COLORS: List<Color>
-    get() = listOf(JBColor.RED, JBColor.GREEN, JBColor.BLUE, JBColor.ORANGE, JBColor.CYAN, JBColor.YELLOW, JBColor.MAGENTA, JBColor.PINK)
+private class ClassicUiVcsLogColorManager(private val delegate: VcsLogColorManager) : VcsLogColorManager by delegate {
+  override fun getPathColor(path: FilePath): Color = delegate.getPathColor(path).mixWithTableBackground()
+
+  override fun getRootColor(root: VirtualFile): Color = delegate.getRootColor(root).mixWithTableBackground()
+
+  private fun Color.mixWithTableBackground(): Color = JBColor.lazy { ColorUtil.mix(this, UIUtil.getTableBackground(), 0.75) }
+
+  companion object {
+    fun forRoots(roots: Set<VirtualFile>) : VcsLogColorManager =
+      ClassicUiVcsLogColorManager(VcsLogColorManagerImpl(roots, CLASSIC_ROOT_COLORS))
+
+    fun forPaths(paths: Collection<FilePath>): VcsLogColorManager =
+      ClassicUiVcsLogColorManager(VcsLogColorManagerImpl(paths, CLASSIC_ROOT_COLORS))
+
+    private val CLASSIC_ROOT_COLORS: List<Color>
+      get() = listOf(JBColor.RED, JBColor.GREEN, JBColor.BLUE, JBColor.ORANGE, JBColor.CYAN, JBColor.YELLOW, JBColor.MAGENTA, JBColor.PINK)
+  }
 }
