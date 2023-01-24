@@ -2,10 +2,13 @@
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.hint.EditorCodePreview
+import com.intellij.codeInsight.hint.HintManager
+import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -29,6 +32,10 @@ data class IntroduceObjectResult(
   val replacedReferences: List<PsiExpression>
 )
 
+enum class Chooser {
+  Yes, No;
+}
+
 interface ObjectBuilder {
   fun createClass(): PsiClass
   fun createDeclaration(): PsiDeclarationStatement
@@ -38,9 +45,27 @@ interface ObjectBuilder {
 
   companion object {
     fun run(editor: Editor, variables: List<PsiVariable>, scope: List<PsiElement>){
+      val message = JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs")
+      HintManager.getInstance().showErrorHint(editor, message)
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(listOf(Chooser.Yes, Chooser.No))
+        .setItemChosenCallback { item ->
+          if (item == Chooser.Yes) {
+            doExtract(editor, variables, scope)
+          }
+        }
+        .setMovable(true)
+        .setResizable(false)
+        .setRequestFocus(true)
+        .createPopup()
+        .showInBestPositionFor(editor)
+    }
+
+    fun doExtract(editor: Editor, variables: List<PsiVariable>, scope: List<PsiElement>){
       require(variables.isNotEmpty())
       require(scope.isNotEmpty())
-      val objectBuilder: ObjectBuilder = RecordObjectBuilder.create(variables, scope) ?: return
+
+      val objectBuilder: ObjectBuilder = RecordObjectBuilder.create(variables, scope)
       val file = scope.first().containingFile
       val extractRange = createGreedyRangeMarker(file.viewProvider.document, scope.first().textRange.union(scope.last().textRange))
       val editorState = EditorState(editor)
@@ -133,7 +158,7 @@ class RecordObjectBuilder(private val record: PsiClass, private val references: 
 
   companion object {
 
-    fun create(variables: List<PsiVariable>, scope: List<PsiElement>): RecordObjectBuilder? {
+    fun create(variables: List<PsiVariable>, scope: List<PsiElement>): RecordObjectBuilder {
       val record = createRecord(variables)
       val affectedReferences = findAffectedReferences(variables, scope.last().nextSibling)
       return RecordObjectBuilder(record, affectedReferences)
