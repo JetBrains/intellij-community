@@ -2,16 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.openapi.util.Key
+import java.util.concurrent.CompletableFuture
 
 interface GHPRToolWindowTabController {
 
-  /**
-   * Initial view that will be displayed after login and data pre-loading
-   * Only viable options are [GHPRToolWindowViewType.LIST] and [GHPRToolWindowViewType.NEW]
-   */
-  var initialView: GHPRToolWindowViewType
-
-  val componentController: GHPRToolWindowTabComponentController?
+  val componentController: CompletableFuture<GHPRToolWindowTabComponentController>
 
   fun canResetRemoteOrAccount(): Boolean
   fun resetRemoteAndAccount()

@@ -127,6 +127,16 @@ object CompletableFutureUtil {
     }
 
   /**
+   * Compose the result of async computation on EDT
+   *
+   * @see [CompletableFuture.thenApply]
+   * @param handler invoked when computation completes without exception
+   */
+  fun <T, R> CompletableFuture<T>.composeOnEdt(modalityState: ModalityState? = null,
+                                               handler: (T) -> CompletableFuture<R>): CompletableFuture<R> =
+    thenComposeAsync({ handler(it) }, getEDTExecutor(modalityState))
+
+  /**
    * Handle the error on EDT
    *
    * If you need to return something after handling use [handleOnEdt]

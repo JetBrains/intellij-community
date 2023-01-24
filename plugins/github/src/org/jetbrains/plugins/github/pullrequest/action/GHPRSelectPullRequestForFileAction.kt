@@ -1,10 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
+import com.intellij.collaboration.async.CompletableFutureUtil.composeOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -26,7 +29,7 @@ class GHPRSelectPullRequestForFileAction : DumbAwareAction(GithubBundle.messageP
       return
     }
 
-    val componentController = project.service<GHPRToolWindowController>().getTabController()?.componentController
+    val componentController = project.service<GHPRToolWindowController>().getTabController()?.componentController?.getNow(null)
     if (componentController == null) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -40,8 +43,10 @@ class GHPRSelectPullRequestForFileAction : DumbAwareAction(GithubBundle.messageP
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(PlatformDataKeys.PROJECT)
     val file = FileEditorManager.getInstance(project).selectedFiles.filterIsInstance<GHPRVirtualFile>().first()
-    project.service<GHPRToolWindowController>().activate {
-      it.componentController?.viewPullRequest(file.pullRequest)
+    project.service<GHPRToolWindowController>().activate().composeOnEdt {
+      it.componentController
+    }.successOnEdt {
+      it.viewPullRequest(file.pullRequest)
     }
   }
 }

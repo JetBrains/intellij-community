@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ClientProperty
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabController
+import java.util.concurrent.CompletableFuture
 
 @Service
 internal class GHPRToolWindowController(private val project: Project) {
@@ -17,14 +18,25 @@ internal class GHPRToolWindowController(private val project: Project) {
   }
 
   @RequiresEdt
-  fun activate(onActivated: ((GHPRToolWindowTabController) -> Unit)? = null) {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID) ?: return
+  fun activate(): CompletableFuture<GHPRToolWindowTabController> {
+    val result = CompletableFuture<GHPRToolWindowTabController>()
+
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID)
+                     ?: run {
+                       result.cancel(true)
+                       return result
+                     }
+
     toolWindow.activate {
       val controller = ClientProperty.get(toolWindow.component, GHPRToolWindowTabController.KEY)
-      if (controller != null && onActivated != null) {
-        onActivated(controller)
+      if (controller != null) {
+        result.complete(controller)
+      }
+      else {
+        result.cancel(true)
       }
     }
+    return result
   }
 
   fun getTabController(): GHPRToolWindowTabController? {

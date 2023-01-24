@@ -36,7 +36,6 @@ internal class GHPRToolWindowTabComponentControllerImpl(
   private val dataContext: GHPRDataContext,
   private val wrapper: Wrapper,
   private val parentDisposable: Disposable,
-  initialView: GHPRToolWindowViewType,
   private val onTitleChange: (@Nls String) -> Unit
 ) : GHPRToolWindowTabComponentController {
 
@@ -51,11 +50,7 @@ internal class GHPRToolWindowTabComponentControllerImpl(
   private var currentPullRequest: GHPRIdentifier? = null
 
   init {
-    when (initialView) {
-      GHPRToolWindowViewType.NEW -> createPullRequest(false)
-      else -> viewList(false)
-    }
-
+    viewList(false)
     DataManager.registerDataProvider(wrapper) { dataId ->
       when {
         GHPRActionKeys.PULL_REQUESTS_TAB_CONTROLLER.`is`(dataId) -> this
@@ -103,7 +98,7 @@ internal class GHPRToolWindowTabComponentControllerImpl(
     dataContext.repositoryDataService.resetData()
   }
 
-  override fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean, onShown: ((GHPRCommitBrowserComponentController?) -> Unit)?) {
+  override fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean): GHPRCommitBrowserComponentController? {
     onTitleChange(GithubBundle.message("pull.request.num", id.number))
     if (currentPullRequest != id) {
       currentDisposable?.let { Disposer.dispose(it) }
@@ -119,16 +114,12 @@ internal class GHPRToolWindowTabComponentControllerImpl(
       wrapper.repaint()
     }
 
-    if (onShown != null) {
-      val tree = UIUtil.findComponentOfType(wrapper.targetComponent, ChangesTree::class.java)
-      if (tree != null) {
-        val viewComponentController = ClientProperty.get(tree, GHPRCommitBrowserComponentController.KEY)
-        onShown(viewComponentController)
-      }
-    }
-
     if (requestFocus) {
       CollaborationToolsUIUtil.focusPanel(wrapper.targetComponent)
+    }
+
+    return UIUtil.findComponentOfType(wrapper.targetComponent, ChangesTree::class.java)?.let {
+      ClientProperty.get(it, GHPRCommitBrowserComponentController.KEY)
     }
   }
 
