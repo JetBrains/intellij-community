@@ -66,7 +66,7 @@ public final class IntroduceTargetChooser {
                                                         @NotNull @NlsContexts.PopupTitle String title,
                                                         int selection,
                                                         @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger) {
-    ReadAction.nonBlocking(() -> ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger, renderer)))
+    ReadAction.nonBlocking(() -> ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger.fun(t), renderer.fun(t))))
       .finishOnUiThread(ModalityState.NON_MODAL, targets ->
         showIntroduceTargetChooser(editor, targets, target -> callback.pass(target.getPlace()), title, selection))
       .expireWhen(() -> editor.isDisposed())
@@ -158,11 +158,11 @@ public final class IntroduceTargetChooser {
     private final String myText;
 
     MyIntroduceTarget(@NotNull T psi,
-                      @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger,
-                      @NotNull Function<? super T, String> renderer) {
+                      @NotNull TextRange range,
+                      @NotNull String text) {
       super(psi);
-      myTextRange = ranger.fun(psi);
-      myText = renderer.fun(psi);
+      myTextRange = range;
+      myText = text;
     }
 
     @NotNull
