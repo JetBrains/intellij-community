@@ -13,11 +13,11 @@ import org.jetbrains.uast.kotlin.TypeOwnerKind
 import org.jetbrains.uast.kotlin.lz
 import org.jetbrains.uast.kotlin.toPsiType
 
-internal class UastDescriptorLightMethod(
+internal class UastFakeDescriptorLightMethod(
     original: SimpleFunctionDescriptor,
     containingClass: PsiClass,
     context: KtElement,
-) : UastDescriptorLightMethodBase<SimpleFunctionDescriptor>(original, containingClass, context) {
+) : UastFakeDescriptorLightMethodBase<SimpleFunctionDescriptor>(original, containingClass, context) {
 
     private val _buildTypeParameterList by lz {
         KotlinLightTypeParameterListBuilder(this).also { paramList ->
@@ -33,7 +33,7 @@ internal class UastDescriptorLightMethod(
                                 p.upperBounds.forEach { bound ->
                                     val psiType =
                                         bound.toPsiType(
-                                            this@UastDescriptorLightMethod,
+                                            this@UastFakeDescriptorLightMethod,
                                             context,
                                             PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
                                         )
@@ -53,7 +53,7 @@ internal class UastDescriptorLightMethod(
 
     private val paramsList: PsiParameterList by lz {
         object : LightParameterListBuilder(containingClass.manager, containingClass.language) {
-            override fun getParent(): PsiElement = this@UastDescriptorLightMethod
+            override fun getParent(): PsiElement = this@UastFakeDescriptorLightMethod
             override fun getContainingFile(): PsiFile = parent.containingFile
 
             init {
@@ -64,7 +64,7 @@ internal class UastDescriptorLightMethod(
                         UastDescriptorLightParameterBase(
                             "\$this\$${original.name.identifier}",
                             receiver.type.toPsiType(
-                                this@UastDescriptorLightMethod,
+                                this@UastFakeDescriptorLightMethod,
                                 context,
                                 PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
                             ),
@@ -79,7 +79,7 @@ internal class UastDescriptorLightMethod(
                         UastDescriptorLightParameter(
                             p.name.identifier,
                             p.type.toPsiType(
-                                this@UastDescriptorLightMethod,
+                                this@UastFakeDescriptorLightMethod,
                                 context,
                                 PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
                             ),
@@ -95,7 +95,7 @@ internal class UastDescriptorLightMethod(
     override fun getParameterList(): PsiParameterList = paramsList
 }
 
-internal abstract class UastDescriptorLightMethodBase<T: CallableMemberDescriptor>(
+internal abstract class UastFakeDescriptorLightMethodBase<T: CallableMemberDescriptor>(
     internal val original: T,
     containingClass: PsiClass,
     protected val context: KtElement,
@@ -126,7 +126,7 @@ internal abstract class UastDescriptorLightMethodBase<T: CallableMemberDescripto
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as UastDescriptorLightMethodBase<*>
+        other as UastFakeDescriptorLightMethodBase<*>
 
         if (original != other.original) return false
 
