@@ -68,6 +68,8 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   @Nls
   private var buttonLabel: String = IdeBundle.message("got.it.button.name")
   private var buttonAction: () -> Unit = {}
+  private var requestFocus: Boolean = false
+
   private var showCloseShortcut = false
 
   private var maxWidth = MAX_WIDTH
@@ -193,6 +195,15 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    */
   fun onButtonClick(action: () -> Unit): GotItComponentBuilder {
     this.buttonAction = action
+    return this
+  }
+
+  /**
+   * Request focus to "Got It" button after tooltip will be shown.
+   * Default is false.
+   */
+  fun requestFocus(request: Boolean): GotItComponentBuilder {
+    this.requestFocus = request
     return this
   }
 
@@ -346,7 +357,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
         if (ExperimentalUI.isNewUI()) {
           font = JBFont.label().asBold()
         }
-        isFocusable = false
+        isFocusable = requestFocus
         isOpaque = false
         foreground = JBUI.CurrentTheme.GotItTooltip.buttonForeground()
         putClientProperty("gotItButton", true)
@@ -374,6 +385,17 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
         buttonPanel
       }
       else button
+
+      if (requestFocus) {
+        // Needed to provide right component to focus in com.intellij.ui.BalloonImpl.getContentToFocus
+        panel.isFocusTraversalPolicyProvider = true
+        panel.focusTraversalPolicy = object : SortingFocusTraversalPolicy(Comparator { _, _ -> 0 }) {
+          override fun getDefaultComponent(aContainer: Container?): Component {
+            return button
+          }
+        }
+      }
+
       panel.add(buttonComponent,
                 gc.nextLine().setColumn(column)
                   .insets(JBUI.CurrentTheme.GotItTooltip.BUTTON_TOP_INSET.get(), left,
