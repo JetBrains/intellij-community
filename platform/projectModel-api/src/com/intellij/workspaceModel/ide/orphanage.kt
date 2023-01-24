@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -35,9 +36,6 @@ import kotlin.system.measureTimeMillis
  * - If we create a custom *source root*, the created content root has [OrphanageWorkerEntitySource] entity source in orphan storage and
  *     have `dumb="true"` tag in iml file.
  */
-
-object OrphanageWorkerEntitySource : EntitySource
-
 @Service(Service.Level.PROJECT)
 class EntitiesOrphanage(private val project: Project) {
   val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
@@ -83,21 +81,23 @@ class EntitiesOrphanage(private val project: Project) {
   }
 
   companion object {
-    var benchmarkMode = false
-    val preUpdateTimes = ArrayList<Long>()
-    val updateTimes = ArrayList<Long>()
-    val use: Boolean
-      get() = Registry.`is`("ide.workspace.model.separate.component.for.roots", false) || benchmarkMode
-    val log = logger<EntitiesOrphanage>()
+    var isBenchmarkMode: Boolean = false
+    val preUpdateTimes: MutableList<Long> = ArrayList()
+    val updateTimes: MutableList<Long> = ArrayList()
+    val isEnabled: Boolean
+      get() = Registry.`is`("ide.workspace.model.separate.component.for.roots", false) || isBenchmarkMode
+    private val log: Logger = logger<EntitiesOrphanage>()
 
-    fun getInstance(project: Project) = project.service<EntitiesOrphanage>()
+    fun getInstance(project: Project): EntitiesOrphanage = project.service()
   }
 }
+
+object OrphanageWorkerEntitySource : EntitySource
 
 class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
 
-    if (!EntitiesOrphanage.use) return
+    if (!EntitiesOrphanage.isEnabled) return
     val adders: List<EntityAdder>
     val changedModules: List<ModuleEntity>
 
@@ -117,7 +117,7 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
     }
 
     if (adders.any { it.anyEntitiesToMove() }) {
-      if (EntitiesOrphanage.benchmarkMode) EntitiesOrphanage.preUpdateTimes += preUpdateTime
+      if (EntitiesOrphanage.isBenchmarkMode) EntitiesOrphanage.preUpdateTimes += preUpdateTime
       if (preUpdateTime > 1_000) log.warn("Orphanage preparation took $preUpdateTime ms")
 
       runLaterAndWrite {
@@ -137,7 +137,7 @@ class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
             }
           }
         }
-        if (EntitiesOrphanage.benchmarkMode) EntitiesOrphanage.updateTimes += updateTime
+        if (EntitiesOrphanage.isBenchmarkMode) EntitiesOrphanage.updateTimes += updateTime
         if (updateTime > 1_000) log.warn("Orphanage update took $preUpdateTime ms")
       }
     }
