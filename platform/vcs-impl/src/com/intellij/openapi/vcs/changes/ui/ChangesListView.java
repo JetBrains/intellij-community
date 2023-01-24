@@ -145,7 +145,7 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
     }
     if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       return VcsTreeModelData.exactlySelected(this)
-        .iterateUserObjects(ChangeList.class)
+        .iterateRawUserObjects(ChangeList.class)
         .toList().toArray(ChangeList[]::new);
     }
     if (VcsDataKeys.FILE_PATHS.is(dataId)) {
