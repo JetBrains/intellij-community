@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -186,7 +187,7 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
         if (scanningLatch.get() != null) return // already started
         val latch = CountDownLatch(1)
         if (scanningLatch.compareAndSet(null, latch)) {
-          DumbModeWhileScanning(latch, scanningLatch).queue(project)
+          DumbModeWhileScanning(latch, scanningLatch, project).queue(project)
         }
       }
       else {
@@ -277,12 +278,19 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
   }
 
   private class DumbModeWhileScanning(private val latch: CountDownLatch,
-                                      private val latchRef: AtomicReference<CountDownLatch?>) : DumbModeTask() {
+                                      private val latchRef: AtomicReference<CountDownLatch?>,
+                                      private val project: Project) : DumbModeTask() {
     override fun performInDumbMode(indicator: ProgressIndicator) {
       indicator.isIndeterminate = true
       indicator.text = IndexingBundle.message("progress.indexing.waiting.for.scanning.to.complete")
 
       ProgressIndicatorUtils.awaitWithCheckCanceled(latch)
+
+      // also wait for all the other scanning tasks to complete before starting indexing tasks
+      ProgressIndicatorUtils.awaitWithCheckCanceled {
+        LockSupport.parkNanos(50_000_000)
+        return@awaitWithCheckCanceled !project.service<UnindexedFilesScannerExecutor>().isRunning
+      }
     }
 
     override fun dispose() {
