@@ -17,7 +17,6 @@ package org.zmlx.hg4idea.command.mq;
 
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
@@ -45,7 +44,7 @@ public class HgQImportCommand {
   public void executeInCurrentThread(@NotNull final String startRevisionNumber) {
     final Project project = myRepository.getProject();
     String lastRevisionName = myRepository.getMQAppliedPatches().isEmpty() ? "tip" : "qparent";
-    List<String> arguments = ContainerUtil.newArrayList("--rev", startRevisionNumber + ":" + lastRevisionName);
+    List<String> arguments = List.of("--rev", startRevisionNumber + ":" + lastRevisionName);
     HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(myRepository.getRoot(), "qimport", arguments);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)

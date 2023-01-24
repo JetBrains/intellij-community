@@ -72,7 +72,7 @@ public final class GitLogUtil {
     }
 
     GitLineHandler handler = createGitHandler(project, root, configParameters, false);
-    List<GitLogParser.GitLogOption> options = ContainerUtil.newArrayList(HASH, PARENTS, COMMIT_TIME);
+    List<GitLogParser.GitLogOption> options = new ArrayList<>(Arrays.asList(HASH, PARENTS, COMMIT_TIME));
     if (userConsumer != null) {
       options.add(AUTHOR_NAME);
       options.add(AUTHOR_EMAIL);

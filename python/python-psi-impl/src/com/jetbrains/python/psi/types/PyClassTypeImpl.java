@@ -137,8 +137,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                           boolean inherited) {
     return RecursionManager.doPreventingRecursion(
       resolveContext.allowProperties()
-      ? ContainerUtil.newArrayList(this, name, location, direction, resolveContext)
-      : ContainerUtil.newArrayList(this, name, location, resolveContext),
+      ? Arrays.asList(this, name, location, direction, resolveContext)
+      : Arrays.asList(this, name, location, resolveContext),
       false,
       () -> doResolveMember(name, location, direction, resolveContext, inherited)
     );

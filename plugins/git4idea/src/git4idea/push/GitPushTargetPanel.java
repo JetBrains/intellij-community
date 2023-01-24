@@ -479,7 +479,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      return ContainerUtil.newArrayList(myTargetEditor.getFocusTarget(), myRemoteRenderer);
+      return List.of(myTargetEditor.getFocusTarget(), myRemoteRenderer);
     }
 
     @Override

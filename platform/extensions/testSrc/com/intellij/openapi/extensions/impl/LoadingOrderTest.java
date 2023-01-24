@@ -3,10 +3,11 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.SortingException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,7 +19,7 @@ public class LoadingOrderTest {
   public void testSimpleSorting() {
     assertSequence(
       "1 Any Any 2",
-      ContainerUtil.newArrayList(
+      Arrays.asList(
       createElement(LoadingOrder.ANY, null, "Any"),
       createElement(LoadingOrder.FIRST, null, "1"),
       createElement(LoadingOrder.LAST, null, "2"),
@@ -31,7 +32,7 @@ public class LoadingOrderTest {
   public void testStability() {
     assertSequence(
       "1 2 3 4",
-      ContainerUtil.newArrayList(
+      Arrays.asList(
       createElement(LoadingOrder.ANY, null, "1"),
       createElement(LoadingOrder.ANY, null, "2"),
       createElement(LoadingOrder.ANY, null, "3"),
@@ -47,7 +48,7 @@ public class LoadingOrderTest {
 
     assertSequence(
       "0 1 2 3 4 5",
-      ContainerUtil.newArrayList(
+      Arrays.asList(
       createElement(LoadingOrder.before(idTwo), idOne, "2"),
       createElement(LoadingOrder.FIRST, null, "0"),
       createElement(LoadingOrder.LAST, null, "5"),
@@ -64,7 +65,7 @@ public class LoadingOrderTest {
 
     assertSequence(
       "1 2 3 4 5 6",
-      ContainerUtil.newArrayList(
+      Arrays.asList(
       createElement(LoadingOrder.before(idOne), null, "2"),
       createElement(LoadingOrder.after(idOne), null, "4"),
       createElement(LoadingOrder.FIRST, null, "1"),
@@ -79,7 +80,7 @@ public class LoadingOrderTest {
   public void testComplexSortingBeforeLast() {
     assertSequence(
       "3 4 2 1",
-      ContainerUtil.newArrayList(
+      Arrays.asList(
       createElement(LoadingOrder.LAST, "1", "1"),
       createElement(LoadingOrder.readOrder("last,before 1"), null, "2"),
       createElement(LoadingOrder.ANY, null, "3"),
@@ -91,7 +92,7 @@ public class LoadingOrderTest {
   @Test
   public void testFailingSortingBeforeFirst() {
     checkSortingFailure(
-      ContainerUtil.newArrayList(
+      Arrays.asList(
       createElement(LoadingOrder.ANY, null, "good"),
       createElement(LoadingOrder.FIRST, "first", "bad"),
       createElement(LoadingOrder.LAST, null, "good"),
@@ -105,7 +106,7 @@ public class LoadingOrderTest {
   public void testFailingSortingFirst() {
     assertSequence(
       "1 1 2 3",
-      ContainerUtil.newArrayList(
+      Arrays.asList(
       createElement(LoadingOrder.ANY, null, "2"),
       createElement(LoadingOrder.FIRST, "first", "1"),
       createElement(LoadingOrder.LAST, null, "3"),
@@ -116,7 +117,7 @@ public class LoadingOrderTest {
   @Test
   public void testFailingSortingAfterLast() {
     checkSortingFailure(
-      ContainerUtil.newArrayList(
+      Arrays.asList(
       createElement(LoadingOrder.after("last"), null, "bad"),
       createElement(LoadingOrder.FIRST, null, "good"),
       createElement(LoadingOrder.LAST, "last", "bad"),
@@ -129,7 +130,7 @@ public class LoadingOrderTest {
   public void testFailingSortingLast() {
     assertSequence(
       "1 2 3 3",
-      ContainerUtil.newArrayList(
+      Arrays.asList(
       createElement(LoadingOrder.LAST, null, "3"),
       createElement(LoadingOrder.FIRST, null, "1"),
       createElement(LoadingOrder.LAST, "last", "3"),
@@ -140,11 +141,9 @@ public class LoadingOrderTest {
 
   @Test
   public void testFailingSortingComplex() {
-    checkSortingFailure(ContainerUtil.newArrayList(
-                          createElement(LoadingOrder.after("2"), "1", "bad"),
-                          createElement(LoadingOrder.after("3"), "2", "bad"),
-                          createElement(LoadingOrder.after("1"), "3", "bad")
-                        )
+    checkSortingFailure(new ArrayList<>(Arrays.asList(createElement(LoadingOrder.after("2"), "1", "bad"),
+                                                      createElement(LoadingOrder.after("3"), "2", "bad"),
+                                                      createElement(LoadingOrder.after("1"), "3", "bad")))
     );
   }
 

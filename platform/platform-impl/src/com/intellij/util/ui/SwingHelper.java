@@ -256,8 +256,8 @@ public final class SwingHelper {
     Object itemToSelect = comboBox.getSelectedItem();
     boolean preserveSelection = true;
     //noinspection SuspiciousMethodCalls
-    if (!newItems.contains(itemToSelect)) {
-      if (newItems.contains(newSelectedItemIfSelectionCannotBePreserved)) {
+    if (itemToSelect == null || !newItems.contains(itemToSelect)) {
+      if (newSelectedItemIfSelectionCannotBePreserved != null && newItems.contains(newSelectedItemIfSelectionCannotBePreserved)) {
         itemToSelect = newSelectedItemIfSelectionCannotBePreserved;
       }
       else {

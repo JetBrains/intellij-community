@@ -52,7 +52,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     PsiType[] keyValueSignature = index ? new PsiType[]{key, value, PsiType.INT} : new PsiType[]{key, value};
     PsiType[] mapEntrySignature = index ? new PsiType[]{mapEntryType, PsiType.INT} : new PsiType[]{mapEntryType};
 
-    return ContainerUtil.newArrayList(keyValueSignature, mapEntrySignature);
+    return List.of(keyValueSignature, mapEntrySignature);
   }
 
   private static int extractArgNum(String[] options) {
