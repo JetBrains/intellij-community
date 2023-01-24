@@ -7,8 +7,10 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getTargets;
 
@@ -25,8 +27,7 @@ final class GroupConfigurationsAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setEnabledAndVisible(e.getProject() != null &&
-                                      getTargets(e).isNotEmpty());
+    presentation.setEnabledAndVisible(e.getProject() != null && !getTargets(e).isEmpty());
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setText(getTemplatePresentation().getText() + "...");
     }
@@ -37,8 +38,8 @@ final class GroupConfigurationsAction extends AnAction {
     Project project = e.getProject();
     if (project == null) return;
 
-    JBIterable<RunDashboardRunConfigurationNode> nodes = getTargets(e);
-    RunDashboardRunConfigurationNode firstNode = nodes.first();
+    List<RunDashboardRunConfigurationNode> nodes = getTargets(e);
+    RunDashboardRunConfigurationNode firstNode = ContainerUtil.getFirstItem(nodes);;
     String initialValue = firstNode != null ? firstNode.getConfigurationSettings().getFolderName() : null;
     String value = Messages.showInputDialog(project, ExecutionBundle.message("run.dashboard.group.configurations.label"),
                                             ExecutionBundle.message("run.dashboard.group.configurations.title"), null, initialValue, null);
