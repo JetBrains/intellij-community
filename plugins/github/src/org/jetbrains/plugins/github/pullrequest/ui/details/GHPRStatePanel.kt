@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.details.ReviewRole
+import com.intellij.collaboration.ui.codereview.details.ReviewState
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.ui.util.emptyBorders
@@ -53,7 +55,7 @@ internal class GHPRStatePanel(
   private val stateModel: GHPRStateModel,
   private val metadataModel: GHPRMetadataModel,
   private val avatarIconsProvider: GHAvatarIconsProvider
-) : CardLayoutPanel<GHPRReviewFlowViewModel.ReviewRole, GHPRStatePanel.StateUI, JComponent>() {
+) : CardLayoutPanel<ReviewRole, GHPRStatePanel.StateUI, JComponent>() {
   private val scope = parentScope.childScope(Dispatchers.EDT)
 
   init {
@@ -64,15 +66,15 @@ internal class GHPRStatePanel(
     }
   }
 
-  override fun prepare(key: GHPRReviewFlowViewModel.ReviewRole): StateUI {
+  override fun prepare(key: ReviewRole): StateUI {
     return when (key) {
-      GHPRReviewFlowViewModel.ReviewRole.AUTHOR -> StateUI.Author(
+      ReviewRole.AUTHOR -> StateUI.Author(
         scope, reviewDetailsVm, reviewFlowVm, stateModel, securityService, metadataModel, avatarIconsProvider
       )
-      GHPRReviewFlowViewModel.ReviewRole.REVIEWER -> StateUI.Reviewer(
+      ReviewRole.REVIEWER -> StateUI.Reviewer(
         scope, reviewDetailsVm, reviewFlowVm, stateModel, securityService, metadataModel, avatarIconsProvider, dataProvider
       )
-      GHPRReviewFlowViewModel.ReviewRole.GUEST -> StateUI.Guest(
+      ReviewRole.GUEST -> StateUI.Guest(
         scope, reviewDetailsVm, reviewFlowVm, stateModel, securityService, metadataModel, avatarIconsProvider
       )
     }
@@ -135,7 +137,7 @@ internal class GHPRStatePanel(
         GHPRSquashMergeAction(stateModel, securityService)
       )
       return JBOptionButton(GHPRCommitMergeAction(stateModel, securityService), actions).apply {
-        bindVisibility(scope, reviewFlowVm.reviewState.map { it == GHPRReviewFlowViewModel.ReviewState.ACCEPTED })
+        bindVisibility(scope, reviewFlowVm.reviewState.map { it == ReviewState.ACCEPTED })
       }
     }
 
@@ -154,8 +156,8 @@ internal class GHPRStatePanel(
           text = CollaborationToolsBundle.message("review.details.action.request")
           action = GHPRRequestReviewAction(stateModel, securityService, metadataModel, avatarIconsProvider)
           bindVisibility(scope, combine(reviewFlowVm.reviewState, reviewFlowVm.requestedReviewersState) { reviewState, requestedReviewers ->
-            reviewState == GHPRReviewFlowViewModel.ReviewState.NEED_REVIEW ||
-            (reviewState == GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isNotEmpty())
+            reviewState == ReviewState.NEED_REVIEW ||
+            (reviewState == ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isNotEmpty())
           })
         }
         val reRequestReviewButton = JButton().apply {
@@ -163,7 +165,7 @@ internal class GHPRStatePanel(
           text = CollaborationToolsBundle.message("review.details.action.rerequest")
           action = GHPRReRequestReviewAction(stateModel, securityService, metadataModel, reviewFlowVm)
           bindVisibility(scope, combine(reviewFlowVm.reviewState, reviewFlowVm.requestedReviewersState) { reviewState, requestedReviewers ->
-            reviewState == GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isEmpty()
+            reviewState == ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isEmpty()
           })
         }
         val mergePullRequest = createMergeReviewButton(scope, reviewFlowVm)
@@ -175,11 +177,11 @@ internal class GHPRStatePanel(
           reviewFlowVm.reviewState.collect { reviewState ->
             actionGroup.removeAll()
             when (reviewState) {
-              GHPRReviewFlowViewModel.ReviewState.NEED_REVIEW, GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES -> {
+              ReviewState.NEED_REVIEW, ReviewState.WAIT_FOR_UPDATES -> {
                 actionGroup.add(GHPRCommitMergeAction(stateModel, securityService).toAnAction())
                 actionGroup.add(GHPRCloseAction(stateModel, securityService).toAnAction())
               }
-              GHPRReviewFlowViewModel.ReviewState.ACCEPTED -> {
+              ReviewState.ACCEPTED -> {
                 actionGroup.add(GHPRRequestReviewAction(stateModel, securityService, metadataModel, avatarIconsProvider).toAnAction())
                 actionGroup.add(GHPRCloseAction(stateModel, securityService).toAnAction())
               }
@@ -218,12 +220,12 @@ internal class GHPRStatePanel(
           reviewFlowVm.reviewState.collect { reviewState ->
             actionGroup.removeAll()
             when (reviewState) {
-              GHPRReviewFlowViewModel.ReviewState.NEED_REVIEW, GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES -> {
+              ReviewState.NEED_REVIEW, ReviewState.WAIT_FOR_UPDATES -> {
                 actionGroup.add(GHPRRequestReviewAction(stateModel, securityService, metadataModel, avatarIconsProvider).toAnAction())
                 actionGroup.add(GHPRCommitMergeAction(stateModel, securityService).toAnAction())
                 actionGroup.add(GHPRCloseAction(stateModel, securityService).toAnAction())
               }
-              GHPRReviewFlowViewModel.ReviewState.ACCEPTED -> {
+              ReviewState.ACCEPTED -> {
                 actionGroup.add(GHPRRequestReviewAction(stateModel, securityService, metadataModel, avatarIconsProvider).toAnAction())
                 actionGroup.add(GHPRCloseAction(stateModel, securityService).toAnAction())
               }
@@ -260,7 +262,7 @@ internal class GHPRStatePanel(
             GithubBundle.message("pull.request.review.actions.submit", pendingComments)
           })
           bindVisibility(scope, reviewFlowVm.reviewState.map {
-            it == GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES || it == GHPRReviewFlowViewModel.ReviewState.NEED_REVIEW
+            it == ReviewState.WAIT_FOR_UPDATES || it == ReviewState.NEED_REVIEW
           })
         }
       }

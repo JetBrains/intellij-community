@@ -3,6 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.ui.codereview.details.ReviewRole
+import com.intellij.collaboration.ui.codereview.details.ReviewState
 import com.intellij.openapi.Disposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +18,6 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRMetadataModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel.ReviewState
 
 internal class GHPRReviewFlowViewModelImpl(
   scope: CoroutineScope,
@@ -59,11 +60,11 @@ internal class GHPRReviewFlowViewModelImpl(
     }
   }
 
-  override val roleState: StateFlow<GHPRReviewFlowViewModel.ReviewRole> = reviewerAndReviewState.mapState(scope) {
+  override val roleState: StateFlow<ReviewRole> = reviewerAndReviewState.mapState(scope) {
     when {
-      currentUser == metadataModel.getAuthor() -> GHPRReviewFlowViewModel.ReviewRole.AUTHOR
-      reviewerAndReviewState.value.containsKey(currentUser) -> GHPRReviewFlowViewModel.ReviewRole.REVIEWER
-      else -> GHPRReviewFlowViewModel.ReviewRole.GUEST
+      currentUser == metadataModel.getAuthor() -> ReviewRole.AUTHOR
+      reviewerAndReviewState.value.containsKey(currentUser) -> ReviewRole.REVIEWER
+      else -> ReviewRole.GUEST
     }
   }
 
