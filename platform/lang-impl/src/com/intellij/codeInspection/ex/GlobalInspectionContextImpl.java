@@ -158,7 +158,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       toolWindow = toolWindowManager.getToolWindow(ToolWindowId.INSPECTION);
     }
     if (toolWindow != null) {
-      view.addAdditionalGearActions(toolWindow);
+      view.initAdditionalGearActions(toolWindow);
       toolWindow.activate(null);
     }
   }
