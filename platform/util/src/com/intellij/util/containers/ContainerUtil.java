@@ -441,12 +441,12 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code array} elements.
+   * @return unmodifiable list (in which mutation methods throw {@link UnsupportedOperationException}) which contains elements from {@code array}.
    * When contents of {@code array} changes (e.g. via {@code array[0] = null}), this collection contents changes accordingly.
    * This collection doesn't contain {@link Collections.UnmodifiableList#list} and {@link Collections.UnmodifiableCollection#c} fields,
    * unlike the {@link Collections#unmodifiableList(List)}, so it might be useful in extremely space-conscious places.
    * (Subject to change in subsequent JDKs).
-   * Otherwise, please prefer {@link Collections#unmodifiableList(List)}.
+   * Otherwise, please prefer {@link List#of} or {@link Collections#unmodifiableList(List)}.
    */
   @SafeVarargs
   @Contract(pure = true)
@@ -484,7 +484,7 @@ public final class ContainerUtil {
   /**
    * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code element}.
    * This collection doesn't contain {@code modCount} field, unlike the {@link Collections#singletonList(Object)}, so it might be useful in extremely space-conscious places.
-   * Otherwise, please prefer {@link Collections#singletonList(Object)}.
+   * Otherwise, please prefer {@link Collections#singletonList(Object)} or {@link List#of(Object)}.
    */
   @Contract(pure = true)
   @Unmodifiable
