@@ -60,6 +60,12 @@ internal object GitLabMergeRequestDetailsComponentFactory {
                            right = ReviewDetailsUIUtil.indentRight,
                            bottom = ReviewDetailsUIUtil.gapBetweenCommitsAndCommitInfo))
       add(emptyPanel, CC().grow().push()) // TODO: remove
+      add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(scope, detailsVm),
+          CC().growX().maxHeight("${ReviewDetailsUIUtil.statusChecksMaxHeight}")
+            .gap(left = ReviewDetailsUIUtil.indentLeft,
+                 right = ReviewDetailsUIUtil.indentRight,
+                 top = 4,
+                 bottom = ReviewDetailsUIUtil.gapBetweenCheckAndActions))
     }
   }
 }

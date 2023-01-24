@@ -88,11 +88,11 @@ internal object GHPRDetailsComponentFactory {
         right = ReviewDetailsUIUtil.indentRight,
         bottom = gapBetweenCommitInfoAndCommitsBrowser))
       add(commitFilesBrowserComponent, CC().grow().push())
-      add(statusChecks, CC().growX().maxHeight("$statusChecksMaxHeight").gap(
+      add(statusChecks, CC().growX().maxHeight("${ReviewDetailsUIUtil.statusChecksMaxHeight}").gap(
         left = ReviewDetailsUIUtil.indentLeft,
         right = ReviewDetailsUIUtil.indentRight,
-        top = gapBetweenCommitsBrowserAndStatusChecks,
-        bottom = gapBetweenCheckAndActions))
+        top = ReviewDetailsUIUtil.gapBetweenCommitsBrowserAndStatusChecks,
+        bottom = ReviewDetailsUIUtil.gapBetweenCheckAndActions))
       add(state, CC().growX().pushX().minHeight("pref").gap(
         left = ReviewDetailsUIUtil.indentLeft - 2,
         right = ReviewDetailsUIUtil.indentRight,
@@ -105,9 +105,6 @@ internal object GHPRDetailsComponentFactory {
   private val indentBottom: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 15, newUI = 18)
 
   private val gapBetweenCommitInfoAndCommitsBrowser: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 12, newUI = 12)
-  private val gapBetweenCommitsBrowserAndStatusChecks: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 4, newUI = 4)
-  private val gapBetweenCheckAndActions: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 10, newUI = 10)
 
   private val commitInfoMaxHeight: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 100, newUI = 100)
-  private val statusChecksMaxHeight: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 143, newUI = 143)
 }

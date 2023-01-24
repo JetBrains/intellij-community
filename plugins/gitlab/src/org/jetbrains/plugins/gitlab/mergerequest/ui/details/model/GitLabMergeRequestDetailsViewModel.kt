@@ -9,6 +9,7 @@ internal interface GitLabMergeRequestDetailsViewModel {
   val descriptionState: Flow<String>
   val targetBranch: Flow<String>
   val sourceBranch: Flow<String>
+  val hasConflicts: Flow<Boolean>
 
   val number: String
   val url: String
@@ -19,6 +20,7 @@ internal class GitLabMergeRequestDetailsViewModelImpl(mergeRequest: GitLabMergeR
   override val descriptionState: Flow<String> = mergeRequest.description
   override val targetBranch: Flow<String> = mergeRequest.targetBranch
   override val sourceBranch: Flow<String> = mergeRequest.sourceBranch
+  override val hasConflicts: Flow<Boolean> = mergeRequest.hasConflicts
 
   override val number: String = mergeRequest.number
   override val url: String = mergeRequest.url

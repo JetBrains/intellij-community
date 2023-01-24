@@ -11,6 +11,7 @@ internal interface GitLabMergeRequest {
   val description: Flow<String>
   val targetBranch: Flow<String>
   val sourceBranch: Flow<String>
+  val hasConflicts: Flow<Boolean>
 
   val number: String
   val url: String
@@ -23,6 +24,7 @@ internal class LoadedGitLabMergeRequest(mergeRequest: GitLabMergeRequestDTO) : G
   override val description: Flow<String> = mergeRequestState.map { it.description }
   override val targetBranch: Flow<String> = mergeRequestState.map { it.targetBranch }
   override val sourceBranch: Flow<String> = mergeRequestState.map { it.sourceBranch }
+  override val hasConflicts: Flow<Boolean> = mergeRequestState.map { it.conflicts }
 
   override val number: String = mergeRequest.iid
   override val url: String = mergeRequest.webUrl

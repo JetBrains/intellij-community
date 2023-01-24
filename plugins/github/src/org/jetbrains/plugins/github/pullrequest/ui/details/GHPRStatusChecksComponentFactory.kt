@@ -112,7 +112,7 @@ internal object GHPRStatusChecksComponentFactory {
       name = "Review conflicts label"
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
-      text = GithubBundle.message("pull.request.conflicts.must.be.resolved")
+      text = CollaborationToolsBundle.message("review.details.status.conflicts")
       bindVisibility(scope, reviewDetailsVm.hasConflictsState.map { it == true })
     }
   }
