@@ -14,6 +14,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,12 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     };
 
     if (selectedItem != null) {
-      step.setDefaultOptionIndex(step.getValues().indexOf(selectedItem));
+      List<T> stepValues = step.getValues();
+      if (stepValues.size() > 0 && stepValues.get(0) instanceof GroupedComboBoxRenderer.Item) {
+        // Skip separators (filtered by the model) for the default option index
+        stepValues = ContainerUtil.filter(stepValues, item -> item instanceof GroupedComboBoxRenderer.Item i && !i.isSeparator());
+      }
+      step.setDefaultOptionIndex(stepValues.indexOf(selectedItem));
     }
     return step;
   }
