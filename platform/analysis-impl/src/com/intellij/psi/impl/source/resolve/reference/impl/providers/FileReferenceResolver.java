@@ -21,9 +21,26 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+/**
+ * You can implement the extension point to customize resolution of references in a context of a specific file.
+ * There are two approaches here:
+ * <ol>
+ * <li>You can provide the resolution logic right inside of your file (e.g. HtmlFileImpl)
+ * <li>You can provide an additional context (SyntheticFileSystemItem), which implements the interface
+ * </ol>
+ *
+ * @see FileReferenceHelper
+ */
 public interface FileReferenceResolver {
+
+  /**
+   * @return resolution result for the name in the context of the reference.
+   */
   @Nullable
   PsiFileSystemItem resolveFileReference(@NotNull FileReference reference, @NotNull String name);
 
+  /**
+   * @return additional variants for code completion
+   */
   Collection<Object> getVariants(@NotNull FileReference reference);
 }

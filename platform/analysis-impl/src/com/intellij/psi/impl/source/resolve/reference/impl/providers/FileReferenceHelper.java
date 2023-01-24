@@ -43,6 +43,7 @@ import static java.util.Collections.emptyList;
  *
  * @see FileContextProvider
  * @see CustomizableReferenceProvider.CustomizationKey
+ * @see FileReferenceResolver
  */
 public abstract class FileReferenceHelper {
 
