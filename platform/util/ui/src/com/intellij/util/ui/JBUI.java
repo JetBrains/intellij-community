@@ -810,6 +810,13 @@ public final class JBUI {
         Color STRIPE_BACKGROUND = JBColor.namedColor("ToolWindow.Button.DragAndDrop.stripeBackground", CurrentTheme.DragAndDrop.Area.BACKGROUND);
         Color BUTTON_DROP_BACKGROUND = JBColor.namedColor("ToolWindow.Button.DragAndDrop.buttonDropBackground", CurrentTheme.DragAndDrop.Area.BACKGROUND);
         Color BUTTON_FLOATING_BACKGROUND = JBColor.namedColor("ToolWindow.Button.DragAndDrop.buttonFloatingBackground", ActionButton.pressedBackground());
+        Color BUTTON_DROP_BORDER = JBColor.namedColor("ToolWindow.Button.DragAndDrop.buttonDropBorderColor", new JBColor(0x407BF2, 0x548AF7));
+      }
+
+      public static @NotNull Color stripeSeparatorColor(boolean dnd) {
+        return dnd
+               ? JBColor.namedColor("ToolWindow.Stripe.DragAndDrop.separatorColor", 0x407BF2, 0x548AF7)
+               : JBColor.namedColor("ToolWindow.Stripe.separatorColor", 0xC9CCD6, 0x43454A);
       }
 
       public static @NotNull Color headerBackground(boolean active) {

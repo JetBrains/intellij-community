@@ -504,7 +504,14 @@
       "Button": {
         "DragAndDrop" : {
           "stripeBackground" : "Grey2",
-          "buttonDropBackground": "#35538F99"
+          "buttonDropBackground": "#35538F99",
+          "buttonDropBorderColor": "Blue8"
+        }
+      },
+      "Stripe": {
+        "separatorColor": "Grey4",
+        "DragAndDrop": {
+          "separatorColor": "Blue8"
         }
       }
     },

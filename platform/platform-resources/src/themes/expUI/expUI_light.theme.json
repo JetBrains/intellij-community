@@ -543,7 +543,14 @@
         "hoverBackground": "Grey12",
         "DragAndDrop" : {
           "stripeBackground" : "Grey13",
-          "buttonDropBackground": "Blue11"
+          "buttonDropBackground": "Blue11",
+          "buttonDropBorderColor": "Blue7"
+        }
+      },
+      "Stripe": {
+        "separatorColor": "Grey9",
+        "DragAndDrop": {
+          "separatorColor": "Blue7"
         }
       }
     },
