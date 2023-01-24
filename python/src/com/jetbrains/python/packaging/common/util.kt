@@ -91,9 +91,12 @@ suspend fun <T> runPackagingOperationOrShowErrorDialog(sdk: Sdk,
   }
   catch (ex: PyExecutionException) {
     val description = PyPackageManagementService.toErrorDescription(listOf(ex), sdk, packageName)
-    withContext(Dispatchers.Main) {
-      if (packageName != null) PyPackagesNotificationPanel.showPackageInstallationError(title, description!!)
-      else PackagesNotificationPanel.showError(title, description!!)
+    if (!PythonPackageManagementServiceBridge.runningUnderOldUI) {
+      // todo[akniazev] this check is used for legacy package management only, remove when it's not needed anymore
+      withContext(Dispatchers.Main) {
+        if (packageName != null) PyPackagesNotificationPanel.showPackageInstallationError(title, description!!)
+        else PackagesNotificationPanel.showError(title, description!!)
+      }
     }
     return Result.failure(ex)
   }
