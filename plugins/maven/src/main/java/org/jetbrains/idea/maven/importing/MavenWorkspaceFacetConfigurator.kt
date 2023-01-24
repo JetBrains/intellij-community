@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.project.PackagingModel
 import com.intellij.openapi.externalSystem.service.project.ArtifactExternalDependenciesImporterImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.packaging.artifacts.ArtifactModel
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.packaging.elements.PackagingElementResolvingContext
@@ -19,8 +19,9 @@ import org.jetbrains.idea.maven.importing.workspaceModel.ARTIFACT_MODEL_KEY
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
 import org.jetbrains.idea.maven.project.MavenProjectsTree
+import java.util.concurrent.ConcurrentHashMap
 
-private val FACET_DETECTION_DISABLED_KEY = Key.create<MutableMap<MavenWorkspaceFacetConfigurator, Boolean>>("FACET_DETECTION_DISABLED_KEY")
+private val FACET_DETECTION_DISABLED_KEY = Key.create<ConcurrentHashMap<MavenWorkspaceFacetConfigurator, Boolean>>("FACET_DETECTION_DISABLED_KEY")
 
 @ApiStatus.Internal
 interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
@@ -44,24 +45,18 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
               mavenProjectToModuleName: Map<MavenProject, String>,
               packagingModel: PackagingModel,
               postTasks: MutableList<MavenProjectsProcessorTask>,
-              userDataHolder: UserDataHolderBase) {
+              userDataHolder: UserDataHolderEx) {
   }
 
-  fun isFacetDetectionDisabled(context: Context<*>): Boolean {
-    if (null == context.getUserData(FACET_DETECTION_DISABLED_KEY)) {
-      context.putUserData(FACET_DETECTION_DISABLED_KEY, mutableMapOf())
-    }
-    val facetDetectionDisabledMap = context.getUserData(FACET_DETECTION_DISABLED_KEY)!!
-    if (!facetDetectionDisabledMap.containsKey(this)) {
-      facetDetectionDisabledMap[this] = isFacetDetectionDisabled(context.project)
-    }
-    return facetDetectionDisabledMap[this]!!
+  private fun isFacetDetectionDisabled(context: Context<*>): Boolean {
+    context.putUserDataIfAbsent(FACET_DETECTION_DISABLED_KEY, ConcurrentHashMap())
+    return FACET_DETECTION_DISABLED_KEY[context].computeIfAbsent(this) { isFacetDetectionDisabled(context.project) }
   }
 
   override fun configureMavenProject(context: MutableMavenProjectContext) {
-    val project = context.project
-    if (isFacetDetectionDisabled(project)) return
+    if (isFacetDetectionDisabled(context)) return
 
+    val project = context.project
     val mavenProjectWithModules = context.mavenProjectWithModules
     val mavenProject = mavenProjectWithModules.mavenProject
     if (!isApplicable(mavenProject)) return
@@ -77,9 +72,9 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
   }
 
   override fun beforeModelApplied(context: MutableModelContext) {
-    val project = context.project
-    if (isFacetDetectionDisabled(project)) return
+    if (isFacetDetectionDisabled(context)) return
 
+    val project = context.project
     val artifactModel = ARTIFACT_MODEL_KEY[context]
     val resolvingContext = object : DefaultPackagingElementResolvingContext(project) {
       override fun getArtifactModel(): ArtifactModel {
@@ -111,7 +106,7 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
                   mavenProjectToModuleName,
                   packagingModel,
                   postTasks,
-                  context as UserDataHolderBase)
+                  context)
         }
       }
     }
