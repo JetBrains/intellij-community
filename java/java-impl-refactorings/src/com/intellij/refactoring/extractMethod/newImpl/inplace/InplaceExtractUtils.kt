@@ -262,6 +262,11 @@ object InplaceExtractUtils {
 
   private fun IntRange.trim(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
 
+  fun getLinesFromTextRange(document: Document, range: TextRange, maxLength: Int): IntRange {
+    val lines = document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
+    return lines.trim(maxLength)
+  }
+
   fun getLinesFromTextRange(document: Document, range: TextRange): IntRange {
     return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
   }
