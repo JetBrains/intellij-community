@@ -45,6 +45,8 @@
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
     <projectService serviceInterface="com.intellij.workspaceModel.ide.WorkspaceModel"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.EntitiesOrphanage"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.EntitiesOrphanageImpl"/>
     <projectService serviceInterface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex"
                     serviceImplementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl"/>
     <applicationService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
@@ -83,7 +85,7 @@
   <projectListeners>
     <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSynchronizerListener"
               topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
-    <listener class="com.intellij.workspaceModel.ide.OrphanListener"
+    <listener class="com.intellij.workspaceModel.ide.impl.OrphanListener"
               topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
   </projectListeners>
 </idea-plugin>
