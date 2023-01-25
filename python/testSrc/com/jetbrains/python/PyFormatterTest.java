@@ -3,9 +3,8 @@ package com.jetbrains.python;
 
 import com.jetbrains.python.fixture.PythonCommonCodeInsightTestFixture;
 import com.jetbrains.python.fixtures.PythonPlatformCodeInsightTestFixture;
-import com.jetbrains.python.psi.LanguageLevel;
 
-public class PythonFormatterTest extends PythonCommonFormatterTest {
+public class PyFormatterTest extends PythonCommonFormatterTest {
   @Override
   protected PythonCommonCodeInsightTestFixture getFixture() {
     return new PythonPlatformCodeInsightTestFixture(LANGUAGE_LEVEL);
