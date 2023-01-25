@@ -30,7 +30,6 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.IncorrectOperationException;
 import org.apache.velocity.runtime.parser.ParseException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,11 +44,14 @@ import java.util.function.Supplier;
 public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAction<PsiFile> {
 
   public CreateFileFromTemplateAction(@NlsActions.ActionText String text,
-                                      @NlsActions.ActionDescription String description, Icon icon) {
+                                      @NlsActions.ActionDescription String description,
+                                      @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  public CreateFileFromTemplateAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
+  public CreateFileFromTemplateAction(@NotNull Supplier<String> dynamicText,
+                                      @NotNull Supplier<String> dynamicDescription,
+                                      @Nullable Icon icon) {
     super(dynamicText, dynamicDescription, icon);
   }
 
