@@ -33,6 +33,9 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
 
   protected static final Logger LOG = Logger.getInstance(CreateFromTemplateAction.class);
 
+  protected CreateFromTemplateAction() {
+  }
+
   public CreateFromTemplateAction(@NlsActions.ActionText String text,
                                   @NlsActions.ActionDescription String description,
                                   @Nullable Icon icon) {
