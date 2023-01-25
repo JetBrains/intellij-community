@@ -21,8 +21,9 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -44,7 +45,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
 
   @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    return new InspectionGadgetsFix[] {
+    return new InspectionGadgetsFix[]{
       new WeakenVisibilityFix()
     };
   }
@@ -86,12 +87,21 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
                          @NotNull List<PsiElement> psiElementsToIgnore,
                          @Nullable Runnable refreshViews) {
       List<PsiElement> elements = Stream.of(descriptors).map(d -> ((ProblemDescriptor)d).getPsiElement()).toList();
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        WriteCommandAction.writeCommandAction(project, elements)
-          .withName(InspectionGadgetsBundle.message("make.static.quickfix"))
-          .withGlobalUndo()
-          .run(() -> elements.forEach(e -> performFix(e)));
-      }, InspectionGadgetsBundle.message("weaken.visibility.quickfix"), true, project);
+      ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+      application.runWriteActionWithCancellableProgressInDispatchThread(InspectionGadgetsBundle.message("make.static.quickfix"), project,
+                                                                        null, indicator -> {
+          WriteCommandAction.writeCommandAction(project, elements)
+            .withName(InspectionGadgetsBundle.message("make.static.quickfix"))
+            .withGlobalUndo()
+            .run(() -> {
+              indicator.setIndeterminate(false);
+              for (int i = 0; i < elements.size(); i++) {
+                PsiElement e = elements.get(i);
+                indicator.setFraction((double) i / elements.size());
+                performFix(e);
+              }
+            });
+        });
     }
 
     @Override
