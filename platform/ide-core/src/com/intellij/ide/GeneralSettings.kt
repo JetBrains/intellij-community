@@ -1,288 +1,264 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide;
+package com.intellij.ide
 
-import com.intellij.ide.ui.UINumericRange;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.OptionTag;
-import com.intellij.util.xmlb.annotations.Transient;
-import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemDependent;
+import com.intellij.ide.ui.UINumericRange
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.*
+import com.intellij.util.PlatformUtils
+import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.util.xmlb.annotations.Transient
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
+import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.SystemDependent
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
+private const val SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY = "ide.show.tips.on.startup.default.value"
+private const val CONFIGURED_PROPERTY = "GeneralSettings.initiallyConfigured"
 
-@State(name = "GeneralSettings", storages = @Storage(GeneralSettings.IDE_GENERAL_XML), category = SettingsCategory.SYSTEM)
-public final class GeneralSettings implements PersistentStateComponent<GeneralSettings> {
-  public static final String IDE_GENERAL_XML = "ide.general.xml";
+@Suppress("unused", "EnumEntryName")
+@State(name = "GeneralSettings", storages = [Storage(GeneralSettings.IDE_GENERAL_XML)], category = SettingsCategory.SYSTEM)
+class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
+  private var state = GeneralSettingsState()
 
-  public static final int OPEN_PROJECT_ASK = -1;
-  public static final int OPEN_PROJECT_NEW_WINDOW = 0;
-  public static final int OPEN_PROJECT_SAME_WINDOW = 1;
-  public static final int OPEN_PROJECT_SAME_WINDOW_ATTACH = 2;
+  @get:Deprecated("Use {@link GeneralLocalSettings#getBrowserPath()} instead.")
+  val browserPath: String?
+    get() = state.browserPath
 
-  public enum ProcessCloseConfirmation {ASK, TERMINATE, DISCONNECT}
-
-  public static final String PROP_INACTIVE_TIMEOUT = "inactiveTimeout";
-  public static final String PROP_SUPPORT_SCREEN_READERS = "supportScreenReaders";
-
-  public static final String SUPPORT_SCREEN_READERS = "ide.support.screenreaders.enabled";
-  private static final Boolean SUPPORT_SCREEN_READERS_OVERRIDDEN = getSupportScreenReadersOverridden();
-
-  static final UINumericRange SAVE_FILES_AFTER_IDLE_SEC = new UINumericRange(15, 1, 300);
-
-  private static final String SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY = "ide.show.tips.on.startup.default.value";
-
-  String myBrowserPath = "";
-  private boolean myShowTipsOnStartup = Boolean.parseBoolean(System.getProperty(SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY, "true"));
-  private boolean myReopenLastProject = true;
-  private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDDEN, false);
-  private boolean mySyncOnFrameActivation = true;
-  private boolean mySaveOnFrameDeactivation = true;
-  private boolean myAutoSaveIfInactive = false;  // If true the IDE automatically saves files if it is inactive for some seconds
-  private int myInactiveTimeout = 15; // Number of seconds of inactivity after which the IDE automatically saves all files
-  private boolean myUseSafeWrite = true;
-  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
-  boolean myUseDefaultBrowser = true;
-  private boolean mySearchInBackground;
-  private boolean myConfirmExit = true;
-  private boolean myShowWelcomeScreen = true;
-  private int myConfirmOpenNewProject = PlatformUtils.isDataSpell() ? OPEN_PROJECT_SAME_WINDOW_ATTACH : OPEN_PROJECT_ASK;
-  private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
-  String myDefaultProjectDirectory = "";
-
-  private static final String CONFIGURED_PROPERTY = "GeneralSettings.initiallyConfigured";
-
-  public static GeneralSettings getInstance() {
-    return ApplicationManager.getApplication().getService(GeneralSettings.class);
-  }
-
-  public GeneralSettings() {
-    Application application = ApplicationManager.getApplication();
-    if (application == null || application.isHeadlessEnvironment()) {
-      return;
+  var isShowTipsOnStartup: Boolean
+    get() {
+      return state.showTipsOnStartup
+             ?: java.lang.Boolean.parseBoolean(System.getProperty(SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY, "true"))
+    }
+    set(value) {
+      state.showTipsOnStartup = value
     }
 
-    if (PlatformUtils.isPyCharmEducational() || PlatformUtils.isRubyMine() || PlatformUtils.isWebStorm()) {
-      PropertiesComponent propertyManager = PropertiesComponent.getInstance();
+  var isReopenLastProject: Boolean
+    get() = state.reopenLastProject
+    set(value) {
+      state.reopenLastProject = value
+    }
+
+  private var supportScreenReaders = SUPPORT_SCREEN_READERS_OVERRIDDEN ?: false
+
+  var isSyncOnFrameActivation: Boolean
+    get() = state.autoSyncFiles
+    set(value) {
+      state.autoSyncFiles = value
+    }
+
+  var isSaveOnFrameDeactivation: Boolean
+    get() = state.autoSaveFiles
+    set(value) {
+      state.autoSaveFiles = value
+    }
+
+  /**
+   * @return `true` if IDE saves all files after "idle" timeout.
+   */
+  var isAutoSaveIfInactive: Boolean
+    get() = state.autoSaveIfInactive
+    set(value) {
+      val changed = state.autoSaveIfInactive != value
+      state.autoSaveIfInactive = value
+      if (changed) {
+        propertyChanged(PropertyNames.autoSaveIfInactive)
+      }
+    }
+
+  var isUseSafeWrite: Boolean
+    get() = state.isUseSafeWrite
+    set(value) {
+      state.isUseSafeWrite = value
+    }
+
+  private val _propertyChangedFlow = MutableSharedFlow<PropertyNames>(extraBufferCapacity = 16,
+                                                                      onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  val propertyChangedFlow: Flow<PropertyNames> = _propertyChangedFlow.asSharedFlow()
+
+  //fun propertyChangedFlow()
+
+  @get:Deprecated("Use {@link GeneralLocalSettings#getUseDefaultBrowser()} instead.")
+  val isUseDefaultBrowser: Boolean
+    get() = state.useDefaultBrowser
+
+  var isSearchInBackground: Boolean
+    get() = state.searchInBackground
+    set(value) {
+      state.searchInBackground = value
+    }
+
+  var isConfirmExit: Boolean
+    get() = state.confirmExit
+    set(value) {
+      state.confirmExit = value
+    }
+
+  var isShowWelcomeScreen: Boolean
+    get() = state.isShowWelcomeScreen
+    set(value) {
+      state.isShowWelcomeScreen = value
+    }
+
+  /**
+   * [GeneralSettings.OPEN_PROJECT_NEW_WINDOW] if a new project should be opened in new window
+   * [GeneralSettings.OPEN_PROJECT_SAME_WINDOW] if a new project should be opened in same window
+   * [GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH] if a new project should be attached
+   * [GeneralSettings.OPEN_PROJECT_ASK] if a confirmation dialog should be shown
+   */
+  @get:OpenNewProjectOption
+  var confirmOpenNewProject: Int
+    get() = state.confirmOpenNewProject2 ?: defaultConfirmNewProject()
+    set(value) {
+      state.confirmOpenNewProject2 = value
+    }
+
+
+  var processCloseConfirmation: ProcessCloseConfirmation
+    get() = state.processCloseConfirmation
+    set(value) {
+      state.processCloseConfirmation = value
+    }
+
+  init {
+    val app = ApplicationManager.getApplication()
+    if (app != null && !app.isHeadlessEnvironment &&
+        (PlatformUtils.isPyCharmEducational() || PlatformUtils.isRubyMine() || PlatformUtils.isWebStorm())) {
+      val propertyManager = PropertiesComponent.getInstance()
       if (!propertyManager.isValueSet(CONFIGURED_PROPERTY)) {
-        propertyManager.setValue(CONFIGURED_PROPERTY, true);
-        setShowTipsOnStartup(false);
+        propertyManager.setValue(CONFIGURED_PROPERTY, true)
+        state.showTipsOnStartup = false
       }
     }
   }
 
-  public void addPropertyChangeListener(@NotNull String propertyName, @NotNull Disposable parentDisposable, @NotNull PropertyChangeListener listener) {
-    myPropertyChangeSupport.addPropertyChangeListener(propertyName, listener);
-    Disposer.register(parentDisposable, () -> myPropertyChangeSupport.removePropertyChangeListener(propertyName, listener));
+  companion object {
+    const val IDE_GENERAL_XML = "ide.general.xml"
+    const val OPEN_PROJECT_ASK = -1
+    const val OPEN_PROJECT_NEW_WINDOW = 0
+    const val OPEN_PROJECT_SAME_WINDOW = 1
+    const val OPEN_PROJECT_SAME_WINDOW_ATTACH = 2
+    @Suppress("SpellCheckingInspection")
+    const val SUPPORT_SCREEN_READERS = "ide.support.screenreaders.enabled"
+    private val SUPPORT_SCREEN_READERS_OVERRIDDEN = getSupportScreenReadersOverridden()
+
+    val SAVE_FILES_AFTER_IDLE_SEC: UINumericRange = UINumericRange(15, 1, 300)
+
+    @JvmStatic
+    fun getInstance(): GeneralSettings = ApplicationManager.getApplication().service<GeneralSettings>()
+
+    private fun getSupportScreenReadersOverridden(): Boolean? = System.getProperty(SUPPORT_SCREEN_READERS)?.toBoolean()
+
+    fun isSupportScreenReadersOverridden(): Boolean = SUPPORT_SCREEN_READERS_OVERRIDDEN != null
+
+    fun defaultConfirmNewProject(): Int = if (PlatformUtils.isDataSpell()) OPEN_PROJECT_SAME_WINDOW_ATTACH else OPEN_PROJECT_ASK
   }
 
-  /**
-   * @deprecated Use {@link GeneralLocalSettings#getBrowserPath()} instead.
-   */
-  @Deprecated
-  public String getBrowserPath() {
-    return myBrowserPath;
+  enum class PropertyNames {
+    inactiveTimeout,
+    autoSaveIfInactive,
+    supportScreenReaders,
   }
 
-  public void setBrowserPath(String browserPath) {
-    myBrowserPath = browserPath;
-  }
-
-  public boolean isShowTipsOnStartup() {
-    return myShowTipsOnStartup;
-  }
-
-  public void setShowTipsOnStartup(boolean value) {
-    myShowTipsOnStartup = value;
-  }
-
-  public boolean isReopenLastProject() {
-    return myReopenLastProject;
-  }
-
-  public void setReopenLastProject(boolean reopenLastProject) {
-    myReopenLastProject = reopenLastProject;
-  }
-
-  private static @Nullable Boolean getSupportScreenReadersOverridden() {
-    String prop = System.getProperty(SUPPORT_SCREEN_READERS);
-    return prop != null ? Boolean.parseBoolean(prop) : null;
-  }
-
-  public static boolean isSupportScreenReadersOverridden() {
-    return SUPPORT_SCREEN_READERS_OVERRIDDEN != null;
-  }
-
-  public boolean isSupportScreenReaders() {
-    return mySupportScreenReaders;
-  }
-
-  public void setSupportScreenReaders(boolean enabled) {
-    boolean oldValue = mySupportScreenReaders;
-    mySupportScreenReaders = enabled;
-    myPropertyChangeSupport.firePropertyChange(
-      PROP_SUPPORT_SCREEN_READERS, Boolean.valueOf(oldValue), Boolean.valueOf(enabled)
-    );
-  }
-
-  public ProcessCloseConfirmation getProcessCloseConfirmation() {
-    return myProcessCloseConfirmation;
-  }
-
-  public void setProcessCloseConfirmation(ProcessCloseConfirmation processCloseConfirmation) {
-    myProcessCloseConfirmation = processCloseConfirmation;
-  }
-
-  @OptionTag("autoSyncFiles")
-  public boolean isSyncOnFrameActivation() {
-    return mySyncOnFrameActivation;
-  }
-
-  public void setSyncOnFrameActivation(boolean syncOnFrameActivation) {
-    mySyncOnFrameActivation = syncOnFrameActivation;
-  }
-
-  @OptionTag("autoSaveFiles")
-  public boolean isSaveOnFrameDeactivation() {
-    return mySaveOnFrameDeactivation;
-  }
-
-  public void setSaveOnFrameDeactivation(boolean saveOnFrameDeactivation) {
-    mySaveOnFrameDeactivation = saveOnFrameDeactivation;
-  }
-
-  /**
-   * @return {@code true} if IDE saves all files after "idle" timeout.
-   */
-  public boolean isAutoSaveIfInactive(){
-    return myAutoSaveIfInactive;
-  }
-
-  public void setAutoSaveIfInactive(boolean autoSaveIfInactive) {
-    myAutoSaveIfInactive = autoSaveIfInactive;
-  }
+  var isSupportScreenReaders: Boolean
+    get() = supportScreenReaders
+    set(value) {
+      val changed = supportScreenReaders != value
+      supportScreenReaders = value
+      if (changed) {
+        propertyChanged(PropertyNames.supportScreenReaders)
+      }
+    }
 
   /**
    * @return timeout in seconds after which IDE saves all files if there was no user activity.
-   * The method always return positive (more then zero) value.
+   * The method always returns positive (more than zero) value.
    */
-  public int getInactiveTimeout(){
-    return SAVE_FILES_AFTER_IDLE_SEC.fit(myInactiveTimeout);
+  var inactiveTimeout: Int
+    get() = SAVE_FILES_AFTER_IDLE_SEC.fit(state.inactiveTimeout)
+    set(value) {
+      val newValue = SAVE_FILES_AFTER_IDLE_SEC.fit(value)
+      val changed = state.inactiveTimeout != newValue
+      state.inactiveTimeout = newValue
+      if (changed) {
+        propertyChanged(PropertyNames.inactiveTimeout)
+      }
+    }
+
+  private fun propertyChanged(property: PropertyNames) {
+    check(_propertyChangedFlow.tryEmit(property))
   }
 
-  public void setInactiveTimeout(int inactiveTimeoutSeconds) {
-    int oldInactiveTimeout = myInactiveTimeout;
+  override fun getState(): GeneralSettingsState = state
 
-    myInactiveTimeout = SAVE_FILES_AFTER_IDLE_SEC.fit(inactiveTimeoutSeconds);
-    myPropertyChangeSupport.firePropertyChange(
-        PROP_INACTIVE_TIMEOUT, Integer.valueOf(oldInactiveTimeout), Integer.valueOf(myInactiveTimeout)
-    );
+  override fun loadState(state: GeneralSettingsState) {
+    this.state = state
   }
 
-  public boolean isUseSafeWrite() {
-    return myUseSafeWrite;
-  }
+  @Suppress("UNUSED_PARAMETER")
+  @get:Deprecated("unused")
+  @get:Transient
+  @set:Deprecated("unused")
+  var isConfirmExtractFiles: Boolean
+    get() = true
+    set(value) {}
 
-  public void setUseSafeWrite(boolean value) {
-    myUseSafeWrite = value;
-  }
+  @MagicConstant(intValues = [OPEN_PROJECT_ASK.toLong(), OPEN_PROJECT_NEW_WINDOW.toLong(), OPEN_PROJECT_SAME_WINDOW.toLong(), OPEN_PROJECT_SAME_WINDOW_ATTACH.toLong()])
+  internal annotation class OpenNewProjectOption
 
-  @NotNull
-  @Override
-  public GeneralSettings getState() {
-    return this;
-  }
+  @get:Deprecated("Use {@link GeneralLocalSettings#getDefaultProjectDirectory()} instead.")
+  val defaultProjectDirectory: @SystemDependent String?
+    get() = state.defaultProjectDirectory
+}
 
-  @Override
-  public void loadState(@NotNull GeneralSettings state) {
-    XmlSerializerUtil.copyBean(state, this);
-  }
+data class GeneralSettingsState(
+  @field:OptionTag("myDefaultProjectDirectory")
+  @JvmField
+  var defaultProjectDirectory: String? = "",
 
-  /**
-   * @deprecated Use {@link GeneralLocalSettings#getUseDefaultBrowser()} instead.
-   */
-  @Deprecated
-  public boolean isUseDefaultBrowser() {
-    return myUseDefaultBrowser;
-  }
+  @JvmField
+  var browserPath: String? = "",
 
-  /**
-   * @deprecated unused
-   */
-  @Transient
-  @Deprecated(forRemoval = true)
-  public boolean isConfirmExtractFiles() {
-    return true;
-  }
+  @JvmField
+  var showTipsOnStartup: Boolean? = null,
+  @JvmField
+  var reopenLastProject: Boolean = true,
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated(forRemoval = true)
-  public void setConfirmExtractFiles(boolean value) { }
+  @JvmField
+  var autoSyncFiles: Boolean = true,
 
-  public boolean isConfirmExit() {
-    return myConfirmExit;
-  }
+  @JvmField
+  var autoSaveFiles: Boolean = true,
+  @JvmField
+  var autoSaveIfInactive: Boolean = false,
 
-  public void setConfirmExit(boolean confirmExit) {
-    myConfirmExit = confirmExit;
-  }
+  @JvmField
+  var isUseSafeWrite: Boolean = true,
 
-  public boolean isShowWelcomeScreen() {
-    return myShowWelcomeScreen;
-  }
+  @JvmField
+  var useDefaultBrowser: Boolean = true,
+  @JvmField
+  var searchInBackground: Boolean = false,
+  @JvmField
+  var confirmExit: Boolean = true,
+  @JvmField
+  var isShowWelcomeScreen: Boolean = true,
 
-  public void setShowWelcomeScreen(boolean show) {
-    myShowWelcomeScreen = show;
-  }
-
-  @MagicConstant(intValues = {OPEN_PROJECT_ASK, OPEN_PROJECT_NEW_WINDOW, OPEN_PROJECT_SAME_WINDOW, OPEN_PROJECT_SAME_WINDOW_ATTACH})
-  @interface OpenNewProjectOption {}
-  /**
-   * @return
-   * <ul>
-   * <li>{@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW} if new project should be opened in new window
-   * <li>{@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW} if new project should be opened in same window
-   * <li>{@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW_ATTACH} if new project should be attached
-   * <li>{@link GeneralSettings#OPEN_PROJECT_ASK} if a confirmation dialog should be shown
-   * </ul>
-   */
-  @OpenNewProjectOption
-  @OptionTag("confirmOpenNewProject2")
   @ReportValue
-  public int getConfirmOpenNewProject() {
-    return myConfirmOpenNewProject;
-  }
+  @JvmField
+  var confirmOpenNewProject2: Int? = null,
 
-  public void setConfirmOpenNewProject(@OpenNewProjectOption int confirmOpenNewProject) {
-    myConfirmOpenNewProject = confirmOpenNewProject;
-  }
+  @JvmField
+  var processCloseConfirmation: ProcessCloseConfirmation = ProcessCloseConfirmation.ASK,
 
-  public boolean isSearchInBackground() {
-    return mySearchInBackground;
-  }
+  @JvmField
+  var inactiveTimeout: Int = 15,
+)
 
-  public void setSearchInBackground(final boolean searchInBackground) {
-    mySearchInBackground = searchInBackground;
-  }
-
-  /**
-   * @deprecated Use {@link GeneralLocalSettings#getDefaultProjectDirectory()} instead.
-   */
-  @Deprecated
-  @SystemDependent
-  public String getDefaultProjectDirectory() {
-    return myDefaultProjectDirectory;
-  }
+enum class ProcessCloseConfirmation {
+  ASK,
+  TERMINATE,
+  DISCONNECT
 }

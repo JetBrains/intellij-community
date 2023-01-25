@@ -55,9 +55,9 @@ import javax.swing.*
 
 private val settings: UISettings
   get() = UISettings.getInstance()
-private val generalSettings
+private val generalSettings: GeneralSettings
   get() = GeneralSettings.getInstance()
-private val lafManager
+private val lafManager: LafManager
   get() = LafManager.getInstance()
 
 private val cdShowToolWindowBars
@@ -208,7 +208,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           val ctrlTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, mask))
           val ctrlShiftTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, mask + InputEvent.SHIFT_MASK))
           checkBox(message("checkbox.support.screen.readers"))
-            .bindSelected(generalSettings::isSupportScreenReaders, generalSettings::setSupportScreenReaders)
+            .bindSelected(generalSettings::isSupportScreenReaders) { generalSettings.isSupportScreenReaders = it }
             .comment(message("support.screen.readers.tab", ctrlTab, ctrlShiftTab))
             .enabled(!isOverridden)
 

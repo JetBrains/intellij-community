@@ -58,14 +58,14 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
 
     executeAndWaitUntilPushed {
       GeneralSettings.getInstance().initModifyAndSave {
-        isSaveOnFrameDeactivation = false
+        autoSaveFiles = false
       }
     }
 
     assertServerSnapshot {
       fileState {
         GeneralSettings().withState {
-          isSaveOnFrameDeactivation = false
+          autoSaveFiles = false
         }
       }
     }
@@ -106,7 +106,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
 
     bridge.suspendEventProcessing()
     GeneralSettings.getInstance().initModifyAndSave {
-      isSaveOnFrameDeactivation = false
+      autoSaveFiles = false
     }
     EditorSettingsExternalizable.getInstance().initModifyAndSave {
       SHOW_INTENTION_BULB = false
@@ -119,7 +119,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     pushedSnapshot.assertSettingsSnapshot {
       fileState {
         GeneralSettings().withState {
-          isSaveOnFrameDeactivation = false
+          autoSaveFiles = false
         }
       }
       fileState {
@@ -133,7 +133,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
   @Test
   fun `existing settings are copied on initialization`() {
     GeneralSettings.getInstance().initModifyAndSave {
-      isSaveOnFrameDeactivation = false
+      autoSaveFiles = false
     }
 
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
@@ -147,7 +147,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     assertServerSnapshot {
       fileState {
         GeneralSettings().withState {
-          isSaveOnFrameDeactivation = false
+          autoSaveFiles = false
         }
       }
       fileState {
@@ -160,7 +160,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
 
   @Test fun `disabled categories should be ignored when copying settings on initialization`() {
     GeneralSettings.getInstance().initModifyAndSave {
-      isSaveOnFrameDeactivation = false
+      autoSaveFiles = false
     }
     EditorSettingsExternalizable.getInstance().initModifyAndSave {
       SHOW_INTENTION_BULB = false
@@ -213,7 +213,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
   fun `enabling category should copy existing settings from that category`() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.CODE, isEnabled = false)
     GeneralSettings.getInstance().initModifyAndSave {
-      isSaveOnFrameDeactivation = false
+      autoSaveFiles = false
     }
     EditorSettingsExternalizable.getInstance().initModifyAndSave {
       SHOW_INTENTION_BULB = false
@@ -225,7 +225,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     assertServerSnapshot {
       fileState {
         GeneralSettings().withState {
-          isSaveOnFrameDeactivation = false
+          autoSaveFiles = false
         }
       }
     }
@@ -240,7 +240,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     assertServerSnapshot {
       fileState {
         GeneralSettings().withState {
-          isSaveOnFrameDeactivation = false
+          autoSaveFiles = false
         }
       }
       fileState {
@@ -343,7 +343,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     assertServerSnapshot {
       fileState {
         GeneralSettings().withState {
-          isSaveOnFrameDeactivation = false
+          autoSaveFiles = false
         }
       }
       fileState {

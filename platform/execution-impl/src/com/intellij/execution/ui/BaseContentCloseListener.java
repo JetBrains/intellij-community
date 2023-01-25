@@ -4,7 +4,7 @@ package com.intellij.execution.ui;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.TerminateRemoteProcessDialog;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.ProcessCloseConfirmation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -143,11 +143,11 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
                + processHandler.getClass() + ", " + processHandler + ")");
       return true;
     }
-    GeneralSettings.ProcessCloseConfirmation rc = TerminateRemoteProcessDialog.show(myProject, sessionName, processHandler);
+    ProcessCloseConfirmation rc = TerminateRemoteProcessDialog.show(myProject, sessionName, processHandler);
     if (rc == null) { // cancel
       return false;
     }
-    boolean destroyProcess = rc == GeneralSettings.ProcessCloseConfirmation.TERMINATE;
+    boolean destroyProcess = rc == ProcessCloseConfirmation.TERMINATE;
     if (destroyProcess) {
       processHandler.destroyProcess();
     }

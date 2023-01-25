@@ -52,15 +52,15 @@ import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JCheckBox
 
-private val codeInsightSettings
+private val codeInsightSettings: CodeInsightSettings
   get() = CodeInsightSettings.getInstance()
-private val editorSettings
+private val editorSettings: EditorSettingsExternalizable
   get() = EditorSettingsExternalizable.getInstance()
 private val stripTrailingSpacesProxy get() = StripTrailingSpacesProxy()
 
-private val richCopySettings
+private val richCopySettings: RichCopySettings
   get() = RichCopySettings.getInstance()
-private val codeAnalyzerSettings
+private val codeAnalyzerSettings: DaemonCodeAnalyzerSettings
   get() = DaemonCodeAnalyzerSettings.getInstance()
 
 @Contract(pure = true)
@@ -352,7 +352,7 @@ private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOp
         row { checkBox(highlightScope) }
         row { checkBox(highlightIdentifierUnderCaret) }
       }
-      if (!GeneralSettings.getInstance().isSupportScreenReaders()) {
+      if (!GeneralSettings.getInstance().isSupportScreenReaders) {
         group(message("group.quick.documentation")) {
           row { checkBox(cdShowQuickDocOnMouseMove) }
         }
