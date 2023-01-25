@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.analysis.AnalysisScope;
@@ -62,29 +62,26 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
                                                            @NotNull final InspectionManager manager,
                                                            @NotNull final GlobalInspectionContext globalContext,
                                                            @NotNull final ProblemDescriptionsProcessor processor) {
-    if (refEntity instanceof RefJavaElement) {
-      final RefJavaElement refElement = (RefJavaElement)refEntity;
+    if (refEntity instanceof final RefJavaElement refElement) {
       if (refElement instanceof RefParameter) return null;
       if (!refElement.isReferenced()) return null;
       if (refElement.isSyntheticJSP()) return null;
       if (refElement.isFinal()) return null;
       if (!((RefElementImpl)refElement).checkFlag(CanBeFinalAnnotator.CAN_BE_FINAL_MASK)) return null;
 
-      if (refElement instanceof RefClass) {
+      if (refElement instanceof RefClass refClass) {
         if (!isReportClasses()) return null;
-        RefClass refClass = (RefClass)refElement;
         if (refClass.isInterface() || refClass.isAnonymous() || refClass.isAbstract()) return null;
       }
-      else if (refElement instanceof RefMethod) {
+      else if (refElement instanceof RefMethod refMethod) {
         if (!isReportMethods()) return null;
-        RefMethod refMethod = (RefMethod)refElement;
         RefClass ownerClass = refMethod.getOwnerClass();
         if (ownerClass == null || ownerClass.isFinal()) return null;
         if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return null;
       }
-      else if (refElement instanceof RefField) {
+      else if (refElement instanceof RefField field) {
         if (!isReportFields()) return null;
-        if (!((RefField)refElement).isUsedForWriting()) return null;
+        if (!field.isUsedForWriting()) return null;
       }
       else {
         return null;
