@@ -67,9 +67,9 @@ interface FacetBridge<T: ModuleSettingsBase> {
 
   private fun getFacetEntities(mutableStorage: MutableEntityStorage) = mutableStorage.facetMapping().getEntities(this as Facet<*>).map { it as T }
 
-  fun getFacetEntity(mutableStorage: MutableEntityStorage) : T = getFacetEntities(mutableStorage).single()
+  private fun getFacetEntity(mutableStorage: MutableEntityStorage) : T = getFacetEntities(mutableStorage).single()
 
-  fun getFacetEntityOptional(mutableStorage: MutableEntityStorage) = getFacetEntities(mutableStorage).firstOrNull()
+  fun getFacetEntityOptional(mutableStorage: MutableEntityStorage) : T? = getFacetEntities(mutableStorage).firstOrNull()
 
   val config: FacetConfigurationBridge<T>
 }
