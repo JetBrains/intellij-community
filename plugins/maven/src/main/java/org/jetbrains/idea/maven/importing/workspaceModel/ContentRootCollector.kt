@@ -13,7 +13,17 @@ object ContentRootCollector {
 
     val result = mutableListOf<ContentRootWithFolders>()
 
-    folders.sorted().forEach { curr ->
+    val projectContentRoots = folders.filterIsInstance<ProjectRootFolder>().map { it.path }
+
+    // don't add resource folders that are ancestors of a project content root
+    fun isResourceFolderAncestorOfContentRoot(folder: ImportedFolder) =
+      folder is SourceFolder
+      && folder.type is JavaResourceRootType
+      && projectContentRoots.any { projectContentRoot -> FileUtil.isAncestor(folder.path, projectContentRoot, true) }
+
+    val filteredFolders = folders.filter { !isResourceFolderAncestorOfContentRoot(it) }
+
+    filteredFolders.sorted().forEach { curr ->
       // 1. ADD CONTENT ROOT, IF NEEDED:
       var nearestRoot = result.lastOrNull()
       if (nearestRoot != null && FileUtil.isAncestor(nearestRoot.path, curr.path, false)) {

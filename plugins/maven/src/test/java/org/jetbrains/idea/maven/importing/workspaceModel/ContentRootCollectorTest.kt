@@ -162,6 +162,24 @@ class ContentRootCollectorTest : MavenTestCase() {
     )
   }
 
+
+  @Test
+  fun `test skip resource folders that are ancestors of root`() {
+    val root = "/home/project/modules/m1"
+    val parentResource = "/home/project/modules"
+    val grandParentResource = "/home/project"
+
+    val contentRoots = collect(projectRoots = listOf(root),
+                               mainResourceFolders = listOf(parentResource, grandParentResource))
+
+    assertContentRoots(contentRoots,
+                       listOf(ContentRootTestData(
+                         expectedPath = root,
+                         expectedMainResourcesFolders = listOf(),
+                         expectedTestResourcesFolders = listOf()))
+    )
+  }
+
   @Test
   fun `test source folders override resource folders`() {
     val root = "/home"
