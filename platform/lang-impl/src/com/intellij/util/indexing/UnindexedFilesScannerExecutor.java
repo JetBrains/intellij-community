@@ -7,10 +7,8 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.PingProgress;
-import com.intellij.openapi.project.DumbModeTask;
-import com.intellij.openapi.project.MergingQueueGuiExecutor;
-import com.intellij.openapi.project.MergingTaskQueue;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -22,6 +20,11 @@ import java.util.concurrent.locks.LockSupport;
 public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor<UnindexedFilesScanner> implements Disposable {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesScannerExecutor.class);
   private final AtomicReference<ProgressIndicator> runningTask = new AtomicReference<>();
+
+  @NotNull
+  public static UnindexedFilesScannerExecutor getInstance(@NotNull Project project) {
+    return project.getService(UnindexedFilesScannerExecutor.class);
+  }
 
   private static class TaskQueueListener implements ExecutorStateListener {
     private final Project project;
@@ -114,5 +117,15 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   @Override
   public void dispose() {
     getTaskQueue().disposePendingTasks();
+  }
+
+  /**
+   * This method does not have "happens before" semantics. It requests GUI supender to suspend and executes runnable without waiting for
+   * all the running tasks to pause.
+   */
+  public void suspendScanningAndIndexingThenRun(@NotNull @NlsContexts.ProgressText String activityName, @NotNull Runnable runnable) {
+    suspendAndRun(activityName, () -> {
+      DumbService.getInstance(getProject()).suspendIndexingAndRun(activityName, runnable);
+    });
   }
 }

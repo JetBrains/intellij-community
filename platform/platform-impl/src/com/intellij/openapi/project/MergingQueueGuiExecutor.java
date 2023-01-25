@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -218,11 +219,11 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     }, task.getIndicator());
   }
 
-  public @NotNull Project getProject() {
+  public final @NotNull Project getProject() {
     return myProject;
   }
 
-  public @NotNull MergingTaskQueue<T> getTaskQueue() {
+  public final @NotNull MergingTaskQueue<T> getTaskQueue() {
     return myTaskQueue;
   }
 
@@ -238,7 +239,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
    * is invoked. Already running task still continues to run.
    * Does nothing if the queue is already suspended.
    */
-  public void suspendQueue() {
+  public final void suspendQueue() {
     mySuspended.set(true);
   }
 
@@ -246,13 +247,17 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
    * Resumes queue in this executor after {@linkplain #suspendQueue()}. All the queued tasks will be scheduled for execution immediately.
    * Does nothing if the queue was not suspended.
    */
-  public void resumeQueue() {
+  public final void resumeQueue() {
     if (mySuspended.compareAndSet(true, false)) {
       startBackgroundProcess();
     }
   }
 
-  public MergingQueueGuiSuspender getGuiSuspender() {
+  public final MergingQueueGuiSuspender getGuiSuspender() {
     return myGuiSuspender;
+  }
+
+  public final void suspendAndRun(@NlsContexts.ProgressText @NotNull String activityName, @NotNull Runnable activity) {
+    getGuiSuspender().suspendAndRun(activityName, activity);
   }
 }

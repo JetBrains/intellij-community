@@ -215,7 +215,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
-    myGuiDumbTaskRunner.getGuiSuspender().suspendAndRun(activityName, activity);
+    myGuiDumbTaskRunner.suspendAndRun(activityName, activity);
   }
 
   @Override
