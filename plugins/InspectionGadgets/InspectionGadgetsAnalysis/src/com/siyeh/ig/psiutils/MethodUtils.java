@@ -261,7 +261,7 @@ public final class MethodUtils {
    * Try to avoid calling it in such cases.
    */
   public static boolean isOverridden(@NotNull PsiMethod method) {
-    return OverridingMethodsSearch.search(method).findFirst() != null;
+    return OverridingMethodsSearch.search(method, false).findFirst() != null;
   }
 
   public static boolean isOverriddenInHierarchy(@NotNull PsiMethod method, @NotNull PsiClass baseClass) {
