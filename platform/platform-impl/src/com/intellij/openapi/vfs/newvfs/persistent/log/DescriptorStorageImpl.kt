@@ -81,6 +81,8 @@ class DescriptorStorageImpl(
   override suspend fun writeDescriptor(tag: VfsOperationTag, compute: suspend () -> VfsOperation<*>) {
     val descrSize = bytesForDescriptor(tag)
     position.track(descrSize.toLong()) { descrPos ->
+      // XXX: in case of mmap-based storage, compiler can reorder operations here so that tag.ordinal.toByte() will be written right away,
+      // but it is unlikely, because there is too much code in between
       storageIO.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
       storageIO.write(descrPos + descrSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
       val op = compute()
