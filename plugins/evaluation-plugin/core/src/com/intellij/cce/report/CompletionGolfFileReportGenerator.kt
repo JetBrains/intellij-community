@@ -168,7 +168,7 @@ class CompletionGolfFileReportGenerator(
       val info = mutableListOf<String>().apply {
         add("${(movesNormalised * 100).format()}%".padEnd(4, ' '))
         add("$movesCount act")
-        add((totalLatency / 1000).format() + "s")
+        add("${(totalLatency / 1000).format()}s".padEnd(4, ' '))
         add(if (isPerfectLine) perfectLineSign else "")
       }
 

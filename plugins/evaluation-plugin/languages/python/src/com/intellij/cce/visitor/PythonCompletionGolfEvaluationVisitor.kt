@@ -36,7 +36,11 @@ open class PythonCompletionGolfEvaluationVisitor : CompletionGolfEvaluationVisit
   }
 
   override fun visitPyStringLiteralExpression(node: PyStringLiteralExpression) {
-    if (node.isDocString) processor.skipElement(node)
+    if (node.isDocString || node.stringValueTextRange.length > MAX_STRING_LENGTH) processor.skipElement(node)
     super.visitPyStringLiteralExpression(node)
+  }
+
+  companion object {
+    private const val MAX_STRING_LENGTH: Int = 20
   }
 }
