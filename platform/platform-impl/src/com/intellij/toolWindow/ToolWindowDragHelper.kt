@@ -351,7 +351,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
                                                             paneId = info?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID,
                                                             anchor = preferredStripe.anchor,
                                                             order = info?.order ?: -1,
-                                                            isSplit = preferredStripe.split)
+                                                            isSplit = info?.isSplit ?: preferredStripe.split)
         }
       }
     }
