@@ -23,6 +23,8 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
     loadFacetEntities(moduleEntity, listOf(facetState), null, evaluateEntitySource)
   }
 
+  override fun serialize(entity: FacetEntity, rootElement: Element): Element  = error("Unsupported operation")
+
   private fun loadFacetEntities(moduleEntity: ModuleEntity,
                                 facetStates: List<FacetState>,
                                 underlyingFacet: FacetEntity?,
