@@ -421,11 +421,6 @@ public final class MethodUtils {
     if (!InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), PsiUtil.resolveClassInClassTypeOnly(method.getReturnType()), true)) {
       return false;
     }
-    final PsiElement navigationElement = method.getNavigationElement();
-    if (!(navigationElement instanceof PsiMethod)) {
-      return false;
-    }
-    method = (PsiMethod)navigationElement;
     final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
     if (!(lastStatement instanceof PsiReturnStatement)) {
       return false;
