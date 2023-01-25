@@ -3,8 +3,8 @@ package org.jetbrains.plugins.gradle.properties
 
 import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.gradle.properties.base.BasePropertiesFile
 import org.jetbrains.plugins.gradle.properties.GradleProperties.EMPTY
+import org.jetbrains.plugins.gradle.properties.base.BasePropertiesFile
 import org.jetbrains.plugins.gradle.properties.models.Property
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -59,7 +59,7 @@ object GradlePropertiesFile : BasePropertiesFile<GradleProperties>() {
   private fun getGradleServiceDirectoryPath(serviceDirectoryStr: String?) =
     serviceDirectoryStr?.let { Paths.get(serviceDirectoryStr, propertiesFileName) }
 
-  private fun getGradleHomePropertiesPath(): Path? {
+  fun getGradleHomePropertiesPath(): Path? {
     val gradleUserHome = Environment.getVariable(GradleConstants.SYSTEM_DIRECTORY_PATH_KEY)
     if (gradleUserHome != null) {
       return Paths.get(gradleUserHome, propertiesFileName)
