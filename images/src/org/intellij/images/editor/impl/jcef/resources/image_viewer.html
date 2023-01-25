@@ -194,7 +194,6 @@
 
   const gState = {
     'zoom': 1.0,
-    'scroll': { 'x': 0.0, 'y': 0.0 },
     'url': '',
     'grid_visible': false,
     'chessboard_visible': false,
@@ -213,8 +212,8 @@
     'control_panel': document.getElementById('control_panel'),
     'info_panel': document.getElementById('info_panel'),
   }
-
-  let send_info = function (info_string) {}
+  let send_info = function (info_string) {
+  }
 
   function _update_info() {
     let canvas_bbox = gUI.canvas.getBoundingClientRect()
@@ -222,9 +221,9 @@
       'status': gUI.error_message.style.display === 'none' ? 'OK' : 'FAILED',
 
       'zoom': gState.zoom,
-      'viewportSize': { 'width': gUI.view_port.clientWidth, 'height': gUI.view_port.clientHeight },
-      'imageSize': { 'width': gUI.image.clientWidth, 'height': gUI.image.clientHeight },
-      'canvasBBox': { 'x': canvas_bbox.x, 'y': canvas_bbox.y, 'width': canvas_bbox.width, 'height': canvas_bbox.height},
+      'viewportSize': {'width': gUI.view_port.clientWidth, 'height': gUI.view_port.clientHeight},
+      'imageSize': {'width': gUI.image.clientWidth, 'height': gUI.image.clientHeight},
+      'canvasBBox': {'x': canvas_bbox.x, 'y': canvas_bbox.y, 'width': canvas_bbox.width, 'height': canvas_bbox.height},
 
       'zoomInPossible': gState.zoom < MAX_ZOOM,
       'zoomOutPossible': canvas_bbox.width > MIN_IMAGE_SIZE && canvas_bbox.height > MIN_IMAGE_SIZE,
@@ -245,7 +244,8 @@
     if (gState.grid_visible && gState.zoom > MIN_GRID_ZOOM) {
       gUI.pixel_grid.style.backgroundSize = `${gState.zoom}px ${gState.zoom}px`
       gUI.pixel_grid.style.display = ''
-    } else {
+    }
+    else {
       gUI.pixel_grid.style.display = 'none'
     }
   }
@@ -256,7 +256,7 @@
     if (!image) {
       return
     }
-    for (e of image.getElementsByTagName('svg')) {
+    for (let e of image.getElementsByTagName('svg')) {
       if (e.getAttribute('height') || e.getAttribute('width')) continue
 
       let vb = e.viewBox
@@ -274,7 +274,8 @@
       error_message.appendChild(parserErrors[0])
       error_message.style.display = ''
       view_port.style.display = 'none'
-    } else {
+    }
+    else {
       error_message.style.display = 'none'
       view_port.style.display = ''
     }
@@ -312,7 +313,7 @@
 
   function setZoom(zoom = 1.0, anchor_on_viewport = null) {
     if (anchor_on_viewport == null) {
-      anchor_on_viewport = {x: gUI.view_port.offsetWidth / 2, y: gUI.view_port.offsetHeight / 2 }
+      anchor_on_viewport = {x: gUI.view_port.offsetWidth / 2, y: gUI.view_port.offsetHeight / 2}
     }
     zoom = Math.min(MAX_ZOOM, zoom)
     zoom = Math.max(zoom, MIN_IMAGE_SIZE / gUI.image.clientWidth, MIN_IMAGE_SIZE / gUI.image.clientHeight)
@@ -360,30 +361,29 @@
   }
 
   function _set_up_canvas(canvas_width, canvas_height) {
-    gUI.canvas.style.width = canvas_width + 'px'
-    gUI.canvas.style.height = canvas_height + 'px'
-
     let translate_x
+    let left_pos
     if (canvas_width > gUI.view_port.clientWidth) {
       translate_x = '0'
-      gUI.canvas.style.left = '0'
+      left_pos = '0'
     }
     else {
       translate_x = '-50%'
-      gUI.canvas.style.left = '50%'
+      left_pos = '50%'
     }
 
     let translate_y
+    let top_pos
     if (canvas_height > gUI.view_port.clientHeight) {
       translate_y = '0'
-      gUI.canvas.style.top = '0'
+      top_pos = '0'
     }
     else {
       translate_y = '-50%'
-      gUI.canvas.style.top = '50%'
+      top_pos = '50%'
     }
 
-    gUI.canvas.style.transform = 'translate(' + translate_x + ", " + translate_y + ")"
+    gUI.canvas.style.cssText = `width: ${canvas_width}px; height: ${canvas_height}px; left: ${left_pos}; top: ${top_pos}; transform: translate(${translate_x}, ${translate_y});`
   }
 
   function getFitToViewportScale() {
@@ -399,7 +399,9 @@
   function setImageUrl(url) {
     if (!url) return
 
-    let size_observer = new ResizeObserver( () => { setZoom(gState.zoom) })
+    let size_observer = new ResizeObserver(() => {
+      setZoom(gState.zoom)
+    })
     size_observer.observe(gUI.image)
 
     let image_loaded_listener = function () {

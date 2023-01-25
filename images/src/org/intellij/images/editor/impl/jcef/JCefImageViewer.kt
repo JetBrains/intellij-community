@@ -56,13 +56,13 @@ class JCefImageViewer(private val myFile: VirtualFile,
   private val myCefClient: JBCefClient = JBCefApp.getInstance().createClient()
   private val myBrowser: JBCefBrowser = JBCefBrowserBuilder().setClient(myCefClient).build()
   private val myUIComponent: JCefImageViewerUI
-  private val myMagnificationFinishedJSQuery: JBCefJSQuery
+  private val myViewerStateJSQuery: JBCefJSQuery
 
   private val myInitializer: AtomicReference<() -> Unit> = AtomicReference()
   private var myState = ViewerState()
 
   override fun getComponent(): JComponent = myUIComponent
-  override fun getPreferredFocusedComponent(): JComponent? = null
+  override fun getPreferredFocusedComponent(): JComponent = myBrowser.cefBrowser.uiComponent as JComponent
   override fun getName(): @Nls(capitalization = Nls.Capitalization.Title) String = NAME
 
   override fun isModified(): Boolean = false
@@ -93,26 +93,15 @@ class JCefImageViewer(private val myFile: VirtualFile,
     }
   }
 
-  override fun dispose() {}
+  override fun dispose() {
+    myViewerStateJSQuery.clearHandlers()
+    myDocument.removeDocumentListener(this)
+  }
+
   override fun documentChanged(event: DocumentEvent) = execute("reload()")
 
-  fun magnify(scale: Double, at: Point, callback: (() -> Unit)?) {
-    if (callback != null) {
-      myMagnificationFinishedJSQuery.addHandler {
-        callback.invoke()
-        myMagnificationFinishedJSQuery.clearHandlers()
-        null
-      }
-    }
-
-    execute("setZoom(${myState.zoom * scale}, {'x': ${at.x}, 'y': ${at.y}});\n" +
-            "window.requestAnimationFrame(() => {\n" +
-            "  window.requestIdleCallback(() => {\n" +
-            "    setTimeout(() => {\n" +
-            "      ${myMagnificationFinishedJSQuery.inject("")}\n" +
-            "    }, 150)\n" +
-            "  })\n" +
-            "})\n")
+  fun setZoom(scale: Double, at: Point) {
+    execute("setZoom(${scale}, {'x': ${at.x}, 'y': ${at.y}});")
   }
 
   override fun setTransparencyChessboardVisible(visible: Boolean) {
@@ -129,8 +118,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
   override fun isEnabledForActionPlace(place: String): Boolean = ThumbnailViewActions.ACTION_PLACE != place
   override fun getZoomModel(): ImageZoomModel = ZOOM_MODEL
   override fun isGridVisible(): Boolean = myState.status == ViewerState.Status.OK && myState.gridEnabled
-  fun getClientWidth() = myState.viewportSize.width
-  fun getClientHeight() = myState.viewportSize.height
+  fun getZoom() = myState.zoom
 
   private fun execute(/*language=javascript*/ script: String) = myBrowser.cefBrowser.executeJavaScript(script, myBrowser.cefBrowser.url, 0)
 
@@ -175,16 +163,17 @@ class JCefImageViewer(private val myFile: VirtualFile,
 
     myCefClient.addRequestHandler(resourceRequestHandler, myBrowser.cefBrowser)
 
-    @Suppress("DEPRECATION")
-    myMagnificationFinishedJSQuery = JBCefJSQuery.create(myBrowser)
-
-    myUIComponent = JCefImageViewerUI(myBrowser.component, this)
-    Disposer.register(this, myUIComponent);
+    myUIComponent = JCefImageViewerUI(myBrowser.cefBrowser.uiComponent, this)
+    Disposer.register(this, myUIComponent)
 
     @Suppress("DEPRECATION")
-    val query = JBCefJSQuery.create(myBrowser)
-    query.addHandler { s: String ->
-      myState = jsonParser.decodeFromString(s)
+    myViewerStateJSQuery = JBCefJSQuery.create(myBrowser)
+    myViewerStateJSQuery.addHandler { s: String ->
+      try {
+        myState = jsonParser.decodeFromString(s)
+      }
+      catch (_: Exception) {
+      }
       myUIComponent.setInfo(
         ImagesBundle.message("image.info.svg",
                              myState.imageSize.width, myState.imageSize.height, StringUtil.formatFileSize(myFile.length)))
@@ -192,7 +181,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
     }
 
     myInitializer.set {
-      execute("send_info = function(info_text) {${query.inject("info_text")};}")
+      execute("send_info = function(info_text) {${myViewerStateJSQuery.inject("info_text")};}")
       execute("setImageUrl('$IMAGE_URL');")
       isGridVisible = OptionsManager.getInstance().options.editorOptions.gridOptions.isShowDefault
       isTransparencyChessboardVisible = OptionsManager.getInstance().options.editorOptions.transparencyChessboardOptions.isShowDefault
