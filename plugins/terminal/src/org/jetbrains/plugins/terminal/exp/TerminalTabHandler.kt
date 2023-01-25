@@ -15,4 +15,8 @@ class TerminalTabHandler(private val originalHandler: EditorActionHandler) : Edi
     }
     else originalHandler.execute(editor, caret, dataContext)
   }
+
+  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+    return editor.getUserData(TerminalPromptPanel.KEY) != null || originalHandler.isEnabled(editor, caret, dataContext)
+  }
 }
