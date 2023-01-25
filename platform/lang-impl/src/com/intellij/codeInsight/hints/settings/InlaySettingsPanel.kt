@@ -106,20 +106,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
     }
 
-    tree = object: CheckboxTree(object : CheckboxTreeCellRenderer(true, true) {
-      override fun customizeRenderer(tree: JTree?,
-                                     value: Any?,
-                                     selected: Boolean,
-                                     expanded: Boolean,
-                                     leaf: Boolean,
-                                     row: Int,
-                                     hasFocus: Boolean) {
-        if (value !is DefaultMutableTreeNode) return
-
-        val name = getName(value, value.parent as? DefaultMutableTreeNode)
-        textRenderer.appendHTML(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-      }
-    }, root, CheckPolicy(true, true, true, false)) {
+    tree = object: CheckboxTree(InlaySettingsTreeRenderer(), root, CheckPolicy(true, true, true, false)) {
       override fun installSpeedSearch() {
         TreeSpeedSearch(this, true) { getName(it.lastPathComponent as DefaultMutableTreeNode,
                                               it.parentPath?.lastPathComponent as DefaultMutableTreeNode?) }
@@ -469,6 +456,21 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     }
     if (node != null) {
       TreeUtil.selectNode(tree, node)
+    }
+  }
+
+  private inner class InlaySettingsTreeRenderer : CheckboxTree.CheckboxTreeCellRenderer(true, true) {
+    override fun customizeRenderer(tree: JTree?,
+                                   value: Any?,
+                                   selected: Boolean,
+                                   expanded: Boolean,
+                                   leaf: Boolean,
+                                   row: Int,
+                                   hasFocus: Boolean) {
+      if (value !is DefaultMutableTreeNode) return
+
+      val name = getName(value, value.parent as? DefaultMutableTreeNode)
+      textRenderer.appendHTML(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     }
   }
 }
