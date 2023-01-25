@@ -81,7 +81,7 @@ class CompletionInvokerImpl(private val project: Project,
       CommonFeatures(features.context, features.user, features.session),
       lookup.items.map { MLCompletionFeaturesUtil.getElementFeatures(lookup, it).features }
     )
-    val suggestions = lookup.items.map { it.asSuggestion() }
+    val suggestions = lookup.items.map { it.asSuggestion(lookup) }
 
     return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures, isNew)
   }
@@ -272,7 +272,7 @@ class CompletionInvokerImpl(private val project: Project,
 
   private fun hideLookup() = (LookupManager.getActiveLookup(editor) as? LookupImpl)?.hide()
 
-  private fun LookupElement.asSuggestion(): Suggestion {
+  private fun LookupElement.asSuggestion(lookup: LookupImpl): Suggestion {
     val presentation = LookupElementPresentation()
     renderElement(presentation)
     val presentationText = "${presentation.itemText}${presentation.tailText ?: ""}" +
@@ -283,7 +283,7 @@ class CompletionInvokerImpl(private val project: Project,
     return Suggestion(insertedText,
                       presentationText,
                       sourceFromPresentation(presentation),
-                      scoreFromPresentation(presentation)
+                      scoreFromFeatures(lookup, this)
     )
   }
 
@@ -299,7 +299,9 @@ class CompletionInvokerImpl(private val project: Project,
     }
   }
 
-  private fun scoreFromPresentation(presentation: LookupElementPresentation): Double? =
-    presentation.tailText?.filter { it.isDigit() || it == '.' }?.toDoubleOrNull()
+  private fun scoreFromFeatures(lookup: LookupImpl, element: LookupElement): Double? {
+    val features = MLCompletionFeaturesUtil.getElementFeatures(lookup, element).features
+    return features["ml_full_line_score"]?.toDoubleOrNull()
+  }
 }
 
