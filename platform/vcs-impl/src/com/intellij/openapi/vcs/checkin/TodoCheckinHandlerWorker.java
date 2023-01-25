@@ -157,6 +157,10 @@ public class TodoCheckinHandlerWorker {
       public boolean equals(Object obj) {
         return obj instanceof ByRange br && range.equals(br.range);
       }
+      @Override
+      public int hashCode() {
+        return range.hashCode();
+      }
     }
     return Arrays.stream(items)
       .filter(next -> filter == null || filter.contains(next.getPattern()))
