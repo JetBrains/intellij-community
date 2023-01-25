@@ -88,8 +88,7 @@ private fun CoroutineScope.createHint(contents: JPanel): LightweightHint =
       setForceShowAsPopup(true)
       setFocusRequestor(contents)
     }
-    override fun hide() {
-      super.hide()
+    override fun onPopupCancel() {
       cancel(null)
     }
   }
