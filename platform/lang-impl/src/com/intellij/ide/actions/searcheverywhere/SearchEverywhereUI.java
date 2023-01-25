@@ -148,6 +148,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
                                           shortcutSupplier, project == null ? null : new ShowInFindToolWindowAction(), this);
 
     init();
+    myHintHelper = new HintHelper(mySearchField);
+
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
     myBufferedListener = createListener();
     SearchListener listener = Registry.is("search.everywhere.detect.slow.contributors")
@@ -181,7 +183,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     myResultsList.addListSelectionListener(mySelectionTracker);
     mySearchTypingListener = new SearchFieldTypingListener();
     mySearchField.addKeyListener(mySearchTypingListener);
-    myHintHelper = new HintHelper(mySearchField);
 
     myMlService = SearchEverywhereMlService.getInstance();
     if (myMlService != null) {
