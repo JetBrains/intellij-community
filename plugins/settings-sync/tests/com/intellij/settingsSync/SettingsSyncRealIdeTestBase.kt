@@ -7,8 +7,10 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Assert
 import org.junit.Before
+import java.lang.reflect.Constructor
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 
@@ -19,6 +21,11 @@ internal open class SettingsSyncRealIdeTestBase: SettingsSyncTestBase() {
   fun setupComponentStore() {
     componentStore = TestComponentStore(configDir)
     application.replaceService(IComponentStore::class.java, componentStore, disposable)
+  }
+
+  @After
+  fun resetComponentStatesToDefault() {
+    componentStore.resetComponents()
   }
 
   protected fun initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit) {
@@ -47,6 +54,9 @@ internal open class SettingsSyncRealIdeTestBase: SettingsSyncTestBase() {
 
   protected fun <T : PersistentStateComponent<*>> T.init(): T {
     componentStore.initComponent(this, null, null)
+    val defaultConstructor: Constructor<T> = this::class.java.declaredConstructors.find { it.parameterCount == 0 } as Constructor<T>
+    val componentInstance: T = defaultConstructor.newInstance()
+    componentStore.componentsAndDefaultStates[this] = componentInstance.state!!
     return this
   }
 
@@ -68,6 +78,7 @@ internal open class SettingsSyncRealIdeTestBase: SettingsSyncTestBase() {
     override val loadPolicy: StateLoadPolicy
       get() = StateLoadPolicy.LOAD
 
+    val componentsAndDefaultStates = mutableMapOf<PersistentStateComponent<*>, Any>()
     val reinitedComponents = mutableListOf<String>()
     lateinit var reinitLatch: CountDownLatch
 
@@ -83,5 +94,13 @@ internal open class SettingsSyncRealIdeTestBase: SettingsSyncTestBase() {
       reinitedComponents.addAll(componentNames)
       if (::reinitLatch.isInitialized) reinitLatch.countDown()
     }
+
+    fun resetComponents() {
+      for ((component, defaultState) in componentsAndDefaultStates) {
+        val c = component as PersistentStateComponent<Any>
+        c.loadState(defaultState)
+      }
+    }
+
   }
 }
