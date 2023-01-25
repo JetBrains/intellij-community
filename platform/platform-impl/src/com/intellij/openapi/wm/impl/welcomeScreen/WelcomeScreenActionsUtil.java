@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Couple;
 import com.intellij.ui.AnActionButton;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -113,7 +114,15 @@ public final class WelcomeScreenActionsUtil {
       myIconButton.setHorizontalAlignment(SwingConstants.CENTER);
       myIconButton.setOpaque(false);
       myIconButton.setPreferredSize(new JBDimension(60, 60));
-      myIconButton.putClientProperty("JButton.focusedBackgroundColor", getActionsButtonBackground(true));
+
+      if (ExperimentalUI.isNewUI()) {
+        myIconButton.putClientProperty("JButton.focusedBackgroundColor", getActionsButtonBackground(false));
+        myIconButton.putClientProperty("JButton.outlineFocusColor", WelcomeScreenUIManager.getActionsButtonSelectionBorder());
+        myIconButton.putClientProperty("JButton.outlineFocusSize", JBUI.scale(2));
+      }
+      else {
+        myIconButton.putClientProperty("JButton.focusedBackgroundColor", getActionsButtonBackground(true));
+      }
       myIconButton.putClientProperty("JButton.backgroundColor", getActionsButtonBackground(false));
 
       myIconButton.addFocusListener(new FocusListener() {
@@ -142,10 +151,12 @@ public final class WelcomeScreenActionsUtil {
       myIconButton.getAccessibleContext().setAccessibleName(myLabel.getText());
     }
 
-    void updateIconBackground(boolean selected) {
-      myIconButton.setSelected(selected);
-      myIconButton.putClientProperty("JButton.backgroundColor", getActionsButtonBackground(selected));
-      myIconButton.repaint();
+    private void updateIconBackground(boolean selected) {
+      if (!ExperimentalUI.isNewUI()) {
+        myIconButton.setSelected(selected);
+        myIconButton.putClientProperty("JButton.backgroundColor", getActionsButtonBackground(selected));
+        myIconButton.repaint();
+      }
     }
 
     @Override
