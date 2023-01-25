@@ -24,6 +24,8 @@ class CompoundVirtualFileFinder(private val finders: List<VirtualFileFinder>) : 
         return null
     }
 
+    override fun findMetadataTopLevelClassesInPackage(packageFqName: FqName): Set<String>? = null
+
     override fun findSourceOrBinaryVirtualFile(classId: ClassId): VirtualFile? = findVirtualFileWithHeader(classId)
 
     override fun findVirtualFileWithHeader(classId: ClassId): VirtualFile? {
