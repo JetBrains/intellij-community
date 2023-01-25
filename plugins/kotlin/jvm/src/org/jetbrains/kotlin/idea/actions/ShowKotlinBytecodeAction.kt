@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.internal.KotlinBytecodeToolWindow
 
+private const val TOOLWINDOW_ID = "Kotlin Bytecode"
+
 class ShowKotlinBytecodeAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
@@ -37,9 +39,5 @@ class ShowKotlinBytecodeAction : AnAction() {
     override fun update(e: AnActionEvent) {
         val file = e.getData(CommonDataKeys.PSI_FILE)
         e.presentation.isEnabled = e.project != null && file?.fileType == KotlinFileType.INSTANCE
-    }
-
-    companion object {
-        const val TOOLWINDOW_ID = "Kotlin Bytecode"
     }
 }
