@@ -1,9 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log.io
 
-import java.io.OutputStream
-
-class ByteCountingOutputStream : OutputStream() {
+class ByteCountingOutputStream : OutputStreamWithValidation() {
   var written = 0L
     private set
   override fun write(b: Int) {
@@ -14,7 +12,7 @@ class ByteCountingOutputStream : OutputStream() {
     written += len
   }
 
-  fun validateWrittenBytesCount(expectedBytesWritten: Long) {
+  override fun validateWrittenBytesCount(expectedBytesWritten: Long) {
     if (written != expectedBytesWritten) {
       throw IllegalStateException("unexpected amount of data has been written: written ${written} vs expected ${expectedBytesWritten}")
     }
