@@ -123,7 +123,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     cleanScriptsCacheIfNeeded();
   }
 
-  private void configureJDKTable() throws Exception {
+  protected void configureJDKTable() throws Exception {
     removedSdks.clear();
     for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
       ProjectJdkTable.getInstance().removeJdk(sdk);
