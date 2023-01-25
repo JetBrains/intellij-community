@@ -16,9 +16,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConsoleLine
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.CalledInAny
@@ -61,7 +59,7 @@ class VcsConsoleTabService(val project: Project) : Disposable {
   fun isConsoleVisible(): Boolean {
     if (project.isDisposed || project.isDefault) return false
 
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
+    val toolWindow = ChangesViewContentManager.getToolWindowFor(project, ChangesViewContentManager.CONSOLE) ?: return false
     val contentManager = toolWindow.contentManagerIfCreated ?: return false
     return contentManager.getContent(consoleView.component) != null
   }
@@ -76,15 +74,16 @@ class VcsConsoleTabService(val project: Project) : Disposable {
   fun showConsoleTab(selectContent: Boolean, onShown: Runnable?) {
     if (project.isDisposed || project.isDefault) return
 
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return
-    val contentManager = toolWindow.contentManager
-
-    val contentTab: Content = contentManager.getContent(consoleView.component)
-                              ?: contentManager.createConsoleContentTab()
+    val contentTab = ChangesViewContentManager.getInstance(project)
+      .findContents { it.tabName == ChangesViewContentManager.CONSOLE }
+      .firstOrNull()
+    if (contentTab == null) {
+      createConsoleContentTab()
+    }
 
     if (selectContent) {
-      contentManager.setSelectedContent(contentTab, true)
-      toolWindow.show(onShown)
+      ChangesViewContentManager.getInstance(project).selectContent(ChangesViewContentManager.CONSOLE)
+      ChangesViewContentManager.getToolWindowFor(project, ChangesViewContentManager.CONSOLE)?.show(onShown)
     }
   }
 
@@ -95,19 +94,23 @@ class VcsConsoleTabService(val project: Project) : Disposable {
     }
   }
 
-  private fun ContentManager.createConsoleContentTab(): Content {
+  private fun createConsoleContentTab(): Content {
+    val panel = SimpleToolWindowPanel(false, true)
+    panel.setContent(consoleView.component)
+
     val actionGroup = DefaultActionGroup(*consoleView.createConsoleActions())
     val toolbar = ActionManager.getInstance().createActionToolbar("VcsManager", actionGroup, false)
     toolbar.targetComponent = consoleView.component
-
-    val panel = SimpleToolWindowPanel(false, true)
-    panel.setContent(consoleView.component)
     panel.toolbar = toolbar.component
 
     val contentTab = ContentImpl(panel, VcsBundle.message("vcs.console.toolwindow.display.name"), true)
     contentTab.setPreferredFocusedComponent { consoleView.preferredFocusableComponent }
 
-    addContent(contentTab)
+    contentTab.tabName = ChangesViewContentManager.CONSOLE //NON-NLS
+    contentTab.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
+                           ChangesViewContentManager.TabOrderWeight.CONSOLE.weight)
+
+    ChangesViewContentManager.getInstance(project).addContent(contentTab)
 
     return contentTab
   }
