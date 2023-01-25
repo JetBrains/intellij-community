@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
@@ -523,7 +523,6 @@ public final class ExpectedTypesProvider {
     public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       if (myExpr.equals(statement.getIteratedValue())) {
         PsiParameter iterationParameter = statement.getIterationParameter();
-        if (iterationParameter == null) return;
         PsiType type = iterationParameter.getType();
 
         if (PsiTypes.nullType().equals(type)) return;
