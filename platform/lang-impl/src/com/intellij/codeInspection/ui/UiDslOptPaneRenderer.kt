@@ -263,11 +263,9 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         is OptStringList -> {
           @Suppress("UNCHECKED_CAST") val list = context.getOption(component.bindId) as MutableList<String>
           val listWithListener = ListWithListener(list) { context.setOption(component.bindId, list) }
-          val validator = component.validator
-          val form = if (validator is StringValidatorWithSwingSelector) {
-            ListEditForm("", component.label.label(), listWithListener, "", validator::select)
-          } else {
-            ListEditForm("", component.label.label(), listWithListener)
+          val form = when (val validator = component.validator) {
+            is StringValidatorWithSwingSelector -> ListEditForm("", component.label.label(), listWithListener, "", validator::select)
+            else -> ListEditForm("", component.label.label(), listWithListener)
           }
           cell(form.contentPanel)
             .align(Align.FILL)
