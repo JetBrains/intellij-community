@@ -41,15 +41,15 @@ internal class GHPRReviewFlowViewModelImpl(
   override val reviewerAndReviewState: StateFlow<Map<GHPullRequestRequestedReviewer, ReviewState>> =
     combineState(scope, pullRequestReviewState, requestedReviewersState) { reviews, requestedReviewers ->
       mutableMapOf<GHPullRequestRequestedReviewer, ReviewState>().apply {
-        requestedReviewers.forEach { requestedReviewer ->
-          put(requestedReviewer, ReviewState.NEED_REVIEW)
-        }
-
         reviews
           .filter { (reviewer, _) -> reviewer != metadataModel.getAuthor() }
           .forEach { (reviewer, pullRequestReviewState) ->
             put(reviewer, convertPullRequestReviewState(pullRequestReviewState))
           }
+
+        requestedReviewers.forEach { requestedReviewer ->
+          put(requestedReviewer, ReviewState.NEED_REVIEW)
+        }
       }
     }
 
