@@ -17,6 +17,10 @@ object InterceptorInjection {
 
   fun injectInContents(storage: RefCountingContentStorage,
                        interceptors: List<ContentsInterceptor>): RefCountingContentStorage = interceptors.run {
+    if (isEmpty()) {
+      return storage
+    }
+
     val writeBytes = intercept(storage::writeBytes, ContentsInterceptor::onWriteBytes)
     val writeStream1: (record: Int) -> IStorageDataOutput = intercept(storage::writeStream, ContentsInterceptor::onWriteStream)
     val writeStream2: (record: Int, fixedSize: Boolean) -> IStorageDataOutput = intercept(storage::writeStream,
@@ -51,6 +55,10 @@ object InterceptorInjection {
 
   fun injectInAttributes(storage: AbstractAttributesStorage,
                          interceptors: List<AttributesInterceptor>): AbstractAttributesStorage = interceptors.run {
+    if (isEmpty()) {
+      return storage
+    }
+
     val writeAttribute = intercept(storage::writeAttribute, AttributesInterceptor::onWriteAttribute)
     val deleteAttributes = intercept(storage::deleteAttributes, AttributesInterceptor::onDeleteAttributes)
     val setVersion = intercept(storage::setVersion, AttributesInterceptor::onSetVersion)
@@ -67,6 +75,10 @@ object InterceptorInjection {
 
   fun injectInRecords(storage: PersistentFSRecordsStorage,
                       interceptors: List<RecordsInterceptor>): PersistentFSRecordsStorage = interceptors.run {
+    if (isEmpty()) {
+      return storage
+    }
+
     val allocateRecord = intercept(storage::allocateRecord, RecordsInterceptor::onAllocateRecord)
     val setAttributeRecordId = intercept(storage::setAttributeRecordId, RecordsInterceptor::onSetAttributeRecordId)
     val setParent = intercept(storage::setParent, RecordsInterceptor::onSetParent)

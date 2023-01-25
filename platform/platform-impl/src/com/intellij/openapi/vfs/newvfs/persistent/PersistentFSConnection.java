@@ -124,7 +124,6 @@ final public class PersistentFSConnection {
       .filter(ContentsInterceptor.class::isInstance)
       .map(ContentsInterceptor.class::cast)
       .toList();
-    if (contentInterceptors.isEmpty()) return contents;
     return InterceptorInjection.INSTANCE.injectInContents(contents, contentInterceptors);
   }
 
@@ -133,7 +132,6 @@ final public class PersistentFSConnection {
       .filter(AttributesInterceptor.class::isInstance)
       .map(AttributesInterceptor.class::cast)
       .toList();
-    if (attributesInterceptors.isEmpty()) return attributes;
     return InterceptorInjection.INSTANCE.injectInAttributes(attributes, attributesInterceptors);
   }
 
@@ -142,7 +140,6 @@ final public class PersistentFSConnection {
       .filter(RecordsInterceptor.class::isInstance)
       .map(RecordsInterceptor.class::cast)
       .toList();
-    if (recordsInterceptors.isEmpty()) return records;
     return InterceptorInjection.INSTANCE.injectInRecords(records, recordsInterceptors);
   }
 
