@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render
 
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -28,6 +27,4 @@ interface DocRenderItem {
   fun getInlineDocumentation(): InlineDocumentation?
 
   fun getInlineDocumentationTarget(): DocumentationTarget?
-
-  fun createToggleAction(): AnAction
 }

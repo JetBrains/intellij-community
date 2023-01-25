@@ -235,8 +235,8 @@ interface DocRenderItemManager {
         if (foldRegion is CustomFoldRegion && caretOffset > foldRegion.getStartOffset()) {
           val renderer = foldRegion.renderer
           if (renderer is DocRenderer) {
-            val data = renderer.item
-            data.toggle()
+            val item = renderer.item
+            item.toggle()
           }
         }
       }

@@ -7,7 +7,6 @@ import com.intellij.codeInsight.documentation.DocumentationActionProvider;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -23,7 +22,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.documentation.InlineDocumentation;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
@@ -195,7 +193,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new CopySelection());
     group.addSeparator();
-    group.add(myItem.createToggleAction());
+    group.add(new ToggleRenderingAction(myItem));
     AnAction toggleRenderAllAction = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC_FOR_ALL);
     if (toggleRenderAllAction != null) {
       group.add(toggleRenderAllAction);
@@ -644,6 +642,20 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       if (!StringUtil.isEmpty(text)) {
         CopyPasteManager.getInstance().setContents(new StringSelection(text));
       }
+    }
+  }
+
+  static class ToggleRenderingAction extends DumbAwareAction {
+    private final DocRenderItem item;
+
+    ToggleRenderingAction(DocRenderItem i) {
+      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC));
+      item = i;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      item.toggle();
     }
   }
 }

@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.documentation.DocumentationTarget
 import com.intellij.platform.documentation.InlineDocumentation
@@ -66,6 +65,7 @@ internal class DocRenderItemImpl(override val editor: Editor,
   }
 
   override fun toggle() {
+    if (!isValid) return
     toggle(null)
   }
 
@@ -136,10 +136,6 @@ internal class DocRenderItemImpl(override val editor: Editor,
       highlighter.gutterIconRenderer = if (iconEnabled) MyGutterIconRenderer(AllIcons.Gutter.JavadocRead, false) else null
       (foldRegion?.renderer as? DocRenderer)?.update(false, false, foldingTasks)
     }
-  }
-
-  override fun createToggleAction(): AnAction {
-    return ToggleRenderingAction(this)
   }
 
   override fun setIconVisible(visible: Boolean) {
@@ -224,26 +220,11 @@ internal class DocRenderItemImpl(override val editor: Editor,
     }
 
     override fun getClickAction(): AnAction {
-      return createToggleAction()
+      return DocRenderer.ToggleRenderingAction(this@DocRenderItemImpl)
     }
 
     override fun getPopupMenuActions(): ActionGroup? {
       return ActionManager.getInstance().getAction(IdeActions.GROUP_DOC_COMMENT_GUTTER_ICON_CONTEXT_MENU) as? ActionGroup
-    }
-  }
-
-  private class ToggleRenderingAction(item: DocRenderItemImpl) : DumbAwareAction() {
-    private val item: DocRenderItemImpl
-
-    init {
-      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC))
-      this.item = item
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      if (item.isValid) {
-        item.toggle()
-      }
     }
   }
 
