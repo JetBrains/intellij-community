@@ -6,5 +6,5 @@ import com.intellij.workspaceModel.ide.WorkspaceModelCacheVersion
 class KotlinScriptWorkspaceModelCacheVersion: WorkspaceModelCacheVersion {
     override fun getId(): String = "KotlinScript"
 
-    override fun getVersion(): String = "1"
+    override fun getVersion(): String = "2"
 }
