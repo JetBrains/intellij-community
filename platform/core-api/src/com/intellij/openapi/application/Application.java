@@ -161,6 +161,23 @@ public interface Application extends ComponentManager {
   boolean hasWriteAction(@NotNull Class<?> actionClass);
 
   /**
+   * Runs the specified computation in a write intent. Must be called from the Swing dispatch thread. The action is executed
+   * immediately if no write action is currently running, or blocked until the currently running write action
+   * completes.
+   * <p>
+   * See also {@link WriteIntentAction#compute} for a more lambda-friendly version.
+   *
+   * @param computation the computation to perform.
+   * @return the result returned by the computation.
+   * @throws E re-frown from ThrowableComputable
+   */
+  @ApiStatus.Experimental
+  default <T, E extends Throwable> T runWriteIntentAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+    assertWriteIntentLockAcquired();
+    return computation.compute();
+  }
+
+  /**
    * Asserts whether read access is allowed.
    */
   void assertReadAccessAllowed();
