@@ -86,10 +86,11 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
   private final AtomicBoolean isRunning = new AtomicBoolean(false);
   private final AtomicBoolean mySuspended = new AtomicBoolean();
   private final ExecutorStateListener myListener;
+  private final MergingQueueGuiSuspender myGuiSuspender = new MergingQueueGuiSuspender();
 
   protected MergingQueueGuiExecutor(@NotNull Project project,
-                          @NotNull MergingTaskQueue<T> queue,
-                          @NotNull MergingQueueGuiExecutor.ExecutorStateListener listener) {
+                                    @NotNull MergingTaskQueue<T> queue,
+                                    @NotNull MergingQueueGuiExecutor.ExecutorStateListener listener) {
     myProject = project;
     myTaskQueue = queue;
     myListener = new SafeExecutorStateListenerWrapper(listener);
@@ -98,26 +99,28 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
   protected void processTasksWithProgress(@NotNull ProgressSuspender suspender,
                                           @NotNull ProgressIndicator visibleIndicator,
                                           @Nullable StructuredIdeActivity activity) {
-    while (true) {
-      if (myProject.isDisposed()) break;
-      if (mySuspended.get()) break;
+    myGuiSuspender.setCurrentSuspenderAndSuspendIfRequested(suspender, () -> {
+      while (true) {
+        if (myProject.isDisposed()) break;
+        if (mySuspended.get()) break;
 
-      try (MergingTaskQueue.@Nullable QueuedTask<T> task = myTaskQueue.extractNextTask()) {
-        if (task == null) break;
+        try (MergingTaskQueue.@Nullable QueuedTask<T> task = myTaskQueue.extractNextTask()) {
+          if (task == null) break;
 
-        AbstractProgressIndicatorExBase taskIndicator = (AbstractProgressIndicatorExBase)task.getIndicator();
-        ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(visibleIndicator);
-        suspender.attachToProgress(taskIndicator);
-        taskIndicator.addStateDelegate(relayToVisibleIndicator);
+          AbstractProgressIndicatorExBase taskIndicator = (AbstractProgressIndicatorExBase)task.getIndicator();
+          ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(visibleIndicator);
+          suspender.attachToProgress(taskIndicator);
+          taskIndicator.addStateDelegate(relayToVisibleIndicator);
 
-        try {
-          runSingleTask(task, activity);
-        }
-        finally {
-          taskIndicator.removeStateDelegate(relayToVisibleIndicator);
+          try {
+            runSingleTask(task, activity);
+          }
+          finally {
+            taskIndicator.removeStateDelegate(relayToVisibleIndicator);
+          }
         }
       }
-    }
+    });
   }
 
   /**
@@ -210,7 +213,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
       catch (ProcessCanceledException ignored) {
       }
       catch (Throwable unexpected) {
-        LOG.error("Failed to execute task " + task + ". " + unexpected.getMessage(), unexpected);
+        LOG.error("Failed to execute task " + task.getInfoString() + ". " + unexpected.getMessage(), unexpected);
       }
     }, task.getIndicator());
   }
@@ -247,5 +250,9 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     if (mySuspended.compareAndSet(true, false)) {
       startBackgroundProcess();
     }
+  }
+
+  public MergingQueueGuiSuspender getGuiSuspender() {
+    return myGuiSuspender;
   }
 }
