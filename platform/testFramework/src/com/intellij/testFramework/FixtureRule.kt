@@ -404,8 +404,8 @@ suspend fun Project.closeProjectAsync(save: Boolean = false) {
   }
 }
 
-suspend fun openProjectAsync(virtualFile: VirtualFile, vararg activities: ProjectPostStartupActivity): Project {
-  return ProjectUtil.openOrImportAsync(virtualFile.toNioPath())!!
+suspend fun openProjectAsync(path: Path, vararg activities: ProjectPostStartupActivity): Project {
+  return ProjectUtil.openOrImportAsync(path)!!
     .withProjectAsync { project ->
       for (activity in activities) {
         activity.runActivity(project)
@@ -413,6 +413,8 @@ suspend fun openProjectAsync(virtualFile: VirtualFile, vararg activities: Projec
       }
     }
 }
+suspend fun openProjectAsync(virtualFile: VirtualFile, vararg activities: ProjectPostStartupActivity) =
+  openProjectAsync(virtualFile.toNioPath(), *activities)
 
 class DisposeNonLightProjectsRule : ExternalResource() {
   override fun after() {
