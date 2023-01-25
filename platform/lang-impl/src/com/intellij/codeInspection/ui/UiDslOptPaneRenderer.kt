@@ -25,6 +25,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.layout.selected
 import com.intellij.util.applyIf
+import com.intellij.util.ui.UIUtil.setEnabledRecursively
 import java.awt.BorderLayout
 import java.awt.EventQueue
 import javax.swing.*
@@ -270,6 +271,11 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           cell(form.contentPanel)
             .align(Align.FILL)
             .resizableColumn()
+            .applyToComponent {
+              addPropertyChangeListener {
+                if (it.propertyName == "enabled") setEnabledRecursively(this, isEnabled)
+              }
+            }
         }
         
         is OptTable -> {
