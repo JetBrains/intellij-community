@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.ApiStatus;
@@ -163,8 +164,8 @@ public final class SystemInfo {
 
   private static int[] getMacOSVersionParts(@NotNull String version) {
     List<String> parts = StringUtil.split(version, ".");
-    while (parts.size() < 3) {
-      parts.add("0");
+    if (parts.size() < 3) {
+      parts = ContainerUtil.append(parts, "0", "0", "0");
     }
     return new int[]{toInt(parts.get(0)), toInt(parts.get(1)), toInt(parts.get(2))};
   }
