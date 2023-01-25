@@ -8,16 +8,23 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrect
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 
 internal class SearchEverywhereSpellingCorrectorImpl(private val project: Project) : SearchEverywhereSpellingCorrector {
   override fun isAvailableInTab(tabId: String): Boolean = tabId == ActionSearchEverywhereContributor::class.java.simpleName
 
   override fun suggestCorrectionFor(query: String): SearchEverywhereSpellingCorrection {
-    if (query.isBlank()) return SearchEverywhereSpellingCorrection(null)
+    if (query.isBlank()) return SearchEverywhereSpellingCorrection(null,0.0)
 
     return ActionsTabTypoFixSuggestionProvider(project)
-      .suggestFixFor(query)
-      .let { SearchEverywhereSpellingCorrection(it) }
+             .suggestFixFor(query)
+             ?.takeIf { isAboveMinimumConfidence(it) }
+             ?.let { SearchEverywhereSpellingCorrection(it.suggestion, it.confidence) }
+           ?: SearchEverywhereSpellingCorrection(null, 0.0)
+  }
+
+  private fun isAboveMinimumConfidence(suggestedCorrection: ActionsTabTypoFixSuggestionProvider.CorrectionResult): Boolean {
+    return suggestedCorrection.confidence >= Registry.doubleValue("search.everywhere.ml.typos.min.confidence")
   }
 }
 

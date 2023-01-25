@@ -7,5 +7,13 @@
 
     <searchEverywhereSpellingCorrector
       implementation="com.intellij.ide.actions.searcheverywhere.ml.typos.SearchEverywhereSpellingCorrectorFactoryImpl" />
+
+    <registryKey key="search.everywhere.ml.typos.min.confidence"
+                 description="Minimum confidence required for spelling suggestion"
+                 defaultValue="0.5"/>
+
+    <registryKey key="search.everywhere.ml.typos.show.confidence"
+                 description="Show confidence in Search Everywhere"
+                 defaultValue="false"/>
   </extensions>
 </idea-plugin>

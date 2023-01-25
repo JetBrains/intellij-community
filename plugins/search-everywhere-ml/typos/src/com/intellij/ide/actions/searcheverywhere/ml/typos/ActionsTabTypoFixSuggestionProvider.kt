@@ -5,7 +5,6 @@ import ai.grazie.spell.suggestion.ranker.FrequencySuggestionRanker
 import ai.grazie.spell.suggestion.ranker.JaroWinklerSuggestionRanker
 import ai.grazie.spell.suggestion.ranker.LinearAggregatingSuggestionRanker
 import ai.grazie.spell.suggestion.ranker.SuggestionRanker
-import com.intellij.codeInspection.ui.actions.LOG
 import com.intellij.grazie.utils.LinkedSet
 import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.ide.actions.ShowSettingsUtilImpl
@@ -28,30 +27,36 @@ internal class ActionsTabTypoFixSuggestionProvider(private val project: Project)
   private val spellChecker = SpellCheckerManager.getInstance(project)
   private var suggestionRanker: SuggestionRanker? = null
 
-  fun suggestFixFor(query: String): String? {
+  fun suggestFixFor(query: String): CorrectionResult? {
     var wasCorrected = false
-    val corrected = query.split(" ")
+    val correction = query.split(" ")
       .filter { it.isNotBlank() }
-      .joinToString(" ") {
-        if (!spellChecker.hasProblem(it)) return@joinToString it
+      .map {
+        if (!spellChecker.hasProblem(it)) return@map NoCorrection(it)
 
         val bestSuggestion = try {
           getBestSuggestion(it, spellChecker.getSuggestions(it).toLinkedSet())
         }
         catch (e: NullPointerException) {
-          return@joinToString it
+          return@map NoCorrection(it)
         }
 
         if (bestSuggestion == null) {
-          return@joinToString it
+          return@map NoCorrection(it)
         }
         else {
           wasCorrected = true
-          return@joinToString bestSuggestion
+          return@map bestSuggestion
         }
       }
+      .let { corrections ->
+        val correctedQuery = corrections.joinToString(" ") { it.suggestion }
+        val confidence = corrections.filterIsInstance<CorrectionSuggestion>().map { it.confidence }.average()
 
-    return if (wasCorrected) corrected else null
+        CorrectionSuggestion(correctedQuery, confidence)
+      }
+
+    return if (wasCorrected) correction else null
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -65,18 +70,20 @@ internal class ActionsTabTypoFixSuggestionProvider(private val project: Project)
     )
   }
 
-  private fun getBestSuggestion(word: String, suggestions: LinkedSet<String>): String? {
+  private fun getBestSuggestion(word: String, suggestions: LinkedSet<String>): CorrectionSuggestion? {
     return suggestionRanker.let {
       if (suggestionRanker == null) suggestionRanker = tryCreateSuggestionRanker()
 
       suggestionRanker
-    }?.rank(word, suggestions)
-      ?.first()
-      ?.also {
-        val score = suggestionRanker!!.score(word, suggestions)
-        LOG.info("Fixing $word to $it - probability $score")
-      }
+    }?.score(word, suggestions)
+      ?.toList()
+      ?.maxBy { it.second }
+      ?.let { CorrectionSuggestion(it.first, it.second) }
   }
+
+  sealed class CorrectionResult(val suggestion: String, val confidence: Double)
+  private class CorrectionSuggestion(suggestion: String, confidence: Double) : CorrectionResult(suggestion, confidence)
+  private class NoCorrection(original: String): CorrectionResult(original, 1.0)
 }
 
 @Service(Service.Level.PROJECT)

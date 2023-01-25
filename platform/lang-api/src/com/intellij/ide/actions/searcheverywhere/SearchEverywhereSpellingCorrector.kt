@@ -4,10 +4,12 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.Processor
+import com.intellij.util.applyIf
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -48,8 +50,13 @@ interface SearchEverywhereSpellingCorrectorFactory {
 }
 
 @Internal
-data class SearchEverywhereSpellingCorrection(val correction: String?) {
+data class SearchEverywhereSpellingCorrection(val correction: String?, val confidence: Double?) {
   val presentationText: String? = correction?.let { "Do you mean $correction?" }
+    ?.applyIf(showConfidence()) {
+      "$this (p=%.2f)".format(confidence)
+    }
+
+  private fun showConfidence(): Boolean = Registry.`is`("search.everywhere.ml.typos.show.confidence", false)
 }
 
 @Internal
