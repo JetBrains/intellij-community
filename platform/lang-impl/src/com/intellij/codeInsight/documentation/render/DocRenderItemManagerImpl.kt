@@ -2,7 +2,10 @@
 package com.intellij.codeInsight.documentation.render
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Key
@@ -98,6 +101,15 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
     setupListeners(editor, items.isEmpty())
   }
 
+  override fun setupListeners(editor: Editor, disable: Boolean) {
+    if (disable) {
+      editor.caretModel.removeCaretListener(MyCaretListener)
+    } else if (!areListenersAttached(editor)) {
+      editor.caretModel.addCaretListener(MyCaretListener)
+    }
+    super.setupListeners(editor, disable)
+  }
+
   override fun resetToDefaultState(editor: Editor) {
     val items = editor.getUserData(OUR_ITEMS) ?: return
     val editorSetting = DocRenderManager.isDocRenderingEnabled(editor)
@@ -118,6 +130,29 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
 
   override fun isRenderedDocHighlighter(highlighter: RangeHighlighter): Boolean {
     return java.lang.Boolean.TRUE == highlighter.getUserData(OWN_HIGHLIGHTER)
+  }
+
+  object MyCaretListener : CaretListener {
+    override fun caretPositionChanged(event: CaretEvent) {
+      onCaretUpdate(event)
+    }
+
+    override fun caretAdded(event: CaretEvent) {
+      onCaretUpdate(event)
+    }
+
+    private fun onCaretUpdate(event: CaretEvent) {
+      val caret = event.caret ?: return
+      val caretOffset = caret.offset
+      val foldRegion = caret.editor.foldingModel.getCollapsedRegionAtOffset(caretOffset)
+      if (foldRegion is CustomFoldRegion && caretOffset > foldRegion.getStartOffset()) {
+        val renderer = foldRegion.renderer
+        if (renderer is DocRenderer) {
+          val item = renderer.item
+          item.toggle()
+        }
+      }
+    }
   }
 
   interface Listener {

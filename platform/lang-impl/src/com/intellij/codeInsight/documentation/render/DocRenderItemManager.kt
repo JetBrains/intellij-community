@@ -80,9 +80,10 @@ interface DocRenderItemManager {
           }
         }
       }, connection)
-      editor.caretModel.addCaretListener(MyCaretListener(), connection)
     }
   }
+
+  fun areListenersAttached(editor: Editor) = editor.getUserData(LISTENERS_DISPOSABLE) != null
 
   private class MyVisibleAreaListener(editor: Editor) : VisibleAreaListener {
     private var lastWidth: Int
@@ -214,31 +215,6 @@ interface DocRenderItemManager {
           }
         }
         return null
-      }
-    }
-  }
-
-  private class MyCaretListener : CaretListener {
-    override fun caretPositionChanged(event: CaretEvent) {
-      onCaretUpdate(event)
-    }
-
-    override fun caretAdded(event: CaretEvent) {
-      onCaretUpdate(event)
-    }
-
-    companion object {
-      private fun onCaretUpdate(event: CaretEvent) {
-        val caret = event.caret ?: return
-        val caretOffset = caret.offset
-        val foldRegion = caret.editor.foldingModel.getCollapsedRegionAtOffset(caretOffset)
-        if (foldRegion is CustomFoldRegion && caretOffset > foldRegion.getStartOffset()) {
-          val renderer = foldRegion.renderer
-          if (renderer is DocRenderer) {
-            val item = renderer.item
-            item.toggle()
-          }
-        }
       }
     }
   }
