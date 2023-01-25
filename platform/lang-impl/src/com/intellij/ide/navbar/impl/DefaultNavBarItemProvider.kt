@@ -114,7 +114,7 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
           is Module -> ModuleNavBarItem(child)
           is PsiElement -> {
             if (ext.normalizeChildren()) {
-              val adjusted = adjustWithAllExtensions(child, reversedOrder = true)
+              val adjusted = adjustWithAllExtensions(child)
               adjusted?.let { PsiNavBarItem(it, ownerExtension = null) }
             }
             else {
@@ -150,17 +150,10 @@ fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?, predicate
   return null
 }
 
-fun adjustWithAllExtensions(element: PsiElement, reversedOrder: Boolean = false): PsiElement? {
+fun adjustWithAllExtensions(element: PsiElement): PsiElement? {
   var result = element
 
-  val extensions = if (reversedOrder) {
-    NavBarModelExtension.EP_NAME.extensionList.asReversed()
-  }
-  else {
-    NavBarModelExtension.EP_NAME.extensionList
-  }
-
-  for (ext in extensions) {
+  for (ext in NavBarModelExtension.EP_NAME.extensionList.asReversed()) {
     result = ext.adjustElement(result) ?: return null
     ensurePsiFromExtensionIsValid(result, "Invalid psi returned from ${ext.javaClass} while adjusting", ext.javaClass)
   }
