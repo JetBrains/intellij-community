@@ -31,8 +31,6 @@ import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.dashboard.BranchesDashboardUtil.anyIncomingOutgoingState
 import kotlin.properties.Delegates
 
-internal val BRANCHES_UI_CONTROLLER = DataKey.create<BranchesDashboardController>("GitBranchesUiControllerKey")
-
 internal class BranchesDashboardController(private val project: Project,
                                            private val ui: BranchesDashboardUi) : Disposable, DataProvider {
 
