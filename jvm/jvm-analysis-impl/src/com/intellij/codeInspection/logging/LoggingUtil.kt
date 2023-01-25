@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.logging
 
 import com.siyeh.ig.callMatcher.CallMatcher
-import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.*
 
 const val SLF4J_LOGGER = "org.slf4j.Logger"
 
@@ -42,6 +42,111 @@ fun getLoggerType(uCall: UCallExpression?): LoggerType? {
   }
 }
 
+fun isGuarded(call: UCallExpression): Boolean {
+  val variable: UVariable = getLoggerQualifier(call) ?: return false
+  val loggerLevel = getLoggerLevel(call) ?: return false
+  val ifExpression: UIfExpression? = call.getParentOfType<UIfExpression>()
+  val condition = ifExpression?.condition ?: return false
+  return isGuardedIn(condition, variable, loggerLevel)
+}
+
+fun isGuardedIn(condition: UExpression, variable: UVariable, loggerLevel: LevelType): Boolean {
+  val loggerLevelFromCondition: LevelType = getLevelFromCondition(condition, variable) ?: return false
+  return loggerLevelFromCondition == loggerLevel
+}
+
+fun getLevelFromCondition(condition: UExpression, variable: UVariable): LevelType? {
+  if (condition is UCallExpression) {
+    if ((condition.receiver as? UResolvable)?.resolveToUElement()?.sourcePsi != variable.sourcePsi) {
+      return null
+    }
+    val methodName = condition.methodName ?: return null
+    return levelTypeFromGuard(methodName)
+  }
+  if (condition is UQualifiedReferenceExpression) {
+    if ((condition.receiver as? UResolvable)?.resolveToUElement()?.sourcePsi != variable.sourcePsi) {
+      return null
+    }
+    val methodName = condition.resolvedName ?: return null
+    return levelTypeFromGuard(methodName)
+  }
+  if (condition is UPolyadicExpression) {
+    for (operand in condition.operands) {
+      val levelFromCondition = getLevelFromCondition(operand, variable)
+      if (levelFromCondition != null) return levelFromCondition
+    }
+  }
+  return null
+}
+
+private fun levelTypeFromGuard(methodName: String): LevelType? {
+  if (!methodName.startsWith("is") || !methodName.endsWith("Enabled")) {
+    return null
+  }
+  for (level in LevelType.values()) {
+    if (methodName.substring(2, methodName.length - 7).equals(level.name, ignoreCase = true)) {
+      return level
+    }
+  }
+  return null
+}
+
+fun getLoggerQualifier(call: UCallExpression?): UVariable? {
+  if (call == null) return null
+  var receiver: UExpression? = call.receiver
+  if (receiver is UCallExpression) {
+    receiver = receiver.receiver
+  }
+  if (receiver is UQualifiedReferenceExpression) {
+    receiver = receiver.receiver
+  }
+  if (receiver is USimpleNameReferenceExpression) {
+    val resolved = receiver.resolveToUElement() as? UVariable ?: return null
+    if (resolved.type.equalsToText(SLF4J_LOGGER) ||
+        resolved.type.equalsToText(LOG4J_LOGGER)) {
+      return resolved
+    }
+    if (resolved.type.equalsToText(SLF4J_EVENT_BUILDER) ||
+        resolved.type.equalsToText(LOG4J_LOG_BUILDER)) {
+      val uastInitializer = (resolved.uastInitializer as? UQualifiedReferenceExpression) ?: return null
+      return getLoggerQualifier(uastInitializer.selector as? UCallExpression)
+    }
+  }
+  return null
+}
+
+fun getLoggerLevel(uCall: UCallExpression?): LevelType? {
+  if (uCall == null) {
+    return null
+  }
+
+  var levelName = uCall.methodName
+  if ("log" == levelName) {
+    //also, it could be LOG4J_LOGGER, for example, log(level, pattern),
+    //but let's skip it, because it is usually used for dynamic choice
+    var receiver: UElement = uCall.receiver ?: return null
+    if (receiver is UQualifiedReferenceExpression) {
+      receiver = receiver.selector
+    }
+    else if (receiver is USimpleNameReferenceExpression) {
+      val variable = receiver.resolveToUElement() as? UVariable ?: return null
+      receiver = (variable.uastInitializer as? UQualifiedReferenceExpression)?.selector ?: return null
+    }
+    levelName = (receiver as? UCallExpression)?.methodName
+  }
+  if (levelName == null) {
+    return null
+  }
+  for (value in LevelType.values()) {
+    if (value.name.equals(levelName, ignoreCase = true) ||
+        "at${value.name}".equals(levelName, ignoreCase = true)
+    ) {
+      return value
+    }
+  }
+  return null
+}
+
 fun countPlaceHolders(text: String, loggerType: LoggerType?): Int {
   var count = 0
   var placeHolder = false
@@ -73,4 +178,8 @@ fun countPlaceHolders(text: String, loggerType: LoggerType?): Int {
 
 enum class LoggerType {
   SLF4J_LOGGER_TYPE, SLF4J_BUILDER_TYPE, LOG4J_LOGGER_TYPE, LOG4J_BUILDER_TYPE
+}
+
+enum class LevelType {
+  FATAL, ERROR, WARNING, INFO, DEBUG, TRACE
 }

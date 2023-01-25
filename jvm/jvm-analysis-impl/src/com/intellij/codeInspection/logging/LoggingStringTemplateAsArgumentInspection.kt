@@ -3,10 +3,13 @@ package com.intellij.codeInspection.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiType
+import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
@@ -15,6 +18,33 @@ import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectionTool() {
+
+  @JvmField
+  var myLimitLevelType: LimitLevelType = LimitLevelType.ALL
+
+  @JvmField
+  var mySkipPrimitives: Boolean = true
+  override fun getOptionsPane(): OptPane {
+    return OptPane.pane(
+      OptPane.dropdown(
+        "myLimitLevelType",
+        JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.warn.on.label"),
+        OptPane.option(LimitLevelType.ALL,
+                       JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.all.levels.option")),
+        OptPane.option(LimitLevelType.WARN_AND_LOWER,
+                       JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.warn.level.and.lower.option")),
+        OptPane.option(LimitLevelType.INFO_AND_LOWER,
+                       JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.info.level.and.lower.option")),
+        OptPane.option(LimitLevelType.DEBUG_AND_LOWER,
+                       JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.debug.level.and.lower.option")),
+        OptPane.option(LimitLevelType.TRACE,
+                       JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.trace.level.option")),
+      ),
+      OptPane.checkbox("mySkipPrimitives",
+                       JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.skip.on.primitives"))
+    )
+  }
+
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
     UastHintedVisitorAdapter.create(
       holder.file.language,
@@ -22,52 +52,103 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
       arrayOf(UCallExpression::class.java),
       directOnly = true
     )
-}
 
-private class LoggingStringTemplateAsArgumentVisitor(
-  private val holder: ProblemsHolder,
-) : AbstractUastNonRecursiveVisitor() {
+  inner class LoggingStringTemplateAsArgumentVisitor(
+    private val holder: ProblemsHolder,
+  ) : AbstractUastNonRecursiveVisitor() {
 
-  override fun visitCallExpression(node: UCallExpression): Boolean {
-    if (!LOG_MATCHERS.uCallMatches(node)) return true
-    val valueArguments = node.valueArguments
-    if (valueArguments.isEmpty()) return true
-    var stringExpression = valueArguments[0]
-    var indexStringExpression = 0
-    if (!canBeText(stringExpression.getExpressionType())) {
-      if (valueArguments.size < 2) {
+    override fun visitCallExpression(node: UCallExpression): Boolean {
+      if (!LOG_MATCHERS.uCallMatches(node)) return true
+      if (skipAccordingLevel(node)) return true
+      val valueArguments = node.valueArguments
+      val uMethod = node.resolve().toUElement() as? UMethod ?: return true
+      val uastParameters = uMethod.uastParameters
+      if (valueArguments.isEmpty() || uastParameters.isEmpty()) return true
+      var indexStringExpression = 0
+      if (!uastParameters[indexStringExpression].type.canBeText()) {
+        if (valueArguments.size < 2 || uastParameters.size < 2) {
+          return true
+        }
+        indexStringExpression = 1
+        if (!uastParameters[indexStringExpression].type.canBeText()) {
+          return true
+        }
+      }
+
+      val stringExpression = valueArguments[indexStringExpression]
+
+      val parts: MutableList<UExpression> = mutableListOf()
+      //if parameter is String and argument is NOT String, probably it is String Template like "$object" for Kotlin
+      if (stringExpression !is UPolyadicExpression && !stringExpression.getExpressionType().canBeText() &&
+          stringExpression.lang == Language.findLanguageByID("kotlin")) {
+        val text: String = stringExpression.sourcePsi?.parent?.text ?: return true
+        if (text.startsWith("$")) {
+          parts.add(stringExpression)
+        }
+      }
+
+      if (stringExpression is UPolyadicExpression && isPattern(stringExpression)) {
+        parts.addAll(stringExpression.operands)
+      }
+
+      if (parts.isEmpty()) {
         return true
       }
-      stringExpression = valueArguments[1]
-      indexStringExpression = 1
-      if (!canBeText(stringExpression.getExpressionType())) {
+
+      if (mySkipPrimitives && allExpressionsInPatternArePrimitivesOrWrappers(parts)) {
         return true
       }
-    }
 
-    if (!isPattern(stringExpression)) {
+      if (isGuarded(node)) {
+        return true
+      }
+
+      val message = JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.problem.descriptor")
+      holder.registerUProblem(node, message, ConvertToPlaceHolderQuickfix(indexStringExpression))
       return true
     }
 
+    private fun allExpressionsInPatternArePrimitivesOrWrappers(operands: List<UExpression>): Boolean {
+      return operands.all { it.getExpressionType().isPrimitiveOrWrappers() }
+    }
 
-    val message = JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.problem.descriptor")
-    holder.registerUProblem(node, message, ConvertToPlaceHolderQuickfix(indexStringExpression))
-    return true
-  }
+    private fun skipAccordingLevel(node: UCallExpression): Boolean {
+      if (myLimitLevelType != LimitLevelType.ALL) {
+        val loggerLevel = getLoggerLevel(node)
+        if (loggerLevel == null) return true
+        val notSkip: Boolean = when (loggerLevel) {
+          LevelType.FATAL -> false
+          LevelType.ERROR -> false
+          LevelType.WARNING -> myLimitLevelType.ordinal == LimitLevelType.WARN_AND_LOWER.ordinal
+          LevelType.INFO -> myLimitLevelType.ordinal <= LimitLevelType.INFO_AND_LOWER.ordinal
+          LevelType.DEBUG -> myLimitLevelType.ordinal <= LimitLevelType.DEBUG_AND_LOWER.ordinal
+          LevelType.TRACE -> myLimitLevelType.ordinal <= LimitLevelType.TRACE.ordinal
+        }
+        return !notSkip
+      }
+      else {
+        return false
+      }
+    }
 
-  private fun isPattern(stringExpression: UExpression): Boolean {
-    //Perhaps, it needs to be customized for Java Pattern in the future
-    return stringExpression is UPolyadicExpression && stringExpression is UInjectionHost &&
-           !stringExpression.operands.all { it is ULiteralExpression }
+    private fun isPattern(stringExpression: UPolyadicExpression): Boolean {
+      //it needs to be customized for Java
+      return stringExpression is UInjectionHost &&
+             stringExpression.lang == Language.findLanguageByID("kotlin") &&
+             !stringExpression.operands.all { it is ULiteralExpression }
+    }
   }
+}
 
-  private fun canBeText(expressionType: PsiType?): Boolean {
-    if (
-      expressionType?.equalsToText(CommonClassNames.JAVA_LANG_STRING) == true ||
-      expressionType?.equalsToText(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE) == true
-    ) return true
-    return false
-  }
+private fun PsiType?.canBeText(): Boolean {
+  return this?.equalsToText(CommonClassNames.JAVA_LANG_STRING) == true ||
+         this?.equalsToText(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE) == true
+}
+
+private fun PsiType?.isPrimitiveOrWrappers(): Boolean {
+  return this != null && (TypeConversionUtil.isPrimitiveAndNotNull(this) ||
+                          TypeConversionUtil.isPrimitiveWrapper(this) ||
+                          canBeText())
 }
 
 class ConvertToPlaceHolderQuickfix(private val indexStringExpression: Int) : LocalQuickFix {
@@ -82,33 +163,39 @@ class ConvertToPlaceHolderQuickfix(private val indexStringExpression: Int) : Loc
       parametersBeforeString.add(valueArguments[0])
     }
     val builderString = StringBuilder()
-    val template = valueArguments[indexStringExpression] as? UPolyadicExpression ?: return
+    val stringTemplate = valueArguments[indexStringExpression]
     var indexOuterPlaceholder = indexStringExpression + 1
-    val loggerType = getLoggerType(uCallExpression)
+    if (stringTemplate is UPolyadicExpression) {
+      val loggerType = getLoggerType(uCallExpression)
 
-    for (operand in template.operands) {
-      if (operand is ULiteralExpression && operand.isString) {
-        val text = operand.value.toString()
-        val countPlaceHolders = countPlaceHolders(text, loggerType)
-        for (index in 0 until countPlaceHolders) {
-          val nextIndex = indexOuterPlaceholder + index
-          if (nextIndex < valueArguments.size) {
-            parametersAfterString.add(valueArguments[nextIndex])
+      for (operand in stringTemplate.operands) {
+        if (operand is ULiteralExpression && operand.isString) {
+          val text = operand.value.toString()
+          val countPlaceHolders = countPlaceHolders(text, loggerType)
+          for (index in 0 until countPlaceHolders) {
+            val nextIndex = indexOuterPlaceholder + index
+            if (nextIndex < valueArguments.size) {
+              parametersAfterString.add(valueArguments[nextIndex])
+            }
+            else {
+              break
+            }
           }
-          else {
-            break
+          indexOuterPlaceholder += countPlaceHolders
+          builderString.append(text)
+        }
+        else {
+          if (builderString.endsWith("\\") && (loggerType == LoggerType.SLF4J_LOGGER_TYPE || loggerType == LoggerType.SLF4J_BUILDER_TYPE)) {
+            builderString.append("\\")
           }
+          builderString.append("{}")
+          parametersAfterString.add(operand)
         }
-        indexOuterPlaceholder += countPlaceHolders
-        builderString.append(text)
       }
-      else {
-        if (builderString.endsWith("\\") && (loggerType == LoggerType.SLF4J_LOGGER_TYPE || loggerType == LoggerType.SLF4J_BUILDER_TYPE)) {
-          builderString.append("\\")
-        }
-        builderString.append("{}")
-        parametersAfterString.add(operand)
-      }
+    }
+    else {
+      builderString.append("{}")
+      parametersAfterString.add(stringTemplate)
     }
 
     if (indexOuterPlaceholder < valueArguments.size) {
@@ -118,10 +205,11 @@ class ConvertToPlaceHolderQuickfix(private val indexStringExpression: Int) : Loc
     }
     val elementFactory = uCallExpression.getUastElementFactory(project) ?: return
     val newText = elementFactory.createStringLiteralExpression(builderString.toString(), uCallExpression.sourcePsi) ?: return
-    val newParameters = mutableListOf<UExpression>()
-    newParameters.addAll(parametersBeforeString)
-    newParameters.add(newText)
-    newParameters.addAll(parametersAfterString)
+    val newParameters = mutableListOf<UExpression>().apply {
+      addAll(parametersBeforeString)
+      add(newText)
+      addAll(parametersAfterString)
+    }
 
     val methodName = uCallExpression.methodName ?: return
     val newCall = elementFactory.createCallExpression(uCallExpression.receiver, methodName, newParameters, uCallExpression.returnType,
@@ -130,4 +218,8 @@ class ConvertToPlaceHolderQuickfix(private val indexStringExpression: Int) : Loc
     val oldCall = uCallExpression.getQualifiedParentOrThis()
     oldCall.replace(newCall)
   }
+}
+
+enum class LimitLevelType {
+  ALL, WARN_AND_LOWER, INFO_AND_LOWER, DEBUG_AND_LOWER, TRACE
 }

@@ -96,7 +96,7 @@
     <inspectionElementsMerger implementation="com.intellij.codeInspection.test.junit.JUnitMalformedDeclarationInspectionMerger"/>
 
     <!--logging-->
-    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="LoggingStringTemplateAsArgument"
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="LoggingStringTemplateAsArgument"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.logging.frameworks.group.name"
                      key="jvm.inspection.logging.string.template.as.argument.display.name"
