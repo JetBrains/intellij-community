@@ -171,7 +171,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
       .create(directionModel, titleDocument, descriptionDocument, metadataModel, commitsCountModel, existenceCheckLoadingModel,
               createLoadingModel)
 
-    GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
+    GHPRViewTabsFactory(project, uiDisposable)
       .create(infoComponent, diffController,
               createFilesComponent(), filesCountFlow, null,
               createCommitsComponent(), commitsCountFlow).apply {

@@ -9,7 +9,6 @@ import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
@@ -19,6 +18,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
@@ -55,7 +55,6 @@ internal class MultiTabGHPRToolWindowContentController(parentDisposable: Disposa
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       var initial = true
       var requestFocus = false
-      var ctrlDisposable: Disposable? = null
       connectionManager.connectionState.collectLatest { conn ->
         withContext(NonCancellable) {
           if (conn == null) {
@@ -66,10 +65,7 @@ internal class MultiTabGHPRToolWindowContentController(parentDisposable: Disposa
             showSelectorsTab(requestFocus)
           }
           else {
-            ctrlDisposable = Disposer.newDisposable().also {
-              Disposer.register(parentDisposable, it)
-            }
-            val controller = showRepositoryContent(conn, ctrlDisposable!!, requestFocus)
+            val controller = showRepositoryContent(conn, requestFocus)
             _contentController.complete(controller)
             initial = false
           }
@@ -83,13 +79,16 @@ internal class MultiTabGHPRToolWindowContentController(parentDisposable: Disposa
             requestFocus = contentManager.selectedContent?.let {
               CollaborationToolsUIUtil.isFocusParent(it.component)
             } ?: false
-            ctrlDisposable?.let {
-              Disposer.dispose(it)
-            }
-            ctrlDisposable = null
             contentManager.removeAllContents(true)
           }
         }
+      }
+    }
+
+    contentManager.addDataProvider { dataId ->
+      when {
+        GHPRActionKeys.PULL_REQUESTS_CONTENT_CONTROLLER.`is`(dataId) -> _contentController.getNow(null)
+        else -> null
       }
     }
   }
@@ -139,26 +138,13 @@ internal class MultiTabGHPRToolWindowContentController(parentDisposable: Disposa
     }
   }
 
-  private fun showRepositoryContent(conn: GHRepositoryConnection,
-                                    disposable: Disposable,
-                                    focused: Boolean): GHPRToolWindowTabComponentControllerImpl {
-    val wrapper = Wrapper()
-    val content = contentManager.factory.createContent(wrapper, GithubBundle.message("toolwindow.stripe.Pull_Requests"), false).apply {
-      isCloseable = false
-      isPinned = true
-      setDisposer(disposable)
-    }
-    contentManager.addContent(content)
-    contentManager.setSelectedContent(content, focused)
-
-    return GHPRToolWindowTabComponentControllerImpl(project,
-                                                    repositoriesManager,
-                                                    settings,
-                                                    conn.dataContext,
-                                                    wrapper,
-                                                    disposable) {
-      content.displayName = it
-    }.apply {
+  private fun showRepositoryContent(conn: GHRepositoryConnection, focused: Boolean): GHPRToolWindowRepositoryContentController {
+    return MultiTabGHPRToolWindowRepositoryContentController(
+      project,
+      repositoriesManager,
+      settings,
+      conn.dataContext,
+      contentManager).apply {
       viewList(focused)
     }
   }

@@ -100,10 +100,15 @@ internal class GHPRListPanelFactory(private val project: Project,
 
     return JBUI.Panels.simplePanel(progressStripe).addToTop(controlsPanel).andTransparent().also {
       DataManager.registerDataProvider(it) { dataId ->
-        if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) {
-          if (list.isSelectionEmpty) null else list.selectedValue
+        when {
+          GHPRActionKeys.PULL_REQUESTS_LIST_CONTROLLER.`is`(dataId) -> {
+            GHPRListControllerImpl(repositoryDataService, listLoader)
+          }
+          GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> {
+            if (list.isSelectionEmpty) null else list.selectedValue
+          }
+          else -> null
         }
-        else null
       }
       actionManager.getAction("Github.PullRequest.List.Reload").registerCustomShortcutSet(it, disposable)
     }

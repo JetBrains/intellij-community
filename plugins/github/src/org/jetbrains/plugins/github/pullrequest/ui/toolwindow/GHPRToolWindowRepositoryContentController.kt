@@ -10,8 +10,6 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
  */
 interface GHPRToolWindowRepositoryContentController {
 
-  val currentView: GHPRToolWindowViewType
-
   val repository: GHRepositoryCoordinates
 
   fun createPullRequest(requestFocus: Boolean = true)
