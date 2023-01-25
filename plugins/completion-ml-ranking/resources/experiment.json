@@ -63,7 +63,7 @@
       "id": "python",
       "experimentBucketsCount": 8,
       "includeGroups": [ 7, 8, 11, 12, 13, 15],
-      "shouldLogElementFeatures": false
+      "shouldLogElementFeatures": true
     },
     {
       "id": "kotlin",
