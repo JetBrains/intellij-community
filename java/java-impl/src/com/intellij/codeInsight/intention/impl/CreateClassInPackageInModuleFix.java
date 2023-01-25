@@ -139,9 +139,9 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
     private final JBTextField myNameTextField = new JBTextField();
     private final ComboBoxWithWidePopup<PsiDirectory> myRootDirCombo = new ComboBoxWithWidePopup<>();
     private final TemplateKindCombo myKindCombo = new TemplateKindCombo();
-    @Nullable private final Project myProject;
+    @NotNull private final Project myProject;
 
-    CreateClassInPackageDialog(@Nullable Project project, PsiDirectory @NotNull [] rootDirs) {
+    CreateClassInPackageDialog(@NotNull Project project, PsiDirectory @NotNull [] rootDirs) {
       super(project);
       myProject = project;
       setTitle(JavaBundle.message("dialog.title.create.class.in.package"));
