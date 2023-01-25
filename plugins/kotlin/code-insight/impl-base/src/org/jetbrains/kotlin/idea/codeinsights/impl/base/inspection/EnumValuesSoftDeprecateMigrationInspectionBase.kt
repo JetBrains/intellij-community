@@ -16,14 +16,11 @@ import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.codeInsight.isSoftDeprecatedEnumValuesMethod
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.migration.MigrationInfo
-import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 
@@ -33,13 +30,7 @@ import org.jetbrains.kotlin.psi.*
  *
  * See [KTIJ-22298](https://youtrack.jetbrains.com/issue/KTIJ-22298/Soft-deprecate-Enumvalues-for-Kotlin-callers).
  */
-abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinInspection(), MigrationFix {
-
-    final override fun isApplicable(migrationInfo: MigrationInfo): Boolean {
-        val sinceVersion = LanguageFeature.EnumEntries.sinceVersion ?: return false
-        return migrationInfo.oldLanguageVersion < sinceVersion && migrationInfo.newLanguageVersion >= sinceVersion
-    }
-
+abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinInspection() {
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         if (!holder.file.isEnumValuesSoftDeprecateEnabled()) {
             PsiElementVisitor.EMPTY_VISITOR
