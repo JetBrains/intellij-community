@@ -52,26 +52,7 @@ public abstract class IntentionSettingsTree {
   }
 
   private void initTree() {
-    myTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(true) {
-      @Override
-      public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        if (!(value instanceof CheckedTreeNode)) {
-          return;
-        }
-
-        CheckedTreeNode node = (CheckedTreeNode)value;
-        SimpleTextAttributes attributes = node.getUserObject() instanceof IntentionActionMetaData ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-        final String text = getNodeText(node);
-        Color background = UIUtil.getTreeBackground(selected, true);
-        UIUtil.changeBackGround(this, background);
-        SearchUtil.appendFragments(myFilter != null ? myFilter.getFilter() : null,
-                                   text,
-                                   attributes.getStyle(),
-                                   attributes.getFgColor(),
-                                   background,
-                                   getTextRenderer());
-      }
-    }, new CheckedTreeNode(null));
+    myTree = new CheckboxTree(new IntentionsTreeCellRenderer(), new CheckedTreeNode(null));
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
@@ -388,5 +369,32 @@ public abstract class IntentionSettingsTree {
 
   public JPanel getToolbarPanel() {
     return myNorthPanel;
+  }
+
+  private class IntentionsTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
+    public IntentionsTreeCellRenderer() {
+      super(true);
+    }
+
+    @Override
+    public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+      if (!(value instanceof CheckedTreeNode)) {
+        return;
+      }
+
+      CheckedTreeNode node = (CheckedTreeNode)value;
+      SimpleTextAttributes attributes = node.getUserObject() instanceof IntentionActionMetaData
+                                        ? SimpleTextAttributes.REGULAR_ATTRIBUTES
+                                        : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+      final String text = getNodeText(node);
+      Color background = UIUtil.getTreeBackground(selected, true);
+      UIUtil.changeBackGround(this, background);
+      SearchUtil.appendFragments(myFilter != null ? myFilter.getFilter() : null,
+                                 text,
+                                 attributes.getStyle(),
+                                 attributes.getFgColor(),
+                                 background,
+                                 getTextRenderer());
+    }
   }
 }
