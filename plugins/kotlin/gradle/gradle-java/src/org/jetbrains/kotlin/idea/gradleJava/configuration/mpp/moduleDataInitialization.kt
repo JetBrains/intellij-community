@@ -58,11 +58,19 @@ internal fun initializeMppModuleDataNode(
     gradleModule: IdeaModule,
     moduleDataNode: DataNode<ModuleData>,
     projectDataNode: DataNode<ProjectData>,
+    mppModel: KotlinMPPGradleModel,
     resolverCtx: ProjectResolverContext,
 ) {
+    if (shouldSkipMppModuleInitBecauseOfExtensions(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx))
+        return
+
+    runPreModuleInitExtensions(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
+
     KotlinMPPCompilerArgumentsCacheMergeManager.mergeCache(gradleModule, resolverCtx)
-    initializeModuleData(gradleModule, moduleDataNode, projectDataNode, resolverCtx)
-    populateSourceSetInfos(gradleModule, moduleDataNode, resolverCtx)
+    initializeModuleData(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
+    populateSourceSetInfos(gradleModule, moduleDataNode, mppModel, resolverCtx)
+
+    runPostModuleInitExtensions(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
 }
 
 internal fun shouldDelegateToOtherPlugin(compilation: KotlinCompilation): Boolean =
@@ -198,6 +206,7 @@ private fun initializeModuleData(
     gradleModule: IdeaModule,
     moduleDataNode: DataNode<ModuleData>,
     projectDataNode: DataNode<ProjectData>,
+    mppModel: KotlinMPPGradleModel,
     resolverCtx: ProjectResolverContext
 ) {
     if (moduleDataNode.isMppDataInitialized) return
@@ -205,8 +214,7 @@ private fun initializeModuleData(
     val mainModuleData = moduleDataNode.data
 
     val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java)
-    val mppModel = resolverCtx.getMppModel(gradleModule)
-    if (mppModel == null || externalProject == null) return
+    if (externalProject == null) return
     moduleDataNode.isMppDataInitialized = true
 
     // save artifacts locations.
@@ -245,6 +253,7 @@ private fun initializeModuleData(
 private fun populateSourceSetInfos(
     gradleModule: IdeaModule,
     mainModuleNode: DataNode<ModuleData>,
+    mppModel: KotlinMPPGradleModel,
     resolverCtx: ProjectResolverContext
 ) {
     val mainModuleData = mainModuleNode.data
@@ -252,7 +261,6 @@ private fun populateSourceSetInfos(
     val mainModuleFileDirectoryPath = mainModuleData.moduleFileDirectoryPath
 
     val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java) ?: return
-    val mppModel = resolverCtx.getMppModel(gradleModule) ?: return
     val projectDataNode = ExternalSystemApiUtil.findParent(mainModuleNode, ProjectKeys.PROJECT) ?: return
 
     val moduleGroup: Array<String>? = if (!resolverCtx.isUseQualifiedModuleNames) {
