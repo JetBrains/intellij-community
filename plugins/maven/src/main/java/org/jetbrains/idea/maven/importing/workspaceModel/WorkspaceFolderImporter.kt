@@ -23,6 +23,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import java.io.File
+import java.nio.file.Path
 import java.util.stream.Stream
 
 internal class WorkspaceFolderImporter(
@@ -162,7 +163,15 @@ internal class WorkspaceFolderImporter(
       }
     }
 
-    return CachedProjectFolders(mavenProject.directory, outputPath, testOutputPath, folders)
+    val projectContentRoot = mavenProject.directory
+    val projectContentRootPath = Path.of(projectContentRoot)
+
+    folders.removeIf { folder ->
+      val folderPath = Path.of(folder.path)
+      projectContentRootPath.startsWith(folderPath) && projectContentRootPath != folderPath
+    }
+
+    return CachedProjectFolders(projectContentRoot, outputPath, testOutputPath, folders)
   }
 
   private fun collectGeneratedFolders(folders: MutableList<ContentRootCollector.ImportedFolder>,
