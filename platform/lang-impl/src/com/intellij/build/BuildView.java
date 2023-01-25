@@ -54,6 +54,37 @@ public class BuildView extends CompositeView<ExecutionConsole>
   public static final String CONSOLE_VIEW_NAME = "consoleView";
   @ApiStatus.Experimental
   public static final DataKey<List<AnAction>> RESTART_ACTIONS = DataKey.create("restart actions");
+  private static final OccurenceNavigator EMPTY_PROBLEMS_NAVIGATOR = new OccurenceNavigator() {
+    @Override
+    public boolean hasNextOccurence() {
+      return false;
+    }
+
+    @Override
+    public boolean hasPreviousOccurence() {
+      return false;
+    }
+
+    @Override
+    public OccurenceInfo goNextOccurence() {
+      return null;
+    }
+
+    @Override
+    public OccurenceInfo goPreviousOccurence() {
+      return null;
+    }
+
+    @Override
+    public @NotNull String getNextOccurenceActionName() {
+      return IdeBundle.message("action.next.problem");
+    }
+
+    @Override
+    public @NotNull String getPreviousOccurenceActionName() {
+      return IdeBundle.message("action.previous.problem");
+    }
+  };
   private final @NotNull Project myProject;
   private final @NotNull ViewManager myViewManager;
   private final AtomicBoolean isBuildStartEventProcessed = new AtomicBoolean();
@@ -414,7 +445,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
     if (executionConsole instanceof OccurenceNavigator) {
       return (OccurenceNavigator)executionConsole;
     }
-    return EMPTY;
+    return EMPTY_PROBLEMS_NAVIGATOR;
   }
 
   @Override
