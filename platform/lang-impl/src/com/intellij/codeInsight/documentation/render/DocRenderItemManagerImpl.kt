@@ -1,162 +1,143 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.documentation.render;
+package com.intellij.codeInsight.documentation.render
 
-import com.intellij.lang.documentation.InlineDocumentation;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.util.messages.Topic
+import java.util.*
+import java.util.function.BooleanSupplier
+import java.util.function.Consumer
 
-import java.util.*;
-import java.util.function.BooleanSupplier;
-
-public class DocRenderItemManagerImpl implements DocRenderItemManager {
-  @Topic.AppLevel
-  public static final Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.NONE, true);
-
-  private static final Key<Collection<DocRenderItemImpl>> OUR_ITEMS = Key.create("doc.render.items");
-  static final Key<Boolean> OWN_HIGHLIGHTER = Key.create("doc.render.highlighter");
-
-  @Override
-  @Nullable
-  public DocRenderItemImpl getItemAroundOffset(@NotNull Editor editor, int offset) {
-    Collection<DocRenderItemImpl> items = editor.getUserData(OUR_ITEMS);
-    if (items == null || items.isEmpty()) return null;
-    Document document = editor.getDocument();
-    if (offset < 0 || offset > document.getTextLength()) return null;
-    int line = document.getLineNumber(offset);
-    DocRenderItemImpl itemOnAdjacentLine = items.stream().filter(i -> {
-      if (!i.isValid()) return false;
-      int startLine = document.getLineNumber(i.getHighlighter().getStartOffset());
-      int endLine = document.getLineNumber(i.getHighlighter().getEndOffset());
-      return line >= startLine - 1 && line <= endLine + 1;
-    }).min(Comparator.comparingInt(i -> i.getHighlighter().getStartOffset())).orElse(null);
-    if (itemOnAdjacentLine != null) return itemOnAdjacentLine;
-
-    Project project = editor.getProject();
-    if (project == null) return null;
-
-    DocRenderItemImpl foundItem = null;
-    int foundStartOffset = 0;
-    for (DocRenderItemImpl item : items) {
-      if (!item.isValid()) continue;
-      InlineDocumentation documentation = item.getInlineDocumentation();
-      if (documentation == null) continue;
-      TextRange ownerTextRange = documentation.getDocumentationOwnerRange();
-      if (ownerTextRange == null || !ownerTextRange.containsOffset(offset)) continue;
-      int startOffset = ownerTextRange.getStartOffset();
-      if (foundItem != null && foundStartOffset >= startOffset) continue;
-      foundItem = item;
-      foundStartOffset = startOffset;
+class DocRenderItemManagerImpl : DocRenderItemManager {
+  override fun getItemAroundOffset(editor: Editor, offset: Int): DocRenderItemImpl? {
+    val items = editor.getUserData(OUR_ITEMS)
+    if (items.isNullOrEmpty()) return null
+    val document = editor.document
+    if (offset < 0 || offset > document.textLength) return null
+    val line = document.getLineNumber(offset)
+    val itemOnAdjacentLine = items.filter {
+      if (!it.isValid) return@filter false
+      val startLine = document.getLineNumber(it.highlighter.startOffset)
+      val endLine = document.getLineNumber(it.highlighter.endOffset)
+      line >= startLine - 1 && line <= endLine + 1
+    }.minByOrNull { it.highlighter.startOffset }
+    if (itemOnAdjacentLine != null) return itemOnAdjacentLine
+    var foundItem: DocRenderItemImpl? = null
+    var foundStartOffset = 0
+    for (item in items) {
+      if (!item.isValid) continue
+      val documentation = item.getInlineDocumentation() ?: continue
+      val ownerTextRange = documentation.documentationOwnerRange
+      if (ownerTextRange == null || !ownerTextRange.containsOffset(offset)) continue
+      val startOffset = ownerTextRange.startOffset
+      if (foundItem != null && foundStartOffset >= startOffset) continue
+      foundItem = item
+      foundStartOffset = startOffset
     }
-    return foundItem;
+    return foundItem
   }
 
-  @Override
-  @Nullable
-  public Collection<DocRenderItem> getItems(@NotNull Editor editor) {
-    Collection<DocRenderItemImpl> items = editor.getUserData(OUR_ITEMS);
-    if (items == null) return null;
-    return Collections.unmodifiableCollection(items);
+  override fun getItems(editor: Editor): Collection<DocRenderItem>? {
+    val items = editor.getUserData(OUR_ITEMS) ?: return null
+    return Collections.unmodifiableCollection<DocRenderItem>(items)
   }
 
-  @Override
-  public void removeAllItems(@NotNull Editor editor) {
-    setItemsToEditor(editor, new DocRenderPassFactory.Items(), false);
+  override fun removeAllItems(editor: Editor) {
+    setItemsToEditor(editor, DocRenderPassFactory.Items(), false)
   }
 
-  @Override
-  public void setItemsToEditor(@NotNull Editor editor, @NotNull DocRenderPassFactory.Items itemsToSet, boolean collapseNewItems) {
-    Collection<DocRenderItemImpl> items;
-    Collection<DocRenderItemImpl> existing = editor.getUserData(OUR_ITEMS);
-    if (existing == null) {
-      if (itemsToSet.isEmpty()) return;
-      editor.putUserData(OUR_ITEMS, items = new ArrayList<>());
-    }
-    else {
-      items = existing;
-    }
-    keepScrollingPositionWhile(editor, () -> {
-      List<Runnable> foldingTasks = new ArrayList<>();
-      List<DocRenderItemImpl> itemsToUpdateRenderers = new ArrayList<>();
-      List<String> itemsToUpdateText = new ArrayList<>();
-      boolean updated = false;
-      for (Iterator<DocRenderItemImpl> it = items.iterator(); it.hasNext(); ) {
-        DocRenderItemImpl existingItem = it.next();
-        DocRenderPassFactory.Item matchingNewItem = existingItem.isValid() ? itemsToSet.removeItem(existingItem.getHighlighter()) : null;
+  override fun setItemsToEditor(editor: Editor, itemsToSet: DocRenderPassFactory.Items, collapseNewItems: Boolean) {
+    if (editor.getUserData(OUR_ITEMS) == null && itemsToSet.isEmpty) return
+    val items = (editor as UserDataHolderEx).putUserDataIfAbsent(OUR_ITEMS, mutableListOf())
+    keepScrollingPositionWhile(editor) {
+      val foldingTasks = mutableListOf<Runnable>()
+      val itemsToUpdateRenderers: MutableList<DocRenderItemImpl> = ArrayList()
+      val itemsToUpdateText: MutableList<String> = ArrayList()
+      var updated = false
+      val it = items.iterator()
+      while (it.hasNext()) {
+        val existingItem = it.next()
+        val matchingNewItem = if (existingItem.isValid) itemsToSet.removeItem(existingItem.highlighter) else null
         if (matchingNewItem == null) {
-          updated |= existingItem.remove(foldingTasks);
-          it.remove();
+          updated = updated or existingItem.remove(foldingTasks)
+          it.remove()
         }
-        else if (matchingNewItem.textToRender != null && !matchingNewItem.textToRender.equals(existingItem.getTextToRender())) {
-          itemsToUpdateRenderers.add(existingItem);
-          itemsToUpdateText.add(matchingNewItem.textToRender);
+        else if (matchingNewItem.textToRender != null && matchingNewItem.textToRender != existingItem.textToRender) {
+          itemsToUpdateRenderers.add(existingItem)
+          itemsToUpdateText.add(matchingNewItem.textToRender)
         }
         else {
-          existingItem.updateIcon(foldingTasks);
+          existingItem.updateIcon(foldingTasks)
         }
       }
-      Collection<DocRenderItemImpl> newRenderItems = new ArrayList<>();
-      for (DocRenderPassFactory.Item item : itemsToSet) {
-        DocRenderItemImpl newItem = new DocRenderItemImpl(editor, item.textRange, collapseNewItems ? null : item.textToRender);
-        newRenderItems.add(newItem);
+      val newRenderItems: MutableCollection<DocRenderItemImpl> = ArrayList()
+      for (item in itemsToSet) {
+        val newItem = DocRenderItemImpl(editor, item.textRange, if (collapseNewItems) null else item.textToRender)
+        newRenderItems.add(newItem)
         if (collapseNewItems) {
-          updated |= newItem.toggle(foldingTasks);
-          itemsToUpdateRenderers.add(newItem);
-          itemsToUpdateText.add(item.textToRender);
+          updated = updated or newItem.toggle(foldingTasks)
+          itemsToUpdateRenderers.add(newItem)
+          itemsToUpdateText.add(item.textToRender)
         }
       }
-      editor.getFoldingModel().runBatchFoldingOperation(() -> foldingTasks.forEach(Runnable::run), true, false);
-      for (int i = 0; i < itemsToUpdateRenderers.size(); i++) {
-        itemsToUpdateRenderers.get(i).setTextToRender(itemsToUpdateText.get(i));
+      editor.foldingModel.runBatchFoldingOperation({
+                                                     foldingTasks.forEach(Consumer { obj: Runnable -> obj.run() })
+                                                   }, true, false)
+      for (i in itemsToUpdateRenderers.indices) {
+        itemsToUpdateRenderers[i].setTextToRender(itemsToUpdateText[i])
       }
-      DocRenderItemUpdater.updateRenderers(itemsToUpdateRenderers, true);
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).itemsTextChanged(editor, itemsToUpdateRenderers);
-      items.addAll(newRenderItems);
-      return updated;
-    });
-    setupListeners(editor, items.isEmpty());
+      DocRenderItemUpdater.updateRenderers(itemsToUpdateRenderers, true)
+      ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).itemsTextChanged(editor, itemsToUpdateRenderers)
+      items.addAll(newRenderItems)
+      updated
+    }
+    setupListeners(editor, items.isEmpty())
   }
 
-  @Override
-  public void resetToDefaultState(@NotNull Editor editor) {
-    Collection<DocRenderItemImpl> items = editor.getUserData(OUR_ITEMS);
-    if (items == null) return;
-    boolean editorSetting = DocRenderManager.isDocRenderingEnabled(editor);
-    keepScrollingPositionWhile(editor, () -> {
-      List<Runnable> foldingTasks = new ArrayList<>();
-      boolean updated = false;
-      for (DocRenderItemImpl item : items) {
-        if (item.isValid() && (item.getFoldRegion() == null) == editorSetting) {
-          updated |= item.toggle(foldingTasks);
+  override fun resetToDefaultState(editor: Editor) {
+    val items = editor.getUserData(OUR_ITEMS) ?: return
+    val editorSetting = DocRenderManager.isDocRenderingEnabled(editor)
+    keepScrollingPositionWhile(editor) {
+      val foldingTasks = mutableListOf<Runnable>()
+      var updated = false
+      for (item in items) {
+        if (item.isValid && item.foldRegion == null == editorSetting) {
+          updated = updated or item.toggle(foldingTasks)
         }
       }
-      editor.getFoldingModel().runBatchFoldingOperation(() -> foldingTasks.forEach(Runnable::run), true, false);
-      return updated;
-    });
+      editor.foldingModel.runBatchFoldingOperation({
+                                                     foldingTasks.forEach(Consumer { obj: Runnable -> obj.run() })
+                                                   }, true, false)
+      updated
+    }
   }
 
-  private static void keepScrollingPositionWhile(@NotNull Editor editor, @NotNull BooleanSupplier task) {
-    EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor);
-    keeper.savePosition();
-    if (task.getAsBoolean()) keeper.restorePosition(false);
+  override fun isRenderedDocHighlighter(highlighter: RangeHighlighter): Boolean {
+    return java.lang.Boolean.TRUE == highlighter.getUserData(OWN_HIGHLIGHTER)
   }
 
-  @Override
-  public boolean isRenderedDocHighlighter(@NotNull RangeHighlighter highlighter) {
-    return Boolean.TRUE.equals(highlighter.getUserData(OWN_HIGHLIGHTER));
-  }
-
-  public interface Listener {
+  interface Listener {
     /**
      * Called only for existing items whose text was changed.
      */
-    void itemsTextChanged(@NotNull Editor editor, @NotNull Collection<? extends DocRenderItem> items);
+    fun itemsTextChanged(editor: Editor, items: Collection<DocRenderItem>)
+  }
+
+  companion object {
+    @Topic.AppLevel
+    val TOPIC = Topic(
+      Listener::class.java, Topic.BroadcastDirection.NONE, true)
+    private val OUR_ITEMS = Key.create<MutableList<DocRenderItemImpl>>("doc.render.items")
+    @JvmField
+    val OWN_HIGHLIGHTER = Key.create<Boolean>("doc.render.highlighter")
+    private fun keepScrollingPositionWhile(editor: Editor, task: BooleanSupplier) {
+      val keeper = EditorScrollingPositionKeeper(editor)
+      keeper.savePosition()
+      if (task.asBoolean) keeper.restorePosition(false)
+    }
   }
 }
