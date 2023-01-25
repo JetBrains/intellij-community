@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationResult.Companion.serialize
+import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.DataOutputStream
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -13,21 +14,21 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
    * VALUE_SIZE_BYTES in nested classes -- size of all value fields in bytes excluding tag (includes result)
    */
 
-  abstract suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray
+  abstract fun serializeValue(enumerator: DataEnumerator<String>): ByteArray
 
   sealed class RecordsOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
     class AllocateRecord(result: OperationResult<Int>) : RecordsOperation<Int>(VfsOperationTag.REC_ALLOC, result) {
       companion object {
         const val VALUE_SIZE_BYTES = OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>): AllocateRecord =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>): AllocateRecord =
           DataInputStream(ByteArrayInputStream(data)).run {
             val result = readResult<Int>(enumerator)
             AllocateRecord(result)
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(result.serialize(enumerator))
@@ -41,7 +42,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>): SetAttributeRecordId =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>): SetAttributeRecordId =
           DataInputStream(ByteArrayInputStream(data)).run {
             val fileId = readInt()
             val recordId = readInt()
@@ -50,7 +51,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(fileId)
@@ -66,7 +67,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>): SetContentRecordId =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>): SetContentRecordId =
           DataInputStream(ByteArrayInputStream(data)).run {
             val fileId = readInt()
             val recordId = readInt()
@@ -75,7 +76,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(fileId)
@@ -91,7 +92,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>): SetParent =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>): SetParent =
           DataInputStream(ByteArrayInputStream(data)).run {
             val fileId = readInt()
             val parentId = readInt()
@@ -100,7 +101,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(fileId)
@@ -116,7 +117,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val fileId = readInt()
             val nameId = readInt()
@@ -125,7 +126,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(fileId)
@@ -141,7 +142,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val fileId = readInt()
             val flags = readInt()
@@ -150,7 +151,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(fileId)
@@ -166,7 +167,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + Long.SIZE_BYTES + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val fileId = readInt()
             val length = readLong()
@@ -175,7 +176,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(fileId)
@@ -191,7 +192,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + Long.SIZE_BYTES + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val fileId = readInt()
             val timestamp = readLong()
@@ -200,7 +201,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(fileId)
@@ -216,7 +217,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val fileId = readInt()
             val result = readResult<Unit>(enumerator)
@@ -224,7 +225,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(fileId)
@@ -240,7 +241,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 4 + Long.SIZE_BYTES * 2 + 1 + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val fileId = readInt()
             val timestamp = readLong()
@@ -254,7 +255,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(fileId)
@@ -275,7 +276,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val fileId = readInt()
             val result = readResult<Unit>(enumerator)
@@ -283,7 +284,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(fileId)
@@ -298,7 +299,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val version = readInt()
             val result = readResult<Unit>(enumerator)
@@ -306,7 +307,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(version)
@@ -323,7 +324,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>): WriteAttribute =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>): WriteAttribute =
           DataInputStream(ByteArrayInputStream(data)).run {
             val fileId = readInt()
             val attrIdEnumerated = readInt()
@@ -335,7 +336,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(fileId)
@@ -352,7 +353,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val fileId = readInt()
             val result = readResult<Unit>(enumerator)
@@ -360,7 +361,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(fileId)
@@ -375,7 +376,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val version = readInt()
             val result = readResult<Unit>(enumerator)
@@ -383,7 +384,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(version)
@@ -399,7 +400,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       : ContentsOperation<Unit>(VfsOperationTag.CONTENT_WRITE_BYTES, result) {
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + 1 + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val recordId = readInt()
             val fixedSize = readByte() == 1.toByte()
@@ -409,7 +410,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(recordId)
@@ -425,7 +426,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       : ContentsOperation<Unit>(VfsOperationTag.CONTENT_WRITE_STREAM, result) {
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val recordId = readInt()
             val payloadRef = PayloadRef(readLong())
@@ -434,7 +435,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(recordId)
@@ -449,7 +450,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       : ContentsOperation<Unit>(VfsOperationTag.CONTENT_WRITE_STREAM_2, result) {
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + 1 + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val recordId = readInt()
             val payloadRef = PayloadRef(readLong())
@@ -459,7 +460,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(recordId)
@@ -475,7 +476,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       : ContentsOperation<Unit>(VfsOperationTag.CONTENT_APPEND_STREAM, result) {
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val recordId = readInt()
             val payloadRef = PayloadRef(readLong())
@@ -484,7 +485,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(recordId)
@@ -499,7 +500,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       : ContentsOperation<Unit>(VfsOperationTag.CONTENT_REPLACE_BYTES, result) {
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val recordId = readInt()
             val offset = readInt()
@@ -509,7 +510,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(recordId)
@@ -525,14 +526,14 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       : ContentsOperation<Int>(VfsOperationTag.CONTENT_ACQUIRE_NEW_RECORD, result) {
       companion object {
         const val VALUE_SIZE_BYTES = OperationResult.SIZE_BYTES
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val result = readResult<Int>(enumerator)
             AcquireNewRecord(result)
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(result.serialize(enumerator))
@@ -545,7 +546,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       : ContentsOperation<Unit>(VfsOperationTag.CONTENT_ACQUIRE_RECORD, result) {
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val recordId = readInt()
             val result = readResult<Unit>(enumerator)
@@ -553,7 +554,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(recordId)
@@ -567,7 +568,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       : ContentsOperation<Unit>(VfsOperationTag.CONTENT_RELEASE_RECORD, result) {
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val recordId = readInt()
             val result = readResult<Unit>(enumerator)
@@ -575,7 +576,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(recordId)
@@ -590,7 +591,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       companion object {
         const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
 
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+        fun deserializeValue(data: ByteArray, enumerator: DataEnumerator<String>) =
           DataInputStream(ByteArrayInputStream(data)).run {
             val version = readInt()
             val result = readResult<Unit>(enumerator)
@@ -598,7 +599,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
 
-      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+      override fun serializeValue(enumerator: DataEnumerator<String>): ByteArray =
         ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
           DataOutputStream(this).run {
             writeInt(version)
@@ -611,7 +612,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
 
   companion object {
     @Suppress("UNCHECKED_CAST")
-    suspend fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray, enumerator: SuspendDataEnumerator<String>): T =
+    fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray, enumerator: DataEnumerator<String>): T =
       when (tag) {
         VfsOperationTag.NULL -> throw IllegalArgumentException("NULL descriptor is unexpected")
 
@@ -643,12 +644,12 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         VfsOperationTag.CONTENT_SET_VERSION -> ContentsOperation.SetVersion.deserializeValue(data, enumerator) as T
       }
 
-    private suspend inline fun <reified T : Any> DataInputStream.readResult(enumerator: SuspendDataEnumerator<String>) =
+    private inline fun <reified T : Any> DataInputStream.readResult(enumerator: DataEnumerator<String>) =
       OperationResult.deserialize<T>(readInt()) {
         enumerator.valueOf(it) ?: throw IllegalStateException("corrupted enumerator storage")
       }
 
-    private suspend inline fun <reified T : Any> OperationResult<T>.serialize(enumerator: SuspendDataEnumerator<String>): Int =
+    private inline fun <reified T : Any> OperationResult<T>.serialize(enumerator: DataEnumerator<String>): Int =
       serialize { enumerator.enumerate(it) }
   }
 }

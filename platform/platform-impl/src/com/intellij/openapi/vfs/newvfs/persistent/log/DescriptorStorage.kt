@@ -7,17 +7,17 @@ interface DescriptorStorage {
   /**
    * contract: tag == compute().tag
    */
-  suspend fun writeDescriptor(tag: VfsOperationTag, compute: suspend () -> VfsOperation<*>)
+  fun writeDescriptor(tag: VfsOperationTag, compute: () -> VfsOperation<*>)
 
-  suspend fun readAt(position: Long, action: suspend (VfsOperation<*>?) -> Unit)
+  fun readAt(position: Long, action: (VfsOperation<*>?) -> Unit)
 
   /**
    * @param action return true to continue reading, false to stop.
    */
-  suspend fun readAll(action: suspend (VfsOperation<*>) -> Boolean)
+  fun readAll(action: (VfsOperation<*>) -> Boolean)
 
-  suspend fun serialize(operation: VfsOperation<*>): ByteArray
-  suspend fun <T: VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T
+  fun serialize(operation: VfsOperation<*>): ByteArray
+  fun <T: VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T
 
   fun size(): Long
 

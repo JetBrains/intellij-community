@@ -5,9 +5,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMapedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
+import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.UnInterruptibleFileChannel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -15,7 +14,7 @@ import kotlin.io.path.div
 
 class DescriptorStorageImpl(
   storagePath: Path,
-  private val stringEnumerator: SuspendDataEnumerator<String>
+  private val stringEnumerator: DataEnumerator<String>
 ) : DescriptorStorage {
   private val storageIO: StorageIO
   private var lastSafeSize by PersistentVar.long(storagePath / "size")
@@ -78,7 +77,7 @@ class DescriptorStorageImpl(
    * 2. we do all the necessary additional logic that the operation needs (e.g. write the payload in PayloadStorage before finalizing the descriptor)
    * 3. we rewrite the first byte as (tag value), designating that the descriptor is (hopefully) was written completely and correctly
    */
-  override suspend fun writeDescriptor(tag: VfsOperationTag, compute: suspend () -> VfsOperation<*>) {
+  override fun writeDescriptor(tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
     val descrSize = bytesForDescriptor(tag)
     position.track(descrSize.toLong()) { descrPos ->
       // XXX: in case of mmap-based storage, compiler can reorder operations here so that tag.ordinal.toByte() will be written right away,
@@ -94,7 +93,7 @@ class DescriptorStorageImpl(
     }
   }
 
-  override suspend fun readAt(position: Long, action: suspend (VfsOperation<*>?) -> Unit) {
+  override fun readAt(position: Long, action: (VfsOperation<*>?) -> Unit) {
     val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
     storageIO.read(position, buf)
     validateTagByte(buf[0]) {
@@ -141,31 +140,25 @@ class DescriptorStorageImpl(
     }
   }
 
-  override suspend fun readAll(action: suspend (VfsOperation<*>) -> Boolean) {
+  override fun readAll(action: (VfsOperation<*>) -> Boolean) {
     var pos = 0L
-    var cont = true
-    coroutineScope {
-      val size = size()
-      while (cont && pos < size) {
-        readAt(pos) {
-          if (it == null) {
-            cont = false
-            return@readAt
-          }
-          launch {
-            if (!action(it)) {
-              cont = false
-            }
-          }
-          pos += bytesForDescriptor(it.tag)
+    val size = size()
+    while (pos < size) {
+      readAt(pos) {
+        if (it == null) {
+          return@readAt
         }
+        if (!action(it)) {
+          return@readAt
+        }
+        pos += bytesForDescriptor(it.tag)
       }
     }
   }
 
-  override suspend fun serialize(operation: VfsOperation<*>): ByteArray = operation.serializeValue(stringEnumerator)
-  override suspend fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T
-    = VfsOperation.deserialize(tag, data, stringEnumerator)
+  override fun serialize(operation: VfsOperation<*>): ByteArray = operation.serializeValue(stringEnumerator)
+  override fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T = VfsOperation.deserialize(tag, data,
+                                                                                                                      stringEnumerator)
 
   override fun size(): Long = lastSafeSize ?: 0L
 

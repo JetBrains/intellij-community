@@ -1,11 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("RAW_RUN_BLOCKING")
+
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic
 
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.newFixedThreadPoolContext
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -48,7 +49,7 @@ fun main(args: Array<String>) {
   fun Double.format(fmt: String) = String.format(fmt, this)
 
   stats.elapsedTime = measureTime {
-    runBlocking(newFixedThreadPoolContext(8, "Stats")) {
+    runBlocking {
       log.query {
         stats.descriptorStorageSize = descriptorStorage.size()
         stats.payloadStorageSize = payloadStorage.size()

@@ -5,8 +5,6 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.AttributesInterceptor
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 
 class AttributesLogInterceptor(
   private val processor: OperationProcessor
@@ -25,15 +23,12 @@ class AttributesLogInterceptor(
           val data = aos.asByteArraySequence().toBytes()
           processor.enqueue {
             descriptorStorage.writeDescriptor(VfsOperationTag.ATTR_WRITE_ATTR) {
-              coroutineScope {
-                val attrIdEnumerated = async { stringEnumerator.enumerate(attribute.id) }
-                val payloadRef = async {
-                  payloadStorage.writePayload(data.size.toLong()) {
-                    write(data, 0, data.size)
-                  }
+              val attrIdEnumerated = stringEnumerator.enumerate(attribute.id)
+              val payloadRef =
+                payloadStorage.writePayload(data.size.toLong()) {
+                  write(data, 0, data.size)
                 }
-                VfsOperation.AttributesOperation.WriteAttribute(fileId, attrIdEnumerated.await(), payloadRef.await(), result)
-              }
+              VfsOperation.AttributesOperation.WriteAttribute(fileId, attrIdEnumerated, payloadRef, result)
             }
           }
         }

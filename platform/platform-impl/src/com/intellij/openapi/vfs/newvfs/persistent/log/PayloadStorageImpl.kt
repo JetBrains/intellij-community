@@ -36,7 +36,7 @@ class PayloadStorageImpl(
     position = AdvancingPositionTracker(lastSafeSize ?: 0L)
   }
 
-  override suspend fun writePayload(sizeBytes: Long, body: suspend OutputStream.() -> Unit): PayloadRef {
+  override fun writePayload(sizeBytes: Long, body: OutputStream.() -> Unit): PayloadRef {
     assert(sizeBytes >= 0)
     if (sizeBytes == 0L) {
       ByteCountingOutputStream().run {
@@ -60,7 +60,7 @@ class PayloadStorageImpl(
     }
   }
 
-  override suspend fun readAt(ref: PayloadRef): ByteArray? {
+  override fun readAt(ref: PayloadRef): ByteArray? {
     if (ref == PayloadRef.ZERO_SIZE) return ByteArray(0)
     // TODO: revisit unexpected value cases
     val buf = ByteArray(10) // 1 + (64 - 6) / 7 < 10

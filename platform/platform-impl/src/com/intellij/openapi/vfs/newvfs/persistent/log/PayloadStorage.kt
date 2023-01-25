@@ -4,8 +4,8 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 import java.io.OutputStream
 
 interface PayloadStorage {
-  suspend fun writePayload(sizeBytes: Long, body: suspend OutputStream.() -> Unit): PayloadRef
-  suspend fun readAt(ref: PayloadRef): ByteArray?
+  fun writePayload(sizeBytes: Long, body: OutputStream.() -> Unit): PayloadRef
+  fun readAt(ref: PayloadRef): ByteArray?
 
   fun size(): Long
 
