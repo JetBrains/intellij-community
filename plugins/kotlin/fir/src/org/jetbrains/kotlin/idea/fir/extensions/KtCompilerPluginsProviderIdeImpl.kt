@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.orNull
@@ -20,13 +21,19 @@ import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.plugins.processCompilerPluginsOptions
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
+import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
+import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -102,6 +109,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
         return registrars as List<T>
     }
 
+    @OptIn(Frontend10ApiUsage::class)
     private fun computeExtensionStorage(module: KtSourceModule): CompilerPluginRegistrar.ExtensionStorage? {
         val classLoader = pluginsCache?.pluginsClassLoader ?: return null
         val compilerArguments = module.ideaModule.getCompilerArguments()
@@ -117,8 +125,24 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
             ServiceLoaderLite.loadImplementations<CommandLineProcessor>(classPaths, classLoader)
         } ?: return null
 
-        val compilerConfiguration = CompilerConfiguration()
-        processCompilerPluginsOptions(compilerConfiguration, compilerArguments.pluginOptions?.toList(), commandLineProcessors)
+        val compilerConfiguration = CompilerConfiguration().apply {
+            // Temporary work-around for KTIJ-24320. Calls to 'setupCommonArguments()' and 'setupJvmSpecificArguments()'
+            // (or even a platform-agnostic alternative) should be added.
+            if (compilerArguments is K2JVMCompilerArguments) {
+                val compilerExtension = CompilerModuleExtension.getInstance(module.ideaModule)
+                val outputPath = when (module.moduleInfo) {
+                    is ModuleTestSourceInfo -> compilerExtension?.compilerOutputPathForTests
+                    else -> compilerExtension?.compilerOutputPath
+                }
+
+                putIfNotNull(JVMConfigurationKeys.JVM_TARGET, compilerArguments.jvmTarget?.let(JvmTarget::fromString))
+                putIfNotNull(JVMConfigurationKeys.OUTPUT_DIRECTORY, outputPath?.toNioPath()?.toFile())
+                put(JVMConfigurationKeys.IR, true) // FIR cannot work with the old backend
+            }
+
+            processCompilerPluginsOptions(this, compilerArguments.pluginOptions?.toList(), commandLineProcessors)
+        }
+
         val storage = CompilerPluginRegistrar.ExtensionStorage()
         for (pluginRegistrar in pluginRegistrars) {
             with(pluginRegistrar) {
