@@ -19,8 +19,10 @@ class WorkspaceModelTestingService : KotlinBeforeAfterTestRuleWithDescription {
         val checksAnnotation = description.getAnnotation(WorkspaceChecks::class.java)
         val fullCheck = description.getAnnotation(FullCheck::class.java)
 
+        if (checksAnnotation != null && fullCheck != null) error("@FullCheck and @WorkspaceChecks can't be used together")
+
         currentModes = when {
-            fullCheck != null -> listOf(SOURCE_ROOTS, MODULE_DEPENDENCIES, MODULE_FACETS)
+            fullCheck != null -> listOf(SOURCE_ROOTS, MODULE_DEPENDENCIES, MODULE_FACETS, TEST_TASKS)
             checksAnnotation != null -> checksAnnotation.modes.asList()
             else -> return
         }

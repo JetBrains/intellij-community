@@ -140,6 +140,22 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
     }
   }
 
+  public static class NonEmptyChangeLists extends LocalChangesBrowser {
+    public NonEmptyChangeLists(@NotNull Project project) {
+      super(project);
+      myViewer.rebuildTree();
+    }
+
+    @NotNull
+    @Override
+    protected DefaultTreeModel buildTreeModel() {
+      List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
+      List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> !list.getChanges().isEmpty());
+      return TreeModelBuilder.buildFromChangeLists(myProject, getGrouping(), selectedLists,
+                                                   Registry.is("vcs.skip.single.default.changelist"));
+    }
+  }
+
   public static class SelectedChangeLists extends LocalChangesBrowser {
     @NotNull private final Set<String> myChangeListNames;
 

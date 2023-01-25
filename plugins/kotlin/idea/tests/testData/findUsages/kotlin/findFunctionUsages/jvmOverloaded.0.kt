@@ -11,4 +11,3 @@ fun <caret>foo(
 
 }
 
-// FIR_COMPARISON

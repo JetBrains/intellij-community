@@ -3,9 +3,6 @@ package com.jetbrains.python.sdk.pipenv
 
 import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
 
-/**
- * @author vlan
- */
 class PyPipEnvSdkFlavorProvider : PythonFlavorProvider {
   override fun getFlavor(platformIndependent: Boolean) = PyPipEnvSdkFlavor
 }

@@ -15,8 +15,6 @@ import java.util.Arrays;
  * Logically equivalent instruction keys having different stacks (but equal sub-stacks) may appear
  * when a 'finally' block is exited with THROW or COND_THROW instead of RETURN, so that the stack isn't unwound.
  * In this case the top of the stack is no longer relevant and should be ignored, which is done by comparing sub-stacks.
- *
- * @author Pavel.Dolgov
  */
 final class InstructionKeySet {
   private final @NotNull Node myRoot;

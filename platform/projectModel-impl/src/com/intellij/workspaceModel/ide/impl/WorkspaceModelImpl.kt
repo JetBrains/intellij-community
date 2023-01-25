@@ -46,7 +46,9 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
   var userWarningLoggingLevel = false
     @TestOnly set
 
-  private val projectModelVersionUpdate = AtomicLong(-1)
+  private val updateModelMethodName = WorkspaceModelImpl::updateProjectModel.name
+  private val updateModelSilentMethodName = WorkspaceModelImpl::updateProjectModelSilent.name
+  private val onChangedMethodName = WorkspaceModelImpl::onChanged.name
 
   init {
     log.debug { "Loading workspace model" }
@@ -104,11 +106,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
 
   final override fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    val initialStoreVersion = projectModelVersionUpdate.get()
-    if (initialStoreVersion == entityStorage.pointer.version) {
-      log.error("Trying to update project model twice from the same version. Maybe recursive call of 'updateProjectModel'?")
-    }
-    projectModelVersionUpdate.set(entityStorage.pointer.version)
+    checkRecursiveUpdate()
 
     val updateTimeMillis: Long
     val preHandlersTimeMillis: Long
@@ -119,13 +117,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
       val before = entityStorage.current
       val builder = MutableEntityStorage.from(before)
       updateTimeMillis = measureTimeMillis {
-        try {
-          updater(builder)
-        }
-        catch (e: Exception) {
-          projectModelVersionUpdate.set(initialStoreVersion)
-          throw e
-        }
+        updater(builder)
       }
       preHandlersTimeMillis = measureTimeMillis {
         startPreUpdateHandlers(before, builder)
@@ -170,11 +162,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
    */
   @Synchronized
   fun updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
-    val initialStoreVersion = projectModelVersionUpdate.get()
-    if (initialStoreVersion == entityStorage.pointer.version) {
-      log.error("Trying to update project model twice from the same version. Maybe recursive call of 'updateProjectModel'?")
-    }
-    projectModelVersionUpdate.set(entityStorage.pointer.version)
+    checkRecursiveUpdate()
 
     val newStorage: EntityStorageSnapshot
     val updateTimeMillis: Long
@@ -183,13 +171,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
       val before = entityStorage.current
       val builder = MutableEntityStorage.from(entityStorage.current)
       updateTimeMillis = measureTimeMillis {
-        try {
-          updater(builder)
-        }
-        catch (e: Exception) {
-          projectModelVersionUpdate.set(initialStoreVersion)
-          throw e
-        }
+        updater(builder)
       }
       toSnapshotTimeMillis = measureTimeMillis {
         newStorage = builder.toSnapshot()
@@ -206,6 +188,22 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     }
     else {
       log.debug { "Project model update details: Updater code: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis m" }
+    }
+  }
+
+  private fun checkRecursiveUpdate() {
+    val stackStraceIterator = RuntimeException().stackTrace.iterator()
+    // Skip two methods of the current update
+    repeat(2) { stackStraceIterator.next() }
+    while (stackStraceIterator.hasNext()) {
+      val frame = stackStraceIterator.next()
+      if ((frame.methodName == updateModelMethodName || frame.methodName == updateModelSilentMethodName)
+          && frame.className == WorkspaceModelImpl::class.qualifiedName) {
+        log.error("Trying to update project model twice from the same version. Maybe recursive call of 'updateProjectModel'?")
+      } else if (frame.methodName == onChangedMethodName && frame.className == WorkspaceModelImpl::class.qualifiedName) {
+        // It's fine to update the project method in "after update" listeners
+        return
+      }
     }
   }
 

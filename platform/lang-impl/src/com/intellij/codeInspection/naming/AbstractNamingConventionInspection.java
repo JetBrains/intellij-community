@@ -7,7 +7,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptCheckboxPanel;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.Disposable;
@@ -238,8 +237,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
       String shortName = convention.getShortName();
       NamingConventionBean bean = myNamingConventionBeans.get(shortName);
       //noinspection LanguageMismatch
-      return OptPane.checkbox(shortName, convention.getElementDescription(),
-                              bean.getOptionsPane().prefix(shortName).components().toArray(new OptRegularComponent[0]));
+      return bean.getOptionsPane().prefix(shortName).asCheckbox(shortName, convention.getElementDescription());
     })));
   }
 

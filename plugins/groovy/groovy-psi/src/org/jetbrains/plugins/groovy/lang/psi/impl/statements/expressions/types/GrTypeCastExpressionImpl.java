@@ -15,9 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-/**
- * @author ilyas
- */
 public class GrTypeCastExpressionImpl extends GrExpressionImpl implements GrTypeCastExpression {
 
   public GrTypeCastExpressionImpl(@NotNull ASTNode node) {

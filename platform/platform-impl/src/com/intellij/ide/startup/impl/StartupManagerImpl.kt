@@ -196,11 +196,10 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       val pluginId = adapter.pluginDescriptor.pluginId
       @Suppress("SpellCheckingInspection")
       if (!isCorePlugin(adapter.pluginDescriptor) && pluginId.idString != "com.jetbrains.performancePlugin"
-          && pluginId.idString != "com.intellij.clion-makefile"
           && pluginId.idString != "com.jetbrains.performancePlugin.yourkit"
           && pluginId.idString != "com.intellij.clion-swift"
+          && pluginId.idString != "com.intellij.clion.performanceTesting"
           && pluginId.idString != "com.intellij.appcode"
-          && pluginId.idString != "com.intellij.clion-compdb"
           && pluginId.idString != "com.intellij.kmm"
           && pluginId.idString != "org.jetbrains.plugins.clion.radler") {
         LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")

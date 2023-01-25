@@ -29,6 +29,21 @@ class RealContextVariablesProvider(
         collectVariables().filter { it.type.isBuiltinFunctionalTypeOrSubtype }
     }
 
+    /*
+    * The reason for using `nameFilter = MemberScope.ALL_NAME_FILTER` here is that we have
+    * functionality that allows to complete arguments for a completing call like here:
+    * class C {
+    *   companion object {
+    *     fun create(p: (Int) -> Unit) {}
+    *   }
+    * }
+    *
+    * val handler: (Int) -> Unit = {}
+    *
+    * val v: C = cr<caret>
+    *
+    * And here at <caret> it's possible to complete the full line: C.create(handler) !!!
+    * */
     private fun collectVariables(): Collection<VariableDescriptor> {
         val descriptorFilter =
             DescriptorKindFilter.VARIABLES exclude DescriptorKindExclude.Extensions // we exclude extensions by performance reasons

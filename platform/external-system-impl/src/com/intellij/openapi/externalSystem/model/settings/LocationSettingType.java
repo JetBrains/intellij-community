@@ -12,8 +12,6 @@ import java.awt.*;
 
 /**
  * Enumerates possible types of external project location setting.
- *
- * @author Denis Zhdanov
  */
 public enum LocationSettingType {
 

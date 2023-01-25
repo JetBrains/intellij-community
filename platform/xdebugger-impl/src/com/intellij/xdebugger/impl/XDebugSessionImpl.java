@@ -736,11 +736,6 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   @Override
-  public boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @NotNull final XSuspendContext suspendContext) {
-    return breakpointReached(breakpoint, null, suspendContext);
-  }
-
-  @Override
   public boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
                                    @NotNull XSuspendContext suspendContext) {
     return breakpointReached(breakpoint, evaluatedLogExpression, suspendContext, true);

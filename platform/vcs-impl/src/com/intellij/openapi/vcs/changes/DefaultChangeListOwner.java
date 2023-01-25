@@ -19,7 +19,7 @@ public class DefaultChangeListOwner implements ChangeListOwner {
   }
 
   @Override
-  public void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes) {
+  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<Change> changes) {
     ChangeListManager.getInstance(myProject).moveChangesTo(list, changes);
   }
 

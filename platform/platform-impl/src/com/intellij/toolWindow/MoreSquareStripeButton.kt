@@ -14,13 +14,14 @@ import com.intellij.openapi.wm.impl.SquareStripeButtonLook
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.util.PopupImplUtil
+import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseEvent
 
 internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) :
   ActionButton(createAction(toolWindowToolbar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR,
-               { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
+               { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
 
   init {
     setLook(SquareStripeButtonLook(this))
@@ -36,19 +37,29 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) 
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
 
+  override fun updateUI() {
+    super.updateUI()
+    myPresentation.icon = scaleIcon()
+  }
+
   companion object {
     private fun createPresentation(): Presentation {
       val presentation = Presentation()
-      presentation.icon = IconLoader.loadCustomVersionOrScale(AllIcons.Actions.MoreHorizontal as ScalableIcon, 20)
+      presentation.icon = scaleIcon()
       presentation.isEnabledAndVisible = true
       return presentation
     }
+
+    private fun scaleIcon() = IconLoader.loadCustomVersionOrScale(
+      AllIcons.Actions.MoreHorizontal as ScalableIcon,
+      JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
+    )
 
     private fun createAction(toolWindowToolbar: ToolWindowLeftToolbar): DumbAwareAction {
       return object : DumbAwareAction() {
         override fun actionPerformed(e: AnActionEvent) {
           val actions = ToolWindowsGroup.getToolWindowActions(e.project ?: return, true)
-          var popup = JBPopupFactory.getInstance().createActionGroupPopup(null, DefaultActionGroup(actions), e.dataContext, null, true)
+          val popup = JBPopupFactory.getInstance().createActionGroupPopup(null, DefaultActionGroup(actions), e.dataContext, null, true)
           popup.setMinimumSize(Dimension(300, -1))
 
           val moreSquareStripeButton = toolWindowToolbar.moreButton

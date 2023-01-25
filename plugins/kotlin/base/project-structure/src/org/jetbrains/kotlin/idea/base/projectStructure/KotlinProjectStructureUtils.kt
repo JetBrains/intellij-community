@@ -4,6 +4,7 @@
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -116,10 +117,12 @@ fun FileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSourceRoo
         return null
     }
 
-    return when {
-        isUnderSourceRootOfType(virtualFile, testRootTypes) -> TestSourceKotlinRootType
-        isInSourceContent(virtualFile) -> SourceKotlinRootType
-        else -> null
+    return runReadAction {
+        when {
+            isUnderSourceRootOfType(virtualFile, testRootTypes) -> TestSourceKotlinRootType
+            isInSourceContent(virtualFile) -> SourceKotlinRootType
+            else -> null
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.completion.CompletionMemory;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceEmptyVariableHandlerImpl;
 import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.util.IncorrectOperationException;
@@ -21,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Danila Ponomarenko
- */
 public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAction {
   @NotNull
   @Override
@@ -65,6 +63,22 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
   }
 
   @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiElement element = getElement(editor, file);
+    if (element == null) return IntentionPreviewInfo.EMPTY;
+    PsiType type = getTypeOfUnfilledParameter(editor, element);
+    if (type != null) return new IntroduceEmptyVariableHandlerImpl().generatePreview(editor, element.getContainingFile(), type);
+    final PsiExpression expression = detectExpressionStatement(element);
+    if (expression == null) return IntentionPreviewInfo.EMPTY;
+    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+    JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
+    if (handler instanceof PreviewableRefactoringActionHandler previewableRefactoringActionHandler) {
+      return previewableRefactoringActionHandler.generatePreview(project, expression);
+    }
+    return IntentionPreviewInfo.EMPTY;
+  }
+
+  @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiType type = getTypeOfUnfilledParameter(editor, element);
     if (type != null) {
@@ -73,10 +87,7 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
     }
 
     final PsiExpression expression = detectExpressionStatement(element);
-    if (expression == null){
-      return;
-    }
-
+    if (expression == null) return;
     RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
     JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
     assert handler != null;
@@ -129,7 +140,7 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
           CharArrayUtil.isEmptyOrSpaces(editor.getDocument().getImmutableCharSequence(),
                                         leftBoundary.getTextRange().getEndOffset(),
                                         rightBoundary.getTextRange().getStartOffset())) {
-        PsiMethod method = CompletionMemory.getChosenMethod((PsiCall)element.getParent().getParent());
+        PsiMethod method = ((PsiMethodCallExpression)element.getParent().getParent()).resolveMethod();
         if (method != null) {
           List<PsiJavaToken> allTokens = PsiTreeUtil.getChildrenOfTypeAsList(element.getParent(), PsiJavaToken.class);
           PsiParameterList parameterList = method.getParameterList();

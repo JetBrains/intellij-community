@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.localCanBeFinal;
 
 import com.intellij.codeInspection.*;
@@ -192,8 +192,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       @Override public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         if (!REPORT_FOREACH_PARAMETERS) return;
-        final PsiForeachDeclarationElement iterationDeclaration = statement.getIterationDeclaration();
-        if (!(iterationDeclaration instanceof PsiParameter param)) return;
+        final PsiParameter param = statement.getIterationParameter();
         if (PsiTreeUtil.getParentOfType(param, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
           return;
         }
@@ -211,9 +210,13 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
         super.visitPatternVariable(variable);
         if (!REPORT_PATTERN_VARIABLES) return;
+        if (PsiTreeUtil.getParentOfType(variable, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
+          return;
+        }
         PsiElement context = PsiTreeUtil.getParentOfType(variable,
                                                          PsiInstanceOfExpression.class,
                                                          PsiCaseLabelElementList.class,
+                                                         PsiForeachPatternStatement.class,
                                                          PsiForeachStatement.class);
         int from;
         int end;
@@ -243,7 +246,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
           }
           end = flow.getEndOffset(body);
         }
-        else if (context instanceof PsiForeachStatement forEach) {
+        else if (context instanceof PsiForeachPatternStatement forEach) {
           PsiStatement body = forEach.getBody();
           if (body == null) return;
           from = flow.getStartOffset(body);
@@ -344,7 +347,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       if (!variable.isPhysical()) continue;
       final PsiIdentifier nameIdentifier = variable.getNameIdentifier();
       PsiElement problemElement = nameIdentifier != null ? nameIdentifier : variable;
-      if (variable instanceof PsiParameter && !(((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement)) {
+      if (variable instanceof PsiParameter && !(((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatementBase)) {
         problems.add(manager.createProblemDescriptor(problemElement,
                                                      JavaAnalysisBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
                                                      myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly));

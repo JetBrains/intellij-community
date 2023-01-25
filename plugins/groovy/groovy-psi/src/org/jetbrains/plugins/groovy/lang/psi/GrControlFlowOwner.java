@@ -5,8 +5,6 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
 /**
  * Represents elements with control flow cached
- *
- * @author ven
  */
 public interface GrControlFlowOwner extends GroovyPsiElement {
 

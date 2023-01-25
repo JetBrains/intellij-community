@@ -45,10 +45,10 @@ public class PatternParser {
         builder.advanceLexer();
       }
     }
-    myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS);
+    Boolean hasNoModifier = myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS).second;
     PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
     boolean isPattern = type != null && (builder.getTokenType() == JavaTokenType.IDENTIFIER ||
-                                         builder.getTokenType() == JavaTokenType.LPARENTH);
+                                         (builder.getTokenType() == JavaTokenType.LPARENTH && hasNoModifier));
     if (!isPattern) {
       patternStart.rollbackTo();
       return null;
@@ -131,7 +131,7 @@ public class PatternParser {
   private PsiBuilder.@NotNull Marker parseTypeOrRecordPattern(final PsiBuilder builder, boolean expectVar) {
     PsiBuilder.Marker pattern = builder.mark();
     PsiBuilder.Marker patternVariable = builder.mark();
-    myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS);
+    Boolean hasNoModifiers = myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS).second;
 
     int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD;
     if (expectVar) {
@@ -140,7 +140,7 @@ public class PatternParser {
     PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, flags);
     assert type != null; // guarded by isPattern
     boolean isRecord = false;
-    if (builder.getTokenType() == JavaTokenType.LPARENTH) {
+    if (builder.getTokenType() == JavaTokenType.LPARENTH && hasNoModifiers) {
       parseRecordStructurePattern(builder);
       isRecord = true;
     }

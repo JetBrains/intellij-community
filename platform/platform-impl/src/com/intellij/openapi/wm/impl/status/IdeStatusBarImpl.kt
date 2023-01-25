@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.ui.border.name
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.NotificationPopup
 import com.intellij.ui.popup.PopupState
@@ -517,7 +518,7 @@ open class IdeStatusBarImpl internal constructor(
     }
 
     val point = SwingUtilities.convertPoint(component, e.point, rightPanel)
-    val widget = rightPanel.getComponentAt(point) as? JComponent
+    val widget = getVisibleChildAt(rightPanel, point)
     if (e.clickCount == 0 || e.id == MouseEvent.MOUSE_RELEASED) {
       applyWidgetEffect(if (widget !== rightPanel) widget else null, WidgetEffect.HOVER)
     }
@@ -546,6 +547,19 @@ open class IdeStatusBarImpl internal constructor(
     return false
   }
 
+  /**
+   * Unlike [Container.getComponentAt] will not return invisible child.
+   * Unlike [Container.findComponentAt] or [SwingUtilities.getDeepestComponentAt] will not search deeper.
+   */
+  private fun getVisibleChildAt(component: JComponent, point: Point): JComponent? {
+    if (component.isVisible && component.contains(point)) {
+      return component.components.find { child ->
+        child.isVisible && child.contains(point.x - child.x, point.y - child.y)
+      } as? JComponent
+    }
+    return null
+  }
+
   override fun getUIClassID(): String = UI_CLASS_ID
 
   override fun updateUI() {
@@ -555,6 +569,18 @@ open class IdeStatusBarImpl internal constructor(
     else {
       setUI(StatusBarUI())
     }
+    GuiUtils.iterateChildren(this, { c ->
+      if (c is JComponent) {
+        val newBorder = when (c.border?.name) {
+          JBUI.CurrentTheme.StatusBar.Widget.borderName() -> JBUI.CurrentTheme.StatusBar.Widget.border()
+          JBUI.CurrentTheme.StatusBar.Widget.iconBorderName() -> JBUI.CurrentTheme.StatusBar.Widget.iconBorder()
+          else -> null
+        }
+        if (newBorder != null) {
+          c.border = newBorder
+        }
+      }
+    })
   }
 
   override fun getComponentGraphics(g: Graphics): Graphics {
@@ -755,7 +781,7 @@ private fun wrap(widget: StatusBarWidget): JComponent {
     createComponentByWidgetPresentation(widget)
   }
   ClientProperty.put(result, WIDGET_ID, widget.ID())
-  result.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, java.lang.Boolean.TRUE)
+  result.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, true)
   return result
 }
 
@@ -784,7 +810,7 @@ private fun wrapCustomStatusBarWidget(widget: CustomStatusBarWidget): JComponent
 }
 
 private fun createDefaultEditorProvider(frameHelper: ProjectFrameHelper): () -> FileEditor? {
-  return p@ {
+  return p@{
     (frameHelper.project ?: return@p null).service<StatusBarWidgetsManager>().dataContext.currentFileEditor.value
   }
 }

@@ -26,6 +26,7 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -134,17 +135,17 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     AnAction action = registerAction(actionManager, executor.getContextActionId(), runContextAction, myContextActionIdToAction);
     if (isExecutorInMainGroup(executor)) {
-      Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP))
-        .add(action, new Constraints(Anchor.BEFORE, RUN_CONTEXT_GROUP_MORE), actionManager);
+      DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP));
+      ((ActionManagerImpl) actionManager).addToGroup(group, action, new Constraints(Anchor.BEFORE, RUN_CONTEXT_GROUP_MORE));
     }
     else {
-      Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP_MORE))
-        .add(action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"), actionManager);
+      DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP_MORE));
+      ((ActionManagerImpl) actionManager).addToGroup(group, action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"));
     }
 
     AnAction nonExistingAction = registerAction(actionManager, newConfigurationContextActionId(executor), runNonExistingContextAction, myContextActionIdToAction);
-    Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP_MORE))
-      .add(nonExistingAction, new Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"), actionManager);
+    DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP_MORE));
+    ((ActionManagerImpl) actionManager).addToGroup(group, nonExistingAction, new Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"));
 
     initRunToolbarExecutorActions(executor, actionManager);
 
@@ -206,7 +207,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
   private static void registerActionInGroup(@NotNull ActionManager actionManager, @NotNull String actionId, @NotNull AnAction anAction, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
     AnAction action = registerAction(actionManager, actionId, anAction, map);
-    ((DefaultActionGroup)actionManager.getAction(groupId)).add(action, actionManager);
+    AnAction group = actionManager.getAction(groupId);
+    if (group != null) {
+      ((ActionManagerImpl) actionManager).addToGroup((DefaultActionGroup) group, action, Constraints.LAST);
+    }
   }
 
   private static @NotNull AnAction registerAction(@NotNull ActionManager actionManager,
@@ -256,7 +260,6 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     AnAction action = map.get(actionId);
     if (action != null) {
-      group.remove(action, actionManager);
       actionManager.unregisterAction(actionId);
       map.remove(actionId);
     }
@@ -688,7 +691,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         Presentation presentation = e.getPresentation();
         presentation.setText(ExecutionBundle.message("choose.run.popup.edit"));
         presentation.setDescription(ExecutionBundle.message("choose.run.popup.edit.description"));
-        presentation.setIcon(AllIcons.Actions.EditSource);
+        presentation.setIcon(!ExperimentalUI.isNewUI() ? AllIcons.Actions.EditSource : null);
       }
     }
 
@@ -826,6 +829,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
                            @NotNull Executor executor) {
       if (settings != null) {
         RunConfigurationStartHistory.getInstance(project).register(settings);
+        RunManager.getInstance(project).setSelectedConfiguration(settings);
       }
       runSubProcess(project, configuration, settings, dataContext, executor, RunToolbarProcessData.prepareBaseSettingCustomization(settings, null));
     }

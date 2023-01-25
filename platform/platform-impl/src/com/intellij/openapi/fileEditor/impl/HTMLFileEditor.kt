@@ -32,9 +32,9 @@ import java.beans.PropertyChangeListener
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 
-internal class HTMLFileEditor(private val project: Project, private val file: LightVirtualFile, url: String) : UserDataHolderBase(), FileEditor {
+class HTMLFileEditor(private val project: Project, private val file: LightVirtualFile, url: String) : UserDataHolderBase(), FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
-  private val contentPanel = JCEFHtmlPanel(true, null, null)
+  val contentPanel = JCEFHtmlPanel(true, null, null)
   private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
   private val initial = AtomicBoolean(true)
   private val navigating = AtomicBoolean(false)

@@ -62,9 +62,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 
-/**
- * @author ven
- */
 public class GroovyDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {
   private static final String LINE_SEPARATOR = "\n";
 

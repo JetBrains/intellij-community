@@ -9,7 +9,7 @@ from ._common import weekday
 _SelfT = TypeVar("_SelfT", bound=relativedelta)
 _DateT = TypeVar("_DateT", date, datetime)
 # Work around attribute and type having the same name.
-_weekday: TypeAlias = weekday
+_Weekday: TypeAlias = weekday
 
 MO: weekday
 TU: weekday
@@ -30,7 +30,7 @@ class relativedelta:
     microseconds: int
     year: int | None
     month: int | None
-    weekday: _weekday | None
+    weekday: _Weekday | None
     day: int | None
     hour: int | None
     minute: int | None
@@ -52,7 +52,7 @@ class relativedelta:
         year: int | None = ...,
         month: int | None = ...,
         day: int | None = ...,
-        weekday: int | _weekday | None = ...,
+        weekday: int | _Weekday | None = ...,
         yearday: int | None = ...,
         nlyearday: int | None = ...,
         hour: int | None = ...,

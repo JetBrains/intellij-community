@@ -56,8 +56,8 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
-                new JavaClassValidator().annotationsOnly()),
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()),
       checkbox("ignoreClassesWithOnlyMain", InspectionGadgetsBundle.message("utility.class.without.private.constructor.option"))
     );
   }

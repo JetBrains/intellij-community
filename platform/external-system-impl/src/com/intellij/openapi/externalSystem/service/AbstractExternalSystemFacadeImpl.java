@@ -17,9 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends RemoteServer
   implements RemoteExternalSystemFacade<S>
 {
@@ -221,6 +218,17 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
 
     @Override
     public synchronized void onStart(@NotNull ExternalSystemTaskId id) {
+    }
+
+
+    @Override
+    public synchronized void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
+      try {
+        myManager.onEnvironmentPrepared(id);
+      }
+      catch (RemoteException e) {
+        // Ignore
+      }
     }
 
     @Override

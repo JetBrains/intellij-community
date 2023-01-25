@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider;
@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-/**
- * @author Pavel.Dolgov
- */
 
 @TestFor(classes = SdkSetupNotificationProvider.class)
 public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtureTestCase {
@@ -46,6 +43,7 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
                                                                     @NotNull String name,
                                                                     @NotNull String text) {
     if (isModuleSdk) {
+      registerSdkIfNeeded(sdk);
       ModuleRootModificationUtil.setModuleSdk(getModule(), sdk);
     }
     else {
@@ -91,13 +89,17 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
   }
 
   protected void setProjectSdk(@Nullable Sdk sdk) {
+    registerSdkIfNeeded(sdk);
+    WriteAction.run(() -> ProjectRootManager.getInstance(getProject()).setProjectSdk(sdk));
+  }
+
+  private void registerSdkIfNeeded(@Nullable Sdk sdk) {
     if (sdk != null) {
       final Sdk foundJdk = ReadAction.compute(() -> ProjectJdkTable.getInstance().findJdk(sdk.getName()));
       if (foundJdk == null) {
         WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(sdk, myFixture.getProjectDisposable()));
       }
     }
-    WriteAction.run(() -> ProjectRootManager.getInstance(getProject()).setProjectSdk(sdk));
   }
 
   protected static void assertSdkSetupPanelShown(EditorNotificationPanel panel, @NotNull String expectedMessagePrefix) {

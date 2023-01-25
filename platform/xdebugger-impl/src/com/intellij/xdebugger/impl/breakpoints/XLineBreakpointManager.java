@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.AppTopics;
@@ -35,8 +35,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -53,14 +53,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 public final class XLineBreakpointManager {
-  private final BidirectionalMap<XLineBreakpointImpl, String> myBreakpoints = new BidirectionalMap<>();
+  private final MultiMap<String, XLineBreakpointImpl> myBreakpoints = MultiMap.createConcurrent();
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
 
@@ -79,7 +77,7 @@ public final class XLineBreakpointManager {
       busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileUrlChangeAdapter() {
         @Override
         protected void fileUrlChanged(String oldUrl, String newUrl) {
-          breakpoints().forEach(breakpoint -> {
+          myBreakpoints.values().forEach(breakpoint -> {
             String url = breakpoint.getFileUrl();
             if (FileUtil.startsWith(url, oldUrl)) {
               breakpoint.setFileUrl(newUrl + url.substring(oldUrl.length()));
@@ -89,8 +87,7 @@ public final class XLineBreakpointManager {
 
         @Override
         public void fileDeleted(@NotNull VirtualFileEvent event) {
-          List<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(event.getFile().getUrl());
-          removeBreakpoints(breakpoints != null ? new ArrayList<>(breakpoints) : null); // safe copy
+          removeBreakpoints(myBreakpoints.get(event.getFile().getUrl()));
         }
       }));
     }
@@ -101,10 +98,7 @@ public final class XLineBreakpointManager {
     busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
-        List<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(file.getUrl());
-        if (breakpoints != null) {
-          breakpoints.stream().filter(b -> b.getHighlighter() == null).forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
-        }
+        myBreakpoints.get(file.getUrl()).stream().filter(b -> b.getHighlighter() == null).forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
       }
     });
   }
@@ -121,27 +115,20 @@ public final class XLineBreakpointManager {
     if (initUI) {
       updateBreakpointNow(breakpoint);
     }
-    myBreakpoints.put(breakpoint, breakpoint.getFileUrl());
+    myBreakpoints.putValue(breakpoint.getFileUrl(), breakpoint);
   }
 
   public void unregisterBreakpoint(final XLineBreakpointImpl breakpoint) {
-    myBreakpoints.remove(breakpoint);
+    myBreakpoints.remove(breakpoint.getFileUrl(), breakpoint);
   }
 
   @NotNull
   public Collection<XLineBreakpointImpl> getDocumentBreakpoints(Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
-      Collection<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(file.getUrl());
-      if (breakpoints != null) {
-        return new ArrayList<>(breakpoints);
-      }
+      return myBreakpoints.get(file.getUrl());
     }
     return Collections.emptyList();
-  }
-
-  private Stream<XLineBreakpointImpl> breakpoints() {
-    return myBreakpoints.keySet().stream();
   }
 
   @RequiresEdt
@@ -164,7 +151,7 @@ public final class XLineBreakpointManager {
     removeBreakpoints(toRemove);
   }
 
-  private void removeBreakpoints(@Nullable final List<? extends XLineBreakpoint> toRemove) {
+  private void removeBreakpoints(@Nullable final Collection<? extends XLineBreakpoint> toRemove) {
     if (ContainerUtil.isEmpty(toRemove)) {
       return;
     }
@@ -215,7 +202,7 @@ public final class XLineBreakpointManager {
     myBreakpointsUpdateQueue.queue(new Update("all breakpoints") {
       @Override
       public void run() {
-        breakpoints().forEach(b -> b.doUpdateUI(EmptyRunnable.INSTANCE));
+        myBreakpoints.values().forEach(b -> b.doUpdateUI(EmptyRunnable.INSTANCE));
       }
     });
     // skip waiting

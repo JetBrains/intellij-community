@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Alexey Chmutov
- */
 public abstract class TemplateLanguageBlock extends AbstractBlock implements BlockWithParent {
   private final TemplateLanguageBlockFactory myBlockFactory;
   private final CodeStyleSettings mySettings;

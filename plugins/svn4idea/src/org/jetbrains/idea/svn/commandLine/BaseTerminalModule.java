@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public abstract class BaseTerminalModule extends LineCommandAdapter implements CommandRuntimeModule, InteractiveCommandListener {
 
   private static final Logger LOG = Logger.getInstance(BaseTerminalModule.class);

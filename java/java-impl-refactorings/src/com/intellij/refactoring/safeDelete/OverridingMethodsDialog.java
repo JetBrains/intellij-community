@@ -7,7 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
@@ -35,9 +38,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author dsl
- */
 class OverridingMethodsDialog extends DialogWrapper {
   private final List<? extends UsageInfo> myOverridingMethods;
   private final String[] myMethodText;
@@ -55,12 +55,16 @@ class OverridingMethodsDialog extends DialogWrapper {
 
     myMethodText = new String[myOverridingMethods.size()];
     for (int i = 0; i < myMethodText.length; i++) {
-      myMethodText[i] = PsiFormatUtil.formatMethod(
-              ((SafeDeleteOverridingMethodUsageInfo) myOverridingMethods.get(i)).getOverridingMethod(),
-              PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS
-                                    | PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_TYPE,
-              PsiFormatUtilBase.SHOW_TYPE
-      );
+      PsiElement overridingMethod = ((SafeDeleteOverridingMethodUsageInfo)myOverridingMethods.get(i)).getOverridingMethod();
+      if (overridingMethod instanceof PsiMethod) {
+        myMethodText[i] = PsiFormatUtil.formatMethod((PsiMethod)overridingMethod,
+                                                     PsiSubstitutor.EMPTY,
+                                                     PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_TYPE,
+                                                     PsiFormatUtilBase.SHOW_TYPE);
+      }
+      else {
+        myMethodText[i] = SymbolPresentationUtil.getSymbolPresentableText(overridingMethod);
+      }
     }
     myUsagePreviewPanel = new UsagePreviewPanel(project, new UsageViewPresentation());
     setTitle(JavaRefactoringBundle.message("unused.overriding.methods.title"));

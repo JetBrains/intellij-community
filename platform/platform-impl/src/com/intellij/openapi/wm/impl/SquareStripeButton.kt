@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
 import com.intellij.toolWindow.ToolWindowEventSource
@@ -26,9 +25,9 @@ import java.awt.Rectangle
 import java.awt.event.MouseEvent
 
 internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
-  ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
+  ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
   companion object {
-    fun createMoveGroup(toolWindow: ToolWindow) = ToolWindowMoveAction.Group()
+    fun createMoveGroup() = ToolWindowMoveAction.Group()
   }
 
   init {
@@ -115,8 +114,9 @@ private fun createPresentation(toolWindow: ToolWindowImpl): Presentation {
 }
 
 private fun scaleIcon(presentation: Presentation) {
-  if (presentation.icon is ScalableIcon && presentation.icon.iconWidth != 20) {
-    presentation.icon = IconLoader.loadCustomVersionOrScale(presentation.icon as ScalableIcon, 20)
+  val iconSize = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
+  if (presentation.icon is ScalableIcon && presentation.icon.iconWidth != iconSize) {
+    presentation.icon = IconLoader.loadCustomVersionOrScale(presentation.icon as ScalableIcon, iconSize)
   }
 }
 
@@ -124,7 +124,7 @@ private fun createPopupGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
   val group = DefaultActionGroup()
   group.add(HideAction(toolWindow))
   group.addSeparator()
-  group.add(createMoveGroup(toolWindow))
+  group.add(createMoveGroup())
   return group
 }
 

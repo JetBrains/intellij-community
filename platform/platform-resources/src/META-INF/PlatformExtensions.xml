@@ -286,7 +286,7 @@
                              key="configurable.trusted.hosts.display.name"
                              instance="com.intellij.ide.impl.TrustedHostsConfigurable"
                              groupId="build" />
-    <projectLocator implementation="com.intellij.ide.impl.trustedProjects.DefaultProjectLocator"/>
+    <trustedProjectsLocator implementation="com.intellij.ide.trustedProjects.impl.DefaultTrustedProjectsLocator"/>
 
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
@@ -333,6 +333,7 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingManager"
                         serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingManagerImpl"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
+    <applicationService serviceImplementation="com.intellij.ide.actions.IdeScaleTransformer"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
                         serviceImplementation="com.intellij.codeInsight.hint.HintManagerImpl"/>
@@ -480,6 +481,9 @@
     <projectService serviceInterface="com.intellij.openapi.project.DumbService" serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbUtil" serviceImplementation="com.intellij.openapi.project.DumbUtilImpl"/>
+    
+    <projectService serviceInterface="com.intellij.openapi.project.BaseProjectDirectories"
+                    serviceImplementation="com.intellij.ide.project.impl.BaseProjectDirectoriesImpl"/>
 
     <projectService serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
     <registryKey key="scroll.to.first.trace" defaultValue="true"
@@ -905,7 +909,7 @@
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.CommandLineWaitingManager$MyNotification"/>
-    <editorNotificationProvider implementation="com.intellij.ide.impl.UntrustedProjectNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.ide.trustedProjects.impl.UntrustedProjectNotificationProvider"/>
 
     <getDataRule key="copyProvider" implementationClass="com.intellij.ide.impl.dataRules.CopyProviderRule" type="fast"/>
     <getDataRule key="cutProvider" implementationClass="com.intellij.ide.impl.dataRules.CutProviderRule" type="fast"/>
@@ -1060,7 +1064,7 @@
                          id="actions.on.save"
                          bundle="messages.IdeBundle"
                          key="actions.on.save.page.title"
-                         nonDefaultProject="true"/>
+                         nonDefaultProject="false"/>
     <search.optionContributor implementation="com.intellij.ide.actionsOnSave.ActionsOnSaveSearchableOptionsContributor"/>
 
     <!--troubleshooting-->
@@ -1351,6 +1355,7 @@
     <advancedSetting id="ide.max.recent.projects" default="50" groupKey="group.advanced.settings.ide"/>
     <advancedSetting id="ide.max.recent.files" default="50" groupKey="group.advanced.settings.ide" service="com.intellij.ide.ui.UISettings" property="recentFilesLimit"/>
     <advancedSetting id="ide.max.recent.locations" default="25" groupKey="group.advanced.settings.ide" service="com.intellij.ide.ui.UISettings" property="recentLocationsLimit"/>
+    <advancedSetting id="ide.max.recent.run.configurations" default="5" groupKey="group.advanced.settings.ide"/>
     <advancedSetting id="temporary.configurations.limit" default="5" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="confirm.rerun.with.termination" default="true" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="start.run.configurations.pinned" default="false" groupKey="group.advanced.settings.run"/>
@@ -1458,10 +1463,10 @@
               topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
     <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$CurrentActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
-    <listener class="com.intellij.ide.impl.UntrustedProjectNotificationProvider$TrustedListener"
-              topic="com.intellij.ide.impl.trustedProjects.TrustedProjectsListener" activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="com.intellij.ide.trustedProjects.impl.UntrustedProjectNotificationProvider$TrustedListener"
+              topic="com.intellij.ide.trustedProjects.TrustedProjectsListener" activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.ide.impl.TrustStateListener$Bridge"
-              topic="com.intellij.ide.impl.trustedProjects.TrustedProjectsListener" activeInHeadlessMode="false" activeInTestMode="false"/>
+              topic="com.intellij.ide.trustedProjects.TrustedProjectsListener" activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.openapi.util.registry.EarlyAccessRegistryManager$MyListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings$ToolbarRegistryListener"
@@ -1487,6 +1492,8 @@
               activeInHeadlessMode="false"
               activeInTestMode="false"
               topic="com.intellij.notification.Notifications"/>
+    <listener class="com.intellij.formatting.EditorFormatterListener"
+              topic="com.intellij.psi.codeStyle.CodeStyleManager$Listener"/>
   </projectListeners>
 
   <xi:include href="/META-INF/RemoteDevUtil.xml">

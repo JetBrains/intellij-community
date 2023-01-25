@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Danila Ponomarenko
- */
 public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
   private final PsiClass myClass;
   private final PsiReferenceParameterList myParameterList;

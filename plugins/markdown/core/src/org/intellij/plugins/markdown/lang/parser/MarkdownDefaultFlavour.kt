@@ -44,7 +44,7 @@ open class MarkdownDefaultFlavour: MarkdownFlavourDescriptor {
     return result
   }
 
-  protected fun addCustomProviders(providers: MutableMap<IElementType, GeneratingProvider>) {
+  private fun addCustomProviders(providers: MutableMap<IElementType, GeneratingProvider>) {
     providers[DefinitionListMarkerProvider.DEFINITION_LIST] = SimpleInlineTagProvider("dl")
     providers[DefinitionListMarkerProvider.DEFINITION] = SimpleInlineTagProvider("dd")
     providers[DefinitionListMarkerProvider.TERM] = SimpleInlineTagProvider("dt")

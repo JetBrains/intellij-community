@@ -9,4 +9,3 @@ class SimpleClass(i: Int) {
     companion obj<caret>ect : ClassWithInvoke()
 }
 
-// FIR_COMPARISON

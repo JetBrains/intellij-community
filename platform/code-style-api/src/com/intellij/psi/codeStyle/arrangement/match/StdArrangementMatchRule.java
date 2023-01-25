@@ -29,8 +29,6 @@ import java.util.Set;
  * Arrangement rule which uses {@link StdArrangementEntryMatcher standard settings-based matcher}.
  * <p/>
  * Not thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class StdArrangementMatchRule extends ArrangementMatchRule implements Cloneable, Comparable<StdArrangementMatchRule> {
 

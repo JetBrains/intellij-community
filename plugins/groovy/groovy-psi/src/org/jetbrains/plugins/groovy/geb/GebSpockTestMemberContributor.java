@@ -10,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GebSpockTestMemberContributor extends NonCodeMembersContributor {
 
   @Override

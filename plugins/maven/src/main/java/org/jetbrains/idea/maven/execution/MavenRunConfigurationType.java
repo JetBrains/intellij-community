@@ -35,9 +35,6 @@ import java.util.List;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public final class MavenRunConfigurationType implements ConfigurationType {
   private static final Key<Boolean> IS_DELEGATE_BUILD = new Key<>("IS_DELEGATE_BUILD");
   private final ConfigurationFactory myFactory;

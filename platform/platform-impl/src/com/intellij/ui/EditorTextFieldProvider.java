@@ -8,8 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Defines common contract for building {@link EditorTextField} with necessary combinations of features.
- *
- * @author Denis Zhdanov
  */
 public interface EditorTextFieldProvider {
   static EditorTextFieldProvider getInstance() {

@@ -41,7 +41,7 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
         private var myInfo: HighlightInfo? = null
 
         override fun doCollectInformation(progress: ProgressIndicator) {
-            myInfo = buildHighlightingInfo()
+            myInfo = buildHighlightingInfo(file)
         }
 
         override fun doApplyInformationToEditor() {
@@ -51,12 +51,12 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
             }
         }
 
-        private fun buildHighlightingInfo(): HighlightInfo? {
+        private fun buildHighlightingInfo(file: PsiFile): HighlightInfo? {
             val cookie = editor.getUserData(MoveDeclarationsEditorCookie.KEY) ?: return null
 
             if (cookie.modificationCount != PsiModificationTracker.getInstance(project).modificationCount) return null
 
-            val processor = MoveDeclarationsProcessor.build(editor, cookie)
+            val processor = MoveDeclarationsProcessor.build(file, cookie)
 
             if (processor == null) {
                 editor.putUserData(MoveDeclarationsEditorCookie.KEY, null)

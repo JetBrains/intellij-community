@@ -50,15 +50,6 @@ fun <T> List<T>.takeWhileInclusive(predicate: (T) -> Boolean): List<T> {
     return slice(0..inclusiveIndex)
 }
 
-/**
- * Sorted by [selector] or preserves the order for elements where [selector] returns the same result
- */
-@ApiStatus.Internal
-fun <T, R : Comparable<R>> Sequence<T>.sortedConservativelyBy(selector: (T) -> R?): Sequence<T> =
-    withIndex()
-        .sortedWith(compareBy({ (_, value) -> selector(value) }, IndexedValue<T>::index))
-        .map(IndexedValue<T>::value)
-
 private fun <T> Sequence<T>.cycle(): Sequence<T> = sequence { while (true) yieldAll(this@cycle) }
 
 /**

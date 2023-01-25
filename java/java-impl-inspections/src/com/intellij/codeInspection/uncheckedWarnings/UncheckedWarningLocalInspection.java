@@ -289,6 +289,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       super.visitForeachStatement(statement);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
       final PsiParameter parameter = statement.getIterationParameter();
+      if (parameter == null) return;
       final PsiType parameterType = parameter.getType();
       final PsiExpression iteratedValue = statement.getIteratedValue();
       if (iteratedValue == null) return;

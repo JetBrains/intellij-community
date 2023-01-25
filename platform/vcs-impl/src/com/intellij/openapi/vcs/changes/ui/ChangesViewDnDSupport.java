@@ -20,8 +20,6 @@ import java.util.List;
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.IGNORED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
-import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getChanges;
-import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getFilePaths;
 
 public final class ChangesViewDnDSupport extends ChangesTreeDnDSupport {
   @NotNull private final Project myProject;
@@ -39,11 +37,14 @@ public final class ChangesViewDnDSupport extends ChangesTreeDnDSupport {
   @Override
   protected DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info) {
     if (info.isMove()) {
-      Change[] changes = getChanges(myProject, myTree.getSelectionPaths()).toList().toArray(Change[]::new);
-      List<FilePath> unversionedFiles = getFilePaths(myTree.getSelectionPaths(), UNVERSIONED_FILES_TAG).toList();
-      List<FilePath> ignoredFiles = getFilePaths(myTree.getSelectionPaths(), IGNORED_FILES_TAG).toList();
+      List<Change> changes = VcsTreeModelData.selected(myTree)
+        .iterateUserObjects(Change.class).toList();
+      List<FilePath> unversionedFiles = VcsTreeModelData.selectedUnderTag(myTree, UNVERSIONED_FILES_TAG)
+        .iterateUserObjects(FilePath.class).toList();
+      List<FilePath> ignoredFiles = VcsTreeModelData.selectedUnderTag(myTree, IGNORED_FILES_TAG)
+        .iterateUserObjects(FilePath.class).toList();
 
-      if (changes.length > 0 || !unversionedFiles.isEmpty() || !ignoredFiles.isEmpty()) {
+      if (!changes.isEmpty() || !unversionedFiles.isEmpty() || !ignoredFiles.isEmpty()) {
         return new DnDDragStartBean(new ChangeListDragBean(myTree, changes, unversionedFiles, ignoredFiles));
       }
     }

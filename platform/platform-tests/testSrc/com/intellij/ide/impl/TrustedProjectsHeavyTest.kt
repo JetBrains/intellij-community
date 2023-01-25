@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
-import com.intellij.ide.impl.trustedProjects.ProjectLocator
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.*
@@ -43,7 +43,7 @@ class TrustedProjectsHeavyTest : TrustedProjectsHeavyTestCase() {
 
   @Test
   fun `test collecting project roots`() {
-    ProjectLocator.EP_NAME.point.registerExtension(TestProjectLocator(), testDisposable)
+    TrustedProjectsLocator.EP_NAME.point.registerExtension(TestTrustedProjectsLocator(), testDisposable)
     runBlocking {
       createProjectAsync("project")
         .useProjectAsync {

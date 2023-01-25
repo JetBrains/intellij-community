@@ -23,9 +23,6 @@ import java.io.File
 import java.nio.charset.Charset
 import java.nio.charset.UnsupportedCharsetException
 
-/**
- * @author Sergey Evdokimov
- */
 @ApiStatus.Internal
 class MavenEncodingConfigurator : MavenImporter("", ""), MavenWorkspaceConfigurator {
   private val PREPARED_MAPPER = Key.create<EncodingMapper>("ENCODING_MAPPER")

@@ -23,7 +23,7 @@ class KotlinPluginPrePushHandler(private val project: Project) : PrePushHandler 
   companion object {
     private const val HANDLER_ENABLED_KEY = "kotlin.commit.message.validation.enabled"
     private const val KOTLIN_PLUGIN_PATH = "plugins/kotlin/"
-    private val pathsToIgnore = setOf("/test/", "/testData/", "/fleet/plugins/kotlin/")
+    private val pathsToIgnore = setOf("/test/", "/testData/", "/fleet/plugins/kotlin/", "/plugins/kotlin/jupyter/")
     private val fileExtensionsNotToTrack = setOf("iml", "md")
     private val commitMessageRegex = Regex(".*KTIJ-\\d+.*", RegexOption.DOT_MATCHES_ALL /* line breaks matter */)
 

@@ -6,7 +6,9 @@ from os import stat_result
 from typing import Any, overload
 from typing_extensions import TypeAlias
 
-from . import ospath as path
+from . import ospath
+
+path = ospath
 
 _FdOrAnyPath: TypeAlias = int | StrOrBytesPath
 

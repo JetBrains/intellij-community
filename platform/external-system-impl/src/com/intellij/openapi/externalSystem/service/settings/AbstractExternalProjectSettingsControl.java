@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Templates class for managing single external project settings (single ide project might contain multiple bindings to external
  * projects, e.g. one module is backed by a single external project and couple of others are backed by a single external multi-project).
- *
- * @author Denis Zhdanov
  */
 public abstract class AbstractExternalProjectSettingsControl<S extends ExternalProjectSettings>
   extends AbstractSettingsControl

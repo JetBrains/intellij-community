@@ -8,7 +8,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
@@ -28,9 +27,9 @@ class SpecialFirstIterationLoop {
   private final @NotNull List<? extends PsiStatement> myOtherIterationStatements;
   private final @Nullable PsiLocalVariable myVariable;
 
-  SpecialFirstIterationLoop(@NotNull List<? extends PsiStatement> firstIterationStatements,
-                                   @NotNull List<? extends PsiStatement> otherIterationStatements,
-                                   @Nullable PsiLocalVariable variable) {
+  private SpecialFirstIterationLoop(@NotNull List<? extends PsiStatement> firstIterationStatements,
+                                    @NotNull List<? extends PsiStatement> otherIterationStatements,
+                                    @Nullable PsiLocalVariable variable) {
     myFirstIterationStatements = firstIterationStatements;
     myOtherIterationStatements = otherIterationStatements;
     myVariable = variable;
@@ -52,7 +51,7 @@ class SpecialFirstIterationLoop {
 
   @Contract("null -> null")
   @Nullable
-  static PsiExpression getExpressionComparedToZero(@Nullable PsiBinaryExpression condition) {
+  private static PsiExpression getExpressionComparedToZero(@Nullable PsiBinaryExpression condition) {
     if (condition == null) return null;
     IElementType tokenType = condition.getOperationTokenType();
     PsiExpression left = condition.getLOperand();
@@ -69,7 +68,7 @@ class SpecialFirstIterationLoop {
   @Nullable
   private static SpecialFirstIterationLoop extract(boolean firstIterationThen,
                                                    int index,
-                                                   @NotNull List<PsiStatement> statements,
+                                                   @NotNull List<? extends PsiStatement> statements,
                                                    @NotNull PsiLocalVariable checkVar) {
     PsiStatement statement = statements.get(index);
     PsiIfStatement ifStatement = tryCast(statement, PsiIfStatement.class);
@@ -134,7 +133,7 @@ class SpecialFirstIterationLoop {
      */
     @Nullable
     static SpecialFirstIterationLoop extract(TerminalBlock terminalBlock) {
-      ArrayList<PsiStatement> statements = ContainerUtil.newArrayList(terminalBlock.getStatements());
+      List<PsiStatement> statements = List.of(terminalBlock.getStatements());
       int index = getSingleStatementIndex(statements, PsiIfStatement.class::isInstance);
       if (index == -1) return null;
       PsiStatement statement = statements.get(index);
@@ -142,10 +141,10 @@ class SpecialFirstIterationLoop {
       if (ifStatement == null) return null;
       ThreeState firstIterationThen = isFirstIterationThen(statement);
       if (firstIterationThen.equals(ThreeState.UNSURE)) return null;
-      final ConditionData conditionData = ConditionData.extract(ifStatement, firstIterationThen.toBoolean());
+      final ConditionData conditionData = extract(ifStatement, firstIterationThen.toBoolean());
       if(conditionData == null) return null;
 
-      PsiAssignmentExpression assignment = conditionData.getAssignment();
+      PsiAssignmentExpression assignment = conditionData.assignment();
       PsiExpression expression = assignment.getLExpression();
       PsiLocalVariable boolFlag = resolveLocalVariable(expression);
       if(boolFlag == null) return null;
@@ -159,7 +158,7 @@ class SpecialFirstIterationLoop {
                                                                PsiTreeUtil.isAncestor(boolFlag, reference.getElement(), false));
       if (!referencesAllowed) return null;
       return SpecialFirstIterationLoop
-        .extract(firstIterationThen.toBoolean(), index, conditionData.getThenStatements(), conditionData.getElseStatements(), statements,
+        .extract(firstIterationThen.toBoolean(), index, conditionData.thenStatements(), conditionData.elseStatements(), statements,
                  boolFlag);
     }
 
@@ -186,52 +185,27 @@ class SpecialFirstIterationLoop {
     }
 
 
-    private static final class ConditionData {
-      private final @NotNull List<PsiStatement> myThenStatements;
-      private final @NotNull List<PsiStatement> myElseStatements;
-      private final @NotNull PsiAssignmentExpression myAssignment;
+    private record ConditionData(@NotNull List<PsiStatement> thenStatements,
+                                 @NotNull List<PsiStatement> elseStatements,
+                                 @NotNull PsiAssignmentExpression assignment) {
+    }
 
-      private ConditionData(@NotNull List<PsiStatement> thenStatements,
-                            @NotNull List<PsiStatement> elseStatements,
-                            @NotNull PsiAssignmentExpression assignment) {
-        myThenStatements = thenStatements;
-        myElseStatements = elseStatements;
-        myAssignment = assignment;
-      }
-
-      @NotNull
-      public PsiAssignmentExpression getAssignment() {
-        return myAssignment;
-      }
-
-      @NotNull
-      public List<PsiStatement> getElseStatements() {
-        return myElseStatements;
-      }
-
-      @NotNull
-      public List<PsiStatement> getThenStatements() {
-        return myThenStatements;
-      }
-
-
-      @Nullable
-      static ConditionData extract(@NotNull PsiIfStatement ifStatement, boolean firstIterationThen) {
-        PsiStatement block = firstIterationThen ? ifStatement.getThenBranch() : ifStatement.getElseBranch();
-        ArrayList<PsiStatement> firstIterationStatements = new ArrayList<>(unwrapBlock(block));
-        int index = getSingleAssignmentIndex(firstIterationStatements);
-        if (index == -1) return null;
-        PsiStatement assignment = firstIterationStatements.remove(index);
-        PsiExpressionStatement expressionStatement = tryCast(assignment, PsiExpressionStatement.class);
-        if(expressionStatement == null) return null;
-        PsiAssignmentExpression assignmentExpression = tryCast(expressionStatement.getExpression(), PsiAssignmentExpression.class);
-        if(assignmentExpression == null) return null;
-        PsiStatement otherBlock = firstIterationThen ? ifStatement.getElseBranch() : ifStatement.getThenBranch();
-        List<PsiStatement> otherIterationStatements = unwrapBlock(otherBlock);
-        return firstIterationThen
-               ? new ConditionData(firstIterationStatements, otherIterationStatements, assignmentExpression)
-               : new ConditionData(otherIterationStatements, firstIterationStatements, assignmentExpression);
-      }
+    @Nullable
+    static ConditionData extract(@NotNull PsiIfStatement ifStatement, boolean firstIterationThen) {
+      PsiStatement block = firstIterationThen ? ifStatement.getThenBranch() : ifStatement.getElseBranch();
+      ArrayList<PsiStatement> firstIterationStatements = new ArrayList<>(unwrapBlock(block));
+      int index = getSingleAssignmentIndex(firstIterationStatements);
+      if (index == -1) return null;
+      PsiStatement assignment = firstIterationStatements.remove(index);
+      PsiExpressionStatement expressionStatement = tryCast(assignment, PsiExpressionStatement.class);
+      if(expressionStatement == null) return null;
+      PsiAssignmentExpression assignmentExpression = tryCast(expressionStatement.getExpression(), PsiAssignmentExpression.class);
+      if(assignmentExpression == null) return null;
+      PsiStatement otherBlock = firstIterationThen ? ifStatement.getElseBranch() : ifStatement.getThenBranch();
+      List<PsiStatement> otherIterationStatements = unwrapBlock(otherBlock);
+      return firstIterationThen
+             ? new ConditionData(firstIterationStatements, otherIterationStatements, assignmentExpression)
+             : new ConditionData(otherIterationStatements, firstIterationStatements, assignmentExpression);
     }
   }
 
@@ -262,7 +236,7 @@ class SpecialFirstIterationLoop {
       PsiLocalVariable loopLocalVar = tryCast(loopVar, PsiLocalVariable.class);
       if (loopLocalVar == null) return null;
 
-      ArrayList<PsiStatement> statements = ContainerUtil.newArrayList(terminalBlock.getStatements());
+      List<PsiStatement> statements = List.of(terminalBlock.getStatements());
       int index = getSingleStatementIndex(statements, statement -> statement instanceof PsiIfStatement);
       if (index == -1) return null;
       ThreeState firstIterationThen = isFirstIterationThen(statements.get(index), loopVar);
@@ -295,6 +269,6 @@ class SpecialFirstIterationLoop {
     if(statement == null) return Collections.emptyList();
     PsiBlockStatement blockStatement = tryCast(statement, PsiBlockStatement.class);
     if(blockStatement == null) return Collections.singletonList(statement);
-    return ContainerUtil.newArrayList(blockStatement.getCodeBlock().getStatements());
+    return List.of(blockStatement.getCodeBlock().getStatements());
   }
 }

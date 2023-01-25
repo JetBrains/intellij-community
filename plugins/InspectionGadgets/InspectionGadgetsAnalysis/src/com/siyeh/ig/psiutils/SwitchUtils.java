@@ -294,8 +294,11 @@ public final class SwitchUtils {
   }
 
   private static @Nullable PsiExpression findPossiblePatternOperand(@Nullable PsiExpression expression) {
-    if (expression instanceof PsiInstanceOfExpression) {
-      return ((PsiInstanceOfExpression)expression).getOperand();
+    if (expression instanceof PsiInstanceOfExpression psiInstanceOfExpression) {
+      if (hasLeakingScope(psiInstanceOfExpression)) {
+        return null;
+      }
+      return psiInstanceOfExpression.getOperand();
     }
     if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       final IElementType operationToken = polyadicExpression.getOperationTokenType();
@@ -311,6 +314,17 @@ public final class SwitchUtils {
       }
     }
     return null;
+  }
+
+  private static boolean hasLeakingScope(@NotNull PsiInstanceOfExpression expression) {
+    PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class);
+    if (!PsiTreeUtil.isAncestor(ifStatement, expression, false)) {
+      //something strange, return true as safe result
+      return true;
+    }
+    return JavaPsiPatternUtil.getExposedPatternVariables(expression)
+      .stream().flatMap(variable -> VariableAccessUtils.getVariableReferences(variable, ifStatement.getParent()).stream())
+      .anyMatch(variable -> !PsiTreeUtil.isAncestor(ifStatement, variable, false));
   }
 
   public static @Nullable PsiExpression findPatternSwitchExpression(@Nullable PsiExpression expression){
@@ -559,10 +573,39 @@ public final class SwitchUtils {
   }
 
   /**
-   * Checks if the given switch label statement contains a {@code default} case or a total pattern
+   * Checks if the label has the following form {@code 'case null'}
+   *
+   * @param label label to check
+   * @return {@code true} if the label has the following form {@code 'case null'}, {@code false} otherwise.
+   */
+  public static boolean isCaseNull(@Nullable PsiSwitchLabelStatementBase label) {
+    if (label == null) return false;
+    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+    return labelElementList != null &&
+           labelElementList.getElementCount() == 1 &&
+           labelElementList.getElements()[0] instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr);
+  }
+
+  /**
+   * Checks if the label has the following form {@code 'case null, default'}
+   *
+   * @param label label to check
+   * @return {@code true} if the label has the following form {@code 'case null, default'}, {@code false} otherwise.
+   */
+  public static boolean isCaseNullDefault(@Nullable PsiSwitchLabelStatementBase label) {
+    if (label == null) return false;
+    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+    return labelElementList != null &&
+           labelElementList.getElementCount() == 2 &&
+           labelElementList.getElements()[0] instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr) &&
+           labelElementList.getElements()[1] instanceof PsiDefaultCaseLabelElement;
+  }
+
+  /**
+   * Checks if the given switch label statement contains a {@code default} case or an unconditional pattern
    *
    * @param label a switch label statement to test
-   * @return {@code true} if the given switch label statement contains a {@code default} case or a total pattern,
+   * @return {@code true} if the given switch label statement contains a {@code default} case or an unconditional pattern,
    * {@code false} otherwise.
    */
   public static boolean isTotalLabel(@Nullable PsiSwitchLabelStatementBase label) {
@@ -577,7 +620,7 @@ public final class SwitchUtils {
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
     if (labelElementList == null) return false;
     return StreamEx.of(labelElementList.getElements()).select(PsiPattern.class)
-      .anyMatch(pattern -> JavaPsiPatternUtil.isTotalForType(pattern, type));
+      .anyMatch(pattern -> JavaPsiPatternUtil.isUnconditionalForType(pattern, type));
   }
 
   private static class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {

@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * @author ven
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;

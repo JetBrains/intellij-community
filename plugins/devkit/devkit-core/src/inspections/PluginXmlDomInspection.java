@@ -3,12 +3,14 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.MoveToPackageFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptStringList;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.diagnostic.ITNReporter;
@@ -24,8 +26,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
-import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Comparing;
@@ -42,12 +42,8 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.UI;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
@@ -57,11 +53,10 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.IncludedXmlTag;
 import com.siyeh.ig.ui.ExternalizableStringSet;
-import com.siyeh.ig.ui.UiUtils;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.Listeners.Listener;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
@@ -73,14 +68,14 @@ import org.jetbrains.idea.devkit.util.PluginPlatformInfo;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase {
   @NonNls
@@ -112,45 +107,32 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   private static final int FIRST_BRANCH_SUPPORTING_STAR = 131;
 
-  @NotNull
   @Override
-  public JComponent createOptionsPanel() {
-    ListTable table = new ListTable(new ListWrappingTableModel(myRegistrationCheckIgnoreClassList, ""));
-    JPanel panel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(table, DevKitBundle.message("inspections.plugin.xml.add.ignored.class.title"));
-    PanelGridBuilder grid = UI.PanelFactory.grid();
-    grid.resize().add(
-      UI.PanelFactory.panel(panel)
-        .withLabel(DevKitBundle.message("inspections.plugin.xml.ignore.classes.title"))
-        .moveLabelOnTop()
-        .resizeY(true)
-    );
-
+  public @NotNull OptPane getOptionsPane() {
+    OptStringList
+      ignoreClassList = stringList("myRegistrationCheckIgnoreClassList", DevKitBundle.message("inspections.plugin.xml.ignore.classes.title"),
+                                   new JavaClassValidator().withTitle(DevKitBundle.message("inspections.plugin.xml.add.ignored.class.title")));
     if (ApplicationManager.getApplication().isInternal()) {
-      JBTextArea component = new JBTextArea(5, 80);
-      component.setText(PLUGINS_MODULES.stream().map(it -> String.join(",", it.modules)).collect(Collectors.joining("\n")));
-      component.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          PLUGINS_MODULES.clear();
-          for (String line : StringUtil.splitByLines(component.getText())) {
-            PluginModuleSet set = new PluginModuleSet();
-            set.modules = new LinkedHashSet<>(StringUtil.split(line, ","));
-            PLUGINS_MODULES.add(set);
-          }
-          myPluginModuleSetByModuleName.drop();
-        }
-      });
-      ComponentPanelBuilder pluginModulesPanel =
-        UI.PanelFactory.panel(new JBScrollPane(component))
-          .withLabel(DevKitBundle.message("inspections.plugin.xml.plugin.modules.label"))
-          .moveLabelOnTop()
-          .withComment(DevKitBundle.message("inspections.plugin.xml.plugin.modules.description"))
-          .resizeY(true);
-      grid.add(pluginModulesPanel);
+      return pane(ignoreClassList,
+                  OptPane.stringList("PLUGINS_MODULES", DevKitBundle.message("inspections.plugin.xml.plugin.modules.label")));
     }
+    return pane(ignoreClassList);
+  }
 
-    return grid.createPanel();
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController()
+      .onValue("PLUGINS_MODULES",
+               () -> StreamEx.of(PLUGINS_MODULES).map(set -> String.join(",", set.modules)).toMutableList(),
+               newList -> {
+                 PLUGINS_MODULES.clear();
+                 StreamEx.of(newList).map(line -> {
+                   PluginModuleSet set = new PluginModuleSet();
+                   set.modules = StreamEx.split(line, ",").toCollection(LinkedHashSet::new);
+                   return set;
+                 }).into(PLUGINS_MODULES);
+                 myPluginModuleSetByModuleName.drop();
+               });
   }
 
   @Override

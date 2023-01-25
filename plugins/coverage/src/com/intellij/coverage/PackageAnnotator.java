@@ -35,9 +35,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author ven
- */
 public final class PackageAnnotator {
   private static final Logger LOG = Logger.getInstance(PackageAnnotator.class);
   private static final @NonNls String DEFAULT_CONSTRUCTOR_NAME_SIGNATURE = "<init>()V";

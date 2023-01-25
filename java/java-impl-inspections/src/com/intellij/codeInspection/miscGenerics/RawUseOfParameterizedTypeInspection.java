@@ -6,7 +6,6 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -30,14 +29,11 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Set;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
-/**
- *  @author dsl
- */
 public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean ignoreObjectConstruction = false;
@@ -227,7 +223,8 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       }
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(
         typeElement, PsiTypeElement.class, PsiReferenceParameterList.class, PsiJavaCodeReferenceElement.class);
-      if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiClassObjectAccessExpression) {
+      if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiClassObjectAccessExpression ||
+          parent instanceof PsiDeconstructionPattern) {
         return;
       }
       if (ignoreTypeCasts && parent instanceof PsiTypeCastExpression) {

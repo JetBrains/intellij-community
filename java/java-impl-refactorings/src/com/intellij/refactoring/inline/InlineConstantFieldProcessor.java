@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author ven
- */
 public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InlineConstantFieldProcessor.class);
   private PsiField myField;

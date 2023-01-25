@@ -3,6 +3,8 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -14,6 +16,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,9 +52,13 @@ public abstract class VcsTreeModelData {
     return new IncludedUnderData(tree, getRoot(tree));
   }
 
+  /**
+   * @deprecated Prefer using {@link #allUnder(ChangesBrowserNode)} with non-ambiguous name.
+   */
   @NotNull
+  @Deprecated
   public static VcsTreeModelData children(@NotNull ChangesBrowserNode<?> node) {
-    return new AllUnderData(node);
+    return allUnder(node);
   }
 
 
@@ -357,21 +364,29 @@ public abstract class VcsTreeModelData {
       return getListSelectionOrAll(tree).map(entry -> ObjectUtils.tryCast(entry, Change.class));
     }
     else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
-      return mapToChange(exactlySelected(tree)).take(1).toArray(Change.EMPTY_CHANGE_ARRAY);
+      return mapToChange(exactlySelected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return mapToVirtualFile(selected(tree)).toArray(VirtualFile.EMPTY_ARRAY);
-    }
-    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      if (project == null) return null;
-      return ChangesUtil.getNavigatableArray(project, mapToNavigatableFile(selected(tree)));
-    }
-    else if (VcsDataKeys.IO_FILE_ARRAY.is(dataId)) {
-      return mapToIoFile(selected(tree)).toArray(ArrayUtil.EMPTY_FILE_ARRAY);
+    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      VcsTreeModelData treeSelection = selected(tree);
+      return (DataProvider)slowId -> getSlowData(project, treeSelection, slowId);
     }
     return null;
   }
 
+  @Nullable
+  private static Object getSlowData(@Nullable Project project, @NotNull VcsTreeModelData treeSelection, @NotNull String slowId) {
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(slowId)) {
+      return mapToVirtualFile(treeSelection).toArray(VirtualFile.EMPTY_ARRAY);
+    }
+    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowId)) {
+      if (project == null) return null;
+      return ChangesUtil.getNavigatableArray(project, mapToNavigatableFile(treeSelection));
+    }
+    else if (VcsDataKeys.IO_FILE_ARRAY.is(slowId)) {
+      return mapToIoFile(treeSelection).toArray(ArrayUtil.EMPTY_FILE_ARRAY);
+    }
+    return null;
+  }
 
   @NotNull
   private static JBIterable<Change> mapToChange(@NotNull VcsTreeModelData data) {
@@ -380,7 +395,7 @@ public abstract class VcsTreeModelData {
   }
 
   @NotNull
-  private static JBIterable<VirtualFile> mapToNavigatableFile(@NotNull VcsTreeModelData data) {
+  static JBIterable<VirtualFile> mapToNavigatableFile(@NotNull VcsTreeModelData data) {
     return data.iterateUserObjects()
       .flatMap(entry -> {
         if (entry instanceof Change) {
@@ -395,11 +410,12 @@ public abstract class VcsTreeModelData {
         }
         return JBIterable.empty();
       })
-      .filterNotNull();
+      .filterNotNull()
+      .filter(VirtualFile::isValid);
   }
 
   @NotNull
-  private static JBIterable<VirtualFile> mapToVirtualFile(@NotNull VcsTreeModelData data) {
+  static JBIterable<VirtualFile> mapToVirtualFile(@NotNull VcsTreeModelData data) {
     return data.iterateUserObjects()
       .map(entry -> {
         if (entry instanceof Change) {
@@ -414,11 +430,12 @@ public abstract class VcsTreeModelData {
         }
         return null;
       })
-      .filterNotNull();
+      .filterNotNull()
+      .filter(VirtualFile::isValid);
   }
 
   @NotNull
-  private static JBIterable<File> mapToIoFile(@NotNull VcsTreeModelData data) {
+  static JBIterable<File> mapToIoFile(@NotNull VcsTreeModelData data) {
     return data.iterateUserObjects()
       .map(entry -> {
         if (entry instanceof Change) {
@@ -428,6 +445,39 @@ public abstract class VcsTreeModelData {
         return null;
       })
       .filterNotNull();
+  }
+
+  @NotNull
+  static JBIterable<FilePath> mapToFilePath(@NotNull VcsTreeModelData data) {
+    return data.iterateUserObjects()
+      .map(entry -> {
+        if (entry instanceof Change) {
+          return ChangesUtil.getFilePath((Change)entry);
+        }
+        else if (entry instanceof VirtualFile) {
+          return VcsUtil.getFilePath((VirtualFile)entry);
+        }
+        else if (entry instanceof FilePath) {
+          return ((FilePath)entry);
+        }
+        return null;
+      })
+      .filterNotNull();
+  }
+
+  /**
+   * @see ChangesListView#EXACTLY_SELECTED_FILES_DATA_KEY
+   */
+  @NotNull
+  static JBIterable<VirtualFile> mapToExactVirtualFile(@NotNull VcsTreeModelData data) {
+    return data.iterateUserObjects()
+      .map(object -> {
+        if (object instanceof VirtualFile) return (VirtualFile)object;
+        if (object instanceof FilePath) return ((FilePath)object).getVirtualFile();
+        return null;
+      })
+      .filterNotNull()
+      .filter(VirtualFile::isValid);
   }
 
 

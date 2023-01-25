@@ -5,4 +5,4 @@ public class UnaryNot {
         return this;
     }
 }
-// FIR_COMPARISON
+

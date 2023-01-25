@@ -26,9 +26,18 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
     fillSmartTypingBraces(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS);
   }
 
+  public void addPreferences(Preferences preferences) {
+    fillHighlightingBraces(preferences.getHighlightingPairs());
+    fillSmartTypingBraces(preferences.getSmartTypingPairs());
+    myPreferences.add(preferences);
+  }
+
   /**
    * Append table with new preferences
+   *
+   * @deprecated use {@link this#addPreferences(Preferences)} instead
    */
+  @Deprecated(forRemoval = true)
   public void fillFromPList(@NotNull CharSequence scopeName, @NotNull Plist plist) {
     final Set<TextMateBracePair> highlightingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.HIGHLIGHTING_PAIRS_KEY));
     final Set<TextMateBracePair> smartTypingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.SMART_TYPING_PAIRS_KEY));
@@ -40,7 +49,7 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
     }
   }
 
-  public void fillHighlightingBraces(Collection<TextMateBracePair> highlightingPairs) {
+  private void fillHighlightingBraces(Collection<TextMateBracePair> highlightingPairs) {
     if (highlightingPairs != null) {
       for (TextMateBracePair pair : highlightingPairs) {
         myLeftHighlightingBraces.add(pair.leftChar);
@@ -49,7 +58,7 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
     }
   }
 
-  public void fillSmartTypingBraces(Collection<TextMateBracePair> smartTypingPairs) {
+  private void fillSmartTypingBraces(Collection<TextMateBracePair> smartTypingPairs) {
     if (smartTypingPairs != null) {
       for (TextMateBracePair pair : smartTypingPairs) {
         myLeftSmartTypingBraces.add(pair.leftChar);

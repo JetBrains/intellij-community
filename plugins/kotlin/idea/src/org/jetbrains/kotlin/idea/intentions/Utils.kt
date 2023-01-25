@@ -257,6 +257,14 @@ fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
 
         is KtCallExpression -> this.calleeExpression?.text in ENUM_STATIC_METHODS
         is KtCallableReferenceExpression -> this.callableReference.text in ENUM_STATIC_METHODS
+        is KtImportDirective -> {
+            val importedFqName = this.importedFqName
+            val enumStaticMethods = when {
+                importedFqName != null && importPath?.isAllUnder == true -> ENUM_STATIC_METHODS.map { FqName("$importedFqName.$it") }
+                else -> listOfNotNull(importedFqName)
+            }
+            enumStaticMethods.isNotEmpty() && containingFile.anyDescendantOfType<KtCallExpression> { it.isCalling(enumStaticMethods) }
+        }
         else -> false
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.PowerSaveMode
@@ -14,8 +14,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.problems.ProblemListener
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.util.ui.EdtInvocationManager
+import kotlinx.coroutines.CoroutineScope
 
-open class PsiAwareFileEditorManagerImpl(project: Project) : FileEditorManagerImpl(project) {
+open class PsiAwareFileEditorManagerImpl(project: Project, coroutineScope: CoroutineScope) : FileEditorManagerImpl(project, coroutineScope) {
   private val problemSolver by lazy(LazyThreadSafetyMode.NONE) { WolfTheProblemSolver.getInstance(getProject()) }
 
   /**
@@ -26,7 +27,7 @@ open class PsiAwareFileEditorManagerImpl(project: Project) : FileEditorManagerIm
     registerExtraEditorDataProvider(TextEditorPsiDataProvider(), null)
 
     // reinit syntax highlighter for Groovy. In power save mode keywords are highlighted by GroovySyntaxHighlighter insteadof
-    // GrKeywordAndDeclarationHighlighter. So we need to drop caches for token types attributes in LayeredLexerEditorHighlighter
+    // GrKeywordAndDeclarationHighlighter. So we need to drop caches for token types of attributes in LayeredLexerEditorHighlighter
     @Suppress("LeakingThis")
     val connection = project.messageBus.connect(this)
     connection.subscribe(PowerSaveMode.TOPIC, PowerSaveMode.Listener {
@@ -41,7 +42,6 @@ open class PsiAwareFileEditorManagerImpl(project: Project) : FileEditorManagerIm
 
   override fun isProblem(file: VirtualFile) = problemSolver.isProblemFile(file)
 
-  @Suppress("HardCodedStringLiteral")
   override fun getFileTooltipText(file: VirtualFile, window: EditorWindow): String {
     val tooltipText: @NlsSafe StringBuilder = StringBuilder()
     if (Registry.`is`("ide.tab.tooltip.module", false)) {

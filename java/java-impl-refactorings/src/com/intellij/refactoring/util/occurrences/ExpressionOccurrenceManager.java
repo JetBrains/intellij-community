@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
   private final PsiExpression myMainOccurence;
   private final PsiElement myScope;

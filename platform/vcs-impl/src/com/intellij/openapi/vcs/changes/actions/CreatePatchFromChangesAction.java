@@ -173,14 +173,12 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
 
   @Override
   public void defaultUpdate(@NotNull AnActionEvent e) {
-    Boolean haveSelectedChanges = e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES);
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
     ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
     List<ShelvedChangeList> shelveChangelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
     int changelistNum = changeLists == null ? 0 : changeLists.length;
     changelistNum += shelveChangelists.size();
 
-    e.getPresentation().setEnabled(!Boolean.FALSE.equals(haveSelectedChanges) &&
-                                   changelistNum <= 1 &&
-                                   !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES)));
+    e.getPresentation().setEnabled(changelistNum <= 1 && !ArrayUtil.isEmpty(changes));
   }
 }

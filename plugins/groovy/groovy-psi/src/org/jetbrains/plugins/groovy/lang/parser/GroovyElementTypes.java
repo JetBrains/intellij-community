@@ -9,7 +9,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 /**
  * Utility interface that contains all Groovy non-token element types
  *
- * @author Dmitry.Krasilschikov, ilyas
+ * @author Dmitry.Krasilschikov
  */
 public interface GroovyElementTypes extends GroovyStubElementTypes, GroovyEmptyStubElementTypes {
 

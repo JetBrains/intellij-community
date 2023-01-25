@@ -22,9 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Danila Ponomarenko
- */
 public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLocalInspectionTool
   implements CleanupLocalInspectionTool {
 

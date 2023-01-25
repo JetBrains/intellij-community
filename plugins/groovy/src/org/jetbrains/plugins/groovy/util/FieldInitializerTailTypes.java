@@ -6,9 +6,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
-/**
- * @author Sergey Evdokimov
- */
 public class FieldInitializerTailTypes extends TailType {
 
   public static final TailType EQ_CLOSURE = new FieldInitializerTailTypes("{}", 1);

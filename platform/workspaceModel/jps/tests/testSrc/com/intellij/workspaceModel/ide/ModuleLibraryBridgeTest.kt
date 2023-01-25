@@ -218,7 +218,7 @@ class ModuleLibraryBridgeTest {
         assertEquals(2, libraries.size)
         libraries.forEach { assertEquals(antLibraryName, it.name) }
 
-        val libraryDependencies = WorkspaceModel.getInstance(project).entityStorage.current.entities(
+        val libraryDependencies = WorkspaceModel.getInstance(project).currentSnapshot.entities(
           ModuleEntity::class.java).first().dependencies.drop(1)
         assertEquals(2, libraryDependencies.size)
         val libraryDepOne = libraryDependencies[0] as ModuleDependencyItem.Exportable.LibraryDependency
@@ -241,7 +241,7 @@ class ModuleLibraryBridgeTest {
       }
     }
     
-    val libraryDependencies = WorkspaceModel.getInstance(project).entityStorage.current
+    val libraryDependencies = WorkspaceModel.getInstance(project).currentSnapshot
       .entities(ModuleEntity::class.java).first()
       .dependencies.drop(1)
     assertEquals(2, libraryDependencies.size)
@@ -452,7 +452,7 @@ class ModuleLibraryBridgeTest {
       libraries.forEach { assertEquals(libraryName, it.name) }
       rootModel.dispose()
     }
-    val moduleDependencyItem = WorkspaceModel.getInstance(project).entityStorage.current
+    val moduleDependencyItem = WorkspaceModel.getInstance(project).currentSnapshot
       .entities(ModuleEntity::class.java).first()
       .dependencies.last()
     assertTrue(moduleDependencyItem is ModuleDependencyItem.Exportable.LibraryDependency)

@@ -115,6 +115,8 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.tips",
 )
 
+private const val UTIL_8 = "util-8.jar"
+
 object PlatformModules {
   const val PRODUCT_JAR = "product.jar"
 
@@ -235,16 +237,22 @@ object PlatformModules {
       "intellij.platform.util.trove",
     ), productLayout, layout)
 
-    jar(UTIL_JAR, listOf(
+    jar(UTIL_8, listOf(
       "intellij.platform.util.rt.java8",
-      "intellij.platform.util.zip",
       "intellij.platform.util.classLoader",
+      "intellij.platform.util.jdom",
+      "intellij.platform.util.xmlDom",
+    ), productLayout, layout)
+    // fastutil-min cannot be in libsThatUsedInJps - guava is used by JPS and also in this JAR,
+    // but it leads to conflict in some old 3rd-party JDBC driver, so, pack fastutil-min into another JAR
+    layout.projectLibrariesToUnpack.putValue(UTIL_8, "fastutil-min")
+
+    jar(UTIL_JAR, listOf(
+      "intellij.platform.util.zip",
       "intellij.platform.util",
       "intellij.platform.util.text.matching",
       "intellij.platform.util.base",
       "intellij.platform.util.diff",
-      "intellij.platform.util.xmlDom",
-      "intellij.platform.util.jdom",
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt",
       "intellij.platform.core",

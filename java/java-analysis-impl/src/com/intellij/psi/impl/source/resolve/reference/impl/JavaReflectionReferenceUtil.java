@@ -40,9 +40,6 @@ import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class JavaReflectionReferenceUtil {
   // MethodHandle (Java 7) and VarHandle (Java 9) infrastructure
   public static final String JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP = "java.lang.invoke.MethodHandles.Lookup";

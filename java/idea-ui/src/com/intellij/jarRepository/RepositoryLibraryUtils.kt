@@ -157,7 +157,7 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
       project,
       JavaUiBundle.message("repository.library.utils.progress.title.all.libraries.resolution.check")
     ) {
-      val snapshot = WorkspaceModel.getInstance(project).entityStorage.current
+      val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
       checkLibrariesCanBeResolved(snapshot.entities(LibraryEntity::class.java), snapshot)
     }
   }
@@ -492,7 +492,7 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
     suspend fun apply() = coroutineScope {
       val job = launch {
         progressSinkOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.collecting.libraries"))
-        stateSnapshot = workspaceModel.entityStorage.current
+        stateSnapshot = workspaceModel.currentSnapshot
 
         for (libraryPropertiesEntity in stateSnapshot.entities(LibraryPropertiesEntity::class.java)) {
           checkCancelled()

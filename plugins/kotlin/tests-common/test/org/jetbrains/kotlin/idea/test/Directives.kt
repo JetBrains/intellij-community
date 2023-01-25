@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test
 
@@ -14,11 +14,23 @@ class Directives {
         return directives[key]?.single()
     }
 
+    fun getValue(key: String): String {
+        val values = directives[key]
+        return when {
+            values == null -> error("'$key' is not found")
+            values.size > 1 -> error("Too many '$key' directives")
+            else -> values.single()
+        }
+    }
+
+    fun getBooleanValue(key: String): Boolean =
+        contains(key) && getValue(key) == "TRUE"
+
     fun put(key: String, value: String?) {
         if (value == null) {
             directives[key] = null
         } else {
-            directives.getOrPut(key, { arrayListOf() }).let {
+            directives.getOrPut(key) { arrayListOf() }.let {
                 it?.add(value) ?: error("Null value was already passed to $key via smth like // $key")
             }
         }

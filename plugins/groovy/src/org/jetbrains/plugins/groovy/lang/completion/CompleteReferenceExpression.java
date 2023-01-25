@@ -59,9 +59,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.ignoreImpo
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
 
-/**
- * @author ven
- */
 public final class CompleteReferenceExpression {
   private static final Logger LOG = Logger.getInstance(CompleteReferenceExpression.class);
 

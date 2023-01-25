@@ -49,7 +49,7 @@ import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.*
@@ -119,7 +119,10 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @State(name = "FileEditorManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-open class FileEditorManagerImpl(private val project: Project) : FileEditorManagerEx(), PersistentStateComponent<Element?>, Disposable {
+open class FileEditorManagerImpl(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+) : FileEditorManagerEx(), PersistentStateComponent<Element?>, Disposable {
   enum class OpenMode {
     NEW_WINDOW, RIGHT_SPLIT, DEFAULT
   }
@@ -132,7 +135,10 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   private val isInitialized = AtomicBoolean()
 
-  private val dockable = lazy { DockableEditorTabbedContainer(mainSplitters, false, coroutineScope) }
+  private val dockable = lazy {
+    DockableEditorTabbedContainer(splitters = mainSplitters, disposeWhenEmpty = false, coroutineScope = coroutineScope)
+  }
+
   private val selectionHistory = SelectionHistory()
 
   private val fileUpdateChannel: MergingUpdateChannel<VirtualFile> = MergingUpdateChannel(delay = 50.milliseconds) { toUpdate ->
@@ -175,9 +181,6 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   private var contentFactory: DockableEditorContainerFactory? = null
   private val openedComposites = CopyOnWriteArrayList<EditorComposite>()
   private val listenerList = MessageListenerList(project.messageBus, FileEditorManagerListener.FILE_EDITOR_MANAGER)
-
-  @Suppress("DEPRECATION")
-  private val coroutineScope: CoroutineScope = project.coroutineScope.childScope()
 
   private val splitterFlow = MutableSharedFlow<EditorsSplitters>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
@@ -263,7 +266,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     // connect after we set mainSplitters
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       val connection = project.messageBus.connect(coroutineScope)
-      FileStatusManager.getInstance(project)?.addFileStatusListener(MyFileStatusListener(), project)
+      connection.subscribe(FileStatusListener.TOPIC, MyFileStatusListener())
       connection.subscribe(FileTypeManager.TOPIC, MyFileTypeListener())
       if (!LightEdit.owns(project)) {
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, MyRootListener())
@@ -314,10 +317,15 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     val OPEN_IN_PREVIEW_TAB = Key.create<Boolean>("OPEN_IN_PREVIEW_TAB")
 
     /**
-     * Works on FileEditor objects, allows forcing opening other editor tabs in the main window.
-     * If the currently selected file editor has this key is set to TRUE, new editors will be opened in the main splitters.
+     * Works on [FileEditor] objects, allows forcing opening other editor tabs in the main window.
+     * When determining a proper place to open a new editor tab, the currently selected file editor is checked
+     * whether is has this key set to TRUE. If that's the case, and the selected editor is a singleton in a split view,
+     * the new editor tab is opened in the sibling of that split window. If the singleton editor is not in a split view,
+     * but in a separate detached window, then the new editors will be opened in the main window splitters.
      */
+    @JvmField
     val SINGLETON_EDITOR_IN_WINDOW = Key.create<Boolean>("OPEN_OTHER_TABS_IN_MAIN_WINDOW")
+
     const val FILE_EDITOR_MANAGER = "FileEditorManager"
     const val EDITOR_OPEN_INACTIVE_SPLITTER = "editor.open.inactive.splitter"
     private val openFileSetModificationCount = LongAdder()
@@ -326,8 +334,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     val OPEN_FILE_SET_MODIFICATION_COUNT = ModificationTracker { openFileSetModificationCount.sum() }
 
     fun isDumbAware(editor: FileEditor): Boolean {
-      return java.lang.Boolean.TRUE == editor.getUserData(DUMB_AWARE) &&
-             (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
+      return true == editor.getUserData(DUMB_AWARE) && (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
     }
 
     private fun isFileOpenInWindow(file: VirtualFile, window: EditorWindow): Boolean {
@@ -362,6 +369,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
     @JvmStatic
     fun forbidSplitFor(file: VirtualFile): Boolean = file.getUserData(SplitAction.FORBID_TAB_SPLIT) == true
+
+    @JvmStatic
+    internal fun isSingletonFileEditor(fileEditor: FileEditor?): Boolean = SINGLETON_EDITOR_IN_WINDOW.get(fileEditor, false)
 
     internal fun getOriginalFile(file: VirtualFile): VirtualFile {
       return BackedVirtualFile.getOriginFileIfBacked(if (file is VirtualFileWindow) file.delegate else file)
@@ -766,7 +776,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
         if (forbidSplitFor(file)) {
           closeFile(file)
         }
-        return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file, this)
+        return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file) { editorWindow ->
+          openFileImpl2(window = editorWindow, file = file, options = options)
+        }
       }
       if (mode == OpenMode.RIGHT_SPLIT) {
         val result = openInRightSplit(file)
@@ -776,7 +788,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       }
     }
 
-    if (windowToOpenIn == null && (options.reuseOpen || !getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER))) {
+    if (windowToOpenIn == null && (options.reuseOpen || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER))) {
       windowToOpenIn = findWindowInAllSplitters(file)
     }
     if (windowToOpenIn == null) {
@@ -793,8 +805,11 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     for (splitters in getAllSplitters()) {
       for (window in splitters.getWindows()) {
         if (isFileOpenInWindow(file, window)) {
-          return if (getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)) window else activeCurrentWindow
+          if (AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)) {
+            return window
+          }
           // return a window from here so that we don't look for it again in getOrCreateCurrentWindow
+          return activeCurrentWindow
         }
       }
     }
@@ -802,23 +817,39 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   private fun getOrCreateCurrentWindow(file: VirtualFile): EditorWindow {
-    val uiSettings = UISettings.getInstance()
-    val useMainWindow = uiSettings.openTabsInMainWindow || SINGLETON_EDITOR_IN_WINDOW.get(selectedEditor, false)
-    val splitters = if (useMainWindow) mainSplitters else splitters
+    val currentEditor = selectedEditor
+    val isSingletonEditor = isSingletonFileEditor(currentEditor)
     val currentWindow = splitters.currentWindow
-    if (currentWindow == null || uiSettings.editorTabPlacement != UISettings.TABS_NONE) {
-      return splitters.getOrCreateCurrentWindow(file)
+
+    // If the selected editor is a singleton in a split window, prefer the sibling of that split window.
+    // When navigating from a diff view, opened in a vertical split,
+    // this makes a new tab open below/above the diff view, still keeping the diff in sight.
+    if (isSingletonEditor && currentWindow != null && currentWindow.inSplitter() &&
+        currentWindow.tabCount == 1 && currentWindow.selectedComposite?.selectedEditor === currentEditor) {
+      val siblingWindow = currentWindow.getSiblings().firstOrNull()
+      if (siblingWindow != null) {
+        return siblingWindow
+      }
     }
-    else {
-      return currentWindow
+
+    val uiSettings = UISettings.getInstance()
+    val useMainWindow = isSingletonEditor || uiSettings.openTabsInMainWindow
+    val targetSplitters = if (useMainWindow) mainSplitters else splitters
+    val targetWindow = targetSplitters.currentWindow
+
+    if (targetWindow != null && uiSettings.editorTabPlacement == UISettings.TABS_NONE) {
+      return targetWindow
     }
+    return targetSplitters.getOrCreateCurrentWindow(file)
   }
 
   fun openFileInNewWindow(file: VirtualFile): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
     if (forbidSplitFor(file)) {
       closeFile(file)
     }
-    return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file, this).retrofit()
+    return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file) { editorWindow ->
+      openFileImpl2(editorWindow, file, FileEditorOpenOptions(requestFocus = true))
+    }.retrofit()
   }
 
   private fun openInRightSplit(file: VirtualFile): FileEditorComposite? {
@@ -1075,9 +1106,8 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       IdeDocumentHistory.getInstance(project).onSelectionChanged()
     }
 
-    options.pin?.let {
-      window.setFilePinned(file = file, pinned = it)
-    }
+    window.setFilePinned(composite, pinned = options.pin)
+
     if (newEditor) {
       val messageBus = project.messageBus
       messageBus.syncPublisher(FileOpenedSyncListener.TOPIC).fileOpenedSync(this, file, editorsWithProviders)
@@ -1693,6 +1723,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   private inner class MyEditorPropertyChangeListener : PropertyChangeListener {
     @RequiresEdt
     override fun propertyChange(e: PropertyChangeEvent) {
+      if (project.isDisposed) return
       val propertyName = e.propertyName
       if (FileEditor.PROP_MODIFIED == propertyName) {
         val editor = e.source as FileEditor

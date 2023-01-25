@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * @author ven
- */
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.*;

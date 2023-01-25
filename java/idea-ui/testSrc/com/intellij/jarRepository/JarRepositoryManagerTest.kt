@@ -44,7 +44,11 @@ class JarRepositoryManagerTest : UsefulTestCase() {
       runInEdtAndWait {
         myFixture.tearDown()
       }
-    } finally {
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
       super.tearDown()
     }
   }

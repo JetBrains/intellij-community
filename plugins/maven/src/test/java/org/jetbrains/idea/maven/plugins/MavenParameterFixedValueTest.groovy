@@ -19,9 +19,6 @@ package org.jetbrains.idea.maven.plugins
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenParameterFixedValueTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Test

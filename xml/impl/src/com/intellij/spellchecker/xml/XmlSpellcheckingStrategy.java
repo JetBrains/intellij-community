@@ -3,9 +3,7 @@ package com.intellij.spellchecker.xml;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IElementType;
@@ -20,10 +18,14 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.xml.util.XmlEnumeratedValueReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy {
 
@@ -151,12 +153,33 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
     }
 
     @Override
-    public void tokenize(@NotNull final XmlAttributeValue element, final TokenConsumer consumer) {
+    protected @NotNull List<@NotNull SpellcheckRange> getSpellcheckRanges(@NotNull XmlAttributeValue element) {
+      TextRange range = ElementManipulators.getValueTextRange(element);
+      if (range.isEmpty()) return emptyList();
+
+      String text = ElementManipulators.getValueText(element);
+
+      return singletonList(new SpellcheckRange(text, false, range.getStartOffset(), TextRange.allOf(text)));
+    }
+
+    @Override
+    public void tokenize(@NotNull XmlAttributeValue element, @NotNull TokenConsumer consumer) {
+      PsiReference[] references = element.getReferences();
+      for (PsiReference reference : references) {
+        if (reference instanceof XmlEnumeratedValueReference) {
+          if (reference.resolve() != null) {
+            // this is probably valid enumeration value from XSD/RNG schema, such as SVG
+            return;
+          }
+        }
+      }
+
       final String valueTextTrimmed = element.getValue().trim();
       // do not inspect colors like #00aaFF
       if (valueTextTrimmed.startsWith("#") && valueTextTrimmed.length() <= 9 && isHexString(valueTextTrimmed.substring(1))) {
         return;
       }
+
       super.tokenize(element, consumer);
     }
 

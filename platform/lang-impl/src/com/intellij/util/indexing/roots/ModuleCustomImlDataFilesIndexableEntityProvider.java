@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ModuleCustomImlDataFilesIndexableEntityProvider implements IndexableEntityProvider<ModuleCustomImlDataEntity> {
+public class ModuleCustomImlDataFilesIndexableEntityProvider implements IndexableEntityProvider.Enforced<ModuleCustomImlDataEntity> {
 
   @Override
   public @NotNull Class<ModuleCustomImlDataEntity> getEntityClass() {
@@ -57,9 +57,12 @@ public class ModuleCustomImlDataFilesIndexableEntityProvider implements Indexabl
 
   private static @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedParentEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
                                                                                                                 @NotNull ModuleEntity newEntity) {
-    List<IndexableIteratorBuilder> result = new ArrayList<>();
-    result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(oldEntity.getSymbolicId()));
-    result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getSymbolicId()));
-    return result;
+    if (shouldBeRescanned(oldEntity.getCustomImlData(), newEntity.getCustomImlData())) {
+      List<IndexableIteratorBuilder> result = new ArrayList<>();
+      result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(oldEntity.getSymbolicId()));
+      result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getSymbolicId()));
+      return result;
+    }
+    return Collections.emptyList();
   }
 }

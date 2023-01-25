@@ -40,6 +40,7 @@ internal class GitLabToolWindowTabViewModelTest {
     whenever(accountManager.accountsState) doReturn MutableStateFlow(emptySet())
     whenever(accountManager.getCredentialsState(any(), any())) doReturn MutableStateFlow("")
     whenever(projectManager.knownRepositoriesState) doReturn MutableStateFlow(emptySet())
+    whenever(connectionManager.connectionState) doReturn MutableStateFlow(null)
 
     val scope = childScope(Dispatchers.Main)
     val vm = GitLabToolWindowTabViewModel(scope, connectionManager, projectManager, accountManager)
@@ -54,7 +55,7 @@ internal class GitLabToolWindowTabViewModelTest {
       accountSelectionState.value = acc
       submitSelection()
     }
-    verify(connectionManager, times(1)).connect(scope, repo, acc)
+    verify(connectionManager, times(1)).openConnection(repo, acc)
 
     scope.cancel()
   }

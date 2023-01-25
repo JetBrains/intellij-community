@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment", "KDocUnresolvedReference")
 
@@ -188,11 +188,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
     launch(CoroutineName("coroutine debug probes init")) {
-      try {
-        enableCoroutineDump()
-      }
-      catch (ignore: Exception) {
-      }
+      enableCoroutineDump()
     }
   }
 
@@ -275,9 +271,7 @@ fun CoroutineScope.startApplication(args: List<String>,
         appStarter = appStarterDeferred.await(),
         euaDocumentDeferred = euaDocumentDeferred,
       )
-      if (!PlatformUtils.isRider()) {
-        PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred)
-      }
+      PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred)
     }
     else {
       // must be scheduled before starting app
@@ -294,7 +288,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
 
     // with the main dispatcher for non-technical reasons
-    appStarter.start(InitAppContext(context = coroutineContext,
+    appStarter.start(InitAppContext(context = mainScope.coroutineContext,
                                     args = args,
                                     appDeferred = appDeferred,
                                     initLafJob = initLafJob,

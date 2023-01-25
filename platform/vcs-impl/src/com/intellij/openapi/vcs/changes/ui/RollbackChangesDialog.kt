@@ -11,8 +11,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.AllChanges
-import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.SelectedChangeLists
+import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.*
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
@@ -98,7 +97,10 @@ class RollbackChangesDialog private constructor(private val project: Project,
       val changeListManager = ChangeListManagerEx.getInstanceEx(project)
       val browser = if (changeListManager.areChangeListsEnabled()) {
         val lists = changeListManager.getAffectedLists(changes)
-        SelectedChangeLists(project, lists)
+        when {
+          lists.isNotEmpty() -> SelectedChangeLists(project, lists)
+          else -> NonEmptyChangeLists(project)
+        }
       }
       else {
         AllChanges(project)
@@ -112,8 +114,11 @@ class RollbackChangesDialog private constructor(private val project: Project,
     fun rollbackChanges(project: Project) {
       val changeListManager = ChangeListManager.getInstance(project)
       val browser = if (changeListManager.areChangeListsEnabled()) {
-        val lists = listOf(changeListManager.defaultChangeList)
-        SelectedChangeLists(project, lists)
+        val defaultChangeList = changeListManager.defaultChangeList
+        when {
+          defaultChangeList.changes.isNotEmpty() -> SelectedChangeLists(project, listOf(defaultChangeList))
+          else -> NonEmptyChangeLists(project)
+        }
       }
       else {
         AllChanges(project)

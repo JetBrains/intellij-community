@@ -7,6 +7,16 @@ import org.intellij.lang.annotations.Language
 
 class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
     @Suppress("SameParameterValue")
+    private fun checkHasNoDiff(
+        @Language("kotlin") before: String,
+        testClass: String,
+        testName: String,
+        expected: String,
+        actual: String,
+        stackTrace: String
+    ) = checkHasNoDiff(before, testClass, testName, expected, actual, stackTrace, "kt")
+
+    @Suppress("SameParameterValue")
     private fun checkAcceptFullDiff(
         @Language("kotlin") before: String,
         @Language("kotlin") after: String,
@@ -58,6 +68,46 @@ class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
                   at MyJUnitTest.testFoo(MyJUnitTest.kt:7)
               """.trimIndent()
         )
+    }
+
+    fun `test accept diff is not available when expected is not a string literal`() {
+        checkHasNoDiff("""
+            import org.junit.Assert
+            import org.junit.Test
+            
+            class MyJunitTest {
+                @Test
+                fun testFoo() {
+                    Assert.assertEquals(true, "actual")
+                }
+            }
+    """.trimIndent(), "MyJunitTest", "testFoo", "expected", "actual", """
+        at org.junit.Assert.fail(Assert.java:89)
+        at org.junit.Assert.failNotEquals(Assert.java:835)
+        at org.junit.Assert.assertEquals(Assert.java:120)
+        at org.junit.Assert.assertEquals(Assert.java:146)
+        at MyJunitTest.testFoo(MyJunitTest.kt:7)
+    """.trimIndent())
+    }
+
+    fun `test accept diff is not available when actual is not a string literal`() {
+        checkHasNoDiff("""
+            import org.junit.Assert
+            import org.junit.Test
+            
+            class MyJunitTest {
+                @Test
+                fun testFoo() {
+                    Assert.assertEquals("expected", true)
+                }
+            }
+    """.trimIndent(), "MyJunitTest", "testFoo", "expected", "actual", """
+        at org.junit.Assert.fail(Assert.java:89)
+        at org.junit.Assert.failNotEquals(Assert.java:835)
+        at org.junit.Assert.assertEquals(Assert.java:120)
+        at org.junit.Assert.assertEquals(Assert.java:146)
+        at MyJunitTest.testFoo(MyJunitTest.kt:7)
+    """.trimIndent())
     }
 
     fun `test physical string literal change sync`() {

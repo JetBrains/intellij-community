@@ -32,9 +32,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class MavenResolveToWorkspaceTest extends MavenMultiVersionImportingTestCase {
 
   @Test

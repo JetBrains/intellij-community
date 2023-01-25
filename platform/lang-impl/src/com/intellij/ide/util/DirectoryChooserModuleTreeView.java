@@ -40,9 +40,6 @@ import javax.swing.*;
 import javax.swing.tree.*;
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = (node1, node2) -> {
     final Object o1 = node1.getUserObject();
@@ -215,7 +212,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
           append(fragment.getText(),
                  fragment.isCommon() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
-        setIcon(wrapper.getIcon(myFileIndex));
+        setIcon(wrapper.getIcon());
       }
       else if (value instanceof Module) {
         final Module module = (Module)value;

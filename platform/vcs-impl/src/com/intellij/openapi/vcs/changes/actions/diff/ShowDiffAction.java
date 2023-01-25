@@ -60,7 +60,7 @@ public class ShowDiffAction implements AnActionExtensionProvider {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
 
-    List<Change> result = ContainerUtil.newArrayList(changes);
+    List<Change> result = List.of(changes);
     showDiffForChange(project, result, 0);
   }
 

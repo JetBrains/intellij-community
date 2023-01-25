@@ -26,9 +26,6 @@ import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processLocals;
 
-/**
- * @author ven
- */
 public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSection {
   public GrCaseSectionImpl(@NotNull ASTNode node) {
     super(node);

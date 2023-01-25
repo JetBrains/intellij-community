@@ -60,7 +60,7 @@ object SourceRootPropertiesHelper {
     return propertiesXml == customEntity.propertiesXmlTag
   }
 
-  private fun <P : JpsElement?> savePropertiesToString(serializer: JpsModuleSourceRootPropertiesSerializer<P>, properties: P): String {
+  private fun <P : JpsElement> savePropertiesToString(serializer: JpsModuleSourceRootPropertiesSerializer<P>, properties: P): String {
     val sourceElement = Element(JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG)
     serializer.saveProperties(properties, sourceElement)
     return JDOMUtil.writeElement(sourceElement)

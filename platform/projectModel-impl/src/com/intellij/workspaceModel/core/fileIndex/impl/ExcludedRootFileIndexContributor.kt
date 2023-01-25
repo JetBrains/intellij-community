@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
@@ -9,7 +9,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.library
 
-class ExcludedRootFileIndexContributor : WorkspaceFileIndexContributor<ExcludeUrlEntity> {
+class ExcludedRootFileIndexContributor : WorkspaceFileIndexContributor<ExcludeUrlEntity>, PlatformInternalWorkspaceFileIndexContributor {
   override val entityClass: Class<ExcludeUrlEntity>
     get() = ExcludeUrlEntity::class.java
 

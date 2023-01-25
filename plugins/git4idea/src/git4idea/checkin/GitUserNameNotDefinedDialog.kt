@@ -101,8 +101,7 @@ internal class GitUserNameNotDefinedDialog(
       }
       row {
         checkBox(GitBundle.message("checkbox.set.config.property.globally"))
-          .bindSelected({ settings.shouldSetUserNameGlobally() },
-                        { settings.setUserNameGlobally(it) })
+          .bindSelected(settings::shouldSetUserNameGlobally, settings::setUserNameGlobally)
       }
     }
   }

@@ -26,6 +26,7 @@ public class EqualsWithItselfInspectionTest extends LightJavaInspectionTestCase 
   @Override
   protected InspectionProfileEntry getInspection() {
     EqualsWithItselfInspection inspection = new EqualsWithItselfInspection();
+    inspection.ignoreNonFinalClassesInTest = false;
     String option = StringUtil.substringAfter(getName(), "_");
     if(option != null) {
       new OptionAccessor.Default(inspection).setOption(option, true);
@@ -46,6 +47,7 @@ public class EqualsWithItselfInspectionTest extends LightJavaInspectionTestCase 
      public class Assertions{
      	public static void assertEquals(Object expected, Object actual) {}
      	public static void assertNotEquals(Object expected, Object actual) {}
+     	public static void assertArrayEquals(int[] expected, int[] actual) {}
      }
      """,
       """

@@ -34,7 +34,6 @@ import java.io.File
  *
  * The original Git repo is located [here](https://github.com/JetBrains/typeshed).
  *
- * @author vlan
  */
 object PyTypeShed {
 
@@ -45,13 +44,13 @@ object PyTypeShed {
     "_dummy_threading" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON38),
     "_py_abc" to (LanguageLevel.PYTHON37 to null),
     "asyncio.mixins" to (LanguageLevel.PYTHON310 to null),  // likely it is ignored now
-    "asyncio.compat" to (LanguageLevel.PYTHON34 to LanguageLevel.PYTHON36),  // likely it is ignored now
     "asyncio.exceptions" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
     "asyncio.format_helpers" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
     "asyncio.runners" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
     "asyncio.staggered" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
     "asyncio.taskgroups" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
     "asyncio.threads" to (LanguageLevel.PYTHON39 to null),  // likely it is ignored now
+    "asyncio.timeouts" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
     "asyncio.trsock" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
     "binhex" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON310),
     "contextvars" to (LanguageLevel.PYTHON37 to null),
@@ -65,7 +64,6 @@ object PyTypeShed {
     "importlib.metadata._meta" to (LanguageLevel.PYTHON310 to null),  // likely it is ignored now
     "importlib.resources" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
     "macpath" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON37),
-    "macurl2path" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON36),
     "multiprocessing.shared_memory" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
     "parser" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
     "symbol" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),

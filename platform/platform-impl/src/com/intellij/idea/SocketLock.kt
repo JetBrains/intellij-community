@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.idea
@@ -8,11 +8,11 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.CliResult
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SpecialConfigFiles
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.User32Ex
 import com.sun.jna.platform.win32.WinDef
 import io.netty.buffer.ByteBuf
@@ -22,7 +22,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.io.BuiltInServer
 import org.jetbrains.io.MessageDecoder
-import java.io.*
+import java.io.DataInput
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.IOException
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.Socket
@@ -76,13 +79,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
 
   fun dispose() {
     log("enter: dispose()")
-    var server: BuiltInServer? = null
-    try {
-      server = getServer()
-    }
-    catch (ignored: Exception) {
-    }
-
+    val server: BuiltInServer? = runCatching { getServer() }.getOrNull()
     try {
       if (lockedFiles.isEmpty()) {
         lockPortFiles()
@@ -156,18 +153,18 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
    * Unlocking of port files (via [.unlockPortFiles]) happens either after builtin server init, or on app termination.
    *
    * Because of that, we do not care about non-starting Netty leading to infinite lock handling, as the IDE is not ready to
-   * accept connections anyway; on app termination the locks will be released.
+   * accept connections anyway; on app termination, the locks will be released.
    */
   @Suppress("KDocUnresolvedReference")
   @Synchronized
   private fun lockPortFiles() {
     check(lockedFiles.isEmpty()) { "File locking must not be called twice" }
     val options = arrayOf<OpenOption>(StandardOpenOption.CREATE, StandardOpenOption.APPEND)
-    Files.createDirectories(configPath)
+    NioFiles.createDirectories(configPath)
     val cc = FileChannel.open(configPath.resolve(SpecialConfigFiles.PORT_LOCK_FILE), *options)
     lockedFiles.add(cc)
     lockedFiles.add(cc.lock())
-    Files.createDirectories(systemPath)
+    NioFiles.createDirectories(systemPath)
     val sc = FileChannel.open(systemPath.resolve(SpecialConfigFiles.PORT_LOCK_FILE), *options)
     lockedFiles.add(sc)
     lockedFiles.add(sc.lock())
@@ -336,7 +333,7 @@ private class MyChannelInboundHandler(lockedPaths: Array<Path>,
   private var state = State.HEADER
 
   override fun channelActive(context: ChannelHandlerContext) {
-    sendStringSequence(context, lockedPaths + PathManager.getPerProjectLockedPaths().joinToString() )
+    sendStringSequence(context, lockedPaths)
   }
 
   override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
@@ -364,6 +361,7 @@ private class MyChannelInboundHandler(lockedPaths: Array<Path>,
               }
 
               try {
+                @Suppress("RAW_RUN_BLOCKING")
                 runBlocking {
                   commandProcessor()(list).await()
                 }

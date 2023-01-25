@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -354,7 +354,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
             if (element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType())) return null;
             if (PsiUtil.getLanguageLevel(element).isLessThan(LanguageLevel.JDK_19_PREVIEW) &&
                 element instanceof PsiPattern && expressionType != null &&
-                JavaPsiPatternUtil.isTotalForType(element, expressionType)) {
+                JavaPsiPatternUtil.isUnconditionalForType(element, expressionType)) {
               return null;
             }
           }

@@ -19,36 +19,45 @@ import java.awt.Dimension
 import javax.swing.*
 import javax.swing.border.CompoundBorder
 
-abstract class GroupedComboBoxRenderer<T>(private val combo: ComboBox<T>) : GroupedElementsRenderer(), ListCellRenderer<T> {
+open class GroupedComboBoxRenderer(val combo: ComboBox<out Item>) : GroupedElementsRenderer(), ListCellRenderer<GroupedComboBoxRenderer.Item> {
+
+  interface Item {
+    fun getText(): @NlsContexts.ListItem String = ""
+    fun getSecondaryText(): @Nls String? = null
+    fun getIcon(): Icon? = null
+
+    fun isSeparator(): Boolean = false
+    fun getSeparatorText(): @NlsContexts.Separator String = ""
+  }
 
   private lateinit var coloredComponent: SimpleColoredComponent
 
+  open val maxWidth: Int = -1
+
   override fun layout() {
     myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH)
-    val centerComponent: JComponent = object : NonOpaquePanel(myComponent) {
+    val centerComponent: JComponent = object : NonOpaquePanel(itemComponent) {
       override fun getPreferredSize(): Dimension {
-        return UIUtil.updateListRowHeight(super.getPreferredSize())
+        val dimension = UIUtil.updateListRowHeight(super.getPreferredSize())
+        return when (maxWidth) {
+          -1 -> dimension
+          else -> Dimension(maxWidth, dimension.height)
+        }
       }
     }
     myRendererComponent.add(centerComponent, BorderLayout.CENTER)
   }
 
-  @NlsContexts.ListItem
-  open fun getText(value: T): String = ""
-  @Nls
-  open fun getSecondaryText(value: T): String? = null
-  open fun getIcon(value: T): Icon? = null
-
-  open fun customize(item: SimpleColoredComponent, value: T, index: Int) {
-    val text = getText(value)
+  open fun customize(item: SimpleColoredComponent, value: Item, index: Int) {
+    val text = value.getText()
     item.append(text)
 
-    val secondaryText = getSecondaryText(value)
+    val secondaryText = value.getSecondaryText()
     if (secondaryText != null) {
       item.append(" $secondaryText", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
 
-    item.icon = getIcon(value)
+    item.icon = value.getIcon()
   }
 
   override fun createSeparator(): SeparatorWithText = when {
@@ -70,17 +79,16 @@ abstract class GroupedComboBoxRenderer<T>(private val combo: ComboBox<T>) : Grou
     }
   }
 
-  private fun getPopup(): ComboBoxPopup<out Any>? {
+  fun getPopup(): ComboBoxPopup<out Any>? {
     return (combo.popup as? DarculaJBPopupComboPopup<*>)?.popup
   }
-
   override fun getBackground(): Color = UIUtil.getListBackground(false, false)
   override fun getForeground(): Color = UIUtil.getListForeground(false, false)
   override fun getSelectionBackground(): Color = UIUtil.getListSelectionBackground(true)
   override fun getSelectionForeground(): Color = UIUtil.getListSelectionForeground(true)
 
-  override fun getListCellRendererComponent(list: JList<out T>?,
-                                            value: T,
+  override fun getListCellRendererComponent(list: JList<out Item>?,
+                                            value: Item,
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
@@ -100,12 +108,12 @@ abstract class GroupedComboBoxRenderer<T>(private val combo: ComboBox<T>) : Grou
     if (index == -1) {
       // Element shown in the combo: no separator & no border
       mySeparatorComponent.isVisible = false
-      myComponent.border = JBUI.Borders.empty()
+      itemComponent.border = JBUI.Borders.empty()
     } else {
-      if (ExperimentalUI.isNewUI() && myComponent is SelectablePanel) {
-        PopupUtil.configListRendererFlexibleHeight(myComponent as SelectablePanel)
+      if (ExperimentalUI.isNewUI() && itemComponent is SelectablePanel) {
+        PopupUtil.configListRendererFlexibleHeight(itemComponent as SelectablePanel)
       } else {
-        myComponent.border = CompoundBorder(defaultItemComponentBorder, ComboBoxPopup.COMBO_ITEM_BORDER)
+        itemComponent.border = CompoundBorder(defaultItemComponentBorder, ComboBoxPopup.COMBO_ITEM_BORDER)
       }
     }
 
@@ -113,10 +121,10 @@ abstract class GroupedComboBoxRenderer<T>(private val combo: ComboBox<T>) : Grou
     AccessibleContextUtil.setDescription(myRendererComponent, coloredComponent)
 
     list?.let { myRendererComponent.background = it.background }
-    updateSelection(isSelected, myComponent, coloredComponent)
+    updateSelection(isSelected, itemComponent, coloredComponent)
 
-    if (ExperimentalUI.isNewUI() && myComponent is SelectablePanel) {
-      (myComponent as SelectablePanel).selectionColor = when (isSelected) {
+    if (ExperimentalUI.isNewUI() && itemComponent is SelectablePanel) {
+      (itemComponent as SelectablePanel).selectionColor = when (isSelected) {
         true -> JBUI.CurrentTheme.List.background(true, true)
         false -> null
       }

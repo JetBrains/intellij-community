@@ -24,10 +24,10 @@ val scriptsAsEntities: Boolean
 
 fun getScriptDependenciesClassFilesScope(project: Project, ktFile: KtFile): GlobalSearchScope {
     val vFile = ktFile.virtualFile ?: ktFile.viewProvider.virtualFile
-    require(ktFile.isScript()) { "argument must be a script: ${ vFile.path }" }
+    require(ktFile.isScript()) { "argument must be a script: ${vFile.path}" }
 
     return if (scriptsAsEntities) {
-        val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+        val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
         val scriptEntity = entityStorage.resolve(KotlinScriptId(vFile.path))
 
         if (scriptEntity == null) {
@@ -53,25 +53,20 @@ fun getAllScriptDependenciesSourcesScope(project: Project): GlobalSearchScope =
 
 fun getAllScriptsDependenciesClassFiles(project: Project): Collection<VirtualFile> {
     return if (scriptsAsEntities) {
-        val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+        val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
         entityStorage.listDependenciesOfAllScriptEntities(project, KotlinScriptLibraryRootTypeId.COMPILED)
     } else {
         ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFiles()
     }
 }
 
-fun getAllScriptDependenciesSources(project: Project): Collection<VirtualFile> {
-    return if (scriptsAsEntities) {
-        val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
-        entityStorage.listDependenciesOfAllScriptEntities(project, KotlinScriptLibraryRootTypeId.SOURCES)
-    } else {
-        ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSources()
-    }
-}
+fun getAllScriptDependenciesSources(project: Project): Collection<VirtualFile> =
+    // calculation based on WS model is inefficient and leads to freezes
+    ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSources()
 
 fun computeClassRoots(project: Project): List<VirtualFile> {
     return if (scriptsAsEntities) {
-        val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+        val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
         entityStorage.listDependenciesOfAllScriptEntities(project, KotlinScriptLibraryRootTypeId.COMPILED).toList()
     } else {
         val manager = ScriptConfigurationManager.getInstance(project)
@@ -79,7 +74,10 @@ fun computeClassRoots(project: Project): List<VirtualFile> {
     }
 }
 
-private fun EntityStorage.listDependenciesOfAllScriptEntities(project: Project, rootTypeId: KotlinScriptLibraryRootTypeId): Collection<VirtualFile> =
+private fun EntityStorage.listDependenciesOfAllScriptEntities(
+    project: Project,
+    rootTypeId: KotlinScriptLibraryRootTypeId
+): Collection<VirtualFile> =
     entities(KotlinScriptEntity::class.java)
         .flatMap { it.listDependencies(project, rootTypeId) }
         .toSet()
@@ -91,7 +89,7 @@ internal fun scriptEntitiesDebugInfo(project: Project, listRoots: Boolean = fals
         .joinToString("\n", indent)
 
     return buildString {
-        val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+        val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
 
         val allClasses = HashSet<KotlinScriptLibraryRoot>()
         val allSources = HashSet<KotlinScriptLibraryRoot>()

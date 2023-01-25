@@ -8,9 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class DuplicatesProfileBase extends DuplicatesProfile {
   @NotNull
   @Override

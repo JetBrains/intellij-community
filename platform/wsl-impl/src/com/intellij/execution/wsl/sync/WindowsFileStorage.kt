@@ -135,7 +135,7 @@ class WindowsFileStorage(dir: Path,
         }
       }
     }
-    val dest = distro.getUNCRootVirtualFile(true)!!.toNioPath().resolve(destTar)
+    val dest = distro.getUNCRootPath().resolve(destTar)
     feature.get()
     LOGGER.info("Copying")
     Files.copy(tarFile, dest)

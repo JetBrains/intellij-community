@@ -1,5 +1,3 @@
-from typing import Any
-
 from stripe.api_resources.abstract import (
     CreateableAPIResource as CreateableAPIResource,
     ListableAPIResource as ListableAPIResource,
@@ -9,4 +7,4 @@ from stripe.api_resources.abstract import (
 
 class Dispute(CreateableAPIResource, ListableAPIResource, UpdateableAPIResource):
     OBJECT_NAME: str
-    def submit(self, idempotency_key: Any | None = ..., **params): ...
+    def submit(self, idempotency_key: str | None = ..., **params): ...

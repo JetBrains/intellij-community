@@ -319,7 +319,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   }
 
   private void resetMutableEntityStorage() {
-    myMutableEntityStorage = MutableEntityStorage.from(myWorkspaceModel.getEntityStorage().getCurrent());
+    myMutableEntityStorage = MutableEntityStorage.from(myWorkspaceModel.getCurrentSnapshot());
   }
 
   private void applyMutableEntityStorageChanges() {

@@ -7,7 +7,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-@OptIn(ExperimentalGradleToolingApi::class)
 class KotlinMppGradleModelExtensionsTest {
 
     @Test
@@ -103,16 +102,29 @@ class KotlinMppGradleModelExtensionsTest {
         )
 
         assertEquals(
-            setOf(a, b, c).sortedBy { it.name },
+            setOf(a, b).sortedBy { it.name },
             model.resolveAllDependsOnSourceSets(c).sortedBy { it.name },
-            "Expected self dependency to be resolved for 'resolveAllDependsOnSourceSets'"
+            "Expected self dependency to be *not* resolved for 'resolveAllDependsOnSourceSets'"
         )
 
         assertEquals(
-            setOf(b, c).sortedBy { it.name },
-            model.resolveDeclaredDependsOnSourceSets(c).sortedBy { it.name },
-            "Expected self dependency to be resolved by 'resolveDeclaredDependsOnSourceSets'"
+            setOf(a, b),
+            model.resolveAllDependsOnSourceSets(listOf(c)),
+            "Expected self dependency to be *not* resolved for 'resolveAllDependsOnSourceSets'"
         )
+
+        assertEquals(
+            setOf(a),
+            model.resolveAllDependsOnSourceSets(listOf(c, b)),
+            "Expected self dependency to be *not* resolved for 'resolveAllDependsOnSourceSets'"
+        )
+
+        assertEquals(
+            setOf(b).sortedBy { it.name },
+            model.resolveDeclaredDependsOnSourceSets(c).sortedBy { it.name },
+            "Expected self dependency to be *not* resolved by 'resolveDeclaredDependsOnSourceSets'"
+        )
+
     }
 
     @Test

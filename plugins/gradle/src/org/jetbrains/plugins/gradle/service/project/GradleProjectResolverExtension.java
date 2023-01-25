@@ -48,7 +48,7 @@ import java.util.*;
  * Every extension is expected to have a no-args constructor because they are used at external process and we need a simple way
  * to instantiate it.
  *
- * @author Denis Zhdanov, Vladislav Soroka
+ * @author Vladislav Soroka
  * @see GradleManager#enhanceRemoteProcessing(SimpleJavaParameters)   sample enhanceParameters() implementation
  */
 public interface GradleProjectResolverExtension extends ParametersEnhancer {

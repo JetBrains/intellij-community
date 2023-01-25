@@ -138,6 +138,7 @@ class Foo {
 
   private doTestSuggestionAvailable(String text, String... expectedSuggestions) {
     def suggestions = getNameSuggestions(text)
+    print(suggestions)
     for (String suggestion : expectedSuggestions) {
       assert suggestion in suggestions
     }

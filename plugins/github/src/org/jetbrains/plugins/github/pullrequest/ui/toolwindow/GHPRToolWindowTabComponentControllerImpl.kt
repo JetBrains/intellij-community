@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
-import git4idea.remote.hosting.knownRepositories
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
@@ -9,10 +8,13 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ui.UIUtil
+import git4idea.remote.hosting.knownRepositories
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -101,7 +103,7 @@ internal class GHPRToolWindowTabComponentControllerImpl(
     dataContext.repositoryDataService.resetData()
   }
 
-  override fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean, onShown: ((GHPRViewComponentController?) -> Unit)?) {
+  override fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean, onShown: ((GHPRCommitBrowserComponentController?) -> Unit)?) {
     onTitleChange(GithubBundle.message("pull.request.num", id.number))
     if (currentPullRequest != id) {
       currentDisposable?.let { Disposer.dispose(it) }
@@ -116,7 +118,15 @@ internal class GHPRToolWindowTabComponentControllerImpl(
       wrapper.setContent(pullRequestComponent)
       wrapper.repaint()
     }
-    if (onShown != null) onShown(UIUtil.getClientProperty(wrapper.targetComponent, GHPRViewComponentController.KEY))
+
+    if (onShown != null) {
+      val tree = UIUtil.findComponentOfType(wrapper.targetComponent, ChangesTree::class.java)
+      if (tree != null) {
+        val viewComponentController = ClientProperty.get(tree, GHPRCommitBrowserComponentController.KEY)
+        onShown(viewComponentController)
+      }
+    }
+
     if (requestFocus) {
       CollaborationToolsUIUtil.focusPanel(wrapper.targetComponent)
     }

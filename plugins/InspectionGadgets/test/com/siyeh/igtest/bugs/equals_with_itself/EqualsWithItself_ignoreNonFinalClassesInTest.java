@@ -14,6 +14,10 @@ class EqualsWithItself_ignoreNonFinalClassesInTest {
     return s.<warning descr="'equalsIgnoreCase()' called on itself">equalsIgnoreCase</warning>(s);
   }
 
+  void arrayTest(){
+    org.junit.jupiter.api.Assertions.<warning descr="'assertArrayEquals()' called on itself">assertArrayEquals</warning>(new int[]{1,2}, new int[]{1,2});
+  }
+
   void primitiveTest(int i) {
     org.junit.jupiter.api.Assertions.<warning descr="'assertEquals()' called on itself">assertEquals</warning>(i, i);
   }

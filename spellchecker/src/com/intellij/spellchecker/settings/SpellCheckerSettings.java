@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -80,6 +81,9 @@ public final class SpellCheckerSettings implements PersistentStateComponent<Elem
 
   public void setCustomDictionariesPaths(List<String> customDictionariesPaths) {
     myCustomDictionariesPaths = customDictionariesPaths;
+    ApplicationManager.getApplication().getMessageBus()
+      .syncPublisher(CustomDictionaryPathListener.Companion.getTOPIC())
+      .dictionariesChanged(customDictionariesPaths);
   }
 
   public Set<String> getRuntimeDisabledDictionariesNames() {

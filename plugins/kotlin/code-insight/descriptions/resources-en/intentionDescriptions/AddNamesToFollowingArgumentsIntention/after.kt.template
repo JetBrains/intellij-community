@@ -5,5 +5,5 @@ fun checkEquals(expected: Int, actual: Int, message: String) {
 }
 
 fun usage() {
-    <spot>checkEquals(expected = 24, <spot>actual = 42, message = "Consistency check failed"</spot>)
+    <spot>checkEquals(24, <spot>actual = 42, message = "Consistency check failed"</spot>)
 }

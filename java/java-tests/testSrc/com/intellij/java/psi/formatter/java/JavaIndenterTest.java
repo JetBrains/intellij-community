@@ -20,9 +20,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class JavaIndenterTest extends AbstractJavaFormatterTest {
 
   private static final String CARET_TOKEN = "<caret>";

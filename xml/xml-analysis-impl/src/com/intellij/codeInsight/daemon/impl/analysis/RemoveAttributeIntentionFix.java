@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author spleaner
- */
 public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionAction {
   private final String myLocalName;
 

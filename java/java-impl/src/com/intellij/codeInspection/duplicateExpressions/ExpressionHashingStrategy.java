@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Pavel.Dolgov
- */ 
 final class ExpressionHashingStrategy implements HashingStrategy<PsiExpression> {
   private static final EquivalenceChecker EQUIVALENCE_CHECKER = new NoSideEffectExpressionEquivalenceChecker();
 

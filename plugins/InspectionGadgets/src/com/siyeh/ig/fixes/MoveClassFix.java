@@ -15,6 +15,13 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.siyeh.InspectionGadgetsBundle;
@@ -32,5 +39,18 @@ public class MoveClassFix extends RefactoringInspectionGadgetsFix {
   @Override
   public RefactoringActionHandler getHandler() {
     return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    PsiElement elementToRefactor = getElementToRefactor(previewDescriptor.getPsiElement());
+    if (elementToRefactor instanceof PsiClass aClass && aClass.getParent() instanceof PsiClass) {
+      String className = aClass.getName();
+      String key = aClass.hasModifierProperty(PsiModifier.STATIC)
+                   ? "move.inner.class.to.upper.level.or.another.class.preview"
+                   : "move.inner.class.to.upper.level.preview";
+      return new IntentionPreviewInfo.Html(JavaRefactoringBundle.message(key, className));
+    }
+    return IntentionPreviewInfo.EMPTY;
   }
 }

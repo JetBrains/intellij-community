@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -33,8 +32,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -53,6 +54,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
+  private static final Logger LOG = Logger.getInstance(ShowIntentionActionsHandler.class);
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -175,7 +177,15 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       return false;
     }
     catch (IntentionPreviewUnsupportedOperationException e) {
-      //check action availability can be invoked on a mock editor and may produce exceptions
+      // check action availability can be invoked on a mock editor and may produce exceptions
+      return false;
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      // avoid breaking highlighting when an exception is thrown from an intention
+      LOG.error(e);
       return false;
     }
     return true;

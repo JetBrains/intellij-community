@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -54,7 +53,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
 
     EditorMarkupModel markup = (EditorMarkupModel) editor.getMarkupModel();
     markup.setErrorPanelPopupHandler(new DaemonEditorPopup(myProject, editor));
-    markup.setErrorStripTooltipRendererProvider(createTooltipRenderer(editor));
+    markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(myProject, editor));
     markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
     setOrRefreshErrorStripeRenderer(markup, psiFile);
   }
@@ -88,10 +87,6 @@ public final class ErrorStripeUpdateManager implements Disposable {
         editorMarkupModel.setErrorStripeRenderer(tlRenderer);
       }, modality, myProject.getDisposed());
     });
-  }
-
-  private @NotNull ErrorStripTooltipRendererProvider createTooltipRenderer(Editor editor) {
-    return new DaemonTooltipRendererProvider(myProject, editor);
   }
 
   private @NotNull TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {

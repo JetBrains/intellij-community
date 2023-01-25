@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalBundle;
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
-import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,24 +37,22 @@ public class TerminalContainer {
   private final Content myContent;
   private final TerminalWidget myTerminalWidget;
   private final Project myProject;
-  private final TerminalView myTerminalView;
+  private final TerminalToolWindowManager myTerminalToolWindowManager;
   private @Nullable TerminalWrapperPanel myWrapperPanel;
   private boolean myForceHideUiWhenSessionEnds = false;
-  private final Runnable myTerminationListener;
 
   public TerminalContainer(@NotNull Project project,
                            @NotNull Content content,
                            @NotNull TerminalWidget terminalWidget,
-                           @NotNull TerminalView terminalView) {
+                           @NotNull TerminalToolWindowManager terminalToolWindowManager) {
     myProject = project;
     myContent = content;
     myTerminalWidget = terminalWidget;
-    myTerminalView = terminalView;
-    myTerminationListener = () -> {
+    myTerminalToolWindowManager = terminalToolWindowManager;
+    terminalWidget.addTerminationCallback(() -> {
       ApplicationManager.getApplication().invokeLater(() -> processSessionCompleted(), myProject.getDisposed());
-    };
-    terminalWidget.addTerminationCallback(myTerminationListener);
-    terminalView.register(this);
+    }, terminalWidget);
+    terminalToolWindowManager.register(this);
     Disposer.register(content, () -> cleanup());
   }
 
@@ -89,7 +87,7 @@ public class TerminalContainer {
     boolean hasFocus = myTerminalWidget.hasFocus();
     TerminalWrapperPanel newParent = getWrapperPanel();
     myWrapperPanel = new TerminalWrapperPanel(this);
-    TerminalContainer newContainer = new TerminalContainer(myProject, myContent, newTerminalWidget, myTerminalView);
+    TerminalContainer newContainer = new TerminalContainer(myProject, myContent, newTerminalWidget, myTerminalToolWindowManager);
     Splitter splitter = createSplitter(vertically, myWrapperPanel, newContainer.getWrapperPanel());
     newParent.setChildSplitter(splitter);
     if (hasFocus) {
@@ -131,13 +129,12 @@ public class TerminalContainer {
   }
 
   private void cleanup() {
-    myTerminalWidget.removeTerminationCallback(myTerminationListener);
-    myTerminalView.unregister(this);
+    myTerminalToolWindowManager.unregister(this);
   }
 
   private void processSingleTerminalCompleted() {
     if (myForceHideUiWhenSessionEnds || TerminalOptionsProvider.getInstance().getCloseSessionOnLogout()) {
-      myTerminalView.closeTab(myContent);
+      myTerminalToolWindowManager.closeTab(myContent);
     }
     else {
       String text = getSessionCompletedMessage(myTerminalWidget);

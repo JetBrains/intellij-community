@@ -38,7 +38,7 @@ import java.util.List;
 public class PsiTypeTokenizer extends Tokenizer<PsiTypeElement> {
 
   @Override
-  public void tokenize(@NotNull PsiTypeElement element, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiTypeElement element, @NotNull TokenConsumer consumer) {
     final PsiType type = element.getType();
     if (type instanceof PsiDisjunctionType) {
       tokenizeComplexType(element, consumer);

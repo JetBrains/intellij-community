@@ -4,9 +4,6 @@ package com.intellij.platform.externalSystem.testFramework;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class TestExternalProjectSettings extends ExternalProjectSettings {
 
   @NotNull

@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public abstract class CoverageDataManager {
   public static CoverageDataManager getInstance(@NotNull Project project) {
     return project.getService(CoverageDataManagerImpl.class);

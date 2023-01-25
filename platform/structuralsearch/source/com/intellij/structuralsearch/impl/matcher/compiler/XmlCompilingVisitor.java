@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.CODE;
 import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.TEXT;
 
-/**
-* @author Eugene.Kudelevsky
-*/
 public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
   @NotNull
   private final GlobalCompilingVisitor myCompilingVisitor;

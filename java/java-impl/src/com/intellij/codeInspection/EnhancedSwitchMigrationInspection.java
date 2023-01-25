@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -186,7 +186,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       if (existsDefaultLabelElement(branch.myLabelStatement)) return true;
     }
     CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(switchStatement);
-    return completenessResult == CompletenessResult.COMPLETE_WITHOUT_TOTAL || completenessResult == CompletenessResult.COMPLETE_WITH_TOTAL;
+    return completenessResult == CompletenessResult.COMPLETE_WITHOUT_UNCONDITIONAL || completenessResult == CompletenessResult.COMPLETE_WITH_UNCONDITIONAL;
   }
 
   private static boolean isConvertibleBranch(OldSwitchStatementBranch branch, boolean allowMultipleStatements, boolean hasNext) {

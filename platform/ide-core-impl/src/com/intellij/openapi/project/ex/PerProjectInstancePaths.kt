@@ -42,8 +42,8 @@ class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
   companion object {
     @VisibleForTesting
     fun getSystemDir(currentSystem: Path,
-                     currentChildProcess: Boolean,
-                     currentProjectStoreBaseDir: () -> Path?,
+                     currentChildProcess: Boolean = false,
+                     currentProjectStoreBaseDir: () -> Path? = { null },
                      newProjectStoreBaseDir: Path): Path {
       return adjustPathForNewProject(currentSystem, currentChildProcess, currentProjectStoreBaseDir, newProjectStoreBaseDir)
     }

@@ -20,7 +20,7 @@ class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveApp
                 || hasOtherModifier(OtherModifier.NATIVE)
                 || hasOtherModifier(OtherModifier.SYNCHRONIZED)
                 || psi<PsiMethod>()?.let { context.converter.converterServices.oldServices.referenceSearcher.hasOverrides(it) } == true
-                || annotationList.annotations.isNotEmpty()
+                || hasAnnotations
                 || name.value.canBeGetterOrSetterName()
 
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

@@ -56,9 +56,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRVal
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.IncompleteKt.resolveIncomplete;
 import static org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculatorKt.getTypeFromCandidate;
 
-/**
- * @author ilyas
- */
 public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpression> implements GrReferenceExpression {
   private static final Logger LOG = Logger.getInstance(GrReferenceExpressionImpl.class);
 

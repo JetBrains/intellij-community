@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -28,6 +28,7 @@ import git4idea.GitRemoteBranch;
 import git4idea.actions.GitOngoingOperationAction;
 import git4idea.actions.branch.GitBranchActionsUtil;
 import git4idea.branch.*;
+import git4idea.config.GitSharedSettings;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
 import git4idea.fetch.GitFetchSupport;
@@ -67,7 +68,7 @@ public class GitBranchPopupActions {
   public static final @NonNls String EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP = "Git.Experimental.Branch.Popup.Actions";
 
   private static final int MAX_BRANCH_NAME_LENGTH = 40;
-  private static final int BRANCH_NAME_LENGHT_DELTA = 4;
+  private static final int BRANCH_NAME_LENGTH_DELTA = 4;
   private static final int BRANCH_NAME_SUFFIX_LENGTH = 5;
   private final Project myProject;
   private final GitRepository myRepository;
@@ -236,25 +237,31 @@ public class GitBranchPopupActions {
   @NlsSafe
   @NotNull
   public static String truncateBranchName(@NotNull @NlsSafe String branchName, @NotNull Project project) {
+    return truncateBranchName(project, branchName,
+                              MAX_BRANCH_NAME_LENGTH, BRANCH_NAME_SUFFIX_LENGTH, BRANCH_NAME_LENGTH_DELTA);
+  }
+
+  @NlsSafe
+  @NotNull
+  public static String truncateBranchName(@NotNull Project project, @NotNull @NlsSafe String branchName,
+                                          int maxBranchNameLength, int suffixLength, int delta) {
     int branchNameLength = branchName.length();
 
-    if (branchNameLength <= MAX_BRANCH_NAME_LENGTH + BRANCH_NAME_LENGHT_DELTA) {
+    if (branchNameLength <= maxBranchNameLength + delta) {
       return branchName;
     }
 
     IssueNavigationConfiguration issueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
     List<IssueNavigationConfiguration.LinkMatch> issueMatches = issueNavigationConfiguration.findIssueLinks(branchName);
+    int affectedMaxBranchNameLength = maxBranchNameLength - StringUtil.ELLIPSIS.length();
     if (issueMatches.size() != 0) {
       // never truncate the first occurrence of the issue id
       IssueNavigationConfiguration.LinkMatch firstMatch = issueMatches.get(0);
       TextRange firstMatchRange = firstMatch.getRange();
-      return truncateAndSaveIssueId(firstMatchRange, branchName, MAX_BRANCH_NAME_LENGTH, BRANCH_NAME_SUFFIX_LENGTH,
-                                    BRANCH_NAME_LENGHT_DELTA);
+      return truncateAndSaveIssueId(firstMatchRange, branchName, affectedMaxBranchNameLength, suffixLength, delta);
     }
 
-    return StringUtil.shortenTextWithEllipsis(branchName,
-                                              MAX_BRANCH_NAME_LENGTH,
-                                              BRANCH_NAME_SUFFIX_LENGTH, true);
+    return StringUtil.shortenTextWithEllipsis(branchName, affectedMaxBranchNameLength, suffixLength, true);
   }
 
   @NlsSafe
@@ -1078,11 +1085,11 @@ public class GitBranchPopupActions {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
-      brancher.merge(myBranchName, deleteOnMerge(), myRepositories);
+      brancher.merge(myBranchName, deleteOnMerge(myProject), myRepositories);
     }
 
-    private GitBrancher.DeleteOnMergeOption deleteOnMerge() {
-      if (myLocalBranch && !myBranchName.equals("master")) { // NON-NLS
+    private GitBrancher.DeleteOnMergeOption deleteOnMerge(Project project) {
+      if (myLocalBranch && !GitSharedSettings.getInstance(project).isBranchProtected(myBranchName)) {
         return GitBrancher.DeleteOnMergeOption.PROPOSE;
       }
       return GitBrancher.DeleteOnMergeOption.NOTHING;

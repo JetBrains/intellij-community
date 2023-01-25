@@ -105,18 +105,17 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         return super.getElementText(element);
       }
     };
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     getComboBox().setRenderer(SimpleListCellRenderer.<DirectoryChooser.ItemWrapper>create(
       (label, itemWrapper, index) -> {
       if (itemWrapper != NULL_WRAPPER && itemWrapper != null) {
-        label.setIcon(itemWrapper.getIcon(fileIndex));
-
+        label.setIcon(itemWrapper.getIcon());
         label.setText(itemWrapper.getRelativeToProjectPath());
       }
       else {
         label.setText(leaveInSameSourceRoot);
       }
     }));
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile initialSourceRoot =
       initialTargetDirectory != null ? fileIndex.getSourceRootForFile(initialTargetDirectory.getVirtualFile()) : null;
     final VirtualFile[] selection = new VirtualFile[]{initialSourceRoot};

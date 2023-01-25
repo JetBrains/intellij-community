@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractRegexpArrangementMatcher implements ArrangementEntryMatcher {
   
   @NotNull private final String myPattern;

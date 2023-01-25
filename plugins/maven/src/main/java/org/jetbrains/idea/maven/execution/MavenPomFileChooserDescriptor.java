@@ -21,9 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-/**
- * @author ibessonov
- */
 public class MavenPomFileChooserDescriptor extends FileChooserDescriptor {
 
   private final Project myProject;

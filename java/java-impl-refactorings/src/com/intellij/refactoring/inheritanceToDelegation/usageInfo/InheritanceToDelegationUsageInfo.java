@@ -18,9 +18,6 @@ package com.intellij.refactoring.inheritanceToDelegation.usageInfo;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 
-/**
- * @author dsl
- */
 public class InheritanceToDelegationUsageInfo extends UsageInfo {
   private final FieldAccessibility myDelegateFieldVisibility;
 

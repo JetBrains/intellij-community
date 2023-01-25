@@ -9,9 +9,9 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.util.Key
 import com.intellij.psi.util.proximity.PsiProximityComparator
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.codeInsight.ENUM_VALUES_METHOD_NAME
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.SoftDeprecationWeigher
@@ -149,8 +149,8 @@ object CallableWeigher : LookupElementWeigher("kotlin.callableWeight") {
     private enum class Weight1 {
         local,
         memberOrExtension,
-        globalOrStatic,
         typeParameterExtension,
+        globalOrStatic,
         receiverCastRequired
     }
 
@@ -253,7 +253,7 @@ object K1SoftDeprecationWeigher : LookupElementWeigher(SoftDeprecationWeigher.WE
     ): Boolean {
         return languageVersionSettings.isEnumValuesSoftDeprecateEnabled() &&
                 isEnumClass(descriptor.containingDeclaration) &&
-                ENUM_VALUES_METHOD_NAME == declarationLookupObject.name &&
+                StandardNames.ENUM_VALUES == declarationLookupObject.name &&
                 // Don't touch user-declared methods with the name "values"
                 (descriptor as? CallableMemberDescriptor)?.kind == CallableMemberDescriptor.Kind.SYNTHESIZED
     }

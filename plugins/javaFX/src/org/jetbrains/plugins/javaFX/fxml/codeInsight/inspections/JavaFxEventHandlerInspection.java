@@ -36,9 +36,6 @@ import java.util.stream.Collectors;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool {
   public boolean myDetectNonVoidReturnType;
 

@@ -4,9 +4,7 @@ package git4idea.index.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.IdeFocusManager
-import git4idea.index.GitStageContentProvider
 import git4idea.index.isStagingAreaAvailable
 import git4idea.index.showStagingArea
 
@@ -22,9 +20,7 @@ class GitCommitWithStagingAreaAction : DumbAwareAction() {
       return
     }
 
-    e.presentation.isEnabledAndVisible =
-      isStagingAreaAvailable(project) &&
-      ChangesViewContentManager.getToolWindowFor(project, GitStageContentProvider.STAGING_AREA_TAB_NAME) != null
+    e.presentation.isEnabledAndVisible = isStagingAreaAvailable(project)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

@@ -46,7 +46,7 @@ public class PsiTreeUtil {
    * @param strict   whether to start search from element ({@code true}) or from element's parent ({@code false}).
    * @return {@code true} if element has ancestor as its parent somewhere in the hierarchy, {@code false} otherwise.
    */
-  @Contract("null, _, _ -> false")
+  @Contract(value = "null, _, _ -> false", pure = true)
   public static boolean isAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
     if (ancestor == null) return false;
     // fast path to avoid loading tree

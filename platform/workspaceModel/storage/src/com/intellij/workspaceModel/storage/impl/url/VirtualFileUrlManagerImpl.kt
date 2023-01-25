@@ -23,6 +23,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return add(url)
   }
 
+  @Synchronized
   override fun fromUrlSegments(urls: List<String>): VirtualFileUrl {
     if (urls.isEmpty()) return getEmptyUrl()
     return addSegments(null, urls)

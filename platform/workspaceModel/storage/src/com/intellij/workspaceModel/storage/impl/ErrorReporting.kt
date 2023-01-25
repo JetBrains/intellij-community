@@ -1,38 +1,45 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
-import com.esotericsoftware.kryo.kryo5.io.Output
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.Compressor
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
-import java.io.OutputStream
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.createFile
-import kotlin.io.path.name
-import kotlin.io.path.writeText
+import kotlin.io.path.readBytes
 
 @ApiStatus.Internal
 fun reportErrorAndAttachStorage(message: String, storage: EntityStorage) {
-  reportConsistencyIssue(message, IllegalStateException(), null, null, null, storage)
+  reportConsistencyIssue(message = message,
+                         e = IllegalStateException(),
+                         sourceFilter = null,
+                         left = null,
+                         right = null,
+                         resulting = storage)
 }
 
-internal fun serializeContent(path: Path, howToSerialize: (EntityStorageSerializerImpl, OutputStream) -> Unit) {
+internal fun serializeContent(file: Path, howToSerialize: (EntityStorageSerializerImpl, Path) -> Unit) {
   val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
-  path.toFile().outputStream().use { howToSerialize(serializer, it) }
+  howToSerialize(serializer, file)
 }
 
-internal fun serializeEntityStorage(path: Path, storage: EntityStorage) {
-  serializeContent(path) { serializer, stream ->
+internal fun serializeEntityStorage(file: Path, storage: EntityStorage) {
+  serializeContent(file) { serializer, stream ->
     serializer.serializeCache(stream, storage.toSnapshot())
   }
 }
@@ -57,7 +64,7 @@ private fun cleanOldFiles(parentDir: File) {
   Arrays.sort(children)
   for (i in children.indices) {
     val child = children[i]
-    // Store latest 30 items in the folder and not older than one week
+    // Store the latest 30 items in the folder and not older than one week
     if (i < children.size - 30 || ageInDays(child) > 7) FileUtil.delete(child)
   }
 }
@@ -66,24 +73,24 @@ private fun formatTime(timeMs: Long) = SimpleDateFormat("yyyyMMdd-HHmmss").forma
 
 private fun ageInDays(file: File) = TimeUnit.DAYS.convert(System.currentTimeMillis() - file.lastModified(), TimeUnit.MILLISECONDS)
 
-internal fun EntityStorage.serializeTo(stream: OutputStream) {
+internal fun EntityStorage.serializeTo(file: Path) {
   val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
-  serializer.serializeCache(stream, this.toSnapshot())
+  serializer.serializeCache(file, toSnapshot())
 }
 
-internal fun MutableEntityStorageImpl.serializeDiff(stream: OutputStream) {
+internal fun MutableEntityStorageImpl.serializeDiff(file: Path) {
   val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
-  serializeDiff(serializer, stream)
+  serializeDiff(serializer, file)
 }
 
-private fun MutableEntityStorageImpl.serializeDiff(serializer: EntityStorageSerializerImpl, stream: OutputStream) {
-  serializer.serializeDiffLog(stream, this.changeLog.changeLog.anonymize())
+private fun MutableEntityStorageImpl.serializeDiff(serializer: EntityStorageSerializerImpl, file: Path) {
+  serializer.serializeDiffLog(file, changeLog.changeLog.anonymize())
 }
 
 internal fun EntityStorage.anonymize(sourceFilter: ((EntitySource) -> Boolean)?): EntityStorage {
   if (!isWrapped()) return this
   val builder = MutableEntityStorage.from(this)
-  builder.entitiesBySource { true }.flatMap { it.value.flatMap { it.value } }.forEach { entity ->
+  builder.entitiesBySource { true }.flatMap { entry -> entry.value.flatMap { it.value } }.forEach { entity ->
     builder.modifyEntity(WorkspaceEntity.Builder::class.java, entity) {
       this.entitySource = entity.entitySource.anonymize(sourceFilter)
     }
@@ -94,7 +101,7 @@ internal fun EntityStorage.anonymize(sourceFilter: ((EntitySource) -> Boolean)?)
 internal fun ChangeLog.anonymize(): ChangeLog {
   if (!isWrapped()) return this
   val result = HashMap(this)
-  result.replaceAll { key, value ->
+  result.replaceAll { _, value ->
     when (value) {
       is ChangeEntry.AddEntity -> {
         val newEntityData = value.entityData.clone()
@@ -162,45 +169,47 @@ private fun serializeContentToFolder(contentFolder: Path,
                                      left: EntityStorage?,
                                      right: EntityStorage?,
                                      resulting: EntityStorage,
-                                     sourceFilter: ((EntitySource) -> Boolean)?): File? {
+                                     sourceFilter: ((EntitySource) -> Boolean)?): Path? {
   if (right is MutableEntityStorage) {
-    serializeContent(contentFolder.resolve("Right_Diff_Log")) { serializer, stream ->
+    serializeContent(contentFolder.resolve("Right_Diff_Log")) { serializer, file ->
       right as MutableEntityStorageImpl
-      right.serializeDiff(serializer, stream)
+      right.serializeDiff(serializer, file)
     }
   }
 
   left?.anonymize(sourceFilter)?.let { serializeEntityStorage(contentFolder.resolve("Left_Store"), it) }
   right?.anonymize(sourceFilter)?.let { serializeEntityStorage(contentFolder.resolve("Right_Store"), it) }
   serializeEntityStorage(contentFolder.resolve("Res_Store"), resulting.anonymize(sourceFilter))
-  serializeContent(contentFolder.resolve("ClassToIntConverter")) { serializer, stream -> serializer.serializeClassToIntConverter(stream) }
+  serializeContent(contentFolder.resolve("ClassToIntConverter"), EntityStorageSerializerImpl::serializeClassToIntConverter)
 
   val operationName = if (sourceFilter == null) "Add_Diff" else "Replace_By_Source"
   val operationFile = contentFolder.resolve(operationName)
-  operationFile.createFile()
+  Files.createFile(operationFile)
   if (!isWrapped()) {
     val entitySourceFilter = if (sourceFilter != null) {
       val allEntitySources = (left as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries()?.toHashSet() ?: hashSetOf()
       allEntitySources.addAll((right as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries() ?: emptySet())
       allEntitySources.sortedBy { it.toString() }.fold("") { acc, source -> acc + if (sourceFilter(source)) "1" else "0" }
     }
-    else ""
-    operationFile.writeText(entitySourceFilter)
+    else {
+      ""
+    }
+    Files.writeString(operationFile, entitySourceFilter)
   }
 
   if (isWrapped()) contentFolder.resolve("Report_Wrapped").createFile()
 
   return if (!executingOnTC()) {
-    val zipFile = contentFolder.parent.resolve(contentFolder.name + ".zip").toFile()
-    Compressor.Zip(zipFile).use { it.addDirectory(contentFolder.toFile()) }
-    FileUtil.delete(contentFolder)
+    val zipFile = contentFolder.parent.resolve("${contentFolder.fileName}.zip")
+    Compressor.Zip(zipFile).use { it.addDirectory(contentFolder) }
+    NioFiles.deleteRecursively(contentFolder)
     zipFile
   }
   else null
 }
 
-private fun EntityStorageSerializerImpl.serializeDiffLog(stream: OutputStream, log: ChangeLog) {
-  val output = Output(stream, KRYO_BUFFER_SIZE)
+private fun EntityStorageSerializerImpl.serializeDiffLog(file: Path, log: ChangeLog) {
+  val output = createKryoOutput(file)
   try {
     val (kryo, _) = createKryo()
 
@@ -223,13 +232,13 @@ private fun EntityStorageSerializerImpl.serializeDiffLog(stream: OutputStream, l
     kryo.writeClassAndObject(output, log)
   }
   finally {
-    flush(output)
+    closeOutput(output)
   }
 }
 
-private fun EntityStorageSerializerImpl.serializeClassToIntConverter(stream: OutputStream) {
+private fun EntityStorageSerializerImpl.serializeClassToIntConverter(file: Path) {
   val converterMap = ClassToIntConverter.INSTANCE.getMap().toMap()
-  val output = Output(stream, KRYO_BUFFER_SIZE)
+  val output = createKryoOutput(file)
   try {
     val (kryo, _) = createKryo()
 
@@ -242,7 +251,7 @@ private fun EntityStorageSerializerImpl.serializeClassToIntConverter(stream: Out
     kryo.writeClassAndObject(output, mapData)
   }
   finally {
-    flush(output)
+    closeOutput(output)
   }
 }
 

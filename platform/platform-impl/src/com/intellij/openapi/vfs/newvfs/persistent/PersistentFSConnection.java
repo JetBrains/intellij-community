@@ -14,7 +14,8 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.*;
+import com.intellij.util.io.ScannableDataEnumeratorEx;
+import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingContentStorage;
@@ -212,7 +213,7 @@ final class PersistentFSConnection {
       myAttributesStorage.force();
       myContents.force();
       if (myContentHashesEnumerator != null) myContentHashesEnumerator.force();
-      markClean();      //TODO RC: shouldn't markClean() be _after_ myRecords.close()?
+      markClean();      //TODO RC: shouldn't markClean() be _after_ myRecords.force()?
       myRecords.force();
     }
   }
@@ -253,6 +254,8 @@ final class PersistentFSConnection {
     return myPersistentFSPaths;
   }
 
+  //TODO RC: we use it to mark file record modified there something derived is modified -- i.e. children attribute
+  //         or content. This looks suspicious to me: why we need to update _file_ record version in those cases?
   public void markRecordAsModified(int fileId) throws IOException {
     getRecords().markRecordAsModified(fileId);
     markDirty();

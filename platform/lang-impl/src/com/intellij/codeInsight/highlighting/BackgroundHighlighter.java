@@ -10,6 +10,8 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
@@ -24,10 +26,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -148,44 +151,33 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
     if (editor.getDocument().isInBulkUpdate()) {
       return;
     }
+    if (!BackgroundHighlightingUtil.isValidEditor(editor)) {
+      return;
+    }
 
-    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (foundFile, newEditor) -> {
-      int textLength = foundFile.getTextLength();
-      if (textLength == -1) {
-        // sometime some crazy stuff is returned (EA-248725)
-        return Pair.<IdentifierHighlighterPass, Pair<TextRange, TextRange>>create(null, null);
-      }
-      IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().
-        createHighlightingPass(foundFile, newEditor, TextRange.from(0, textLength));
-      if (pass != null) {
-        pass.doCollectInformation();
-      }
-      Pair<TextRange, TextRange> heavyBraceMatch = HeavyBraceHighlighter.match(foundFile, newEditor.getCaretModel().getOffset());
-      return Pair.create(pass, heavyBraceMatch);
-    }, (foundFile, newEditor, bgResults) -> {
-      BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, myAlarm, foundFile);
-      Pair<TextRange, TextRange> maybeMatch = bgResults.second;
+    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(
+      project, editor,
+      (newFile, newEditor) -> {
+        int offsetBefore = editor.getCaretModel().getOffset();
 
-      if (maybeMatch == null) {
-        handler.updateBraces();
-      }
-      else {
-        CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-
-        if (BackgroundHighlightingUtil.needMatching(newEditor, codeInsightSettings)) {
-          FileType fileType = PsiUtilBase.getPsiFileAtOffset(foundFile, maybeMatch.first.getStartOffset()).getFileType();
-
-          handler.clearBraceHighlighters();
-
-          handler.highlightBraces(maybeMatch.first, maybeMatch.second, true, false, fileType);
+        submitIdentifierHighlighterPass(editor, offsetBefore, newFile, newEditor);
+        return HeavyBraceHighlighter.match(newFile, offsetBefore);
+      },
+      (newFile, newEditor, maybeMatch) -> {
+        BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, myAlarm, newFile);
+        if (maybeMatch == null) {
+          handler.updateBraces();
         }
-      }
+        else {
+          CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
 
-      IdentifierHighlighterPass pass = bgResults.first;
-      if (pass != null) {
-        pass.doApplyInformationToEditor();
-      }
-    });
+          if (BackgroundHighlightingUtil.needMatching(newEditor, codeInsightSettings)) {
+            FileType fileType = PsiUtilBase.getPsiFileAtOffset(newFile, maybeMatch.first.getStartOffset()).getFileType();
+            handler.clearBraceHighlighters();
+            handler.highlightBraces(maybeMatch.first, maybeMatch.second, true, false, fileType);
+          }
+        }
+      });
   }
 
   private void clearBraces(@NotNull Project project, @NotNull Editor editor) {
@@ -193,6 +185,35 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
       BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, myAlarm, foundFile);
       handler.clearBraceHighlighters();
     });
+  }
+
+  private static void submitIdentifierHighlighterPass(@NotNull Editor editor,
+                                                      int offsetBefore,
+                                                      @NotNull PsiFile newFile,
+                                                      @NotNull Editor newEditor) {
+    ReadAction.nonBlocking(() -> {
+        int textLength = newFile.getTextLength();
+        if (textLength == -1) {
+          // sometime some crazy stuff is returned (EA-248725)
+          return null;
+        }
+        IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().
+          createHighlightingPass(newFile, newEditor, TextRange.from(0, textLength));
+        if (pass != null) {
+          pass.doCollectInformation();
+        }
+        return pass;
+      })
+      .expireWhen(() -> !BackgroundHighlightingUtil.isValidEditor(editor) ||
+                        !newFile.isValid() ||
+                        offsetBefore != editor.getCaretModel().getOffset())
+      .coalesceBy(HighlightIdentifiersKey.class, editor)
+      .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), identifierHighlighterPass -> {
+        if (identifierHighlighterPass != null) {
+          identifierHighlighterPass.doApplyInformationToEditor();
+        }
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @NotNull
@@ -203,5 +224,8 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
   @TestOnly
   static void enableListenersInTest(@NotNull Project project, @NotNull Disposable disposable) {
     StartupActivity.Companion.getPOST_STARTUP_ACTIVITY().findExtension(BackgroundHighlighter.class).registerListeners(project, disposable);
+  }
+
+  private static class HighlightIdentifiersKey {
   }
 }

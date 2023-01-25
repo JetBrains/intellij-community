@@ -25,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * Implementations of this interface are expected to provide correct {@link #equals(Object)} & {@link #hashCode()} implementations.
  * <p/>
  * Implementations of this interface are expected to be thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public interface ArrangementEntryMatcher {
 

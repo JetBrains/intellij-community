@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
  * {@code 'Treated as white space'} here means that formatter may remove such symbols or replace them to other
  * 'white space symbols' if necessary.
  *
- * @author Denis Zhdanov
  * @see WhiteSpaceFormattingStrategyFactory
  */
 public interface WhiteSpaceFormattingStrategy {

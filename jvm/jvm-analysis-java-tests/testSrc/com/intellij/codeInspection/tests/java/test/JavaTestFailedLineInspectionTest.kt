@@ -1,32 +1,53 @@
 package com.intellij.codeInspection.tests.java.test
 
+import com.intellij.codeInspection.tests.ULanguage
 import com.intellij.codeInspection.tests.test.TestFailedLineInspectionTestBase
-import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
-import com.intellij.testFramework.TestDataPath
 
-private const val inspectionPath = "/codeInspection/testfailedline"
-
-@TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
 class JavaTestFailedLineInspectionTest : TestFailedLineInspectionTestBase() {
-  override fun getBasePath() = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
-
-  fun testMainTest() {
+  fun `test non qualified call`() {
     doTest(
+      lang = ULanguage.JAVA,
+      text = """
+        public class MainTest extends junit.framework.TestCase {
+          public void testFoo() {
+            <warning descr="junit.framework.AssertionFailedError:">assertEquals</warning>();
+            assertEquals();
+          }
+  
+          public void assertEquals() {}
+        }
+      """.trimIndent(),
       fileName = "MainTest",
-      fileExt = "java",
-      methodName = "testFoo",
-      errorLn = 3,
-      errorMessage = "junit.framework.AssertionFailedError:"
+      url = "java:test://MainTest/testFoo",
+      errorMessage = "junit.framework.AssertionFailedError:",
+      stackTrace = """
+        |${'\t'}at junit.framework.Assert.fail(Assert.java:47)
+        |${'\t'}at MainTest.assertEquals(Assert.java:207)
+        |${'\t'}at MainTest.testFoo(MainTest.java:3)
+      """.trimMargin()
     )
   }
 
-  fun testQualifiedTest() {
+  fun `test qualified call`() {
     doTest(
+      lang = ULanguage.JAVA,
+      text = """
+        public class QualifiedTest extends junit.framework.TestCase {
+          public void testFoo() {
+            QualifiedTest.<warning descr="junit.framework.AssertionFailedError:">assertEquals</warning>();
+          }
+        
+          public static void assertEquals() {}
+        }
+      """.trimIndent(),
       fileName = "QualifiedTest",
-      fileExt = "java",
-      methodName = "testFoo",
-      errorLn = 3,
-      errorMessage = "junit.framework.AssertionFailedError:"
+      url = "java:test://QualifiedTest/testFoo",
+      errorMessage = "junit.framework.AssertionFailedError:",
+      stackTrace = """
+        |${'\t'}at junit.framework.Assert.fail(Assert.java:47)
+        |${'\t'}at QualifiedTest.assertEquals(Assert.java:207)
+        |${'\t'}at QualifiedTest.testFoo(QualifiedTest.java:3)
+      """.trimMargin()
     )
   }
 }

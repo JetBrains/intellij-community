@@ -31,7 +31,7 @@ public class NamedElementTokenizer<T extends PsiNamedElement> extends Tokenizer<
   private final Tokenizer<PsiIdentifier> myIdentifierTokenizer = new PsiIdentifierTokenizer();
 
   @Override
-  public void tokenize(@NotNull T element, TokenConsumer consumer) {
+  public void tokenize(@NotNull T element, @NotNull TokenConsumer consumer) {
     PsiIdentifier psiIdentifier = PsiTreeUtil.getChildOfType(element, PsiIdentifier.class);
     if (psiIdentifier == null) return;
 

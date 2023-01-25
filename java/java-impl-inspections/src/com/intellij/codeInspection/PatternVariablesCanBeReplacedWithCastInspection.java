@@ -82,13 +82,11 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
 
         PsiConditionalLoopStatement conditionalLoopStatement =
           PsiTreeUtil.getParentOfType(psiInstanceOfExpression, PsiConditionalLoopStatement.class);
-        if (conditionalLoopStatement != null) {
-          if (conditionalLoopStatement instanceof PsiForStatement forStatement) {
-            PsiStatement update = forStatement.getUpdate();
-            for (PsiPatternVariable variable : variables) {
-              if (VariableAccessUtils.variableIsAssigned(variable, update)) {
-                return true;
-              }
+        if (conditionalLoopStatement instanceof PsiForStatement forStatement) {
+          PsiStatement update = forStatement.getUpdate();
+          for (PsiPatternVariable variable : variables) {
+            if (VariableAccessUtils.variableIsAssigned(variable, update)) {
+              return true;
             }
           }
         }
@@ -100,7 +98,8 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
         PsiElement parent = current.getParent();
         while (parent instanceof PsiParenthesizedExpression ||
                parent instanceof PsiPolyadicExpression ||
-               parent instanceof PsiPrefixExpression) {
+               parent instanceof PsiPrefixExpression ||
+               parent instanceof PsiConditionalExpression) {
           current = parent;
           parent = current.getParent();
         }
@@ -239,14 +238,14 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
         addDeclarationOutsideBlock(ifStatement, variable);
       }
 
-      //typeCast - for example in Conditions
+      //typeCast - for example, in Conditions
       replaceWithCast(variable, collectedOutside.get(Boolean.FALSE));
     }
 
-    private void processReferencesForLoopStatement(PsiConditionalLoopStatement statement,
-                                                   PsiPatternVariable variable,
-                                                   PsiInstanceOfExpression psiInstanceOfExpression,
-                                                   List<PsiReferenceExpression> references) {
+    private void processReferencesForLoopStatement(@NotNull PsiConditionalLoopStatement statement,
+                                                   @NotNull PsiPatternVariable variable,
+                                                   @NotNull PsiInstanceOfExpression psiInstanceOfExpression,
+                                                   @NotNull List<PsiReferenceExpression> references) {
 
       //trivial cases
       ConditionState conditionState = getConditionIfInstanceOfTrue(psiInstanceOfExpression, statement.getCondition());
@@ -338,7 +337,7 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
       CodeStyleManager.getInstance(project).reformat(newDeclarationStatement);
     }
 
-    private static void addDeclarationInsideBlock(PsiStatement statement, PsiPatternVariable variable) {
+    private static void addDeclarationInsideBlock(@NotNull PsiStatement statement, @NotNull PsiPatternVariable variable) {
       String text = getDeclarationStatement(variable);
       if (text == null) {
         return;
@@ -350,7 +349,7 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
     }
 
     @Nullable
-    private static String getDeclarationStatement(PsiPatternVariable variable) {
+    private static String getDeclarationStatement(@NotNull PsiPatternVariable variable) {
       String text = JavaPsiPatternUtil.getEffectiveInitializerText(variable);
       if (text == null) {
         return null;
@@ -363,7 +362,7 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
       return text;
     }
 
-    private static void deletePatternFromInstanceOf(PsiInstanceOfExpression expression) {
+    private static void deletePatternFromInstanceOf(@NotNull PsiInstanceOfExpression expression) {
       if (!(expression.getPattern() instanceof PsiTypeTestPattern typeTestPattern)) {
         return;
       }

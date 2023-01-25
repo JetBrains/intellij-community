@@ -1,7 +1,6 @@
 package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieBundle
-import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.jlanguage.Lang
@@ -29,8 +28,7 @@ import java.util.*
 open class LanguageToolChecker : TextChecker() {
   override fun getRules(locale: Locale): Collection<Rule> {
     val language = Languages.getLanguageForLocale(locale)
-    val state = GrazieConfig.get()
-    val lang = state.enabledLanguages.find { language == it.jLanguage } ?: return emptyList()
+    val lang = Lang.values().find { it.jLanguage == language } ?: return emptyList()
     return grammarRules(LangTool.getTool(lang), lang)
   }
 

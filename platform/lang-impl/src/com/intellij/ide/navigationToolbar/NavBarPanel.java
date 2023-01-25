@@ -278,9 +278,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (selectedPopupObject != null) {
       navigateInsideBar(mySelection.barIndex, selectedPopupObject, true);
     }
-
-    int index = myModel.getSelectedIndex();
-    if (index != -1) doubleClick(index);
+    else {
+      int index = myModel.getSelectedIndex();
+      if (index != -1) doubleClick(index);
+    }
   }
 
   private @Nullable Object getSelectedPopupObject() {

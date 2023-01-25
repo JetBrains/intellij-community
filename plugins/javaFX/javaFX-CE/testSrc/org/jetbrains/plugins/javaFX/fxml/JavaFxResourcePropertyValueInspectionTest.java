@@ -4,9 +4,6 @@ import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.resources.JavaFxResourcePropertyValueInspection;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxResourcePropertyValueInspectionTest extends AbstractJavaFXTestCase {
 
   public void testResourceKeyInEnumAttribute() {

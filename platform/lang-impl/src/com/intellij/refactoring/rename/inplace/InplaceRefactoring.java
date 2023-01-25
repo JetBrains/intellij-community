@@ -11,7 +11,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
@@ -140,13 +139,6 @@ public abstract class InplaceRefactoring {
       myInitialName = initialName;
       PsiFile containingFile = myElementToRename.getContainingFile();
       FileViewProvider viewProvider = containingFile.getViewProvider();
-      if (viewProvider.getDocument() != myEditor.getDocument()) {
-        throw new IllegalArgumentException("elementToRename must be from the editor's document, " +
-                                           "but got: elementToRename='" + myElementToRename + "'" +
-                                           " (from " + (InjectedLanguageManager.getInstance(project).isInjectedFragment(containingFile) ? "injected ":"") +
-                                           "file " + containingFile + " in " + viewProvider.getVirtualFile()+ ")" +
-                                           "; editor document=" + (editor instanceof EditorWindow ? "injected " : "") + editor.getDocument());
-      }
       if (!notSameFile(getTopLevelVirtualFile(viewProvider), containingFile)
           && myElementToRename.getTextRange() != null) {
         myRenameOffset = myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange());

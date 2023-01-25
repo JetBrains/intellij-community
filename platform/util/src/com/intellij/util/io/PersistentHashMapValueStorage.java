@@ -49,7 +49,7 @@ public final class PersistentHashMapValueStorage {
    * inside some wrapping code. Also, it could be >1 instances of PHMap/ValueStorage to support single
    * top-level structure, and params like READONLY should be the same for all them. But it is quite
    * daunting to pass parameters like READONLY through all the ctors and intermediate methods down to
-   * the point of actual initialization (e.g. READONLY is used in {@linkplain #com.intellij.util.io.PagedFileStorage}
+   * the point of actual initialization (e.g. READONLY is used in {@linkplain com.intellij.util.io.PagedFileStorage}
    * even). CreationTimeOptions allows to set those arguments in thread-local instance, and get them
    * there they are needed.
    * <br/>
@@ -184,18 +184,17 @@ public final class PersistentHashMapValueStorage {
       }
     };
 
-  private static final FileAccessorCache<Path, OutputStream> ourAppendersCache =
-    new FileAccessorCache<Path, OutputStream>(CACHE_PROTECTED_QUEUE_SIZE, CACHE_PROBATIONAL_QUEUE_SIZE) {
+  private static final FileAccessorCache<Path, SyncAbleBufferedOutputStreamOverCachedFileChannel> ourAppendersCache =
+    new FileAccessorCache<Path, SyncAbleBufferedOutputStreamOverCachedFileChannel>(CACHE_PROTECTED_QUEUE_SIZE, CACHE_PROBATIONAL_QUEUE_SIZE) {
       @NotNull
       @Override
-      protected OutputStream createAccessor(Path path) {
-        OutputStream out = new OutputStreamOverRandomAccessFileCache(path);
-        return new BufferedOutputStream(out);
+      protected PersistentHashMapValueStorage.SyncAbleBufferedOutputStreamOverCachedFileChannel createAccessor(Path path) {
+        return new SyncAbleBufferedOutputStreamOverCachedFileChannel(path);
       }
 
       @Override
-      protected void disposeAccessor(@NotNull OutputStream fileAccessor) throws IOException {
-        fileAccessor.close();
+      protected void disposeAccessor(@NotNull PersistentHashMapValueStorage.SyncAbleBufferedOutputStreamOverCachedFileChannel stream) throws IOException {
+        stream.close();
       }
     };
 
@@ -240,10 +239,12 @@ public final class PersistentHashMapValueStorage {
 
       // avoid corruption issue when disk fails to write first record synchronously or unexpected first write file increase (IDEA-106306),
       // code depends on correct value of mySize
-      FileAccessorCache.Handle<OutputStream> streamCacheValue = ourAppendersCache.getIfCached(myPath);
+      FileAccessorCache.Handle<SyncAbleBufferedOutputStreamOverCachedFileChannel> streamCacheValue = ourAppendersCache.getIfCached(myPath);
       if (streamCacheValue != null) {
         try {
-          IOUtil.syncStream(streamCacheValue.get());
+          final SyncAbleBufferedOutputStreamOverCachedFileChannel stream = streamCacheValue.get();
+          stream.flush();
+          stream.sync();
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -287,7 +288,7 @@ public final class PersistentHashMapValueStorage {
         }
       });
     } else {
-      FileAccessorCache.@NotNull Handle<OutputStream> appender = ourAppendersCache.get(myPath);
+      FileAccessorCache.@NotNull Handle<SyncAbleBufferedOutputStreamOverCachedFileChannel> appender = ourAppendersCache.get(myPath);
       dataOutputStream = toDataOutputStream(appender);
     }
 
@@ -738,7 +739,7 @@ public final class PersistentHashMapValueStorage {
   }
 
   private static void forceAppender(Path path) {
-    final FileAccessorCache.Handle<OutputStream> cached = ourAppendersCache.getIfCached(path);
+    final FileAccessorCache.Handle<? extends OutputStream> cached = ourAppendersCache.getIfCached(path);
     if (cached != null) {
       try {
         cached.get().flush();
@@ -796,7 +797,7 @@ public final class PersistentHashMapValueStorage {
   }
 
   @NotNull
-  private static DataOutputStream toDataOutputStream(FileAccessorCache.@NotNull Handle<OutputStream> handle) {
+  private static DataOutputStream toDataOutputStream(FileAccessorCache.@NotNull Handle<SyncAbleBufferedOutputStreamOverCachedFileChannel> handle) {
     return new DataOutputStream(handle.get()) {
       @Override
       public void close() throws IOException {
@@ -874,30 +875,45 @@ public final class PersistentHashMapValueStorage {
     }
   }
 
-  private static class OutputStreamOverRandomAccessFileCache extends OutputStream {
+  private static class SyncAbleBufferedOutputStreamOverCachedFileChannel extends BufferedOutputStream {
     private final Path myPath;
 
-    OutputStreamOverRandomAccessFileCache(Path path) {
+    SyncAbleBufferedOutputStreamOverCachedFileChannel(final Path path) {
+      super(new OutputStreamOverRandomAccessFileCache(path));
       myPath = path;
     }
 
-    @Override
-    public void write(byte @NotNull [] b, int off, int len) throws IOException {
-      FileAccessorCache.Handle<FileChannelWithSizeTracking> fileAccessor = ourFileChannelCache.get(myPath);
-      FileChannelWithSizeTracking file = fileAccessor.get();
-      try {
-        file.write(file.length(), b, off, len);
+    public void sync() throws IOException {
+      final FileAccessorCache.Handle<FileChannelWithSizeTracking> fileAccessor = ourFileChannelCache.get(myPath);
+      final FileChannelWithSizeTracking fileChannel = fileAccessor.get();
+      fileChannel.force();
+    }
+
+    /** Implements output stream by writing data through {@link FileChannelWithSizeTracking} out of {@link #ourFileChannelCache} */
+    private static class OutputStreamOverRandomAccessFileCache extends OutputStream {
+      private final Path myPath;
+
+      public OutputStreamOverRandomAccessFileCache(Path path) { myPath = path; }
+
+      @Override
+      public void write(byte @NotNull [] b, int off, int len) throws IOException {
+        FileAccessorCache.Handle<FileChannelWithSizeTracking> fileAccessor = ourFileChannelCache.get(myPath);
+        FileChannelWithSizeTracking file = fileAccessor.get();
+        try {
+          file.write(file.length(), b, off, len);
+        }
+        finally {
+          fileAccessor.release();
+        }
       }
-      finally {
-        fileAccessor.release();
+
+      @Override
+      public void write(int b) throws IOException {
+        byte[] r = {(byte)(b & 0xFF)};
+        write(r);
       }
     }
 
-    @Override
-    public void write(int b) throws IOException {
-      byte[] r = {(byte)(b & 0xFF)};
-      write(r);
-    }
   }
 
   private class MyCompressedAppendableFile extends CompressedAppendableFile {

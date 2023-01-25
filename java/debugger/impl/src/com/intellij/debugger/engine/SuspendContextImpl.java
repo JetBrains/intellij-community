@@ -30,9 +30,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-/**
- * @author lex
- */
 public abstract class SuspendContextImpl extends XSuspendContext implements SuspendContext {
   private static final Logger LOG = Logger.getInstance(SuspendContextImpl.class);
 

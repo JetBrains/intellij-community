@@ -26,9 +26,6 @@ import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker.areSchemaTypesCompatible;
 
-/**
- * @author Irina.Chernushina on 4/24/2017.
- */
 public class JsonSchemaResolver {
   @NotNull private final Project myProject;
   @NotNull private final JsonSchemaObject mySchema;

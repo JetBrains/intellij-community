@@ -1,6 +1,7 @@
 {
   "expui": {
     "actions": {
+      "buildAutoReloadChanges.svg": "actions/buildAutoReloadChanges.svg",
       "deploy.svg": "nodes/deploy.svg",
       "filterdups.svg": "toolbar/filterdups.svg",
       "generated.svg": "actions/generatedFolder.svg",
@@ -517,6 +518,10 @@
       ],
       "phpWeb.svg": "icons/run_web_app.svg"
     },
+    "profiler": {
+      "collapseNode.svg": "profiler/collapseNode.svg",
+      "expandNode.svg": "profiler/expandNode.svg"
+    },
     "progress": {
       "pause.svg": [
         "process/progressPause.svg",
@@ -579,7 +584,10 @@
       "testIgnored.svg": "runConfigurations/testIgnored.svg",
       "testNotRunYet.svg": "runConfigurations/testNotRan.svg",
       "testPassed.svg": "runConfigurations/testPassed.svg",
-      "testPassedIgnored.svg": "runConfigurations/testPassedIgnored.svg",
+      "testPassedIgnored.svg": [
+        "runConfigurations/testPassedIgnored.svg",
+        "runConfigurations/toolbarPassedIgnored.svg"
+      ],
       "testPaused.svg": "runConfigurations/testPaused.svg",
       "testSkipped.svg": "runConfigurations/testSkipped.svg",
       "testTerminated.svg": "runConfigurations/testTerminated.svg",
@@ -602,6 +610,7 @@
         "ide/fatalError.svg"
       ],
       "errorOutline.svg": "ide/fatalError-read.svg",
+      "failedInProgress.svg": "status/failedInProgress.svg",
       "info.svg": "general/balloonInformation.svg",
       "warning.svg": "general/balloonWarning.svg",
       "warningOutline.svg": "general/showWarning.svg"
@@ -657,6 +666,7 @@
       "currentBranch.svg": "icons/currentBranchLabel.svg",
       "currentBranchFavorite.svg": "icons/currentBranchFavoriteLabel.svg",
       "diff.svg": "actions/diff.svg",
+      "fetch.svg": "vcs/fetch.svg",
       "intelliSort.svg": "icons/IntelliSort.svg",
       "merge.svg": "vcs/merge.svg",
       "patch.svg": "vcs/patch.svg",

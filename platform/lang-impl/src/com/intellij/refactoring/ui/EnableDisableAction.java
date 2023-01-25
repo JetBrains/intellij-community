@@ -23,9 +23,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-/**
- * @author dsl
- */
 public abstract class EnableDisableAction extends AbstractAction {
   @Override
   public void actionPerformed(ActionEvent e) {

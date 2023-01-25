@@ -817,7 +817,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
       static LengthBasedJoiningTerminal extractLengthBasedTerminal(@NotNull TerminalBlock terminalBlock,
                                                                    @Nullable List<PsiVariable> nonFinalVariables) {
         if (nonFinalVariables != null && !nonFinalVariables.isEmpty()) return null;
-        ArrayList<PsiStatement> statements = ContainerUtil.newArrayList(terminalBlock.getStatements());
+        List<PsiStatement> statements = List.of(terminalBlock.getStatements());
         if (statements.size() < 2) return null;
         PsiIfStatement ifStatement = tryCast(statements.get(0), PsiIfStatement.class);
         if (ifStatement == null) return null;
@@ -1058,7 +1058,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
       static DelimiterRewriteJoiningTerminal extractDelimiterRewritingTerminal(@NotNull TerminalBlock terminalBlock,
                                                                                @Nullable List<PsiVariable> nonFinalVariables) {
         if (nonFinalVariables != null && nonFinalVariables.size() != 1) return null;
-        List<PsiStatement> statements = ContainerUtil.newArrayList(terminalBlock.getStatements());
+        List<PsiStatement> statements = List.of(terminalBlock.getStatements());
         if (statements.size() < 2) return null;
         // TODO maybe not just last, but check if delimiter not used after assignment?
         PsiAssignmentExpression assignment = extractAssignment(statements.get(statements.size() - 1));
@@ -1262,7 +1262,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         PsiExpression initializer = loopSource.getVariable().getInitializer();
         Object constantExpression = ExpressionUtils.computeConstantExpression(initializer);
         if (!Integer.valueOf(1).equals(constantExpression)) return null;
-        List<PsiStatement> statements = ContainerUtil.newArrayList(terminalBlock.getStatements());
+        List<PsiStatement> statements = List.of(terminalBlock.getStatements());
         if (statements.isEmpty()) return null;
         List<PsiExpression> joinParts = extractJoinParts(statements);
         if (joinParts == null) return null;

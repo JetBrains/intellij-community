@@ -36,8 +36,6 @@ for the IntelliJ Platform.
 Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory. 
 * If IntelliJ IDEA displays an error about a missing or out of date required plugin (e.g. Kotlin),
   [enable, upgrade, or install that plugin](https://www.jetbrains.com/help/idea/managing-plugins.html) and restart IntelliJ IDEA.
-* If IntelliJ IDEA displays an error about a Gradle configuration not found,
-  [refresh the Gradle projects](https://www.jetbrains.com/help/idea/jetgradle-tool-window.html). 
 
 ### IntelliJ Build Configuration
 1. It's recommended to use JetBrains Runtime 17 to compile the project. 

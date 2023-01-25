@@ -222,7 +222,7 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ArtifactPropertiesEntity(providerType, entitySource) {
       this.propertiesXmlTag = this@ArtifactPropertiesEntityData.propertiesXmlTag
-      this.artifact = parents.filterIsInstance<ArtifactEntity>().single()
+      parents.filterIsInstance<ArtifactEntity>().singleOrNull()?.let { this.artifact = it }
     }
   }
 

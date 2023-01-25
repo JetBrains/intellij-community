@@ -180,16 +180,6 @@ public final class Utils {
 
   private static final boolean DO_FULL_EXPAND = Boolean.getBoolean("actionSystem.use.full.group.expand"); // for tests and debug
 
-  /** @deprecated Use {@link #expandActionGroup(ActionGroup, PresentationFactory, DataContext, String)} */
-  @Deprecated(forRemoval = true)
-  public static @NotNull List<AnAction> expandActionGroup(boolean isInModalContext,
-                                                          @NotNull ActionGroup group,
-                                                          @NotNull PresentationFactory presentationFactory,
-                                                          @NotNull DataContext context,
-                                                          @NotNull String place) {
-    return expandActionGroup(group, presentationFactory, context, place);
-  }
-
   public static @NotNull List<AnAction> expandActionGroup(@NotNull ActionGroup group,
                                                           @NotNull PresentationFactory presentationFactory,
                                                           @NotNull DataContext context,

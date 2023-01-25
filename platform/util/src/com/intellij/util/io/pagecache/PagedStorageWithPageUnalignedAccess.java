@@ -122,31 +122,38 @@ public class PagedStorageWithPageUnalignedAccess implements PagedStorage {
     alignedAccessStorage.get(offsetInFile, destination, offsetInArray, length);
   }
 
+  @Override
   public void put(final long offsetInFile,
                   final byte[] src, final int offsetInArray, final int length) throws IOException {
     alignedAccessStorage.put(offsetInFile, src, offsetInArray, length);
   }
 
+  @Override
   public @NotNull StorageLockContext getStorageLockContext() {
     return alignedAccessStorage.getStorageLockContext();
   }
 
+  @Override
   public @NotNull Path getFile() {
     return alignedAccessStorage.getFile();
   }
 
+  @Override
   public boolean isReadOnly() {
     return alignedAccessStorage.isReadOnly();
   }
 
+  @Override
   public int getPageSize() {
     return alignedAccessStorage.getPageSize();
   }
 
+  @Override
   public boolean isNativeBytesOrder() {
     return alignedAccessStorage.isNativeBytesOrder();
   }
 
+  @Override
   public long length() {
     return alignedAccessStorage.length();
   }
@@ -156,12 +163,14 @@ public class PagedStorageWithPageUnalignedAccess implements PagedStorage {
     alignedAccessStorage.clear();
   }
 
+  @Override
   public boolean isDirty() {
     return alignedAccessStorage.isDirty();
   }
 
-  public Page pageByOffset(final long offsetInFile,
-                           final boolean forModification) throws IOException {
+  @Override
+  public @NotNull Page pageByOffset(final long offsetInFile,
+                                    final boolean forModification) throws IOException {
     return alignedAccessStorage.pageByOffset(offsetInFile, forModification);
   }
 
@@ -170,14 +179,17 @@ public class PagedStorageWithPageUnalignedAccess implements PagedStorage {
     return alignedAccessStorage.toOffsetInPage(offsetInFile);
   }
 
+  @Override
   public boolean isClosed() {
     return alignedAccessStorage.isClosed();
   }
 
+  @Override
   public void force() throws IOException {
     alignedAccessStorage.force();
   }
 
+  @Override
   public void close() throws IOException, InterruptedException {
     alignedAccessStorage.close();
   }

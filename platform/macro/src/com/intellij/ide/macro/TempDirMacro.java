@@ -4,6 +4,7 @@
  import com.intellij.ide.IdeCoreBundle;
  import com.intellij.openapi.actionSystem.DataContext;
  import com.intellij.openapi.util.SystemInfo;
+ import com.intellij.util.SystemProperties;
  import org.jetbrains.annotations.NotNull;
  import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +27,8 @@
      if (SystemInfo.isWindows) {
        String tempDir = System.getenv("TEMP");
        if (tempDir == null) {
-         String homeDir = System.getProperty("user.home");
-         if (homeDir != null) {
-           tempDir = homeDir + "\\AppData\\Local\\Temp";
-         }
+         String homeDir = SystemProperties.getUserHome();
+         tempDir = homeDir + "\\AppData\\Local\\Temp";
        }
        return tempDir;
      }

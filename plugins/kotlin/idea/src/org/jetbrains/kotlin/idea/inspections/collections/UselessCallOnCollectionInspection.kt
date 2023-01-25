@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstr
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
@@ -46,15 +47,17 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         conversion: Conversion
     ) {
         val receiverType = expression.receiverExpression.getType(context) ?: return
-        val receiverTypeArgument = receiverType.arguments.singleOrNull()?.type ?: return
+        val receiverTypeArgument = receiverType.arguments.singleOrNull() ?: return
+        val receiverTypeArgumentType = receiverTypeArgument.type
         val resolvedCall = expression.getResolvedCall(context) ?: return
         if (calleeExpression.text == "filterIsInstance") {
+            if (receiverTypeArgument.projectionKind == Variance.IN_VARIANCE) return
             val typeParameterDescriptor = resolvedCall.candidateDescriptor.typeParameters.singleOrNull() ?: return
             val argumentType = resolvedCall.typeArguments[typeParameterDescriptor] ?: return
-            if (receiverTypeArgument.isFlexible() || !receiverTypeArgument.isSubtypeOf(argumentType)) return
+            if (receiverTypeArgumentType.isFlexible() || !receiverTypeArgumentType.isSubtypeOf(argumentType)) return
         } else {
             // xxxNotNull
-            if (TypeUtils.isNullableType(receiverTypeArgument)) return
+            if (TypeUtils.isNullableType(receiverTypeArgumentType)) return
             if (calleeExpression.text != "filterNotNull") {
                 // Also check last argument functional type to have not-null result
                 val lastParameterMatches = resolvedCall.hasLastFunctionalParameterWithResult(context) {

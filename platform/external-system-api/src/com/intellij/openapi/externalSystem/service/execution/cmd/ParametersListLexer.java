@@ -1,8 +1,5 @@
 package com.intellij.openapi.externalSystem.service.execution.cmd;
 
-/**
- * @author Sergey Evdokimov
- */
 public class ParametersListLexer {
 
   private final String myText;

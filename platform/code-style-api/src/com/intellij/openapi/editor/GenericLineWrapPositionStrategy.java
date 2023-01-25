@@ -14,8 +14,6 @@ import java.util.Arrays;
  * Highly customizable {@link LineWrapPositionStrategy} implementation.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy {
 

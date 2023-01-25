@@ -1,4 +1,4 @@
-// "Collapse loop with stream 'anyMatch()'" "false"
+// "Collapse loop with stream 'anyMatch()/noneMatch()/allMatch()'" "false"
 
 import java.util.List;
 

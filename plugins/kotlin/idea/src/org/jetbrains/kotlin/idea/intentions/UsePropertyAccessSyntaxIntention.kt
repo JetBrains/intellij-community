@@ -3,9 +3,12 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptPane.stringList
+import com.intellij.codeInspection.options.OptionController
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.util.Key
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
@@ -25,7 +28,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
-import org.jetbrains.kotlin.idea.configuration.ui.NotPropertyListPanel
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
@@ -63,11 +65,10 @@ import org.jetbrains.kotlin.types.typeUtil.isBoolean
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.shouldNotConvertToProperty
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import javax.swing.JComponent
 
 @Suppress("DEPRECATION")
 class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>(UsePropertyAccessSyntaxIntention::class),
-    CleanupLocalInspectionTool {
+                                          CleanupLocalInspectionTool {
 
     val fqNameList = NotPropertiesService.DEFAULT.map(::FqNameUnsafe).toMutableList()
 
@@ -87,9 +88,15 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>
         super.writeSettings(node)
     }
 
-    override fun createOptionsPanel(): JComponent {
-        val list = NotPropertyListPanel(fqNameList)
-        return LabeledComponent.create(list, KotlinBundle.message("excluded.methods"))
+    override fun getOptionsPane(): OptPane = pane(stringList("fqNameStrings", KotlinBundle.message("excluded.methods")))
+
+    override fun getOptionController(): OptionController {
+        return super.getOptionController()
+            .onValueSet("fqNameStrings") { newList ->
+                assert(newList === fqNameStrings)
+                fqNameList.clear()
+                fqNameStrings.mapTo(fqNameList, ::FqNameUnsafe)
+            }
     }
 
     override fun inspectionTarget(element: KtExpression): PsiElement? =
@@ -362,8 +369,8 @@ private inline fun <T> KtExpression.callOrReferenceOrNull(
     call: (KtCallExpression) -> T,
     reference: (KtCallableReferenceExpression) -> T
 ): T? =
-    when {
-        this is KtCallExpression -> call(this)
-        this is KtSimpleNameExpression && parent is KtCallableReferenceExpression -> reference(parent as KtCallableReferenceExpression)
+    when (this) {
+        is KtCallExpression -> call(this)
+        is KtCallableReferenceExpression -> reference(this)
         else -> null
     }

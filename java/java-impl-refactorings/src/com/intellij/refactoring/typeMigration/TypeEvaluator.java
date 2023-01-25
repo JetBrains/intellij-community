@@ -24,9 +24,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-/**
- * @author db
- */
 public class TypeEvaluator {
   private final HashMap<TypeMigrationUsageInfo, LinkedList<PsiType>> myTypeMap;
   private final TypeMigrationRules myRules;

@@ -70,6 +70,8 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
     unloadedStorage.addUnloadedModuleNames(toUnload)
     if (toUnload.isNotEmpty()) {
       val toUnloadSet = toUnload.toSet()
+      /* we need to create a snapshot because adding entities from one builder to another will result
+         in "Entity is already created in a different builder" exception */
       val snapshot = builder.toSnapshot()
       val moduleEntitiesToAdd = snapshot.entities(ModuleEntity::class.java).filter { it.name in toUnloadSet }.toList()
       val moduleEntitiesToRemove = builder.entities(ModuleEntity::class.java).filter { it.name in toUnloadSet }.toList()

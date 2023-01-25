@@ -35,9 +35,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
 public final class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
   private static final Logger LOG = Logger.getInstance(LibraryDataService.class);

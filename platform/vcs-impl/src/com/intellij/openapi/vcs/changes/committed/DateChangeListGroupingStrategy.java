@@ -14,9 +14,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 
-/**
-* @author irengrig
-*/
 public final class DateChangeListGroupingStrategy implements ChangeListGroupingStrategy {
   @NonNls private final SimpleDateFormat myMonthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.ENGLISH);
   private long myTimeToRecalculateAfter;

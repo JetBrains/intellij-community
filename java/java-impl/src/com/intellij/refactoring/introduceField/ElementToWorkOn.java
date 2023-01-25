@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public final class ElementToWorkOn {
   public static final Key<PsiElement> PARENT = Key.create("PARENT");
   private final PsiExpression myExpression;

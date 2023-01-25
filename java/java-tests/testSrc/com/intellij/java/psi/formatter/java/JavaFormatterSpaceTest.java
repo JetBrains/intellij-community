@@ -7,8 +7,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * Is intended to hold specific java formatting tests for 'spacing' settings.
- *
- * @author Denis Zhdanov
  */
 public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   @Override
@@ -1080,5 +1078,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+
+  public void testForeachPatternInside() {
+    doMethodTest(
+      "for (Rec(): foo)",
+      "for (Rec() : foo)");
+  }
 
 }

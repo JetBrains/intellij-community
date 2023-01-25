@@ -19,9 +19,6 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.testFramework.NeedsIndex
 
-/**
- * @author Pavel.Dolgov
- */
 @NeedsIndex.ForStandardLibrary
 class JavaReflectionCompletionOverloadTest : LightFixtureCompletionTestCase() {
 

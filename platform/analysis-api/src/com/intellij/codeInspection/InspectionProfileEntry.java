@@ -25,7 +25,6 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.serialization.SerializationException;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
@@ -43,7 +42,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -339,55 +337,37 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
   /**
    * Old and discouraged way to create inspection options. Override {@link #getOptionsPane()} instead.
-   * If you need to render options, use {@link InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable)}.
+   * If you need to render options, use {@link InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)}.
    *
    * @return {@code null} if no UI options required.
    */
   public @Nullable JComponent createOptionsPanel() {
     OptPane pane = getOptionsPane();
     if (pane.equals(OptPane.EMPTY)) return null;
-    return InspectionOptionPaneRenderer.getInstance().render(this, getOptionsPane(), null);
+    return InspectionOptionPaneRenderer.getInstance().render(this, getOptionsPane(), null, null);
   }
 
   /**
    * @return declarative representation of the inspection options. If this method returns a non-empty pane, then
    * {@link #createOptionsPanel()} is not used.
+   * 
    * @see OptPane#pane(OptRegularComponent...) 
-   * @see InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable) 
+   * @see InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)
+   * @see #getOptionController() if you need custom logic to read/write options
    */
   public @NotNull OptPane getOptionsPane() {
     return OptPane.EMPTY;
   }
 
   /**
-   * @return a controller to process inspection options. The default implementation
-   * finds a field with the corresponding name and uses/updates its value.
+   * @return a controller to process inspection options specified by {@link #getOptionsPane()}. 
+   * The default implementation finds a field with the corresponding name and uses/updates its value.
    * If you need to process some options specially, you can override this method in particular inspection
    * and compose a new controller using methods like {@link OptionController#onPrefix} and
    * {@link OptionController#onValue}.
    */
   public @NotNull OptionController getOptionController() {
-    return OptionController.of(
-      bindId -> {
-        Field field;
-        try {
-          field = ReflectionUtil.findAssignableField(getClass(), null, bindId);
-        }
-        catch (NoSuchFieldException e) {
-          throw new IllegalArgumentException("Inspection " + getClass().getName() + ": Unable to find bindId = " + bindId, e);
-        }
-        return ReflectionUtil.getFieldValue(field, this);
-      },
-      (bindId, value) -> {
-        try {
-          final Field field = ReflectionUtil.findAssignableField(getClass(), null, bindId);
-          field.set(this, value);
-        }
-        catch (NoSuchFieldException | IllegalAccessException e) {
-          throw new IllegalArgumentException("Inspection " + getClass().getName() + ": Unable to find bindId = " + bindId, e);
-        }
-      }
-    );
+    return OptionController.fieldsOf(this);
   }
 
   /**

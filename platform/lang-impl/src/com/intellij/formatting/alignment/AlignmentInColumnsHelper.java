@@ -41,8 +41,6 @@ import java.util.List;
  * This class is not singleton but it's thread-safe and provides single-point-of-usage field {@link #INSTANCE}.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class AlignmentInColumnsHelper {
 

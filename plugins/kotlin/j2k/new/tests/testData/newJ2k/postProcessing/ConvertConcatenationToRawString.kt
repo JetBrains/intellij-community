@@ -1,24 +1,24 @@
 class Test {
     var s1 = """
-           asdf
-           asdfasdf
-           """.trimIndent()
+         asdf
+         asdfasdf
+         """.trimIndent()
     var s2 = """
-           asdf
-           asdfasdf
+         asdf
+         asdfasdf
 
-           """.trimIndent()
+         """.trimIndent()
     var s3 = """
-           asdf
-           nadfadsf
-           asdfasdf
-           """.trimIndent()
+         asdf
+         nadfadsf
+         asdfasdf
+         """.trimIndent()
     var s4 = """
-           asdf
-           nadfadsf
-           asdfasdf
+         asdf
+         nadfadsf
+         asdfasdf
 
-           """.trimIndent()
+         """.trimIndent()
     var trailingNewlinesOnly = "asdf" + "\n"
     var trailingNewlinesOnly2 = "asdf\n" + "\n"
 }

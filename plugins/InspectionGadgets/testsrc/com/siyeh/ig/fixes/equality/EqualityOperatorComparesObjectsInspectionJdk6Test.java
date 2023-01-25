@@ -20,9 +20,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 
-/**
- * @author Pavel.Dolgov
- */
 public class EqualityOperatorComparesObjectsInspectionJdk6Test extends EqualityOperatorComparesObjectsInspectionTestBase {
 
   public void testSimpleObjectOldSafeComparison() { doTest(InspectionGadgetsBundle.message("equality.to.safe.equals.quickfix")); }

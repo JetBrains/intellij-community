@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author Denis Zhdanov
- */
 public class JavaArrangementParseInfo {
 
   private final List<JavaElementArrangementEntry> myEntries = new ArrayList<>();

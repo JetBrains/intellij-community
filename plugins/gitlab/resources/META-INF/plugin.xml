@@ -33,5 +33,17 @@
     <toolWindow id="Merge Requests" icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"
                 anchor="left" doNotActivateOnStart="true"
                 factoryClass="org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowFactory"/>
+
+    <virtualFileSystem key="gitlabmr" implementationClass="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabVirtualFileSystem"/>
+    <fileEditorProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabFileEditorProvider"/>
   </extensions>
+
+  <actions>
+    <group id="GitLab.Merge.Requests.List.Actions">
+      <action id="GitLab.Merge.Request.Show"
+              class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
+      <action id="GitLab.Merge.Request.Open.In.Browser"
+              class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabOpenMergeRequestInBrowserAction"/>
+    </group>
+  </actions>
 </idea-plugin>

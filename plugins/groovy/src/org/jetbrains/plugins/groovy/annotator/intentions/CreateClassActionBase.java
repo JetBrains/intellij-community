@@ -28,9 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-/**
- * @author ilyas
- */
 public abstract class CreateClassActionBase extends Intention {
   private final GrCreateClassKind myType;
 

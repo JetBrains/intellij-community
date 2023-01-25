@@ -8,9 +8,6 @@ import org.jetbrains.idea.svn.api.SvnClient;
 
 import java.io.File;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface ConflictClient extends SvnClient {
 
   void resolve(@NotNull File path, @Nullable Depth depth, boolean resolveProperty, boolean resolveContent, boolean resolveTree)

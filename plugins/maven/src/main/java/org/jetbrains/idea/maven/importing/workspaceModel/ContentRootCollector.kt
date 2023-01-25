@@ -55,11 +55,13 @@ object ContentRootCollector {
           if (prev.rootTypeRank <= curr.rootTypeRank) {
             return@forEach
           }
-          else {
-            nearestRoot.folders.removeLast()
-          }
+          nearestRoot.folders.removeLast()
         }
         else if (prev is GeneratedSourceFolder && curr is UserOrGeneratedSourceFolder) {
+          // prefer generated folder to annotations subfolder
+          if (curr is GeneratedSourceFolder && curr.isAnnotationFolder) {
+            return@forEach
+          }
           // don't add generated folder when there are sub source folder
           nearestRoot.folders.removeLast()
         }
@@ -148,7 +150,7 @@ object ContentRootCollector {
   class ProjectRootFolder(path: String) : ImportedFolder(path, 0)
   class SourceFolder(path: String, type: JpsModuleSourceRootType<*>) : UserOrGeneratedSourceFolder(path, type, 1)
   class ExcludedFolderAndPreventSubfolders(path: String) : BaseExcludedFolder(path, 2)
-  class GeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>) : UserOrGeneratedSourceFolder(path, type, 3)
+  class GeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>, val isAnnotationFolder: Boolean = false) : UserOrGeneratedSourceFolder(path, type, 3)
   class ExcludedFolder(path: String) : BaseExcludedFolder(path, 4)
 
   class ContentRootResult(val path: String,

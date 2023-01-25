@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ItemListener;
 
-/**
- * @author dsl
- */
 public class TypeSelector {
   private final PsiType myType;
   private final JComponent myComponent;

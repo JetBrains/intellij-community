@@ -17,9 +17,6 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
-/**
- * @author Pavel.Dolgov
- */
 public class UnwrapElseBranchTest extends LightIntentionActionTestCase {
 
   @Override

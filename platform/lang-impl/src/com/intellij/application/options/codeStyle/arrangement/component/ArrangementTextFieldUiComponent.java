@@ -28,9 +28,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementTextFieldUiComponent extends AbstractArrangementUiComponent {
 
   @NotNull private final JBTextField myTextField = new JBTextField(20);

@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.consumeUnrelatedEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.JobProvider
@@ -24,7 +25,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.util.awaitCancellation
+import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -273,7 +274,7 @@ private fun CoroutineScope.showModalIndicator(
       },
     )
 
-    awaitCancellation {
+    awaitCancellationAndInvoke {
       dialog.close(DialogWrapper.OK_EXIT_CODE)
     }
 
@@ -295,7 +296,7 @@ private fun CoroutineScope.showModalIndicator(
       val previousFocusOwner = SwingUtilities.getWindowAncestor(focusComponent)?.mostRecentFocusOwner
       focusComponent.requestFocusInWindow()
       if (previousFocusOwner != null) {
-        awaitCancellation {
+        awaitCancellationAndInvoke {
           previousFocusOwner.requestFocusInWindow()
         }
       }
@@ -335,9 +336,21 @@ private fun IdeEventQueue.pumpEventsForHierarchy(
   assert(EventQueue.isDispatchThread())
   while (!exitCondition()) {
     val event: AWTEvent = nextEvent
-    val consumed = IdeEventQueue.consumeUnrelatedEvent(modalComponent(), event)
+    val consumed = consumeUnrelatedEvent(modalComponent(), event)
     if (!consumed) {
       dispatchEvent(event)
     }
   }
+}
+
+@Internal
+fun IdeEventQueue.pumpEventsUntilJobIsCompleted(job: Job) {
+  job.invokeOnCompletion {
+    // Unblock `getNextEvent()` in case it's blocked.
+    SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
+  }
+  pumpEventsForHierarchy(
+    exitCondition = job::isCompleted,
+    modalComponent = { null },
+  )
 }

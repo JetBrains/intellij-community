@@ -13,6 +13,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import kotlin.io.path.bufferedReader
 
 @Suppress("SpellCheckingInspection")
@@ -85,11 +86,31 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       productCode = productProperties.productCode
     }
     this.productCode = productCode!!
-    val majorReleaseDate = buildTag.getAttributeValue("majorReleaseDate")
-    check (isEAP || (majorReleaseDate != null && !majorReleaseDate.startsWith("__"))) {
-      "majorReleaseDate may be omitted only for EAP"
+    this.majorReleaseDate = run {
+      val majorReleaseDate = buildTag.getAttributeValue("majorReleaseDate")
+      when {
+        isEAP -> {
+          val buildDate = Instant.ofEpochSecond(buildOptions.buildDateInSeconds)
+          val expirationDate = buildDate.plus(30, ChronoUnit.DAYS)
+          val now = Instant.ofEpochMilli(System.currentTimeMillis())
+          if (expirationDate < now) {
+            val msg = "Supplied build date is $buildDate, " +
+                      "so expiration date is in the past, " +
+                      "distribution won't be able to start"
+            if (buildOptions.isInDevelopmentMode) {
+              error(msg)
+            }
+            else {
+              println("##teamcity[buildProblem description='$msg']")
+            }
+          }
+        }
+        majorReleaseDate == null || majorReleaseDate.startsWith("__") -> {
+          error("majorReleaseDate may be omitted only for EAP")
+        }
+      }
+      formatMajorReleaseDate(majorReleaseDate, buildOptions.buildDateInSeconds)
     }
-    this.majorReleaseDate = formatMajorReleaseDate(majorReleaseDate, buildOptions.buildDateInSeconds)
     productName = namesTag.getAttributeValue("fullname") ?: shortProductName
     edition = namesTag.getAttributeValue("edition")
     motto = namesTag.getAttributeValue("motto")

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -94,20 +93,17 @@ final class WolfListeners implements Disposable {
         }
       }
     });
-    FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
-    if (fileStatusManager != null) { //tests?
-      fileStatusManager.addFileStatusListener(new FileStatusListener() {
-        @Override
-        public void fileStatusesChanged() {
-          clearInvalidFiles();
-        }
+    busConnection.subscribe(FileStatusListener.TOPIC, new FileStatusListener() {
+      @Override
+      public void fileStatusesChanged() {
+        clearInvalidFiles();
+      }
 
-        @Override
-        public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
-          fileStatusesChanged();
-        }
-      }, this);
-    }
+      @Override
+      public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
+        fileStatusesChanged();
+      }
+    });
 
     busConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override

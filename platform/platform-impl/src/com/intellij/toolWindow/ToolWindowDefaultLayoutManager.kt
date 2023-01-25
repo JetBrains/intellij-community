@@ -87,6 +87,15 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     }
   }
 
+  /**
+   * Rider uses default layout for per-app toolwindows feature, so we need to migrate default layout
+   */
+  @Serializable
+  data class ToolWindowLayoutStorageManagerStateV1(
+    val v1: List<ToolWindowDescriptor> = emptyList(),
+    val v2: List<ToolWindowDescriptor> = emptyList()
+  )
+
   @Serializable
   data class ToolWindowLayoutStorageManagerState(
     val activeLayoutName: String = DEFAULT_LAYOUT_NAME,
@@ -177,7 +186,7 @@ private fun convertWindowStateToDescriptor(it: WindowInfoImpl): ToolWindowDescri
     isSplit = it.isSplit,
 
     type = it.type,
-    internalType = it.type,
+    internalType = it.internalType,
     contentUiType = when(it.contentUiType) {
       ToolWindowContentUiType.TABBED -> ToolWindowDescriptor.ToolWindowContentUiType.TABBED
       ToolWindowContentUiType.COMBO -> ToolWindowDescriptor.ToolWindowContentUiType.COMBO
@@ -218,7 +227,7 @@ private fun convertWindowDescriptorsToWindowInfos(list: List<ToolWindowDescripto
       isSplit = it.isSplit
 
       type = it.type
-      internalType = it.type
+      internalType = it.internalType
       contentUiType = when (it.contentUiType) {
         ToolWindowDescriptor.ToolWindowContentUiType.TABBED -> ToolWindowContentUiType.TABBED
         ToolWindowDescriptor.ToolWindowContentUiType.COMBO -> ToolWindowContentUiType.COMBO

@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author Irina.Chernushina on 2/17/2016.
- */
 public class JsonSchemaPatternComparator {
   @NotNull
   private final Project myProject;

@@ -3,7 +3,6 @@ package git4idea.commands;
 
 import com.intellij.externalProcessAuthHelper.ScriptGeneratorImpl;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import externalApp.ExternalApp;
 import externalApp.nativessh.NativeSshAskPassAppHandler;
 import git4idea.config.GitExecutable;
@@ -37,12 +36,13 @@ public class GitScriptGenerator extends ScriptGeneratorImpl {
     if (myExecutable instanceof GitExecutable.Wsl) {
       // pass ENV variables from git to java command
       StringBuilder sb = new StringBuilder();
-      List<String> envs = ContainerUtil.newArrayList(
+      List<String> envs = List.of(
         NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_HANDLER_ENV,
         NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_PORT_ENV,
         GitAskPassAppHandler.IJ_ASK_PASS_HANDLER_ENV,
         GitAskPassAppHandler.IJ_ASK_PASS_PORT_ENV,
-        GitRebaseEditorAppHandler.IJ_EDITOR_HANDLER_ENV);
+        GitRebaseEditorAppHandler.IJ_EDITOR_HANDLER_ENV,
+        GitRebaseEditorAppHandler.IJ_EDITOR_PORT_ENV);
       sb.append("export WSLENV=");
       sb.append(StringUtil.join(envs, it -> it + "/w", ":"));
       sb.append("\n");

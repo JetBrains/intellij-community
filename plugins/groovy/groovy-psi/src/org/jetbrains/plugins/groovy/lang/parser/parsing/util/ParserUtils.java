@@ -12,8 +12,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType;
 /**
  * Utility classdef, that contains various useful methods for
  * parser needs.
- *
- * @author ilyas
  */
 public abstract class ParserUtils {
 

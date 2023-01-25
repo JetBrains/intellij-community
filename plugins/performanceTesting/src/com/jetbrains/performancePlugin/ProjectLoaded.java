@@ -33,6 +33,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand;
 import com.jetbrains.performancePlugin.commands.TakeScreenshotCommand;
 import com.jetbrains.performancePlugin.profilers.ProfilersController;
+import com.jetbrains.performancePlugin.utils.ReporterCommandAsTelemetrySpan;
 import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -409,6 +410,9 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
   private static void runScriptFromFile(Project project) {
     PlaybackRunner playback = new PlaybackRunnerExtended("%include " + getTestFile(), new CommandLogger(), project);
     playback.setScriptDir(getTestFile().getParentFile());
+    if (SystemProperties.getBooleanProperty(ReporterCommandAsTelemetrySpan.USE_SPAN_WRAPPER_FOR_COMMAND, false)) {
+      playback.setCommandStartStopProcessor(new ReporterCommandAsTelemetrySpan());
+    }
     ActionCallback scriptCallback = playback.run();
     CommandsRunner.setActionCallback(scriptCallback);
     runScript(scriptCallback);

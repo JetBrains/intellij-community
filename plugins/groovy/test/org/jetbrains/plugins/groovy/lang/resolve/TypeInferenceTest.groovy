@@ -20,9 +20,6 @@ import static com.intellij.psi.CommonClassNames.*
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.allowNestedContext
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.allowNestedContextOnce
 
-/**
- * @author ven
- */
 @CompileStatic
 class TypeInferenceTest extends TypeInferenceTestBase {
 

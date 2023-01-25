@@ -7,7 +7,10 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -22,12 +25,18 @@ public abstract class GroupedElementsRenderer implements Accessible {
 
   protected abstract JComponent createItemComponent();
 
+  /**
+   * @deprecated Use {@link #getItemComponent()} getter instead, the field will be hidden
+   */
+  @Deprecated
   protected JComponent myComponent;
   protected MyComponent myRendererComponent;
+  private UpdateScaleHelper updateScaleHelper;
 
   protected ErrorLabel myTextLabel;
 
   public GroupedElementsRenderer() {
+    updateScaleHelper = new UpdateScaleHelper();
     myRendererComponent = new MyComponent();
 
     myComponent = createItemComponent();
@@ -36,6 +45,10 @@ public abstract class GroupedElementsRenderer implements Accessible {
   }
 
   protected abstract void layout();
+
+  public JComponent getItemComponent() {
+    return myComponent;
+  }
 
   protected SeparatorWithText createSeparator() {
     return new SeparatorWithText();
@@ -54,6 +67,8 @@ public abstract class GroupedElementsRenderer implements Accessible {
     setComponentIcon(icon, disabledIcon);
     updateSelection(isSelected, myComponent, myTextLabel);
     myRendererComponent.setPreferredWidth(preferredForcedWidth);
+
+    updateScaleHelper.saveScaleAndUpdateUIIfChanged(myRendererComponent);
 
     return myRendererComponent;
   }
@@ -178,9 +193,11 @@ public abstract class GroupedElementsRenderer implements Accessible {
   public class MyComponent extends OpaquePanel {
 
     private int myPrefWidth = -1;
+    private final @NotNull GroupedElementsRenderer renderer;
 
     public MyComponent() {
       super(new BorderLayout(), GroupedElementsRenderer.this.getBackground());
+      renderer = GroupedElementsRenderer.this;
     }
 
     public void setPreferredWidth(final int minWidth) {
@@ -192,6 +209,11 @@ public abstract class GroupedElementsRenderer implements Accessible {
       final Dimension size = super.getPreferredSize();
       size.width = myPrefWidth == -1 ? size.width : myPrefWidth;
       return size;
+    }
+
+    @ApiStatus.Internal
+    public @NotNull GroupedElementsRenderer getRenderer() {
+      return renderer;
     }
   }
 

@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public final class ExternalSystemDataKeys {
 
   @NotNull public static final DataKey<ProjectSystemId> EXTERNAL_SYSTEM_ID = DataKey.create("external.system.id");

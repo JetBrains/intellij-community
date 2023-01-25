@@ -103,7 +103,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
     List<ExternalLibrariesWorkspaceModelNodesProvider<?>> extensionList =
       ExternalLibrariesWorkspaceModelNodesProvider.EP.getExtensionList();
     if (!extensionList.isEmpty()) {
-      EntityStorage current = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+      EntityStorage current = WorkspaceModel.getInstance(project).getCurrentSnapshot();
       for (ExternalLibrariesWorkspaceModelNodesProvider<?> provider : extensionList) {
         handleProvider(provider, project, current, children);
       }

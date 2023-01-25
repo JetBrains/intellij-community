@@ -25,19 +25,25 @@ class PyDictLiteralCompletionContributor : CompletionContributor() {
 }
 
 private class DictLiteralCompletionProvider : CompletionProvider<CompletionParameters?>() {
+
+  private val DEFAULT_QUOTE = "\""
+
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val originalElement = parameters.originalPosition?.parent ?: return
 
-    val possibleSequenceExpr = if (originalElement is PyStringLiteralExpression) originalElement.parent else originalElement
+    var possibleSequenceExpr = if (originalElement is PyStringLiteralExpression) originalElement.parent else originalElement
+    if (possibleSequenceExpr is PyKeyValueExpression) {
+      possibleSequenceExpr = possibleSequenceExpr.parent
+    }
     if (possibleSequenceExpr is PyDictLiteralExpression || possibleSequenceExpr is PySetLiteralExpression) { // it's set literal when user is typing the first key
-      addCompletionToCallExpression(originalElement, possibleSequenceExpr as PyTypedElement, result)
+      addCompletionToCallExpression(originalElement, possibleSequenceExpr as PySequenceExpression, result)
       addCompletionToAssignment(originalElement, possibleSequenceExpr, result)
       addCompletionToReturnStatement(originalElement, possibleSequenceExpr, result)
     }
   }
 
   private fun addCompletionToCallExpression(originalElement: PsiElement,
-                                            possibleSequenceExpr: PyTypedElement,
+                                            possibleSequenceExpr: PySequenceExpression,
                                             result: CompletionResultSet) {
     val callExpression = PsiTreeUtil.getParentOfType(originalElement, PyCallExpression::class.java)
     if (callExpression != null) {
@@ -51,12 +57,25 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
       if (params.size < argumentIndex) return
       val expectedType = params[argumentIndex].getType(typeEvalContext)
       val actualType = typeEvalContext.getType(possibleSequenceExpr)
-      addCompletionForTypedDictKeys(expectedType, actualType, result, originalElement !is PyStringLiteralExpression)
+
+      addCompletionForTypedDictKeys(expectedType, actualType, result, getForcedQuote(possibleSequenceExpr, originalElement))
     }
   }
 
+  private fun getForcedQuote(possibleSequenceExpr: PySequenceExpression, originalElement: PsiElement): String {
+    if (originalElement !is PyStringLiteralExpression) {
+      val usedQuotes = possibleSequenceExpr.elements.mapNotNull { if (it is PyKeyValueExpression) it.key else it }
+        .filterIsInstance<PyStringLiteralExpression>()
+        .flatMap { it.stringElements }
+        .map { it.quote }
+        .toSet()
+      return usedQuotes.singleOrNull() ?: DEFAULT_QUOTE
+    }
+    return ""
+  }
+
   private fun addCompletionToAssignment(originalElement: PsiElement,
-                                        possibleSequenceExpr: PyTypedElement,
+                                        possibleSequenceExpr: PySequenceExpression,
                                         result: CompletionResultSet) {
     val assignment = PsiTreeUtil.getParentOfType(originalElement, PyAssignmentStatement::class.java)
     if (assignment != null) {
@@ -67,7 +86,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
       if (targetToValue?.first != null && targetToValue.second != null) {
         val expectedType = typeEvalContext.getType(targetToValue.first as PyTypedElement)
         val actualType = typeEvalContext.getType(targetToValue.second as PyTypedElement)
-        addCompletionForTypedDictKeys(expectedType, actualType, result, originalElement !is PyStringLiteralExpression)
+        addCompletionForTypedDictKeys(expectedType, actualType, result, getForcedQuote(possibleSequenceExpr, originalElement))
       }
       else { //multiple target expressions and there is a PsiErrorElement
         val targetExpr = assignment.assignedValue
@@ -80,7 +99,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
           if (index < assignment.targets.size) {
             val expectedType = typeEvalContext.getType(assignment.targets[index])
             val actualType = typeEvalContext.getType(element)
-            addCompletionForTypedDictKeys(expectedType, actualType, result, originalElement !is PyStringLiteralExpression)
+            addCompletionForTypedDictKeys(expectedType, actualType, result, getForcedQuote(possibleSequenceExpr, originalElement))
           }
         }
       }
@@ -88,7 +107,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
   }
 
   private fun addCompletionToReturnStatement(originalElement: PsiElement,
-                                             possibleSequenceExpr: PyTypedElement,
+                                             possibleSequenceExpr: PySequenceExpression,
                                              result: CompletionResultSet) {
     val returnStatement = PsiTreeUtil.getParentOfType(originalElement, PyReturnStatement::class.java)
     if (returnStatement != null) {
@@ -100,7 +119,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
         if (annotation != null || typeCommentAnnotation != null) { // to ensure that we have return type specified, not inferred
           val expectedType = typeEvalContext.getReturnType(owner)
           val actualType = typeEvalContext.getType(possibleSequenceExpr)
-          addCompletionForTypedDictKeys(expectedType, actualType, result, originalElement !is PyStringLiteralExpression)
+          addCompletionForTypedDictKeys(expectedType, actualType, result, getForcedQuote(possibleSequenceExpr, originalElement))
         }
       }
     }
@@ -109,7 +128,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
   private fun addCompletionForTypedDictKeys(expectedType: PyType?,
                                             actualType: PyType?,
                                             dictCompletion: CompletionResultSet,
-                                            addQuotes: Boolean) {
+                                            quote: String) {
     if (expectedType is PyTypedDictType) {
       val keys =
         when {
@@ -121,7 +140,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
       for (key in keys) {
         dictCompletion.addElement(
           LookupElementBuilder
-            .create(if (addQuotes) "'$key'" else key)
+            .create("$quote$key$quote")
             .withTypeText("dict key")
             .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter))
         )

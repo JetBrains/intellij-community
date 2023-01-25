@@ -2,6 +2,7 @@ package org.jetbrains.plugins.textmate.plist;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +93,6 @@ public class JsonPlistReader implements PlistReader {
       .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
       .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
       .build();
-    return new ObjectMapper(factory);
+    return new ObjectMapper(factory).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   }
 }

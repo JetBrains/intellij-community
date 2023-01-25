@@ -42,9 +42,6 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author db
- */
 public class TypeMigrationLabeler {
   private static final Logger LOG = Logger.getInstance(TypeMigrationLabeler.class);
   private boolean myShowWarning = true;
@@ -458,7 +455,7 @@ public class TypeMigrationLabeler {
 
     if (expr instanceof PsiConditionalExpression) {
       final PsiConditionalExpression condExpr = (PsiConditionalExpression)expr;
-      for (PsiExpression e : ContainerUtil.newArrayList(condExpr.getThenExpression(), condExpr.getElseExpression())) {
+      for (PsiExpression e : new PsiExpression[]{condExpr.getThenExpression(), condExpr.getElseExpression()}) {
         if (e != null) {
           migrateExpressionType(e, migrationType, place, alreadyProcessed, false);
         }

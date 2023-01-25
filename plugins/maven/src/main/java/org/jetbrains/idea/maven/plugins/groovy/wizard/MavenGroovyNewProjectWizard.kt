@@ -12,9 +12,6 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.DistributionInfo
@@ -26,7 +23,6 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.asSafely
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.loadLatestGroovyVersions
@@ -84,22 +80,21 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      val builder = MavenGroovyNewProjectBuilder(groovySdk.getVersion() ?: GROOVY_SDK_FALLBACK_VERSION).apply {
+      val groovySdkVersion = groovySdk.getVersion() ?: GROOVY_SDK_FALLBACK_VERSION
+      val builder = MavenGroovyNewProjectBuilder(groovySdkVersion).apply {
         moduleJdk = sdk
         name = parentStep.name
-        parentProject = parentData
         contentEntryPath = "${parentStep.path}/${parentStep.name}"
+
+        isCreatingNewProject = context.isCreatingNewProject
+
+        parentProject = parentData
         aggregatorProject = parentData
         projectId = MavenId(groupId, artifactId, version)
         isInheritGroupId = parentData?.mavenId?.groupId == groupId
         isInheritVersion = parentData?.mavenId?.version == version
         createSampleCode = addSampleCode
       }
-
-      ExternalProjectsManagerImpl.setupCreatedProject(project)
-      MavenProjectsManager.setupCreatedMavenProject(project)
-
-      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
       builder.commit(project)
     }
 

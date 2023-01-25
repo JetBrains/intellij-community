@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase
@@ -9,9 +9,9 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.file.converter.CanonicalPathPrefixTreeFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
@@ -42,6 +43,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import java.io.File
 import java.util.concurrent.Future
 
 @State(name = "sourceFolderManager", storages = [Storage(StoragePathMacros.CACHE_FILE)])
@@ -52,7 +54,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private val moduleNamesToSourceFolderState: MultiMap<String, SourceFolderModelState> = MultiMap.create()
   private var isDisposed = false
   private val mutex = Any()
-  private var sourceFolders = CanonicalPathPrefixTreeFactory.createMap<SourceFolderModel>()
+  private var sourceFolders = UrlPrefixFactory.createMap<SourceFolderModel>()
   private var sourceFoldersByModule = HashMap<String, ModuleModel>()
 
   private val operationsStates = mutableListOf<Future<*>>()
@@ -169,7 +171,9 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
 
     val application = ApplicationManager.getApplication()
     val future = project.coroutineScope.async {
-      updateSourceFolders(sourceFoldersToChange)
+      blockingContext {
+        updateSourceFolders(sourceFoldersToChange)
+      }
     }.asCompletableFuture()
 
     if (application.isUnitTestMode) {
@@ -223,7 +227,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 
   private fun batchUpdateModels(project: Project, modules: Collection<Module>, modifier: (ModifiableRootModel) -> Unit) {
-    val diffBuilder = WorkspaceModel.getInstance(project).entityStorage.current.toBuilder()
+    val diffBuilder = WorkspaceModel.getInstance(project).currentSnapshot.toBuilder()
     val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
       val moduleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
       val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder),
@@ -273,7 +277,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
       if (isDisposed) {
         return
       }
-      sourceFolders = CanonicalPathPrefixTreeFactory.createMap()
+      sourceFolders = UrlPrefixFactory.createMap()
       sourceFoldersByModule = HashMap()
 
       if (state.sourceFolders.isEmpty()) {
@@ -332,6 +336,17 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
       "RESOURCE" to JavaResourceRootType.RESOURCE,
       "TEST_RESOURCE" to JavaResourceRootType.TEST_RESOURCE
     )
+  }
+
+  /**
+   * Don't use outside SourceFolderManagerImpl,
+   * because all file paths which are representing by string should be canonical,
+   * but URL has system dependent presentation.
+   */
+  private object UrlPrefixFactory : AbstractPrefixTreeFactory<String, String>() {
+    override fun convertToList(element: String): List<String> {
+      return element.removeSuffix(File.separator).split(File.separator)
+    }
   }
 }
 

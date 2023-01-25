@@ -32,7 +32,7 @@ internal sealed class PackageModel : Comparable<PackageModel> {
     val identifier
         get() = PackageIdentifier("$groupId:$artifactId")
 
-    val sortKey
+    private val sortKey
         get() = (remoteInfo?.name.normalizeWhitespace() ?: identifier.rawValue.lowercase())
 
     val isKotlinMultiplatform

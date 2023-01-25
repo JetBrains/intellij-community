@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.OperatorToFunctionIntention
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
@@ -296,7 +296,7 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     override fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression? {
         val canMoveLambda = newExpression.getPossiblyQualifiedCallExpression()?.canMoveLambdaOutsideParentheses() == true
-        return OperatorToFunctionIntention.replaceExplicitInvokeCallWithImplicit(newExpression)?.let { newQualifiedExpression ->
+        return OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(newExpression)?.let { newQualifiedExpression ->
             newQualifiedExpression.getPossiblyQualifiedCallExpression()
                 ?.takeIf { canMoveLambda }
                 ?.let(KtCallExpression::moveFunctionLiteralOutsideParentheses)

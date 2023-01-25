@@ -42,8 +42,6 @@ import java.util.*;
  * Must be used inside the highlighting process only (e.g., in your {@link HighlightingPass#applyInformationToEditor()})
  */
 public final class UpdateHighlightersUtil {
-  private final static ExtensionPointName<HighlightInfoPostFilter> EP_NAME = new ExtensionPointName<>("com.intellij.highlightInfoPostFilter");
-
   private static final Comparator<HighlightInfo> BY_START_OFFSET_NO_DUPS = (o1, o2) -> {
     int d = o1.getActualStartOffset() - o2.getActualStartOffset();
     if (d != 0) return d;
@@ -85,7 +83,7 @@ public final class UpdateHighlightersUtil {
                                                   @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Project project = file.getProject();
-    if (!accept(project, info)) {
+    if (!HighlightInfoPostFilters.accept(project, info)) {
       return;
     }
 
@@ -113,13 +111,26 @@ public final class UpdateHighlightersUtil {
     }
   }
 
-  private static boolean accept(@NotNull Project project, @NotNull HighlightInfo info) {
-    for (HighlightInfoPostFilter filter : EP_NAME.getExtensions(project)) {
-      if (!filter.accept(info))
-        return false;
-    }
+  private static class HighlightInfoPostFilters {
+    private final static ExtensionPointName<HighlightInfoPostFilter> EP_NAME = new ExtensionPointName<>("com.intellij.highlightInfoPostFilter");
+    private static boolean accept(@NotNull Project project, @NotNull HighlightInfo info) {
+      for (HighlightInfoPostFilter filter : EP_NAME.getExtensions(project)) {
+        if (!filter.accept(info))
+          return false;
+      }
 
-    return true;
+      return true;
+    }
+    @NotNull
+    private static List<HighlightInfo> applyPostFilter(@NotNull Project project, @NotNull List<? extends HighlightInfo> highlightInfos) {
+      List<HighlightInfo> result = new ArrayList<>(highlightInfos.size());
+      for (HighlightInfo info : highlightInfos) {
+        if (accept(project, info)) {
+          result.add(info);
+        }
+      }
+      return result;
+    }
   }
 
   public static boolean isFileLevelOrGutterAnnotation(@NotNull HighlightInfo info) {
@@ -179,17 +190,6 @@ public final class UpdateHighlightersUtil {
   }
 
 
-  @NotNull
-  private static List<HighlightInfo> applyPostFilter(@NotNull Project project, @NotNull List<? extends HighlightInfo> highlightInfos) {
-    List<HighlightInfo> result = new ArrayList<>(highlightInfos.size());
-    for (HighlightInfo info : highlightInfos) {
-      if (accept(project, info)) {
-        result.add(info);
-      }
-    }
-    return result;
-  }
-
   // set highlights inside startOffset,endOffset but outside priorityRange
   static void setHighlightersOutsideRange(@NotNull Document document,
                                           @NotNull List<? extends HighlightInfo> infos,
@@ -201,7 +201,7 @@ public final class UpdateHighlightersUtil {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiFile psiFile = session.getPsiFile();
     Project project = session.getProject();
-    List<HighlightInfo> filteredInfos = applyPostFilter(project, infos);
+    List<HighlightInfo> filteredInfos = HighlightInfoPostFilters.applyPostFilter(project, infos);
 
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     if (startOffset == 0 && endOffset == document.getTextLength()) {
@@ -294,7 +294,7 @@ public final class UpdateHighlightersUtil {
       return true;
     });
 
-    List<HighlightInfo> filteredInfos = applyPostFilter(project, infos);
+    List<HighlightInfo> filteredInfos = HighlightInfoPostFilters.applyPostFilter(project, infos);
     ContainerUtil.quickSort(filteredInfos, BY_START_OFFSET_NO_DUPS);
     Long2ObjectMap<RangeMarker> ranges2markersCache = new Long2ObjectOpenHashMap<>(10);
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
@@ -464,9 +464,23 @@ public final class UpdateHighlightersUtil {
     }
   }
 
+  private static class InternalLayerSuppliers {
+    private static final ExtensionPointName<InternalLayerSupplier> EP_NAME = ExtensionPointName.create("com.intellij.internalHighlightingLayerSupplier");
+    private static int getLayerFromSuppliers(@NotNull HighlightInfo info) {
+      for (InternalLayerSupplier extension : EP_NAME.getExtensions()) {
+        int layer = extension.getLayer(info);
+        if (layer > 0) {
+          return layer;
+        }
+      }
+      return -1;
+    }
+  }
+
   private static int getLayer(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
-    if (info instanceof InternalLayerSupplier) {
-      return ((InternalLayerSupplier)info).getLayer();
+    int hardCodedLayer = InternalLayerSuppliers.getLayerFromSuppliers(info);
+    if (hardCodedLayer > 0) {
+      return hardCodedLayer;
     }
     HighlightSeverity severity = info.getSeverity();
     int layer;

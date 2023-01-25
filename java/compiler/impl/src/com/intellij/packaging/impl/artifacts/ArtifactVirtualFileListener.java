@@ -75,7 +75,7 @@ final class ArtifactVirtualFileListener implements BulkFileListener {
     //this is needed to set up mapping from ArtifactEntity to ArtifactBridge
     artifactManager.getArtifacts();
     
-    EntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
     ExternalEntityMapping<ArtifactBridge> artifactsMap = ArtifactManagerBridge.Companion.getArtifactsMap(storage);
     ModifiableArtifactModel model = artifactManager.createModifiableModel();
     for (ArtifactEntity artifactEntity : artifactEntities) {

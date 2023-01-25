@@ -48,7 +48,6 @@ import static com.intellij.openapi.util.NlsContexts.ProgressText;
  * Does all the heavy lifting calling skeleton generator, managing blacklists, etc.
  * One-time, non-reusable instances.
  * <br/>
- * User: dcheryasov
  */
 public class PySkeletonRefresher {
   private static final Logger LOG = Logger.getInstance(PySkeletonRefresher.class);

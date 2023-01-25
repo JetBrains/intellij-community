@@ -21,9 +21,6 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValuePair {
   private final ClsElementImpl myParent;
   private final ClsIdentifierImpl myNameIdentifier;

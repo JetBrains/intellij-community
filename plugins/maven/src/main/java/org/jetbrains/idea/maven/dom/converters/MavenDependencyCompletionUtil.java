@@ -29,9 +29,6 @@ import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIE
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
 import static org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem.Type.PROJECT;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenDependencyCompletionUtil {
 
   public static boolean isPlugin(@NotNull MavenDomShortArtifactCoordinates dependency) {

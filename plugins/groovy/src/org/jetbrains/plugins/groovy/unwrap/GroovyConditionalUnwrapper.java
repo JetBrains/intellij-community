@@ -8,9 +8,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCondit
 
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GroovyConditionalUnwrapper extends GroovyUnwrapper {
   public GroovyConditionalUnwrapper() {
     super(JavaBundle.message("unwrap.conditional"));

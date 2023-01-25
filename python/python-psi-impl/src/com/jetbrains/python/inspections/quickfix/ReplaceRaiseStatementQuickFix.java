@@ -26,9 +26,6 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyRaiseStatement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Alexey.Ivanov
- */
 public class ReplaceRaiseStatementQuickFix implements LocalQuickFix {
   @NotNull
   @Override

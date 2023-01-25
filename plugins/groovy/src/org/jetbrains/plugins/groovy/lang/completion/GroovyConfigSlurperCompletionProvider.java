@@ -42,9 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
-/**
- * @author Sergey Evdokimov
- */
 class GroovyConfigSlurperCompletionProvider extends CompletionProvider<CompletionParameters> {
 
   private final boolean myAddPrefixes;

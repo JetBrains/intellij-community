@@ -19,9 +19,6 @@ import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
 public final class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   @NotNull private static final Comparator<TreeNode> NODE_COMPARATOR = (t1, t2) -> {
     Object e1 = ((ExternalSystemNode<?>)t1).getDescriptor().getElement();

@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.application.Application;
@@ -41,7 +41,8 @@ import static org.junit.Assert.fail;
 
 /**
  * Provides 3 streams of output named system, stdout and stderr,
- * which are independent of but analogous to Java's {@link System#out} and {@link System#err}.
+ * which are independent of Java's {@link System#out} and {@link System#err}
+ * but analogous to them.
  * <p>
  * This output can be validated against prerecorded output in <tt>{@link #myAppPath}/outs</tt>.
  * The output files are named <i>testName[.platform][.jdkX].out</i>,
@@ -58,7 +59,11 @@ import static org.junit.Assert.fail;
  * To add custom normalization, override {@link #replaceAdditionalInOutput(String)}.
  */
 public class OutputChecker {
-  public static final Key[] OUTPUT_ORDER = {ProcessOutputTypes.SYSTEM, ProcessOutputTypes.STDOUT, ProcessOutputTypes.STDERR};
+  public static final ProcessOutputType[] OUTPUT_ORDER = {
+    ProcessOutputType.SYSTEM,
+    ProcessOutputType.STDOUT,
+    ProcessOutputType.STDERR
+  };
 
   private static final String JDK_HOME_STR = "!JDK_HOME!";
   //ERROR: JDWP Unable to get JNI 1.2 environment, jvm->GetEnv() return code = -2
@@ -69,7 +74,7 @@ public class OutputChecker {
   private static final Pattern JDI_BUG_OUTPUT_PATTERN_2 =
     Pattern.compile("JDWP\\s+exit\\s+error\\s+AGENT_ERROR_NO_JNI_ENV.*]\n");
 
-  /** If a string containing one of the listed strings is written to {@link ProcessOutputTypes#STDERR}, the whole string is ignored. */
+  /** If a string containing one of the listed strings is written to {@link ProcessOutputType#STDERR}, the whole string is ignored. */
   private static final String[] IGNORED_IN_STDERR = {"Picked up _JAVA_OPTIONS:", "Picked up JAVA_TOOL_OPTIONS:"};
 
   private final Producer<String> myAppPath;
@@ -109,7 +114,7 @@ public class OutputChecker {
   public void print(String s, Key outputType) {
     synchronized (this) {
       if (myBuffers != null) {
-        if (outputType == ProcessOutputTypes.STDERR && ContainerUtil.exists(IGNORED_IN_STDERR, s::contains)) {
+        if (outputType == ProcessOutputType.STDERR && ContainerUtil.exists(IGNORED_IN_STDERR, s::contains)) {
           return;
         }
         myBuffers.computeIfAbsent(outputType, k -> new StringBuffer()).append(s);

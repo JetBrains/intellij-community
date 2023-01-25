@@ -5,7 +5,9 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.openapi.externalSystem.util.*
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.file.VirtualFileUtil
+import com.intellij.openapi.vfs.findOrCreateFile
+import com.intellij.openapi.vfs.getFile
+import com.intellij.openapi.vfs.writeText
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder
@@ -80,8 +82,8 @@ fun VirtualFile.createSettingsFile(
   content: String
 ) = runWriteActionAndGet {
   val path = getSettingsFilePath(relativeModulePath, useKotlinDsl)
-  val file = VirtualFileUtil.findOrCreateFile(this, path)
-  VirtualFileUtil.setTextContent(file, content)
+  val file = findOrCreateFile(path)
+  file.writeText(content)
 }
 
 fun VirtualFile.createBuildFile(
@@ -90,8 +92,8 @@ fun VirtualFile.createBuildFile(
   content: String
 ) = runWriteActionAndGet {
   val path = getBuildFilePath(relativeModulePath, useKotlinDsl)
-  val file = VirtualFileUtil.findOrCreateFile(this, path)
-  VirtualFileUtil.setTextContent(file, content)
+  val file = findOrCreateFile(path)
+  file.writeText(content)
 }
 
 fun VirtualFile.getSettingsFile(
@@ -99,7 +101,7 @@ fun VirtualFile.getSettingsFile(
   useKotlinDsl: Boolean = false
 ) = runReadAction {
   val path = getSettingsFilePath(relativeModulePath, useKotlinDsl)
-  VirtualFileUtil.getFile(this, path)
+  getFile(path)
 }
 
 fun VirtualFile.getBuildFile(
@@ -107,7 +109,7 @@ fun VirtualFile.getBuildFile(
   useKotlinDsl: Boolean = false
 ) = runReadAction {
   val path = getBuildFilePath(relativeModulePath, useKotlinDsl)
-  VirtualFileUtil.getFile(this, path)
+  getFile(path)
 }
 
 fun TestFilesConfiguration.withSettingsFile(

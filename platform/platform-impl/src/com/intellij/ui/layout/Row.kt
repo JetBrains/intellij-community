@@ -27,11 +27,11 @@ interface BaseBuilder {
 
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun buttonGroup(init: () -> Unit) {
-    buttonGroup(null, init)
+    withButtonGroup(null, ButtonGroup(), init)
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun buttonGroup(@NlsContexts.BorderTitle title:String? = null, init: () -> Unit) {
     withButtonGroup(title, ButtonGroup(), init)
   }
@@ -52,17 +52,20 @@ interface RowBuilder : BaseBuilder {
   fun createNoteOrCommentRow(component: JComponent): Row
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun checkBoxGroup(@Nls title: String?, body: () -> Unit)
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
     return createChildRow(label = label, isSeparated = separated).apply(init)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun row(label: @Nls String?, separated: Boolean = false, init: Row.() -> Unit): Row {
     return row(label?.let { Label(it) }, separated = separated, init)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun titledRow(@NlsContexts.BorderTitle title: String, init: Row.() -> Unit): Row
 
   /**
@@ -96,7 +99,7 @@ interface RowBuilder : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun commentRow(@Nls text: String) {
     createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true, -1, true))
   }
@@ -105,7 +108,7 @@ interface RowBuilder : BaseBuilder {
    * Creates a nested UI DSL panel, with a grid which is independent of this pane.
    */
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun nestedPanel(@NlsContexts.BorderTitle title: String? = null, init: LayoutBuilder.() -> Unit): CellBuilder<DialogPanel>
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -120,8 +123,10 @@ interface RowBuilder : BaseBuilder {
 
 @Deprecated("Use Kotlin UI DSL Version 2")
 abstract class Row : Cell(), RowBuilder {
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var enabled: Boolean
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var visible: Boolean
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -134,6 +139,10 @@ abstract class Row : Cell(), RowBuilder {
    * Indent for child rows of this row, expressed in steps (multiples of [SpacingConfiguration.indentLevel]). Replaces indent
    * calculated from row nesting.
    */
+  @get:Deprecated("Use Kotlin UI DSL Version 2")
+  @get:ApiStatus.ScheduledForRemoval
+  @set:Deprecated("Use Kotlin UI DSL Version 2")
+  @set:ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var subRowIndent: Int
 
@@ -163,6 +172,7 @@ abstract class Row : Cell(), RowBuilder {
    *
    * @param isFullWidth If `true`, the cell occupies the full width of the enclosing component.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   inline fun cell(isVerticalFlow: Boolean = false, isFullWidth: Boolean = false, init: InnerCell.() -> Unit) {
     setCellMode(true, isVerticalFlow, isFullWidth)
@@ -178,9 +188,13 @@ abstract class Row : Cell(), RowBuilder {
 
 @Deprecated("Use Kotlin UI DSL Version 2")
 enum class GrowPolicy {
-  SHORT_TEXT, MEDIUM_TEXT
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  SHORT_TEXT,
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  MEDIUM_TEXT
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun Row.enableIf(predicate: ComponentPredicate) {
   enabled = predicate()

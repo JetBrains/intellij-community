@@ -35,8 +35,7 @@ internal object SettingsSyncPanelFactory {
               checkBox(
                 descriptor.name
               )
-                .bindSelected({ descriptor.isSynchronized },
-                              { descriptor.isSynchronized = it })
+                .bindSelected(descriptor::isSynchronized)
                 .onReset { descriptor.reset() }
                 .onApply { descriptor.apply() }
                 .onIsModified { descriptor.isModified() }

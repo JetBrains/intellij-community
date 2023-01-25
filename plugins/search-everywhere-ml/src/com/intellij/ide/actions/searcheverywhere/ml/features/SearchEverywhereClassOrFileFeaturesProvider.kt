@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiInvalidElementAccessException
+import com.intellij.psi.PsiNamedElement
 import com.intellij.util.Time
 import org.jetbrains.annotations.ApiStatus
 
@@ -65,6 +66,8 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     internal val WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY = EventFields.Boolean("wasModifiedInLastHour")
     internal val WAS_MODIFIED_IN_LAST_DAY_DATA_KEY = EventFields.Boolean("wasModifiedInLastDay")
     internal val WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY = EventFields.Boolean("wasModifiedInLastMonth")
+
+    internal val ALL_INITIAL_LETTERS_MATCH_DATA_KEY = EventFields.Boolean("allInitialLettersMatch")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
@@ -81,7 +84,8 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
       RECENT_INDEX_DATA_KEY, PREDICTION_SCORE_DATA_KEY,
       TIME_SINCE_LAST_MODIFICATION_DATA_KEY, WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY,
       WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY, WAS_MODIFIED_IN_LAST_DAY_DATA_KEY,
-      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY, IS_OPENED_DATA_KEY
+      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY, IS_OPENED_DATA_KEY,
+      ALL_INITIAL_LETTERS_MATCH_DATA_KEY,
     )
   }
 
@@ -105,6 +109,9 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     if (item !is PsiFileSystemItem) {
       data.addAll(isAccessibleFromModule(item, cache?.currentlyOpenedFile))
     }
+
+    data.add(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.with(allInitialLettersMatch(item, searchQuery)))
+
     return data
   }
 
@@ -321,5 +328,23 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
   private fun isOpened(virtualFile: VirtualFile, project: Project): Boolean {
     val openedFiles = FileEditorManager.getInstance(project).openFiles
     return virtualFile in openedFiles
+  }
+
+  private fun allInitialLettersMatch(element: PsiElement, query: String): Boolean {
+    val elementName = when (element) {
+      is PsiFileSystemItem -> element.virtualFile.nameWithoutExtension
+      is PsiNamedElement -> element.name ?: return false
+      else -> return false
+    }
+
+    // Transform the element name, so that the match yields true for the following three cases
+    // - PascalCaseNames
+    // - camelCaseNames
+    // - snake_case_names
+    val transformedElementName = elementName.split("_")
+      .joinToString { substring -> substring.replaceFirstChar { it.uppercase() } }
+      .filter { it.isUpperCase() }
+
+    return query.filter { it.isUpperCase() } == transformedElementName
   }
 }

@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
 // https://rosettacode.org/wiki/Find_common_directory_path#Java
-fun getCommonPath(paths: List<String>): String {
+internal fun getCommonPath(paths: List<String>): String {
   var commonPath = ""
   val folders = Array(paths.size) { paths[it].split('/') }
   for (j in folders[0].indices) {

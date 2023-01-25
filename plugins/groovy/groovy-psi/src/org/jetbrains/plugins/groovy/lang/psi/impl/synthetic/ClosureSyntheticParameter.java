@@ -18,9 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
 import java.util.Objects;
 import java.util.function.Function;
 
-/**
- * @author ven
- */
 public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrRenameableLightElement {
   private static final Function<ClosureSyntheticParameter,PsiType> TYPES_CALCULATOR = parameter -> {
     PsiType typeGroovy = GrVariableEnhancer.getEnhancedType(parameter);

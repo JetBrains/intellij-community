@@ -23,7 +23,6 @@ import java.util.HashSet;
 
 /**
  * Visits explicit and implicit references to 'this'
- * @author dsl
  */
 public abstract class ClassThisReferencesVisitor extends ClassMemberReferencesVisitor {
   HashSet<PsiClass> myClassSuperClasses;

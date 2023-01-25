@@ -1,5 +1,6 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.ALL_INITIAL_LETTERS_MATCH_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY
@@ -593,6 +594,30 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
       .ofElement(testFile)
       .changes(false, true)
       .after { FileEditorManager.getInstance(project).openFile(it.virtualFile, false) }
+  }
+
+  fun `test all initial letters match is true on PascalCase`() {
+    val file = MockPsiFile(MockVirtualFile("PascalCaseFile.kt"), psiManager)
+    checkThatFeature(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.name)
+      .ofElement(file)
+      .withQuery("PCF")
+      .isEqualTo(true)
+  }
+
+  fun `test all initial letters match is true on camelCase`() {
+    val file = MockPsiFile(MockVirtualFile("camelCaseFile.kt"), psiManager)
+    checkThatFeature(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.name)
+      .ofElement(file)
+      .withQuery("CCF")
+      .isEqualTo(true)
+  }
+
+  fun `test all initial letters match is true on snake_case`() {
+    val file = MockPsiFile(MockVirtualFile("snake_case_file.py"), psiManager)
+    checkThatFeature(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.name)
+      .ofElement(file)
+      .withQuery("SCF")
+      .isEqualTo(true)
   }
 
   private fun createFileWithModTimestamp(modificationTimestamp: Long): PsiFileSystemItem {

@@ -31,8 +31,6 @@ import static com.siyeh.ig.psiutils.VariableAccessUtils.variableIsUsed;
 
 /**
  * It's called "Java" inspection because the name without "Java" already exists.
- *
- * @author Pavel.Dolgov
  */
 public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull

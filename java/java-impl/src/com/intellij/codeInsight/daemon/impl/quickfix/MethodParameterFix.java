@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringFactory;
@@ -126,5 +128,16 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
       result.add(ParameterInfoImpl.createNew().withName(newParameter.getName()).withType(newParameter.getType()));
     }
     return result.toArray(new ParameterInfoImpl[0]);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    final PsiMethod method = PsiTreeUtil.findSameElementInCopy((PsiMethod)getStartElement(), file);
+    PsiTypeElement typeElement = method.getParameterList().getParameters()[myIndex].getTypeElement();
+    if (typeElement == null) return IntentionPreviewInfo.EMPTY;
+    PsiElementFactory factory = PsiElementFactory.getInstance(project);
+    PsiTypeElement newTypeElement = factory.createTypeElement(myParameterType);
+    typeElement.replace(newTypeElement);
+    return IntentionPreviewInfo.DIFF;
   }
 }

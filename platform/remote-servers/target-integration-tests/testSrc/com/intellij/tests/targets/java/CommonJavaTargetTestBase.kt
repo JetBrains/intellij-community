@@ -96,6 +96,9 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
         (ExecutionManager.getInstance(project) as? ExecutionManagerImpl)?.forceCompilationInTests = it
       }
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }

@@ -72,7 +72,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   protected JPanel createAdvancedSettings() {
     JComponent advancedSettings = null;
     if (myProjectGenerator instanceof PythonProjectGenerator) {
-      advancedSettings = ((PythonProjectGenerator<?>)myProjectGenerator).getSettingsPanel(myProjectDirectory);
+      advancedSettings = ((PythonProjectGenerator<?>)myProjectGenerator).getSettingsPanel(myProjectDirectory.get());
     }
     else if (myProjectGenerator instanceof WebProjectTemplate) {
       advancedSettings = getPeer().getComponent();

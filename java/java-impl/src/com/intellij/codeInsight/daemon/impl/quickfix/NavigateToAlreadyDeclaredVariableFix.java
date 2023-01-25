@@ -18,8 +18,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.IncorrectOperationException;
@@ -60,5 +62,15 @@ public class NavigateToAlreadyDeclaredVariableFix implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (myVariable.getNavigationElement() instanceof NavigatablePsiElement navigatablePsiElement) {
+      return IntentionPreviewInfo.navigate(navigatablePsiElement);
+    }
+    else {
+      return IntentionPreviewInfo.EMPTY;
+    }
   }
 }

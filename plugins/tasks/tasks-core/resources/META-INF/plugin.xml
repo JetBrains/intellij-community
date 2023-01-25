@@ -92,8 +92,7 @@
 
     <projectConfigurable groupId="tools" instance="com.intellij.tasks.config.TaskConfigurable" id="tasks"
                          bundle="messages.TaskBundle"
-                         key="configurable.TaskConfigurable.display.name"
-                         nonDefaultProject="true">
+                         key="configurable.TaskConfigurable.display.name">
       <configurable instance="com.intellij.tasks.config.TaskRepositoriesConfigurable"
                     bundle="messages.TaskBundle"
                     key="configurable.TaskRepositoriesConfigurable.display.name"

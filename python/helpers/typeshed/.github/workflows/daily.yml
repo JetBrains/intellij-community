@@ -19,15 +19,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # macos-11 does not have tcl/tk installed, needed for stubtesting tkinter
-        os: ["ubuntu-latest", "windows-latest", "macos-10.15"]
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11-dev"]
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Update pip
@@ -46,12 +45,12 @@ jobs:
         shard-index: [0, 1, 2, 3]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: "3.9"
       - name: Install dependencies
-        run: pip install $(grep tomli== requirements-tests.txt)
+        run: pip install $(grep tomli== requirements-tests.txt) termcolor
       - name: Install apt packages
         run: |
           sudo apt update
@@ -68,7 +67,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: actions/github-script@v5
+      - uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

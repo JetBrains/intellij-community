@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 
-/**
- * @author Irina.Chernushina on 2/2/2016.
- */
 public final class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSchemaConfiguration> {
   private final Project myProject;
   @NotNull private final String mySchemaFilePath;

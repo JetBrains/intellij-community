@@ -30,9 +30,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author lex
- */
 public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
   private Modifier myModifier;
   protected TextWithImports myText;

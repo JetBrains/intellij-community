@@ -58,7 +58,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends BaseI
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("questionList", InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.table.label")),
+      stringList("questionList", InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.table.label")),
       checkbox("ignoreBooleanMethods", InspectionGadgetsBundle.message("ignore.methods.with.boolean.return.type.option")),
       checkbox("onlyWarnOnBaseMethods", InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"))
     );

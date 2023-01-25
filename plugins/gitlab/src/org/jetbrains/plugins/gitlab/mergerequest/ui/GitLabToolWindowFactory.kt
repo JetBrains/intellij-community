@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui
 
 import com.intellij.collaboration.async.DisposingMainScope
+import com.intellij.collaboration.async.DisposingScope
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -9,7 +10,6 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.content.Content
-import com.intellij.util.childScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
@@ -38,15 +38,15 @@ internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   private fun configureContent(project: Project, content: Content) {
-    val scope = DisposingMainScope(content)
+    val scope = DisposingScope(content)
     val projectsManager = project.service<GitLabProjectsManager>()
     val accountManager = service<GitLabAccountManager>()
 
-    val connectionManager = GitLabProjectConnectionManager(projectsManager, accountManager)
+    val connectionManager = project.service<GitLabProjectConnectionManager>()
 
     val vm = GitLabToolWindowTabViewModel(scope, connectionManager, projectsManager, accountManager)
 
-    GitLabToolWindowTabController(project, scope.childScope(), vm, content)
+    GitLabToolWindowTabController(project, scope, vm, content)
   }
 
   override fun shouldBeAvailable(project: Project): Boolean = false

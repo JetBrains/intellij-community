@@ -54,7 +54,14 @@ public final class TypeConversionUtil {
   private static final int UNKNOWN_RANK = 1000;
   @TypeRank
   private static final int MAX_NUMERIC_RANK = DOUBLE_RANK;
-  public static final PsiType NULL_TYPE = new PsiEllipsisType(PsiType.NULL) {
+
+  /**
+   * This is extracted to a separate field as temporary work around a deadlock during class initialization (IDEA-309438).
+   * Deadlock won't happen if PsiType class is initialized before initializing its inheritor PsiEllipsisType.
+   */
+  private static final PsiPrimitiveType NULL_TYPE_ACCESS = PsiType.NULL;
+  
+  public static final PsiType NULL_TYPE = new PsiEllipsisType(NULL_TYPE_ACCESS) {
     @Override
     public boolean isValid() {
       return true;

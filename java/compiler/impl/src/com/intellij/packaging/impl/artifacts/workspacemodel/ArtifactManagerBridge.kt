@@ -47,9 +47,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   override fun getArtifacts(): Array<ArtifactBridge> {
     initBridges()
 
-    val entityStorage = project.workspaceModel.entityStorage
-
-    val store = entityStorage.current
+    val store = project.workspaceModel.currentSnapshot
 
     return store
       .entities(ArtifactEntity::class.java)
@@ -62,8 +60,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   override fun findArtifact(name: String): Artifact? {
     initBridges()
 
-    val entityStorage = project.workspaceModel.entityStorage
-    val store = entityStorage.current
+    val store = project.workspaceModel.currentSnapshot
 
     val artifactEntity = store.resolve(ArtifactId(name)) ?: return null
 
@@ -81,8 +78,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     ApplicationManager.getApplication().assertReadAccessAllowed()
     initBridges()
 
-    val entityStorage = project.workspaceModel.entityStorage
-    val store = entityStorage.current
+    val store = project.workspaceModel.currentSnapshot
     val typeId = type.id
 
     return store
@@ -98,8 +94,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     ApplicationManager.getApplication().assertReadAccessAllowed()
     initBridges()
 
-    val entityStorage = project.workspaceModel.entityStorage
-    val storage = entityStorage.current
+    val storage = project.workspaceModel.currentSnapshot
 
     return storage
       .entities(ArtifactEntity::class.java)
@@ -119,11 +114,11 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   }
 
   override fun createModifiableModel(): ModifiableArtifactModel {
-    val storage = project.workspaceModel.entityStorage.current
+    val storage = project.workspaceModel.currentSnapshot
     return createModifiableModel(MutableEntityStorage.from(storage))
   }
 
-  override fun createModifiableModel(mutableEntityStorage: MutableEntityStorage): ModifiableArtifactModel {
+  private fun createModifiableModel(mutableEntityStorage: MutableEntityStorage): ModifiableArtifactModel {
     return ArtifactModifiableModelBridge(project, mutableEntityStorage, this)
   }
 
@@ -163,7 +158,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     LOG.trace { "Committing artifact manager bridge. diff: ${artifactModel.diff}" }
     updateCustomElements(artifactModel.diff)
 
-    val current = project.workspaceModel.entityStorage.current
+    val current = project.workspaceModel.currentSnapshot
     val changes = artifactModel.diff.collectChanges(current)[ArtifactEntity::class.java] ?: emptyList()
 
     val removed = mutableSetOf<ArtifactBridge>()
@@ -274,11 +269,11 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertReadAccessAllowed()
     val workspaceModel = project.workspaceModel
-    val current = workspaceModel.entityStorage.current
+    val current = workspaceModel.currentSnapshot
     if (current.entitiesAmount(ArtifactEntity::class.java) != current.artifactsMap.size()) {
 
       synchronized(lock) {
-        val currentInSync = workspaceModel.entityStorage.current
+        val currentInSync = workspaceModel.currentSnapshot
         val artifactsMap = currentInSync.artifactsMap
 
         // Double check

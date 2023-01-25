@@ -11,9 +11,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
 
   @Override
@@ -205,6 +202,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // TODO This test fails with Python 3 Typeshed stubs
   // PY-4285
   public void testMapReturnElementType() {
     doTest();

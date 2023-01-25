@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-/**
- * @author vlan
- */
 public class PyHighlightingAnnotator extends PyAnnotator implements HighlightRangeExtension {
 
   @Override

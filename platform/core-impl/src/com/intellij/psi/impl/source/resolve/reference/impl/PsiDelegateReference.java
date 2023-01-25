@@ -7,9 +7,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Evdokimov
- */
 public class PsiDelegateReference implements PsiReference {
 
   private final PsiReference myDelegate;

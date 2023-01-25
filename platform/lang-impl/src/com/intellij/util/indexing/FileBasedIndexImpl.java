@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.google.common.collect.Iterators;
@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.PingProgress;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -273,23 +272,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public void registerProjectFileSets(@NotNull Project project) {
-    if (IndexableFilesIndex.isIntegrationFullyEnabled()) {
+    if (IndexableFilesIndex.isEnabled()) {
       registerIndexableSet(new IndexableFileSet() {
         @Override
         public boolean isInSet(@NotNull VirtualFile file) {
           return IndexableFilesIndex.getInstance(project).shouldBeIndexed(file);
-        }
-      }, project);
-      AdditionalIndexableFileSet additionalFilesContributor = new AdditionalIndexableFileSet(project);
-      registerIndexableSet(new IndexableFileSet() {
-        @Override
-        public boolean isInSet(@NotNull VirtualFile file) {
-          return additionalFilesContributor.isInSet(file);
-        }
-
-        @Override
-        public String toString() {
-          return "IndexableFileSet[AdditionalIndexableFileSet]";
         }
       }, project);
       return;
@@ -1887,9 +1874,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean contentChange) {
-    final List<IndexableFilesFilter> filters = IndexableFilesFilter.EP_NAME.getExtensionList();
-    if (!filters.isEmpty() && !ContainerUtil.exists(filters, e -> e.shouldIndex(file))) return;
-
     if (ensureFileBelongsToIndexableFilter(fileId, file) == FileAddStatus.SKIPPED) {
       doInvalidateIndicesForFile(fileId, file);
       return;

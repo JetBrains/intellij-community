@@ -21,7 +21,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
-import com.intellij.codeInspection.options.OptPane.stringSet
+import com.intellij.codeInspection.options.OptPane.stringList
 import com.intellij.openapi.module.Module
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiFile
@@ -66,8 +66,8 @@ abstract class PackageUpdateInspection : AbstractPackageUpdateInspectionCheck() 
 
     override fun getOptionsPane(): OptPane {
         return pane(
-            checkbox("onlyStable", PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable")),
-            stringSet("excludeList", PackageSearchBundle.message("packagesearch.inspection.upgrade.excluded.dependencies"))
+          checkbox("onlyStable", PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable")),
+          stringList("excludeList", PackageSearchBundle.message("packagesearch.inspection.upgrade.excluded.dependencies"))
         )
     }
 

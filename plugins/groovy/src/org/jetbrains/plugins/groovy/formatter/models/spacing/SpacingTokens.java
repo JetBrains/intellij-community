@@ -7,9 +7,6 @@ import com.intellij.psi.tree.TokenSet;
 import static com.intellij.psi.tree.TokenSet.create;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
-/**
- * @author ilyas
- */
 public interface SpacingTokens {
 
   TokenSet LEFT_BRACES = create(T_LPAREN, T_LBRACK, T_LBRACE);

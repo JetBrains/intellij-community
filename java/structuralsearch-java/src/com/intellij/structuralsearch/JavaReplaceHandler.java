@@ -29,9 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class JavaReplaceHandler extends StructuralReplaceHandler {
   private final PsiElement[] patternElements;
   @NotNull private final Project myProject;

@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
 
-/**
- * Author: Alexey.Ivanov
- */
 public class PyUnconditionalStatementPartFixer extends PyFixer<PyElement> {
   public PyUnconditionalStatementPartFixer() {
     super(PyElement.class);

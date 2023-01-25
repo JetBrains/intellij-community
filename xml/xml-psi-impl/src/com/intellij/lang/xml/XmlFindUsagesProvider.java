@@ -12,9 +12,6 @@ import com.intellij.psi.xml.*;
 import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class XmlFindUsagesProvider implements FindUsagesProvider {
   @Override
   public boolean canFindUsagesFor(@NotNull PsiElement element) {

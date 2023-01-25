@@ -5,6 +5,8 @@
 
 #Requires -RunAsAdministrator
 
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
 if ($args.Count -eq 0) {
   Write-Host "usage: $PSCommandPath path [path ...]"
   exit 1

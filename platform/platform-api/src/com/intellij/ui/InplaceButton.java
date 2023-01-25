@@ -180,12 +180,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     }
     else if ((myBehavior.isHovered() && myHoveringEnabled) || hasFocus()) {
       paintHover(g);
-      if (myBehavior.isPressedByMouse()) {
-        myHovered.paintIcon(this, g, 1, 1);
-      }
-      else {
-        myHovered.paintIcon(this, g, 0, 0);
-      }
+      myHovered.paintIcon(this, g, 0, 0);
     }
     else {
       myRegular.paintIcon(this, g, 0, 0);

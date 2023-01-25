@@ -58,4 +58,15 @@ class Main {
         System.out.println("default");
     }
   }
+
+  void test8(final Object obj) {
+    final I i = new I() {
+      void foo() {
+        if (obj instanceof Point(int <warning descr="Parameter 'x' can have 'final' modifier">x</warning>, int <warning descr="Parameter 'y' can have 'final' modifier">y</warning>)) {}
+      }
+    };
+  }
+
+  interface I {}
 }
+

@@ -269,7 +269,7 @@ class TreeEntityData : WorkspaceEntityData<TreeEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return TreeEntity(data, entitySource) {
-      this.parentEntity = parents.filterIsInstance<TreeEntity>().single()
+      parents.filterIsInstance<TreeEntity>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

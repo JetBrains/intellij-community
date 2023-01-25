@@ -18,6 +18,7 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -49,6 +50,10 @@ public class ShowOtherBranchesAction extends BooleanPropertyToggleAction {
     super.update(e);
 
     if (!e.getPresentation().isEnabled()) return;
+    if (!Registry.is("vcs.history.use.index")) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
 
     Project project = e.getProject();
     VcsLogManager logManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER);

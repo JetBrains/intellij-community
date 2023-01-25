@@ -10,7 +10,7 @@
 
   <properties>
     <maven.compiler.release>11</maven.compiler.release>
-    <bootstrap.intellij.version>223.6102</bootstrap.intellij.version>
+    <bootstrap.intellij.version>231.4705</bootstrap.intellij.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -54,6 +54,31 @@
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>2.11.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.ktor</groupId>
+      <artifactId>ktor-client-core-jvm</artifactId>
+      <version>2.2.2</version>
+    </dependency>
+    <dependency>
+      <groupId>io.ktor</groupId>
+      <artifactId>ktor-client-cio-jvm</artifactId>
+      <version>2.2.2</version>
+    </dependency>
+    <dependency>
+      <groupId>io.ktor</groupId>
+      <artifactId>ktor-client-encoding-jvm</artifactId>
+      <version>2.2.2</version>
+    </dependency>
+    <dependency>
+      <groupId>io.ktor</groupId>
+      <artifactId>ktor-client-auth-jvm</artifactId>
+      <version>2.2.2</version>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-extension-kotlin</artifactId>
+      <version>1.22.0</version>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.platform</groupId>

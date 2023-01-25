@@ -4,6 +4,8 @@ package com.intellij.refactoring;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -17,6 +19,7 @@ import com.intellij.refactoring.introduce.PsiIntroduceTarget;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,8 +66,11 @@ public final class IntroduceTargetChooser {
                                                         @NotNull @NlsContexts.PopupTitle String title,
                                                         int selection,
                                                         @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger) {
-    List<MyIntroduceTarget<T>> targets = ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger, renderer));
-    showIntroduceTargetChooser(editor, targets, target -> callback.pass(target.getPlace()), title, selection);
+    ReadAction.nonBlocking(() -> ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger.fun(t), renderer.fun(t))))
+      .finishOnUiThread(ModalityState.NON_MODAL, targets ->
+        showIntroduceTargetChooser(editor, targets, target -> callback.pass(target.getPlace()), title, selection))
+      .expireWhen(() -> editor.isDisposed())
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   public static <T extends IntroduceTarget> void showIntroduceTargetChooser(@NotNull Editor editor,
@@ -148,32 +154,32 @@ public final class IntroduceTargetChooser {
   }
 
   private static class MyIntroduceTarget<T extends PsiElement> extends PsiIntroduceTarget<T> {
-    private final NotNullFunction<? super PsiElement, ? extends TextRange> myRanger;
-    private final Function<? super T, String> myRenderer;
+    private final TextRange myTextRange;
+    private final String myText;
 
     MyIntroduceTarget(@NotNull T psi,
-                             @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger,
-                             @NotNull Function<? super T, String> renderer) {
+                      @NotNull TextRange range,
+                      @NotNull String text) {
       super(psi);
-      myRanger = ranger;
-      myRenderer = renderer;
+      myTextRange = range;
+      myText = text;
     }
 
     @NotNull
     @Override
     public TextRange getTextRange() {
-      return myRanger.fun(getPlace());
+      return myTextRange;
     }
 
     @NotNull
     @Override
     public String render() {
-      return myRenderer.fun(getPlace());
+      return myText;
     }
 
     @Override
     public String toString() {
-      return isValid() ? render() : "invalid";
+      return isValid() ? myText : "invalid";
     }
   }
 }

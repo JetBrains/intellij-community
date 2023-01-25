@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 
 import static org.jetbrains.plugins.groovy.util.ThrowingTransformation.disableTransformations
 
-/**
- * @author ven
- */
 class ResolvePropertyTest extends GroovyResolveTestCase {
   final String basePath = TestUtils.testDataPath + "resolve/property/"
 

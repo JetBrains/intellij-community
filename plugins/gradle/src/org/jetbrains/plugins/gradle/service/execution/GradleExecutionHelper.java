@@ -68,9 +68,6 @@ import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutio
 import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY;
 import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_PREFIX_KEY;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleExecutionHelper {
 
   private static final Logger LOG = Logger.getInstance(GradleExecutionHelper.class);

@@ -94,7 +94,7 @@ class LoadInvalidProjectTest {
 
   private fun assertContainsSingleModuleFoo(project: Project) {
     assertThat(ModuleManager.getInstance(project).modules).hasSize(1)
-    assertThat(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).single().name).isEqualTo("foo")
+    assertThat(WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java).single().name).isEqualTo("foo")
   }
 
   @Test

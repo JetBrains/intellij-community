@@ -29,7 +29,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 
   public static void openOptionOrPerformAction(@NotNull Object element,

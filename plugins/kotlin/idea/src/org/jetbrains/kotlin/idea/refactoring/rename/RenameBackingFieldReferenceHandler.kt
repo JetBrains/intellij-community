@@ -8,10 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 class RenameBackingFieldReferenceHandler : KotlinVariableInplaceRenameHandler() {
@@ -23,7 +23,7 @@ class RenameBackingFieldReferenceHandler : KotlinVariableInplaceRenameHandler() 
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext) {
         editor?.let {
-            KotlinSurrounderUtils.showErrorHint(
+            CommonRefactoringUtil.showErrorHint(
                 project,
                 editor,
                 KotlinBundle.message("text.rename.not.applicable.to.backing.field.reference"),

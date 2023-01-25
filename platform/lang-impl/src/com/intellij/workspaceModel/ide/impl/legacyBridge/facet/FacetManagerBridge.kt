@@ -19,13 +19,13 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomFacetRelatedEntitySerializer
-import com.intellij.workspaceModel.ide.legacyBridge.FacetBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.ide.toExternalSource
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
 import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
@@ -47,7 +47,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
   override fun facetConfigurationChanged(facet: Facet<*>) {
     if (facet is FacetBridge<*>) {
       runWriteAction {
-        val mutableEntityStorage = module.diff ?: WorkspaceModel.getInstance(module.project).entityStorage.current.toBuilder()
+        val mutableEntityStorage = module.diff ?: WorkspaceModel.getInstance(module.project).currentSnapshot.toBuilder()
         facet.applyChangesToStorage(mutableEntityStorage, module)
         if (module.diff == null) {
           WorkspaceModel.getInstance(module.project).updateProjectModel("Update facet configuration") { it.addDiff(mutableEntityStorage) }
@@ -215,13 +215,12 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     super.facetsChanged()
   }
 
-  fun checkConsistency(facetRelatedEntities: List<WorkspaceEntity>,
-                       entityTypeToFacetContributor: Map<Class<WorkspaceEntity>, WorkspaceFacetContributor<WorkspaceEntity>>) {
+  fun checkConsistency(facetRelatedEntities: List<ModuleSettingsBase>,
+                       entityTypeToFacetContributor: Map<Class<ModuleSettingsBase>, WorkspaceFacetContributor<ModuleSettingsBase>>) {
     val facetEntitiesSet = facetRelatedEntities.toSet()
     for (entity in facetRelatedEntities) {
-      val facetContributor = entityTypeToFacetContributor[entity.getEntityInterface()]!!
       val facet = facetMapping().getDataByEntity(entity)
-      val facetName = facetContributor.getFacetName(entity)
+      val facetName = entity.name
       if (facet == null) {
         throw IllegalStateException("No facet registered for $entity (name = $facetName)")
       }
@@ -246,8 +245,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     mappedFacets.addAll(resolvedModuleEntity.facets.toSet())
     val staleEntity = (mappedFacets - facetRelatedEntities).firstOrNull()
     if (staleEntity != null) {
-      val facetContributor = entityTypeToFacetContributor[staleEntity.getEntityInterface()]!!
-      val facetName = facetContributor.getFacetName(staleEntity)
+      val facetName = staleEntity.name
       throw IllegalStateException("Stale entity $staleEntity (name = $facetName) in the mapping")
     }
   }

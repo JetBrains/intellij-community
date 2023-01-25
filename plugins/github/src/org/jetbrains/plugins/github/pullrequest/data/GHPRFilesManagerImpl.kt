@@ -3,11 +3,9 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFileBase
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
-import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
@@ -19,8 +17,6 @@ internal class GHPRFilesManagerImpl(private val project: Project,
 
   // current time should be enough to distinguish the manager between launches
   private val id = System.currentTimeMillis().toString()
-
-  private val filesEventDispatcher = EventDispatcher.create(FileListener::class.java)
 
   private val files = ContainerUtil.createWeakValueMap<GHPRIdentifier, GHPRTimelineVirtualFile>()
   private val diffFiles = ContainerUtil.createWeakValueMap<GHPRIdentifier, DiffVirtualFileBase>()
@@ -52,7 +48,6 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     files.getOrPut(SimpleGHPRIdentifier(pullRequest)) {
       GHPRTimelineVirtualFile(id, project, repository, pullRequest)
     }.let {
-      filesEventDispatcher.multicaster.onBeforeFileOpened(it)
       FileEditorManager.getInstance(project).openFile(it, requestFocus)
       GHPRStatisticsCollector.logTimelineOpened(project)
     }
@@ -95,17 +90,9 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   override fun findDiffFile(pullRequest: GHPRIdentifier): DiffVirtualFileBase? = diffFiles[SimpleGHPRIdentifier(pullRequest)]
 
   override fun updateTimelineFilePresentation(details: GHPullRequestShort) {
-    val file = findTimelineFile(details)
-    if (file != null) {
-      file.details = details
-      FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file)
+    findTimelineFile(details)?.let {
+      FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(it)
     }
-  }
-
-  override fun addBeforeTimelineFileOpenedListener(disposable: Disposable, listener: (file: GHPRTimelineVirtualFile) -> Unit) {
-    filesEventDispatcher.addListener(object : FileListener {
-      override fun onBeforeFileOpened(file: GHPRTimelineVirtualFile) = listener(file)
-    }, disposable)
   }
 
   override fun dispose() {
@@ -113,9 +100,5 @@ internal class GHPRFilesManagerImpl(private val project: Project,
       FileEditorManager.getInstance(project).closeFile(file)
       file.isValid = false
     }
-  }
-
-  private interface FileListener : EventListener {
-    fun onBeforeFileOpened(file: GHPRTimelineVirtualFile)
   }
 }

@@ -11,15 +11,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.ServiceContainerUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
 
-/**
- * @author ven
- */
 class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
@@ -225,7 +224,7 @@ class Test implements A {
   }
 
   void testTypeAnnotationsInImplementedMethod() {
-    def handler = new OverrideImplementsAnnotationsHandler() { @Override String[] getAnnotations(Project project) { return ["TA"] } }
+    def handler = new OverrideImplementsAnnotationsHandler() { @Override String[] getAnnotations(@NotNull PsiFile file) { return ["TA"] } }
     OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, testRootDisposable)
 
     myFixture.addClass """\
@@ -299,7 +298,7 @@ class Test implements A {
 
     ServiceContainerUtil.registerExtension(ApplicationManager.application, OverrideImplementsAnnotationsHandler.EP_NAME, new OverrideImplementsAnnotationsHandler() {
       @Override
-      String[] getAnnotations(Project project) {
+      String[] getAnnotations(@NotNull PsiFile file) {
         return ["a.A"]
       }
     }, myFixture.getTestRootDisposable())

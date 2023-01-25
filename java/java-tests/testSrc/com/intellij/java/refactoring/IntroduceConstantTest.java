@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 @TestDataPath("$CONTENT_ROOT/testData")
 public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/refactoring/introduceConstant/";

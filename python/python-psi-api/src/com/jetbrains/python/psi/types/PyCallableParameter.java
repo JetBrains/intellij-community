@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
-/**
- * @author vlan
- */
 public interface PyCallableParameter {
 
   /**

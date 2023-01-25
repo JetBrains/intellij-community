@@ -31,5 +31,8 @@ private fun install(editor: Editor): NotebookCellSelectionModel? {
   return model
 }
 
-private fun getProvider(editor: Editor): NotebookCellSelectionModelProvider? =
-  getLanguage(editor)?.let(NotebookCellSelectionModelProvider::forLanguage)
+private fun getProvider(editor: Editor): NotebookCellSelectionModelProvider? {
+  val project = editor.project ?: return null
+  val language = getLanguage(project, editor.document) ?: return null
+  return NotebookCellSelectionModelProvider.forLanguage(language)
+}

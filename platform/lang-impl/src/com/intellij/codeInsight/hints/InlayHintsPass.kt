@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.Processor
-import com.intellij.util.SlowOperations
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
@@ -61,6 +60,7 @@ class InlayHintsPass(
   }
 
   override fun doApplyInformationToEditor() {
+    if (editor !is EditorImpl) return
     val positionKeeper = EditorScrollingPositionKeeper(editor)
     positionKeeper.savePosition()
     applyCollected(allHints, rootElement, editor)

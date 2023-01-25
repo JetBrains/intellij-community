@@ -27,9 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author ven
- */
 public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAction {
   private static final Logger LOG = Logger.getInstance(AddOnDemandStaticImportAction.class);
 

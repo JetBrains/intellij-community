@@ -14,7 +14,6 @@ import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
-import com.intellij.util.indexing.IdIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -103,15 +102,6 @@ public abstract class StubIndex {
     getInstance().processElements(indexKey, key, project, scope, idFilter, requiredClass, processor);
     return result;
   }
-
-  /**
-   * @deprecated use {@link StubIndex#getContainingFiles(StubIndexKey, Object, Project, GlobalSearchScope)}.
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public abstract <Key> IdIterator getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull @NonNls Key dataKey,
-                                                    @NotNull Project project,
-                                                    @NotNull final GlobalSearchScope scope);
 
   /**
    * @return lazily reified iterator of VirtualFile's.

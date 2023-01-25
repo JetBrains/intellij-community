@@ -360,7 +360,7 @@ public final class VcsLogUtil {
     ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> {
       ApplicationManager.getApplication().invokeLater(() -> {
         VcsProjectLog.Companion.runWhenLogIsReady(project, manager -> {
-          action.consume(logManager);
+          action.consume(manager);
           return Unit.INSTANCE;
         });
       }, project.getDisposed());

@@ -8,9 +8,6 @@ import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import java.net.URL;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFx9Migration implements PredefinedMigrationProvider {
   @NotNull
   @Override

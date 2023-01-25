@@ -18,6 +18,18 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import org.intellij.lang.annotations.Language as InjectedLanguage
 
+internal object EventFieldIds {
+  const val START_TIME_FIELD_ID = "start_time"
+
+  /**
+   * Logger merges successive events with identical group id, event id and event data fields except for fields listed here.
+   *
+   * @see com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider.createEventsMergeStrategy
+   */
+  @JvmField
+  val FieldsIgnoredByMerge: List<String> = arrayListOf(START_TIME_FIELD_ID)
+}
+
 @Suppress("FunctionName")
 object EventFields {
   /**
@@ -466,15 +478,7 @@ object EventFields {
   val TimeToShowMs = LongEventField("time_to_show")
 
   @JvmField
-  val StartTime = LongEventField("start_time")
-
-  /**
-   * Logger merges successive events with identical group id, event id and event data fields except for fields listed here.
-   *
-   * @see com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider.createEventsMergeStrategy
-   */
-  @JvmField
-  val FieldsIgnoredByMerge: List<EventField<*>> = arrayListOf(StartTime)
+  val StartTime = LongEventField(EventFieldIds.START_TIME_FIELD_ID)
 
   @JvmStatic
   fun createAdditionalDataField(groupId: String, eventId: String): ObjectEventField {

@@ -56,7 +56,7 @@ internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Do
   }
 
   override fun doApplyInformationToEditor() {
-    val dirtyScope = DaemonCodeAnalyzerEx.getInstanceEx(myProject).fileStatusMap.getFileDirtyScope(myDocument, id) ?: return
+    val dirtyScope = DaemonCodeAnalyzerEx.getInstanceEx(myProject).fileStatusMap.getFileDirtyScope(myDocument, file, id) ?: return
 
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, dirtyScope.startOffset, dirtyScope.endOffset,
                                                    referencesWithProblems.flatMap { it.createProblemAnnotations() },

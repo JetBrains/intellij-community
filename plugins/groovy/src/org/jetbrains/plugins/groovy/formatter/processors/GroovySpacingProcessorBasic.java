@@ -38,9 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.RANGES;
 
-/**
- * @author ilyas
- */
 public abstract class GroovySpacingProcessorBasic {
 
   private static final Spacing NO_SPACING_WITH_NEWLINE = Spacing.createSpacing(0, 0, 0, true, 1);

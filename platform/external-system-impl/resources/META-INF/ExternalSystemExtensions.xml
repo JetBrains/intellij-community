@@ -132,14 +132,14 @@
 
     <externalSystemSettingsListener implementation="com.intellij.openapi.externalSystem.service.ui.ExternalToolWindowManager"/>
 
-    <projectLocator implementation="com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemProjectLocator"/>
+    <trustedProjectsLocator implementation="com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectsLocator"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshFloatingProvider$Listener"
               topic="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware$Listener"
               activeInHeadlessMode="true" activeInTestMode="true"/>
     <listener class="com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedListener"
-              topic="com.intellij.ide.impl.trustedProjects.TrustedProjectsListener"
+              topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl$BulkFileListenerImpl"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"

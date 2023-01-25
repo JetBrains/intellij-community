@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * Generic data model for {@link ArrangementEntryMatcher arrangement entry matcher}.
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public interface ArrangementMatchCondition extends Cloneable {
 

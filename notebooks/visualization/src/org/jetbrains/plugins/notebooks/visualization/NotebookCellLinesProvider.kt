@@ -4,6 +4,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 
@@ -17,9 +18,15 @@ interface NotebookCellLinesProvider : IntervalsGenerator {
 
     fun install(editor: Editor): NotebookCellLinesProvider? {
       get(editor.document)?.let { return it }
-      val language = getLanguage(editor) ?: return null
+      val project = editor.project ?: return null
+      return install(project, editor.document)
+    }
+
+    fun install(project: Project, document: Document): NotebookCellLinesProvider? {
+      get(document)?.let { return it }
+      val language = getLanguage(project, document) ?: return null
       val provider = forLanguage(language) ?: return null
-      key.set(editor.document, provider)
+      key.set(document, provider)
       return provider
     }
 
@@ -42,9 +49,5 @@ open class NonIncrementalCellLinesProvider protected constructor(private val int
     NonIncrementalCellLines.getOrNull(document)?.intervals ?: intervalsGenerator.makeIntervals(document)
 }
 
-internal fun getLanguage(editor: Editor): Language? =
-  editor
-    .project
-    ?.let(PsiDocumentManager::getInstance)
-    ?.getPsiFile(editor.document)
-    ?.language
+internal fun getLanguage(project: Project, document: Document): Language? =
+  PsiDocumentManager.getInstance(project).getPsiFile(document)?.language

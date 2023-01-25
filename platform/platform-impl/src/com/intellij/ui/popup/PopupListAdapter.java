@@ -2,8 +2,8 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.JBListUpdater;
-import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ListUtil;
@@ -105,8 +105,8 @@ final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAda
   }
 
   @Override
-  public ListComponentUpdater getBackgroundUpdater() {
-    return new JBListUpdater((JBList)(myList));
+  public GenericListComponentUpdater<T> getBackgroundUpdater() {
+    return new JBListUpdater<T>((JBList<T>)(myList));
   }
 
   @Override

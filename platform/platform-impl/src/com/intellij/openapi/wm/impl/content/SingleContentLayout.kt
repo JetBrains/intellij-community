@@ -305,8 +305,8 @@ internal class SingleContentLayout(
   internal inner class TabAdapter(
     val content: Content,
     val jbTabs: JBTabs,
-    val tabPainter: JBTabPainter,
-    val twcui: ToolWindowContentUi
+    private val tabPainter: JBTabPainter,
+    private val twcui: ToolWindowContentUi
   ) : NonOpaquePanel(),
       TabsListener,
       PropertyChangeListener,
@@ -430,7 +430,7 @@ internal class SingleContentLayout(
       return Dimension(minWidth, 0)
     }
 
-    fun copyValues(from: TabInfo, to: ContentLabel) {
+    private fun copyValues(from: TabInfo, to: ContentLabel) {
       to.icon = from.icon
       to.text = from.text
     }

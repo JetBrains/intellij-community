@@ -157,5 +157,10 @@
     <action id="XDebugger.Show.Breakpoints.Over.Line.Numbers" class="com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction">
       <add-to-group group-id="EditorGutterPopupMenu.Appearance" anchor="after" relative-to-action="EditorGutterToggleGlobalLineNumbers"/>
     </action>
+
+    <action id="XDebugger.Attach.Dialog.ShowOnlyMyProcessesToggleAction"
+            class="com.intellij.xdebugger.impl.ui.attach.dialog.AttachShowOnlyMyProcessesToggleAction">
+      <add-to-group group-id="XDebugger.Attach.Dialog.Settings"/>
+    </action>
   </actions>
 </idea-plugin>

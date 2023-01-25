@@ -152,8 +152,8 @@ class MavenImportingManager(val project: Project) {
           getWaitingPromise().setError("Cancelled")
         }
         else {
-          MavenLog.LOG.error(e)
           getWaitingPromise().setError(e)
+          MavenLog.LOG.error(e)
         }
       }
       finally {
@@ -267,9 +267,7 @@ class MavenImportingManager(val project: Project) {
     return context != null && context !is MavenImportFinishedContext
   }
 
-  @RequiresEdt
   fun getImportFinishPromise(): Promise<MavenImportFinishedContext> {
-    ApplicationManager.getApplication().assertIsDispatchThread()
     return getWaitingPromise()
   }
 

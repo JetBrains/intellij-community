@@ -18,9 +18,6 @@ package com.intellij.refactoring.inheritanceToDelegation.usageInfo;
 import com.intellij.psi.PsiMethod;
 import com.intellij.usageView.UsageInfo;
 
-/**
- * @author dsl
- */
 public class NoLongerOverridingSubClassMethodUsageInfo extends UsageInfo {
   private final PsiMethod myOverridenMethod;
 

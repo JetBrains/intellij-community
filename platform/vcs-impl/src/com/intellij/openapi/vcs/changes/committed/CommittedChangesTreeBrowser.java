@@ -422,9 +422,6 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
     if (VcsDataKeys.CHANGES.is(dataId)) {
       return collectChanges(getSelectedChangeLists(), false).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
-    if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
-      return myChangesTree.getSelectionCount() > 0;
-    }
     if (VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN.is(dataId)) {
       return collectChanges(getSelectedChangeLists(), true).toArray(Change.EMPTY_CHANGE_ARRAY);
     }

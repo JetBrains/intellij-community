@@ -15,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -113,10 +115,15 @@ public abstract class GutterTooltipBuilder {
                                                          @NotNull String pressMessageKey) {
     StringBuilder sb = new StringBuilder("<html><body><p>");
     if (prefix != null) sb.append(prefix);
+    Set<String> names = new HashSet<>();
     for (E element : elements) {
-      String elementPrefix = elementToPrefix.apply(element);
-      if (elementPrefix != null) sb.append(elementPrefix);
-      appendElement(sb, element, skipFirstMemberOfElement.test(element));
+      StringBuilder elementBuilder = new StringBuilder();
+      appendElement(elementBuilder, element, skipFirstMemberOfElement.test(element));
+      if (names.add(elementBuilder.toString())) {
+        String elementPrefix = elementToPrefix.apply(element);
+        if (elementPrefix != null) sb.append(elementPrefix);
+        sb.append(elementBuilder);
+      }
     }
     appendContextHelp(sb, actionId, pressMessageKey);
     sb.append("</p></body></html>");

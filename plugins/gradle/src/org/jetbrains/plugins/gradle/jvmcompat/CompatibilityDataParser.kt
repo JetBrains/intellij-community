@@ -11,7 +11,7 @@ import org.jetbrains.plugins.gradle.util.Ranges
 import org.jetbrains.plugins.gradle.util.range
 import java.io.StringReader
 
-class CompatibilityDataParser(val ideVersion: String) {
+class CompatibilityDataParser(private val ideVersion: String) {
 
   internal fun getCompatibilityRanges(data: CompatibilityData): List<Pair<Ranges<JavaVersion>, Ranges<GradleVersion>>> {
     return data.versionMappings.map { entry ->

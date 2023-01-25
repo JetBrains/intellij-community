@@ -10,7 +10,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -20,8 +19,6 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,7 +34,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -192,12 +188,9 @@ public class WSLDistribution implements AbstractWslDistribution {
                                   @NotNull String targetWinDirPath,
                                   @Nullable List<String> additionalOptions,
                                   @Nullable Consumer<? super ProcessHandler> handlerConsumer) throws ExecutionException {
-    var command = ContainerUtil.newArrayList(RSYNC, "--checksum", "--recursive");
-    if (additionalOptions != null) {
-      command.addAll(additionalOptions);
-    }
-    command.add(getSourceWslPath(sourceWslPath));
-    command.add(getTargetWslPath(targetWinDirPath));
+    var command = List.of(RSYNC, "--checksum", "--recursive");
+    command = ContainerUtil.concat(additionalOptions == null ? List.of() : additionalOptions);
+    command = ContainerUtil.append(command, getSourceWslPath(sourceWslPath), getTargetWslPath(targetWinDirPath));
 
     var process = executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
     if (process.getExitCode() != 0) {
@@ -493,7 +486,7 @@ public class WSLDistribution implements AbstractWslDistribution {
         return windowsPath;
       }
     }
-    return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
+    return getUNCRootPathString() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
   }
 
   private static boolean containsDriveLetter(@NotNull String linuxPath) {
@@ -582,29 +575,16 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   /**
-   * @deprecated use {@link WSLDistribution#getUNCRootPath()} instead
-   */
-  @Deprecated
-  public @NotNull File getUNCRoot() {
-    return new File(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
-  }
-
-  /**
    * @return UNC root for the distribution, e.g. {@code \\wsl$\Ubuntu}
    */
-  @ApiStatus.Experimental
-  public @NotNull Path getUNCRootPath() {
-    return Paths.get(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
-  }
-
   @Override
   @ApiStatus.Experimental
-  public @Nullable VirtualFile getUNCRootVirtualFile(boolean refreshIfNeed) {
-    if (!Experiments.getInstance().isFeatureEnabled("wsl.p9.support")) {
-      return null;
-    }
-    File uncRoot = getUNCRoot();
-    return uncRoot.exists() ? VfsUtil.findFileByIoFile(uncRoot, refreshIfNeed) : null;
+  public @NotNull Path getUNCRootPath() {
+    return Path.of(getUNCRootPathString());
+  }
+
+  private @NotNull String getUNCRootPathString() {
+    return WslConstants.UNC_PREFIX + myDescriptor.getMsId();
   }
 
   // https://docs.microsoft.com/en-us/windows/wsl/compare-versions#accessing-windows-networking-apps-from-linux-host-ip

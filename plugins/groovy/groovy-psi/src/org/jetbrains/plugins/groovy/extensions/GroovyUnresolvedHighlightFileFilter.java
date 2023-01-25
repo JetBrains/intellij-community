@@ -19,9 +19,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class GroovyUnresolvedHighlightFileFilter {
 
   public static final ExtensionPointName<GroovyUnresolvedHighlightFileFilter> EP_NAME = ExtensionPointName.create("org.intellij.groovy.unresolvedHighlightFileFilter");

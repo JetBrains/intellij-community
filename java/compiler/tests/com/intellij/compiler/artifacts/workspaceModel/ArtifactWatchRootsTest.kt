@@ -41,7 +41,7 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
       file.rename(this, "AnotherName")
     }
 
-    val artifactEntity = WorkspaceModel.getInstance(project).entityStorage.current.entities(ArtifactEntity::class.java).single()
+    val artifactEntity = WorkspaceModel.getInstance(project).currentSnapshot.entities(ArtifactEntity::class.java).single()
     val copyElement = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
     assertEquals("AnotherName", copyElement.filePath.fileName)
   }

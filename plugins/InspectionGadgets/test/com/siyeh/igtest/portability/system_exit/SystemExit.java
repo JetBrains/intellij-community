@@ -11,4 +11,8 @@ class SystemExit {
   public static void main(String[] args) {
     System.exit(1);
   }
+
+  public static void other(String[] args) {
+    System.<warning descr="Call to 'System.exit()' is non-portable">exit</warning>(2);
+  }
 }

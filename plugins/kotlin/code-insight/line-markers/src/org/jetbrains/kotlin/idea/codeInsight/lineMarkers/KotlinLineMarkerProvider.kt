@@ -20,9 +20,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.dsl.collectHighlightingDslMarkers
+import org.jetbrains.kotlin.idea.highlighter.markers.InheritanceMergeableLineMarkerInfo
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinGutterTooltipHelper
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
-import org.jetbrains.kotlin.idea.highlighter.markers.InheritanceMergeableLineMarkerInfo
 import org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInheritable
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
@@ -55,6 +56,7 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
             when (declaration) {
                 is KtClass -> {
                     collectInheritedClassMarker(declaration, result)
+                    collectHighlightingDslMarkers(declaration, result)
                 }
 
                 is KtCallableDeclaration -> {
@@ -101,7 +103,14 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
     }
 
     private fun collectSuperDeclarations(declaration: KtCallableDeclaration, result: MutableCollection<in LineMarkerInfo<*>>) {
-        if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
+        if (!(KotlinLineMarkerOptions.implementingOption.isEnabled || KotlinLineMarkerOptions.overridingOption.isEnabled)) {
+            return
+        }
+
+        if (!(declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD) || (declaration.containingFile as KtFile).isCompiled)) {
+            return
+        }
+
         analyze(declaration) {
             var callableSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return
             if (callableSymbol is KtValueParameterSymbol) {

@@ -15,9 +15,6 @@
  */
 package org.intellij.plugins.relaxNG;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class RngHtml5CompletionTest extends HighlightingTestBase {
 
   @Override

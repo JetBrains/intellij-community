@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public final class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRunTask> {
   public static final Key<AntBeforeRunTask> ID = Key.create("AntTarget");
 

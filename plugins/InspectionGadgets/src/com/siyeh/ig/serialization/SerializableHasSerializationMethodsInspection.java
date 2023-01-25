@@ -15,16 +15,17 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class SerializableHasSerializationMethodsInspection extends SerializableInspectionBase {
 
@@ -52,9 +53,8 @@ public class SerializableHasSerializationMethodsInspection extends SerializableI
   }
 
   @Override
-  protected JComponent @NotNull [] createAdditionalOptions() {
-    return new JComponent[] {new CheckBox(InspectionGadgetsBundle.message("serializable.has.serialization.methods.ignore.option"),
-                                          this, "ignoreClassWithoutFields")};
+  protected @NotNull OptPane getAdditionalOptions() {
+    return pane(checkbox("ignoreClassWithoutFields", InspectionGadgetsBundle.message("serializable.has.serialization.methods.ignore.option")));
   }
 
   @Override

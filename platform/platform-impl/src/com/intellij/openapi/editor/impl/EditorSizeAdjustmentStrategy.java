@@ -24,8 +24,6 @@ import java.awt.*;
  * is permanently increasing (the user is typing at the end of the longest line) etc. See method javadocs for more details.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 final class EditorSizeAdjustmentStrategy {
   /**

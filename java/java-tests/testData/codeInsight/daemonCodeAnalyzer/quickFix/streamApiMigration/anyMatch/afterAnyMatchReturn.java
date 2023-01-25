@@ -1,4 +1,4 @@
-// "Collapse loop with stream 'anyMatch()'" "true-preview"
+// "Collapse loop with stream 'anyMatch()/noneMatch()/allMatch()'" "true-preview"
 
 import java.util.Collection;
 import java.util.List;

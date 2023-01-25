@@ -6,17 +6,24 @@ import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.impl.headertoolbar.isDarkHeader
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
+import java.awt.image.RGBImageFilter
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.UIManager
 
-private const val iconSize = 20
+private val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter =  {
+  if (isDarkHeader()) UIUtil.GrayFilter(-70, -70, 100) else UIUtil.getGrayFilter()
+}
 
-internal class HeaderToolbarButtonLook : IdeaActionButtonLook() {
+internal class HeaderToolbarButtonLook(
+  private val iconSize: () -> Int = { JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize() }
+) : IdeaActionButtonLook() {
 
   override fun getStateBackground(component: JComponent, state: Int): Color = when (state) {
     ActionButtonComponent.NORMAL -> component.background
@@ -28,6 +35,10 @@ internal class HeaderToolbarButtonLook : IdeaActionButtonLook() {
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
   override fun getButtonArc(): JBValue = JBValue.Float(0f)
+
+  override fun getDisabledIcon(icon: Icon): Icon {
+    return IconLoader.getDisabledIcon(icon, lightThemeDarkHeaderDisableFilter)
+  }
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon) {
     val scaledIcon = scaleIcon(adjustColor(icon))
@@ -50,7 +61,7 @@ internal class HeaderToolbarButtonLook : IdeaActionButtonLook() {
 
   private fun scaleIcon(icon: Icon) : Icon {
     if (icon is ScalableIcon) {
-      return IconLoader.loadCustomVersionOrScale(icon, iconSize)
+      return IconLoader.loadCustomVersionOrScale(icon, iconSize())
     }
 
     return icon

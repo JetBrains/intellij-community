@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author ven
- */
 public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InvertBooleanProcessor.class);
   private final InvertBooleanDelegate myDelegate;

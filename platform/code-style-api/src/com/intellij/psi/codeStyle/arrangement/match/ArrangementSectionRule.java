@@ -40,7 +40,7 @@ public final class ArrangementSectionRule implements Cloneable {
   }
 
   public static ArrangementSectionRule create(@Nullable String start, @Nullable String end, StdArrangementMatchRule @NotNull ... rules) {
-    return create(start, end, rules.length == 0 ? ContainerUtil.emptyList() : ContainerUtil.newArrayList(rules));
+    return create(start, end, rules.length == 0 ? ContainerUtil.emptyList() : List.of(rules));
   }
 
   public static ArrangementSectionRule create(@Nullable String start, @Nullable String end, @NotNull List<? extends StdArrangementMatchRule> rules) {

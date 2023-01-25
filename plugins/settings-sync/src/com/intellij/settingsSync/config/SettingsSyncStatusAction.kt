@@ -62,7 +62,7 @@ class SettingsSyncStatusAction : SettingsSyncOpenSettingsAction(message("title.s
     val builder = StringBuilder()
     builder.append("<html>")
       .append(message("status.action.settings.sync")).append(" ")
-      .append("<span color='#")
+      .append("<font color='#")
     val hexColor = UIUtil.colorToHex(JBUI.CurrentTheme.Popup.mnemonicForeground())
     builder.append(hexColor).append("'>")
     when (status) {
@@ -71,7 +71,7 @@ class SettingsSyncStatusAction : SettingsSyncOpenSettingsAction(message("title.s
       SyncStatus.FAILED -> builder.append(message("status.action.settings.sync.failed"))
     }
     builder
-      .append("</span>")
+      .append("</font>")
     return "$builder"
   }
 

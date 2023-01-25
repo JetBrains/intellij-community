@@ -33,6 +33,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static com.intellij.openapi.util.Pair.pair;
 
 public final class VMOptions {
+
+  public static final String TEST_SCRIPT_FILE_NAME = "test_script.txt";
   private static final Logger LOG = Logger.getInstance(VMOptions.class);
   private static final ReadWriteLock ourUserFileLock = new ReentrantReadWriteLock();
 

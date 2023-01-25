@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author spleaner
- */
 public final class FileInfoManager {
   public static FileInfoManager getFileInfoManager() {
     return ApplicationManager.getApplication().getService(FileInfoManager.class);

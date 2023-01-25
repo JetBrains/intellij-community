@@ -22,9 +22,6 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author dsl
- */
 public class NameUtilTest {
   @Test
   public void testSplitIntoWords1() {

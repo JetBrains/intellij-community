@@ -13,11 +13,11 @@ objects at runtime.
 objects at runtime.
 
 To run the tests, follow the [setup instructions](../CONTRIBUTING.md#preparing-the-environment)
-in the `CONTRIBUTING.md` document. In particular, we recommend running with Python 3.8+.
+in the `CONTRIBUTING.md` document. In particular, we recommend running with Python 3.9+.
 
 ## mypy\_test.py
 
-This test requires Python 3.7+. Run using:
+Run using:
 ```
 (.venv3)$ python3 tests/mypy_test.py
 ```
@@ -37,7 +37,6 @@ for this test script.
 
 ## pytype\_test.py
 
-This test requires Python 3.7+.
 Note: this test cannot be run on Windows
 systems unless you are using Windows Subsystem for Linux.
 
@@ -73,7 +72,6 @@ python3 tests/check_consistent.py
 
 ## stubtest\_stdlib.py
 
-This test requires Python 3.6 or higher.
 Run using
 ```
 (.venv3)$ python3 tests/stubtest_stdlib.py
@@ -102,10 +100,8 @@ directly, with
 ```
 stubtest can also help you find things missing from the stubs.
 
-
 ## stubtest\_third\_party.py
 
-This test requires Python 3.7+.
 Run using
 ```
 (.venv3)$ python3 tests/stubtest_third_party.py

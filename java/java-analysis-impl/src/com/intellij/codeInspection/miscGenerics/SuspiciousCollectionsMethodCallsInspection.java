@@ -23,9 +23,6 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-/**
- * @author ven
- */
 public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean REPORT_CONVERTIBLE_METHOD_CALLS = true;
 

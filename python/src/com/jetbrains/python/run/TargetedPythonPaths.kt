@@ -36,12 +36,19 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import java.io.File
 import java.nio.file.Path
 
+/**
+ * Append pythonPathList to envs
+ * Append PYTHONPATH from system environment for local target if it is necessary
+ * checkPythonPathInEnvs flag used for optionally checking envs already contains PYTHONPATH
+ */
 fun initPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
                    passParentEnvs: Boolean,
                    pythonPathList: MutableCollection<TargetEnvironmentFunction<String>>,
-                   targetEnvironmentRequest: TargetEnvironmentRequest) {
+                   targetEnvironmentRequest: TargetEnvironmentRequest,
+                   checkPythonPathInEnvs: Boolean = true) {
   // TODO [Targets API] Passing parent envs logic should be moved somewhere else
-  if (passParentEnvs && targetEnvironmentRequest is LocalTargetEnvironmentRequest && !envs.containsKey(PythonEnvUtil.PYTHONPATH)) {
+  if (passParentEnvs && targetEnvironmentRequest is LocalTargetEnvironmentRequest &&
+      !(checkPythonPathInEnvs && envs.containsKey(PythonEnvUtil.PYTHONPATH))) {
     appendSystemPythonPath(pythonPathList)
   }
   appendToPythonPath(envs, pythonPathList, targetEnvironmentRequest.targetPlatform)

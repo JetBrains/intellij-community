@@ -15,9 +15,6 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
-/**
- * @author Denis Zhdanov
- */
 public class FoldingInfo {
   public final String placeholder;
   public final int start;

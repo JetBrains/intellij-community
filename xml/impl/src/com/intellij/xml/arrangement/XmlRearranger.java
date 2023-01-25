@@ -26,9 +26,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Ge
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.KEEP;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlRearranger
   implements Rearranger<XmlElementArrangementEntry>,
              ArrangementStandardSettingsAware {
@@ -132,7 +129,7 @@ public class XmlRearranger
   @Nullable
   @Override
   public List<CompositeArrangementSettingsToken> getSupportedMatchingTokens() {
-    return ContainerUtil.newArrayList(
+    return List.of(
       new CompositeArrangementSettingsToken(TYPE, SUPPORTED_TYPES),
       new CompositeArrangementSettingsToken(StdArrangementTokens.Regexp.NAME),
       new CompositeArrangementSettingsToken(StdArrangementTokens.Regexp.XML_NAMESPACE),

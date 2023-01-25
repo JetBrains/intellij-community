@@ -302,7 +302,7 @@ final class SearchForUsagesRunnable implements Runnable {
       // associate progress only if created successfully, otherwise Dispose will cancel the actual progress, see IDEA-195542
       PsiElement element = getPsiElement(mySearchFor);
       Language language = element != null ? element.getLanguage() : null;
-      UsageViewStatisticsCollector.logSearchStarted(myProject, usageView, CodeNavigateSource.FindToolWindow, language);
+      UsageViewStatisticsCollector.logSearchStarted(myProject, usageView, CodeNavigateSource.FindToolWindow, language, element);
       usageView.associateProgress(indicator);
       if (myProcessPresentation.isShowFindOptionsPrompt()) {
         openView(usageView);

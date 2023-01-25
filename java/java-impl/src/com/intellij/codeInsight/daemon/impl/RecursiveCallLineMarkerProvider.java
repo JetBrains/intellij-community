@@ -22,9 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Danila Ponomarenko
- */
 public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override

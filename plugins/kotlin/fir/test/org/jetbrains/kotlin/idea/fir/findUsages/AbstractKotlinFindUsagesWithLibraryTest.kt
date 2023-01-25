@@ -2,14 +2,10 @@
 
 package org.jetbrains.kotlin.idea.fir.findUsages
 
-import com.intellij.psi.PsiElement
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.findUsages.AbstractKotlinFindUsagesWithLibraryTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.utils.IgnoreTests
-import java.nio.file.Paths
 
 abstract class AbstractKotlinFindUsagesWithLibraryFirTest : AbstractKotlinFindUsagesWithLibraryTest() {
     override fun isFirPlugin(): Boolean = true
@@ -19,15 +15,5 @@ abstract class AbstractKotlinFindUsagesWithLibraryFirTest : AbstractKotlinFindUs
             ThrowableRunnable { project.invalidateCaches() },
             ThrowableRunnable { super.tearDown() }
         )
-    }
-
-    override fun <T : PsiElement> doTest(path: String) {
-        IgnoreTests.runTestIfEnabledByFileDirective(
-            Paths.get(path),
-            IgnoreTests.DIRECTIVES.FIR_COMPARISON,
-            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
-        ) {
-            super.doTest<T>(path)
-        }
     }
 }

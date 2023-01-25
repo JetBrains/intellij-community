@@ -366,7 +366,7 @@ public class GeneralCommandLine implements UserDataHolder {
     try {
       if (myWorkDirectory != null) {
         if (!myWorkDirectory.exists()) {
-          throw new WorkingDirectoryNotFoundException(myWorkDirectory.toString());
+          throw new WorkingDirectoryNotFoundException(myWorkDirectory.toPath());
         }
         if (!myWorkDirectory.isDirectory()) {
           throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));

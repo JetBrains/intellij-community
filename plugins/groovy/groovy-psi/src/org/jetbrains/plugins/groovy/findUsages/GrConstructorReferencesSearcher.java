@@ -9,9 +9,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class GrConstructorReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   public GrConstructorReferencesSearcher() {
     super(true);

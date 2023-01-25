@@ -21,13 +21,13 @@ internal class PackageSearchProjectCachesService(project: Project) {
     val searchCache: CoroutineLRUCache<PackagesListPanel.SearchCommandModel, ProjectDataProvider.ParsedSearchResponse> =
         CoroutineLRUCache(200)
 
-    val searchPackageModelCache: CoroutineLRUCache<UiPackageModelCacheKey, UiPackageModel.SearchResult> =
+    private val searchPackageModelCache: CoroutineLRUCache<UiPackageModelCacheKey, UiPackageModel.SearchResult> =
         CoroutineLRUCache(1000)
 
     val installedDependencyCache: CoroutineLRUCache<InstalledDependency, ApiStandardPackage> =
         CoroutineLRUCache(500)
 
-    val projectCacheDirectory = project.getProjectDataPath("pkgs")
+    private val projectCacheDirectory = project.getProjectDataPath("pkgs")
         .also { if (!it.exists()) it.createDirectories() }
 
     suspend fun clear() = coroutineScope {

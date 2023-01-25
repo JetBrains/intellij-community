@@ -11,9 +11,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class RefactoringListenerManagerImpl extends RefactoringListenerManager {
   private final List<RefactoringElementListenerProvider> myListenerProviders = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Project myProject;

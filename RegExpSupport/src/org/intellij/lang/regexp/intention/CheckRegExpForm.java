@@ -54,6 +54,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -65,10 +67,19 @@ import java.util.regex.Pattern;
 public final class CheckRegExpForm {
   private static final Logger LOG = Logger.getInstance(CheckRegExpForm.class);
 
-  public static final Key<Boolean> CHECK_REG_EXP_EDITOR = Key.create("CHECK_REG_EXP_EDITOR");
-
   private static final Key<List<RegExpMatch>> LATEST_MATCHES = Key.create("REG_EXP_LATEST_MATCHES");
   private static final Key<RegExpMatchResult> RESULT = Key.create("REG_EXP_RESULT");
+
+  /**
+   * @deprecated Use {{@link Keys#CHECK_REG_EXP_EDITOR} instead.
+   */
+  @Deprecated
+  public static final Key<Boolean> CHECK_REG_EXP_EDITOR = Keys.CHECK_REG_EXP_EDITOR;
+
+  public static final class Keys {
+    // do not load CheckRegExpForm early, declare this key in separate class
+    public static final Key<Boolean> CHECK_REG_EXP_EDITOR = Key.create("CHECK_REG_EXP_EDITOR");
+  }
 
   private static final String LAST_EDITED_REGEXP = "last.edited.regexp";
 
@@ -107,17 +118,7 @@ public final class CheckRegExpForm {
           @Override
           public void caretPositionChanged(@NotNull CaretEvent event) {
             final int offset = editor.logicalPositionToOffset(event.getNewPosition());
-            final RegExpGroup group = findCapturingGroupAtOffset(regExpFile, offset);
-            final HighlightManager highlightManager = HighlightManager.getInstance(regExpFile.getProject());
-            removeHighlights(highlightManager);
-            if (group != null) {
-              final int index = SyntaxTraverser.psiTraverser(regExpFile).filter(RegExpGroup.class).indexOf(e -> e == group) + 1;
-              highlightRegExpGroup(group, highlightManager);
-              highlightMatchGroup(highlightManager, getMatches(regExpFile), index);
-            }
-            else {
-              highlightMatchGroup(highlightManager, getMatches(regExpFile), 0);
-            }
+            highlightRegExpGroup(offset, regExpFile);
           }
         }, disposable);
       }
@@ -132,7 +133,7 @@ public final class CheckRegExpForm {
       @Override
       protected @NotNull EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
-        editor.putUserData(CHECK_REG_EXP_EDITOR, Boolean.TRUE);
+        editor.putUserData(Keys.CHECK_REG_EXP_EDITOR, Boolean.TRUE);
         editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
@@ -152,6 +153,15 @@ public final class CheckRegExpForm {
         setupBorder(editor);
       }
     };
+    myRegExp.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        final Editor editor = myRegExp.getEditor();
+        if (editor == null) return;
+        final int offset = editor.getCaretModel().getOffset();
+        highlightRegExpGroup(offset, regExpFile);
+      }
+    });
     setupIcon(myRegExp, myRegExpIcon);
 
     final String sampleText =
@@ -168,23 +178,7 @@ public final class CheckRegExpForm {
           @Override
           public void caretPositionChanged(@NotNull CaretEvent event) {
             final int offset = editor.logicalPositionToOffset(event.getNewPosition());
-            final HighlightManager highlightManager = HighlightManager.getInstance(regExpFile.getProject());
-            removeHighlights(highlightManager);
-
-            final List<RegExpMatch> matches = getMatches(regExpFile);
-            int index = indexOfGroupAtOffset(matches, offset);
-            if (index > 0) {
-              @Nullable RegExpGroup group =
-                SyntaxTraverser.psiTraverser(regExpFile)
-                  .filter(RegExpGroup.class)
-                  .filter(RegExpGroup::isCapturing)
-                  .get(index - 1);
-              highlightRegExpGroup(group, highlightManager);
-              highlightMatchGroup(highlightManager, matches, index);
-            }
-            else {
-              highlightMatchGroup(highlightManager, matches, 0);
-            }
+            highlightSampleGroup(offset, regExpFile);
           }
         }, disposable);
       }
@@ -218,6 +212,15 @@ public final class CheckRegExpForm {
         setupBorder(editor);
       }
     };
+    mySampleText.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        final Editor editor = mySampleText.getEditor();
+        if (editor == null) return;
+        final int offset = editor.getCaretModel().getOffset();
+        highlightSampleGroup(offset, regExpFile);
+      }
+    });
 
     setupIcon(mySampleText, mySampleIcon);
     mySampleText.setOneLineMode(false);
@@ -305,6 +308,40 @@ public final class CheckRegExpForm {
     myRootPanel.add(createLabel(RegExpBundle.message("label.sample"), mySampleText), c);
     c.gridx = 1;
     myRootPanel.add(mySampleText, c);
+  }
+
+  private void highlightSampleGroup(int offset, @NotNull PsiFile regExpFile) {
+    final HighlightManager highlightManager = HighlightManager.getInstance(regExpFile.getProject());
+    removeHighlights(highlightManager);
+
+    final List<RegExpMatch> matches = getMatches(regExpFile);
+    int index = indexOfGroupAtOffset(matches, offset);
+    if (index > 0) {
+      @Nullable RegExpGroup group =
+        SyntaxTraverser.psiTraverser(regExpFile)
+          .filter(RegExpGroup.class)
+          .filter(RegExpGroup::isCapturing)
+          .get(index - 1);
+      highlightRegExpGroup(group, highlightManager);
+      highlightMatchGroup(highlightManager, matches, index);
+    }
+    else {
+      highlightMatchGroup(highlightManager, matches, 0);
+    }
+  }
+
+  private void highlightRegExpGroup(int offset, @NotNull PsiFile regExpFile) {
+    final RegExpGroup group = findCapturingGroupAtOffset(regExpFile, offset);
+    final HighlightManager highlightManager = HighlightManager.getInstance(regExpFile.getProject());
+    removeHighlights(highlightManager);
+    if (group != null) {
+      final int index = SyntaxTraverser.psiTraverser(regExpFile).filter(RegExpGroup.class).indexOf(e -> e == group) + 1;
+      highlightRegExpGroup(group, highlightManager);
+      highlightMatchGroup(highlightManager, getMatches(regExpFile), index);
+    }
+    else {
+      highlightMatchGroup(highlightManager, getMatches(regExpFile), 0);
+    }
   }
 
   private static int indexOfGroupAtOffset(List<RegExpMatch> matches, int offset) {
@@ -415,16 +452,19 @@ public final class CheckRegExpForm {
       case MATCHES -> {
         setIconAndTooltip(mySampleIcon, AllIcons.General.InspectionsOK, RegExpBundle.message("tooltip.matches"));
         setIconAndTooltip(myRegExpIcon, null, null);
+        final Editor editor = mySampleText.getEditor();
+        if (editor != null) {
+          final HighlightManager highlightManager = HighlightManager.getInstance(regExpFile.getProject());
+          removeHighlights(highlightManager);
+        }
       }
       case FOUND -> {
         final List<RegExpMatch> matches = getMatches(regExpFile);
         final Editor editor = mySampleText.getEditor();
         if (editor != null) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            final HighlightManager highlightManager = HighlightManager.getInstance(regExpFile.getProject());
-            removeHighlights(highlightManager);
-            highlightMatchGroup(highlightManager, matches, 0);
-          });
+          final HighlightManager highlightManager = HighlightManager.getInstance(regExpFile.getProject());
+          removeHighlights(highlightManager);
+          highlightMatchGroup(highlightManager, matches, 0);
         }
         if (matches.size() > 1) {
           setIconAndTooltip(mySampleIcon, AllIcons.General.InspectionsOK, RegExpBundle.message("tooltip.found.multiple", matches.size()));

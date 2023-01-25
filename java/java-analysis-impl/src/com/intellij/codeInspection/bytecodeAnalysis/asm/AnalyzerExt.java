@@ -13,8 +13,6 @@ import java.util.Map;
 /**
  * Extended version of {@link Analyzer}.
  * It handles frames <b>and</b> additional data.
- *
- * @author lambdamix
  */
 public class AnalyzerExt<V extends Value, Data, MyInterpreter extends Interpreter<V> & InterpreterExt<Data>> extends SubroutineFinder {
   private final MyInterpreter interpreter;

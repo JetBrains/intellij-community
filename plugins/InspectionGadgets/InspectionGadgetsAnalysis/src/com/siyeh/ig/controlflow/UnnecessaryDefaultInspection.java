@@ -40,7 +40,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.COMPLETE_WITHOUT_TOTAL;
+import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.COMPLETE_WITHOUT_UNCONDITIONAL;
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -255,6 +255,6 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
       return null;
     }
     final CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(switchBlock);
-    return completenessResult == COMPLETE_WITHOUT_TOTAL ? result : null;
+    return completenessResult == COMPLETE_WITHOUT_UNCONDITIONAL ? result : null;
   }
 }

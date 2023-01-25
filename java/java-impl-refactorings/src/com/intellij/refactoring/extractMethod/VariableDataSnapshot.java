@@ -8,9 +8,6 @@ import com.intellij.refactoring.util.VariableData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Pavel.Dolgov
- */
 class VariableDataSnapshot extends AbstractVariableData {
   @Nullable private final SmartPsiElementPointer<PsiVariable> myVariable;
   @Nullable private final SmartTypePointer myType;

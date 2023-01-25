@@ -31,10 +31,31 @@ class X {
     }
   }
 
-  void test(String s) {
+  void testUnconditionalPatternAndDefault1(String s) {
     switch (s) {
-      case null, <error descr="'switch' has both a total pattern and a default label">default</error> -> System.out.println("null, default");
-      case <error descr="'switch' has both a total pattern and a default label">String str</error> -> System.out.println("String");
+      case null, <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> System.out.println("null, default");
+      case <error descr="'switch' has both an unconditional pattern and a default label">String str</error> -> System.out.println("String");
+    }
+  }
+
+  void testUnconditionalPatternAndDefault2(Integer j) {
+    switch (j) {
+      case <error descr="'switch' has both an unconditional pattern and a default label">Integer i when true</error>  -> System.out.println("An integer");
+      <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> System.out.println("default");
+    }
+  }
+
+  void testDuplicateUnconditionalPattern1(Integer j) {
+    switch (j) {
+      case <error descr="Duplicate unconditional pattern">Integer i when true</error> -> System.out.println("An integer");
+      case <error descr="Duplicate unconditional pattern">Number number</error> -> System.out.println("An integer");
+    }
+  }
+
+  void testDuplicateUnconditionalPattern2(Integer j) {
+    switch (j) {
+      case <error descr="Duplicate unconditional pattern">Integer i when true</error> -> System.out.println("An integer");
+      case <error descr="Duplicate unconditional pattern">Integer i</error> -> System.out.println("An integer");
     }
   }
 }

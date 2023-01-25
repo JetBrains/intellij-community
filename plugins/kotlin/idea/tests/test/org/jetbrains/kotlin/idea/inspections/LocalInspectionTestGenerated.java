@@ -1758,6 +1758,89 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain")
         public abstract static class SimplifiableCallChain extends AbstractLocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant")
+            public static class MapSumWithConstant extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("const.kt")
+                public void testConst() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/const.kt");
+                }
+
+                @TestMetadata("intLiteral.kt")
+                public void testIntLiteral() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteral.kt");
+                }
+
+                @TestMetadata("intLiteralInAnonymousFun.kt")
+                public void testIntLiteralInAnonymousFun() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInAnonymousFun.kt");
+                }
+
+                @TestMetadata("intLiteralInBinary.kt")
+                public void testIntLiteralInBinary() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInBinary.kt");
+                }
+
+                @TestMetadata("intLiteralInIf.kt")
+                public void testIntLiteralInIf() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInIf.kt");
+                }
+
+                @TestMetadata("intLiteralInIf2.kt")
+                public void testIntLiteralInIf2() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInIf2.kt");
+                }
+
+                @TestMetadata("intLiteralInTryCatch.kt")
+                public void testIntLiteralInTryCatch() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInTryCatch.kt");
+                }
+
+                @TestMetadata("intLiteralInWhen.kt")
+                public void testIntLiteralInWhen() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInWhen.kt");
+                }
+
+                @TestMetadata("intLiteralInWhen2.kt")
+                public void testIntLiteralInWhen2() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInWhen2.kt");
+                }
+
+                @TestMetadata("longLiteral.kt")
+                public void testLongLiteral() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/longLiteral.kt");
+                }
+
+                @TestMetadata("longLiteralInBinary.kt")
+                public void testLongLiteralInBinary() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/longLiteralInBinary.kt");
+                }
+
+                @TestMetadata("longLiteralInIf.kt")
+                public void testLongLiteralInIf() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/longLiteralInIf.kt");
+                }
+
+                @TestMetadata("variable.kt")
+                public void testVariable() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/variable.kt");
+                }
+
+                @TestMetadata("variableInBinary.kt")
+                public void testVariableInBinary() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/variableInBinary.kt");
+                }
+
+                @TestMetadata("variableInIf.kt")
+                public void testVariableInIf() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/variableInIf.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/primitiveArray")
             public static class PrimitiveArray extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
@@ -2152,6 +2235,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMap4.kt");
                 }
 
+                @TestMetadata("mapToMapWithDestination.kt")
+                public void testMapToMapWithDestination() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMapWithDestination.kt");
+                }
+
+                @TestMetadata("mapToMapWithDestination2.kt")
+                public void testMapToMapWithDestination2() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMapWithDestination2.kt");
+                }
+
+                @TestMetadata("mapToMapWithDestination3.kt")
+                public void testMapToMapWithDestination3() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMapWithDestination3.kt");
+                }
+
                 @TestMetadata("mapWithReturn.kt")
                 public void testMapWithReturn() throws Exception {
                     runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapWithReturn.kt");
@@ -2394,6 +2492,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("FilterIsForFlexibleOnSequence.kt")
             public void testFilterIsForFlexibleOnSequence() throws Exception {
                 runTest("testData/inspectionsLocal/collections/uselessCallOnCollection/FilterIsForFlexibleOnSequence.kt");
+            }
+
+            @TestMetadata("FilterIsForInVariance.kt")
+            public void testFilterIsForInVariance() throws Exception {
+                runTest("testData/inspectionsLocal/collections/uselessCallOnCollection/FilterIsForInVariance.kt");
+            }
+
+            @TestMetadata("FilterIsForOutVariance.kt")
+            public void testFilterIsForOutVariance() throws Exception {
+                runTest("testData/inspectionsLocal/collections/uselessCallOnCollection/FilterIsForOutVariance.kt");
             }
 
             @TestMetadata("FilterIsSupertypeInstance.kt")
@@ -4842,6 +4950,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("featureDisabled.kt")
         public void testFeatureDisabled() throws Exception {
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/featureDisabled.kt");
+        }
+
+        @TestMetadata("forEachInsideEnumBody.kt")
+        public void testForEachInsideEnumBody() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/forEachInsideEnumBody.kt");
         }
 
         @TestMetadata("forLoop.kt")
@@ -16376,6 +16489,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/propertyOfInlineClassType.kt");
         }
 
+        @TestMetadata("secondaryConstructorCalledByImportAlias.kt")
+        public void testSecondaryConstructorCalledByImportAlias() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/secondaryConstructorCalledByImportAlias.kt");
+        }
+
         @TestMetadata("secondaryConstructorCalledByTypeAlias.kt")
         public void testSecondaryConstructorCalledByTypeAlias() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/secondaryConstructorCalledByTypeAlias.kt");
@@ -16459,6 +16577,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("usedEnumFunction9.kt")
         public void testUsedEnumFunction9() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction9.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport.kt")
+        public void testUsedEnumFunctionWithImport() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport2.kt")
+        public void testUsedEnumFunctionWithImport2() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport2.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport3.kt")
+        public void testUsedEnumFunctionWithImport3() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport3.kt");
         }
 
         @TestMetadata("usedEnumFunctionWithNestedEnum.kt")
@@ -16862,6 +16995,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("get.kt")
         public void testGet() throws Exception {
             runTest("testData/inspectionsLocal/usePropertyAccessSyntax/get.kt");
+        }
+
+        @TestMetadata("getCallableReference.kt")
+        public void testGetCallableReference() throws Exception {
+            runTest("testData/inspectionsLocal/usePropertyAccessSyntax/getCallableReference.kt");
+        }
+
+        @TestMetadata("getCallableReferenceOldLV.kt")
+        public void testGetCallableReferenceOldLV() throws Exception {
+            runTest("testData/inspectionsLocal/usePropertyAccessSyntax/getCallableReferenceOldLV.kt");
         }
 
         @TestMetadata("set.kt")

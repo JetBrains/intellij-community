@@ -4,9 +4,6 @@ package com.intellij.openapi.externalSystem.model.project;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public interface Named {
 
   @NlsSafe @NotNull String getExternalName();

@@ -14,7 +14,6 @@ import org.jetbrains.plugins.textmate.regex.StringWithId;
 import org.jetbrains.plugins.textmate.regex.TextMateRange;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public final class TextMateLexer {
   /**
@@ -115,7 +114,7 @@ public final class TextMateLexer {
           closeScopeSelector(output, linePosition + startLinePosition);
           closeScopeSelector(output, linePosition + startLinePosition);
           myStates = myStates.getTail();
-          // this is happening on line start, none of previous states couldn't be run on this line, so no need to update anchorByteOffset
+          // this is happening at line start, none of previous states couldn't be run on this line, so no need to update anchorByteOffset
           continue;
         }
         else {
@@ -252,7 +251,6 @@ public final class TextMateLexer {
     Int2ObjectMap<CharSequence> captures = rule.getCaptures(capturesKey);
     if (captures != null) {
       List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string, line);
-      //noinspection SSBasedInspection
       List<CaptureMatchData> nonEmptyMatches = matches.stream().filter(m -> m.selectorName.length() > 0 && !m.range.isEmpty()).toList();
       LinkedList<CaptureMatchData> starts = new LinkedList<>(nonEmptyMatches);
       Collections.sort(starts, CaptureMatchData.START_OFFSET_ORDERING);

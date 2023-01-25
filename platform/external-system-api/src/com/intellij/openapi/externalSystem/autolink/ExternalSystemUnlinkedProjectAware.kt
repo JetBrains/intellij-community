@@ -4,11 +4,8 @@ package com.intellij.openapi.externalSystem.autolink
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 
 /**
  * Allows to show and hide notification about unlinked projects with [systemId].
@@ -25,11 +22,8 @@ interface ExternalSystemUnlinkedProjectAware {
 
   fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable)
 
-  @Nls
-  fun getNotificationText(): String =
-    ExternalSystemBundle.message("unlinked.project.notification.load.action", systemId.readableName)
-
   companion object {
+
     val EP_NAME = ExtensionPointName.create<ExternalSystemUnlinkedProjectAware>("com.intellij.externalSystemUnlinkedProjectAware")
 
     @JvmStatic

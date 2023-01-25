@@ -45,8 +45,8 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("ignoredTypes", InspectionGadgetsBundle.message("options.label.ignored.classes"),
-                new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.class.type.to.ignore"))),
+      stringList("ignoredTypes", InspectionGadgetsBundle.message("options.label.ignored.classes"),
+                 new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.class.type.to.ignore"))),
       checkbox("ignoreNegations", InspectionGadgetsBundle.message("size.replaceable.by.isempty.negation.ignore.option"))
     );
   }

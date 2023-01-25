@@ -19,7 +19,7 @@ public final class JsonPathSpellcheckerStrategy extends SpellcheckingStrategy {
 
   private final Tokenizer<JsonPathStringLiteral> ourStringLiteralTokenizer = new Tokenizer<>() {
     @Override
-    public void tokenize(@NotNull JsonPathStringLiteral element, TokenConsumer consumer) {
+    public void tokenize(@NotNull JsonPathStringLiteral element, @NotNull TokenConsumer consumer) {
       PlainTextSplitter textSplitter = PlainTextSplitter.getInstance();
       if (element.textContains('\\')) {
         List<Pair<TextRange, String>> fragments = element.getTextFragments();
@@ -40,7 +40,7 @@ public final class JsonPathSpellcheckerStrategy extends SpellcheckingStrategy {
 
   private final Tokenizer<JsonPathId> idLiteralTokenizer = new Tokenizer<>() {
     @Override
-    public void tokenize(@NotNull JsonPathId element, TokenConsumer consumer) {
+    public void tokenize(@NotNull JsonPathId element, @NotNull TokenConsumer consumer) {
       PlainTextSplitter textSplitter = PlainTextSplitter.getInstance();
       consumer.consumeToken(element, textSplitter);
     }

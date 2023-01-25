@@ -53,7 +53,6 @@ import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedSerializedArgsInfo
-import org.jetbrains.kotlin.idea.gradleTooling.serialization.IdeaKotlinSerializationContext
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
@@ -409,11 +408,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
                     }
 
-                    val kotlinSourceSet = createSourceSetInfo(
-                        compilation,
-                        gradleModule,
-                        resolverCtx
-                    ) ?: continue
+                    val kotlinSourceSet = createSourceSetInfo(mppModel, compilation, gradleModule, resolverCtx) ?: continue
 
                     /*if (compilation.platform == KotlinPlatform.JVM || compilation.platform == KotlinPlatform.ANDROID) {
                         compilationData.targetCompatibility = (kotlinSourceSet.compilerArguments as? K2JVMCompilerArguments)?.jvmTarget
@@ -679,9 +674,10 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 Some dependencies are represented as IdeaKotlinProjectArtifactDependency.
                 Such dependencies can be resolved to the actual source sets that built this artifact.
                  */
-                val projectArtifactDependencyResolver = KotlinProjectArtifactDependencyResolver(ideProject)
+                val projectArtifactDependencyResolver = KotlinProjectArtifactDependencyResolver()
                 val resolvedDependencies = dependencies[sourceSet.name].flatMap { dependency ->
-                    if (dependency is IdeaKotlinProjectArtifactDependency) projectArtifactDependencyResolver.resolve(dependency)
+                    if (dependency is IdeaKotlinProjectArtifactDependency)
+                        projectArtifactDependencyResolver.resolve(ideProject, sourceSetDataNode, dependency)
                     else listOf(dependency)
                 }
 
@@ -941,6 +937,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         // TODO: Unite with other createSourceSetInfo
         // This method is used in Android side of import and it's signature could not be changed
         fun createSourceSetInfo(
+            model: KotlinMPPGradleModel,
             compilation: KotlinCompilation,
             gradleModule: IdeaModule,
             resolverCtx: ProjectResolverContext
@@ -948,6 +945,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             if (compilation.platform.isNotSupported()) return null
             if (Proxy.isProxyClass(compilation.javaClass)) {
                 return createSourceSetInfo(
+                    model,
                     KotlinCompilationImpl(compilation, HashMap<Any, Any>()),
                     gradleModule,
                     resolverCtx
@@ -961,9 +959,8 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 sourceSetInfo.gradleModuleId = getModuleId(resolverCtx, gradleModule)
                 sourceSetInfo.actualPlatforms.pushPlatforms(compilation.platform)
                 sourceSetInfo.isTestModule = compilation.isTestComponent
-                sourceSetInfo.dependsOn = compilation.declaredSourceSets.flatMap { it.allDependsOnSourceSets }.map {
-                    getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
-                }.distinct().toSet()
+                sourceSetInfo.dependsOn = model.resolveAllDependsOnSourceSets(compilation.declaredSourceSets)
+                    .map { dependsOnSourceSet -> getGradleModuleQualifiedName(resolverCtx, gradleModule, dependsOnSourceSet.name) }.toSet()
 
                 sourceSetInfo.additionalVisible = sourceSetInfo.additionalVisible.map {
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
@@ -1037,17 +1034,13 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
     }
 }
 
-fun ProjectResolverContext.getMppModel(gradleModule: IdeaModule): KotlinMPPGradleModel? {
-    return this.getExtraProject(gradleModule, KotlinMPPGradleModel::class.java)?.let { mppModel ->
+fun ProjectResolverContext.getMppModel(gradleModule: IdeaModule): KotlinMPPGradleModel? =
+    this.getExtraProject(gradleModule, KotlinMPPGradleModel::class.java)?.let { mppModel ->
         if (mppModel is Proxy) {
             KotlinMPPGradleProjectResolver.proxyObjectCloningCache[mppModel] as? KotlinMPPGradleModelImpl
                 ?: KotlinMPPGradleModelImpl(mppModel, KotlinMPPGradleProjectResolver.proxyObjectCloningCache).also {
                     KotlinMPPGradleProjectResolver.proxyObjectCloningCache[mppModel] = it
                 }
         } else mppModel
-    }.also { mppModel ->
-        @OptIn(KotlinGradlePluginVersionDependentApi::class)
-        (mppModel?.dependencies as? IdeaKotlinSerializedDependenciesContainer)
-            ?.deserializeIfNecessary(IdeaKotlinSerializationContext(KotlinMPPGradleProjectResolver::class.java.classLoader))
     }
-}
+

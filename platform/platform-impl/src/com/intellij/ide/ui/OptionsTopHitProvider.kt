@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.runActivity
@@ -30,7 +30,7 @@ import kotlin.coroutines.coroutineContext
 abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHitProvider {
   companion object {
     // project level here means not that EP itself in project area, but that extensions applicable for project only
-    val PROJECT_LEVEL_EP = ExtensionPointName<ProjectLevelProvider>("com.intellij.search.projectOptionsTopHitProvider")
+    val PROJECT_LEVEL_EP: ExtensionPointName<ProjectLevelProvider> = ExtensionPointName("com.intellij.search.projectOptionsTopHitProvider")
 
     @JvmStatic
     fun consumeTopHits(provider: OptionsSearchTopHitProvider,

@@ -22,9 +22,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Zhdanov
- */
 public class ScrollRightAction extends InactiveEditorAction {
   
   public ScrollRightAction() {

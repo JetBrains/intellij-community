@@ -216,7 +216,7 @@ class ArtifactsPropertyTest {
         val foundArtifactVal = codeMaker.makeVal("foundArtifact",
                                                  "$managerVal.findArtifact(${codeMaker.v("chosenArtifact")}.name)!!")
 
-        val artifactEntity = WorkspaceModel.getInstance(projectModel.project).entityStorage.current
+        val artifactEntity = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
           .entities(ArtifactEntity::class.java).find { it.name == artifactBridge.name }!!
 
         assertElementsEquals(rootElement, foundArtifact.rootElement)
@@ -263,7 +263,7 @@ class ArtifactsPropertyTest {
       checkResult(env) {
         val foundArtifact = runReadAction { manager.findArtifact(selectedArtifact.name) }!!
 
-        val artifactEntity = WorkspaceModel.getInstance(projectModel.project).entityStorage.current
+        val artifactEntity = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
           .entities(ArtifactEntity::class.java).find { it.name == selectedArtifact.name }!!
 
         assertElementsEquals(rootElement, foundArtifact.rootElement)
@@ -288,8 +288,7 @@ class ArtifactsPropertyTest {
       val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
       val artifactName = selectArtifactName(
         env,
-        workspaceModel.entityStorage
-          .current
+        workspaceModel.currentSnapshot
           .entities(ArtifactEntity::class.java)
           .map { it.name }
           .toList()
@@ -319,8 +318,7 @@ class ArtifactsPropertyTest {
       val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
       val artifactName = selectArtifactName(
         env,
-        workspaceModel.entityStorage
-          .current
+        workspaceModel.currentSnapshot
           .entities(ArtifactEntity::class.java)
           .map { it.name }
           .toList()
@@ -340,7 +338,7 @@ class ArtifactsPropertyTest {
       }
 
       checkResult(env) {
-        val entities = workspaceModel.entityStorage.current.entities(ArtifactEntity::class.java)
+        val entities = workspaceModel.currentSnapshot.entities(ArtifactEntity::class.java)
         assertTrue(entities.none { it.name == selectedArtifact.name })
         assertTrue(entities.any { it.name == artifactName })
 
@@ -368,7 +366,7 @@ class ArtifactsPropertyTest {
       }
 
       checkResult(env) {
-        val artifactEntity = workspaceModel.entityStorage.current.resolve(selectedArtifact.symbolicId)!!
+        val artifactEntity = workspaceModel.currentSnapshot.resolve(selectedArtifact.symbolicId)!!
         assertEquals(!selectedArtifact.includeInProjectBuild, artifactEntity.includeInProjectBuild)
 
         onManager(env) { manager ->
@@ -419,7 +417,7 @@ class ArtifactsPropertyTest {
       }
 
       checkResult(env) {
-        val entities = workspaceModel.entityStorage.current.entities(ArtifactEntity::class.java)
+        val entities = workspaceModel.currentSnapshot.entities(ArtifactEntity::class.java)
         assertTrue(entities.none { it.name == selectedArtifact.name })
 
         onManager(env) { manager ->
@@ -444,7 +442,7 @@ class ArtifactsPropertyTest {
 
   inner class FindByNameNonExisting : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
-      val artifactEntities = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.entities(
+      val artifactEntities = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(
         ArtifactEntity::class.java).toList()
 
       val artifactName = selectArtifactName(env, artifactEntities.map { it.name }) ?: run {
@@ -461,7 +459,7 @@ class ArtifactsPropertyTest {
 
   inner class FindByNameExisting : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
-      val artifactEntities = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.entities(
+      val artifactEntities = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(
         ArtifactEntity::class.java).toList()
       if (artifactEntities.isEmpty()) {
         env.logMessage("Cannot select artifact for finding")
@@ -531,7 +529,7 @@ class ArtifactsPropertyTest {
         assertEquals(initialArtifactsSize - 1, newArtifactsList.size)
         assertTrue(newArtifactsList.none { it.name == removalName })
 
-        val artifactEntities = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.entities(ArtifactEntity::class.java)
+        val artifactEntities = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(ArtifactEntity::class.java)
         assertTrue(artifactEntities.none { it.name == removalName })
       }
     }
@@ -588,7 +586,7 @@ class ArtifactsPropertyTest {
       checkResult(env) {
         assertEquals(newName, runReadAction{ manager.artifacts }[index].name)
 
-        val artifactEntities = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.entities(ArtifactEntity::class.java)
+        val artifactEntities = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(ArtifactEntity::class.java)
         assertTrue(artifactEntities.any { it.name == newName })
         assertTrue(artifactEntities.none { it.name == oldName })
       }
@@ -615,7 +613,7 @@ class ArtifactsPropertyTest {
       checkResult(env) {
         assertEquals(!oldBuildOnMake, runReadAction{ manager.artifacts }[index].isBuildOnMake)
 
-        val artifactEntities = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.entities(ArtifactEntity::class.java)
+        val artifactEntities = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(ArtifactEntity::class.java)
         assertTrue(artifactEntities.single { it.name == artifact.name }.includeInProjectBuild == !oldBuildOnMake)
       }
     }
@@ -835,7 +833,7 @@ class ArtifactsPropertyTest {
   }
 
   fun selectArtifactViaModel(env: ImperativeCommand.Environment, workspaceModel: WorkspaceModel, reason: String): ArtifactEntity? {
-    val existingArtifacts = workspaceModel.entityStorage.current.entities(ArtifactEntity::class.java).toList()
+    val existingArtifacts = workspaceModel.currentSnapshot.entities(ArtifactEntity::class.java).toList()
     if (existingArtifacts.isEmpty()) {
       env.logMessage("Cannot select artifact for $reason")
       return null
@@ -844,7 +842,7 @@ class ArtifactsPropertyTest {
 
     val artifactEntityId = existingArtifacts.indexOf(selectedArtifact)
 
-    codeMaker.makeVal("chosenArtifactEntity", "WorkspaceModel.getInstance(project).entityStorage.current.entities(ArtifactEntity::class.java).toList()[$artifactEntityId]")
+    codeMaker.makeVal("chosenArtifactEntity", "WorkspaceModel.getInstance(project).currentSnapshot.entities(ArtifactEntity::class.java).toList()[$artifactEntityId]")
 
     return selectedArtifact
   }
@@ -858,9 +856,9 @@ class ArtifactsPropertyTest {
       val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
       val entity = selectArtifactViaModel(env, workspaceModel, reason) ?: return null
 
-      codeMaker.makeVal("chosenArtifact", "WorkspaceModel.getInstance(project).entityStorage.current.artifactsMap.getDataByEntity(${codeMaker.v("chosenArtifactEntity")})")
+      codeMaker.makeVal("chosenArtifact", "WorkspaceModel.getInstance(project).currentSnapshot.artifactsMap.getDataByEntity(${codeMaker.v("chosenArtifactEntity")})")
 
-      workspaceModel.entityStorage.current.artifactsMap.getDataByEntity(entity)
+      workspaceModel.currentSnapshot.artifactsMap.getDataByEntity(entity)
     }
   }
 

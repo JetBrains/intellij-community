@@ -1,6 +1,7 @@
 import datetime
+from re import Pattern
 from types import TracebackType
-from typing import Any, NamedTuple, Pattern
+from typing import Any, NamedTuple
 
 class SizeUnit(NamedTuple):
     divider: int

@@ -18,9 +18,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractExternalSystemToolWindowFactory implements ToolWindowFactory, DumbAware {
   @NotNull private final ProjectSystemId externalSystemId;
 

@@ -204,7 +204,7 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return CustomSourceRootPropertiesEntity(propertiesXmlTag, entitySource) {
-      this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
+      parents.filterIsInstance<SourceRootEntity>().singleOrNull()?.let { this.sourceRoot = it }
     }
   }
 

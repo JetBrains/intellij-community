@@ -10,7 +10,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -19,8 +18,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -150,13 +147,6 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     return makePath(p, p.getBuildDirectory(), getTargetName(p) + suffix);
   }
 
-  protected String getTargetOutputPath(MavenProject p, String... subFoldersAndFile) {
-    List<String> elements = new ArrayList<>();
-    elements.add(p.getBuildDirectory());
-    Collections.addAll(elements, subFoldersAndFile);
-    return makePath(p, ArrayUtilRt.toStringArray(elements));
-  }
-
   protected String makePath(MavenProject p, String... elements) {
     StringBuilder tailBuff = new StringBuilder();
     for (String e : elements) {
@@ -173,7 +163,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     return p.getPackaging();
   }
 
-  protected boolean isFacetDetectionDisabled(Project project) {
+  public boolean isFacetDetectionDisabled(Project project) {
     final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(project);
     final FrameworkType frameworkType = FrameworkDetectionUtil.findFrameworkTypeForFacetDetector(myFacetType);
     if (frameworkType == null) return false;

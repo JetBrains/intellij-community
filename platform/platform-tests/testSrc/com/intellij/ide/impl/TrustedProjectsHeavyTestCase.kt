@@ -1,19 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
-import com.intellij.ide.impl.trustedProjects.LocatedProject
-import com.intellij.ide.impl.trustedProjects.ProjectLocator
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.file.VirtualFileUtil
-import com.intellij.openapi.file.VirtualFileUtil.getAbsoluteNioPath
-import com.intellij.openapi.file.converter.NioPathPrefixTreeFactory
-import com.intellij.openapi.file.system.LocalFileSystemUtil
+import com.intellij.openapi.util.io.getResolvedNioPath
+import com.intellij.openapi.util.io.toNioPath
+import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.createDirectory
+import com.intellij.openapi.vfs.findOrCreateDirectory
+import com.intellij.openapi.vfs.getVirtualDirectory
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
@@ -46,7 +47,7 @@ abstract class TrustedProjectsHeavyTestCase {
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory()
       .createTempDirTestFixture()
     fileFixture.setUp()
-    testRoot = LocalFileSystemUtil.getDirectory(fileFixture.tempDirPath)
+    testRoot = fileFixture.tempDirPath.toNioPath().getVirtualDirectory()
   }
 
   @AfterEach
@@ -58,7 +59,7 @@ abstract class TrustedProjectsHeavyTestCase {
     relativeProjectRoot: String
   ): Project {
     val projectRoot = writeAction {
-      VirtualFileUtil.createDirectory(testRoot, relativeProjectRoot)
+      testRoot.createDirectory(relativeProjectRoot)
     }
     val projectManager = ProjectManagerEx.getInstanceEx()
     return closeOpenedProjectsIfFailAsync {
@@ -78,7 +79,7 @@ abstract class TrustedProjectsHeavyTestCase {
     writeAction {
       val entityStorage = MutableEntityStorage.create()
       val contentRoots = relativeContentRoots.map {
-        VirtualFileUtil.findOrCreateDirectory(testRoot, it)
+        testRoot.findOrCreateDirectory(it)
       }
       addModuleEntity(project, entityStorage, moduleName, contentRoots)
       WorkspaceModel.getInstance(project).updateProjectModel("Create module $moduleName") {
@@ -114,10 +115,10 @@ abstract class TrustedProjectsHeavyTestCase {
     numModules: Int,
     numContentRoots: Int
   ) {
-    val projectRoot = VirtualFileUtil.findOrCreateDirectory(testRoot, relativeProjectRoot)
+    val projectRoot = testRoot.findOrCreateDirectory(relativeProjectRoot)
     generateModuleAsync(project, entityStorage, projectRoot, numContentRoots)
     repeat(numModules - 1) {
-      val moduleRoot = VirtualFileUtil.createDirectory(projectRoot, projectRoot.name + "-module-$it")
+      val moduleRoot = projectRoot.createDirectory(projectRoot.name + "-module-$it")
       generateModuleAsync(project, entityStorage, moduleRoot, numContentRoots)
     }
   }
@@ -131,7 +132,7 @@ abstract class TrustedProjectsHeavyTestCase {
     val contentRoots = ArrayList<VirtualFile>()
     contentRoots.add(moduleRoot)
     repeat(numContentRoots - 1) {
-      contentRoots.add(VirtualFileUtil.createDirectory(moduleRoot, "contentRoot-$it"))
+      contentRoots.add(moduleRoot.createDirectory("contentRoot-$it"))
     }
     addModuleEntity(project, entityStorage, moduleRoot.name, contentRoots)
   }
@@ -155,9 +156,9 @@ abstract class TrustedProjectsHeavyTestCase {
     project: Project,
     vararg relativeRoots: String
   ) {
-    val locatedProject = LocatedProject.locateProject(project)
+    val locatedProject = TrustedProjectsLocator.locateProject(project)
     Assertions.assertEquals(
-      relativeRoots.map { testRoot.getAbsoluteNioPath(it) }.toSet(),
+      relativeRoots.map { testRoot.path.getResolvedNioPath(it) }.toSet(),
       locatedProject.projectRoots.toSet()
     )
   }
@@ -175,7 +176,7 @@ abstract class TrustedProjectsHeavyTestCase {
     return result
   }
 
-  class TestProjectLocator : ProjectLocator {
+  class TestTrustedProjectsLocator : TrustedProjectsLocator {
 
     override fun getProjectRoots(project: Project): List<Path> {
       val index = NioPathPrefixTreeFactory.createSet()

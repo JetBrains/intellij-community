@@ -52,12 +52,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * <p>
  * Page is only visible to the 'clients' within state USABLE and ABOUT_TO_UNMAP -- other states are
  * used only internally. Because only USABLE and ABOUT_TO_UNMAP could be visible to the clients, only
- * in those 2 states usageCount could be >0.
+ * in those 2 states .usageCount could be >0.
  * <p>
  * Transition graph is uni-directional: e.g. there is no way for page to return from ABOUT_TO_UNMAP to
- * USABLE. So pages are not re-usable: page _buffers_ could be reused, but as page transitions to
- * ABOUT_TO_UNMAP there is no way back -- page will inevitably go towards TOMBSTONE, after which it
- * could be only thrown away to GC. This 'equifinality' is important property of state graph.
+ * USABLE. So pages are not re-usable: page _buffers_ could be reused, but as the page transitions to
+ * ABOUT_TO_UNMAP, there is no way back -- page will inevitably go towards TOMBSTONE, after which it
+ * could be only thrown away to GC. This 'equifinality' is an important property of the state graph,
+ * implementation relies on it in many places.
  * <p>
  * Transitions between states are implemented with CAS, so they could be tried concurrently, and only
  * one thread 'wins' the transition -- this is the thread that is responsible for some actions attached

@@ -118,7 +118,7 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
     if (!includeFiles) {
       return ArrayUtilRt.toStringArray(templates);
     }
-    List<String> fileTemplates = ContainerUtil.newArrayList("file_adds", "file_mods", "file_dels", "file_copies");
+    List<String> fileTemplates = List.of("file_adds", "file_mods", "file_dels", "file_copies");
     templates.addAll(wrapIn(fileTemplates, currentVersion));
     return ArrayUtilRt.toStringArray(templates);
   }

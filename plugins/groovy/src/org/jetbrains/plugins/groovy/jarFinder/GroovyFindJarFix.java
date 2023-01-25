@@ -13,9 +13,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author Sergey Evdokimov
- */
 class GroovyFindJarFix extends FindJarFix {
   GroovyFindJarFix(@NotNull GrReferenceElement<?> ref) {
     super(ref);

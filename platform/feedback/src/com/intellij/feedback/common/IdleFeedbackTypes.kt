@@ -4,9 +4,6 @@ package com.intellij.feedback.common
 import com.intellij.feedback.common.IdleFeedbackTypeResolver.isFeedbackNotificationDisabled
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.notification.RequestFeedbackNotification
-import com.intellij.feedback.common.statistics.FeedbackDialogCountCollector.Companion.logDialogCancelAction
-import com.intellij.feedback.common.statistics.FeedbackDialogCountCollector.Companion.logDialogOkAction
-import com.intellij.feedback.common.statistics.FeedbackDialogCountCollector.Companion.logDialogShown
 import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logDisableNotificationActionInvoked
 import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logRequestNotificationShown
 import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logRespondNotificationActionInvoked
@@ -24,8 +21,6 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.DialogWrapper.CANCEL_EXIT_CODE
-import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.*
@@ -106,13 +101,14 @@ enum class IdleFeedbackTypes {
   PRODUCTIVITY_METRIC_FEEDBACK {
     override val fusFeedbackId: String = "productivity_metric_feedback"
     override val suitableIdeVersion: String = "2023.1"
-    private val lastDayCollectFeedback = LocalDate(2022, 12, 6)
+    private val lastDayCollectFeedback = LocalDate(2023, 2, 28)
     private val maxNumberNotificationShowed = 1
 
     override fun isSuitable(): Boolean {
       val infoState = ProductivityMetricFeedbackInfoService.getInstance().state
 
-      return checkIdeIsSuitable() &&
+      return isIdeEAP() &&
+             checkIdeIsSuitable() &&
              checkIsNoDeadline() &&
              checkIdeVersionIsSuitable() &&
              checkFeedbackNotSent(infoState) &&
@@ -120,7 +116,9 @@ enum class IdleFeedbackTypes {
     }
 
     private fun checkIdeIsSuitable(): Boolean {
-      return PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate();
+      return PlatformUtils.isPhpStorm() || PlatformUtils.isWebStorm() || PlatformUtils.isGoIde() ||
+             PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharm() ||
+             PlatformUtils.isCLion();
     }
 
     private fun checkIsNoDeadline(): Boolean {
@@ -194,14 +192,6 @@ enum class IdleFeedbackTypes {
         }
         val dialog = createFeedbackDialog(project, forTest)
         dialog.show()
-        if (!forTest) {
-          logDialogShown(fusFeedbackId)
-          when (dialog.exitCode) {
-            OK_EXIT_CODE -> logDialogOkAction(fusFeedbackId)
-            CANCEL_EXIT_CODE -> logDialogCancelAction(fusFeedbackId)
-            else -> {}
-          }
-        }
       }
     )
     notification.addAction(

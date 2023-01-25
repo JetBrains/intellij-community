@@ -1,10 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -58,49 +56,6 @@ public final class LazyInitializer {
       synchronized(this) {
         this.value = value;
       }
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-  }
-
-  /**
-   * @deprecated Use {@link #create(Supplier)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static abstract class NotNullValue<T> implements Supplier<T> {
-    public NotNullValue() {
-    }
-
-    public abstract @NotNull T initialize();
-
-    @SuppressWarnings("unchecked")
-    private volatile T value = (T)UNINITIALIZED_VALUE;
-
-    /**
-     * Initializes the value if necessary and returns it.
-     */
-    @Nullable
-    public T get() {
-      T v = value;
-      if (v != UNINITIALIZED_VALUE) {
-        return value;
-      }
-
-      //noinspection SynchronizeOnThis
-      synchronized (this) {
-        v = value;
-        if (v != UNINITIALIZED_VALUE) {
-          return value;
-        }
-
-        v = initialize();
-        value = v;
-      }
-      return value;
     }
 
     @Override

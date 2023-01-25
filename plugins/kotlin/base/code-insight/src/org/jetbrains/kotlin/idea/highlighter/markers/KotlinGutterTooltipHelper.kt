@@ -34,11 +34,11 @@ object KotlinGutterTooltipHelper : GutterTooltipBuilder() {
     override fun getContainingElement(element: PsiElement): PsiElement? {
         val unwrapped = element.unwrapped
         if (unwrapped is PsiMethod) {
-            return unwrapped.containingClass
+            return PsiTreeUtil.getStubOrPsiParentOfType(unwrapped, PsiMember::class.java)
         }
 
         if (unwrapped is PsiClass) {
-            return unwrapped.containingClass ?: unwrapped.containingFile
+            return PsiTreeUtil.getStubOrPsiParentOfType(unwrapped, PsiMember::class.java) ?: unwrapped.containingFile
         }
 
         var member: KtDeclaration?

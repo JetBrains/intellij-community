@@ -51,7 +51,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 
   @Override

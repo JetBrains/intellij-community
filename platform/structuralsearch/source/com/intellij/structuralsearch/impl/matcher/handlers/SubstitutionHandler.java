@@ -15,7 +15,6 @@ import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.predicates.AndPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
-import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
@@ -93,15 +92,6 @@ public class SubstitutionHandler extends MatchingHandler {
 
   public MatchPredicate getPredicate() {
     return predicate;
-  }
-
-  /**
-   * @deprecated Use {@link SubstitutionHandler#findPredicate instead}
-   */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  public RegExpPredicate findRegExpPredicate() {
-    return findPredicate(getPredicate(), RegExpPredicate.class);
   }
 
   public @Nullable <T extends MatchPredicate> T findPredicate(@NotNull Class<T> aClass) {

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -55,7 +56,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   public abstract @PopupTitle String getCaption(int size);
 
   @Nullable
-  protected abstract Usage createUsage(T element);
+  protected abstract Usage createUsage(@NotNull T element);
 
   protected void replaceModel(@NotNull List<? extends T> data) {
     myUpdater.replaceModel(data);
@@ -79,7 +80,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
    * @deprecated Use {@link #BackgroundUpdaterTaskBase(Project, String, Comparator)} and {@link #updateComponent(T)} instead
    */
   @Deprecated(forRemoval = true)
-  public boolean updateComponent(@NotNull T element, @Nullable Comparator comparator) {
+  protected boolean updateComponent(@NotNull T element, @Nullable Comparator comparator) {
     if (tryAppendUsage(element)) return true;
     if (myCanceled) return false;
 
@@ -104,11 +105,14 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   private boolean tryAppendUsage(@NotNull T element) {
     final UsageView view = myUsageView.get();
     if (view != null && !((UsageViewImpl)view).isDisposed()) {
-      Usage usage = createUsage(element);
-      if (usage == null)
-        return false;
-      ApplicationManager.getApplication().runReadAction(() -> view.appendUsage(usage));
-      return true;
+      return ReadAction.compute(() -> {
+        Usage usage = createUsage(element);
+        if (usage == null) {
+          return false;
+        }
+        view.appendUsage(usage);
+        return true;
+      });
     }
     return false;
   }

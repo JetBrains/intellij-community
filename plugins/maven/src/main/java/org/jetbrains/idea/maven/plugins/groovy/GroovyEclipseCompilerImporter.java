@@ -15,9 +15,6 @@
  */
 package org.jetbrains.idea.maven.plugins.groovy;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GroovyEclipseCompilerImporter extends MigratedGroovyImporter {
 
   public GroovyEclipseCompilerImporter() {

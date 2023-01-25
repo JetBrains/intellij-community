@@ -14,10 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
@@ -53,7 +50,8 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
       @Override
       public Object getData(@NotNull String dataId) {
         if (shownDataKey.is(dataId)) {
-          return getSelectedFilePaths(null);
+          return VcsTreeModelData.selected(this)
+            .iterateUserObjects(FilePath.class);
         }
         return super.getData(dataId);
       }

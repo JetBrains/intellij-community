@@ -8,7 +8,6 @@ import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.GitSilentFileAdder;
 import com.intellij.openapi.GitSilentFileAdderProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -27,7 +26,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.file.NioPathUtil;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
@@ -62,7 +61,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScri
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.KotlinDslGradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionUtil;
+import org.jetbrains.plugins.gradle.service.project.wizard.util.GradleWrapperUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -81,11 +80,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC;
-import static com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl.setupCreatedProject;
 
-/**
- * @author Denis Zhdanov
- */
 @SuppressWarnings("unused")
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
   private static final Logger LOG = Logger.getInstance(AbstractGradleModuleBuilder.class);
@@ -216,6 +211,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       settings.linkProject(projectSettings);
     }
     if (isCreatingNewProject) {
+      ExternalProjectsManagerImpl.setupCreatedProject(project);
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
       // Needed to ignore postponed project refresh
       project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, Boolean.TRUE);
@@ -229,13 +225,9 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       }
       openBuildScriptFile(project, buildScriptFile);
       if (isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
-        createWrapper(project, () -> {
-          reloadProject(project);
-        });
+        generateGradleWrapper(project);
       }
-      else {
-        reloadProject(project);
-      }
+      reloadProject(project);
     }, ModalityState.NON_MODAL, project.getDisposed());
   }
 
@@ -256,15 +248,13 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     });
   }
 
-  private void createWrapper(@NotNull Project project, @NotNull Runnable callback) {
-    GitSilentFileAdder vcsFileAdder = GitSilentFileAdderProvider.create(project);
-    vcsFileAdder.markFileForAdding(rootProjectPath.resolve("gradle"), true);
-    vcsFileAdder.markFileForAdding(rootProjectPath.resolve("gradlew"), false);
-    vcsFileAdder.markFileForAdding(rootProjectPath.resolve("gradlew.bat"), false);
-    GradleExecutionUtil.ensureInstalledWrapper(project, rootProjectPath, gradleVersion, () -> {
-      vcsFileAdder.finish();
-      callback.run();
-    });
+  private void generateGradleWrapper(@NotNull Project project) {
+    var vcs = GitSilentFileAdderProvider.create(project);
+    vcs.markFileForAdding(rootProjectPath.resolve("gradle"), true);
+    vcs.markFileForAdding(rootProjectPath.resolve("gradlew"), false);
+    vcs.markFileForAdding(rootProjectPath.resolve("gradlew.bat"), false);
+    GradleWrapperUtil.generateGradleWrapper(rootProjectPath, gradleVersion);
+    vcs.finish();
   }
 
   public void configureBuildScript(@NotNull Consumer<GradleBuildScriptBuilder<?>> configure) {
@@ -575,7 +565,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   @Nullable
   @Override
   public Project createProject(String name, String path) {
-    return setupCreatedProject(super.createProject(name, path));
+    setCreatingNewProject(true);
+    return super.createProject(name, path);
   }
 
   public boolean isUseKotlinDsl() {
@@ -607,7 +598,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     }
 
     private void configureModulesSdk(@NotNull DataNode<ProjectData> projectNode) {
-      DataNode<ModuleData> moduleNode = ExternalSystemApiUtil.find(projectNode, ProjectKeys.MODULE, this::isTargetModule);
+      DataNode<ModuleData> moduleNode = ExternalSystemApiUtil.findChild(projectNode, ProjectKeys.MODULE, this::isTargetModule);
       if (moduleNode == null) return;
       configureModuleSdk(moduleNode);
       Collection<DataNode<GradleSourceSetData>> sourceSetsNodes = ExternalSystemApiUtil.getChildren(moduleNode, GradleSourceSetData.KEY);

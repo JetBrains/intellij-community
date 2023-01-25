@@ -220,7 +220,7 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ModuleCustomImlDataEntity(customModuleOptions, entitySource) {
       this.rootManagerTagCustomData = this@ModuleCustomImlDataEntityData.rootManagerTagCustomData
-      this.module = parents.filterIsInstance<ModuleEntity>().single()
+      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
     }
   }
 

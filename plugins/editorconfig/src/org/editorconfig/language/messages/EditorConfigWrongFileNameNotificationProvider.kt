@@ -26,28 +26,30 @@ import javax.swing.JComponent
 
 class EditorConfigWrongFileNameNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-    return Function { createNotificationPanel(file, it, project) }
-  }
-  private fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
-    if (fileEditor !is TextEditor) return null
-    val editor = fileEditor.editor
-    if (editor.getUserData(HIDDEN_KEY) != null) return null
     if (PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) return null
     if (file.extension != EditorConfigFileConstants.FILE_EXTENSION) return null
     if (nameMatches(file)) return null
-    return buildPanel(editor, file, project)
+    val renameRunnable = createRenameRunnable(project, file)
+    return Function { createNotificationPanel(file, it, project, renameRunnable) }
+  }
+  private fun createNotificationPanel(file: VirtualFile,
+                                      fileEditor: FileEditor,
+                                      project: Project,
+                                      renameRunnable: Runnable?): EditorNotificationPanel? {
+    if (fileEditor !is TextEditor) return null
+    val editor = fileEditor.editor
+    if (editor.getUserData(HIDDEN_KEY) != null) return null
+    return buildPanel(editor, file, project, renameRunnable)
   }
 
-  private fun buildPanel(editor: Editor, file: VirtualFile, project: Project): EditorNotificationPanel {
-    val result = EditorNotificationPanel(editor, null, null, EditorNotificationPanel.Status.Warning)
-
+  private fun createRenameRunnable(project: Project, file: VirtualFile): Runnable? {
     if (findEditorConfig(file) == null) {
-      val rename = EditorConfigBundle["notification.action.rename"]
-      result.createActionLabel(rename) action@{
-        if (findEditorConfig(file) != null) {
+      return Runnable {
+        if (runReadAction { findEditorConfig(file) } != null) {
+          file.parent.findChild(EditorConfigFileConstants.FILE_NAME)
           val message = EditorConfigBundle["notification.error.file.already.exists"]
           error(message, project)
-          return@action
+          return@Runnable
         }
 
         try {
@@ -60,6 +62,16 @@ class EditorConfigWrongFileNameNotificationProvider : EditorNotificationProvider
 
         update(file, project)
       }
+    }
+    return null
+  }
+
+  private fun buildPanel(editor: Editor, file: VirtualFile, project: Project, renameRunnable: Runnable?): EditorNotificationPanel {
+    val result = EditorNotificationPanel(editor, null, null, EditorNotificationPanel.Status.Warning)
+
+    if (renameRunnable != null) {
+      val rename = EditorConfigBundle["notification.action.rename"]
+      result.createActionLabel(rename, renameRunnable)
     }
 
     val hide = EditorConfigBundle["notification.action.hide.once"]
@@ -77,8 +89,7 @@ class EditorConfigWrongFileNameNotificationProvider : EditorNotificationProvider
     return result.text(EditorConfigBundle.get("notification.rename.message"))
   }
 
-  private fun findEditorConfig(file: VirtualFile) =
-    runReadAction { file.parent.findChild(EditorConfigFileConstants.FILE_NAME) }
+  private fun findEditorConfig(file: VirtualFile) = file.parent.findChild(EditorConfigFileConstants.FILE_NAME)
 
   private fun error(@Nls message: String, project: Project) {
     val notification = Notification("editorconfig", Utils.EDITOR_CONFIG_NAME, message, NotificationType.ERROR)

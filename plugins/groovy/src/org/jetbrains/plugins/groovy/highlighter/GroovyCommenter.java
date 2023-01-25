@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
-/**
- * @author ilyas
- */
 
 public class GroovyCommenter implements CodeDocumentationAwareCommenter {
   @Override

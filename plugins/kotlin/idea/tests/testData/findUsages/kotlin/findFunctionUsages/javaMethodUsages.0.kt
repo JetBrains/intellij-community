@@ -10,4 +10,3 @@ public class ServerEx() : Server() {
     public override fun processRequest() = "foofoo"
 }
 
-// FIR_COMPARISON

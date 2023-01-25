@@ -28,9 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author dsl
- */
 public class PsiMigrationImpl implements PsiMigration {
   private static final Logger LOG = Logger.getInstance(PsiMigrationImpl.class);
   private final PsiMigrationManager myMigrationManager;

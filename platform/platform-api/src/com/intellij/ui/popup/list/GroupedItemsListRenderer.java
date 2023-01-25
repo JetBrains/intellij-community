@@ -56,8 +56,8 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
     myRendererComponent.setBackground(list.getBackground());
     customizeComponent(list, value, isSelected);
 
-    if (ExperimentalUI.isNewUI() && myComponent instanceof SelectablePanel) {
-      ((SelectablePanel)myComponent).setSelectionColor(isSelected ? JBUI.CurrentTheme.List.background(true, true) : null);
+    if (ExperimentalUI.isNewUI() && getItemComponent() instanceof SelectablePanel selectablePanel) {
+      selectablePanel.setSelectionColor(isSelected ? JBUI.CurrentTheme.List.background(true, true) : null);
     }
 
     return result;

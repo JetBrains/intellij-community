@@ -22,10 +22,10 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId
 import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
@@ -111,14 +111,6 @@ class ArtifactModifiableModelBridge(
       .toMutableList()
     addBridgesToDiff(newBridges, diff)
     return artifacts
-  }
-
-  override fun addArtifact(name: String, artifactType: ArtifactType): ModifiableArtifact {
-    return addArtifact(name, artifactType, artifactType.createRootElement(name))
-  }
-
-  override fun addArtifact(name: String, artifactType: ArtifactType, rootElement: CompositePackagingElement<*>): ModifiableArtifact {
-    return addArtifact(name, artifactType, rootElement, null)
   }
 
   override fun addArtifact(name: String,
@@ -229,7 +221,7 @@ class ArtifactModifiableModelBridge(
     }
     (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).disposePointers(artifacts)
 
-    val current = WorkspaceModel.getInstance(project).entityStorage.current
+    val current = WorkspaceModel.getInstance(project).currentSnapshot
     val changes = diff.collectChanges(current)[ArtifactEntity::class.java] ?: emptyList()
 
     val added = mutableListOf<ArtifactBridge>()

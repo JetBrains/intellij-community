@@ -14,10 +14,8 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
 import org.jetbrains.kotlin.idea.KotlinIdeaBundle
-import org.jetbrains.kotlin.psi.KtAnonymousInitializer
-import org.jetbrains.kotlin.psi.KtModifierListOwner
-import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.idea.projectView.KtDeclarationTreeNode.Companion.tryGetRepresentableText
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.DescriptorRenderer.Companion.ONLY_NAMES_WITH_SHORT_TYPES
 import org.jetbrains.kotlin.resolve.DescriptorUtils.getAllOverriddenDeclarations
 import org.jetbrains.kotlin.resolve.OverridingUtil.filterOutOverridden
@@ -82,16 +80,9 @@ internal class KotlinStructureElementPresentation(
             return ONLY_NAMES_WITH_SHORT_TYPES.render(descriptor)
         }
 
-        val text = navigatablePsiElement.name
-        if (!text.isNullOrEmpty()) {
-            return text
-        }
+        navigatablePsiElement.name.takeUnless { it.isNullOrEmpty() }?.let { return it }
 
-        if (navigatablePsiElement is KtAnonymousInitializer) {
-            return KotlinIdeaBundle.message("class.initializer")
-        }
-
-        return null
+        return (navigatablePsiElement as? KtDeclaration)?.let { tryGetRepresentableText(it) }
     }
 
     private fun getElementLocationString(isInherited: Boolean, descriptor: DeclarationDescriptor?): String? {

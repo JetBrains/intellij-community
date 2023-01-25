@@ -3,7 +3,10 @@ package com.intellij.testFramework
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.nastradamus.NastradamusClient
-import com.intellij.nastradamus.model.*
+import com.intellij.nastradamus.model.BuildInfo
+import com.intellij.nastradamus.model.ChangeEntity
+import com.intellij.nastradamus.model.SortRequestEntity
+import com.intellij.nastradamus.model.TestCaseEntity
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.tool.Cache
 import com.intellij.tool.withErrorThreshold
@@ -40,7 +43,6 @@ class NastradamusClientTest {
 
   @Before
   fun beforeEach() {
-    Assume.assumeFalse("Until IJI-1000 is fixed", true)
     tcMockServer.start()
     tcClient = getTeamCityClientWithMock()
     nastradamus = getNastradamusClientWithMock(teamCityClient = tcClient)
@@ -71,13 +73,13 @@ class NastradamusClientTest {
   }
 
   private fun getTeamCityClientWithMock(vararg buildProperties: Pair<String, String>): TeamCityClient {
-    return TeamCityClient(baseUri = URI("http://localhost:${tcMockServer.port}").normalize(),
+    return TeamCityClient(baseUri = URI("http://${tcMockServer.hostName}:${tcMockServer.port}").normalize(),
                           systemPropertiesFilePath = setBuildParams(*buildProperties))
   }
 
   private fun getNastradamusClientWithMock(unsortedClasses: List<Class<*>> = listOf(), teamCityClient: TeamCityClient): NastradamusClient {
     return NastradamusClient(
-      baseUrl = URI("http://localhost:${nastradamusMockServer.port}").normalize(),
+      baseUrl = URI("http://${nastradamusMockServer.hostName}:${nastradamusMockServer.port}").normalize(),
       unsortedClasses = listOf(),
       teamCityClient = teamCityClient
     )
@@ -109,25 +111,6 @@ class NastradamusClientTest {
     changesEntities.forEach { Assert.assertTrue("File path should not be blank", it.filePath.isNotBlank()) }
     changesEntities.forEach { Assert.assertTrue("Relative file path should not be blank", it.relativeFile.isNotBlank()) }
     changesEntities.forEach { Assert.assertTrue("User name must not be blank", it.userName.isNotBlank()) }
-  }
-
-  @Test
-  @Ignore("Do not use TC. Use mocks / test data")
-  fun collectingTestResultsFromTC() {
-    val tests = tcClient.getTestRunInfo("226830449")
-
-    val testResultEntities = tests.map { json ->
-      TestResultEntity(
-        name = json.findValue("name").asText(),
-        status = TestStatus.fromString(json.findValue("status").asText()),
-        runOrder = json.findValue("runOrder").asInt(),
-        duration = json.findValue("duration")?.asLong() ?: 0,
-        buildType = tcClient.buildTypeId,
-        buildStatusMessage = tcClient.getBuildInfo().findValue("statusText").asText()
-      )
-    }
-
-    println(testResultEntities)
   }
 
   @Test
@@ -233,5 +216,6 @@ class NastradamusClientTest {
 
     Assert.assertEquals("Requested path should be equal", "/result/?build_id=100500", request.path)
     Assert.assertEquals("POST request should be sent", "POST", request.method)
+    Assert.assertTrue("Converted test entities must have 2 muted tests", testResultRequestEntity.testRunResults.count { it.isMuted } == 2)
   }
 }

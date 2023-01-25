@@ -10,4 +10,4 @@ internal val <caret>foo: Int = 1
 
 val Int.foo: Int get() = 2
 
-// FIR_COMPARISON
+

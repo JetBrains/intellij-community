@@ -2,8 +2,7 @@
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.ide.IdeCoreBundle;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.NlsContexts;
@@ -11,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -127,24 +127,21 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
       localIOFile = myLocalFile;
     }
 
-    VirtualFile localFile = WriteAction.computeAndWait(() -> {
-      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localIOFile);
-      if (file != null) {
-        file.refresh(false, false);
-      }
-      return file;
-    }, ModalityState.NON_MODAL);
-    LOG.assertTrue(localFile != null, "Virtual local file not found for " + localIOFile.getAbsolutePath());
-    LOG.debug("Virtual local file: " + localFile + ", size = " + localFile.getLength());
-    synchronized (myLock) {
-      myLocalVirtualFile = localFile;
-      myPrevLocalFile = null;
-      myState = RemoteFileState.DOWNLOADED;
-      myErrorMessage = null;
-    }
-    for (FileDownloadingListener listener : myListeners) {
-      listener.fileDownloaded(localFile);
-    }
+    VfsImplUtil.refreshAndFindFileByPath(LocalFileSystem.getInstance(), localIOFile.toString(), localFile -> {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        LOG.assertTrue(localFile != null, "Virtual local file not found for " + localIOFile.getAbsolutePath());
+        LOG.debug("Virtual local file: " + localFile + ", size = " + localFile.getLength());
+        synchronized (myLock) {
+          myLocalVirtualFile = localFile;
+          myPrevLocalFile = null;
+          myState = RemoteFileState.DOWNLOADED;
+          myErrorMessage = null;
+        }
+        for (FileDownloadingListener listener : myListeners) {
+          listener.fileDownloaded(localFile);
+        }
+      });
+    });
   }
 
   @Override

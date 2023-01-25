@@ -24,9 +24,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author ven
- */
 public class WrapExpressionFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(WrapExpressionFix.class);
 

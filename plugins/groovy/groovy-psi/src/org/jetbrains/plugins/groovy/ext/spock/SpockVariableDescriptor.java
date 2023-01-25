@@ -15,9 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class SpockVariableDescriptor {
 
   private final String myName;

@@ -2,6 +2,7 @@
   <dependencies>
     <module name="kotlin.searching.k2"/>
     <module name="kotlin.code-insight.k2"/>
+    <module name="kotlin.highlighting"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -16,5 +17,9 @@
     <codeInsight.lineMarkerProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinLineMarkerProvider"/>
+
+    <codeInsight.lineMarkerProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinExpectActualLineMarkerProvider"/>
   </extensions>
 </idea-plugin>

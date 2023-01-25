@@ -23,9 +23,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author dsl
- */
 public interface ReturnValue {
   boolean isEquivalent(ReturnValue other);
 

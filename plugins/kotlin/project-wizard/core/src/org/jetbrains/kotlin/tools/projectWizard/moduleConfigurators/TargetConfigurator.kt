@@ -104,7 +104,7 @@ abstract class AbstractBrowserTargetConfigurator: JsTargetConfigurator, ModuleCo
                 createAdditionalParams(module)
             )
         ) {
-            browserSubTarget(module, this@createTargetIrs)
+            browserSubTarget(module, this@createTargetIrs, cssSupportNeeded = true)
         }
     }
 

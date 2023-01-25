@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.ex.util;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.notification.NotificationGroupManager;
@@ -859,10 +860,15 @@ public final class EditorUtil {
    * editor.
    */
   public static Font getEditorFont() {
+    float fontSize = IdeScaleTransformer.getInstance().getCurrentEditorFontSize();
+    if (UISettings.getInstance().getPresentationMode()) {
+      fontSize = UISettings.getInstance().getPresentationModeFontSize() - 4f;
+    }
+
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Font editorFont = scheme.getFont(EditorFontType.PLAIN);
-    if (UISettings.getInstance().getPresentationMode()) {
-      editorFont = editorFont.deriveFont(UISettings.getInstance().getPresentationModeFontSize() - 4f);
+    if (editorFont.getSize() != fontSize) {
+      editorFont = editorFont.deriveFont(fontSize);
     }
     return UIUtil.getFontWithFallback(editorFont);
   }

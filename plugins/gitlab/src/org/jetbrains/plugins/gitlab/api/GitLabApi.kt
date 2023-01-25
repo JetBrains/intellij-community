@@ -8,8 +8,11 @@ import com.intellij.collaboration.api.httpclient.CommonHeadersConfigurer
 import com.intellij.collaboration.api.httpclient.CompoundRequestConfigurer
 import com.intellij.collaboration.api.httpclient.RequestTimeoutConfigurer
 import com.intellij.collaboration.api.json.JsonHttpApiHelper
+import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
+import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
+import java.net.http.HttpResponse
 
 class GitLabApi private constructor(httpHelper: HttpApiHelper)
   : HttpApiHelper by httpHelper,
@@ -25,6 +28,11 @@ class GitLabApi private constructor(httpHelper: HttpApiHelper)
 
   constructor(tokenSupplier: () -> String) : this(httpHelper(tokenSupplier))
 
+  suspend inline fun <reified T> loadList(uri: String): HttpResponse<out List<T>> {
+    val request = request(uri).GET().build()
+    return loadJsonList(request)
+  }
+
   companion object {
     private fun httpHelper(tokenSupplier: () -> String): HttpApiHelper {
       val authConfigurer = object : AuthorizationConfigurer() {
@@ -37,6 +45,14 @@ class GitLabApi private constructor(httpHelper: HttpApiHelper)
       return HttpApiHelper(logger = logger<GitLabApi>(),
                            requestConfigurer = requestConfigurer)
     }
-
   }
+}
+
+@Throws(GitLabGraphQLMutationException::class)
+fun <R : Any, MR : GitLabGraphQLMutationResultDTO<R>> HttpResponse<out MR?>.getResultOrThrow(): R {
+  val result = body()
+  if (result == null) throw GitLabGraphQLMutationEmptyResultException()
+  val errors = result.errors
+  if (!errors.isNullOrEmpty()) throw GitLabGraphQLMutationErrorException(errors)
+  return result.value
 }

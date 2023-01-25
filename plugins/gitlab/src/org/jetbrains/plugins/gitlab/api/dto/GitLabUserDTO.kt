@@ -3,12 +3,13 @@ package org.jetbrains.plugins.gitlab.api.dto
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.auth.AccountDetails
+import com.intellij.openapi.util.NlsSafe
 
 @GraphQLFragment("graphql/fragment/user.graphql")
-class GitLabUserDTO(
+data class GitLabUserDTO(
   val id: String,
   val username: String,
-  override val name: String,
+  override val name: @NlsSafe String,
   override val avatarUrl: String?,
   val webUrl: String
 ) : AccountDetails

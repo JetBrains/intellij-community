@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class UiDslOptPaneRendererTest {
   private static class MyInspection extends LocalInspectionTool {
     public int myInt = 7;
+    public double myDouble = 2.5;
     public int myNegativeInt = -1;
     public String myString = "default 1";
     public boolean myBoolean = false;
@@ -32,6 +33,7 @@ public class UiDslOptPaneRendererTest {
     public @NotNull OptPane getOptionsPane() {
       return pane(
         number("myInt", "before|after", 0, 10),
+        number("myDouble", "", 0, 10),
         string("myString", "before|after"),
         dropdown("myOption", "before|after",
                  new OptDropdown.Option("o1", new PlainMessage("option 1")),
@@ -55,8 +57,9 @@ public class UiDslOptPaneRendererTest {
     var dropDown = UIUtil.findComponentOfType(component, ComboBox.class);
 
     assertEquals("7", textFields.get(0).getText());
-    assertEquals("default 1", textFields.get(1).getText());
-    assertEquals("-1", textFields.get(2).getText());
+    assertEquals("2.5", textFields.get(1).getText());
+    assertEquals("default 1", textFields.get(2).getText());
+    assertEquals("-1", textFields.get(3).getText());
     assertFalse(checkBox.isSelected());
     assertEquals("o1", ((OptDropdown.Option)dropDown.getSelectedItem()).key());
   }
@@ -91,8 +94,11 @@ public class UiDslOptPaneRendererTest {
     textFields.get(0).setText("2");
     assertEquals(2, inspection.myInt);
 
+    textFields.get(1).setText("1.25");
+    assertEquals(1.25, inspection.myDouble);
+
     // String
-    textFields.get(1).setText("foo");
+    textFields.get(2).setText("foo");
     assertEquals("foo", inspection.myString);
 
     // CheckBox
@@ -160,7 +166,7 @@ public class UiDslOptPaneRendererTest {
   }
 
   private static @NotNull JComponent render(InspectionProfileEntry inspection) {
-    return new UiDslOptPaneRenderer().render(inspection, inspection.getOptionsPane(), null);
+    return new UiDslOptPaneRenderer().render(inspection, inspection.getOptionsPane(), null, null);
   }
 
   private static class MyTabsInspection extends LocalInspectionTool {

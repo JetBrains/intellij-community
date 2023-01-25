@@ -4,4 +4,3 @@
 private class SomeClass {
     fun action<caret>() {}
 }
-// FIR_COMPARISON

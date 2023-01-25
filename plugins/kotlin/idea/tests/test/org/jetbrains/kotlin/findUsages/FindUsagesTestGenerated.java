@@ -114,6 +114,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                     runTest("testData/findUsages/kotlin/conventions/components/dataClassComponentByRef.0.kt");
                 }
 
+                @TestMetadata("dataClassComponentByRefLocal.0.kt")
+                public void testDataClassComponentByRefLocal() throws Exception {
+                    runTest("testData/findUsages/kotlin/conventions/components/dataClassComponentByRefLocal.0.kt");
+                }
+
                 @TestMetadata("dataClassFromStdlib.0.kt")
                 public void testDataClassFromStdlib() throws Exception {
                     runTest("testData/findUsages/kotlin/conventions/components/dataClassFromStdlib.0.kt");
@@ -177,6 +182,29 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 @TestMetadata("when.0.kt")
                 public void testWhen() throws Exception {
                     runTest("testData/findUsages/kotlin/conventions/components/when.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/findUsages/kotlin/conventions/invoke")
+            public static class Invoke extends AbstractFindUsagesTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("invokeAsTypeParameterExtension.0.kt")
+                public void testInvokeAsTypeParameterExtension() throws Exception {
+                    runTest("testData/findUsages/kotlin/conventions/invoke/invokeAsTypeParameterExtension.0.kt");
+                }
+
+                @TestMetadata("invokeAsTypeParameterExtensionWithSmartCast.0.kt")
+                public void testInvokeAsTypeParameterExtensionWithSmartCast() throws Exception {
+                    runTest("testData/findUsages/kotlin/conventions/invoke/invokeAsTypeParameterExtensionWithSmartCast.0.kt");
+                }
+
+                @TestMetadata("invokeInObjectAsFunction.0.kt")
+                public void testInvokeInObjectAsFunction() throws Exception {
+                    runTest("testData/findUsages/kotlin/conventions/invoke/invokeInObjectAsFunction.0.kt");
                 }
             }
 

@@ -26,9 +26,6 @@ import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Author: Alexey.Ivanov
- */
 public class ReplaceNotEqOperatorQuickFix implements LocalQuickFix {
   @NotNull
   @Override

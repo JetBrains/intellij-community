@@ -109,6 +109,12 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(artifact));
   }
 
+  @NotNull
+  @Override
+  public PackagingElement<?> createArtifactElement(@NotNull String artifactName, @NotNull Project project) {
+    return new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(artifactName));
+  }
+
   @Override
   @NotNull
   public DirectoryPackagingElement createDirectory(@NotNull @NonNls String directoryName) {
@@ -215,7 +221,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
 
   @NotNull
   @Override
-  public List<? extends PackagingElement<?>> createLibraryElements(@NotNull Library library) {
+  public List<PackagingElement<?>> createLibraryElements(@NotNull Library library) {
     final LibraryTable table = library.getTable();
     final String libraryName = library.getName();
     if (table != null) {

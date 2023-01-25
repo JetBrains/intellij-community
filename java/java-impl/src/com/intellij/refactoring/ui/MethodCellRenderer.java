@@ -23,9 +23,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- *  @author dsl
- */
 public class MethodCellRenderer extends DefaultListCellRenderer {
   @Override
   public Component getListCellRendererComponent(

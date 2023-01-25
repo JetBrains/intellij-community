@@ -2,20 +2,27 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ui.OptionAccessor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.intellij.lang.annotations.Language;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 @SuppressWarnings("PlaceholderCountMatchesArgumentCount")
 public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     PlaceholderCountMatchesArgumentCountInspection inspection = new PlaceholderCountMatchesArgumentCountInspection();
-    inspection.ignoreSlf4jThrowableHavePlaceholder = true;
+    inspection.slf4jToLog4J2Type = PlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.YES;
     String option = StringUtil.substringAfter(getName(), "_");
     String disabled = "disable_";
+    String auto = "auto_";
     if(option != null && option.startsWith(disabled)) {
-      new OptionAccessor.Default(inspection).setOption(option.substring(disabled.length()), false);
+      inspection.slf4jToLog4J2Type = PlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO;
+    }
+    else if (option != null && option.startsWith(auto)) {
+      inspection.slf4jToLog4J2Type = PlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.AUTO;
     }
     return inspection;
   }
@@ -23,7 +30,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
 
   @Override
   protected String[] getEnvironmentClasses() {
-    return new String[]{
+    @Language("JAVA") String[] baseClasses = {
       """
       package org.slf4j.spi;
       public interface LoggingEventBuilder {
@@ -82,6 +89,20 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
       }
       """
     };
+
+    String option = StringUtil.substringAfter(getName(), "_");
+    String auto = "auto_";
+
+    if (option != null && option.startsWith(auto)) {
+      ArrayList<String> temp = new ArrayList<>(Arrays.asList(baseClasses));
+      temp.add("""
+                  package org.apache.logging.slf4j.;
+                  public interface Log4jLogger {
+                  }
+                 """);
+      baseClasses = temp.toArray(baseClasses);
+    }
+    return baseClasses;
   }
 
   public void testLog4j2() {
@@ -344,7 +365,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
              }""");
   }
 
-  public void testSlf4J_disable_ignoreSlf4jThrowableHavePlaceholder() {
+  public void testSlf4J_disable_slf4jToLog4J2Type() {
     doTest("""
              import org.slf4j.*;
              class X {
@@ -354,6 +375,21 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
                  logger.atError().log(/*Fewer arguments provided (0) than placeholders specified (1)*/"{}"/**/, new RuntimeException("test"));
                  LoggerFactory.getLogger(X.class).atError().log(/*Fewer arguments provided (1) than placeholders specified (2)*/"{} {}"/**/, 1, new RuntimeException("test"));
                  LoggerFactory.getLogger(X.class).atError().log("{}", 1, new RuntimeException("test"));
+               }
+             }"""
+    );
+  }
+
+  public void testSlf4J_auto_slf4jToLog4J2Type() {
+    doTest("""
+             import org.slf4j.*;
+             class X {
+               void foo() {
+                 Logger logger = LoggerFactory.getLogger(X.class);
+                 logger.info("string {} {}", 1, new RuntimeException());
+                 logger.atError().log("{}", new RuntimeException("test"));
+                 LoggerFactory.getLogger(X.class).atError().log("{} {}", 1, new RuntimeException("test"));
+                 LoggerFactory.getLogger(X.class).atError().log(/*More arguments provided (2) than placeholders specified (1)*/"{}"/**/, 1, new RuntimeException("test"));
                }
              }"""
     );

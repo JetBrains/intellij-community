@@ -17,9 +17,6 @@ package com.intellij.refactoring.util.classRefs;
 
 import com.intellij.psi.*;
 
-/**
- * @author dsl
- */
 public abstract class ClassReferenceScanner {
   protected PsiClass myClass;
   private PsiReference[] myReferences;

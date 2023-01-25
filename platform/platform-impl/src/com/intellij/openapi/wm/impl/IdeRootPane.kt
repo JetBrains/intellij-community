@@ -91,10 +91,18 @@ open class IdeRootPane internal constructor(frame: JFrame,
     val selectedEditorFilePath: SelectedEditorFilePath?,
   ) : Helper {
     override val toolbarHolder: ToolbarHolder? = (customFrameTitlePane as? ToolbarHolder)
-      ?.takeIf { ExperimentalUI.isNewUI() && isToolbarInHeader }
+      ?.takeIf { ExperimentalUI.isNewUI() && isToolbarInHeader() }
   }
 
   private val helper: Helper
+  private val isToolbarVisible: Boolean
+    get() {
+      val uiSettings = UISettings.shadowInstance
+      val isNewToolbar = ExperimentalUI.isNewUI()
+      return ((isNewToolbar && !isToolbarInHeader(uiSettings) && !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled())
+              || (!isNewToolbar && uiSettings.showMainToolbar))
+             && !uiSettings.presentationMode
+    }
 
   init {
     if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
@@ -164,10 +172,9 @@ open class IdeRootPane internal constructor(frame: JFrame,
     updateMainMenuVisibility()
 
     if (helper.toolbarHolder == null) {
-      toolbar = createToolbar(initActions = true)
+      toolbar = createToolbar()
       northPanel.add(toolbar, 0)
-      val visible = !isToolbarInHeader && !UISettings.shadowInstance.presentationMode
-      toolbar!!.isVisible = visible
+      toolbar!!.isVisible = isToolbarVisible
     }
 
     if (SystemInfoRt.isMac && JdkEx.isTabbingModeAvailable()) {
@@ -259,13 +266,15 @@ open class IdeRootPane internal constructor(frame: JFrame,
       }
     }
     else if (SystemInfoRt.isXWindow) {
+      val shouldMinimize = ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()
+      val isNewToolbar = ExperimentalUI.isNewUI()
+
       if (bar != null) {
-        bar.isVisible = fullScreen || !isMenuButtonInToolbar
+        bar.isVisible = fullScreen || !isMenuButtonInToolbar || shouldMinimize && isNewToolbar
       }
       if (toolbar != null) {
         val uiSettings = UISettings.shadowInstance
-        val isNewToolbar = ExperimentalUI.isNewUI()
-        toolbar!!.isVisible = !fullScreen && ((isNewToolbar && !isToolbarInHeader) || (!isNewToolbar && uiSettings.showMainToolbar))
+         toolbar!!.isVisible = !fullScreen && ((!shouldMinimize && isNewToolbar && !isToolbarInHeader(uiSettings)) || (!isNewToolbar && uiSettings.showMainToolbar))
       }
     }
   }
@@ -337,12 +346,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
     toolbar = createToolbar()
     northPanel.add(toolbar, 0)
-
-    val uiSettings = UISettings.shadowInstance
-    val isNewToolbar = ExperimentalUI.isNewUI()
-    val visible = ((isNewToolbar && !isToolbarInHeader) || (!isNewToolbar && uiSettings.showMainToolbar)) && !uiSettings.presentationMode
-    toolbar!!.isVisible = visible
-
+    toolbar!!.isVisible = isToolbarVisible
     contentPane!!.revalidate()
   }
 
@@ -399,10 +403,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       northPanel.add(toolbar, 0)
     }
 
-    val uiSettings = UISettings.shadowInstance
-    val isNewToolbar = ExperimentalUI.isNewUI()
-    val visible = ((isNewToolbar && !isToolbarInHeader || !isNewToolbar && uiSettings.showMainToolbar) && !uiSettings.presentationMode)
-    toolbar!!.isVisible = visible
+    toolbar!!.isVisible = isToolbarVisible
   }
 
   private fun updateStatusBarVisibility() {
@@ -567,20 +568,16 @@ open class IdeRootPane internal constructor(frame: JFrame,
   }
 }
 
-private val isToolbarInHeader by lazy { isToolbarInHeader(UISettings.shadowInstance) }
-
 private val isDecoratedMenu: Boolean
   get() {
     val osSupported = SystemInfoRt.isWindows || (SystemInfoRt.isMac && ExperimentalUI.isNewUI())
-    return osSupported && (isToolbarInHeader || IdeFrameDecorator.isCustomDecorationActive())
+    return osSupported && (isToolbarInHeader() || IdeFrameDecorator.isCustomDecorationActive())
   }
 
-private fun createToolbar(initActions: Boolean = true): JComponent {
+private fun createToolbar(): JComponent {
   if (ExperimentalUI.isNewUI()) {
     val toolbar = MainToolbar()
-    if (initActions) {
-      toolbar.init(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
-    }
+    toolbar.init(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
     toolbar.border = JBUI.Borders.empty()
     return toolbar
   }

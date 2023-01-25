@@ -5,6 +5,7 @@ import com.intellij.execution.target.value.TargetValue
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
+import com.intellij.task.RunConfigurationTaskState
 import org.gradle.initialization.BuildCancellationToken
 import org.gradle.internal.classpath.ClassPath
 import org.gradle.internal.logging.progress.ProgressLoggerFactory
@@ -20,7 +21,8 @@ import java.util.concurrent.TimeUnit
 
 class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentConfigurationProvider,
                             taskId: ExternalSystemTaskId?,
-                            taskListener: ExternalSystemTaskNotificationListener?) : GradleConnector(), ProjectConnectionCloseListener {
+                            taskListener: ExternalSystemTaskNotificationListener?,
+                            private val taskState: RunConfigurationTaskState?) : GradleConnector(), ProjectConnectionCloseListener {
   private val connectionFactory: TargetConnectionFactory = TargetConnectionFactory(environmentConfigurationProvider, taskId, taskListener)
   private val distributionFactory: DistributionFactory = DistributionFactory(Time.clock())
   private var distribution: Distribution? = null
@@ -142,7 +144,9 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
       if (stopped) {
         throw IllegalStateException("Tooling API client has been disconnected. No other connections may be used.")
       }
-      val connection = connectionFactory.create(distribution!!, TargetConnectionParameters(connectionParameters, gradleUserHome), this)
+      val connection = connectionFactory.create(distribution!!,
+                                                TargetConnectionParameters(connectionParameters, gradleUserHome, taskState),
+                                                this)
       connections.add(connection as TargetProjectConnection)
       return connection
     }

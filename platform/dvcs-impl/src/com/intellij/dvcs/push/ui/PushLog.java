@@ -6,6 +6,7 @@ import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -72,7 +73,10 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
   private final @NotNull Project myProject;
   private final boolean myAllowSyncStrategy;
 
-  public PushLog(@NotNull Project project, final CheckedTreeNode root, final boolean allowSyncStrategy) {
+  public PushLog(@NotNull Project project,
+                 @NotNull CheckedTreeNode root,
+                 @NotNull ModalityState modalityState,
+                 boolean allowSyncStrategy) {
     myProject = project;
     myAllowSyncStrategy = allowSyncStrategy;
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
@@ -231,7 +235,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
                                               ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
 
-    myChangesBrowser = new PushLogChangesBrowser(project, false, false, myChangesLoadingPane);
+    myChangesBrowser = new PushLogChangesBrowser(project, false, false, myChangesLoadingPane, modalityState);
     myChangesBrowser.hideViewerBorder();
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);

@@ -25,9 +25,6 @@ import org.kohsuke.rngom.digested.DElementPattern;
 
 import javax.xml.namespace.QName;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class RelaxedHtmlFromRngElementDescriptor extends DelegatingRelaxedHtmlElementDescriptor implements Comparable {
   private final boolean isHtml;
 

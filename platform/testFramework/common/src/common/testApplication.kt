@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.testFramework.common
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.idea.*
@@ -100,6 +101,7 @@ fun loadApp() {
 @OptIn(DelicateCoroutinesApi::class)
 @Internal
 fun loadApp(setupEventQueue: Runnable) {
+  enableCoroutineDump()
   val isHeadless = UITestUtil.getAndSetHeadlessProperty()
   AppMode.setHeadlessInTestMode(isHeadless)
   PluginManagerCore.isUnitTestMode = true
@@ -169,6 +171,7 @@ private suspend fun preloadServicesAndCallAppInitializedListeners(app: Applicati
         modules = pluginSet.getEnabledModules(),
         activityPrefix = "",
         syncScope = this,
+        asyncScope = app.coroutineScope,
       )
     }
 

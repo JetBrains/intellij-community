@@ -4,8 +4,6 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.validation.CellValidation
 import org.jetbrains.annotations.ApiStatus
 
@@ -25,12 +23,6 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
   override fun visible(isVisible: Boolean): SegmentedButton<T>
 
   override fun enabled(isEnabled: Boolean): SegmentedButton<T>
-
-  @Deprecated("Use align method instead")
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): SegmentedButton<T>
-
-  @Deprecated("Use align method instead")
-  override fun verticalAlign(verticalAlign: VerticalAlign): SegmentedButton<T>
 
   override fun align(align: Align): SegmentedButton<T>
 

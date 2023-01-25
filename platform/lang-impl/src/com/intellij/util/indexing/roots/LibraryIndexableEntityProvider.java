@@ -3,7 +3,6 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot;
@@ -16,16 +15,11 @@ import java.util.List;
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryEntity> {
+public class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryEntity> {
 
   @Override
   public @NotNull Class<LibraryEntity> getEntityClass() {
     return LibraryEntity.class;
-  }
-
-  @Override
-  public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
-    return Collections.emptyList();
   }
 
   @Override

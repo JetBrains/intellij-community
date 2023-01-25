@@ -14,10 +14,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,7 +81,7 @@ public class YourkitFilter implements Filter{
       final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
       if (editor != null) {
         final IPopupChooserBuilder<PsiFile> builder = JBPopupFactory.getInstance()
-          .createPopupChooserBuilder(ContainerUtil.newArrayList(myPsiFiles))
+          .createPopupChooserBuilder(List.of(myPsiFiles))
           .setRenderer(renderer)
           .setTitle(ExecutionBundle.message("choose.file"))
           .setItemsChosenCallback((selectedElements) -> {

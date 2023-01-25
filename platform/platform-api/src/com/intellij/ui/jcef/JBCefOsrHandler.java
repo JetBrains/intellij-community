@@ -121,6 +121,7 @@ class JBCefOsrHandler implements CefRenderHandler {
   public void onPaint(CefBrowser browser, boolean popup, Rectangle[] dirtyRects, ByteBuffer buffer, int width, int height) {
     JBHiDPIScaledImage image = myImage;
     VolatileImage volatileImage = myVolatileImage;
+    final double jreScale = myScale.getJreBiased();
 
     //
     // Recreate images when necessary
@@ -128,12 +129,15 @@ class JBCefOsrHandler implements CefRenderHandler {
     if (!popup) {
       Dimension size = getDevImageSize();
       if (size.width != width || size.height != height) {
-        image = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE), myScale.getJreBiased(), null);
+        image = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE),
+                                                           jreScale, null);
         GraphicsConfiguration gc = myComponent.getGraphicsConfiguration();
-        if (gc != null)
-          volatileImage = gc.createCompatibleVolatileImage(width, height, Transparency.TRANSLUCENT);
-        else
-          volatileImage = myComponent.createVolatileImage(width, height);
+        if (gc != null) {
+          volatileImage = gc.createCompatibleVolatileImage((int)(width / jreScale), (int)(height / jreScale), Transparency.TRANSLUCENT);
+        }
+        else {
+          volatileImage = myComponent.createVolatileImage((int)(width / jreScale), (int)(height / jreScale));
+        }
         dirtyRects = new Rectangle[]{new Rectangle(0, 0, width, height)};
       }
     }
@@ -152,7 +156,9 @@ class JBCefOsrHandler implements CefRenderHandler {
         dirtyRects = new Rectangle[]{ new Rectangle(0, 0, width, height) };
       }
       if (result == VolatileImage.IMAGE_INCOMPATIBLE) {
-        volatileImage = myComponent.getGraphicsConfiguration().createCompatibleVolatileImage(imageWidth, imageHeight, Transparency.TRANSLUCENT);
+        volatileImage = myComponent.getGraphicsConfiguration().createCompatibleVolatileImage((int)(imageWidth / jreScale),
+                                                                                             (int)(imageHeight / jreScale),
+                                                                                             Transparency.TRANSLUCENT);
       }
     }
 
@@ -252,9 +258,8 @@ class JBCefOsrHandler implements CefRenderHandler {
     Image volatileImage = myVolatileImage;
     Image image = myImage;
     if (volatileImage != null) {
-      g.drawImage(volatileImage, 0, 0, null );
+      g.drawImage(volatileImage, 0, 0, null);
     }
-    //
     else if (image != null) {
       UIUtil.drawImage(g, image, 0, 0, null);
     }

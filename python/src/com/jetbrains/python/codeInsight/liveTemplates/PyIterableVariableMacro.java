@@ -38,9 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-/**
- * @author vlan
- */
 public class PyIterableVariableMacro extends Macro {
   @Override
   public String getName() {

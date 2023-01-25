@@ -43,9 +43,6 @@ import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author dsl
- */
 public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass, PsiMember, MemberInfo> {
   private static final Logger LOG = Logger.getInstance(GenerateEqualsWizard.class);
 

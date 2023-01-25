@@ -23,9 +23,6 @@ import java.util.function.Supplier;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 final class JavaLangReflectHandleInvocationChecker {
   private static final Logger LOG = Logger.getInstance(JavaLangReflectHandleInvocationChecker.class);
 

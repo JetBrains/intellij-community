@@ -474,15 +474,6 @@ public final class XmlUtil {
     return null;
   }
 
-  /**
-   * @deprecated use {@link XmlComment#getCommentText()}
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public static String getCommentText(XmlComment comment) {
-    return comment.getCommentText();
-  }
-
   public static void reformatTagStart(XmlTag tag) {
     ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
     if (child == null) {

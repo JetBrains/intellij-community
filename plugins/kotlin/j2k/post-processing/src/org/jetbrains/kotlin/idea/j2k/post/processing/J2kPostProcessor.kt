@@ -189,7 +189,6 @@ private val removeRedundantElementsProcessingGroup =
 
 private val inspectionLikePostProcessingGroup =
     InspectionLikeProcessingGroup(
-        RemoveRedundantConstructorKeywordProcessing(),
         RemoveExplicitOpenInInterfaceProcessing(),
         RemoveRedundantOverrideVisibilityProcessing(),
         MoveLambdaOutsideParenthesesProcessing(),

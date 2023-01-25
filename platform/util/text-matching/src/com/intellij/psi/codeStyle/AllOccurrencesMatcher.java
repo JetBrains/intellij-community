@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
@@ -22,9 +22,8 @@ public final class AllOccurrencesMatcher extends MinusculeMatcher {
     delegate = new FixingLayoutMatcher(pattern, options, hardSeparators);
   }
 
-  @NotNull
   @Override
-  public String getPattern() {
+  public @NotNull String getPattern() {
     return delegate.getPattern();
   }
 
@@ -33,9 +32,8 @@ public final class AllOccurrencesMatcher extends MinusculeMatcher {
     return delegate.matchingDegree(name, valueStartCaseMatch, fragments);
   }
 
-  @Nullable
   @Override
-  public FList<TextRange> matchingFragments(@NotNull String name) {
+  public @Nullable FList<TextRange> matchingFragments(@NotNull String name) {
     FList<TextRange> match = delegate.matchingFragments(name);
     if (match != null && !match.isEmpty()) {
       List<FList<TextRange>> allMatchesReversed = new ArrayList<>();

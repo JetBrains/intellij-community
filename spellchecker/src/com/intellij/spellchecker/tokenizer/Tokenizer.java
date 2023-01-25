@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class Tokenizer<T extends PsiElement> {
 
-  public abstract void tokenize(@NotNull T element, TokenConsumer consumer);
+  public abstract void tokenize(@NotNull T element, @NotNull TokenConsumer consumer);
 
   @NotNull
   public TextRange getHighlightingRange(PsiElement element, int offset, TextRange textRange) {

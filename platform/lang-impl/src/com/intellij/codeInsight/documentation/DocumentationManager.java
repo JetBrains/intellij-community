@@ -1903,11 +1903,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public static @Nls String decorate(@Nls @NotNull String text, @Nullable HtmlChunk location, @Nullable HtmlChunk links) {
     text = StringUtil.replaceIgnoreCase(text, "</html>", "");
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
-    text = StringUtil.replaceIgnoreCase(text, SECTIONS_START + SECTIONS_END, "");
-    text = StringUtil.replaceIgnoreCase(text, SECTIONS_START + "<p>" + SECTIONS_END, ""); //NON-NLS
-    boolean hasContent = text.contains(CONTENT_START);
+    text = replaceIgnoreQuotesType(text, SECTIONS_START + SECTIONS_END, "");
+    text = replaceIgnoreQuotesType(text, SECTIONS_START + "<p>" + SECTIONS_END, ""); //NON-NLS
+    boolean hasContent = containsIgnoreQuotesType(text, CONTENT_START);
     if (!hasContent) {
-      if (!text.contains(DEFINITION_START)) {
+      if (!containsIgnoreQuotesType(text, DEFINITION_START)) {
         int bodyStart = findContentStart(text);
         if (bodyStart > 0) {
           text = text.substring(0, bodyStart) +
@@ -1920,13 +1920,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
         hasContent = true;
       }
-      else if (!text.contains(SECTIONS_START)) {
-        //noinspection HardCodedStringLiteral
-        text = StringUtil.replaceIgnoreCase(text, DEFINITION_START, "<div class='definition-only'><pre>");
+      else if (!containsIgnoreQuotesType(text, SECTIONS_START)) {
+        text = replaceIgnoreQuotesType(text, DEFINITION_START, "<div class='definition-only'><pre>");
       }
     }
-    if (!text.contains(DEFINITION_START)) {
-      text = text.replace("class='content'", "class='content-only'");
+    if (!containsIgnoreQuotesType(text, DEFINITION_START)) {
+      text = replaceIgnoreQuotesType(text, "class='content'", "class='content-only'");
     }
     if (location != null) {
       text += getBottom(hasContent).child(location);
@@ -1938,6 +1937,30 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     text = text.replaceAll("<p>\\s*(<(?:[uo]l|h\\d|p))", "$1");
     text = addExternalLinksIcon(text);
     return text;
+  }
+
+  private static boolean containsIgnoreQuotesType(@NotNull String text, @NotNull String substring) {
+    return text.contains(substring)
+           || text.contains(substring.replace("\"", "'"))
+           || text.contains(substring.replace("'", "\""));
+  }
+
+  private static @NlsSafe @NotNull String replaceIgnoreQuotesType(@NotNull String text,
+                                                                  @NotNull String oldString,
+                                                                  @NotNull String newString) {
+    String replaced;
+    if (!text.contains(oldString)) {
+      if (oldString.contains("\"")) {
+        replaced = oldString.replace("\"", "'");
+      }
+      else {
+        replaced = oldString.replace("'", "\"");
+      }
+    }
+    else {
+      replaced = oldString;
+    }
+    return StringUtil.replaceIgnoreCase(text, replaced, newString);
   }
 
   @RequiresReadLock

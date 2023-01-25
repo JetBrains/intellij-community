@@ -10,7 +10,6 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -399,16 +398,10 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     }
     if (!containerSet.contains(resolved)) {
       containerSet.add(resolved);
-      String placesDescription;
-      if (containerSet.size() == 1) {
-        placesDescription = RefactoringUIUtil.getDescription(resolved, true);
-      } else {
-        placesDescription = "<ol><li>" + StringUtil.join(containerSet, element -> RefactoringUIUtil.getDescription(element, true), "</li><li>") + "</li></ol>";
-      }
       String message = JavaRefactoringBundle.message("0.will.become.inaccessible.from.1",
-                                                 placesDescription,
+                                                 RefactoringUIUtil.getDescription(resolved, true),
                                                  RefactoringUIUtil.getDescription(container, true));
-      conflicts.put(container, Collections.singletonList(message));
+      conflicts.putValue(reference, message);
     }
   }
 

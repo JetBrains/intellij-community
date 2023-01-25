@@ -1,8 +1,9 @@
 import ast
 import sys
 from collections.abc import Callable, Iterable, Iterator
+from re import Pattern
 from tokenize import TokenInfo
-from typing import Any, ClassVar, Pattern, TypeVar, overload
+from typing import Any, ClassVar, TypeVar, overload
 from typing_extensions import Literal, ParamSpec, TypeAlias
 
 from pyflakes.messages import Message

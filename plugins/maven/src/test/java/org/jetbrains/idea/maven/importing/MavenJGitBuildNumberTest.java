@@ -21,9 +21,6 @@ import org.junit.Test;
 
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenJGitBuildNumberTest extends MavenDomTestCase {
 
   @Test

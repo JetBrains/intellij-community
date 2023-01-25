@@ -9,6 +9,7 @@ import com.intellij.refactoring.rename.api.ModifiableRenameUsage
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage.FileUpdater
 import com.intellij.refactoring.rename.api.PsiRenameUsage
 import com.intellij.refactoring.rename.api.ReplaceTextTargetContext
+import com.intellij.usages.impl.rules.UsageType
 
 internal class TextRenameUsage(
   private val psiUsage: PsiUsage,
@@ -21,6 +22,8 @@ internal class TextRenameUsage(
   override val file: PsiFile get() = psiUsage.file
 
   override val range: TextRange get() = psiUsage.range
+
+  override val usageType: UsageType? get() = psiUsage.usageType
 
   override fun createPointer(): Pointer<out TextRenameUsage> {
     val fileUpdater = fileUpdater // don't capture `this`

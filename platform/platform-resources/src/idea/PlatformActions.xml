@@ -197,6 +197,7 @@
     </action>
     <action id="OpenElementInNewWindow" class="com.intellij.ide.actions.OpenElementInNewWindowAction" />
     <action id="SearchEverywhere" class="com.intellij.ide.actions.SearchEverywhereAction" icon="AllIcons.Actions.Find"/>
+    <action id="TestSearchContributors" class="com.intellij.ide.actions.searcheverywhere.setesting.TestSearchEverywhereAction" internal="true"/>
     <action id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction" icon="AllIcons.General.GearPlain"/>
 
     <action id="RunAnything" icon="AllIcons.Actions.Run_anything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
@@ -612,10 +613,13 @@
               <synonym key="action.ToggleZenMode.enter"/>
             </action>
             <separator/>
-            <group id="Appearance.Density" popup="true">
-              <action id="Appearance.Density.Default" class="com.intellij.ide.actions.SetDefaultDensityAction"/>
-              <action id="Appearance.Density.Compact" class="com.intellij.ide.actions.SetCompactDensityAction"/>
-            </group>
+            <action id="ToggleCompactMode" class="com.intellij.ide.actions.ToggleCompactModeAction" />
+          </group>
+          <group id="ZoomIDE" class="com.intellij.ide.actions.ZoomIdeActionGroup">
+            <separator/>
+            <action id="CurrentIdeScaleAction" class="com.intellij.ide.actions.CurrentIdeScaleAction">
+              <synonym key="action.CurrentIdeScaleAction.text"/>
+            </action>
             <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
               <synonym key="action.ZoomInIdeAction.text"/>
             </action>
@@ -740,6 +744,7 @@
       <group id="WindowMenu" popup="true">
         <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>
         <action id="ZoomCurrentWindow" class="com.intellij.ide.actions.ZoomCurrentWindowAction"/>
+        <action id="MoveWindowToNextDisplay" class="com.intellij.ide.actions.MoveWindowToNextDisplayAction"/>
         <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction"/>
         <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction"/>
         <group id="StoreLayoutGroup" popup="true">
@@ -778,6 +783,7 @@
           <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
           <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
           <action id="PinActiveEditorTab" class="com.intellij.ide.actions.PinActiveTabAction$EW" use-shortcut-of="PinActiveTab"/>
+          <action id="KeepTabOpen" class="com.intellij.ide.actions.KeepTabOpenAction"/>
           <action id="TabList" class="com.intellij.ide.actions.TabListAction"/>
           <separator/>
           <group id="CloseEditorsGroup">
@@ -1000,6 +1006,7 @@
       <reference ref="UnsplitAll"/>
       <separator/>
       <reference ref="PinActiveEditorTab"/>
+      <reference ref="KeepTabOpen"/>
       <reference ref="EditSourceInNewWindow"/>
       <reference ref="ConfigureEditorTabs"/>
       <separator/>
@@ -1183,6 +1190,9 @@
         <action id="TrustProject" internal="true" class="com.intellij.internal.YesTrustAction"/>
         <action id="UntrustProject" internal="true" class="com.intellij.internal.NoTrustAction"/>
       </group>
+      <group id="Internal.WorkspaceModel" popup="true" text="Workspace Model">
+        <action id="PrintModulesAndEntitySources" internal="true" class="com.intellij.internal.PrintModulesAndEntitySources"/>
+      </group>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction">
         <synonym text="Exit Dumb Mode"/>
@@ -1278,6 +1288,7 @@
         <action id="DefaultBundleIndex" internal="true" class="com.intellij.ide.util.gotoByName.DefaultBundleIndexAction"/>
         <action id="UiDslShowcaseAction" internal="true" class="com.intellij.internal.ui.uiDslShowcase.UiDslShowcaseAction"/>
         <action id="ProgressIconShowcaseAction" internal="true" class="com.intellij.internal.ui.ProgressIconShowcaseAction"/>
+        <action id="IconScaleTestAction" internal="true" class="com.intellij.internal.ui.ShowIconScaleTestAction"/>
         <action id="GridLayoutTestAction" internal="true" class="com.intellij.internal.ui.gridLayoutTestAction.GridLayoutTestAction"/>
       </group>
       <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" popup="true"/>

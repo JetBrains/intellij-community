@@ -19,9 +19,6 @@ import java.awt.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class AbstractMavenConsoleFilter implements Filter {
 
   private final Pattern myPattern;

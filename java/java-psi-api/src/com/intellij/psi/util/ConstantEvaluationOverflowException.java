@@ -17,9 +17,6 @@ package com.intellij.psi.util;
 
 import com.intellij.psi.PsiElement;
 
-/**
- * @author ven
- */
 public class ConstantEvaluationOverflowException extends RuntimeException {
   private final PsiElement myOverflowingExpression;
 

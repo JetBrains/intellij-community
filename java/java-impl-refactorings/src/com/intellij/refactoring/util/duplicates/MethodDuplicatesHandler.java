@@ -58,9 +58,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class MethodDuplicatesHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(MethodDuplicatesHandler.class);
 

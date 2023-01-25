@@ -34,7 +34,6 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
-import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
@@ -88,10 +87,7 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    e.getPresentation().setEnabled(project != null &&
-                                   VcsProjectLog.getInstance(project) != null &&
-                                   getRevisionNumber(e) != null &&
-                                   Comparing.equal(getVcsKey(e), GitVcs.getKey()));
+    e.getPresentation().setEnabled(project != null && getRevisionNumber(e) != null && Comparing.equal(getVcsKey(e), GitVcs.getKey()));
   }
 
   static void jumpToRevision(@NotNull Project project, @NotNull Hash hash) {

@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class DefaultLogFilterModel extends LogFilterModel {
   private final Project myProject;
   private boolean myCheckStandardFilters = true;

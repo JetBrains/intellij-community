@@ -6,4 +6,14 @@ import com.intellij.psi.PsiElement
 
 class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun isSafeDeleteAvailable(element: PsiElement) = element.canDeleteElement()
+
+    /**
+     * @see org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider.isInplaceRenameAvailable
+     */
+    override fun isInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean = false
+
+    /**
+     * @see org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider.isMemberInplaceRenameAvailable
+     */
+    override fun isMemberInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean = false
 }

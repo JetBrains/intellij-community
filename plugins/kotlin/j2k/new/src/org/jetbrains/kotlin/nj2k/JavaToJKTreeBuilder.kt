@@ -718,7 +718,7 @@ class JavaToJKTreeBuilder constructor(
             ).also { klass ->
                 klass.psi = this
                 symbolProvider.provideUniverseSymbol(this, klass)
-                klass.withFormattingFrom(this)
+                klass.withFormattingFrom(this, assignLineBreaks = true)
             }
 
         private fun PsiClass.recordComponents(): List<JKJavaRecordComponent> =
@@ -1055,12 +1055,18 @@ class JavaToJKTreeBuilder constructor(
                     body.toJK()
                 )
 
-                is PsiForeachStatement ->
-                    JKForInStatement(
-                        iterationParameter.toJK(),
-                        with(expressionTreeMapper) { iteratedValue?.toJK() ?: JKStubExpression() },
-                        body?.toJK() ?: blockStatement()
-                    )
+                is PsiForeachStatement -> {
+                    val parameter = iterationParameter
+                    if (parameter == null) {
+                        JKErrorStatement(this, "patterns in switch are not yet supported")
+                    } else {
+                        JKForInStatement(
+                            parameter.toJK(),
+                            with(expressionTreeMapper) { iteratedValue?.toJK() ?: JKStubExpression() },
+                            body?.toJK() ?: blockStatement()
+                        )
+                    }
+                }
 
                 is PsiBlockStatement -> JKBlockStatement(codeBlock.toJK())
 

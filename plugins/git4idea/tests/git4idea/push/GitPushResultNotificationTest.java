@@ -71,8 +71,8 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
       put(repo("community"), repoResult(ERROR, "master", "origin/master", "Permission denied"));
     }});
     assertPushNotification(NotificationType.ERROR, "Push partially failed",
-                       "ultimate: Pushed 1 commit to origin/master<br/>" +
-                       "community: Permission denied", notification);
+                           "ultimate: Pushed 1 commit to origin/master<br/>" +
+                           "community: Permission denied", notification);
   }
 
   public void test_success_and_reject() {
@@ -81,8 +81,8 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
       put(repo("community"), repoResult(REJECTED, "master", "origin/master", -1));
     }});
     assertPushNotification(NotificationType.WARNING, "Push partially rejected",
-                       "ultimate: Pushed 1 commit to origin/master<br/>" +
-                       "community: Push to origin/master was rejected", notification);
+                           "ultimate: Pushed 1 commit to origin/master<br/>" +
+                           "community: Push to origin/master was rejected", notification);
   }
 
   public void test_success_with_update() {
@@ -97,11 +97,10 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
       put(repo("ultimate"), repoResult(SUCCESS, "master", "origin/master", 1));
     }});
     assertPushNotification(NotificationType.WARNING, "Push partially rejected",
-                       "ultimate: Pushed 1 commit to origin/master<br/>" +
-                       "community: " + UPDATE_WITH_RESOLVED_CONFLICTS + "<br/>" +
-                       "contrib: " + UPDATE_WITH_RESOLVED_CONFLICTS,
+                           "ultimate: Pushed 1 commit to origin/master<br/>" +
+                           "community: " + UPDATE_WITH_RESOLVED_CONFLICTS + "<br/>" +
+                           "contrib: " + UPDATE_WITH_RESOLVED_CONFLICTS,
                            notification);
-
   }
 
   public void test_commits_and_tags() {
@@ -140,8 +139,8 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     }});
 
     assertPushNotification(NotificationType.INFORMATION, "Push successful",
-                       "community: Pushed 1 commit to origin/master, and tag v0.1 to origin<br/>" +
-                       "ultimate: Pushed tag v0.1 to origin", notification);
+                           "community: Pushed 1 commit to origin/master, and tag v0.1 to origin<br/>" +
+                           "ultimate: Pushed tag v0.1 to origin", notification);
   }
 
   public void test_two_tags() {
@@ -154,10 +153,10 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   }
 
   private static Map<GitRepository, GitPushRepoResult> singleResult(final GitPushNativeResult.Type type,
-                                                                       final String from,
-                                                                       final String to,
-                                                                       final int commits,
-                                                                       @Nullable final GitUpdateResult updateResult) {
+                                                                    final String from,
+                                                                    final String to,
+                                                                    final int commits,
+                                                                    @Nullable final GitUpdateResult updateResult) {
     return new HashMap<>() {{
       put(repo("community"), repoResult(type, from, to, commits, updateResult));
     }};
@@ -177,8 +176,8 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   }
 
   private static Map<GitRepository, GitPushRepoResult> singleResult(final GitPushNativeResult.Type type,
-                                                                       final String from,
-                                                                       final String to, final int commits) {
+                                                                    final String from,
+                                                                    final String to, final int commits) {
     return singleResult(type, from, to, commits, null);
   }
 
@@ -188,8 +187,8 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     return GitPushRepoResult.error(from(from), to(to), errorText);
   }
 
-  private static GitLocalBranch from(String from) {
-    return new GitLocalBranch(from);
+  private static GitPushSource from(String from) {
+    return GitPushSource.create(new GitLocalBranch(from));
   }
 
   private static GitRemoteBranch to(String to) {

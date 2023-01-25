@@ -21,6 +21,9 @@ class Client:
     redirect_url: Any
     code: Any
     expires_in: Any
+    code_verifier: str
+    code_challenge: str
+    code_challenge_method: str
     def __init__(
         self,
         client_id,
@@ -35,6 +38,9 @@ class Client:
         state: Any | None = ...,
         redirect_url: Any | None = ...,
         state_generator=...,
+        code_verifier: str | None = ...,
+        code_challenge: str | None = ...,
+        code_challenge_method: str | None = ...,
         **kwargs,
     ) -> None: ...
     @property
@@ -71,5 +77,7 @@ class Client:
     ): ...
     def parse_request_body_response(self, body, scope: Any | None = ..., **kwargs): ...
     def prepare_refresh_body(self, body: str = ..., refresh_token: Any | None = ..., scope: Any | None = ..., **kwargs): ...
+    def create_code_verifier(self, length: int) -> str: ...
+    def create_code_challenge(self, code_verifier: str, code_challenge_method: str | None = ...) -> str: ...
     def populate_code_attributes(self, response) -> None: ...
     def populate_token_attributes(self, response) -> None: ...

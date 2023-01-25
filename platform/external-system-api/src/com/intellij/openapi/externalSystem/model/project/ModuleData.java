@@ -19,9 +19,6 @@ import java.util.Map;
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 
-/**
- * @author Denis Zhdanov
- */
 @SuppressWarnings("JavadocReference")
 public class ModuleData extends AbstractNamedData implements Named, ExternalConfigPathAware, Identifiable {
   @NotNull private final Map<ExternalSystemSourceType, String> compileOutputPaths = new HashMap<>();

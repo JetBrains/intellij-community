@@ -17,10 +17,7 @@ import java.nio.file.Path
  * should have as many dependencies as possible and there is no dependency to intellij.platform.core module.
  * That's why this method was declared here, where service was registered.
  */
-fun VirtualFileUrlManager.Companion.getInstance(project: Project): VirtualFileUrlManager {
-  //TODO:: Check solution for making two services app and project level, for now it's work incorrectly by adding VFUs from one store to another via virtualFileIndex
-  return getGlobalInstance()
-}
+fun VirtualFileUrlManager.Companion.getInstance(project: Project): VirtualFileUrlManager = project.service()
 
 fun VirtualFileUrlManager.Companion.getGlobalInstance(): VirtualFileUrlManager = ApplicationManager.getApplication().service()
 

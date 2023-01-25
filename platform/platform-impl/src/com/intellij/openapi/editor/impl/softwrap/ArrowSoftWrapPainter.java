@@ -30,8 +30,6 @@ import java.awt.*;
  * Primary idea is to use dedicated unicode symbols as soft wrap drawings and this class is introduced only as a part
  * of defensive programming - there is unlikely case that local client environment doesn't have a font that is able to
  * represent target unicode symbol. We draw an arrow manually then (platform-independent approach).
- *
- * @author Denis Zhdanov
  */
 public class ArrowSoftWrapPainter implements SoftWrapPainter {
 

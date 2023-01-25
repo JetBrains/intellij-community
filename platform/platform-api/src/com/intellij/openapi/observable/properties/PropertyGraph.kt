@@ -64,7 +64,7 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
     dependencies.add(Dependency(child, deleteWhenChildModified, update))
   }
 
-  private fun registerIfNeeded(property: ObservableProperty<*>) {
+  internal fun registerIfNeeded(property: ObservableProperty<*>) {
     if (properties.putIfAbsent(property, true) == null) {
       property.whenPropertyChanged {
         if (propagation.isOperationCompleted()) {

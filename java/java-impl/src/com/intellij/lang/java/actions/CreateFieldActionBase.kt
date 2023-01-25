@@ -20,7 +20,7 @@ internal abstract class CreateFieldActionBase(
 
   override fun getRenderData() = JvmActionGroup.RenderData { request.fieldName }
 
-  internal fun fieldRenderer(project: Project) = JavaFieldRenderer(project, isConstant(), target, request)
+  private fun fieldRenderer(project: Project) = JavaFieldRenderer(project, isConstant(), target, request)
 
   override fun invoke(project: Project, file: PsiFile, target: PsiClass) {
     fieldRenderer(project).doRender()

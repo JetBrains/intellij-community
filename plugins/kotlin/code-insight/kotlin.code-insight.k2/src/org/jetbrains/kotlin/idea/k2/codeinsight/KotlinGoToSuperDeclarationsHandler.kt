@@ -47,7 +47,7 @@ class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
                 return HandlerResult.Single(superDeclarations.single())
             } else {
                 val title = when (targetDeclaration) {
-                    is KtClass, is PsiClass -> KotlinBundle.message("goto.super.chooser.class.title")
+                    is KtClassOrObject, is PsiClass -> KotlinBundle.message("goto.super.chooser.class.title")
                     is KtFunction, is PsiMethod -> KotlinBundle.message("goto.super.chooser.function.title")
                     is KtProperty, is KtParameter -> KotlinBundle.message("goto.super.chooser.property.title")
                     else -> error("Unexpected declaration $targetDeclaration")
@@ -106,7 +106,7 @@ class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
         if (file !is KtFile) return
         val targetDeclaration = findTargetDeclaration(file, editor) ?: return
         presentation?.text = when (targetDeclaration) {
-            is KtClass, is PsiClass -> KotlinBundle.message("action.GotoSuperClass.MainMenu.text")
+            is KtClassOrObject, is PsiClass -> KotlinBundle.message("action.GotoSuperClass.MainMenu.text")
             is KtFunction, is PsiMethod -> ActionsBundle.actionText("GotoSuperMethod.MainMenu")
             is KtProperty, is KtParameter -> KotlinBundle.message("action.GotoSuperProperty.MainMenu.text")
             else -> error("Unexpected declaration $targetDeclaration")

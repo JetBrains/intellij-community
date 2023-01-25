@@ -19,9 +19,6 @@ import java.util.Set;
 import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectHandleInvocationChecker.*;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 final class JavaLangReflectVarHandleInvocationChecker {
   private static final Logger LOG = Logger.getInstance(JavaLangReflectVarHandleInvocationChecker.class);
 

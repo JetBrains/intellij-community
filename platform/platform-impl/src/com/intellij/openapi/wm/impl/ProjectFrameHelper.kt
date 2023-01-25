@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.RecentProjectsManager
@@ -19,7 +19,9 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
@@ -35,7 +37,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 import java.awt.Window
 import java.awt.event.ComponentAdapter
@@ -43,7 +44,6 @@ import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.accessibility.AccessibleContext
 import javax.swing.*
@@ -60,13 +60,13 @@ open class ProjectFrameHelper internal constructor(
   private var currentFile: Path? = null
   private var project: Project? = null
 
-  @get:ApiStatus.Internal
-  val rootPane: IdeRootPane
+  @JvmField
+  internal val rootPane: IdeRootPane
 
   private var balloonLayout: BalloonLayout? = null
   private val frameDecorator: IdeFrameDecorator?
 
-  // frame can be activated before project is assigned to it,
+  // frame can be activated before a project is assigned to it,
   // so we remember the activation time and report it against the assigned project later
   private var activationTimestamp: Long? = null
 
@@ -166,7 +166,8 @@ open class ProjectFrameHelper internal constructor(
 
   private val isInitialized = AtomicBoolean()
 
-  // purpose of delayed init - to show project frame as early as possible (and start loading of project too) and use it as project loading "splash"
+  // purpose of delayed init -
+  // to show project frame as early as possible (and start loading of a project too) and use it as project loading "splash"
   // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
   fun init(): JFrame {
     if (!isInitialized.compareAndSet(false, true)) {
@@ -418,4 +419,7 @@ open class ProjectFrameHelper internal constructor(
       RecentProjectsManager.getInstance().setActivationTimestamp(project = it, timestamp = currentTimeMillis)
     }
   }
+
+  internal val isTabbedWindow: Boolean
+    get() = frameDecorator?.isTabbedWindow ?: false
 }

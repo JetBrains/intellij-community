@@ -16,9 +16,6 @@ import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author pegov
- */
 public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   public static final Key<Boolean> MARK_MODIFIED_KEY = Key.create("EDITOR_TABS_MARK_MODIFIED");
   /**

@@ -3,10 +3,10 @@ package org.jetbrains.plugins.gitlab.mergerequest.data.loaders
 
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
 import org.jetbrains.plugins.gitlab.api.request.getAllProjectMembers
 import org.jetbrains.plugins.gitlab.api.request.loadAllProjectLabels
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabLabelDTO
 
 internal class GitLabProjectDetailsLoader(
   private val api: GitLabApi,

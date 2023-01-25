@@ -2,13 +2,11 @@
 package com.jetbrains.python
 
 import com.jetbrains.python.fixtures.PyTestCase
-import org.junit.Assert
-import java.util.*
 
 
 class PyDictLiteralCompletionTest : PyTestCase() {
   fun testEmptyLiteralsInCallExpressions() {
-    assertCompletionContains("'x'", "'y'")
+    assertCompletionContains("\"x\"", "\"y\"")
   }
 
   fun testEmptyLiteralsInCallExpressionsWithQuotes() {
@@ -24,7 +22,7 @@ class PyDictLiteralCompletionTest : PyTestCase() {
   }
 
   fun testEmptyLiteralsInAssignments() {
-    assertCompletionContains("'x'", "'y'")
+    assertCompletionContains("\"x\"", "\"y\"")
   }
 
   fun testEmptyLiteralsInAssignmentsWithQuotes() {
@@ -32,7 +30,7 @@ class PyDictLiteralCompletionTest : PyTestCase() {
   }
 
   fun testNotEmptyLiteralsInAssignments() {
-    assertCompletionContains("'y'")
+    assertCompletionContains("\"y\"")
   }
 
   fun testNotEmptyLiteralsInAssignmentsWithQuotes() {
@@ -40,7 +38,7 @@ class PyDictLiteralCompletionTest : PyTestCase() {
   }
 
   fun testEmptyLiteralsInReturnStatements() {
-    assertCompletionContains("'x'", "'y'")
+    assertCompletionContains("\"x\"", "\"y\"")
   }
 
   fun testEmptyLiteralsInReturnStatementsWithQuotes() {
@@ -59,12 +57,33 @@ class PyDictLiteralCompletionTest : PyTestCase() {
     assertCompletionContains("b")
   }
 
+  // PY-42637
+  fun testNotEmptyLiteralsInReturnStatementsWithSeveralTypesOfQuotes() {
+    assertCompletionContains("\"x\"")
+  }
+
+  // PY-42637
+  fun testNotEmptyLiteralsInReturnStatementsWithOnlySingleQuotes() {
+    assertCompletionContains("'x'")
+  }
+
+  // PY-58374
+  fun testEditingKeyWithExistingValue() {
+    val variants = getVariants()
+    assertContainsElements(variants, "coordinateX", "coordinateZ")
+    assertDoesntContain(variants, "coordinateY")
+  }
+
   private fun assertCompletionContains(vararg expected: String) {
+    val variants = getVariants()
+    assertContainsElements(variants, *expected)
+  }
+
+  private fun getVariants(): List<String> {
     myFixture.copyDirectoryToProject(getTestName(false), "")
     myFixture.configureByFile("main.py")
     myFixture.completeBasic()
-    val variants = myFixture.lookupElementStrings ?: emptyList()
-    assertContainsElements(variants, *expected)
+    return myFixture.lookupElementStrings ?: emptyList()
   }
 
 

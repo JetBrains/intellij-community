@@ -6,7 +6,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -14,6 +13,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -25,11 +25,9 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
-import groovy.transform.CompileStatic;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,9 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class NormalCompletionTest extends NormalCompletionTestCase {
 
@@ -224,11 +220,18 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true;
-    CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.FIRST_LETTER);
-    CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(false);
-    CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = true;
-    super.tearDown();
+    try {
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true;
+      CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.FIRST_LETTER);
+      CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(false);
+      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = true;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testConstructorName1() throws Exception {
@@ -628,6 +631,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
         }""");
     configure();
     type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
@@ -923,6 +927,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     configure();
     assertStringItems("Zzoo", "Zzoo.Impl");
     type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
@@ -2777,5 +2782,51 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     LookupElementPresentation presentation = new LookupElementPresentation();
     elements[0].renderElement(presentation);
     assertEquals("(\"1\", AN_IMESSAGE_1) (SomeClass)", presentation.getTailText());
+  }
+
+  @NeedsIndex.Full
+  public void testPackagePrivateConstantInInterface() {
+    myFixture.addClass("""
+                         package com.example.x;
+                                                  
+                         public interface Exposed extends PackPrivate {
+                             int value();
+                         }
+                         """);
+    myFixture.addClass("""
+                         package com.example.x;
+                                                  
+                         interface PackPrivate {
+                             Exposed CONSTANT = () -> 5;
+                         }
+                         """);
+    myFixture.configureByText("Main.java", """
+      package com.example;
+            
+      import com.example.x.Exposed;
+            
+      public class Main {
+          public static void main(String[] args) {
+              test(CONST<caret>);
+          }
+            
+          private static void test(Exposed exposed) {
+          }
+      }""");
+    myFixture.completeBasic();
+    myFixture.type('\n');
+    myFixture.checkResult("""
+      package com.example;
+                                  
+      import com.example.x.Exposed;
+                                  
+      public class Main {
+          public static void main(String[] args) {
+              test(Exposed.CONSTANT);
+          }
+                                  
+          private static void test(Exposed exposed) {
+          }
+      }""");
   }
 }

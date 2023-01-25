@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Checks nested decorators, especially whatever comes after @classmethod.
  * <br/>
- * User: dcheryasov
  */
 public class PyNestedDecoratorsInspection extends PyInspection {
 

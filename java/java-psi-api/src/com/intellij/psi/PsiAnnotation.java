@@ -14,8 +14,6 @@ import java.util.List;
 
 /**
  * Represents a Java annotation.
- *
- * @author ven
  */
 public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
   /**

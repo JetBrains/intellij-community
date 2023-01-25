@@ -61,7 +61,7 @@ class GitBranchesTreeMultiRepoModel(
                                              || (node === GitBranchType.REMOTE && commonRemoteBranchesTree.isEmpty())
 
   private fun getChildren(parent: Any?): List<Any> {
-    if (parent == null || !haveFilteredBranches()) return emptyList()
+    if (parent == null) return emptyList()
     return when (parent) {
       TreeRoot -> getTopLevelNodes()
       is GitBranchType -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent, emptyList()) }
@@ -91,6 +91,4 @@ class GitBranchesTreeMultiRepoModel(
 
   private fun getPreferredBranch(): GitBranch? =
     getPreferredBranch(project, repositories, null, commonLocalBranchesTree, commonRemoteBranchesTree)
-
-  private fun haveFilteredBranches(): Boolean = !commonLocalBranchesTree.isEmpty() || !commonRemoteBranchesTree.isEmpty()
 }

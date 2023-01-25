@@ -20,17 +20,14 @@ abstract class AbstractPropertyActionCreateCallableFromUsageFix(
     override val calculatedText: String
         get() {
             val propertyInfo = callableInfos.first() as PropertyInfo
-            return buildString {
-                append(KotlinBundle.message("text.add"))
-                if (propertyInfo.isLateinitPreferred || propertyInfo.modifierList?.hasModifier(KtTokens.LATEINIT_KEYWORD) == true) {
-                    append("lateinit ")
-                } else if (propertyInfo.isConst) {
-                    append("const ")
-                }
-                append(if (propertyInfo.writable) "var" else "val")
-                append(KotlinBundle.message("property.0.to.1", propertyInfo.name, classOrFileName.toString()))
-            }
+            val modifier = if (propertyInfo.isLateinitPreferred || propertyInfo.modifierList?.hasModifier(KtTokens.LATEINIT_KEYWORD) == true) {
+                "lateinit "
+            } else if (propertyInfo.isConst) {
+                "const "
+            } else ""
+            val property = if (propertyInfo.writable) "var" else "val"
+            return KotlinBundle.message("quickFix.add.property.text", modifier, property, propertyInfo.name, classOrFileName.toString())
         }
 
-    override fun getFamilyName(): String = KotlinBundle.message("add.property")
+    override fun getFamilyName(): String = KotlinBundle.message("quickfix.add.property.familyName")
 }

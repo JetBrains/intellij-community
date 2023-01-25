@@ -64,12 +64,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
 
   @Nullable
   private PyTargetExpression resolveGlobalVariable(@NotNull PyFile owner) {
-    for (PyTargetExpression assignment : owner.getTopLevelAttributes()) {
-      if (getCanonicalText().equals(assignment.getName())) {
-        return assignment;
-      }
-    }
-    return null;
+    return owner.findTopLevelAttribute(getCanonicalText());
   }
 
   @Nullable

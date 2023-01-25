@@ -21,9 +21,6 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 final class MethodCallUsageInfo extends UsageInfo implements BranchableUsageInfo {
   private final PsiMethodCallExpression myMethodCall;
 

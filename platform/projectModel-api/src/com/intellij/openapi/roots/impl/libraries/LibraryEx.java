@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- *  @author dsl
- */
 @ApiStatus.NonExtendable
 public interface LibraryEx extends Library {
   @NotNull

@@ -279,28 +279,27 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       ApplicationManager.getApplication().runWriteAction {
         ProjectRootManagerEx.getInstanceEx(project).withRootsChange(RootsChangeRescanningInfo.NO_RESCAN_NEEDED).use {
           WorkspaceModel.getInstance(project).updateProjectModel("Update unloaded modules") { builder ->
-            for (entity in moduleEntitiesToUnload) {
-              builder.removeEntity(entity)
-            }
-            for (entity in moduleEntitiesToLoad) {
-              builder.addEntity(entity)
-              entity.getModuleLevelLibraries(unloadedEntityStorage).forEach { libraryEntity ->
-                builder.addEntity(libraryEntity)
-              }
-            }
+            addAndRemoveModules(builder, moduleEntitiesToLoad, moduleEntitiesToUnload, unloadedEntityStorage)
           }
           WorkspaceModel.getInstance(project).updateUnloadedEntities("Update unloaded modules") { builder ->
-            for (entity in moduleEntitiesToLoad) {
-              builder.removeEntity(entity)
-            }
-            for (entity in moduleEntitiesToUnload) {
-              builder.addEntity(entity)
-              entity.getModuleLevelLibraries(mainStorage).forEach { libraryEntity ->
-                builder.addEntity(libraryEntity)
-              }
-            }
+            addAndRemoveModules(builder, moduleEntitiesToUnload, moduleEntitiesToLoad, mainStorage)
           }
         }
+      }
+    }
+  }
+
+  private fun addAndRemoveModules(builder: MutableEntityStorage,
+                                  entitiesToAdd: List<ModuleEntity>,
+                                  entitiesToRemove: List<ModuleEntity>,
+                                  storageContainingEntitiesToAdd: EntityStorage) {
+    for (entity in entitiesToRemove) {
+      builder.removeEntity(entity)
+    }
+    for (entity in entitiesToAdd) {
+      builder.addEntity(entity)
+      entity.getModuleLevelLibraries(storageContainingEntitiesToAdd).forEach { libraryEntity ->
+        builder.addEntity(libraryEntity)
       }
     }
   }

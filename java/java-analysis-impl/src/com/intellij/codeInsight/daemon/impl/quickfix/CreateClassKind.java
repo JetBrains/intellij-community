@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author ven
-*/
 public enum CreateClassKind implements ClassKind {
   CLASS(JavaElementKind.CLASS),
   INTERFACE(JavaElementKind.INTERFACE),

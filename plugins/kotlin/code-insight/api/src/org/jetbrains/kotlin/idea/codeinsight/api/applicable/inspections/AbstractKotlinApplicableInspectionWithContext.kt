@@ -37,7 +37,7 @@ abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement
     override fun getActionName(element: ELEMENT, context: CONTEXT): @IntentionName String = getActionFamilyName()
 
     final override fun buildProblemInfo(element: ELEMENT): ProblemInfo? {
-        val context = prepareContextWithAnalyze(element, needsReadAction = true) ?: return null
+        val context = prepareContextWithAnalyze(element) ?: return null
 
         val elementPointer = element.createSmartPointer()
         val quickFix = object : AbstractKotlinApplicableInspectionQuickFix<ELEMENT>() {
@@ -45,6 +45,7 @@ abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement
                 apply(element, context, element.project, element.findExistingEditor())
             }
 
+            override fun shouldApplyInWriteAction(): Boolean = this@AbstractKotlinApplicableInspectionWithContext.shouldApplyInWriteAction()
             override fun getFamilyName(): String = this@AbstractKotlinApplicableInspectionWithContext.getActionFamilyName()
             override fun getName(): String = elementPointer.element?.let { getActionName(element, context) } ?: familyName
         }

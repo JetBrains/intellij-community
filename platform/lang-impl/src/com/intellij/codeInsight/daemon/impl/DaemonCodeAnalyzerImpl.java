@@ -30,11 +30,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.fileEditor.ClientFileEditorManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -84,7 +80,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
   private final @NotNull PsiDocumentManager myPsiDocumentManager;
-  private FileEditorManagerEx myFileEditorManager;
+  private FileEditorManager myFileEditorManager;
   private final Map<FileEditor, DaemonProgressIndicator> myUpdateProgress = new ConcurrentHashMap<>();
 
   private final UpdateRunnable myUpdateRunnable;
@@ -147,14 +143,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     myDaemonListenerPublisher = project.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC);
   }
 
-  private FileEditorManagerEx getFileEditorManager() {
+  private FileEditorManager getFileEditorManager() {
     var result = myFileEditorManager;
     if (result == null) {
-      result = FileEditorManagerEx.getInstanceEx(myProject);
+      result = FileEditorManager.getInstance(myProject);
       myFileEditorManager = result;
-      if (result == null && !myProject.isDefault()) {
-        throw new IllegalStateException("FileEditorManagerEx.getInstanceEx(myProject) = null; project=" + myProject);
-      }
     }
     return result;
   }
@@ -249,7 +242,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                     @NotNull PsiFile psiFile) {
     assertMyFile(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
-    FileEditorManagerEx fileEditorManager = getFileEditorManager();
+    FileEditorManager fileEditorManager = getFileEditorManager();
     for (FileEditor fileEditor : fileEditorManager.getAllEditors(vFile)) {
       if (fileEditor instanceof TextEditor) {
         List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = new ArrayList<>();
@@ -636,7 +629,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   @Override
   public void restart(@NotNull PsiFile psiFile) {
     assertMyFile(psiFile.getProject(), psiFile);
-    Document document = myPsiDocumentManager.getCachedDocument(psiFile);
+    Document document = psiFile.getViewProvider().getDocument();
     if (document == null) return;
     String reason = "Psi file restart: " + psiFile.getName();
     myFileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength()), psiFile.getTextLength(), reason);
@@ -655,7 +648,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   boolean isAllAnalysisFinished(@NotNull PsiFile psiFile) {
     if (myDisposed) return false;
     assertMyFile(psiFile.getProject(), psiFile);
-    Document document = myPsiDocumentManager.getCachedDocument(psiFile);
+    Document document = psiFile.getViewProvider().getDocument();
     return document != null &&
            document.getModificationStamp() == psiFile.getViewProvider().getModificationStamp() &&
            myFileStatusMap.allDirtyScopesAreNull(document);
@@ -665,10 +658,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   public boolean isErrorAnalyzingFinished(@NotNull PsiFile psiFile) {
     if (myDisposed) return false;
     assertMyFile(psiFile.getProject(), psiFile);
-    Document document = myPsiDocumentManager.getCachedDocument(psiFile);
+    Document document = psiFile.getViewProvider().getDocument();
     return document != null &&
            document.getModificationStamp() == psiFile.getViewProvider().getModificationStamp() &&
-           myFileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL) == null;
+           myFileStatusMap.getFileDirtyScope(document, psiFile, Pass.UPDATE_ALL) == null;
   }
 
   @Override

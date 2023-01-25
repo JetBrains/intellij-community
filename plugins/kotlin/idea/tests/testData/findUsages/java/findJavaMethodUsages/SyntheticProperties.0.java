@@ -8,4 +8,3 @@ public class JavaClass {
     public void setSomething(int value) {
     }
 }
-// FIR_COMPARISON

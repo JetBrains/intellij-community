@@ -11,9 +11,6 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class CommentZenCodingFilter extends ZenCodingFilter {
   private static String buildCommentString(@Nullable String classAttr, @Nullable String idAttr) {
     StringBuilder builder = new StringBuilder();

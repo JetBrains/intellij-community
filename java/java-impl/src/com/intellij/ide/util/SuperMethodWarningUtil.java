@@ -30,15 +30,11 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public final class SuperMethodWarningUtil {
   public static final Key<PsiMethod[]> SIBLINGS = Key.create("MULTIPLE_INHERITANCE");
@@ -190,7 +186,7 @@ public final class SuperMethodWarningUtil {
                                  containingClass.isInterface() && !aClass.isInterface() ? 0 : 1, 
                                  SymbolPresentationUtil.getSymbolPresentableText(containingClass));
     }
-    JBPopupFactory.getInstance().createPopupChooserBuilder(ContainerUtil.newArrayList(renameBase, renameCurrent))
+    JBPopupFactory.getInstance().createPopupChooserBuilder(List.of(renameBase, renameCurrent))
       .setTitle(title)
       .setMovable(false)
       .setResizable(false)

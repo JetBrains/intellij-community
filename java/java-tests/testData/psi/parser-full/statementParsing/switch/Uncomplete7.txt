@@ -74,7 +74,7 @@ PsiJavaFile:Uncomplete7.java
                   PsiKeyword:when('when')
                   PsiErrorElement:Expression expected
                     <empty list>
-              PsiErrorElement:':' expected
+              PsiErrorElement:':' or '->' expected
                 <empty list>
             PsiWhiteSpace('\n        ')
             PsiJavaToken:RBRACE('}')

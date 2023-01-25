@@ -113,17 +113,29 @@ class registry:
     def mapped(self, cls: _ClsT) -> _ClsT: ...
     # Return type of the callable is a _DeclarativeBase class with the passed in class as base.
     # This could be better approximated with Intersection[PassedInClass, _DeclarativeBase].
+    @overload
+    def as_declarative_base(self, *, mapper: Any | None = ...) -> Callable[[_ClsT], _ClsT | DeclarativeMeta | Any]: ...
+    @overload
     def as_declarative_base(
-        self, *, mapper: Any | None = ..., metaclass: _DeclarativeBaseMeta[_DeclT] = ...
+        self, *, mapper: Any | None = ..., metaclass: _DeclarativeBaseMeta[_DeclT]
     ) -> Callable[[_ClsT], _ClsT | _DeclT | Any]: ...
     def map_declaratively(self, cls): ...
     def map_imperatively(self, class_, local_table: Any | None = ..., **kw): ...
 
+@overload
 def as_declarative(
     *,
     bind: Connectable | None = ...,
     metadata: MetaData | None = ...,
     class_registry: dict[str, type[Any]] | None = ...,
     mapper: Any | None = ...,
-    metaclass: _DeclarativeBaseMeta[_DeclT] = ...,
+) -> Callable[[_ClsT], _ClsT | DeclarativeMeta | Any]: ...
+@overload
+def as_declarative(
+    *,
+    bind: Connectable | None = ...,
+    metadata: MetaData | None = ...,
+    class_registry: dict[str, type[Any]] | None = ...,
+    mapper: Any | None = ...,
+    metaclass: _DeclarativeBaseMeta[_DeclT],
 ) -> Callable[[_ClsT], _ClsT | _DeclT | Any]: ...

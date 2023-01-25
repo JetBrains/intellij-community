@@ -62,11 +62,9 @@ public class NamingConventionBean {
   }
   
   public @NotNull OptionController getOptionController() {
-    return OptionController.empty()
-      .onValue("m_minLength", () -> m_minLength, val -> m_minLength = (int)val)
-      .onValue("m_maxLength", () -> m_maxLength, val -> m_maxLength = (int)val)
+    return OptionController.fieldsOf(this)
       .onValue("m_regex", () -> m_regex, val -> {
-        m_regex = (String)val;
+        m_regex = val;
         try {
           initPattern();
         }

@@ -11,9 +11,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import java.util.*;
 
-/**
- * @author ilyas
- */
 public final class DuplicatesUtil {
   public static void collectMethodDuplicates(Map<GrMethod, List<GrMethod>> map, HashSet<? super GrMethod> duplicateMethodsWarning, HashSet<? super GrMethod> duplicateMethodsErrors) {
     for (GrMethod method : map.keySet()) {

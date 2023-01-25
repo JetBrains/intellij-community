@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBLabel
@@ -16,7 +17,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
-import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -69,10 +69,12 @@ object GHPRReviewCommentComponent {
       maxEditorWidth = maxTextWidth
     }
 
-    val editButton = GHTextActions.createEditButton(editablePaneHandle).apply {
+    val editButton = CodeReviewCommentUIUtil.createEditButton {
+      editablePaneHandle.showAndFocusEditor()
+    }.apply {
       isVisible = comment.canBeUpdated
     }
-    val deleteButton = GHTextActions.createDeleteButton {
+    val deleteButton = CodeReviewCommentUIUtil.createDeleteCommentIconButton {
       reviewDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
     }.apply {
       isVisible = comment.canBeDeleted

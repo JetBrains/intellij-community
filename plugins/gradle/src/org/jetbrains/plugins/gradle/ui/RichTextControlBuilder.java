@@ -15,8 +15,6 @@ import java.util.List;
  * Allows to build controls that show target user text with 'reach info' (e.g. inline icon button).
  * <p/>
  * Not thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class RichTextControlBuilder {
   

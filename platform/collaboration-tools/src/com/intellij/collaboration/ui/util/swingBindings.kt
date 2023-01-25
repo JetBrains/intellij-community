@@ -3,16 +3,16 @@ package com.intellij.collaboration.ui.util
 
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
-import javax.swing.Action
-import javax.swing.ComboBoxModel
-import javax.swing.JComponent
+import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.text.JTextComponent
@@ -99,9 +99,80 @@ fun JTextComponent.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) 
   }
 }
 
+fun JEditorPane.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    textFlow.collect {
+      text = it
+      setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
+    }
+  }
+}
+
+fun JLabel.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    textFlow.collect {
+      text = it
+    }
+  }
+}
+
+fun JLabel.bindIcon(scope: CoroutineScope, iconFlow: Flow<Icon?>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    iconFlow.collect {
+      icon = it
+    }
+  }
+}
+
+fun JButton.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    textFlow.collect {
+      text = it
+    }
+  }
+}
+
+fun Wrapper.bindContent(scope: CoroutineScope, contentFlow: Flow<JComponent>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    contentFlow.collect {
+      setContent(it)
+      repaint()
+    }
+  }
+}
+
+fun <D> JPanel.bindChild(scope: CoroutineScope, dataFlow: Flow<D>,
+                         constraints: Any? = null, index: Int? = null,
+                         componentFactory: (CoroutineScope, D) -> JComponent?) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    dataFlow.collectLatest {
+      coroutineScope {
+        val component = componentFactory(this, it) ?: return@coroutineScope
+        if (index != null) {
+          add(component, constraints, index)
+        }
+        else {
+          add(component, constraints)
+        }
+        validate()
+        repaint()
+
+        try {
+          awaitCancellation()
+        }
+        finally {
+          remove(component)
+          revalidate()
+          repaint()
+        }
+      }
+    }
+  }
+}
+
 private typealias Block = CoroutineScope.() -> Unit
 
-class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { SupervisorJob() + Dispatchers.Main.immediate })
+class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { SupervisorJob() + Dispatchers.Main })
   : Activatable {
 
   private var scope: CoroutineScope? = null
@@ -113,7 +184,7 @@ class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineCont
     launch { block() }
   }
 
-  private fun doInScope(block: Block) {
+  fun doInScope(block: Block) {
     blocks.add(block)
     scope?.run {
       block()

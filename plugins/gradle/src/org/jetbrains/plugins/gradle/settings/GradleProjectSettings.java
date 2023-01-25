@@ -24,8 +24,6 @@ import java.util.Optional;
 
 /**
  * {@link GradleProjectSettings} holds settings for the linked gradle project.
- *
- * @author Denis Zhdanov
  */
 @SuppressWarnings("unused")
 public class GradleProjectSettings extends ExternalProjectSettings {

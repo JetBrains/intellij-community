@@ -37,9 +37,6 @@ import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.Icon
 
-/**
- * @author vlan
- */
 open class PyAddExistingCondaEnvPanel(private val project: Project?,
                                       private val module: Module?,
                                       private val existingSdks: List<Sdk>,
@@ -48,7 +45,7 @@ open class PyAddExistingCondaEnvPanel(private val project: Project?,
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.existing.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
   protected val sdkComboBox = PySdkPathChoosingComboBox()
-  protected val condaPathField = TextFieldWithBrowseButton().apply {
+  private val condaPathField = TextFieldWithBrowseButton().apply {
     val path = PyCondaPackageService.getCondaExecutable(null)
     if (path != null) {
       text = path

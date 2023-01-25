@@ -20,9 +20,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public class OverriderUsageInfo extends UsageInfo implements OverriderMethodUsageInfo<PsiMethod> {
   private final PsiMethod myBaseMethod;
   private final boolean myToInsertArgs;

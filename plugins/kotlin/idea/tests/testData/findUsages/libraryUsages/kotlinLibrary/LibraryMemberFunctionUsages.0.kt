@@ -12,4 +12,3 @@ fun test() {
     A().<caret>foo(1)
 }
 
-// FIR_COMPARISON

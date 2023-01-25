@@ -16,9 +16,6 @@ import com.intellij.util.ArrayUtil;
 
 import java.util.HashSet;
 
-/**
- * @author dsl
- */
 public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   private CommonCodeStyleSettings getJavaSettings() {
     return getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);

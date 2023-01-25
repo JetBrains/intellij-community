@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,40 +15,46 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class WaitForContributorsListenerWrapper implements SearchListener{
+public class WaitForContributorsListenerWrapper implements SearchListener, Disposable {
 
   private static final Logger LOG = Logger.getInstance(WaitForContributorsListenerWrapper.class);
 
-  private static final long DEFAULT_WAIT_TIMEOUT = 3000;
-  private static final long DEFAULT_THROTTLING_TIMEOUT = 100;
+  static final long DEFAULT_WAIT_TIMEOUT_MS = 3000;
+  static final long DEFAULT_THROTTLING_TIMEOUT_MS = 100;
 
   private final Map<SearchEverywhereContributor<?>, Boolean> contributorsMap = new HashMap<>();
   private final ScheduledExecutorService executorService = EdtExecutorService.getScheduledExecutorInstance();
   private final SearchListModel listModel;
   private Future<?> flushFuture;
-  private final long waitTimeout;
-  private final long throttlingTimeout;
+  private final long waitTimeoutMs;
+  private final long throttlingTimeoutMs;
+  private final Supplier<String> mySearchPattern;
   private final SearchListener delegateListener;
   private final SearchEventsBuffer buffer = new SearchEventsBuffer();
 
-  public WaitForContributorsListenerWrapper(SearchListener delegate, SearchListModel model, long waitTimeout, long throttlingTimeout) {
+  public WaitForContributorsListenerWrapper(@NotNull SearchListener delegate, @NotNull SearchListModel model,
+                                            long waitTimeoutMs, long throttlingTimeoutMs,
+                                            @NotNull Supplier<String> searchPattern) {
     delegateListener = delegate;
     listModel = model;
-    this.waitTimeout = waitTimeout;
-    this.throttlingTimeout = throttlingTimeout;
+    this.waitTimeoutMs = waitTimeoutMs;
+    this.throttlingTimeoutMs = throttlingTimeoutMs;
+    mySearchPattern = searchPattern;
   }
 
-  public WaitForContributorsListenerWrapper(SearchListener delegate, SearchListModel model) {
-    this(delegate, model, DEFAULT_WAIT_TIMEOUT, DEFAULT_THROTTLING_TIMEOUT);
+  @Override
+  public void dispose() {
+    cancelScheduledFlush();
   }
 
   @Override
   public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
     resetState(contributors);
     delegateListener.searchStarted(contributors);
-    long timeout = contributors.size() > 1 ? waitTimeout : throttlingTimeout;
+    long timeout = contributors.size() > 1 ? waitTimeoutMs : throttlingTimeoutMs;
     scheduleFlush(timeout);
   }
 
@@ -61,13 +68,13 @@ public class WaitForContributorsListenerWrapper implements SearchListener{
   @Override
   public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
     buffer.addElements(list);
-    scheduleFlush(throttlingTimeout);
+    scheduleFlush(throttlingTimeoutMs);
   }
 
   @Override
   public void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
     buffer.removeElements(list);
-    scheduleFlush(throttlingTimeout);
+    scheduleFlush(throttlingTimeoutMs);
   }
 
   @Override
@@ -97,7 +104,7 @@ public class WaitForContributorsListenerWrapper implements SearchListener{
     if (flushFuture != null) flushFuture.cancel(false);
   }
 
-  private void scheduleFlush(long timeout) {
+  private void scheduleFlush(long timeoutMs) {
     if (flushFuture != null && !flushFuture.isDone()) return;
 
     Runnable command = () -> {
@@ -106,13 +113,16 @@ public class WaitForContributorsListenerWrapper implements SearchListener{
       listModel.freezeElements();
     };
 
-    flushFuture = executorService.schedule(command, timeout, TimeUnit.MILLISECONDS);
+    flushFuture = executorService.schedule(command, timeoutMs, TimeUnit.MILLISECONDS);
   }
 
   private void logNonFinished() {
     contributorsMap.forEach((contributor, finished) -> {
-      if (!finished) LOG.warn(String.format("Contributor (%s) did not finish search in timeout (%d). Maybe it should implement PossibleSlowContributor interface", contributor.getSearchProviderId(),
-                                            waitTimeout));
+      if (!finished) {
+        LOG.warn("Contributor '" + contributor.getSearchProviderId() +
+                 "' did not finish search for '" + mySearchPattern.get() + "'" +
+                 " in " + waitTimeoutMs +"ms. Maybe it should implement PossibleSlowContributor interface?");
+      }
     });
   }
 

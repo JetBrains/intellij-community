@@ -262,7 +262,7 @@ open class AttachToProcessDialog(
     list.getFocusedComponent().addKeyListener(keyListener)
   }
 
-  private fun updateProcesses() {
+  fun updateProcesses() {
     currentAttachView.get().updateProcesses()
   }
 
@@ -579,5 +579,9 @@ open class AttachToProcessDialog(
         state.searchFieldValue.get().isNotBlank())
       attach(debugger, item)
     }
+  }
+
+  override fun getHelpId(): String? {
+    return "debugging.AttachToProcessDialog"
   }
 }

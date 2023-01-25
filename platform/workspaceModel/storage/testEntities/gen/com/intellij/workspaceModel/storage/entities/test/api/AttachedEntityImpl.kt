@@ -199,7 +199,7 @@ class AttachedEntityData : WorkspaceEntityData<AttachedEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return AttachedEntity(data, entitySource) {
-      this.ref = parents.filterIsInstance<MainEntity>().single()
+      parents.filterIsInstance<MainEntity>().singleOrNull()?.let { this.ref = it }
     }
   }
 

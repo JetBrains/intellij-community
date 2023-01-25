@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
@@ -13,10 +13,10 @@ import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.util.io.systemIndependentPath
-import java.util.*
 import javax.swing.Icon
 
 abstract class AutoLinkTestCase : ExternalSystemTestCase() {
+
   lateinit var testDisposable: Disposable
     private set
 
@@ -77,13 +77,13 @@ abstract class AutoLinkTestCase : ExternalSystemTestCase() {
 
       override suspend fun openProjectAsync(virtualFile: VirtualFile,
                                             projectToClose: Project?,
-                                            forceOpenInNewFrame: Boolean): Optional<Project> {
+                                            forceOpenInNewFrame: Boolean): Project? {
         val project = openProvider.openProject(virtualFile, projectToClose, forceOpenInNewFrame)
         if (project != null && !isExternalSystem) {
           project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null)
           project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null)
         }
-        return Optional.ofNullable(project)
+        return project
       }
 
       override fun canImportProjectAfterwards(): Boolean = true

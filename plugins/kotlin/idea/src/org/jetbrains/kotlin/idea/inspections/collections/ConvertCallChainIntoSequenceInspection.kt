@@ -6,12 +6,11 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.number
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.ui.EditorTextField
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -25,8 +24,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import java.awt.BorderLayout
-import javax.swing.JPanel
 
 class ConvertCallChainIntoSequenceInspection : AbstractKotlinInspection() {
 
@@ -34,7 +31,10 @@ class ConvertCallChainIntoSequenceInspection : AbstractKotlinInspection() {
 
     private var callChainLength = defaultCallChainLength
 
-    var callChainLengthText = defaultCallChainLength.toString()
+    // Used for serialization
+    @Suppress("unused")
+    var callChainLengthText = callChainLength.toString()
+        get() { return callChainLength.toString() }
         set(value) {
             field = value
             callChainLength = value.toIntOrNull() ?: defaultCallChainLength
@@ -59,21 +59,8 @@ class ConvertCallChainIntoSequenceInspection : AbstractKotlinInspection() {
             )
         })
 
-    override fun createOptionsPanel(): JPanel = OptionsPanel(this)
-
-    private class OptionsPanel(owner: ConvertCallChainIntoSequenceInspection) : JPanel() {
-        init {
-            layout = BorderLayout()
-            val regexField = EditorTextField(owner.callChainLengthText).apply { setOneLineMode(true) }
-            regexField.document.addDocumentListener(object : DocumentListener {
-                override fun documentChanged(e: DocumentEvent) {
-                    owner.callChainLengthText = regexField.text
-                }
-            })
-            val labeledComponent = LabeledComponent.create(regexField, KotlinBundle.message("call.chain.length.to.transform"), BorderLayout.WEST)
-            add(labeledComponent, BorderLayout.NORTH)
-        }
-    }
+    override fun getOptionsPane(): OptPane =
+        pane(number("callChainLength", KotlinBundle.message("call.chain.length.to.transform"), 1, 100))
 }
 
 private class ConvertCallChainIntoSequenceFix : LocalQuickFix {

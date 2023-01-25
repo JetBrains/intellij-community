@@ -21,9 +21,6 @@ import java.util.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_METHOD_PROPERTY;
 
-/**
- * @author ven
- */
 public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResult> implements GrMethodComparator.Context {
 
   private final PsiType @Nullable [] myArgumentTypes;

@@ -84,6 +84,12 @@
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
+    <registryKey key="kotlin.script.use.workspace.file.index.contributor.api" defaultValue="true"
+                 description="Use new WorkspaceFileIndexContributor API for custom entities.
+                 The flag is temporary, legacy API will be removed in the future."/>
+    <!--suppress PluginXmlValidity -->
+    <workspaceModel.fileIndexContributor
+            implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptWorkspaceFileIndexContributor"/>
     <!--suppress PluginXmlValidity -->
     <customEntityProjectModelInfoProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptProjectModelInfoProvider"/>
 

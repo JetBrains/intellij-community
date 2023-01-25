@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "UnstableApiUsage", "ReplacePutWithAssignment")
 
 package com.intellij.internal.statistic.service.fus.collectors
@@ -10,10 +10,13 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.logState
+import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger.Companion.LOG
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,55 +33,34 @@ import org.jetbrains.concurrency.asDeferred
  * Implement [ApplicationUsagesCollector] or [ProjectUsagesCollector] instead.
  *
  * To record IDE events (e.g. invoked action, opened dialog) use [CounterUsagesCollector]
+ * @see ProjectFUStateUsagesLogger
  */
 @Service(Service.Level.APP)
 @Internal
-class FUStateUsagesLogger private constructor(): UsagesCollectorConsumer {
+class FUStateUsagesLogger private constructor(cs: CoroutineScope) : UsagesCollectorConsumer {
   // https://github.com/Kotlin/kotlinx.coroutines/issues/2603#issuecomment-808859170
   private val logAppStateRequests = MutableSharedFlow<Boolean?>()
-  private val logProjectStateRequests = MutableSharedFlow<Project?>()
 
   init {
-    ApplicationManager.getApplication().coroutineScope.launch {
+    cs.launch {
       logAppStateRequests
         .filterNotNull()
         .collectLatest(::logApplicationStates)
     }
-    ApplicationManager.getApplication().coroutineScope.launch {
-      logProjectStateRequests
-        .filterNotNull()
-        .collectLatest { project ->
-          coroutineScope {
-            val recorderLoggers = HashMap<String, StatisticsEventLogger>()
-            for (usagesCollector in ProjectUsagesCollector.getExtensions(this@FUStateUsagesLogger)) {
-              if (!getPluginInfo(usagesCollector.javaClass).isDevelopedByJetBrains()) {
-                @Suppress("removal", "DEPRECATION")
-                LOG.warn("Skip '${usagesCollector.groupId}' because its registered in a third-party plugin")
-                continue
-              }
-
-              launch {
-                val metrics = usagesCollector.getMetrics(project, null)
-                logMetricsOrError(project = project,
-                                  recorderLoggers = recorderLoggers,
-                                  usagesCollector = usagesCollector,
-                                  metrics = metrics.asDeferred().await() ?: emptySet())
-              }
-            }
-          }
-        }
-    }
   }
 
   companion object {
-    private val LOG = Logger.getInstance(FUStateUsagesLogger::class.java)
+
+    internal val LOG = Logger.getInstance(FUStateUsagesLogger::class.java)
 
     fun getInstance(): FUStateUsagesLogger = ApplicationManager.getApplication().getService(FUStateUsagesLogger::class.java)
 
-    private suspend fun logMetricsOrError(project: Project?,
-                                          recorderLoggers: MutableMap<String, StatisticsEventLogger>,
-                                          usagesCollector: FeatureUsagesCollector,
-                                          metrics: Set<MetricEvent>) {
+    internal suspend fun logMetricsOrError(
+      project: Project?,
+      recorderLoggers: MutableMap<String, StatisticsEventLogger>,
+      usagesCollector: FeatureUsagesCollector,
+      metrics: Set<MetricEvent>,
+    ) {
       var group = usagesCollector.group
       if (group == null) {
         @Suppress("removal", "DEPRECATION")
@@ -106,10 +88,12 @@ class FUStateUsagesLogger private constructor(): UsagesCollectorConsumer {
       }
     }
 
-    private suspend fun logUsagesAsStateEvents(project: Project?,
-                                               group: EventLogGroup,
-                                               metrics: Set<MetricEvent>,
-                                               logger: StatisticsEventLogger) {
+    private suspend fun logUsagesAsStateEvents(
+      project: Project?,
+      group: EventLogGroup,
+      metrics: Set<MetricEvent>,
+      logger: StatisticsEventLogger,
+    ) {
       if (project != null && project.isDisposed) {
         return
       }
@@ -158,8 +142,7 @@ class FUStateUsagesLogger private constructor(): UsagesCollectorConsumer {
   }
 
   suspend fun logProjectStates(project: Project) {
-    logProjectStateRequests.emit(project)
-    logProjectStateRequests.emit(null)
+    project.service<ProjectFUStateUsagesLogger>().logProjectStates()
   }
 
   suspend fun logApplicationStates() {
@@ -186,12 +169,57 @@ class FUStateUsagesLogger private constructor(): UsagesCollectorConsumer {
         }
 
         launch {
-          logMetricsOrError(project = null,
-                            recorderLoggers = recorderLoggers,
-                            usagesCollector = usagesCollector,
-                            metrics = usagesCollector.getMetricsAsync())
+          logMetricsOrError(
+            project = null,
+            recorderLoggers = recorderLoggers,
+            usagesCollector = usagesCollector,
+            metrics = usagesCollector.getMetricsAsync(),
+          )
         }
       }
     }
+  }
+}
+
+@Service(Service.Level.PROJECT)
+private class ProjectFUStateUsagesLogger(
+  private val project: Project,
+  cs: CoroutineScope,
+) : UsagesCollectorConsumer {
+  // https://github.com/Kotlin/kotlinx.coroutines/issues/2603#issuecomment-808859170
+  private val logProjectStateRequests = MutableSharedFlow<Unit?>()
+
+  init {
+    cs.launch {
+      logProjectStateRequests
+        .filterNotNull()
+        .collectLatest {
+          coroutineScope {
+            val recorderLoggers = HashMap<String, StatisticsEventLogger>()
+            for (usagesCollector in ProjectUsagesCollector.getExtensions(this@ProjectFUStateUsagesLogger)) {
+              if (!getPluginInfo(usagesCollector.javaClass).isDevelopedByJetBrains()) {
+                @Suppress("removal", "DEPRECATION")
+                LOG.warn("Skip '${usagesCollector.groupId}' because its registered in a third-party plugin")
+                continue
+              }
+
+              launch {
+                val metrics = blockingContext { usagesCollector.getMetrics(project, null) }
+                FUStateUsagesLogger.logMetricsOrError(
+                  project = project,
+                  recorderLoggers = recorderLoggers,
+                  usagesCollector = usagesCollector,
+                  metrics = metrics.asDeferred().await() ?: emptySet(),
+                )
+              }
+            }
+          }
+        }
+    }
+  }
+
+  suspend fun logProjectStates() {
+    logProjectStateRequests.emit(Unit)
+    logProjectStateRequests.emit(null)
   }
 }

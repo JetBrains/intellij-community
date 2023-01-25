@@ -13,9 +13,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 
-/**
- * @author Denis Zhdanov
- */
 public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
 
   public void testAtWordStart() {

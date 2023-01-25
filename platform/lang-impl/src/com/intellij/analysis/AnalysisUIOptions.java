@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
@@ -64,10 +65,11 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   }
 
   public AnAction createGroupBySeverityAction(final InspectionResultsView view) {
-    return new InspectionResultsViewToggleAction(view,
-                                                 InspectionsBundle.message("inspection.action.group.by.severity"),
-                                                 InspectionsBundle.message("inspection.action.group.by.severity.description"),
-                                                 AllIcons.Nodes.SortBySeverity) {
+    return new InspectionResultsViewToggleAction(
+      view,
+      InspectionsBundle.message(ExperimentalUI.isNewUI() ? "inspection.action.group.by.severity.new" : "inspection.action.group.by.severity"),
+      InspectionsBundle.message("inspection.action.group.by.severity.description"),
+      AllIcons.Nodes.SortBySeverity) {
 
 
       @Override
@@ -112,7 +114,8 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   }
 
   public AnAction createGroupByDirectoryAction(final InspectionResultsView view) {
-    String message = InspectionsBundle.message("inspection.action.group.by.directory");
+    String message = InspectionsBundle.message(ExperimentalUI.isNewUI() ? "inspection.action.group.by.directory.new" :
+                                               "inspection.action.group.by.directory");
     return new InspectionResultsViewToggleAction(view, message, message, AllIcons.Actions.GroupByPackage) {
 
       @Override

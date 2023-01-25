@@ -32,7 +32,7 @@ internal abstract class PropertyRenderer(
   private val javaUsage = request as? CreateMethodFromJavaUsageRequest
   private val isStatic = JvmModifier.STATIC in request.modifiers
   private val propertyName = nameKind.first
-  protected val propertyKind = nameKind.second
+  internal val propertyKind: PropertyKind = nameKind.second
 
   private val suggestedFieldName = run {
     val kind = if (isStatic) VariableKind.STATIC_FIELD else VariableKind.FIELD

@@ -14,6 +14,8 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.extension.JsonSchemaGotoDeclarationSuppressor;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +24,10 @@ import java.util.Arrays;
 public class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler {
   @Override
   public PsiElement @Nullable [] getGotoDeclarationTargets(@Nullable PsiElement sourceElement, int offset, Editor editor) {
+    boolean shouldSuppressNavigation =
+      ContainerUtil.exists(JsonSchemaGotoDeclarationSuppressor.EP_NAME.getExtensionList(), it -> it.shouldSuppressGtd(sourceElement));
+    if (shouldSuppressNavigation) return null;
+
     final IElementType elementType = PsiUtilCore.getElementType(sourceElement);
     if (elementType != JsonElementTypes.DOUBLE_QUOTED_STRING && elementType != JsonElementTypes.SINGLE_QUOTED_STRING) return null;
     final JsonStringLiteral literal = PsiTreeUtil.getParentOfType(sourceElement, JsonStringLiteral.class);

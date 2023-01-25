@@ -30,9 +30,6 @@ import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Set<String> MEMBER_METHOD_NAMES = Set.of(GET_FIELD, GET_DECLARED_FIELD,
@@ -51,8 +48,8 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("ignoredClassNames", JavaBundle.message("inspection.reflection.member.access.check.exists.exclude.label"),
-                new JavaClassValidator().withTitle(JavaBundle.message("inspection.reflection.member.access.check.exists.exclude.chooser"))),
+      stringList("ignoredClassNames", JavaBundle.message("inspection.reflection.member.access.check.exists.exclude.label"),
+                 new JavaClassValidator().withTitle(JavaBundle.message("inspection.reflection.member.access.check.exists.exclude.chooser"))),
       checkbox("checkMemberExistsInNonFinalClasses", JavaBundle.message("inspection.reflection.member.access.check.exists"))
     );
   }

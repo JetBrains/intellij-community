@@ -40,10 +40,18 @@ interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
   val internalEntitySource: JpsFileEntitySource
   val fileUrl: VirtualFileUrl
   val mainEntityClass: Class<E>
-  fun loadEntities(builder: MutableEntityStorage,
-                   reader: JpsFileContentReader,
+
+  /**
+   * This method reads configuration files and creates entities that are not added to any builder.
+   *
+   * These entities can be just added to builder, but it's suggested to do it using [checkAndAddToBuilder] because this method
+   *   implements additional actions on adding (e.g. reports error when trying to add a library that already exists).
+   */
+  fun loadEntities(reader: JpsFileContentReader,
                    errorReporter: ErrorReporter,
-                   virtualFileManager: VirtualFileUrlManager)
+                   virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>>
+  fun checkAndAddToBuilder(builder: MutableEntityStorage, orphanage: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>)
+
   fun saveEntities(mainEntities: Collection<E>,
                    entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                    storage: EntityStorage,
@@ -119,6 +127,7 @@ interface JpsProjectSerializers {
 
   suspend fun loadAll(reader: JpsFileContentReader,
                       builder: MutableEntityStorage,
+                      orphanageBuilder: MutableEntityStorage,
                       unloadedEntityBuilder: MutableEntityStorage,
                       unloadedModuleNames: Set<String>,
                       errorReporter: ErrorReporter,
@@ -142,6 +151,7 @@ interface JpsProjectSerializers {
 
 data class ReloadingResult(
   val builder: MutableEntityStorage,
+  val orphanageBuilder: MutableEntityStorage,
   val unloadedEntityBuilder: MutableEntityStorage,
   val affectedSources: Set<EntitySource>
 )

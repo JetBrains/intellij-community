@@ -2,6 +2,8 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.util.IntRef;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.WriterDecidesStrategy;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -17,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static org.junit.Assert.*;
@@ -27,22 +28,22 @@ import static org.junit.Assume.assumeTrue;
 @RunWith(Theories.class)
 public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobStorage> extends BlobStorageTestBase<S> {
 
+  private static final StorageRecord[] RANDOM_RECORDS_TO_START_WITH = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
+
   protected final int pageSize;
   protected final SpaceAllocationStrategy allocationStrategy;
 
   @DataPoints
   public static List<SpaceAllocationStrategy> allocationStrategiesToTry() {
     return Arrays.asList(
-      new SpaceAllocationStrategy.WriterDecidesStrategy(1024),
-      new SpaceAllocationStrategy.WriterDecidesStrategy(512),
-      new SpaceAllocationStrategy.WriterDecidesStrategy(256),
-      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(1024, 256, 30),
-      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(512, 128, 30),
-      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(256, 64, 30),
+      new WriterDecidesStrategy(1024),
+      new WriterDecidesStrategy(256),
+      new DataLengthPlusFixedPercentStrategy(1024, 256, 30),
+      new DataLengthPlusFixedPercentStrategy(256, 64, 30),
 
       //put stress on allocation/reallocation code paths
-      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(128, 64, 0),
-      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(2, 2, 0)
+      new DataLengthPlusFixedPercentStrategy(128, 64, 0),
+      new DataLengthPlusFixedPercentStrategy(2, 2, 0)
     );
   }
 
@@ -67,7 +68,7 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   @Test
   public void emptyStorageHasNoRecords() throws Exception {
     final IntArrayList nonExistentIds = new IntArrayList();
-    nonExistentIds.add(NON_EXISTENT_ATTR_RECORD_ID);
+    nonExistentIds.add(NULL_ID);
     nonExistentIds.add(Integer.MAX_VALUE);
     ThreadLocalRandom.current().ints()
       .filter(i -> i > 0)
@@ -115,7 +116,7 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
 
   @Test
   public void manyRecordsWritten_CouldAllBeReadBackUnchanged_ViaForEach() throws Exception {
-    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
+    final StorageRecord[] recordsToWrite = RANDOM_RECORDS_TO_START_WITH.clone();
     for (int i = 0; i < recordsToWrite.length; i++) {
       recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
     }
@@ -132,6 +133,10 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
     for (int i = 0; i < recordsToWrite.length; i++) {
       final StorageRecord recordWritten = recordsToWrite[i];
       final StorageRecord recordReadBack = recordsById.get(recordWritten.recordId);
+      assertNotNull(
+        "Record[" + i + "][#" + recordWritten.recordId + "]: must be read back",
+        recordReadBack
+      );
       assertEquals(
         "Record[" + i + "][#" + recordWritten.recordId + "]: " +
         "written [" + recordWritten.payload + "], read back[" + recordReadBack.payload + "]",
@@ -196,7 +201,7 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
 
   @Test
   public void reallocatedRecordCouldStillBeReadByOriginalId() throws Exception {
-    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
+    final StorageRecord[] recordsToWrite = RANDOM_RECORDS_TO_START_WITH.clone();
     for (int i = 0; i < recordsToWrite.length; i++) {
       recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
     }
@@ -307,7 +312,9 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
         return buff
           .clear()
           .put(payloadBytes);
-      }
+      },
+      payloadBytes.length / 2,
+      true
     );
     if (recordId == newRecordId) {
       return record;

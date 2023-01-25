@@ -33,9 +33,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportProvider {
   @Override
   public boolean isSafeDeleteAvailable(@NotNull PsiElement element) {

@@ -22,9 +22,6 @@ import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterPro
 import com.jetbrains.python.psi.PyParenthesizedExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Author: Alexey.Ivanov
- */
 public class PyParenthesizedFixer extends PyFixer<PyParenthesizedExpression> {
   public PyParenthesizedFixer() {
     super(PyParenthesizedExpression.class);

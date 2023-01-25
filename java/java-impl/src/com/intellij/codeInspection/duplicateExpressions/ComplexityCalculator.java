@@ -18,8 +18,6 @@ import static com.intellij.psi.PsiBinaryExpression.BOOLEAN_OPERATION_TOKENS;
  * Expression complexity is >= 0. Complexity <= 10 means the expression is trivial (a constant or a variable). <br>
  * Complexity >= 100 means that the expression is really big (many operators and/or method calls). <br>
  * Side effects aren't checked here.
- *
- * @author Pavel.Dolgov
  */
 class ComplexityCalculator {
   private static final int IDENTIFIER = 10;

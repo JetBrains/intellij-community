@@ -8,7 +8,6 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.J2KFusCollector"/>
-    <statistics.counterUsagesCollector groupId="kotlin.ide.debugger" version="2"/>
     <statistics.counterUsagesCollector
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector"/>
 

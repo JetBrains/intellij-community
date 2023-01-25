@@ -63,10 +63,12 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
     val textRange = callSourcePsi.textRange
     val lineRange = document.getLineNumber(textRange.startOffset)..document.getLineNumber(textRange.endOffset)
     if ((info.record.failedLine - 1) !in lineRange) return null
-    if (info.record.failedMethod != call.methodName) return null
+    if (!matchesJvmName(info.record.failedMethod, call.methodName)) return null
     info.pointer = SmartPointerManager.createPointer(callSourcePsi)
     return if (info.record.magnitude <= TestStateInfo.Magnitude.IGNORED_INDEX.value) null else info
   }
+
+  private fun matchesJvmName(jvmName: String, sourceName: String?) = jvmName.split("$").any { it == sourceName }
 
   private class TestInfoCache(
     var record: TestStateStorage.Record,

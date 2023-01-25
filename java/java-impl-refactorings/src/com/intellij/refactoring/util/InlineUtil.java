@@ -37,9 +37,6 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author ven
- */
 public final class InlineUtil implements CommonJavaInlineUtil {
   private static final Logger LOG = Logger.getInstance(InlineUtil.class);
 

@@ -29,9 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import java.util.Arrays;
 import java.util.Collection;
 
-/**
- * @author ilyas
- */
 public class GrExpressionCategory implements PsiEnhancerCategory{
 
   public static Collection<GrExpression> getArguments(GrCallExpression call) {

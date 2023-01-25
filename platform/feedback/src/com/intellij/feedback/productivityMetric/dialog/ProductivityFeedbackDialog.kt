@@ -4,6 +4,7 @@ package com.intellij.feedback.productivityMetric.dialog
 import com.intellij.feedback.common.*
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.dialog.*
+import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
 import com.intellij.feedback.productivityMetric.bundle.ProductivityFeedbackBundle
 import com.intellij.feedback.productivityMetric.statistics.ProductivityMetricCountCollector
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -64,7 +65,9 @@ class ProductivityFeedbackDialog(
     val feedbackData = FeedbackRequestData(feedbackReportId, createCollectedDataJsonString())
     submitFeedback(project, feedbackData,
                    { }, { },
-                   if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)
+                   if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST,
+                   ThanksForFeedbackNotification(description = ProductivityFeedbackBundle.message(
+                     "notification.thanks.feedback.content", applicationName)))
   }
 
   private fun createCollectedDataJsonString(): JsonObject {
@@ -116,12 +119,14 @@ class ProductivityFeedbackDialog(
           .applyToComponent {
             selectedItem = null
             columns(COLUMNS_MEDIUM)
-          }.whenItemSelectedFromUi { usingExperience.set(it) }
-          .validation {
+          }.whenItemSelectedFromUi {
+            usingExperience.set(it)
+          }
+          .validationOnApply {
             if (usingExperience.get() == null) {
-              return@validation error(ProductivityFeedbackBundle.message("dialog.combobox.error"))
+              return@validationOnApply error(ProductivityFeedbackBundle.message("dialog.combobox.error"))
             }
-            return@validation null
+            return@validationOnApply null
           }
 
       }.bottomGap(BottomGap.MEDIUM)
@@ -155,7 +160,7 @@ class ProductivityFeedbackDialog(
     cancelAction.putValue(Action.NAME, ProductivityFeedbackBundle.message("dialog.cancel.label"))
     return cancelAction
   }
-  
+
   private fun mapExperienceToInt(experience: String?): Int {
     return when (experience) {
       ProductivityFeedbackBundle.message("dialog.combobox.item.1") -> 1

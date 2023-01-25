@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vcs.VcsEnvCustomizer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.impl.wsl.WslConstants
 import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
@@ -61,7 +62,8 @@ class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
   }
 
   private val Sdk.isWsl: Boolean
-    get() = (sdkAdditionalData as? RemoteSdkAdditionalData<*>)?.remoteConnectionType?.hasPrefix("wsl://") == true
+    // WSLCredentialsType#WZSL_CREDENTIALS_PREFIX is inaccessible, let's use WslConstants.UNC_PREFIX
+    get() = (sdkAdditionalData as? RemoteSdkAdditionalData<*>)?.remoteConnectionType?.hasPrefix(WslConstants.UNC_PREFIX) == true
 }
 
 @Service(Service.Level.PROJECT)

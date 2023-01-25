@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.Disposable
@@ -18,22 +18,20 @@ import com.intellij.workspaceModel.storage.impl.isConsistent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
 
 @ApiStatus.Internal
-class WorkspaceModelCacheImpl(private val project: Project) : AbstractWorkspaceModelCache(WorkspaceModelCacheImpl::collectExternalCacheVersions),
-                                                              WorkspaceModelCache, Disposable {
+class WorkspaceModelCacheImpl(private val project: Project) : WorkspaceModelCache, Disposable {
   override val enabled = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
   private val saveAlarm = SingleAlarm.pooledThreadSingleAlarm(1000, this) { this.doCacheSaving() }
 
   private val cacheFile by lazy { initCacheFile() }
   private val unloadedEntitiesCacheFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve("unloaded-entities-cache.data") }
   private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate") }
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
+  private val cacheSerializer = WorkspaceModelCacheSerializer(VirtualFileUrlManager.getInstance(project))
 
   init {
     if (enabled) {
@@ -51,7 +49,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : AbstractWorkspaceM
   private fun initCacheFile(): Path {
     if (ApplicationManager.getApplication().isUnitTestMode && testCacheFile != null) {
       // For testing purposes
-      val testFile = testCacheFile!!.toPath()
+      val testFile = testCacheFile!!
       if (!testFile.exists()) {
         error("Test cache file defined, but doesn't exist")
       }
@@ -76,11 +74,11 @@ class WorkspaceModelCacheImpl(private val project: Project) : AbstractWorkspaceM
 
     if (!cachesInvalidated.get()) {
       LOG.debug("Saving project model cache to $cacheFile")
-      saveCache(storage, cacheFile)
+      cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
       //todo check that where are no entities in the storage instead
       if (unloadedStorage != EntityStorageSnapshot.empty()) {
         LOG.debug("Saving project model cache to $unloadedEntitiesCacheFile")
-        saveCache(unloadedStorage, unloadedEntitiesCacheFile)
+        cacheSerializer.saveCacheToFile(unloadedStorage, unloadedEntitiesCacheFile, userPreProcessor = true)
       }
       else {
         Files.deleteIfExists(unloadedEntitiesCacheFile)
@@ -95,9 +93,13 @@ class WorkspaceModelCacheImpl(private val project: Project) : AbstractWorkspaceM
   @TestOnly
   fun getUnloadedEntitiesCacheFilePath(): Path = unloadedEntitiesCacheFile
 
-  override fun loadCache(): EntityStorage? = loadCache(cacheFile, invalidateCachesMarkerFile, invalidateProjectCacheMarkerFile)
-  override fun loadUnloadedEntitiesCache(): EntityStorage? = loadCache(unloadedEntitiesCacheFile, invalidateCachesMarkerFile,
-                                                                       invalidateProjectCacheMarkerFile)
+  override fun loadCache(): EntityStorage? {
+    return cacheSerializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateProjectCacheMarkerFile)
+  }
+  override fun loadUnloadedEntitiesCache(): EntityStorage? {
+    return cacheSerializer.loadCacheFromFile(unloadedEntitiesCacheFile, invalidateCachesMarkerFile,
+                                             invalidateProjectCacheMarkerFile)
+  }
   override fun dispose() = Unit
 
   private fun invalidateProjectCache() {
@@ -111,7 +113,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : AbstractWorkspaceM
     private var forceEnableCaching = false
 
     @TestOnly
-    var testCacheFile: File? = null
+    var testCacheFile: Path? = null
 
     private val cachesInvalidated = AtomicBoolean(false)
     internal val invalidateCachesMarkerFile = projectsDataDir.resolve(".invalidate")
@@ -119,12 +121,6 @@ class WorkspaceModelCacheImpl(private val project: Project) : AbstractWorkspaceM
     fun invalidateCaches() {
       LOG.info("Invalidating caches by creating $invalidateCachesMarkerFile")
       invalidateCaches(cachesInvalidated, invalidateCachesMarkerFile)
-    }
-
-    private val WORKSPACE_MODEL_CACHE_VERSION_EP = ExtensionPointName<WorkspaceModelCacheVersion>("com.intellij.workspaceModel.cache.version")
-
-    fun collectExternalCacheVersions(): Map<String, String> {
-      return WORKSPACE_MODEL_CACHE_VERSION_EP.extensionList.associate { it.getId() to it.getVersion() }
     }
 
     fun forceEnableCaching(disposable: Disposable) {

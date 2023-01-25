@@ -21,9 +21,6 @@ import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.TurnRefsToSuperRefactoring;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
 
-/**
- * @author dsl
- */
 public class TurnRefsToSuperRefactoringImpl extends RefactoringImpl<TurnRefsToSuperProcessor> implements TurnRefsToSuperRefactoring {
   TurnRefsToSuperRefactoringImpl(Project project, PsiClass aClass, PsiClass aSuper, boolean replaceInstanceOf) {
     super(new TurnRefsToSuperProcessor(project, aClass, aSuper, replaceInstanceOf));

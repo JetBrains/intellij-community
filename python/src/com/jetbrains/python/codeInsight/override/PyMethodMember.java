@@ -29,9 +29,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyMethodMember extends PsiElementMemberChooserObject implements ClassMember {
   @NlsSafe
   private static String buildNameFor(final PyElement element) {

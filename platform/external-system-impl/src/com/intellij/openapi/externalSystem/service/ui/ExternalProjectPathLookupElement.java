@@ -11,9 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalProjectPathLookupElement extends LookupElement {
   
   @NotNull private final String myProjectName;

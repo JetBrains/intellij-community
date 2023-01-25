@@ -45,7 +45,6 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 /**
  * User: catherine
@@ -142,6 +141,6 @@ public class RestRoleInspection extends RestInspection {
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(stringSet("ignoredRoles", PythonRestBundle.message("python.rest.inspections.role.ignore.roles.label")));
+    return pane(OptPane.stringList("ignoredRoles", PythonRestBundle.message("python.rest.inspections.role.ignore.roles.label")));
   }
 }

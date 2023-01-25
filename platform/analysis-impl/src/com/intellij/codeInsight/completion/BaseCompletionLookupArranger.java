@@ -97,7 +97,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       sorterNumber++;
       Collection<LookupElement> thisSorterItems = inputBySorter.get(sorter);
       for (LookupElement element : thisSorterItems) {
-        map.put(element, ContainerUtil.newArrayList(new Pair<>("frozen", myFrozenItems.contains(element)),
+        map.put(element, new SmartList<>(new Pair<>("frozen", myFrozenItems.contains(element)),
                                                     new Pair<>("sorter", sorterNumber)));
       }
       ProcessingContext context = createContext();

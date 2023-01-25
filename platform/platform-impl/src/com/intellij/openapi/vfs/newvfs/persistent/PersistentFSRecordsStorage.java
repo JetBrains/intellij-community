@@ -19,7 +19,8 @@ abstract class PersistentFSRecordsStorage {
     LOCK_FREE,
     IN_MEMORY,
 
-    OVER_LOCK_FREE_FILE_CACHE
+    OVER_LOCK_FREE_FILE_CACHE,
+    OVER_MMAPPED_FILE
   }
 
   static final RecordsStorageKind
@@ -30,6 +31,7 @@ abstract class PersistentFSRecordsStorage {
       case REGULAR, IN_MEMORY -> PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
       case LOCK_FREE -> PersistentFSLockFreeRecordsStorage.RECORD_SIZE;
       case OVER_LOCK_FREE_FILE_CACHE -> PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES;
+      case OVER_MMAPPED_FILE -> PersistentFSRecordsLockFreeOverMMappedFile.RECORD_SIZE_IN_BYTES;
     };
   }
 
@@ -42,6 +44,7 @@ abstract class PersistentFSRecordsStorage {
       case IN_MEMORY -> new PersistentInMemoryFSRecordsStorage(file, /*max size: */1 << 24);
 
       case OVER_LOCK_FREE_FILE_CACHE -> createLockFreeStorage(file);
+      case OVER_MMAPPED_FILE -> new PersistentFSRecordsLockFreeOverMMappedFile(file, PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE);
     };
   }
 
@@ -94,7 +97,6 @@ abstract class PersistentFSRecordsStorage {
    */
   abstract int allocateRecord();
 
-  //TODO RC: offset constant named ATTR_REF, but accessor is attributeRecord -- which one is correct, REFERENCE or RECORD?
   abstract void setAttributeRecordId(int fileId, int recordId) throws IOException;
 
   abstract int getAttributeRecordId(int fileId) throws IOException;
@@ -120,7 +122,6 @@ abstract class PersistentFSRecordsStorage {
   /**
    * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
    */
-  //RC: why 'put' not 'set'?
   abstract boolean setLength(int fileId, long length) throws IOException;
 
   abstract long getTimestamp(int fileId) throws IOException;
@@ -129,13 +130,15 @@ abstract class PersistentFSRecordsStorage {
   /**
    * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
    */
-  //RC: why 'put' not 'set'?
   abstract boolean setTimestamp(int fileId, long timestamp) throws IOException;
 
   abstract int getModCount(int fileId) throws IOException;
 
   //TODO RC: why we need this method? Record modification is detected by actual modification -- there
   //         are (seems to) no way to modify record bypassing it.
+  //         We use the method to mark file record modified there something derived is modified -- e.g.
+  //         children attribute or content. This looks suspicious to me: why we need to update _file_
+  //         record version in those cases?
   abstract void markRecordAsModified(int fileId) throws IOException;
 
   abstract int getContentRecordId(int fileId) throws IOException;

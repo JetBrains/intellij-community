@@ -9,4 +9,4 @@ fun foo() {
     c += 10
 }
 
-// FIR_COMPARISON
+

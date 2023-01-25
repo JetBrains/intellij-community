@@ -14,9 +14,6 @@ import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author lex
- */
 public class SyntheticVariableEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance(SyntheticVariableEvaluator.class);
 

@@ -23,9 +23,6 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.function.Supplier;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTaskExecutionInfo> {
 
   private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;

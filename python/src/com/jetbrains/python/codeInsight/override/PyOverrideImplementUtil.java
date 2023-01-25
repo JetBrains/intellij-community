@@ -37,9 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * @author Alexey.Ivanov
- */
 public final class PyOverrideImplementUtil {
 
   @Nullable

@@ -65,7 +65,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p/>
  * Thread-safe.
  *
- * @author Denis Zhdanov, Vladislav Soroka
+ * @author Vladislav Soroka
  */
 @Service(Service.Level.PROJECT)
 public final class ExternalSystemNotificationManager implements Disposable {

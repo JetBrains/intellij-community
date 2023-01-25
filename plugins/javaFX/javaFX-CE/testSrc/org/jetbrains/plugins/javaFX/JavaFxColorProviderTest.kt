@@ -6,9 +6,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxColorProvider
 
-/**
- * @author Pavel.Dolgov
- */
 
 class JavaFxColorProviderTest : AbstractJavaFXTestCase() {
   override fun getTestDataPath() = PluginPathManager.getPluginHomePath("javaFX") + "/testData/colorProvider"

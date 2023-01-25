@@ -13,9 +13,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public abstract class MethodArgumentFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(MethodArgumentFix.class);
 

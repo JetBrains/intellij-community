@@ -3,6 +3,9 @@ package org.jetbrains.idea.devkit.inspections.missingApi.resolve
 
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.indeterminateStep
+import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.vfs.VirtualFile
@@ -39,7 +42,7 @@ class PublicIntelliJSdkExternalAnnotationsRepository(private val project: Projec
     return "com.jetbrains.intellij.idea" to "ideaIU"
   }
 
-  override fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IntelliJSdkExternalAnnotations? {
+  override suspend fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IntelliJSdkExternalAnnotations? {
     val (groupId, artifactId) = getAnnotationsCoordinates()
 
     val lastReleaseVersion = "${ideBuildNumber.baselineVersion}.999999"
@@ -64,7 +67,7 @@ class PublicIntelliJSdkExternalAnnotationsRepository(private val project: Projec
                       latestTrunkSnapshotAnnotations).filterNotNull().maxByOrNull { it.annotationsBuild }
   }
 
-  private fun tryDownload(
+  private suspend fun tryDownload(
     groupId: String,
     artifactId: String,
     version: String,
@@ -80,19 +83,22 @@ class PublicIntelliJSdkExternalAnnotationsRepository(private val project: Projec
     return null
   }
 
-  private fun tryDownloadAnnotationsArtifact(
+  private suspend fun tryDownloadAnnotationsArtifact(
     groupId: String,
     artifactId: String,
     version: String,
     repos: List<RemoteRepositoryDescription>
-  ): VirtualFile? {
-    return JarRepositoryManager.loadDependenciesSync(
-      project,
-      JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version),
-      setOf(ArtifactKind.ANNOTATIONS),
-      repos,
-      null
-    )?.firstOrNull()?.file
+  ): VirtualFile? = indeterminateStep {
+    withRawProgressReporter {
+      coroutineToIndicator {
+        JarRepositoryManager.loadDependenciesSync(
+          project,
+          JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version),
+          setOf(ArtifactKind.ANNOTATIONS),
+          repos,
+          null
+        )?.firstOrNull()?.file
+      }
+    }
   }
-
 }

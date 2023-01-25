@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.ApiStatus;
@@ -300,6 +301,15 @@ public final class ProgressIndicatorUtils {
     finally {
       lock.unlock();
     }
+  }
+
+  public static void awaitWithCheckCanceled(long millis) {
+    long start = System.nanoTime();
+    awaitWithCheckCanceled(() -> {
+      if (TimeoutUtil.getDurationMillis(start) > millis) return true;
+      TimeoutUtil.sleep(ConcurrencyUtil.DEFAULT_TIMEOUT_MS);
+      return false;
+    });
   }
 
   public static void awaitWithCheckCanceled(@NotNull Condition condition) {

@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GroovyStdTypeCalculators {
 
   public static class ClosureTypeExtractor implements PairFunction<GrMethodCall, PsiMethod, PsiType> {

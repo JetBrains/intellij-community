@@ -26,9 +26,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class StartNewLineBeforeAction extends EditorAction {
 
   public StartNewLineBeforeAction() {

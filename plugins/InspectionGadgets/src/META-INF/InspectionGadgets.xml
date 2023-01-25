@@ -959,6 +959,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="ThrowsRuntimeException" bundle="messages.InspectionGadgetsBundle" key="throws.runtime.exception.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.ThrowsRuntimeExceptionInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ThrowableSupplierOnlyThrowException" bundle="messages.InspectionGadgetsBundle" key="throwable.supplier.only.throw.exception.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.errorhandling.ThrowableSupplierOnlyThrowExceptionInspection"/>
 
     <!--group.names.finalization.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="FinalizeDeclaration" shortName="Finalize" bundle="messages.InspectionGadgetsBundle"
@@ -1047,7 +1050,7 @@
                      implementationClass="com.siyeh.ig.inheritance.ProblematicVarargsMethodOverrideInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantMethodOverride" bundle="messages.InspectionGadgetsBundle"
                      key="redundant.method.override.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.inheritance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.inheritance.RedundantMethodOverrideInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="MethodDoesntCallSuperMethod" shortName="RefusedBequest" bundle="messages.InspectionGadgetsBundle" key="refused.bequest.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues" enabledByDefault="true"
@@ -1591,7 +1594,7 @@
                      groupKey="group.names.naming.conventions.class" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.ClassNameSameAsAncestorNameInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConfusingMainMethod" bundle="messages.InspectionGadgetsBundle" key="confusing.main.method.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.ConfusingMainMethodInspection"/>
 
     <localInspection groupPath="Java" language="JAVA" shortName="FieldNamingConvention" bundle="messages.InspectionGadgetsBundle"

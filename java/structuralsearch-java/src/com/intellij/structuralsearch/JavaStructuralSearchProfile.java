@@ -49,9 +49,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   private static final Key<Map<String, ParameterInfo>> PARAMETER_CONTEXT = new Key<>("PARAMETER_CONTEXT");
   private static final Key<Integer> PARAMETER_LENGTH = new Key<>("PARAMETER_LENGTH");

@@ -29,7 +29,7 @@ class EditorConfigIndentOptionsProvider : FileIndentOptionsProvider() {
   companion object {
     // Handles the following EditorConfig settings:
     const val indentSizeKey = "indent_size"
-    const val continuationSizeKey = "continuation_indent_size"
+    private const val continuationSizeKey = "continuation_indent_size"
     const val tabWidthKey = "tab_width"
     const val indentStyleKey = "indent_style"
     private fun applyCodeStyleSettings(project: Project,

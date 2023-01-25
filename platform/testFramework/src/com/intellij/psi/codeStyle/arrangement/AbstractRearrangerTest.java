@@ -29,9 +29,6 @@ import java.util.regex.Pattern;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.KEEP;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
   private static final RichTextHandler[] RICH_TEXT_HANDLERS = {new RangeHandler(), new FoldingHandler()};
   private static final Pattern ATTRIBUTE_PATTERN = Pattern.compile("([^\\s]+)=([^\\s]+)");
@@ -53,7 +50,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
   }
 
   protected static StdArrangementRuleAliasToken alias(@NotNull String id, StdArrangementMatchRule @NotNull ... rules) {
-    return new StdArrangementRuleAliasToken(id, id, ContainerUtil.newArrayList(rules));
+    return new StdArrangementRuleAliasToken(id, id, List.of(rules));
   }
 
   @NotNull

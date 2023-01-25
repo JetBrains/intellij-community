@@ -31,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.LinkedList;
 
-/**
- * @author Roman.Shein
- */
 public class JavaExtractor implements LangCodeStyleExtractor {
   @NotNull
   @Override

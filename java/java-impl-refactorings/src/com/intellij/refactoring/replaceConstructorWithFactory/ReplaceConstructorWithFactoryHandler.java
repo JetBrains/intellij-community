@@ -21,9 +21,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class ReplaceConstructorWithFactoryHandler implements PreviewableRefactoringActionHandler, ContextAwareActionHandler {
 
   @Override

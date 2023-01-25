@@ -15,9 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.geb;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GebModuleMemberContributor extends GebPageMemberContributor {
 
   @Override

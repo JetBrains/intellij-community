@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
@@ -90,5 +91,11 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
     CaretModel caretModel = editor.getCaretModel();
     int position = caretModel.getOffset();
     return file.findElementAt(position);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    // No preview is necessary for suppress action
+    return IntentionPreviewInfo.EMPTY;
   }
 }

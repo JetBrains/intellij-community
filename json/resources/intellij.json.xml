@@ -201,6 +201,8 @@
                     interface="com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory" dynamic="true"/>
     <extensionPoint qualifiedName="JavaScript.JsonSchema.ContentAwareSchemaFileProvider"
                     interface="com.jetbrains.jsonSchema.extension.ContentAwareJsonSchemaFileProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaGotoDeclarationSuppressor" dynamic="true"
+                    interface="com.jetbrains.jsonSchema.extension.JsonSchemaGotoDeclarationSuppressor"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonLikePsiWalkerFactory"
                     interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonSchemaEnabler" interface="com.jetbrains.jsonSchema.extension.JsonSchemaEnabler"

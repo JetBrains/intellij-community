@@ -67,6 +67,4 @@ public class NonAcceptedJavaLevelIssue implements BuildIssue {
       return CompletableFuture.completedFuture(null);
     }
   }
-
-  ;
 }

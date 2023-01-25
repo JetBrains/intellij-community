@@ -15,11 +15,13 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
@@ -144,6 +146,10 @@ fun Project.guessProjectDir() : VirtualFile? {
   if (customBaseDir != null) {
     return customBaseDir
   }
+  val baseDirectory = getBaseDirectories().firstOrNull()
+  if (baseDirectory != null) {
+    return baseDirectory
+  }
 
   val modules = ModuleManager.getInstance(this).modules
   val module = if (modules.size == 1) modules.first() else modules.firstOrNull { it.name == this.name }
@@ -251,6 +257,38 @@ fun clearCachesForAllProjects(@NonNls dataDirName: String) {
     val filesToDelete = dirs.asSequence().map { it.resolve(dataDirName) }.filter { it.exists() }.map { it.toFile() }.toList()
     FileUtil.asyncDelete(filesToDelete)
   }
+}
+
+@ApiStatus.Experimental
+fun clearCachesForAllProjectsStartingWith(@NonNls prefix: String) {
+  require(!prefix.isEmpty())
+  // A snapshot list instead of stream is used - do not iterate directory while deleting its content
+  for (projectDir in NioFiles.list(projectsDataDir)) {
+    for (file in NioFiles.list(projectDir)) {
+      if (file.fileName.toString().startsWith(prefix)) {
+        NioFiles.deleteRecursively(file)
+      }
+    }
+  }
+}
+
+@ApiStatus.Experimental
+fun hasCacheForAnyProjectStartingWith(@NonNls prefix: String): Boolean {
+  require(!prefix.isEmpty())
+  projectsDataDir.directoryStreamIfExists { projectDirs ->
+    for (projectDir in projectDirs) {
+      if (!Files.isDirectory(projectDir)) {
+        continue
+      }
+
+      projectDir.directoryStreamIfExists { files ->
+        if (files.any { it.fileName.toString().startsWith(prefix) }) {
+          return true
+        }
+      }
+    }
+  }
+  return false
 }
 
 /**

@@ -224,10 +224,13 @@ public final class TreeState implements JDOMExternalizable {
     if (userObject == null) return "";
     // There used to be a lot of code here that all started in 2005 with IDEA-29734 (back then IDEADEV-2150),
     // which later was modified many times, but in the end all it did was to invoke some slow operations on EDT
-    // (IDEA-270843, IDEA-305055), and IDEA-29734 was still broken. It's a very edge case anyway (two folders
-    // with the same name under the same parent) and should be fixed in a better way. For now just stick to
-    // the good old way of doing this which should be fast enough for EDT unless the tree model is too slow by
-    // itself, in which case we've got much bigger problems to worry about anyway!
+    // (IDEA-270843, IDEA-305055), and IDEA-29734 was still broken.
+    // Now it's being slowly rewritten as something more sensible and efficient.
+    if (userObject instanceof PresentableNodeDescriptor<?> nodeDescriptor) {
+      var name = StringUtil.notNullize(nodeDescriptor.getName());
+      var locationString = nodeDescriptor.getPresentation().getLocationString();
+      return locationString == null ? name : name + "@" + locationString;
+    }
     return StringUtil.notNullize(userObject.toString());
   }
 

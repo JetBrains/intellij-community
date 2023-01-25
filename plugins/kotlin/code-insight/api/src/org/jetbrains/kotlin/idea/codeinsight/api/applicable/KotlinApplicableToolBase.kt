@@ -20,4 +20,10 @@ interface KotlinApplicableToolBase<ELEMENT : KtElement> {
      * Whether this tool is applicable to [element] by PSI only. May not use the Analysis API due to performance concerns.
      */
     fun isApplicableByPsi(element: ELEMENT): Boolean
+
+    /**
+     * Whether `apply` should be performed in a write action. An individual tool may override this to have fine-grained control over read
+     * and write actions in `apply`. For example, a tool may wish to start a refactoring in `apply` outside a write action.
+     */
+    fun shouldApplyInWriteAction(): Boolean = true
 }

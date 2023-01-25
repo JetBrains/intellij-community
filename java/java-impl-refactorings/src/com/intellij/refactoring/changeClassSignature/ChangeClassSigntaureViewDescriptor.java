@@ -22,9 +22,6 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class ChangeClassSigntaureViewDescriptor extends UsageViewDescriptorAdapter {
   private final PsiClass myClass;
 

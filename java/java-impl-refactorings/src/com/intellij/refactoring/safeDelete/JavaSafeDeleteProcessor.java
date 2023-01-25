@@ -387,7 +387,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         }
 
         if (!unselected.isEmpty()) {
-          List<PsiMethod> unselectedMethods = ContainerUtil.map(unselected, info -> ((SafeDeleteOverridingMethodUsageInfo)info).getOverridingMethod());
+          List<PsiElement> unselectedMethods = ContainerUtil.map(unselected, info -> ((SafeDeleteOverridingMethodUsageInfo)info).getOverridingMethod());
 
           result.removeIf(info -> info instanceof SafeDeleteOverrideAnnotation &&
                                   !allSuperMethodsSelectedToDelete(unselectedMethods, ((SafeDeleteOverrideAnnotation)info).getMethod()));
@@ -469,7 +469,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  private static boolean allSuperMethodsSelectedToDelete(List<PsiMethod> unselectedMethods, PsiMethod method) {
+  private static boolean allSuperMethodsSelectedToDelete(List<PsiElement> unselectedMethods, PsiMethod method) {
     ArrayList<PsiMethod> superMethods = new ArrayList<>(Arrays.asList(method.findSuperMethods()));
     superMethods.retainAll(unselectedMethods);
     return superMethods.isEmpty();

@@ -37,6 +37,11 @@ final class ShowHintAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     // Alt-Enter hotkey for editor takes precedence over this action
     e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);

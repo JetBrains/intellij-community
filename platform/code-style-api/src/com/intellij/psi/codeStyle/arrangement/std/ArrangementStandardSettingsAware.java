@@ -24,8 +24,6 @@ import java.util.Set;
 /**
  * Defines a contract for {@link Rearranger} implementation which wants to use standard platform UI for configuring
  * and managing arrangement settings.
- *
- * @author Denis Zhdanov
  */
 public interface ArrangementStandardSettingsAware {
 

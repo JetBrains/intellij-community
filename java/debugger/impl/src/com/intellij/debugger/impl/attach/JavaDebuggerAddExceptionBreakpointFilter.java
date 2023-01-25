@@ -13,7 +13,6 @@ import com.intellij.execution.filters.JvmExceptionOccurrenceFilter;
 import com.intellij.execution.impl.InlayProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -48,7 +47,7 @@ public class JavaDebuggerAddExceptionBreakpointFilter implements JvmExceptionOcc
 
     @Override
     public EditorCustomElementRenderer createInlayRenderer(Editor editor) {
-      PresentationFactory factory = new PresentationFactory((EditorImpl)editor);
+      PresentationFactory factory = new PresentationFactory(editor);
       InlayPresentation presentation =
         factory.referenceOnHover(factory.roundWithBackground(factory.smallText("Create breakpoint")), (event, point) -> {
           JavaDebuggerActionsCollector.createExceptionBreakpointInlay.log();

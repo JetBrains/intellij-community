@@ -9,9 +9,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Pavel.Dolgov
- */
 class ExtractableFragment {
   private final SmartPsiElementPointer<PsiElement> myStart;
   private final SmartPsiElementPointer<PsiElement> myEnd;

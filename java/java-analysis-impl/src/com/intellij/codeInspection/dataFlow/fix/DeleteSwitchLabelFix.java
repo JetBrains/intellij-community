@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
@@ -99,10 +99,12 @@ public class DeleteSwitchLabelFix extends LocalQuickFixAndIntentionActionOnPsiEl
       else if (labelElementList.getElementCount() == 2) {
         PsiElement defaultElement = SwitchUtils.findDefaultElement(label);
         if (defaultElement != null && defaultElement != labelElement) {
+          PsiElement firstChild = label.getFirstChild();
+          assert PsiKeyword.CASE.equals(firstChild.getText()) && defaultElement instanceof PsiDefaultCaseLabelElement;
           new CommentTracker().deleteAndRestoreComments(labelElementList);
           PsiElementFactory factory = PsiElementFactory.getInstance(project);
-          PsiKeyword defaultKeyword = factory.createKeyword(PsiKeyword.DEFAULT);
-          label.getFirstChild().replace(defaultKeyword);
+          PsiSwitchLabelStatement defaultLabel = (PsiSwitchLabelStatement)factory.createStatementFromText("default:", null);
+          firstChild.replace(defaultLabel.getFirstChild());
           return;
         }
       }

@@ -16,9 +16,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * @author Pavel.Dolgov
- */
 public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends LocalQuickFixAndIntentionActionOnPsiElement {
   protected MergeModuleStatementsFix(@NotNull PsiJavaModule javaModule) {
     super(javaModule);

@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author Denis Zhdanov
- */
 @SuppressWarnings("unchecked")
 public class IntObjectMap<V> {
   

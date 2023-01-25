@@ -332,6 +332,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/featureDisabled.kt");
         }
 
+        @TestMetadata("forEachInsideEnumBody.kt")
+        public void testForEachInsideEnumBody() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/forEachInsideEnumBody.kt");
+        }
+
         @TestMetadata("forLoop.kt")
         public void testForLoop() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/forLoop.kt");

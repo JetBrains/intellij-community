@@ -605,11 +605,25 @@
     },
     "RunWidget" : {
       "foreground": "#ffffff",
+      "disabledForeground": "#FFFFFF66",
       "background": "#3369d6",
       "runningBackground": "#599e5e",
       "hoverBackground": "#00000019",
       "pressedBackground": "#00000028",
       "separatorColor": "#FFFFFF40"
+    },
+
+
+    "MainWindow.Tab" : {
+      "selectedForeground": "#CED0D6",
+      "selectedBackground": "#3C3F41",
+      "selectedInactiveBackground": "#3C3F41",
+      "foreground": "#B4B8BF",
+      "background": "#131314",
+      "hoverForeground": "#CED0D6",
+      "hoverBackground": "#1A1A1B",
+      "separatorColor": "#2B2D30",
+      "borderColor": "#1E1F22"
     }
   },
 

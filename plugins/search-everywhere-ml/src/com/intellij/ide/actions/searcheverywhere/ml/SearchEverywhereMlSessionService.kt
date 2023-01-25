@@ -71,15 +71,17 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
                                previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     if (!isEnabled()) return
 
-    val orderByMl = shouldOrderByMlInTab(tabId)
+    val orderByMl = shouldOrderByMlInTab(tabId, searchQuery)
     getCurrentSession()?.onSearchRestart(
       project, experiment, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, mapElementsProvider(previousElementsProvider)
     )
   }
 
-  private fun shouldOrderByMlInTab(tabId: String): Boolean {
+  private fun shouldOrderByMlInTab(tabId: String, searchQuery: String): Boolean {
     val tab = SearchEverywhereTabWithMl.findById(tabId) ?: return false // Tab does not support ML ordering
     val settings = service<SearchEverywhereMlSettings>()
+
+    if (tabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID && searchQuery.isEmpty()) return false
 
     if (settings.isSortingByMlEnabledByDefault(tab)) {
       return settings.isSortingByMlEnabled(tab)

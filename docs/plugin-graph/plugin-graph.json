@@ -2115,18 +2115,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "jU",
-    "name": "intellij.performanceTesting.maven",
-    "n": "i.performanceTesting.maven",
-    "package": "com.jetbrains.performancePlugin.maven",
-    "sourceModule": "intellij.performanceTesting.maven",
-    "descriptor": "plugins/performanceTesting/maven/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.performancePlugin.maven",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "HX",
     "name": "intellij.php.docker",
     "n": "i.php.docker",

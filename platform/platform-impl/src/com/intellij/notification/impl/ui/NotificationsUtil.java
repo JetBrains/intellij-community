@@ -26,9 +26,6 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 
-/**
- * @author spleaner
- */
 public final class NotificationsUtil {
   private static final Logger LOG = Logger.getInstance(NotificationsUtil.class);
   private static final int TITLE_LIMIT = 1000;

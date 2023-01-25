@@ -10,14 +10,15 @@ import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
+import com.intellij.openapi.util.io.*
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.file.system.LocalFileSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findVirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import java.util.*
 
 @ApiStatus.Experimental
@@ -26,7 +27,7 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
   lateinit var outputDirectory: String
   private val assets = ArrayList<GeneratorAsset>()
   private val templateProperties = HashMap<String, Any>()
-  private val filesToOpen = HashSet<String>()
+  private val filesToOpen = HashSet<Path>()
 
   @ApiStatus.Internal
   internal fun getTemplateProperties(): Map<String, Any> {
@@ -55,7 +56,9 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
     addFilesToOpen(relativeCanonicalPaths.toList())
 
   private fun addFilesToOpen(relativeCanonicalPaths: Iterable<String>) {
-    filesToOpen.addAll(relativeCanonicalPaths.map { "$outputDirectory/$it" })
+    for (relativePath in relativeCanonicalPaths) {
+      filesToOpen.add(outputDirectory.getResolvedNioPath(relativePath))
+    }
   }
 
   abstract fun setupAssets(project: Project)
@@ -71,8 +74,8 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       }
 
       whenProjectCreated(project) { //IDEA-244863
-        reformatCode(project, generatedFiles.mapNotNull { LocalFileSystemUtil.findFile(it) })
-        openFilesInEditor(project, filesToOpen.mapNotNull { LocalFileSystemUtil.findFile(it) })
+        reformatCode(project, generatedFiles.mapNotNull { it.findVirtualFile() })
+        openFilesInEditor(project, filesToOpen.mapNotNull { it.findVirtualFile() })
       }
     }
   }

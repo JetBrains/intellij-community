@@ -14,11 +14,9 @@ from pathlib import Path
 
 def run_stubtest(typeshed_dir: Path) -> int:
     allowlist_dir = typeshed_dir / "tests" / "stubtest_allowlists"
-    version_allowlist = "py{}{}.txt".format(sys.version_info.major, sys.version_info.minor)
-    platform_allowlist = "{}.txt".format(sys.platform)
-    combined_allowlist = "{}-py{}{}.txt".format(sys.platform, sys.version_info.major, sys.version_info.minor)
-
-    ignore_unused_allowlist = "--ignore-unused-allowlist" in sys.argv[1:]
+    version_allowlist = f"py{sys.version_info.major}{sys.version_info.minor}.txt"
+    platform_allowlist = f"{sys.platform}.txt"
+    combined_allowlist = f"{sys.platform}-py{sys.version_info.major}{sys.version_info.minor}.txt"
 
     cmd = [
         sys.executable,
@@ -32,8 +30,6 @@ def run_stubtest(typeshed_dir: Path) -> int:
         "--allowlist",
         str(allowlist_dir / version_allowlist),
     ]
-    if ignore_unused_allowlist:
-        cmd += ["--ignore-unused-allowlist"]
     if (allowlist_dir / platform_allowlist).exists():
         cmd += ["--allowlist", str(allowlist_dir / platform_allowlist)]
     if (allowlist_dir / combined_allowlist).exists():

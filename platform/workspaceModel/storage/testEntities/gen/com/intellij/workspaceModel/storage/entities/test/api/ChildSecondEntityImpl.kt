@@ -223,7 +223,7 @@ class ChildSecondEntityData : WorkspaceEntityData<ChildSecondEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ChildSecondEntity(commonData, secondData, entitySource) {
-      this.parentEntity = parents.filterIsInstance<ParentAbEntity>().single()
+      parents.filterIsInstance<ParentAbEntity>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

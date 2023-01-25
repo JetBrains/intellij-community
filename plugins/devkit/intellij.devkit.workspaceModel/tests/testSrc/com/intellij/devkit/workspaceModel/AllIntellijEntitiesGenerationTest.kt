@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ModuleRootManager
@@ -176,9 +175,12 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
   private suspend fun loadProjectIntellijProject(): Pair<MutableEntityStorage, JpsProjectSerializers> {
     val mutableEntityStorage = MutableEntityStorage.create()
-    val jpsProjectSerializer = JpsProjectEntitiesLoader.loadProject(configLocation = createProjectConfigLocation(), builder = mutableEntityStorage,
-                                                                externalStoragePath = Paths.get("/tmp"), errorReporter = TestErrorReporter,
-                                                                virtualFileManager = virtualFileManager)
+    val jpsProjectSerializer = JpsProjectEntitiesLoader.loadProject(configLocation = createProjectConfigLocation(),
+                                                                    builder = mutableEntityStorage,
+                                                                    orphanage = mutableEntityStorage,
+                                                                    externalStoragePath = Paths.get("/tmp"),
+                                                                    errorReporter = TestErrorReporter,
+                                                                    virtualFileManager = virtualFileManager)
     return mutableEntityStorage to jpsProjectSerializer
   }
 

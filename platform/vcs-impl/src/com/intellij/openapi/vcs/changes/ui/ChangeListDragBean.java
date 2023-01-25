@@ -4,19 +4,22 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 
 public class ChangeListDragBean {
   private final JComponent mySourceComponent;
-  private final Change[] myChanges;
+  private final List<Change> myChanges;
   private final List<FilePath> myUnversionedFiles;
   private final List<FilePath> myIgnoredFiles;
   private ChangesBrowserNode myTargetNode;
 
-  public ChangeListDragBean(final JComponent sourceComponent, final Change[] changes, final List<FilePath> unversionedFiles,
-                            final List<FilePath> ignoredFiles) {
+  public ChangeListDragBean(@NotNull JComponent sourceComponent,
+                            @NotNull List<Change> changes,
+                            @NotNull List<FilePath> unversionedFiles,
+                            @NotNull List<FilePath> ignoredFiles) {
     mySourceComponent = sourceComponent;
     myChanges = changes;
     myUnversionedFiles = unversionedFiles;
@@ -27,7 +30,7 @@ public class ChangeListDragBean {
     return mySourceComponent;
   }
 
-  public Change[] getChanges() {
+  public List<Change> getChanges() {
     return myChanges;
   }
 

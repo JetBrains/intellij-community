@@ -48,7 +48,7 @@ public abstract class PackagingElementFactory {
   public abstract PackagingElement<?> createTestModuleOutput(@NotNull Module module);
 
   @NotNull
-  public abstract List<? extends PackagingElement<?>> createLibraryElements(@NotNull Library library);
+  public abstract List<PackagingElement<?>> createLibraryElements(@NotNull Library library);
 
   @NotNull
   public abstract List<? extends PackagingElement<?>> createLibraryElements(@NotNull LibraryEntity libraryEntity, String moduleName);
@@ -58,6 +58,9 @@ public abstract class PackagingElementFactory {
 
   @NotNull
   public abstract PackagingElement<?> createArtifactElement(@NotNull Artifact artifact, @NotNull Project project);
+
+  @NotNull
+  public abstract PackagingElement<?> createArtifactElement(@NotNull String artifactName, @NotNull Project project);
 
   @NotNull
   public abstract PackagingElement<?> createLibraryFiles(@NotNull String libraryName, @NotNull @NonNls String level, @NonNls String moduleName);

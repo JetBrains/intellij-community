@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -503,7 +503,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
                                                               boolean replaceTrivialForEach) {
     boolean shouldWarn = replaceTrivialForEach || tb.hasOperations();
     if (ReferencesSearch.search(tb.getVariable(), new LocalSearchScope(statement)).findFirst() == null) {
-      return new MatchMigration(shouldWarn, "anyMatch");
+      return new MatchMigration(shouldWarn, "anyMatch()/noneMatch()/allMatch");
     }
     if (nonFinalVariables.isEmpty() && statement instanceof PsiExpressionStatement) {
       return new FindFirstMigration(shouldWarn);
@@ -1085,7 +1085,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       PsiArrayType iteratedValueType = tryCast(iteratedValue.getType(), PsiArrayType.class);
       PsiParameter parameter = statement.getIterationParameter();
 
-      if (iteratedValueType != null && StreamApiUtil.isSupportedStreamElement(iteratedValueType.getComponentType()) &&
+      if (parameter != null && iteratedValueType != null && StreamApiUtil.isSupportedStreamElement(iteratedValueType.getComponentType()) &&
           (!(parameter.getType() instanceof PsiPrimitiveType) || parameter.getType().equals(iteratedValueType.getComponentType()))) {
         return new ArrayStream(statement, parameter, iteratedValue);
       }
@@ -1120,13 +1120,15 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       PsiClass collectionClass =
         JavaPsiFacade.getInstance(statement.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, statement.getResolveScope());
       PsiClass iteratorClass = PsiUtil.resolveClassInClassTypeOnly(iteratedValueType);
-      if (collectionClass == null ||
+      PsiParameter parameter = statement.getIterationParameter();
+      if (parameter == null ||
+          collectionClass == null ||
           !InheritanceUtil.isInheritorOrSelf(iteratorClass, collectionClass, true) ||
           isRawSubstitution(iteratedValueType, collectionClass) ||
-          !StreamApiUtil.isSupportedStreamElement(statement.getIterationParameter().getType())) {
+          !StreamApiUtil.isSupportedStreamElement(parameter.getType())) {
         return null;
       }
-      return new CollectionStream(statement, statement.getIterationParameter(), iteratedValue);
+      return new CollectionStream(statement, parameter, iteratedValue);
     }
   }
 

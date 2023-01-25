@@ -1202,6 +1202,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @Override
     public void selectText(int startIndex, int endIndex) {
       myEditor.getSelectionModel().setSelection(startIndex, endIndex);
+      myEditor.getCaretModel().moveToOffset(endIndex);
     }
 
     @Override

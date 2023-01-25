@@ -23,9 +23,6 @@ import java.util.List;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processElement;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessTypeParameters;
 
-/**
- * @author ilyas
- */
 public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub>
   implements GrTypeParameterList, StubBasedPsiElement<EmptyStub>, PsiListLikeElement {
 

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 abstract class GroovyCompletionTestBase extends LightJavaCodeInsightFixtureTestCase {
@@ -34,6 +35,7 @@ abstract class GroovyCompletionTestBase extends LightJavaCodeInsightFixtureTestC
 
     myFixture.complete(ct)
     type.each { myFixture.type(it) }
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
     assertNull(myFixture.lookupElementStrings as String, myFixture.lookupElements)
     if (after == null) {

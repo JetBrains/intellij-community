@@ -1,0 +1,2023 @@
+Node: ArraysKt___ArraysKt
+User object class: KtInternalFileTreeNode
+
+Value: KtLightClassForDecompiledDeclaration of PsiFile:ArraysKt___ArraysKt.class
+Value file: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___ArraysKt.class
+
+Navigation item #0: KtFile: _Arrays.kt
+Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
+
+
+-Project
+ +PsiDirectory: src
+ -External Libraries
+  +Library: < java 11 >
+  -Library: kotlin-stdlib
+   -PsiDirectory: kotlin-stdlib.jar
+    -PsiDirectory: kotlin
+     +PsiDirectory: annotation
+     -PsiDirectory: collections
+      +PsiDirectory: builders
+      +PsiDirectory: jdk8
+      +PsiDirectory: unsigned
+      +AbstractCollection
+      +AbstractIterator
+      +AbstractList
+      +AbstractMap
+      +AbstractMutableCollection
+      +AbstractMutableList
+      +AbstractMutableMap
+      +AbstractMutableSet
+      +AbstractSet
+      +ArrayAsCollection.class
+      +ArrayDeque
+      +ArraysUtilJVM
+      +BooleanIterator
+      +ByteIterator
+      +CharIterator
+      +collections.kotlin_builtins
+      +DoubleIterator
+      +EmptyIterator
+      +EmptyList
+      +EmptyMap.class
+      +EmptySet
+      +FloatIterator
+      +Grouping
+      +IndexedValue
+      +IndexingIterable
+      +IndexingIterator
+      +IntIterator
+      +LongIterator
+      +MapWithDefault.class
+      +MapWithDefaultImpl.class
+      +MovingSubList
+      +MutableMapWithDefault.class
+      +MutableMapWithDefaultImpl.class
+      +ReversedList.class
+      +ReversedListReadOnly.class
+      +RingBuffer.class
+      +ShortIterator
+      +State.class
+      ArraysKt
+      +ArraysKt___ArraysJvmKt
+      -[ArraysKt___ArraysKt]
+       Array<*>.filterIsInstance(): List<@kotlin.internal.NoInfer R>
+       Array<*>.filterIsInstanceTo(destination: C): C
+       Array<out Boolean>.toBooleanArray(): BooleanArray
+       Array<out Byte>.average(): Double
+       Array<out Byte>.sum(): Int
+       Array<out Byte>.toByteArray(): ByteArray
+       Array<out Char>.toCharArray(): CharArray
+       Array<out Double>.average(): Double
+       Array<out Double>.max(): Double
+       Array<out Double>.maxOrNull(): Double?
+       Array<out Double>.min(): Double
+       Array<out Double>.minOrNull(): Double?
+       Array<out Double>.sum(): Double
+       Array<out Double>.toDoubleArray(): DoubleArray
+       Array<out Float>.average(): Double
+       Array<out Float>.max(): Float
+       Array<out Float>.maxOrNull(): Float?
+       Array<out Float>.min(): Float
+       Array<out Float>.minOrNull(): Float?
+       Array<out Float>.sum(): Float
+       Array<out Float>.toFloatArray(): FloatArray
+       Array<out Int>.average(): Double
+       Array<out Int>.sum(): Int
+       Array<out Int>.toIntArray(): IntArray
+       Array<out K>.associateWith(valueSelector: (K) -> V): Map<K, V>
+       Array<out K>.associateWithTo(destination: M, valueSelector: (K) -> V): M
+       Array<out Long>.average(): Double
+       Array<out Long>.sum(): Long
+       Array<out Long>.toLongArray(): LongArray
+       Array<out Short>.average(): Double
+       Array<out Short>.sum(): Int
+       Array<out Short>.toShortArray(): ShortArray
+       Array<out T>.all(predicate: (T) -> Boolean): Boolean
+       Array<out T>.any(): Boolean
+       Array<out T>.any(predicate: (T) -> Boolean): Boolean
+       Array<out T>.asIterable(): Iterable<T>
+       Array<out T>.asList(): List<T>
+       Array<out T>.asSequence(): Sequence<T>
+       Array<out T>.associate(transform: (T) -> Pair<K, V>): Map<K, V>
+       Array<out T>.associateBy(keySelector: (T) -> K): Map<K, T>
+       Array<out T>.associateBy(keySelector: (T) -> K, valueTransform: (T) -> V): Map<K, V>
+       Array<out T>.associateByTo(destination: M, keySelector: (T) -> K): M
+       Array<out T>.associateByTo(destination: M, keySelector: (T) -> K, valueTransform: (T) -> V): M
+       Array<out T>.associateTo(destination: M, transform: (T) -> Pair<K, V>): M
+       Array<out T>.component1(): T
+       Array<out T>.component2(): T
+       Array<out T>.component3(): T
+       Array<out T>.component4(): T
+       Array<out T>.component5(): T
+       Array<out T>.contains(element: T): Boolean
+       Array<out T>.contentDeepEquals(other: Array<out T>): Boolean
+       Array<out T>.contentDeepHashCode(): Int
+       Array<out T>.contentDeepToString(): String
+       Array<out T>.contentEquals(other: Array<out T>): Boolean
+       Array<out T>.contentHashCode(): Int
+       Array<out T>.contentToString(): String
+       Array<out T>.copyInto(destination: Array<T>, destinationOffset: Int, startIndex: Int, endIndex: Int): Array<T>
+       Array<out T>.count(): Int
+       Array<out T>.count(predicate: (T) -> Boolean): Int
+       Array<out T>.distinct(): List<T>
+       Array<out T>.distinctBy(selector: (T) -> K): List<T>
+       Array<out T>.drop(n: Int): List<T>
+       Array<out T>.dropLast(n: Int): List<T>
+       Array<out T>.dropLastWhile(predicate: (T) -> Boolean): List<T>
+       Array<out T>.dropWhile(predicate: (T) -> Boolean): List<T>
+       Array<out T>.elementAt(index: Int): T
+       Array<out T>.elementAtOrElse(index: Int, defaultValue: (Int) -> T): T
+       Array<out T>.elementAtOrNull(index: Int): T?
+       Array<out T>.filter(predicate: (T) -> Boolean): List<T>
+       Array<out T>.filterIndexed(predicate: (index: Int, T) -> Boolean): List<T>
+       Array<out T>.filterIndexedTo(destination: C, predicate: (index: Int, T) -> Boolean): C
+       Array<out T>.filterNot(predicate: (T) -> Boolean): List<T>
+       Array<out T>.filterNotTo(destination: C, predicate: (T) -> Boolean): C
+       Array<out T>.filterTo(destination: C, predicate: (T) -> Boolean): C
+       Array<out T>.find(predicate: (T) -> Boolean): T?
+       Array<out T>.findLast(predicate: (T) -> Boolean): T?
+       Array<out T>.first(): T
+       Array<out T>.first(predicate: (T) -> Boolean): T
+       Array<out T>.firstNotNullOf(transform: (T) -> R?): R
+       Array<out T>.firstNotNullOfOrNull(transform: (T) -> R?): R?
+       Array<out T>.firstOrNull(): T?
+       Array<out T>.firstOrNull(predicate: (T) -> Boolean): T?
+       Array<out T>.flatMap(transform: (T) -> Iterable<R>): List<R>
+       Array<out T>.flatMap(transform: (T) -> Sequence<R>): List<R>
+       Array<out T>.flatMapIndexed(transform: (index: Int, T) -> Iterable<R>): List<R>
+       Array<out T>.flatMapIndexed(transform: (index: Int, T) -> Sequence<R>): List<R>
+       Array<out T>.flatMapIndexedTo(destination: C, transform: (index: Int, T) -> Iterable<R>): C
+       Array<out T>.flatMapIndexedTo(destination: C, transform: (index: Int, T) -> Sequence<R>): C
+       Array<out T>.flatMapTo(destination: C, transform: (T) -> Iterable<R>): C
+       Array<out T>.flatMapTo(destination: C, transform: (T) -> Sequence<R>): C
+       Array<out T>.fold(initial: R, operation: (acc: R, T) -> R): R
+       Array<out T>.foldIndexed(initial: R, operation: (index: Int, acc: R, T) -> R): R
+       Array<out T>.foldRight(initial: R, operation: (T, acc: R) -> R): R
+       Array<out T>.foldRightIndexed(initial: R, operation: (index: Int, T, acc: R) -> R): R
+       Array<out T>.forEach(action: (T) -> Unit): Unit
+       Array<out T>.forEachIndexed(action: (index: Int, T) -> Unit): Unit
+       Array<out T>.getOrElse(index: Int, defaultValue: (Int) -> T): T
+       Array<out T>.getOrNull(index: Int): T?
+       Array<out T>.groupBy(keySelector: (T) -> K): Map<K, List<T>>
+       Array<out T>.groupBy(keySelector: (T) -> K, valueTransform: (T) -> V): Map<K, List<V>>
+       Array<out T>.groupByTo(destination: M, keySelector: (T) -> K): M
+       Array<out T>.groupByTo(destination: M, keySelector: (T) -> K, valueTransform: (T) -> V): M
+       Array<out T>.groupingBy(keySelector: (T) -> K): Grouping<T, K>
+       Array<out T>.indexOf(element: T): Int
+       Array<out T>.indexOfFirst(predicate: (T) -> Boolean): Int
+       Array<out T>.indexOfLast(predicate: (T) -> Boolean): Int
+       Array<out T>.intersect(other: Iterable<T>): Set<T>
+       Array<out T>.isEmpty(): Boolean
+       Array<out T>.isNotEmpty(): Boolean
+       Array<out T>.joinTo(buffer: A, separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((T) -> CharSequence)?): A
+       Array<out T>.joinToString(separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((T) -> CharSequence)?): String
+       Array<out T>.last(): T
+       Array<out T>.last(predicate: (T) -> Boolean): T
+       Array<out T>.lastIndexOf(element: T): Int
+       Array<out T>.lastOrNull(): T?
+       Array<out T>.lastOrNull(predicate: (T) -> Boolean): T?
+       Array<out T>.map(transform: (T) -> R): List<R>
+       Array<out T>.mapIndexed(transform: (index: Int, T) -> R): List<R>
+       Array<out T>.mapIndexedNotNull(transform: (index: Int, T) -> R?): List<R>
+       Array<out T>.mapIndexedNotNullTo(destination: C, transform: (index: Int, T) -> R?): C
+       Array<out T>.mapIndexedTo(destination: C, transform: (index: Int, T) -> R): C
+       Array<out T>.mapNotNull(transform: (T) -> R?): List<R>
+       Array<out T>.mapNotNullTo(destination: C, transform: (T) -> R?): C
+       Array<out T>.mapTo(destination: C, transform: (T) -> R): C
+       Array<out T>.max(): T
+       Array<out T>.maxBy(selector: (T) -> R): T
+       Array<out T>.maxByOrNull(selector: (T) -> R): T?
+       Array<out T>.maxOf(selector: (T) -> Double): Double
+       Array<out T>.maxOf(selector: (T) -> Float): Float
+       Array<out T>.maxOf(selector: (T) -> R): R
+       Array<out T>.maxOfOrNull(selector: (T) -> Double): Double?
+       Array<out T>.maxOfOrNull(selector: (T) -> Float): Float?
+       Array<out T>.maxOfOrNull(selector: (T) -> R): R?
+       Array<out T>.maxOfWith(comparator: Comparator<in R>, selector: (T) -> R): R
+       Array<out T>.maxOfWithOrNull(comparator: Comparator<in R>, selector: (T) -> R): R?
+       Array<out T>.maxOrNull(): T?
+       Array<out T>.maxWith(comparator: Comparator<in T>): T
+       Array<out T>.maxWithOrNull(comparator: Comparator<in T>): T?
+       Array<out T>.min(): T
+       Array<out T>.minBy(selector: (T) -> R): T
+       Array<out T>.minByOrNull(selector: (T) -> R): T?
+       Array<out T>.minOf(selector: (T) -> Double): Double
+       Array<out T>.minOf(selector: (T) -> Float): Float
+       Array<out T>.minOf(selector: (T) -> R): R
+       Array<out T>.minOfOrNull(selector: (T) -> Double): Double?
+       Array<out T>.minOfOrNull(selector: (T) -> Float): Float?
+       Array<out T>.minOfOrNull(selector: (T) -> R): R?
+       Array<out T>.minOfWith(comparator: Comparator<in R>, selector: (T) -> R): R
+       Array<out T>.minOfWithOrNull(comparator: Comparator<in R>, selector: (T) -> R): R?
+       Array<out T>.minOrNull(): T?
+       Array<out T>.minWith(comparator: Comparator<in T>): T
+       Array<out T>.minWithOrNull(comparator: Comparator<in T>): T?
+       Array<out T>.none(): Boolean
+       Array<out T>.none(predicate: (T) -> Boolean): Boolean
+       Array<out T>.onEach(action: (T) -> Unit): Array<out T>
+       Array<out T>.onEachIndexed(action: (index: Int, T) -> Unit): Array<out T>
+       Array<out T>.partition(predicate: (T) -> Boolean): Pair<List<T>, List<T>>
+       Array<out T>.random(): T
+       Array<out T>.random(random: Random): T
+       Array<out T>.randomOrNull(): T?
+       Array<out T>.randomOrNull(random: Random): T?
+       Array<out T>.reduce(operation: (acc: S, T) -> S): S
+       Array<out T>.reduceIndexed(operation: (index: Int, acc: S, T) -> S): S
+       Array<out T>.reduceIndexedOrNull(operation: (index: Int, acc: S, T) -> S): S?
+       Array<out T>.reduceOrNull(operation: (acc: S, T) -> S): S?
+       Array<out T>.reduceRight(operation: (T, acc: S) -> S): S
+       Array<out T>.reduceRightIndexed(operation: (index: Int, T, acc: S) -> S): S
+       Array<out T>.reduceRightIndexedOrNull(operation: (index: Int, T, acc: S) -> S): S?
+       Array<out T>.reduceRightOrNull(operation: (T, acc: S) -> S): S?
+       Array<out T>.reversed(): List<T>
+       Array<out T>.runningFold(initial: R, operation: (acc: R, T) -> R): List<R>
+       Array<out T>.runningFoldIndexed(initial: R, operation: (index: Int, acc: R, T) -> R): List<R>
+       Array<out T>.runningReduce(operation: (acc: S, T) -> S): List<S>
+       Array<out T>.runningReduceIndexed(operation: (index: Int, acc: S, T) -> S): List<S>
+       Array<out T>.scan(initial: R, operation: (acc: R, T) -> R): List<R>
+       Array<out T>.scanIndexed(initial: R, operation: (index: Int, acc: R, T) -> R): List<R>
+       Array<out T>.single(): T
+       Array<out T>.single(predicate: (T) -> Boolean): T
+       Array<out T>.singleOrNull(): T?
+       Array<out T>.singleOrNull(predicate: (T) -> Boolean): T?
+       Array<out T>.slice(indices: IntRange): List<T>
+       Array<out T>.slice(indices: Iterable<Int>): List<T>
+       Array<out T>.sort(): Unit
+       Array<out T>.sort(fromIndex: Int, toIndex: Int): Unit
+       Array<out T>.sortBy(selector: (T) -> R?): Unit
+       Array<out T>.sortByDescending(selector: (T) -> R?): Unit
+       Array<out T>.sortDescending(): Unit
+       Array<out T>.sortDescending(fromIndex: Int, toIndex: Int): Unit
+       Array<out T>.sorted(): List<T>
+       Array<out T>.sortedArrayWith(comparator: Comparator<in T>): Array<out T>
+       Array<out T>.sortedBy(selector: (T) -> R?): List<T>
+       Array<out T>.sortedByDescending(selector: (T) -> R?): List<T>
+       Array<out T>.sortedDescending(): List<T>
+       Array<out T>.sortedWith(comparator: Comparator<in T>): List<T>
+       Array<out T>.sortWith(comparator: Comparator<in T>): Unit
+       Array<out T>.sortWith(comparator: Comparator<in T>, fromIndex: Int, toIndex: Int): Unit
+       Array<out T>.subtract(other: Iterable<T>): Set<T>
+       Array<out T>.sumBy(selector: (T) -> Int): Int
+       Array<out T>.sumByDouble(selector: (T) -> Double): Double
+       Array<out T>.sumOf(selector: (T) -> Double): Double
+       Array<out T>.sumOf(selector: (T) -> Int): Int
+       Array<out T>.sumOf(selector: (T) -> Long): Long
+       Array<out T>.sumOf(selector: (T) -> UInt): UInt
+       Array<out T>.sumOf(selector: (T) -> ULong): ULong
+       Array<out T>.take(n: Int): List<T>
+       Array<out T>.takeLast(n: Int): List<T>
+       Array<out T>.takeLastWhile(predicate: (T) -> Boolean): List<T>
+       Array<out T>.takeWhile(predicate: (T) -> Boolean): List<T>
+       Array<out T>.toCollection(destination: C): C
+       Array<out T>.toHashSet(): HashSet<T>
+       Array<out T>.toList(): List<T>
+       Array<out T>.toMutableList(): MutableList<T>
+       Array<out T>.toMutableSet(): MutableSet<T>
+       Array<out T>.toSet(): Set<T>
+       Array<out T>.union(other: Iterable<T>): Set<T>
+       Array<out T>.withIndex(): Iterable<IndexedValue<T>>
+       Array<out T>.zip(other: Array<out R>): List<Pair<T, R>>
+       Array<out T>.zip(other: Array<out R>, transform: (a: T, b: R) -> V): List<V>
+       Array<out T>.zip(other: Iterable<R>): List<Pair<T, R>>
+       Array<out T>.zip(other: Iterable<R>, transform: (a: T, b: R) -> V): List<V>
+       Array<out T>?.contentDeepEquals(other: Array<out T>?): Boolean
+       Array<out T>?.contentDeepHashCode(): Int
+       Array<out T>?.contentDeepToString(): String
+       Array<out T>?.contentEquals(other: Array<out T>?): Boolean
+       Array<out T>?.contentHashCode(): Int
+       Array<out T>?.contentToString(): String
+       Array<out T?>.filterNotNull(): List<T>
+       Array<out T?>.filterNotNullTo(destination: C): C
+       Array<T>.copyOf(): Array<T>
+       Array<T>.copyOf(newSize: Int): Array<T?>
+       Array<T>.copyOfRange(fromIndex: Int, toIndex: Int): Array<T>
+       Array<T>.fill(element: T, fromIndex: Int, toIndex: Int): Unit
+       Array<T>.plus(element: T): Array<T>
+       Array<T>.plus(elements: Array<out T>): Array<T>
+       Array<T>.plus(elements: Collection<T>): Array<T>
+       Array<T>.plusElement(element: T): Array<T>
+       Array<T>.reverse(): Unit
+       Array<T>.reverse(fromIndex: Int, toIndex: Int): Unit
+       Array<T>.reversedArray(): Array<T>
+       Array<T>.shuffle(): Unit
+       Array<T>.shuffle(random: Random): Unit
+       Array<T>.sliceArray(indices: Collection<Int>): Array<T>
+       Array<T>.sliceArray(indices: IntRange): Array<T>
+       Array<T>.sortedArray(): Array<T>
+       Array<T>.sortedArrayDescending(): Array<T>
+       Array<T?>.requireNoNulls(): Array<T>
+       BooleanArray.all(predicate: (Boolean) -> Boolean): Boolean
+       BooleanArray.any(): Boolean
+       BooleanArray.any(predicate: (Boolean) -> Boolean): Boolean
+       BooleanArray.asIterable(): Iterable<Boolean>
+       BooleanArray.asList(): List<Boolean>
+       BooleanArray.asSequence(): Sequence<Boolean>
+       BooleanArray.associate(transform: (Boolean) -> Pair<K, V>): Map<K, V>
+       BooleanArray.associateBy(keySelector: (Boolean) -> K): Map<K, Boolean>
+       BooleanArray.associateBy(keySelector: (Boolean) -> K, valueTransform: (Boolean) -> V): Map<K, V>
+       BooleanArray.associateByTo(destination: M, keySelector: (Boolean) -> K): M
+       BooleanArray.associateByTo(destination: M, keySelector: (Boolean) -> K, valueTransform: (Boolean) -> V): M
+       BooleanArray.associateTo(destination: M, transform: (Boolean) -> Pair<K, V>): M
+       BooleanArray.associateWith(valueSelector: (Boolean) -> V): Map<Boolean, V>
+       BooleanArray.associateWithTo(destination: M, valueSelector: (Boolean) -> V): M
+       BooleanArray.component1(): Boolean
+       BooleanArray.component2(): Boolean
+       BooleanArray.component3(): Boolean
+       BooleanArray.component4(): Boolean
+       BooleanArray.component5(): Boolean
+       BooleanArray.contains(element: Boolean): Boolean
+       BooleanArray.contentEquals(other: BooleanArray): Boolean
+       BooleanArray.contentHashCode(): Int
+       BooleanArray.contentToString(): String
+       BooleanArray.copyInto(destination: BooleanArray, destinationOffset: Int, startIndex: Int, endIndex: Int): BooleanArray
+       BooleanArray.copyOf(): BooleanArray
+       BooleanArray.copyOf(newSize: Int): BooleanArray
+       BooleanArray.copyOfRange(fromIndex: Int, toIndex: Int): BooleanArray
+       BooleanArray.count(): Int
+       BooleanArray.count(predicate: (Boolean) -> Boolean): Int
+       BooleanArray.distinct(): List<Boolean>
+       BooleanArray.distinctBy(selector: (Boolean) -> K): List<Boolean>
+       BooleanArray.drop(n: Int): List<Boolean>
+       BooleanArray.dropLast(n: Int): List<Boolean>
+       BooleanArray.dropLastWhile(predicate: (Boolean) -> Boolean): List<Boolean>
+       BooleanArray.dropWhile(predicate: (Boolean) -> Boolean): List<Boolean>
+       BooleanArray.elementAt(index: Int): Boolean
+       BooleanArray.elementAtOrElse(index: Int, defaultValue: (Int) -> Boolean): Boolean
+       BooleanArray.elementAtOrNull(index: Int): Boolean?
+       BooleanArray.fill(element: Boolean, fromIndex: Int, toIndex: Int): Unit
+       BooleanArray.filter(predicate: (Boolean) -> Boolean): List<Boolean>
+       BooleanArray.filterIndexed(predicate: (index: Int, Boolean) -> Boolean): List<Boolean>
+       BooleanArray.filterIndexedTo(destination: C, predicate: (index: Int, Boolean) -> Boolean): C
+       BooleanArray.filterNot(predicate: (Boolean) -> Boolean): List<Boolean>
+       BooleanArray.filterNotTo(destination: C, predicate: (Boolean) -> Boolean): C
+       BooleanArray.filterTo(destination: C, predicate: (Boolean) -> Boolean): C
+       BooleanArray.find(predicate: (Boolean) -> Boolean): Boolean?
+       BooleanArray.findLast(predicate: (Boolean) -> Boolean): Boolean?
+       BooleanArray.first(): Boolean
+       BooleanArray.first(predicate: (Boolean) -> Boolean): Boolean
+       BooleanArray.firstOrNull(): Boolean?
+       BooleanArray.firstOrNull(predicate: (Boolean) -> Boolean): Boolean?
+       BooleanArray.flatMap(transform: (Boolean) -> Iterable<R>): List<R>
+       BooleanArray.flatMapIndexed(transform: (index: Int, Boolean) -> Iterable<R>): List<R>
+       BooleanArray.flatMapIndexedTo(destination: C, transform: (index: Int, Boolean) -> Iterable<R>): C
+       BooleanArray.flatMapTo(destination: C, transform: (Boolean) -> Iterable<R>): C
+       BooleanArray.fold(initial: R, operation: (acc: R, Boolean) -> R): R
+       BooleanArray.foldIndexed(initial: R, operation: (index: Int, acc: R, Boolean) -> R): R
+       BooleanArray.foldRight(initial: R, operation: (Boolean, acc: R) -> R): R
+       BooleanArray.foldRightIndexed(initial: R, operation: (index: Int, Boolean, acc: R) -> R): R
+       BooleanArray.forEach(action: (Boolean) -> Unit): Unit
+       BooleanArray.forEachIndexed(action: (index: Int, Boolean) -> Unit): Unit
+       BooleanArray.getOrElse(index: Int, defaultValue: (Int) -> Boolean): Boolean
+       BooleanArray.getOrNull(index: Int): Boolean?
+       BooleanArray.groupBy(keySelector: (Boolean) -> K): Map<K, List<Boolean>>
+       BooleanArray.groupBy(keySelector: (Boolean) -> K, valueTransform: (Boolean) -> V): Map<K, List<V>>
+       BooleanArray.groupByTo(destination: M, keySelector: (Boolean) -> K): M
+       BooleanArray.groupByTo(destination: M, keySelector: (Boolean) -> K, valueTransform: (Boolean) -> V): M
+       BooleanArray.indexOf(element: Boolean): Int
+       BooleanArray.indexOfFirst(predicate: (Boolean) -> Boolean): Int
+       BooleanArray.indexOfLast(predicate: (Boolean) -> Boolean): Int
+       BooleanArray.intersect(other: Iterable<Boolean>): Set<Boolean>
+       BooleanArray.isEmpty(): Boolean
+       BooleanArray.isNotEmpty(): Boolean
+       BooleanArray.joinTo(buffer: A, separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Boolean) -> CharSequence)?): A
+       BooleanArray.joinToString(separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Boolean) -> CharSequence)?): String
+       BooleanArray.last(): Boolean
+       BooleanArray.last(predicate: (Boolean) -> Boolean): Boolean
+       BooleanArray.lastIndexOf(element: Boolean): Int
+       BooleanArray.lastOrNull(): Boolean?
+       BooleanArray.lastOrNull(predicate: (Boolean) -> Boolean): Boolean?
+       BooleanArray.map(transform: (Boolean) -> R): List<R>
+       BooleanArray.mapIndexed(transform: (index: Int, Boolean) -> R): List<R>
+       BooleanArray.mapIndexedTo(destination: C, transform: (index: Int, Boolean) -> R): C
+       BooleanArray.mapTo(destination: C, transform: (Boolean) -> R): C
+       BooleanArray.maxBy(selector: (Boolean) -> R): Boolean
+       BooleanArray.maxByOrNull(selector: (Boolean) -> R): Boolean?
+       BooleanArray.maxOf(selector: (Boolean) -> Double): Double
+       BooleanArray.maxOf(selector: (Boolean) -> Float): Float
+       BooleanArray.maxOf(selector: (Boolean) -> R): R
+       BooleanArray.maxOfOrNull(selector: (Boolean) -> Double): Double?
+       BooleanArray.maxOfOrNull(selector: (Boolean) -> Float): Float?
+       BooleanArray.maxOfOrNull(selector: (Boolean) -> R): R?
+       BooleanArray.maxOfWith(comparator: Comparator<in R>, selector: (Boolean) -> R): R
+       BooleanArray.maxOfWithOrNull(comparator: Comparator<in R>, selector: (Boolean) -> R): R?
+       BooleanArray.maxWith(comparator: Comparator<in Boolean>): Boolean
+       BooleanArray.maxWithOrNull(comparator: Comparator<in Boolean>): Boolean?
+       BooleanArray.minBy(selector: (Boolean) -> R): Boolean
+       BooleanArray.minByOrNull(selector: (Boolean) -> R): Boolean?
+       BooleanArray.minOf(selector: (Boolean) -> Double): Double
+       BooleanArray.minOf(selector: (Boolean) -> Float): Float
+       BooleanArray.minOf(selector: (Boolean) -> R): R
+       BooleanArray.minOfOrNull(selector: (Boolean) -> Double): Double?
+       BooleanArray.minOfOrNull(selector: (Boolean) -> Float): Float?
+       BooleanArray.minOfOrNull(selector: (Boolean) -> R): R?
+       BooleanArray.minOfWith(comparator: Comparator<in R>, selector: (Boolean) -> R): R
+       BooleanArray.minOfWithOrNull(comparator: Comparator<in R>, selector: (Boolean) -> R): R?
+       BooleanArray.minWith(comparator: Comparator<in Boolean>): Boolean
+       BooleanArray.minWithOrNull(comparator: Comparator<in Boolean>): Boolean?
+       BooleanArray.none(): Boolean
+       BooleanArray.none(predicate: (Boolean) -> Boolean): Boolean
+       BooleanArray.onEach(action: (Boolean) -> Unit): BooleanArray
+       BooleanArray.onEachIndexed(action: (index: Int, Boolean) -> Unit): BooleanArray
+       BooleanArray.partition(predicate: (Boolean) -> Boolean): Pair<List<Boolean>, List<Boolean>>
+       BooleanArray.plus(element: Boolean): BooleanArray
+       BooleanArray.plus(elements: BooleanArray): BooleanArray
+       BooleanArray.plus(elements: Collection<Boolean>): BooleanArray
+       BooleanArray.random(): Boolean
+       BooleanArray.random(random: Random): Boolean
+       BooleanArray.randomOrNull(): Boolean?
+       BooleanArray.randomOrNull(random: Random): Boolean?
+       BooleanArray.reduce(operation: (acc: Boolean, Boolean) -> Boolean): Boolean
+       BooleanArray.reduceIndexed(operation: (index: Int, acc: Boolean, Boolean) -> Boolean): Boolean
+       BooleanArray.reduceIndexedOrNull(operation: (index: Int, acc: Boolean, Boolean) -> Boolean): Boolean?
+       BooleanArray.reduceOrNull(operation: (acc: Boolean, Boolean) -> Boolean): Boolean?
+       BooleanArray.reduceRight(operation: (Boolean, acc: Boolean) -> Boolean): Boolean
+       BooleanArray.reduceRightIndexed(operation: (index: Int, Boolean, acc: Boolean) -> Boolean): Boolean
+       BooleanArray.reduceRightIndexedOrNull(operation: (index: Int, Boolean, acc: Boolean) -> Boolean): Boolean?
+       BooleanArray.reduceRightOrNull(operation: (Boolean, acc: Boolean) -> Boolean): Boolean?
+       BooleanArray.reverse(): Unit
+       BooleanArray.reverse(fromIndex: Int, toIndex: Int): Unit
+       BooleanArray.reversed(): List<Boolean>
+       BooleanArray.reversedArray(): BooleanArray
+       BooleanArray.runningFold(initial: R, operation: (acc: R, Boolean) -> R): List<R>
+       BooleanArray.runningFoldIndexed(initial: R, operation: (index: Int, acc: R, Boolean) -> R): List<R>
+       BooleanArray.runningReduce(operation: (acc: Boolean, Boolean) -> Boolean): List<Boolean>
+       BooleanArray.runningReduceIndexed(operation: (index: Int, acc: Boolean, Boolean) -> Boolean): List<Boolean>
+       BooleanArray.scan(initial: R, operation: (acc: R, Boolean) -> R): List<R>
+       BooleanArray.scanIndexed(initial: R, operation: (index: Int, acc: R, Boolean) -> R): List<R>
+       BooleanArray.shuffle(): Unit
+       BooleanArray.shuffle(random: Random): Unit
+       BooleanArray.single(): Boolean
+       BooleanArray.single(predicate: (Boolean) -> Boolean): Boolean
+       BooleanArray.singleOrNull(): Boolean?
+       BooleanArray.singleOrNull(predicate: (Boolean) -> Boolean): Boolean?
+       BooleanArray.slice(indices: IntRange): List<Boolean>
+       BooleanArray.slice(indices: Iterable<Int>): List<Boolean>
+       BooleanArray.sliceArray(indices: Collection<Int>): BooleanArray
+       BooleanArray.sliceArray(indices: IntRange): BooleanArray
+       BooleanArray.sortedBy(selector: (Boolean) -> R?): List<Boolean>
+       BooleanArray.sortedByDescending(selector: (Boolean) -> R?): List<Boolean>
+       BooleanArray.sortedWith(comparator: Comparator<in Boolean>): List<Boolean>
+       BooleanArray.subtract(other: Iterable<Boolean>): Set<Boolean>
+       BooleanArray.sumBy(selector: (Boolean) -> Int): Int
+       BooleanArray.sumByDouble(selector: (Boolean) -> Double): Double
+       BooleanArray.sumOf(selector: (Boolean) -> Double): Double
+       BooleanArray.sumOf(selector: (Boolean) -> Int): Int
+       BooleanArray.sumOf(selector: (Boolean) -> Long): Long
+       BooleanArray.sumOf(selector: (Boolean) -> UInt): UInt
+       BooleanArray.sumOf(selector: (Boolean) -> ULong): ULong
+       BooleanArray.take(n: Int): List<Boolean>
+       BooleanArray.takeLast(n: Int): List<Boolean>
+       BooleanArray.takeLastWhile(predicate: (Boolean) -> Boolean): List<Boolean>
+       BooleanArray.takeWhile(predicate: (Boolean) -> Boolean): List<Boolean>
+       BooleanArray.toCollection(destination: C): C
+       BooleanArray.toHashSet(): HashSet<Boolean>
+       BooleanArray.toList(): List<Boolean>
+       BooleanArray.toMutableList(): MutableList<Boolean>
+       BooleanArray.toMutableSet(): MutableSet<Boolean>
+       BooleanArray.toSet(): Set<Boolean>
+       BooleanArray.toTypedArray(): Array<Boolean>
+       BooleanArray.union(other: Iterable<Boolean>): Set<Boolean>
+       BooleanArray.withIndex(): Iterable<IndexedValue<Boolean>>
+       BooleanArray.zip(other: Array<out R>): List<Pair<Boolean, R>>
+       BooleanArray.zip(other: Array<out R>, transform: (a: Boolean, b: R) -> V): List<V>
+       BooleanArray.zip(other: BooleanArray): List<Pair<Boolean, Boolean>>
+       BooleanArray.zip(other: BooleanArray, transform: (a: Boolean, b: Boolean) -> V): List<V>
+       BooleanArray.zip(other: Iterable<R>): List<Pair<Boolean, R>>
+       BooleanArray.zip(other: Iterable<R>, transform: (a: Boolean, b: R) -> V): List<V>
+       BooleanArray?.contentEquals(other: BooleanArray?): Boolean
+       BooleanArray?.contentHashCode(): Int
+       BooleanArray?.contentToString(): String
+       ByteArray.all(predicate: (Byte) -> Boolean): Boolean
+       ByteArray.any(): Boolean
+       ByteArray.any(predicate: (Byte) -> Boolean): Boolean
+       ByteArray.asIterable(): Iterable<Byte>
+       ByteArray.asList(): List<Byte>
+       ByteArray.asSequence(): Sequence<Byte>
+       ByteArray.associate(transform: (Byte) -> Pair<K, V>): Map<K, V>
+       ByteArray.associateBy(keySelector: (Byte) -> K): Map<K, Byte>
+       ByteArray.associateBy(keySelector: (Byte) -> K, valueTransform: (Byte) -> V): Map<K, V>
+       ByteArray.associateByTo(destination: M, keySelector: (Byte) -> K): M
+       ByteArray.associateByTo(destination: M, keySelector: (Byte) -> K, valueTransform: (Byte) -> V): M
+       ByteArray.associateTo(destination: M, transform: (Byte) -> Pair<K, V>): M
+       ByteArray.associateWith(valueSelector: (Byte) -> V): Map<Byte, V>
+       ByteArray.associateWithTo(destination: M, valueSelector: (Byte) -> V): M
+       ByteArray.average(): Double
+       ByteArray.component1(): Byte
+       ByteArray.component2(): Byte
+       ByteArray.component3(): Byte
+       ByteArray.component4(): Byte
+       ByteArray.component5(): Byte
+       ByteArray.contains(element: Byte): Boolean
+       ByteArray.contentEquals(other: ByteArray): Boolean
+       ByteArray.contentHashCode(): Int
+       ByteArray.contentToString(): String
+       ByteArray.copyInto(destination: ByteArray, destinationOffset: Int, startIndex: Int, endIndex: Int): ByteArray
+       ByteArray.copyOf(): ByteArray
+       ByteArray.copyOf(newSize: Int): ByteArray
+       ByteArray.copyOfRange(fromIndex: Int, toIndex: Int): ByteArray
+       ByteArray.count(): Int
+       ByteArray.count(predicate: (Byte) -> Boolean): Int
+       ByteArray.distinct(): List<Byte>
+       ByteArray.distinctBy(selector: (Byte) -> K): List<Byte>
+       ByteArray.drop(n: Int): List<Byte>
+       ByteArray.dropLast(n: Int): List<Byte>
+       ByteArray.dropLastWhile(predicate: (Byte) -> Boolean): List<Byte>
+       ByteArray.dropWhile(predicate: (Byte) -> Boolean): List<Byte>
+       ByteArray.elementAt(index: Int): Byte
+       ByteArray.elementAtOrElse(index: Int, defaultValue: (Int) -> Byte): Byte
+       ByteArray.elementAtOrNull(index: Int): Byte?
+       ByteArray.fill(element: Byte, fromIndex: Int, toIndex: Int): Unit
+       ByteArray.filter(predicate: (Byte) -> Boolean): List<Byte>
+       ByteArray.filterIndexed(predicate: (index: Int, Byte) -> Boolean): List<Byte>
+       ByteArray.filterIndexedTo(destination: C, predicate: (index: Int, Byte) -> Boolean): C
+       ByteArray.filterNot(predicate: (Byte) -> Boolean): List<Byte>
+       ByteArray.filterNotTo(destination: C, predicate: (Byte) -> Boolean): C
+       ByteArray.filterTo(destination: C, predicate: (Byte) -> Boolean): C
+       ByteArray.find(predicate: (Byte) -> Boolean): Byte?
+       ByteArray.findLast(predicate: (Byte) -> Boolean): Byte?
+       ByteArray.first(): Byte
+       ByteArray.first(predicate: (Byte) -> Boolean): Byte
+       ByteArray.firstOrNull(): Byte?
+       ByteArray.firstOrNull(predicate: (Byte) -> Boolean): Byte?
+       ByteArray.flatMap(transform: (Byte) -> Iterable<R>): List<R>
+       ByteArray.flatMapIndexed(transform: (index: Int, Byte) -> Iterable<R>): List<R>
+       ByteArray.flatMapIndexedTo(destination: C, transform: (index: Int, Byte) -> Iterable<R>): C
+       ByteArray.flatMapTo(destination: C, transform: (Byte) -> Iterable<R>): C
+       ByteArray.fold(initial: R, operation: (acc: R, Byte) -> R): R
+       ByteArray.foldIndexed(initial: R, operation: (index: Int, acc: R, Byte) -> R): R
+       ByteArray.foldRight(initial: R, operation: (Byte, acc: R) -> R): R
+       ByteArray.foldRightIndexed(initial: R, operation: (index: Int, Byte, acc: R) -> R): R
+       ByteArray.forEach(action: (Byte) -> Unit): Unit
+       ByteArray.forEachIndexed(action: (index: Int, Byte) -> Unit): Unit
+       ByteArray.getOrElse(index: Int, defaultValue: (Int) -> Byte): Byte
+       ByteArray.getOrNull(index: Int): Byte?
+       ByteArray.groupBy(keySelector: (Byte) -> K): Map<K, List<Byte>>
+       ByteArray.groupBy(keySelector: (Byte) -> K, valueTransform: (Byte) -> V): Map<K, List<V>>
+       ByteArray.groupByTo(destination: M, keySelector: (Byte) -> K): M
+       ByteArray.groupByTo(destination: M, keySelector: (Byte) -> K, valueTransform: (Byte) -> V): M
+       ByteArray.indexOf(element: Byte): Int
+       ByteArray.indexOfFirst(predicate: (Byte) -> Boolean): Int
+       ByteArray.indexOfLast(predicate: (Byte) -> Boolean): Int
+       ByteArray.intersect(other: Iterable<Byte>): Set<Byte>
+       ByteArray.isEmpty(): Boolean
+       ByteArray.isNotEmpty(): Boolean
+       ByteArray.joinTo(buffer: A, separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Byte) -> CharSequence)?): A
+       ByteArray.joinToString(separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Byte) -> CharSequence)?): String
+       ByteArray.last(): Byte
+       ByteArray.last(predicate: (Byte) -> Boolean): Byte
+       ByteArray.lastIndexOf(element: Byte): Int
+       ByteArray.lastOrNull(): Byte?
+       ByteArray.lastOrNull(predicate: (Byte) -> Boolean): Byte?
+       ByteArray.map(transform: (Byte) -> R): List<R>
+       ByteArray.mapIndexed(transform: (index: Int, Byte) -> R): List<R>
+       ByteArray.mapIndexedTo(destination: C, transform: (index: Int, Byte) -> R): C
+       ByteArray.mapTo(destination: C, transform: (Byte) -> R): C
+       ByteArray.max(): Byte
+       ByteArray.maxBy(selector: (Byte) -> R): Byte
+       ByteArray.maxByOrNull(selector: (Byte) -> R): Byte?
+       ByteArray.maxOf(selector: (Byte) -> Double): Double
+       ByteArray.maxOf(selector: (Byte) -> Float): Float
+       ByteArray.maxOf(selector: (Byte) -> R): R
+       ByteArray.maxOfOrNull(selector: (Byte) -> Double): Double?
+       ByteArray.maxOfOrNull(selector: (Byte) -> Float): Float?
+       ByteArray.maxOfOrNull(selector: (Byte) -> R): R?
+       ByteArray.maxOfWith(comparator: Comparator<in R>, selector: (Byte) -> R): R
+       ByteArray.maxOfWithOrNull(comparator: Comparator<in R>, selector: (Byte) -> R): R?
+       ByteArray.maxOrNull(): Byte?
+       ByteArray.maxWith(comparator: Comparator<in Byte>): Byte
+       ByteArray.maxWithOrNull(comparator: Comparator<in Byte>): Byte?
+       ByteArray.min(): Byte
+       ByteArray.minBy(selector: (Byte) -> R): Byte
+       ByteArray.minByOrNull(selector: (Byte) -> R): Byte?
+       ByteArray.minOf(selector: (Byte) -> Double): Double
+       ByteArray.minOf(selector: (Byte) -> Float): Float
+       ByteArray.minOf(selector: (Byte) -> R): R
+       ByteArray.minOfOrNull(selector: (Byte) -> Double): Double?
+       ByteArray.minOfOrNull(selector: (Byte) -> Float): Float?
+       ByteArray.minOfOrNull(selector: (Byte) -> R): R?
+       ByteArray.minOfWith(comparator: Comparator<in R>, selector: (Byte) -> R): R
+       ByteArray.minOfWithOrNull(comparator: Comparator<in R>, selector: (Byte) -> R): R?
+       ByteArray.minOrNull(): Byte?
+       ByteArray.minWith(comparator: Comparator<in Byte>): Byte
+       ByteArray.minWithOrNull(comparator: Comparator<in Byte>): Byte?
+       ByteArray.none(): Boolean
+       ByteArray.none(predicate: (Byte) -> Boolean): Boolean
+       ByteArray.onEach(action: (Byte) -> Unit): ByteArray
+       ByteArray.onEachIndexed(action: (index: Int, Byte) -> Unit): ByteArray
+       ByteArray.partition(predicate: (Byte) -> Boolean): Pair<List<Byte>, List<Byte>>
+       ByteArray.plus(element: Byte): ByteArray
+       ByteArray.plus(elements: ByteArray): ByteArray
+       ByteArray.plus(elements: Collection<Byte>): ByteArray
+       ByteArray.random(): Byte
+       ByteArray.random(random: Random): Byte
+       ByteArray.randomOrNull(): Byte?
+       ByteArray.randomOrNull(random: Random): Byte?
+       ByteArray.reduce(operation: (acc: Byte, Byte) -> Byte): Byte
+       ByteArray.reduceIndexed(operation: (index: Int, acc: Byte, Byte) -> Byte): Byte
+       ByteArray.reduceIndexedOrNull(operation: (index: Int, acc: Byte, Byte) -> Byte): Byte?
+       ByteArray.reduceOrNull(operation: (acc: Byte, Byte) -> Byte): Byte?
+       ByteArray.reduceRight(operation: (Byte, acc: Byte) -> Byte): Byte
+       ByteArray.reduceRightIndexed(operation: (index: Int, Byte, acc: Byte) -> Byte): Byte
+       ByteArray.reduceRightIndexedOrNull(operation: (index: Int, Byte, acc: Byte) -> Byte): Byte?
+       ByteArray.reduceRightOrNull(operation: (Byte, acc: Byte) -> Byte): Byte?
+       ByteArray.reverse(): Unit
+       ByteArray.reverse(fromIndex: Int, toIndex: Int): Unit
+       ByteArray.reversed(): List<Byte>
+       ByteArray.reversedArray(): ByteArray
+       ByteArray.runningFold(initial: R, operation: (acc: R, Byte) -> R): List<R>
+       ByteArray.runningFoldIndexed(initial: R, operation: (index: Int, acc: R, Byte) -> R): List<R>
+       ByteArray.runningReduce(operation: (acc: Byte, Byte) -> Byte): List<Byte>
+       ByteArray.runningReduceIndexed(operation: (index: Int, acc: Byte, Byte) -> Byte): List<Byte>
+       ByteArray.scan(initial: R, operation: (acc: R, Byte) -> R): List<R>
+       ByteArray.scanIndexed(initial: R, operation: (index: Int, acc: R, Byte) -> R): List<R>
+       ByteArray.shuffle(): Unit
+       ByteArray.shuffle(random: Random): Unit
+       ByteArray.single(): Byte
+       ByteArray.single(predicate: (Byte) -> Boolean): Byte
+       ByteArray.singleOrNull(): Byte?
+       ByteArray.singleOrNull(predicate: (Byte) -> Boolean): Byte?
+       ByteArray.slice(indices: IntRange): List<Byte>
+       ByteArray.slice(indices: Iterable<Int>): List<Byte>
+       ByteArray.sliceArray(indices: Collection<Int>): ByteArray
+       ByteArray.sliceArray(indices: IntRange): ByteArray
+       ByteArray.sort(): Unit
+       ByteArray.sort(fromIndex: Int, toIndex: Int): Unit
+       ByteArray.sortDescending(): Unit
+       ByteArray.sortDescending(fromIndex: Int, toIndex: Int): Unit
+       ByteArray.sorted(): List<Byte>
+       ByteArray.sortedArray(): ByteArray
+       ByteArray.sortedArrayDescending(): ByteArray
+       ByteArray.sortedBy(selector: (Byte) -> R?): List<Byte>
+       ByteArray.sortedByDescending(selector: (Byte) -> R?): List<Byte>
+       ByteArray.sortedDescending(): List<Byte>
+       ByteArray.sortedWith(comparator: Comparator<in Byte>): List<Byte>
+       ByteArray.subtract(other: Iterable<Byte>): Set<Byte>
+       ByteArray.sum(): Int
+       ByteArray.sumBy(selector: (Byte) -> Int): Int
+       ByteArray.sumByDouble(selector: (Byte) -> Double): Double
+       ByteArray.sumOf(selector: (Byte) -> Double): Double
+       ByteArray.sumOf(selector: (Byte) -> Int): Int
+       ByteArray.sumOf(selector: (Byte) -> Long): Long
+       ByteArray.sumOf(selector: (Byte) -> UInt): UInt
+       ByteArray.sumOf(selector: (Byte) -> ULong): ULong
+       ByteArray.take(n: Int): List<Byte>
+       ByteArray.takeLast(n: Int): List<Byte>
+       ByteArray.takeLastWhile(predicate: (Byte) -> Boolean): List<Byte>
+       ByteArray.takeWhile(predicate: (Byte) -> Boolean): List<Byte>
+       ByteArray.toCollection(destination: C): C
+       ByteArray.toHashSet(): HashSet<Byte>
+       ByteArray.toList(): List<Byte>
+       ByteArray.toMutableList(): MutableList<Byte>
+       ByteArray.toMutableSet(): MutableSet<Byte>
+       ByteArray.toSet(): Set<Byte>
+       ByteArray.toTypedArray(): Array<Byte>
+       ByteArray.union(other: Iterable<Byte>): Set<Byte>
+       ByteArray.withIndex(): Iterable<IndexedValue<Byte>>
+       ByteArray.zip(other: Array<out R>): List<Pair<Byte, R>>
+       ByteArray.zip(other: Array<out R>, transform: (a: Byte, b: R) -> V): List<V>
+       ByteArray.zip(other: ByteArray): List<Pair<Byte, Byte>>
+       ByteArray.zip(other: ByteArray, transform: (a: Byte, b: Byte) -> V): List<V>
+       ByteArray.zip(other: Iterable<R>): List<Pair<Byte, R>>
+       ByteArray.zip(other: Iterable<R>, transform: (a: Byte, b: R) -> V): List<V>
+       ByteArray?.contentEquals(other: ByteArray?): Boolean
+       ByteArray?.contentHashCode(): Int
+       ByteArray?.contentToString(): String
+       CharArray.all(predicate: (Char) -> Boolean): Boolean
+       CharArray.any(): Boolean
+       CharArray.any(predicate: (Char) -> Boolean): Boolean
+       CharArray.asIterable(): Iterable<Char>
+       CharArray.asList(): List<Char>
+       CharArray.asSequence(): Sequence<Char>
+       CharArray.associate(transform: (Char) -> Pair<K, V>): Map<K, V>
+       CharArray.associateBy(keySelector: (Char) -> K): Map<K, Char>
+       CharArray.associateBy(keySelector: (Char) -> K, valueTransform: (Char) -> V): Map<K, V>
+       CharArray.associateByTo(destination: M, keySelector: (Char) -> K): M
+       CharArray.associateByTo(destination: M, keySelector: (Char) -> K, valueTransform: (Char) -> V): M
+       CharArray.associateTo(destination: M, transform: (Char) -> Pair<K, V>): M
+       CharArray.associateWith(valueSelector: (Char) -> V): Map<Char, V>
+       CharArray.associateWithTo(destination: M, valueSelector: (Char) -> V): M
+       CharArray.component1(): Char
+       CharArray.component2(): Char
+       CharArray.component3(): Char
+       CharArray.component4(): Char
+       CharArray.component5(): Char
+       CharArray.contains(element: Char): Boolean
+       CharArray.contentEquals(other: CharArray): Boolean
+       CharArray.contentHashCode(): Int
+       CharArray.contentToString(): String
+       CharArray.copyInto(destination: CharArray, destinationOffset: Int, startIndex: Int, endIndex: Int): CharArray
+       CharArray.copyOf(): CharArray
+       CharArray.copyOf(newSize: Int): CharArray
+       CharArray.copyOfRange(fromIndex: Int, toIndex: Int): CharArray
+       CharArray.count(): Int
+       CharArray.count(predicate: (Char) -> Boolean): Int
+       CharArray.distinct(): List<Char>
+       CharArray.distinctBy(selector: (Char) -> K): List<Char>
+       CharArray.drop(n: Int): List<Char>
+       CharArray.dropLast(n: Int): List<Char>
+       CharArray.dropLastWhile(predicate: (Char) -> Boolean): List<Char>
+       CharArray.dropWhile(predicate: (Char) -> Boolean): List<Char>
+       CharArray.elementAt(index: Int): Char
+       CharArray.elementAtOrElse(index: Int, defaultValue: (Int) -> Char): Char
+       CharArray.elementAtOrNull(index: Int): Char?
+       CharArray.fill(element: Char, fromIndex: Int, toIndex: Int): Unit
+       CharArray.filter(predicate: (Char) -> Boolean): List<Char>
+       CharArray.filterIndexed(predicate: (index: Int, Char) -> Boolean): List<Char>
+       CharArray.filterIndexedTo(destination: C, predicate: (index: Int, Char) -> Boolean): C
+       CharArray.filterNot(predicate: (Char) -> Boolean): List<Char>
+       CharArray.filterNotTo(destination: C, predicate: (Char) -> Boolean): C
+       CharArray.filterTo(destination: C, predicate: (Char) -> Boolean): C
+       CharArray.find(predicate: (Char) -> Boolean): Char?
+       CharArray.findLast(predicate: (Char) -> Boolean): Char?
+       CharArray.first(): Char
+       CharArray.first(predicate: (Char) -> Boolean): Char
+       CharArray.firstOrNull(): Char?
+       CharArray.firstOrNull(predicate: (Char) -> Boolean): Char?
+       CharArray.flatMap(transform: (Char) -> Iterable<R>): List<R>
+       CharArray.flatMapIndexed(transform: (index: Int, Char) -> Iterable<R>): List<R>
+       CharArray.flatMapIndexedTo(destination: C, transform: (index: Int, Char) -> Iterable<R>): C
+       CharArray.flatMapTo(destination: C, transform: (Char) -> Iterable<R>): C
+       CharArray.fold(initial: R, operation: (acc: R, Char) -> R): R
+       CharArray.foldIndexed(initial: R, operation: (index: Int, acc: R, Char) -> R): R
+       CharArray.foldRight(initial: R, operation: (Char, acc: R) -> R): R
+       CharArray.foldRightIndexed(initial: R, operation: (index: Int, Char, acc: R) -> R): R
+       CharArray.forEach(action: (Char) -> Unit): Unit
+       CharArray.forEachIndexed(action: (index: Int, Char) -> Unit): Unit
+       CharArray.getOrElse(index: Int, defaultValue: (Int) -> Char): Char
+       CharArray.getOrNull(index: Int): Char?
+       CharArray.groupBy(keySelector: (Char) -> K): Map<K, List<Char>>
+       CharArray.groupBy(keySelector: (Char) -> K, valueTransform: (Char) -> V): Map<K, List<V>>
+       CharArray.groupByTo(destination: M, keySelector: (Char) -> K): M
+       CharArray.groupByTo(destination: M, keySelector: (Char) -> K, valueTransform: (Char) -> V): M
+       CharArray.indexOf(element: Char): Int
+       CharArray.indexOfFirst(predicate: (Char) -> Boolean): Int
+       CharArray.indexOfLast(predicate: (Char) -> Boolean): Int
+       CharArray.intersect(other: Iterable<Char>): Set<Char>
+       CharArray.isEmpty(): Boolean
+       CharArray.isNotEmpty(): Boolean
+       CharArray.joinTo(buffer: A, separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Char) -> CharSequence)?): A
+       CharArray.joinToString(separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Char) -> CharSequence)?): String
+       CharArray.last(): Char
+       CharArray.last(predicate: (Char) -> Boolean): Char
+       CharArray.lastIndexOf(element: Char): Int
+       CharArray.lastOrNull(): Char?
+       CharArray.lastOrNull(predicate: (Char) -> Boolean): Char?
+       CharArray.map(transform: (Char) -> R): List<R>
+       CharArray.mapIndexed(transform: (index: Int, Char) -> R): List<R>
+       CharArray.mapIndexedTo(destination: C, transform: (index: Int, Char) -> R): C
+       CharArray.mapTo(destination: C, transform: (Char) -> R): C
+       CharArray.max(): Char
+       CharArray.maxBy(selector: (Char) -> R): Char
+       CharArray.maxByOrNull(selector: (Char) -> R): Char?
+       CharArray.maxOf(selector: (Char) -> Double): Double
+       CharArray.maxOf(selector: (Char) -> Float): Float
+       CharArray.maxOf(selector: (Char) -> R): R
+       CharArray.maxOfOrNull(selector: (Char) -> Double): Double?
+       CharArray.maxOfOrNull(selector: (Char) -> Float): Float?
+       CharArray.maxOfOrNull(selector: (Char) -> R): R?
+       CharArray.maxOfWith(comparator: Comparator<in R>, selector: (Char) -> R): R
+       CharArray.maxOfWithOrNull(comparator: Comparator<in R>, selector: (Char) -> R): R?
+       CharArray.maxOrNull(): Char?
+       CharArray.maxWith(comparator: Comparator<in Char>): Char
+       CharArray.maxWithOrNull(comparator: Comparator<in Char>): Char?
+       CharArray.min(): Char
+       CharArray.minBy(selector: (Char) -> R): Char
+       CharArray.minByOrNull(selector: (Char) -> R): Char?
+       CharArray.minOf(selector: (Char) -> Double): Double
+       CharArray.minOf(selector: (Char) -> Float): Float
+       CharArray.minOf(selector: (Char) -> R): R
+       CharArray.minOfOrNull(selector: (Char) -> Double): Double?
+       CharArray.minOfOrNull(selector: (Char) -> Float): Float?
+       CharArray.minOfOrNull(selector: (Char) -> R): R?
+       CharArray.minOfWith(comparator: Comparator<in R>, selector: (Char) -> R): R
+       CharArray.minOfWithOrNull(comparator: Comparator<in R>, selector: (Char) -> R): R?
+       CharArray.minOrNull(): Char?
+       CharArray.minWith(comparator: Comparator<in Char>): Char
+       CharArray.minWithOrNull(comparator: Comparator<in Char>): Char?
+       CharArray.none(): Boolean
+       CharArray.none(predicate: (Char) -> Boolean): Boolean
+       CharArray.onEach(action: (Char) -> Unit): CharArray
+       CharArray.onEachIndexed(action: (index: Int, Char) -> Unit): CharArray
+       CharArray.partition(predicate: (Char) -> Boolean): Pair<List<Char>, List<Char>>
+       CharArray.plus(element: Char): CharArray
+       CharArray.plus(elements: CharArray): CharArray
+       CharArray.plus(elements: Collection<Char>): CharArray
+       CharArray.random(): Char
+       CharArray.random(random: Random): Char
+       CharArray.randomOrNull(): Char?
+       CharArray.randomOrNull(random: Random): Char?
+       CharArray.reduce(operation: (acc: Char, Char) -> Char): Char
+       CharArray.reduceIndexed(operation: (index: Int, acc: Char, Char) -> Char): Char
+       CharArray.reduceIndexedOrNull(operation: (index: Int, acc: Char, Char) -> Char): Char?
+       CharArray.reduceOrNull(operation: (acc: Char, Char) -> Char): Char?
+       CharArray.reduceRight(operation: (Char, acc: Char) -> Char): Char
+       CharArray.reduceRightIndexed(operation: (index: Int, Char, acc: Char) -> Char): Char
+       CharArray.reduceRightIndexedOrNull(operation: (index: Int, Char, acc: Char) -> Char): Char?
+       CharArray.reduceRightOrNull(operation: (Char, acc: Char) -> Char): Char?
+       CharArray.reverse(): Unit
+       CharArray.reverse(fromIndex: Int, toIndex: Int): Unit
+       CharArray.reversed(): List<Char>
+       CharArray.reversedArray(): CharArray
+       CharArray.runningFold(initial: R, operation: (acc: R, Char) -> R): List<R>
+       CharArray.runningFoldIndexed(initial: R, operation: (index: Int, acc: R, Char) -> R): List<R>
+       CharArray.runningReduce(operation: (acc: Char, Char) -> Char): List<Char>
+       CharArray.runningReduceIndexed(operation: (index: Int, acc: Char, Char) -> Char): List<Char>
+       CharArray.scan(initial: R, operation: (acc: R, Char) -> R): List<R>
+       CharArray.scanIndexed(initial: R, operation: (index: Int, acc: R, Char) -> R): List<R>
+       CharArray.shuffle(): Unit
+       CharArray.shuffle(random: Random): Unit
+       CharArray.single(): Char
+       CharArray.single(predicate: (Char) -> Boolean): Char
+       CharArray.singleOrNull(): Char?
+       CharArray.singleOrNull(predicate: (Char) -> Boolean): Char?
+       CharArray.slice(indices: IntRange): List<Char>
+       CharArray.slice(indices: Iterable<Int>): List<Char>
+       CharArray.sliceArray(indices: Collection<Int>): CharArray
+       CharArray.sliceArray(indices: IntRange): CharArray
+       CharArray.sort(): Unit
+       CharArray.sort(fromIndex: Int, toIndex: Int): Unit
+       CharArray.sortDescending(): Unit
+       CharArray.sortDescending(fromIndex: Int, toIndex: Int): Unit
+       CharArray.sorted(): List<Char>
+       CharArray.sortedArray(): CharArray
+       CharArray.sortedArrayDescending(): CharArray
+       CharArray.sortedBy(selector: (Char) -> R?): List<Char>
+       CharArray.sortedByDescending(selector: (Char) -> R?): List<Char>
+       CharArray.sortedDescending(): List<Char>
+       CharArray.sortedWith(comparator: Comparator<in Char>): List<Char>
+       CharArray.subtract(other: Iterable<Char>): Set<Char>
+       CharArray.sumBy(selector: (Char) -> Int): Int
+       CharArray.sumByDouble(selector: (Char) -> Double): Double
+       CharArray.sumOf(selector: (Char) -> Double): Double
+       CharArray.sumOf(selector: (Char) -> Int): Int
+       CharArray.sumOf(selector: (Char) -> Long): Long
+       CharArray.sumOf(selector: (Char) -> UInt): UInt
+       CharArray.sumOf(selector: (Char) -> ULong): ULong
+       CharArray.take(n: Int): List<Char>
+       CharArray.takeLast(n: Int): List<Char>
+       CharArray.takeLastWhile(predicate: (Char) -> Boolean): List<Char>
+       CharArray.takeWhile(predicate: (Char) -> Boolean): List<Char>
+       CharArray.toCollection(destination: C): C
+       CharArray.toHashSet(): HashSet<Char>
+       CharArray.toList(): List<Char>
+       CharArray.toMutableList(): MutableList<Char>
+       CharArray.toMutableSet(): MutableSet<Char>
+       CharArray.toSet(): Set<Char>
+       CharArray.toTypedArray(): Array<Char>
+       CharArray.union(other: Iterable<Char>): Set<Char>
+       CharArray.withIndex(): Iterable<IndexedValue<Char>>
+       CharArray.zip(other: Array<out R>): List<Pair<Char, R>>
+       CharArray.zip(other: Array<out R>, transform: (a: Char, b: R) -> V): List<V>
+       CharArray.zip(other: CharArray): List<Pair<Char, Char>>
+       CharArray.zip(other: CharArray, transform: (a: Char, b: Char) -> V): List<V>
+       CharArray.zip(other: Iterable<R>): List<Pair<Char, R>>
+       CharArray.zip(other: Iterable<R>, transform: (a: Char, b: R) -> V): List<V>
+       CharArray?.contentEquals(other: CharArray?): Boolean
+       CharArray?.contentHashCode(): Int
+       CharArray?.contentToString(): String
+       DoubleArray.all(predicate: (Double) -> Boolean): Boolean
+       DoubleArray.any(): Boolean
+       DoubleArray.any(predicate: (Double) -> Boolean): Boolean
+       DoubleArray.asIterable(): Iterable<Double>
+       DoubleArray.asList(): List<Double>
+       DoubleArray.asSequence(): Sequence<Double>
+       DoubleArray.associate(transform: (Double) -> Pair<K, V>): Map<K, V>
+       DoubleArray.associateBy(keySelector: (Double) -> K): Map<K, Double>
+       DoubleArray.associateBy(keySelector: (Double) -> K, valueTransform: (Double) -> V): Map<K, V>
+       DoubleArray.associateByTo(destination: M, keySelector: (Double) -> K): M
+       DoubleArray.associateByTo(destination: M, keySelector: (Double) -> K, valueTransform: (Double) -> V): M
+       DoubleArray.associateTo(destination: M, transform: (Double) -> Pair<K, V>): M
+       DoubleArray.associateWith(valueSelector: (Double) -> V): Map<Double, V>
+       DoubleArray.associateWithTo(destination: M, valueSelector: (Double) -> V): M
+       DoubleArray.average(): Double
+       DoubleArray.component1(): Double
+       DoubleArray.component2(): Double
+       DoubleArray.component3(): Double
+       DoubleArray.component4(): Double
+       DoubleArray.component5(): Double
+       DoubleArray.contains(element: Double): Boolean
+       DoubleArray.contentEquals(other: DoubleArray): Boolean
+       DoubleArray.contentHashCode(): Int
+       DoubleArray.contentToString(): String
+       DoubleArray.copyInto(destination: DoubleArray, destinationOffset: Int, startIndex: Int, endIndex: Int): DoubleArray
+       DoubleArray.copyOf(): DoubleArray
+       DoubleArray.copyOf(newSize: Int): DoubleArray
+       DoubleArray.copyOfRange(fromIndex: Int, toIndex: Int): DoubleArray
+       DoubleArray.count(): Int
+       DoubleArray.count(predicate: (Double) -> Boolean): Int
+       DoubleArray.distinct(): List<Double>
+       DoubleArray.distinctBy(selector: (Double) -> K): List<Double>
+       DoubleArray.drop(n: Int): List<Double>
+       DoubleArray.dropLast(n: Int): List<Double>
+       DoubleArray.dropLastWhile(predicate: (Double) -> Boolean): List<Double>
+       DoubleArray.dropWhile(predicate: (Double) -> Boolean): List<Double>
+       DoubleArray.elementAt(index: Int): Double
+       DoubleArray.elementAtOrElse(index: Int, defaultValue: (Int) -> Double): Double
+       DoubleArray.elementAtOrNull(index: Int): Double?
+       DoubleArray.fill(element: Double, fromIndex: Int, toIndex: Int): Unit
+       DoubleArray.filter(predicate: (Double) -> Boolean): List<Double>
+       DoubleArray.filterIndexed(predicate: (index: Int, Double) -> Boolean): List<Double>
+       DoubleArray.filterIndexedTo(destination: C, predicate: (index: Int, Double) -> Boolean): C
+       DoubleArray.filterNot(predicate: (Double) -> Boolean): List<Double>
+       DoubleArray.filterNotTo(destination: C, predicate: (Double) -> Boolean): C
+       DoubleArray.filterTo(destination: C, predicate: (Double) -> Boolean): C
+       DoubleArray.find(predicate: (Double) -> Boolean): Double?
+       DoubleArray.findLast(predicate: (Double) -> Boolean): Double?
+       DoubleArray.first(): Double
+       DoubleArray.first(predicate: (Double) -> Boolean): Double
+       DoubleArray.firstOrNull(): Double?
+       DoubleArray.firstOrNull(predicate: (Double) -> Boolean): Double?
+       DoubleArray.flatMap(transform: (Double) -> Iterable<R>): List<R>
+       DoubleArray.flatMapIndexed(transform: (index: Int, Double) -> Iterable<R>): List<R>
+       DoubleArray.flatMapIndexedTo(destination: C, transform: (index: Int, Double) -> Iterable<R>): C
+       DoubleArray.flatMapTo(destination: C, transform: (Double) -> Iterable<R>): C
+       DoubleArray.fold(initial: R, operation: (acc: R, Double) -> R): R
+       DoubleArray.foldIndexed(initial: R, operation: (index: Int, acc: R, Double) -> R): R
+       DoubleArray.foldRight(initial: R, operation: (Double, acc: R) -> R): R
+       DoubleArray.foldRightIndexed(initial: R, operation: (index: Int, Double, acc: R) -> R): R
+       DoubleArray.forEach(action: (Double) -> Unit): Unit
+       DoubleArray.forEachIndexed(action: (index: Int, Double) -> Unit): Unit
+       DoubleArray.getOrElse(index: Int, defaultValue: (Int) -> Double): Double
+       DoubleArray.getOrNull(index: Int): Double?
+       DoubleArray.groupBy(keySelector: (Double) -> K): Map<K, List<Double>>
+       DoubleArray.groupBy(keySelector: (Double) -> K, valueTransform: (Double) -> V): Map<K, List<V>>
+       DoubleArray.groupByTo(destination: M, keySelector: (Double) -> K): M
+       DoubleArray.groupByTo(destination: M, keySelector: (Double) -> K, valueTransform: (Double) -> V): M
+       DoubleArray.indexOf(element: Double): Int
+       DoubleArray.indexOfFirst(predicate: (Double) -> Boolean): Int
+       DoubleArray.indexOfLast(predicate: (Double) -> Boolean): Int
+       DoubleArray.intersect(other: Iterable<Double>): Set<Double>
+       DoubleArray.isEmpty(): Boolean
+       DoubleArray.isNotEmpty(): Boolean
+       DoubleArray.joinTo(buffer: A, separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Double) -> CharSequence)?): A
+       DoubleArray.joinToString(separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Double) -> CharSequence)?): String
+       DoubleArray.last(): Double
+       DoubleArray.last(predicate: (Double) -> Boolean): Double
+       DoubleArray.lastIndexOf(element: Double): Int
+       DoubleArray.lastOrNull(): Double?
+       DoubleArray.lastOrNull(predicate: (Double) -> Boolean): Double?
+       DoubleArray.map(transform: (Double) -> R): List<R>
+       DoubleArray.mapIndexed(transform: (index: Int, Double) -> R): List<R>
+       DoubleArray.mapIndexedTo(destination: C, transform: (index: Int, Double) -> R): C
+       DoubleArray.mapTo(destination: C, transform: (Double) -> R): C
+       DoubleArray.max(): Double
+       DoubleArray.maxBy(selector: (Double) -> R): Double
+       DoubleArray.maxByOrNull(selector: (Double) -> R): Double?
+       DoubleArray.maxOf(selector: (Double) -> Double): Double
+       DoubleArray.maxOf(selector: (Double) -> Float): Float
+       DoubleArray.maxOf(selector: (Double) -> R): R
+       DoubleArray.maxOfOrNull(selector: (Double) -> Double): Double?
+       DoubleArray.maxOfOrNull(selector: (Double) -> Float): Float?
+       DoubleArray.maxOfOrNull(selector: (Double) -> R): R?
+       DoubleArray.maxOfWith(comparator: Comparator<in R>, selector: (Double) -> R): R
+       DoubleArray.maxOfWithOrNull(comparator: Comparator<in R>, selector: (Double) -> R): R?
+       DoubleArray.maxOrNull(): Double?
+       DoubleArray.maxWith(comparator: Comparator<in Double>): Double
+       DoubleArray.maxWithOrNull(comparator: Comparator<in Double>): Double?
+       DoubleArray.min(): Double
+       DoubleArray.minBy(selector: (Double) -> R): Double
+       DoubleArray.minByOrNull(selector: (Double) -> R): Double?
+       DoubleArray.minOf(selector: (Double) -> Double): Double
+       DoubleArray.minOf(selector: (Double) -> Float): Float
+       DoubleArray.minOf(selector: (Double) -> R): R
+       DoubleArray.minOfOrNull(selector: (Double) -> Double): Double?
+       DoubleArray.minOfOrNull(selector: (Double) -> Float): Float?
+       DoubleArray.minOfOrNull(selector: (Double) -> R): R?
+       DoubleArray.minOfWith(comparator: Comparator<in R>, selector: (Double) -> R): R
+       DoubleArray.minOfWithOrNull(comparator: Comparator<in R>, selector: (Double) -> R): R?
+       DoubleArray.minOrNull(): Double?
+       DoubleArray.minWith(comparator: Comparator<in Double>): Double
+       DoubleArray.minWithOrNull(comparator: Comparator<in Double>): Double?
+       DoubleArray.none(): Boolean
+       DoubleArray.none(predicate: (Double) -> Boolean): Boolean
+       DoubleArray.onEach(action: (Double) -> Unit): DoubleArray
+       DoubleArray.onEachIndexed(action: (index: Int, Double) -> Unit): DoubleArray
+       DoubleArray.partition(predicate: (Double) -> Boolean): Pair<List<Double>, List<Double>>
+       DoubleArray.plus(element: Double): DoubleArray
+       DoubleArray.plus(elements: Collection<Double>): DoubleArray
+       DoubleArray.plus(elements: DoubleArray): DoubleArray
+       DoubleArray.random(): Double
+       DoubleArray.random(random: Random): Double
+       DoubleArray.randomOrNull(): Double?
+       DoubleArray.randomOrNull(random: Random): Double?
+       DoubleArray.reduce(operation: (acc: Double, Double) -> Double): Double
+       DoubleArray.reduceIndexed(operation: (index: Int, acc: Double, Double) -> Double): Double
+       DoubleArray.reduceIndexedOrNull(operation: (index: Int, acc: Double, Double) -> Double): Double?
+       DoubleArray.reduceOrNull(operation: (acc: Double, Double) -> Double): Double?
+       DoubleArray.reduceRight(operation: (Double, acc: Double) -> Double): Double
+       DoubleArray.reduceRightIndexed(operation: (index: Int, Double, acc: Double) -> Double): Double
+       DoubleArray.reduceRightIndexedOrNull(operation: (index: Int, Double, acc: Double) -> Double): Double?
+       DoubleArray.reduceRightOrNull(operation: (Double, acc: Double) -> Double): Double?
+       DoubleArray.reverse(): Unit
+       DoubleArray.reverse(fromIndex: Int, toIndex: Int): Unit
+       DoubleArray.reversed(): List<Double>
+       DoubleArray.reversedArray(): DoubleArray
+       DoubleArray.runningFold(initial: R, operation: (acc: R, Double) -> R): List<R>
+       DoubleArray.runningFoldIndexed(initial: R, operation: (index: Int, acc: R, Double) -> R): List<R>
+       DoubleArray.runningReduce(operation: (acc: Double, Double) -> Double): List<Double>
+       DoubleArray.runningReduceIndexed(operation: (index: Int, acc: Double, Double) -> Double): List<Double>
+       DoubleArray.scan(initial: R, operation: (acc: R, Double) -> R): List<R>
+       DoubleArray.scanIndexed(initial: R, operation: (index: Int, acc: R, Double) -> R): List<R>
+       DoubleArray.shuffle(): Unit
+       DoubleArray.shuffle(random: Random): Unit
+       DoubleArray.single(): Double
+       DoubleArray.single(predicate: (Double) -> Boolean): Double
+       DoubleArray.singleOrNull(): Double?
+       DoubleArray.singleOrNull(predicate: (Double) -> Boolean): Double?
+       DoubleArray.slice(indices: IntRange): List<Double>
+       DoubleArray.slice(indices: Iterable<Int>): List<Double>
+       DoubleArray.sliceArray(indices: Collection<Int>): DoubleArray
+       DoubleArray.sliceArray(indices: IntRange): DoubleArray
+       DoubleArray.sort(): Unit
+       DoubleArray.sort(fromIndex: Int, toIndex: Int): Unit
+       DoubleArray.sortDescending(): Unit
+       DoubleArray.sortDescending(fromIndex: Int, toIndex: Int): Unit
+       DoubleArray.sorted(): List<Double>
+       DoubleArray.sortedArray(): DoubleArray
+       DoubleArray.sortedArrayDescending(): DoubleArray
+       DoubleArray.sortedBy(selector: (Double) -> R?): List<Double>
+       DoubleArray.sortedByDescending(selector: (Double) -> R?): List<Double>
+       DoubleArray.sortedDescending(): List<Double>
+       DoubleArray.sortedWith(comparator: Comparator<in Double>): List<Double>
+       DoubleArray.subtract(other: Iterable<Double>): Set<Double>
+       DoubleArray.sum(): Double
+       DoubleArray.sumBy(selector: (Double) -> Int): Int
+       DoubleArray.sumByDouble(selector: (Double) -> Double): Double
+       DoubleArray.sumOf(selector: (Double) -> Double): Double
+       DoubleArray.sumOf(selector: (Double) -> Int): Int
+       DoubleArray.sumOf(selector: (Double) -> Long): Long
+       DoubleArray.sumOf(selector: (Double) -> UInt): UInt
+       DoubleArray.sumOf(selector: (Double) -> ULong): ULong
+       DoubleArray.take(n: Int): List<Double>
+       DoubleArray.takeLast(n: Int): List<Double>
+       DoubleArray.takeLastWhile(predicate: (Double) -> Boolean): List<Double>
+       DoubleArray.takeWhile(predicate: (Double) -> Boolean): List<Double>
+       DoubleArray.toCollection(destination: C): C
+       DoubleArray.toHashSet(): HashSet<Double>
+       DoubleArray.toList(): List<Double>
+       DoubleArray.toMutableList(): MutableList<Double>
+       DoubleArray.toMutableSet(): MutableSet<Double>
+       DoubleArray.toSet(): Set<Double>
+       DoubleArray.toTypedArray(): Array<Double>
+       DoubleArray.union(other: Iterable<Double>): Set<Double>
+       DoubleArray.withIndex(): Iterable<IndexedValue<Double>>
+       DoubleArray.zip(other: Array<out R>): List<Pair<Double, R>>
+       DoubleArray.zip(other: Array<out R>, transform: (a: Double, b: R) -> V): List<V>
+       DoubleArray.zip(other: DoubleArray): List<Pair<Double, Double>>
+       DoubleArray.zip(other: DoubleArray, transform: (a: Double, b: Double) -> V): List<V>
+       DoubleArray.zip(other: Iterable<R>): List<Pair<Double, R>>
+       DoubleArray.zip(other: Iterable<R>, transform: (a: Double, b: R) -> V): List<V>
+       DoubleArray?.contentEquals(other: DoubleArray?): Boolean
+       DoubleArray?.contentHashCode(): Int
+       DoubleArray?.contentToString(): String
+       FloatArray.all(predicate: (Float) -> Boolean): Boolean
+       FloatArray.any(): Boolean
+       FloatArray.any(predicate: (Float) -> Boolean): Boolean
+       FloatArray.asIterable(): Iterable<Float>
+       FloatArray.asList(): List<Float>
+       FloatArray.asSequence(): Sequence<Float>
+       FloatArray.associate(transform: (Float) -> Pair<K, V>): Map<K, V>
+       FloatArray.associateBy(keySelector: (Float) -> K): Map<K, Float>
+       FloatArray.associateBy(keySelector: (Float) -> K, valueTransform: (Float) -> V): Map<K, V>
+       FloatArray.associateByTo(destination: M, keySelector: (Float) -> K): M
+       FloatArray.associateByTo(destination: M, keySelector: (Float) -> K, valueTransform: (Float) -> V): M
+       FloatArray.associateTo(destination: M, transform: (Float) -> Pair<K, V>): M
+       FloatArray.associateWith(valueSelector: (Float) -> V): Map<Float, V>
+       FloatArray.associateWithTo(destination: M, valueSelector: (Float) -> V): M
+       FloatArray.average(): Double
+       FloatArray.component1(): Float
+       FloatArray.component2(): Float
+       FloatArray.component3(): Float
+       FloatArray.component4(): Float
+       FloatArray.component5(): Float
+       FloatArray.contains(element: Float): Boolean
+       FloatArray.contentEquals(other: FloatArray): Boolean
+       FloatArray.contentHashCode(): Int
+       FloatArray.contentToString(): String
+       FloatArray.copyInto(destination: FloatArray, destinationOffset: Int, startIndex: Int, endIndex: Int): FloatArray
+       FloatArray.copyOf(): FloatArray
+       FloatArray.copyOf(newSize: Int): FloatArray
+       FloatArray.copyOfRange(fromIndex: Int, toIndex: Int): FloatArray
+       FloatArray.count(): Int
+       FloatArray.count(predicate: (Float) -> Boolean): Int
+       FloatArray.distinct(): List<Float>
+       FloatArray.distinctBy(selector: (Float) -> K): List<Float>
+       FloatArray.drop(n: Int): List<Float>
+       FloatArray.dropLast(n: Int): List<Float>
+       FloatArray.dropLastWhile(predicate: (Float) -> Boolean): List<Float>
+       FloatArray.dropWhile(predicate: (Float) -> Boolean): List<Float>
+       FloatArray.elementAt(index: Int): Float
+       FloatArray.elementAtOrElse(index: Int, defaultValue: (Int) -> Float): Float
+       FloatArray.elementAtOrNull(index: Int): Float?
+       FloatArray.fill(element: Float, fromIndex: Int, toIndex: Int): Unit
+       FloatArray.filter(predicate: (Float) -> Boolean): List<Float>
+       FloatArray.filterIndexed(predicate: (index: Int, Float) -> Boolean): List<Float>
+       FloatArray.filterIndexedTo(destination: C, predicate: (index: Int, Float) -> Boolean): C
+       FloatArray.filterNot(predicate: (Float) -> Boolean): List<Float>
+       FloatArray.filterNotTo(destination: C, predicate: (Float) -> Boolean): C
+       FloatArray.filterTo(destination: C, predicate: (Float) -> Boolean): C
+       FloatArray.find(predicate: (Float) -> Boolean): Float?
+       FloatArray.findLast(predicate: (Float) -> Boolean): Float?
+       FloatArray.first(): Float
+       FloatArray.first(predicate: (Float) -> Boolean): Float
+       FloatArray.firstOrNull(): Float?
+       FloatArray.firstOrNull(predicate: (Float) -> Boolean): Float?
+       FloatArray.flatMap(transform: (Float) -> Iterable<R>): List<R>
+       FloatArray.flatMapIndexed(transform: (index: Int, Float) -> Iterable<R>): List<R>
+       FloatArray.flatMapIndexedTo(destination: C, transform: (index: Int, Float) -> Iterable<R>): C
+       FloatArray.flatMapTo(destination: C, transform: (Float) -> Iterable<R>): C
+       FloatArray.fold(initial: R, operation: (acc: R, Float) -> R): R
+       FloatArray.foldIndexed(initial: R, operation: (index: Int, acc: R, Float) -> R): R
+       FloatArray.foldRight(initial: R, operation: (Float, acc: R) -> R): R
+       FloatArray.foldRightIndexed(initial: R, operation: (index: Int, Float, acc: R) -> R): R
+       FloatArray.forEach(action: (Float) -> Unit): Unit
+       FloatArray.forEachIndexed(action: (index: Int, Float) -> Unit): Unit
+       FloatArray.getOrElse(index: Int, defaultValue: (Int) -> Float): Float
+       FloatArray.getOrNull(index: Int): Float?
+       FloatArray.groupBy(keySelector: (Float) -> K): Map<K, List<Float>>
+       FloatArray.groupBy(keySelector: (Float) -> K, valueTransform: (Float) -> V): Map<K, List<V>>
+       FloatArray.groupByTo(destination: M, keySelector: (Float) -> K): M
+       FloatArray.groupByTo(destination: M, keySelector: (Float) -> K, valueTransform: (Float) -> V): M
+       FloatArray.indexOf(element: Float): Int
+       FloatArray.indexOfFirst(predicate: (Float) -> Boolean): Int
+       FloatArray.indexOfLast(predicate: (Float) -> Boolean): Int
+       FloatArray.intersect(other: Iterable<Float>): Set<Float>
+       FloatArray.isEmpty(): Boolean
+       FloatArray.isNotEmpty(): Boolean
+       FloatArray.joinTo(buffer: A, separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Float) -> CharSequence)?): A
+       FloatArray.joinToString(separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Float) -> CharSequence)?): String
+       FloatArray.last(): Float
+       FloatArray.last(predicate: (Float) -> Boolean): Float
+       FloatArray.lastIndexOf(element: Float): Int
+       FloatArray.lastOrNull(): Float?
+       FloatArray.lastOrNull(predicate: (Float) -> Boolean): Float?
+       FloatArray.map(transform: (Float) -> R): List<R>
+       FloatArray.mapIndexed(transform: (index: Int, Float) -> R): List<R>
+       FloatArray.mapIndexedTo(destination: C, transform: (index: Int, Float) -> R): C
+       FloatArray.mapTo(destination: C, transform: (Float) -> R): C
+       FloatArray.max(): Float
+       FloatArray.maxBy(selector: (Float) -> R): Float
+       FloatArray.maxByOrNull(selector: (Float) -> R): Float?
+       FloatArray.maxOf(selector: (Float) -> Double): Double
+       FloatArray.maxOf(selector: (Float) -> Float): Float
+       FloatArray.maxOf(selector: (Float) -> R): R
+       FloatArray.maxOfOrNull(selector: (Float) -> Double): Double?
+       FloatArray.maxOfOrNull(selector: (Float) -> Float): Float?
+       FloatArray.maxOfOrNull(selector: (Float) -> R): R?
+       FloatArray.maxOfWith(comparator: Comparator<in R>, selector: (Float) -> R): R
+       FloatArray.maxOfWithOrNull(comparator: Comparator<in R>, selector: (Float) -> R): R?
+       FloatArray.maxOrNull(): Float?
+       FloatArray.maxWith(comparator: Comparator<in Float>): Float
+       FloatArray.maxWithOrNull(comparator: Comparator<in Float>): Float?
+       FloatArray.min(): Float
+       FloatArray.minBy(selector: (Float) -> R): Float
+       FloatArray.minByOrNull(selector: (Float) -> R): Float?
+       FloatArray.minOf(selector: (Float) -> Double): Double
+       FloatArray.minOf(selector: (Float) -> Float): Float
+       FloatArray.minOf(selector: (Float) -> R): R
+       FloatArray.minOfOrNull(selector: (Float) -> Double): Double?
+       FloatArray.minOfOrNull(selector: (Float) -> Float): Float?
+       FloatArray.minOfOrNull(selector: (Float) -> R): R?
+       FloatArray.minOfWith(comparator: Comparator<in R>, selector: (Float) -> R): R
+       FloatArray.minOfWithOrNull(comparator: Comparator<in R>, selector: (Float) -> R): R?
+       FloatArray.minOrNull(): Float?
+       FloatArray.minWith(comparator: Comparator<in Float>): Float
+       FloatArray.minWithOrNull(comparator: Comparator<in Float>): Float?
+       FloatArray.none(): Boolean
+       FloatArray.none(predicate: (Float) -> Boolean): Boolean
+       FloatArray.onEach(action: (Float) -> Unit): FloatArray
+       FloatArray.onEachIndexed(action: (index: Int, Float) -> Unit): FloatArray
+       FloatArray.partition(predicate: (Float) -> Boolean): Pair<List<Float>, List<Float>>
+       FloatArray.plus(element: Float): FloatArray
+       FloatArray.plus(elements: Collection<Float>): FloatArray
+       FloatArray.plus(elements: FloatArray): FloatArray
+       FloatArray.random(): Float
+       FloatArray.random(random: Random): Float
+       FloatArray.randomOrNull(): Float?
+       FloatArray.randomOrNull(random: Random): Float?
+       FloatArray.reduce(operation: (acc: Float, Float) -> Float): Float
+       FloatArray.reduceIndexed(operation: (index: Int, acc: Float, Float) -> Float): Float
+       FloatArray.reduceIndexedOrNull(operation: (index: Int, acc: Float, Float) -> Float): Float?
+       FloatArray.reduceOrNull(operation: (acc: Float, Float) -> Float): Float?
+       FloatArray.reduceRight(operation: (Float, acc: Float) -> Float): Float
+       FloatArray.reduceRightIndexed(operation: (index: Int, Float, acc: Float) -> Float): Float
+       FloatArray.reduceRightIndexedOrNull(operation: (index: Int, Float, acc: Float) -> Float): Float?
+       FloatArray.reduceRightOrNull(operation: (Float, acc: Float) -> Float): Float?
+       FloatArray.reverse(): Unit
+       FloatArray.reverse(fromIndex: Int, toIndex: Int): Unit
+       FloatArray.reversed(): List<Float>
+       FloatArray.reversedArray(): FloatArray
+       FloatArray.runningFold(initial: R, operation: (acc: R, Float) -> R): List<R>
+       FloatArray.runningFoldIndexed(initial: R, operation: (index: Int, acc: R, Float) -> R): List<R>
+       FloatArray.runningReduce(operation: (acc: Float, Float) -> Float): List<Float>
+       FloatArray.runningReduceIndexed(operation: (index: Int, acc: Float, Float) -> Float): List<Float>
+       FloatArray.scan(initial: R, operation: (acc: R, Float) -> R): List<R>
+       FloatArray.scanIndexed(initial: R, operation: (index: Int, acc: R, Float) -> R): List<R>
+       FloatArray.shuffle(): Unit
+       FloatArray.shuffle(random: Random): Unit
+       FloatArray.single(): Float
+       FloatArray.single(predicate: (Float) -> Boolean): Float
+       FloatArray.singleOrNull(): Float?
+       FloatArray.singleOrNull(predicate: (Float) -> Boolean): Float?
+       FloatArray.slice(indices: IntRange): List<Float>
+       FloatArray.slice(indices: Iterable<Int>): List<Float>
+       FloatArray.sliceArray(indices: Collection<Int>): FloatArray
+       FloatArray.sliceArray(indices: IntRange): FloatArray
+       FloatArray.sort(): Unit
+       FloatArray.sort(fromIndex: Int, toIndex: Int): Unit
+       FloatArray.sortDescending(): Unit
+       FloatArray.sortDescending(fromIndex: Int, toIndex: Int): Unit
+       FloatArray.sorted(): List<Float>
+       FloatArray.sortedArray(): FloatArray
+       FloatArray.sortedArrayDescending(): FloatArray
+       FloatArray.sortedBy(selector: (Float) -> R?): List<Float>
+       FloatArray.sortedByDescending(selector: (Float) -> R?): List<Float>
+       FloatArray.sortedDescending(): List<Float>
+       FloatArray.sortedWith(comparator: Comparator<in Float>): List<Float>
+       FloatArray.subtract(other: Iterable<Float>): Set<Float>
+       FloatArray.sum(): Float
+       FloatArray.sumBy(selector: (Float) -> Int): Int
+       FloatArray.sumByDouble(selector: (Float) -> Double): Double
+       FloatArray.sumOf(selector: (Float) -> Double): Double
+       FloatArray.sumOf(selector: (Float) -> Int): Int
+       FloatArray.sumOf(selector: (Float) -> Long): Long
+       FloatArray.sumOf(selector: (Float) -> UInt): UInt
+       FloatArray.sumOf(selector: (Float) -> ULong): ULong
+       FloatArray.take(n: Int): List<Float>
+       FloatArray.takeLast(n: Int): List<Float>
+       FloatArray.takeLastWhile(predicate: (Float) -> Boolean): List<Float>
+       FloatArray.takeWhile(predicate: (Float) -> Boolean): List<Float>
+       FloatArray.toCollection(destination: C): C
+       FloatArray.toHashSet(): HashSet<Float>
+       FloatArray.toList(): List<Float>
+       FloatArray.toMutableList(): MutableList<Float>
+       FloatArray.toMutableSet(): MutableSet<Float>
+       FloatArray.toSet(): Set<Float>
+       FloatArray.toTypedArray(): Array<Float>
+       FloatArray.union(other: Iterable<Float>): Set<Float>
+       FloatArray.withIndex(): Iterable<IndexedValue<Float>>
+       FloatArray.zip(other: Array<out R>): List<Pair<Float, R>>
+       FloatArray.zip(other: Array<out R>, transform: (a: Float, b: R) -> V): List<V>
+       FloatArray.zip(other: FloatArray): List<Pair<Float, Float>>
+       FloatArray.zip(other: FloatArray, transform: (a: Float, b: Float) -> V): List<V>
+       FloatArray.zip(other: Iterable<R>): List<Pair<Float, R>>
+       FloatArray.zip(other: Iterable<R>, transform: (a: Float, b: R) -> V): List<V>
+       FloatArray?.contentEquals(other: FloatArray?): Boolean
+       FloatArray?.contentHashCode(): Int
+       FloatArray?.contentToString(): String
+       indices: IntRange
+       indices: IntRange
+       indices: IntRange
+       indices: IntRange
+       indices: IntRange
+       indices: IntRange
+       indices: IntRange
+       indices: IntRange
+       indices: IntRange
+       IntArray.all(predicate: (Int) -> Boolean): Boolean
+       IntArray.any(): Boolean
+       IntArray.any(predicate: (Int) -> Boolean): Boolean
+       IntArray.asIterable(): Iterable<Int>
+       IntArray.asList(): List<Int>
+       IntArray.asSequence(): Sequence<Int>
+       IntArray.associate(transform: (Int) -> Pair<K, V>): Map<K, V>
+       IntArray.associateBy(keySelector: (Int) -> K): Map<K, Int>
+       IntArray.associateBy(keySelector: (Int) -> K, valueTransform: (Int) -> V): Map<K, V>
+       IntArray.associateByTo(destination: M, keySelector: (Int) -> K): M
+       IntArray.associateByTo(destination: M, keySelector: (Int) -> K, valueTransform: (Int) -> V): M
+       IntArray.associateTo(destination: M, transform: (Int) -> Pair<K, V>): M
+       IntArray.associateWith(valueSelector: (Int) -> V): Map<Int, V>
+       IntArray.associateWithTo(destination: M, valueSelector: (Int) -> V): M
+       IntArray.average(): Double
+       IntArray.component1(): Int
+       IntArray.component2(): Int
+       IntArray.component3(): Int
+       IntArray.component4(): Int
+       IntArray.component5(): Int
+       IntArray.contains(element: Int): Boolean
+       IntArray.contentEquals(other: IntArray): Boolean
+       IntArray.contentHashCode(): Int
+       IntArray.contentToString(): String
+       IntArray.copyInto(destination: IntArray, destinationOffset: Int, startIndex: Int, endIndex: Int): IntArray
+       IntArray.copyOf(): IntArray
+       IntArray.copyOf(newSize: Int): IntArray
+       IntArray.copyOfRange(fromIndex: Int, toIndex: Int): IntArray
+       IntArray.count(): Int
+       IntArray.count(predicate: (Int) -> Boolean): Int
+       IntArray.distinct(): List<Int>
+       IntArray.distinctBy(selector: (Int) -> K): List<Int>
+       IntArray.drop(n: Int): List<Int>
+       IntArray.dropLast(n: Int): List<Int>
+       IntArray.dropLastWhile(predicate: (Int) -> Boolean): List<Int>
+       IntArray.dropWhile(predicate: (Int) -> Boolean): List<Int>
+       IntArray.elementAt(index: Int): Int
+       IntArray.elementAtOrElse(index: Int, defaultValue: (Int) -> Int): Int
+       IntArray.elementAtOrNull(index: Int): Int?
+       IntArray.fill(element: Int, fromIndex: Int, toIndex: Int): Unit
+       IntArray.filter(predicate: (Int) -> Boolean): List<Int>
+       IntArray.filterIndexed(predicate: (index: Int, Int) -> Boolean): List<Int>
+       IntArray.filterIndexedTo(destination: C, predicate: (index: Int, Int) -> Boolean): C
+       IntArray.filterNot(predicate: (Int) -> Boolean): List<Int>
+       IntArray.filterNotTo(destination: C, predicate: (Int) -> Boolean): C
+       IntArray.filterTo(destination: C, predicate: (Int) -> Boolean): C
+       IntArray.find(predicate: (Int) -> Boolean): Int?
+       IntArray.findLast(predicate: (Int) -> Boolean): Int?
+       IntArray.first(): Int
+       IntArray.first(predicate: (Int) -> Boolean): Int
+       IntArray.firstOrNull(): Int?
+       IntArray.firstOrNull(predicate: (Int) -> Boolean): Int?
+       IntArray.flatMap(transform: (Int) -> Iterable<R>): List<R>
+       IntArray.flatMapIndexed(transform: (index: Int, Int) -> Iterable<R>): List<R>
+       IntArray.flatMapIndexedTo(destination: C, transform: (index: Int, Int) -> Iterable<R>): C
+       IntArray.flatMapTo(destination: C, transform: (Int) -> Iterable<R>): C
+       IntArray.fold(initial: R, operation: (acc: R, Int) -> R): R
+       IntArray.foldIndexed(initial: R, operation: (index: Int, acc: R, Int) -> R): R
+       IntArray.foldRight(initial: R, operation: (Int, acc: R) -> R): R
+       IntArray.foldRightIndexed(initial: R, operation: (index: Int, Int, acc: R) -> R): R
+       IntArray.forEach(action: (Int) -> Unit): Unit
+       IntArray.forEachIndexed(action: (index: Int, Int) -> Unit): Unit
+       IntArray.getOrElse(index: Int, defaultValue: (Int) -> Int): Int
+       IntArray.getOrNull(index: Int): Int?
+       IntArray.groupBy(keySelector: (Int) -> K): Map<K, List<Int>>
+       IntArray.groupBy(keySelector: (Int) -> K, valueTransform: (Int) -> V): Map<K, List<V>>
+       IntArray.groupByTo(destination: M, keySelector: (Int) -> K): M
+       IntArray.groupByTo(destination: M, keySelector: (Int) -> K, valueTransform: (Int) -> V): M
+       IntArray.indexOf(element: Int): Int
+       IntArray.indexOfFirst(predicate: (Int) -> Boolean): Int
+       IntArray.indexOfLast(predicate: (Int) -> Boolean): Int
+       IntArray.intersect(other: Iterable<Int>): Set<Int>
+       IntArray.isEmpty(): Boolean
+       IntArray.isNotEmpty(): Boolean
+       IntArray.joinTo(buffer: A, separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Int) -> CharSequence)?): A
+       IntArray.joinToString(separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Int) -> CharSequence)?): String
+       IntArray.last(): Int
+       IntArray.last(predicate: (Int) -> Boolean): Int
+       IntArray.lastIndexOf(element: Int): Int
+       IntArray.lastOrNull(): Int?
+       IntArray.lastOrNull(predicate: (Int) -> Boolean): Int?
+       IntArray.map(transform: (Int) -> R): List<R>
+       IntArray.mapIndexed(transform: (index: Int, Int) -> R): List<R>
+       IntArray.mapIndexedTo(destination: C, transform: (index: Int, Int) -> R): C
+       IntArray.mapTo(destination: C, transform: (Int) -> R): C
+       IntArray.max(): Int
+       IntArray.maxBy(selector: (Int) -> R): Int
+       IntArray.maxByOrNull(selector: (Int) -> R): Int?
+       IntArray.maxOf(selector: (Int) -> Double): Double
+       IntArray.maxOf(selector: (Int) -> Float): Float
+       IntArray.maxOf(selector: (Int) -> R): R
+       IntArray.maxOfOrNull(selector: (Int) -> Double): Double?
+       IntArray.maxOfOrNull(selector: (Int) -> Float): Float?
+       IntArray.maxOfOrNull(selector: (Int) -> R): R?
+       IntArray.maxOfWith(comparator: Comparator<in R>, selector: (Int) -> R): R
+       IntArray.maxOfWithOrNull(comparator: Comparator<in R>, selector: (Int) -> R): R?
+       IntArray.maxOrNull(): Int?
+       IntArray.maxWith(comparator: Comparator<in Int>): Int
+       IntArray.maxWithOrNull(comparator: Comparator<in Int>): Int?
+       IntArray.min(): Int
+       IntArray.minBy(selector: (Int) -> R): Int
+       IntArray.minByOrNull(selector: (Int) -> R): Int?
+       IntArray.minOf(selector: (Int) -> Double): Double
+       IntArray.minOf(selector: (Int) -> Float): Float
+       IntArray.minOf(selector: (Int) -> R): R
+       IntArray.minOfOrNull(selector: (Int) -> Double): Double?
+       IntArray.minOfOrNull(selector: (Int) -> Float): Float?
+       IntArray.minOfOrNull(selector: (Int) -> R): R?
+       IntArray.minOfWith(comparator: Comparator<in R>, selector: (Int) -> R): R
+       IntArray.minOfWithOrNull(comparator: Comparator<in R>, selector: (Int) -> R): R?
+       IntArray.minOrNull(): Int?
+       IntArray.minWith(comparator: Comparator<in Int>): Int
+       IntArray.minWithOrNull(comparator: Comparator<in Int>): Int?
+       IntArray.none(): Boolean
+       IntArray.none(predicate: (Int) -> Boolean): Boolean
+       IntArray.onEach(action: (Int) -> Unit): IntArray
+       IntArray.onEachIndexed(action: (index: Int, Int) -> Unit): IntArray
+       IntArray.partition(predicate: (Int) -> Boolean): Pair<List<Int>, List<Int>>
+       IntArray.plus(element: Int): IntArray
+       IntArray.plus(elements: Collection<Int>): IntArray
+       IntArray.plus(elements: IntArray): IntArray
+       IntArray.random(): Int
+       IntArray.random(random: Random): Int
+       IntArray.randomOrNull(): Int?
+       IntArray.randomOrNull(random: Random): Int?
+       IntArray.reduce(operation: (acc: Int, Int) -> Int): Int
+       IntArray.reduceIndexed(operation: (index: Int, acc: Int, Int) -> Int): Int
+       IntArray.reduceIndexedOrNull(operation: (index: Int, acc: Int, Int) -> Int): Int?
+       IntArray.reduceOrNull(operation: (acc: Int, Int) -> Int): Int?
+       IntArray.reduceRight(operation: (Int, acc: Int) -> Int): Int
+       IntArray.reduceRightIndexed(operation: (index: Int, Int, acc: Int) -> Int): Int
+       IntArray.reduceRightIndexedOrNull(operation: (index: Int, Int, acc: Int) -> Int): Int?
+       IntArray.reduceRightOrNull(operation: (Int, acc: Int) -> Int): Int?
+       IntArray.reverse(): Unit
+       IntArray.reverse(fromIndex: Int, toIndex: Int): Unit
+       IntArray.reversed(): List<Int>
+       IntArray.reversedArray(): IntArray
+       IntArray.runningFold(initial: R, operation: (acc: R, Int) -> R): List<R>
+       IntArray.runningFoldIndexed(initial: R, operation: (index: Int, acc: R, Int) -> R): List<R>
+       IntArray.runningReduce(operation: (acc: Int, Int) -> Int): List<Int>
+       IntArray.runningReduceIndexed(operation: (index: Int, acc: Int, Int) -> Int): List<Int>
+       IntArray.scan(initial: R, operation: (acc: R, Int) -> R): List<R>
+       IntArray.scanIndexed(initial: R, operation: (index: Int, acc: R, Int) -> R): List<R>
+       IntArray.shuffle(): Unit
+       IntArray.shuffle(random: Random): Unit
+       IntArray.single(): Int
+       IntArray.single(predicate: (Int) -> Boolean): Int
+       IntArray.singleOrNull(): Int?
+       IntArray.singleOrNull(predicate: (Int) -> Boolean): Int?
+       IntArray.slice(indices: IntRange): List<Int>
+       IntArray.slice(indices: Iterable<Int>): List<Int>
+       IntArray.sliceArray(indices: Collection<Int>): IntArray
+       IntArray.sliceArray(indices: IntRange): IntArray
+       IntArray.sort(): Unit
+       IntArray.sort(fromIndex: Int, toIndex: Int): Unit
+       IntArray.sortDescending(): Unit
+       IntArray.sortDescending(fromIndex: Int, toIndex: Int): Unit
+       IntArray.sorted(): List<Int>
+       IntArray.sortedArray(): IntArray
+       IntArray.sortedArrayDescending(): IntArray
+       IntArray.sortedBy(selector: (Int) -> R?): List<Int>
+       IntArray.sortedByDescending(selector: (Int) -> R?): List<Int>
+       IntArray.sortedDescending(): List<Int>
+       IntArray.sortedWith(comparator: Comparator<in Int>): List<Int>
+       IntArray.subtract(other: Iterable<Int>): Set<Int>
+       IntArray.sum(): Int
+       IntArray.sumBy(selector: (Int) -> Int): Int
+       IntArray.sumByDouble(selector: (Int) -> Double): Double
+       IntArray.sumOf(selector: (Int) -> Double): Double
+       IntArray.sumOf(selector: (Int) -> Int): Int
+       IntArray.sumOf(selector: (Int) -> Long): Long
+       IntArray.sumOf(selector: (Int) -> UInt): UInt
+       IntArray.sumOf(selector: (Int) -> ULong): ULong
+       IntArray.take(n: Int): List<Int>
+       IntArray.takeLast(n: Int): List<Int>
+       IntArray.takeLastWhile(predicate: (Int) -> Boolean): List<Int>
+       IntArray.takeWhile(predicate: (Int) -> Boolean): List<Int>
+       IntArray.toCollection(destination: C): C
+       IntArray.toHashSet(): HashSet<Int>
+       IntArray.toList(): List<Int>
+       IntArray.toMutableList(): MutableList<Int>
+       IntArray.toMutableSet(): MutableSet<Int>
+       IntArray.toSet(): Set<Int>
+       IntArray.toTypedArray(): Array<Int>
+       IntArray.union(other: Iterable<Int>): Set<Int>
+       IntArray.withIndex(): Iterable<IndexedValue<Int>>
+       IntArray.zip(other: Array<out R>): List<Pair<Int, R>>
+       IntArray.zip(other: Array<out R>, transform: (a: Int, b: R) -> V): List<V>
+       IntArray.zip(other: IntArray): List<Pair<Int, Int>>
+       IntArray.zip(other: IntArray, transform: (a: Int, b: Int) -> V): List<V>
+       IntArray.zip(other: Iterable<R>): List<Pair<Int, R>>
+       IntArray.zip(other: Iterable<R>, transform: (a: Int, b: R) -> V): List<V>
+       IntArray?.contentEquals(other: IntArray?): Boolean
+       IntArray?.contentHashCode(): Int
+       IntArray?.contentToString(): String
+       lastIndex: Int
+       lastIndex: Int
+       lastIndex: Int
+       lastIndex: Int
+       lastIndex: Int
+       lastIndex: Int
+       lastIndex: Int
+       lastIndex: Int
+       lastIndex: Int
+       LongArray.all(predicate: (Long) -> Boolean): Boolean
+       LongArray.any(): Boolean
+       LongArray.any(predicate: (Long) -> Boolean): Boolean
+       LongArray.asIterable(): Iterable<Long>
+       LongArray.asList(): List<Long>
+       LongArray.asSequence(): Sequence<Long>
+       LongArray.associate(transform: (Long) -> Pair<K, V>): Map<K, V>
+       LongArray.associateBy(keySelector: (Long) -> K): Map<K, Long>
+       LongArray.associateBy(keySelector: (Long) -> K, valueTransform: (Long) -> V): Map<K, V>
+       LongArray.associateByTo(destination: M, keySelector: (Long) -> K): M
+       LongArray.associateByTo(destination: M, keySelector: (Long) -> K, valueTransform: (Long) -> V): M
+       LongArray.associateTo(destination: M, transform: (Long) -> Pair<K, V>): M
+       LongArray.associateWith(valueSelector: (Long) -> V): Map<Long, V>
+       LongArray.associateWithTo(destination: M, valueSelector: (Long) -> V): M
+       LongArray.average(): Double
+       LongArray.component1(): Long
+       LongArray.component2(): Long
+       LongArray.component3(): Long
+       LongArray.component4(): Long
+       LongArray.component5(): Long
+       LongArray.contains(element: Long): Boolean
+       LongArray.contentEquals(other: LongArray): Boolean
+       LongArray.contentHashCode(): Int
+       LongArray.contentToString(): String
+       LongArray.copyInto(destination: LongArray, destinationOffset: Int, startIndex: Int, endIndex: Int): LongArray
+       LongArray.copyOf(): LongArray
+       LongArray.copyOf(newSize: Int): LongArray
+       LongArray.copyOfRange(fromIndex: Int, toIndex: Int): LongArray
+       LongArray.count(): Int
+       LongArray.count(predicate: (Long) -> Boolean): Int
+       LongArray.distinct(): List<Long>
+       LongArray.distinctBy(selector: (Long) -> K): List<Long>
+       LongArray.drop(n: Int): List<Long>
+       LongArray.dropLast(n: Int): List<Long>
+       LongArray.dropLastWhile(predicate: (Long) -> Boolean): List<Long>
+       LongArray.dropWhile(predicate: (Long) -> Boolean): List<Long>
+       LongArray.elementAt(index: Int): Long
+       LongArray.elementAtOrElse(index: Int, defaultValue: (Int) -> Long): Long
+       LongArray.elementAtOrNull(index: Int): Long?
+       LongArray.fill(element: Long, fromIndex: Int, toIndex: Int): Unit
+       LongArray.filter(predicate: (Long) -> Boolean): List<Long>
+       LongArray.filterIndexed(predicate: (index: Int, Long) -> Boolean): List<Long>
+       LongArray.filterIndexedTo(destination: C, predicate: (index: Int, Long) -> Boolean): C
+       LongArray.filterNot(predicate: (Long) -> Boolean): List<Long>
+       LongArray.filterNotTo(destination: C, predicate: (Long) -> Boolean): C
+       LongArray.filterTo(destination: C, predicate: (Long) -> Boolean): C
+       LongArray.find(predicate: (Long) -> Boolean): Long?
+       LongArray.findLast(predicate: (Long) -> Boolean): Long?
+       LongArray.first(): Long
+       LongArray.first(predicate: (Long) -> Boolean): Long
+       LongArray.firstOrNull(): Long?
+       LongArray.firstOrNull(predicate: (Long) -> Boolean): Long?
+       LongArray.flatMap(transform: (Long) -> Iterable<R>): List<R>
+       LongArray.flatMapIndexed(transform: (index: Int, Long) -> Iterable<R>): List<R>
+       LongArray.flatMapIndexedTo(destination: C, transform: (index: Int, Long) -> Iterable<R>): C
+       LongArray.flatMapTo(destination: C, transform: (Long) -> Iterable<R>): C
+       LongArray.fold(initial: R, operation: (acc: R, Long) -> R): R
+       LongArray.foldIndexed(initial: R, operation: (index: Int, acc: R, Long) -> R): R
+       LongArray.foldRight(initial: R, operation: (Long, acc: R) -> R): R
+       LongArray.foldRightIndexed(initial: R, operation: (index: Int, Long, acc: R) -> R): R
+       LongArray.forEach(action: (Long) -> Unit): Unit
+       LongArray.forEachIndexed(action: (index: Int, Long) -> Unit): Unit
+       LongArray.getOrElse(index: Int, defaultValue: (Int) -> Long): Long
+       LongArray.getOrNull(index: Int): Long?
+       LongArray.groupBy(keySelector: (Long) -> K): Map<K, List<Long>>
+       LongArray.groupBy(keySelector: (Long) -> K, valueTransform: (Long) -> V): Map<K, List<V>>
+       LongArray.groupByTo(destination: M, keySelector: (Long) -> K): M
+       LongArray.groupByTo(destination: M, keySelector: (Long) -> K, valueTransform: (Long) -> V): M
+       LongArray.indexOf(element: Long): Int
+       LongArray.indexOfFirst(predicate: (Long) -> Boolean): Int
+       LongArray.indexOfLast(predicate: (Long) -> Boolean): Int
+       LongArray.intersect(other: Iterable<Long>): Set<Long>
+       LongArray.isEmpty(): Boolean
+       LongArray.isNotEmpty(): Boolean
+       LongArray.joinTo(buffer: A, separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Long) -> CharSequence)?): A
+       LongArray.joinToString(separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Long) -> CharSequence)?): String
+       LongArray.last(): Long
+       LongArray.last(predicate: (Long) -> Boolean): Long
+       LongArray.lastIndexOf(element: Long): Int
+       LongArray.lastOrNull(): Long?
+       LongArray.lastOrNull(predicate: (Long) -> Boolean): Long?
+       LongArray.map(transform: (Long) -> R): List<R>
+       LongArray.mapIndexed(transform: (index: Int, Long) -> R): List<R>
+       LongArray.mapIndexedTo(destination: C, transform: (index: Int, Long) -> R): C
+       LongArray.mapTo(destination: C, transform: (Long) -> R): C
+       LongArray.max(): Long
+       LongArray.maxBy(selector: (Long) -> R): Long
+       LongArray.maxByOrNull(selector: (Long) -> R): Long?
+       LongArray.maxOf(selector: (Long) -> Double): Double
+       LongArray.maxOf(selector: (Long) -> Float): Float
+       LongArray.maxOf(selector: (Long) -> R): R
+       LongArray.maxOfOrNull(selector: (Long) -> Double): Double?
+       LongArray.maxOfOrNull(selector: (Long) -> Float): Float?
+       LongArray.maxOfOrNull(selector: (Long) -> R): R?
+       LongArray.maxOfWith(comparator: Comparator<in R>, selector: (Long) -> R): R
+       LongArray.maxOfWithOrNull(comparator: Comparator<in R>, selector: (Long) -> R): R?
+       LongArray.maxOrNull(): Long?
+       LongArray.maxWith(comparator: Comparator<in Long>): Long
+       LongArray.maxWithOrNull(comparator: Comparator<in Long>): Long?
+       LongArray.min(): Long
+       LongArray.minBy(selector: (Long) -> R): Long
+       LongArray.minByOrNull(selector: (Long) -> R): Long?
+       LongArray.minOf(selector: (Long) -> Double): Double
+       LongArray.minOf(selector: (Long) -> Float): Float
+       LongArray.minOf(selector: (Long) -> R): R
+       LongArray.minOfOrNull(selector: (Long) -> Double): Double?
+       LongArray.minOfOrNull(selector: (Long) -> Float): Float?
+       LongArray.minOfOrNull(selector: (Long) -> R): R?
+       LongArray.minOfWith(comparator: Comparator<in R>, selector: (Long) -> R): R
+       LongArray.minOfWithOrNull(comparator: Comparator<in R>, selector: (Long) -> R): R?
+       LongArray.minOrNull(): Long?
+       LongArray.minWith(comparator: Comparator<in Long>): Long
+       LongArray.minWithOrNull(comparator: Comparator<in Long>): Long?
+       LongArray.none(): Boolean
+       LongArray.none(predicate: (Long) -> Boolean): Boolean
+       LongArray.onEach(action: (Long) -> Unit): LongArray
+       LongArray.onEachIndexed(action: (index: Int, Long) -> Unit): LongArray
+       LongArray.partition(predicate: (Long) -> Boolean): Pair<List<Long>, List<Long>>
+       LongArray.plus(element: Long): LongArray
+       LongArray.plus(elements: Collection<Long>): LongArray
+       LongArray.plus(elements: LongArray): LongArray
+       LongArray.random(): Long
+       LongArray.random(random: Random): Long
+       LongArray.randomOrNull(): Long?
+       LongArray.randomOrNull(random: Random): Long?
+       LongArray.reduce(operation: (acc: Long, Long) -> Long): Long
+       LongArray.reduceIndexed(operation: (index: Int, acc: Long, Long) -> Long): Long
+       LongArray.reduceIndexedOrNull(operation: (index: Int, acc: Long, Long) -> Long): Long?
+       LongArray.reduceOrNull(operation: (acc: Long, Long) -> Long): Long?
+       LongArray.reduceRight(operation: (Long, acc: Long) -> Long): Long
+       LongArray.reduceRightIndexed(operation: (index: Int, Long, acc: Long) -> Long): Long
+       LongArray.reduceRightIndexedOrNull(operation: (index: Int, Long, acc: Long) -> Long): Long?
+       LongArray.reduceRightOrNull(operation: (Long, acc: Long) -> Long): Long?
+       LongArray.reverse(): Unit
+       LongArray.reverse(fromIndex: Int, toIndex: Int): Unit
+       LongArray.reversed(): List<Long>
+       LongArray.reversedArray(): LongArray
+       LongArray.runningFold(initial: R, operation: (acc: R, Long) -> R): List<R>
+       LongArray.runningFoldIndexed(initial: R, operation: (index: Int, acc: R, Long) -> R): List<R>
+       LongArray.runningReduce(operation: (acc: Long, Long) -> Long): List<Long>
+       LongArray.runningReduceIndexed(operation: (index: Int, acc: Long, Long) -> Long): List<Long>
+       LongArray.scan(initial: R, operation: (acc: R, Long) -> R): List<R>
+       LongArray.scanIndexed(initial: R, operation: (index: Int, acc: R, Long) -> R): List<R>
+       LongArray.shuffle(): Unit
+       LongArray.shuffle(random: Random): Unit
+       LongArray.single(): Long
+       LongArray.single(predicate: (Long) -> Boolean): Long
+       LongArray.singleOrNull(): Long?
+       LongArray.singleOrNull(predicate: (Long) -> Boolean): Long?
+       LongArray.slice(indices: IntRange): List<Long>
+       LongArray.slice(indices: Iterable<Int>): List<Long>
+       LongArray.sliceArray(indices: Collection<Int>): LongArray
+       LongArray.sliceArray(indices: IntRange): LongArray
+       LongArray.sort(): Unit
+       LongArray.sort(fromIndex: Int, toIndex: Int): Unit
+       LongArray.sortDescending(): Unit
+       LongArray.sortDescending(fromIndex: Int, toIndex: Int): Unit
+       LongArray.sorted(): List<Long>
+       LongArray.sortedArray(): LongArray
+       LongArray.sortedArrayDescending(): LongArray
+       LongArray.sortedBy(selector: (Long) -> R?): List<Long>
+       LongArray.sortedByDescending(selector: (Long) -> R?): List<Long>
+       LongArray.sortedDescending(): List<Long>
+       LongArray.sortedWith(comparator: Comparator<in Long>): List<Long>
+       LongArray.subtract(other: Iterable<Long>): Set<Long>
+       LongArray.sum(): Long
+       LongArray.sumBy(selector: (Long) -> Int): Int
+       LongArray.sumByDouble(selector: (Long) -> Double): Double
+       LongArray.sumOf(selector: (Long) -> Double): Double
+       LongArray.sumOf(selector: (Long) -> Int): Int
+       LongArray.sumOf(selector: (Long) -> Long): Long
+       LongArray.sumOf(selector: (Long) -> UInt): UInt
+       LongArray.sumOf(selector: (Long) -> ULong): ULong
+       LongArray.take(n: Int): List<Long>
+       LongArray.takeLast(n: Int): List<Long>
+       LongArray.takeLastWhile(predicate: (Long) -> Boolean): List<Long>
+       LongArray.takeWhile(predicate: (Long) -> Boolean): List<Long>
+       LongArray.toCollection(destination: C): C
+       LongArray.toHashSet(): HashSet<Long>
+       LongArray.toList(): List<Long>
+       LongArray.toMutableList(): MutableList<Long>
+       LongArray.toMutableSet(): MutableSet<Long>
+       LongArray.toSet(): Set<Long>
+       LongArray.toTypedArray(): Array<Long>
+       LongArray.union(other: Iterable<Long>): Set<Long>
+       LongArray.withIndex(): Iterable<IndexedValue<Long>>
+       LongArray.zip(other: Array<out R>): List<Pair<Long, R>>
+       LongArray.zip(other: Array<out R>, transform: (a: Long, b: R) -> V): List<V>
+       LongArray.zip(other: Iterable<R>): List<Pair<Long, R>>
+       LongArray.zip(other: Iterable<R>, transform: (a: Long, b: R) -> V): List<V>
+       LongArray.zip(other: LongArray): List<Pair<Long, Long>>
+       LongArray.zip(other: LongArray, transform: (a: Long, b: Long) -> V): List<V>
+       LongArray?.contentEquals(other: LongArray?): Boolean
+       LongArray?.contentHashCode(): Int
+       LongArray?.contentToString(): String
+       ShortArray.all(predicate: (Short) -> Boolean): Boolean
+       ShortArray.any(): Boolean
+       ShortArray.any(predicate: (Short) -> Boolean): Boolean
+       ShortArray.asIterable(): Iterable<Short>
+       ShortArray.asList(): List<Short>
+       ShortArray.asSequence(): Sequence<Short>
+       ShortArray.associate(transform: (Short) -> Pair<K, V>): Map<K, V>
+       ShortArray.associateBy(keySelector: (Short) -> K): Map<K, Short>
+       ShortArray.associateBy(keySelector: (Short) -> K, valueTransform: (Short) -> V): Map<K, V>
+       ShortArray.associateByTo(destination: M, keySelector: (Short) -> K): M
+       ShortArray.associateByTo(destination: M, keySelector: (Short) -> K, valueTransform: (Short) -> V): M
+       ShortArray.associateTo(destination: M, transform: (Short) -> Pair<K, V>): M
+       ShortArray.associateWith(valueSelector: (Short) -> V): Map<Short, V>
+       ShortArray.associateWithTo(destination: M, valueSelector: (Short) -> V): M
+       ShortArray.average(): Double
+       ShortArray.component1(): Short
+       ShortArray.component2(): Short
+       ShortArray.component3(): Short
+       ShortArray.component4(): Short
+       ShortArray.component5(): Short
+       ShortArray.contains(element: Short): Boolean
+       ShortArray.contentEquals(other: ShortArray): Boolean
+       ShortArray.contentHashCode(): Int
+       ShortArray.contentToString(): String
+       ShortArray.copyInto(destination: ShortArray, destinationOffset: Int, startIndex: Int, endIndex: Int): ShortArray
+       ShortArray.copyOf(): ShortArray
+       ShortArray.copyOf(newSize: Int): ShortArray
+       ShortArray.copyOfRange(fromIndex: Int, toIndex: Int): ShortArray
+       ShortArray.count(): Int
+       ShortArray.count(predicate: (Short) -> Boolean): Int
+       ShortArray.distinct(): List<Short>
+       ShortArray.distinctBy(selector: (Short) -> K): List<Short>
+       ShortArray.drop(n: Int): List<Short>
+       ShortArray.dropLast(n: Int): List<Short>
+       ShortArray.dropLastWhile(predicate: (Short) -> Boolean): List<Short>
+       ShortArray.dropWhile(predicate: (Short) -> Boolean): List<Short>
+       ShortArray.elementAt(index: Int): Short
+       ShortArray.elementAtOrElse(index: Int, defaultValue: (Int) -> Short): Short
+       ShortArray.elementAtOrNull(index: Int): Short?
+       ShortArray.fill(element: Short, fromIndex: Int, toIndex: Int): Unit
+       ShortArray.filter(predicate: (Short) -> Boolean): List<Short>
+       ShortArray.filterIndexed(predicate: (index: Int, Short) -> Boolean): List<Short>
+       ShortArray.filterIndexedTo(destination: C, predicate: (index: Int, Short) -> Boolean): C
+       ShortArray.filterNot(predicate: (Short) -> Boolean): List<Short>
+       ShortArray.filterNotTo(destination: C, predicate: (Short) -> Boolean): C
+       ShortArray.filterTo(destination: C, predicate: (Short) -> Boolean): C
+       ShortArray.find(predicate: (Short) -> Boolean): Short?
+       ShortArray.findLast(predicate: (Short) -> Boolean): Short?
+       ShortArray.first(): Short
+       ShortArray.first(predicate: (Short) -> Boolean): Short
+       ShortArray.firstOrNull(): Short?
+       ShortArray.firstOrNull(predicate: (Short) -> Boolean): Short?
+       ShortArray.flatMap(transform: (Short) -> Iterable<R>): List<R>
+       ShortArray.flatMapIndexed(transform: (index: Int, Short) -> Iterable<R>): List<R>
+       ShortArray.flatMapIndexedTo(destination: C, transform: (index: Int, Short) -> Iterable<R>): C
+       ShortArray.flatMapTo(destination: C, transform: (Short) -> Iterable<R>): C
+       ShortArray.fold(initial: R, operation: (acc: R, Short) -> R): R
+       ShortArray.foldIndexed(initial: R, operation: (index: Int, acc: R, Short) -> R): R
+       ShortArray.foldRight(initial: R, operation: (Short, acc: R) -> R): R
+       ShortArray.foldRightIndexed(initial: R, operation: (index: Int, Short, acc: R) -> R): R
+       ShortArray.forEach(action: (Short) -> Unit): Unit
+       ShortArray.forEachIndexed(action: (index: Int, Short) -> Unit): Unit
+       ShortArray.getOrElse(index: Int, defaultValue: (Int) -> Short): Short
+       ShortArray.getOrNull(index: Int): Short?
+       ShortArray.groupBy(keySelector: (Short) -> K): Map<K, List<Short>>
+       ShortArray.groupBy(keySelector: (Short) -> K, valueTransform: (Short) -> V): Map<K, List<V>>
+       ShortArray.groupByTo(destination: M, keySelector: (Short) -> K): M
+       ShortArray.groupByTo(destination: M, keySelector: (Short) -> K, valueTransform: (Short) -> V): M
+       ShortArray.indexOf(element: Short): Int
+       ShortArray.indexOfFirst(predicate: (Short) -> Boolean): Int
+       ShortArray.indexOfLast(predicate: (Short) -> Boolean): Int
+       ShortArray.intersect(other: Iterable<Short>): Set<Short>
+       ShortArray.isEmpty(): Boolean
+       ShortArray.isNotEmpty(): Boolean
+       ShortArray.joinTo(buffer: A, separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Short) -> CharSequence)?): A
+       ShortArray.joinToString(separator: CharSequence, prefix: CharSequence, postfix: CharSequence, limit: Int, truncated: CharSequence, transform: ((Short) -> CharSequence)?): String
+       ShortArray.last(): Short
+       ShortArray.last(predicate: (Short) -> Boolean): Short
+       ShortArray.lastIndexOf(element: Short): Int
+       ShortArray.lastOrNull(): Short?
+       ShortArray.lastOrNull(predicate: (Short) -> Boolean): Short?
+       ShortArray.map(transform: (Short) -> R): List<R>
+       ShortArray.mapIndexed(transform: (index: Int, Short) -> R): List<R>
+       ShortArray.mapIndexedTo(destination: C, transform: (index: Int, Short) -> R): C
+       ShortArray.mapTo(destination: C, transform: (Short) -> R): C
+       ShortArray.max(): Short
+       ShortArray.maxBy(selector: (Short) -> R): Short
+       ShortArray.maxByOrNull(selector: (Short) -> R): Short?
+       ShortArray.maxOf(selector: (Short) -> Double): Double
+       ShortArray.maxOf(selector: (Short) -> Float): Float
+       ShortArray.maxOf(selector: (Short) -> R): R
+       ShortArray.maxOfOrNull(selector: (Short) -> Double): Double?
+       ShortArray.maxOfOrNull(selector: (Short) -> Float): Float?
+       ShortArray.maxOfOrNull(selector: (Short) -> R): R?
+       ShortArray.maxOfWith(comparator: Comparator<in R>, selector: (Short) -> R): R
+       ShortArray.maxOfWithOrNull(comparator: Comparator<in R>, selector: (Short) -> R): R?
+       ShortArray.maxOrNull(): Short?
+       ShortArray.maxWith(comparator: Comparator<in Short>): Short
+       ShortArray.maxWithOrNull(comparator: Comparator<in Short>): Short?
+       ShortArray.min(): Short
+       ShortArray.minBy(selector: (Short) -> R): Short
+       ShortArray.minByOrNull(selector: (Short) -> R): Short?
+       ShortArray.minOf(selector: (Short) -> Double): Double
+       ShortArray.minOf(selector: (Short) -> Float): Float
+       ShortArray.minOf(selector: (Short) -> R): R
+       ShortArray.minOfOrNull(selector: (Short) -> Double): Double?
+       ShortArray.minOfOrNull(selector: (Short) -> Float): Float?
+       ShortArray.minOfOrNull(selector: (Short) -> R): R?
+       ShortArray.minOfWith(comparator: Comparator<in R>, selector: (Short) -> R): R
+       ShortArray.minOfWithOrNull(comparator: Comparator<in R>, selector: (Short) -> R): R?
+       ShortArray.minOrNull(): Short?
+       ShortArray.minWith(comparator: Comparator<in Short>): Short
+       ShortArray.minWithOrNull(comparator: Comparator<in Short>): Short?
+       ShortArray.none(): Boolean
+       ShortArray.none(predicate: (Short) -> Boolean): Boolean
+       ShortArray.onEach(action: (Short) -> Unit): ShortArray
+       ShortArray.onEachIndexed(action: (index: Int, Short) -> Unit): ShortArray
+       ShortArray.partition(predicate: (Short) -> Boolean): Pair<List<Short>, List<Short>>
+       ShortArray.plus(element: Short): ShortArray
+       ShortArray.plus(elements: Collection<Short>): ShortArray
+       ShortArray.plus(elements: ShortArray): ShortArray
+       ShortArray.random(): Short
+       ShortArray.random(random: Random): Short
+       ShortArray.randomOrNull(): Short?
+       ShortArray.randomOrNull(random: Random): Short?
+       ShortArray.reduce(operation: (acc: Short, Short) -> Short): Short
+       ShortArray.reduceIndexed(operation: (index: Int, acc: Short, Short) -> Short): Short
+       ShortArray.reduceIndexedOrNull(operation: (index: Int, acc: Short, Short) -> Short): Short?
+       ShortArray.reduceOrNull(operation: (acc: Short, Short) -> Short): Short?
+       ShortArray.reduceRight(operation: (Short, acc: Short) -> Short): Short
+       ShortArray.reduceRightIndexed(operation: (index: Int, Short, acc: Short) -> Short): Short
+       ShortArray.reduceRightIndexedOrNull(operation: (index: Int, Short, acc: Short) -> Short): Short?
+       ShortArray.reduceRightOrNull(operation: (Short, acc: Short) -> Short): Short?
+       ShortArray.reverse(): Unit
+       ShortArray.reverse(fromIndex: Int, toIndex: Int): Unit
+       ShortArray.reversed(): List<Short>
+       ShortArray.reversedArray(): ShortArray
+       ShortArray.runningFold(initial: R, operation: (acc: R, Short) -> R): List<R>
+       ShortArray.runningFoldIndexed(initial: R, operation: (index: Int, acc: R, Short) -> R): List<R>
+       ShortArray.runningReduce(operation: (acc: Short, Short) -> Short): List<Short>
+       ShortArray.runningReduceIndexed(operation: (index: Int, acc: Short, Short) -> Short): List<Short>
+       ShortArray.scan(initial: R, operation: (acc: R, Short) -> R): List<R>
+       ShortArray.scanIndexed(initial: R, operation: (index: Int, acc: R, Short) -> R): List<R>
+       ShortArray.shuffle(): Unit
+       ShortArray.shuffle(random: Random): Unit
+       ShortArray.single(): Short
+       ShortArray.single(predicate: (Short) -> Boolean): Short
+       ShortArray.singleOrNull(): Short?
+       ShortArray.singleOrNull(predicate: (Short) -> Boolean): Short?
+       ShortArray.slice(indices: IntRange): List<Short>
+       ShortArray.slice(indices: Iterable<Int>): List<Short>
+       ShortArray.sliceArray(indices: Collection<Int>): ShortArray
+       ShortArray.sliceArray(indices: IntRange): ShortArray
+       ShortArray.sort(): Unit
+       ShortArray.sort(fromIndex: Int, toIndex: Int): Unit
+       ShortArray.sortDescending(): Unit
+       ShortArray.sortDescending(fromIndex: Int, toIndex: Int): Unit
+       ShortArray.sorted(): List<Short>
+       ShortArray.sortedArray(): ShortArray
+       ShortArray.sortedArrayDescending(): ShortArray
+       ShortArray.sortedBy(selector: (Short) -> R?): List<Short>
+       ShortArray.sortedByDescending(selector: (Short) -> R?): List<Short>
+       ShortArray.sortedDescending(): List<Short>
+       ShortArray.sortedWith(comparator: Comparator<in Short>): List<Short>
+       ShortArray.subtract(other: Iterable<Short>): Set<Short>
+       ShortArray.sum(): Int
+       ShortArray.sumBy(selector: (Short) -> Int): Int
+       ShortArray.sumByDouble(selector: (Short) -> Double): Double
+       ShortArray.sumOf(selector: (Short) -> Double): Double
+       ShortArray.sumOf(selector: (Short) -> Int): Int
+       ShortArray.sumOf(selector: (Short) -> Long): Long
+       ShortArray.sumOf(selector: (Short) -> UInt): UInt
+       ShortArray.sumOf(selector: (Short) -> ULong): ULong
+       ShortArray.take(n: Int): List<Short>
+       ShortArray.takeLast(n: Int): List<Short>
+       ShortArray.takeLastWhile(predicate: (Short) -> Boolean): List<Short>
+       ShortArray.takeWhile(predicate: (Short) -> Boolean): List<Short>
+       ShortArray.toCollection(destination: C): C
+       ShortArray.toHashSet(): HashSet<Short>
+       ShortArray.toList(): List<Short>
+       ShortArray.toMutableList(): MutableList<Short>
+       ShortArray.toMutableSet(): MutableSet<Short>
+       ShortArray.toSet(): Set<Short>
+       ShortArray.toTypedArray(): Array<Short>
+       ShortArray.union(other: Iterable<Short>): Set<Short>
+       ShortArray.withIndex(): Iterable<IndexedValue<Short>>
+       ShortArray.zip(other: Array<out R>): List<Pair<Short, R>>
+       ShortArray.zip(other: Array<out R>, transform: (a: Short, b: R) -> V): List<V>
+       ShortArray.zip(other: Iterable<R>): List<Pair<Short, R>>
+       ShortArray.zip(other: Iterable<R>, transform: (a: Short, b: R) -> V): List<V>
+       ShortArray.zip(other: ShortArray): List<Pair<Short, Short>>
+       ShortArray.zip(other: ShortArray, transform: (a: Short, b: Short) -> V): List<V>
+       ShortArray?.contentEquals(other: ShortArray?): Boolean
+       ShortArray?.contentHashCode(): Int
+       ShortArray?.contentToString(): String
+      +ArraysKt__ArraysJVMKt
+      +ArraysKt__ArraysKt
+      CollectionsKt
+      +CollectionsKt___CollectionsJvmKt
+      +CollectionsKt___CollectionsKt
+      +CollectionsKt__CollectionsJVMKt
+      +CollectionsKt__CollectionsKt
+      +CollectionsKt__IterablesKt
+      +CollectionsKt__IteratorsJVMKt
+      +CollectionsKt__IteratorsKt
+      +CollectionsKt__MutableCollectionsJVMKt
+      +CollectionsKt__MutableCollectionsKt
+      +CollectionsKt__ReversedViewsKt
+      GroupingKt
+      +GroupingKt__GroupingJVMKt
+      +GroupingKt__GroupingKt
+      +MapAccessorsKt
+      MapsKt
+      +MapsKt___MapsJvmKt
+      +MapsKt___MapsKt
+      +MapsKt__MapsJVMKt
+      +MapsKt__MapsKt
+      +MapsKt__MapWithDefaultKt
+      SetsKt
+      +SetsKt___SetsKt
+      +SetsKt__SetsJVMKt
+      +SetsKt__SetsKt
+      +SlidingWindowKt
+      +TypeAliasesKt
+      +UArraySortingKt
+      +UCollectionsKt
+      +UCollectionsKt___UCollectionsKt
+     +PsiDirectory: comparisons
+     +PsiDirectory: concurrent
+     +PsiDirectory: contracts
+     +PsiDirectory: coroutines
+     +PsiDirectory: enums
+     +PsiDirectory: experimental
+     +PsiDirectory: internal
+     +PsiDirectory: io
+     +PsiDirectory: jdk7
+     +PsiDirectory: js
+     +PsiDirectory: jvm
+     +PsiDirectory: math
+     +PsiDirectory: properties
+     +PsiDirectory: random
+     +PsiDirectory: ranges
+     +PsiDirectory: reflect
+     +PsiDirectory: sequences
+     +PsiDirectory: streams
+     +PsiDirectory: system
+     +PsiDirectory: text
+     +PsiDirectory: time
+     +_Assertions
+     +BuilderInference
+     +ContextFunctionTypeParams
+     +DeepRecursiveFunction
+     +DeepRecursiveScope
+     +DeepRecursiveScopeImpl.class
+     +Deprecated
+     +DeprecatedSinceKotlin
+     +DeprecationLevel
+     +DslMarker
+     +ExperimentalMultiplatform
+     +ExperimentalStdlibApi
+     +ExperimentalSubclassOptIn
+     +ExperimentalUnsignedTypes
+     +ExtensionFunctionType
+     Function
+     +InitializedLazyImpl
+     +kotlin.kotlin_builtins
+     +KotlinNothingValueException
+     +KotlinNullPointerException
+     +KotlinVersion
+     +KotlinVersionCurrentValue.class
+     +Lazy
+     +LazyThreadSafetyMode
+     +Metadata
+     +NotImplementedError
+     +NoWhenBranchMatchedException
+     +OptIn
+     +OptionalExpectation
+     +OverloadResolutionByLambdaReturnType
+     +Pair
+     +ParameterName
+     +PublishedApi
+     +ReplaceWith
+     +RequiresOptIn
+     +Result
+     +SafePublicationLazyImpl.class
+     +SinceKotlin
+     +SubclassOptInRequired
+     +Suppress
+     +SynchronizedLazyImpl.class
+     +Triple
+     +TypeCastException
+     +UByte
+     +UByteArray
+     +UInt
+     +UIntArray
+     +ULong
+     +ULongArray
+     UNINITIALIZED_VALUE
+     +UninitializedPropertyAccessException
+     +Unit
+     +UnsafeLazyImpl
+     +UnsafeVariance
+     +UShort
+     +UShortArray
+     +WasExperimental
+     +ArrayIntrinsicsKt
+     +CharCodeJVMKt
+     +CharCodeKt
+     +CompareToKt
+     +DeepRecursiveKt
+     +ExceptionsKt
+     +ExceptionsKt__ExceptionsKt
+     +HashCodeKt
+     +LateinitKt
+     LazyKt
+     +LazyKt__LazyJVMKt
+     +LazyKt__LazyKt
+     NumbersKt
+     +NumbersKt__BigDecimalsKt
+     +NumbersKt__BigIntegersKt
+     +NumbersKt__FloorDivModKt
+     +NumbersKt__NumbersJVMKt
+     +NumbersKt__NumbersKt
+     PreconditionsKt
+     +PreconditionsKt__AssertionsJVMKt
+     +PreconditionsKt__PreconditionsKt
+     +PropertyReferenceDelegatesKt
+     +ResultKt
+     StandardKt
+     +StandardKt__StandardKt
+     +StandardKt__SynchronizedKt
+     +SuspendKt
+     +ThrowsKt
+     +TuplesKt
+     +TypeAliasesKt
+     +UByteArrayKt
+     +UByteKt
+     +UIntArrayKt
+     +UIntKt
+     +ULongArrayKt
+     +ULongKt
+     +UnsignedKt
+     +UNumbersKt
+     +UShortArrayKt
+     +UShortKt
+    +PsiDirectory: META-INF
+   +PsiDirectory: kotlin-stdlib-common.jar

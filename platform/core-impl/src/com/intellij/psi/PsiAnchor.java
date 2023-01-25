@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * @author db
- */
 public abstract class PsiAnchor {
   private static final Logger LOG = Logger.getInstance(PsiAnchor.class);
   @Nullable

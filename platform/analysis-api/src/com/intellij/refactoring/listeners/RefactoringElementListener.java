@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * @see RefactoringElementAdapter
  * @see com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
  * @see com.intellij.execution.configurations.RefactoringListenerProvider
- * @author dsl
  */
 public interface RefactoringElementListener {
   RefactoringElementListener DEAF = new RefactoringElementListener() {

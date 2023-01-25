@@ -22,9 +22,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.openapi.diagnostic.Logger;
 
-/**
- * @author ven
- */
 public class InternalUsageInfo extends UsageInfo {
   private static final Logger LOG = Logger.getInstance(InternalUsageInfo.class);
   public InternalUsageInfo(final PsiElement referenceElement) {

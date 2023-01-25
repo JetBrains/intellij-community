@@ -208,11 +208,9 @@
     <!-- File-Based Index-->
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider" dynamic="true"/>
     <extensionPoint name="globalIndexFilter" interface="com.intellij.util.indexing.GlobalIndexFilter" dynamic="true"/>
-    <extensionPoint name="indexableFilesFilter" interface="com.intellij.util.indexing.IndexableFilesFilter"/>
 
     <extensionPoint name="indexableEntityProvider" interface="com.intellij.util.indexing.roots.IndexableEntityProvider" dynamic="true"/>
     <extensionPoint name="indexableIteratorBuilderHandler" interface="com.intellij.util.indexing.roots.builders.IndexableIteratorBuilderHandler" dynamic="true"/>
-    <extensionPoint name="indexableEntityInducedChangesProvider" interface="com.intellij.util.indexing.roots.IndexableEntityInducedChangesProvider" dynamic="true"/>
 
     <extensionPoint name="symbolNavigation" dynamic="true" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="forClass" implements="com.intellij.model.Symbol"/>
@@ -634,6 +632,7 @@
     <extensionPoint name="implementationViewDocumentFactory" interface="com.intellij.codeInsight.hint.ImplementationViewDocumentFactory" dynamic="true"/>
 
     <extensionPoint name="highlightInfoPostFilter" interface="com.intellij.codeInsight.daemon.impl.HighlightInfoPostFilter" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="internalHighlightingLayerSupplier" interface="com.intellij.codeInsight.daemon.impl.InternalLayerSupplier" dynamic="true"/>
     <extensionPoint name="commandLineInspectionProjectConfigurator" interface="com.intellij.ide.CommandLineInspectionProjectConfigurator" dynamic="true"/>
 
     <extensionPoint name="fileTypeStatisticProvider" interface="com.intellij.internal.statistic.fileTypes.FileTypeStatisticProvider" dynamic="true"/>

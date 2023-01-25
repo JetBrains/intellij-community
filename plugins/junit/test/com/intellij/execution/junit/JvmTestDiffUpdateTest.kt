@@ -5,6 +5,7 @@ import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.testframework.JavaTestLocator
+import com.intellij.execution.testframework.actions.TestDiffContent
 import com.intellij.execution.testframework.actions.TestDiffRequestProcessor
 import com.intellij.execution.testframework.sm.runner.MockRuntimeConfiguration
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
@@ -57,6 +58,19 @@ abstract class JvmTestDiffUpdateTest : JavaCodeInsightFixtureTestCase() {
   private fun getDiffDocument(request: SimpleDiffRequest) = request.contents.firstOrNull().asSafely<DocumentContent>()?.document?.apply {
     setReadOnly(false)
   }!!
+
+  protected open fun checkHasNoDiff(
+    before: String,
+    testClass: String,
+    testName: String,
+    expected: String,
+    actual: String,
+    stackTrace: String,
+    fileExt: String
+  ) {
+    val request = createDiffRequest(before, testClass, testName, expected, actual, stackTrace, fileExt)
+    assertNull(request.contents.firstOrNull { it is TestDiffContent })
+  }
 
   protected open fun checkAcceptFullDiff(
     before: String,

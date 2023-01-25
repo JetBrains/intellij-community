@@ -24,7 +24,7 @@ PyCF_ONLY_AST: int
 
 # ast classes
 
-identifier = str
+_Identifier: TypeAlias = str
 
 class AST:
     _attributes: tuple[str, ...]
@@ -55,14 +55,14 @@ class stmt(AST):
     col_offset: int
 
 class FunctionDef(stmt):
-    name: identifier
+    name: _Identifier
     args: arguments
     body: list[stmt]
     decorator_list: list[expr]
     type_comment: str | None
 
 class ClassDef(stmt):
-    name: identifier
+    name: _Identifier
     bases: list[expr]
     body: list[stmt]
     decorator_list: list[expr]
@@ -133,7 +133,7 @@ class Import(stmt):
     names: list[alias]
 
 class ImportFrom(stmt):
-    module: identifier | None
+    module: _Identifier | None
     names: list[alias]
     level: int | None
 
@@ -143,7 +143,7 @@ class Exec(stmt):
     locals: expr | None
 
 class Global(stmt):
-    names: list[identifier]
+    names: list[_Identifier]
 
 class Expr(stmt):
     value: expr
@@ -153,7 +153,7 @@ class Break(stmt): ...
 class Continue(stmt): ...
 class slice(AST): ...
 
-_slice: TypeAlias = slice  # this lets us type the variable named 'slice' below
+_Slice: TypeAlias = slice  # this lets us type the variable named 'slice' below
 
 class Slice(slice):
     lower: expr | None
@@ -237,7 +237,7 @@ class Repr(expr):
     value: expr
 
 class Num(expr):
-    n: int | float | complex
+    n: complex
 
 class Str(expr):
     s: str | bytes
@@ -245,16 +245,16 @@ class Str(expr):
 
 class Attribute(expr):
     value: expr
-    attr: identifier
+    attr: _Identifier
     ctx: expr_context
 
 class Subscript(expr):
     value: expr
-    slice: _slice
+    slice: _Slice
     ctx: expr_context
 
 class Name(expr):
-    id: identifier
+    id: _Identifier
     ctx: expr_context
 
 class List(expr):
@@ -319,18 +319,18 @@ class ExceptHandler(AST):
 
 class arguments(AST):
     args: list[expr]
-    vararg: identifier | None
-    kwarg: identifier | None
+    vararg: _Identifier | None
+    kwarg: _Identifier | None
     defaults: list[expr]
     type_comments: list[str | None]
 
 class keyword(AST):
-    arg: identifier
+    arg: _Identifier
     value: expr
 
 class alias(AST):
-    name: identifier
-    asname: identifier | None
+    name: _Identifier
+    asname: _Identifier | None
 
 class TypeIgnore(AST):
     lineno: int

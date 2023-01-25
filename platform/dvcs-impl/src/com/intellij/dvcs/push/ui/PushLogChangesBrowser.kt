@@ -19,7 +19,8 @@ import javax.swing.tree.DefaultTreeModel
 class PushLogChangesBrowser(project: Project,
                             showCheckboxes: Boolean,
                             highlightProblems: Boolean,
-                            private val loadingPane: JBLoadingPanel)
+                            private val loadingPane: JBLoadingPanel,
+                            private val modalityState: ModalityState)
   : ChangesBrowserBase(project, showCheckboxes, highlightProblems), Disposable {
   private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("PushLogChangesBrowser Pool", 1)
   private var indicator: ProgressIndicator? = null
@@ -60,7 +61,7 @@ class PushLogChangesBrowser(project: Project,
     taskIndicator.checkCanceled()
     val treeModel = buildTreeModel(changes)
 
-    invokeLater(ModalityState.stateForComponent(this)) {
+    invokeLater(modalityState) {
       taskIndicator.checkCanceled()
       resetIndicator(taskIndicator)
 

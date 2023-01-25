@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
@@ -64,10 +64,9 @@ public final class ConversionContextImpl implements ConversionContext {
   private Path mySettingsBaseDir;
   private ComponentManagerSettings myCompilerManagerSettings;
   private ComponentManagerSettings myProjectRootManagerSettings;
-  private SettingsXmlFile myModulesSettings;
+  private SettingsXmlFile myModuleSettings;
   private MultiFilesSettings myProjectLibrariesSettings;
   private MultiFilesSettings myArtifactsSettings;
-  private ComponentManagerSettings myProjectFileVersionSettings;
 
   private final NotNullLazyValue<CachedConversionResult> conversionResult;
 
@@ -369,17 +368,10 @@ public final class ConversionContextImpl implements ConversionContext {
 
   @Override
   public ComponentManagerSettings getModulesSettings() {
-    if (myModulesSettings == null) {
-      myModulesSettings = createProjectSettings("modules.xml");
+    if (myModuleSettings == null) {
+      myModuleSettings = createProjectSettings("modules.xml");
     }
-    return myModulesSettings;
-  }
-
-  public @NotNull ComponentManagerSettings getProjectFileVersionSettings() {
-    if (myProjectFileVersionSettings == null) {
-      myProjectFileVersionSettings = createProjectSettings("misc.xml");
-    }
-    return myProjectFileVersionSettings;
+    return myModuleSettings;
   }
 
   @Override

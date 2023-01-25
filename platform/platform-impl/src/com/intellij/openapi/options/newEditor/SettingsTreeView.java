@@ -562,9 +562,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     @Override
     protected SimpleNode[] buildChildren() {
-      if (myConfigurable != null) {
-        myConfigurableToNodeMap.put(myConfigurable, this);
-      }
+      myConfigurableToNodeMap.put(myConfigurable, this);
       if (myComposite == null) {
         return NO_CHILDREN;
       }
@@ -575,9 +573,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       SimpleNode[] result = new SimpleNode[configurables.length];
       for (int i = 0; i < configurables.length; i++) {
         result[i] = new MyNode(this, configurables[i], myLevel + 1);
-        if (myConfigurable != null) {
-          myFilter.myContext.registerKid(myConfigurable, configurables[i]);
-        }
+        myFilter.myContext.registerKid(myConfigurable, configurables[i]);
       }
       return result;
     }
@@ -650,13 +646,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground(true) : UIUtil.getTreeForeground());
       if (!selected && node != null) {
         Configurable configurable = node.myConfigurable;
-        if (configurable != null) {
-          if (myFilter.myContext.getErrors().containsKey(configurable)) {
-            myTextLabel.setForeground(WRONG_CONTENT);
-          }
-          else if (myFilter.myContext.getModified().contains(configurable)) {
-            myTextLabel.setForeground(MODIFIED_CONTENT);
-          }
+        if (myFilter.myContext.getErrors().containsKey(configurable)) {
+          myTextLabel.setForeground(WRONG_CONTENT);
+        }
+        else if (myFilter.myContext.getModified().contains(configurable)) {
+          myTextLabel.setForeground(MODIFIED_CONTENT);
         }
       }
       // configure project icon

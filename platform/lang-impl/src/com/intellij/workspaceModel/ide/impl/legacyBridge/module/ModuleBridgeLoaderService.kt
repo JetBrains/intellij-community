@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.diagnostic.Activity
@@ -6,9 +6,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -33,42 +31,12 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+private val LOG = logger<ModuleBridgeLoaderService>()
+
 private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedListener {
-  companion object {
-    private val LOG = logger<ModuleBridgeLoaderService>()
-  }
-
-  private suspend fun loadModules(project: Project,
-                                  activity: Activity?,
-                                  targetBuilder: MutableEntityStorage?,
-                                  targetUnloadedEntitiesBuilder: MutableEntityStorage?,
-                                  loadedFromCache: Boolean) {
-    val componentManager = project as ComponentManagerEx
-
-    val childActivity = activity?.startChild("modules instantiation")
-    // ModuleManagerComponentBridge calls WorkspaceModel in init - getting entityStorage
-    componentManager.getServiceAsync(WorkspaceModel::class.java).await()
-
-    val moduleManager = componentManager.getServiceAsync(ModuleManager::class.java).await() as ModuleManagerComponentBridge
-    if (targetBuilder != null) {
-      moduleManager.unloadNewlyAddedModulesIfPossible(targetBuilder, targetUnloadedEntitiesBuilder!!)
-    }
-    val entities = (targetBuilder ?: moduleManager.entityStore.current).entities(ModuleEntity::class.java).toList()
-    val unloadedEntities = (targetUnloadedEntitiesBuilder ?: WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities).entities(ModuleEntity::class.java).toList()
-    moduleManager.loadModules(entities, unloadedEntities, targetBuilder, loadedFromCache)
-    childActivity?.setDescription("modules count: ${moduleManager.modules.size}")
-    childActivity?.end()
-
-    runActivity("libraries instantiation") {
-      (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries(targetBuilder)
-    }
-    activity?.end()
-  }
-
   override suspend fun execute(project: Project) {
     val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
-    val componentManagerEx = project as ComponentManagerEx
-    val workspaceModel = componentManagerEx.getServiceAsync(WorkspaceModel::class.java).await() as WorkspaceModelImpl
+    val workspaceModel = project.serviceAsync<WorkspaceModel>().await() as WorkspaceModelImpl
     if (workspaceModel.loadedFromCache) {
       val activity = StartUpMeasurer.startActivity("modules loading with cache")
       if (projectModelSynchronizer.hasNoSerializedJpsModules()) {
@@ -77,10 +45,14 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
         workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
         project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
       }
-      loadModules(project, activity, null, null, workspaceModel.loadedFromCache)
+      loadModules(project = project,
+                  activity = activity,
+                  targetBuilder = null,
+                  targetUnloadedEntitiesBuilder = null,
+                  loadedFromCache = workspaceModel.loadedFromCache)
       if (GlobalLibraryTableBridge.isEnabled()) {
         withContext(Dispatchers.EDT) {
-          runWriteAction {
+          ApplicationManager.getApplication().runWriteAction {
             GlobalWorkspaceModel.getInstance().applyStateToProject(project)
           }
         }
@@ -91,8 +63,11 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
       val activity = StartUpMeasurer.startActivity("modules loading without cache")
       val projectEntities = projectModelSynchronizer.loadProjectToEmptyStorage(project)
 
-
-      loadModules(project, activity, projectEntities?.builder, projectEntities?.unloadedEntitiesBuilder, workspaceModel.loadedFromCache)
+      loadModules(project = project,
+                  activity = activity,
+                  targetBuilder = projectEntities?.builder,
+                  targetUnloadedEntitiesBuilder = projectEntities?.unloadedEntitiesBuilder,
+                  loadedFromCache = workspaceModel.loadedFromCache)
       if (projectEntities?.builder != null) {
         WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
       }
@@ -102,8 +77,8 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
 
     runActivity("tracked libraries setup") {
       // required for setupTrackedLibrariesAndJdks - make sure that it is created to avoid blocking of EDT
-      val jdkTableDeferred = (ApplicationManager.getApplication() as ComponentManagerEx).getServiceAsync(ProjectJdkTable::class.java)
-      val projectRootManager = componentManagerEx.getServiceAsync(ProjectRootManager::class.java).await() as ProjectRootManagerBridge
+      val jdkTableDeferred = ApplicationManager.getApplication().serviceAsync<ProjectJdkTable>()
+      val projectRootManager = project.serviceAsync<ProjectRootManager>().await() as ProjectRootManagerBridge
       jdkTableDeferred.join()
       withContext(Dispatchers.EDT) {
         ApplicationManager.getApplication().runWriteAction {
@@ -113,11 +88,35 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
     }
     if (WorkspaceFileIndexEx.IS_ENABLED) {
       runActivity("workspace file index initialization") {
-        readAction {
-          (WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx).ensureInitialized()
-        }
+        (project.serviceAsync<WorkspaceFileIndex>().await() as WorkspaceFileIndexEx).ensureInitialized()
       }
     }
     WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
   }
+}
+
+private suspend fun loadModules(project: Project,
+                                activity: Activity?,
+                                targetBuilder: MutableEntityStorage?,
+                                targetUnloadedEntitiesBuilder: MutableEntityStorage?,
+                                loadedFromCache: Boolean) {
+  val childActivity = activity?.startChild("modules instantiation")
+  // ModuleManagerComponentBridge calls WorkspaceModel in init - getting entityStorage
+  project.serviceAsync<WorkspaceModel>().await()
+
+  val moduleManager = project.serviceAsync<ModuleManager>().await() as ModuleManagerComponentBridge
+  if (targetBuilder != null && targetUnloadedEntitiesBuilder != null) {
+    moduleManager.unloadNewlyAddedModulesIfPossible(targetBuilder, targetUnloadedEntitiesBuilder)
+  }
+  val entities = (targetBuilder ?: moduleManager.entityStore.current).entities(ModuleEntity::class.java).toList()
+  val unloadedEntities = (targetUnloadedEntitiesBuilder ?: WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities).entities(
+    ModuleEntity::class.java).toList()
+  moduleManager.loadModules(entities, unloadedEntities, targetBuilder, loadedFromCache)
+  childActivity?.setDescription("modules count: ${moduleManager.modules.size}")
+  childActivity?.end()
+
+  runActivity("libraries instantiation") {
+    (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries(targetBuilder)
+  }
+  activity?.end()
 }

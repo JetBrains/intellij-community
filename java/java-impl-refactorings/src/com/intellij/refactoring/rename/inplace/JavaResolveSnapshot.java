@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author ven
- */
 class JavaResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
   private static final Logger LOG = Logger.getInstance(JavaResolveSnapshot.class);
 

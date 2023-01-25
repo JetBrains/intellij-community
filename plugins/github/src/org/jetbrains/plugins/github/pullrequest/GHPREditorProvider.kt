@@ -12,27 +12,18 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 
 internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
-  override fun accept(project: Project, file: VirtualFile): Boolean {
-    return file is GHRepoVirtualFile && GHPRDataContextRepository.getInstance(project).findContext(file.repository) != null
-  }
+  override fun accept(project: Project, file: VirtualFile): Boolean =
+    file is GHPRTimelineVirtualFile && GHPRDataContextRepository.getInstance(project).findContext(file.repository) != null
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    file as GHRepoVirtualFile
+    file as GHPRTimelineVirtualFile
     val dataContext = GHPRDataContextRepository.getInstance(project).findContext(file.repository)!!
 
+    val dataDisposable = Disposer.newDisposable()
+    val dataProvider = dataContext.dataProviderRepository.getDataProvider(file.pullRequest, dataDisposable)
 
-    return when (file) {
-      is GHPRVirtualFile -> {
-        val dataDisposable = Disposer.newDisposable()
-        val dataProvider = dataContext.dataProviderRepository.getDataProvider(file.pullRequest, dataDisposable)
-        when (file) {
-          is GHPRTimelineVirtualFile -> GHPRTimelineFileEditor(project, dataContext, dataProvider, file)
-          else -> error("Unsupported file type")
-        }.also {
-          Disposer.register(it, dataDisposable)
-        }
-      }
-      else -> error("Unsupported file type")
+    return GHPRTimelineFileEditor(project, dataContext, dataProvider, file).also {
+      Disposer.register(it, dataDisposable)
     }
   }
 

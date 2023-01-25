@@ -1,24 +1,18 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
-import com.intellij.util.containers.HashSetInterner;
-import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.textmate.bundles.Bundle;
-import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
-import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 
 import static org.jetbrains.plugins.textmate.TestUtil.*;
 import static org.junit.Assert.*;
 
 public class TextMateSnippetsLoadingTest {
   @Test
-  public void testLoadTextMateSnippets() throws IOException {
+  public void testLoadTextMateSnippets() {
     SnippetsRegistry snippetsRegistry = loadSnippets(CHEF);
     Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet("log", scopeFromString("source.ruby.chef.something"));
     assertEquals(1, snippets.size());
@@ -31,14 +25,14 @@ public class TextMateSnippetsLoadingTest {
   }
 
   @Test
-  public void testLoadTextMateSnippetsWithInvalidSelector() throws IOException {
+  public void testLoadTextMateSnippetsWithInvalidSelector() {
     SnippetsRegistry snippetsRegistry = loadSnippets(CHEF);
     Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet("log", new TextMateScope("source", null));
     assertTrue(snippets.isEmpty());
   }
   
   @Test
-  public void testLoadTextMateSnippetsFromPlist() throws IOException {
+  public void testLoadTextMateSnippetsFromPlist() {
     SnippetsRegistry snippetsRegistry = loadSnippets(HTML);
     Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet("div", new TextMateScope("text.html", null));
     assertEquals(1, snippets.size());
@@ -54,16 +48,11 @@ public class TextMateSnippetsLoadingTest {
   }
 
   @NotNull
-  private static SnippetsRegistry loadSnippets(@NotNull String bundleName) throws IOException {
-    final Bundle bundle = getBundle(bundleName);
-    assertNotNull(bundle);
+  private static SnippetsRegistry loadSnippets(@NotNull String bundleName) {
+    Iterator<TextMateSnippet> snippets = readBundle(bundleName).readSnippets().iterator();
     final SnippetsRegistryImpl snippetsRegistry = new SnippetsRegistryImpl();
-    Interner<CharSequence> interner = new HashSetInterner<>();
-    for (File file : bundle.getSnippetFiles()) {
-      final TextMateSnippet snippet = PreferencesReadUtil.loadSnippet(file, new CompositePlistReader().read(file), interner);
-      if (snippet != null) {
-        snippetsRegistry.register(snippet);
-      }
+    while (snippets.hasNext()) {
+      snippetsRegistry.register(snippets.next());
     }
     return snippetsRegistry;
   }

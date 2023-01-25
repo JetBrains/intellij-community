@@ -115,6 +115,23 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, count = 5, forward = false)
   }
 
+  @Test
+  fun `test multiple tabs forward in empty cells`() {
+    // language=Markdown
+    val before = """
+    ||||
+    |-|-|-|
+    |<caret>|||
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    ||||
+    |-|-|-|
+    |||<caret>|
+    """.trimIndent()
+    doTest(before, after, count = 2)
+  }
+
   private fun doTest(content: String, expected: String, count: Int = 1, forward: Boolean = true) {
     configureFromFileText("some.md", content)
     repeat(count) {

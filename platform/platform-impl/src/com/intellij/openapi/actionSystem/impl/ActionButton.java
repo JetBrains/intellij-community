@@ -36,7 +36,6 @@ import javax.accessibility.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.RGBImageFilter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Objects;
@@ -156,6 +155,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   @Override
   public int getPopState() {
     return getPopState(isSelected());
+  }
+
+  @NotNull
+  public final Presentation getPresentation() {
+    return myPresentation;
   }
 
   public final boolean isRollover() {
@@ -397,8 +401,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myDisabledIcon = null;
     }
     else if (IconLoader.isGoodSize(myIcon)) {
-      Supplier<RGBImageFilter> disableFilter = myPresentation.getClientProperty(Presentation.DISABLE_ICON_FILTER);
-      myDisabledIcon = IconLoader.INSTANCE.getDisabledIcon(myIcon, disableFilter == null ? null : disableFilter::get);
+      myDisabledIcon = myLook.getDisabledIcon(myIcon);
     }
     else {
       myDisabledIcon = null;
@@ -457,7 +460,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   @NotNull
   protected final Icon getEnableOrDisable(@NotNull Icon icon) {
-    return isEnabled() ? icon : IconLoader.getDisabledIcon(icon);
+    return isEnabled() ? icon : myLook.getDisabledIcon(icon);
   }
 
   protected void paintButtonLook(Graphics g) {

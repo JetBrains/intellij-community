@@ -31,7 +31,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
                          private val remoteCommunicator: SettingsSyncRemoteCommunicator,
                          private val updateChecker: SettingsSyncUpdateChecker) {
 
-  private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent>()
+  private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent.StandardEvent>()
 
   private val queue = MergingUpdateQueue("SettingsSyncBridge", 1000, false, null, parentDisposable, null,
                                          Alarm.ThreadToUse.POOLED_THREAD).apply {
@@ -47,13 +47,13 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
   private val settingsChangeListener = SettingsChangeListener { event ->
     LOG.debug("Adding settings changed event $event to the queue")
-    if (isEventExclusive(event)) { // such events will be processed separately from all others
+    if (event is SyncSettingsEvent.ExclusiveEvent) { // such events will be processed separately from all others
       queue.queue(Update.create(event) {
         processExclusiveEvent(event)
       })
     }
     else {
-      pendingEvents.add(event)
+      pendingEvents.add(event as SyncSettingsEvent.StandardEvent)
       queue.queue(updateObject)
     }
   }
@@ -84,7 +84,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
     settingsLog.logExistingSettings()
 
-    SettingsSynchronizer.checkCrossIdeSyncStatusOnServer(remoteCommunicator)
+    checkCrossIdeSyncStatusOnServer(remoteCommunicator)
 
     try {
       when (initMode) {
@@ -119,23 +119,38 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       LOG.info("Migration from old storage applied.")
       var masterPosition = settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings & by migration
 
-      // if there is already a version on the server, then it should be preferred over migration
       val updateResult = remoteCommunicator.receiveUpdates()
-      if (updateResult is UpdateResult.Success) {
-        val snapshot = updateResult.settingsSnapshot
-        masterPosition = settingsLog.forceWriteToMaster(snapshot, "Remote changes to overwrite migration data by settings from cloud")
-        SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = updateResult.serverVersionId
-        pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
-      }
-      else {
-        // otherwise we place our migrated data to the cloud
-        forcePushToCloud(masterPosition)
+      when (updateResult) {
+        is UpdateResult.Success -> {
+          LOG.info("There is a snapshot on the server => prefer server version over local migration data")
+          val snapshot = updateResult.settingsSnapshot
+          masterPosition = settingsLog.forceWriteToMaster(snapshot, "Remote changes to overwrite migration data by settings from cloud")
+          settingsLog.setCloudPosition(masterPosition)
 
-        pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
-        migration.migrateCategoriesSyncStatus(appConfigPath, SettingsSyncSettings.getInstance())
-        saveIdeSettings()
+          SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = updateResult.serverVersionId
+          SettingsSyncSettings.getInstance().syncEnabled = true
+          pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
+        }
+        is UpdateResult.FileDeletedFromServer -> {
+          SettingsSyncSettings.getInstance().syncEnabled = false
+          LOG.info("Snapshot on the server has been deleted => not enabling settings sync after migration")
+        }
+        is UpdateResult.Error -> {
+          LOG.info("Error prevented checking server state: ${updateResult.message}")
+          SettingsSyncSettings.getInstance().syncEnabled = false
+          SettingsSyncStatusTracker.getInstance().updateOnError(updateResult.message)
+        }
+        UpdateResult.NoFileOnServer -> {
+          LOG.info("No snapshot file on the server yet => pushing the migrated data to the cloud")
+          forcePushToCloud(masterPosition)
+          settingsLog.setCloudPosition(masterPosition)
+
+          SettingsSyncSettings.getInstance().syncEnabled = true
+          pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
+          migration.migrateCategoriesSyncStatus(appConfigPath, SettingsSyncSettings.getInstance())
+          saveIdeSettings()
+        }
       }
-      settingsLog.setCloudPosition(masterPosition)
     }
     else {
       LOG.warn("Migration from old storage didn't happen, although it was identified as possible: no data to migrate")
@@ -157,11 +172,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     object PushToServer : InitMode()
   }
 
-  private fun isEventExclusive(event: SyncSettingsEvent): Boolean {
-    return event is SyncSettingsEvent.CrossIdeSyncStateChanged
-  }
-
-  private fun processExclusiveEvent(event: SyncSettingsEvent) {
+  private fun processExclusiveEvent(event: SyncSettingsEvent.ExclusiveEvent) {
     when (event) {
       is SyncSettingsEvent.CrossIdeSyncStateChanged -> {
         LOG.info("Cross-ide sync state changed to: " + event.isCrossIdeSyncEnabled)
@@ -173,8 +184,8 @@ class SettingsSyncBridge(parentDisposable: Disposable,
         }
         forcePushToCloud(settingsLog.getMasterPosition())
       }
-      else -> {
-        LOG.error("Unexpected event $event. It should be processed within ordinary events")
+      is SyncSettingsEvent.SyncRequest -> {
+        checkServer()
       }
     }
   }
@@ -212,10 +223,6 @@ class SettingsSyncBridge(parentDisposable: Disposable,
             mergeAndPushAfterProcessingEvents = false
             stopSyncingAndRollback(previousState)
           }
-          SyncSettingsEvent.PingRequest -> {}
-          is SyncSettingsEvent.CrossIdeSyncStateChanged -> {
-            LOG.error("Unexpected event $event. It should have been processed separately")
-          }
         }
       }
 
@@ -243,6 +250,41 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       SettingsSyncPushResult.Rejected -> {
         afterDeleting(DeleteServerDataResult.Error("Deletion rejected by server"))
       }
+    }
+  }
+
+  private fun checkServer() {
+    checkCrossIdeSyncStatusOnServer(remoteCommunicator)
+
+    when (remoteCommunicator.checkServerState()) {
+      is ServerState.UpdateNeeded -> {
+        LOG.info("Updating from server")
+        updateChecker.scheduleUpdateFromServer()
+        // the push will happen automatically after updating and merging (if there is anything to merge)
+      }
+      ServerState.FileNotExists -> {
+        LOG.info("No file on server, will push local settings")
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.MustPushRequest)
+      }
+      ServerState.UpToDate -> {
+        LOG.debug("Updating settings is not needed")
+      }
+      is ServerState.Error -> {
+        // error already logged in checkServerState
+      }
+    }
+  }
+
+  private fun checkCrossIdeSyncStatusOnServer(remoteCommunicator: SettingsSyncRemoteCommunicator) {
+    try {
+      val crossIdeSyncEnabled = remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
+      if (crossIdeSyncEnabled != SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
+        LOG.info("Cross-IDE sync status on server is: ${enabledOrDisabled(crossIdeSyncEnabled)}. Updating local settings with it.")
+        SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = crossIdeSyncEnabled
+      }
+    }
+    catch (e: Throwable) {
+      LOG.error("Couldn't check if $CROSS_IDE_SYNC_MARKER_FILE exists", e)
     }
   }
 

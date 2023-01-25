@@ -7,7 +7,7 @@ from typing import Any
 if sys.version_info >= (3, 8):
     from re import Pattern
 else:
-    from typing import Pattern
+    from re import Pattern
 
 entry_point_pattern: Pattern[str]
 file_in_zip_pattern: Pattern[str]

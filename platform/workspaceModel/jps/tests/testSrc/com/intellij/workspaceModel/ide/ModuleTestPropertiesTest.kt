@@ -46,7 +46,7 @@ class ModuleTestPropertiesTest {
 
     val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
 
-    UsefulTestCase.assertEmpty(workspaceModel.entityStorage.current.entities (TestModulePropertiesEntity::class.java).toList())
+    UsefulTestCase.assertEmpty(workspaceModel.currentSnapshot.entities (TestModulePropertiesEntity::class.java).toList())
 
     runWriteActionAndWait {
       workspaceModel.updateProjectModel { builder ->
@@ -57,7 +57,7 @@ class ModuleTestPropertiesTest {
       }
     }
 
-    UsefulTestCase.assertNotEmpty(workspaceModel.entityStorage.current.entities (TestModulePropertiesEntity::class.java).toList())
+    UsefulTestCase.assertNotEmpty(workspaceModel.currentSnapshot.entities (TestModulePropertiesEntity::class.java).toList())
 
     assertSame(mainModule, testModuleProperties.productionModule)
     assertEquals(mainModule.name, testModuleProperties.productionModuleName)

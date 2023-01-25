@@ -77,6 +77,8 @@
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
                         serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionServiceImpl"
                         overrides="true"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionServiceImpl$ClientCompletionService"
+                        client="all" />
 
     <applicationService serviceInterface="com.intellij.codeInspection.actions.CleanupInspectionUtil"
                         serviceImplementation="com.intellij.codeInspection.actions.CleanupInspectionUtilImpl"/>
@@ -91,8 +93,10 @@
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleFacadeImpl"/>
     <applicationService serviceInterface="com.intellij.psi.codeStyle.CodeStyleSettingsService"
                         serviceImplementation="com.intellij.psi.codeStyle.CodeStyleSettingsServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.formatting.FormattingProgressCallbackFactory"
+                        serviceImplementation="com.intellij.formatting.FormattingProgressTaskFactory"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.ex.util.EditorFacade"
-                        serviceImplementation="com.intellij.openapi.editor.ex.util.EditorFacadeImpl"/>
+                        serviceImplementation="com.intellij.formatting.EditorFacadeImpl"/>
 
     <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
                         serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
@@ -108,18 +112,16 @@
     <!--suppress PluginXmlCapitalization -->
     <registryKey defaultValue="true" key="use.dependencies.cache.service" restartRequired="true"
                  description="Rescan delta of AdditionalLibraryProvider, IndexableSetContributor, DirectoryIndexExcludePolicy values instead of full project."/>
-    <registryKey defaultValue="false" key="scanning.in.smart.mode" restartRequired="false"
+    <registryKey defaultValue="true" key="scanning.in.smart.mode" restartRequired="false"
                  description="Scan project in smart mode under regular progress indicator."/>
-    <registryKey defaultValue="false" key="retrieve.pushed.properties.from.vfs" restartRequired="true"
+    <registryKey defaultValue="true" key="retrieve.pushed.properties.from.vfs" restartRequired="true"
                  description="Retrieve previously pushed properties from VFS (via PersistentKey) if the value is urgently needed before pushers complete their work."/>
-    <registryKey defaultValue="false" key="cache.nulls.for.pushed.properties" restartRequired="true"
+    <registryKey defaultValue="true" key="cache.nulls.for.pushed.properties" restartRequired="true"
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
                     serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndexImpl"/>
     <registryKey defaultValue="false" key="indexing.use.indexable.files.index" restartRequired="true"
-                 description="Create separate index to determine fileset to index; needs `indexing.enable.entity.provider.based.indexing` enabled to become enabled"/>
-    <registryKey defaultValue="false" key="indexing.fully.use.indexable.files.index" restartRequired="true"
-                 description="Always use IndexableFilesIndex when indexing; needs `indexing.use.indexable.files.index` enabled to become enabled"/>
+                 description="Create separate index to determine fileset to index; needs `indexing.enable.entity.provider.based.indexing` and `platform.projectModel.workspace.model.file.index` enabled to become enabled"/>
 
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
@@ -263,6 +265,7 @@
 
     <formattingService implementation="com.intellij.formatting.service.ExternalFormatProcessorAdapter" order="first"/>
     <postFormatProcessor implementation="com.intellij.formatting.LineCommentAddSpacePostFormatProcessor"/>
+    <postFormatProcessor implementation="com.intellij.formatting.LineWrappingPostFormatProcessor" order="first"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.editorActions.TabOutScopesTracker"
                         serviceImplementation="com.intellij.codeInsight.editorActions.TabOutScopesTrackerImpl"/>
@@ -549,7 +552,6 @@
                              id="preferences.fileTypes"
                              key="filetype.settings.title" bundle="messages.FileTypesBundle"/>
 
-    <search.topHitProvider implementation="com.intellij.codeInsight.intention.impl.config.IntentionsOptionsTopHitProvider"/>
     <applicationConfigurable groupId="editor" key="intention.settings" bundle="messages.CodeInsightBundle"
                              provider="com.intellij.codeInsight.intention.impl.config.IntentionsConfigurableProviderImpl"
                              id="preferences.intentionPowerPack"/>
@@ -1310,6 +1312,8 @@
                             implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor"
                             order="last"/>
 
+    <projectService serviceInterface="com.intellij.execution.AdditionalRunningOptions"
+                    serviceImplementation="com.intellij.execution.EmptyAdditionalRunningOptions"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionManager"
                     serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager"
@@ -1610,8 +1614,11 @@
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.DefaultProjectIndexableFilesContributor" order="first"/>
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalFilesContributor" order="last"
                                id="additionalFiles"/>
-    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor"
+    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor" id="indexableSets"
                                order="last, after additionalFiles"/>
+    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.WorkspaceFileIndexContributorBasedContributor"
+                               order="last, after indexableSets"/>
+
     <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
 
     <registryKey defaultValue="true" description="Use IndexableEntityProviders to iterate project for indexing"
@@ -1620,10 +1627,13 @@
                  description="Amount in milliseconds to wait for completion contributors till decide whether to insert the single item"
                  key="ide.completion.auto.insert.item.timeout"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryPropertyEntityIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ContentRootIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.CustomSourceRootPropertyIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.SourceRootIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleDependencyEntitiesIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleCustomImlDataFilesIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleGroupPathIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaSourceRootPropertiesIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaResourceRootPropertiesIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaModuleSettingsIndexableEntityProvider"/>
@@ -1632,10 +1642,11 @@
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SdkIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.LibraryIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SyntheticLibraryIndexableIteratorHandler"/>
+    <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.ExternalEntityIndexableIteratorHandler"/>
+    <indexableIteratorBuilderHandler
+      implementation="com.intellij.util.indexing.roots.builders.ModuleUnawareContentEntityIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler
       implementation="com.intellij.util.indexing.roots.builders.IndexableSetContributorIndexableIteratorHandler"/>
-    <indexableEntityInducedChangesProvider implementation="com.intellij.util.indexing.roots.ExcludeUrlEntityInducedChangesProvider"/>
-    <indexableEntityInducedChangesProvider implementation="com.intellij.util.indexing.roots.ContentRootEntityInducedChangesProvider"/>
 
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor$Factory"/>
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor$Factory"/>

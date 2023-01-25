@@ -13,9 +13,6 @@ import javax.swing.*;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual;
 
-/**
- * @author vlan
- */
 public class PyStructureViewTest extends PyTestCase {
   private static final String TEST_DIRECTORY = "structureView/";
 

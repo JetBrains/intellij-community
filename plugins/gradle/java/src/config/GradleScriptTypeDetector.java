@@ -9,9 +9,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-/**
- * @author sergey.evdokimov
- */
 public class GradleScriptTypeDetector extends GroovyScriptTypeDetector implements FileTypeUsageSchemaDescriptor {
 
   public GradleScriptTypeDetector() {

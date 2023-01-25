@@ -4,9 +4,6 @@ package com.intellij.debugger.engine.events;
 import com.intellij.debugger.impl.DebuggerTaskImpl;
 import org.jetbrains.annotations.Async;
 
-/**
- * @author lex
- */
 public abstract class DebuggerCommandImpl extends DebuggerTaskImpl {
   private final Priority myPriority;
 

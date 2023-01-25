@@ -288,7 +288,7 @@ public class DefaultTreeUI extends BasicTreeUI {
               if (shouldPaintTop && shouldPaintBottom) {
                 g.fillRect(left, bounds.y, right - left, bounds.height);
               } else {
-                int arc = JBUI.scale(8);
+                int arc = JBUI.CurrentTheme.Tree.ARC.get();
                 FILL.paint((Graphics2D)g, left, bounds.y, right - left, bounds.height, arc);
                 if (shouldPaintTop) {
                   g.fillRect(left, bounds.y, right - left, arc);

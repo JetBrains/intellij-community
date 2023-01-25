@@ -20,10 +20,12 @@ import java.util.HashSet;
 import java.util.List;
 
 public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
+  @NotNull
   private final Project myProject;
+  @NotNull
   private final Editor myEditor;
 
-  DaemonTooltipRendererProvider(Project project, Editor editor) {
+  DaemonTooltipRendererProvider(@NotNull Project project, @NotNull Editor editor) {
     myProject = project;
     myEditor = editor;
   }
@@ -64,7 +66,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       });
       HighlightInfoComposite composite = HighlightInfoComposite.create(infos);
       String toolTip = composite.getToolTip();
-      TooltipAction action = TooltipActionProvider.calcTooltipAction(composite, myEditor);
+      TooltipAction action = TooltipActionProvider.calcTooltipAction(composite, myProject, myEditor);
       DaemonTooltipRenderer myRenderer = new DaemonTooltipWithActionRenderer(
         toolTip, action, 0,
         action == null ? new Object[]{toolTip} : new Object[]{toolTip, action});

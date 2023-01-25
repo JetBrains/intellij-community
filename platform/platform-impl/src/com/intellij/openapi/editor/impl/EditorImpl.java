@@ -511,7 +511,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }, myCaretModel);
 
-    setFontSize(IdeScaleTransformer.INSTANCE.getCurrentEditorFontSize());
+    setFontSize(IdeScaleTransformer.getInstance().getCurrentEditorFontSize());
 
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
@@ -545,6 +545,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
     putUserData(INITIALIZED, Boolean.TRUE);
+
+    myScrollPane.getHorizontalScrollBar().updateUI();
   }
 
   public void applyFocusMode() {
@@ -1348,7 +1350,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!(highlighter instanceof EmptyEditorHighlighter)) {
       EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
     }
+
+    EditorHighlighter oldHighlighter = myHighlighter;
     myHighlighter = highlighter;
+    myPropertyChangeSupport.firePropertyChange(EditorEx.PROP_HIGHLIGHTER, oldHighlighter, highlighter);
 
     if (myPanel != null) {
       reinitSettings();
@@ -4566,7 +4571,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return myFontPreferences.getSize2D(myFontPreferences.getFontFamily());
       }
       if (myFontSize == FONT_SIZE_TO_IGNORE) {
-        return IdeScaleTransformer.INSTANCE.scaledEditorFontSize(getDelegate().getEditorFontSize2D());
+        return IdeScaleTransformer.getInstance().scaledEditorFontSize(getDelegate().getEditorFontSize2D());
       }
       return myFontSize;
     }
@@ -4592,7 +4597,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = false;
 
-      IdeScaleTransformer scaleTransformer = IdeScaleTransformer.INSTANCE;
+      IdeScaleTransformer scaleTransformer = IdeScaleTransformer.getInstance();
       if (!scaleTransformer.isEditorFontSizeForced() && fontSize == scaleTransformer.scaledEditorFontSize(super.getEditorFontSize2D())) {
         myFontSize = FONT_SIZE_TO_IGNORE;
       }
@@ -5087,7 +5092,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public @NotNull JScrollBar createHorizontalScrollBar() {
-      return new OpaqueAwareScrollBar(Adjustable.HORIZONTAL);
+      return new OpaqueAwareScrollBar(Adjustable.HORIZONTAL) {
+        @Override
+        public void updateUI() {
+          //noinspection ConstantValue
+          if (SystemInfo.isMac && myMarkupModel != null) {
+            setUI(myMarkupModel.createMacHorizontalScrollBarUI());
+          }
+          else {
+            super.updateUI();
+          }
+        }
+      };
     }
 
     @Override
@@ -5203,10 +5219,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     NullEditorHighlighter() {
       super(NULL_ATTRIBUTES);
     }
-
-    @SuppressWarnings("removal")
-    @Override
-    public void setAttributes(TextAttributes attributes) {}
 
     @Override
     public void setColorScheme(@NotNull EditorColorsScheme scheme) {}

@@ -40,9 +40,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author spleaner
- */
 public class NotificationsConfigurablePanel extends JPanel implements Disposable {
   private static final String REMOVE_KEY = "REMOVE";
 

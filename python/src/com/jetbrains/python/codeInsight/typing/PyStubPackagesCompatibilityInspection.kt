@@ -52,7 +52,7 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
   var ignoredStubPackages: MutableList<String> = mutableListOf()
 
   override fun getOptionsPane() =
-    OptPane.pane(OptPane.stringSet("ignoredStubPackages", PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label")))
+    OptPane.pane(OptPane.stringList("ignoredStubPackages", PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label")))
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,

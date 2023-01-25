@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
-/**
- * @author ilyas
- */
 public class GrDocMethodParameterImpl extends GroovyDocPsiElementImpl implements GrDocMethodParameter {
 
   public GrDocMethodParameterImpl(@NotNull ASTNode node) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
 package com.intellij.serviceContainer
 
@@ -26,16 +26,21 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.util.attachAsChildTo
 import com.intellij.util.childScope
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.namedChildScope
 import com.intellij.util.runSuppressing
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
+import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.Constructor
@@ -51,6 +56,16 @@ internal val LOG = logger<ComponentManagerImpl>()
 private val constructorParameterResolver = ConstructorParameterResolver()
 private val methodLookup = MethodHandles.lookup()
 private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
+private val coroutineScopeMethodType = emptyConstructorMethodType.appendParameterTypes(CoroutineScope::class.java)
+
+private fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: MethodType): MethodHandle? {
+  return try {
+    findConstructor(clazz, type)
+  }
+  catch (e: NoSuchMethodException) {
+    return null
+  }
+}
 
 @ApiStatus.Internal
 abstract class ComponentManagerImpl(
@@ -125,8 +140,10 @@ abstract class ComponentManagerImpl(
   @Volatile
   private var isServicePreloadingCancelled = false
 
+  private fun debugString(short: Boolean = false): String = "${if (short) javaClass.simpleName else javaClass.name}@${System.identityHashCode(this)}"
+
   @Suppress("LeakingThis")
-  internal val serviceParentDisposable = Disposer.newDisposable("services of ${javaClass.name}@${System.identityHashCode(this)}")
+  internal val serviceParentDisposable = Disposer.newDisposable("services of ${debugString()}")
 
   protected open val isLightServiceSupported = parent?.parent == null
   protected open val isMessageBusSupported = parent?.parent == null
@@ -137,7 +154,7 @@ abstract class ComponentManagerImpl(
   internal var componentContainerIsReadonly: String? = null
 
   private val coroutineScope: CoroutineScope? = when {
-    parent == null -> mainScope?.childScope(Dispatchers.Default) ?: CoroutineScope(SupervisorJob())
+    parent == null -> CoroutineScope(SupervisorJob(parent = mainScope?.coroutineContext?.job) + Dispatchers.Default)
     parent.parent == null -> parent.coroutineScope!!.childScope()
     else -> null
   }
@@ -959,34 +976,36 @@ abstract class ComponentManagerImpl(
     checkCanceledIfNotInClassInit()
 
     try {
+      val lookup = MethodHandles.privateLookupIn(aClass, methodLookup)
       if (parent == null) {
+        val instance = lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
+                       ?: lookup.findConstructor(aClass, coroutineScopeMethodType).invoke(instanceCoroutineScope(aClass))
         @Suppress("UNCHECKED_CAST")
-        return MethodHandles.privateLookupIn(aClass, methodLookup).findConstructor(aClass, emptyConstructorMethodType).invoke() as T
+        return instance as T
       }
       else {
         val constructors: Array<Constructor<*>> = aClass.declaredConstructors
-        var constructor = if (constructors.size > 1) {
-          // see ConfigurableEP - prefer constructor that accepts our instance
-          constructors.firstOrNull { it.parameterCount == 1 && it.parameterTypes[0].isAssignableFrom(javaClass) }
-        }
-        else {
-          null
-        }
-
-        if (constructor == null) {
-          constructors.sortBy { it.parameterCount }
-          constructor = constructors.first()
-        }
-
-        constructor.isAccessible = true
+        val instance =
+          constructors.firstOrNull {
+            // see ConfigurableEP - prefer constructor that accepts our instance
+            it.parameterCount == 1
+            && it.parameterTypes[0].isAssignableFrom(javaClass)
+          }?.run {
+            isAccessible = true
+            newInstance(getActualContainerInstance())
+          }
+          ?: constructors.firstOrNull {
+            it.parameterCount == 2
+            && it.parameterTypes[1] == CoroutineScope::class.java
+            && it.parameterTypes[0].isAssignableFrom(javaClass)
+          }?.run {
+            isAccessible = true
+            newInstance(getActualContainerInstance(), instanceCoroutineScope(aClass))
+          }
+          ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
+          ?: lookup.findConstructor(aClass, coroutineScopeMethodType).invoke(instanceCoroutineScope(aClass))
         @Suppress("UNCHECKED_CAST")
-        if (constructor.parameterCount == 1) {
-          return constructor.newInstance(getActualContainerInstance()) as T
-        }
-        else {
-          @Suppress("UNCHECKED_CAST")
-          return MethodHandles.privateLookupIn(aClass, methodLookup).unreflectConstructor(constructor).invoke() as T
-        }
+        return instance as T
       }
     }
     catch (e: Throwable) {
@@ -1104,8 +1123,8 @@ abstract class ComponentManagerImpl(
   fun preloadServices(modules: List<IdeaPluginDescriptorImpl>,
                       activityPrefix: String,
                       syncScope: CoroutineScope,
-                      onlyIfAwait: Boolean = false) {
-    val asyncScope = coroutineScope!!
+                      onlyIfAwait: Boolean = false,
+                      asyncScope: CoroutineScope) {
     for (plugin in modules) {
       for (service in getContainerDescriptor(plugin).services) {
         if (!isServiceSuitable(service) || (service.os != null && !isSuitableForOs(service.os))) {
@@ -1226,7 +1245,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  fun stopServicePreloading() {
+  open fun stopServicePreloading() {
     isServicePreloadingCancelled = true
   }
 
@@ -1428,6 +1447,67 @@ abstract class ComponentManagerImpl(
       ExtensionDescriptor.Os.unix -> SystemInfoRt.isUnix
       ExtensionDescriptor.Os.freebsd -> SystemInfoRt.isFreeBSD
       else -> throw IllegalArgumentException("Unknown OS '$os'")
+    }
+  }
+
+  /**
+   * Key: plugin coroutine scope.
+   * Value: intersection of this container scope and plugin coroutine scope.
+   */
+  private val pluginScopes: AtomicReference<PersistentMap<CoroutineScope, CoroutineScope>> = AtomicReference(persistentHashMapOf())
+
+  internal fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {
+    val pluginClassloader = pluginClass.classLoader
+    val intersectionScope = if (pluginClassloader is PluginAwareClassLoader) {
+      val pluginScope = pluginClassloader.pluginCoroutineScope
+      val parentScope = parent?.intersectionCoroutineScope(pluginScope) // for consistency
+                        ?: pluginScope
+      intersectionCoroutineScope(parentScope)
+    }
+    else { // non-unloadable
+      getCoroutineScope()
+    }
+    // The parent scope should become cancelled only when the container is disposed, or the plugin is unloaded.
+    // Leaking the parent scope might lead to premature cancellation.
+    // Fool proofing: a fresh child scope is created per instance to avoid leaking the parent to clients.
+    return intersectionScope.namedChildScope(pluginClass.name)
+  }
+
+  private fun intersectionCoroutineScope(pluginScope: CoroutineScope): CoroutineScope {
+    var scopes = pluginScopes.get()
+    scopes.get(pluginScope)?.let {
+      return it
+    }
+
+    val containerScope = getCoroutineScope()
+    val intersectionName = "(${debugString(short = true)} x ${pluginScope.coroutineContext[CoroutineName]?.name})"
+    val intersectionScope = containerScope.namedChildScope(intersectionName).also {
+      it.attachAsChildTo(pluginScope)
+    }
+    while (true) {
+      val newScopes = scopes.put(pluginScope, intersectionScope)
+      val witness = pluginScopes.compareAndExchange(scopes, newScopes)
+      if (witness === scopes) {
+        intersectionScope.coroutineContext.job.invokeOnCompletion {
+          removePluginScope(pluginScope)
+        }
+        // published successfully
+        return intersectionScope
+      }
+      witness.get(pluginScope)?.let {
+        // another thread published the scope for given plugin
+        // => use the value from another thread, and cancel the unpublished scope
+        intersectionScope.cancel()
+        return it
+      }
+      // try to publish again
+      scopes = witness
+    }
+  }
+
+  private fun removePluginScope(pluginScope: CoroutineScope) {
+    pluginScopes.updateAndGet { scopes: PersistentMap<CoroutineScope, CoroutineScope> ->
+      scopes.remove(pluginScope)
     }
   }
 }

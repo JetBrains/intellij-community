@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author db
- */
 public class TypeMigrationRules {
   private final List<TypeConversionRule> myConversionRules;
   private final Map<Class, Object> myConversionCustomSettings = new HashMap<>();

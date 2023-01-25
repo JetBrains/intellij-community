@@ -14,8 +14,10 @@ class Main {
             if(Math.random() > 0.5) {
                 throw new Ex3();
             }
-        } catch(Ex3 ignored) {
-        } catch(RuntimeException | Ex2 | Ex1 ex) {
+        }
+        catch(Ex3 ignored) {
+        }
+        catch(RuntimeException | Ex2 | Ex1 ex) {
             ex.printStackTrace();
         } catch(Error e) {
             return;

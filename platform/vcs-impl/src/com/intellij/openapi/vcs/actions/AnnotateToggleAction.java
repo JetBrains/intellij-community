@@ -225,11 +225,10 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
       gutters.add(mergeSourceGutter);
     }
 
-    final List<LineAnnotationAspect> aspects = ContainerUtil.newArrayList(fileAnnotation.getAspects());
-    for (AnnotationGutterColumnProvider extension : AnnotationGutterColumnProvider.EP_NAME.getExtensions()) {
-      ContainerUtil.addIfNotNull(aspects, extension.createColumn(fileAnnotation));
-    }
-    for (LineAnnotationAspect aspect : aspects) {
+    List<LineAnnotationAspect> aspects = Arrays.asList(fileAnnotation.getAspects());
+    List<LineAnnotationAspect> fromExt =
+      ContainerUtil.mapNotNull(AnnotationGutterColumnProvider.EP_NAME.getExtensions(), extension -> extension.createColumn(fileAnnotation));
+    for (LineAnnotationAspect aspect : ContainerUtil.concat(aspects, fromExt)) {
       gutters.add(new AspectAnnotationFieldGutter(fileAnnotation, aspect, presentation, bgColorMap));
     }
 

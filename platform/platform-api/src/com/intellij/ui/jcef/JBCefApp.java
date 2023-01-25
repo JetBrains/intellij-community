@@ -153,8 +153,23 @@ public final class JBCefApp {
     settings.cache_path = ApplicationManager.getApplication().getService(JBCefAppCache.class).getPath().toString();
 
     if (Registry.is("ide.browser.jcef.sandbox.enable")) {
-      LOG.debug("enabled JCEF-sandbox");
+      LOG.info("JCEF-sandbox is enabled");
       settings.no_sandbox = false;
+
+      if (SystemInfoRt.isWindows) {
+        String sandboxPtr = System.getProperty("jcef.sandbox.ptr");
+        if (sandboxPtr != null && !sandboxPtr.trim().isEmpty()) {
+          if (isSandboxSupported())
+            settings.browser_subprocess_path = "";
+          else {
+            LOG.info("JCEF-sandbox was disabled because current jcef version doesn't support sandbox");
+            settings.no_sandbox = true;
+          }
+        } else {
+          LOG.info("JCEF-sandbox was disabled because java-process initialized without sandbox");
+          settings.no_sandbox = true;
+        }
+      }
     }
 
     String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
@@ -222,6 +237,18 @@ public final class JBCefApp {
       case "default" -> LogSeverity.LOGSEVERITY_DEFAULT;
       default -> LogSeverity.LOGSEVERITY_DEFAULT;
     };
+  }
+
+  private static boolean isSandboxSupported() {
+    JCefVersionDetails version;
+    try {
+      version = JCefAppConfig.getVersionDetails();
+    }
+    catch (Throwable e) {
+      LOG.error("JCEF runtime version is not supported");
+      return false;
+    }
+    return version.cefVersion.major >= 104 && version.apiVersion.minor >= 9;
   }
 
   @NotNull

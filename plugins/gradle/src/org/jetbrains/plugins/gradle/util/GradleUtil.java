@@ -59,8 +59,6 @@ import static org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIP
 
 /**
  * Holds miscellaneous utility methods.
- *
- * @author Denis Zhdanov
  */
 public final class GradleUtil {
   private static final String LAST_USED_GRADLE_HOME_KEY = "last.used.gradle.home";

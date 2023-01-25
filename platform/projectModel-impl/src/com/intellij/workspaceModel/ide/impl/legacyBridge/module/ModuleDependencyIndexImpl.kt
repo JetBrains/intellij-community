@@ -51,7 +51,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   }
 
   override fun setupTrackedLibrariesAndJdks() {
-    val currentStorage = WorkspaceModel.getInstance(project).entityStorage.current
+    val currentStorage = WorkspaceModel.getInstance(project).currentSnapshot
     for (moduleEntity in currentStorage.entities(ModuleEntity::class.java)) {
       addTrackedLibraryAndJdkFromEntity(moduleEntity)
     }

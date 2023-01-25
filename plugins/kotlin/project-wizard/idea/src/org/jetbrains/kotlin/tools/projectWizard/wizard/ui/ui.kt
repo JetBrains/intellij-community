@@ -72,6 +72,7 @@ val ModuleType.icon: Icon
     get() = when (this) {
         ModuleType.jvm -> KotlinIcons.Wizard.JVM
         ModuleType.js -> KotlinIcons.Wizard.JS
+        ModuleType.wasm -> KotlinIcons.Wizard.WEB
         ModuleType.native -> KotlinIcons.Wizard.NATIVE
         ModuleType.common -> KotlinIcons.SMALL_LOGO
         ModuleType.android -> KotlinIcons.Wizard.ANDROID
@@ -85,6 +86,7 @@ val ModuleSubType.icon: Icon
     get() = when (this) {
         ModuleSubType.jvm -> KotlinIcons.Wizard.JVM
         ModuleSubType.js -> KotlinIcons.Wizard.JS
+        ModuleSubType.wasm -> KotlinIcons.Wizard.WEB
         ModuleSubType.android, ModuleSubType.androidNativeArm32, ModuleSubType.androidNativeArm64 -> KotlinIcons.Wizard.ANDROID
         ModuleSubType.iosArm32, ModuleSubType.iosArm64, ModuleSubType.iosX64, ModuleSubType.iosSimulatorArm64,
         ModuleSubType.ios, ModuleSubType.iosCocoaPods -> KotlinIcons.Wizard.IOS

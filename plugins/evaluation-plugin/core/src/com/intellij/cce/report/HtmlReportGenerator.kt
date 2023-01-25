@@ -133,6 +133,7 @@ class HtmlReportGenerator(
 
   private fun getMetricsTable(globalMetrics: List<MetricInfo>): String {
     val evaluationTypes = globalMetrics.map { it.evaluationType }.toSet().sorted().toMutableList()
+    val uniqueMetricsInfo = globalMetrics.filter { it.evaluationType == evaluationTypes.first() }
     val manyTypes = (evaluationTypes.size > 1)
     val withDiff = (evaluationTypes.size == 2)
     if (withDiff) evaluationTypes.add(diffColumnTitle)
@@ -176,7 +177,7 @@ class HtmlReportGenerator(
         |let table=new Tabulator('#metricsTable',{data:tableData,
         |columns:[{title:'File Report',field:'file',formatter:'html'${if (manyTypes) ",width:'120'" else ""}},
         |${
-      globalMetrics.joinToString(",\n") { metric ->
+      uniqueMetricsInfo.joinToString(",\n") { metric ->
         "{title:'${metric.name}',visible:${if (metric.showByDefault) "true" else "false"},columns:[${
           evaluationTypes.joinToString(",") { type ->
             "{title:'$type',field:'${metric.name.filter { it.isLetterOrDigit() }}$type',sorter:'number',align:'right',headerVertical:${manyTypes},visible:${if (metric.showByDefault) "true" else "false"}}"
@@ -210,6 +211,7 @@ class HtmlReportGenerator(
 
   private fun getToolbar(globalMetrics: List<MetricInfo>): String {
     val evaluationTypes = globalMetrics.mapTo(HashSet()) { it.evaluationType }
+    val uniqueMetricsInfo = globalMetrics.filter { it.evaluationType == evaluationTypes.first() }
     val withDiff = evaluationTypes.size == 2
     if (withDiff) evaluationTypes.add(diffColumnTitle)
     val sessionMetricIsPresent = globalMetrics.any { it.name == "Sessions" }
@@ -227,7 +229,7 @@ class HtmlReportGenerator(
           +"Metrics visibility"
         }
         ul("dropdown") {
-          globalMetrics.map { metric ->
+          uniqueMetricsInfo.map { metric ->
             li {
               input(InputType.checkBox) {
                 id = metric.name.filter { it.isLetterOrDigit() }
@@ -261,7 +263,7 @@ class HtmlReportGenerator(
     }
     val ifDiff: (String) -> String = { if (withDiff) it else "" }
     val ifSessions: (String) -> String = { if (sessionMetricIsPresent) it else "" }
-    val filteredNames = globalMetrics.map { it.name.filter { ch -> ch.isLetterOrDigit() } }
+    val filteredNames = uniqueMetricsInfo.map { it.name.filter { ch -> ch.isLetterOrDigit() } }
     val toolbarScript = """|<script>
         |${filteredNames.joinToString("") { "let ${it}=document.getElementById('${it}');" }}
         |function updateCols(${ifDiff("toggleDiff=false")}){

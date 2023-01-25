@@ -40,7 +40,6 @@ import java.util.*
  *
  * TODO: Merge with ResolveImportUtil, maybe make these functions the methods of PyQualifiedNameResolveContext.
  *
- * @author vlan
  */
 
 

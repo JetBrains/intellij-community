@@ -40,9 +40,6 @@ import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author ven
- */
 public final class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationsHighlightUtil.class);
 

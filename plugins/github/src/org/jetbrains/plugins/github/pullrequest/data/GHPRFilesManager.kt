@@ -23,6 +23,4 @@ internal interface GHPRFilesManager : Disposable {
   fun findDiffFile(pullRequest: GHPRIdentifier): DiffVirtualFileBase?
 
   fun updateTimelineFilePresentation(details: GHPullRequestShort)
-
-  fun addBeforeTimelineFileOpenedListener(disposable: Disposable, listener: (file: GHPRTimelineVirtualFile) -> Unit)
 }

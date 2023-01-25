@@ -25,8 +25,6 @@ import java.util.List;
  *   <li>Candidates not yet imported. In this case {@link #getPath()} must return not {@code null}.</li>
  * </ul>
  * <p/>
- *
- * @author dcheryasov
  */
 public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
   private static final Logger LOG = Logger.getInstance(ImportCandidateHolder.class);

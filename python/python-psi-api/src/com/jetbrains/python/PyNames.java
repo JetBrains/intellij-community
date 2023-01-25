@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
@@ -11,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author dcheryasov
- */
 @NonNls
 public final class PyNames {
   public static final String SITE_PACKAGES = "site-packages";
@@ -225,7 +223,7 @@ public final class PyNames {
 
   public static final String UNKNOWN_TYPE = "Any";
 
-  public static final String UNNAMED_ELEMENT = "<unnamed>";
+  public static final @NlsSafe String UNNAMED_ELEMENT = "<unnamed>";
 
   public static final String UNDERSCORE = "_";
 

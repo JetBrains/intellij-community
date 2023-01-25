@@ -234,7 +234,7 @@ class ProjectLibraryBridgeTest {
     ModuleRootModificationUtil.addDependency(module, library)
     projectModel.renameLibrary(library, mavenLibraryName)
 
-    val moduleDependencyItem = WorkspaceModel.getInstance(project).entityStorage.current
+    val moduleDependencyItem = WorkspaceModel.getInstance(project).currentSnapshot
       .entities(ModuleEntity::class.java).first()
       .dependencies.last()
     assertTrue(moduleDependencyItem is ModuleDependencyItem.Exportable.LibraryDependency)
@@ -252,7 +252,7 @@ class ProjectLibraryBridgeTest {
         rootModel.addLibraryEntry(library)
         rootModel.dispose()
       }
-      val moduleDependencies = WorkspaceModel.getInstance(project).entityStorage.current
+      val moduleDependencies = WorkspaceModel.getInstance(project).currentSnapshot
         .entities(ModuleEntity::class.java).first()
         .dependencies
       assertEquals(1, moduleDependencies.size)

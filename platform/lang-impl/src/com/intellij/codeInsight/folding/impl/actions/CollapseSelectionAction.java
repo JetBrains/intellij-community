@@ -27,9 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class CollapseSelectionAction extends BaseCodeInsightAction implements DumbAware {
   @NotNull
   @Override

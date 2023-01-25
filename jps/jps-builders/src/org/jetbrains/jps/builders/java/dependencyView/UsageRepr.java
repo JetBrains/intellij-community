@@ -15,9 +15,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 
-/**
- * @author db
- */
 final class UsageRepr {
   private static final byte FIELD_USAGE = 0x0;
   private static final byte FIELD_ASSIGN_USAGE = 0x1;

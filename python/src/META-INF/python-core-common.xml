@@ -739,7 +739,7 @@
     </action>
 
     <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewXml"/>
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewWebDevelopment"/>
     </action>
 
     <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction"

@@ -135,7 +135,7 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
             val right = condition::right.detached().parenthesizeIfCompoundExpression()
             val range = forIterationRange(start, right, reversed, inclusive)
             val explicitType =
-                if (context.converter.settings.specifyLocalVariableTypeByDefault || loopVar.type.annotationList.annotations.isNotEmpty())
+                if (context.converter.settings.specifyLocalVariableTypeByDefault || loopVar.type.hasAnnotations)
                     JKJavaPrimitiveType.INT
                 else JKNoType
             val loopVarDeclaration =

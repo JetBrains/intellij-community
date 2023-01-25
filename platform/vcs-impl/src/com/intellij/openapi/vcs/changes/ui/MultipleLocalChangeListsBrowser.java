@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
@@ -279,7 +280,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Override
   public Object getData(@NotNull String dataId) {
     if (UNVERSIONED_FILE_PATHS_DATA_KEY.is(dataId)) {
-      return ChangesListView.getSelectedUnversionedFiles(myViewer);
+      return VcsTreeModelData.selectedUnderTag(myViewer, UNVERSIONED_FILES_TAG)
+        .iterateUserObjects(FilePath.class);
     }
     else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteProvider;
@@ -288,7 +290,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       return new ChangeList[]{myChangeList};
     }
     else if (EXACTLY_SELECTED_FILES_DATA_KEY.is(dataId)) {
-      return ChangesListView.getExactlySelectedVirtualFiles(myViewer);
+      return VcsTreeModelData.mapToExactVirtualFile(VcsTreeModelData.exactlySelected(myViewer));
     }
     return super.getData(dataId);
   }

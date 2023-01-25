@@ -5,14 +5,17 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
@@ -36,6 +39,64 @@ public final class ImplementOrExtendFix extends LocalQuickFixAndIntentionActionO
     mySubclassPointer = SmartPointerManager.createPointer(subclass);
     myParentClassPointer = SmartPointerManager.createPointer(parentClass);
     myOnTheFly = onTheFly;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiClass subclass = mySubclassPointer.getElement();
+    PsiClass parent = myParentClassPointer.getElement();
+    if (subclass == null || !subclass.isValid() || parent == null || !parent.isValid()) return IntentionPreviewInfo.EMPTY;
+    PsiFile subclassFile = subclass.getContainingFile();
+
+    if (!subclassFile.isWritable() || subclass.getImplementsList() == null || subclass.getExtendsList() == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+
+    String before = createClassDescription(subclass, null, null);
+    String after = createClassDescription(subclass, parent.isInterface() ? null : parent, parent.isInterface() ? parent : null);
+    if (before == null || after == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, subclassFile.getName(), before, after);
+  }
+
+  @Nullable
+  private static String createClassDescription(@Nullable PsiClass psiClass,
+                                               @Nullable PsiClass addToExtends,
+                                               @Nullable PsiClass addToImplement) {
+    if (psiClass == null) {
+      return null;
+    }
+    StringBuilder stringBuilder = new StringBuilder();
+    PsiElement brace = psiClass.getLBrace();
+    for (PsiElement child : psiClass.getChildren()) {
+      if (child == brace) {
+        break;
+      }
+      if (child == psiClass.getImplementsList() && addToImplement!=null){
+        String text = child.getText();
+        PsiElementFactory elementFactory = JavaPsiFacade.getInstance(child.getProject()).getElementFactory();
+        PsiClassType type = elementFactory.createType(addToImplement);
+        text = StringUtil.isNotEmpty(text) ? text + ", " + type.getName() : "implements " + type.getName();
+        if (!(child.getPrevSibling() instanceof PsiWhiteSpace)) {
+          text = " " + text;
+        }
+        stringBuilder.append(text);
+        continue;
+      }
+      if (child == psiClass.getExtendsList() && addToExtends!=null) {
+        PsiElementFactory elementFactory = JavaPsiFacade.getInstance(child.getProject()).getElementFactory();
+        PsiClassType type = elementFactory.createType(addToExtends);
+        String text = "extends " + type.getName();
+        if (!(child.getPrevSibling() instanceof PsiWhiteSpace)) {
+          text = " " + text;
+        }
+        stringBuilder.append(text);
+        continue;
+      }
+      stringBuilder.append(child.getText());
+    }
+    return stringBuilder.toString();
   }
 
   @Override

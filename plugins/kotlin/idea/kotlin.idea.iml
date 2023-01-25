@@ -106,5 +106,7 @@
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" />
     <orderEntry type="module" module-name="kotlin.searching.base" />
+    <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" />
   </component>
 </module>

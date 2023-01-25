@@ -33,9 +33,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-/**
- * @author Irina.Chernushina on 4/19/2017.
- */
 @Tag("SchemaInfo")
 public class UserDefinedJsonSchemaConfiguration {
   private final static Comparator<Item> ITEM_COMPARATOR = (o1, o2) -> {

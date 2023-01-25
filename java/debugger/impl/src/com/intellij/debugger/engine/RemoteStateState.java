@@ -12,9 +12,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author lex
- */
 public class RemoteStateState implements RemoteState {
   private final Project myProject;
   private final RemoteConnection myConnection;

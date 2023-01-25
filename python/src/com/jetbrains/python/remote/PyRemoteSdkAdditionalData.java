@@ -1,7 +1,6 @@
 package com.jetbrains.python.remote;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -117,7 +116,6 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     RemoteSdkCredentialsBuilder.copyCredentials(credentials, res);
     myRemoteSdkProperties.copyTo(res);
     res.setSkeletonsPath(getSkeletonsPath());
-    res.setInitialized(isInitialized());
     res.setValid(isValid());
     res.setSdkId(getSdkId());
     return res;
@@ -196,16 +194,6 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   private static String constructSdkID(@NotNull RemoteConnectionCredentialsWrapper remoteConnectionCredentialsWrapper,
                                        @NotNull RemoteSdkPropertiesHolder properties) {
     return remoteConnectionCredentialsWrapper.getId() + properties.getInterpreterPath();
-  }
-
-  @Override
-  public boolean isInitialized() {
-    return myRemoteSdkProperties.isInitialized();
-  }
-
-  @Override
-  public void setInitialized(boolean initialized) {
-    myRemoteSdkProperties.setInitialized(initialized);
   }
 
   @Override
@@ -304,7 +292,6 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     data.load(element);
 
     if (element != null) {
-      WSLUtil.fixWslPrefix(sdk);
       CredentialsManager.getInstance().loadCredentials(path, element, data);
       if (data.myRemoteConnectionCredentialsWrapper.getRemoteConnectionType().hasPrefix(RemoteCredentialsHolder.SSH_PREFIX)) {
         CredentialsManager.updateOutdatedSdk(data, null);

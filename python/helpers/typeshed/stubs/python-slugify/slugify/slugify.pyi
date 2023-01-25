@@ -16,4 +16,5 @@ def slugify(
     regex_pattern: str | None = ...,
     lowercase: bool = ...,
     replacements: Iterable[Iterable[str]] = ...,
+    allow_unicode: bool = ...,
 ) -> str: ...

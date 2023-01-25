@@ -178,6 +178,9 @@ data class JdkItem(
 
   val fullPresentationText: @NlsSafe String
     get() = product.packagePresentationText + " " + jdkVersion + (presentableArchIfNeeded?.let {" ($it)" } ?: "")
+
+  val fullPresentationWithVendorText: @NlsSafe String
+    get() = product.packagePresentationText + " " + (jdkVendorVersion ?: jdkVersion) + (presentableArchIfNeeded?.let {" ($it)" } ?: "")
 }
 
 enum class JdkPackageType(@NonNls val type: String) {

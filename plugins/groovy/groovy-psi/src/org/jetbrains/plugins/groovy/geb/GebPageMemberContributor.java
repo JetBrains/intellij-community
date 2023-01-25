@@ -17,9 +17,6 @@ import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.sorryCannotKnowElementKind;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GebPageMemberContributor extends NonCodeMembersContributor {
 
   @Override

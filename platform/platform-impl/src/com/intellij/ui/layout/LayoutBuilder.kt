@@ -21,18 +21,19 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
 
   @Suppress("PropertyName")
   @PublishedApi
-  @get:Deprecated("", replaceWith = ReplaceWith("builder"), level = DeprecationLevel.ERROR)
+  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @get:ApiStatus.ScheduledForRemoval
   internal val `$`: LayoutBuilderImpl
     get() = builder
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 class CellBuilderWithButtonGroupProperty<T : Any>
 @PublishedApi internal constructor(private val prop: PropertyBinding<T>)
 
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 class RowBuilderWithButtonGroupProperty<T : Any>
 @PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder by builder {

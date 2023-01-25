@@ -21,9 +21,6 @@ import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
 
-/**
- * @author spleaner
- */
 final class FocusDebuggerAction extends AnAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(FocusDebuggerAction.class);

@@ -98,6 +98,11 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
         runTest("testData/multiFile/OverrideFieldToPrimaryConstructorProperty/");
     }
 
+    @TestMetadata("OverridePropertyAndUseAnotherPropertyOfSupertypeCompanion")
+    public void testOverridePropertyAndUseAnotherPropertyOfSupertypeCompanion() throws Exception {
+        runTest("testData/multiFile/OverridePropertyAndUseAnotherPropertyOfSupertypeCompanion/");
+    }
+
     @TestMetadata("ProtectedVisibility")
     public void testProtectedVisibility() throws Exception {
         runTest("testData/multiFile/ProtectedVisibility/");

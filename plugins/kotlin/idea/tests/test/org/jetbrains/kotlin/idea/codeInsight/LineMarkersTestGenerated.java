@@ -216,6 +216,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
         public void testWithJavaInheritor() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/WithJavaInheritor.kt");
         }
+
+        @TestMetadata("WithJavaInheritorProperty.kt")
+        public void testWithJavaInheritorProperty() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/WithJavaInheritorProperty.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

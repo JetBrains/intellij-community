@@ -19,8 +19,6 @@ import java.io.File;
 
 /**
  * Base class for run configurations with enabled code coverage
- *
- * @author ven
  */
 public abstract class CoverageEnabledConfiguration implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance(CoverageEnabledConfiguration.class.getName());

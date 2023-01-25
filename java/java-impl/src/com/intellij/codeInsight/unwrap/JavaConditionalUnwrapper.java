@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class JavaConditionalUnwrapper extends JavaUnwrapper {
   public JavaConditionalUnwrapper() {
     super(JavaBundle.message("unwrap.conditional"));

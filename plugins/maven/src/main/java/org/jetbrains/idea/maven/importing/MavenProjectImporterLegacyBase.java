@@ -44,7 +44,7 @@ public abstract class MavenProjectImporterLegacyBase extends MavenProjectImporte
 
   protected void setMavenizedModules(final Collection<Module> modules, final boolean mavenized) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    EntityStorage initialStorage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
+    EntityStorage initialStorage = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
     MutableEntityStorage storageBuilder = MutableEntityStorage.from(initialStorage);
     for (Module module : modules) {
       if (module.isDisposed()) continue;

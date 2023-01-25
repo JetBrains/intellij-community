@@ -28,8 +28,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
  * <p/>
  * <b>Note:</b> non-abstract subclasses of this class are expected to be marked by {@link State} annotation configured
  * to be stored under a distinct name at a {@link StoragePathMacros#CACHE_FILE}.
- *
- * @author Denis Zhdanov
  */
 public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExternalSystemLocalSettings.State> {
   protected S state;

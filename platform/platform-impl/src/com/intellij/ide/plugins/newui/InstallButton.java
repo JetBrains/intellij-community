@@ -58,9 +58,8 @@ public class InstallButton extends ColorButton {
   }
 
   protected void setTextAndSize() {
-    setText(myIsUpgradeRequired
-            ? IdeBundle.message("action.AnActionButton.text.upgrade")
-            : IdeBundle.message("action.AnActionButton.text.install"));
+    setText(IdeBundle.message("action.AnActionButton.text.install"));
+    setEnabled(!myIsUpgradeRequired);
     setWidth72(this);
   }
 

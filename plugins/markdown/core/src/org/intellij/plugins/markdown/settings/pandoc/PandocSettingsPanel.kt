@@ -32,7 +32,7 @@ internal class PandocSettingsPanel(private val project: Project) : JPanel(GridBa
   private val settings
     get() = PandocSettings.getInstance(project)
 
-  val executablePath
+  private val executablePath
     get() = executablePathSelector.text.takeIf { it.isNotEmpty() }
 
   private val imagesPath

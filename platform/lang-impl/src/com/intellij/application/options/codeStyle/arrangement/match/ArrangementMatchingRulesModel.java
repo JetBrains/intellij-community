@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.DefaultTableModel;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementMatchingRulesModel extends DefaultTableModel {
 
   private static final Logger LOG = Logger.getInstance(ArrangementMatchingRulesModel.class);

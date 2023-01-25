@@ -28,19 +28,19 @@ interface UiSwitcher {
 
     @JvmStatic
     fun append(component: JComponent, uiSwitcher: UiSwitcher) {
-      val uiSwitchers = component.getUserData(UI_SWITCHERS) ?: emptySet()
+      val uiSwitchers = getUiSwitchers(component)
       component.putUserData(UI_SWITCHERS, uiSwitchers + uiSwitcher)
     }
 
     @JvmStatic
     fun appendAll(component: JComponent, uiSwitchers: Set<UiSwitcher>) {
-      val myUiSwitchers = component.getUserData(UI_SWITCHERS) ?: emptySet()
+      val myUiSwitchers = getUiSwitchers(component)
       component.putUserData(UI_SWITCHERS, myUiSwitchers + uiSwitchers)
     }
 
     @JvmStatic
     fun removeAll(component: JComponent, uiSwitchers: Set<UiSwitcher>) {
-      val myUiSwitchers = component.getUserData(UI_SWITCHERS) ?: emptySet()
+      val myUiSwitchers = getUiSwitchers(component)
       component.putUserData(UI_SWITCHERS, (myUiSwitchers - uiSwitchers).ifEmpty { null })
     }
 
@@ -53,13 +53,17 @@ interface UiSwitcher {
       var c: Component? = component
       while (c != null && !c.isShowing) {
         if (c is JComponent) {
-          val uiSwitchers = c.getUserData(UI_SWITCHERS) ?: emptySet()
+          val uiSwitchers = getUiSwitchers(c)
           for (uiSwitcher in uiSwitchers) {
             uiSwitcher.show()
           }
         }
         c = c.parent
       }
+    }
+
+    private fun getUiSwitchers(component: JComponent): Set<UiSwitcher> {
+      return component.getUserData(UI_SWITCHERS) ?: mutableSetOf()
     }
   }
 }

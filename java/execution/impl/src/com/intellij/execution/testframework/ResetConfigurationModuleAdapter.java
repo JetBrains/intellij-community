@@ -86,13 +86,15 @@ public class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
       }
     }
     final Set<Module> modulesWithPackage = new HashSet<>();
-    final PsiDirectory[] directories = ReadAction.compute(() -> aPackage.getDirectories());
-    for (PsiDirectory directory : directories) {
-      final Module currentModule = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), project);
-      if (module != currentModule && currentModule != null) {
-        modulesWithPackage.add(currentModule);
+    ReadAction.run(() -> {
+      final PsiDirectory[] directories = ReadAction.compute(() -> aPackage.getDirectories());
+      for (PsiDirectory directory : directories) {
+        final Module currentModule = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), project);
+        if (module != currentModule && currentModule != null) {
+          modulesWithPackage.add(currentModule);
+        }
       }
-    }
+    });
     if (!modulesWithPackage.isEmpty()) {
       
       final Function<Module, String> moduleNameRef = module1 -> {

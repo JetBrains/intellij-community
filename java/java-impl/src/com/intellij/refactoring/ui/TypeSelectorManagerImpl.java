@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private SmartTypePointer myPointer;
   private PsiType myDefaultType;

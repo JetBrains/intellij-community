@@ -16,8 +16,8 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
+import org.jetbrains.intellij.build.impl.withTrailingSlash
 import org.jetbrains.intellij.build.io.moveFile
-import org.jetbrains.intellij.build.io.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.jps.cache.model.BuildTargetState
 import org.jetbrains.jps.incremental.storage.ProjectStamps
@@ -168,7 +168,7 @@ internal class PortableCompilationCacheUploader(
 }
 
 private class Uploader(serverUrl: String, val authHeader: String) {
-  private val serverUrl = toUrlWithTrailingSlash(serverUrl)
+  private val serverUrl = serverUrl.withTrailingSlash()
 
   fun upload(path: String, file: Path): Boolean {
     val url = pathToUrl(path)

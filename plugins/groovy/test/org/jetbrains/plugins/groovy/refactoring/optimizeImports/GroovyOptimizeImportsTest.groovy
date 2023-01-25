@@ -15,9 +15,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 
 import java.util.function.Consumer
 
-/**
- * @author ilyas
- */
 class GroovyOptimizeImportsTest extends LightGroovyTestCase {
 
   final String basePath = "${TestUtils.testDataPath}optimizeImports/"

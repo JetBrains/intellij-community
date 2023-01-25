@@ -100,14 +100,21 @@ internal val Bookmark.firstGroupWithDescription
 /**
  * Creates and registers an action that navigates to a bookmark by a digit or a letter, if speed search is not active.
  */
-internal fun JComponent.registerBookmarkTypeAction(parent: Disposable, type: BookmarkType) = GotoBookmarkTypeAction(type, true)
-  .registerCustomShortcutSet(CustomShortcutSet.fromString(type.mnemonic.toString()), this, parent)
+internal fun JComponent.registerBookmarkTypeAction(parent: Disposable, type: BookmarkType, whenPerformed: () -> Unit = {}) {
+  object : GotoBookmarkTypeAction(type, true) {
+    override fun actionPerformed(event: AnActionEvent) {
+      super.actionPerformed(event)
+      whenPerformed()
+    }
+  }
+    .registerCustomShortcutSet(CustomShortcutSet.fromString(type.mnemonic.toString()), this, parent)
+}
 
 /**
  * Creates an action that navigates to a selected bookmark by the EditSource shortcut.
  */
 internal fun JComponent.registerEditSourceAction(parent: Disposable) = LightEditActionFactory
-  .create { OpenSourceUtil.navigate(*it.getData(CommonDataKeys.NAVIGATABLE_ARRAY)) }
+  .create { OpenSourceUtil.navigate(*it.getData(CommonDataKeys.NAVIGATABLE_ARRAY).orEmpty()) }
   .registerCustomShortcutSet(CommonShortcuts.getEditSource(), this, parent)
 
 internal fun JTree.registerNavigateOnEnterAction(whenPerformed: () -> Unit = {}) {

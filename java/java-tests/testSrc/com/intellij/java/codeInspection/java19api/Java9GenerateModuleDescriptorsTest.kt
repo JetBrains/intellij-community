@@ -4,9 +4,6 @@ package com.intellij.java.codeInspection.java19api
 import com.intellij.codeInspection.java19api.Java9GenerateModuleDescriptorsAction
 import junit.framework.TestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class Java9GenerateModuleDescriptorsTest : TestCase() {
 
   fun testNameConverter() {

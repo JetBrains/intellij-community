@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -43,21 +42,16 @@ interface KotlinApplicableToolWithContext<ELEMENT : KtElement, CONTEXT> : Kotlin
     /**
      * Applies a fix to [element] using information from [context]. [apply] should not use the Analysis API due to performance concerns, as
      * [apply] is usually executed on the EDT. Any information that needs to come from the Analysis API should be supplied via
-     * [prepareContext]. [apply] is guaranteed to be executed in a write action if [element] is physical.
+     * [prepareContext]. [apply] is executed in a write action if [element] is physical and [shouldApplyInWriteAction] returns `true`.
      */
     fun apply(element: ELEMENT, context: CONTEXT, project: Project, editor: Editor?)
 }
 
 internal fun <ELEMENT : KtElement, CONTEXT> KotlinApplicableToolWithContext<ELEMENT, CONTEXT>.prepareContextWithAnalyze(
     element: ELEMENT,
-    needsReadAction: Boolean,
-): CONTEXT? {
-    fun action() = analyze(element) { prepareContext(element) }
-    return if (needsReadAction) runReadAction { action() } else action()
-}
+): CONTEXT? = analyze(element) { prepareContext(element) }
 
 @OptIn(KtAllowAnalysisOnEdt::class)
 internal fun <ELEMENT : KtElement, CONTEXT> KotlinApplicableToolWithContext<ELEMENT, CONTEXT>.prepareContextWithAnalyzeAllowEdt(
     element: ELEMENT,
-    needsReadAction: Boolean,
-): CONTEXT? = allowAnalysisOnEdt { prepareContextWithAnalyze(element, needsReadAction) }
+): CONTEXT? = allowAnalysisOnEdt { prepareContextWithAnalyze(element) }

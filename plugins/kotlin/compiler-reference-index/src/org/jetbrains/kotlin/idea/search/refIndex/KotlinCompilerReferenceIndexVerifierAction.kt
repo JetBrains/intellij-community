@@ -18,12 +18,12 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.util.codeUsageScope
-import org.jetbrains.kotlin.idea.search.toHumanReadableString
 import org.jetbrains.kotlin.idea.base.util.useScope
+import org.jetbrains.kotlin.idea.search.toHumanReadableString
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -68,13 +68,13 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
                             text = context.elementText
                         )
 
-                        titledRow(title = "PsiSearchHelper#getCodeUsageScope") {
+                        group("PsiSearchHelper#getCodeUsageScope") {
                             row {
                                 immutableScrollableTextArea(text = context.codeUsageScopeText)
-                            }
-                        }
+                            }.resizableRow()
+                        }.resizableRow()
 
-                        titledRow("Use Scope vs. Code Usage Scope") {
+                        group("Use Scope vs. Code Usage Scope") {
                             rowWithImmutableTextField(
                                 label = "Number of Kotlin files:",
                                 text = context.numberOfKotlinFilesInUseScope + "/" + context.numberOfKotlinFilesInCodeUsageScope
@@ -109,18 +109,21 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
     }
 }
 
-private fun RowBuilder.rowWithImmutableTextField(label: String, text: String) {
+private fun Panel.rowWithImmutableTextField(label: String, text: String) {
     row(label) {
-        immutableTextField(text)
+        textField().applyToComponent {
+            setText(text)
+            isEditable = false
+        }.align(AlignX.FILL)
     }
 }
 
-private fun Row.immutableTextField(text: String) {
-    textField(getter = { text }, setter = {}).applyToComponent { isEditable = false }
-}
-
 private fun Row.immutableScrollableTextArea(text: String) {
-    scrollableTextArea(getter = { text }, setter = {}).applyToComponent { isEditable = false }
+    textArea().applyToComponent {
+        setText(text)
+        isEditable = false
+    }.rows(6)
+        .align(Align.FILL)
 }
 
 private fun showPsiElementNotFound(project: Project): Unit = showInvalidData(

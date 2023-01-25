@@ -18,9 +18,6 @@ import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -29,7 +26,6 @@ import java.util.Objects;
 public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
   public static final Key<MarkdownEditorWithPreview> PARENT_SPLIT_EDITOR_KEY = Key.create("parentSplit");
   private boolean myAutoScrollPreview;
-  private final List<SplitLayoutListener> myLayoutListeners = new ArrayList<>();
 
   public MarkdownEditorWithPreview(@NotNull TextEditor editor, @NotNull MarkdownPreviewFileEditor preview) {
     super(
@@ -69,17 +65,8 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
     getTextEditor().getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener());
   }
 
-  public void addLayoutListener(SplitLayoutListener listener) {
-    myLayoutListeners.add(listener);
-  }
-
-  public void removeLayoutListener(SplitLayoutListener listener) {
-    myLayoutListeners.remove(listener);
-  }
-
   @Override
   protected void onLayoutChange(Layout oldValue, Layout newValue) {
-    myLayoutListeners.forEach(listener -> listener.onLayoutChange(oldValue, newValue));
     super.onLayoutChange(oldValue, newValue);
     // Editor tab will lose focus after switching to JCEF preview for some reason.
     // So we should explicitly request focus for our editor here.
@@ -138,10 +125,6 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
   @Override
   protected @NotNull ToggleAction getShowPreviewAction() {
     return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.PreviewOnly"));
-  }
-
-  public interface SplitLayoutListener extends EventListener {
-    void onLayoutChange(Layout oldValue, Layout newValue);
   }
 
   private class MyVisibleAreaListener implements VisibleAreaListener {

@@ -10,4 +10,3 @@ fun test1() {
 fun test2() {
 }
 
-// FIR_COMPARISON

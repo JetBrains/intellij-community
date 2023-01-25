@@ -1,7 +1,7 @@
 from _typeshed import Self
 from collections.abc import Callable, Iterator
 from logging import Logger
-from typing import IO, Any
+from typing import IO
 from typing_extensions import TypeAlias
 
 from paramiko.channel import Channel
@@ -11,7 +11,7 @@ from paramiko.sftp_file import SFTPFile
 from paramiko.transport import Transport
 from paramiko.util import ClosingContextManager
 
-_Callback: TypeAlias = Callable[[int, int], Any]
+_Callback: TypeAlias = Callable[[int, int], object]
 
 b_slash: bytes
 

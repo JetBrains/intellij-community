@@ -5,7 +5,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.Topic;
@@ -23,8 +22,6 @@ import java.util.function.Predicate;
 public interface RunDashboardManager {
   Topic<RunDashboardListener> DASHBOARD_TOPIC =
     Topic.create("run dashboard", RunDashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
-
-  Key<RunConfiguration> BASE_CONFIGURATION_KEY = Key.create("BASE_CONFIGURATION");
 
   static RunDashboardManager getInstance(@NotNull Project project) {
     return project.getService(RunDashboardManager.class);

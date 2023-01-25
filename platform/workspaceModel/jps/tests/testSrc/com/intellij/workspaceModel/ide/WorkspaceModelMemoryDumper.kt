@@ -35,7 +35,7 @@ private suspend fun loadProject(): Pair<JpsProjectSerializers, EntityStorage> {
   val builder = MutableEntityStorage.create()
   val virtualFileManager = VirtualFileUrlManagerImpl()
   val projectDir = File(PathManager.getHomePath()).asConfigLocation(virtualFileManager)
-  val serializers = JpsProjectEntitiesLoader.loadProject(projectDir, builder, Paths.get("/tmp"), TestErrorReporter,
+  val serializers = JpsProjectEntitiesLoader.loadProject(projectDir, builder, builder, Paths.get("/tmp"), TestErrorReporter,
                                                          virtualFileManager)
   return Pair(serializers, builder.toSnapshot())
 }

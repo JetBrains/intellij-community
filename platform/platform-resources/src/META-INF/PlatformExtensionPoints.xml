@@ -461,7 +461,7 @@
                     dynamic="true"/>
     <extensionPoint name="trustedHostsConfigurableProvider" interface="com.intellij.ide.impl.TrustedHostsConfigurableProvider"
                     dynamic="true"/>
-    <extensionPoint name="projectLocator" interface="com.intellij.ide.impl.trustedProjects.ProjectLocator"
+    <extensionPoint name="trustedProjectsLocator" interface="com.intellij.ide.trustedProjects.TrustedProjectsLocator"
                     dynamic="true"/>
     <extensionPoint name="settingsEntryPointActionProvider" interface="com.intellij.ide.actions.SettingsEntryPointAction$ActionProvider" dynamic="true"/>
     <extensionPoint name="settingsEntryPointIconCustomizer" interface="com.intellij.ide.actions.SettingsEntryPointAction$IconCustomizer" dynamic="true"/>

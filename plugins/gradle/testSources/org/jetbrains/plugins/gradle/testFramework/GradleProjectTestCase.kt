@@ -3,8 +3,7 @@ package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.openapi.externalSystem.util.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.file.VirtualFileUtil
+import com.intellij.openapi.vfs.*
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
@@ -23,15 +22,15 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
   fun findOrCreateFile(relativePath: String, text: String): VirtualFile {
     gradleFixture.fileFixture.snapshot(relativePath)
     return runWriteActionAndGet {
-      val file = VirtualFileUtil.findOrCreateFile(projectRoot, relativePath)
-      VirtualFileUtil.reloadDocument(file)
-      VirtualFileUtil.setTextContent(file, text)
-      VirtualFileUtil.commitDocument(project, file)
+      val file = projectRoot.findOrCreateFile(relativePath)
+      file.reloadDocument()
+      file.writeText(text)
+      file.commitDocument(project)
       file
     }
   }
 
   fun getFile(relativePath: String): VirtualFile {
-    return VirtualFileUtil.getFile(projectRoot, relativePath)
+    return projectRoot.getFile(relativePath)
   }
 }

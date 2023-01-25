@@ -20,11 +20,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.IconReplacer
+import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBDimension
@@ -39,7 +39,6 @@ import java.awt.geom.RoundRectangle2D
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
-import com.intellij.util.ui.JBUI.CurrentTheme.RunWidget as RunWidgetDefaults
 
 private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
   return ActionManager.getInstance().createActionToolbar(
@@ -52,7 +51,7 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
     layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     if (this is ActionToolbarImpl) {
       isOpaque = false
-      setMinimumButtonSize { JBUI.size(RunWidgetDefaults.actionButtonWidth(), RunWidgetDefaults.toolbarHeight()) }
+      setMinimumButtonSize { JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight()) }
       setActionButtonBorder(JBUI.Borders.empty())
       setSeparatorCreator { RunToolbarSeparator(isCurrentConfigurationRunning) }
       setCustomButtonLook(RunWidgetButtonLook(isCurrentConfigurationRunning))
@@ -72,17 +71,12 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
     return createRunActionToolbar {
       presentation.getClientProperty(runToolbarDataKey) ?: false
     }.component.let {
-      Wrapper(it).apply { border = JBUI.Borders.empty(RunWidgetDefaults.toolbarBorderHeight(), 12, RunWidgetDefaults.toolbarBorderHeight(), 2) }
+      DynamicBorderWrapper(it) { JBUI.Borders.empty(JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 12,
+                                                    JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 2) }
     }
   }
 
   override fun update(e: AnActionEvent) {
-    if (!Registry.`is`("ide.experimental.ui.redesigned.run.widget")) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-    e.presentation.isEnabled = false
-
     e.presentation.putClientProperty(runToolbarDataKey, isSomeRunningNow(e))
   }
 
@@ -136,6 +130,22 @@ class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
   }
 }
 
+private class DisabledIcon(private val width: Int, private val height: Int, private val iconFn: () -> Icon) : RetrievableIcon {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    iconFn().paintIcon(c, g, x, y)
+  }
+
+  override fun getIconWidth(): Int = width
+
+  override fun getIconHeight(): Int = height
+
+  override fun retrieveIcon(): Icon = iconFn()
+
+  override fun replaceBy(replacer: IconReplacer): Icon {
+    return DisabledIcon(width, height) { replacer.replaceIcon(iconFn()) }
+  }
+}
+
 private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () -> Boolean) : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color {
 
@@ -143,8 +153,8 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
 
     return when (state) {
       ActionButtonComponent.NORMAL -> color
-      ActionButtonComponent.PUSHED -> ColorUtil.alphaBlending(RunWidgetDefaults.PRESSED_BACKGROUND, color)
-      else -> ColorUtil.alphaBlending(RunWidgetDefaults.HOVER_BACKGROUND, color)
+      ActionButtonComponent.PUSHED -> ColorUtil.alphaBlending(JBUI.CurrentTheme.RunWidget.PRESSED_BACKGROUND, color)
+      else -> ColorUtil.alphaBlending(JBUI.CurrentTheme.RunWidget.HOVER_BACKGROUND, color)
     }
   }
 
@@ -185,12 +195,18 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     }
   }
 
+  override fun getDisabledIcon(icon: Icon): Icon = DisabledIcon(icon.iconWidth, icon.iconHeight) {
+    IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND)
+  }
 
   override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
     if (icon.iconWidth == 0 || icon.iconHeight == 0) {
       return
     }
-    super.paintIcon(g, actionButton, IconUtil.toStrokeIcon(icon, RunWidgetDefaults.FOREGROUND), x, y)
+
+    val toStrokeIcon = if (icon is DisabledIcon) icon else IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.FOREGROUND)
+
+    super.paintIcon(g, actionButton, toStrokeIcon, x, y)
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
@@ -236,9 +252,10 @@ private class MoreRunToolbarActions : TogglePopupAction(
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
-    return createOtherRunnersSubgroup(selectedConfiguration, project)
+    val result = createOtherRunnersSubgroup(selectedConfiguration, project)
+    addAdditionalActionsToRunConfigurationOptions(project, selectedConfiguration, result, true)
+    return result
   }
-
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
 
@@ -247,14 +264,24 @@ internal val excludeRunAndDebug: (Executor) -> Boolean = {
   it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
 }
 
-private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): ActionGroup? {
+private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): DefaultActionGroup {
   if (runConfiguration != null) {
     return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, excludeRunAndDebug)
   }
   if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
     return RunConfigurationsComboBoxAction.RunCurrentFileAction(excludeRunAndDebug)
   }
-  return ActionGroup.EMPTY_GROUP
+  return DefaultActionGroup()
+}
+
+internal fun addAdditionalActionsToRunConfigurationOptions(project: Project,
+                                                           selectedConfiguration: RunnerAndConfigurationSettings?,
+                                                           targetGroup: DefaultActionGroup,
+                                                           isWidget: Boolean) {
+  val additionalActions = AdditionalRunningOptions.getInstance(project).getAdditionalActions(selectedConfiguration, isWidget)
+  for (action in additionalActions.getChildren(null).reversed()) {
+    targetGroup.add(action, Constraints.FIRST)
+  }
 }
 
 private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {
@@ -289,12 +316,15 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return object : ActionButtonWithText(this, presentation, place, { JBUI.size(RunWidgetDefaults.configurationSelectorWidth(), RunWidgetDefaults.toolbarHeight()) }){
+    return object : ActionButtonWithText(this, presentation, place, {
+      JBUI.size(JBUI.CurrentTheme.RunWidget.configurationSelectorWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
+    }) {
       override fun getMargins(): Insets = JBInsets.create(0, 10)
       override fun iconTextSpace(): Int = JBUI.scale(6)
       override fun shallPaintDownArrow() = true
+      override fun getInactiveTextColor() = JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND
     }.also {
-      it.foreground = RunWidgetDefaults.FOREGROUND
+      it.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
       it.setHorizontalTextAlignment(SwingConstants.LEFT)
     }
   }
@@ -310,7 +340,7 @@ private class RunToolbarSeparator(private val isCurrentConfigurationRunning: () 
       g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
       g2.color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
       g2.fillRect(-1, 0, size.width + 1, size.height)
-      g2.color = RunWidgetDefaults.SEPARATOR
+      g2.color = JBUI.CurrentTheme.RunWidget.SEPARATOR
       g2.stroke = BasicStroke(JBUI.pixScale(this))
       g2.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))
     }
@@ -319,10 +349,10 @@ private class RunToolbarSeparator(private val isCurrentConfigurationRunning: () 
     }
   }
 
-  override fun getPreferredSize(): Dimension = Dimension(JBUI.scale(1), JBUI.scale(RunWidgetDefaults.toolbarHeight()))
+  override fun getPreferredSize(): Dimension = Dimension(JBUI.scale(1), JBUI.scale(JBUI.CurrentTheme.RunWidget.toolbarHeight()))
 }
 
 private fun getRunWidgetBackgroundColor(isRunning: Boolean): Color = if (isRunning)
-  RunWidgetDefaults.RUNNING_BACKGROUND
+  JBUI.CurrentTheme.RunWidget.RUNNING_BACKGROUND
 else
-  RunWidgetDefaults.BACKGROUND
+  JBUI.CurrentTheme.RunWidget.BACKGROUND

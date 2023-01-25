@@ -62,14 +62,6 @@ import java.util.Map;
   }
 
   /**
-   * @deprecated use {@linkplain #create(int)} for caching.
-   */
-  @Deprecated(forRemoval = true)
-  public EmptyIcon(int size) {
-    this(size, size, false);
-  }
-
-  /**
    * @deprecated use {@linkplain #create(int, int)} for caching.
    */
   @Deprecated

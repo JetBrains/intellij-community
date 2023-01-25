@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.openapi.components.*
@@ -11,9 +11,10 @@ import java.util.*
 @ApiStatus.Internal
 fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>().isPathTrusted(path)
 
+@ApiStatus.Internal
 @State(name = "Trusted.Paths.Settings", storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.APP)
-internal class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings.State>(State()) {
+class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings.State>(State()) {
 
   companion object {
     @JvmStatic

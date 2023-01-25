@@ -11,9 +11,6 @@ import java.util.LinkedHashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Alexey.Ivanov
- */
 public final class NameSuggesterUtil {
   private NameSuggesterUtil() {
   }

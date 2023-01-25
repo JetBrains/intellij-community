@@ -158,15 +158,6 @@ public abstract class SyntheticLibrary {
   }
 
   /**
-   * @deprecated use {@link #newImmutableLibrary(List)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<? extends VirtualFile> sourceRoots) {
-    return newImmutableLibrary(asList(sourceRoots), Collections.emptySet(), null);
-  }
-
-  /**
    * @see SyntheticLibrary#newImmutableLibrary(String, List, List, Set, ExcludeFileCondition)
    */
   @NotNull
