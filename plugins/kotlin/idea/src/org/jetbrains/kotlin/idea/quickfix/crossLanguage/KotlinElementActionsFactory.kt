@@ -213,6 +213,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
+        if (!request.isValid) return emptyList()
+
         val targetKtClass =
             targetClass.toKtClassOrFile().safeAs<KtClass>() ?: return emptyList()
         val modifierBuilder = ModifierBuilder(targetKtClass).apply { addJvmModifiers(request.modifiers) }
