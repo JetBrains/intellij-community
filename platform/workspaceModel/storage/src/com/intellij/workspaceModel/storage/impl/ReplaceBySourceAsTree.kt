@@ -9,7 +9,6 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.TestOnly
 import java.util.*
-import kotlin.collections.ArrayList
 
 /**
  * # Replace By Source ~~as tree~~
@@ -131,7 +130,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         targetStorage.modifyEntity(WorkspaceEntity.Builder::class.java, targetEntity) {
           (this as ModifiableWorkspaceEntityBase<*, *>).relabel(replaceWithEntity, parents)
         }
-        targetStorage.indexes.updateExternalMappingForEntityId(operation.replaceWithEntityId, operation.targetEntityId, replaceWithStorage.indexes)
+        targetStorage.indexes.updateExternalMappingForEntityId(operation.replaceWithEntityId, operation.targetEntityId,
+                                                               replaceWithStorage.indexes)
       }
 
       for (removeOperation in removeOperations) {
@@ -367,7 +367,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           entityFilter(targetEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
             if (replaceWithEntity.entitySource !is DummyParentEntitySource) {
               replaceWorkspaceData(targetEntity.id, replaceWithEntity.id, parents)
-            } else {
+            }
+            else {
               doNothingOn(targetEntityId, replaceWithEntityId)
             }
             return ParentsRef.TargetRef(targetEntityId)
@@ -380,7 +381,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
             if (targetEntity is WorkspaceEntityWithSymbolicId) {
               if (replaceWithEntity.entitySource !is DummyParentEntitySource) {
                 replaceWorkspaceData(targetEntityId, replaceWithEntityId, parents)
-              } else {
+              }
+              else {
                 doNothingOn(targetEntityId, replaceWithEntityId)
               }
               return ParentsRef.TargetRef(targetEntityId)
@@ -449,7 +451,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
             val targetEntityData = findEntityInTargetStore(replaceWithEntityData, value.targetEntityId, replaceWithTrack.entity.clazz)
             if (targetEntityData != null) {
               return targetEntityData.createEntityId().let { ParentsRef.TargetRef(it) }
-            } else {
+            }
+            else {
               // If target parent didn't change, but we can't find desired existing child, we suppose it's new child
               isNewParent = true
             }
@@ -576,7 +579,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           entityFilter(targetEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
             if (replaceWithEntity.entitySource !is DummyParentEntitySource) {
               replaceWorkspaceData(targetEntity.id, replaceWithEntity.id, targetParents)
-            } else {
+            }
+            else {
               doNothingOn(targetEntity.id, replaceWithEntity.id)
             }
             return replaceWithEntity.id
@@ -588,7 +592,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           !entityFilter(targetEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
             if (replaceWithEntity.entitySource !is DummyParentEntitySource) {
               replaceWorkspaceData(targetEntity.id, replaceWithEntity.id, targetParents)
-            } else {
+            }
+            else {
               doNothingOn(targetEntity.id, replaceWithEntity.id)
             }
             return replaceWithEntity.id
@@ -688,7 +693,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       val currentTargetState = targetState[targetRootEntityId]
       assert(currentTargetState == null) { "This state was already checked before this function" }
 
-      val replaceWithEntity = findRootEntityInStorage(targetEntityData.createEntity(targetStorage) as WorkspaceEntityBase, replaceWithStorage,
+      val replaceWithEntity = findRootEntityInStorage(targetEntityData.createEntity(targetStorage) as WorkspaceEntityBase,
+                                                      replaceWithStorage,
                                                       targetStorage, replaceWithState) as? WorkspaceEntityBase
 
       return processExactEntity(null, targetEntityData, replaceWithEntity)
@@ -908,11 +914,13 @@ internal sealed interface ReplaceWithState {
       return "NoChange(targetEntityId=${targetEntityId.asString()})"
     }
   }
+
   data class Relabel(val targetEntityId: EntityId) : ReplaceWithState {
     override fun toString(): String {
       return "Relabel(targetEntityId=${targetEntityId.asString()})"
     }
   }
+
   object NoChangeTraceLost : ReplaceWithState
 }
 
@@ -922,6 +930,7 @@ sealed interface ParentsRef {
       return "TargetRef(targetEntityId=${targetEntityId.asString()})"
     }
   }
+
   data class AddedElement(val replaceWithEntityId: EntityId) : ParentsRef {
     override fun toString(): String {
       return "AddedElement(replaceWithEntityId=${replaceWithEntityId.asString()})"
