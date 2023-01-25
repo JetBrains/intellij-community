@@ -1070,6 +1070,10 @@
                       enabledByDefault="true" level="ERROR"
                       bundle="messages.LangBundle" key="display.name.syntax.error"
                       implementationClass="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection$SyntaxErrorInspection"/>
+    <globalInspection shortName="GenericError" groupKey="inspection.general.tools.group.name" groupBundle="messages.InspectionsBundle"
+                      enabledByDefault="false" level="ERROR"
+                      bundle="messages.LangBundle" key="display.name.generic.error"
+                      implementationClass="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection$GenericErrorInspection"/>
     <localInspection shortName="LossyEncoding" bundle="messages.LangBundle" key="lossy.encoding"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="true"
                      level="WARNING"
