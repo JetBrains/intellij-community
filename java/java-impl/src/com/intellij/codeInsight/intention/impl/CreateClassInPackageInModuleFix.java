@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceClassFixBase;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -68,6 +69,11 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return ModuleManager.getInstance(project).findModuleByName(myModuleName) != null;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(JavaBundle.message("intention.text.create.a.class.in.package.preview", myPackageName));
   }
 
   @Override
