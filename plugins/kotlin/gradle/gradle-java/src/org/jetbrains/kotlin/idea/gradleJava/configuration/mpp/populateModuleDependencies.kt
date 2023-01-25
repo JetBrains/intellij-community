@@ -21,6 +21,10 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
     resolverCtx: ProjectResolverContext,
     mppModel: KotlinMPPGradleModel,
 ) {
+    if (shouldSkipMppDependencyHandlingBecauseOfExtensions(gradleModule, ideModule, ideProject, mppModel, resolverCtx))
+        return
+    runPreDependencyHandlingExtensions(gradleModule, ideModule, ideProject, mppModel, resolverCtx)
+
     val dependenciesContainer = mppModel.dependencies
 
     if (dependenciesContainer != null) {
@@ -30,6 +34,8 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
     } else {
         populateModuleDependenciesWithoutDependenciesContainer(gradleModule, ideProject, ideModule, resolverCtx)
     }
+
+    runPostDependencyHandlingExtensions(gradleModule, ideModule, ideProject, mppModel, resolverCtx)
 }
 
 /**

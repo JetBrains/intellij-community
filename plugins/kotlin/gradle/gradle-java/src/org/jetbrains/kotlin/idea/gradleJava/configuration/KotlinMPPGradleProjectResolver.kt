@@ -30,7 +30,9 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
         val moduleDataNode = super.createModule(gradleModule, projectDataNode) ?: return null
-        initializeMppModuleDataNode(gradleModule, moduleDataNode, projectDataNode, resolverCtx)
+        val mppModel = resolverCtx.getMppModel(gradleModule) ?: return moduleDataNode
+
+        initializeMppModuleDataNode(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
         return moduleDataNode
     }
 
