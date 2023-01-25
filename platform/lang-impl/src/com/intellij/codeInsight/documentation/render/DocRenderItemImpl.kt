@@ -1,339 +1,258 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.documentation.render;
+package com.intellij.codeInsight.documentation.render
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.HelpTooltip;
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.platform.documentation.DocumentationTarget;
-import com.intellij.platform.documentation.InlineDocumentation;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.icons.AllIcons
+import com.intellij.ide.HelpTooltip
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.editor.CustomFoldRegion
+import com.intellij.openapi.editor.CustomFoldRegionRenderer
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.TextRange
+import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.documentation.InlineDocumentation
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.ui.LayeredIcon
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.xml.util.XmlStringUtil
+import org.jetbrains.annotations.Nls
+import javax.swing.Icon
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.util.List;
-import java.util.*;
+internal class DocRenderItemImpl(override val editor: Editor,
+                                 textRange: TextRange,
+                                 override var textToRender: @Nls String?) : DocRenderItem {
+  override val highlighter: RangeHighlighter
+  override var foldRegion: CustomFoldRegion? = null
+    private set
 
-import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.findInlineDocumentation;
-
-public final class DocRenderItemImpl implements DocRenderItem {
-  private final Editor editor;
-  private final RangeHighlighter highlighter;
-  private @Nls String textToRender;
-  private CustomFoldRegion foldRegion;
-
-  @Nls
-  @Nullable
-  @Override
-  public String getTextToRender() {
-    return textToRender;
+  override fun calcFoldingGutterIconRenderer(): GutterIconRenderer? {
+    val isHighlighterIconVisible = (highlighter.gutterIconRenderer as? MyGutterIconRenderer)?.isIconVisible ?: return null
+    return MyGutterIconRenderer(AllIcons.Gutter.JavadocEdit, isHighlighterIconVisible)
   }
 
-  void setTextToRender(@Nls String text) {
-    textToRender = text;
+  init {
+    highlighter = (editor.markupModel as MarkupModelEx)
+      .addRangeHighlighterAndChangeAttributes(null, textRange.startOffset, textRange.endOffset,
+                                              0, HighlighterTargetArea.EXACT_RANGE, false) { h: RangeHighlighterEx ->
+        h.putUserData(DocRenderItemManagerImpl.OWN_HIGHLIGHTER, true)
+      }
+    updateIcon(null)
   }
 
-  @Override
-  public @Nullable CustomFoldRegion getFoldRegion() {
-    return foldRegion;
-  }
+  val isValid: Boolean
+    get() = highlighter.isValid && highlighter.startOffset < highlighter.endOffset && ItemLocation(highlighter).matches(foldRegion)
 
-  @Override
-  public @NotNull RangeHighlighter getHighlighter() {
-    return highlighter;
-  }
-
-  @Override
-  public @NotNull Editor getEditor() {
-    return editor;
-  }
-
-  @Override
-  public GutterIconRenderer calcFoldingGutterIconRenderer() {
-    MyGutterIconRenderer highlighterIconRenderer =
-      (MyGutterIconRenderer)highlighter.getGutterIconRenderer();
-    return highlighterIconRenderer == null
-           ? null
-           : new MyGutterIconRenderer(AllIcons.Gutter.JavadocEdit, highlighterIconRenderer.isIconVisible());
-  }
-
-  public static CustomFoldRegionRenderer createDemoRenderer(@NotNull Editor editor) {
-    DocRenderItemImpl item = new DocRenderItemImpl(editor, new TextRange(0, 0), CodeInsightBundle.message(
-      "documentation.rendered.documentation.with.href.link"));
-    return new DocRenderer(item, DocRenderDefaultLinkActivationHandler.INSTANCE);
-  }
-
-  DocRenderItemImpl(@NotNull Editor editor, @NotNull TextRange textRange, @Nullable @Nls String textToRender) {
-    this.editor = editor;
-    this.textToRender = textToRender;
-    highlighter = ((MarkupModelEx)editor.getMarkupModel())
-      .addRangeHighlighterAndChangeAttributes(null, textRange.getStartOffset(), textRange.getEndOffset(), 0, HighlighterTargetArea.EXACT_RANGE, false, (h) -> {
-        h.putUserData(DocRenderItemManagerImpl.OWN_HIGHLIGHTER, true);
-      });
-    updateIcon(null);
-  }
-
-  boolean isValid() {
-    return highlighter.isValid() &&
-           highlighter.getStartOffset() < highlighter.getEndOffset() &&
-           new ItemLocation(highlighter).matches(foldRegion);
-  }
-
-  boolean remove(@NotNull Collection<Runnable> foldingTasks) {
-    highlighter.dispose();
-    if (foldRegion != null && foldRegion.isValid()) {
-      foldingTasks.add(() -> foldRegion.getEditor().getFoldingModel().removeFoldRegion(foldRegion));
-      return true;
+  fun remove(foldingTasks: MutableCollection<Runnable>): Boolean {
+    highlighter.dispose()
+    val region = foldRegion
+    if (region != null && region.isValid) {
+      foldingTasks.add(Runnable { region.editor.foldingModel.removeFoldRegion(region) })
+      return true
     }
-    return false;
+    return false
   }
 
-  @Override
-  public void toggle() {
-    toggle(null);
+  override fun toggle() {
+    toggle(null)
   }
 
-  boolean toggle(@Nullable Collection<? super Runnable> foldingTasks) {
-    if (!(editor instanceof EditorEx)) return false;
-    FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
-    if (foldRegion == null) {
+  fun toggle(foldingTasks: MutableCollection<Runnable>?): Boolean {
+    if (editor !is EditorEx) return false
+    val foldingModel = editor.foldingModel
+    val region = foldRegion
+    if (region == null) {
       if (textToRender == null && foldingTasks == null) {
-        generateHtmlInBackgroundAndToggle();
-        return false;
+        generateHtmlInBackgroundAndToggle()
+        return false
       }
-      ItemLocation offsets = new ItemLocation(highlighter);
-      Runnable foldingTask = () -> {
-        foldRegion = foldingModel.addCustomLinesFolding(offsets.foldStartLine, offsets.foldEndLine, new DocRenderer(this));
-      };
-      if (foldingTasks == null) {
-        foldingModel.runBatchFoldingOperation(foldingTask, true, false);
+      val offsets = ItemLocation(highlighter)
+      val foldingTask = Runnable {
+        foldRegion = foldingModel.addCustomLinesFolding(offsets.foldStartLine, offsets.foldEndLine, DocRenderer(this))
       }
-      else {
-        foldingTasks.add(foldingTask);
-      }
+      foldingTasks?.add(foldingTask) ?: foldingModel.runBatchFoldingOperation(foldingTask, true, false)
     }
     else {
-      Runnable foldingTask = () -> {
-        int startOffset = foldRegion.getStartOffset();
-        int endOffset = foldRegion.getEndOffset();
-        foldingModel.removeFoldRegion(foldRegion);
-        for (FoldRegion region : foldingModel.getRegionsOverlappingWith(startOffset, endOffset)) {
-          if (region.getStartOffset() >= startOffset && region.getEndOffset() <= endOffset) {
-            region.setExpanded(true);
+      val foldingTask = Runnable {
+        val startOffset = region.startOffset
+        val endOffset = region.endOffset
+        foldingModel.removeFoldRegion(region)
+        for (r in foldingModel.getRegionsOverlappingWith(startOffset, endOffset)) {
+          if (r.startOffset >= startOffset && r.endOffset <= endOffset) {
+            r.isExpanded = true
           }
         }
-        foldRegion = null;
-      };
-      if (foldingTasks == null) {
-        foldingModel.runBatchFoldingOperation(foldingTask, true, false);
+        foldRegion = null
       }
-      else {
-        foldingTasks.add(foldingTask);
-      }
+      foldingTasks?.add(foldingTask) ?: foldingModel.runBatchFoldingOperation(foldingTask, true, false)
       if (!DocRenderManager.isDocRenderingEnabled(editor)) {
         // the value won't be updated by DocRenderPass on document modification, so we shouldn't cache the value
-        textToRender = null;
+        textToRender = null
       }
     }
-    return true;
+    return true
   }
 
-  private void generateHtmlInBackgroundAndToggle() {
-    ReadAction.nonBlocking(() -> DocRenderPassFactory.calcText(getInlineDocumentation()))
-      .withDocumentsCommitted(Objects.requireNonNull(editor.getProject()))
+  private fun generateHtmlInBackgroundAndToggle() {
+    ReadAction.nonBlocking<String> { DocRenderPassFactory.calcText(getInlineDocumentation()) }
+      .withDocumentsCommitted(editor.project ?: return)
       .coalesceBy(this)
-      .finishOnUiThread(ModalityState.any(), (@Nls String html) -> {
-        textToRender = html;
-        toggle();
-      }).submit(AppExecutorUtil.getAppExecutorService());
+      .finishOnUiThread(ModalityState.any()) { html: @Nls String? ->
+        textToRender = html
+        toggle()
+      }.submit(AppExecutorUtil.getAppExecutorService())
   }
 
-  @Override
-  public @Nullable InlineDocumentation getInlineDocumentation() {
-    if (highlighter.isValid()) {
-      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(Objects.requireNonNull(editor.getProject()));
-      PsiFile file = psiDocumentManager.getPsiFile(editor.getDocument());
-      if (file != null) {
-        return findInlineDocumentation(file, highlighter.getTextRange());
-      }
+  override fun getInlineDocumentation(): InlineDocumentation? {
+    if (highlighter.isValid) {
+      val psiDocumentManager = PsiDocumentManager.getInstance(editor.project ?: return null)
+      val file = psiDocumentManager.getPsiFile(editor.document) ?: return null
+      return findInlineDocumentation(file, highlighter.textRange)
     }
-    return null;
+    return null
   }
 
-  @Override
-  public @Nullable DocumentationTarget getInlineDocumentationTarget() {
-    InlineDocumentation documentation = getInlineDocumentation();
-    return documentation == null ? null : documentation.getOwnerTarget();
+  override fun getInlineDocumentationTarget(): DocumentationTarget? {
+    val documentation = getInlineDocumentation()
+    return documentation?.ownerTarget
   }
 
-  void updateIcon(List<? super Runnable> foldingTasks) {
-    boolean iconEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled();
-    boolean iconExists = highlighter.getGutterIconRenderer() != null;
+  fun updateIcon(foldingTasks: List<Runnable>?) {
+    val iconEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled()
+    val iconExists = highlighter.gutterIconRenderer != null
     if (iconEnabled != iconExists) {
-      if (iconEnabled) {
-        highlighter.setGutterIconRenderer(new MyGutterIconRenderer(AllIcons.Gutter.JavadocRead, false));
-      }
-      else {
-        highlighter.setGutterIconRenderer(null);
-      }
-      if (foldRegion != null) {
-        ((DocRenderer)foldRegion.getRenderer()).update(false, false, foldingTasks);
-      }
+      highlighter.gutterIconRenderer = if (iconEnabled) MyGutterIconRenderer(AllIcons.Gutter.JavadocRead, false) else null
+      (foldRegion?.renderer as? DocRenderer)?.update(false, false, foldingTasks)
     }
   }
 
-  @Override
-  public @NotNull AnAction createToggleAction() {
-    return new ToggleRenderingAction(this);
+  override fun createToggleAction(): AnAction {
+    return ToggleRenderingAction(this)
   }
 
-  @Override
-  public void setIconVisible(boolean visible) {
-    MyGutterIconRenderer iconRenderer = (MyGutterIconRenderer)highlighter.getGutterIconRenderer();
+  override fun setIconVisible(visible: Boolean) {
+    val iconRenderer = highlighter.gutterIconRenderer as MyGutterIconRenderer?
     if (iconRenderer != null) {
-      iconRenderer.setIconVisible(visible);
-      int y = editor.visualLineToY(((EditorImpl)editor).offsetToVisualLine(highlighter.getStartOffset()));
-      repaintGutter(y);
+      iconRenderer.isIconVisible = visible
+      val y = editor.visualLineToY((editor as EditorImpl).offsetToVisualLine(highlighter.startOffset))
+      repaintGutter(y)
     }
-    if (foldRegion != null) {
-      MyGutterIconRenderer inlayIconRenderer = (MyGutterIconRenderer)foldRegion.getGutterIconRenderer();
+    val region = foldRegion
+    if (region != null) {
+      val inlayIconRenderer = region.gutterIconRenderer as MyGutterIconRenderer?
       if (inlayIconRenderer != null) {
-        inlayIconRenderer.setIconVisible(visible);
-        repaintGutter(editor.offsetToXY(foldRegion.getStartOffset()).y);
+        inlayIconRenderer.isIconVisible = visible
+        repaintGutter(editor.offsetToXY(region.startOffset).y)
       }
     }
   }
 
-  private void repaintGutter(int startY) {
-    JComponent gutter = (JComponent)editor.getGutter();
-    gutter.repaint(0, startY, gutter.getWidth(), startY + editor.getLineHeight());
+  private fun repaintGutter(startY: Int) {
+    val gutter = editor.gutter as JComponent
+    gutter.repaint(0, startY, gutter.width, startY + editor.lineHeight)
   }
 
-  private static final class ItemLocation {
-    private final int foldStartLine;
-    private final int foldEndLine;
+  @JvmInline
+  private value class ItemLocation(private val highlighter: RangeHighlighter) {
+    val foldStartLine
+      get() = highlighter.document.getLineNumber(highlighter.startOffset)
+    val foldEndLine
+      get() = highlighter.document.getLineNumber(highlighter.endOffset)
 
-    private ItemLocation(@NotNull RangeHighlighter highlighter) {
-      Document document = highlighter.getDocument();
-      foldStartLine = document.getLineNumber(highlighter.getStartOffset());
-      foldEndLine = document.getLineNumber(highlighter.getEndOffset());
-    }
-
-    private boolean matches(CustomFoldRegion foldRegion) {
+    fun matches(foldRegion: CustomFoldRegion?): Boolean {
       return foldRegion == null ||
-             foldRegion.isValid() &&
-             foldRegion.getStartOffset() == foldRegion.getEditor().getDocument().getLineStartOffset(foldStartLine) &&
-             foldRegion.getEndOffset() == foldRegion.getEditor().getDocument().getLineEndOffset(foldEndLine);
+             foldRegion.isValid &&
+             foldRegion.startOffset == foldRegion.editor.document.getLineStartOffset(foldStartLine) &&
+             foldRegion.endOffset == foldRegion.editor.document.getLineEndOffset(foldEndLine)
     }
   }
 
-  private class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
-    private final LayeredIcon icon;
+  private inner class MyGutterIconRenderer(icon: Icon, iconVisible: Boolean) : GutterIconRenderer(), DumbAware {
+    private val icon: LayeredIcon
 
-    MyGutterIconRenderer(Icon icon, boolean iconVisible) {
-      this.icon = new LayeredIcon(icon);
-      setIconVisible(iconVisible);
-    }
-
-    boolean isIconVisible() {
-      return icon.isLayerEnabled(0);
-    }
-
-    void setIconVisible(boolean visible) {
-      icon.setLayerEnabled(0, visible);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof MyGutterIconRenderer;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    @NotNull
-    @Override
-    public Icon getIcon() {
-      return icon;
-    }
-
-    @Override
-    public @NotNull String getAccessibleName() {
-      return CodeInsightBundle.message("doc.render.icon.accessible.name");
-    }
-
-    @NotNull
-    @Override
-    public Alignment getAlignment() {
-      return Alignment.RIGHT;
-    }
-
-    @Override
-    public boolean isNavigateAction() {
-      return true;
-    }
-
-    @Nullable
-    @Override
-    public String getTooltipText() {
-      AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC);
-      if (action == null) return null;
-      String actionText = action.getTemplateText();
-      if (actionText == null) return null;
-      return XmlStringUtil.wrapInHtml(actionText + HelpTooltip.getShortcutAsHtml(KeymapUtil.getFirstKeyboardShortcutText(action)));
-    }
-
-    @Nullable
-    @Override
-    public AnAction getClickAction() {
-      return createToggleAction();
-    }
-
-    @Override
-    public ActionGroup getPopupMenuActions() {
-      return ObjectUtils.tryCast(ActionManager.getInstance().getAction(IdeActions.GROUP_DOC_COMMENT_GUTTER_ICON_CONTEXT_MENU),
-                                 ActionGroup.class);
-    }
-  }
-
-  private static final class ToggleRenderingAction extends DumbAwareAction {
-    private final DocRenderItemImpl item;
-
-    private ToggleRenderingAction(DocRenderItemImpl item) {
-      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC));
-      this.item = item;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      if (item.isValid()) {
-        item.toggle();
+    var isIconVisible: Boolean
+      get() = icon.isLayerEnabled(0)
+      set(visible) {
+        icon.setLayerEnabled(0, visible)
       }
+
+    init {
+      this.icon = LayeredIcon(icon)
+      isIconVisible = iconVisible
+    }
+
+    override fun equals(other: Any?): Boolean {
+      return other is MyGutterIconRenderer
+    }
+
+    override fun hashCode(): Int {
+      return 0
+    }
+
+    override fun getIcon(): Icon {
+      return icon
+    }
+
+    override fun getAccessibleName(): String {
+      return CodeInsightBundle.message("doc.render.icon.accessible.name")
+    }
+
+    override fun getAlignment(): Alignment {
+      return Alignment.RIGHT
+    }
+
+    override fun isNavigateAction(): Boolean {
+      return true
+    }
+
+    override fun getTooltipText(): String? {
+      val action = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC) ?: return null
+      val actionText = action.templateText ?: return null
+      return XmlStringUtil.wrapInHtml(actionText + HelpTooltip.getShortcutAsHtml(KeymapUtil.getFirstKeyboardShortcutText(action)))
+    }
+
+    override fun getClickAction(): AnAction {
+      return createToggleAction()
+    }
+
+    override fun getPopupMenuActions(): ActionGroup? {
+      return ActionManager.getInstance().getAction(IdeActions.GROUP_DOC_COMMENT_GUTTER_ICON_CONTEXT_MENU) as? ActionGroup
+    }
+  }
+
+  private class ToggleRenderingAction(item: DocRenderItemImpl) : DumbAwareAction() {
+    private val item: DocRenderItemImpl
+
+    init {
+      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC))
+      this.item = item
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      if (item.isValid) {
+        item.toggle()
+      }
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun createDemoRenderer(editor: Editor): CustomFoldRegionRenderer {
+      val item = DocRenderItemImpl(editor, TextRange(0, 0), CodeInsightBundle.message(
+        "documentation.rendered.documentation.with.href.link"))
+      return DocRenderer(item, DocRenderDefaultLinkActivationHandler)
     }
   }
 }

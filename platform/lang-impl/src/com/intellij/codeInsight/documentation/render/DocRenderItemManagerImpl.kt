@@ -13,7 +13,7 @@ import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 
 class DocRenderItemManagerImpl : DocRenderItemManager {
-  override fun getItemAroundOffset(editor: Editor, offset: Int): DocRenderItemImpl? {
+  override fun getItemAroundOffset(editor: Editor, offset: Int): DocRenderItem? {
     val items = editor.getUserData(OUR_ITEMS)
     if (items.isNullOrEmpty()) return null
     val document = editor.document
@@ -88,7 +88,7 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
                                                      foldingTasks.forEach(Consumer { obj: Runnable -> obj.run() })
                                                    }, true, false)
       for (i in itemsToUpdateRenderers.indices) {
-        itemsToUpdateRenderers[i].setTextToRender(itemsToUpdateText[i])
+        itemsToUpdateRenderers[i].textToRender = itemsToUpdateText[i]
       }
       DocRenderItemUpdater.updateRenderers(itemsToUpdateRenderers, true)
       ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).itemsTextChanged(editor, itemsToUpdateRenderers)

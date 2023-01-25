@@ -89,7 +89,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     myLinkActivationHandler = linkActivationHandler;
   }
 
-  void update(boolean updateSize, boolean updateContent, List<? super Runnable> foldingTasks) {
+  void update(boolean updateSize, boolean updateContent, List<Runnable> foldingTasks) {
     CustomFoldRegion foldRegion = myItem.getFoldRegion();
     if (foldRegion != null) {
       if (updateSize) {
