@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.*;
@@ -6,7 +6,7 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.IdleFlow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.*;
@@ -37,6 +37,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -46,8 +48,7 @@ import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -506,7 +507,8 @@ public class CompilerManagerImpl extends CompilerManager {
           manager.setWslExecutablePath(WSLDistribution.findWslExe());
           manager.start(listenPort);
           myExternalJavacManager = manager;
-          IdeEventQueue.getInstance().addIdleListener(new IdleTask(manager), IdleTask.CHECK_PERIOD);
+          IdleTask task = new IdleTask(manager);
+          task.removeIdleListener = IdleFlow.getInstance().addIdleListener(IdleTask.CHECK_PERIOD, task);
         }
       }
     }
@@ -622,9 +624,11 @@ public class CompilerManagerImpl extends CompilerManager {
     }
   }
 
-  private static class IdleTask implements Runnable {
-    private static final int CHECK_PERIOD = 10000; // check idle javac processes every 10 second when IDE is idle
+  private static final class IdleTask implements Runnable {
+    // check idle javac processes every 10 seconds when IDE is idle
+    private static final int CHECK_PERIOD = 10_000;
     private final ExternalJavacManager myManager;
+    Function0<Unit> removeIdleListener;
 
     IdleTask(@NotNull ExternalJavacManager manager) {
       myManager = manager;
@@ -635,8 +639,8 @@ public class CompilerManagerImpl extends CompilerManager {
       if (myManager.isRunning()) {
         myManager.shutdownIdleProcesses();
       }
-      else {
-        IdeEventQueue.getInstance().removeIdleListener(this);
+      else if (removeIdleListener != null) {
+        removeIdleListener.invoke();
       }
     }
   }

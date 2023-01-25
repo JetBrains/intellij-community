@@ -5,7 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.codeWithMe.ClientId
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.GeneralSettings
-import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.IdleFlow
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.SaveAndSyncHandlerListener
 import com.intellij.openapi.application.*
@@ -32,12 +32,9 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.project.stateStore
 import com.intellij.util.application
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.util.childScope
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -49,8 +46,8 @@ private val LISTEN_DELAY = 15.milliseconds
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
-  private val refreshRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val refreshRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val saveRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
@@ -104,11 +101,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
           }
       }
 
-      // add listeners after some delay - doesn't make sense to listen earlier
-      delay(15.seconds)
-      withContext(Dispatchers.EDT) {
-        addListeners(GeneralSettings.getInstance())
-      }
+      listenIdleAndActivate()
     }
 
     coroutineScope.awaitCancellationAndInvoke {
@@ -159,46 +152,59 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     }
   }
 
-  @RequiresEdt
-  private fun addListeners(settings: GeneralSettings) {
-    val idleListener = Runnable {
-      if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
-        ClientId.withClientId(ClientId.ownerId) {
-          (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
-        }
-      }
-    }
+  private suspend fun listenIdleAndActivate() {
+    // add listeners after some delay - doesn't make sense to listen earlier
+    delay(15.seconds)
 
-    IdeEventQueue.getInstance().addIdleListener(runnable = idleListener,
-                                                delaySupplier = { settings.inactiveTimeout.seconds },
-                                                parentScope = coroutineScope.childScope())
+    val settings = GeneralSettings.getInstance()
+
+    generalSettingFlow(settings, GeneralSettings.PropertyNames.autoSaveIfInactive) { it.isAutoSaveIfInactive }
+      .filter { it }
+      .flatMapConcat {
+        generalSettingFlow(settings, GeneralSettings.PropertyNames.inactiveTimeout) { it.inactiveTimeout.seconds }
+      }
+      .distinctUntilChanged()
+      .flatMapConcat { delay ->
+        IdleFlow.getInstance().events.debounce(delay)
+      }
+      .collect {
+        executeOnIdle()
+      }
 
     if (LISTEN_DELAY >= (settings.inactiveTimeout.seconds)) {
-      idleListener.run()
+      executeOnIdle()
     }
 
-    val busConnection = ApplicationManager.getApplication().messageBus.connect(coroutineScope)
-    busConnection.subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
-      override fun applicationDeactivated(ideFrame: IdeFrame) {
-        externalChangesModificationTracker.incModificationCount()
-        if (!settings.isSaveOnFrameDeactivation || !canSyncOrSave()) {
-          return
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope)
+      .subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
+        override fun applicationDeactivated(ideFrame: IdeFrame) {
+          externalChangesModificationTracker.incModificationCount()
+          if (!settings.isSaveOnFrameDeactivation || !canSyncOrSave()) {
+            return
+          }
+
+          // for web development, it is crucially important to save documents on frame deactivation as early as possible
+          (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+
+          if (addToSaveQueue(saveAppAndProjectsSettingsTask)) {
+            requestSave()
+          }
         }
 
-        // for web development, it is crucially important to save documents on frame deactivation as early as possible
-        (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
-
-        if (addToSaveQueue(saveAppAndProjectsSettingsTask)) {
-          requestSave()
+        override fun applicationActivated(ideFrame: IdeFrame) {
+          if (!ApplicationManager.getApplication().isDisposed && settings.isSyncOnFrameActivation) {
+            scheduleRefresh()
+          }
         }
+      })
+  }
+
+  private suspend fun executeOnIdle() {
+    withContext(Dispatchers.EDT) {
+      ClientId.withClientId(ClientId.ownerId) {
+        (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
       }
-
-      override fun applicationActivated(ideFrame: IdeFrame) {
-        if (!ApplicationManager.getApplication().isDisposed && settings.isSyncOnFrameActivation) {
-          scheduleRefresh()
-        }
-      }
-    })
+    }
   }
 
   override fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean) {
@@ -371,4 +377,15 @@ private val saveAppAndProjectsSettingsTask = SaveAndSyncHandler.SaveTask()
 @NlsContexts.ProgressTitle
 private fun getProgressTitle(componentManager: ComponentManager): String {
   return if (componentManager is Application) CommonBundle.message("title.save.app") else CommonBundle.message("title.save.project")
+}
+
+private fun <T> generalSettingFlow(settings: GeneralSettings,
+                                   name: GeneralSettings.PropertyNames,
+                                   getter: (GeneralSettings) -> T): Flow<T> {
+  return merge(
+    settings.propertyChangedFlow
+      .filter { it == name }
+      .map { getter(GeneralSettings.getInstance()) },
+    flowOf(getter(GeneralSettings.getInstance())),
+  )
 }
