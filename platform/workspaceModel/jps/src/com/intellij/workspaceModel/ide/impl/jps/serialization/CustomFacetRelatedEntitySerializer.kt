@@ -76,8 +76,13 @@ interface CustomFacetRelatedEntitySerializer<T: ModuleSettingsBase> {
 
   /**
    * Method for creation facet XML tag from root type entity passed as a parameter
+   * Default implementation creates "configuration" root element and calls [serialize] method
    */
   fun serializeIntoXml(entity: T): Element = serialize(entity, Element(JpsFacetSerializer.CONFIGURATION_TAG))
+
+  /**
+   * Method for creation facet XML tag from root type entity and root element passed as parameters
+   */
   fun serialize(entity: T, rootElement: Element): Element
 
   companion object {

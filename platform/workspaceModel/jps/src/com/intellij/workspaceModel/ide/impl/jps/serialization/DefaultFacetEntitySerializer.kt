@@ -23,8 +23,6 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
     loadFacetEntities(moduleEntity, listOf(facetState), null, evaluateEntitySource)
   }
 
-  override fun serialize(entity: FacetEntity, rootElement: Element): Element  = error("Unsupported operation")
-
   private fun loadFacetEntities(moduleEntity: ModuleEntity,
                                 facetStates: List<FacetState>,
                                 underlyingFacet: FacetEntity?,
@@ -110,6 +108,8 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
   override fun serializeIntoXml(entity: FacetEntity): Element {
     return entity.configurationXmlTag?.let { JDOMUtil.load(it) } ?: Element("configuration")
   }
+
+  override fun serialize(entity: FacetEntity, rootElement: Element): Element = error("Unsupported operation")
 
   companion object {
     val instance: DefaultFacetEntitySerializer
