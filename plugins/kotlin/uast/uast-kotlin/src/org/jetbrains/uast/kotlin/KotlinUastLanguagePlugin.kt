@@ -3,12 +3,15 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.isFe10Plugin
+import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
@@ -31,7 +34,11 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
         get() = KotlinLanguage.INSTANCE
 
     override fun isFileSupported(fileName: String): Boolean {
-        return fileName.endsWith(".kt", false) || fileName.endsWith(".kts", false)
+        return when {
+            fileName.endsWith(".kt", false) -> true
+            fileName.endsWith(".kts", false) -> isFe10Plugin() || Registry.`is`("kotlin.k2.scripting.enabled", false)
+            else -> false
+        }
     }
 
     private val PsiElement.isJvmElement: Boolean

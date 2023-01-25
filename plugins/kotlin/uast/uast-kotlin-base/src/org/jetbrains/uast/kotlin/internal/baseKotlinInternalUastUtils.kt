@@ -37,7 +37,13 @@ inline fun <reified T : UDeclaration, reified P : PsiElement> unwrap(element: P)
     return unwrapped as P
 }
 
-fun unwrapFakeFileForLightClass(file: PsiFile): PsiFile = (file as? FakeFileForLightClass)?.ktFile ?: file
+fun unwrapFakeFileForLightClass(file: PsiFile): PsiFile {
+    return when (file) {
+        is FakeFileForLightClass -> file.ktFile
+        is PsiCompiledElement -> (file.mirror as? KtFile) ?: file
+        else -> file
+    }
+}
 
 fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
     (original.containingClassOrObject?.toLightClass() ?: original.containingKtFile.findFacadeClass())

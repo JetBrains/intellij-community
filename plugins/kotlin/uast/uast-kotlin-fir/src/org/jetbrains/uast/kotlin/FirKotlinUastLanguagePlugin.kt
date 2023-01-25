@@ -4,6 +4,7 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
@@ -32,13 +33,23 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
             return resolveProvider.isJvmElement(this)
         }
 
+    private val PsiElement.isSupportedElement: Boolean
+        get() {
+            if (!isJvmElement) {
+                return false
+            }
+
+            val containingFile = containingFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
+            return !containingFile.isScript() || Registry.`is`("kotlin.k2.scripting.enabled", false)
+        }
+
     override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
-        if (!element.isJvmElement) return null
+        if (!element.isSupportedElement) return null
         return convertDeclarationOrElement(element, parent, elementTypes(requiredType))
     }
 
     override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
-        if (!element.isJvmElement) return null
+        if (!element.isSupportedElement) return null
         return convertDeclarationOrElement(element, null, elementTypes(requiredType))
     }
 
@@ -51,14 +62,14 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? {
-        if (!element.isJvmElement) return null
+        if (!element.isSupportedElement) return null
         val nonEmptyRequiredTypes = requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)
         return convertDeclarationOrElement(element, null, nonEmptyRequiredTypes) as? T
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> {
-        if (!element.isJvmElement) return emptySequence()
+        if (!element.isSupportedElement) return emptySequence()
         return when {
             element is KtFile ->
                 FirKotlinConverter.convertKtFile(element, null, requiredTypes) as Sequence<T>
