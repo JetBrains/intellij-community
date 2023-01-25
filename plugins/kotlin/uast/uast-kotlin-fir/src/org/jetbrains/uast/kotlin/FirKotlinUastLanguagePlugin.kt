@@ -6,6 +6,8 @@ import com.intellij.lang.Language
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.project.structure.KtNotUnderContentRootModule
+import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.DEFAULT_TYPES_LIST
@@ -40,6 +42,11 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
             }
 
             val containingFile = containingFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
+
+            val ktModule = containingFile.getKtModule(project)
+            if (ktModule is KtNotUnderContentRootModule) {
+                return false
+            }
             return !containingFile.isScript() || Registry.`is`("kotlin.k2.scripting.enabled", false)
         }
 
