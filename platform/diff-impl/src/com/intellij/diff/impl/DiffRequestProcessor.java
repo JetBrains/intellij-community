@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -1285,7 +1285,6 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     @Override
     public final Component getDefaultComponent(final Container focusCycleRoot) {
       JComponent component = DiffRequestProcessor.this.getPreferredFocusedComponent();
-      if (component == null) return null;
       return IdeFocusTraversalPolicy.getPreferredFocusedComponent(component, this);
     }
 
