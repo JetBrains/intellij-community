@@ -53,5 +53,10 @@ public class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbModeTask> 
     public void beforeTask() {
       waitRequiredTasksToStartIndexing();
     }
+
+    @Override
+    String getInfoString() {
+      return "(dumb mode task) " + super.getInfoString();
+    }
   }
 }

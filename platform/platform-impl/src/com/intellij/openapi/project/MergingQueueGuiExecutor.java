@@ -199,7 +199,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
   }
 
   protected void runSingleTask(@NotNull MergingTaskQueue.QueuedTask<T> task, @Nullable StructuredIdeActivity activity) {
-    if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task.getInfoString());
+    if (ApplicationManager.getApplication().isInternal()) LOG.info("Running task: " + task.getInfoString());
     if (activity != null) task.registerStageStarted(activity);
 
     // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
