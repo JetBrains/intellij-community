@@ -171,7 +171,9 @@ public final class FSRecords {
       ourConnection = PersistentFSConnector.connect(getCachesDir(), ourCurrentVersion, useContentHashes, vfsLog.getInterceptors());
       ourContentAccessor = new PersistentFSContentAccessor(useContentHashes, ourConnection);
       ourAttributeAccessor = new PersistentFSAttributeAccessor(ourConnection);
-      ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourConnection);
+      ourTreeAccessor = ourAttributeAccessor.supportsRawAccess()
+                        ? new PersistentFSTreeRawAccessor(ourAttributeAccessor, ourConnection)
+                        : new PersistentFSTreeAccessor(ourAttributeAccessor, ourConnection);
       ourRecordAccessor = new PersistentFSRecordAccessor(ourContentAccessor, ourAttributeAccessor, ourConnection);
       try {
         ourTreeAccessor.ensureLoaded();

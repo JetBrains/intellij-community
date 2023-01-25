@@ -100,6 +100,31 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     }
   }
 
+  public <R> R readAttributeRaw(final PersistentFSConnection connection,
+                                final int fileId,
+                                final @NotNull FileAttribute attribute,
+                                final ByteBufferReader<R> reader) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(fileId);
+    lock.readLock().lock();
+    try {
+      final int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
+      if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+        return null;
+      }
+      final int encodedAttributeId = connection.getAttributeId(attribute.getId());
+
+      return readAttributeValue(
+        attributeRecordId,
+        fileId,
+        encodedAttributeId,
+        reader
+      );
+    }
+    finally {
+      lock.readLock().unlock();
+    }
+  }
+
   @Override
   public boolean hasAttributePage(final @NotNull PersistentFSConnection connection,
                                   final int fileId,
@@ -480,6 +505,11 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       final byte[] entryValue = new byte[valueLength];
       buffer.get(inlinedValueStartOffset(), entryValue);
       return entryValue;
+    }
+
+    public ByteBuffer inlinedValueAsSlice() {
+      final int valueLength = inlinedValueLength();
+      return buffer.slice(inlinedValueStartOffset(), valueLength);
     }
 
     @Override
@@ -879,6 +909,40 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
 
   @VisibleForTesting
   //@GuardedBy("lock")
+  protected <R> R readAttributeValue(final int attributesRecordId,
+                                     final int fileId,
+                                     final int attributeId,
+                                     final ByteBufferReader<R> reader) throws IOException {
+    return storage.readRecord(attributesRecordId, buffer -> {
+      final AttributesRecord attributesRecord = new AttributesRecord(buffer);
+      assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
+                                                        " != backref fileId(" + attributesRecord.backRefFileId + ")";
+
+      if (!attributesRecord.findAttributeInDirectoryRecord(attributeId)) {
+        return null;
+      }
+
+      final AttributeEntry attributeEntry = attributesRecord.currentEntry();
+      if (attributeEntry.isValueInlined()) {
+        return reader.read(attributeEntry.inlinedValueAsSlice());
+      }
+
+      final int dedicatedRecordId = attributeEntry.dedicatedValueRecordId();
+      return storage.readRecord(
+        dedicatedRecordId,
+        dedicatedRecordBuffer -> reader.read(
+          readDedicatedRecordPayloadAsSlice(
+            attributesRecordId, fileId, attributeEntry.attributeId,
+            dedicatedRecordBuffer
+          )
+        )
+      );
+    });
+  }
+
+
+  @VisibleForTesting
+  //@GuardedBy("lock")
   protected boolean hasAttribute(final int attributesRecordId,
                                  final int fileId,
                                  final int attributeId) throws IOException {
@@ -955,6 +1019,22 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     dedicatedRecordBuffer.get(AttributesRecord.DEDICATED_RECORD_HEADER_SIZE, entryValue);
     return entryValue;
   }
+
+  private static ByteBuffer readDedicatedRecordPayloadAsSlice(final int dedicatedAttributeRecordId,
+                                                              final int fileId,
+                                                              final int attributeId,
+                                                              final ByteBuffer dedicatedRecordBuffer) {
+    final int backRefFileId = -dedicatedRecordBuffer.getInt(AttributesRecord.RECORD_FILE_ID_OFFSET);
+    final int backRefAttributeId = dedicatedRecordBuffer.getInt(AttributesRecord.DEDICATED_RECORD_ATTRIBUTE_ID_OFFSET);
+    assert backRefFileId == fileId : "record(" + dedicatedAttributeRecordId + ").fileId(" + fileId + ") " +
+                                     "!= backref fileId(" + backRefFileId + ")";
+    assert backRefAttributeId == attributeId : "record(" + attributeId + ").attributeId(" + attributeId + ") " +
+                                               "!= backref attributeId(" + backRefAttributeId + ")";
+
+    final int valueLength = dedicatedRecordBuffer.remaining() - AttributesRecord.DEDICATED_RECORD_HEADER_SIZE;
+    return dedicatedRecordBuffer.slice(AttributesRecord.DEDICATED_RECORD_HEADER_SIZE, valueLength);
+  }
+
 
   private int writeDedicatedAttributeRecord(final int dedicatedAttributeRecordId,
                                             final int fileId,
