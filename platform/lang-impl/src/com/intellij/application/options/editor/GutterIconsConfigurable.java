@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -110,12 +111,17 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
              byPlugin :
              StringUtil.naturalCompare(o1.getName(), o2.getName());
     });
-    PluginDescriptor current = null;
+    PluginId current = null;
     for (GutterIconDescriptor descriptor : myDescriptors) {
       PluginDescriptor pluginDescriptor = pluginDescriptorMap.get(descriptor);
-      if (pluginDescriptor != current) {
+      PluginId pluginId = pluginDescriptor != null ? pluginDescriptor.getPluginId() : null;
+      // You get different plugin descriptors for `GutterIconDescriptor`s from the same plugin
+      // if they are located in different plugin modules.
+      // But there is no reason to put them into separate UI groups especially taking into account
+      // we sort `myDescriptors` only by plugin name, so compare plugin descriptors by their id
+      if (pluginId != null && !pluginId.equals(current)) {
         myFirstDescriptors.put(descriptor, pluginDescriptor);
-        current = pluginDescriptor;
+        current = pluginId;
       }
     }
 
