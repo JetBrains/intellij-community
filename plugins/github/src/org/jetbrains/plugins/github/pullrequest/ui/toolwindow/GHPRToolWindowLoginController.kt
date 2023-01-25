@@ -2,16 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.openapi.util.Key
-import java.util.concurrent.CompletableFuture
 
-interface GHPRToolWindowTabController {
-
-  val componentController: CompletableFuture<GHPRToolWindowTabComponentController>
+/**
+ * Controls the state of repo and account selection for toolwindow
+ */
+interface GHPRToolWindowLoginController {
 
   fun canResetRemoteOrAccount(): Boolean
   fun resetRemoteAndAccount()
 
   companion object {
-    val KEY = Key.create<GHPRToolWindowTabController>("Github.PullRequests.ToolWindow.Tab.Controller")
+    val KEY = Key.create<GHPRToolWindowLoginController>("Github.PullRequests.ToolWindow.Login.Controller")
   }
 }

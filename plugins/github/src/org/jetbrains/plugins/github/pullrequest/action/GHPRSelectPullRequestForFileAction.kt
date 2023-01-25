@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -29,24 +28,26 @@ class GHPRSelectPullRequestForFileAction : DumbAwareAction(GithubBundle.messageP
       return
     }
 
-    val componentController = project.service<GHPRToolWindowController>().getTabController()?.componentController?.getNow(null)
-    if (componentController == null) {
+    val controller = project.service<GHPRToolWindowController>().getContentController()?.repositoryContentController?.getNow(null)
+    if (controller == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
 
     e.presentation.isVisible = true
-    val files = FileEditorManager.getInstance(project).selectedFiles.filterIsInstance<GHPRVirtualFile>()
-    e.presentation.isEnabled = files.isNotEmpty()
+    val file: GHPRVirtualFile? = FileEditorManager.getInstance(project).selectedFiles.filterIsInstance<GHPRVirtualFile>().firstOrNull()
+    e.presentation.isEnabled = file != null && file.repository == controller.repository
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(PlatformDataKeys.PROJECT)
     val file = FileEditorManager.getInstance(project).selectedFiles.filterIsInstance<GHPRVirtualFile>().first()
     project.service<GHPRToolWindowController>().activate().composeOnEdt {
-      it.componentController
+      it.repositoryContentController
     }.successOnEdt {
-      it.viewPullRequest(file.pullRequest)
+      if (file.repository == it.repository) {
+        it.viewPullRequest(file.pullRequest)
+      }
     }
   }
 }

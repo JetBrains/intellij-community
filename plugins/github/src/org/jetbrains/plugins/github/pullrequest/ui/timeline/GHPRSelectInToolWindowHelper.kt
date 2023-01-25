@@ -12,7 +12,7 @@ class GHPRSelectInToolWindowHelper(private val project: Project, private val pul
 
   fun selectCommit(oid: String) {
     project.service<GHPRToolWindowController>().activate().composeOnEdt {
-      it.componentController
+      it.repositoryContentController
     }.successOnEdt {
       it.viewPullRequest(pullRequest)?.selectCommit(oid)
     }
@@ -20,7 +20,7 @@ class GHPRSelectInToolWindowHelper(private val project: Project, private val pul
 
   fun selectChange(oid: String?, filePath: String) {
     project.service<GHPRToolWindowController>().activate().composeOnEdt {
-      it.componentController
+      it.repositoryContentController
     }.successOnEdt {
       it.viewPullRequest(pullRequest)?.selectChange(oid, filePath)
       it.openPullRequestDiff(pullRequest, false)

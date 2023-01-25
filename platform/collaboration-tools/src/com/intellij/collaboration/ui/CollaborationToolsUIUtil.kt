@@ -190,7 +190,7 @@ object CollaborationToolsUIUtil {
   /**
    * Checks if focus is somewhere down the hierarchy from [component]
    */
-  private fun isFocusParent(component: JComponent): Boolean {
+  fun isFocusParent(component: JComponent): Boolean {
     val focusOwner = IdeFocusManager.findInstanceByComponent(component).focusOwner ?: return false
     return SwingUtilities.isDescendingFrom(focusOwner, component)
   }

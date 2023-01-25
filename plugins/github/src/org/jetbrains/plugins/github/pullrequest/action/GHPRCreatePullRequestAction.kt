@@ -12,7 +12,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowViewType
 import java.util.function.Supplier
 
 class GHPRCreatePullRequestAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.create.show.form.action"),
@@ -26,11 +25,11 @@ class GHPRCreatePullRequestAction : DumbAwareAction(GithubBundle.messagePointer(
     with(e) {
       val twController = project?.service<GHPRToolWindowController>()
       val twAvailable = project != null && twController != null && twController.isAvailable()
-      val componentController = twController?.getTabController()?.componentController?.getNow(null)
+      val componentController = twController?.getContentController()?.repositoryContentController?.getNow(null)
       val twInitialized = project != null && componentController != null
 
       if (place == ActionPlaces.TOOLWINDOW_TITLE) {
-        presentation.isEnabledAndVisible = twInitialized && componentController?.currentView != GHPRToolWindowViewType.NEW
+        presentation.isEnabledAndVisible = twInitialized
         presentation.icon = AllIcons.General.Add
       }
       else {
@@ -43,7 +42,7 @@ class GHPRCreatePullRequestAction : DumbAwareAction(GithubBundle.messagePointer(
   override fun actionPerformed(e: AnActionEvent) {
     val twController = e.getRequiredData(PlatformDataKeys.PROJECT).service<GHPRToolWindowController>()
     twController.activate().composeOnEdt {
-      it.componentController
+      it.repositoryContentController
     }.successOnEdt {
       it.createPullRequest()
     }

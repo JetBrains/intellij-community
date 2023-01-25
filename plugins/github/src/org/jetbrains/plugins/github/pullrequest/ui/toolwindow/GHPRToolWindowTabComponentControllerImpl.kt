@@ -16,6 +16,7 @@ import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ui.UIUtil
 import git4idea.remote.hosting.knownRepositories
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -37,7 +38,7 @@ internal class GHPRToolWindowTabComponentControllerImpl(
   private val wrapper: Wrapper,
   private val parentDisposable: Disposable,
   private val onTitleChange: (@Nls String) -> Unit
-) : GHPRToolWindowTabComponentController {
+) : GHPRToolWindowRepositoryContentController {
 
   private val listComponent by lazy { createListPanel() }
   private val createComponentHolder = ClearableLazyValue.create {
@@ -46,14 +47,14 @@ internal class GHPRToolWindowTabComponentControllerImpl(
   }
 
   override lateinit var currentView: GHPRToolWindowViewType
+  override val repository: GHRepositoryCoordinates = dataContext.repositoryDataService.repositoryCoordinates
   private var currentDisposable: Disposable? = null
   private var currentPullRequest: GHPRIdentifier? = null
 
   init {
-    viewList(false)
     DataManager.registerDataProvider(wrapper) { dataId ->
       when {
-        GHPRActionKeys.PULL_REQUESTS_TAB_CONTROLLER.`is`(dataId) -> this
+        GHPRActionKeys.PULL_REQUESTS_CONTENT_CONTROLLER.`is`(dataId) -> this
         GHPRActionKeys.PULL_REQUESTS_LIST_CONTROLLER.`is`(dataId) -> GHPRListControllerImpl(dataContext)
         else -> null
       }
@@ -103,8 +104,7 @@ internal class GHPRToolWindowTabComponentControllerImpl(
       }
       currentPullRequest = id
       currentView = GHPRToolWindowViewType.DETAILS
-      val pullRequestComponent = GHPRViewComponentFactory(ActionManager.getInstance(), project, dataContext, this, id,
-                                                          currentDisposable!!)
+      val pullRequestComponent = GHPRViewComponentFactory(ActionManager.getInstance(), project, dataContext, id, currentDisposable!!)
         .create()
       wrapper.setContent(pullRequestComponent)
       wrapper.repaint()

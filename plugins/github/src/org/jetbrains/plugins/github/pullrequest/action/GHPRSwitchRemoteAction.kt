@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.action
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -19,13 +18,14 @@ class GHPRSwitchRemoteAction : DumbAwareAction(GithubBundle.message("pull.reques
   }
 
   private fun isEnabledAndVisible(e: AnActionEvent): Boolean {
-    val controller = e.project?.service<GHPRToolWindowController>()?.getTabController() ?: return false
+    val controller = e.project?.service<GHPRToolWindowController>()?.getContentController()?.loginController ?: return false
     return controller.canResetRemoteOrAccount()
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.project!!.service<GHPRToolWindowController>().activate().successOnEdt(ModalityState.current()) {
-      it.resetRemoteAndAccount()
+    val controller = e.project!!.service<GHPRToolWindowController>()
+    controller.activate().successOnEdt {
+      it.loginController.resetRemoteAndAccount()
     }
   }
 }

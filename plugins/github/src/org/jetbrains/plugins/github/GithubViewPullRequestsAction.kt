@@ -32,7 +32,7 @@ class GithubViewPullRequestsAction :
 
   override fun actionPerformed(e: AnActionEvent) {
     e.project!!.service<GHPRToolWindowController>().activate().composeOnEdt {
-      it.componentController
+      it.repositoryContentController
     }.successOnEdt {
       it.viewList()
     }

@@ -9,12 +9,10 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.content.Content
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,12 +20,11 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSelectPullRequestForFileAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSwitchRemoteAction
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabController
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabControllerImpl
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabViewModel
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowContentController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHRepositoryConnectionManager
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.MultiTabGHPRToolWindowContentController
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
-import javax.swing.JPanel
 
 internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
   companion object {
@@ -46,34 +43,25 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
-    configureToolWindow(toolWindow)
-    val contentManager = toolWindow.contentManager
-    val content = contentManager.factory.createContent(JPanel(null), null, false).apply {
-      isCloseable = false
-      setDisposer(Disposer.newDisposable("reviews tab disposable"))
+    with(toolWindow) {
+      component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
+      setTitleActions(listOf(
+        EmptyAction.registerWithShortcutSet("Github.Create.Pull.Request", CommonShortcuts.getNew(), toolWindow.component),
+        GHPRSelectPullRequestForFileAction(),
+      ))
+      setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
     }
-    val contentController = configureContent(project, content)
-    ClientProperty.put(toolWindow.component, GHPRToolWindowTabController.KEY, contentController)
-    contentManager.addContent(content)
-  }
 
-  private fun configureToolWindow(toolWindow: ToolWindow) {
-    toolWindow.setTitleActions(listOf(
-      EmptyAction.registerWithShortcutSet("Github.Create.Pull.Request", CommonShortcuts.getNew(), toolWindow.component),
-      GHPRSelectPullRequestForFileAction(),
-    ))
-    toolWindow.setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
-  }
+    val controller = MultiTabGHPRToolWindowContentController(
+      toolWindow.disposable, project,
+      project.service<GHHostedRepositoriesManager>(),
+      service<GHAccountManager>(),
+      project.service<GHRepositoryConnectionManager>(),
+      project.service<GithubPullRequestsProjectUISettings>(),
+      toolWindow.contentManager
+    )
 
-  private fun configureContent(project: Project, content: Content): GHPRToolWindowTabController {
-    val scope = DisposingScope(content)
-    val repositoriesManager = project.service<GHHostedRepositoriesManager>()
-    val connectionManager = project.service<GHRepositoryConnectionManager>()
-    val accountManager = service<GHAccountManager>()
-    val vm = GHPRToolWindowTabViewModel(scope, repositoriesManager, accountManager, connectionManager, project.service())
-
-    return GHPRToolWindowTabControllerImpl(scope, project, vm, content)
+    ClientProperty.put(toolWindow.component, GHPRToolWindowContentController.KEY, controller)
   }
 
   override fun shouldBeAvailable(project: Project): Boolean = false

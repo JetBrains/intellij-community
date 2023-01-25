@@ -47,7 +47,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHIOExecutorLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowRepositoryContentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -62,7 +62,7 @@ import javax.swing.text.Document
 internal class GHPRCreateInfoComponentFactory(private val project: Project,
                                               private val settings: GithubPullRequestsProjectUISettings,
                                               private val dataContext: GHPRDataContext,
-                                              private val viewController: GHPRToolWindowTabComponentController) {
+                                              private val viewController: GHPRToolWindowRepositoryContentController) {
 
   fun create(directionModel: MergeDirectionModel<GHGitRepositoryMapping>,
              titleDocument: Document,

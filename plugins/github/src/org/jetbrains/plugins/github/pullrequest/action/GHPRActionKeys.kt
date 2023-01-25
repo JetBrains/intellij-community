@@ -7,7 +7,7 @@ import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRListController
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowRepositoryContentController
 
 object GHPRActionKeys {
   @JvmStatic
@@ -25,6 +25,6 @@ object GHPRActionKeys {
   val PULL_REQUESTS_LIST_CONTROLLER = DataKey.create<GHPRListController>("org.jetbrains.plugins.github.pullrequest.list.controller")
 
   @JvmStatic
-  val PULL_REQUESTS_TAB_CONTROLLER = DataKey.create<GHPRToolWindowTabComponentController>(
-    "org.jetbrains.plugins.github.pullrequest.tab.controller")
+  val PULL_REQUESTS_CONTENT_CONTROLLER = DataKey.create<GHPRToolWindowRepositoryContentController>(
+    "org.jetbrains.plugins.github.pullrequest.content.controller")
 }
