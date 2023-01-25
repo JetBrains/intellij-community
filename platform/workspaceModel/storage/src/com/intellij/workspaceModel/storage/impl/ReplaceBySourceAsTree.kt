@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.workspaceModel.storage.*
@@ -59,6 +59,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   internal val addOperations = ArrayList<AddElement>()
   internal val targetState = Long2ObjectOpenHashMap<ReplaceState>()
   internal val replaceWithState = Long2ObjectOpenHashMap<ReplaceWithState>()
+
+  private val listOfParentsWithPotentiallyBrokenChildrenOrder = HashSet<ParentsRef>()
 
   @set:TestOnly
   internal var shuffleEntities: Long = -1L
@@ -134,6 +136,45 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
       for (removeOperation in removeOperations) {
         targetStorage.removeEntityByEntityId(removeOperation.targetEntityId)
+      }
+
+      listOfParentsWithPotentiallyBrokenChildrenOrder.forEach { parentsRef ->
+        when (parentsRef) {
+          is ParentsRef.AddedElement -> {
+            // todo this case should also be processed. Not necessary in this place
+          }
+          is ParentsRef.TargetRef -> {
+            val targetParent = parentsRef.targetEntityId
+            val replaceWithParent = replaceWithEntityFromState(targetParent) ?: return@forEach
+            val children = targetStorage.refs.getChildrenRefsOfParentBy(targetParent.asParent())
+            children.forEach inner@{ connectionId, childEntityIds ->
+              if (childEntityIds.size < 2) return@inner
+
+              // Here we use the following approach to fix ordering:
+              // - Associate children with its indexes
+              // - For the children we can find an associated entity in replaceWith storage, change index to the index of child in replaceWith
+              // - Sort children by index
+              // This gives more-or-less sensible order of children
+              val replaceWithChildren = childrenInReplaceWith(replaceWithParent, childEntityIds.first().id.clazz)
+                .mapIndexed { index, childEntityId -> childEntityId.id to index }
+                .toMap()
+              val sortedChildren = childEntityIds.mapIndexed { index, childEntityId ->
+                val myIndex = replaceWithEntityFromState(childEntityId.id)?.let { replaceWithChildren[it] } ?: index
+                childEntityId to myIndex
+              }.sortedBy { it.second }.map { it.first }
+              targetStorage.refs.updateChildrenOfParent(connectionId, targetParent.asParent(), sortedChildren)
+            }
+          }
+        }
+      }
+    }
+
+    private fun replaceWithEntityFromState(targetParent: EntityId): EntityId? {
+      val replaceWithState = targetState[targetParent] ?: return null
+      return when (replaceWithState) {
+        is ReplaceState.NoChange -> replaceWithState.replaceWithEntityId ?: return null
+        is ReplaceState.Relabel -> replaceWithState.replaceWithEntityId
+        is ReplaceState.Remove -> return null
       }
     }
 
@@ -701,11 +742,13 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   }
 
   private fun addElementOperation(targetParentEntity: Set<ParentsRef>?, replaceWithEntity: EntityId) {
+    targetParentEntity?.let { listOfParentsWithPotentiallyBrokenChildrenOrder += it }
     addOperations += AddElement(targetParentEntity, replaceWithEntity)
     replaceWithEntity.addState(ReplaceWithState.ElementMoved)
   }
 
   private fun replaceWorkspaceData(targetEntityId: EntityId, replaceWithEntityId: EntityId, parents: Set<ParentsRef>?) {
+    parents?.let { listOfParentsWithPotentiallyBrokenChildrenOrder += it }
     replaceOperations.add(RelabelElement(targetEntityId, replaceWithEntityId, parents))
     targetEntityId.addState(ReplaceState.Relabel(replaceWithEntityId, parents))
     replaceWithEntityId.addState(ReplaceWithState.Relabel(targetEntityId))
