@@ -4,7 +4,6 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ContentIteratorEx;
@@ -21,13 +20,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 abstract class FileIndexBase implements FileIndex {
-  private final FileTypeRegistry myFileTypeRegistry;
   final DirectoryIndex myDirectoryIndex;
   final WorkspaceFileIndexEx myWorkspaceFileIndex;
 
   FileIndexBase(@NotNull Project project) {
     myDirectoryIndex = DirectoryIndex.getInstance(project);
-    myFileTypeRegistry = FileTypeRegistry.getInstance();
     myWorkspaceFileIndex = WorkspaceFileIndexEx.IS_ENABLED ? (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project) : null;
   }
 
