@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class DumbServiceHeavyActivities {
+class MergingQueueGuiSuspender {
   private volatile ProgressSuspender myCurrentSuspender;
   private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
 

@@ -69,7 +69,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final DumbServiceMergingTaskQueue myTaskQueue;
   private final DumbServiceGuiExecutor myGuiDumbTaskRunner;
   private final DumbServiceSyncTaskQueue mySyncDumbTaskRunner;
-  private final DumbServiceHeavyActivities myHeavyActivities;
+  private final MergingQueueGuiSuspender myHeavyActivities;
   private final DumbServiceAlternativeResolveTracker myAlternativeResolveTracker;
 
   //used from EDT
@@ -120,7 +120,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myProject = project;
     myTrackedEdtActivityService = new TrackedEdtActivityService(project);
     myTaskQueue = new DumbServiceMergingTaskQueue();
-    myHeavyActivities = new DumbServiceHeavyActivities();
+    myHeavyActivities = new MergingQueueGuiSuspender();
     myGuiDumbTaskRunner = new DumbServiceGuiExecutor(myProject, myTaskQueue, myHeavyActivities, new DumbTaskListener());
     mySyncDumbTaskRunner = new DumbServiceSyncTaskQueue(myTaskQueue);
 

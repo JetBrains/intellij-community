@@ -11,11 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask> {
-  private final DumbServiceHeavyActivities myHeavyActivities;
+  private final MergingQueueGuiSuspender myHeavyActivities;
 
   DumbServiceGuiExecutor(@NotNull Project project,
                          @NotNull DumbServiceMergingTaskQueue queue,
-                         @NotNull DumbServiceHeavyActivities heavyActivities,
+                         @NotNull MergingQueueGuiSuspender heavyActivities,
                          @NotNull MergingQueueGuiExecutor.ExecutorStateListener listener) {
     super(project, queue, listener);
     myHeavyActivities = heavyActivities;
