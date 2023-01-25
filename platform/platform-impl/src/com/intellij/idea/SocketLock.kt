@@ -42,17 +42,6 @@ private const val ACTIVATE_COMMAND = "activate "
 private const val OK_RESPONSE = "ok"
 
 class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path) {
-  companion object {
-    /**
-     * Name of an environment variable that will be set by the Windows launcher and will contain the working directory the
-     * IDE was started with.
-     *
-     * This is necessary on Windows because the launcher needs to change the current directory for the JVM to load
-     * properly; see the details in WindowsLauncher.cpp.
-     */
-    const val LAUNCHER_INITIAL_DIRECTORY_ENV_VAR = "IDEA_INITIAL_DIRECTORY"
-  }
-
   enum class ActivationStatus {
     ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE
   }
@@ -208,7 +197,7 @@ private fun tryActivate(portNumber: Int,
           allowActivation(input)
           val token = readOneLine(systemPath.resolve(SpecialConfigFiles.TOKEN_FILE))
           val out = DataOutputStream(socket.getOutputStream())
-          var currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
+          var currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
           if (currentDirectory == null) {
             currentDirectory = "."
           }

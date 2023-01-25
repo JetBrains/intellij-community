@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package com.intellij.idea
@@ -192,7 +192,7 @@ open class IdeStarter : ModernApplicationStarter() {
 }
 
 private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
-  val currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
+  val currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
   @Suppress("SSBasedInspection")
   Logger.getInstance("#com.intellij.idea.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
   val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory)

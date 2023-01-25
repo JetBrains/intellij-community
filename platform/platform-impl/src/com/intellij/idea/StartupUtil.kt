@@ -81,6 +81,15 @@ import kotlin.system.exitProcess
 internal const val IDE_STARTED = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
 private const val IDE_SHUTDOWN = "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"
 
+/**
+ * Name of an environment variable that will be set by the Windows launcher and will contain the working directory the
+ * IDE was started with.
+ *
+ * This is necessary on Windows because the launcher needs to change the current directory for the JVM to load
+ * properly; see the details in WindowsLauncher.cpp.
+ */
+const val LAUNCHER_INITIAL_DIRECTORY_ENV_VAR = "IDEA_INITIAL_DIRECTORY"
+
 @JvmField
 internal var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunction { _, _ -> AppExitCodes.ACTIVATE_NOT_INITIALIZED }
 
