@@ -40,13 +40,14 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NonNls private static final String FIND_PREFIX = "find";
   @NonNls private static final String CREATE_PREFIX = "create";
   @NonNls private static final String SET_PREFIX = "set";
+  @NonNls private static final String AS_PREFIX = "as";
+  @NonNls private static final String TO_PREFIX = "to";
 
   @NonNls private static final String[] ourPrepositions = {
     "as", "at", "by", "down", "for", "from", "in", "into", "of", "on", "onto", "out", "over",
     "per", "to", "up", "upon", "via", "with"};
 
   @NonNls private static final String[] ourCommonTypeSuffixes = {"Entity"};
-
 
   private final Project myProject;
 
@@ -668,7 +669,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           if (GET_PREFIX.equals(firstWord)
               || IS_PREFIX.equals(firstWord)
               || FIND_PREFIX.equals(firstWord)
-              || CREATE_PREFIX.equals(firstWord)) {
+              || CREATE_PREFIX.equals(firstWord)
+              || AS_PREFIX.equals(firstWord)
+              || TO_PREFIX.equals(firstWord)) {
             if (words.length > 1) {
               final String propertyName = methodName.substring(firstWord.length());
               final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
