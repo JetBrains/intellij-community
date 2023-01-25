@@ -42,8 +42,8 @@ import static java.util.Collections.emptyList;
  * relative "href=" references based on the current module content root.
  *
  * @see FileContextProvider
- * @see CustomizableReferenceProvider.CustomizationKey
  * @see FileReferenceResolver
+ * @see CustomizableReferenceProvider
  */
 public abstract class FileReferenceHelper {
 
