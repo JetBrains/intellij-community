@@ -834,9 +834,23 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
 typealias DataCache = Object2ObjectOpenCustomHashMap<WorkspaceEntityData<out WorkspaceEntity>, List<WorkspaceEntityData<out WorkspaceEntity>>>
 
-internal data class RelabelElement(val targetEntityId: EntityId, val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>?)
-internal data class RemoveElement(val targetEntityId: EntityId)
-internal data class AddElement(val parents: Set<ParentsRef>?, val replaceWithSource: EntityId)
+internal data class RelabelElement(val targetEntityId: EntityId, val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>?) {
+  override fun toString(): String {
+    return "RelabelElement(targetEntityId=${targetEntityId.asString()}, replaceWithEntityId=${replaceWithEntityId.asString()}, parents=$parents)"
+  }
+}
+
+internal data class RemoveElement(val targetEntityId: EntityId) {
+  override fun toString(): String {
+    return "RemoveElement(targetEntityId=${targetEntityId.asString()})"
+  }
+}
+
+internal data class AddElement(val parents: Set<ParentsRef>?, val replaceWithSource: EntityId) {
+  override fun toString(): String {
+    return "AddElement(parents=$parents, replaceWithSource=${replaceWithSource.asString()})"
+  }
+}
 
 internal sealed interface ReplaceState {
   data class Relabel(val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>? = null) : ReplaceState
@@ -846,14 +860,30 @@ internal sealed interface ReplaceState {
 
 internal sealed interface ReplaceWithState {
   object ElementMoved : ReplaceWithState
-  data class NoChange(val targetEntityId: EntityId) : ReplaceWithState
-  data class Relabel(val targetEntityId: EntityId) : ReplaceWithState
+  data class NoChange(val targetEntityId: EntityId) : ReplaceWithState {
+    override fun toString(): String {
+      return "NoChange(targetEntityId=${targetEntityId.asString()})"
+    }
+  }
+  data class Relabel(val targetEntityId: EntityId) : ReplaceWithState {
+    override fun toString(): String {
+      return "Relabel(targetEntityId=${targetEntityId.asString()})"
+    }
+  }
   object NoChangeTraceLost : ReplaceWithState
 }
 
 sealed interface ParentsRef {
-  data class TargetRef(val targetEntityId: EntityId) : ParentsRef
-  data class AddedElement(val replaceWithEntityId: EntityId) : ParentsRef
+  data class TargetRef(val targetEntityId: EntityId) : ParentsRef {
+    override fun toString(): String {
+      return "TargetRef(targetEntityId=${targetEntityId.asString()})"
+    }
+  }
+  data class AddedElement(val replaceWithEntityId: EntityId) : ParentsRef {
+    override fun toString(): String {
+      return "AddedElement(replaceWithEntityId=${replaceWithEntityId.asString()})"
+    }
+  }
 }
 
 private class TrackToParents(
