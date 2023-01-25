@@ -2,6 +2,9 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMapedFileIO
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
+import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
 import com.intellij.util.io.UnInterruptibleFileChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -14,7 +17,7 @@ class DescriptorStorageImpl(
   storagePath: Path,
   private val stringEnumerator: SuspendDataEnumerator<String>
 ) : DescriptorStorage {
-  private val mmapIO: MappedFileIOUtil
+  private val storageIO: StorageIO
   private var lastSafeSize by PersistentVar.long(storagePath / "size")
   private val position: AdvancingPositionTracker
 
@@ -23,7 +26,7 @@ class DescriptorStorageImpl(
 
     val fileChannel = UnInterruptibleFileChannel(storagePath / "descriptors",
                                                  StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-    mmapIO = MappedFileIOUtil(fileChannel, FileChannel.MapMode.READ_WRITE)
+    storageIO = ChunkMMapedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
 
     lastSafeSize.let {
       if (it != null) {
@@ -78,20 +81,20 @@ class DescriptorStorageImpl(
   override suspend fun writeDescriptor(tag: VfsOperationTag, compute: suspend () -> VfsOperation<*>) {
     val descrSize = bytesForDescriptor(tag)
     position.track(descrSize.toLong()) { descrPos ->
-      mmapIO.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
-      mmapIO.write(descrPos + descrSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
+      storageIO.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
+      storageIO.write(descrPos + descrSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
       val op = compute()
       assert(tag == op.tag)
       val data = serialize(op)
       assert(data.size == sizeOfValueInDescriptor(descrSize))
-      mmapIO.write(descrPos + VfsOperationTag.SIZE_BYTES, data)
-      mmapIO.write(descrPos, byteArrayOf(tag.ordinal.toByte()))
+      storageIO.write(descrPos + VfsOperationTag.SIZE_BYTES, data)
+      storageIO.write(descrPos, byteArrayOf(tag.ordinal.toByte()))
     }
   }
 
   override suspend fun readAt(position: Long, action: suspend (VfsOperation<*>?) -> Unit) {
     val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
-    mmapIO.read(position, buf)
+    storageIO.read(position, buf)
     validateTagByte(buf[0]) {
       action(null)
       return
@@ -99,7 +102,7 @@ class DescriptorStorageImpl(
     val tag = VfsOperationTag.values()[buf[0].toInt()]
     // check right bound
     val descrSize = bytesForDescriptor(tag)
-    mmapIO.read(position + descrSize - VfsOperationTag.SIZE_BYTES, buf)
+    storageIO.read(position + descrSize - VfsOperationTag.SIZE_BYTES, buf)
     validateTagByte(buf[0]) {
       action(null)
       return
@@ -111,7 +114,7 @@ class DescriptorStorageImpl(
     }
     val bytesToRead = sizeOfValueInDescriptor(bytesForDescriptor(tag))
     val data = ByteArray(bytesToRead)
-    mmapIO.read(position + VfsOperationTag.SIZE_BYTES, data)
+    storageIO.read(position + VfsOperationTag.SIZE_BYTES, data)
     val descr = deserialize<VfsOperation<*>>(tag, data)
     action(descr)
   }
@@ -166,12 +169,12 @@ class DescriptorStorageImpl(
 
   override fun flush() {
     val safePos = position.getMinInflightPosition()
-    mmapIO.flush()
+    storageIO.force()
     lastSafeSize = safePos
   }
 
   override fun dispose() {
     flush()
-    mmapIO.close()
+    storageIO.close()
   }
 }
