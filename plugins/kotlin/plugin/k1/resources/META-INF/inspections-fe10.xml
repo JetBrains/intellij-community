@@ -2876,9 +2876,9 @@
                      language="kotlin"
                      key="external.interface.contains.non.nullable.property.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.EnumValuesSoftDeprecateMigrationInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.EnumValuesSoftDeprecateInspection"
                      groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
                      enabledByDefault="true"
                      cleanupTool="false"
                      level="WARNING"

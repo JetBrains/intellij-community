@@ -193,9 +193,9 @@
                      language="kotlin"
                      key="inspection.inconsistent.comment.for.java.parameter.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.EnumValuesSoftDeprecateMigrationInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.EnumValuesSoftDeprecateInspection"
                      groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
                      enabledByDefault="true"
                      cleanupTool="false"
                      level="WARNING"

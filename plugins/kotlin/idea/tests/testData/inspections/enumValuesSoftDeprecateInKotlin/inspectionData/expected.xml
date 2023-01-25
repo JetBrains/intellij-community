@@ -5,7 +5,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="class" FQNAME="sample.MyEnum" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -18,7 +18,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="class" FQNAME="sample.MyEnum.Companion" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -31,7 +31,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.TestKt void foo()" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -44,7 +44,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.TestKt void foo()" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -57,7 +57,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.TestKt void foo()" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -70,7 +70,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.TestKt void foo()" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -83,7 +83,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.TestKt void foo()" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -96,7 +96,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.TestKt void foo()" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -109,7 +109,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.OptInTest void reported_ClassDeclarartionOptIn()" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -122,7 +122,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.OptInTestOneMore void reported_ClassDeclarartionExperimental()" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -135,7 +135,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="field" FQNAME="temp:///src/optIn.kt reported_valDeclarartionOptIn" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -148,7 +148,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="field" FQNAME="temp:///src/optIn.kt reported_valDeclarartionExperimental" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -161,7 +161,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.OptInKt void reported_OptInAnnotation()" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -174,7 +174,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.OptInKt void reported_ExperimentalAnnotation()" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>
@@ -187,7 +187,7 @@
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.OptInFileKt void mustReport_OptInFile()" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
+    <problem_class id="EnumValuesMethodSoftDeprecate" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
     <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
     <highlighted_element>values()</highlighted_element>
     <language>kotlin</language>

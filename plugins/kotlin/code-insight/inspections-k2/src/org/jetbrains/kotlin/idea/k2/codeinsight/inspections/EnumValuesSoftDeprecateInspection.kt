@@ -7,12 +7,12 @@ import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.fir.codeInsight.isOptInAllowed
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspection.EnumValuesSoftDeprecateMigrationInspectionBase
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspection.EnumValuesSoftDeprecateInspectionBase
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 
-class EnumValuesSoftDeprecateMigrationInspection : EnumValuesSoftDeprecateMigrationInspectionBase() {
+class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspectionBase() {
 
     override fun KtAnalysisSession.isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean {
         return isOptInAllowed(element, annotationClassId, element.languageVersionSettings)

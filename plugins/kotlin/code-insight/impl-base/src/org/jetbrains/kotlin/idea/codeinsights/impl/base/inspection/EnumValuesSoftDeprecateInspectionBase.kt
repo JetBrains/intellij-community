@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.psi.*
  *
  * See [KTIJ-22298](https://youtrack.jetbrains.com/issue/KTIJ-22298/Soft-deprecate-Enumvalues-for-Kotlin-callers).
  */
-abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinInspection() {
+abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection() {
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         if (!holder.file.isEnumValuesSoftDeprecateEnabled()) {
             PsiElementVisitor.EMPTY_VISITOR
