@@ -16,6 +16,7 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   /**
@@ -82,6 +83,9 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    */
   @ApiStatus.Internal
   fun visitFileSets(visitor: WorkspaceFileSetVisitor)
+  
+  @TestOnly
+  fun reset()
 
   companion object {
     @JvmField
