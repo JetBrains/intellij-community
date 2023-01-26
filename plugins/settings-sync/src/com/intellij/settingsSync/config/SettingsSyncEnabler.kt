@@ -3,6 +3,7 @@ package com.intellij.settingsSync.config
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.settingsSync.*
+import com.intellij.settingsSync.SettingsSynchronizer.Companion.checkCrossIdeSyncStatusOnServer
 import com.intellij.util.EventDispatcher
 import java.util.*
 
@@ -20,6 +21,7 @@ internal class SettingsSyncEnabler {
       private lateinit var updateResult: UpdateResult
 
       override fun run(indicator: ProgressIndicator) {
+        checkCrossIdeSyncStatusOnServer(communicator)
         updateResult = communicator.receiveUpdates()
       }
 
