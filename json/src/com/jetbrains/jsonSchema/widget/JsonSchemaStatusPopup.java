@@ -30,11 +30,21 @@ public final class JsonSchemaStatusPopup {
     }
   };
 
-  static final JsonSchemaInfo SET_NO_MAPPING_FOR_FILE = new JsonSchemaInfo("") {
+  static final JsonSchemaInfo IGNORE_FILE = new JsonSchemaInfo("") {
+
     @Nls
     @Override
     public @NotNull String getDescription() {
       return JsonBundle.message("schema.widget.no.mapping");
+    }
+  };
+
+  static final JsonSchemaInfo STOP_IGNORE_FILE = new JsonSchemaInfo("") {
+
+    @Nls
+    @Override
+    public @NotNull String getDescription() {
+      return JsonBundle.message("schema.widget.stop.ignore.file");
     }
   };
 
@@ -88,8 +98,12 @@ public final class JsonSchemaStatusPopup {
     else {
       allSchemas = new SmartList<>(EDIT_MAPPINGS);
     }
-    if (mapping != null) {
-      allSchemas.add(0, SET_NO_MAPPING_FOR_FILE);
+
+    if (configuration.isIgnoredFile(virtualFile)) {
+      allSchemas.add(0, STOP_IGNORE_FILE);
+    }
+    else {
+      allSchemas.add(0, IGNORE_FILE);
     }
     return new JsonSchemaInfoPopupStep(allSchemas, project, virtualFile, service, null);
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -13,6 +14,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,5 +132,37 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
     MyState(Map<String, UserDefinedJsonSchemaConfiguration> state) {
       myState = state;
     }
+  }
+
+  public boolean isIgnoredFile(VirtualFile virtualFile) {
+    UserDefinedJsonSchemaConfiguration mappingForFile = findMappingForFile(virtualFile);
+    return mappingForFile != null && mappingForFile.isIgnoredFile();
+  }
+
+  public void markAsIgnored(VirtualFile virtualFile) {
+    UserDefinedJsonSchemaConfiguration existingMapping = findMappingForFile(virtualFile);
+    if (existingMapping != null) {
+      removeConfiguration(existingMapping);
+    }
+    addConfiguration(createIgnoreSchema(virtualFile.getUrl()));
+  }
+
+  public void unmarkAsIgnored(VirtualFile virtualFile) {
+    if (isIgnoredFile(virtualFile)) {
+      UserDefinedJsonSchemaConfiguration existingMapping = findMappingForFile(virtualFile);
+      removeConfiguration(existingMapping);
+    }
+  }
+
+  private static UserDefinedJsonSchemaConfiguration createIgnoreSchema(String ignoredFileUrl) {
+    UserDefinedJsonSchemaConfiguration schemaConfiguration = new UserDefinedJsonSchemaConfiguration(
+      JsonBundle.message("schema.widget.no.schema.label"),
+      JsonSchemaVersion.SCHEMA_4,
+      "",
+      true,
+      Collections.singletonList(new UserDefinedJsonSchemaConfiguration.Item(ignoredFileUrl, false, false))
+    );
+    schemaConfiguration.setIgnoredFile(true);
+    return schemaConfiguration;
   }
 }

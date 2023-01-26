@@ -47,6 +47,7 @@ public class UserDefinedJsonSchemaConfiguration {
   public JsonSchemaVersion schemaVersion = JsonSchemaVersion.SCHEMA_4;
   public boolean applicationDefined;
   public List<Item> patterns = new SmartList<>();
+  public boolean isIgnoredFile = false;
   @Transient
   private final AtomicClearableLazyValue<List<PairProcessor<Project, VirtualFile>>> myCalculatedPatterns =
     new AtomicClearableLazyValue<>() {
@@ -86,6 +87,14 @@ public class UserDefinedJsonSchemaConfiguration {
 
   public void setName(@NotNull @Nls String name) {
     this.name = name;
+  }
+
+  public boolean isIgnoredFile() {
+    return isIgnoredFile;
+  }
+
+  public void setIgnoredFile(boolean ignoredFile) {
+    isIgnoredFile = ignoredFile;
   }
 
   public String getRelativePathToSchema() {
@@ -209,6 +218,7 @@ public class UserDefinedJsonSchemaConfiguration {
     result = 31 * result + schemaVersion.hashCode();
     return result;
   }
+
 
   public static class Item {
     public String path;
