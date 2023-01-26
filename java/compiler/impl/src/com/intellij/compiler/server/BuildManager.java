@@ -2397,9 +2397,7 @@ public final class BuildManager implements Disposable {
 
     @Override
     public Void get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, java.util.concurrent.ExecutionException, TimeoutException {
-      for (Future<?> delegate : getDelegates()) {
-        delegate.get(timeout, unit);
-      }
+      ConcurrencyUtil.getAll(timeout, unit, getDelegates());
       return null;
     }
   }

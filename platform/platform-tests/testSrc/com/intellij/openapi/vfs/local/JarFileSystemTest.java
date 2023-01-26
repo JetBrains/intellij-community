@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.zip.JBZipFile;
 import com.intellij.util.messages.MessageBusConnection;
@@ -190,7 +191,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
           }));
         }
 
-        for (Future<?> future : futuresToWait) future.get(2, TimeUnit.SECONDS);
+        ConcurrencyUtil.getAll(2L*futuresToWait.size(), TimeUnit.SECONDS, futuresToWait);
       }
 
       for (TimedZipHandler handler : handlers) handler.clearCaches();

@@ -13,6 +13,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.QueueProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Activatable;
@@ -300,24 +301,11 @@ public class Alarm implements Disposable {
   public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     assert ApplicationManager.getApplication().isUnitTestMode();
 
-    List<Request> requests;
+    List<Future<?>> futures;
     synchronized (LOCK) {
-      requests = new ArrayList<>(myRequests);
+      futures = ContainerUtil.mapNotNull(myRequests, r -> r.myFuture);
     }
-
-    for (Request request : requests) {
-      Future<?> future;
-      synchronized (LOCK) {
-        future = request.myFuture;
-      }
-      if (future != null) {
-        try {
-          future.get(timeout, unit);
-        }
-        catch (CancellationException ignored) {
-        }
-      }
-    }
+    ConcurrencyUtil.getAll(timeout, unit, futures);
   }
 
   public int getActiveRequestCount() {
