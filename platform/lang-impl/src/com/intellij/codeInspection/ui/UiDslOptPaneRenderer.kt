@@ -26,8 +26,8 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.layout.selected
 import com.intellij.util.applyIf
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UI.PanelFactory
 import com.intellij.util.ui.UIUtil.setEnabledRecursively
-import java.awt.BorderLayout
 import java.awt.EventQueue
 import javax.swing.*
 import kotlin.math.max
@@ -327,12 +327,18 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
               EventQueue.invokeLater { editLastRow(table) }
             }
             .setRemoveAction { _ -> TableUtil.removeSelectedItems(table) }
-            .disableUpDownActions().createPanel()
+            .disableUpDownActions()
+            .setPreferredSize(InspectionOptionsPanel.getMinimumListSize())
+            .createPanel()
           val label = component.label.label()
-          if (!label.isEmpty()) {
-            panel.add(JLabel(label), BorderLayout.NORTH)
-          }
-          cell(panel)
+          cell(when {
+                 label.isBlank() -> panel
+                 else -> PanelFactory.panel(panel)
+                   .withLabel(label)
+                   .moveLabelOnTop()
+                   .resizeY(true)
+                   .createPanel()
+               })
             .align(Align.FILL)
             .resizableColumn()
         }
