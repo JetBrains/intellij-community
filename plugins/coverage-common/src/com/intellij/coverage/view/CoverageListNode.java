@@ -23,9 +23,10 @@ import java.awt.*;
 import java.util.List;
 
 public class CoverageListNode extends AbstractTreeNode<Object> {
-  protected CoverageSuitesBundle myBundle;
-  protected CoverageViewManager.StateBean myStateBean;
+  protected final CoverageSuitesBundle myBundle;
+  protected final CoverageViewManager.StateBean myStateBean;
   private final FileStatusManager myFileStatusManager;
+  private volatile List<AbstractTreeNode<?>> myChildren;
   private final boolean myIsLeaf;
   private boolean myFullyCovered = false;
 
@@ -48,6 +49,10 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
     myStateBean = stateBean;
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myIsLeaf = isLeaf;
+  }
+
+  public synchronized void reset() {
+    myChildren = null;
   }
 
   public boolean isLeaf() {
@@ -80,9 +85,16 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   @NotNull
   @Override
   public List<? extends AbstractTreeNode<?>> getChildren() {
-    final var nodes = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle, myStateBean)
-      .getChildrenNodes(this);
-    return filterChildren(nodes);
+    return getChildrenInternal();
+  }
+
+  private synchronized List<? extends AbstractTreeNode<?>> getChildrenInternal() {
+    if (myChildren == null) {
+      final var nodes = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle, myStateBean)
+        .getChildrenNodes(this);
+      myChildren = filterChildren(nodes);
+    }
+    return myChildren;
   }
 
   protected List<AbstractTreeNode<?>> filterChildren(List<AbstractTreeNode<?>> nodes) {

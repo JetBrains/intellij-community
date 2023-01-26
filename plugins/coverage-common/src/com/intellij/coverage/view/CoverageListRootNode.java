@@ -34,7 +34,9 @@ public class CoverageListRootNode extends CoverageListNode {
     return myObservable;
   }
 
+  @Override
   public synchronized void reset() {
+    super.reset();
     myTopLevelPackages = null;
   }
 
