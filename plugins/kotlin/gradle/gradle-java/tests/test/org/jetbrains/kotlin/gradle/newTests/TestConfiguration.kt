@@ -35,18 +35,3 @@ class TestConfiguration(private val featuresConfiguration: MutableMap<TestFeatur
 
     fun copy(): TestConfiguration = TestConfiguration(featuresConfiguration)
 }
-
-interface TestFeature<V : Any> {
-    /**
-     * Renders human-readable description of test feature' configuration. It will be
-     * rendered in the testdata
-     *
-     * General guidelines:
-     * - return one or more strings. Each string will be rendered as a separate line, so it's
-     *   a good idea go group related information together, and separate less related ones
-     * - try to keep it short and informative, akin to commit message titles: 'hide stdlib', 'show order entries scopes'
-     */
-    fun renderConfiguration(configuration: V): List<String>
-
-    fun createDefaultConfiguration(): V
-}
