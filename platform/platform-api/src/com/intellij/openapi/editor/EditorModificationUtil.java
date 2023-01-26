@@ -130,7 +130,7 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
     FileDocumentManager.WriteAccessStatus writeAccess =
       FileDocumentManager.getInstance().requestWritingStatus(editor.getDocument(), editor.getProject());
     if (!writeAccess.hasWriteAccess()) {
-      HintManager.getInstance().showInformationHint(editor, writeAccess.getReadOnlyMessage());
+      HintManager.getInstance().showInformationHint(editor, writeAccess.getReadOnlyMessage(), writeAccess.getHyperlinkListener());
       return false;
     }
     return true;

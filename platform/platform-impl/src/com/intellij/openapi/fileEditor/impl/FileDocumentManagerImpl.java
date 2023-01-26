@@ -493,7 +493,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       ReadonlyStatusHandler.OperationStatus writableStatus =
         ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file));
       if (writableStatus.hasReadonlyFiles()) {
-        return new WriteAccessStatus(writableStatus.getReadonlyFilesMessage());
+        return new WriteAccessStatus(writableStatus.getReadonlyFilesMessage(), writableStatus.getHyperlinkListener());
       }
       assert file.isWritable() : file;
     }
