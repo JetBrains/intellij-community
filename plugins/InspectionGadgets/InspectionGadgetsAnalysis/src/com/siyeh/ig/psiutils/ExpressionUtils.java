@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -197,7 +197,8 @@ public final class ExpressionUtils {
   }
 
   @Contract("null -> false")
-  public static boolean isNullLiteral(@Nullable PsiExpression expression) {
+  public static boolean isNullLiteral(@Nullable PsiCaseLabelElement element) {
+    if (!(element instanceof PsiExpression expression)) return false;
     expression = PsiUtil.deparenthesizeExpression(expression);
     return expression instanceof PsiLiteralExpression && ((PsiLiteralExpression)expression).getValue() == null;
   }

@@ -476,7 +476,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   protected void reportNullabilityProblems(ProblemReporter reporter, List<NullabilityProblem<?>> problems) {
     for (NullabilityProblem<?> problem : problems) {
       PsiExpression expression = problem.getDereferencedExpression();
-      boolean nullLiteral = ExpressionUtils.isNullLiteral(PsiUtil.skipParenthesizedExprDown(expression));
+      boolean nullLiteral = ExpressionUtils.isNullLiteral(expression);
       if (!REPORT_UNSOUND_WARNINGS) {
         if (expression == null || !nullLiteral && CommonDataflow.getDfType(expression, IGNORE_ASSERT_STATEMENTS) != DfTypes.NULL) continue;
       }

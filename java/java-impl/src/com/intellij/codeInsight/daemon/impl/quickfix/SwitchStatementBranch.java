@@ -24,7 +24,7 @@ import java.util.*;
 class SwitchStatementBranch {
 
   private final Set<PsiElement> myPendingDeclarations = new HashSet<>(5);
-  private final List<PsiElement> myCaseElements = new ArrayList<>(2);
+  private final List<PsiCaseLabelElement> myCaseElements = new ArrayList<>(2);
   private final List<PsiElement> myBodyElements = new ArrayList<>(5);
   private final List<PsiElement> myPendingWhiteSpace = new ArrayList<>(2);
   private boolean myDefault;
@@ -52,7 +52,7 @@ class SwitchStatementBranch {
     }
   }
 
-  List<PsiElement> getCaseElements() {
+  List<PsiCaseLabelElement> getCaseElements() {
     return Collections.unmodifiableList(myCaseElements);
   }
 
@@ -85,7 +85,7 @@ class SwitchStatementBranch {
       myDefault = true;
       myAlwaysExecuted = defaultAlwaysExecuted;
     } else {
-      PsiExpression nullCase = null;
+      PsiCaseLabelElement nullCase = null;
       PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
       if (labelElementList != null) {
         for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
@@ -94,8 +94,8 @@ class SwitchStatementBranch {
             myAlwaysExecuted = defaultAlwaysExecuted;
             break;
           }
-          else if (labelElement instanceof PsiExpression expression && ExpressionUtils.isNullLiteral(expression)) {
-            nullCase = expression;
+          else if (ExpressionUtils.isNullLiteral(labelElement)) {
+            nullCase = labelElement;
           }
         }
         if (!myDefault) {

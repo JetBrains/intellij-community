@@ -28,7 +28,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.CreateEnumMissingSwitchBranchesFix;
@@ -167,15 +166,11 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
   }
 
   private static boolean isDefaultOrNull(@Nullable PsiCaseLabelElement labelElement) {
-    return labelElement instanceof PsiDefaultCaseLabelElement ||
-           ExpressionUtils.isNullLiteral(ObjectUtils.tryCast(labelElement, PsiExpression.class));
+    return labelElement instanceof PsiDefaultCaseLabelElement || ExpressionUtils.isNullLiteral(labelElement);
   }
 
   private static boolean hasMatchingNull(@NotNull PsiSwitchLabelStatementBase label) {
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
-    if (labelElementList == null) return false;
-    return ContainerUtil.exists(labelElementList.getElements(),
-                                element -> ExpressionUtils.isNullLiteral(ObjectUtils.tryCast(element, PsiExpression.class))
-    );
+    return labelElementList != null && ContainerUtil.exists(labelElementList.getElements(), ExpressionUtils::isNullLiteral);
   }
 }

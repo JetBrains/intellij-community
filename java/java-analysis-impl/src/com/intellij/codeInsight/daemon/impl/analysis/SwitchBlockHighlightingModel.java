@@ -721,8 +721,7 @@ public class SwitchBlockHighlightingModel {
       PsiCaseLabelElementList list = ObjectUtils.tryCast(element.getParent(), PsiCaseLabelElementList.class);
       if (list == null || list.getElementCount() != 2) return false;
       PsiCaseLabelElement[] elements = list.getElements();
-      return elements[0] instanceof PsiExpression expression && ExpressionUtils.isNullLiteral(expression) &&
-             elements[1] instanceof PsiDefaultCaseLabelElement;
+      return ExpressionUtils.isNullLiteral(elements[0]) && elements[1] instanceof PsiDefaultCaseLabelElement;
     }
 
     @Override
@@ -831,7 +830,7 @@ public class SwitchBlockHighlightingModel {
           for (int i = 0; i < elements.length; i++) {
             PsiCaseLabelElement currentElement = elements[i];
             if (isInCaseNullDefaultLabel(currentElement)) continue;
-            if (currentElement instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr) && i != 0 && !existPattern ||
+            if (ExpressionUtils.isNullLiteral(currentElement) && i != 0 && !existPattern ||
                 existsConst && !isConstantLabelElement(currentElement) ||
                 existsNull) {
               addIllegalFallThroughError(currentElement, "invalid.case.label.combination", holder, alreadyFallThroughElements);
@@ -854,7 +853,7 @@ public class SwitchBlockHighlightingModel {
             }
             existPattern = currentElement instanceof PsiPattern || currentElement instanceof PsiPatternGuard;
             existsConst |= isConstantLabelElement(currentElement);
-            existsNull = currentElement instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr);
+            existsNull = ExpressionUtils.isNullLiteral(currentElement);
           }
           canPrecedingStatementCompleteNormally = true;
         }

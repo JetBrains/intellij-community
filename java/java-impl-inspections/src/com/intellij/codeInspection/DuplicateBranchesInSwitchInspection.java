@@ -593,8 +593,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
                                    !ContainerUtil.exists(labels, label -> {
                                      PsiCaseLabelElementList list = label.getCaseLabelElementList();
                                      if (list == null) return false;
-                                     return ContainerUtil.exists(list.getElements(), element -> element instanceof PsiExpression expr &&
-                                                                                                ExpressionUtils.isNullLiteral(expr));
+                                     return ContainerUtil.exists(list.getElements(), ExpressionUtils::isNullLiteral);
                                    });
     }
 
@@ -958,7 +957,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       PsiCaseLabelElement[] elements = labelElementList.getElements();
       return !ContainerUtil.exists(elements, element -> element instanceof PsiPattern ||
                                                         element instanceof PsiPatternGuard ||
-                                                        element instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
+                                                        ExpressionUtils.isNullLiteral(element));
     }
 
     @Override
