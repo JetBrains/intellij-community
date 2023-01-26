@@ -143,12 +143,12 @@ fun IDETestContext.downloadAndroidPluginProject(): IDETestContext {
     assert(script.exists()) { "File $script does not exist" }
     val scriptContent = script.readText().replace("clone", "clone --depth 1")
     val commandLineArgs = scriptContent.split(" ")
-    val adjustedCommandLineArgs = when (Git.getDefaultBranch) {
+    val adjustedCommandLineArgs = when (communityUrlSuffix) {
       "master" -> commandLineArgs
       else -> {
         val listOfArgs = commandLineArgs.toMutableList()
         listOfArgs.add(2, "-b")
-        listOfArgs.add(3, Git.getDefaultBranch)
+        listOfArgs.add(3, communityUrlSuffix)
         listOfArgs.add(4, "--single-branch")
         listOfArgs
       }
@@ -168,5 +168,20 @@ fun IDETestContext.downloadAndroidPluginProject(): IDETestContext {
     logOutput(stdout.read().trim())
   }
   return this
+}
+
+val communityUrlSuffix = communityUrlSuffix(Git.getDefaultBranch)
+
+fun communityUrlSuffix(branch: String): String {
+  val majorVersion = branch.substringBefore(".")
+  return when (majorVersion.isNumeric()) {
+    true -> "refs/heads/$majorVersion"
+    false -> "master"
+  }
+}
+
+private fun String.isNumeric(): Boolean {
+  val regex = "-?[0-9]+(\\.[0-9]+)?".toRegex()
+  return matches(regex)
 }
 
