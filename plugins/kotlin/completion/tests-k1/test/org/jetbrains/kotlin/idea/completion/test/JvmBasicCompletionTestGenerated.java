@@ -510,6 +510,69 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/basic/common/extensionDeclarations")
+        public static class ExtensionDeclarations extends AbstractJvmBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ClassTypeParameterAsReceiver.kt")
+            public void testClassTypeParameterAsReceiver() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ClassTypeParameterAsReceiver.kt");
+            }
+
+            @TestMetadata("CompanionObject.kt")
+            public void testCompanionObject() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/CompanionObject.kt");
+            }
+
+            @TestMetadata("ExtensionFunReceiver.kt")
+            public void testExtensionFunReceiver() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionFunReceiver.kt");
+            }
+
+            @TestMetadata("ExtensionFunReceiverForce.kt")
+            public void testExtensionFunReceiverForce() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionFunReceiverForce.kt");
+            }
+
+            @TestMetadata("ExtensionInsideFunction.kt")
+            public void testExtensionInsideFunction() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionInsideFunction.kt");
+            }
+
+            @TestMetadata("FunctionTypeParameterAsReceiver1.kt")
+            public void testFunctionTypeParameterAsReceiver1() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/FunctionTypeParameterAsReceiver1.kt");
+            }
+
+            @TestMetadata("FunctionTypeParameterAsReceiver2.kt")
+            public void testFunctionTypeParameterAsReceiver2() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/FunctionTypeParameterAsReceiver2.kt");
+            }
+
+            @TestMetadata("GenericExtensionFunReceiver1.kt")
+            public void testGenericExtensionFunReceiver1() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/GenericExtensionFunReceiver1.kt");
+            }
+
+            @TestMetadata("GenericExtensionFunReceiver2.kt")
+            public void testGenericExtensionFunReceiver2() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/GenericExtensionFunReceiver2.kt");
+            }
+
+            @TestMetadata("NestedClassName1.kt")
+            public void testNestedClassName1() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/NestedClassName1.kt");
+            }
+
+            @TestMetadata("NestedClassName2.kt")
+            public void testNestedClassName2() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/NestedClassName2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/extensionFunctionTypeValues")
         public static class ExtensionFunctionTypeValues extends AbstractJvmBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -2372,24 +2435,9 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/ExtensionForProperty.kt");
             }
 
-            @TestMetadata("ExtensionFunReceiver.kt")
-            public void testExtensionFunReceiver() throws Exception {
-                runTest("../testData/basic/common/ExtensionFunReceiver.kt");
-            }
-
-            @TestMetadata("ExtensionFunReceiverForce.kt")
-            public void testExtensionFunReceiverForce() throws Exception {
-                runTest("../testData/basic/common/ExtensionFunReceiverForce.kt");
-            }
-
             @TestMetadata("ExtensionFunctionInClassObject.kt")
             public void testExtensionFunctionInClassObject() throws Exception {
                 runTest("../testData/basic/common/ExtensionFunctionInClassObject.kt");
-            }
-
-            @TestMetadata("ExtensionInsideFunction.kt")
-            public void testExtensionInsideFunction() throws Exception {
-                runTest("../testData/basic/common/ExtensionInsideFunction.kt");
             }
 
             @TestMetadata("ExtensionOnTypeAliasFromOtherTypeAlias.kt")
@@ -2450,16 +2498,6 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             @TestMetadata("GenericCompanionExtension.kt")
             public void testGenericCompanionExtension() throws Exception {
                 runTest("../testData/basic/common/GenericCompanionExtension.kt");
-            }
-
-            @TestMetadata("GenericExtensionFunReceiver1.kt")
-            public void testGenericExtensionFunReceiver1() throws Exception {
-                runTest("../testData/basic/common/GenericExtensionFunReceiver1.kt");
-            }
-
-            @TestMetadata("GenericExtensionFunReceiver2.kt")
-            public void testGenericExtensionFunReceiver2() throws Exception {
-                runTest("../testData/basic/common/GenericExtensionFunReceiver2.kt");
             }
 
             @TestMetadata("GenericKotlinClass.kt")
@@ -2757,16 +2795,6 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/NestedClassBug.kt");
             }
 
-            @TestMetadata("NestedClassNameForExtension.kt")
-            public void testNestedClassNameForExtension() throws Exception {
-                runTest("../testData/basic/common/NestedClassNameForExtension.kt");
-            }
-
-            @TestMetadata("NestedClassNameForExtension2.kt")
-            public void testNestedClassNameForExtension2() throws Exception {
-                runTest("../testData/basic/common/NestedClassNameForExtension2.kt");
-            }
-
             @TestMetadata("NestedClassesOnClassWithDefaultObject.kt")
             public void testNestedClassesOnClassWithDefaultObject() throws Exception {
                 runTest("../testData/basic/common/NestedClassesOnClassWithDefaultObject.kt");
@@ -3025,6 +3053,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             @TestMetadata("TypeParameterFromOuterClass.kt")
             public void testTypeParameterFromOuterClass() throws Exception {
                 runTest("../testData/basic/common/TypeParameterFromOuterClass.kt");
+            }
+
+            @TestMetadata("TypeParameterInReturnType.kt")
+            public void testTypeParameterInReturnType() throws Exception {
+                runTest("../testData/basic/common/TypeParameterInReturnType.kt");
             }
 
             @TestMetadata("VariableClassName.kt")
