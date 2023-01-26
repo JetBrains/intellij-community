@@ -65,16 +65,9 @@ internal fun populateMppModuleDataNode(
     mppModel: KotlinMPPGradleModel,
     resolverCtx: ProjectResolverContext,
 ) {
-    if (shouldSkipMppModuleInitBecauseOfExtensions(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx))
-        return
-
-    runPreModuleInitExtensions(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
-
     KotlinMPPCompilerArgumentsCacheMergeManager.mergeCache(gradleModule, resolverCtx)
     initializeModuleData(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
-    populateSourceSetInfos(gradleModule, moduleDataNode, mppModel, resolverCtx)
-
-    runPostModuleInitExtensions(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
+    createMppGradleSourceSetDataNodes(gradleModule, moduleDataNode, mppModel, resolverCtx)
 }
 
 internal fun shouldDelegateToOtherPlugin(compilation: KotlinCompilation): Boolean =
@@ -258,7 +251,7 @@ private fun initializeModuleData(
     }
 }
 
-private fun populateSourceSetInfos(
+private fun createMppGradleSourceSetDataNodes(
     gradleModule: IdeaModule,
     mainModuleNode: DataNode<ModuleData>,
     mppModel: KotlinMPPGradleModel,
@@ -298,6 +291,12 @@ private fun populateSourceSetInfos(
             val moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, compilation, resolverCtx)
             val existingSourceSetDataNode = sourceSetMap[moduleId]?.first
             if (existingSourceSetDataNode?.kotlinSourceSetData?.sourceSetInfo != null) continue
+
+            /* Execute extensions and do not create any GradleSourceSetData node if any extension wants us to Skip */
+            if (KotlinMppGradleProjectResolverExtension.beforeMppGradleSourceSetDataNodeCreation(
+                    mppModel, resolverCtx, gradleModule, mainModuleNode, compilation
+                ) == KotlinMppGradleProjectResolverExtension.Result.Skip
+            ) continue
 
             compilationIds.add(moduleId)
 
@@ -354,6 +353,11 @@ private fun populateSourceSetInfos(
             if (existingSourceSetDataNode == null) {
                 sourceSetMap[moduleId] = Pair(compilationDataNode, createExternalSourceSet(compilation, compilationData, mppModel))
             }
+
+            /* Execution all extensions after we freshly created a GradleSourceSetData node for the given compilation */
+            KotlinMppGradleProjectResolverExtension.afterMppGradleSourceSetDataNodeCreated(
+                mppModel, resolverCtx, gradleModule, mainModuleNode, compilation, compilationDataNode
+            )
         }
 
         targetData.moduleIds = compilationIds
@@ -362,11 +366,18 @@ private fun populateSourceSetInfos(
     val ignoreCommonSourceSets by lazy { externalProject.notImportedCommonSourceSets() }
     for (sourceSet in mppModel.sourceSetsByName.values) {
         if (shouldDelegateToOtherPlugin(sourceSet)) continue
+
         val platform = sourceSet.actualPlatforms.platforms.singleOrNull()
         if (platform == KotlinPlatform.COMMON && ignoreCommonSourceSets) continue
         val moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx)
         val existingSourceSetDataNode = sourceSetMap[moduleId]?.first
         if (existingSourceSetDataNode?.kotlinSourceSetData != null) continue
+
+        /* Execute extensions and do not create any GradleSourceSetData node if any extension wants us to Skip */
+        if (KotlinMppGradleProjectResolverExtension.beforeMppGradleSourceSetDataNodeCreation(
+                mppModel, resolverCtx, gradleModule, mainModuleNode, sourceSet
+            ) == KotlinMppGradleProjectResolverExtension.Result.Skip
+        ) continue
 
         val sourceSetData = existingSourceSetDataNode?.data ?: createGradleSourceSetData(
             sourceSet, gradleModule, mainModuleNode, resolverCtx
@@ -409,13 +420,17 @@ private fun populateSourceSetInfos(
 
         val kotlinSourceSet = KotlinMPPGradleProjectResolver.createSourceSetInfo(mppModel, sourceSet, gradleModule, resolverCtx) ?: continue
 
-        val sourceSetDataNode =
-            (existingSourceSetDataNode ?: mainModuleNode.createChild(GradleSourceSetData.KEY, sourceSetData)).also {
-                it.addChild(DataNode(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet), it))
-            }
+        val sourceSetDataNode = (existingSourceSetDataNode ?: mainModuleNode.createChild(GradleSourceSetData.KEY, sourceSetData)).also {
+            it.addChild(DataNode(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet), it))
+        }
         if (existingSourceSetDataNode == null) {
             sourceSetMap[moduleId] = Pair(sourceSetDataNode, createExternalSourceSet(sourceSet, sourceSetData, mppModel))
         }
+
+        /* Execution all extensions after we freshly created a GradleSourceSetData node for the given compilation */
+        KotlinMppGradleProjectResolverExtension.afterMppGradleSourceSetDataNodeCreated(
+            mppModel, resolverCtx, gradleModule, mainModuleNode, sourceSet, sourceSetDataNode
+        )
     }
 }
 
