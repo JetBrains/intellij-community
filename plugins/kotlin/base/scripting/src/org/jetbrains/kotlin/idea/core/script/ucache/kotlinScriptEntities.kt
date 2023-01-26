@@ -18,7 +18,6 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.nio.file.Path
 import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
@@ -53,7 +52,7 @@ fun VirtualFile.findDependentScripts(project: Project): List<KotlinScriptEntity>
         }
 
         return entities
-            .mapNotNull { it.first.safeAs<KotlinScriptLibraryEntity>() }
+            .mapNotNull { it.first as? KotlinScriptLibraryEntity }
             .flatMap { it.usedInScripts }
             .map { storage.resolve(it) ?: error("Unresolvable script: ${it.path}") }
             .toList()
