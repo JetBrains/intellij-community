@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.github.pullrequest.ui.list
 
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.ide.DataManager
@@ -31,6 +31,10 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRListUpdatesChecker
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListPersistentSearchHistory
+import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchHistoryModel
+import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchPanelFactory
+import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchPanelViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import java.awt.FlowLayout
 import javax.swing.*

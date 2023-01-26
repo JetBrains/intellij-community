@@ -1,12 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.github.pullrequest.ui.filters
 
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.PopupItemPresentation
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.showAsyncChooserPopup
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -34,7 +33,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
               filterName = GithubBundle.message("pull.request.list.filter.state"),
               items = GHPRListSearchValue.State.values().asList(),
               onSelect = {},
-              valuePresenter = ::getShortText),
+              valuePresenter = Companion::getShortText),
     DropDownComponentFactory(vm.authorFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.author")) { point, popupState ->
         showAsyncChooserPopup(point, popupState, { vm.getAuthors() }) {
@@ -58,7 +57,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
               filterName = GithubBundle.message("pull.request.list.filter.review"),
               items = GHPRListSearchValue.ReviewState.values().asList(),
               onSelect = {},
-              valuePresenter = ::getShortText,
+              valuePresenter = Companion::getShortText,
               popupItemPresenter = { PopupItemPresentation.Simple(getFullText(it)) })
   )
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
+package org.jetbrains.plugins.github.pullrequest.ui.selector
 
 import com.intellij.collaboration.async.combineState
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModelBase
