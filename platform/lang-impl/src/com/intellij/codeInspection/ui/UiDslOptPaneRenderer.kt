@@ -25,6 +25,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.layout.selected
 import com.intellij.util.applyIf
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.setEnabledRecursively
 import java.awt.BorderLayout
 import java.awt.EventQueue
@@ -108,9 +109,43 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         }
       }
       is OptCheckboxPanel -> {
-        panel {
-          // TODO: proper rendering
-          component.children.forEachIndexed { i, child -> render(child, context, i == 0, i == component.children.lastIndex) }
+        row {
+          val panels = mutableListOf<Panel>()
+          val list: CheckBoxList<String> = CheckBoxList<String>(CheckBoxListListener { index, value ->
+            panels[index].enabled(value)
+            context.setOption(component.children[index].bindId, value)
+          })
+            .apply {
+              // Add checkboxes
+              component.children.forEach { checkbox ->
+                addItem(checkbox.bindId, "${checkbox.label.label()} ", context.getOption(checkbox.bindId) == true)
+              }
+              // Show correct panel on checkbox selection
+              addListSelectionListener {
+                panels.forEachIndexed { index, panel -> panel
+                  .visible(index == selectedIndex)
+                  .enabled(isEnabled && isItemSelected(index))
+                }
+              }
+              border = JBUI.Borders.customLine(JBColor.namedColor("Borders.color"))
+            }
+          cell(list)
+          // panel containing one panel for each checkbox, only one visible at a time
+          panel {
+            for (child in component.children) {
+              row {
+                panels.add(panel {
+                  child.children.forEachIndexed { i, component ->
+                    render(component, context, i == 0)
+                  }
+                })
+              }
+            }
+          }
+            .align(Align.FILL)
+          panels.forEach { it.visible(false) }
+          // Default list selection
+          list.selectedIndex = 0
         }
       }
     }
