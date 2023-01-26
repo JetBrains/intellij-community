@@ -274,7 +274,7 @@ final class DirectoryLock {
         result = new CliResult(AppExitCodes.ACTIVATE_ERROR, message);
       }
 
-      sendLines(socketChannel, List.of(String.valueOf(result.getExitCode()), requireNonNullElse(result.getMessage(), "")));
+      sendLines(socketChannel, List.of(String.valueOf(result.exitCode), requireNonNullElse(result.message, "")));
     }
     catch (IOException e) {
       LOG.warn(e);
