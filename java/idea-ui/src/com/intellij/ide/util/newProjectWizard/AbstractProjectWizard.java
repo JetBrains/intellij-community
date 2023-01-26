@@ -168,7 +168,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   public boolean doFinishAction() {
     if (myDelegate != null) {
       myDelegate.doFinishAction();
-      NewProjectWizardCollector.Companion.logGeneratorFinished(myWizardContext);
+      NewProjectWizardCollector.logGeneratorFinished(myWizardContext);
       return true;
     }
     int idx = getCurrentStep();
@@ -210,7 +210,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       myCurrentStep = idx;
       updateStep();
     }
-    NewProjectWizardCollector.Companion.logGeneratorFinished(myWizardContext);
+    NewProjectWizardCollector.logGeneratorFinished(myWizardContext);
     return true;
   }
 

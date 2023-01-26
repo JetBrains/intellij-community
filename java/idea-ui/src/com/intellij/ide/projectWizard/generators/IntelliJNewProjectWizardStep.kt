@@ -2,13 +2,13 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleOnboardingTipsChangedEvent
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logContentRootChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleFileLocationChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleNameChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChangedEvent
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logContentRootChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logModuleFileLocationChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logModuleNameChanged
 import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.proposeToGenerateOnboardingTipsByDefault
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep

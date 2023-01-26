@@ -134,13 +134,13 @@ fun moveUnstableVersionToTheEnd(left: FrameworkLibraryVersion, right: FrameworkL
 fun NewProjectWizardStep.logGroovySdkChanged(sdk: DistributionInfo?) {
   val type = getGroovySdkType(sdk)
   val version = getGroovySdkVersion(sdk)
-  logGroovyLibraryChanged(context, type, version)
+  logGroovyLibraryChanged(type, version)
 }
 
 fun NewProjectWizardStep.logGroovySdkFinished(sdk: DistributionInfo?) {
   val type = getGroovySdkType(sdk)
   val version = getGroovySdkVersion(sdk)
-  logGroovyLibraryFinished(context, type, version)
+  logGroovyLibraryFinished(type, version)
 }
 
 private fun getGroovySdkType(sdk: DistributionInfo?): String? {

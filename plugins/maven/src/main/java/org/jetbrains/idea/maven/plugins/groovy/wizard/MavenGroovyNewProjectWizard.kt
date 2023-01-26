@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.plugins.groovy.wizard
 
 import com.intellij.framework.library.FrameworkLibraryVersion
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider

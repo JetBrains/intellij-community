@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.wizard
 
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logArtifactIdChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logGroupIdChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logArtifactIdChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logGroupIdChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logVersionChanged
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep

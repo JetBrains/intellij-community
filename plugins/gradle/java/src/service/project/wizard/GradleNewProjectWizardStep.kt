@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logDslChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Gradle.logDslChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.wizard.NewProjectWizardBaseData

@@ -2,8 +2,8 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.logLocationChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.logNameChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLocationChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logNameChanged
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
