@@ -14,9 +14,7 @@ import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
@@ -37,7 +35,7 @@ private const val PROPERTY_DISABLED = "idea.builtin.server.disabled"
 
 private val LOG = logger<BuiltInServerManager>()
 
-class BuiltInServerManagerImpl : BuiltInServerManager() {
+class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : BuiltInServerManager() {
   private var serverStartFuture: Job? = null
   private var server: BuiltInServer? = null
   private var portOverride: Int? = null
@@ -50,15 +48,13 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
 
   init {
     val app = ApplicationManager.getApplication()
-    @Suppress("DEPRECATION")
     serverStartFuture = when {
       app.isUnitTestMode -> null
-      else -> app.coroutineScope.async(Dispatchers.IO) { startServerInPooledThread() }
+      else -> coroutineScope.launch(Dispatchers.IO) { startServerInPooledThread() }
     }
   }
 
-  override fun createClientBootstrap(): Bootstrap =
-    NettyUtil.nioClientBootstrap(server!!.childEventLoopGroup)
+  override fun createClientBootstrap(): Bootstrap = NettyUtil.nioClientBootstrap(server!!.childEventLoopGroup)
 
   companion object {
     internal const val NOTIFICATION_GROUP = "Built-in Server"
@@ -107,8 +103,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
     synchronized(this) {
       future = serverStartFuture
       if (future == null) {
-        @Suppress("DEPRECATION")
-        future = app.coroutineScope.async(Dispatchers.IO) { startServerInPooledThread() }
+        future = coroutineScope.async(Dispatchers.IO) { startServerInPooledThread() }
         serverStartFuture = future
       }
     }
@@ -138,15 +133,17 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
     Disposer.register(ApplicationManager.getApplication(), server!!)
   }
 
-  override fun isOnBuiltInWebServer(url: Url?): Boolean =
-    url != null && !url.authority.isNullOrEmpty() && isOnBuiltInWebServerByAuthority(url.authority!!)
+  override fun isOnBuiltInWebServer(url: Url?): Boolean {
+    return url != null && !url.authority.isNullOrEmpty() && isOnBuiltInWebServerByAuthority(url.authority!!)
+  }
 
-  override fun addAuthToken(url: Url): Url =
-    when {
+  override fun addAuthToken(url: Url): Url {
+    return when {
       // the built-in server URL contains a query only if a token is specified
       url.parameters != null -> url
       else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, acquireToken()))
     }
+  }
 
   override fun overridePort(port: Int?) {
     if (port != this.port) {

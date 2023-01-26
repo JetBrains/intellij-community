@@ -74,6 +74,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -1789,9 +1790,9 @@ public final class BuildManager implements Disposable {
       final boolean shouldPostponeAllTasks = HeavyProcessLatch.INSTANCE.isRunning() || mySuspendBackgroundTasksCounter.get() > 0;
       if (!shouldPostponeAllTasks && !shouldPostpone() && !myInProgress.getAndSet(true)) {
         try {
-          ApplicationManager.getApplication().executeOnPooledThread(myTaskRunnable);
+          AppJavaExecutorUtil.executeOnPooledIoThread(myTaskRunnable);
         }
-        catch (RejectedExecutionException ignored) {
+        catch (CancellationException ignored) {
           // we were shut down
           myInProgress.set(false);
         }

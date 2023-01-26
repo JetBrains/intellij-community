@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
@@ -19,6 +19,7 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.util.xmlb.annotations.OptionTag
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Function
@@ -117,7 +118,8 @@ open class ProjectInspectionProfileManager(override val project: Project) : Base
       cleanupInspectionProfilesRunnable.invoke()
     }
     else {
-      app.executeOnPooledThread(cleanupInspectionProfilesRunnable)
+      @Suppress("DEPRECATION")
+      app.coroutineScope.launch { cleanupInspectionProfilesRunnable() }
     }
   }
 
