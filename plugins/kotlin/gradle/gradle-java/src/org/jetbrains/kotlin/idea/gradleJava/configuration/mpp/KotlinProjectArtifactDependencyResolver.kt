@@ -43,6 +43,7 @@ private class KotlinProjectArtifactDependencyResolverImpl : KotlinProjectArtifac
         dependency: IdeaKotlinProjectArtifactDependency
     ): Set<IdeaKotlinSourceDependency> {
         val resolvedByExtensions = projectNode.getUserData(KotlinProjectArtifactDependencyResolver.key).orEmpty()
+            .plus(KotlinMppGradleProjectResolverExtension.provideAdditionalProjectArtifactDependencyResolvers())
             .flatMap { resolver -> resolver.resolve(projectNode, sourceSetNode, dependency) }
             .toSet()
 
