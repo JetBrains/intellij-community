@@ -2,11 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.ReviewState
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
-import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
@@ -16,7 +16,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.ui.CardLayoutPanel
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.childScope
 import com.intellij.util.ui.InlineIconButton
@@ -25,9 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -44,7 +40,6 @@ import java.awt.event.ActionListener
 import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 internal class GHPRStatePanel(
   parentScope: CoroutineScope,
@@ -91,14 +86,6 @@ internal class GHPRStatePanel(
     protected val securityService: GHPRSecurityService,
     protected val avatarIconsProvider: GHAvatarIconsProvider
   ) {
-    protected val horizontalLayout = MigLayout(
-      LC()
-        .emptyBorders()
-        .fill()
-        .flowX()
-        .hideMode(3)
-    )
-
     abstract fun createReviewActionsForOpenReview(): JComponent
 
     fun createComponent(): JComponent {
@@ -112,10 +99,9 @@ internal class GHPRStatePanel(
         bindVisibility(scope, reviewDetailsVm.reviewMergeState.map { it == GHPullRequestState.CLOSED })
       }
 
-      return JPanel(HorizontalLayout(0)).apply {
-        isOpaque = false
-        add(reviewActionsComponentForOpenReview, HorizontalLayout.LEFT)
-        add(reviewActionsComponentForCloseReview, HorizontalLayout.LEFT)
+      return HorizontalListPanel().apply {
+        add(reviewActionsComponentForOpenReview)
+        add(reviewActionsComponentForCloseReview)
       }
     }
 
@@ -189,12 +175,11 @@ internal class GHPRStatePanel(
           }
         }
 
-        return JPanel(horizontalLayout).apply {
-          isOpaque = false
-          add(requestReviewButton, CC())
-          add(reRequestReviewButton, CC())
-          add(mergePullRequest, CC())
-          add(moreActions, CC())
+        return HorizontalListPanel().apply {
+          add(requestReviewButton)
+          add(reRequestReviewButton)
+          add(mergePullRequest)
+          add(moreActions)
         }
       }
     }
@@ -233,11 +218,10 @@ internal class GHPRStatePanel(
           }
         }
 
-        return JPanel(horizontalLayout).apply {
-          isOpaque = false
-          add(submitReviewButton, CC())
-          add(mergeReviewButton, CC())
-          add(moreActions, CC())
+        return HorizontalListPanel().apply {
+          add(submitReviewButton)
+          add(mergeReviewButton)
+          add(moreActions)
         }
       }
 
@@ -290,10 +274,9 @@ internal class GHPRStatePanel(
         }
         val moreButton = createMoreButton(actionGroup)
 
-        return JPanel(horizontalLayout).apply {
-          isOpaque = false
-          add(setAsReviewerButton, CC())
-          add(moreButton, CC())
+        return HorizontalListPanel().apply {
+          add(setAsReviewerButton)
+          add(moreButton)
         }
       }
     }

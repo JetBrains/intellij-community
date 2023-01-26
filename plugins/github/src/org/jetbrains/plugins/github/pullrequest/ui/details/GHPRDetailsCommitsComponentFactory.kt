@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindText
@@ -10,7 +11,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EmptyIcon
@@ -26,9 +26,10 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.JPanel
 
 internal object GHPRDetailsCommitsComponentFactory {
+  private const val COMPONENTS_GAP = 4
+
   fun create(scope: CoroutineScope, commitsVm: GHPRCommitsViewModel, diffBridge: GHPRDiffController): JComponent {
     val commitsPopupTitle = JLabel().apply {
       font = JBFont.regular().asBold()
@@ -52,12 +53,11 @@ internal object GHPRDetailsCommitsComponentFactory {
       bindDisabled(scope, commitsVm.selectedCommitIndex.map { it == 0 })
     }
 
-    return JPanel(HorizontalLayout(4)).apply {
-      isOpaque = false
-      add(commitsPopupTitle, HorizontalLayout.LEFT)
-      add(commitsPopup, HorizontalLayout.LEFT)
-      add(nextCommitIcon, HorizontalLayout.LEFT)
-      add(previousCommitIcon, HorizontalLayout.LEFT)
+    return HorizontalListPanel(COMPONENTS_GAP).apply {
+      add(commitsPopupTitle)
+      add(commitsPopup)
+      add(nextCommitIcon)
+      add(previousCommitIcon)
     }
   }
 
