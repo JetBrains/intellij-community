@@ -53,7 +53,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         val moduleDataNode = super.createModule(gradleModule, projectDataNode) ?: return null
         val mppModel = resolverCtx.getMppModel(gradleModule) ?: return moduleDataNode
 
-        initializeMppModuleDataNode(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
+        populateMppModuleDataNode(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
         return moduleDataNode
     }
 
