@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.DialogAppender;
@@ -15,7 +15,7 @@ public final class LoggerFactory implements Logger.Factory {
   public static final String LOG_FILE_NAME = "idea.log";
 
   public static @NotNull Path getLogFilePath() {
-    return Path.of(PathManager.getLogPath(), LOG_FILE_NAME);
+    return PathManager.getLogDir().resolve(LOG_FILE_NAME);
   }
 
   public LoggerFactory() {

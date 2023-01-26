@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("BlockingMethodInNonBlockingContext")
-
 package org.jetbrains.io
 
 import com.intellij.openapi.Disposable
@@ -61,15 +60,11 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
     private class BuiltInServerThreadFactory : ThreadFactory {
       private val counter = AtomicInteger()
 
-      override fun newThread(r: java.lang.Runnable): Thread {
-        return FastThreadLocalThread(r, "Netty Builtin Server " + counter.incrementAndGet())
-      }
+      override fun newThread(r: Runnable): Thread =
+        FastThreadLocalThread(r, "Netty Builtin Server " + counter.incrementAndGet())
     }
 
-    suspend fun start(firstPort: Int,
-                      portsCount: Int,
-                      tryAnyPort: Boolean,
-                      handler: (() -> ChannelHandler)? = null): BuiltInServer {
+    suspend fun start(firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (() -> ChannelHandler)? = null): BuiltInServer {
       val provider = selectorProvider ?: SelectorProvider.provider()
       val factory = BuiltInServerThreadFactory()
       val eventLoopGroup = NioEventLoopGroup(if (PlatformUtils.isIdeaCommunity()) 2 else 3, factory, provider)
@@ -101,7 +96,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
       val address = InetAddress.getByName("127.0.0.1")
       val maxPort = (firstPort + portsCount) - 1
       for (port in firstPort..maxPort) {
-        // some antiviral software detect viruses by the fact of accessing these ports, so we should not touch them to appear innocent
+        // some antiviral software detects viruses by the fact of accessing these ports, so we should not touch them to appear innocent
         if (port == 6953 || port == 6969 || port == 6970) {
           continue
         }

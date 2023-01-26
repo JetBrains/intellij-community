@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment", "KDocUnresolvedReference")
-
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.idea
 
 import com.intellij.BundleBase
@@ -82,7 +81,7 @@ internal const val IDE_STARTED = "----------------------------------------------
 private const val IDE_SHUTDOWN = "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"
 
 /**
- * Name of an environment variable that will be set by the Windows launcher and will contain the working directory the
+ * A name of an environment variable that will be set by the Windows launcher and will contain the working directory the
  * IDE was started with.
  *
  * This is necessary on Windows because the launcher needs to change the current directory for the JVM to load
@@ -94,7 +93,6 @@ const val LAUNCHER_INITIAL_DIRECTORY_ENV_VAR = "IDEA_INITIAL_DIRECTORY"
 internal var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunction { _, _ -> AppExitCodes.ACTIVATE_NOT_INITIALIZED }
 
 private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app"
-
 private const val DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY = "idea.disable.implicit.read.on.edt"
 private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 
@@ -105,7 +103,7 @@ private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResu
 internal var shellEnvDeferred: Deferred<Boolean?>? = null
   private set
 
-// mainDispatcher is sequential - use it with care
+// the main thread's dispatcher is sequential - use it with care
 fun CoroutineScope.startApplication(args: List<String>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
@@ -358,23 +356,18 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
   }
 }
 
-private suspend fun prepareSplash(appInfoDeferred: Deferred<ApplicationInfoEx>, args: List<String>): Runnable? {
+private suspend fun prepareSplash(appInfoDeferred: Deferred<ApplicationInfoEx>, args: List<String>): Runnable? =
   // products may specify `splash` VM property; `nosplash` is deprecated and should be checked first
-  if (!CommandLineArgs.isSplashNeeded(args)) {
-    return null
+  if (CommandLineArgs.isSplashNeeded(args)) {
+    val appInfo = appInfoDeferred.await()
+    runActivity("splash preparation") {
+      SplashManager.scheduleShow(appInfo)
+    }
   }
+  else null
 
-  val appInfo = appInfoDeferred.await()
-  return runActivity("splash preparation") {
-    SplashManager.scheduleShow(appInfo)
-  }
-}
-
-/** Called via reflection from [WindowsCommandLineProcessor.processWindowsLauncherCommandLine].  */
-@Suppress("unused")
-fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<String>): Int {
-  return EXTERNAL_LISTENER.apply(currentDirectory, args)
-}
+fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<String>): Int =
+  EXTERNAL_LISTENER.apply(currentDirectory, args)
 
 internal val isImplicitReadOnEDTDisabled: Boolean
   get() = java.lang.Boolean.getBoolean(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
@@ -426,8 +419,8 @@ private suspend fun importConfig(args: List<String>, log: Logger,
 }
 
 // return type (LookAndFeel) is not specified to avoid class loading
-private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Thread): Job {
-  return launch {
+private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Thread): Job =
+  launch {
     launch {
       lockSystemDirsJob.join()
 
@@ -468,7 +461,6 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
       Class.forName(AWTExceptionHandler::class.java.name, true, classLoader)
     }
   }
-}
 
 private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job, preloadLafClassesJob: Job): Job = launch {
   initAwtToolkitAndEventQueueJob.join()
@@ -513,8 +505,8 @@ private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job, preloadLa
     runActivity("html style patching") {
       // create a separate copy for each case
       val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
-      uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
-      uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
+      uiDefaults["javax.swing.JLabel.userStyleSheet"] = globalStyleSheet
+      uiDefaults["HTMLEditorKit.jbStyleSheet"] = globalStyleSheet
 
       runActivity("global styleSheet updating") {
         GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
@@ -529,8 +521,8 @@ private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job, preloadLa
   }
 }
 
-private fun CoroutineScope.preloadLafClasses(): Job {
-  return launch(CoroutineName("LaF class preloading") + Dispatchers.IO) {
+private fun CoroutineScope.preloadLafClasses(): Job =
+  launch(CoroutineName("LaF class preloading") + Dispatchers.IO) {
     val classLoader = AppStarter::class.java.classLoader
     // preload class not in EDT
     Class.forName(DarculaLaf::class.java.name, true, classLoader)
@@ -541,7 +533,6 @@ private fun CoroutineScope.preloadLafClasses(): Job {
     Class.forName(ScaleContext::class.java.name, true, classLoader)
     Class.forName(GlobalStyleSheetHolder::class.java.name, true, classLoader)
   }
-}
 
 /*
  * The method should be called before `Toolkit#initAssistiveTechnologies`, which is called from `Toolkit#getDefaultToolkit`.
@@ -597,7 +588,7 @@ private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(in
       }
     }
 
-    // preload cursors used by drag-n-drop AWT subsystem, run on SwingDispatcher to avoid a possible deadlock - see RIDER-80810
+    // preload cursors used by the drag-n-drop AWT subsystem, run on SwingDispatcher to avoid a possible deadlock - see RIDER-80810
     launch(CoroutineName("DnD setup") + RawSwingDispatcher) {
       DragSource.getDefaultDragSource()
     }
@@ -608,8 +599,8 @@ private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(in
   }
 }
 
-private fun CoroutineScope.configureJavaUtilLogging(): Job {
-  return launch(CoroutineName("console logger configuration")) {
+private fun CoroutineScope.configureJavaUtilLogging(): Job =
+  launch(CoroutineName("console logger configuration")) {
     val rootLogger = java.util.logging.Logger.getLogger("")
     if (rootLogger.handlers.isEmpty()) {
       rootLogger.level = Level.WARNING
@@ -618,7 +609,6 @@ private fun CoroutineScope.configureJavaUtilLogging(): Job {
       rootLogger.addHandler(consoleHandler)
     }
   }
-}
 
 @VisibleForTesting
 fun checkHiDPISettings() {
@@ -755,8 +745,7 @@ private fun checkDirectory(directory: Path,
       try {
         Files.deleteIfExists(tempFile)
       }
-      catch (ignored: Exception) {
-      }
+      catch (ignored: Exception) { }
     }
   }
 }
@@ -799,8 +788,8 @@ private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job, args:
     }
   }
 
-private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob: Job): Deferred<Logger> {
-  return async {
+private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob: Job): Deferred<Logger> =
+  async {
     consoleLoggerJob.join()
     checkSystemDirJob.join()
 
@@ -822,11 +811,10 @@ private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob:
       log
     }
   }
-}
 
 private fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<String>) {
   val buildDate = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.buildDate.time)
-  log.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${appInfo.build.asString()}, $buildDate)")
+  log.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${appInfo.build.asString()}, ${buildDate})")
   log.info("OS: ${SystemInfoRt.OS_NAME} (${SystemInfoRt.OS_VERSION}, ${System.getProperty("os.arch")})")
   log.info("JRE: ${System.getProperty("java.runtime.version", "-")} (${System.getProperty("java.vendor", "-")})")
   log.info("JVM: ${System.getProperty("java.vm.version", "-")} (${System.getProperty("java.vm.name", "-")})")
@@ -836,7 +824,7 @@ private fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args
   }
 
   ManagementFactory.getRuntimeMXBean().inputArguments?.let {
-    log.info("JVM options: $it")
+    log.info("JVM options: ${it}")
   }
   log.info("args: ${args.joinToString(separator = " ")}")
   log.info("library path: ${System.getProperty("java.library.path")}")
@@ -846,20 +834,18 @@ private fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args
   logEnvVar(log, "JAVA_TOOL_OPTIONS")
   log.info(
     """locale=${Locale.getDefault()} JNU=${System.getProperty("sun.jnu.encoding")} file.encoding=${System.getProperty("file.encoding")}
-  ${PathManager.PROPERTY_CONFIG_PATH}=${logPath(PathManager.getConfigPath())}
-  ${PathManager.PROPERTY_SYSTEM_PATH}=${logPath(PathManager.getSystemPath())}
-  ${PathManager.PROPERTY_PLUGINS_PATH}=${logPath(PathManager.getPluginsPath())}
-  ${PathManager.PROPERTY_LOG_PATH}=${logPath(PathManager.getLogPath())}"""
-  )
+    ${PathManager.PROPERTY_CONFIG_PATH}=${logPath(PathManager.getConfigPath())}
+    ${PathManager.PROPERTY_SYSTEM_PATH}=${logPath(PathManager.getSystemPath())}
+    ${PathManager.PROPERTY_PLUGINS_PATH}=${logPath(PathManager.getPluginsPath())}
+    ${PathManager.PROPERTY_LOG_PATH}=${logPath(PathManager.getLogPath())}""")
   val cores = Runtime.getRuntime().availableProcessors()
   val pool = ForkJoinPool.commonPool()
-  log.info("CPU cores: $cores; ForkJoinPool.commonPool: $pool; factory: ${pool.factory}")
+  log.info("CPU cores: ${cores}; ForkJoinPool.commonPool: ${pool}; factory: ${pool.factory}")
 }
 
 private fun logEnvVar(log: Logger, variable: String) {
-  val value = System.getenv(variable)
-  if (value != null) {
-    log.info("$variable=$value")
+  System.getenv(variable)?.let {
+    log.info("${variable}=${it}")
   }
 }
 
@@ -867,15 +853,11 @@ private fun logPath(path: String): String {
   try {
     val configured = Path.of(path)
     val real = configured.toRealPath()
-    if (configured != real) {
-      return "$path -> $real"
-    }
+    return if (configured != real) "${path} -> ${real}" else path
   }
-  catch (ignored: IOException) {
-  }
-  catch (ignored: InvalidPathException) {
-  }
-  return path
+  catch (ignored: IOException) { }
+  catch (ignored: InvalidPathException) { }
+  return "${path} -> ?"
 }
 
 fun runStartupWizard() {

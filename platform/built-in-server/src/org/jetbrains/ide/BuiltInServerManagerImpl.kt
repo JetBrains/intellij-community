@@ -12,6 +12,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
+import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -49,13 +50,15 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
 
   init {
     val app = ApplicationManager.getApplication()
+    @Suppress("DEPRECATION")
     serverStartFuture = when {
       app.isUnitTestMode -> null
       else -> app.coroutineScope.async(Dispatchers.IO) { startServerInPooledThread() }
     }
   }
 
-  override fun createClientBootstrap() = NettyUtil.nioClientBootstrap(server!!.childEventLoopGroup)
+  override fun createClientBootstrap(): Bootstrap =
+    NettyUtil.nioClientBootstrap(server!!.childEventLoopGroup)
 
   companion object {
     internal const val NOTIFICATION_GROUP = "Built-in Server"
@@ -104,6 +107,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
     synchronized(this) {
       future = serverStartFuture
       if (future == null) {
+        @Suppress("DEPRECATION")
         future = app.coroutineScope.async(Dispatchers.IO) { startServerInPooledThread() }
         serverStartFuture = future
       }
@@ -113,7 +117,6 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
     return this
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
   private suspend fun startServerInPooledThread() {
     if (SystemProperties.getBooleanProperty(PROPERTY_DISABLED, false)) {
       throw RuntimeException("Built-in server is disabled by `$PROPERTY_DISABLED` VM option")
@@ -135,17 +138,15 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
     Disposer.register(ApplicationManager.getApplication(), server!!)
   }
 
-  override fun isOnBuiltInWebServer(url: Url?): Boolean {
-    return url != null && !url.authority.isNullOrEmpty() && isOnBuiltInWebServerByAuthority(url.authority!!)
-  }
+  override fun isOnBuiltInWebServer(url: Url?): Boolean =
+    url != null && !url.authority.isNullOrEmpty() && isOnBuiltInWebServerByAuthority(url.authority!!)
 
-  override fun addAuthToken(url: Url): Url {
-    return when {
-      // built-in server url contains query only if token specified
+  override fun addAuthToken(url: Url): Url =
+    when {
+      // the built-in server URL contains a query only if a token is specified
       url.parameters != null -> url
       else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, acquireToken()))
     }
-  }
 
   override fun overridePort(port: Int?) {
     if (port != this.port) {
@@ -158,7 +159,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   }
 }
 
-// Default port will be occupied by main idea instance - define the custom default to avoid searching of free port
+// the default port will be occupied by the main IDE instance - define the custom default to avoid searching for a free port
 private val defaultPort: Int
   get() = SystemProperties.getIntProperty(PROPERTY_RPC_PORT, if (ApplicationManager.getApplication().isUnitTestMode) 64463 else BuiltInServerOptions.DEFAULT_PORT)
 

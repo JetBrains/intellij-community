@@ -56,6 +56,8 @@ open class IdeStarter : ModernApplicationStarter() {
   override val isHeadless: Boolean
     get() = false
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Specify it as `id` for extension definition in a plugin descriptor")
   override val commandName: String?
     get() = null
 
@@ -194,7 +196,7 @@ private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<Str
   val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory)
   if (result.hasError) {
     withContext(Dispatchers.EDT) {
-      result.showErrorIfFailed()
+      result.showError()
       ApplicationManager.getApplication().exit(true, true, false)
     }
   }
