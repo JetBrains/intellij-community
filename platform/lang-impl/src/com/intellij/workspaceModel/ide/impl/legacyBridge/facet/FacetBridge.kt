@@ -55,15 +55,20 @@ interface FacetBridge<T : ModuleSettingsBase> {
   }
 
   /**
-   * Apply changes from the entity which used under the hood into the builder passed as a parameter
+   * Apply changes from the underlying entity to [mutableStorage]
    */
   fun applyChangesToStorage(mutableStorage: MutableEntityStorage) {
     val existingFacetEntity = getFacetEntityOptional(mutableStorage)
 
     if (null == existingFacetEntity) return
 
-    config.applyChangesToExistingEntityInStorage(existingFacetEntity, mutableStorage)
+    applyChangesToExistingEntityInStorage(existingFacetEntity, mutableStorage)
   }
+
+  /**
+   * Apply changes from the entity which used under the hood to [existingFacetEntity] in [mutableStorage]
+   */
+  fun applyChangesToExistingEntityInStorage(existingFacetEntity: T, mutableStorage: MutableEntityStorage)
 
   /**
    * Update facet configuration base on the data from the related entity
@@ -118,9 +123,4 @@ interface FacetConfigurationBridge<T : ModuleSettingsBase> {
    * Attaches the settings to [moduleEntity] module
    */
   fun attachUnderlyingEntityToModule(moduleEntity: ModuleEntity)
-
-  /**
-   * Stores this config settings to [existingFacetEntity] in [mutableStorage]
-   */
-  fun applyChangesToExistingEntityInStorage(existingFacetEntity: T, mutableStorage: MutableEntityStorage)
 }
