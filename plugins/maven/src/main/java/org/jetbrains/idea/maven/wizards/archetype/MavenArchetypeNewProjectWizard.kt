@@ -13,7 +13,7 @@ import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
-import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
+import com.intellij.ide.wizard.comment.NewProjectLinkNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Companion.append
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox

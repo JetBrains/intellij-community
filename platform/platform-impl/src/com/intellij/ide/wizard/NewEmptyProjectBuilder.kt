@@ -3,7 +3,7 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Generators
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.util.CommentNewProjectWizardStep
+import com.intellij.ide.wizard.comment.CommentNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.module.GeneralModuleType
 import com.intellij.openapi.module.ModuleTypeManager
