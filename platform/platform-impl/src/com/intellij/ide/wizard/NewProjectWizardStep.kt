@@ -17,6 +17,7 @@ import com.intellij.ui.dsl.builder.Panel
  * Wizard type (NPW or NMW) can be determined by [context] property
  * [WizardContext.isCreatingNewProject].
  *
+ * @see com.intellij.ide.wizard.NewProjectWizardChainStep
  * @see AbstractNewProjectWizardStep
  * @see AbstractNewProjectWizardMultiStep
  * @see NewProjectWizardMultiStepFactory

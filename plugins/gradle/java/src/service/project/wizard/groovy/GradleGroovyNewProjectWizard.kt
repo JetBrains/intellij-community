@@ -8,7 +8,7 @@ import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.chain
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
@@ -24,7 +24,9 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
   override val ordinal = 200
 
-  override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep = Step(parent).chain(::AssetsStep)
+  override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep =
+    Step(parent)
+      .nextStep(::AssetsStep)
 
   class Step(parent: GroovyNewProjectWizard.Step) :
     GradleNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent),

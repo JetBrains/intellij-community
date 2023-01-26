@@ -9,7 +9,7 @@ import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.chain
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
@@ -22,7 +22,9 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
   override val ordinal = 100
 
-  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
+  override fun createStep(parent: JavaNewProjectWizard.Step): NewProjectWizardStep =
+    Step(parent)
+      .nextStep(::AssetsStep)
 
   class Step(parent: JavaNewProjectWizard.Step) :
     MavenNewProjectWizardStep<JavaNewProjectWizard.Step>(parent),

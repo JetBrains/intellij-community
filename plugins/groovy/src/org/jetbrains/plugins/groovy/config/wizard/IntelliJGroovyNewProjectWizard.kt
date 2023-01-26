@@ -11,7 +11,7 @@ import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.EditorHelper
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ide.wizard.chain
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
@@ -39,7 +39,9 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
   override val ordinal = 0
 
-  override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep = Step(parent).chain(::AssetsStep)
+  override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep =
+    Step(parent)
+      .nextStep(::AssetsStep)
 
   class Step(parent: GroovyNewProjectWizard.Step) :
     IntelliJNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent),

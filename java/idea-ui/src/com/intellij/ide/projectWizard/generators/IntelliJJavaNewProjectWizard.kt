@@ -5,7 +5,8 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
-import com.intellij.ide.wizard.chain
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
@@ -18,7 +19,9 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
   override val ordinal = 0
 
-  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
+  override fun createStep(parent: JavaNewProjectWizard.Step): NewProjectWizardStep =
+    Step(parent)
+      .nextStep(::AssetsStep)
 
   class Step(parent: JavaNewProjectWizard.Step) :
     IntelliJNewProjectWizardStep<JavaNewProjectWizard.Step>(parent),

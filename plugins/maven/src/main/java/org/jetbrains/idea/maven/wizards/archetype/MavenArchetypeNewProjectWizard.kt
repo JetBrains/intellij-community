@@ -14,6 +14,7 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
 import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Companion.append
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
@@ -56,13 +57,13 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
 
   override val icon: Icon = OpenapiIcons.RepositoryLibraryLogo
 
-  override fun createStep(context: WizardContext) =
-    RootNewProjectWizardStep(context).chain(
-      ::CommentStep,
-      ::newProjectWizardBaseStepWithoutGap,
-      ::GitNewProjectWizardStep,
-      ::Step
-    ).chain(::AssetsStep)
+  override fun createStep(context: WizardContext): NewProjectWizardStep =
+    RootNewProjectWizardStep(context)
+      .nextStep(::CommentStep)
+      .nextStep(::newProjectWizardBaseStepWithoutGap)
+      .nextStep(::GitNewProjectWizardStep)
+      .nextStep(::Step)
+      .nextStep(::AssetsStep)
 
   private class CommentStep(parent: NewProjectWizardStep) : NewProjectLinkNewProjectWizardStep(parent) {
     override fun getComment(name: String): String {

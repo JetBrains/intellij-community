@@ -7,7 +7,7 @@ import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.chain
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.util.bindBooleanStorage
@@ -29,9 +29,9 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
     override val ordinal = 100
 
-    override fun createStep(parent: KotlinNewProjectWizard.Step): NewProjectWizardStep {
-        return Step(parent).chain(::AssetsStep)
-    }
+    override fun createStep(parent: KotlinNewProjectWizard.Step): NewProjectWizardStep =
+        Step(parent)
+            .nextStep(::AssetsStep)
 
     class Step(parent: KotlinNewProjectWizard.Step) :
         MavenNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent),
