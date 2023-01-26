@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.util.NlsContexts.ProgressText
@@ -27,7 +27,7 @@ import kotlin.coroutines.coroutineContext
  *   progressStep(text = "0.7) { // endFraction is 1.0 by default
  *     progressStep(endFraction = 0.4) { ... }
  *     progressStep {
- *       items.mapParallel { item ->
+ *       items.mapWithProgress(concurrent = true) { item ->
  *         progressStep(text = "Processing '${item.presentableText}'") {
  *           ...
  *         }
@@ -122,11 +122,13 @@ import kotlin.coroutines.coroutineContext
  * }
  * ```
  *
- * #### How to process a list in parallel
+ * #### How to process a list concurrently
+ *
+ * The parallelism if controlled by the context coroutine dispatcher.
  * ```
  * val items: List<X> = ...
  * withBackgroundProgressIndicator(...) {
- *   items.mapParallelWithProgress {
+ *   items.mapWithProgress(concurrent = true) {
  *     // will show the item string as progress text in the UI
  *     progressStep(text = item.presentableString()) {
  *       ...
@@ -134,7 +136,7 @@ import kotlin.coroutines.coroutineContext
  *   }
  *   // or
  *   progressStep(text = "Processing items", endFraction = ...) {
- *     items.mapParallelWithProgress {
+ *     items.mapWithProgress(concurrent = true) {
  *       // will show the item string as progress details in the UI
  *       progressStep(text = item.presentableString()) {
  *         ...
@@ -297,7 +299,7 @@ internal typealias TransformerOutput<R> = suspend (R) -> Unit
  * #### `transform`
  *
  * ```
- * items.transformWithProgress(parallel = true) { item, out ->
+ * items.transformWithProgress(concurrent = true) { item, out ->
  *   when {
  *     condition0 -> {
  *       // transformed into nothing
@@ -323,7 +325,7 @@ internal typealias TransformerOutput<R> = suspend (R) -> Unit
  *
  * ```
  * progressStep(endFraction = 0.7, text = "Processing files") {
- *   files.forEachWithProgress(parallel = false) { file ->
+ *   files.forEachWithProgress(concurrent = false) { file ->
  *     val data = progressStep(endFraction = 0.2, text = "Preprocessing file $file") {
  *       withContext(Dispatchers.IO) {
  *         preprocess(file)
@@ -336,12 +338,12 @@ internal typealias TransformerOutput<R> = suspend (R) -> Unit
  * }
  * ```
  *
- * @param parallel `true` if items should be transformed in parallel, `false` to transform items sequentially
+ * @param concurrent `true` if items should be transformed in concurrent, `false` to transform items sequentially
  *
  * @see transform
  */
 suspend fun <T, R> Collection<T>.transformWithProgress(
-  parallel: Boolean,
+  concurrent: Boolean,
   transform: suspend (value: T, out: TransformerOutput<R>) -> Unit,
 ): List<R> {
   val items = this@transformWithProgress
@@ -356,7 +358,7 @@ suspend fun <T, R> Collection<T>.transformWithProgress(
   }
 
   return channelFlow {
-    if (parallel) {
+    if (concurrent) {
       for (item in items) {
         launch {
           step(item)
@@ -374,8 +376,8 @@ suspend fun <T, R> Collection<T>.transformWithProgress(
 /**
  * @see transformWithProgress
  */
-suspend fun <T, R> Collection<T>.mapWithProgress(parallel: Boolean, mapper: suspend (value: T) -> R): List<R> {
-  return transformWithProgress(parallel) { item, out ->
+suspend fun <T, R> Collection<T>.mapWithProgress(concurrent: Boolean, mapper: suspend (value: T) -> R): List<R> {
+  return transformWithProgress(concurrent) { item, out ->
     out(mapper(item))
   }
 }
@@ -383,8 +385,8 @@ suspend fun <T, R> Collection<T>.mapWithProgress(parallel: Boolean, mapper: susp
 /**
  * @see transformWithProgress
  */
-suspend fun <T> Collection<T>.filterWithProgress(parallel: Boolean, predicate: suspend (value: T) -> Boolean): List<T> {
-  return transformWithProgress(parallel) { item, out ->
+suspend fun <T> Collection<T>.filterWithProgress(concurrent: Boolean, predicate: suspend (value: T) -> Boolean): List<T> {
+  return transformWithProgress(concurrent) { item, out ->
     if (predicate(item)) {
       out(item)
     }
@@ -394,8 +396,8 @@ suspend fun <T> Collection<T>.filterWithProgress(parallel: Boolean, predicate: s
 /**
  * @see transformWithProgress
  */
-suspend fun <T> Collection<T>.forEachWithProgress(parallel: Boolean, action: suspend (value: T) -> Unit) {
-  transformWithProgress<_, Nothing?>(parallel) { item, _ ->
+suspend fun <T> Collection<T>.forEachWithProgress(concurrent: Boolean, action: suspend (value: T) -> Unit) {
+  transformWithProgress<_, Nothing?>(concurrent) { item, _ ->
     action(item)
   }
 }
