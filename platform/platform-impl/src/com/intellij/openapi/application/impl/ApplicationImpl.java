@@ -505,21 +505,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public final void restart(boolean exitConfirmed, boolean elevate) {
-    restart(exitConfirmed, elevate, false);
-  }
-
-  private void restart(boolean exitConfirmed,
-                       boolean elevate,
-                       boolean force) {
     int flags = SAVE;
     if (exitConfirmed) {
       flags |= EXIT_CONFIRMED;
     }
     if (elevate) {
       flags |= ELEVATE;
-    }
-    if (force) {
-      flags |= FORCE_EXIT;
     }
     restart(flags, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
@@ -662,7 +653,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     return !ProgressManager.getInstance().hasProgressIndicator();
   }
 
-  public final @NotNull CompletableFuture<@NotNull ProgressWindow> createProgressWindowAsyncIfNeeded(
+  private @NotNull CompletableFuture<@NotNull ProgressWindow> createProgressWindowAsyncIfNeeded(
     @NotNull @NlsContexts.ProgressTitle String progressTitle,
     boolean canBeCanceled,
     boolean shouldShowModalWindow,
@@ -992,32 +983,27 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     boolean wilock = acquireWriteIntentLock(computation.getClass().getName());
     try {
       return computation.compute();
-    } finally {
-      if (wilock)
+    }
+    finally {
+      if (wilock) {
         releaseWriteIntentLock();
+      }
     }
   }
 
   @Override
   public void assertReadAccessAllowed() {
     if (!isReadAccessAllowed()) {
-      LOG.error(
+      throw new IllegalStateException(
         "Read access is allowed from inside read-action (or EDT) only" +
-        " (see com.intellij.openapi.application.Application.runReadAction())",
-        "Current thread: " + describe(Thread.currentThread()),
-        "Dispatch thread: " + EventQueue.isDispatchThread() + "; isDispatchThread(): " + isDispatchThread(),
-        "SystemEventQueueThread: " + describe(getEventQueueThread()));
+        " (see com.intellij.openapi.application.Application.runReadAction())\n" + getThreadDetails());
     }
   }
 
   @Override
   public void assertReadAccessNotAllowed() {
     if (isReadAccessAllowed()) {
-      LOG.error(
-        "Read access is not allowed",
-        "Current thread: " + describe(Thread.currentThread()),
-        "Dispatch thread: " + EventQueue.isDispatchThread() + "; isDispatchThread(): " + isDispatchThread(),
-        "SystemEventQueueThread: " + describe(getEventQueueThread()));
+      throw new IllegalStateException("Must not execute under read action.\n" + getThreadDetails());
     }
   }
 
@@ -1050,12 +1036,15 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private static void throwThreadAccessException(@NotNull String message) {
-    throw new RuntimeExceptionWithAttachments(
-      message,
-      "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
-      "\nCurrent thread: " + describe(Thread.currentThread()) +
-      "\nSystemEventQueueThread: " + describe(getEventQueueThread()),
-      new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
+    throw new RuntimeExceptionWithAttachments(message, getThreadDetails(),
+                                              new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
+  }
+
+  @NotNull
+  private static String getThreadDetails() {
+    return "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
+           "\nCurrent thread: " + describe(Thread.currentThread()) +
+           "\nSystemEventQueueThread: " + describe(getEventQueueThread());
   }
 
   @Override
