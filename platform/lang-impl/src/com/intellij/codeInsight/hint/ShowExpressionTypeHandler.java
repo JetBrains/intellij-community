@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.ui.LightweightHint;
@@ -71,7 +72,8 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     if (map.isEmpty()) {
       ApplicationManager.getApplication().invokeLater(() -> {
         String errorHint = Objects.requireNonNull(ContainerUtil.getFirstItem(handlers)).getErrorHint();
-        HintManager.getInstance().showErrorHint(editor, errorHint);
+        Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
+        HintManager.getInstance().showErrorHint(hostEditor, errorHint);
       });
     }
     else if (map.size() == 1) {
@@ -189,9 +191,10 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
       HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
       LightweightHint hint = new LightweightHint(label);
       hint.addHintListener(e -> ApplicationManager.getApplication().invokeLater(() -> setInstance(null)));
-      Point p = hintManager.getHintPosition(hint, myEditor, HintManager.ABOVE);
+      Editor editorToShow = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
+      Point p = hintManager.getHintPosition(hint, editorToShow, HintManager.ABOVE);
       int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
-      hintManager.showEditorHint(hint, myEditor, p, flags, 0, false);
+      hintManager.showEditorHint(hint, editorToShow, p, flags, 0, false);
     }
 
     private static void setInstance(DisplayedTypeInfo typeInfo) {
