@@ -19,6 +19,8 @@ public class ListTable extends JBTable {
     setRowSelectionAllowed(true);
     setRowHeight(getRowHeight() + JBUIScale.scale(4));
     setDragEnabled(false);
+    setShowHorizontalLines(false);
+    setShowVerticalLines(false);
     final JTableHeader header = getTableHeader();
     header.setReorderingAllowed(false);
     final TableCellRenderer delegate = header.getDefaultRenderer();
