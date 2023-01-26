@@ -33,4 +33,9 @@ abstract class AbstractScriptConfigurationNavigationTest : AbstractScriptConfigu
 
         Assert.assertEquals(expectedFile, actualFile)
     }
+
+    override fun tearDown() {
+        super.tearDown()
+        Registry.get("kotlin.scripting.index.dependencies.sources").resetToDefault()
+    }
 }
