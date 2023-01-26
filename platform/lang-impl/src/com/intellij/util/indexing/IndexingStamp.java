@@ -24,6 +24,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -42,7 +43,7 @@ public final class IndexingStamp {
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
   private static final long HAS_NO_INDEXED_DATA_STAMP = 0L;
 
-  private IndexingStamp() {}
+  private IndexingStamp() { }
 
   @NotNull
   public static FileIndexingState isFileIndexedStateCurrent(int fileId, @NotNull ID<?, ?> indexName) {
@@ -93,18 +94,20 @@ public final class IndexingStamp {
         if (diff > 0 && diff < ID.MAX_NUMBER_OF_INDICES) {
           int numberOfOutdatedIndices = (int)diff;
           outdatedIndices = new int[numberOfOutdatedIndices];
-          while(numberOfOutdatedIndices > 0) {
+          while (numberOfOutdatedIndices > 0) {
             outdatedIndices[--numberOfOutdatedIndices] = DataInputOutputUtil.readINT(stream);
           }
           dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
         }
 
         //and after is just a set of ints -- Index IDs from ID class
-        while(stream.available() > 0) {
+        while (stream.available() > 0) {
           ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
           if (id != null && !(id instanceof StubIndexKey)) {
             long stamp = IndexVersion.getIndexCreationStamp(id);
-            if (stamp == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+            if (stamp == 0) {
+              continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+            }
             if (myIndexStamps == null) {
               myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
             }
@@ -115,10 +118,67 @@ public final class IndexingStamp {
         }
 
         if (outdatedIndices != null) {
-          for(int outdatedIndexId:outdatedIndices) {
+          for (int outdatedIndexId : outdatedIndices) {
             ID<?, ?> id = ID.findById(outdatedIndexId);
             if (id != null && !(id instanceof StubIndexKey)) {
-              if (IndexVersion.getIndexCreationStamp(id) == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+              if (IndexVersion.getIndexCreationStamp(id) == 0) {
+                continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+              }
+              long stamp = INDEX_DATA_OUTDATED_STAMP;
+              if (myIndexStamps == null) {
+                myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
+              }
+              if (stamp <= dominatingIndexStamp) {
+                myIndexStamps.put(id, stamp);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    private Timestamps(final @Nullable ByteBuffer buffer) throws IOException {
+      if (buffer != null) {
+        int[] outdatedIndices = null;
+        //'header' is either timestamp (dominatingIndexStamp), or, if timestamp is small enough
+        // (<MAX_SHORT), it is really a number of 'outdatedIndices', followed by actual indices
+        // ints (which is index id from ID class), and followed by another timestamp=dominatingIndexStamp
+        // value
+        long dominatingIndexStamp = DataInputOutputUtil.readTIME(buffer);
+        long diff = dominatingIndexStamp - DataInputOutputUtil.timeBase;
+        if (diff > 0 && diff < ID.MAX_NUMBER_OF_INDICES) {
+          int numberOfOutdatedIndices = (int)diff;
+          outdatedIndices = new int[numberOfOutdatedIndices];
+          while (numberOfOutdatedIndices > 0) {
+            outdatedIndices[--numberOfOutdatedIndices] = DataInputOutputUtil.readINT(buffer);
+          }
+          dominatingIndexStamp = DataInputOutputUtil.readTIME(buffer);
+        }
+
+        //and after is just a set of ints -- Index IDs from ID class
+        while (buffer.hasRemaining()) {
+          ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(buffer));
+          if (id != null && !(id instanceof StubIndexKey)) {
+            long stamp = IndexVersion.getIndexCreationStamp(id);
+            if (stamp == 0) {
+              continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+            }
+            if (myIndexStamps == null) {
+              myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
+            }
+            if (stamp <= dominatingIndexStamp) {
+              myIndexStamps.put(id, stamp);
+            }
+          }
+        }
+
+        if (outdatedIndices != null) {
+          for (int outdatedIndexId : outdatedIndices) {
+            ID<?, ?> id = ID.findById(outdatedIndexId);
+            if (id != null && !(id instanceof StubIndexKey)) {
+              if (IndexVersion.getIndexCreationStamp(id) == 0) {
+                continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+              }
               long stamp = INDEX_DATA_OUTDATED_STAMP;
               if (myIndexStamps == null) {
                 myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
@@ -149,14 +209,14 @@ public final class IndexingStamp {
       for (Object2LongMap.Entry<ID<?, ?>> entry : entries) {
         long b = entry.getLongValue();
         if (b == INDEX_DATA_OUTDATED_STAMP) {
-           ++data[numberOfOutdatedIndex];
-           b = IndexVersion.getIndexCreationStamp(entry.getKey());
-         }
-         data[dominatingStampIndex] = Math.max(data[dominatingStampIndex], b);
+          ++data[numberOfOutdatedIndex];
+          b = IndexVersion.getIndexCreationStamp(entry.getKey());
+        }
+        data[dominatingStampIndex] = Math.max(data[dominatingStampIndex], b);
 
-         if (IS_UNIT_TEST && b == HAS_NO_INDEXED_DATA_STAMP) {
-           FileBasedIndexImpl.LOG.info("Wrong indexing timestamp state: " + myIndexStamps);
-         }
+        if (IS_UNIT_TEST && b == HAS_NO_INDEXED_DATA_STAMP) {
+          FileBasedIndexImpl.LOG.info("Wrong indexing timestamp state: " + myIndexStamps);
+        }
       }
 
       if (data[numberOfOutdatedIndex] > 0) {
@@ -199,6 +259,14 @@ public final class IndexingStamp {
     public boolean isDirty() {
       return myIsDirty;
     }
+
+    @Override
+    public String toString() {
+      return "Timestamps{" +
+             "indexStamps: " + myIndexStamps +
+             ", dirty: " + myIsDirty +
+             '}';
+    }
   }
 
   private static final int INDEXING_STAMP_CACHE_CAPACITY = SystemProperties.getIntProperty("index.timestamp.cache.size", 100);
@@ -222,7 +290,7 @@ public final class IndexingStamp {
   public static void dropIndexingTimeStamps(int fileId) throws IOException {
     ourTimestampsCache.remove(fileId);
     try (DataOutputStream out = FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
-      new Timestamps(null).writeToStream(out);
+      new Timestamps((DataInputStream)null).writeToStream(out);
     }
   }
 
@@ -236,12 +304,27 @@ public final class IndexingStamp {
     assert id > 0;
     Timestamps timestamps = ourTimestampsCache.get(id);
     if (timestamps == null) {
-      try (final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE)) {
-        if (stream == null && !createIfNoneSaved) return null;
-        timestamps = new Timestamps(stream);
+      if (FSRecords.supportsRawAttributesAccess()) {
+        try {
+          timestamps = FSRecords.readAttributeRawWithLock(id, Timestamps.PERSISTENCE, Timestamps::new);
+          if (timestamps == null && !createIfNoneSaved) {
+            return null;
+          }
+          
+          timestamps = new Timestamps((DataInputStream)null);
+        }
+        catch (IOException e) {
+          throw FSRecords.handleError(e);
+        }
       }
-      catch (IOException e) {
-        throw FSRecords.handleError(e);
+      else {
+        try (final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE)) {
+          if (stream == null && !createIfNoneSaved) return null;
+          timestamps = new Timestamps(stream);
+        }
+        catch (IOException e) {
+          throw FSRecords.handleError(e);
+        }
       }
       ourTimestampsCache.cacheOrGet(id, timestamps);
     }

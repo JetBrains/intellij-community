@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
@@ -60,6 +61,7 @@ public final class FSRecords {
 
   /**
    * If true, enhance each attribute record with backref to fileId owned this attribute(s).
+   *
    * @deprecated This is likely unfinished work since this backref is never used
    */
   @Deprecated
@@ -99,68 +101,38 @@ public final class FSRecords {
     return nextMask(59 + (PersistentFSRecordsStorageFactory.RECORDS_STORAGE_KIND.ordinal()),  // acceptable range is [0..255]
                     8,
                     nextMask(useContentHashes,
-                    nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
-                    nextMask(bulkAttrReadSupport,
-                    nextMask(inlineAttributes,
-                    nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
-                    nextMask(false, // feel free to use
-                    nextMask(useSmallAttrTable,
-                    nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
-                    nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
-                    nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
-                    nextMask(USE_FAST_NAMES_IMPLEMENTATION,
-                    nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION, 0 )))))))))))));
+                             nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
+                                      nextMask(bulkAttrReadSupport,
+                                               nextMask(inlineAttributes,
+                                                        nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
+                                                                 nextMask(false, // feel free to use
+                                                                          nextMask(useSmallAttrTable,
+                                                                                   nextMask(
+                                                                                     PersistentHashMapValueStorage.COMPRESSION_ENABLED,
+                                                                                     nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+                                                                                              nextMask(
+                                                                                                ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
+                                                                                                nextMask(USE_FAST_NAMES_IMPLEMENTATION,
+                                                                                                         nextMask(
+                                                                                                           USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION,
+                                                                                                           0)))))))))))));
+  }
+
+  /** @return path to the directory there all VFS files are located */
+  public static @NotNull String getCachesDir() {
+    String dir = System.getProperty("caches_dir");
+    return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
   }
 
   private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
+
   private static final FineGrainedIdLock updateLock = new FineGrainedIdLock();
 
-  /**
-   * @return nameId > 0
-   */
-  static int writeAttributesToRecord(int fileId,
-                                     int parentId,
-                                     @NotNull FileAttributes attributes,
-                                     @NotNull String name,
-                                     boolean overwriteMissed) {
-    int nameId = getNameId(name);
-    long timestamp = attributes.lastModified;
-    long length = attributes.isDirectory() ? -1L : attributes.length;
-    int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
-
-    try {
-      fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
-    }
-    catch (IOException e) {
-      throw handleError(e);
-    }
-
-    InvertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
-    ourNamesIndexModCount.incrementAndGet();
-
-    return nameId;
+  private FSRecords() {
+    throw new AssertionError("Not for instantiation");
   }
 
-  public static @NotNull String diagnosticsForAlreadyCreatedFile(int fileId, int nameId, @NotNull Object existingData) {
-    invalidateCaches();
-    int parentId = getParent(fileId);
-    String msg = "File already created: fileId=" + fileId +
-                 "; nameId=" + nameId + "(" + FileNameCache.getVFileName(nameId) + ")" +
-                 "; parentId=" + parentId +
-                 "; \nexistingData=" + existingData;
-    if (parentId > 0) {
-      msg += "; parent.name=" + getName(parentId);
-      msg += "; parent.children=" + list(parentId);
-    }
-    return msg;
-  }
-
-  private FSRecords() { }
-
-  @ApiStatus.Internal
-  public static int getVersion() {
-    return ourCurrentVersion;
-  }
+  //========== lifecycle: ========================================
 
   static void connect(@NotNull VfsLog vfsLog) {
     if (IOUtil.isSharedCachesEnabled()) {
@@ -188,9 +160,32 @@ public final class FSRecords {
     }
   }
 
-  public static @NotNull String getCachesDir() {
-    String dir = System.getProperty("caches_dir");
-    return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
+  static synchronized void dispose() {
+    if (ourConnection != null) {
+      PersistentFSConnector.disconnect(ourConnection);
+
+      ourConnection = null;
+      ourContentAccessor = null;
+      ourAttributeAccessor = null;
+      ourTreeAccessor = null;
+      ourRecordAccessor = null;
+    }
+  }
+
+  @NotNull
+  private static PersistentFSConnection getConnectionOrFail() {
+    PersistentFSConnection connection = ourConnection;
+    if (connection == null) {
+      throw new AlreadyDisposedException("VFS is already disposed");
+    }
+    return connection;
+  }
+
+
+  //========== general FS records properties: ========================================
+
+  public static int getVersion() {
+    return ourCurrentVersion;
   }
 
   public static long getCreationTimestamp() {
@@ -202,6 +197,42 @@ public final class FSRecords {
     }
   }
 
+  //========== modifications counters: ========================================
+
+  static int getLocalModCount() {
+    return getConnectionOrFail().getModificationCount() + ourAttributeAccessor.getLocalModificationCount();
+  }
+
+  @TestOnly
+  static int getPersistentModCount() {
+    return getConnectionOrFail().getPersistentModCount();
+  }
+
+  public static long getNamesIndexModCount() {
+    return ourNamesIndexModCount.get();
+  }
+
+
+  //========== FS records persistence: ========================================
+
+  @TestOnly
+  static void force() {
+    try {
+      getConnectionOrFail().doForce();
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
+  @TestOnly
+  static boolean isDirty() {
+    return getConnectionOrFail().isDirty();
+  }
+
+
+  //========== record allocations: ========================================
+
   // todo: Address  / capacity store in records table, size store with payload
   public static int createRecord() {
     try {
@@ -210,10 +241,6 @@ public final class FSRecords {
     catch (Exception e) {
       throw handleError(e);
     }
-  }
-
-  public static long getNamesIndexModCount() {
-    return ourNamesIndexModCount.get();
   }
 
   static void deleteRecordRecursively(int id) {
@@ -241,53 +268,28 @@ public final class FSRecords {
     InvertedNameIndex.updateFileName(id, NULL_NAME_ID, nameId);
   }
 
+  /**
+   * @return records (ids) freed in previous session, and not yet re-used in a current session.
+   */
+  public static @NotNull IntList getRemainFreeRecords() {
+    return getConnectionOrFail().getFreeRecords();
+  }
+
+  /**
+   * @return records (ids) freed in current session. Returns !empty list only in unit-tests, outside of testing records freeing in
+   * current session are marked by an apt flag, but not collected into free-list
+   */
+  public static @NotNull IntList getNewFreeRecords() {
+    return ourRecordAccessor.getNewFreeRecords();
+  }
+
+
+  //========== FS roots manipulation: ========================================
+
   @TestOnly
   static int @NotNull [] listRoots() {
     try {
       return ourTreeAccessor.listRoots();
-    }
-    catch (IOException e) {
-      throw handleError(e);
-    }
-  }
-
-  @TestOnly
-  static void force() {
-    try {
-      getConnectionOrFail().doForce();
-    }
-    catch (IOException e) {
-      throw handleError(e);
-    }
-  }
-
-  @TestOnly
-  static boolean isDirty() {
-    return getConnectionOrFail().isDirty();
-  }
-
-  static @PersistentFS.Attributes int getFlags(int id) {
-    try {
-      return getConnectionOrFail().getRecords().getFlags(id);
-    }
-    catch (IOException e) {
-      throw handleError(e);
-    }
-  }
-
-  @NotNull
-  private static PersistentFSConnection getConnectionOrFail() {
-    PersistentFSConnection connection = ourConnection;
-    if (connection == null) {
-      throw new AlreadyDisposedException("VFS is already disposed");
-    }
-    return connection;
-  }
-
-  @ApiStatus.Internal
-  public static boolean isDeleted(int id) {
-    try {
-      return ourRecordAccessor.isDeleted(id);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -312,18 +314,21 @@ public final class FSRecords {
     }
   }
 
-  static void loadDirectoryData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) {
+  static void deleteRootRecord(int fileId) {
     try {
-      ourTreeAccessor.loadDirectoryData(id, path, fs);
+      ourTreeAccessor.deleteRootRecord(fileId);
     }
     catch (IOException e) {
       throw handleError(e);
     }
   }
 
-  static void deleteRootRecord(int fileId) {
+
+  //========== directory/children manipulation: ========================================
+
+  static void loadDirectoryData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) {
     try {
-      ourTreeAccessor.deleteRootRecord(fileId);
+      ourTreeAccessor.loadDirectoryData(id, path, fs);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -468,6 +473,8 @@ public final class FSRecords {
     }
   }
 
+  //========== symlink manipulation: ========================================
+
   private static void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
                                                    @NotNull ListResult oldChildren,
                                                    @NotNull ListResult newChildren) {
@@ -520,30 +527,6 @@ public final class FSRecords {
     }
   }
 
-
-  static int getLocalModCount() {
-    return getConnectionOrFail().getModificationCount() + ourAttributeAccessor.getLocalModificationCount();
-  }
-
-  @TestOnly
-  static int getPersistentModCount() {
-    return getConnectionOrFail().getPersistentModCount();
-  }
-
-  public static int getParent(int id) {
-    try {
-      int parentId = getConnectionOrFail().getRecords().getParent(id);
-      if (parentId == id) {
-        LOG.error("Cyclic parent child relations in the database. id = " + id);
-        return 0;
-      }
-
-      return parentId;
-    }
-    catch (IOException e) {
-      throw handleError(e);
-    }
-  }
 
   static @Nullable VirtualFileSystemEntry findFileById(int id, @NotNull VirtualDirectoryCache idToDirCache) {
     class ParentFinder implements ThrowableComputable<Void, Exception> {
@@ -615,21 +598,39 @@ public final class FSRecords {
     return file;
   }
 
-  /**
-   * @return records (ids) freed in previous session, and not yet re-used in a current session.
-   */
-  @ApiStatus.Internal
-  public static @NotNull IntList getRemainFreeRecords() {
-    return getConnectionOrFail().getFreeRecords();
+
+  //========== file name iterations: ========================================
+
+  public static boolean processAllNames(@NotNull Processor<? super CharSequence> processor) {
+    try {
+      return getConnectionOrFail().getNames().processAllDataObjects(processor);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
-  /**
-   * @return records (ids) freed in current session. Returns !empty list only in unit-tests, outside of testing records freeing in
-   * current session are marked by an apt flag, but not collected into free-list
-   */
-  @ApiStatus.Internal
-  public static @NotNull IntList getNewFreeRecords() {
-    return ourRecordAccessor.getNewFreeRecords();
+  public static boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
+    if (names.isEmpty()) return true;
+    return InvertedNameIndex.processFilesWithNames(names, processor);
+  }
+
+
+  //========== file record fields accessors: ========================================
+
+  public static int getParent(int id) {
+    try {
+      int parentId = getConnectionOrFail().getRecords().getParent(id);
+      if (parentId == id) {
+        LOG.error("Cyclic parent child relations in the database. id = " + id);
+        return 0;
+      }
+
+      return parentId;
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   static void setParent(int id, int parentId) {
@@ -645,20 +646,6 @@ public final class FSRecords {
     catch (Throwable e) {
       throw handleError(e);
     }
-  }
-
-  public static boolean processAllNames(@NotNull Processor<? super CharSequence> processor) {
-    try {
-      return getConnectionOrFail().getNames().processAllDataObjects(processor);
-    }
-    catch (IOException e) {
-      throw handleError(e);
-    }
-  }
-
-  public static boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
-    if (names.isEmpty()) return true;
-    return InvertedNameIndex.processFilesWithNames(names, processor);
   }
 
   //TODO RC: this method is used to look up files by name, but this non-strict enumerator this approach
@@ -729,6 +716,25 @@ public final class FSRecords {
     }
   }
 
+  static @PersistentFS.Attributes int getFlags(int id) {
+    try {
+      return getConnectionOrFail().getRecords().getFlags(id);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static boolean isDeleted(int id) {
+    try {
+      return ourRecordAccessor.isDeleted(id);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
   static long getLength(int id) {
     try {
       return getConnectionOrFail().getRecords().getLength(id);
@@ -755,6 +761,33 @@ public final class FSRecords {
     getConnectionOrFail().markDirty();
   }
 
+  /**
+   * @return nameId > 0
+   */
+  static int writeAttributesToRecord(int fileId,
+                                     int parentId,
+                                     @NotNull FileAttributes attributes,
+                                     @NotNull String name,
+                                     boolean overwriteMissed) {
+    int nameId = getNameId(name);
+    long timestamp = attributes.lastModified;
+    long length = attributes.isDirectory() ? -1L : attributes.length;
+    int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
+
+    try {
+      fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+
+    InvertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
+    ourNamesIndexModCount.incrementAndGet();
+
+    return nameId;
+  }
+
+
   static long getTimestamp(int id) {
     try {
       return getConnectionOrFail().getRecords().getTimestamp(id);
@@ -778,6 +811,53 @@ public final class FSRecords {
   static int getModCount(int id) {
     try {
       return getConnectionOrFail().getRecords().getModCount(id);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
+  //========== file attributes accessors: ========================================
+
+  public static @Nullable AttributeInputStream readAttributeWithLock(int fileId, @NotNull FileAttribute attribute) {
+    try {
+      return readAttribute(fileId, attribute);
+    }
+    catch (Throwable e) {
+      throw handleError(e);
+    }
+  }
+
+  public static boolean supportsRawAttributesAccess(){
+    return ourAttributeAccessor.supportsRawAccess();
+  }
+
+  @ApiStatus.Internal
+  public static <R> @Nullable R readAttributeRawWithLock(final int fileId,
+                                                         final @NotNull FileAttribute attribute,
+                                                         final ByteBufferReader<R> reader) {
+    try {
+      return ourAttributeAccessor.readAttributeRaw(fileId, attribute, reader);
+    }
+    catch (Throwable e) {
+      throw handleError(e);
+    }
+  }
+
+  /** must be called under r or w lock */
+  private static @Nullable AttributeInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
+    return ourAttributeAccessor.readAttribute(fileId, attribute);
+  }
+
+  public static @NotNull AttributeOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
+    return ourAttributeAccessor.writeAttribute(fileId, att);
+  }
+
+  //========== file content accessors: ========================================
+
+  static int acquireFileContent(int fileId) {
+    try {
+      return ourContentAccessor.acquireContentRecord(fileId);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -814,30 +894,6 @@ public final class FSRecords {
       handleError(e);
     }
     return null;
-  }
-
-
-  public static @Nullable AttributeInputStream readAttributeWithLock(int fileId, @NotNull FileAttribute attribute) {
-    try {
-      return readAttribute(fileId, attribute);
-    }
-    catch (Throwable e) {
-      throw handleError(e);
-    }
-  }
-
-  // must be called under r or w lock
-  private static @Nullable AttributeInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
-    return ourAttributeAccessor.readAttribute(fileId, attribute);
-  }
-
-  static int acquireFileContent(int fileId) {
-    try {
-      return ourContentAccessor.acquireContentRecord(fileId);
-    }
-    catch (IOException e) {
-      throw handleError(e);
-    }
   }
 
   static void releaseContent(int contentId) {
@@ -903,33 +959,10 @@ public final class FSRecords {
     }
   }
 
-  public static @NotNull AttributeOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
-    return ourAttributeAccessor.writeAttribute(fileId, att);
-  }
-
-  static synchronized void dispose() {
-    if (ourConnection != null) {
-      PersistentFSConnector.disconnect(ourConnection);
-
-      ourConnection = null;
-      ourContentAccessor = null;
-      ourAttributeAccessor = null;
-      ourTreeAccessor = null;
-      ourRecordAccessor = null;
-    }
-  }
+  //========== aux: ========================================
 
   public static void invalidateCaches() {
     getConnectionOrFail().createBrokenMarkerFile(null);
-  }
-
-  static void checkSanity() {
-    try {
-      ourRecordAccessor.checkSanity();
-    }
-    catch (IOException e) {
-      throw handleError(e);
-    }
   }
 
   /**
@@ -960,6 +993,37 @@ public final class FSRecords {
     }
     // no connection means IDE is closing...
     throw new ServiceNotReadyException();
+  }
+
+  //========== diagnostic, sanity checks: ========================================
+
+
+  static void checkSanity() {
+    try {
+      ourRecordAccessor.checkSanity();
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
+  /**
+   * @return human-readable description of file fileId -- as much information as VFS now contains
+   */
+  public static @NotNull String describeAlreadyCreatedFile(final int fileId,
+                                                           final int nameId) {
+    //RC: actually, this method better to be located in VfsData class from there it is called
+    //    The only list(parentId) method is not public -- all other methods could be called
+    //    from VfsData
+    final int parentId = getParent(fileId);
+    final String description = "fileId=" + fileId +
+                               "; nameId=" + nameId + "(" + FileNameCache.getVFileName(nameId) + ")" +
+                               "; parentId=" + parentId;
+    if (parentId <= 0) {
+      return description;
+    }
+    return description + "; parent.name=" + getName(parentId)
+           + "; parent.children=" + list(parentId);
   }
 
   @TestOnly
