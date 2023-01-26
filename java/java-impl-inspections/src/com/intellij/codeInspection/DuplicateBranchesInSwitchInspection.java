@@ -378,14 +378,25 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       if (context.prepare(descriptor.getStartElement(), BranchBase::isDefault)) {
         context.deleteBranchLabel();
         if (!context.myBranchToDelete.hasSingleNullCase()) {
-          // case R():
-          // case null:
-          // case S():
-          //   return 42;
-          //
-          // The 'default' case does not handle null values, so we cannot delete
-          // the 'case null:' and the 'return 42;' statement. However,
-          // we can delete the 'case R():' and 'case S():' statements."
+          /*
+           switch (obj) {
+             case R():
+             case null:
+             case S():
+               <caret>System.out.println(42); // Branch in 'switch' is a duplicate of the default branch
+               break;
+             case String s:
+               System.out.println(0);
+               break;
+             default:
+               System.out.println(42);
+           }
+
+           The 'case R():' and 'case S():' statements can be removed as redundant,
+           because the corresponding branch is a duplicate of the default branch.
+           But the 'default' case does not handle null values, so we cannot delete
+           the 'case null:' and the 'return 42;' statement.
+          */
           context.deleteStatements();
         }
       }
@@ -589,12 +600,14 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       myStatements = statements;
       myCommentTexts = commentTexts;
       myIsDefault = ContainerUtil.exists(labels, label -> label.isDefaultCase() || SwitchUtils.isCaseNullDefault(label));
-      myCanDeleteRedundantBranch = labels.length > 1 ||
-                                   !ContainerUtil.exists(labels, label -> {
-                                     PsiCaseLabelElementList list = label.getCaseLabelElementList();
-                                     if (list == null) return false;
-                                     return ContainerUtil.exists(list.getElements(), ExpressionUtils::isNullLiteral);
-                                   });
+      myCanDeleteRedundantBranch = labels.length > 1 || !ContainerUtil.exists(labels, BranchBase::hasNullCase);
+    }
+
+    private static boolean hasNullCase(@NotNull PsiSwitchLabelStatementBase label) {
+      PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+      if (labelElementList == null) return false;
+      PsiCaseLabelElement[] elements = labelElementList.getElements();
+      return ContainerUtil.exists(elements, ExpressionUtils::isNullLiteral);
     }
 
     boolean isDefault() {
