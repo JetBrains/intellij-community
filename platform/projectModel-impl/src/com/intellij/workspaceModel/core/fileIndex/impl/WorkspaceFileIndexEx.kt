@@ -109,8 +109,15 @@ sealed interface WorkspaceFileInternalInfo {
     NOT_UNDER_ROOTS,
 
     /** File is invalid */
-    INVALID
+    INVALID;
+
+    override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? = null
   }
+
+  /**
+   * Returns a file set stored in this instance which satisfies the given [condition], or `null` if no such file set found.
+   */
+  fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>?
 }
 
 internal sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo {

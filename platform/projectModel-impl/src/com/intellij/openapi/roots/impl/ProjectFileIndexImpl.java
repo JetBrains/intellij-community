@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
@@ -324,26 +323,18 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   public @Nullable VirtualFile getModuleSourceOrLibraryClassesRoot(@NotNull VirtualFile file) {
     if (myWorkspaceFileIndex != null) {
       WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, false);
-      if (info instanceof WorkspaceFileInternalInfo.NonWorkspace) return null;
-      if (info instanceof MultipleWorkspaceFileSets) {
-        WorkspaceFileSetWithCustomData<?> fileSet = ContainerUtil.find(((MultipleWorkspaceFileSets)info).getFileSets(), 
-                                                                       ProjectFileIndexImpl::isModuleSourceOrLibraryClassRoot);
-        return fileSet != null ? fileSet.getRoot() : null;
-      }
-      WorkspaceFileSetWithCustomData<?> fileSet = (WorkspaceFileSetWithCustomData<?>)info;
-      return isModuleSourceOrLibraryClassRoot(fileSet) ? fileSet.getRoot() : null;
+      WorkspaceFileSetWithCustomData<?> fileSet = info.findFileSet(it -> {
+        WorkspaceFileKind kind = it.getKind();
+        return (kind == WorkspaceFileKind.CONTENT || kind == WorkspaceFileKind.TEST_CONTENT) && it.getData() instanceof ModuleOrLibrarySourceRootData
+               || kind == WorkspaceFileKind.EXTERNAL;
+      });
+      return fileSet != null ? fileSet.getRoot() : null;
     }
     DirectoryInfo info = getInfoForFileOrDirectory(file);
     if (isFileInContent(file, info)) {
       return getSourceRootForFile(file, info);
     }
     return getClassRootForFile(file, info);
-  }
-
-  private static boolean isModuleSourceOrLibraryClassRoot(WorkspaceFileSetWithCustomData<?> fileSet) {
-    WorkspaceFileKind kind = fileSet.getKind();
-    return (kind == WorkspaceFileKind.CONTENT || kind == WorkspaceFileKind.TEST_CONTENT) && fileSet.getData() instanceof ModuleOrLibrarySourceRootData
-           || kind == WorkspaceFileKind.EXTERNAL;
   }
 
   @Override
