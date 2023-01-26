@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.util.URIUtil
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModelBase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,7 +47,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModel(
   val loginRequestsFlow: Flow<TokenLoginRequest> = _loginRequestsFlow.asSharedFlow()
 
   init {
-    scope.launch {
+    scope.launch(start = CoroutineStart.UNDISPATCHED) {
       singleRepoAndAccountState.collect {
         if (it != null) {
           repoSelectionState.value = it.first
