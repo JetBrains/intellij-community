@@ -5,63 +5,46 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
-import com.intellij.openapi.externalSystem.model.project.ProjectData
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 interface KotlinMppGradleProjectResolverExtension {
     companion object {
         val EP_NAME = ExtensionPointName.create<KotlinMppGradleProjectResolverExtension>(
-            "org.jetbrains.kotlin.mpp.gradleProjectResolverExtension"
+            "org.jetbrains.kotlin.mppProjectResolve"
         )
     }
 
-    fun shouldSkipDefaultModuleNodeInitialization(
-        gradleModule: IdeaModule,
-        moduleDataNode: DataNode<ModuleData>,
-        projectDataNode: DataNode<ProjectData>,
-        mppModel: KotlinMPPGradleModel,
-        resolverContext: ProjectResolverContext,
-    ): Boolean = false
+    enum class Result {
+        Skip, Proceed
+    }
 
-    fun beforeDefaultModuleNodeInitialization(
-        gradleModule: IdeaModule,
-        moduleDataNode: DataNode<ModuleData>,
-        projectDataNode: DataNode<ProjectData>,
-        mppModel: KotlinMPPGradleModel,
-        resolverContext: ProjectResolverContext,
-    ) {}
+    interface Context {
+        val model: KotlinMPPGradleModel
+        val resolverCtx: ProjectResolverContext
+        val gradleModule: IdeaModule
+        val moduleDataNode: DataNode<ModuleData>
+    }
 
-    fun afterDefaultModuleNodeInitialization(
-        gradleModule: IdeaModule,
-        moduleDataNode: DataNode<ModuleData>,
-        projectDataNode: DataNode<ProjectData>,
-        mppModel: KotlinMPPGradleModel,
-        resolverContext: ProjectResolverContext,
-    ) {}
+    fun beforeMppGradleSourceSetDataNodeCreation(
+        context: Context, component: KotlinComponent
+    ): Result = Result.Proceed
 
-    fun shouldSkipDefaultDependencies(
-        gradleModule: IdeaModule,
-        moduleDataNode: DataNode<ModuleData>,
-        projectDataNode: DataNode<ProjectData>,
-        mppModel: KotlinMPPGradleModel,
-        resolverCtx: ProjectResolverContext,
-    ): Boolean = false
+    fun afterMppGradleSourceSetDataNodeCreated(
+        context: Context, component: KotlinComponent, sourceSetDataNode: DataNode<GradleSourceSetData>
+    ) = Unit
 
-    fun beforeDefaultDependencyHandling(
-        gradleModule: IdeaModule,
-        moduleDataNode: DataNode<ModuleData>,
-        projectDataNode: DataNode<ProjectData>,
-        mppModel: KotlinMPPGradleModel,
-        resolverCtx: ProjectResolverContext,
-    ) {}
+    fun beforePopulateContentRoots(
+        context: Context, sourceSetDataNode: DataNode<GradleSourceSetData>, sourceSet: KotlinSourceSet
+    ): Result = Result.Proceed
 
-    fun afterDefaultDependencyHandling(
-        gradleModule: IdeaModule,
-        moduleDataNode: DataNode<ModuleData>,
-        projectDataNode: DataNode<ProjectData>,
-        mppModel: KotlinMPPGradleModel,
-        resolverCtx: ProjectResolverContext,
-    ) {}
+    fun afterPopulateContentRoots(
+        context: Context, sourceSetDataNode: DataNode<GradleSourceSetData>, sourceSet: KotlinSourceSet
+    ) = Unit
+
+    fun provideAdditionalProjectArtifactDependencyResolver(): KotlinProjectArtifactDependencyResolver? = null
 }

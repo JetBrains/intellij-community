@@ -53,10 +53,6 @@
             qualifiedName="org.jetbrains.kotlin.kotlinTestFramework"
             interface="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework"
             dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.mpp.gradleProjectResolverExtension"
-            interface="org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension"
-            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
