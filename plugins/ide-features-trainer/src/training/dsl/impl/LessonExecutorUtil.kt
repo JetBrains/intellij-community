@@ -65,7 +65,11 @@ internal object LessonExecutorUtil {
                                  lessonExecutor: LessonExecutor,
                                  useAnimationCycle: Boolean) {
     val textBuilder = MessageFactory.convertToGotItFormat(text)
-    val balloon: Balloon = GotItComponentBuilder(textBuilder)
+    val balloonBuilder = GotItComponentBuilder(textBuilder)
+    if (balloonConfig.width > 0) {
+      balloonBuilder.withMaxWidth(balloonConfig.width)
+    }
+    val balloon: Balloon = balloonBuilder
       .withStepNumber(lessonExecutor.visualIndexNumber)
       .showButton(balloonConfig.gotItCallBack != null)
       .onButtonClick { balloonConfig.gotItCallBack?.invoke() }
