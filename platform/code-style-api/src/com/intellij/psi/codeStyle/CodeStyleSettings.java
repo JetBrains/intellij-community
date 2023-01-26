@@ -478,7 +478,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   // region Formatter control
 
-  public boolean FORMATTER_TAGS_ENABLED;
+  public boolean FORMATTER_TAGS_ENABLED = true;
   public String FORMATTER_ON_TAG = "@formatter:on";
   public String FORMATTER_OFF_TAG = "@formatter:off";
 
