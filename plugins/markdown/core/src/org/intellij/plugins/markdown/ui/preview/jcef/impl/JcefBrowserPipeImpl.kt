@@ -26,7 +26,10 @@ internal class JcefBrowserPipeImpl(
   browser: JBCefBrowserBase,
   private val injectionAllowedUrls: List<String>? = null
 ): BrowserPipe {
-  private val query = checkNotNull(JBCefJSQuery.create(browser))
+  private var queryInstance: JBCefJSQuery? = checkNotNull(JBCefJSQuery.create(browser))
+  private val query
+    get() = checkNotNull(queryInstance) { "JS query instance should not be accessed after disposal" }
+
   private val receiveSubscribers = hashMapOf<String, MutableList<BrowserPipe.Handler>>()
 
   private var browserInstance: JBCefBrowserBase? = browser
@@ -70,6 +73,7 @@ internal class JcefBrowserPipeImpl(
 
   override fun dispose() {
     receiveSubscribers.clear()
+    queryInstance = null
     browserInstance = null
   }
 
