@@ -41,6 +41,7 @@ private const val PATHS_EOT_RESPONSE = "---"
 private const val ACTIVATE_COMMAND = "activate "
 private const val OK_RESPONSE = "ok"
 
+//todo rename into DirectoryLock, then replace with the new one
 class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path) {
   enum class ActivationStatus {
     ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE
