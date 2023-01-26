@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.client.ClientAwareComponentManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
@@ -260,7 +261,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   }
 }
 
-final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
+final class DefaultProjectImpl extends ClientAwareComponentManager implements Project {
   private static final Logger LOG = Logger.getInstance(DefaultProjectImpl.class);
   static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
 

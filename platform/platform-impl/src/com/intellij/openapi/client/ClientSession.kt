@@ -61,6 +61,6 @@ interface ClientAppSession : ClientSession
 @ApiStatus.Experimental
 @ApiStatus.Internal
 interface ClientProjectSession : ClientSession {
-  val project: ProjectEx
+  val project: Project
   val appSession: ClientAppSession
 }
