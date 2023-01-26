@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestsListViewModel.ListDataUpdate
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
@@ -37,7 +37,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
                                                   avatarIconsProvider = mock(),
                                                   accountManager = mock(),
                                                   tokenRefreshFlow = mock(),
-                                                  delayingLoader { emptyList<GitLabMergeRequestShortRestDTO>() to true })
+                                                  loaderSupplier = delayingLoader { emptyList<GitLabMergeRequestDetails>() to true })
 
     with(vm) {
       val updates = cs.asyncCollectLast(listDataFlow)
@@ -61,7 +61,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
                                                   avatarIconsProvider = mock(),
                                                   accountManager = mock(),
                                                   tokenRefreshFlow = mock(),
-                                                  delayingLoader { emptyList<GitLabMergeRequestShortRestDTO>() to true })
+                                                  delayingLoader { emptyList<GitLabMergeRequestDetails>() to true })
 
     with(vm) {
       val updates = cs.asyncCollectLast(listDataFlow)
@@ -87,7 +87,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
                                                   avatarIconsProvider = mock(),
                                                   accountManager = mock(),
                                                   tokenRefreshFlow = mock(),
-                                                  delayingLoader { emptyList<GitLabMergeRequestShortRestDTO>() to true })
+                                                  delayingLoader { emptyList<GitLabMergeRequestDetails>() to true })
 
     with(vm) {
       val updates = cs.asyncCollectLast(listDataFlow)
@@ -156,8 +156,8 @@ internal class GitLabMergeRequestsListViewModelImplTest {
 }
 
 private fun delayingLoader(delay: Long = 2000,
-                           loader: suspend () -> Pair<List<GitLabMergeRequestShortRestDTO>, Boolean>)
-  : (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestShortRestDTO> = {
+                           loader: suspend () -> Pair<List<GitLabMergeRequestDetails>, Boolean>)
+  : (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestDetails> = {
   mock {
     onBlocking { loadNext() } doSuspendableAnswer {
       delay(delay)
