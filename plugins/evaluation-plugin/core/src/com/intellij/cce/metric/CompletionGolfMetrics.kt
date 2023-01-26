@@ -11,6 +11,7 @@ internal fun createCompletionGolfMetrics(): List<Metric> =
     CompletionInvocationsCount(),
     MovesCountNormalised(),
     PerfectLine(),
+    Precision(),
     RecallAt(1),
     RecallAt(5)
   )
@@ -141,6 +142,31 @@ internal class PerfectLine : CompletionGolfMetric<Int>() {
 
   companion object {
     const val NAME = "Perfect Line"
+  }
+}
+
+internal class Precision : Metric {
+  private val sample = Sample()
+  override val name = "Precision"
+  override val valueType = MetricValueType.DOUBLE
+  override val value: Double
+    get() = sample.mean()
+
+  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+    val fileSample = Sample()
+
+    for (lookup in sessions.flatMap { it.lookups }) {
+      for (i in lookup.suggestions.indices) {
+        if (i == lookup.selectedPosition) {
+          fileSample.add(1.0)
+          sample.add(1.0)
+        } else {
+          fileSample.add(0.0)
+          sample.add(0.0)
+        }
+      }
+    }
+    return fileSample.mean()
   }
 }
 
