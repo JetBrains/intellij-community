@@ -39,17 +39,19 @@ internal class JcefBrowserPipeImpl(
   init {
     Disposer.register(this, query)
     query.addHandler(::receiveHandler)
-    browser.jbCefClient.addLoadHandler(object: CefLoadHandlerAdapter() {
-      override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
-        val pageUrl = browser.url
-        when {
-          injectionAllowedUrls != null && pageUrl !in injectionAllowedUrls -> {
-            logger.warn("$pageUrl was not included in the list of allowed for injection urls! Allowed urls:\n$injectionAllowedUrls")
-          }
-          else -> inject(browser)
+    browser.jbCefClient.addLoadHandler(InjectionPerformerLoadHandler(), browser.cefBrowser, this)
+  }
+
+  private inner class InjectionPerformerLoadHandler: CefLoadHandlerAdapter() {
+    override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
+      val pageUrl = browser.url
+      when {
+        injectionAllowedUrls != null && pageUrl !in injectionAllowedUrls -> {
+          logger.warn("$pageUrl was not included in the list of allowed for injection urls! Allowed urls:\n$injectionAllowedUrls")
         }
+        else -> inject(browser)
       }
-    }, browser.cefBrowser)
+    }
   }
 
   override fun subscribe(type: String, handler: BrowserPipe.Handler) {
