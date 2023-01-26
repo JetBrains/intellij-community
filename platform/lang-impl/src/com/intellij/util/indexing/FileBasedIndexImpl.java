@@ -1081,13 +1081,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     Pair<FileContentImpl, Long> previousContentAndStamp = SoftReference.dereference(previousContentAndStampRef);
 
     if (previousContentAndStamp != null && currentDocStamp == previousContentAndStamp.getSecond()) {
-      return previousContentAndStamp.getFirst();
+      FileContentImpl existingFC = previousContentAndStamp.getFirst();
+      if (project.equals(existingFC.getProject())) {
+        return existingFC;
+      }
     }
-    else {
-      FileContentImpl newFc = (FileContentImpl)FileContentImpl.createByText(vFile, contentText, project);
-      document.putUserData(ourFileContentKey, new WeakReference<>(Pair.create(newFc, currentDocStamp)));
-      return newFc;
-    }
+
+    FileContentImpl newFc = (FileContentImpl)FileContentImpl.createByText(vFile, contentText, project);
+    document.putUserData(ourFileContentKey, new WeakReference<>(Pair.create(newFc, currentDocStamp)));
+    return newFc;
   }
 
   @NotNull
