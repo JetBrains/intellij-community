@@ -21,7 +21,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
+    catch (Throwable e) {
       throw rethrowException(e);
     }
   }
@@ -39,7 +39,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
+    catch (Throwable e) {
       throw rethrowException(e);
     }
   }
@@ -51,7 +51,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
     try {
       return Maven3XServerEmbedder.interpolateAndAlignModel(model, basedir);
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       throw rethrowException(e);
     }
   }
@@ -62,7 +62,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
     try {
       return Maven3XServerEmbedder.assembleInheritance(model, parentModel);
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       throw rethrowException(e);
     }
   }
@@ -76,7 +76,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
     try {
       return Maven3XServerEmbedder.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       throw rethrowException(e);
     }
   }
@@ -90,7 +90,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
+    catch (Throwable e) {
       throw rethrowException(e);
     }
   }
@@ -103,7 +103,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
+    catch (Throwable e) {
       throw rethrowException(e);
     }
   }
