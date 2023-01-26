@@ -153,7 +153,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
                 if (wrappedMethod != null) {
                     findDeepestSuperMethodsKotlinAware(wrappedMethod)
                 } else {
-                    KotlinSearchUsagesSupport.findDeepestSuperMethodsNoWrapping(element)
+                    KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(element)
                 }
             }
         }

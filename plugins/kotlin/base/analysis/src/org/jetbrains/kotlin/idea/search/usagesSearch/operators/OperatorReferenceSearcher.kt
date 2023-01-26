@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.analysis.KotlinBaseAnalysisBundle
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.forceResolveReferences
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.getReceiverTypeSearcherInfo
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.forceResolveReferences
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.getReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinRequestResultProcessor
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor

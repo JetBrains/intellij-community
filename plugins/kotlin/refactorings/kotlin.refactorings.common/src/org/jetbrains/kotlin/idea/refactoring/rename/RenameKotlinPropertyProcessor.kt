@@ -306,7 +306,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
                 declaration.project
             ) {
                 runReadAction {
-                    KotlinSearchUsagesSupport.findDeepestSuperMethodsNoWrapping(declaration)
+                    KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(declaration)
                 }
             }
 

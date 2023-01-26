@@ -42,9 +42,9 @@ import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindPropert
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.dataClassComponentMethodName
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.filterDataClassComponentsIfDisabled
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.dataClassComponentMethodName
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.filterDataClassComponentsIfDisabled
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector
@@ -325,7 +325,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
     override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope): Collection<PsiReference> {
 
-        val baseDeclarations = KotlinSearchUsagesSupport.findDeepestSuperMethodsNoWrapping(target)
+        val baseDeclarations = KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(target)
 
         return if (baseDeclarations.isNotEmpty()) {
             baseDeclarations.flatMap {

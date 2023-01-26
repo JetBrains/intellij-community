@@ -21,7 +21,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.*
 import org.jetbrains.kotlin.idea.base.util.projectScope
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.scriptDefinitionExists
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.scriptDefinitionExists
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
