@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProject
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.sourceType
 import org.jetbrains.kotlin.idea.gradleJava.configuration.getMppModel
 import org.jetbrains.kotlin.idea.gradleJava.configuration.kotlinGradleProjectDataOrFail
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension.Result.Skip
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
@@ -39,6 +40,12 @@ internal fun populateContentRoots(
     processSourceSets(gradleModule, mppModel, ideModule, resolverCtx) { dataNode, sourceSet ->
         if (dataNode == null || shouldDelegateToOtherPlugin(sourceSet)) return@processSourceSets
 
+        /* Execute all registered extension points and skip population of content roots if instructed by extensions */
+        if (KotlinMppGradleProjectResolverExtension.beforePopulateContentRoots(
+                mppModel, resolverCtx, gradleModule, ideModule, dataNode, sourceSet
+            ) == Skip
+        ) return@processSourceSets
+
         createContentRootData(
             sourceSet.sourceDirs,
             sourceSet.sourceType,
@@ -50,6 +57,10 @@ internal fun populateContentRoots(
             sourceSet.resourceType,
             null,
             dataNode
+        )
+
+        KotlinMppGradleProjectResolverExtension.afterPopulateContentRoots(
+            mppModel, resolverCtx, gradleModule, ideModule, dataNode, sourceSet
         )
     }
 
