@@ -82,7 +82,7 @@ internal class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableAct
   }
 }
 
-private val recentLimit: Int get() = AdvancedSettings.getInt("ide.max.recent.run.configurations")
+private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.configurations")
 
 internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boolean = true): ActionGroup {
   val actions = DefaultActionGroup()
