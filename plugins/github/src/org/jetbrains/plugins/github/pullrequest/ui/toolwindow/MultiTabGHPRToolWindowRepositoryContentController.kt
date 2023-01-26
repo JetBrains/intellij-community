@@ -138,7 +138,7 @@ internal class MultiTabGHPRToolWindowRepositoryContentController(
 
   private fun createAndAddPRContent(id: GHPRIdentifier): Content {
     val contentDisposable = Disposer.newDisposable()
-    val title = GithubBundle.message("pull.request.num", id.number)
+    val title = "#${id.number}"
     val component = GHPRViewComponentFactory(ActionManager.getInstance(), project, dataContext, id, contentDisposable).create()
     val content = contentManager.factory.createContent(component, title, false).apply {
       setDisposer(contentDisposable)
