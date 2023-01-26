@@ -998,7 +998,7 @@ private fun saveMemorySnapshot(pluginId: PluginId): Boolean {
   }
 
   DynamicPlugins.notify(
-    IdeBundle.message("memory.snapshot.captured.text", snapshotPath, snapshotFileName),
+    IdeBundle.message("memory.snapshot.captured.text", snapshotPath),
     NotificationType.WARNING,
     object : AnAction(IdeBundle.message("ide.restart.action")), DumbAware {
       override fun actionPerformed(e: AnActionEvent) = ApplicationManager.getApplication().restart()
