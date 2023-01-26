@@ -318,12 +318,12 @@ public class PagesTable {
 
   @VisibleForTesting
   public Int2IntMap collectProbeLengthsHistogram() {
-    final Int2IntOpenHashMap histo = new Int2IntOpenHashMap();
+    final Int2IntMap histo = new Int2IntOpenHashMap();
     for (int i = 0; i < pages.length(); i++) {
       final PageImpl page = pages.get(i);
       if (page != null) {
         final int probingLength = probingSequenceLengthFor(pages, page.pageIndex());
-        histo.addTo(probingLength, 1);
+        histo.mergeInt(probingLength, 1, Integer::sum);
       }
     }
     return histo;

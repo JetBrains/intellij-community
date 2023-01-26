@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.impl.containers
 
 import com.intellij.util.SmartList
+import com.intellij.util.containers.CollectionFactory
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jetbrains.annotations.TestOnly
 import kotlin.collections.component1
@@ -12,12 +13,11 @@ import kotlin.collections.component2
  * by using [Object2ObjectOpenHashMap.clone] method and only if several keys contain same value we store as list at [valueToKeysMap]
  * field and at collection copying, we additionally clone only field which contains the list inside
  */
-internal class BidirectionalMap<K, V> private constructor(private val slotsWithList: HashSet<V>,
-                                                          private val keyToValueMap: Object2ObjectOpenHashMap<K, V>,
-                                                          private val valueToKeysMap: Object2ObjectOpenHashMap<V, Any>) : MutableMap<K, V> {
-  constructor() : this(HashSet<V>(), Object2ObjectOpenHashMap<K, V>(), Object2ObjectOpenHashMap<V, Any>())
+internal class BidirectionalMap<K, V> private constructor(private val slotsWithList: MutableSet<V>,
+                                                          private val keyToValueMap: MutableMap<K, V>,
+                                                          private val valueToKeysMap: MutableMap<V, Any>) : MutableMap<K, V> {
+  constructor() : this(HashSet<V>(), CollectionFactory.createSmallMemoryFootprintMap<K,V>(), CollectionFactory.createSmallMemoryFootprintMap<V,Any>())
 
-  @Suppress("UNCHECKED_CAST")
   override fun put(key: K, value: V): V? {
     val oldValue = keyToValueMap.put(key, value)
     if (oldValue != null) {
@@ -28,26 +28,31 @@ internal class BidirectionalMap<K, V> private constructor(private val slotsWithL
       if (keys is MutableList<*>) {
         keys.remove(key)
         if (keys.size == 1) {
-          valueToKeysMap[oldValue] = keys[0]
+          valueToKeysMap[oldValue] = keys[0]!!
           slotsWithList.remove(oldValue)
-        } else if (keys.isEmpty()) {
+        }
+        else if (keys.isEmpty()) {
           valueToKeysMap.remove(oldValue)
           slotsWithList.remove(oldValue)
         }
-      } else {
+      }
+      else {
         valueToKeysMap.remove(oldValue)
       }
     }
 
     val existingKeys = valueToKeysMap[value]
     if (existingKeys == null) {
-      valueToKeysMap[value] = key
+      valueToKeysMap[value] = key!!
       return oldValue
     }
     if (existingKeys is MutableList<*>) {
+      @Suppress("UNCHECKED_CAST")
       existingKeys as MutableList<K>
       existingKeys.add(key)
-    } else {
+    }
+    else {
+      @Suppress("UNCHECKED_CAST")
       valueToKeysMap[value] = SmartList(existingKeys as K, key)
       slotsWithList.add(value)
     }
@@ -60,8 +65,8 @@ internal class BidirectionalMap<K, V> private constructor(private val slotsWithL
     valueToKeysMap.clear()
   }
 
-  @Suppress("UNCHECKED_CAST")
   fun getKeysByValue(value: V): List<K>? {
+    @Suppress("UNCHECKED_CAST")
     return valueToKeysMap[value]?.let { keys ->
       if (keys is MutableList<*>) return@let keys as MutableList<K>
       return@let SmartList(keys as K)
@@ -90,7 +95,6 @@ internal class BidirectionalMap<K, V> private constructor(private val slotsWithL
     return keyToValueMap[key]
   }
 
-  @Suppress("UNCHECKED_CAST")
   fun removeValue(v: V) {
     val keys = valueToKeysMap.remove(v)
     if (keys != null) {
@@ -100,6 +104,7 @@ internal class BidirectionalMap<K, V> private constructor(private val slotsWithL
         }
         slotsWithList.remove(v)
       } else {
+        @Suppress("UNCHECKED_CAST")
         keyToValueMap.remove(keys as K)
       }
     }
@@ -112,7 +117,7 @@ internal class BidirectionalMap<K, V> private constructor(private val slotsWithL
       if (keys is MutableList<*> && keys.size > 1) {
         keys.remove(key)
         if (keys.size == 1) {
-          valueToKeysMap[value] = keys[0]
+          valueToKeysMap.put(value!!, keys[0]!!)
           slotsWithList.remove(value)
         }
       } else {
@@ -135,11 +140,13 @@ internal class BidirectionalMap<K, V> private constructor(private val slotsWithL
   override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
     get() = keyToValueMap.entries
 
-  @Suppress("UNCHECKED_CAST")
   fun copy(): BidirectionalMap<K, V> {
-    val clonedValueToKeysMap = valueToKeysMap.clone()
-    slotsWithList.forEach { value -> clonedValueToKeysMap[value] = SmartList(valueToKeysMap[value] as MutableList<K>) }
-    return BidirectionalMap(HashSet(slotsWithList), keyToValueMap.clone(), clonedValueToKeysMap)
+    val clonedValueToKeysMap = CollectionFactory.createSmallMemoryFootprintMap(valueToKeysMap)
+    slotsWithList.forEach { value ->
+      @Suppress("UNCHECKED_CAST")
+      clonedValueToKeysMap[value] = SmartList(valueToKeysMap[value] as List<K>)
+    }
+    return BidirectionalMap(HashSet(slotsWithList), CollectionFactory.createSmallMemoryFootprintMap(keyToValueMap), clonedValueToKeysMap)
   }
 
   @TestOnly
@@ -160,7 +167,8 @@ internal class BidirectionalMap<K, V> private constructor(private val slotsWithL
           assert(keyToValueMap[it] == value) { "Value by key: $it is different in collections. Expected: $value but actual ${keyToValueMap[it]}" }
         }
       } else {
-        assert(keyToValueMap.containsKey(keys)) { "Key: $keys is not registered at keyToValueMap collection" }
+        @Suppress("UNCHECKED_CAST")
+        assert(keyToValueMap.containsKey(keys as K)) { "Key: $keys is not registered at keyToValueMap collection" }
         assert(keyToValueMap[keys] == value) { "Value by key: $keys is different in collections. Expected: $value but actual ${keyToValueMap[keys]}" }
       }
     }

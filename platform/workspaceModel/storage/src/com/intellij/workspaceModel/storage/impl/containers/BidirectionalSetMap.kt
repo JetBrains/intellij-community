@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.storage.impl.containers
 
 import com.intellij.util.containers.CollectionFactory
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 
