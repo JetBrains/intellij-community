@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -36,6 +36,7 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +118,7 @@ public final class RefactoringUtil {
       final PsiImportList importList = ((PsiJavaFile)element.getContainingFile()).getImportList();
       if (importList != null) {
         final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
-        return Arrays.stream(importStaticStatements).anyMatch(stmt -> stmt.isOnDemand() && stmt.resolveTargetClass() == aClass);
+        return ContainerUtil.exists(importStaticStatements, stmt -> stmt.isOnDemand() && stmt.resolveTargetClass() == aClass);
       }
     }
     return false;
@@ -386,7 +387,9 @@ public final class RefactoringUtil {
     }
 
     if (!targetClass.isInterface()) {
-      PsiUtil.setModifierProperty(targetClass, PsiModifier.ABSTRACT, true);
+      if (!targetClass.isEnum()) {
+        PsiUtil.setModifierProperty(targetClass, PsiModifier.ABSTRACT, true);
+      }
       prepareForAbstract(method);
     }
     else {

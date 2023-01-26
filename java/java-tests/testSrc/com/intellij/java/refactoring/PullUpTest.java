@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -29,6 +29,10 @@ public class PullUpTest extends LightRefactoringTestCase {
 
   public void testQualifiedSuper() {
     doTest(new RefactoringTestUtil.MemberDescriptor("Inner", PsiClass.class));
+  }
+
+  public void testPullUpEnumMethodAndMakeAbstract() {
+    doTest(new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
   }
 
   public void testQualifiedReference() {     // IDEADEV-25008
