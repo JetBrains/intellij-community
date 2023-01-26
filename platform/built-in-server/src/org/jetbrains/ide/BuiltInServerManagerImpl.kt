@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
-import com.intellij.idea.getServerFutureAsync
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
@@ -14,7 +13,9 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
 import io.netty.bootstrap.ServerBootstrap
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
@@ -118,20 +119,8 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
       throw RuntimeException("Built-in server is disabled by `$PROPERTY_DISABLED` VM option")
     }
 
-    val mainServer = getServerFutureAsync().await()
     try {
-      server = if (mainServer == null) {
-        BuiltInServer.start(firstPort = defaultPort, portsCount = PORTS_COUNT, tryAnyPort = true)
-      }
-      else {
-        BuiltInServer.start(parentEventLoopGroup = mainServer.eventLoopGroup,
-                            childEventLoopGroup = mainServer.childEventLoopGroup,
-                            isEventLoopGroupOwner = false,
-                            firstPort = defaultPort,
-                            portsCount = PORTS_COUNT,
-                            tryAnyPort = true)
-      }
-
+      server = BuiltInServer.start(firstPort = defaultPort, portsCount = PORTS_COUNT, tryAnyPort = true)
       bindCustomPorts(server!!)
     }
     catch (e: Throwable) {
