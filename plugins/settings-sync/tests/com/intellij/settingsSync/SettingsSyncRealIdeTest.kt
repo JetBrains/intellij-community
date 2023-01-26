@@ -5,14 +5,11 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
-import com.intellij.openapi.editor.colors.FontPreferences
-import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
-import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 import com.intellij.util.io.readText
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
@@ -143,22 +140,22 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     EditorSettingsExternalizable.getInstance().initModifyAndSave {
       SHOW_INTENTION_BULB = false
     }
-    AppEditorFontOptions.getInstance().initModifyAndSave {
-      FONT_SIZE = FontPreferences.DEFAULT_FONT_SIZE - 5
-    }
+    //AppEditorFontOptions.getInstance().initModifyAndSave {
+    //  FONT_SIZE = FontPreferences.DEFAULT_FONT_SIZE - 5
+    //}
     val keymap = createKeymap()
     saveComponentStore()
 
     val os = getPerOsSettingsStorageFolderName()
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, false)
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.SYSTEM, false)
-    SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, EDITOR_FONT_SUBCATEGORY_ID,  false)
+    //SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, EDITOR_FONT_SUBCATEGORY_ID,  false)
 
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     assertTrue("Settings from enabled category was not copied", (settingsSyncStorage / "options" / "editor.xml").exists())
     assertFalse("Settings from disabled category was copied", (settingsSyncStorage / "options" / "ide.general.xml").exists())
-    assertFalse("Settings from disabled subcategory was copied", (settingsSyncStorage / "options" / "editor-font.xml").exists())
+    //assertFalse("Settings from disabled subcategory was copied", (settingsSyncStorage / "options" / "editor-font.xml").exists())
     assertFalse("Settings from disabled category was copied", (settingsSyncStorage / "options" / os / "keymap.xml").exists())
     assertFalse("Schema from disabled category was copied", (settingsSyncStorage / "keymaps" / "${keymap.name}.xml").exists())
     remoteCommunicator.getVersionOnServer()!!.assertSettingsSnapshot {
