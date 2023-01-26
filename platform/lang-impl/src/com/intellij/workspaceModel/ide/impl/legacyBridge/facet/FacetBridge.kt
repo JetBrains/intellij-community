@@ -24,7 +24,8 @@ interface FacetBridge<T : ModuleSettingsBase> {
    * @param entitySource which should be used for such entities
    */
   fun addToStorage(mutableStorage: MutableEntityStorage, moduleEntity: ModuleEntity, entitySource: EntitySource) {
-    val settingsEntity = config.initUnderlyingEntity(moduleEntity, entitySource)
+    config.init(moduleEntity, entitySource)
+    val settingsEntity = config.getEntity()
     mutableStorage.addEntity(settingsEntity)
     mutableStorage.mutableFacetMapping().addMapping(settingsEntity, this as Facet<*>)
   }
@@ -51,7 +52,7 @@ interface FacetBridge<T : ModuleSettingsBase> {
 
     if (null == existingFacetEntity) return
 
-    config.attachUnderlyingEntityToModule(moduleEntity)
+    config.setModule(moduleEntity)
   }
 
   /**
@@ -74,7 +75,7 @@ interface FacetBridge<T : ModuleSettingsBase> {
    * Update facet configuration base on the data from the related entity
    */
   fun updateFacetConfiguration(relatedEntity: T) {
-    config.updateUnderlyingEntity(relatedEntity)
+    config.update(relatedEntity)
   }
 
   private fun getFacetEntities(mutableStorage: MutableEntityStorage) = mutableStorage.facetMapping().getEntities(
@@ -98,29 +99,29 @@ interface FacetBridge<T : ModuleSettingsBase> {
 @ApiStatus.Internal
 interface FacetConfigurationBridge<T : ModuleSettingsBase> {
   /**
-   * Initializes this config settings from [moduleEntity] and [entitySource]. Returns an entity to add to the storage
+   * Initializes this config settings from [moduleEntity] and [entitySource]
    */
-  fun initUnderlyingEntity(moduleEntity: ModuleEntity, entitySource: EntitySource): T
+  fun init(moduleEntity: ModuleEntity, entitySource: EntitySource)
 
   /**
-   * Returns the entity used under the hood
+   * Returns the entity holding current configuration
    */
-  fun getUnderlyingEntity(): T
+  fun getEntity(): T
 
   /**
    * Updates this config settings from [diff]
    */
-  fun updateUnderlyingEntity(diff: T)
+  fun update(diff: T)
 
   /**
    * Updates this config name setting
    */
-  fun renameUnderlyingEntity(newName: String) {
-    (getUnderlyingEntity() as ModuleSettingsBase.Builder<*>).name = newName
+  fun rename(newName: String) {
+    (getEntity() as ModuleSettingsBase.Builder<*>).name = newName
   }
 
   /**
-   * Attaches the settings to [moduleEntity] module
+   * Attaches this config to [moduleEntity] module
    */
-  fun attachUnderlyingEntityToModule(moduleEntity: ModuleEntity)
+  fun setModule(moduleEntity: ModuleEntity)
 }
