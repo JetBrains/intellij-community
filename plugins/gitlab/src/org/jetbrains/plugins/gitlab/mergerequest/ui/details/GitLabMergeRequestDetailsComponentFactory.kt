@@ -23,11 +23,9 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabProjectDetailsLoader
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabTimelinesController
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
-import org.jetbrains.plugins.gitlab.providers.GitLabImageLoader
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -46,14 +44,12 @@ internal object GitLabMergeRequestDetailsComponentFactory {
         GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Loading -> LoadingLabel()
         is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error -> SimpleHtmlPane(loadingState.exception.localizedMessage)
         is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result -> {
-          val projectDetailsLoader = GitLabProjectDetailsLoader(connection)
           val avatarIconsProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(
-            AsyncImageIconsProvider(scope, GitLabImageLoader(connection.apiClient, connection.repo.repository.serverPath))
+            AsyncImageIconsProvider(scope, connection.imageLoader)
           )
           createDetailsComponent(
             scope,
             loadingState.detailsVm,
-            projectDetailsLoader,
             avatarIconsProvider,
             openTimeLineAction = { mergeRequestId, focus -> GitLabTimelinesController.openTimeline(project, repo, mergeRequestId, focus) }
           )
@@ -67,7 +63,6 @@ internal object GitLabMergeRequestDetailsComponentFactory {
   private fun createDetailsComponent(
     scope: CoroutineScope,
     detailsVm: GitLabMergeRequestDetailsViewModel,
-    projectDetailsLoader: GitLabProjectDetailsLoader,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
     openTimeLineAction: (GitLabMergeRequestId, Boolean) -> Unit
   ): JComponent {
@@ -123,7 +118,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
                  right = ReviewDetailsUIUtil.indentRight,
                  top = 4,
                  bottom = ReviewDetailsUIUtil.gapBetweenCheckAndActions))
-      add(GitLabMergeRequestDetailsActionsComponentFactory.create(scope, detailsReviewFlowVm, projectDetailsLoader, avatarIconsProvider),
+      add(GitLabMergeRequestDetailsActionsComponentFactory.create(scope, detailsReviewFlowVm, avatarIconsProvider),
           CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft - 2,
                            right = ReviewDetailsUIUtil.indentRight,
                            bottom = ReviewDetailsUIUtil.indentBottom))

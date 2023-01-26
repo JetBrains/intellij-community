@@ -9,7 +9,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
@@ -34,7 +36,8 @@ private val LOG = logger<GitLabDiscussion>()
 
 class LoadedGitLabDiscussion(
   parentCs: CoroutineScope,
-  private val connection: GitLabProjectConnection,
+  private val api: GitLabApi,
+  private val project: GitLabProjectCoordinates,
   private val eventSink: suspend (GitLabDiscussionEvent) -> Unit,
   private val mr: GitLabMergeRequestDTO,
   private val discussionData: GitLabDiscussionDTO
@@ -80,7 +83,7 @@ class LoadedGitLabDiscussion(
     loadedNotes
       .mapCaching(
         GitLabNoteDTO::id,
-        { LoadedGitLabNote(cs, connection, { noteEvents.emit(it) }, it) },
+        { LoadedGitLabNote(cs, api, project, { noteEvents.emit(it) }, it) },
         LoadedGitLabNote::destroy,
         LoadedGitLabNote::update
       )
@@ -101,8 +104,7 @@ class LoadedGitLabDiscussion(
       operationsGuard.withLock {
         val resolved = resolved.first()
         val result = withContext(Dispatchers.IO) {
-          connection.apiClient
-            .changeMergeRequestDiscussionResolve(connection.repo.repository, discussionData.id, !resolved).getResultOrThrow()
+          api.changeMergeRequestDiscussionResolve(project, discussionData.id, !resolved).getResultOrThrow()
         }
         noteEvents.emit(GitLabNoteEvent.Changed(result.notes))
       }
@@ -112,7 +114,7 @@ class LoadedGitLabDiscussion(
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        connection.apiClient.createReplyNote(connection.repo.repository, mr.id, id, body).getResultOrThrow()
+        api.createReplyNote(project, mr.id, id, body).getResultOrThrow()
       }.also {
         withContext(NonCancellable) {
           noteEvents.emit(GitLabNoteEvent.Added(it))

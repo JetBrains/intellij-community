@@ -10,7 +10,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
+import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -19,7 +20,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 
 private val LOG = logger<GitLabMergeRequest>()
 
-internal interface GitLabMergeRequest {
+interface GitLabMergeRequest {
   val title: Flow<String>
   val description: Flow<String>
   val targetBranch: Flow<String>
@@ -49,12 +50,11 @@ internal interface GitLabMergeRequest {
 
 internal class LoadedGitLabMergeRequest(
   parentScope: CoroutineScope,
-  connection: GitLabProjectConnection,
+  private val api: GitLabApi,
+  private val project: GitLabProjectCoordinates,
   mergeRequest: GitLabMergeRequestDTO
 ) : GitLabMergeRequest {
   private val scope = parentScope.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
-  private val api = connection.apiClient
-  private val project = connection.repo.repository
 
   private val mergeRequestState: MutableStateFlow<GitLabMergeRequestDTO> = MutableStateFlow(mergeRequest)
 

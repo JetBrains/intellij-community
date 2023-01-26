@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 
 internal interface GitLabMergeRequestDetailsViewModel {
   val detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel
@@ -14,9 +15,10 @@ internal interface GitLabMergeRequestDetailsViewModel {
 internal class GitLabMergeRequestDetailsViewModelImpl(
   scope: CoroutineScope,
   currentUser: GitLabUserDTO,
+  projectData: GitLabProject,
   mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestDetailsViewModel {
   override val detailsInfoVm = GitLabMergeRequestDetailsInfoViewModelImpl(mergeRequest)
-  override val detailsReviewFlowVm = GitLabMergeRequestReviewFlowViewModelImpl(scope, currentUser, mergeRequest)
+  override val detailsReviewFlowVm = GitLabMergeRequestReviewFlowViewModelImpl(scope, currentUser, projectData, mergeRequest)
   override val commitsVm = GitLabMergeRequestDetailsCommitsViewModelImpl(scope, mergeRequest)
 }

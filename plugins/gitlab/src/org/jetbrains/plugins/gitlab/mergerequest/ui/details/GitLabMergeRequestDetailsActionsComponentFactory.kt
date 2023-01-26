@@ -21,7 +21,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.*
-import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabProjectDetailsLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.event.ActionListener
@@ -35,15 +34,14 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
   fun create(
     scope: CoroutineScope,
     reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
-    projectDetailsLoader: GitLabProjectDetailsLoader,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
     return Wrapper().apply {
       bindContent(scope, reviewFlowVm.role.map { role ->
         when (role) {
-          ReviewRole.AUTHOR -> createActionsForAuthor(scope, reviewFlowVm, projectDetailsLoader, avatarIconsProvider)
+          ReviewRole.AUTHOR -> createActionsForAuthor(scope, reviewFlowVm, avatarIconsProvider)
           ReviewRole.REVIEWER -> createActionsForReviewer(scope, reviewFlowVm)
-          ReviewRole.GUEST -> createActionsForGuest(scope, reviewFlowVm, projectDetailsLoader, avatarIconsProvider)
+          ReviewRole.GUEST -> createActionsForGuest(scope, reviewFlowVm, avatarIconsProvider)
         }
       })
     }
@@ -52,10 +50,9 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
   private fun createActionsForAuthor(
     scope: CoroutineScope,
     reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
-    projectDetailsLoader: GitLabProjectDetailsLoader,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
-    val requestReviewAction = GitLabMergeRequestRequestReviewAction(scope, reviewFlowVm, projectDetailsLoader, avatarIconsProvider)
+    val requestReviewAction = GitLabMergeRequestRequestReviewAction(scope, reviewFlowVm, avatarIconsProvider)
     val mergeReviewAction = GitLabMergeRequestMergeAction(scope, reviewFlowVm)
     val closeReviewAction = GitLabMergeRequestCloseAction(scope, reviewFlowVm)
 
@@ -103,10 +100,9 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
   private fun createActionsForGuest(
     scope: CoroutineScope,
     reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
-    projectDetailsLoader: GitLabProjectDetailsLoader,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
-    val requestReviewAction = GitLabMergeRequestRequestReviewAction(scope, reviewFlowVm, projectDetailsLoader, avatarIconsProvider)
+    val requestReviewAction = GitLabMergeRequestRequestReviewAction(scope, reviewFlowVm, avatarIconsProvider)
     val mergeReviewAction = GitLabMergeRequestMergeAction(scope, reviewFlowVm)
     val closeReviewAction = GitLabMergeRequestCloseAction(scope, reviewFlowVm)
 

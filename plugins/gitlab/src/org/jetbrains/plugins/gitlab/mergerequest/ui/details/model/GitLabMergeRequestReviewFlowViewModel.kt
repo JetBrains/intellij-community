@@ -6,9 +6,11 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
 internal interface GitLabMergeRequestReviewFlowViewModel {
@@ -36,11 +38,15 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
   fun setReviewers(reviewers: List<GitLabUserDTO>)
 
   fun setMyselfAsReviewer()
+
+  //TODO: extract reviewers update VM
+  suspend fun getPotentialReviewers(): List<GitLabUserDTO>
 }
 
 internal class GitLabMergeRequestReviewFlowViewModelImpl(
   parentScope: CoroutineScope,
   override val currentUser: GitLabUserDTO,
+  private val projectData: GitLabProject,
   private val mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestReviewFlowViewModel {
   private val scope = parentScope.childScope()
@@ -103,6 +109,21 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
         if (e is CancellationException) throw e
         //TODO: handle???
       }
+    }
+  }
+
+  override suspend fun getPotentialReviewers(): List<GitLabUserDTO> {
+    return projectData.getMembers()
+      .filter { member -> isValidMergeRequestAccessLevel(member.accessLevel) }
+      .map { member -> member.user }
+  }
+
+  companion object {
+    private fun isValidMergeRequestAccessLevel(accessLevel: GitLabAccessLevel): Boolean {
+      return accessLevel == GitLabAccessLevel.REPORTER ||
+             accessLevel == GitLabAccessLevel.DEVELOPER ||
+             accessLevel == GitLabAccessLevel.MAINTAINER ||
+             accessLevel == GitLabAccessLevel.OWNER
     }
   }
 }

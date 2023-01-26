@@ -8,10 +8,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.transformLatest
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
-import org.jetbrains.plugins.gitlab.api.getResultOrThrow
+import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.LoadedGitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel.LoadingState
 
@@ -31,12 +32,12 @@ internal interface GitLabMergeRequestDetailsLoadingViewModel {
 
 internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
   parentScope: CoroutineScope,
-  connection: GitLabProjectConnection,
+  currentUser: GitLabUserDTO,
+  api: GitLabApi,
+  projectData: GitLabProject,
   private val mergeRequestId: GitLabMergeRequestId
 ) : GitLabMergeRequestDetailsLoadingViewModel {
   private val scope = parentScope.childScope(Dispatchers.Default)
-  private val api = connection.apiClient
-  private val project = connection.repo.repository
 
   private val loadingRequests = MutableSharedFlow<Unit>(1)
 
@@ -47,10 +48,10 @@ internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
     coroutineScope {
       val result = try {
         val data = scope.async(Dispatchers.IO) {
-          api.loadMergeRequest(project, mergeRequestId)
+          api.loadMergeRequest(projectData.coordinates, mergeRequestId)
         }
-        val mergeRequest = LoadedGitLabMergeRequest(scope, connection, data.await().body()!!)
-        val detailsVm = GitLabMergeRequestDetailsViewModelImpl(scope, connection.currentUser, mergeRequest)
+        val mergeRequest = LoadedGitLabMergeRequest(scope, api, projectData.coordinates, data.await().body()!!)
+        val detailsVm = GitLabMergeRequestDetailsViewModelImpl(scope, currentUser, projectData, mergeRequest)
         LoadingState.Result(detailsVm)
       }
       catch (ce: CancellationException) {

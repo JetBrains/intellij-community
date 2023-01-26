@@ -10,7 +10,7 @@ import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabProjectDetailsLoader
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue
 
@@ -34,7 +34,7 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
   historyModel: GitLabMergeRequestsFiltersHistoryModel,
   override val currentUser: GitLabUserDTO,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-  private val projectDetailsLoader: GitLabProjectDetailsLoader
+  private val projectData: GitLabProject
 ) : GitLabMergeRequestsFiltersViewModel,
     ReviewListSearchPanelViewModelBase<GitLabMergeRequestsFiltersValue, GitLabMergeRequestsQuickFilter>(
       scope,
@@ -74,11 +74,10 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
     copy(label = it)
   }
 
-  override suspend fun getLabels(): List<GitLabLabelDTO> = projectDetailsLoader.projectLabels()
+  override suspend fun getLabels(): List<GitLabLabelDTO> = projectData.getLabels()
 
-  override suspend fun getMergeRequestMembers(): List<GitLabMemberDTO> = projectDetailsLoader.projectMembers().filter { member ->
-    isValidMergeRequestAccessLevel(member.accessLevel)
-  }
+  override suspend fun getMergeRequestMembers(): List<GitLabMemberDTO> =
+    projectData.getMembers().filter { isValidMergeRequestAccessLevel(it.accessLevel) }
 
   companion object {
     private fun isValidMergeRequestAccessLevel(accessLevel: GitLabAccessLevel): Boolean {

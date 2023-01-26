@@ -26,7 +26,6 @@ import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabMergeRequestsListLoader
-import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabProjectDetailsLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
@@ -62,7 +61,11 @@ internal class GitLabReviewTabComponentFactory(private val project: Project) {
     connection: GitLabProjectConnection,
     reviewTab: GitLabReviewTab.ReviewSelected
   ): JComponent {
-    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(cs, connection, reviewTab.reviewId).apply {
+    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(cs,
+                                                                        connection.currentUser,
+                                                                        connection.apiClient,
+                                                                        connection.projectData,
+                                                                        reviewTab.reviewId).apply {
       requestLoad()
     }
 
@@ -79,7 +82,7 @@ internal class GitLabReviewTabComponentFactory(private val project: Project) {
       currentUser = connection.currentUser,
       historyModel = GitLabMergeRequestsFiltersHistoryModel(GitLabMergeRequestsPersistentFiltersHistory()),
       avatarIconsProvider = avatarIconsProvider,
-      projectDetailsLoader = GitLabProjectDetailsLoader(connection)
+      projectData = connection.projectData
     )
 
     val listVm: GitLabMergeRequestsListViewModel = GitLabMergeRequestsListViewModelImpl(

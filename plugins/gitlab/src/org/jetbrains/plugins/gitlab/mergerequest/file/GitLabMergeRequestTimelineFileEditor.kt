@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.DisposingScope
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
@@ -15,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
-import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.providers.GitLabImageLoader
@@ -34,7 +34,11 @@ internal class GitLabMergeRequestTimelineFileEditor(private val project: Project
   private val cs = DisposingScope(this)
 
   private val component = run {
-    val vm = LoadAllGitLabMergeRequestTimelineViewModel(cs, connection, file.mergeRequestId)
+    val vm = LoadAllGitLabMergeRequestTimelineViewModel(cs,
+                                                        connection.currentUser,
+                                                        connection.apiClient,
+                                                        connection.repo.repository,
+                                                        file.mergeRequestId)
     val userIconsProvider = CachingIconsProvider(
       AsyncImageIconsProvider(cs, GitLabImageLoader(connection.apiClient, connection.repo.repository.serverPath))
     )

@@ -9,7 +9,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
@@ -25,7 +27,8 @@ private val LOG = logger<GitLabMergeRequestDiscussionsContainer>()
 
 class GitLabMergeRequestDiscussionsContainerImpl(
   parentCs: CoroutineScope,
-  private val connection: GitLabProjectConnection,
+  private val api: GitLabApi,
+  private val project: GitLabProjectCoordinates,
   private val mr: GitLabMergeRequestDTO
 ) : GitLabMergeRequestDiscussionsContainer {
 
@@ -60,7 +63,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       .mapFiltered { !it.notes.first().system }
       .mapCaching(
         GitLabDiscussionDTO::id,
-        { LoadedGitLabDiscussion(cs, connection, { discussionEvents.emit(it) }, mr, it) },
+        { LoadedGitLabDiscussion(cs, api, project, { discussionEvents.emit(it) }, mr, it) },
         LoadedGitLabDiscussion::destroy
       )
       .modelFlow(cs, LOG)
@@ -72,7 +75,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
 
   private suspend fun loadNonEmptyDiscussions(): List<GitLabDiscussionDTO> =
     ApiPageUtil.createGQLPagesFlow {
-      connection.apiClient.loadMergeRequestDiscussions(connection.repo.repository, mr, it)
+      api.loadMergeRequestDiscussions(project, mr, it)
     }.map { discussions ->
       discussions.filter { it.notes.isNotEmpty() }
     }.foldToList()
@@ -80,7 +83,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        connection.apiClient.addNote(connection.repo.repository, mr.id, body).getResultOrThrow()
+        api.addNote(project, mr.id, body).getResultOrThrow()
       }.also {
         withContext(NonCancellable) {
           discussionEvents.emit(GitLabDiscussionEvent.Added(it))
