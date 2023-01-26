@@ -147,7 +147,8 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
     allFacets.filter { it is FacetBridge<*> }
       .forEach { facet ->
         facet as FacetBridge<*>
-        facet.applyChangesToStorage(diff, facet.module as ModuleBridge)
+        facet.attachToModule(diff, facet.module as ModuleBridge)
+        facet.applyChangesToStorage(diff)
       }
   }
 
