@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -26,7 +26,7 @@ public interface DocumentationLinkHandler {
   }
 
   /**
-   * Implement this method to load some additional data when a link is activated,
+   * Implement this method to support loading some additional data when a link is activated,
    * and then to update the documentation browser content with the loaded data.
    *
    * @return a stream of updates, which should be applied to the existing content,
