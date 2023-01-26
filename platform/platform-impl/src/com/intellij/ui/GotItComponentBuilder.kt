@@ -428,7 +428,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
     @JvmStatic
     fun getArrowShift(): Int {
-      return JBUIScale.scale(20) + Registry.intValue("ide.balloon.shadow.size") + JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get()
+      return JBUIScale.scale(15) + JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get()
     }
 
     // returns dark icon if GotIt tooltip background is dark
