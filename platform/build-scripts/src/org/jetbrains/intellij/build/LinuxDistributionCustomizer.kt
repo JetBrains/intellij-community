@@ -31,7 +31,7 @@ abstract class LinuxDistributionCustomizer {
     )
     executableFilePatterns.addAll(RepairUtilityBuilder.executableFilesPatterns(context))
     if (includeRuntime) {
-      executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, context))
+      executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, context.productProperties.runtimeDistribution))
     }
     return executableFilePatterns
       .addAll(extraExecutables)
