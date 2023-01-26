@@ -61,13 +61,6 @@ interface FacetBridge<T : ModuleSettingsBase> {
     config.updateData(rootEntity)
   }
 
-  /**
-   * Method returns the entity which is used under the hood of this [FacetBridge]
-   */
-  fun getRootEntity(): T {
-    return config.getFacetEntity()
-  }
-
   private fun getFacetEntities(mutableStorage: MutableEntityStorage) = mutableStorage.facetMapping().getEntities(
     this as Facet<*>).map { it as T }
 
@@ -101,7 +94,7 @@ interface FacetConfigurationBridge<T : ModuleSettingsBase> {
   /**
    * Returns the entity used under the hood
    */
-  fun getFacetEntity(): T
+  fun getUnderlyingEntity(): T
 
   /**
    * Updates this config settings from [rootEntity]
@@ -112,6 +105,6 @@ interface FacetConfigurationBridge<T : ModuleSettingsBase> {
    * Updates this config name setting
    */
   fun rename(newName: String) {
-    (getFacetEntity() as ModuleSettingsBase.Builder<*>).name = newName
+    (getUnderlyingEntity() as ModuleSettingsBase.Builder<*>).name = newName
   }
 }
