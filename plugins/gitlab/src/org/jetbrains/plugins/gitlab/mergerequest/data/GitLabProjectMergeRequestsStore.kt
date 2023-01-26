@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
+import com.intellij.collaboration.api.page.SequentialListLoader
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -10,9 +11,13 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabMergeRequestsListLoader
 import java.util.concurrent.ConcurrentHashMap
 
 interface GitLabProjectMergeRequestsStore {
+
+  fun getListLoader(searchQuery: String): SequentialListLoader<GitLabMergeRequestDetails>
+
   /**
    * @return a handle for result of loading a shared MR model
    */
@@ -25,11 +30,15 @@ class CachingGitLabProjectMergeRequestsStore(parentCs: CoroutineScope,
 
   private val cs = parentCs.childScope()
 
-  private val cache = ConcurrentHashMap<GitLabMergeRequestId, SharedFlow<Result<GitLabMergeRequest>>>()
+  private val models = ConcurrentHashMap<GitLabMergeRequestId, SharedFlow<Result<GitLabMergeRequest>>>()
+
+  override fun getListLoader(searchQuery: String): SequentialListLoader<GitLabMergeRequestDetails> {
+    return GitLabMergeRequestsListLoader(api, project, searchQuery)
+  }
 
   override fun getShared(id: GitLabMergeRequestId): SharedFlow<Result<GitLabMergeRequest>> {
     val simpleId = GitLabMergeRequestId.Simple(id)
-    return cache.getOrPut(simpleId) {
+    return models.getOrPut(simpleId) {
       channelFlow {
         val result = runCatching {
           val mrData = withContext(Dispatchers.IO) {
@@ -39,7 +48,7 @@ class CachingGitLabProjectMergeRequestsStore(parentCs: CoroutineScope,
         }
         send(result)
         awaitClose()
-      }.onCompletion { cache.remove(simpleId) }
+      }.onCompletion { models.remove(simpleId) }
         .shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
       // this the model will only be alive while it's needed
     }
