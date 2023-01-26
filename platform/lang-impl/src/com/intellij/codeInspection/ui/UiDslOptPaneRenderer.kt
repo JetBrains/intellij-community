@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui
 
 import com.intellij.codeInsight.hint.HintManager
@@ -268,7 +268,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         }
 
         is OptSettingLink -> {
-          val label = HyperlinkLabel(component.displayName)
+          val label = HyperlinkLabel(component.displayName.label())
           label.addHyperlinkListener {
             val dataContext = DataManager.getInstance().getDataContext(label)
 
