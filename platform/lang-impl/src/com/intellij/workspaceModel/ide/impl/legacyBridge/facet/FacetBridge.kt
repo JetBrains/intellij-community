@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface FacetBridge<T : ModuleSettingsBase> {
   /**
-   * Add root entity which [FacetBridge] uses under the hood, into the storage
+   * Add root entity which [FacetBridge] uses under the hood, to [mutableStorage]
    * @param mutableStorage for saving root entity and it's children in it
    * @param moduleEntity corresponds to this [FacetBridge]
    * @param entitySource which should be used for such entities
@@ -30,16 +30,11 @@ interface FacetBridge<T : ModuleSettingsBase> {
   }
 
   /**
-   * Removes all associated with this bridge entities from the storage
+   * Removes all associated with this bridge entities from [mutableStorage]
    */
   fun removeFromStorage(mutableStorage: MutableEntityStorage) {
     getFacetEntities(mutableStorage).forEach { mutableStorage.removeEntity(it) }
   }
-
-  /**
-   * Rename entity associated with this bridge
-   */
-  fun rename(mutableStorage: MutableEntityStorage, newName: String)
 
   /**
    * Applies changes from the underlying entity to [mutableStorage]
@@ -53,6 +48,11 @@ interface FacetBridge<T : ModuleSettingsBase> {
    * Applies changes from the underlying entity to [existingFacetEntity] in [mutableStorage]
    */
   fun updateExistingEntityInStorage(existingFacetEntity: T, mutableStorage: MutableEntityStorage)
+
+  /**
+   * Rename entity associated with this bridge
+   */
+  fun rename(mutableStorage: MutableEntityStorage, newName: String)
 
   /**
    * Update facet configuration base on the data from the related entity
@@ -82,22 +82,22 @@ interface FacetBridge<T : ModuleSettingsBase> {
 @ApiStatus.Internal
 interface FacetConfigurationBridge<T : ModuleSettingsBase> {
   /**
-   * Initializes this config settings from [moduleEntity] and [entitySource]
+   * Initializes this config settings with [moduleEntity] and [entitySource]
    */
   fun init(moduleEntity: ModuleEntity, entitySource: EntitySource)
 
   /**
-   * Returns the entity holding current configuration
+   * Updates this config settings from [diffEntity]
    */
-  fun getEntity(): T
-
-  /**
-   * Updates this config settings from [diff]
-   */
-  fun update(diff: T)
+  fun update(diffEntity: T)
 
   /**
    * Updates this config name setting
    */
   fun rename(newName: String)
+
+  /**
+   * Returns the entity holding current configuration
+   */
+  fun getEntity(): T
 }
