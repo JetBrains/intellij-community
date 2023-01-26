@@ -1,81 +1,125 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui
 
-import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
+import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
+import com.intellij.collaboration.ui.icon.CachingIconsProvider
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.content.Content
-import com.intellij.util.childScope
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
+import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
+import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowTabViewModel.NestedViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestController
+import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabMergeRequestsListLoader
+import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabProjectDetailsLoader
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsPersistentFiltersHistory
+import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsPanelFactory
+import org.jetbrains.plugins.gitlab.providers.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-internal class GitLabToolWindowTabController(private val project: Project,
-                                             parentCs: CoroutineScope,
-                                             tabVm: GitLabToolWindowTabViewModel,
-                                             private val content: Content) {
+internal class GitLabReviewTabComponentFactory(
+  private val project: Project,
+  private val reviewTabsController: GitLabReviewTabsController
+) {
+  private val projectsManager = project.service<GitLabProjectsManager>()
+  private val accountManager = service<GitLabAccountManager>()
+  private val connectionManager = project.service<GitLabProjectConnectionManager>()
 
-  private val cs = parentCs.childScope(Dispatchers.Main)
-
-  init {
-    cs.launch {
-      tabVm.nestedViewModelState.collectScoped { scope, vm ->
-        content.displayName = GitLabBundle.message("title.merge.requests")
-
-        val component = when (vm) {
-          is NestedViewModel.Selectors -> createSelectorsComponent(scope, vm)
-          is NestedViewModel.MergeRequests -> createMergeRequestsComponent(project, scope, vm)
-        }
-
-        CollaborationToolsUIUtil.setComponentPreservingFocus(content, component)
-      }
+  fun createComponent(
+    cs: CoroutineScope,
+    connection: GitLabProjectConnection,
+    reviewTab: GitLabReviewTab
+  ): JComponent {
+    return when (reviewTab) {
+      GitLabReviewTab.ReviewList -> createReviewListComponent(cs, connection)
+      is GitLabReviewTab.ReviewSelected -> TODO()
     }
   }
 
-  private fun createSelectorsComponent(scope: CoroutineScope, vm: NestedViewModel.Selectors): JComponent {
-    val accountsDetailsProvider = GitLabAccountsDetailsProvider(scope) {
+  private fun createReviewListComponent(cs: CoroutineScope, connection: GitLabProjectConnection): JComponent {
+    val avatarIconsProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(
+      AsyncImageIconsProvider(cs, GitLabImageLoader(connection.apiClient, connection.repo.repository.serverPath))
+    )
+
+    val filterVm: GitLabMergeRequestsFiltersViewModel = GitLabMergeRequestsFiltersViewModelImpl(
+      cs,
+      currentUser = connection.currentUser,
+      historyModel = GitLabMergeRequestsFiltersHistoryModel(GitLabMergeRequestsPersistentFiltersHistory()),
+      avatarIconsProvider = avatarIconsProvider,
+      projectDetailsLoader = GitLabProjectDetailsLoader(connection)
+    )
+
+    val listVm: GitLabMergeRequestsListViewModel = GitLabMergeRequestsListViewModelImpl(
+      cs,
+      filterVm = filterVm,
+      repository = connection.repo.repository.projectPath.name,
+      account = connection.account,
+      avatarIconsProvider = avatarIconsProvider,
+      accountManager = accountManager,
+      tokenRefreshFlow = connection.tokenRefreshFlow,
+      loaderSupplier = { filtersValue ->
+        GitLabMergeRequestsListLoader(connection.apiClient, connection.repo.repository, filtersValue.toSearchQuery())
+      }
+    )
+
+    return GitLabMergeRequestsPanelFactory().create(project, cs, listVm)
+  }
+
+  fun createEmptyContent(cs: CoroutineScope): JComponent {
+    return createSelectorsComponent(cs)
+  }
+
+  private fun createSelectorsComponent(cs: CoroutineScope): JComponent {
+    // TODO: move vm creation to another place
+    val selectorVm = GitLabRepositoryAndAccountSelectorViewModel(cs, projectsManager, accountManager, onSelected = { mapping, account ->
+      withContext(cs.coroutineContext) {
+        connectionManager.openConnection(mapping, account)
+      }
+    })
+
+    val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs) {
       // TODO: separate loader
       service<GitLabAccountManager>().findCredentials(it)?.let(service<GitLabApiManager>()::getClient)
     }
 
-    val selectorVm = vm.selectorVm
     val selectors = RepositoryAndAccountSelectorComponentFactory(selectorVm).create(
-      scope = scope,
+      scope = cs,
       repoNamer = { mapping ->
-        val allProjects = vm.selectorVm.repositoriesState.value.map { it.repository }
+        val allProjects = selectorVm.repositoriesState.value.map { it.repository }
         getProjectDisplayName(allProjects, mapping.repository)
       },
       detailsProvider = accountsDetailsProvider,
       accountsPopupActionsSupplier = { createPopupLoginActions(selectorVm, it) },
       submitActionText = GitLabBundle.message("view.merge.requests.button"),
-      loginButtons = createLoginButtons(scope, selectorVm),
-      errorPresenter = GitLabSelectorErrorStatusPresenter(project, scope, selectorVm.accountManager) {
+      loginButtons = createLoginButtons(cs, selectorVm),
+      errorPresenter = GitLabSelectorErrorStatusPresenter(project, cs, selectorVm.accountManager) {
         selectorVm.submitSelection()
       }
     )
 
-    scope.launch {
+    cs.launch {
       selectorVm.loginRequestsFlow.collect { req ->
         val account = req.account
         if (account == null) {
@@ -96,12 +140,6 @@ internal class GitLabToolWindowTabController(private val project: Project,
     return JPanel(BorderLayout()).apply {
       add(selectors, BorderLayout.NORTH)
     }
-  }
-
-  private fun createMergeRequestsComponent(project: Project, scope: CoroutineScope, vm: NestedViewModel.MergeRequests): JComponent {
-    val wrapper = Wrapper()
-    GitLabMergeRequestController(project, scope, vm, wrapper)
-    return wrapper
   }
 
   private fun createLoginButtons(scope: CoroutineScope, vm: GitLabRepositoryAndAccountSelectorViewModel)

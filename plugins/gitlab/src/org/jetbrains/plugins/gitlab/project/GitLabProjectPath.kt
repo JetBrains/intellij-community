@@ -7,7 +7,7 @@ import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitHostingUrlUtil
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 
-data class GitLabProjectPath(val owner: String, val name: String) {
+data class GitLabProjectPath(val owner: @NlsSafe String, val name: @NlsSafe String) {
   @NlsSafe
   fun fullPath(): String = "$owner/$name"
 

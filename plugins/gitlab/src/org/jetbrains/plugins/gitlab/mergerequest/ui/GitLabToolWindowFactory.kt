@@ -2,19 +2,14 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui
 
 import com.intellij.collaboration.async.DisposingMainScope
-import com.intellij.collaboration.async.DisposingScope
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.ui.content.Content
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import javax.swing.JPanel
 
 internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(toolWindow: ToolWindow) {
@@ -28,25 +23,9 @@ internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
-    with(toolWindow.contentManager) {
-      val content = factory.createContent(JPanel(null), null, false).apply {
-        isCloseable = false
-      }
-      configureContent(project, content)
-      addContent(content)
-    }
-  }
 
-  private fun configureContent(project: Project, content: Content) {
-    val scope = DisposingScope(content)
-    val projectsManager = project.service<GitLabProjectsManager>()
-    val accountManager = service<GitLabAccountManager>()
-
-    val connectionManager = project.service<GitLabProjectConnectionManager>()
-
-    val vm = GitLabToolWindowTabViewModel(scope, connectionManager, projectsManager, accountManager)
-
-    GitLabToolWindowTabController(project, scope, vm, content)
+    GitLabToolwindowTabsManager.showGitLabToolwindowContent(project, toolWindow.contentManager)
+    // TODO: introduce account changing action under gear
   }
 
   override fun shouldBeAvailable(project: Project): Boolean = false
