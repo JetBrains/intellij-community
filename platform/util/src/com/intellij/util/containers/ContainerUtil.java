@@ -174,17 +174,15 @@ public final class ContainerUtil {
     }
 
     return new AbstractList<T>() {
-      private final int size = end - start;
-
       @Override
       public T get(int index) {
-        if (index < 0 || index >= size) throw new IndexOutOfBoundsException("index:" + index + " size:" + size);
+        if (index < 0 || index >= end - start) throw new IndexOutOfBoundsException("index:" + index + " size:" + (end - start));
         return elements[start + index];
       }
 
       @Override
       public int size() {
-        return size;
+        return end - start;
       }
     };
   }
