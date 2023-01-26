@@ -377,7 +377,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       @Override
       public @NotNull List<EventPair<?>> getEventData() {
         return List.of(UsageViewStatisticsCollector.PRIMARY_TARGET.with(handler.getPsiElement().getClass()),
-                       EventFields.Language.with(handler.getPsiElement().getLanguage()));
+                       EventFields.Language.with(handler.getPsiElement().getLanguage()),
+                       UsageViewStatisticsCollector.NUMBER_OF_TARGETS.with(
+                         handler.getPrimaryElements().length + handler.getSecondaryElements().length));
       }
     };
   }
@@ -387,8 +389,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     Project project = parameters.project;
     UsageViewImpl usageView = createUsageView(project);
-    UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup,
-                                                  actionHandler.getTargetLanguage(), actionHandler.getTargetClass());
+    UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup, actionHandler.getEventData());
     final SearchScope searchScope = actionHandler.getSelectedScope();
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();

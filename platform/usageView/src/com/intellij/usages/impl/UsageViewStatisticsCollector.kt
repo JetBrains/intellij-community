@@ -20,7 +20,6 @@ import com.intellij.usages.Usage
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageView
 import com.intellij.usages.rules.PsiElementUsage
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.Nls
 
 enum class CodeNavigateSource {
@@ -38,7 +37,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 17)
+    val GROUP = EventLogGroup("usage.view", 18)
     val USAGE_VIEW = object : PrimitiveEventField<UsageView?>() {
       override val name: String = "usage_view"
 
@@ -52,6 +51,8 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
 
     @JvmField
     val PRIMARY_TARGET = EventFields.Class("primary_target")
+    @JvmField
+    val NUMBER_OF_TARGETS = EventFields.Int("number_of_targets")
     private val REFERENCE_CLASS = EventFields.Class("reference_class")
     private val UI_LOCATION = EventFields.Enum("ui_location", CodeNavigateSource::class.java)
     private val USAGE_SHOWN = GROUP.registerVarargEvent("usage.shown", USAGE_VIEW, REFERENCE_CLASS, EventFields.Language, UI_LOCATION)
@@ -70,7 +71,8 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val TOO_MANY_RESULTS = EventFields.Boolean("too_many_result_warning")
     private val IS_SIMILAR_USAGE = EventFields.Boolean("is_similar_usage")
 
-    private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION, EventFields.Language, PRIMARY_TARGET)
+    private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION, EventFields.Language, PRIMARY_TARGET,
+                                                          NUMBER_OF_TARGETS)
 
     private val searchCancelled = GROUP.registerVarargEvent("cancelled",
                                                             SYMBOL_CLASS,
@@ -108,9 +110,8 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val OPEN_IN_FIND_TOOL_WINDOW = GROUP.registerEvent("open.in.tool.window", USAGE_VIEW)
     private val USER_ACTION = EventFields.Enum("userAction", TooManyUsagesUserAction::class.java)
     private val ITEM_CHOSEN = EventFields.Boolean("item_chosen")
-    private val popupClosed = GROUP.registerVarargEvent(
-      "popup.closed", USAGE_VIEW, ITEM_CHOSEN, PRIMARY_TARGET, EventFields.Language, REFERENCE_CLASS, EventFields.DurationMs
-    )
+    private val popupClosed = GROUP.registerVarargEvent("popup.closed", USAGE_VIEW, ITEM_CHOSEN, PRIMARY_TARGET, NUMBER_OF_TARGETS,
+                                                        EventFields.Language, REFERENCE_CLASS, EventFields.DurationMs)
     private val tooManyUsagesDialog = GROUP.registerVarargEvent("tooManyResultsDialog",
       USAGE_VIEW,
       USER_ACTION,
@@ -123,14 +124,21 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     fun logSearchStarted(project: Project?,
                          usageView: UsageView,
                          source: CodeNavigateSource,
-                         language: Language?,
-                         psiElement: PsiElement?) {
-      logSearchStarted(project, usageView, source, language, psiElement?.javaClass)
+                         showUsagesHandlerEventData: List<EventPair<*>>) {
+      val data = mutableListOf(USAGE_VIEW.with(usageView), UI_LOCATION.with(source))
+      data.addAll(showUsagesHandlerEventData)
+      searchStarted.log(project, data)
     }
 
     @JvmStatic
-    fun logSearchStarted(project: Project?, usageView: UsageView, source: CodeNavigateSource, language: Language?, referenceClass: Class<out Any>?) {
-      searchStarted.log(project, USAGE_VIEW.with(usageView), UI_LOCATION.with(source), EventFields.Language.with(language), PRIMARY_TARGET.with(referenceClass))
+    fun logSearchStarted(project: Project?,
+                         usageView: UsageView,
+                         source: CodeNavigateSource,
+                         language: Language?,
+                         psiElement: PsiElement?,
+                         numberOfTargets: Int) {
+      searchStarted.log(project, USAGE_VIEW.with(usageView), UI_LOCATION.with(source), EventFields.Language.with(language),
+                        PRIMARY_TARGET.with(psiElement?.javaClass), NUMBER_OF_TARGETS.with(numberOfTargets))
     }
 
     @JvmStatic
