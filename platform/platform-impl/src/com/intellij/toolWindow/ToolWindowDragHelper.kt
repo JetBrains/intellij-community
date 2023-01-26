@@ -291,7 +291,10 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
         bounds.location = bounds.location.also { SwingUtilities.convertPointFromScreen(it, lastDropTargetPane!!.rootPane.layeredPane) }
 
-        val dropToSide = targetStripe.getDropToSide()
+        var dropToSide = targetStripe.getDropToSide()
+        if (dropToSide == null && isNewUi) {
+          dropToSide = false
+        }
         if (dropToSide != null) {
           val half = if (targetStripe.anchor.isHorizontal) bounds.width / 2 else bounds.height / 2
           if (!targetStripe.anchor.isHorizontal) {
