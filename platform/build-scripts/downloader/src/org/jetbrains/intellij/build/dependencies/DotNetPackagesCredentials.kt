@@ -15,9 +15,11 @@ object DotNetPackagesCredentials {
   fun setupSystemCredentials(): Boolean {
     try {
       if (loadFromEnvVars()) {
+        println("* DotNet packages credentials loaded from environment variable")
         return true
       }
       if (loadFromNuGetConfig()) {
+        println("* DotNet packages credentials loaded from NuGet.Config")
         return true
       }
     }
@@ -26,6 +28,7 @@ object DotNetPackagesCredentials {
       t.printStackTrace(PrintWriter(writer))
       error(writer.buffer.toString())
     }
+    println("* DotNet packages credentials not loaded")
     return false
   }
 
