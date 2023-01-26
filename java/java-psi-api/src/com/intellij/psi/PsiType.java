@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -26,34 +27,34 @@ import org.jetbrains.annotations.*;
 public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType {
   /** @deprecated use {@link PsiTypes#byteType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated @ApiStatus.ScheduledForRemoval
-  public static final PsiPrimitiveType BYTE = PsiTypes.byteType();
+  public static final PsiPrimitiveType BYTE = new PsiPrimitiveType(JvmPrimitiveTypeKind.BYTE);
   /** @deprecated use {@link PsiTypes#charType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated @ApiStatus.ScheduledForRemoval
-  public static final PsiPrimitiveType CHAR = PsiTypes.charType();
+  public static final PsiPrimitiveType CHAR = new PsiPrimitiveType(JvmPrimitiveTypeKind.CHAR);
   /** @deprecated use {@link PsiTypes#doubleType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated @ApiStatus.ScheduledForRemoval
-  public static final PsiPrimitiveType DOUBLE = PsiTypes.doubleType();
+  public static final PsiPrimitiveType DOUBLE = new PsiPrimitiveType(JvmPrimitiveTypeKind.DOUBLE);
   /** @deprecated use {@link PsiTypes#floatType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated @ApiStatus.ScheduledForRemoval
-  public static final PsiPrimitiveType FLOAT = PsiTypes.floatType();
+  public static final PsiPrimitiveType FLOAT = new PsiPrimitiveType(JvmPrimitiveTypeKind.FLOAT);
   /** @deprecated use {@link PsiTypes#intType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated @ApiStatus.ScheduledForRemoval
-  public static final PsiPrimitiveType INT = PsiTypes.intType();
+  public static final PsiPrimitiveType INT = new PsiPrimitiveType(JvmPrimitiveTypeKind.INT);
   /** @deprecated use {@link PsiTypes#longType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated @ApiStatus.ScheduledForRemoval
-  public static final PsiPrimitiveType LONG = PsiTypes.longType();
+  public static final PsiPrimitiveType LONG = new PsiPrimitiveType(JvmPrimitiveTypeKind.LONG);
   /** @deprecated use {@link PsiTypes#shortType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated @ApiStatus.ScheduledForRemoval
-  public static final PsiPrimitiveType SHORT = PsiTypes.shortType();
+  public static final PsiPrimitiveType SHORT = new PsiPrimitiveType(JvmPrimitiveTypeKind.SHORT);
   /** @deprecated use {@link PsiTypes#booleanType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated @ApiStatus.ScheduledForRemoval
-  public static final PsiPrimitiveType BOOLEAN = PsiTypes.booleanType();
+  public static final PsiPrimitiveType BOOLEAN = new PsiPrimitiveType(JvmPrimitiveTypeKind.BOOLEAN);
   /** @deprecated use {@link PsiTypes#voidType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated @ApiStatus.ScheduledForRemoval
-  public static final PsiPrimitiveType VOID = PsiTypes.voidType();
+  public static final PsiPrimitiveType VOID = new PsiPrimitiveType(JvmPrimitiveTypeKind.VOID);
   /** @deprecated use {@link PsiTypes#nullType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated @ApiStatus.ScheduledForRemoval
-  public static final PsiPrimitiveType NULL = (PsiPrimitiveType)PsiTypes.nullType();
+  public static final PsiPrimitiveType NULL = new PsiPrimitiveType(null);
 
   public static final PsiType[] EMPTY_ARRAY = new PsiType[0];
   public static final ArrayFactory<PsiType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiType[count];

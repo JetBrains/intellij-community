@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
-import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.psi.PsiType.*;
+
+@SuppressWarnings("deprecation")
 public final class PsiTypes {
   /** 
    * Returns instance corresponding to {@code byte} type. 
@@ -74,17 +76,6 @@ public final class PsiTypes {
   public static @NotNull PsiType nullType() { 
     return NULL;
   }
-
-  private static final PsiPrimitiveType BYTE = new PsiPrimitiveType(JvmPrimitiveTypeKind.BYTE);
-  private static final PsiPrimitiveType CHAR = new PsiPrimitiveType(JvmPrimitiveTypeKind.CHAR);
-  private static final PsiPrimitiveType DOUBLE = new PsiPrimitiveType(JvmPrimitiveTypeKind.DOUBLE);
-  private static final PsiPrimitiveType FLOAT = new PsiPrimitiveType(JvmPrimitiveTypeKind.FLOAT);
-  private static final PsiPrimitiveType INT = new PsiPrimitiveType(JvmPrimitiveTypeKind.INT);
-  private static final PsiPrimitiveType LONG = new PsiPrimitiveType(JvmPrimitiveTypeKind.LONG);
-  private static final PsiPrimitiveType SHORT = new PsiPrimitiveType(JvmPrimitiveTypeKind.SHORT);
-  private static final PsiPrimitiveType BOOLEAN = new PsiPrimitiveType(JvmPrimitiveTypeKind.BOOLEAN);
-  private static final PsiPrimitiveType VOID = new PsiPrimitiveType(JvmPrimitiveTypeKind.VOID);
-  private static final PsiPrimitiveType NULL = new PsiPrimitiveType(null);
   
   private PsiTypes() {
   }
