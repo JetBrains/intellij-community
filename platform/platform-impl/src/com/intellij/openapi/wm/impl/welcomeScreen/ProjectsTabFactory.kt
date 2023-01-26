@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory.createComponent
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.panels.VerticalLayout
@@ -148,6 +149,9 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
       .withBorder(JBUI.Borders.emptyTop(10))
 
     val projectSearch = recentProjectTree.installSearchField()
+    if (ExperimentalUI.isNewUI()) {
+      projectSearch.textEditor.putClientProperty("JTextField.Search.Icon", ExperimentalUI.Icons.General.Search)
+    }
     val northPanel: JPanel = JBUI.Panels.simplePanel()
       .andTransparent()
       .withBorder(object : CustomLineBorder(WelcomeScreenUIManager.getSeparatorColor(), JBUI.insetsBottom(1)) {
