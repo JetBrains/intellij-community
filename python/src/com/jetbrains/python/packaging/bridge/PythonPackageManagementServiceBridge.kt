@@ -58,7 +58,9 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
               .map {
                 val line = it.split("\t")
                 PythonPackage(line[0], line[1])
-              }.toList()
+              }
+              .sortedWith(compareBy(PythonPackage::name))
+              .toList()
             Result.success(packages)
           }
           return@runBlocking if (result.isSuccess)  {
@@ -85,11 +87,12 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
     val hasRepositories = manager
       .repositoryManager
       .repositories
-      .any { it !is PyPIPackageRepository && it !is CondaPackageRepository}
+      .any { it !is PyPIPackageRepository && it !is CondaPackageRepository }
 
     return manager
       .repositoryManager
       .packagesByRepository()
+      .filterNot { it.first is CondaPackageRepository }
       .flatMap { (repo, pkgs) -> pkgs.asSequence().map { RepoPackage(it, if (hasRepositories) repo.repositoryUrl else null) } }
       .toMutableList()
   }
@@ -134,10 +137,10 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
     scope.launch {
       try {
         runningUnderOldUI = true
-        val namesToDelete = installedPackages.map { it.name }
+        val namesToDelete = installedPackages.map { it.name.lowercase() }
         manager
           .installedPackages
-          .filter { it.name in namesToDelete }
+          .filter { it.name.lowercase() in namesToDelete }
           .forEach { manager.uninstallPackage(it) }
 
         listener.operationFinished(namesToDelete.first(), null)

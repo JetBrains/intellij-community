@@ -48,8 +48,8 @@ class PackageManagerHolder : Disposable {
   fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {
     val cacheKey = (sdk.sdkAdditionalData as PythonSdkAdditionalData).uuid
     if (cacheKey in bridgeCache) {
-      val bridge = bridgeCache[cacheKey]!!
-      if (bridge.project == project) return bridge
+      val bridge = bridgeCache[cacheKey]
+      if (bridge?.project == project) return bridge
     }
     val bridge = PythonPackageManagementServiceBridge(project, sdk)
     Disposer.register(this, bridge)

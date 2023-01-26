@@ -31,7 +31,7 @@ class PipPythonPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManag
             val line = it.split("\t")
             PythonPackage(line[0], line[1])
           }
-          .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER, PythonPackage::name))
+          .sortedWith(compareBy(PythonPackage::name))
           .toList()
         Result.success(packages)
       }
