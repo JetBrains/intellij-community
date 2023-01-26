@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory.createComponent
+import com.intellij.openapi.wm.impl.welcomeScreen.statistics.WelcomeScreenCounterUsageCollector
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
@@ -96,7 +97,9 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
       layout = VerticalLayout(0)
       add(notificationPanel)
 
-      val promoPanel = WelcomeScreenComponentFactory.getSinglePromotion(RecentProjectsManagerBase.getInstanceEx().getRecentPaths().isEmpty())
+      val recentPaths = RecentProjectsManagerBase.getInstanceEx().getRecentPaths()
+      WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentPaths.size)
+      val promoPanel = WelcomeScreenComponentFactory.getSinglePromotion(recentPaths.isEmpty())
       if (promoPanel != null) {
         val borderPanel = JBUI.Panels.simplePanel(promoPanel).andTransparent().apply {
           border = JBUI.Borders.empty(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET)

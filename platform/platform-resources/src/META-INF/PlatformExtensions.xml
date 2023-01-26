@@ -506,6 +506,7 @@
     <registryKey key="lists.use.open.in.right.splitter" defaultValue="true" description="Add icon 'open In right splitter' to recent files menu"/>
     <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
     <welcomeTabFactory id="ProjectsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.statistics.WelcomeScreenCounterUsageCollector"/>
     <welcomeTabFactory id="CustomizeWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.CustomizeTabFactory"
                        order="after ProjectsWelcomeTab"/>
     <welcomeTabFactory id="PluginsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.PluginsTabFactory"
