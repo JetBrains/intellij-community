@@ -6,7 +6,6 @@ import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.FileChannel.MapMode
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.max
 import kotlin.math.min
 
@@ -105,20 +104,22 @@ class ChunkMMapedFileIO(
     private val mmapIO: ChunkMMapedFileIO,
     private val startOffset: Long,
   ) : OutputStreamWithValidation() {
-    private var position = AtomicLong(startOffset)
+    private var position = startOffset
 
     override fun write(b: Int) {
-      mmapIO.write(position.getAndAdd(1), byteArrayOf(b.toByte()))
+      mmapIO.write(position, byteArrayOf(b.toByte()))
+      position++
     }
 
     override fun write(b: ByteArray, off: Int, len: Int) {
-      mmapIO.write(position.getAndAdd(len.toLong()), b, off, len)
+      mmapIO.write(position, b, off, len)
+      position += len
     }
 
     override fun validateWrittenBytesCount(expectedBytesWritten: Long) {
-      if (position.get() - startOffset != expectedBytesWritten) {
+      if (position - startOffset != expectedBytesWritten) {
         throw IllegalStateException(
-          "unexpected amount of data has been written: written ${position.get() - startOffset} vs expected ${expectedBytesWritten}")
+          "unexpected amount of data has been written: written ${position - startOffset} vs expected ${expectedBytesWritten}")
       }
     }
   }

@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.io
 
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
-import java.util.concurrent.atomic.AtomicLong
 
 fun FileChannel.asStorageIO() = FileChannelStorageIO(this)
 
@@ -32,18 +31,20 @@ class FileChannelStorageIO(private val fc: FileChannel) : StorageIO {
     private val fileChannel: FileChannel,
     private val startOffset: Long,
   ) : OutputStreamWithValidation() {
-    private var position = AtomicLong(startOffset)
+    private var position = startOffset
     override fun write(b: Int) {
-      fileChannel.write(ByteBuffer.wrap(byteArrayOf(b.toByte())), position.getAndAdd(1))
+      fileChannel.write(ByteBuffer.wrap(byteArrayOf(b.toByte())), position)
+      position++
     }
 
     override fun write(b: ByteArray, off: Int, len: Int) {
-      fileChannel.write(ByteBuffer.wrap(b, off, len), position.getAndAdd(len.toLong()))
+      fileChannel.write(ByteBuffer.wrap(b, off, len), position)
+      position += len
     }
 
     override fun validateWrittenBytesCount(expectedBytesWritten: Long) {
-      if (position.get() - startOffset != expectedBytesWritten) {
-        throw IllegalStateException("unexpected amount of data has been written: written ${position.get() - startOffset} vs expected ${expectedBytesWritten}")
+      if (position - startOffset != expectedBytesWritten) {
+        throw IllegalStateException("unexpected amount of data has been written: written ${position - startOffset} vs expected ${expectedBytesWritten}")
       }
     }
   }
