@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -148,7 +149,9 @@ public class Menu extends MenuItem {
 
   public void beginFill() {
     for (MenuItem item : myBuffer) {
-      if (item != null) item.dispose();
+      if (item != null) {
+        Disposer.dispose(item);
+      }
     }
     myBuffer.clear();
   }
@@ -330,7 +333,7 @@ public class Menu extends MenuItem {
       // create and dispose native object (just for to test)
       Menu test = new Menu("test");
       test.ensureNativePeer();
-      test.dispose();
+      Disposer.dispose(test);
       IS_ENABLED = true;
       Logger.getInstance(Menu.class).info("use new ScreenMenuBar implementation");
     }
