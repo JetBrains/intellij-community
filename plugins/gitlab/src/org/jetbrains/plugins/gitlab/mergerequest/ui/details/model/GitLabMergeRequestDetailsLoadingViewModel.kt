@@ -7,13 +7,11 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.transformLatest
-import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
-import org.jetbrains.plugins.gitlab.mergerequest.data.LoadedGitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel.LoadingState
 
 private val LOG = logger<GitLabMergeRequestDetailsLoadingViewModel>()
@@ -30,10 +28,10 @@ internal interface GitLabMergeRequestDetailsLoadingViewModel {
   }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
   parentScope: CoroutineScope,
   currentUser: GitLabUserDTO,
-  api: GitLabApi,
   projectData: GitLabProject,
   private val mergeRequestId: GitLabMergeRequestId
 ) : GitLabMergeRequestDetailsLoadingViewModel {
@@ -41,27 +39,23 @@ internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
 
   private val loadingRequests = MutableSharedFlow<Unit>(1)
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   override val mergeRequestLoadingFlow: Flow<LoadingState> = loadingRequests.transformLatest {
     emit(LoadingState.Loading)
-
-    coroutineScope {
-      val result = try {
-        val data = scope.async(Dispatchers.IO) {
-          api.loadMergeRequest(projectData.coordinates, mergeRequestId)
+    projectData.mergeRequests.getShared(mergeRequestId).collectLatest {
+      coroutineScope {
+        val result = try {
+          val detailsVm = GitLabMergeRequestDetailsViewModelImpl(scope, currentUser, projectData, it.getOrThrow())
+          LoadingState.Result(detailsVm)
         }
-        val mergeRequest = LoadedGitLabMergeRequest(scope, api, projectData.coordinates, data.await().body()!!)
-        val detailsVm = GitLabMergeRequestDetailsViewModelImpl(scope, currentUser, projectData, mergeRequest)
-        LoadingState.Result(detailsVm)
+        catch (ce: CancellationException) {
+          throw ce
+        }
+        catch (e: Exception) {
+          LoadingState.Error(e)
+        }
+        emit(result)
+        awaitCancellation()
       }
-      catch (ce: CancellationException) {
-        throw ce
-      }
-      catch (e: Exception) {
-        LoadingState.Error(e)
-      }
-      emit(result)
-      awaitCancellation()
     }
   }.modelFlow(scope, LOG)
 

@@ -3,24 +3,23 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 
 private val LOG = logger<GitLabMergeRequest>()
 
-interface GitLabMergeRequest {
+interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
+  val number: String
+  val url: String
+  val author: GitLabUserDTO
+
   val title: Flow<String>
   val description: Flow<String>
   val targetBranch: Flow<String>
@@ -30,10 +29,6 @@ interface GitLabMergeRequest {
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: Flow<List<GitLabUserDTO>>
   val commits: Flow<List<GitLabCommitDTO>>
-
-  val number: String
-  val url: String
-  val author: GitLabUserDTO
 
   suspend fun merge()
 
@@ -46,15 +41,26 @@ interface GitLabMergeRequest {
   suspend fun reopen()
 
   suspend fun setReviewers(reviewers: List<GitLabUserDTO>)
+
+  suspend fun getLabelEvents(): List<GitLabResourceLabelEventDTO>
+
+  suspend fun getStateEvents(): List<GitLabResourceStateEventDTO>
+
+  suspend fun getMilestoneEvents(): List<GitLabResourceMilestoneEventDTO>
 }
 
 internal class LoadedGitLabMergeRequest(
-  parentScope: CoroutineScope,
+  parentCs: CoroutineScope,
   private val api: GitLabApi,
   private val project: GitLabProjectCoordinates,
   mergeRequest: GitLabMergeRequestDTO
-) : GitLabMergeRequest {
-  private val scope = parentScope.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+) : GitLabMergeRequest,
+    GitLabMergeRequestDiscussionsContainer by GitLabMergeRequestDiscussionsContainerImpl(parentCs, api, project, mergeRequest) {
+  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+
+  override val number: String = mergeRequest.iid
+  override val url: String = mergeRequest.webUrl
+  override val author: GitLabUserDTO = mergeRequest.author
 
   private val mergeRequestState: MutableStateFlow<GitLabMergeRequestDTO> = MutableStateFlow(mergeRequest)
 
@@ -68,12 +74,20 @@ internal class LoadedGitLabMergeRequest(
   override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestState.map { it.reviewers }
   override val commits: Flow<List<GitLabCommitDTO>> = mergeRequestState.map { it.commits }
 
-  override val number: String = mergeRequest.iid
-  override val url: String = mergeRequest.webUrl
-  override val author: GitLabUserDTO = mergeRequest.author
+  private val stateEvents by lazy {
+    cs.async(Dispatchers.IO) { api.loadMergeRequestStateEvents(project, mergeRequest).body().orEmpty() }
+  }
+
+  private val labelEvents by lazy {
+    cs.async(Dispatchers.IO) { api.loadMergeRequestLabelEvents(project, mergeRequest).body().orEmpty() }
+  }
+
+  private val milestoneEvents by lazy {
+    cs.async(Dispatchers.IO) { api.loadMergeRequestMilestoneEvents(project, mergeRequest).body().orEmpty() }
+  }
 
   override suspend fun merge() {
-    withContext(scope.coroutineContext + Dispatchers.IO) {
+    withContext(cs.coroutineContext + Dispatchers.IO) {
       val updatedMergeRequest = api.mergeRequestAccept(project, mergeRequestState.value)
         .getResultOrThrow()
       mergeRequestState.value = updatedMergeRequest
@@ -81,21 +95,21 @@ internal class LoadedGitLabMergeRequest(
   }
 
   override suspend fun approve() {
-    withContext(scope.coroutineContext + Dispatchers.IO) {
+    withContext(cs.coroutineContext + Dispatchers.IO) {
       api.mergeRequestApprove(project, mergeRequestState.value)
       // TODO: update `approvedBy`
     }
   }
 
   override suspend fun unApprove() {
-    withContext(scope.coroutineContext + Dispatchers.IO) {
+    withContext(cs.coroutineContext + Dispatchers.IO) {
       api.mergeRequestUnApprove(project, mergeRequestState.value)
       // TODO: update `approvedBy`
     }
   }
 
   override suspend fun close() {
-    withContext(scope.coroutineContext + Dispatchers.IO) {
+    withContext(cs.coroutineContext + Dispatchers.IO) {
       val updatedMergeRequest = api.mergeRequestUpdate(project, mergeRequestState.value, GitLabMergeRequestNewState.CLOSED)
         .getResultOrThrow()
       mergeRequestState.value = updatedMergeRequest
@@ -103,7 +117,7 @@ internal class LoadedGitLabMergeRequest(
   }
 
   override suspend fun reopen() {
-    withContext(scope.coroutineContext + Dispatchers.IO) {
+    withContext(cs.coroutineContext + Dispatchers.IO) {
       val updatedMergeRequest = api.mergeRequestUpdate(project, mergeRequestState.value, GitLabMergeRequestNewState.OPEN)
         .getResultOrThrow()
       mergeRequestState.value = updatedMergeRequest
@@ -111,10 +125,16 @@ internal class LoadedGitLabMergeRequest(
   }
 
   override suspend fun setReviewers(reviewers: List<GitLabUserDTO>) {
-    withContext(scope.coroutineContext + Dispatchers.IO) {
+    withContext(cs.coroutineContext + Dispatchers.IO) {
       val updatedMergeRequest = api.mergeRequestSetReviewers(project, mergeRequestState.value, reviewers)
         .getResultOrThrow()
       mergeRequestState.value = updatedMergeRequest
     }
   }
+
+  override suspend fun getLabelEvents(): List<GitLabResourceLabelEventDTO> = labelEvents.await()
+
+  override suspend fun getStateEvents(): List<GitLabResourceStateEventDTO> = stateEvents.await()
+
+  override suspend fun getMilestoneEvents(): List<GitLabResourceMilestoneEventDTO> = milestoneEvents.await()
 }

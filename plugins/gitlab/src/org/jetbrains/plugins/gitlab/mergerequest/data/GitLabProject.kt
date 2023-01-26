@@ -14,6 +14,8 @@ import org.jetbrains.plugins.gitlab.api.request.loadAllProjectLabels
 interface GitLabProject {
   val coordinates: GitLabProjectCoordinates
 
+  val mergeRequests: GitLabProjectMergeRequestsStore
+
   suspend fun getLabels(): List<GitLabLabelDTO>
   suspend fun getMembers(): List<GitLabMemberDTO>
 }
@@ -25,6 +27,10 @@ class GitLabLazyProject(
 ) : GitLabProject {
 
   private val cs = parentCs.childScope()
+
+  override val mergeRequests by lazy {
+    CachingGitLabProjectMergeRequestsStore(cs, api, coordinates)
+  }
 
   override suspend fun getLabels(): List<GitLabLabelDTO> =
     withContext(cs.coroutineContext) {

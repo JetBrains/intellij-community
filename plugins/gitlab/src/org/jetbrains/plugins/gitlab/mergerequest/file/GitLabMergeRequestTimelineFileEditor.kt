@@ -36,8 +36,7 @@ internal class GitLabMergeRequestTimelineFileEditor(private val project: Project
   private val component = run {
     val vm = LoadAllGitLabMergeRequestTimelineViewModel(cs,
                                                         connection.currentUser,
-                                                        connection.apiClient,
-                                                        connection.repo.repository,
+                                                        connection.projectData,
                                                         file.mergeRequestId)
     val userIconsProvider = CachingIconsProvider(
       AsyncImageIconsProvider(cs, GitLabImageLoader(connection.apiClient, connection.repo.repository.serverPath))
