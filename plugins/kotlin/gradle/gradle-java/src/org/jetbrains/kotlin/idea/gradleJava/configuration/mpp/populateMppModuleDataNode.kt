@@ -54,7 +54,11 @@ import java.lang.reflect.Proxy
 import java.util.*
 import java.util.stream.Collectors
 
-internal fun initializeMppModuleDataNode(
+/**
+ * Creates and adds [GradleSourceSetData] nodes and [KotlinSourceSetInfo] for the given [moduleDataNode]
+ * @param moduleDataNode: The node representing a specific Gradle project which contains multiplatform source sets
+ */
+internal fun populateMppModuleDataNode(
     gradleModule: IdeaModule,
     moduleDataNode: DataNode<ModuleData>,
     projectDataNode: DataNode<ProjectData>,
@@ -211,43 +215,47 @@ private fun initializeModuleData(
 ) {
     if (moduleDataNode.isMppDataInitialized) return
 
-    val mainModuleData = moduleDataNode.data
+    /* Populate 'MPP_CONFIGURATION_ARTIFACTS' for every production source set */
+    run {
+        val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java)
+        if (externalProject == null) return
+        moduleDataNode.isMppDataInitialized = true
 
-    val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java)
-    if (externalProject == null) return
-    moduleDataNode.isMppDataInitialized = true
+        // save artifacts locations.
+        val userData = projectDataNode.getUserData(KotlinMPPGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS)
+            ?: HashMap<String, MutableList<String>>().apply {
+                projectDataNode.putUserData(KotlinMPPGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS, this)
+            }
 
-    // save artifacts locations.
-    val userData = projectDataNode.getUserData(KotlinMPPGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS)
-        ?: HashMap<String, MutableList<String>>().apply {
-            projectDataNode.putUserData(KotlinMPPGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS, this)
-        }
-
-    mppModel.targets.filter { it.jar != null && it.jar!!.archiveFile != null }.forEach { target ->
-        val path = ExternalSystemApiUtil.toCanonicalPath(target.jar!!.archiveFile!!.absolutePath)
-        val currentModules = userData[path] ?: ArrayList<String>().apply { userData[path] = this }
-        // Test modules should not be added. Otherwise we could get dependnecy of java.mail on jvmTest
-        val allSourceSets = target.compilations.filter { !it.isTestComponent }.flatMap { it.declaredSourceSets }.toSet()
-        val availableViaDependsOn = allSourceSets.flatMap { it.allDependsOnSourceSets }.mapNotNull { mppModel.sourceSetsByName[it] }
-        allSourceSets.union(availableViaDependsOn).forEach { sourceSet ->
-            currentModules.add(KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx))
-        }
-    }
-
-    with(projectDataNode.data) {
-        if (mainModuleData.linkedExternalProjectPath == linkedExternalProjectPath) {
-            group = mainModuleData.group
-            version = mainModuleData.version
+        mppModel.targets.filter { it.jar != null && it.jar!!.archiveFile != null }.forEach { target ->
+            val path = ExternalSystemApiUtil.toCanonicalPath(target.jar!!.archiveFile!!.absolutePath)
+            val currentModules = userData[path] ?: ArrayList<String>().apply { userData[path] = this }
+            // Test modules should not be added. Otherwise we could get dependnecy of java.mail on jvmTest
+            val allSourceSets = target.compilations.filter { !it.isTestComponent }.flatMap { it.declaredSourceSets }.toSet()
+            val availableViaDependsOn = allSourceSets.flatMap { it.allDependsOnSourceSets }.mapNotNull { mppModel.sourceSetsByName[it] }
+            allSourceSets.union(availableViaDependsOn).forEach { sourceSet ->
+                currentModules.add(KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx))
+            }
         }
     }
-    KotlinGradleProjectData().apply {
-        kotlinNativeHome = mppModel.kotlinNativeHome
-        coroutines = mppModel.extraFeatures.coroutinesState
-        isHmpp = mppModel.extraFeatures.isHMPPEnabled
-        kotlinImportingDiagnosticsContainer = mppModel.kotlinImportingDiagnostics
-        moduleDataNode.createChild(KotlinGradleProjectData.KEY, this)
+
+    /* Create KotlinGradleProjectData node and attach it to moduleDataNode */
+    run {
+        val mainModuleData = moduleDataNode.data
+        with(projectDataNode.data) {
+            if (mainModuleData.linkedExternalProjectPath == linkedExternalProjectPath) {
+                group = mainModuleData.group
+                version = mainModuleData.version
+            }
+        }
+        KotlinGradleProjectData().apply {
+            kotlinNativeHome = mppModel.kotlinNativeHome
+            coroutines = mppModel.extraFeatures.coroutinesState
+            isHmpp = mppModel.extraFeatures.isHMPPEnabled
+            kotlinImportingDiagnosticsContainer = mppModel.kotlinImportingDiagnostics
+            moduleDataNode.createChild(KotlinGradleProjectData.KEY, this)
+        }
     }
-    //TODO improve passing version of used multiplatform
 }
 
 private fun populateSourceSetInfos(
