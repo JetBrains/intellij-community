@@ -71,9 +71,7 @@ internal object LessonExecutorUtil {
       .onButtonClick { balloonConfig.gotItCallBack?.invoke() }
       .requestFocus(balloonConfig.gotItCallBack != null)
       .build(actionsRecorder) {
-        if (balloonConfig.cornerToPointerDistance != -1) {
-          setCornerToPointerDistance(balloonConfig.cornerToPointerDistance)
-        }
+        setCornerToPointerDistance(balloonConfig.cornerToPointerDistance)
         setAnimationCycle(if (useAnimationCycle) balloonConfig.animationCycle else 0)
         setCloseButtonEnabled(false)
         setHideOnCloseClick(false)
