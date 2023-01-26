@@ -24,7 +24,7 @@ interface FacetBridge<T : ModuleSettingsBase> {
    * @param entitySource which should be used for such entities
    */
   fun addToStorage(mutableStorage: MutableEntityStorage, moduleEntity: ModuleEntity, entitySource: EntitySource) {
-    val settingsEntity = config.initSettings(moduleEntity, entitySource)
+    val settingsEntity = config.initUnderlyingEntity(moduleEntity, entitySource)
     mutableStorage.addEntity(settingsEntity)
     mutableStorage.mutableFacetMapping().addMapping(settingsEntity, this as Facet<*>)
   }
@@ -57,8 +57,8 @@ interface FacetBridge<T : ModuleSettingsBase> {
   /**
    * Update facet configuration base on the data from the related entity
    */
-  fun updateFacetConfiguration(rootEntity: T) {
-    config.updateData(rootEntity)
+  fun updateFacetConfiguration(relatedEntity: T) {
+    config.updateUnderlyingEntity(relatedEntity)
   }
 
   private fun getFacetEntities(mutableStorage: MutableEntityStorage) = mutableStorage.facetMapping().getEntities(
@@ -84,12 +84,7 @@ interface FacetConfigurationBridge<T : ModuleSettingsBase> {
   /**
    * Initializes this config settings from [moduleEntity] and [entitySource]. Returns an entity to add to the storage
    */
-  fun initSettings(moduleEntity: ModuleEntity, entitySource: EntitySource): T
-
-  /**
-   * Stores this config settings to [existingFacetEntity] in [mutableStorage]. Attaches the settings to [moduleEntity] module
-   */
-  fun applyChangesToStorage(mutableStorage: MutableEntityStorage, existingFacetEntity: T, moduleEntity: ModuleEntity)
+  fun initUnderlyingEntity(moduleEntity: ModuleEntity, entitySource: EntitySource): T
 
   /**
    * Returns the entity used under the hood
@@ -97,14 +92,20 @@ interface FacetConfigurationBridge<T : ModuleSettingsBase> {
   fun getUnderlyingEntity(): T
 
   /**
-   * Updates this config settings from [rootEntity]
+   * Updates this config settings from [diff]
    */
-  fun updateData(rootEntity: T)
+  fun updateUnderlyingEntity(diff: T)
 
   /**
    * Updates this config name setting
    */
-  fun rename(newName: String) {
+  fun renameUnderlyingEntity(newName: String) {
     (getUnderlyingEntity() as ModuleSettingsBase.Builder<*>).name = newName
   }
+
+  /**
+   * Stores this config settings to [existingFacetEntity] in [mutableStorage]. Attaches the settings to [moduleEntity] module
+   */
+  fun applyChangesToStorage(mutableStorage: MutableEntityStorage, existingFacetEntity: T, moduleEntity: ModuleEntity)
+
 }
