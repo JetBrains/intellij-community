@@ -28,14 +28,6 @@ import java.util.*
 @Order(ExternalSystemConstants.UNORDERED + 1)
 open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
-    override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
-        val moduleDataNode = super.createModule(gradleModule, projectDataNode) ?: return null
-        val mppModel = resolverCtx.getMppModel(gradleModule) ?: return moduleDataNode
-
-        initializeMppModuleDataNode(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
-        return moduleDataNode
-    }
-
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
         return setOf(
             KotlinMPPGradleModelBuilder::class.java, KotlinTarget::class.java,
@@ -57,12 +49,12 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
          */
         listOf("-Pkotlin.mpp.enableIntransitiveMetadataConfiguration=true")
 
-    override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
-        if (ExternalSystemApiUtil.find(ideModule, BuildScriptClasspathData.KEY) == null) {
-            val buildScriptClasspathData = buildClasspathData(gradleModule, resolverCtx)
-            ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData)
-        }
-        super.populateModuleExtraModels(gradleModule, ideModule)
+    override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
+        val moduleDataNode = super.createModule(gradleModule, projectDataNode) ?: return null
+        val mppModel = resolverCtx.getMppModel(gradleModule) ?: return moduleDataNode
+
+        initializeMppModuleDataNode(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
+        return moduleDataNode
     }
 
     override fun populateModuleContentRoots(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
@@ -92,6 +84,14 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         }
 
         populateModuleDependencies(gradleModule, ideProject, ideModule, resolverCtx)
+    }
+
+    override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
+        if (ExternalSystemApiUtil.find(ideModule, BuildScriptClasspathData.KEY) == null) {
+            val buildScriptClasspathData = buildClasspathData(gradleModule, resolverCtx)
+            ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData)
+        }
+        super.populateModuleExtraModels(gradleModule, ideModule)
     }
 
     companion object {
