@@ -326,8 +326,6 @@ impl RemoteDevLaunchConfiguration {
             // TODO: disable once IDEA doesn't require JBA login for remote dev
             ("eap.login.enabled", "false"),
 
-            ("#com.intellij.idea.SocketLock.level", "FINE"),
-
             // TODO: CWM-5782 figure out why posix_spawn / jspawnhelper does not work in tests
             // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
