@@ -16,18 +16,18 @@ import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.addNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestDiscussions
 
-interface GitLabMergeRequestDiscussionsModel: GitLabNotesContainer {
+interface GitLabMergeRequestDiscussionsContainer: GitLabNotesContainer {
   val userDiscussions: Flow<Collection<GitLabDiscussion>>
   val systemDiscussions: Flow<Collection<GitLabDiscussionDTO>>
 }
 
-private val LOG = logger<GitLabMergeRequestDiscussionsModel>()
+private val LOG = logger<GitLabMergeRequestDiscussionsContainer>()
 
-class GitLabMergeRequestDiscussionsModelImpl(
+class GitLabMergeRequestDiscussionsContainerImpl(
   parentCs: CoroutineScope,
   private val connection: GitLabProjectConnection,
   private val mr: GitLabMergeRequestDTO
-) : GitLabMergeRequestDiscussionsModel {
+) : GitLabMergeRequestDiscussionsContainer {
 
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 

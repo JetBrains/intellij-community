@@ -15,8 +15,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestLabelEvents
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestMilestoneEvents
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestStateEvents
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussionsModel
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussionsModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussionsContainer
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussionsContainerImpl
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
@@ -52,10 +52,10 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 
   override val currentUser: GitLabUserDTO = connection.currentUser
 
-  private val discussionsDataFlow: Flow<GitLabMergeRequestDiscussionsModel> =
+  private val discussionsDataFlow: Flow<GitLabMergeRequestDiscussionsContainer> =
     loadingRequests.mapLatest {
       val mrDetails = loadDetails()
-      GitLabMergeRequestDiscussionsModelImpl(cs, connection, mrDetails)
+      GitLabMergeRequestDiscussionsContainerImpl(cs, connection, mrDetails)
     }.modelFlow(cs, LOG)
 
   override val timelineLoadingFlow: Flow<LoadingState> =
@@ -111,7 +111,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
    */
   private suspend fun createItemsFlow(
     cs: CoroutineScope,
-    discussionsData: GitLabMergeRequestDiscussionsModel
+    discussionsData: GitLabMergeRequestDiscussionsContainer
   ): Flow<List<GitLabMergeRequestTimelineItem>> {
 
     val api = connection.apiClient
