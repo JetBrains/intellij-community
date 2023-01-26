@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
@@ -140,7 +141,7 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
           CharArrayUtil.isEmptyOrSpaces(editor.getDocument().getImmutableCharSequence(),
                                         leftBoundary.getTextRange().getEndOffset(),
                                         rightBoundary.getTextRange().getStartOffset())) {
-        PsiMethod method = ((PsiMethodCallExpression)element.getParent().getParent()).resolveMethod();
+        PsiMethod method = CompletionMemory.getChosenMethod((PsiCall)element.getParent().getParent());
         if (method != null) {
           List<PsiJavaToken> allTokens = PsiTreeUtil.getChildrenOfTypeAsList(element.getParent(), PsiJavaToken.class);
           PsiParameterList parameterList = method.getParameterList();
