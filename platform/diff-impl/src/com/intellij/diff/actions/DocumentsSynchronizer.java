@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,11 +70,10 @@ public abstract class DocumentsSynchronizer {
       myDuringModification = true;
       CommandProcessor.getInstance().executeCommand(
         myProject,
-        () -> ApplicationManager.getApplication().runWriteAction(
-          () -> document.replaceString(startOffset, endOffset, StringUtil.convertLineSeparators(newText.toString()))
-        ),
+        () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(startOffset, endOffset, newText)),
         DiffBundle.message("synchronize.document.and.its.fragment"),
-        document);
+        document
+      );
     }
     finally {
       myDuringModification = false;
