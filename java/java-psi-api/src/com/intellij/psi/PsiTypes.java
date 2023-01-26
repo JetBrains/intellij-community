@@ -2,38 +2,77 @@
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
+import org.jetbrains.annotations.NotNull;
 
-public class PsiTypes {
-  /** Returns instance corresponding to {@code byte} type. */
-  public static PsiPrimitiveType byteType() { return BYTE; }
+public final class PsiTypes {
+  /** 
+   * Returns instance corresponding to {@code byte} type. 
+   */
+  public static @NotNull PsiPrimitiveType byteType() { 
+    return BYTE; 
+  }
 
-  /** Returns instance corresponding to {@code char} type. */
-  public static PsiPrimitiveType charType() { return CHAR; }
+  /** 
+   * Returns instance corresponding to {@code char} type. 
+   */
+  public static @NotNull PsiPrimitiveType charType() { 
+    return CHAR; 
+  }
 
-  /** Returns instance corresponding to {@code double} type. */
-  public static PsiPrimitiveType doubleType() { return DOUBLE; }
+  /** 
+   * Returns instance corresponding to {@code double} type. 
+   */
+  public static @NotNull PsiPrimitiveType doubleType() { 
+    return DOUBLE; 
+  }
 
-  /** Returns instance corresponding to {@code float} type. */
-  public static PsiPrimitiveType floatType() { return FLOAT; }
+  /** 
+   * Returns instance corresponding to {@code float} type. 
+   */
+  public static @NotNull PsiPrimitiveType floatType() { 
+    return FLOAT; 
+  }
 
-  /** Returns instance corresponding to {@code int} type. */
-  public static PsiPrimitiveType intType() { return INT; }
+  /** 
+   * Returns instance corresponding to {@code int} type. 
+   */
+  public static @NotNull PsiPrimitiveType intType() { 
+    return INT; 
+  }
 
-  /** Returns instance corresponding to {@code long} type. */
-  public static PsiPrimitiveType longType() { return LONG; }
+  /** 
+   * Returns instance corresponding to {@code long} type. 
+   */
+  public static @NotNull PsiPrimitiveType longType() { 
+    return LONG; 
+  }
 
-  /** Returns instance corresponding to {@code short} type. */
-  public static PsiPrimitiveType shortType() { return SHORT; }
+  /** 
+   * Returns instance corresponding to {@code short} type. 
+   */
+  public static @NotNull PsiPrimitiveType shortType() { 
+    return SHORT; 
+  }
 
-  /** Returns instance corresponding to {@code boolean} type. */
-  public static PsiPrimitiveType booleanType() { return BOOLEAN; }
+  /** 
+   * Returns instance corresponding to {@code boolean} type. 
+   */
+  public static @NotNull PsiPrimitiveType booleanType() { 
+    return BOOLEAN; 
+  }
 
-  /** Returns instance corresponding to {@code void} type. */
-  public static PsiPrimitiveType voidType() { return VOID; }
+  /** 
+   * Returns instance corresponding to {@code void} type. 
+   */
+  public static @NotNull PsiPrimitiveType voidType() { 
+    return VOID; 
+  }
 
-  /** Returns instance describing the type of {@code null} value. */
-  public static PsiType nullType() { 
-    return NULL; 
+  /** 
+   * Returns instance describing the type of {@code null} value. 
+   */
+  public static @NotNull PsiType nullType() { 
+    return NULL;
   }
 
   private static final PsiPrimitiveType BYTE = new PsiPrimitiveType(JvmPrimitiveTypeKind.BYTE);
@@ -46,4 +85,7 @@ public class PsiTypes {
   private static final PsiPrimitiveType BOOLEAN = new PsiPrimitiveType(JvmPrimitiveTypeKind.BOOLEAN);
   private static final PsiPrimitiveType VOID = new PsiPrimitiveType(JvmPrimitiveTypeKind.VOID);
   private static final PsiPrimitiveType NULL = new PsiPrimitiveType(null);
+  
+  private PsiTypes() {
+  }
 }
