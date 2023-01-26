@@ -55,7 +55,8 @@ public class DockToolWindowAction extends DumbAwareAction /*implements FusAwareA
     ToolWindow toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW);
     if (!(toolWindow instanceof ToolWindowImpl)) return;
     toolWindow.setType(((ToolWindowEx)toolWindow).getInternalType(), null);
-    ToolWindowMoveAction.Anchor.fromWindowInfo(((ToolWindowImpl)toolWindow).getWindowInfo()).applyTo(toolWindow);
+    ToolWindowMoveAction.Anchor anchor = ToolWindowMoveAction.Anchor.fromWindowInfo(((ToolWindowImpl)toolWindow).getWindowInfo());
+    anchor.applyTo(toolWindow, ((ToolWindowImpl)toolWindow).getWindowInfo().getOrder());
   }
 
   //@Override

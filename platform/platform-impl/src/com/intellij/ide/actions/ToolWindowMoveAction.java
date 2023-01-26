@@ -98,8 +98,12 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     }
 
     public void applyTo(@NotNull ToolWindow window) {
+      applyTo(window, -1);
+    }
+
+    public void applyTo(@NotNull ToolWindow window, int order) {
       if (window instanceof ToolWindowImpl toolWindow) {
-        toolWindow.setSideToolAndAnchor(getAnchor(), isSplit());
+        toolWindow.setSideToolAndAnchor(getAnchor(), isSplit(), order);
       }
       else {
         window.setAnchor(getAnchor(), null);
