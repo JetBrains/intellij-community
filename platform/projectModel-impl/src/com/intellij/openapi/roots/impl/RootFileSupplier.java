@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.ide.impl.UtilsKt;
+import com.intellij.workspaceModel.ide.VirtualFileUrls;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +75,7 @@ public class RootFileSupplier {
 
   @Nullable 
   public VirtualFile findFile(@NotNull VirtualFileUrl virtualFileUrl) {
-    return UtilsKt.getVirtualFile(virtualFileUrl);
+    return VirtualFileUrls.getVirtualFile(virtualFileUrl);
   }
 
   public static RootFileSupplier forBranch(ModelBranch branch) {
