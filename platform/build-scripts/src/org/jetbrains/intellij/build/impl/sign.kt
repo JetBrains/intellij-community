@@ -433,7 +433,7 @@ private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context
     if (binary.isMacOsBinary() && !runBlocking { binary.isSigned(name) }) {
       tempDir.createDirectories()
       val fileToBeSigned = tempDir.resolve(name.replace("/", "-"))
-      fileToBeSigned.writeBytes(entry.getData())
+      fileToBeSigned.writeBytes(binary)
       filesToBeSigned[name] = fileToBeSigned
     }
   }
