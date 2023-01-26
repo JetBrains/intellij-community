@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 
@@ -19,7 +19,7 @@ class DeclarativeInlayHintsSettings : SimplePersistentStateComponent<Declarative
 
   companion object {
     fun getInstance(): DeclarativeInlayHintsSettings {
-      return application.service()
+      return ApplicationManager.getApplication().service()
     }
   }
 
