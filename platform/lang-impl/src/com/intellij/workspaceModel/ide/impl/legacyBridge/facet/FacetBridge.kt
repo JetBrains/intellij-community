@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 import com.intellij.facet.Facet
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
@@ -41,14 +40,6 @@ interface FacetBridge<T : ModuleSettingsBase> {
    * Rename entity associated with this bridge
    */
   fun rename(mutableStorage: MutableEntityStorage, newName: String)
-
-  /**
-   * Attaches facet to [module]
-   */
-  fun attachToModule(mutableStorage: MutableEntityStorage, module: ModuleBridge) {
-    val moduleEntity = mutableStorage.resolve(module.moduleEntityId) ?: return
-    config.setModule(moduleEntity)
-  }
 
   /**
    * Applies changes from the underlying entity to [mutableStorage]
@@ -109,9 +100,4 @@ interface FacetConfigurationBridge<T : ModuleSettingsBase> {
    * Updates this config name setting
    */
   fun rename(newName: String)
-
-  /**
-   * Attaches this config to [moduleEntity] module
-   */
-  fun setModule(moduleEntity: ModuleEntity)
 }
