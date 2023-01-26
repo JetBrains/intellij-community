@@ -340,7 +340,6 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                    .createPanel()
                })
             .align(Align.FILL)
-            .resizableColumn()
         }
 
         is OptCustom -> {
@@ -430,10 +429,10 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
 
   private val OptComponent.hasBottomGap: Boolean
-    get() = this is OptGroup
+    get() = this is OptGroup || this is OptStringList || this is OptTable
 
   private val OptComponent.hasResizableRow: Boolean
-    get() = this is OptStringList
+    get() = this is OptStringList || this is OptTable
 
   private fun convertItem(key: String, type: Class<*>): Any {
     @Suppress("UNCHECKED_CAST")
