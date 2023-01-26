@@ -144,11 +144,6 @@ internal class NewKotlinFileAction : CreateFileFromTemplateAction(
                     KotlinIcons.ANNOTATION,
                     "Kotlin Annotation"
                 )
-                .addKind(
-                    KotlinBundle.message("action.new.file.dialog.object.title"),
-                    KotlinIcons.OBJECT,
-                    "Kotlin Object"
-                )
         }
 
         builder
@@ -162,6 +157,15 @@ internal class NewKotlinFileAction : CreateFileFromTemplateAction(
                 KotlinIcons.SCRIPT,
                 "Kotlin Worksheet"
             )
+
+        if (isInSourceRoot) {
+            builder
+                .addKind(
+                    KotlinBundle.message("action.new.file.dialog.object.title"),
+                    KotlinIcons.OBJECT,
+                    "Kotlin Object"
+                )
+        }
 
         builder.setValidator(NameValidator)
     }
