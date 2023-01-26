@@ -6,12 +6,14 @@ import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -76,7 +78,7 @@ public class FqnUtil {
       VirtualFile root = WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false);
       if (root != null) {
         String relativePath = VfsUtilCore.getRelativePath(virtualFile, root);
-        if (relativePath != null) {
+        if (Strings.isNotEmpty(relativePath)) {
           return relativePath;
         }
       }
@@ -93,13 +95,12 @@ public class FqnUtil {
       }
     }
 
-    VirtualFile dir = project.getBaseDir();
-    if (dir == null) {
-      return virtualFile.getPath();
-    }
-    String relativePath = VfsUtilCore.getRelativePath(virtualFile, dir);
-    if (relativePath != null) {
-      return relativePath;
+    VirtualFile baseDirectory = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(virtualFile);
+    if (baseDirectory != null) {
+      String relativePath = VfsUtilCore.getRelativePath(virtualFile, baseDirectory);
+      if (relativePath != null) {
+        return relativePath;
+      }
     }
 
     RootType rootType = RootType.forFile(virtualFile);
