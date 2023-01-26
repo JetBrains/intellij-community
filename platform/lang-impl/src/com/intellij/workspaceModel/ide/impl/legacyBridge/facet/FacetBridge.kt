@@ -17,6 +17,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface FacetBridge<T : ModuleSettingsBase> {
   /**
+   * Facet configuration
+   */
+  val config: FacetConfigurationBridge<T>
+
+  /**
    * Add root entity which [FacetBridge] uses under the hood, to [mutableStorage]
    * @param mutableStorage for saving root entity and it's children in it
    * @param moduleEntity corresponds to this [FacetBridge]
@@ -52,7 +57,11 @@ interface FacetBridge<T : ModuleSettingsBase> {
   /**
    * Rename entity associated with this bridge
    */
-  fun rename(mutableStorage: MutableEntityStorage, newName: String)
+  fun rename(mutableStorage: MutableEntityStorage, newName: String) {
+    config.rename(newName)
+    val existingFacetEntity = getFacetEntityOptional(mutableStorage) ?: return
+    updateExistingEntityInStorage(existingFacetEntity, mutableStorage)
+  }
 
   /**
    * Update facet configuration base on the data from the related entity
@@ -67,12 +76,7 @@ interface FacetBridge<T : ModuleSettingsBase> {
   /**
    * Returns the entity associated with this bridge in [mutableStorage], if it exists
    */
-  fun getFacetEntityOptional(mutableStorage: MutableEntityStorage): T? = getFacetEntities(mutableStorage).firstOrNull()
-
-  /**
-   * Facet configuration
-   */
-  val config: FacetConfigurationBridge<T>
+  private fun getFacetEntityOptional(mutableStorage: MutableEntityStorage): T? = getFacetEntities(mutableStorage).firstOrNull()
 }
 
 /**
