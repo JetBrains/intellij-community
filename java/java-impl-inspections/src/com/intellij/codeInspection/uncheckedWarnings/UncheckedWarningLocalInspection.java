@@ -427,7 +427,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       super.visitReturnStatement(statement);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
       final PsiType returnType = PsiTypesUtil.getMethodReturnType(statement);
-      if (returnType != null && !PsiType.VOID.equals(returnType)) {
+      if (returnType != null && !PsiTypes.voidType().equals(returnType)) {
         final PsiExpression returnValue = statement.getReturnValue();
         if (returnValue != null) {
           final PsiType valueType = returnValue.getType();
@@ -451,7 +451,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       PsiElement body = expression.getBody();
       if (body instanceof PsiExpression) {
         PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(expression);
-        if (interfaceReturnType != null && !PsiType.VOID.equals(interfaceReturnType)) {
+        if (interfaceReturnType != null && !PsiTypes.voidType().equals(interfaceReturnType)) {
           PsiType type = ((PsiExpression)body).getType();
           if (type != null) {
             checkRawToGenericsAssignment(body, (PsiExpression)body, interfaceReturnType, type, () -> LocalQuickFix.EMPTY_ARRAY);

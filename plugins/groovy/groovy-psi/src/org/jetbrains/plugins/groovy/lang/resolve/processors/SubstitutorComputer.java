@@ -225,7 +225,7 @@ public class SubstitutorComputer {
       }
       else {
         parameterTypes.add(paramType);
-        argumentTypes.add(PsiType.NULL);
+        argumentTypes.add(PsiTypes.nullType());
       }
     }
     PsiType[] parameterArray = parameterTypes.toArray(PsiType.EMPTY_ARRAY);
@@ -313,7 +313,7 @@ public class SubstitutorComputer {
 
     final PsiType inferred =
       myHelper.getSubstitutionForTypeParameter(typeParameter, lType, inferContextType(), false, LanguageLevel.JDK_1_8);
-    if (inferred != PsiType.NULL) {
+    if (inferred != PsiTypes.nullType()) {
       return substitutor.put(typeParameter, inferred);
     }
     return substitutor;

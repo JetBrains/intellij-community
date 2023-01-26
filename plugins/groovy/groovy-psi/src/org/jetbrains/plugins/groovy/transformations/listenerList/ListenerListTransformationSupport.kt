@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.transformations.listenerList
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
@@ -39,14 +39,14 @@ class ListenerListTransformationSupport : AstTransformationSupport {
       val name = StringUtil.nullize(declaredName) ?: listenerClass.name ?: continue
       context += context.memberBuilder.method("add${name.capitalize()}") {
         addModifier(GrModifierFlags.PUBLIC_MASK)
-        returnType = PsiType.VOID
+        returnType = PsiTypes.voidType()
         addParameter("listener", listenerType)
         navigationElement = field
         originInfo = listenerListOriginInfo
       }
       context += context.memberBuilder.method("remove${name.capitalize()}") {
         addModifier(GrModifierFlags.PUBLIC_MASK)
-        returnType = PsiType.VOID
+        returnType = PsiTypes.voidType()
         addParameter("listener", listenerType)
         navigationElement = field
         originInfo = listenerListOriginInfo
@@ -66,7 +66,7 @@ class ListenerListTransformationSupport : AstTransformationSupport {
         context += GrMethodWrapper.wrap(listenerMethod, "fire${listenerMethod.name.capitalize()}").apply {
           addModifier(GrModifierFlags.PUBLIC_MASK)
           modifierList.removeModifier(GrModifierFlags.ABSTRACT_MASK)
-          returnType = PsiType.VOID
+          returnType = PsiTypes.voidType()
           originInfo = listenerListOriginInfo
         }
       }

@@ -233,9 +233,9 @@ public final class TypeConstraints {
   }
 
   enum PrimitiveArray implements Exact {
-    BOOLEAN(PsiType.BOOLEAN), INT(PsiType.INT),
-    BYTE(PsiType.BYTE), SHORT(PsiType.SHORT), LONG(PsiType.LONG),
-    CHAR(PsiType.CHAR), FLOAT(PsiType.FLOAT), DOUBLE(PsiType.DOUBLE);
+    BOOLEAN(PsiTypes.booleanType()), INT(PsiTypes.intType()),
+    BYTE(PsiTypes.byteType()), SHORT(PsiTypes.shortType()), LONG(PsiTypes.longType()),
+    CHAR(PsiTypes.charType()), FLOAT(PsiTypes.floatType()), DOUBLE(PsiTypes.doubleType());
     private final PsiPrimitiveType myType;
 
     PrimitiveArray(PsiPrimitiveType type) {
@@ -380,9 +380,9 @@ public final class TypeConstraints {
         case JAVA_LANG_LONG -> DfTypes.LONG;
         case JAVA_LANG_DOUBLE -> DfTypes.DOUBLE;
         case JAVA_LANG_FLOAT -> DfTypes.FLOAT;
-        case JAVA_LANG_BYTE -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.BYTE)));
-        case JAVA_LANG_SHORT -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.SHORT)));
-        case JAVA_LANG_CHARACTER -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.CHAR)));
+        case JAVA_LANG_BYTE -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiTypes.byteType())));
+        case JAVA_LANG_SHORT -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiTypes.shortType())));
+        case JAVA_LANG_CHARACTER -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiTypes.charType())));
         default -> DfType.BOTTOM;
       };
     }

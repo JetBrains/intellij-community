@@ -109,10 +109,10 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
           }
 
         private boolean isIterationMethod(@NotNull PsiMethodCallExpression expression) {
-          return MethodCallUtils.isCallToMethod(expression, CommonClassNames.JAVA_UTIL_ITERATOR, PsiType.BOOLEAN, "hasNext") ||
-                 MethodCallUtils.isCallToMethod(expression, "java.util.ListIterator", PsiType.BOOLEAN, "hasPrevious") ||
-                 MethodCallUtils.isCallToMethod(expression, "java.sql.ResultSet", PsiType.BOOLEAN, "next") ||
-                 MethodCallUtils.isCallToMethod(expression, "java.util.Enumeration", PsiType.BOOLEAN, "hasMoreElements") ||
+          return MethodCallUtils.isCallToMethod(expression, CommonClassNames.JAVA_UTIL_ITERATOR, PsiTypes.booleanType(), "hasNext") ||
+                 MethodCallUtils.isCallToMethod(expression, "java.util.ListIterator", PsiTypes.booleanType(), "hasPrevious") ||
+                 MethodCallUtils.isCallToMethod(expression, "java.sql.ResultSet", PsiTypes.booleanType(), "next") ||
+                 MethodCallUtils.isCallToMethod(expression, "java.util.Enumeration", PsiTypes.booleanType(), "hasMoreElements") ||
                  MethodCallUtils.isCallToMethod(expression, CommonClassNames.JAVA_UTIL_QUEUE, null, "poll") ||
                  MethodCallUtils.isCallToMethod(expression, "java.lang.ref.ReferenceQueue", null, "poll");
         }

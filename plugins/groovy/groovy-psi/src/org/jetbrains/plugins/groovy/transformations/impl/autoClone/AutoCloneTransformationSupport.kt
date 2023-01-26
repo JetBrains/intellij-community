@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.light.LightMethodBuilder
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.GroovyLanguage
@@ -67,7 +67,7 @@ class AutoCloneTransformationSupport : AstTransformationSupport {
         // protected void cloneOrCopyMembers(T other) throws CloneNotSupportedException
         context += LightMethodBuilder(context.manager, "cloneOrCopyMembers").apply {
           addModifier(PsiModifier.PROTECTED)
-          setMethodReturnType(PsiType.VOID)
+          setMethodReturnType(PsiTypes.voidType())
           addParameter("other", TypesUtil.createType(context.codeClass))
           addException(CNSE_FQN)
           navigationElement = annotation

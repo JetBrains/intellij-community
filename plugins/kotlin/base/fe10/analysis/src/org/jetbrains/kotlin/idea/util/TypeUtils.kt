@@ -257,7 +257,7 @@ fun KotlinType.isAbstract(): Boolean {
  */
 @OptIn(FrontendInternals::class)
 fun PsiType.resolveToKotlinType(resolutionFacade: ResolutionFacade): KotlinType {
-    if (this == PsiType.NULL) {
+    if (this == PsiTypes.nullType()) {
         return resolutionFacade.moduleDescriptor.builtIns.nullableAnyType
     }
 

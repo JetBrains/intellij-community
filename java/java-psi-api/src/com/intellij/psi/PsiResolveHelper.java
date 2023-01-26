@@ -147,7 +147,7 @@ public interface PsiResolveHelper {
   boolean isAccessible(@NotNull PsiPackage pkg, @NotNull PsiElement place);
 
   /**
-   * Returns {@link PsiType#NULL} iff no type could be inferred, {@code null} iff the type inferred is raw, the inferred type otherwise.
+   * Returns {@link PsiTypes#nullType()} iff no type could be inferred, {@code null} iff the type inferred is raw, the inferred type otherwise.
    */
   PsiType inferTypeForMethodTypeParameter(@NotNull PsiTypeParameter typeParameter,
                                           PsiParameter @NotNull [] parameters,

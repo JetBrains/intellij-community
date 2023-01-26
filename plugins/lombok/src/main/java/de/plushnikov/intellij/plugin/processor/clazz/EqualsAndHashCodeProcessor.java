@@ -186,7 +186,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, EQUALS_METHOD_NAME)
       .withModifier(PsiModifier.PUBLIC)
-      .withMethodReturnType(PsiType.BOOLEAN)
+      .withMethodReturnType(PsiTypes.booleanType())
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withFinalParameter("o", PsiType.getJavaLangObject(psiManager, psiClass.getResolveScope()));
@@ -208,7 +208,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
     return new LombokLightMethodBuilder(psiManager, HASH_CODE_METHOD_NAME)
       .withModifier(PsiModifier.PUBLIC)
-      .withMethodReturnType(PsiType.INT)
+      .withMethodReturnType(PsiTypes.intType())
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withBodyText(m -> {
@@ -227,7 +227,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final String blockText = String.format("return other instanceof %s;", PsiTypesUtil.getClassType(psiClass).getCanonicalText());
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, CAN_EQUAL_METHOD_NAME)
       .withModifier(PsiModifier.PROTECTED)
-      .withMethodReturnType(PsiType.BOOLEAN)
+      .withMethodReturnType(PsiTypes.booleanType())
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withFinalParameter("other", PsiType.getJavaLangObject(psiManager, psiClass.getResolveScope()));
@@ -275,11 +275,11 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
       final PsiType memberType = memberInfo.getType();
       if (memberType instanceof PsiPrimitiveType) {
-        if (PsiType.FLOAT.equals(memberType)) {
+        if (PsiTypes.floatType().equals(memberType)) {
           builder.append("if (java.lang.Float.compare(this.").append(memberAccessor).append(", other.").append(memberAccessor)
             .append(") != 0) return false;\n");
         }
-        else if (PsiType.DOUBLE.equals(memberType)) {
+        else if (PsiTypes.doubleType().equals(memberType)) {
           builder.append("if (java.lang.Double.compare(this.").append(memberAccessor).append(", other.").append(memberAccessor)
             .append(") != 0) return false;\n");
         }
@@ -343,18 +343,18 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
       final PsiType classFieldType = memberInfo.getType();
       if (classFieldType instanceof PsiPrimitiveType) {
-        if (PsiType.BOOLEAN.equals(classFieldType)) {
+        if (PsiTypes.booleanType().equals(classFieldType)) {
           builder.append("result = result * PRIME + (this.").append(memberAccessor).append(" ? ").append(PRIME_FOR_TRUE).append(" : ")
             .append(PRIME_FOR_FALSE).append(");\n");
         }
-        else if (PsiType.LONG.equals(classFieldType)) {
+        else if (PsiTypes.longType().equals(classFieldType)) {
           builder.append("final long $").append(memberName).append(" = this.").append(memberAccessor).append(";\n");
           builder.append("result = result * PRIME + (int)($").append(memberName).append(" >>> 32 ^ $").append(memberName).append(");\n");
         }
-        else if (PsiType.FLOAT.equals(classFieldType)) {
+        else if (PsiTypes.floatType().equals(classFieldType)) {
           builder.append("result = result * PRIME + java.lang.Float.floatToIntBits(this.").append(memberAccessor).append(");\n");
         }
-        else if (PsiType.DOUBLE.equals(classFieldType)) {
+        else if (PsiTypes.doubleType().equals(classFieldType)) {
           builder.append("final long $").append(memberName).append(" = java.lang.Double.doubleToLongBits(this.").append(memberAccessor)
             .append(");\n");
           builder.append("result = result * PRIME + (int)($").append(memberName).append(" >>> 32 ^ $").append(memberName).append(");\n");

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +24,12 @@ public final class InferenceVariablesOrder {
                                                           Map<InferenceVariable, Set<InferenceVariable>> depMap) {
     // Fast-path to find the first resolve group if it consists of single var
     InferenceVariable var = vars.get(0);
-    if (var.getInstantiation() != PsiType.NULL || depMap.get(var).isEmpty()) {
+    if (var.getInstantiation() != PsiTypes.nullType() || depMap.get(var).isEmpty()) {
       return var;
     }
     Set<InferenceVariable> visited = new HashSet<>();
     while (visited.add(var)) {
-      if (var.getInstantiation() != PsiType.NULL) {
+      if (var.getInstantiation() != PsiTypes.nullType()) {
         return var;
       }
       Set<InferenceVariable> deps = depMap.get(var);
@@ -79,7 +79,7 @@ public final class InferenceVariablesOrder {
 
     for (Map.Entry<InferenceVariable, InferenceGraphNode<InferenceVariable>> entry : nodes.entrySet()) {
       InferenceVariable var = entry.getKey();
-      if (var.getInstantiation() != PsiType.NULL) continue;
+      if (var.getInstantiation() != PsiTypes.nullType()) continue;
       final InferenceGraphNode<InferenceVariable> node = entry.getValue();
       final Set<InferenceVariable> dependencies = depMap.get(var);
       for (InferenceVariable dependentVariable : dependencies) {

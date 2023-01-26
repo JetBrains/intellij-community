@@ -398,7 +398,7 @@ public final class StubGenerator implements ClassItemGenerator {
     if (declaredType instanceof PsiPrimitiveType) {
       Object eval = GroovyConstantExpressionEvaluator.evaluate(variable.getInitializerGroovy());
       if (eval instanceof Float ||
-          PsiType.FLOAT.equals(TypesUtil.unboxPrimitiveTypeWrapper(variable.getType())) && eval instanceof Number) {
+          PsiTypes.floatType().equals(TypesUtil.unboxPrimitiveTypeWrapper(variable.getType())) && eval instanceof Number) {
         return eval.toString() + "f";
       }
       else if (eval instanceof Character) {

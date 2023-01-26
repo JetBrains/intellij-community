@@ -181,10 +181,10 @@ public class SwitchBlockHighlightingModel {
       IntentionAction action = getFixFactory().createConvertSwitchToIfIntention(switchStatement);
       builder.registerFix(action, null, null, null, null);
     }
-    if (PsiType.LONG.equals(mySelectorType) || PsiType.FLOAT.equals(mySelectorType) || PsiType.DOUBLE.equals(mySelectorType)) {
-      IntentionAction addTypeCastFix = getFixFactory().createAddTypeCastFix(PsiType.INT, mySelector);
+    if (PsiTypes.longType().equals(mySelectorType) || PsiTypes.floatType().equals(mySelectorType) || PsiTypes.doubleType().equals(mySelectorType)) {
+      IntentionAction addTypeCastFix = getFixFactory().createAddTypeCastFix(PsiTypes.intType(), mySelector);
       builder.registerFix(addTypeCastFix, null, null, null, null);
-      IntentionAction wrapWithAdapterFix = getFixFactory().createWrapWithAdapterFix(PsiType.INT, mySelector);
+      IntentionAction wrapWithAdapterFix = getFixFactory().createWrapWithAdapterFix(PsiTypes.intType(), mySelector);
       builder.registerFix(wrapWithAdapterFix, null, null, null, null);
     }
   }

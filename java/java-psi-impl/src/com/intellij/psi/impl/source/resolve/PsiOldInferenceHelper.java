@@ -65,8 +65,8 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                                                                                     @NotNull ParameterTypeInferencePolicy policy) {
     PsiWildcardType wildcardToCapture = null;
     Pair<PsiType, ConstraintType> rawInference = null;
-    PsiType lowerBound = PsiType.NULL;
-    PsiType upperBound = PsiType.NULL;
+    PsiType lowerBound = PsiTypes.nullType();
+    PsiType upperBound = PsiTypes.nullType();
     if (paramTypes.length > 0) {
       for (int j = 0; j < argTypes.length; j++) {
         PsiType argumentType = argTypes[j];
@@ -103,7 +103,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
             wildcardToCapture = (PsiWildcardType) type;
             break;
           case SUPERTYPE:
-            if (PsiType.NULL.equals(lowerBound)) {
+            if (PsiTypes.nullType().equals(lowerBound)) {
               lowerBound = type;
             }
             else if (!lowerBound.equals(type)) {
@@ -112,7 +112,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
             }
             break;
           case SUBTYPE:
-            if (PsiType.NULL.equals(upperBound) || TypeConversionUtil.isAssignable(upperBound, type)) {
+            if (PsiTypes.nullType().equals(upperBound) || TypeConversionUtil.isAssignable(upperBound, type)) {
               upperBound = type;
             }
         }
@@ -120,7 +120,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
     }
 
     if (wildcardToCapture != null) {
-      if (lowerBound != PsiType.NULL) {
+      if (lowerBound != PsiTypes.nullType()) {
         if (!wildcardToCapture.isAssignableFrom(lowerBound)) return getFailedInferenceConstraint(typeParameter);
         if (wildcardToCapture.isSuper()) {
           return new Pair<>(wildcardToCapture, ConstraintType.SUPERTYPE);
@@ -128,13 +128,13 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, wildcardToCapture, myManager);
       }
       else {
-        if (upperBound != PsiType.NULL && !upperBound.isAssignableFrom(wildcardToCapture)) return getFailedInferenceConstraint(typeParameter);
+        if (upperBound != PsiTypes.nullType() && !upperBound.isAssignableFrom(wildcardToCapture)) return getFailedInferenceConstraint(typeParameter);
         return new Pair<>(wildcardToCapture, ConstraintType.EQUALS);
       }
     }
 
     if (rawInference != null) return rawInference;
-    if (lowerBound != PsiType.NULL) return Pair.create(lowerBound, ConstraintType.EQUALS);
+    if (lowerBound != PsiTypes.nullType()) return Pair.create(lowerBound, ConstraintType.EQUALS);
 
     if (parent != null) {
       final Pair<PsiType, ConstraintType> constraint =
@@ -144,7 +144,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
           return constraint;
         }
 
-        if (upperBound != PsiType.NULL) {
+        if (upperBound != PsiTypes.nullType()) {
           return Pair.create(upperBound, ConstraintType.SUBTYPE);
         }
 
@@ -152,7 +152,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
       }
     }
 
-    if (upperBound != PsiType.NULL) return Pair.create(upperBound, ConstraintType.SUBTYPE);
+    if (upperBound != PsiTypes.nullType()) return Pair.create(upperBound, ConstraintType.SUBTYPE);
     return null;
   }
 
@@ -171,7 +171,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
 
     final Pair<PsiType, ConstraintType> constraint =
       inferTypeForMethodTypeParameterInner(typeParameter, parameters, arguments, partialSubstitutor, parent, policy);
-    if (constraint == null) return PsiType.NULL;
+    if (constraint == null) return PsiTypes.nullType();
     return constraint.getFirst();
   }
 
@@ -205,7 +205,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
     for (int i = 0; i < typeParameters.length; i++) {
       PsiTypeParameter typeParameter = typeParameters[i];
       if (substitutions[i] == null) {
-        PsiType substitutionFromBounds = PsiType.NULL;
+        PsiType substitutionFromBounds = PsiTypes.nullType();
         OtherParameters:
         for (int j = 0; j < typeParameters.length; j++) {
           if (i != j) {
@@ -228,7 +228,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                 break OtherParameters;
               }
               else if (currentConstraintType == ConstraintType.SUPERTYPE && !JavaVersionService.getInstance().isAtLeast(parent, JavaSdkVersion.JDK_1_7)) {
-                if (PsiType.NULL.equals(substitutionFromBounds)) {
+                if (PsiTypes.nullType().equals(substitutionFromBounds)) {
                   substitutionFromBounds = currentSubstitution;
                 }
                 else {
@@ -239,14 +239,14 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
           }
         }
 
-        if (substitutionFromBounds != PsiType.NULL) substitutions[i] = substitutionFromBounds;
+        if (substitutionFromBounds != PsiTypes.nullType()) substitutions[i] = substitutionFromBounds;
       }
     }
 
     for (int i = 0; i < typeParameters.length; i++) {
       PsiTypeParameter typeParameter = typeParameters[i];
       PsiType substitution = substitutions[i];
-      if (substitution != PsiType.NULL) {
+      if (substitution != PsiTypes.nullType()) {
         partialSubstitutor = partialSubstitutor.put(typeParameter, substitution);
       }
     }
@@ -279,7 +279,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
         return factory.createRawSubstitutor(partialSubstitutor, typeParameters);
       }
-      if (substitution != PsiType.NULL) {
+      if (substitution != PsiTypes.nullType()) {
         partialSubstitutor = partialSubstitutor.put(typeParameter, substitution);
       }
     }
@@ -309,8 +309,8 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
     if (leftTypes.length != rightTypes.length) throw new IllegalArgumentException("Types must be of the same length");
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     for (PsiTypeParameter typeParameter : typeParameters) {
-      PsiType substitution = PsiType.NULL;
-      PsiType lowerBound = PsiType.NULL;
+      PsiType substitution = PsiTypes.nullType();
+      PsiType lowerBound = PsiTypes.nullType();
       for (int i1 = 0; i1 < leftTypes.length; i1++) {
         PsiType leftType = leftTypes[i1];
         PsiType rightType = rightTypes[i1];
@@ -324,7 +324,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
             break;
           }
           else if (constraintType == ConstraintType.SUBTYPE) {
-            if (PsiType.NULL.equals(substitution)) {
+            if (PsiTypes.nullType().equals(substitution)) {
               substitution = current;
             }
             else {
@@ -332,7 +332,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
             }
           }
           else {
-            if (PsiType.NULL.equals(lowerBound)) {
+            if (PsiTypes.nullType().equals(lowerBound)) {
               lowerBound = current;
             }
             else {
@@ -342,18 +342,18 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         }
       }
 
-      if (PsiType.NULL.equals(substitution)) {
+      if (PsiTypes.nullType().equals(substitution)) {
         substitution = lowerBound;
       }
 
-      if (substitution != PsiType.NULL) {
+      if (substitution != PsiTypes.nullType()) {
         substitutor = substitutor.put(typeParameter, substitution);
       }
     }
     for (int i = 0; i < typeParameters.length; i++) {
       PsiTypeParameter typeParameter = typeParameters[i];
       if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
-        PsiType substitutionFromBounds = PsiType.NULL;
+        PsiType substitutionFromBounds = PsiTypes.nullType();
         OtherParameters:
         for (int j = 0; j < typeParameters.length; j++) {
           if (i != j) {
@@ -373,7 +373,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                 break OtherParameters;
               }
               else if (currentConstraintType == ConstraintType.SUPERTYPE) {
-                if (PsiType.NULL.equals(substitutionFromBounds)) {
+                if (PsiTypes.nullType().equals(substitutionFromBounds)) {
                   substitutionFromBounds = currentSubstitution;
                 }
                 else {
@@ -383,7 +383,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
             }
           }
         }
-        if (substitutionFromBounds != PsiType.NULL) {
+        if (substitutionFromBounds != PsiTypes.nullType()) {
           substitutor = substitutor.put(typeParameter, substitutionFromBounds);
         }
       }
@@ -395,7 +395,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
   private static Pair<PsiType, ConstraintType> processArgType(PsiType arg, final ConstraintType constraintType,
                                                               final boolean captureWildcard) {
     if (arg instanceof PsiWildcardType && !captureWildcard) return FAILED_INFERENCE;
-    if (arg != PsiType.NULL) {
+    if (arg != PsiTypes.nullType()) {
       return Pair.create(arg, constraintType);
     }
     return null;
@@ -422,7 +422,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                                                  final LanguageLevel languageLevel) {
     final Pair<PsiType, ConstraintType> constraint = getSubstitutionForTypeParameterConstraint(typeParam, param, arg, isContraVariantPosition,
                                                                                                languageLevel);
-    return constraint == null ? PsiType.NULL : constraint.getFirst();
+    return constraint == null ? (PsiPrimitiveType)PsiTypes.nullType() : constraint.getFirst();
   }
 
   @Nullable
@@ -500,7 +500,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
   }
 
   //represents the result of failed type inference: in case we failed inferring from parameters, do not perform inference from context
-  private static final Pair<PsiType, ConstraintType> FAILED_INFERENCE = new Pair<>(PsiType.NULL, ConstraintType.EQUALS);
+  private static final Pair<PsiType, ConstraintType> FAILED_INFERENCE = new Pair<>(PsiTypes.nullType(), ConstraintType.EQUALS);
 
   @Nullable
   private Pair<PsiType, ConstraintType> getSubstitutionForTypeParameterInner(PsiType param,
@@ -598,8 +598,8 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         return null;
       }
 
-      PsiType lowerBound = PsiType.NULL;
-      PsiType upperBound = PsiType.NULL;
+      PsiType lowerBound = PsiTypes.nullType();
+      PsiType upperBound = PsiTypes.nullType();
       Pair<PsiType,ConstraintType> wildcardCaptured = null;
       for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(paramClass)) {
         PsiType paramType = paramResult.getSubstitutor().substitute(typeParameter);
@@ -630,7 +630,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
               break;
             case SUPERTYPE:
               wildcardCaptured = res;
-              if (PsiType.NULL.equals(lowerBound)) {
+              if (PsiTypes.nullType().equals(lowerBound)) {
                 lowerBound = type;
               }
               else if (!lowerBound.equals(type)) {
@@ -640,15 +640,15 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
               break;
             case SUBTYPE:
               wildcardCaptured = res;
-              if (PsiType.NULL.equals(upperBound) || TypeConversionUtil.isAssignable(upperBound, type)) {
+              if (PsiTypes.nullType().equals(upperBound) || TypeConversionUtil.isAssignable(upperBound, type)) {
                 upperBound = type;
               }
           }
         }
       }
 
-      if (lowerBound != PsiType.NULL) return Pair.create(lowerBound, ConstraintType.SUPERTYPE);
-      if (upperBound != PsiType.NULL) return Pair.create(upperBound, ConstraintType.SUBTYPE);
+      if (lowerBound != PsiTypes.nullType()) return Pair.create(lowerBound, ConstraintType.SUPERTYPE);
+      if (upperBound != PsiTypes.nullType()) return Pair.create(upperBound, ConstraintType.SUBTYPE);
 
       return wildcardCaptured;
     }
@@ -692,7 +692,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
       if (constraint != null) {
         PsiType guess = constraint.getFirst();
         if (guess != null &&
-            !guess.equals(PsiType.NULL) &&
+            !guess.equals(PsiTypes.nullType()) &&
             constraint.getSecond() == ConstraintType.SUPERTYPE &&
             guess instanceof PsiIntersectionType &&
             !JavaVersionService.getInstance().isAtLeast(parent, JavaSdkVersion.JDK_1_7)) {

@@ -123,7 +123,7 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
               expectedArgument.set(Boolean.FALSE);
               return;
             }
-            if (PsiUtil.isConstantExpression(definition) || PsiType.NULL.equals(definition.getType())) {
+            if (PsiUtil.isConstantExpression(definition) || PsiTypes.nullType().equals(definition.getType())) {
               return;
             }
             final PsiElement[] refs = DefUseUtil.getRefs(block, variable, definition);

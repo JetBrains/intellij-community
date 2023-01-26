@@ -34,7 +34,7 @@ fun inferDataSourceComponentType(type: PsiType?): PsiType? = when (type) {
 
 private fun extractComponent(type: PsiType, className: String): PsiType? {
   if (InheritanceUtil.isInheritor(type, className)) {
-    return PsiUtil.substituteTypeParameter(type, className, 0, false) ?: PsiType.NULL
+    return PsiUtil.substituteTypeParameter(type, className, 0, false) ?: PsiTypes.nullType()
   }
   else {
     return null
@@ -68,13 +68,13 @@ private fun getComponentType(facade: JavaPsiFacade,
                              ginq: GinqExpression): PsiType {
   val singleProjection = ginq.select?.projections?.singleOrNull()?.takeIf { it.alias == null }
   val projectionPsiType = if (singleProjection != null) {
-    singleProjection.aggregatedExpression.type ?: PsiType.NULL
+    singleProjection.aggregatedExpression.type ?: PsiTypes.nullType()
   }
   else {
     val namedRecord = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD, psiGinq.resolveScope)
-    namedRecord?.let { GrSyntheticNamedRecordClass(ginq, it).type() } ?: PsiType.NULL
+    namedRecord?.let { GrSyntheticNamedRecordClass(ginq, it).type() } ?: PsiTypes.nullType()
   }
-  return if (projectionPsiType == PsiType.NULL) PsiWildcardType.createUnbounded(psiGinq.manager) else projectionPsiType.box(psiGinq)
+  return if (projectionPsiType == PsiTypes.nullType()) PsiWildcardType.createUnbounded(psiGinq.manager) else projectionPsiType.box(psiGinq)
 }
 
 fun inferOverType(expression: GrMethodCall) : PsiType? {

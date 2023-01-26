@@ -44,7 +44,7 @@ internal class GradleManagedPropertyAsSetterProcessor(
     }
     val setterName = PropertyKind.SETTER.getAccessorName(propertyName)
     val setter = GrLightMethodBuilder(manager, setterName).apply {
-      returnType = PsiType.VOID
+      returnType = PsiTypes.voidType()
       navigationElement = element
       containingClass = element.containingClass
       addParameter("value", element.returnType?.let(::propertyType))

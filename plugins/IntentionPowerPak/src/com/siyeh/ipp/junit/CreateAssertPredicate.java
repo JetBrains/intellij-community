@@ -35,7 +35,7 @@ class CreateAssertPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiType type = expression.getType();
-    if (!PsiType.BOOLEAN.equals(type)) {
+    if (!PsiTypes.booleanType().equals(type)) {
       return false;
     }
     PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);

@@ -43,7 +43,7 @@ public final class WeakestTypeFinder {
     else if (variableOrMethod instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)variableOrMethod;
       variableOrMethodType = method.getReturnType();
-      if (PsiType.VOID.equals(variableOrMethodType)) {
+      if (PsiTypes.voidType().equals(variableOrMethodType)) {
         return Collections.emptyList();
       }
     }
@@ -99,7 +99,7 @@ public final class WeakestTypeFinder {
         final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)referenceElement;
         final PsiType type = methodReferenceExpression.getFunctionalInterfaceType();
         final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(type);
-        if (!PsiType.VOID.equals(returnType) && !checkType(returnType, weakestTypeClasses)) {
+        if (!PsiTypes.voidType().equals(returnType) && !checkType(returnType, weakestTypeClasses)) {
           return Collections.emptyList();
         }
       } else if (referenceParent instanceof PsiExpressionList) {

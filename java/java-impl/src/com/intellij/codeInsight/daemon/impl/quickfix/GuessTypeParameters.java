@@ -213,7 +213,7 @@ public class GuessTypeParameters {
 
     @Override
     public PsiType visitType(@NotNull PsiType type) {
-      if (type.equals(PsiType.NULL)) return PsiType.getJavaLangObject(myManager, myResolveScope);
+      if (type.equals(PsiTypes.nullType())) return PsiType.getJavaLangObject(myManager, myResolveScope);
       return type;
     }
 

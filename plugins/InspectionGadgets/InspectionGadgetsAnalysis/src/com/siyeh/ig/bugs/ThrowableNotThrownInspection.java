@@ -162,13 +162,13 @@ public class ThrowableNotThrownInspection extends BaseInspection {
       // void method (like printStackTrace()) provides no result, thus can't be ignored
       final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)parent;
       final PsiExpression expression1 = expressionStatement.getExpression();
-      return !PsiType.VOID.equals(expression1.getType());
+      return !PsiTypes.voidType().equals(expression1.getType());
     }
     else if (parent instanceof PsiExpressionList) {
       return parent.getParent() instanceof PsiExpressionListStatement;
     }
     else if (parent instanceof PsiLambdaExpression) {
-      return PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent));
+      return PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent));
     }
     else if (parent instanceof PsiReturnStatement || parent instanceof PsiThrowStatement || parent instanceof PsiLoopStatement
              || parent instanceof PsiIfStatement || parent instanceof PsiAssertStatement) {

@@ -69,7 +69,7 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
       for (final PsiExpression dimension : dimensions) {
         final Integer intValue =
           (Integer)ConstantExpressionUtil.computeCastTo(
-            dimension, PsiType.INT);
+            dimension, PsiTypes.intType());
         if (intValue != null) {
           size *= intValue.intValue();
         }

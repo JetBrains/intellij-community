@@ -1035,7 +1035,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       .setContainingClass(JavaPsiFacade.getInstance(actionGroupClass.getProject()).findClass(ActionGroup.class.getName(),
                                                                                              actionGroupClass.getResolveScope()))
       .setModifiers(PsiModifier.PUBLIC)
-      .setMethodReturnType(PsiType.BOOLEAN)
+      .setMethodReturnType(PsiTypes.booleanType())
       .addParameter("context", DataContext.class.getName());
 
     PsiMethod overriddenCanBePerformedMethod = actionGroupClass.findMethodBySignature(canBePerformedMethod, false);

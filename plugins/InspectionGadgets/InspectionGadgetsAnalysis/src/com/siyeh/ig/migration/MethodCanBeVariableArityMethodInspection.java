@@ -115,7 +115,7 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
         return;
       }
       if (ignoreByteAndShortArrayParameters) {
-        if (PsiType.BYTE.equals(componentType) || PsiType.SHORT.equals(componentType)) {
+        if (PsiTypes.byteType().equals(componentType) || PsiTypes.shortType().equals(componentType)) {
           return;
         }
         if (ignoreAllPrimitiveArrayParameters && componentType instanceof PsiPrimitiveType) {

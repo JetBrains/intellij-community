@@ -645,24 +645,24 @@ public final class PsiLiteralUtil {
    */
   public static @Nullable String tryConvertNumericLiteral(@NotNull PsiLiteralExpression literal, PsiType wantedType) {
     PsiType exprType = literal.getType();
-    if (PsiType.INT.equals(exprType)) {
-      if (PsiType.LONG.equals(wantedType)) {
+    if (PsiTypes.intType().equals(exprType)) {
+      if (PsiTypes.longType().equals(wantedType)) {
         return literal.getText() + "L";
       }
-      if (PsiType.FLOAT.equals(wantedType)) {
+      if (PsiTypes.floatType().equals(wantedType)) {
         String text = literal.getText();
         if (!text.startsWith("0")) {
           return text + "F";
         }
       }
-      if (PsiType.DOUBLE.equals(wantedType)) {
+      if (PsiTypes.doubleType().equals(wantedType)) {
         String text = literal.getText();
         if (!text.startsWith("0")) {
           return text + ".0";
         }
       }
     }
-    if (PsiType.LONG.equals(exprType) && PsiType.INT.equals(wantedType)) {
+    if (PsiTypes.longType().equals(exprType) && PsiTypes.intType().equals(wantedType)) {
       Long value = ObjectUtils.tryCast(literal.getValue(), Long.class);
       if (value != null && value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
         String text = literal.getText();
@@ -671,7 +671,7 @@ public final class PsiLiteralUtil {
         }
       }
     }
-    if (PsiType.DOUBLE.equals(exprType) && PsiType.FLOAT.equals(wantedType)) {
+    if (PsiTypes.doubleType().equals(exprType) && PsiTypes.floatType().equals(wantedType)) {
       Double value = ObjectUtils.tryCast(literal.getValue(), Double.class);
       if (value != null) {
         float f = (float)(double)value;
@@ -684,7 +684,7 @@ public final class PsiLiteralUtil {
         }
       }
     }
-    if (PsiType.FLOAT.equals(exprType) && PsiType.DOUBLE.equals(wantedType)) {
+    if (PsiTypes.floatType().equals(exprType) && PsiTypes.doubleType().equals(wantedType)) {
       String text = literal.getText();
       if (StringUtil.endsWithIgnoreCase(text, "F")) {
         String newLiteral = text.substring(0, text.length() - 1);

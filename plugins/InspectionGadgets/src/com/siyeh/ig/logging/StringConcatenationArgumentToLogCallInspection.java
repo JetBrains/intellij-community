@@ -182,7 +182,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
             isStringBlock = isStringBlock || literalExpression.isTextBlock();
             logText.append(literalExpression.getValue());
           }
-          else if (operand instanceof PsiLiteralExpression && PsiType.CHAR.equals(operand.getType()) && inStringLiteral) {
+          else if (operand instanceof PsiLiteralExpression && PsiTypes.charType().equals(operand.getType()) && inStringLiteral) {
             final Object value = ((PsiLiteralExpression)operand).getValue();
             if (value instanceof Character) {
               logText.append(value);

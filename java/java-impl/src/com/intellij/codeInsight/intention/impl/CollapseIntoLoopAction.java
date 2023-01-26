@@ -83,7 +83,7 @@ public class CollapseIntoLoopAction implements IntentionAction {
       String varName;
       if (myType == null) {
         int size = myStatements.size() / myStatementCount;
-        varName = new VariableNameGenerator(context, VariableKind.PARAMETER).byType(PsiType.INT).generate(true);
+        varName = new VariableNameGenerator(context, VariableKind.PARAMETER).byType(PsiTypes.intType()).generate(true);
         loopDeclaration = "for(int " + varName + "=0;" + varName + "<" + size + ";" + varName + "++)";
       }
       else {
@@ -118,7 +118,7 @@ public class CollapseIntoLoopAction implements IntentionAction {
     }
 
     private String tryCollapseIntoCountingLoop(String varName) {
-      if (!PsiType.INT.equals(myType) && !PsiType.LONG.equals(myType)) return null;
+      if (!PsiTypes.intType().equals(myType) && !PsiTypes.longType().equals(myType)) return null;
       Long start = null;
       Long step = null;
       Long last = null;
@@ -147,11 +147,11 @@ public class CollapseIntoLoopAction implements IntentionAction {
         .map(ref -> PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiLambdaExpression.class))
         .anyMatch(ctx -> ctx != null && PsiTreeUtil.isAncestor(parent, ctx, false));
       if (mustBeEffectivelyFinal) return null;
-      String suffix = PsiType.LONG.equals(myType) ? "L" : "";
+      String suffix = PsiTypes.longType().equals(myType) ? "L" : "";
       String initial = myType.getCanonicalText() + " " + varName + "=" + start + suffix;
       String condition =
-        varName + (step == 1 && last != (PsiType.LONG.equals(myType) ? Long.MAX_VALUE : Integer.MAX_VALUE) ? "<" + (last + 1) :
-                   step == -1 && last != (PsiType.LONG.equals(myType) ? Long.MIN_VALUE : Integer.MIN_VALUE) ? ">" + (last - 1) :
+        varName + (step == 1 && last != (PsiTypes.longType().equals(myType) ? Long.MAX_VALUE : Integer.MAX_VALUE) ? "<" + (last + 1) :
+                   step == -1 && last != (PsiTypes.longType().equals(myType) ? Long.MIN_VALUE : Integer.MIN_VALUE) ? ">" + (last - 1) :
                    (step < 0 ? ">=" : "<=") + last) + suffix;
       String increment = varName + (step == 1 ? "++" : step == -1 ? "--" : step > 0 ? "+=" + step + suffix : "-=" + (-step) + suffix);
       return "for(" + initial + ";" + condition + ";" + increment + ")";

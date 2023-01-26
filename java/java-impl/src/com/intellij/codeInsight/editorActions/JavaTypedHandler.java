@@ -267,9 +267,9 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     PsiExpression condition = cond.getCondition();
     if (PsiUtilCore.hasErrorElementChild(condition)) return true;
     // intVal+bool? => intVal+(bool?)
-    if (condition instanceof PsiPolyadicExpression && !PsiType.BOOLEAN.equals(condition.getType())) {
+    if (condition instanceof PsiPolyadicExpression && !PsiTypes.booleanType().equals(condition.getType())) {
       PsiExpression lastOperand = ArrayUtil.getLastElement(((PsiPolyadicExpression)condition).getOperands());
-      if (lastOperand != null && PsiType.BOOLEAN.equals(lastOperand.getType())) {
+      if (lastOperand != null && PsiTypes.booleanType().equals(lastOperand.getType())) {
         int openingOffset = lastOperand.getTextRange().getStartOffset();
         int closingOffset = cond.getTextRange().getEndOffset();
         wrapWithParentheses(file, doc, openingOffset, closingOffset);

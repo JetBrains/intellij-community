@@ -17,7 +17,6 @@ package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,9 +39,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public abstract class ResourceInspection extends BaseInspection {
 
@@ -293,7 +291,7 @@ public abstract class ResourceInspection extends BaseInspection {
       if (rhs == null) {
         return false;
       }
-      if (PsiType.NULL.equals(lhs.getType())) {
+      if (PsiTypes.nullType().equals(lhs.getType())) {
         if (!(rhs instanceof PsiReferenceExpression)) {
           return false;
         }
@@ -303,7 +301,7 @@ public abstract class ResourceInspection extends BaseInspection {
           return false;
         }
       }
-      else if (PsiType.NULL.equals(rhs.getType())) {
+      else if (PsiTypes.nullType().equals(rhs.getType())) {
         if (!(lhs instanceof PsiReferenceExpression)) {
           return false;
         }
@@ -338,7 +336,7 @@ public abstract class ResourceInspection extends BaseInspection {
     if (parent instanceof PsiLambdaExpression) {
       PsiLambdaExpression lambda = (PsiLambdaExpression)parent;
       PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
-      if (!PsiType.VOID.equals(returnType)) {
+      if (!PsiTypes.voidType().equals(returnType)) {
         return true;
       }
     }

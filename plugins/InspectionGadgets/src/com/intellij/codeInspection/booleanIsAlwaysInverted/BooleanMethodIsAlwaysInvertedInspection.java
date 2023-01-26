@@ -201,7 +201,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     public void onInitialize(RefElement refElement) {
       if (!(refElement instanceof RefMethod) || ((RefMethod)refElement).isConstructor()) return;
       final UMethod method = (UMethod)((RefMethod)refElement).getUastElement();
-      if (!PsiType.BOOLEAN.equals(method.getReturnType())) return;
+      if (!PsiTypes.booleanType().equals(method.getReturnType())) return;
       refElement.putUserData(ALWAYS_INVERTED, Boolean.TRUE); //initial mark boolean methods
     }
 

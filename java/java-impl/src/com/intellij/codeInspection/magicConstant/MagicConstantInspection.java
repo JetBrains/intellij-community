@@ -451,7 +451,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       return true;
     }
 
-    return PsiType.NULL.equals(argument.getType());
+    return PsiTypes.nullType().equals(argument.getType());
   }
 
   private static final Key<Map<String, PsiExpression>> LITERAL_EXPRESSION_CACHE = Key.create("LITERAL_EXPRESSION_CACHE");

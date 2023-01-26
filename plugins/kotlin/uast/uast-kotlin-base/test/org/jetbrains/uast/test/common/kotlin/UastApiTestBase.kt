@@ -22,7 +22,6 @@ import org.jetbrains.uast.test.env.findElementByText
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
-import java.lang.IllegalStateException
 import kotlin.test.fail as kfail
 
 interface UastApiTestBase : UastPluginSelection {
@@ -688,10 +687,10 @@ interface UastApiTestBase : UastPluginSelection {
         val m = simpleClass.methods.find { it.name == "method" }
             ?: throw IllegalStateException("Target function not found at ${uFile.asRefNames()}")
         // type delegated from LC
-        TestCase.assertEquals(PsiType.VOID, m.returnType)
+        TestCase.assertEquals(PsiTypes.voidType(), m.returnType)
         // type through the base service
         val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
-        TestCase.assertEquals(PsiType.VOID, service.getType(m.sourcePsi as KtDeclaration, m as UElement))
+        TestCase.assertEquals(PsiTypes.voidType(), service.getType(m.sourcePsi as KtDeclaration, m as UElement))
 
         val functionCall = m.findElementByText<UElement>("println").uastParent as KotlinUFunctionCallExpression
         // type through the base service: KotlinUElementWithType#getExpressionType

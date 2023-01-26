@@ -38,7 +38,7 @@ public final class JavaFxEntryPoint extends EntryPoint {
       final String methodName = method.getName();
       final PsiClass containingClass = method.getContainingClass();
       if (paramsCount == 1 &&
-          PsiType.VOID.equals(method.getReturnType()) &&
+          PsiTypes.voidType().equals(method.getReturnType()) &&
           "start".equals(methodName)) {
         return InheritanceUtil.isInheritor(containingClass, true, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION);
       }

@@ -110,7 +110,7 @@ public class ClassReferenceParser extends StandardHeaderParser {
 
   private static boolean hasInstrumenterMethod(PsiClass aClass, String methodName) {
     for (PsiMethod method : aClass.findMethodsByName(methodName, false)) {
-      if (PsiType.VOID.equals(method.getReturnType()) &&
+      if (PsiTypes.voidType().equals(method.getReturnType()) &&
           method.hasModifierProperty(PsiModifier.PUBLIC) &&
           method.hasModifierProperty(PsiModifier.STATIC)) {
         return true;

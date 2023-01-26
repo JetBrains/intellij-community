@@ -53,7 +53,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
     PsiExpression lExpression = PsiUtil.deparenthesizeExpression(getLExpression());
     if (lExpression instanceof PsiReferenceExpression || lExpression instanceof PsiArrayAccessExpression) {
       PsiType type = lExpression.getType();
-      if (type == null || type == PsiType.NULL) {
+      if (type == null || type == PsiTypes.nullType()) {
         PsiExpression rExpression = getRExpression();
         if (rExpression != null && !PsiPolyExpressionUtil.isPolyExpression(rExpression)) {
           return rExpression.getType();

@@ -106,7 +106,7 @@ public final class CountingLoop {
     PsiLocalVariable counter = tryCast(declaredElements[0], PsiLocalVariable.class);
     if(counter == null) return null;
     PsiType counterType = counter.getType();
-    if(!counterType.equals(PsiType.INT) && !counterType.equals(PsiType.LONG)) return null;
+    if(!counterType.equals(PsiTypes.intType()) && !counterType.equals(PsiTypes.longType())) return null;
 
     PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(counter.getInitializer());
     if(initializer == null) return null;

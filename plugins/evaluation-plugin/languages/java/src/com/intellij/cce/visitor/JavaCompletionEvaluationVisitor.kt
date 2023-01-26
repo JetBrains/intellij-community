@@ -1,11 +1,11 @@
 package com.intellij.cce.visitor
 
+import com.intellij.cce.core.*
+import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.util.PsiTypesUtil
-import com.intellij.cce.core.*
-import com.intellij.cce.visitor.exceptions.PsiConverterException
 
 class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursiveElementVisitor() {
   private var codeFragment: CodeFragment? = null
@@ -40,7 +40,7 @@ class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursi
 
   override fun visitLiteralExpression(expression: PsiLiteralExpression) {
     if (expression is PsiLiteralExpressionImpl &&
-        (expression.type == PsiType.BOOLEAN || expression.type == PsiType.NULL)) {
+        (expression.type == PsiTypes.booleanType() || expression.type == PsiTypes.nullType())) {
       val token = CodeToken(expression.text, expression.textOffset, expression.textLength, keywordProperties())
       codeFragment?.addChild(token)
     }

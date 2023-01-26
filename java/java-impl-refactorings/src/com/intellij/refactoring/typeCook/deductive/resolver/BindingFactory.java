@@ -183,7 +183,7 @@ public class BindingFactory {
                 return null;
               }
 
-              if (type != PsiType.NULL) {
+              if (type != PsiTypes.nullType()) {
                 b3.myBindings.put(i, type);
                 b3.myCyclic = type instanceof PsiTypeVariable;
               }
@@ -198,7 +198,7 @@ public class BindingFactory {
                 return null;
               }
 
-              if (type != PsiType.NULL) {
+              if (type != PsiTypes.nullType()) {
                 b3.myBindings.put(i, type);
                 b3.myCyclic = type instanceof PsiTypeVariable;
               }
@@ -218,7 +218,7 @@ public class BindingFactory {
               return null;
             }
 
-            if (type != PsiType.NULL) {
+            if (type != PsiTypes.nullType()) {
               b3.myBindings.put(i, type);
               b3.myCyclic = type instanceof PsiTypeVariable;
             }

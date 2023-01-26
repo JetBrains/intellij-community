@@ -19,7 +19,6 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -36,12 +35,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class PointlessBooleanExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public enum BooleanExpressionKind {
@@ -486,7 +487,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
         return BooleanExpressionKind.UNKNOWN;
       }
       final PsiType type = operand.getType();
-      if (type == null || !type.equals(PsiType.BOOLEAN) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
+      if (type == null || !type.equals(PsiTypes.booleanType()) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
         return BooleanExpressionKind.UNKNOWN;
       }
       if (!stopCheckingSideEffects && SideEffectChecker.mayHaveSideEffects(operand)) {
@@ -565,7 +566,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
         return evaluate(assignmentExpression.getRExpression());
       }
     }
-    return (Boolean)ConstantExpressionUtil.computeCastTo(expression, PsiType.BOOLEAN);
+    return (Boolean)ConstantExpressionUtil.computeCastTo(expression, PsiTypes.booleanType());
   }
 
   private static boolean containsReference(@Nullable PsiExpression expression) {

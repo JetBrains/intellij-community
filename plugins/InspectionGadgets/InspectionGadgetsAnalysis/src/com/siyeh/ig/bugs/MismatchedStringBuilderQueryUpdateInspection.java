@@ -231,7 +231,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       super.visitMethodReferenceExpression(expression);
       final String name = expression.getReferenceName();
       if (!queryNames.contains(name) && !returnSelfNames.contains(name)) return;
-      if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) return;
+      if (PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) return;
       final PsiExpression qualifierExpression = expression.getQualifierExpression();
       if (hasReferenceToVariable(variable, qualifierExpression)) {
         queried = true;

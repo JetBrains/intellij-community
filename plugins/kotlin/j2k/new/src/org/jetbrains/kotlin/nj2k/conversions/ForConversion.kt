@@ -114,7 +114,7 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
             && !loopVarPsi.hasWriteAccesses(referenceSearcher, loopStatement.condition.psi())
         ) {
             val left = condition.left as? JKFieldAccessExpression ?: return null
-            if (condition.right.psi<PsiExpression>()?.type in listOf(PsiType.DOUBLE, PsiType.FLOAT, PsiType.CHAR)) return null
+            if (condition.right.psi<PsiExpression>()?.type in listOf(PsiTypes.doubleType(), PsiTypes.floatType(), PsiTypes.charType())) return null
             if (left.identifier.target != loopVar) return null
             val operationType =
                 (loopStatement.updaters.singleOrNull() as? JKExpressionStatement)?.expression?.isVariableIncrementOrDecrement(loopVar)

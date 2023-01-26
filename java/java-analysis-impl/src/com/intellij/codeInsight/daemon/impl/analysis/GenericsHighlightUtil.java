@@ -797,7 +797,7 @@ public final class GenericsHighlightUtil {
   static HighlightInfo.Builder checkReferenceTypeUsedAsTypeArgument(@NotNull PsiTypeElement typeElement, @NotNull LanguageLevel level) {
     PsiType type = typeElement.getType();
     PsiType wildCardBind = type instanceof PsiWildcardType ? ((PsiWildcardType)type).getBound() : null;
-    if (type != PsiType.NULL && type instanceof PsiPrimitiveType || wildCardBind instanceof PsiPrimitiveType) {
+    if (type != PsiTypes.nullType() && type instanceof PsiPrimitiveType || wildCardBind instanceof PsiPrimitiveType) {
       PsiElement element = new PsiMatcherImpl(typeElement)
         .parent(PsiMatchers.hasClass(PsiReferenceParameterList.class))
         .parent(PsiMatchers.hasClass(PsiJavaCodeReferenceElement.class, PsiNewExpression.class))

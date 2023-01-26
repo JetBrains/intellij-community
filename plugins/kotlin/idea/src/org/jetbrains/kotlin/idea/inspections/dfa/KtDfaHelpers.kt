@@ -13,7 +13,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.RelationType
 import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
@@ -114,14 +114,14 @@ private fun ClassDescriptor.getTypeConstraint(): TypeConstraint {
         }
     }
     return when (fqNameUnsafe.asString()) {
-        "kotlin.ByteArray" -> TypeConstraints.exact(PsiType.BYTE.createArrayType())
-        "kotlin.IntArray" -> TypeConstraints.exact(PsiType.INT.createArrayType())
-        "kotlin.LongArray" -> TypeConstraints.exact(PsiType.LONG.createArrayType())
-        "kotlin.ShortArray" -> TypeConstraints.exact(PsiType.SHORT.createArrayType())
-        "kotlin.CharArray" -> TypeConstraints.exact(PsiType.CHAR.createArrayType())
-        "kotlin.BooleanArray" -> TypeConstraints.exact(PsiType.BOOLEAN.createArrayType())
-        "kotlin.FloatArray" -> TypeConstraints.exact(PsiType.FLOAT.createArrayType())
-        "kotlin.DoubleArray" -> TypeConstraints.exact(PsiType.DOUBLE.createArrayType())
+        "kotlin.ByteArray" -> TypeConstraints.exact(PsiTypes.byteType().createArrayType())
+        "kotlin.IntArray" -> TypeConstraints.exact(PsiTypes.intType().createArrayType())
+        "kotlin.LongArray" -> TypeConstraints.exact(PsiTypes.longType().createArrayType())
+        "kotlin.ShortArray" -> TypeConstraints.exact(PsiTypes.shortType().createArrayType())
+        "kotlin.CharArray" -> TypeConstraints.exact(PsiTypes.charType().createArrayType())
+        "kotlin.BooleanArray" -> TypeConstraints.exact(PsiTypes.booleanType().createArrayType())
+        "kotlin.FloatArray" -> TypeConstraints.exact(PsiTypes.floatType().createArrayType())
+        "kotlin.DoubleArray" -> TypeConstraints.exact(PsiTypes.doubleType().createArrayType())
         else -> {
             val classDef = KtClassDef(this)
             if (kind == ClassKind.OBJECT) {
@@ -201,14 +201,14 @@ internal fun KotlinType.getArrayElementType(): KotlinType? {
 
 internal fun KotlinType.toPsiPrimitiveType(): PsiPrimitiveType {
     return when (this.constructor.declarationDescriptor?.fqNameUnsafe) {
-        FqNames._int -> PsiType.INT
-        FqNames._long -> PsiType.LONG
-        FqNames._short -> PsiType.SHORT
-        FqNames._boolean -> PsiType.BOOLEAN
-        FqNames._byte -> PsiType.BYTE
-        FqNames._char -> PsiType.CHAR
-        FqNames._double -> PsiType.DOUBLE
-        FqNames._float -> PsiType.FLOAT
+        FqNames._int -> PsiTypes.intType()
+        FqNames._long -> PsiTypes.longType()
+        FqNames._short -> PsiTypes.shortType()
+        FqNames._boolean -> PsiTypes.booleanType()
+        FqNames._byte -> PsiTypes.byteType()
+        FqNames._char -> PsiTypes.charType()
+        FqNames._double -> PsiTypes.doubleType()
+        FqNames._float -> PsiTypes.floatType()
         else -> throw IllegalArgumentException("Not a primitive analog: $this")
     }
 }

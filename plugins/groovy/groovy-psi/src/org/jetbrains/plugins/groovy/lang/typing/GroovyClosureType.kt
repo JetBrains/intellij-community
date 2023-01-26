@@ -5,6 +5,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.util.containers.minimalElements
 import com.intellij.util.recursionSafeLazy
 import org.jetbrains.annotations.NonNls
@@ -34,7 +35,7 @@ abstract class GroovyClosureType(
       return@recursionSafeLazy PsiType.EMPTY_ARRAY
     }
     val type: PsiType? = returnType(null)
-    if (type == null || type === PsiType.NULL) {
+    if (type == null || type === PsiTypes.nullType()) {
       // type inference for closures have smart rules when it concerns return type
       // of course raw types are bad, but by leaving it this way we allow some flexibility in ad-hoc inference of closure types
       PsiType.EMPTY_ARRAY

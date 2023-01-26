@@ -114,7 +114,7 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsa
   @Override
   public boolean supportValueFilters(@NotNull PsiElement expression) {
     PsiType type = getType(expression);
-    return type != null && !PsiType.VOID.equals(type) && !PsiType.NULL.equals(type);
+    return type != null && !PsiTypes.voidType().equals(type) && !PsiTypes.nullType().equals(type);
   }
 
   @Override
@@ -138,11 +138,11 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsa
       return new JavaValueFilter(DfTypes.NOT_NULL_OBJECT);
     }
     RelationType relationType = RelationType.EQ;
-    if (PsiType.BYTE.equals(type) ||
-        PsiType.CHAR.equals(type) ||
-        PsiType.SHORT.equals(type) ||
-        PsiType.INT.equals(type) ||
-        PsiType.LONG.equals(type)) {
+    if (PsiTypes.byteType().equals(type) ||
+        PsiTypes.charType().equals(type) ||
+        PsiTypes.shortType().equals(type) ||
+        PsiTypes.intType().equals(type) ||
+        PsiTypes.longType().equals(type)) {
       for (RelationType relType : RelationType.values()) {
         if (filter.startsWith(relType.toString())) {
           relationType = relType;
@@ -179,7 +179,7 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsa
       if (!(o instanceof Number)) {
         throw new SliceFilterParseException(JavaBundle.message("slice.filter.parse.error.incorrect.constant.expected.number", filter));
       }
-      if (PsiType.LONG.equals(type)) {
+      if (PsiTypes.longType().equals(type)) {
         LongRangeSet rangeSet = LongRangeSet.point(((Number)o).longValue()).fromRelation(relationType);
         return new JavaValueFilter(DfTypes.longRange(rangeSet));
       }

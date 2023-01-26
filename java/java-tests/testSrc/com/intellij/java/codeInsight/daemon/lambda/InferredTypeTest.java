@@ -88,7 +88,7 @@ public class InferredTypeTest extends LightJavaCodeInsightFixtureTestCase {
     final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("R.java", "public interface R {@D void run();}");
     final PsiClass psiClass = file.getClasses()[0];
     final PsiMethod method = psiClass.getMethods()[0];
-    assertNotSame(PsiType.VOID, method.getReturnType());
+    assertNotSame(PsiTypes.voidType(), method.getReturnType());
     myFixture.configureByText("a.java", "class A {{R r = () -> {};}} ");
     myFixture.checkHighlighting(false, false, false);
   }

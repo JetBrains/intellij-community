@@ -96,7 +96,7 @@ final class SlowerTypeConversions {
     if (o instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)o;
       final PsiType type = method.getReturnType();
-      if (PsiType.VOID.equals(type) || PsiType.NULL.equals(type)) return null;
+      if (PsiTypes.voidType().equals(type) || PsiTypes.nullType().equals(type)) return null;
       if (!method.getParameterList().isEmpty()) return null;
       return method.getName() + "(" +
              getSpace(CodeStyle.getLanguageSettings(file).SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES) + ")";

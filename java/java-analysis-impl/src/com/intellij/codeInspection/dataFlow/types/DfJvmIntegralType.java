@@ -5,7 +5,7 @@ import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,12 +24,12 @@ public interface DfJvmIntegralType extends DfIntegralType, DfPrimitiveType {
     if (getConstantOfType(Object.class) != null) {
       return DfPrimitiveType.super.castTo(type);
     }
-    if (type.equals(PsiType.DOUBLE) || type.equals(PsiType.FLOAT)) {
+    if (type.equals(PsiTypes.doubleType()) || type.equals(PsiTypes.floatType())) {
       // No widening support for doubles, so we translate the wide range 
       // to avoid diverged states if (int)(double)x cast is performed
       LongRangeSet range = getWideRange();
       if (range.isEmpty()) return DfType.BOTTOM;
-      return type.equals(PsiType.DOUBLE) ? 
+      return type.equals(PsiTypes.doubleType()) ? 
              DfTypes.doubleRange(range.min(), range.max()) :
              DfTypes.floatRange(range.min(), range.max());
     }
@@ -38,7 +38,7 @@ public interface DfJvmIntegralType extends DfIntegralType, DfPrimitiveType {
     }
     LongRangeSet range = JvmPsiRangeSetUtil.castTo(getRange(), type);
     LongRangeSet wideRange = JvmPsiRangeSetUtil.castTo(getWideRange(), type);
-    return type.equals(PsiType.LONG) ? DfTypes.longRange(range, wideRange) : DfTypes.intRange(range, wideRange);
+    return type.equals(PsiTypes.longType()) ? DfTypes.longRange(range, wideRange) : DfTypes.intRange(range, wideRange);
   }
 
   @Override

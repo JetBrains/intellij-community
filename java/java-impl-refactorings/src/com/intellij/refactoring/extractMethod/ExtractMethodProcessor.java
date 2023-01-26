@@ -292,12 +292,12 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
     if (expressionType == null) {
-      expressionType = PsiType.VOID;
+      expressionType = PsiTypes.voidType();
     }
-    myHasExpressionOutput = !PsiType.VOID.equals(expressionType);
+    myHasExpressionOutput = !PsiTypes.voidType().equals(expressionType);
 
     final PsiType returnStatementType = getExpectedReturnType();
-    myHasReturnStatementOutput = myHasReturnStatement && returnStatementType != null && !PsiType.VOID.equals(returnStatementType);
+    myHasReturnStatementOutput = myHasReturnStatement && returnStatementType != null && !PsiTypes.voidType().equals(returnStatementType);
 
     if (myGenerateConditionalExit && myOutputVariables.length == 1) {
       if (!(myOutputVariables[0].getType() instanceof PsiPrimitiveType)) {
@@ -322,7 +322,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       myReturnType = myOutputVariable.getType();
     }
     else if (myGenerateConditionalExit) {
-      myReturnType = PsiType.BOOLEAN;
+      myReturnType = PsiTypes.booleanType();
     }
     else {
       myReturnType = expressionType;
@@ -400,7 +400,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private boolean areAllExitPointsNotNull(PsiType returnStatementType) {
     if (insertNotNullCheckIfPossible() && myControlFlowWrapper.getOutputVariables(false).length == 0) {
-      if (returnStatementType != null && !PsiType.VOID.equals(returnStatementType)) {
+      if (returnStatementType != null && !PsiTypes.voidType().equals(returnStatementType)) {
         return getReturnsNullability(false);
       }
     }
@@ -426,7 +426,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     for (Iterator<PsiExpression> it = returnedExpressions.iterator(); it.hasNext(); ) {
       PsiType type = it.next().getType();
       if (nullsExpected) {
-        if (type == PsiType.NULL) {
+        if (type == PsiTypes.nullType()) {
           it.remove(); // don't need to check
         }
         else if (type instanceof PsiPrimitiveType) {
@@ -434,7 +434,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
       }
       else {
-        if (type == PsiType.NULL) {
+        if (type == PsiTypes.nullType()) {
           return false;
         }
         else if (type instanceof PsiPrimitiveType) {
@@ -510,7 +510,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       return;
     }
     final PsiMethod method = (PsiMethod)myCodeFragmentMember;
-    if (!method.isConstructor() || !PsiType.VOID.equals(myReturnType)) {
+    if (!method.isConstructor() || !PsiTypes.voidType().equals(myReturnType)) {
       return;
     }
     final PsiCodeBlock body = method.getBody();
@@ -626,7 +626,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
     setDataFromInputVariables();
     myNullability = initNullability();
-    myArtificialOutputVariable = PsiType.VOID.equals(myReturnType) ? getArtificialOutputVariable() : null;
+    myArtificialOutputVariable = PsiTypes.voidType().equals(myReturnType) ? getArtificialOutputVariable() : null;
     final PsiType returnType = myArtificialOutputVariable != null ? myArtificialOutputVariable.getType() : myReturnType;
     return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, returnType, getTypeParameterList(),
                                    getThrownExceptions(), isStatic(), isCanBeStatic(), myCanBeChainedConstructor,
@@ -827,7 +827,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       myInputVariables.setPassFields(true);
       myStatic = true;
     }
-    if (PsiType.VOID.equals(myReturnType)) {
+    if (PsiTypes.voidType().equals(myReturnType)) {
       myArtificialOutputVariable = getArtificialOutputVariable();
     }
     testPrepare();
@@ -1196,7 +1196,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean isArtificialOutputUsed() {
-    return myArtificialOutputVariable != null && !PsiType.VOID.equals(myReturnType) && !myIsChainedConstructor;
+    return myArtificialOutputVariable != null && !PsiTypes.voidType().equals(myReturnType) && !myIsChainedConstructor;
   }
 
   private boolean hasNormalExit() {

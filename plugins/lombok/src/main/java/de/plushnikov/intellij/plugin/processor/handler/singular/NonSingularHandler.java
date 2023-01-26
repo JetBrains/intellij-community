@@ -27,7 +27,7 @@ class NonSingularHandler implements BuilderElementHandler {
                  .withModifier(PsiModifier.PRIVATE)
                  .withNavigationElement(info.getVariable()));
     if (info.hasBuilderDefaultAnnotation()) {
-      result.add(new LombokLightFieldBuilder(info.getManager(), info.renderFieldDefaultSetName(), PsiType.BOOLEAN)
+      result.add(new LombokLightFieldBuilder(info.getManager(), info.renderFieldDefaultSetName(), PsiTypes.booleanType())
                    .withContainingClass(info.getBuilderClass())
                    .withModifier(PsiModifier.PRIVATE)
                    .withNavigationElement(info.getVariable()));

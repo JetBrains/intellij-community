@@ -61,7 +61,7 @@ public class GenerateMembersUtilTest extends LightJavaCodeInsightTestCase {
   private void doTest() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-    PsiMethod method = factory.createMethod("foo", PsiType.VOID);
+    PsiMethod method = factory.createMethod("foo", PsiTypes.voidType());
     int offset = getEditor().getCaretModel().getOffset();
     List<GenerationInfo> list = Collections.singletonList(new PsiGenerationInfo<>(method));
     List<GenerationInfo> members =

@@ -108,7 +108,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       PsiType type = ExpectedTypeUtils.findExpectedType(parent, false);
       if (type == null) return false;
       PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(type);
-      return sam != null && sam.getParameterList().getParametersCount() == 1 && PsiType.VOID.equals(sam.getReturnType());
+      return sam != null && sam.getParameterList().getParametersCount() == 1 && PsiTypes.voidType().equals(sam.getReturnType());
     }
   }
 

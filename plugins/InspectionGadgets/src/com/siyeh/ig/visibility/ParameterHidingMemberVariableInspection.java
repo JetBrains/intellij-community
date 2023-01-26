@@ -16,7 +16,6 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtilBase;
@@ -29,9 +28,8 @@ import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ParameterHidingMemberVariableInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -116,7 +114,7 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
       }
       if (m_ignoreForPropertySetters) {
         final String methodName = method.getName();
-        if (methodName.startsWith(HardcodedMethodConstants.SET) && PsiType.VOID.equals(method.getReturnType())) {
+        if (methodName.startsWith(HardcodedMethodConstants.SET) && PsiTypes.voidType().equals(method.getReturnType())) {
           return;
         }
 

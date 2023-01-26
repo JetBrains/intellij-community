@@ -131,7 +131,7 @@ fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement
 val PsiMethod.desc: String
     get() = buildString {
         parameterList.parameters.joinTo(this, separator = "", prefix = "(", postfix = ")") { MapPsiToAsmDesc.typeDesc(it.type) }
-        append(MapPsiToAsmDesc.typeDesc(returnType ?: PsiType.VOID))
+        append(MapPsiToAsmDesc.typeDesc(returnType ?: PsiTypes.voidType()))
     }
 
 private val KtCallElement.isAnnotationArgument: Boolean
@@ -181,9 +181,9 @@ fun convertUnitToVoidIfNeeded(
     fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
     return when {
         typeOwnerKind == TypeOwnerKind.DECLARATION && context is KtNamedFunction ->
-            PsiType.VOID.orBoxed()
+            PsiTypes.voidType().orBoxed()
         typeOwnerKind == TypeOwnerKind.EXPRESSION && context is KtBlockExpression && context.isFunctionBody ->
-            PsiType.VOID.orBoxed()
+            PsiTypes.voidType().orBoxed()
         else -> null
     }
 }

@@ -98,7 +98,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
     }
     PsiLocalVariable[] ctorParameters = ctorHelper.declareParameters();
     InlineTransformer ctorTransformer = InlineTransformer.getSuitableTransformer(myMethod).apply(myReference);
-    ctorTransformer.transformBody(ctorCopy, myReference, PsiType.VOID);
+    ctorTransformer.transformBody(ctorCopy, myReference, PsiTypes.voidType());
     PsiCodeBlock ctorBody = Objects.requireNonNull(ctorCopy.getBody());
     InlineUtil.solveVariableNameConflicts(ctorBody, target, ctorBody);
     updateFieldRefs(ctorCopy, aClass);

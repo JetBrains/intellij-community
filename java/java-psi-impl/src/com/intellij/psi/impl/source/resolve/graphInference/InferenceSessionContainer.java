@@ -226,7 +226,7 @@ public class InferenceSessionContainer {
     Map<PsiTypeParameter, PsiType> map = new HashMap<>();
     for (InferenceVariable variable : topLevelSession.getInferenceVariables()) {
       final PsiType instantiation = variable.getInstantiation();
-      if (instantiation != PsiType.NULL) {
+      if (instantiation != PsiTypes.nullType()) {
         final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(topInferenceSubstitutor.substitute(variable));
         if (psiClass instanceof InferenceVariable) {
           map.put((PsiTypeParameter)psiClass, instantiation);

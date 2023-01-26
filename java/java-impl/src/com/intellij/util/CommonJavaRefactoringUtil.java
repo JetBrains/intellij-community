@@ -51,7 +51,7 @@ import java.util.*;
 public final class CommonJavaRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(CommonJavaRefactoringUtil.class);
   private static final List<? extends PsiType> PRIMITIVE_TYPES = Arrays.asList(
-      PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.INT, PsiType.LONG, PsiType.FLOAT, PsiType.DOUBLE
+    PsiTypes.byteType(), PsiTypes.charType(), PsiTypes.shortType(), PsiTypes.intType(), PsiTypes.longType(), PsiTypes.floatType(), PsiTypes.doubleType()
   );
 
   @NotNull
@@ -72,7 +72,7 @@ public final class CommonJavaRefactoringUtil {
 
   public static PsiType getTypeByExpression(PsiExpression expr, final PsiElementFactory factory) {
     PsiType type = RefactoringChangeUtil.getTypeByExpression(expr);
-    if (PsiType.NULL.equals(type)) {
+    if (PsiTypes.nullType().equals(type)) {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getExpectedTypes(expr, false);
       if (infos.length > 0) {
         type = infos[0].getType();
@@ -256,7 +256,7 @@ public final class CommonJavaRefactoringUtil {
     PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
     while (expression != null) {
       if (!expressions.contains(expression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) &&
-          (acceptVoid || !PsiType.VOID.equals(expression.getType()))) {
+          (acceptVoid || !PsiTypes.voidType().equals(expression.getType()))) {
         if (isExtractable(expression)) {
           expressions.add(expression);
         }
@@ -291,7 +291,7 @@ public final class CommonJavaRefactoringUtil {
     if (!(body instanceof PsiExpression)) return (PsiCodeBlock)body;
 
     @NonNls String newLambdaText = "{";
-    if (!PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) newLambdaText += "return ";
+    if (!PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) newLambdaText += "return ";
     newLambdaText += "a;}";
 
     final Project project = lambdaExpression.getProject();
@@ -375,7 +375,7 @@ public final class CommonJavaRefactoringUtil {
       final PsiElement lambdaExpressionBody = lambdaExpression.getBody();
       LOG.assertTrue(lambdaExpressionBody != null);
       final PsiStatement lastBodyStatement;
-      if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
+      if (PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
         if (replaceBody) {
           lastBodyStatement = null;
         } else {
@@ -1029,7 +1029,7 @@ public final class CommonJavaRefactoringUtil {
     if (arrayElements.length == 1) {
       PsiType type = arrayElements[0].getType();
       // change foo(new Object[]{array}) to foo(array) is not safe
-      if (PsiType.NULL.equals(type) || type instanceof PsiArrayType) return false;
+      if (PsiTypes.nullType().equals(type) || type instanceof PsiArrayType) return false;
     }
     PsiCall copy = (PsiCall)callExpression.copy();
     PsiExpressionList copyArgumentList = copy.getArgumentList();

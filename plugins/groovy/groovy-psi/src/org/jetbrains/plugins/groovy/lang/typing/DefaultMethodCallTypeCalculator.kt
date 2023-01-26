@@ -80,7 +80,7 @@ private fun getTypeFromPropertyCall(element: PsiElement?, arguments: Arguments?,
 }
 
 fun PsiType?.devoid(context: PsiElement): PsiType? {
-  return if (this == PsiType.VOID && !isCompileStatic(context)) PsiType.NULL else this
+  return if (this == PsiTypes.voidType() && !isCompileStatic(context)) PsiTypes.nullType() else this
 }
 
 private fun PsiType.boxIfNecessary(call: GrMethodCall) : PsiType {

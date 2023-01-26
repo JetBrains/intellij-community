@@ -266,8 +266,8 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
       }
       final PsiMethod method = ObjectUtils.tryCast(expression.resolve(), PsiMethod.class);
       if (method != null &&
-          (!PsiType.VOID.equals(method.getReturnType()) &&
-           !PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(expression)) ||
+          (!PsiTypes.voidType().equals(method.getReturnType()) &&
+           !PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(expression)) ||
            ContainerUtil.or(method.getParameterList().getParameters(), p -> LambdaUtil.isFunctionalType(p.getType())))) {
         makeQueried();
       }
@@ -300,7 +300,7 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
       boolean queryQualifier = isQueryUpdateMethodName(name, myQueryNames);
       boolean updateQualifier = isQueryUpdateMethodName(name, myUpdateNames);
       if (queryQualifier &&
-          (!voidContext || PsiType.VOID.equals(call.getType()) || "toArray".equals(name) && !call.getArgumentList().isEmpty())) {
+          (!voidContext || PsiTypes.voidType().equals(call.getType()) || "toArray".equals(name) && !call.getArgumentList().isEmpty())) {
         makeQueried();
       }
       if (updateQualifier) {

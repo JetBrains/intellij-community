@@ -278,13 +278,13 @@ public class DomSimpleValuesTest extends DomTestCase {
 
   public void testPlainPsiTypeConverter() {
     assertNull(createElement("").getPsiType());
-    assertSame(PsiType.INT, createElement("<a>int</a>").getPsiType());
+    assertSame(PsiTypes.intType(), createElement("<a>int</a>").getPsiType());
     final PsiType psiType = createElement("<a>java.lang.String</a>").getPsiType();
     assertEquals(CommonClassNames.JAVA_LANG_STRING, assertInstanceOf(psiType, PsiClassType.class).getCanonicalText());
 
     final PsiType arrayType = createElement("<a>int[]</a>").getPsiType();
     assertTrue(arrayType instanceof PsiArrayType);
-    assertSame(PsiType.INT, ((PsiArrayType) arrayType).getComponentType());
+    assertSame(PsiTypes.intType(), ((PsiArrayType) arrayType).getComponentType());
   }
 
   public void testJvmPsiTypeConverter() {
@@ -296,7 +296,7 @@ public class DomSimpleValuesTest extends DomTestCase {
 
     final PsiArrayType intArray = assertInstanceOf(createElement("<a>[I</a>").getJvmPsiType(), PsiArrayType.class);
     final PsiArrayType stringArray = assertInstanceOf(createElement("<a>[Ljava.lang.String;</a>").getJvmPsiType(), PsiArrayType.class);
-    assertSame(PsiType.INT, intArray.getComponentType());
+    assertSame(PsiTypes.intType(), intArray.getComponentType());
     assertEquals(CommonClassNames.JAVA_LANG_STRING, assertInstanceOf(stringArray.getComponentType(), PsiClassType.class).getCanonicalText());
 
     assertJvmPsiTypeToString(intArray, "[I");

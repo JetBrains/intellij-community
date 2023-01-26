@@ -76,7 +76,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     final PsiElement reference = getReferenceToIterate(iteratedValue, context);
 
     @NonNls final StringBuilder newStatement = new StringBuilder();
-    final String indexText = createVariableName("i", PsiType.INT, statement);
+    final String indexText = createVariableName("i", PsiTypes.intType(), statement);
     final String iteratedValueText = (reference instanceof PsiVariable) ? ((PsiVariable)reference).getName() : tracker.text(reference);
     createForLoopDeclaration(statement, isArray, iteratedValueText, indexText, newStatement);
     if (JavaCodeStyleSettings.getInstance(statement.getContainingFile()).GENERATE_FINAL_LOCALS) {

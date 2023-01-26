@@ -106,7 +106,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
       final AccessorsInfo accessorsInfo = buildAccessorsInfo(psiField);
       final String psiFieldName = psiField.getName();
       final Collection<String> possibleWitherNames =
-        LombokUtils.toAllWitherNames(accessorsInfo, psiFieldName, PsiType.BOOLEAN.equals(psiField.getType()));
+        LombokUtils.toAllWitherNames(accessorsInfo, psiFieldName, PsiTypes.booleanType().equals(psiField.getType()));
       for (String witherName : possibleWitherNames) {
         if (PsiMethodUtil.hasSimilarMethod(classMethods, witherName, 1)) {
           builder.addWarningMessage("inspection.message.not.generating.s.method.with.that.name.already.exists", witherName);

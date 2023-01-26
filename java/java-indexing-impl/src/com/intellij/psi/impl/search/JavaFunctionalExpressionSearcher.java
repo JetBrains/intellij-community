@@ -377,7 +377,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       effectiveUseScope = useScope;
       samParamCount = samMethod.getParameterList().getParametersCount();
       booleanCompatible = FunctionalExpressionKey.isBooleanCompatible(samType);
-      isVoid = PsiType.VOID.equals(samType);
+      isVoid = PsiTypes.voidType().equals(samType);
       dumbService = DumbService.getInstance(samClass.getProject());
       keys = generateKeys();
     }

@@ -226,7 +226,7 @@ public final class FunctionalInterfaceSuggester {
           }
 
           List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(((PsiLambdaExpression)expression));
-          left[parameters.length] = returnExpressions.isEmpty() ? PsiType.VOID : returnExpressions.get(0).getType();
+          left[parameters.length] = returnExpressions.isEmpty() ? PsiTypes.voidType() : returnExpressions.get(0).getType();
           right[parameters.length] = returnType;
 
           final PsiSubstitutor substitutor = PsiResolveHelper.getInstance(project)

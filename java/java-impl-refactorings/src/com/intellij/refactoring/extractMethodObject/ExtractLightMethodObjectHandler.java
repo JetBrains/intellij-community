@@ -319,7 +319,7 @@ public final class ExtractLightMethodObjectHandler {
   private static boolean isValidVariableType(PsiType type) {
     if (type instanceof PsiClassType ||
         type instanceof PsiArrayType ||
-        type instanceof PsiPrimitiveType && !PsiType.VOID.equals(type)) {
+        type instanceof PsiPrimitiveType && !PsiTypes.voidType().equals(type)) {
       return true;
     }
     return false;

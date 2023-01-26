@@ -324,11 +324,11 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       PsiField field = ObjectUtils.tryCast(expression.resolve(), PsiField.class);
       if (field == null) return;
       PsiType fieldType = field.getType();
-      if (PsiType.CHAR.equals(fieldType) || PsiType.SHORT.equals(fieldType)) {
+      if (PsiTypes.charType().equals(fieldType) || PsiTypes.shortType().equals(fieldType)) {
         PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
         if (parent instanceof PsiTypeCastExpression) {
           PsiTypeElement castType = ((PsiTypeCastExpression)parent).getCastType();
-          if (castType != null && PsiType.INT.equals(castType.getType())) {
+          if (castType != null && PsiTypes.intType().equals(castType.getType())) {
             myNonVisitedFields.remove(field);
           }
         }
@@ -353,10 +353,10 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
 
       PsiType expectedType = null;
       if (FLOAT_CALL.test(expression)) {
-        expectedType = PsiType.FLOAT;
+        expectedType = PsiTypes.floatType();
       }
       else if (DOUBLE_CALL.test(expression)) {
-        expectedType = PsiType.DOUBLE;
+        expectedType = PsiTypes.doubleType();
       }
       if (expectedType != null) {
         PsiExpression[] expressions = expression.getArgumentList().getExpressions();

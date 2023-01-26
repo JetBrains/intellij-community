@@ -30,7 +30,7 @@ public class GrRangeType extends GrLiteralClassType {
     myRight = right;
     myIterationType = TypesUtil
       .boxPrimitiveType(TypesUtil.getLeastUpperBoundNullable(myLeft, myRight, getPsiManager()), getPsiManager(), scope);
-    if (PsiType.INT.equals(TypesUtil.unboxPrimitiveTypeWrapper(myIterationType))) {
+    if (PsiTypes.intType().equals(TypesUtil.unboxPrimitiveTypeWrapper(myIterationType))) {
       myQualifiedName = GroovyCommonClassNames.GROOVY_LANG_INT_RANGE;
     }
     else {

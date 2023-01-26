@@ -63,10 +63,10 @@ public final class StreamRefactoringUtil {
       if (outType.equals(inType)) {
         return "";
       }
-      if (PsiType.LONG.equals(outType) && PsiType.INT.equals(inType)) {
+      if (PsiTypes.longType().equals(outType) && PsiTypes.intType().equals(inType)) {
         return "asLongStream";
       }
-      if (PsiType.DOUBLE.equals(outType) && (PsiType.LONG.equals(inType) || PsiType.INT.equals(inType))) {
+      if (PsiTypes.doubleType().equals(outType) && (PsiTypes.longType().equals(inType) || PsiTypes.intType().equals(inType))) {
         return "asDoubleStream";
       }
     }
@@ -84,11 +84,11 @@ public final class StreamRefactoringUtil {
   public static String getMapOperationName(PsiType inType, @Nullable PsiType outType) {
     if(outType instanceof PsiPrimitiveType) {
       if(!outType.equals(inType)) {
-        if(PsiType.INT.equals(outType)) {
+        if(PsiTypes.intType().equals(outType)) {
           return "mapToInt";
-        } else if(PsiType.LONG.equals(outType)) {
+        } else if(PsiTypes.longType().equals(outType)) {
           return "mapToLong";
-        } else if(PsiType.DOUBLE.equals(outType)) {
+        } else if(PsiTypes.doubleType().equals(outType)) {
           return "mapToDouble";
         }
       }
@@ -101,13 +101,13 @@ public final class StreamRefactoringUtil {
   @Nullable
   public static String getFlatMapOperationName(PsiType inType, PsiType outType) {
     if (!(inType instanceof PsiPrimitiveType)) {
-      if (PsiType.INT.equals(outType)) {
+      if (PsiTypes.intType().equals(outType)) {
         return "flatMapToInt";
       }
-      else if (PsiType.LONG.equals(outType)) {
+      else if (PsiTypes.longType().equals(outType)) {
         return "flatMapToLong";
       }
-      else if (PsiType.DOUBLE.equals(outType)) {
+      else if (PsiTypes.doubleType().equals(outType)) {
         return "flatMapToDouble";
       }
     } else if (!inType.equals(outType)) return null;

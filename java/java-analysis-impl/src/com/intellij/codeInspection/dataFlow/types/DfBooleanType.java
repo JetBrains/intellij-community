@@ -2,13 +2,13 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 
 public interface DfBooleanType extends DfPrimitiveType {
   @NotNull
   @Override
   default PsiPrimitiveType getPsiType() {
-    return PsiType.BOOLEAN;
+    return PsiTypes.booleanType();
   }
 }

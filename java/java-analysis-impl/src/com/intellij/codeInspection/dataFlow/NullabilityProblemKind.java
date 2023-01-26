@@ -191,7 +191,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     else if (parent instanceof PsiReturnStatement) {
       targetType = PsiTypesUtil.getMethodReturnType(parent);
     }
-    if (targetType != null && !PsiType.VOID.equals(targetType)) {
+    if (targetType != null && !PsiTypes.voidType().equals(targetType)) {
       if (TypeConversionUtil.isPrimitiveAndNotNull(targetType)) {
         return createUnboxingProblem(context, expression);
       }

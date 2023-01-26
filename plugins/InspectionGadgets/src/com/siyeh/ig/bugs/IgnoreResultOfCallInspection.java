@@ -205,7 +205,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
   private class IgnoreResultOfCallVisitor extends BaseInspectionVisitor {
     @Override
     public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
-      if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) {
+      if (PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) {
         PsiElement resolve = expression.resolve();
         if (resolve instanceof PsiMethod) {
           visitCalledExpression(expression, (PsiMethod)resolve, null);
@@ -232,7 +232,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
     private boolean shouldReport(PsiExpression call, PsiMethod method, @Nullable PsiElement errorContainer) {
       final PsiType returnType = method.getReturnType();
-      if (PsiType.VOID.equals(returnType) || TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_VOID, returnType)) return false;
+      if (PsiTypes.voidType().equals(returnType) || TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_VOID, returnType)) return false;
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) return false;
       if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) return false;

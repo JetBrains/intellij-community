@@ -157,7 +157,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
         if (myExtractProcessor.generatesConditionalExit()) {
           myResultFieldName = uniqueFieldName(new String[]{"myResult"});
-          myInnerClass.add(myElementFactory.createField(myResultFieldName, PsiType.BOOLEAN));
+          myInnerClass.add(myElementFactory.createField(myResultFieldName, PsiTypes.booleanType()));
           myInnerClass.add(myElementFactory.createMethodFromText("boolean is(){return " + myResultFieldName + ";}", myInnerClass));
         }
 

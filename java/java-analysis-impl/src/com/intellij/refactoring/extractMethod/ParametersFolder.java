@@ -198,7 +198,7 @@ public class ParametersFolder {
             break;
           }
           final PsiType expressionType = ((PsiExpression)expression).getType();
-          if (expressionType == null || PsiType.VOID.equals(expressionType)) {
+          if (expressionType == null || PsiTypes.voidType().equals(expressionType)) {
             break;
           }
           if (isTooLongExpressionChain(expression)) {

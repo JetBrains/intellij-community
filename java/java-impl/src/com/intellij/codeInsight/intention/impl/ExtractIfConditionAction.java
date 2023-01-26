@@ -36,7 +36,7 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
 
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
     final PsiType expressionType = polyadicExpression.getType();
-    if (expressionType == null || !PsiType.BOOLEAN.isAssignableFrom(expressionType)) {
+    if (expressionType == null || !PsiTypes.booleanType().isAssignableFrom(expressionType)) {
       return false;
     }
 

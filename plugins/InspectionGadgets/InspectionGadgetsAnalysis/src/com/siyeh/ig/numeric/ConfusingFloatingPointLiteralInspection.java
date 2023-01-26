@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -142,7 +143,7 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection impl
       super.visitLiteralExpression(literal);
       final PsiType type = literal.getType();
       final String literalText = literal.getText();
-      if ((!PsiType.FLOAT.equals(type) && !PsiType.DOUBLE.equals(type)) || !isConfusing(literalText)) {
+      if ((!PsiTypes.floatType().equals(type) && !PsiTypes.doubleType().equals(type)) || !isConfusing(literalText)) {
         return;
       }
       if (ignoreScientificNotation && StringUtil.containsAnyChar(literalText, "EePp")) {

@@ -131,7 +131,7 @@ public final class ExtractableExpressionPart {
   @Nullable
   private static ExtractableExpressionPart matchExpression(@NotNull PsiExpression expression) {
     PsiType type = expression.getType();
-    if (type != null && !PsiType.VOID.equals(type)) {
+    if (type != null && !PsiTypes.voidType().equals(type)) {
       return new ExtractableExpressionPart(expression, null, null, type);
     }
     return null;

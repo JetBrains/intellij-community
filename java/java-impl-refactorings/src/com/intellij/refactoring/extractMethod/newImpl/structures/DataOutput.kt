@@ -2,10 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl.structures
 
 import com.intellij.codeInsight.Nullability
-import com.intellij.psi.PsiAnnotation
-import com.intellij.psi.PsiExpression
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiVariable
+import com.intellij.psi.*
 
 sealed class DataOutput {
   abstract val type: PsiType
@@ -23,12 +20,12 @@ sealed class DataOutput {
                               override val annotations: List<PsiAnnotation> = emptyList()) : DataOutput()
 
   object ArtificialBooleanOutput : DataOutput() {
-    override val type: PsiType = PsiType.BOOLEAN
+    override val type: PsiType = PsiTypes.booleanType()
     override val nullability: Nullability = Nullability.UNKNOWN
     override val annotations: List<PsiAnnotation> = emptyList()
   }
 
-  data class EmptyOutput(override val type: PsiType = PsiType.VOID) : DataOutput(){
+  data class EmptyOutput(override val type: PsiType = PsiTypes.voidType()) : DataOutput(){
     override val nullability: Nullability = Nullability.UNKNOWN
     override val annotations: List<PsiAnnotation> = emptyList()
   }

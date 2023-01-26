@@ -40,12 +40,12 @@ public final class PsiWildcardType extends PsiType.Stub implements JvmWildcardTy
   }
 
   public static @NotNull PsiWildcardType createExtends(@NotNull PsiManager manager, @NotNull PsiType bound) {
-    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiType.NULL, bound);
+    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiTypes.nullType(), bound);
     return new PsiWildcardType(manager, true, bound);
   }
 
   public static @NotNull PsiWildcardType createSuper(@NotNull PsiManager manager, @NotNull PsiType bound) {
-    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiType.NULL, bound);
+    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiTypes.nullType(), bound);
     return new PsiWildcardType(manager, false, bound);
   }
 
@@ -210,7 +210,7 @@ public final class PsiWildcardType extends PsiType.Stub implements JvmWildcardTy
    * @return {@code PsiType} representing an upper bound. Never returns {@code null}.
    */
   public @NotNull PsiType getSuperBound() {
-    return myBound == null || myIsExtending ? NULL : myBound;
+    return myBound == null || myIsExtending ? (PsiPrimitiveType)PsiTypes.nullType() : myBound;
   }
 
   @Override

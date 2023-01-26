@@ -226,7 +226,7 @@ public final class JavaFxPsiUtil {
     if (getter != null) {
       return getter;
     }
-    return findPropertyGetter(psiClass, propertyName, PsiType.BOOLEAN);
+    return findPropertyGetter(psiClass, propertyName, PsiTypes.booleanType());
   }
 
   private static PsiMethod findPropertyGetter(final PsiClass psiClass, final String propertyName, final PsiType propertyType) {

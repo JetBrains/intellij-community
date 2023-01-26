@@ -75,7 +75,7 @@ private fun parameterDistance0(argument: PsiType, argumentCompileTime: Argument?
   val parameterClass = (parameter as? PsiClassType)?.resolve()
   val argumentClass = (argument as? PsiClassType)?.resolve()
 
-  if (PsiType.NULL == argument) {
+  if (PsiTypes.nullType() == argument) {
     return when {
       parameter is PsiPrimitiveType -> 2L shl OBJECT_SHIFT // ?
       parameterClass?.isInterface == true -> -1L

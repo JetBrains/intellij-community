@@ -142,8 +142,8 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
 
       private static @Nullable PsiType getWantedType(PsiElement body, String name) {
         return switch (name) {
-          case "equals" -> PsiType.BOOLEAN.getBoxedType(body);
-          case "hashCode" -> PsiType.INT.getBoxedType(body);
+          case "equals" -> PsiTypes.booleanType().getBoxedType(body);
+          case "hashCode" -> PsiTypes.intType().getBoxedType(body);
           case "toString" -> PsiType.getJavaLangString(body.getManager(), body.getResolveScope());
           default -> null;
         };

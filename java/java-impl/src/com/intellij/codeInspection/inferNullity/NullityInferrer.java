@@ -393,7 +393,7 @@ public class NullityInferrer {
         else if (rOperand == expr) {
           opposite = lOperand;
         }
-        if (opposite != null && opposite.getType() == PsiType.NULL) {
+        if (opposite != null && opposite.getType() == PsiTypes.nullType()) {
           if (DfaPsiUtil.isAssertionEffectively(binOp, binOp.getOperationTokenType() == JavaTokenType.NE)) {
             registerNotNullAnnotation(parameter);
             return true;

@@ -182,12 +182,12 @@ public final class JavaPostfixTemplatesUtils {
 
   @Contract("null -> false")
   public static boolean isBoolean(@Nullable PsiType type) {
-    return type != null && (PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type)));
+    return type != null && (PsiTypes.booleanType().equals(type) || PsiTypes.booleanType().equals(PsiPrimitiveType.getUnboxedType(type)));
   }
 
   @Contract("null -> false")
   public static boolean isNonVoid(@Nullable PsiType type) {
-    return type != null && !PsiType.VOID.equals(type);
+    return type != null && !PsiTypes.voidType().equals(type);
   }
 
   @Contract("null -> false")
@@ -195,12 +195,12 @@ public final class JavaPostfixTemplatesUtils {
     if (type == null) {
       return false;
     }
-    if (PsiType.INT.equals(type) || PsiType.BYTE.equals(type) || PsiType.LONG.equals(type)) {
+    if (PsiTypes.intType().equals(type) || PsiTypes.byteType().equals(type) || PsiTypes.longType().equals(type)) {
       return true;
     }
 
     PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(type);
-    return PsiType.INT.equals(unboxedType) || PsiType.BYTE.equals(unboxedType) || PsiType.LONG.equals(unboxedType);
+    return PsiTypes.intType().equals(unboxedType) || PsiTypes.byteType().equals(unboxedType) || PsiTypes.longType().equals(unboxedType);
   }
 
   @NotNull

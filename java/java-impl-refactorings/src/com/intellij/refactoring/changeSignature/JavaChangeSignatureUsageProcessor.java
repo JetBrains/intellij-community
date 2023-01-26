@@ -1177,14 +1177,14 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     if (changeInfo.isReturnTypeChanged() && methodDocComment != null) {
       CanonicalTypes.Type type = changeInfo.getNewReturnType();
       PsiDocTag aReturn = methodDocComment.findTagByName("return");
-      if (PsiType.VOID.equalsToText(type.getTypeText())) {
+      if (PsiTypes.voidType().equalsToText(type.getTypeText())) {
         if (aReturn != null) {
           aReturn.delete();
         }
       }
       else {
         String oldReturnType = changeInfo.getOldReturnType();
-        if (aReturn == null && oldReturnType != null && PsiType.VOID.equalsToText(oldReturnType)) {
+        if (aReturn == null && oldReturnType != null && PsiTypes.voidType().equalsToText(oldReturnType)) {
           methodDocComment.add(JavaPsiFacade.getElementFactory(method.getProject()).createDocTagFromText("@return"));
         }
       }

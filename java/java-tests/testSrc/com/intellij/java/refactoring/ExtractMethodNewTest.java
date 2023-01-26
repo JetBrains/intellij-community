@@ -25,7 +25,6 @@ import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethod.newImpl.ExtractException;
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ArrayUtilRt;
@@ -1219,20 +1218,20 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
 
   //TODO remove or implement
   public void _testMakeVoidMethodReturnVariable() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testNoReturnTypesSuggested() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testMultipleVarsInMethodNoReturnStatementAndAssignment() throws Exception {
     //return type should not be suggested but still
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testReassignFinalFieldInside() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testShortenClassRefsInNewReturnType() throws Exception {

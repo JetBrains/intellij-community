@@ -44,8 +44,8 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     val castType = PsiPrimitiveType.getUnboxedType(returnType) ?: return
     val returnStatements = PsiTreeUtil.findChildrenOfType(codeFragment, PsiReturnStatement::class.java)
     returnStatements.mapNotNull { it.returnValue }
-      .filter { expression -> expression.type != PsiType.NULL && TypeConversionUtil.isNumericType(expression.type) }
-      .filterNot { expression -> TypeConversionUtil.isAssignable(returnType, expression.type ?: PsiType.NULL) }
+      .filter { expression -> expression.type != PsiTypes.nullType() && TypeConversionUtil.isNumericType(expression.type) }
+      .filterNot { expression -> TypeConversionUtil.isAssignable(returnType, expression.type ?: PsiTypes.nullType()) }
       .forEach { expression -> AddTypeCastFix.addTypeCast(expression.project, expression, castType) }
   }
 
@@ -128,7 +128,7 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     if (normalizedExpression != null) {
       require(dataOutput is ExpressionOutput)
       val parameterMarkers = inputParameters.associateWith { parameter -> createMarkers(parameter.references) }
-      val needsReturnStatement = dataOutput.type != PsiType.VOID
+      val needsReturnStatement = dataOutput.type != PsiTypes.voidType()
       val (wrappedStatement, wrappedExpression) = wrapExpression(normalizedExpression, needsReturnStatement)
       val wrappedParameters = parameterMarkers.entries.map { (parameter, markers) ->
         parameter.copy(references = releaseMarkers(wrappedExpression, markers))

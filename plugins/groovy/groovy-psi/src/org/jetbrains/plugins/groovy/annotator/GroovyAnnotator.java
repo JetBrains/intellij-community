@@ -888,7 +888,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
           else {
             final PsiType methodType = method.getReturnType();
             if (methodType != null) {
-              if (PsiType.VOID.equals(methodType)) {
+              if (PsiTypes.voidType().equals(methodType)) {
                 myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("cannot.return.from.void.method")).range(value).create();
               }
             }
@@ -977,7 +977,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
   public void visitArrayTypeElement(@NotNull GrArrayTypeElement typeElement) {
     GrTypeElement componentTypeElement = typeElement.getComponentTypeElement();
     PsiType componentType = componentTypeElement.getType();
-    if (PsiType.VOID.equals(componentType)) {
+    if (PsiTypes.voidType().equals(componentType)) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("illegal.type.void")).range(componentTypeElement).create();
     }
     else {
@@ -1090,7 +1090,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       PsiMethod superMethod = superMethodSignature.getMethod();
       PsiType declaredReturnType = superMethod.getReturnType();
       PsiType superReturnType = superMethodSignature.getSubstitutor().substitute(declaredReturnType);
-      if (PsiType.VOID.equals(superReturnType) && method instanceof GrMethod && ((GrMethod)method).getReturnTypeElementGroovy() == null) return;
+      if (PsiTypes.voidType().equals(superReturnType) && method instanceof GrMethod && ((GrMethod)method).getReturnTypeElementGroovy() == null) return;
       if (superMethodSignature.isRaw()) superReturnType = TypeConversionUtil.erasure(declaredReturnType);
       if (returnType == null || superReturnType == null || method == superMethod) continue;
       PsiClass superClass = superMethod.getContainingClass();

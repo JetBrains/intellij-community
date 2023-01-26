@@ -5,7 +5,6 @@ package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.problems.MutabilityProblem;
@@ -13,10 +12,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +29,7 @@ public class CollectionUpdateInliner implements CallInliner {
       PsiType elementType = PsiUtil.substituteTypeParameter(qualifier.getType(), CommonClassNames.JAVA_UTIL_COLLECTION, 0, true);
       DfType elementDfType = DfTypes.typedObject(elementType, DfaPsiUtil.getTypeNullability(elementType));
       PsiExpression predicate = call.getArgumentList().getExpressions()[0];
-      DfaVariableValue result = builder.createTempVariable(PsiType.BOOLEAN);
+      DfaVariableValue result = builder.createTempVariable(PsiTypes.booleanType());
       builder
         .assignAndPop(result, DfTypes.FALSE)
         .pushExpression(qualifier) // stack: qualifier

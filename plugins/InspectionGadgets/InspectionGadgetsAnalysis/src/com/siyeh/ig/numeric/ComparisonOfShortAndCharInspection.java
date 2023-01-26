@@ -18,6 +18,7 @@ package com.siyeh.ig.numeric;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -52,10 +53,10 @@ public class ComparisonOfShortAndCharInspection extends BaseInspection {
         return;
       }
       final PsiType rhsType = rhs.getType();
-      if (PsiType.SHORT.equals(lhsType) && PsiType.CHAR.equals(rhsType)) {
+      if (PsiTypes.shortType().equals(lhsType) && PsiTypes.charType().equals(rhsType)) {
         registerError(expression);
       }
-      else if (PsiType.CHAR.equals(lhsType) && PsiType.SHORT.equals(rhsType)) {
+      else if (PsiTypes.charType().equals(lhsType) && PsiTypes.shortType().equals(rhsType)) {
         registerError(expression);
       }
     }

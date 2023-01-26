@@ -61,24 +61,24 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void testDefaultConstructor() throws Exception {
-    doTest null, [ParameterInfoImpl.createNew().withName("j").withType(PsiType.INT).withDefaultValue("27")], false
+    doTest null, [ParameterInfoImpl.createNew().withName("j").withType(PsiTypes.intType()).withDefaultValue("27")], false
   }
 
   void testGenerateDelegate() throws Exception {
-    doTest null, [ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("27")], true
+    doTest null, [ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("27")], true
   }
 
   /*void testGenerateDelegateForAbstract() throws Exception {
     doTest(null,
            [
-             ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("27")
+             ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType().withDefaultValue("27")
            ], true)
   }
 
   void testGenerateDelegateWithReturn() throws Exception {
     doTest(null,
            [
-             ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("27")
+             ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType().withDefaultValue("27")
            ], true)
   }
 
@@ -86,8 +86,8 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
     doTest(null,
            [
              ParameterInfoImpl.create(1),
-             ParameterInfoImpl.createNew().withName("c").withType(PsiType.CHAR).withDefaultValue("'a'"),
-             ParameterInfoImpl.create(0).withName("j").withType(PsiType.INT)
+             ParameterInfoImpl.createNew().withName("c").withType(PsiTypes.charType().withDefaultValue("'a'"),
+             ParameterInfoImpl.create(0).withName("j").withType(PsiTypes.intType()
            ], true)
   }
 
@@ -96,20 +96,20 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
   }*/
 
   void testGenerateDelegateDefaultConstructor() throws Exception {
-    doTest null, [ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("27")], true
+    doTest null, [ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("27")], true
   }
 
   /*void testSCR40895() throws Exception {
     doTest(null, [
-      ParameterInfoImpl.create(0).withName("y").withType(PsiType.INT),
-      ParameterInfoImpl.create(1).withName("b").withType(PsiType.BOOLEAN)
+      ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType(),
+      ParameterInfoImpl.create(1).withName("b").withType(PsiTypes.booleanType()
     ], false)
   }
 
 
   void testSuperCallFromOtherMethod() throws Exception {
     doTest(null, [
-      ParameterInfoImpl.createNew().withName("nnn").withType(PsiType.INT).withDefaultValue("-222"),
+      ParameterInfoImpl.createNew().withName("nnn").withType(PsiTypes.intType().withDefaultValue("-222"),
     ], false)
   }*/
 
@@ -131,14 +131,14 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testEnumConstructor() throws Exception {
     doTest(null, [
-      ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("10")
+      ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType().withDefaultValue("10")
     ], false)
   }
   */
 
   void testVarargs1() throws Exception {
     doTest null, [
-      ParameterInfoImpl.createNew().withName("b").withType(PsiType.BOOLEAN).withDefaultValue("true"),
+      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()).withDefaultValue("true"),
       ParameterInfoImpl.create(0)
     ], false
   }

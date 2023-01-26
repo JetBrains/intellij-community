@@ -349,7 +349,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @Nullable
   private String suggestNameFromTypeMap(@NotNull PsiType type, @NotNull VariableKind variableKind, @Nullable String longTypeName) {
     if (longTypeName != null) {
-      if (type.equals(PsiType.NULL)) {
+      if (type.equals(PsiTypes.nullType())) {
         longTypeName = CommonClassNames.JAVA_LANG_OBJECT;
       }
       String name = nameByType(longTypeName, variableKind);

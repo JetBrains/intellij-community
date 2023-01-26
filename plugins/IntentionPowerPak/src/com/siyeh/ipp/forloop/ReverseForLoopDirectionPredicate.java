@@ -47,7 +47,7 @@ class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiType type = variable.getType();
-    if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
+    if (!PsiTypes.intType().equals(type) && !PsiTypes.longType().equals(type)) {
       return false;
     }
     final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(forStatement.getCondition());

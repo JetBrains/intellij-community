@@ -114,7 +114,7 @@ public class BooleanConstructorInspection extends BaseInspection implements Clea
             }
             final PsiParameter parameter = parameters[0];
             final PsiType type = parameter.getType();
-            if (PsiType.BOOLEAN.equals(type)) {
+            if (PsiTypes.booleanType().equals(type)) {
               methodFound = true;
               break;
             }
@@ -129,7 +129,7 @@ public class BooleanConstructorInspection extends BaseInspection implements Clea
     private static String buildText(PsiExpression argument, boolean useValueOf) {
       final String text = argument.getText();
       final PsiType argumentType = argument.getType();
-      if (!useValueOf && PsiType.BOOLEAN.equals(argumentType)) {
+      if (!useValueOf && PsiTypes.booleanType().equals(argumentType)) {
         if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
           return text + "?java.lang.fBoolean.TRUE:java.lang.Boolean.FALSE";
         }

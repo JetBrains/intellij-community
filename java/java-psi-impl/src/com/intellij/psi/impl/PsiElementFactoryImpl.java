@@ -179,7 +179,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   @Override
   public @NotNull PsiField createField(@NotNull String name, @NotNull PsiType type) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
-    if (PsiType.NULL.equals(type)) {
+    if (PsiTypes.nullType().equals(type)) {
       throw new IncorrectOperationException("Cannot create field with type \"null\".");
     }
 
@@ -202,7 +202,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   @Override
   public @NotNull PsiMethod createMethod(@NotNull String name, PsiType returnType) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
-    if (PsiType.NULL.equals(returnType)) {
+    if (PsiTypes.nullType().equals(returnType)) {
       throw new IncorrectOperationException("Cannot create method with type \"null\".");
     }
 
@@ -253,7 +253,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   @Override
   public @NotNull PsiParameter createParameter(@NotNull String name, @NotNull PsiType type) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
-    if (PsiType.NULL.equals(type)) {
+    if (PsiTypes.nullType().equals(type)) {
       throw new IncorrectOperationException("Cannot create parameter with type \"null\".");
     }
 
@@ -551,7 +551,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
     if (!isIdentifier(name)) {
       throw new IncorrectOperationException("\"" + name + "\" is not an identifier.");
     }
-    if (PsiType.NULL.equals(type)) {
+    if (PsiTypes.nullType().equals(type)) {
       throw new IncorrectOperationException("Cannot create variable with type \"null\".");
     }
 

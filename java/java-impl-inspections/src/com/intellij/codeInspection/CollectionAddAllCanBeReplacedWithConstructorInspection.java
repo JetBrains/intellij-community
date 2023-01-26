@@ -293,7 +293,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
           if (scope != null &&
               ReferencesSearch.search(variable).allMatch(ref -> PsiTreeUtil.isAncestor(scope, ref.getElement(), true))) {
             PsiDeclarationStatement newDeclaration =
-              JavaPsiFacade.getElementFactory(project).createVariableDeclarationStatement("x", PsiType.INT, null, methodCallExpression);
+              JavaPsiFacade.getElementFactory(project).createVariableDeclarationStatement("x", PsiTypes.intType(), null, methodCallExpression);
             PsiVariable newVariable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(variable);
             ct.delete(variable);
             ct.replace(Objects.requireNonNull(newVariable.getInitializer()), replacement);

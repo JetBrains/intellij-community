@@ -218,7 +218,8 @@ public final class SwitchUtils {
       return false;
     }
     final PsiType type = expression.getType();
-    if (PsiType.CHAR.equals(type) || PsiType.BYTE.equals(type) || PsiType.SHORT.equals(type) || PsiType.INT.equals(type)) {
+    if (PsiTypes.charType().equals(type) || PsiTypes.byteType().equals(type) || PsiTypes.shortType().equals(type) || PsiTypes.intType()
+      .equals(type)) {
       return true;
     }
     else if (type instanceof PsiClassType && languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) {
@@ -479,7 +480,7 @@ public final class SwitchUtils {
     }
     final PsiType type = expression.getType();
     if ((!languageLevel.isAtLeast(LanguageLevel.JDK_1_7) || !TypeUtils.isJavaLangString(type)) &&
-        !PsiType.INT.equals(type) && !PsiType.SHORT.equals(type) && !PsiType.BYTE.equals(type) && !PsiType.CHAR.equals(type)) {
+        !PsiTypes.intType().equals(type) && !PsiTypes.shortType().equals(type) && !PsiTypes.byteType().equals(type) && !PsiTypes.charType().equals(type)) {
       return false;
     }
     final Object value = ExpressionUtils.computeConstantExpression(expression);

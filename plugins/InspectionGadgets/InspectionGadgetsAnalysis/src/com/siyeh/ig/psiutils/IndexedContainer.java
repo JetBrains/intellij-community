@@ -197,7 +197,7 @@ public abstract class IndexedContainer {
       if (!"get".equals(methodReference.getReferenceName())) return false;
       if (!isQualifierEquivalent(ExpressionUtils.getEffectiveQualifier(methodReference))) return false;
       PsiMethod method = ObjectUtils.tryCast(methodReference.resolve(), PsiMethod.class);
-      return method != null && MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_LIST, null, "get", PsiType.INT);
+      return method != null && MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_LIST, null, "get", PsiTypes.intType());
     }
 
     @Override
@@ -233,11 +233,11 @@ public abstract class IndexedContainer {
     }
 
     static boolean isGetCall(PsiMethodCallExpression call) {
-      return MethodCallUtils.isCallToMethod(call, CommonClassNames.JAVA_UTIL_LIST, null, "get", PsiType.INT);
+      return MethodCallUtils.isCallToMethod(call, CommonClassNames.JAVA_UTIL_LIST, null, "get", PsiTypes.intType());
     }
 
     static boolean isSizeCall(PsiMethodCallExpression call) {
-      return MethodCallUtils.isCallToMethod(call, CommonClassNames.JAVA_UTIL_LIST, PsiType.INT, "size");
+      return MethodCallUtils.isCallToMethod(call, CommonClassNames.JAVA_UTIL_LIST, PsiTypes.intType(), "size");
     }
   }
 }

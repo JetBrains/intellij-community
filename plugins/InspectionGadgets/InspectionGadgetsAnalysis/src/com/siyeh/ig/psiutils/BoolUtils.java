@@ -100,8 +100,8 @@ public final class BoolUtils {
     PsiPolyadicExpression infixExpression= (PsiPolyadicExpression) unparenthesizedExpression;
     if (!ANDAND.equals(infixExpression.getOperationTokenType())
         && !OROR.equals(infixExpression.getOperationTokenType())
-        && (PsiType.BOOLEAN.equals(infixExpression.getOperands()[0].getType())
-            || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(infixExpression.getOperands()[0].getType()))
+        && (PsiTypes.booleanType().equals(infixExpression.getOperands()[0].getType())
+            || PsiTypes.booleanType().equals(PsiPrimitiveType.getUnboxedType(infixExpression.getOperands()[0].getType()))
             || !Arrays.asList(AND, OR).contains(infixExpression.getOperationTokenType()))) {
       return 1;
     }
@@ -340,7 +340,7 @@ public final class BoolUtils {
       if (rel1 == null || rel2 == null) return false;
       PsiType type = binOp1.getLOperand().getType();
       // a > b and a <= b are not strictly opposite due to NaN semantics
-      if (type == null || type.equals(PsiType.FLOAT) || type.equals(PsiType.DOUBLE)) return false;
+      if (type == null || type.equals(PsiTypes.floatType()) || type.equals(PsiTypes.doubleType())) return false;
       if (rel1 == rel2.getNegated()) {
         return equivalence.expressionsAreEquivalent(binOp1.getLOperand(), binOp2.getLOperand()) &&
                equivalence.expressionsAreEquivalent(binOp1.getROperand(), binOp2.getROperand());

@@ -99,7 +99,7 @@ public final class GetterProcessor extends AbstractClassProcessor {
         //Skip fields if a method with same name and arguments count already exists
         final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues);
         final Collection<String> methodNames =
-          LombokUtils.toAllGetterNames(accessorsInfo, psiField.getName(), PsiType.BOOLEAN.equals(psiField.getType()));
+          LombokUtils.toAllGetterNames(accessorsInfo, psiField.getName(), PsiTypes.booleanType().equals(psiField.getType()));
         for (String methodName : methodNames) {
           createGetter &= !PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 0);
         }

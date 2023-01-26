@@ -44,7 +44,7 @@ public class NonSerializableObjectPassedToObjectStreamInspection extends BaseIns
       super.visitMethodCallExpression(methodCallExpression);
 
       if (!MethodCallUtils.isSimpleCallToMethod(methodCallExpression,
-                                                "java.io.ObjectOutputStream", PsiType.VOID, "writeObject",
+                                                "java.io.ObjectOutputStream", PsiTypes.voidType(), "writeObject",
                                                 CommonClassNames.JAVA_LANG_OBJECT)) {
         return;
       }

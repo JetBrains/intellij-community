@@ -28,7 +28,7 @@ fun GrIndexProperty.isSimpleArrayAccess(): Boolean {
 fun GrIndexProperty.getSimpleArrayAccessType(): PsiType? {
   val thisType = invokedExpression.type as? PsiArrayType ?: return null
   val argument = argumentList.allArguments.singleOrNull() as? GrExpression ?: return null
-  if (TypesUtil.isAssignableByMethodCallConversion(PsiType.INT, argument.type, this) || argument.isSingleCharLiteral()) {
+  if (TypesUtil.isAssignableByMethodCallConversion(PsiTypes.intType(), argument.type, this) || argument.isSingleCharLiteral()) {
     return thisType.componentType
   }
   else {

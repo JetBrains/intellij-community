@@ -293,7 +293,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
                                     @NotNull PsiMethod psiMethod,
                                     @NotNull PsiElement toHighlight,
                                     @NotNull ProblemsHolder holder) {
-    if (!psiMethod.isConstructor() && !PsiType.VOID.equals(psiMethod.getReturnType())) {
+    if (!psiMethod.isConstructor() && !PsiTypes.voidType().equals(psiMethod.getReturnType())) {
       boolean hasReturnTag = ContainerUtil.exists(tags, tag -> "return".equals(tag.getName()));
       if (!hasReturnTag) {
         String message = JavaBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + "return" + "</code>");

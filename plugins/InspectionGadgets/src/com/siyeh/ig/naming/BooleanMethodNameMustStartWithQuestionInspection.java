@@ -17,10 +17,7 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
@@ -72,7 +69,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends NonBoolean
       if (returnType == null) {
         return;
       }
-      else if (!returnType.equals(PsiType.BOOLEAN)) {
+      else if (!returnType.equals(PsiTypes.booleanType())) {
         if (ignoreBooleanMethods || !returnType.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
           return;
         }

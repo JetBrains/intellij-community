@@ -304,13 +304,13 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   static String tryUnbox(PsiVariable variable) {
     PsiType type = variable.getType();
     String mapOp = null;
-    if (type.equals(PsiType.INT)) {
+    if (type.equals(PsiTypes.intType())) {
       mapOp = "mapToInt";
     }
-    else if (type.equals(PsiType.LONG)) {
+    else if (type.equals(PsiTypes.longType())) {
       mapOp = "mapToLong";
     }
-    else if (type.equals(PsiType.DOUBLE)) {
+    else if (type.equals(PsiTypes.doubleType())) {
       mapOp = "mapToDouble";
     }
     return mapOp == null ? "" : "." + mapOp + "(" + variable.getName() + " -> " + variable.getName() + ")";
@@ -781,13 +781,13 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       PsiType outType = mySource.getVariable().getType();
       String lambda = myVariable.getName() + " -> " + getStreamExpression(ct);
       if (outType instanceof PsiPrimitiveType && !outType.equals(inType)) {
-        if (outType.equals(PsiType.INT)) {
+        if (outType.equals(PsiTypes.intType())) {
           operation = "flatMapToInt";
         }
-        else if (outType.equals(PsiType.LONG)) {
+        else if (outType.equals(PsiTypes.longType())) {
           operation = "flatMapToLong";
         }
-        else if (outType.equals(PsiType.DOUBLE)) {
+        else if (outType.equals(PsiTypes.doubleType())) {
           operation = "flatMapToDouble";
         }
       }
@@ -1153,7 +1153,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
 
     @Override
     public String createReplacement(CommentTracker ct) {
-      String className = myVariable.getType().equals(PsiType.LONG) ? "java.util.stream.LongStream" : "java.util.stream.IntStream";
+      String className = myVariable.getType().equals(PsiTypes.longType()) ? "java.util.stream.LongStream" : "java.util.stream.IntStream";
       String methodName = myIncluding ? "rangeClosed" : "range";
       return className + "." + methodName + "(" + ct.text(myExpression) + ", " + ct.text(myBound) + ")";
     }

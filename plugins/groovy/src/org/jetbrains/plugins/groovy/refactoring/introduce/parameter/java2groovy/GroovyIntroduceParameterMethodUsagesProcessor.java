@@ -255,7 +255,7 @@ public final class GroovyIntroduceParameterMethodUsagesProcessor implements Intr
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
     final String typeText =
-      forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || forcedType == PsiType.NULL || PsiType.VOID.equals(forcedType)
+      forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || forcedType == PsiTypes.nullType() || PsiTypes.voidType().equals(forcedType)
       ? null
       : forcedType.getCanonicalText();
 

@@ -221,7 +221,7 @@ final class JavaLangReflectHandleInvocationChecker {
     }
     else if (requiredType.isPrimitive()) {
       final PsiExpression definition = findDefinition(argument);
-      if (definition != null && PsiType.NULL.equals(definition.getType())) {
+      if (definition != null && PsiTypes.nullType().equals(definition.getType())) {
         if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
           holder.registerProblem(argument,
                                  JavaBundle.message("inspection.reflect.handle.invocation.primitive.argument.null",

@@ -45,7 +45,7 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiType returnType = returnValue.getType();
-    return PsiType.BOOLEAN.equals(returnType);
+    return PsiTypes.booleanType().equals(returnType);
   }
 
   public static boolean isBooleanAssignment(PsiStatement statement) {
@@ -66,7 +66,7 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiType assignmentType = rhs.getType();
-    return PsiType.BOOLEAN.equals(assignmentType);
+    return PsiTypes.booleanType().equals(assignmentType);
   }
 
   public static boolean isBooleanDeclaration(PsiStatement statement) {
@@ -88,6 +88,6 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiType type = initializer.getType();
-    return PsiType.BOOLEAN.equals(type);
+    return PsiTypes.booleanType().equals(type);
   }
 }

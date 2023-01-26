@@ -70,7 +70,7 @@ public class ForeachStatementInspection extends BaseInspection {
       if (iteratedValue.getType() instanceof PsiArrayType) {
         final PsiType type = iterationParameter.getType();
         final String index = new VariableNameGenerator(statement, VariableKind.LOCAL_VARIABLE)
-          .byType(PsiType.INT).byName("i", "j", "k").generate(true);
+          .byType(PsiTypes.intType()).byName("i", "j", "k").generate(true);
         newStatement.append("for(int ").append(index).append(" = 0;");
         newStatement.append(index).append('<').append(iteratedValue.getText()).append(".length;");
         newStatement.append(index).append("++)").append("{ ");

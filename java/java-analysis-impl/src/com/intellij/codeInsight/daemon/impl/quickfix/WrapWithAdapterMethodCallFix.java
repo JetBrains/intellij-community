@@ -78,7 +78,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
           if (method.getName().equals("hashCode")) return false;
           if (!method.getParameterList().isEmpty()) return false;
           PsiType type = method.getReturnType();
-          if (type == null || PsiType.VOID.equals(type)) return false;
+          if (type == null || PsiTypes.voidType().equals(type)) return false;
           if (type instanceof PsiClassType) {
             PsiClass containingClass = method.getContainingClass();
             if (containingClass == null) return false;
@@ -125,7 +125,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     boolean isApplicable(PsiElement context, PsiType inType, PsiType outType) {
       if (inType == null ||
           outType == null ||
-          inType.equals(PsiType.NULL) ||
+          inType.equals(PsiTypes.nullType()) ||
           !myInTypeFilter.test(inType) ||
           !myOutTypeFilter.test(outType)) {
         return false;
@@ -221,8 +221,8 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_LANG_ITERABLE) &&
                            isAppropriateLanguageLevel(outType ,l -> l.isAtLeast(JDK_1_9))),
     new Wrapper("java.lang.Math.toIntExact({0})",
-                inType -> PsiType.LONG.equals(inType) || inType.equalsToText(CommonClassNames.JAVA_LANG_LONG),
-                outType -> PsiType.INT.equals(outType) || outType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)),
+                inType -> PsiTypes.longType().equals(inType) || inType.equalsToText(CommonClassNames.JAVA_LANG_LONG),
+                outType -> PsiTypes.intType().equals(outType) || outType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)),
     new Wrapper("java.util.Collections.singleton({0})",
                 Predicates.alwaysTrue(),
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_LANG_ITERABLE)),

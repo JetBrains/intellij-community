@@ -115,14 +115,14 @@ internal fun KotlinType.toPsiType(
         val typeFqName = this.constructor.declarationDescriptor?.fqNameSafe
         fun PsiPrimitiveType.orBoxed() = if (config.isBoxed) getBoxedType(context) else this
         val psiType = when (typeFqName) {
-            StandardClassIds.Int.asSingleFqName() -> PsiType.INT.orBoxed()
-            StandardClassIds.Long.asSingleFqName() -> PsiType.LONG.orBoxed()
-            StandardClassIds.Short.asSingleFqName() -> PsiType.SHORT.orBoxed()
-            StandardClassIds.Boolean.asSingleFqName() -> PsiType.BOOLEAN.orBoxed()
-            StandardClassIds.Byte.asSingleFqName() -> PsiType.BYTE.orBoxed()
-            StandardClassIds.Char.asSingleFqName() -> PsiType.CHAR.orBoxed()
-            StandardClassIds.Double.asSingleFqName() -> PsiType.DOUBLE.orBoxed()
-            StandardClassIds.Float.asSingleFqName() -> PsiType.FLOAT.orBoxed()
+            StandardClassIds.Int.asSingleFqName() -> PsiTypes.intType().orBoxed()
+            StandardClassIds.Long.asSingleFqName() -> PsiTypes.longType().orBoxed()
+            StandardClassIds.Short.asSingleFqName() -> PsiTypes.shortType().orBoxed()
+            StandardClassIds.Boolean.asSingleFqName() -> PsiTypes.booleanType().orBoxed()
+            StandardClassIds.Byte.asSingleFqName() -> PsiTypes.byteType().orBoxed()
+            StandardClassIds.Char.asSingleFqName() -> PsiTypes.charType().orBoxed()
+            StandardClassIds.Double.asSingleFqName() -> PsiTypes.doubleType().orBoxed()
+            StandardClassIds.Float.asSingleFqName() -> PsiTypes.floatType().orBoxed()
             StandardClassIds.Unit.asSingleFqName() -> convertUnitToVoidIfNeeded(context, config.typeOwnerKind, config.isBoxed)
             StandardClassIds.String.asSingleFqName() -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> {
@@ -587,7 +587,7 @@ private fun getMethodSignatureFromDescriptor(context: KtElement, descriptor: Cal
     val originalDescriptor = descriptor.original
     val receiverType = originalDescriptor.extensionReceiverParameter?.type?.toPsiType()
     val parameterTypes = listOfNotNull(receiverType) + originalDescriptor.valueParameters.map { it.type.toPsiType() }
-    val returnType = originalDescriptor.returnType?.toPsiType() ?: PsiType.VOID
+    val returnType = originalDescriptor.returnType?.toPsiType() ?: PsiTypes.voidType()
 
     if (parameterTypes.any { !it.isValid } || !returnType.isValid) {
         return null

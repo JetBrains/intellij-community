@@ -204,14 +204,14 @@ internal fun KtAnalysisSession.toPsiType(
     if (ktType is KtNonErrorClassType && ktType.ownTypeArguments.isEmpty()) {
         fun PsiPrimitiveType.orBoxed() = if (config.isBoxed) getBoxedType(context) else this
         val psiType = when (ktType.classId) {
-            StandardClassIds.Int -> PsiType.INT.orBoxed()
-            StandardClassIds.Long -> PsiType.LONG.orBoxed()
-            StandardClassIds.Short -> PsiType.SHORT.orBoxed()
-            StandardClassIds.Boolean -> PsiType.BOOLEAN.orBoxed()
-            StandardClassIds.Byte -> PsiType.BYTE.orBoxed()
-            StandardClassIds.Char -> PsiType.CHAR.orBoxed()
-            StandardClassIds.Double -> PsiType.DOUBLE.orBoxed()
-            StandardClassIds.Float -> PsiType.FLOAT.orBoxed()
+            StandardClassIds.Int -> PsiTypes.intType().orBoxed()
+            StandardClassIds.Long -> PsiTypes.longType().orBoxed()
+            StandardClassIds.Short -> PsiTypes.shortType().orBoxed()
+            StandardClassIds.Boolean -> PsiTypes.booleanType().orBoxed()
+            StandardClassIds.Byte -> PsiTypes.byteType().orBoxed()
+            StandardClassIds.Char -> PsiTypes.charType().orBoxed()
+            StandardClassIds.Double -> PsiTypes.doubleType().orBoxed()
+            StandardClassIds.Float -> PsiTypes.floatType().orBoxed()
             StandardClassIds.Unit -> convertUnitToVoidIfNeeded(context, config.typeOwnerKind, config.isBoxed)
             StandardClassIds.String -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> null

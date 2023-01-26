@@ -366,7 +366,7 @@ public final class JavaReflectionReferenceUtil {
       return false;
     }
     final PsiType type = field.getType();
-    return !(type instanceof PsiPrimitiveType) || PsiType.INT.equals(type) || PsiType.LONG.equals(type);
+    return !(type instanceof PsiPrimitiveType) || PsiTypes.intType().equals(type) || PsiTypes.longType().equals(type);
   }
 
   @Nullable
@@ -447,7 +447,7 @@ public final class JavaReflectionReferenceUtil {
     if (method != null) {
       final List<String> types = new ArrayList<>();
       final PsiType returnType = method.getReturnType();
-      types.add(getTypeText(returnType != null ? returnType : PsiType.VOID)); // null return type means it's a constructor
+      types.add(getTypeText(returnType != null ? returnType : PsiTypes.voidType())); // null return type means it's a constructor
 
       for (PsiParameter parameter : method.getParameterList().getParameters()) {
         types.add(getTypeText(parameter.getType()));

@@ -46,8 +46,8 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
     String leftOperand = javaStyle.suggestUniqueVariableName("a", body, true);
     String rightOperand = javaStyle.suggestUniqueVariableName("b", body, true);
 
-    if(type.equals(PsiType.BOOLEAN)) {
-      type = PsiType.BOOLEAN.getBoxedType(body); // hack to avoid .map(b -> b) when boxing needed
+    if(type.equals(PsiTypes.booleanType())) {
+      type = PsiTypes.booleanType().getBoxedType(body); // hack to avoid .map(b -> b) when boxing needed
     }
 
     PsiExpression initializer = var.getInitializer();
@@ -165,11 +165,11 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
 
   static boolean bitwiseTypeRestriction(@NotNull PsiVariable variable) {
     return variable.getType() instanceof PsiPrimitiveType
-           && (variable.getType().equals(PsiType.INT) || variable.getType().equals(PsiType.LONG));
+           && (variable.getType().equals(PsiTypes.intType()) || variable.getType().equals(PsiTypes.longType()));
   }
 
   static boolean arithmeticTypeRestriction(@NotNull PsiVariable variable) {
-    return variable.getType() instanceof PsiPrimitiveType && !variable.getType().equals(PsiType.FLOAT);
+    return variable.getType() instanceof PsiPrimitiveType && !variable.getType().equals(PsiTypes.floatType());
   }
 
   private static boolean booleanTypeRestriction(@NotNull PsiVariable variable) {

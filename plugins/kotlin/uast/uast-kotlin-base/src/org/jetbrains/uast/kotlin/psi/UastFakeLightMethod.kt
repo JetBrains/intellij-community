@@ -10,7 +10,9 @@ import com.intellij.psi.impl.light.LightParameterListBuilder
 import com.intellij.psi.impl.light.LightReferenceListBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
-import org.jetbrains.kotlin.asJava.elements.*
+import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterBuilder
+import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
+import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -154,7 +156,7 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
     private val _annotations: Array<PsiAnnotation> by lz {
         val annotations = SmartList<PsiAnnotation>()
 
-        val isUnitFunction = original is KtFunction && _returnType == PsiType.VOID
+        val isUnitFunction = original is KtFunction && _returnType == PsiTypes.voidType()
         // Do not annotate Unit function
         if (!isUnitFunction) {
             val nullability = baseResolveProviderService.nullability(original)

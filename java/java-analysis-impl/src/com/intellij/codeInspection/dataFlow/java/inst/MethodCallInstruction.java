@@ -417,9 +417,9 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       if (myTargetMethod != null) {
         range = range.meet(JvmPsiRangeSetUtil.fromPsiElement(myTargetMethod));
       }
-      return factory.fromDfType(PsiType.LONG.equals(type) ? longRange(range) : intRangeClamped(range));
+      return factory.fromDfType(PsiTypes.longType().equals(type) ? longRange(range) : intRangeClamped(range));
     }
-    return PsiType.VOID.equals(type) ? factory.getUnknown() : factory.fromDfType(typedObject(type, Nullability.UNKNOWN));
+    return PsiTypes.voidType().equals(type) ? factory.getUnknown() : factory.fromDfType(typedObject(type, Nullability.UNKNOWN));
   }
 
   private boolean mayLeakThis(@NotNull DfaMemoryState memState, DfaValue @Nullable [] argValues) {

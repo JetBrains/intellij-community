@@ -184,34 +184,34 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
         return null;
       }
       final String text = expression.getText();
-      if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.LONG)) {
+      if (expressionType.equals(PsiTypes.intType()) && expectedType.equals(PsiTypes.longType())) {
         return text + 'L';
       }
-      if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.FLOAT)) {
+      if (expressionType.equals(PsiTypes.intType()) && expectedType.equals(PsiTypes.floatType())) {
         if (!isDecimalLiteral(text)) {
           return null;
         }
         return text + ".0F";
       }
-      if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.DOUBLE)) {
+      if (expressionType.equals(PsiTypes.intType()) && expectedType.equals(PsiTypes.doubleType())) {
         if (!isDecimalLiteral(text)) {
           return null;
         }
         return text + ".0";
       }
-      if (expressionType.equals(PsiType.LONG) && expectedType.equals(PsiType.FLOAT)) {
+      if (expressionType.equals(PsiTypes.longType()) && expectedType.equals(PsiTypes.floatType())) {
         if (!isDecimalLiteral(text)) {
           return null;
         }
         return text.substring(0, text.length() - 1) + ".0F";
       }
-      if (expressionType.equals(PsiType.LONG) && expectedType.equals(PsiType.DOUBLE)) {
+      if (expressionType.equals(PsiTypes.longType()) && expectedType.equals(PsiTypes.doubleType())) {
         if (!isDecimalLiteral(text)) {
           return null;
         }
         return text.substring(0, text.length() - 1) + ".0";
       }
-      if (expressionType.equals(PsiType.DOUBLE) && expectedType.equals(PsiType.FLOAT)) {
+      if (expressionType.equals(PsiTypes.doubleType()) && expectedType.equals(PsiTypes.floatType())) {
         final int length = text.length();
         if (text.charAt(length - 1) == 'd' || text.charAt(length - 1) == 'D') {
           return text.substring(0, length - 1) + 'F';
@@ -220,7 +220,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
           return text + 'F';
         }
       }
-      if (expressionType.equals(PsiType.FLOAT) && expectedType.equals(PsiType.DOUBLE)) {
+      if (expressionType.equals(PsiTypes.floatType()) && expectedType.equals(PsiTypes.doubleType())) {
         final int length = text.length();
         return text.substring(0, length - 1);
       }
@@ -247,8 +247,10 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
   }
 
   private static boolean isCharConversion(PsiType expressionType, PsiType convertedType) {
-    return PsiType.CHAR.equals(expressionType) && !PsiType.FLOAT.equals(convertedType) && !PsiType.DOUBLE.equals(convertedType) ||
-           PsiType.CHAR.equals(convertedType) && !PsiType.FLOAT.equals(expressionType) && !PsiType.DOUBLE.equals(expressionType);
+    return PsiTypes.charType().equals(expressionType) && !PsiTypes.floatType().equals(convertedType) && !PsiTypes.doubleType()
+      .equals(convertedType) ||
+           PsiTypes.charType().equals(convertedType) && !PsiTypes.floatType().equals(expressionType) && !PsiTypes.doubleType()
+             .equals(expressionType);
   }
 
   private class ImplicitNumericConversionVisitor extends BaseInspectionVisitor {

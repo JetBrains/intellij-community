@@ -65,7 +65,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
     if (returnType != null) {
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(myExpression);
       final PsiElement lambdaBody = myExpression.getBody();
-      if (returnType.equals(PsiType.VOID)) {
+      if (returnType.equals(PsiTypes.voidType())) {
         if (!(lambdaBody instanceof PsiCodeBlock && myExpression.isVoidCompatible()) && !LambdaUtil.isExpressionStatementExpression(lambdaBody)) {
           session.registerIncompatibleErrorMessage(JavaPsiBundle.message("error.incompatible.type.incompatible.types.expected.void.lambda"));
           return false;

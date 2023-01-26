@@ -373,7 +373,7 @@ public class PropertyUtilBase {
     switch (flavour) {
       case GENERIC:
         PsiType returnType = method.getReturnType();
-        return !PsiType.VOID.equals(returnType);
+        return !PsiTypes.voidType().equals(returnType);
       case BOOLEAN:
         PsiType propertyType = method.getReturnType();
         return isBoolean(propertyType) ||
@@ -387,7 +387,7 @@ public class PropertyUtilBase {
 
 
   private static boolean isBoolean(@Nullable PsiType propertyType) {
-    return PsiType.BOOLEAN.equals(propertyType);
+    return PsiTypes.booleanType().equals(propertyType);
   }
 
 
@@ -445,7 +445,7 @@ public class PropertyUtilBase {
 
     final PsiType returnType = method.getReturnType();
 
-    if (returnType == null || PsiType.VOID.equals(returnType)) {
+    if (returnType == null || PsiTypes.voidType().equals(returnType)) {
       return true;
     }
 
@@ -597,7 +597,7 @@ public class PropertyUtilBase {
     String propertyName = codeStyleManager.variableNameToPropertyName(name, kind);
     String setName = suggestSetterName(field);
     PsiMethod setMethod = factory
-      .createMethodFromText(factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiType.VOID).getText(),
+      .createMethodFromText(factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiTypes.voidType()).getText(),
                             field);
     String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
     PsiParameter param = factory.createParameter(parameterName, AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(field.getModifierList(), field.getType()));
@@ -677,7 +677,7 @@ public class PropertyUtilBase {
       final PsiStatement[] statements = body == null ? null : body.getStatements();
       final PsiStatement statement = statements == null || statements.length != 1 ? null : statements[0];
       final PsiElement target;
-      if (PsiType.VOID.equals(returnType)) {
+      if (PsiTypes.voidType().equals(returnType)) {
         final PsiExpression expression =
           statement instanceof PsiExpressionStatement ? ((PsiExpressionStatement)statement).getExpression() : null;
         target = expression instanceof PsiAssignmentExpression ? ((PsiAssignmentExpression)expression).getLExpression() : null;

@@ -93,7 +93,7 @@ public final class SetterProcessor extends AbstractClassProcessor {
         //Skip fields that start with $
         createSetter &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
         //Skip fields if a method with same name already exists
-        final Collection<String> methodNames = fieldProcessor.getAllSetterNames(psiField, PsiType.BOOLEAN.equals(psiField.getType()));
+        final Collection<String> methodNames = fieldProcessor.getAllSetterNames(psiField, PsiTypes.booleanType().equals(psiField.getType()));
         for (String methodName : methodNames) {
           createSetter &= !PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 1);
         }

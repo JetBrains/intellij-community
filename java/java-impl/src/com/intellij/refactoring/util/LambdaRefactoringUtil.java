@@ -163,7 +163,7 @@ public final class LambdaRefactoringUtil {
     if (resolveElement instanceof PsiMember) {
       buf.append("{");
 
-      if (!PsiType.VOID.equals(interfaceMethod.getReturnType())) {
+      if (!PsiTypes.voidType().equals(interfaceMethod.getReturnType())) {
         buf.append("return ");
       }
       final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(referenceExpression);

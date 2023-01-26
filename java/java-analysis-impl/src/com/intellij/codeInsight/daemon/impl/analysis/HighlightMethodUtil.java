@@ -2084,7 +2084,7 @@ public final class HighlightMethodUtil {
   static PsiType determineReturnType(@NotNull PsiMethod method) {
     PsiManager manager = method.getManager();
     PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(method);
-    if (returnStatements.length == 0) return PsiType.VOID;
+    if (returnStatements.length == 0) return PsiTypes.voidType();
     PsiType expectedType = null;
     for (PsiReturnStatement returnStatement : returnStatements) {
       ReturnModel returnModel = ReturnModel.create(returnStatement);
@@ -2100,7 +2100,7 @@ public final class HighlightMethodUtil {
                              @NotNull PsiType valueType,
                              @NotNull PsiMethod method,
                              @NotNull PsiManager manager) {
-    if (currentType == null || PsiType.VOID.equals(currentType)) return valueType;
+    if (currentType == null || PsiTypes.voidType().equals(currentType)) return valueType;
     if (currentType == valueType) return currentType;
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(valueType)) {
@@ -2279,7 +2279,7 @@ public final class HighlightMethodUtil {
     @Nullable
     private static ReturnModel create(@NotNull PsiReturnStatement statement) {
       PsiExpression value = statement.getReturnValue();
-      if (value == null) return new ReturnModel(statement, PsiType.VOID);
+      if (value == null) return new ReturnModel(statement, PsiTypes.voidType());
       if (ExpressionUtils.nonStructuralChildren(value).anyMatch(c -> c instanceof PsiFunctionalExpression)) return null;
       PsiType type = RefactoringChangeUtil.getTypeByExpression(value);
       if (type == null || type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) return null;
@@ -2295,9 +2295,9 @@ public final class HighlightMethodUtil {
         Object res = evaluator.computeConstantExpression(returnValue);
         if (res instanceof Number) {
           long value = ((Number)res).longValue();
-          if (-128 <= value && value <= 127) return PsiType.BYTE;
-          if (-32768 <= value && value <= 32767) return PsiType.SHORT;
-          if (0 <= value && value <= 0xFFFF) return PsiType.CHAR;
+          if (-128 <= value && value <= 127) return PsiTypes.byteType();
+          if (-32768 <= value && value <= 32767) return PsiTypes.shortType();
+          if (0 <= value && value <= 0xFFFF) return PsiTypes.charType();
         }
       }
       return type;

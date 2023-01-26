@@ -59,7 +59,7 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
 
   private fun processQualifier(qualifier: GrExpression, state: ResolveState): Boolean {
     val qualifierType = qualifier.type
-    if (qualifierType == null || PsiType.VOID == qualifierType) {
+    if (qualifierType == null || PsiTypes.voidType() == qualifierType) {
       if (qualifier is GrReferenceExpression) {
         val resolved = qualifier.resolve()
         if (resolved is PsiClass) {

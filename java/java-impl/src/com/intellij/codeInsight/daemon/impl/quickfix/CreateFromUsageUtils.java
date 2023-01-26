@@ -125,7 +125,7 @@ public final class CreateFromUsageUtils {
                                                                                                                  IncorrectOperationException {
     PsiType returnType = method.getReturnType();
     if (returnType == null) {
-      returnType = PsiType.VOID;
+      returnType = PsiTypes.voidType();
     }
 
     JVMElementFactory factory = JVMElementFactories.getFactory(aClass.getLanguage(), aClass.getProject());
@@ -308,7 +308,7 @@ public final class CreateFromUsageUtils {
     else if (argType instanceof PsiWildcardType) {
       argType = ((PsiWildcardType)argType).getBound();
     }
-    if (argType == null || PsiType.NULL.equals(argType) || LambdaUtil.notInferredType(argType)) {
+    if (argType == null || PsiTypes.nullType().equals(argType) || LambdaUtil.notInferredType(argType)) {
       argType = PsiType.getJavaLangObject(psiManager, resolveScope);
     }
     return argType;
@@ -710,7 +710,7 @@ public final class CreateFromUsageUtils {
     }
 
     if (expectedTypes.length == 0) {
-      PsiType t = allowVoidType ? PsiType.VOID : PsiType.getJavaLangObject(manager, resolveScope);
+      PsiType t = allowVoidType ? PsiTypes.voidType() : PsiType.getJavaLangObject(manager, resolveScope);
       expectedTypes = new ExpectedTypeInfo[] {ExpectedTypesProvider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailType.NONE)};
     }
 
@@ -761,7 +761,7 @@ public final class CreateFromUsageUtils {
     }
 
     if (expectedTypes.length == 0) {
-      return allowVoidType ? new PsiType[]{PsiType.VOID} : new PsiType[]{PsiType.getJavaLangObject(manager, resolveScope)};
+      return allowVoidType ? new PsiType[]{PsiTypes.voidType()} : new PsiType[]{PsiType.getJavaLangObject(manager, resolveScope)};
     }
     else {
       //Double check to avoid expensive operations on PsiClassTypes
@@ -771,7 +771,7 @@ public final class CreateFromUsageUtils {
         @Override
         @Nullable
         public PsiType visitType(@NotNull PsiType type) {
-          if (PsiType.NULL.equals(type) || PsiType.VOID.equals(type) && !allowVoidType) {
+          if (PsiTypes.nullType().equals(type) || PsiTypes.voidType().equals(type) && !allowVoidType) {
             type = PsiType.getJavaLangObject(manager, resolveScope);
           }
 

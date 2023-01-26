@@ -319,7 +319,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         }
       }
       if (!InheritanceUtil.isInheritor(type, JAVA_LANG_CHAR_SEQUENCE)) {
-        if (!neighborIsString || (type instanceof PsiArrayType && ((PsiArrayType)type).getComponentType().equals(PsiType.CHAR))) {
+        if (!neighborIsString || (type instanceof PsiArrayType && ((PsiArrayType)type).getComponentType().equals(PsiTypes.charType()))) {
           PsiLiteralExpression literalExpression = tryCast(expression, PsiLiteralExpression.class);
           if (literalExpression != null) {
             Object value = literalExpression.getValue();
@@ -478,7 +478,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         if(arguments.length != 1) return null;
         final PsiExpression argument = arguments[0];
         final PsiType argumentType = argument.getType();
-        if (!PsiType.INT.equals(argumentType)) {
+        if (!PsiTypes.intType().equals(argumentType)) {
           joinParts.add(argument);
         }
       }

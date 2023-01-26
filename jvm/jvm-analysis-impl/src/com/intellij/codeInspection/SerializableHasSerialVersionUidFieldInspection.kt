@@ -49,7 +49,7 @@ class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBa
       fieldName = HardcodedMethodConstants.SERIAL_VERSION_UID,
       annotations = annotations,
       modifiers = listOf(JvmModifier.PRIVATE, JvmModifier.STATIC),
-      fieldType = expectedTypes(PsiType.LONG),
+      fieldType = expectedTypes(PsiTypes.longType()),
       targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY),
       initializer = JvmValue.createLongValue(serialUid),
       isConstant = true

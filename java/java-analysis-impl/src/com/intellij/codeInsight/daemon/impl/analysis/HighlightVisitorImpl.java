@@ -637,7 +637,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     if (!myHolder.hasErrorResults() && parent instanceof PsiNewExpression &&
         ((PsiNewExpression)parent).getQualifier() != expression && ((PsiNewExpression)parent).getArrayInitializer() != expression) {
-      add(HighlightUtil.checkAssignability(PsiType.INT, expression.getType(), expression, expression));  // like in 'new String["s"]'
+      add(HighlightUtil.checkAssignability(PsiTypes.intType(), expression.getType(), expression, expression));  // like in 'new String["s"]'
     }
     if (!myHolder.hasErrorResults()) add(HighlightControlFlowUtil.checkCannotWriteToFinal(expression,myFile));
     if (!myHolder.hasErrorResults()) add(HighlightUtil.checkVariableExpected(expression));
@@ -1674,7 +1674,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           if (info != null && parent instanceof PsiMethod) {
             PsiMethod method = (PsiMethod)parent;
             PsiType expectedType = myExpectedReturnTypes.computeIfAbsent(method, HighlightMethodUtil::determineReturnType);
-            if (expectedType != null && !PsiType.VOID.equals(expectedType))
+            if (expectedType != null && !PsiTypes.voidType().equals(expectedType))
               HighlightUtil.registerReturnTypeFixes(info, method, expectedType);
           }
         }
@@ -1994,7 +1994,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Nullable
   private static HighlightInfo.Builder checkGuardingExpressionHasBooleanType(@Nullable PsiExpression guardingExpression) {
     if (guardingExpression != null && !TypeConversionUtil.isBooleanType(guardingExpression.getType())) {
-      String message = JavaErrorBundle.message("incompatible.types", JavaHighlightUtil.formatType(PsiType.BOOLEAN),
+      String message = JavaErrorBundle.message("incompatible.types", JavaHighlightUtil.formatType(PsiTypes.booleanType()),
                                                JavaHighlightUtil.formatType(guardingExpression.getType()));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpression).descriptionAndTooltip(message);
     }

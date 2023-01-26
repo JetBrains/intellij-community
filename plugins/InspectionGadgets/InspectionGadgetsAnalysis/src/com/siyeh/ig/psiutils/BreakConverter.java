@@ -85,9 +85,9 @@ public class BreakConverter {
     }
     if (parent instanceof PsiCodeBlock) {
       PsiElement grandParent = parent.getParent();
-      if (grandParent instanceof PsiMethod && PsiType.VOID.equals(((PsiMethod)grandParent).getReturnType()) ||
+      if (grandParent instanceof PsiMethod && PsiTypes.voidType().equals(((PsiMethod)grandParent).getReturnType()) ||
           grandParent instanceof PsiLambdaExpression &&
-          PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)grandParent))) {
+          PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)grandParent))) {
         return "return;";
       }
       if (grandParent instanceof PsiBlockStatement) {

@@ -105,7 +105,7 @@ public class DevKitImplicitUsageProvider implements ImplicitUsageProvider {
 
   private static boolean isDomElementVisitorMethod(PsiMethod method,
                                                    PsiClass containingClass) {
-    if (!PsiType.VOID.equals(method.getReturnType()) ||
+    if (!PsiTypes.voidType().equals(method.getReturnType()) ||
         !method.getName().startsWith("visit") ||
         method.getParameterList().getParametersCount() != 1 ||
         !InheritanceUtil.isInheritor(containingClass, "com.intellij.util.xml.DomElementVisitor")) {

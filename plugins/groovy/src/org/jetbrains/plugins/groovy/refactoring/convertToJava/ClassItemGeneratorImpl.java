@@ -180,7 +180,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       builder.append("this");
     }
     else {
-      if (!PsiType.VOID.equals(context.typeProvider.getReturnType(method))) {
+      if (!PsiTypes.voidType().equals(context.typeProvider.getReturnType(method))) {
         builder.append("return ");
       }
       builder.append(method.getName());

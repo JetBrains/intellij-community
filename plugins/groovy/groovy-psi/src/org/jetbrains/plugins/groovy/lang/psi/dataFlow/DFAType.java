@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.GenericsUtil;
-import com.intellij.psi.PsiIntersectionType;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -129,7 +126,7 @@ public final class DFAType {
       if (mixin.myNegated) {
         continue;
       }
-      if (mixin.myType.equals(PsiType.NULL)) {
+      if (mixin.myType.equals(PsiTypes.nullType())) {
         continue;
       }
       types.add(mixin.myType);
@@ -151,7 +148,7 @@ public final class DFAType {
    * Fast check that allows to determine if one dfa type contains not less information than the other.
    */
   public static boolean dominates(DFAType dominating, DFAType dominated) {
-    boolean primaryDominating = dominated.primary == null || dominated.primary == PsiType.NULL || dominated.primary == dominating.primary;
+    boolean primaryDominating = dominated.primary == null || dominated.primary == PsiTypes.nullType() || dominated.primary == dominating.primary;
     if (!primaryDominating) return false;
     return dominating.mixins.isEmpty() || dominated.mixins == dominating.mixins;
   }

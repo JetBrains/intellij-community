@@ -106,7 +106,7 @@ public class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFix
       PsiExpression initializer = variable.getInitializer();
       if (initializer == null) return null;
       PsiType type = initializer.getType();
-      return PsiTypesUtil.isDenotableType(type, variable) && !PsiType.VOID.equals(type) ? type : null;
+      return PsiTypesUtil.isDenotableType(type, variable) && !PsiTypes.voidType().equals(type) ? type : null;
     }
     return null;
   }

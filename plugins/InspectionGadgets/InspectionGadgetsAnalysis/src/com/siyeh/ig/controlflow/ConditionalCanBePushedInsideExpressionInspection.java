@@ -104,7 +104,7 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
         return;
       }
       final PsiType type = ((PsiExpression)leftDiff).getType();
-      if (type == null || PsiType.VOID.equals(type)) {
+      if (type == null || PsiTypes.voidType().equals(type)) {
         return;
       }
       if (ignoreSingleArgument && isOnlyArgumentOfMethodCall(leftDiff, expression)) {

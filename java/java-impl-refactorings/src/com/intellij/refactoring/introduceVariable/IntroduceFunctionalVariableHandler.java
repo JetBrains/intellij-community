@@ -269,7 +269,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
               .map(data -> data.type.getPresentableText())
               .reduce((result, item) -> result + ", " + item)
               .orElse("");
-          String returnTypeString = myReturnType == null || PsiType.VOID.equals(myReturnType)
+          String returnTypeString = myReturnType == null || PsiTypes.voidType().equals(myReturnType)
                                     ? "{}" : myReturnType.getPresentableText();
           return "(" + parametersList + ") -> " + returnTypeString;
         }

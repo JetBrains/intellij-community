@@ -15,7 +15,6 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.asJava.elements.KtLightPsiArrayInitializerMemberValue
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.completion.test.assertInstanceOf
 import org.jetbrains.kotlin.idea.facet.configureFacet
@@ -337,9 +336,9 @@ class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
             listOf(
                 PsiType.getJavaLangString(myFixture.psiManager, scope),
                 PsiType.getTypeByName("java.lang.Throwable", project, scope),
-                PsiType.SHORT.createArrayType(),
+                PsiTypes.shortType().createArrayType(),
                 PsiType.getTypeByName("java.lang.Integer", project, scope).createArrayType().createArrayType(),
-                PsiType.LONG,
+                PsiTypes.longType(),
                 PsiType.getTypeByName("kotlin.Unit", project, scope)
             ),
             classLiterals.map { it.operand.type }
@@ -519,7 +518,7 @@ class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
             innerAnnotationAttributeVal as PsiAnnotation
             val value = innerAnnotationAttributeVal.findAttributeValue("v").assertInstanceOf<PsiLiteral>()
             assertTextAndRange("1", value)
-            TestCase.assertEquals(PsiType.INT, value.assertInstanceOf<PsiExpression>().type)
+            TestCase.assertEquals(PsiTypes.intType(), value.assertInstanceOf<PsiExpression>().type)
         }
 
 

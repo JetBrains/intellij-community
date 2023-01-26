@@ -246,7 +246,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       .createExpressionFromText(qualifierText + suggestedReplacement.getName() + arguments.getText(), call);
 
     PsiType type = ExpectedTypeUtils.findExpectedType(call, true);
-    if (type != null && !type.equals(PsiType.VOID)) {
+    if (type != null && !type.equals(PsiTypes.voidType())) {
       PsiType suggestedCallType = suggestedCall.getType();
       if (!ExpressionUtils.isVoidContext(call) && suggestedCallType != null && !TypeConversionUtil.isAssignable(type, suggestedCallType)) {
         return false;

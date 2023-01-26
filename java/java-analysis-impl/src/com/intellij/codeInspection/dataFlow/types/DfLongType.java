@@ -5,7 +5,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 
 public interface DfLongType extends DfJvmIntegralType {
@@ -24,7 +24,7 @@ public interface DfLongType extends DfJvmIntegralType {
   @NotNull
   @Override
   default PsiPrimitiveType getPsiType() {
-    return PsiType.LONG;
+    return PsiTypes.longType();
   }
 
   @NotNull

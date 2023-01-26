@@ -7,7 +7,6 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,9 +20,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -52,7 +50,7 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
         CountingLoop loop = CountingLoop.from(statement);
         if (loop == null) return;
         PsiLocalVariable var = loop.getCounter();
-        if (var.getType().equals(PsiType.LONG) || VariableAccessUtils.variableIsUsed(var, call)) return;
+        if (var.getType().equals(PsiTypes.longType()) || VariableAccessUtils.variableIsUsed(var, call)) return;
         PsiExpression arg = call.getArgumentList().getExpressions()[0];
         if (SideEffectChecker.mayHaveSideEffects(arg)) return;
         holder.registerProblem(statement.getFirstChild(), JavaBundle.message(

@@ -114,7 +114,7 @@ public class BigDecimalLegacyMethodInspection extends BaseInspection implements 
         return;
       }
       final PsiExpression argument = arguments[arguments.length - 1];
-      if (!PsiType.INT.equals(argument.getType())) {
+      if (!PsiTypes.intType().equals(argument.getType())) {
         return;
       }
       if (!TypeUtils.expressionHasTypeOrSubtype(expression, "java.math.BigDecimal")) {

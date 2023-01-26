@@ -439,7 +439,7 @@ public final class AnnotationsHighlightUtil {
           PsiTypeElement typeElement = (PsiTypeElement)nextElement;
           PsiType type = typeElement.getType();
           //see JLS 9.7.4 Where Annotations May Appear
-          if (PsiType.VOID.equals(type)) {
+          if (PsiTypes.voidType().equals(type)) {
             String message = JavaErrorBundle.message("annotation.not.allowed.void");
             return createAnnotationError(annotation, message);
           }
@@ -924,7 +924,7 @@ public final class AnnotationsHighlightUtil {
 
     @Override
     public Boolean visitPrimitiveType(@NotNull PsiPrimitiveType primitiveType) {
-      return PsiType.VOID.equals(primitiveType) || PsiType.NULL.equals(primitiveType) ? Boolean.FALSE : Boolean.TRUE;
+      return PsiTypes.voidType().equals(primitiveType) || PsiTypes.nullType().equals(primitiveType) ? Boolean.FALSE : Boolean.TRUE;
     }
 
     @Override

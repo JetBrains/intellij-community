@@ -17,7 +17,7 @@ package com.siyeh.ig.finalization;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -57,7 +57,7 @@ public class NoExplicitFinalizeCallsInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!MethodCallUtils.isCallToMethod(expression, null, PsiType.VOID, HardcodedMethodConstants.FINALIZE)) {
+      if (!MethodCallUtils.isCallToMethod(expression, null, PsiTypes.voidType(), HardcodedMethodConstants.FINALIZE)) {
         return;
       }
       final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);

@@ -129,7 +129,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                     return substitutor;
                   }
 
-                  if (includeReturnConstraint && !PsiType.VOID.equals(interfaceMethodReturnType) && interfaceMethodReturnType != null) {
+                  if (includeReturnConstraint && !PsiTypes.voidType().equals(interfaceMethodReturnType) && interfaceMethodReturnType != null) {
                     PsiType returnType = method.isConstructor()
                                                ? composeReturnType(containingClass, substitutor)
                                                : PsiMethodReferenceCompatibilityConstraint
@@ -452,7 +452,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
   private static boolean arrayCreationSignature(@NotNull MethodSignature signature) {
     PsiType[] parameterTypes = signature.getParameterTypes();
     if (parameterTypes.length == 1 && parameterTypes[0] != null) {
-      if (TypeConversionUtil.isAssignable(PsiType.INT, parameterTypes[0])) {
+      if (TypeConversionUtil.isAssignable(PsiTypes.intType(), parameterTypes[0])) {
         return true;
       }
       if (parameterTypes[0] instanceof PsiClassType) {

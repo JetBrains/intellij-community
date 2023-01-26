@@ -5,10 +5,7 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
-import com.intellij.psi.PsiJvmSubstitutor
-import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.util.createSmartPointer
 import com.intellij.psi.xml.XmlAttribute
@@ -46,7 +43,7 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
 
   override fun getMethodName(): String = myElement.value!!.substring(1)
 
-  override fun getReturnType(): List<ExpectedType> = listOf(expectedType(PsiType.VOID, ExpectedType.Kind.EXACT))
+  override fun getReturnType(): List<ExpectedType> = listOf(expectedType(PsiTypes.voidType(), ExpectedType.Kind.EXACT))
 
   override fun getExpectedParameters(): List<ExpectedParameter> {
     val eventType = expectedType(getEventType(myElement), ExpectedType.Kind.EXACT)

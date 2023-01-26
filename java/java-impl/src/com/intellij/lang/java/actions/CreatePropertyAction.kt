@@ -29,7 +29,7 @@ internal class CreatePropertyAction(target: PsiClass, request: CreateMethodReque
       GETTER, BOOLEAN_GETTER -> SETTER
       SETTER -> {
         val expectedType = request.expectedParameters.single().expectedTypes.singleOrNull()
-        if (expectedType != null && PsiType.BOOLEAN == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)) {
+        if (expectedType != null && PsiTypes.booleanType() == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)) {
           BOOLEAN_GETTER
         }
         else {

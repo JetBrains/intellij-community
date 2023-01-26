@@ -33,8 +33,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class AddTypeArgumentsConditionalFix implements IntentionAction, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(AddTypeArgumentsConditionalFix.class);
 
@@ -110,7 +108,7 @@ public class AddTypeArgumentsConditionalFix implements IntentionAction, HighPrio
   }
 
   public static void register(@NotNull HighlightInfo.Builder highlightInfo, @Nullable PsiExpression expression, @NotNull PsiType lType) {
-    if (lType != PsiType.NULL && expression instanceof PsiConditionalExpression) {
+    if (lType != PsiTypes.nullType() && expression instanceof PsiConditionalExpression) {
       final PsiExpression thenExpression = ((PsiConditionalExpression)expression).getThenExpression();
       final PsiExpression elseExpression = ((PsiConditionalExpression)expression).getElseExpression();
       if (thenExpression != null && elseExpression != null) {

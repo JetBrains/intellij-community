@@ -375,7 +375,7 @@ public final class PsiAdapter {
 
             // must have void as return type
             PsiType returnType = method.getReturnType();
-            if (!PsiType.VOID.equals(returnType)) {
+            if (!PsiTypes.voidType().equals(returnType)) {
                 continue;
             }
 
@@ -542,7 +542,7 @@ public final class PsiAdapter {
 
             // must have boolean as return type
             PsiType returnType = method.getReturnType();
-            if (!PsiType.BOOLEAN.equals(returnType)) {
+            if (!PsiTypes.booleanType().equals(returnType)) {
                 continue;
             }
 
@@ -589,7 +589,7 @@ public final class PsiAdapter {
 
             // must have int as return type
             PsiType returnType = method.getReturnType();
-            if (!PsiType.INT.equals(returnType)) {
+            if (!PsiTypes.intType().equals(returnType)) {
                 continue;
             }
 

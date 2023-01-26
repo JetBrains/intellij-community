@@ -63,7 +63,7 @@ public class MakeVoidQuickFix implements LocalQuickFix {
     PsiTypeElement returnTypeElement = method.getReturnTypeElement();
     if (returnTypeElement == null) return IntentionPreviewInfo.EMPTY;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiTypeElement typeElement = factory.createTypeElement(PsiType.VOID);
+    PsiTypeElement typeElement = factory.createTypeElement(PsiTypes.voidType());
     returnTypeElement.replace(typeElement);
     replaceReturnStatements(method);
     return IntentionPreviewInfo.DIFF;
@@ -89,7 +89,7 @@ public class MakeVoidQuickFix implements LocalQuickFix {
     }
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(methodsToModify)) return;
     var csp = JavaRefactoringFactory.getInstance(project)
-      .createChangeSignatureProcessor(psiMethod, false, null, psiMethod.getName(), PsiType.VOID,
+      .createChangeSignatureProcessor(psiMethod, false, null, psiMethod.getName(), PsiTypes.voidType(),
                                       ParameterInfoImpl.fromMethod(psiMethod), null, null, null,
                                       infos -> {
                                         for (final PsiMethod method : methodsToModify) {

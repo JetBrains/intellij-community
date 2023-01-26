@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public class GrIntroduceLocalVariableIntention extends Intention {
 
   private static boolean isTargetVisible(PsiElement element) {
     if (PsiUtil.isExpressionStatement(element) && element instanceof GrExpression) {
-      if (!PsiType.VOID.equals(((GrExpression)element).getType())) {
+      if (!PsiTypes.voidType().equals(((GrExpression)element).getType())) {
         if (PsiTreeUtil.getParentOfType(element, GrAssignmentExpression.class) == null) {
           return true;
         }

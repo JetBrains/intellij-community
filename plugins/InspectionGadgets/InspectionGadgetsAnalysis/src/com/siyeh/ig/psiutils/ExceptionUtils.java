@@ -280,7 +280,7 @@ public final class ExceptionUtils {
           }
         }
       }
-      else if (PsiType.NULL.equals(type)) {
+      else if (PsiTypes.nullType().equals(type)) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
         final PsiClassType npeType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION,
                                                                      statement.getResolveScope());

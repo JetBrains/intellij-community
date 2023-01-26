@@ -61,7 +61,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
         if (myDetectNonVoidReturnType) {
           eventHandlerMethods.stream()
             .map(PsiMethod::getReturnType)
-            .filter(returnType -> !PsiType.VOID.equals(returnType))
+            .filter(returnType -> !PsiTypes.voidType().equals(returnType))
             .findAny()
             .ifPresent(ignored -> holder.registerProblem(xmlAttributeValue, JavaFXBundle.message("inspection.javafx.event.handler.return.type.problem")));
         }

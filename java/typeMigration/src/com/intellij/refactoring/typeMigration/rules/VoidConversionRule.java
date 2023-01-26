@@ -38,7 +38,7 @@ public class VoidConversionRule extends TypeConversionRule {
                                                      PsiMember member,
                                                      PsiExpression context,
                                                      TypeMigrationLabeler labeler) {
-    if (PsiType.VOID.equals(to) &&
+    if (PsiTypes.voidType().equals(to) &&
         context.getParent() instanceof PsiReturnStatement &&
         !SideEffectChecker.mayHaveSideEffects(context)) {
       return new TypeConversionDescriptorBase() {

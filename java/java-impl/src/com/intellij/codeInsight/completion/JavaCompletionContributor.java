@@ -1096,7 +1096,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
             }
             return JavaBundle.message("completion.unknown.type", expectedType) + suffix;
           }
-          if (!PsiType.NULL.equals(type)) {
+          if (!PsiTypes.nullType().equals(type)) {
             return JavaBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
           }
         }

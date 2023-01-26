@@ -53,8 +53,8 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiClassType objectType = TypeUtils.getObjectType(expression);
-      if (!MethodCallUtils.isCallToMethod(expression, "java.lang.System", PsiType.VOID, "arraycopy",
-                                          objectType, PsiType.INT, objectType, PsiType.INT, PsiType.INT)) {
+      if (!MethodCallUtils.isCallToMethod(expression, "java.lang.System", PsiTypes.voidType(), "arraycopy",
+                                          objectType, PsiTypes.intType(), objectType, PsiTypes.intType(), PsiTypes.intType())) {
         return;
       }
       final PsiExpression[] arguments = expression.getArgumentList().getExpressions();

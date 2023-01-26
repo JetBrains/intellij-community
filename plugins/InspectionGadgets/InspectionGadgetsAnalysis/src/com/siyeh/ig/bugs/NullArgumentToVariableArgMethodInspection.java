@@ -101,7 +101,7 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
 
       private static PsiArrayType getSuspiciousVarargType(PsiCall call, PsiType type, Supplier<? extends PsiMethod> resolver) {
       final boolean checkArray;
-      if (PsiType.NULL.equals(type)) {
+      if (PsiTypes.nullType().equals(type)) {
         checkArray = false;
       }
       else if (type instanceof PsiArrayType) {

@@ -213,7 +213,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       return !PsiUtil.isThisReference(expression) && ((GrReferenceExpression)expression).resolve() instanceof PsiClass;
     }
     if (expression instanceof GrClosableBlock && expression.getParent() instanceof GrStringInjection) return true;
-    if (!acceptVoidCalls && expression instanceof GrMethodCall && PsiType.VOID.equals(expression.getType())) return true;
+    if (!acceptVoidCalls && expression instanceof GrMethodCall && PsiTypes.voidType().equals(expression.getType())) return true;
 
     return false;
   }

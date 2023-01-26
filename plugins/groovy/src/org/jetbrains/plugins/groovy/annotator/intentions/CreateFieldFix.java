@@ -53,7 +53,7 @@ public class CreateFieldFix {
     JVMElementFactory factory = JVMElementFactories.getFactory(myTargetClass.getLanguage(), project);
     if (factory == null) return null;
 
-    PsiField field = factory.createField(fieldName, PsiType.INT);
+    PsiField field = factory.createField(fieldName, PsiTypes.intType());
     if (myTargetClass instanceof GroovyScriptClass) {
       field.getModifierList().addAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD);
     }

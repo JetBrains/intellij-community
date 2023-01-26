@@ -44,7 +44,7 @@ public interface InlineTransformer {
 
     @Override
     public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReference callSite, PsiType returnType) {
-      if (returnType == null || PsiType.VOID.equals(returnType) ||
+      if (returnType == null || PsiTypes.voidType().equals(returnType) ||
           callSite.getElement().getParent() instanceof PsiMethodCallExpression &&
           ExpressionUtils.isVoidContext((PsiExpression)callSite.getElement().getParent())) {
         
@@ -85,7 +85,7 @@ public interface InlineTransformer {
           ExpressionUtils.isVoidContext((PsiExpression)callSite.getElement().getParent())) {
         
         InlineUtil.extractReturnValues(methodCopy, false);
-        returnType = PsiType.VOID;
+        returnType = PsiTypes.voidType();
       }
       PsiCodeBlock block = Objects.requireNonNull(methodCopy.getBody());
       List<PsiReturnStatement> returns = Arrays.asList(PsiUtil.findReturnStatements(block));

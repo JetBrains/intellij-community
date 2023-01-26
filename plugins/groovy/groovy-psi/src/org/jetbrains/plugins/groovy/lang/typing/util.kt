@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty
  * @return boxed type if [this] is a primitive type, otherwise [this] type
  */
 fun PsiType.box(context: PsiElement): PsiType {
-  if (this !is PsiPrimitiveType || this == PsiType.NULL) return this
+  if (this !is PsiPrimitiveType || this == PsiTypes.nullType()) return this
   val typeName = boxedTypeName ?: error("This type is not NULL and still doesn't have boxed type name")
   return TypesUtil.createType(typeName, context)
 }

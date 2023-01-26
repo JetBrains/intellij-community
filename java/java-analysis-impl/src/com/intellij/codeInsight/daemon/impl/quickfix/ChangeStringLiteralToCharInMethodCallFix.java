@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
@@ -43,7 +42,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
     final String convertedValue = convertedValue();
     final boolean isString = isString(myLiteral.getType());
     return QuickFixBundle.message("fix.single.character.string.to.char.literal.text", myLiteral.getText(),
-                                  quote(convertedValue, ! isString), isString ? PsiType.CHAR.getCanonicalText() : "String");
+                                  quote(convertedValue, ! isString), isString ? PsiTypes.charType().getCanonicalText() : "String");
   }
 
   @Override
@@ -168,7 +167,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
   }
 
   private static boolean charToString(final PsiType firstType, final PsiType secondType) {
-    return Comparing.equal(PsiType.CHAR, firstType) && isString(secondType);
+    return Comparing.equal(PsiTypes.charType(), firstType) && isString(secondType);
   }
 
   private static boolean isString(final PsiType type) {

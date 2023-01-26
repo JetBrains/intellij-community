@@ -105,7 +105,7 @@ public class RefusedBequestInspection extends BaseInspection {
       final PsiType returnType = method.getReturnType();
       final @NonNls StringBuilder statementText = new StringBuilder();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      if (returnType != null && !PsiType.VOID.equals(returnType)) {
+      if (returnType != null && !PsiTypes.voidType().equals(returnType)) {
         if (JavaCodeStyleSettings.getInstance(method.getContainingFile()).GENERATE_FINAL_LOCALS) {
           statementText.append("final ");
         }

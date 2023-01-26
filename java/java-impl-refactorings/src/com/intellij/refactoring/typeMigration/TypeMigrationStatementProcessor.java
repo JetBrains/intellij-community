@@ -397,7 +397,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   protected boolean tryFindConversionIfOperandIsNull(TypeView nullCandidate, TypeView comparingType, PsiExpression comparingExpr) {
-    if (nullCandidate.getType() == PsiType.NULL && comparingType.isChanged()) {
+    if (nullCandidate.getType() == PsiTypes.nullType() && comparingType.isChanged()) {
       Pair<PsiType, PsiType> typePair = comparingType.getTypePair();
       final TypeConversionDescriptorBase
         conversion = myLabeler.getRules().findConversion(typePair.getFirst(), typePair.getSecond(), null, comparingExpr, false, myLabeler);
@@ -434,7 +434,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
 
   private void checkIndexExpression(final PsiExpression indexExpression) {
     final PsiType indexType = myTypeEvaluator.evaluateType(indexExpression);
-    if (indexType != null && !TypeConversionUtil.isAssignable(PsiType.INT, indexType)) {
+    if (indexType != null && !TypeConversionUtil.isAssignable(PsiTypes.intType(), indexType)) {
       myLabeler.markFailedConversion(Pair.create(indexExpression.getType(), indexType), indexExpression);
     }
   }
@@ -609,7 +609,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
 
 
   private static boolean canBeVariableType(@NotNull PsiType type) {
-    return !type.getDeepComponentType().equals(PsiType.VOID);
+    return !type.getDeepComponentType().equals(PsiTypes.voidType());
   }
 
   private static PsiType adjustMigrationTypeIfGenericArrayCreation(PsiType migrationType, PsiExpression expression) {

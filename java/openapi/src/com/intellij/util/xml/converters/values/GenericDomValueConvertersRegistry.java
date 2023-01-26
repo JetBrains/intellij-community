@@ -4,10 +4,7 @@ package com.intellij.util.xml.converters.values;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +37,7 @@ public class GenericDomValueConvertersRegistry {
   }
 
   private void registerBooleanConverters() {
-    registerConverter(new BooleanValueConverter(false), PsiType.BOOLEAN);
+    registerConverter(new BooleanValueConverter(false), PsiTypes.booleanType());
     registerConverter(new BooleanValueConverter(true), Boolean.class);
   }
 
@@ -59,27 +56,27 @@ public class GenericDomValueConvertersRegistry {
   }
 
   public void registerCharacterConverter() {
-    registerConverter(new CharacterValueConverter(false), PsiType.CHAR);
+    registerConverter(new CharacterValueConverter(false), PsiTypes.charType());
     registerConverter(new CharacterValueConverter(true), Character.class);
   }
 
   public void registerNumberValueConverters() {
-    registerConverter(new NumberValueConverter(byte.class, false), PsiType.BYTE);
+    registerConverter(new NumberValueConverter(byte.class, false), PsiTypes.byteType());
     registerConverter(new NumberValueConverter(Byte.class, true), Byte.class);
 
-    registerConverter(new NumberValueConverter(short.class, false), PsiType.SHORT);
+    registerConverter(new NumberValueConverter(short.class, false), PsiTypes.shortType());
     registerConverter(new NumberValueConverter(Short.class, true), Short.class);
 
-    registerConverter(new NumberValueConverter(int.class, false), PsiType.INT);
+    registerConverter(new NumberValueConverter(int.class, false), PsiTypes.intType());
     registerConverter(new NumberValueConverter(Integer.class, true), Integer.class);
 
-    registerConverter(new NumberValueConverter(long.class, false), PsiType.LONG);
+    registerConverter(new NumberValueConverter(long.class, false), PsiTypes.longType());
     registerConverter(new NumberValueConverter(Long.class, true), Long.class);
 
-    registerConverter(new NumberValueConverter(float.class, false), PsiType.FLOAT);
+    registerConverter(new NumberValueConverter(float.class, false), PsiTypes.floatType());
     registerConverter(new NumberValueConverter(Float.class, true), Float.class);
 
-    registerConverter(new NumberValueConverter(double.class, false), PsiType.DOUBLE);
+    registerConverter(new NumberValueConverter(double.class, false), PsiTypes.doubleType());
     registerConverter(new NumberValueConverter(Double.class, true), Double.class);
 
     registerConverter(new NumberValueConverter(BigDecimal.class, true), BigDecimal.class);

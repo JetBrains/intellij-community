@@ -84,7 +84,7 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
       if (model == null) return;
       ConditionalExpressionGenerator generator = ConditionalExpressionGenerator.from(model);
       if (generator == null || generator.getTokenType().equals("?:")) return;
-      if (PsiType.BOOLEAN.equals(model.getType()) &&
+      if (PsiTypes.booleanType().equals(model.getType()) &&
           ExpressionUtils.nonStructuralChildren(expression).anyMatch(ExpressionUtils::isNullLiteral)) {
         // Something like Boolean res = cond1 ? true : cond2 ? false : null
         // While warning is technically correct, it masks more serious "possible NPE" problem

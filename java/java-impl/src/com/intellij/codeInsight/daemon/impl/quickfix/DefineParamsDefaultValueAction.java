@@ -141,7 +141,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
       final String methodCall;
       if (method.getReturnType() == null) {
         methodCall = "this";
-      } else if (!PsiType.VOID.equals(method.getReturnType())) {
+      } else if (!PsiTypes.voidType().equals(method.getReturnType())) {
         methodCall = "return " + method.getName();
       } else {
         methodCall = method.getName();

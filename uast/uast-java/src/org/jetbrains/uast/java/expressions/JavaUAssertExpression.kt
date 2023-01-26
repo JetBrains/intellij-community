@@ -18,6 +18,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiAssertStatement
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
@@ -66,7 +67,7 @@ class JavaUAssertExpression(
     get() = emptyList()
 
   override val returnType: PsiType
-    get() = PsiType.VOID
+    get() = PsiTypes.voidType()
 
   override val kind: UastCallKind
     get() = JavaUastCallKinds.ASSERT

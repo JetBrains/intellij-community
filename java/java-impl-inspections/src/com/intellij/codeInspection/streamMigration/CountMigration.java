@@ -26,6 +26,6 @@ class CountMigration extends BaseStreamApiMigration {
     if (!(element instanceof PsiLocalVariable)) return null;
     PsiLocalVariable var = (PsiLocalVariable)element;
     CommentTracker ct = new CommentTracker();
-    return replaceWithOperation(tb.getStreamSourceStatement(), var, tb.generate(ct) + ".count()", PsiType.LONG, SUM_OPERATION, ct);
+    return replaceWithOperation(tb.getStreamSourceStatement(), var, tb.generate(ct) + ".count()", PsiTypes.longType(), SUM_OPERATION, ct);
   }
 }

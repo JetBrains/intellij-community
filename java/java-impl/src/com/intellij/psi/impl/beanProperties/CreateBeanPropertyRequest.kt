@@ -3,11 +3,15 @@ package com.intellij.psi.impl.beanProperties
 
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.actions.AnnotationRequest
+import com.intellij.lang.jvm.actions.CreateMethodRequest
+import com.intellij.lang.jvm.actions.expectedParameter
+import com.intellij.lang.jvm.actions.expectedTypes
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.PropertyUtilBase.getAccessorName
 
 class CreateBeanPropertyRequest(
@@ -23,7 +27,7 @@ class CreateBeanPropertyRequest(
   private val myMethodName = getAccessorName(propertyName, propertyKind)
   override fun getMethodName(): String = myMethodName
 
-  private val myReturnType = if (isSetter) expectedTypes(PsiType.VOID) else expectedTypes
+  private val myReturnType = if (isSetter) expectedTypes(PsiTypes.voidType()) else expectedTypes
   override fun getReturnType() = myReturnType
 
   private val myModifiers = listOf(JvmModifier.PUBLIC)

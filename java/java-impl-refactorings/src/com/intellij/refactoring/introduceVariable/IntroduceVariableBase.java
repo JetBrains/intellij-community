@@ -350,7 +350,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       return false;
     }
 
-    if (PsiType.VOID.equals(originalType)) {
+    if (PsiTypes.voidType().equals(originalType)) {
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(project, editor, message);
       return false;
@@ -583,7 +583,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   public static boolean canBeExtractedWithoutExplicitType(PsiExpression expr) {
     if (PsiUtil.isLanguageLevel10OrHigher(expr)) {
       PsiType type = getNormalizedType(expr);
-      if (type != null && !PsiType.NULL.equals(type) && PsiTypesUtil.isDenotableType(type, expr)) {
+      if (type != null && !PsiTypes.nullType().equals(type) && PsiTypesUtil.isDenotableType(type, expr)) {
         PsiExpression copy =
           (PsiExpression)(type instanceof PsiDisjunctionType ? expr.copy() : LambdaUtil.copyWithExpectedType(expr, type));
         if (type.equals(getNormalizedType(copy))) {

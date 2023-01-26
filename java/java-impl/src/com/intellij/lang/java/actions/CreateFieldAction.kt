@@ -72,7 +72,7 @@ internal class JavaFieldRenderer(
   }
 
   fun renderField(): PsiField {
-    val field = JavaPsiFacade.getElementFactory(project).createField(request.fieldName, PsiType.INT)
+    val field = JavaPsiFacade.getElementFactory(project).createField(request.fieldName, PsiTypes.intType())
 
     // clean template modifiers
     field.modifierList?.let { list ->

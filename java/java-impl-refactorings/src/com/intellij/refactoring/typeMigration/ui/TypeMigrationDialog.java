@@ -295,7 +295,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     }
 
     private boolean isVoidVariableMigration() {
-      if (!PsiType.VOID.equals(getMigrationType())) return false;
+      if (!PsiTypes.voidType().equals(getMigrationType())) return false;
       for (PsiElement root : myRoots) {
         if (root instanceof PsiVariable) return true;
       }

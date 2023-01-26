@@ -428,16 +428,16 @@ open class KotlinChangeInfo(
                 .toSet()
 
             val javaChangeInfo = ChangeSignatureProcessor(
-                method.project,
-                originalPsiMethod,
-                false,
-                newVisibility,
-                newName,
-                CanonicalTypes.createTypeWrapper(newReturnType ?: PsiType.VOID),
-                newParameters,
-                arrayOf<ThrownExceptionInfo>(),
-                propagationTargets,
-                emptySet()
+              method.project,
+              originalPsiMethod,
+              false,
+              newVisibility,
+              newName,
+              CanonicalTypes.createTypeWrapper(newReturnType ?: PsiTypes.voidType()),
+              newParameters,
+              arrayOf<ThrownExceptionInfo>(),
+              propagationTargets,
+              emptySet()
             ).changeInfo
 
             javaChangeInfo.updateMethod(currentPsiMethod)
@@ -484,7 +484,7 @@ open class KotlinChangeInfo(
                 val type = if (isPrimaryMethodUpdated)
                     currentPsiMethod.parameterList.parameters[indexInCurrentPsiMethod++].type
                 else
-                    PsiType.VOID
+                  PsiTypes.voidType()
 
                 val defaultValue = info.defaultValueForCall ?: info.defaultValue
                 ParameterInfoImpl(javaOldIndex, info.name, type, defaultValue?.text ?: "")
@@ -513,7 +513,7 @@ open class KotlinChangeInfo(
             } else {
                 if (receiverParameterInfo != null) {
                     if (newJavaParameters.isEmpty()) {
-                        newJavaParameters.add(ParameterInfoImpl(oldIndex, "receiver", PsiType.VOID))
+                        newJavaParameters.add(ParameterInfoImpl(oldIndex, "receiver", PsiTypes.voidType()))
                     }
                 }
                 if (oldIndex < parameters.size) {
@@ -523,7 +523,7 @@ open class KotlinChangeInfo(
             }
 
             val newName = JvmAbi.setterName(newName)
-            return createJavaChangeInfo(originalPsiMethod, currentPsiMethod, newName, PsiType.VOID, newJavaParameters.toTypedArray())
+            return createJavaChangeInfo(originalPsiMethod, currentPsiMethod, newName, PsiTypes.voidType(), newJavaParameters.toTypedArray())
         }
 
         if (!(method.containingFile as KtFile).platform.isJvm()) return null

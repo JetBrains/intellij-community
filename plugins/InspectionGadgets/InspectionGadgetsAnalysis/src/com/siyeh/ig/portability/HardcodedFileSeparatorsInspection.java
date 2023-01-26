@@ -227,7 +227,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
         }
         registerErrorInString(expression);
       }
-      else if (type != null && type.equals(PsiType.CHAR)) {
+      else if (type != null && type.equals(PsiTypes.charType())) {
         final Character value = (Character)expression.getValue();
         if (value == null) {
           return;

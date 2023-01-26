@@ -18,10 +18,7 @@ package com.siyeh.ig.naming;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -108,7 +105,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends BaseI
     public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final PsiType returnType = method.getReturnType();
-      if (returnType == null || returnType.equals(PsiType.BOOLEAN)) {
+      if (returnType == null || returnType.equals(PsiTypes.booleanType())) {
         return;
       }
       if (ignoreBooleanMethods && returnType.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {

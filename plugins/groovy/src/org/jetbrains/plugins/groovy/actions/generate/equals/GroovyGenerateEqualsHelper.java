@@ -137,7 +137,7 @@ public class GroovyGenerateEqualsHelper {
 
 
   private void addDoubleFieldComparison(final StringBuffer buffer, final PsiField field) {
-    @NonNls final String type = PsiType.DOUBLE.equals(field.getType()) ? "Double" : "Float";
+    @NonNls final String type = PsiTypes.doubleType().equals(field.getType()) ? "Double" : "Float";
     final Object[] parameters = new Object[]{type, myClassInstanceName, field.getName()};
     DOUBLE_FIELD_COMPARER_MF.format(parameters, buffer, null);
   }
@@ -255,7 +255,7 @@ public class GroovyGenerateEqualsHelper {
             addArrayEquals(buffer, field);
           }
           else if (type instanceof PsiPrimitiveType) {
-            if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
+            if (PsiTypes.doubleType().equals(type) || PsiTypes.floatType().equals(type)) {
               addDoubleFieldComparison(buffer, field);
             }
             else {
@@ -357,7 +357,7 @@ public class GroovyGenerateEqualsHelper {
   }
 
   private static void addTempAssignment(PsiField field, StringBuilder buffer, String tempName) {
-    if (PsiType.DOUBLE.equals(field.getType())) {
+    if (PsiTypes.doubleType().equals(field.getType())) {
       buffer.append(tempName);
       addTempForDoubleInitialization(field, buffer);
     }
@@ -374,7 +374,7 @@ public class GroovyGenerateEqualsHelper {
   @SuppressWarnings("HardCodedStringLiteral")
   private String addTempDeclaration(StringBuilder buffer) {
     for (PsiField hashCodeField : myHashCodeFields) {
-      if (PsiType.DOUBLE.equals(hashCodeField.getType())) {
+      if (PsiTypes.doubleType().equals(hashCodeField.getType())) {
         final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
         buffer.append("long ").append(name).append("\n");
         return name;
@@ -386,7 +386,7 @@ public class GroovyGenerateEqualsHelper {
   @Nullable
   @SuppressWarnings("HardCodedStringLiteral")
   private String addTempForOneField(PsiField field, StringBuilder buffer) {
-    if (PsiType.DOUBLE.equals(field.getType())) {
+    if (PsiTypes.doubleType().equals(field.getType())) {
       final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
       JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFile);
       if (settings.GENERATE_FINAL_LOCALS) {

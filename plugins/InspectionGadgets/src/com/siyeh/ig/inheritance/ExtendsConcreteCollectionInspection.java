@@ -77,7 +77,7 @@ public class ExtendsConcreteCollectionInspection extends BaseInspection {
         final PsiMethod[] methods = aClass.findMethodsByName("removeEldestEntry", false);
         final PsiClassType entryType = TypeUtils.getType("java.util.Map.Entry", aClass);
         for (PsiMethod method : methods) {
-          if (!PsiType.BOOLEAN.equals(method.getReturnType())) {
+          if (!PsiTypes.booleanType().equals(method.getReturnType())) {
             continue;
           }
           final PsiParameterList parameterList = method.getParameterList();

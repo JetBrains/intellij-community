@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +81,7 @@ public class JavaMethodMergingContributor extends CompletionContributor implemen
 
   private static int getPriority(LookupElement element) {
     PsiMethod method = Objects.requireNonNull(getItemMethod(element));
-    return (PsiType.VOID.equals(method.getReturnType()) ? 0 : 1) +
+    return (PsiTypes.voidType().equals(method.getReturnType()) ? 0 : 1) +
            (method.getParameterList().isEmpty() ? 0 : 2);
   }
 

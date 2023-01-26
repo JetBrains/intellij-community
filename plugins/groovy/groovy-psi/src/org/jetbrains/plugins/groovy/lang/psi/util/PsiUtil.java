@@ -1119,7 +1119,7 @@ public final class PsiUtil {
       if (controlFlowOwnerParent instanceof GrMethod && ((GrMethod)controlFlowOwnerParent).isConstructor()) {
         return false;
       }
-      else if (controlFlowOwnerParent instanceof PsiMethod && PsiType.VOID.equals(((PsiMethod)controlFlowOwnerParent).getReturnType())) {
+      else if (controlFlowOwnerParent instanceof PsiMethod && PsiTypes.voidType().equals(((PsiMethod)controlFlowOwnerParent).getReturnType())) {
         return false;
       }
     }
@@ -1371,11 +1371,11 @@ public final class PsiUtil {
     if (!(element instanceof PsiMethod)) {
       return false;
     }
-    return PsiType.VOID.equals(((PsiMethod)element).getReturnType());
+    return PsiTypes.voidType().equals(((PsiMethod)element).getReturnType());
   }
 
   public static boolean isVoidMethod(@NotNull PsiMethod method) {
-    if (PsiType.VOID.equals(method.getReturnType())) {
+    if (PsiTypes.voidType().equals(method.getReturnType())) {
       return true;
     }
 

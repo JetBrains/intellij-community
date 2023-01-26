@@ -320,7 +320,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                     @NotNull PsiElement elementToHighlight) {
     if (hasTupleInitializer(expression)) return;
     final PsiType returnType = PsiImplUtil.inferReturnType(expression);
-    if (returnType == null || PsiType.VOID.equals(returnType)) return;
+    if (returnType == null || PsiTypes.voidType().equals(returnType)) return;
     processAssignment(returnType, expression, elementToHighlight, "cannot.return.type", context, Position.RETURN_VALUE);
   }
 

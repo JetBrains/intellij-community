@@ -98,7 +98,7 @@ public class BadOddnessInspection extends BaseInspection {
     }
 
     private static boolean hasValue(PsiExpression expression, int testValue) {
-      final Integer value = (Integer)ConstantExpressionUtil.computeCastTo(expression, PsiType.INT);
+      final Integer value = (Integer)ConstantExpressionUtil.computeCastTo(expression, PsiTypes.intType());
       return value != null && value.intValue() == testValue;
     }
   }

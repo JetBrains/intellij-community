@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -74,7 +75,7 @@ public class GroovyMultipleReturnPointsPerMethodInspectionBase extends GroovyMet
         return true;
       }
       final PsiType returnType = method.getReturnType();
-      return PsiType.VOID.equals(returnType);
+      return PsiTypes.voidType().equals(returnType);
     }
   }
 }

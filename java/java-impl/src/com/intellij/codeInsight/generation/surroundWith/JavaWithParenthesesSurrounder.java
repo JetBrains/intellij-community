@@ -28,7 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 public class JavaWithParenthesesSurrounder extends JavaExpressionSurrounder{
   @Override
   public boolean isApplicable(PsiExpression expr) {
-    return !PsiType.VOID.equals(expr.getType());
+    return !PsiTypes.voidType().equals(expr.getType());
   }
 
   @Override

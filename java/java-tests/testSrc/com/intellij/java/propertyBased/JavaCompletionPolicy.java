@@ -79,7 +79,7 @@ class JavaCompletionPolicy extends CompletionPolicy {
     }
     if (refElement instanceof PsiNameValuePair &&
         PsiUtil.isAnnotationMethod(target) &&
-        PsiType.BOOLEAN.equals(((PsiMethod)target).getReturnType())) {
+        PsiTypes.booleanType().equals(((PsiMethod)target).getReturnType())) {
       return false; // they're suggested, but with true/false value text (IDEA-121071)
     }
     return super.shouldSuggestReferenceText(ref, target);

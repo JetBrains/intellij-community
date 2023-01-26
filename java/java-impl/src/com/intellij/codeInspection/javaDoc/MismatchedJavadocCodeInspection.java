@@ -92,7 +92,7 @@ public class MismatchedJavadocCodeInspection extends AbstractBaseJavaLocalInspec
 
       private @Nls @Nullable String getIncompatibleMessage(@NotNull String text, @NotNull Kind kind, @NotNull PsiMethod method) {
         PsiType returnType = method.getReturnType();
-        if (returnType == null || PsiType.VOID.equals(returnType)) return null;
+        if (returnType == null || PsiTypes.voidType().equals(returnType)) return null;
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
         if (kind == Kind.MAYBE_TYPE || kind == Kind.MAYBE_TYPE_SINGULAR) {
           String typeName = text.toLowerCase(Locale.ROOT);

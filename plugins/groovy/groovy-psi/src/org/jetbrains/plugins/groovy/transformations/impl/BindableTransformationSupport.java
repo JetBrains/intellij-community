@@ -57,33 +57,33 @@ public class BindableTransformationSupport implements AstTransformationSupport {
 
     methods.add(
       new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "addPropertyChangeListener")
-        .setMethodReturnType(PsiType.VOID)
+        .setMethodReturnType(PsiTypes.voidType())
         .addParameter("listener", pclType)
     );
 
     methods.add(
       new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "addPropertyChangeListener")
-        .setMethodReturnType(PsiType.VOID)
+        .setMethodReturnType(PsiTypes.voidType())
         .addParameter("name", stringType)
         .addParameter("listener", pclType)
     );
 
     methods.add(
       new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "removePropertyChangeListener")
-        .setMethodReturnType(PsiType.VOID)
+        .setMethodReturnType(PsiTypes.voidType())
         .addParameter("listener", pclType)
     );
 
     methods.add(
       new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "removePropertyChangeListener")
-        .setMethodReturnType(PsiType.VOID)
+        .setMethodReturnType(PsiTypes.voidType())
         .addParameter("name", stringType)
         .addParameter("listener", pclType)
     );
 
     methods.add(
       new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "firePropertyChange")
-        .setMethodReturnType(PsiType.VOID)
+        .setMethodReturnType(PsiTypes.voidType())
         .addParameter("name", stringType)
         .addParameter("oldValue", objectType)
         .addParameter("newValue", objectType)

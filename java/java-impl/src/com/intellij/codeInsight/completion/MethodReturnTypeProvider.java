@@ -63,7 +63,7 @@ final class MethodReturnTypeProvider {
       }
     }
     if (hasVoid && lub == null) {
-      lub = PsiType.VOID;
+      lub = PsiTypes.voidType();
     }
     if (lub instanceof PsiIntersectionType) {
       return ((PsiIntersectionType)lub).getConjuncts();

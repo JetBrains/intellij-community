@@ -7,9 +7,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -115,7 +113,7 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
                        var != null ? var.getType() :
                        stringPart != null ? stringPart.getLiteral().getType() :
                        null;
-        myType = type != null && !PsiType.NULL.equals(type)? CanonicalTypes.createTypeWrapper(type) : null;
+        myType = type != null && !PsiTypes.nullType().equals(type) ? CanonicalTypes.createTypeWrapper(type) : null;
       }
 
 
@@ -148,8 +146,8 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
     GrVariable variable = getVariable();
     assert variable != null && variable.getInitializerGroovy() != null;
     final PsiType initializerType = variable.getInitializerGroovy().getType();
-    TypeConstraint[] constraints = initializerType != null && !initializerType.equals(PsiType.NULL) ? new SupertypeConstraint[]{SupertypeConstraint.create(initializerType)}
-                                                                                                    : TypeConstraint.EMPTY_ARRAY;
+    TypeConstraint[] constraints = initializerType != null && !initializerType.equals(PsiTypes.nullType()) ? new SupertypeConstraint[]{SupertypeConstraint.create(initializerType)}
+                                                                                                           : TypeConstraint.EMPTY_ARRAY;
     ChooseTypeExpression typeExpression = new ChooseTypeExpression(constraints, variable.getManager(), variable.getResolveScope(), true, GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF);
     PsiElement element = getTypeELementOrDef(variable);
     if (element == null) return;

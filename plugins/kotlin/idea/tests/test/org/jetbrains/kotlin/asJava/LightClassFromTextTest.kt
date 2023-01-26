@@ -5,11 +5,11 @@ package org.jetbrains.kotlin.asJava
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -58,7 +58,7 @@ class LightClassFromTextTest8 : KotlinLightCodeInsightFixtureTestCase() {
 
         val gMethods = facadeClass.findMethodsByName("g", false)
         assertEquals(1, gMethods.size)
-        assertEquals(PsiType.VOID, gMethods.single().returnType)
+        assertEquals(PsiTypes.voidType(), gMethods.single().returnType)
 
         val fMethods = facadeClass.findMethodsByName("f", false)
         assertEquals(0, fMethods.size)

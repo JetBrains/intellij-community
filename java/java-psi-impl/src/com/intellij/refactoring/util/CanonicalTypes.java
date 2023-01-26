@@ -133,7 +133,7 @@ public final class CanonicalTypes {
       }
       else {
         PsiType boundType = myBound.getType(context, manager);
-        if (boundType.equals(PsiType.NULL)) {
+        if (boundType.equals(PsiTypes.nullType())) {
           throw new IncorrectOperationException("Bound type is null " + getTypeText());
         }
         if (boundType instanceof PsiWildcardType) {

@@ -2419,8 +2419,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
                                                                @NotNull Class<Psi> type,
                                                                @Nullable String nameHint) {
         if (element instanceof PsiExtensibleClass eClass && eClass.getName().equals("A") && type == PsiMethod.class) {
-          PsiMethod method1 = new LightMethodBuilder(getPsiManager(), "default").setMethodReturnType(PsiType.VOID);
-          PsiMethod method2 = new LightMethodBuilder(getPsiManager(), "define").setMethodReturnType(PsiType.VOID);
+          PsiMethod method1 = new LightMethodBuilder(getPsiManager(), "default").setMethodReturnType(PsiTypes.voidType());
+          PsiMethod method2 = new LightMethodBuilder(getPsiManager(), "define").setMethodReturnType(PsiTypes.voidType());
           return List.of(type.cast(method1), type.cast(method2));
         }
         return Collections.emptyList();

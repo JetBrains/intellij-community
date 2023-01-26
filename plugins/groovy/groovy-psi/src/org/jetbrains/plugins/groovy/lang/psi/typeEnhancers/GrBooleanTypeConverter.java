@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -24,7 +25,7 @@ public class GrBooleanTypeConverter extends GrTypeConverter {
                                         @NotNull PsiType actualType,
                                         @NotNull Position position,
                                         @NotNull GroovyPsiElement context) {
-    if (!PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(targetType))) return null;
+    if (!PsiTypes.booleanType().equals(TypesUtil.unboxPrimitiveTypeWrapper(targetType))) return null;
     return switch (position) {
       case ASSIGNMENT, RETURN_VALUE -> ConversionResult.OK;
       default -> null;

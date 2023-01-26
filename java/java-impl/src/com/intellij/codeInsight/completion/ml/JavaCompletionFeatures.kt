@@ -90,8 +90,8 @@ object JavaCompletionFeatures {
     companion object {
       fun getValue(type: PsiType): JavaType {
         return when {
-          type == PsiType.VOID -> VOID
-          type == PsiType.CHAR -> CHAR
+          type == PsiTypes.voidType() -> VOID
+          type == PsiTypes.charType() -> CHAR
           type.equalsToText(JAVA_LANG_STRING) -> STRING
           TypeConversionUtil.isBooleanType(type) -> BOOLEAN
           TypeConversionUtil.isNumericType(type) -> NUMERIC

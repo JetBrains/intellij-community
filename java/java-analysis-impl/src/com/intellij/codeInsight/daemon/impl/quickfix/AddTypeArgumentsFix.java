@@ -90,7 +90,7 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
             else {
               substitution = helper.getSubstitutionForTypeParameter(typeParameter, returnType, toType, false, level);
             }
-            if (substitution == null || PsiType.NULL.equals(substitution)) return null;
+            if (substitution == null || PsiTypes.nullType().equals(substitution)) return null;
             mappings[i] = GenericsUtil.eliminateWildcards(substitution, false);
           }
 

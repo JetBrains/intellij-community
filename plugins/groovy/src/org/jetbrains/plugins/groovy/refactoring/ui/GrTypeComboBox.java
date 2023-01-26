@@ -54,7 +54,7 @@ public final class GrTypeComboBox extends ComboBox {
       return new GrTypeComboBox(type, expected, expected == null, expression, selectDef);
     }
     else {
-      if (type == PsiType.NULL) {
+      if (type == PsiTypes.nullType()) {
         type = PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
       }
       return new GrTypeComboBox(type, null, true, expression, selectDef);
@@ -88,7 +88,7 @@ public final class GrTypeComboBox extends ComboBox {
       //suggest double as the second item after original BigDecimal
       addItem(new PsiTypeItem(type));
       types.remove(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL);
-      addItem(new PsiTypeItem(PsiType.DOUBLE));
+      addItem(new PsiTypeItem(PsiTypes.doubleType()));
     }
 
     for (String typeName : types.keySet()) {
@@ -103,7 +103,7 @@ public final class GrTypeComboBox extends ComboBox {
   public void addClosureTypesFrom(@Nullable PsiType type, @NotNull PsiElement context) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     final PsiType cl;
-    if (type == null || type == PsiType.NULL) {
+    if (type == null || type == PsiTypes.nullType()) {
       cl = factory.createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, context);
     }
     else {

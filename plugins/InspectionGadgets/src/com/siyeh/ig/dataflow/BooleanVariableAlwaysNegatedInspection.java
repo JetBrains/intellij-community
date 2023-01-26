@@ -87,7 +87,7 @@ public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
         return false;
       }
       final PsiType type = field.getType();
-      if (!PsiType.BOOLEAN.equals(type)) {
+      if (!PsiTypes.booleanType().equals(type)) {
         return false;
       }
       final AlwaysNegatedVisitor visitor = new AlwaysNegatedVisitor(field);

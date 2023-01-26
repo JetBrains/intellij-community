@@ -49,8 +49,8 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
 
     PsiClassType mapEntryType = JavaPsiFacade.getElementFactory(method.getProject()).createType(mapEntry, key, value);
 
-    PsiType[] keyValueSignature = index ? new PsiType[]{key, value, PsiType.INT} : new PsiType[]{key, value};
-    PsiType[] mapEntrySignature = index ? new PsiType[]{mapEntryType, PsiType.INT} : new PsiType[]{mapEntryType};
+    PsiType[] keyValueSignature = index ? new PsiType[]{key, value, PsiTypes.intType()} : new PsiType[]{key, value};
+    PsiType[] mapEntrySignature = index ? new PsiType[]{mapEntryType, PsiTypes.intType()} : new PsiType[]{mapEntryType};
 
     return List.of(keyValueSignature, mapEntrySignature);
   }

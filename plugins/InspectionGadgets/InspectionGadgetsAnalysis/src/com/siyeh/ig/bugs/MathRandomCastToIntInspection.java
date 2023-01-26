@@ -131,7 +131,8 @@ public class MathRandomCastToIntInspection extends BaseInspection {
         return;
       }
       final PsiType type = castType.getType();
-      if (!(type instanceof PsiPrimitiveType) || PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type) || PsiType.BOOLEAN.equals(type)) {
+      if (!(type instanceof PsiPrimitiveType) || PsiTypes.doubleType().equals(type) || PsiTypes.floatType().equals(type) || PsiTypes.booleanType()
+        .equals(type)) {
         return;
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;

@@ -44,7 +44,7 @@ public class ArrayIndexOutOfBoundsExceptionInfo extends ExceptionInfo {
     PsiExpression indexExpression = ((PsiArrayAccessExpression)e.getParent()).getIndexExpression();
     if (indexExpression == null) return null;
     if (myIndex != null) {
-      Object value = ConstantExpressionUtil.computeCastTo(indexExpression, PsiType.INT);
+      Object value = ConstantExpressionUtil.computeCastTo(indexExpression, PsiTypes.intType());
       if (value != null && !value.equals(myIndex)) return null;
     }
     return indexExpression;

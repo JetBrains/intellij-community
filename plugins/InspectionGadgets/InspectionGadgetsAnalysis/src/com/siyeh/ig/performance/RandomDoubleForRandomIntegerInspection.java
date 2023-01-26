@@ -158,7 +158,7 @@ public class RandomDoubleForRandomIntegerInspection extends BaseInspection imple
       final PsiTypeCastExpression castExpression =
         (PsiTypeCastExpression)expression;
       final PsiType type = castExpression.getType();
-      return PsiType.INT.equals(type);
+      return PsiTypes.intType().equals(type);
     }
   }
 

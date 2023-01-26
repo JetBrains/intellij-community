@@ -300,7 +300,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
   }
 
   static boolean isMethodWithVoidReturnType(PsiElement element) {
-    return element instanceof PsiMethod && PsiType.VOID.equals(((PsiMethod)element).getReturnType());
+    return element instanceof PsiMethod && PsiTypes.voidType().equals(((PsiMethod)element).getReturnType());
   }
 
   private static class ModifierComparator implements Comparator<String> {

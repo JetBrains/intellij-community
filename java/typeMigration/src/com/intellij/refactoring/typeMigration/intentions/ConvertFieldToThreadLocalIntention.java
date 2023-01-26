@@ -51,7 +51,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
     if (psiField.getTypeElement() == null) return false;
     final PsiType fieldType = psiField.getType();
     final PsiClass fieldTypeClass = PsiUtil.resolveClassInType(fieldType);
-    if (fieldType instanceof PsiPrimitiveType && !PsiType.VOID.equals(fieldType) || fieldType instanceof PsiArrayType) return true;
+    if (fieldType instanceof PsiPrimitiveType && !PsiTypes.voidType().equals(fieldType) || fieldType instanceof PsiArrayType) return true;
     return fieldTypeClass != null && !Comparing.strEqual(fieldTypeClass.getQualifiedName(), ThreadLocal.class.getName())
            && AllowedApiFilterExtension.isClassAllowed(ThreadLocal.class.getName(), element);
   }
@@ -83,7 +83,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
     final PsiField psiField = PsiTreeUtil.getParentOfType(getElement(editor, file), PsiField.class);
     if (psiField == null) return IntentionPreviewInfo.EMPTY;
     PsiType type = psiField.getType();
-    if (type == PsiType.NULL) return IntentionPreviewInfo.EMPTY;
+    if (type == PsiTypes.nullType()) return IntentionPreviewInfo.EMPTY;
     String fieldName = psiField.getName();
     String presentableText = type.getPresentableText();
     String genericArg = presentableText;

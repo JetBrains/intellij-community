@@ -250,7 +250,7 @@ public final class ExpressionUtils {
         if (e instanceof PsiTypeCastExpression cast) {
           PsiExpression operand = cast.getOperand();
           if (operand != null && !(e.getType() instanceof PsiPrimitiveType) &&
-              (!(operand.getType() instanceof PsiPrimitiveType) || PsiType.NULL.equals(operand.getType()))) {
+              (!(operand.getType() instanceof PsiPrimitiveType) || PsiTypes.nullType().equals(operand.getType()))) {
             // Ignore to-primitive/from-primitive casts as they may actually change the value
             return PsiUtil.skipParenthesizedExprDown(operand);
           }
@@ -621,10 +621,10 @@ public final class ExpressionUtils {
       return null;
     }
     PsiExpression comparedToNull = null;
-    if (PsiType.NULL.equals(operands[0].getType())) {
+    if (PsiTypes.nullType().equals(operands[0].getType())) {
       comparedToNull = operands[1];
     }
-    else if (PsiType.NULL.equals(operands[1].getType())) {
+    else if (PsiTypes.nullType().equals(operands[1].getType())) {
       comparedToNull = operands[0];
     }
     comparedToNull = PsiUtil.skipParenthesizedExprDown(comparedToNull);
@@ -790,7 +790,7 @@ public final class ExpressionUtils {
       final IElementType sign = ((PsiUnaryExpression)parent).getOperationTokenType();
       return sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS;
     }
-    if (expressionType == null || expressionType.equals(PsiType.VOID) || !TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {
+    if (expressionType == null || expressionType.equals(PsiTypes.voidType()) || !TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {
       return false;
     }
     final PsiPrimitiveType primitiveType = (PsiPrimitiveType)expressionType;
@@ -812,8 +812,8 @@ public final class ExpressionUtils {
       if (!convertableBoxedClassNames.contains(className)) {
         return false;
       }
-      return PsiType.BYTE.equals(expressionType) || PsiType.CHAR.equals(expressionType) ||
-             PsiType.SHORT.equals(expressionType) || PsiType.INT.equals(expressionType);
+      return PsiTypes.byteType().equals(expressionType) || PsiTypes.charType().equals(expressionType) ||
+             PsiTypes.shortType().equals(expressionType) || PsiTypes.intType().equals(expressionType);
     }
     return true;
   }
@@ -1043,7 +1043,7 @@ public final class ExpressionUtils {
 
   public static boolean isOctalLiteral(PsiLiteralExpression literal) {
     final PsiType type = literal.getType();
-    if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
+    if (!PsiTypes.intType().equals(type) && !PsiTypes.longType().equals(type)) {
       return false;
     }
     if (literal.getValue() == null) {
@@ -1386,7 +1386,7 @@ public final class ExpressionUtils {
       return true;
     }
     if (element instanceof PsiLambdaExpression lambda) {
-      return PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambda));
+      return PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(lambda));
     }
     return false;
   }

@@ -798,7 +798,7 @@ public class EquivalenceChecker {
   }
 
   protected Match literalExpressionsMatch(PsiLiteralExpression expression1, PsiLiteralExpression expression2) {
-    if (PsiType.NULL.equals(expression1.getType()) && PsiType.NULL.equals(expression2.getType())) {
+    if (PsiTypes.nullType().equals(expression1.getType()) && PsiTypes.nullType().equals(expression2.getType())) {
       return EXACT_MATCH;
     }
     final Object value1 = expression1.getValue();
