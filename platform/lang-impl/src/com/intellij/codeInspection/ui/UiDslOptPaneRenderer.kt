@@ -323,8 +323,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           val panel = ToolbarDecorator.createDecorator(table)
             .setToolbarPosition(ActionToolbarPosition.LEFT)
             .setAddAction { _ ->
-              val tableModel = table.model
-              tableModel.addRow()
+              addRowWithSwingSelectors(table, component)
               EventQueue.invokeLater { editLastRow(table) }
             }
             .setRemoveAction { _ -> TableUtil.removeSelectedItems(table) }
@@ -352,6 +351,23 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     }
   }
 
+  private fun addRowWithSwingSelectors(table: ListTable, component: OptTable) {
+    val tableModel = table.model
+    val dataContext = DataManager.getInstance().getDataContext(table)
+    val project = CommonDataKeys.PROJECT.getData(dataContext)
+    val row = mutableListOf<String>()
+    for (child in component.children) {
+      val validator = child.validator
+      if (project == null || validator == null || validator !is StringValidatorWithSwingSelector) {
+        row.add("")
+        continue
+      }
+      val selected: String? = validator.select(project)
+      row.add(selected ?: "")
+    }
+    tableModel.addRow(*row.toTypedArray())
+  }
+
   private fun RendererContext.getOption(bindId: String): Any? {
     return this.controller.getOption(bindId)
   }
@@ -373,13 +389,13 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     val component = editor.getTableCellEditorComponent(table, tableModel.getValueAt(row, 0), true, row, 0)
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { IdeFocusManager.getGlobalInstance().requestFocus(component, true) }
   }
-  
+
   private class ListWithListener(val list: MutableList<String>, val changeListener: () -> Unit): MutableList<String> by list {
     override fun removeAt(index: Int): String = list.removeAt(index).also { changeListener() }
     override fun remove(element: String): Boolean = list.remove(element).also { changeListener() }
     override fun add(element: String): Boolean = list.add(element).also { changeListener() }
     override fun set(index: Int, element: String): String = list.set(index, element).also { changeListener() }
-  } 
+  }
 
   private val OptComponent.splitLabel: LocMessage.PrefixSuffix?
     get() = when (this) {
@@ -422,7 +438,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       type == Int::class.javaObjectType -> key.toInt()
       type.isEnum -> java.lang.Enum.valueOf(type as Class<out Enum<*>>, key)
       type.superclass.isEnum -> java.lang.Enum.valueOf(type.superclass as Class<out Enum<*>>, key)
-      else -> key 
+      else -> key
     }
   }
 
