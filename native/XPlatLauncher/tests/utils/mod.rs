@@ -545,9 +545,9 @@ pub struct IntellijMainDumpedLaunchParameters {
 
 pub const TEST_OUTPUT_FILE_NAME: &str = "output.json";
 
-pub fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>, output_file: &Path) -> Result<LauncherRunResult> {
-    let stdout_file = File::create("out.txt")?;
-    let stdout_file_path = env::current_dir()?.join("out.txt");
+fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>, output_file: &Path) -> Result<LauncherRunResult> {
+    let stdout_file_path = test.test_root_dir.path().join("out.txt");
+    let stdout_file = File::create(&stdout_file_path)?;
     let stdio = Stdio::from(stdout_file);
 
     let mut launcher_process = Command::new(&test.launcher_path)
@@ -577,10 +577,7 @@ pub fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&s
                         true => Some(read_launcher_run_result(&output_file)?),
                         false => None
                     },
-                    stdout: match es.success() {
-                        true => fs::read_to_string(&stdout_file_path).context("can't open stdout file")?,
-                        false => "".to_string()
-                    }
+                    stdout: fs::read_to_string(&stdout_file_path).context("can't open stdout file")?
                 }),
             },
             Err(e) => {
@@ -647,7 +644,6 @@ fn run_launcher_and_get_dump(test: &TestEnvironment, args: &[&str], envs: HashMa
     result.dump.expect("Launcher exited successfully, but there is no output")
 }
 
-/// Just run launcher and get dump.
 pub fn run_launcher_and_get_dump_default(test: &TestEnvironment) -> IntellijMainDumpedLaunchParameters {
     run_launcher_and_get_dump(test, &[], HashMap::from([(" ", "")]))
 }
@@ -710,7 +706,6 @@ fn run_remote_dev_and_get_dump(test: &TestEnvironment, args: &[&str], envs: Hash
     launcher_run_result.dump.expect("Launcher exited successfully, but there is no output")
 }
 
-/// Just run remote-dev launcher and get dump
 pub fn run_remote_dev_and_get_dump_default(test: &TestEnvironment,) -> IntellijMainDumpedLaunchParameters {
     run_remote_dev_and_get_dump(test, &[], HashMap::from([(" ", "")]))
 }
@@ -733,14 +728,12 @@ pub fn run_remote_dev_and_get_dump_with_java_env(test: &TestEnvironment, java_en
     run_remote_dev_and_get_dump_with_env_vars(test, HashMap::from([(java_env_var, launcher_jdk.to_str().unwrap())]))
 }
 
-/// Just run remote-development launcher and get std_out.
 pub fn run_remote_dev_and_get_output(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>) -> String {
     let launcher_run_result = run_remote_dev(test, args, envs);
 
     launcher_run_result.stdout
 }
 
-/// Just run remote-dev launcher and get std_output
 pub fn run_remote_dev_and_get_output_default(test: &TestEnvironment,) -> String {
     run_remote_dev_and_get_output(test, &[], HashMap::from([(" ", "")]))
 }

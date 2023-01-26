@@ -22,21 +22,65 @@ mod tests {
         assert_eq!(&dump.cmdArguments[4], args[0]);
     }
 
-    // todo: write run_RD realisation with custom command                X
-    // todo: redirect std_out to file and load it                        X
-    // todo: 1) существующая команда с проектом                          X
-    // todo: 2) существующая команда без проекта                         X
-    // todo: 3) существающая команда с двумя ключами (warm-up и warmup)  X
-    // todo: 4) несуществующая команда                                   X
-
     #[rstest]
     #[case::remote_dev_test(& LayoutSpec {launcher_location: LauncherLocation::MainBinRemoteDev, java_type: JavaType::JBR})]
     fn remote_dev_known_command_without_project_path_test(#[case]layout_spec: &LayoutSpec) {
         let test = prepare_test_env(layout_spec);
 
         let remote_dev_command = &["dumpLaunchParameters"];
-        let dump = run_remote_dev_and_get_output_with_args(&test, remote_dev_command);
+        let output = run_remote_dev_and_get_output_with_args(&test, remote_dev_command);
 
-        println!("-----------{}", dump)
+        assert!(output.contains("dump-launch-parameters"));
+        assert!(!output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"));
+    }
+
+    #[rstest]
+    #[case::remote_dev_test(& LayoutSpec {launcher_location: LauncherLocation::MainBinRemoteDev, java_type: JavaType::JBR})]
+    fn remote_dev_unknown_command_without_project_path_test(#[case]layout_spec: &LayoutSpec) {
+        let test = prepare_test_env(layout_spec);
+
+        let remote_dev_command = &["testCommand"];
+        let output = run_remote_dev_and_get_output_with_args(&test, remote_dev_command);
+
+        assert!(output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"));
+    }
+
+    #[rstest]
+    #[case::remote_dev_test(& LayoutSpec {launcher_location: LauncherLocation::MainBinRemoteDev, java_type: JavaType::JBR})]
+    fn remote_dev_known_command_with_project_path_test(#[case]layout_spec: &LayoutSpec) {
+        let test = prepare_test_env(layout_spec);
+        let project_dir = &test.test_root_dir.path().to_string_lossy().to_string();
+
+        let remote_dev_command = &["run", &project_dir];
+        let output = run_remote_dev_and_get_output_with_args(&test, remote_dev_command);
+
+        assert!(output.contains("cwmHostNoLobby"));
+        assert!(output.contains(project_dir));
+        assert!(!output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"));
+    }
+
+    #[rstest]
+    #[case::remote_dev_test(& LayoutSpec {launcher_location: LauncherLocation::MainBinRemoteDev, java_type: JavaType::JBR})]
+    fn remote_dev_known_command_with_project_path_test_1(#[case]layout_spec: &LayoutSpec) {
+        let test = prepare_test_env(layout_spec);
+
+        let remote_dev_command = &["run"];
+        let output = run_remote_dev_and_get_output_with_args(&test, remote_dev_command);
+
+        assert!(output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"));
+    }
+
+    #[rstest]
+    #[case::remote_dev_test(& LayoutSpec {launcher_location: LauncherLocation::MainBinRemoteDev, java_type: JavaType::JBR})]
+    fn remote_dev_known_command_with_project_path_and_arguments_test(#[case]layout_spec: &LayoutSpec) {
+        let test = prepare_test_env(layout_spec);
+        let project_dir = &test.test_root_dir.path().to_string_lossy().to_string();
+
+        let remote_dev_command = &["warmup", project_dir];
+        let output = run_remote_dev_and_get_output_with_args(&test, remote_dev_command);
+
+        assert!(output.contains("warmup"));
+        assert!(output.contains(&format!("--project-dir={}", project_dir)));
+        assert!(!output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"));
     }
 }
