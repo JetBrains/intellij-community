@@ -23,10 +23,10 @@ import kotlin.coroutines.coroutineContext
  * ```
  * withBackgroundProgressIndicator(title = "Top Level", ...) {
  *   indeterminateStep("Indeterminate Stage") { ... }
- *   progressStep(text = "0.3", endFraction = 0.3) { ... }
- *   progressStep(text = "0.7) { // endFraction is 1.0 by default
+ *   progressStep(endFraction = 0.3, text = "0.3 Part") { ... }
+ *   progressStep(endFraction = 1.0, text = "0.7 Part") {
  *     progressStep(endFraction = 0.4) { ... }
- *     progressStep {
+ *     progressStep(endFraction = 1.0) {
  *       items.mapWithProgress(concurrent = true) { item ->
  *         progressStep(text = "Processing '${item.presentableText}'") {
  *           ...
@@ -39,8 +39,8 @@ import kotlin.coroutines.coroutineContext
  * yields:
  * ```
  * |                     Top Level                           |
- * |  Indeterminate Stage  | 0.3  |         0.7              |
- *                                | 0.4       | 10 items     |
+ * |  Indeterminate Stage  | 0.3 Part |       0.7 Part       |
+ *                                    | 0.4   | 10 items     |
  * ```
  *
  * ### Legend
@@ -106,15 +106,15 @@ import kotlin.coroutines.coroutineContext
  * withBackgroundProgressIndicator(...) {
  *   items.mapWithProgress {
  *     // will show the item string as progress text in the UI
- *     progressStep(text = item.presentableString()) {
+ *     progressStep(endFraction = 1.0, text = item.presentableString()) {
  *       ...
  *     }
  *   }
  *   // or
- *   progressStep(text = "Processing items", endFraction = ...) {
+ *   progressStep(endFraction = 1.0, text = "Processing items") {
  *     items.mapWithProgress {
  *       // will show the item string as progress details in the UI
- *       progressStep(text = item.presentableString()) {
+ *       progressStep(endFraction = 1.0, text = item.presentableString()) {
  *         ...
  *       }
  *     }
