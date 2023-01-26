@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.DevicePoint
@@ -83,7 +84,12 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     internal fun createDropTargetHighlightComponent(): NonOpaquePanel {
       return object: NonOpaquePanel() {
         override fun paint(g: Graphics) {
-          g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
+          if (ExperimentalUI.isNewUI()) {
+            g.color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.getAreaBackground()
+          }
+          else {
+            g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
+          }
           g.fillRect(0, 0, width, height)
         }
       }
