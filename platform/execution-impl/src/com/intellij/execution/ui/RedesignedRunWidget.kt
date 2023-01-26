@@ -154,7 +154,9 @@ class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
   }
 }
 
-private class DisabledIcon(private val width: Int, private val height: Int, private val iconFn: () -> Icon) : RetrievableIcon {
+private class PreparedIcon(private val width: Int, private val height: Int, private val iconFn: () -> Icon) : RetrievableIcon {
+  constructor(icon: Icon) : this(icon.iconWidth, icon.iconHeight, { icon })
+
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     iconFn().paintIcon(c, g, x, y)
   }
@@ -166,7 +168,7 @@ private class DisabledIcon(private val width: Int, private val height: Int, priv
   override fun retrieveIcon(): Icon = iconFn()
 
   override fun replaceBy(replacer: IconReplacer): Icon {
-    return DisabledIcon(width, height) { replacer.replaceIcon(iconFn()) }
+    return PreparedIcon(width, height) { replacer.replaceIcon(iconFn()) }
   }
 }
 
@@ -232,22 +234,25 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     if (!isContrastRunWidget) {
       return super.getDisabledIcon(icon)
     }
-    return DisabledIcon(icon.iconWidth, icon.iconHeight) {
+    return PreparedIcon(icon.iconWidth, icon.iconHeight) {
       IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND)
     }
   }
 
   override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
-    if (!isContrastRunWidget && ((actionButton as? ActionButton)?.action as? ExecutorRegistryImpl.ExecutorAction) == null) {
-      return super.paintIcon(g, actionButton, icon, x, y)
-    }
     if (icon.iconWidth == 0 || icon.iconHeight == 0) {
       return
     }
 
-    val toStrokeIcon = if (icon is DisabledIcon) icon else {
-      val resultColor = if (!isContrastRunWidget && !buttonIsRunning(actionButton)) JBUI.CurrentTheme.RunWidget.RUN_MODE_ICON
-      else JBUI.CurrentTheme.RunWidget.FOREGROUND
+    val toStrokeIcon = if (icon is PreparedIcon) icon else {
+      val resultColor = if (!isContrastRunWidget &&
+                            (actionButton as? ActionButton)?.action is ExecutorRegistryImpl.ExecutorAction &&
+                            !buttonIsRunning(actionButton)) {
+        JBUI.CurrentTheme.RunWidget.RUN_MODE_ICON
+      }
+      else {
+        JBUI.CurrentTheme.RunWidget.FOREGROUND
+      }
       IconUtil.toStrokeIcon(icon, resultColor)
     }
 
@@ -351,13 +356,15 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
     val action = ActionManager.getInstance().getAction("RunConfiguration")
     val runConfigAction = action as? RunConfigurationsComboBoxAction ?: return
     runConfigAction.update(e)
-    val icon = e.presentation.icon
-    if (icon != null) {
-      e.presentation.icon = if (icon is InvalidRunConfigurationIcon) {
-        InvalidRunConfigurationIcon(IconUtil.toStrokeIcon(icon.mainIcon, JBUI.CurrentTheme.RunWidget.FOREGROUND))
-      }
-      else {
-        IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.FOREGROUND)
+    if (!isContrastRunWidget) {
+      val icon = e.presentation.icon
+      if (icon != null) {
+        e.presentation.icon = PreparedIcon(if (icon is InvalidRunConfigurationIcon) {
+          InvalidRunConfigurationIcon(IconUtil.toStrokeIcon(icon.mainIcon, JBUI.CurrentTheme.RunWidget.FOREGROUND))
+        }
+                                           else {
+          IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.FOREGROUND)
+        })
       }
     }
     e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description"))
@@ -377,6 +384,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
       override fun iconTextSpace(): Int = JBUI.scale(6)
       override fun shallPaintDownArrow() = true
       override fun getInactiveTextColor() = JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND
+      override fun getDownArrowIcon(): Icon = PreparedIcon(super.getDownArrowIcon())
     }.also {
       it.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
       it.setHorizontalTextAlignment(SwingConstants.LEFT)
