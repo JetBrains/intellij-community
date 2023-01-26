@@ -103,7 +103,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void initVfsLog() {
-    myVfsLog = new VfsLog(Paths.get(FSRecords.getCachesDir() + "/vfslog"), false);
+    myVfsLog = new VfsLog(Paths.get(FSRecords.getCachesDir() + "/vfslog"), VfsLog.IDEA_ENABLED);
   }
 
   @ApiStatus.Internal

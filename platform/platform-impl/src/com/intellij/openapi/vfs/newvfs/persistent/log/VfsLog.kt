@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import com.intellij.util.io.delete
@@ -119,5 +120,9 @@ class VfsLog(
     private val LOG = Logger.getInstance(VfsLog::class.java)
 
     const val VERSION = -42
+
+    @JvmField
+    val IDEA_ENABLED = SystemProperties.getBooleanProperty("idea.vfs.write.operation.log", false)
+    // TODO: compaction & its options
   }
 }
