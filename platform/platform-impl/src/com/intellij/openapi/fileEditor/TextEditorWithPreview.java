@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -257,6 +257,11 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
+  /**
+   * To persist the proportion of the splitter for an individual editor,
+   * override this method to generate a unique key.
+   * From all the text editors that don't override this method, only a single proportion is stored.
+   */
   protected @NotNull String getSplitterProportionKey() {
     return "TextEditorWithPreview.SplitterProportionKey";
   }
