@@ -1,12 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.editor.DiffRequestProcessorEditor
 import com.intellij.diff.tools.combined.CombinedDiffModelRepository
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -14,12 +17,13 @@ import com.intellij.openapi.util.NlsContexts.TabTitle
 import com.intellij.openapi.vcs.changes.actions.diff.COMBINED_DIFF_PREVIEW_TAB_NAME
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 
-class VcsEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
-
+private class VcsEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
   override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
     return getEditorTabName(project, file)
   }
@@ -48,7 +52,13 @@ class VcsEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
     if (EDT.isCurrentThreadEdt()) {
       return supplier()
     }
-    val future = EdtExecutorService.getInstance().submit(supplier, ModalityState.any())
+
+    @Suppress("DEPRECATION")
+    val future = project.coroutineScope.async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      blockingContext {
+        supplier()
+      }
+    }.asCompletableFuture()
     return ProgressIndicatorUtils.awaitWithCheckCanceled(future)
   }
 }

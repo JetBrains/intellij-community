@@ -590,6 +590,8 @@ private class IdePaneLoadingLayer(
 
   var icon: JComponent? = null
 
+  private var selfie: Image? = loadingState.selfie
+
   init {
     val scheduledTime = System.currentTimeMillis()
     @Suppress("DEPRECATION")
@@ -614,27 +616,23 @@ private class IdePaneLoadingLayer(
         }
 
         loadingState.loading.join()
-        if (loadingState.selfie != null) {
-          return@launch
-        }
+        // a gutter icon leads to editor shift, so, we cannot paint selfie with opacity
+        selfie = null
 
         object : SimpleAnimator() {
           override fun paintCycleStart() {
-            icon.suspend()
+            removeIcon()
           }
 
           override fun paintNow(frame: Int, totalFrames: Int) {
             currentAlpha = ALPHA - (frame * opacityPerFrame)
             icon.paintImmediately(icon.bounds)
           }
-        }.run(totalFrames = totalFrames, cycleDuration = if (RemoteDesktopService.isRemoteSession()) 2_520 else 5004)
+        }.run(totalFrames = totalFrames, cycleDuration = if (RemoteDesktopService.isRemoteSession()) 2_520 else 504)
       }
       finally {
         withContext(RawSwingDispatcher) {
-          icon?.let {
-            icon = null
-            pane.remove(it)
-          }
+          removeIcon()
           onFinish()
         }
       }
@@ -642,12 +640,19 @@ private class IdePaneLoadingLayer(
     job.cancelOnDispose(parentDisposable)
   }
 
+  private fun removeIcon() {
+    icon?.let {
+      icon = null
+      pane.remove(it)
+    }
+  }
+
   fun paintPane(g: Graphics) {
     if (currentAlpha == 0f) {
       return
     }
 
-    val selfie = loadingState.selfie
+    val selfie = selfie
     if (selfie == null) {
       (g as Graphics2D).composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, currentAlpha)
       g.setColor(JBColor.PanelBackground)
