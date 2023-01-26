@@ -47,29 +47,21 @@ interface FacetBridge<T : ModuleSettingsBase> {
    */
   fun attachToModule(mutableStorage: MutableEntityStorage, module: ModuleBridge) {
     val moduleEntity = mutableStorage.resolve(module.moduleEntityId) ?: return
-
-    val existingFacetEntity = getFacetEntityOptional(mutableStorage)
-
-    if (null == existingFacetEntity) return
-
     config.setModule(moduleEntity)
   }
 
   /**
-   * Apply changes from the underlying entity to [mutableStorage]
+   * Applies changes from the underlying entity to [mutableStorage]
    */
-  fun applyChangesToStorage(mutableStorage: MutableEntityStorage) {
-    val existingFacetEntity = getFacetEntityOptional(mutableStorage)
-
-    if (null == existingFacetEntity) return
-
-    applyChangesToExistingEntityInStorage(existingFacetEntity, mutableStorage)
+  fun updateInStorage(mutableStorage: MutableEntityStorage) {
+    val existingFacetEntity = getFacetEntityOptional(mutableStorage) ?: return
+    updateExistingEntityInStorage(existingFacetEntity, mutableStorage)
   }
 
   /**
-   * Apply changes from the entity which used under the hood to [existingFacetEntity] in [mutableStorage]
+   * Applies changes from the underlying entity to [existingFacetEntity] in [mutableStorage]
    */
-  fun applyChangesToExistingEntityInStorage(existingFacetEntity: T, mutableStorage: MutableEntityStorage)
+  fun updateExistingEntityInStorage(existingFacetEntity: T, mutableStorage: MutableEntityStorage)
 
   /**
    * Update facet configuration base on the data from the related entity
@@ -116,9 +108,7 @@ interface FacetConfigurationBridge<T : ModuleSettingsBase> {
   /**
    * Updates this config name setting
    */
-  fun rename(newName: String) {
-    (getEntity() as ModuleSettingsBase.Builder<*>).name = newName
-  }
+  fun rename(newName: String)
 
   /**
    * Attaches this config to [moduleEntity] module
