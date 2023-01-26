@@ -7,21 +7,23 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 
-class GitLabFilesController(
-  private val project: Project,
-  private val repo: GitLabProjectCoordinates
-) {
-
-  private val id = System.nanoTime().toString()
-
-  fun openTimeline(mr: GitLabMergeRequestId, focus: Boolean = false) {
+internal object GitLabTimelinesController {
+  fun openTimeline(
+    project: Project,
+    repo: GitLabProjectCoordinates,
+    mr: GitLabMergeRequestId,
+    focus: Boolean = false
+  ) {
+    // TODO: introduce virtual files manager like SpaceVirtualFilesManager
+    val id = System.nanoTime().toString()
     val fs = GitLabVirtualFileSystem.getInstance()
     val path = fs.getPath(id, project, repo, mr)
     val file = fs.refreshAndFindFileByPath(path) ?: return
     FileEditorManager.getInstance(project).openFile(file, focus)
   }
 
-  fun closeAllFiles() {
+  // TODO: all timelines should be closed on connection change. Who should subscribe on it?
+  fun closeAllTimelines(project: Project) {
     val fileManager = FileEditorManager.getInstance(project)
     runWriteAction {
       // cache?

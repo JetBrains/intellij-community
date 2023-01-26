@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui
 import com.intellij.openapi.util.Key
 
 internal object GitLabReviewDataKeys {
-  internal val REVIEW_TABS_CONTROLLER: Key<GitLabReviewTabsController> = Key.create("com.intellij.gitlab.vcs.review.tab.controller")
-
-  internal val REVIEW_TAB: Key<GitLabReviewTab> = Key.create("com.intellij.gitlab.vcs.review.tab")
+  @JvmStatic
+  val REVIEW_TAB: Key<GitLabReviewTab> = Key.create("com.intellij.gitlab.vcs.review.tab")
 }

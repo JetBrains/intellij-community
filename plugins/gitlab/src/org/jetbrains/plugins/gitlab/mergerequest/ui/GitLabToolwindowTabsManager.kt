@@ -13,16 +13,24 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 
 internal class GitLabToolwindowTabsManager private constructor(
   private val project: Project,
   private val contentManager: ContentManager
 ) {
   private val cs = contentManager.disposingMainScope()
-  private val reviewTabsController = GitLabReviewTabsController()
-  private val tabComponentFactory = GitLabReviewTabComponentFactory(project, reviewTabsController)
+  private val reviewTabsController = GitLabReviewTabsController(project)
+  private val tabComponentFactory = GitLabReviewTabComponentFactory(project)
 
   init {
+    contentManager.addDataProvider {
+      when {
+        GitLabMergeRequestsActionKeys.REVIEW_TABS_CONTROLLER.`is`(it) -> reviewTabsController
+        else -> null
+      }
+    }
+
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       project.service<GitLabProjectConnectionManager>().connectionState.collect { connectionState ->
         if (connectionState == null) {
@@ -47,7 +55,7 @@ internal class GitLabToolwindowTabsManager private constructor(
           is GitLabReviewTab.ReviewSelected -> {
             selectExistedTabOrCreate(
               check = {
-                (it as? GitLabReviewTab.ReviewSelected)?.reviewDto?.iid == reviewTab.reviewDto.iid
+                (it as? GitLabReviewTab.ReviewSelected)?.reviewId?.iid == reviewTab.reviewId.iid
               },
               factory = {
                 createReviewDetailsContent(currentConnection, reviewTab)
@@ -63,7 +71,7 @@ internal class GitLabToolwindowTabsManager private constructor(
     connection: GitLabProjectConnection,
     reviewTab: GitLabReviewTab.ReviewSelected
   ): Content = createReviewTabContent(connection, reviewTab) { content ->
-    content.displayName = "#${reviewTab.reviewDto.id}"
+    content.displayName = "#${reviewTab.reviewId.iid}"
   }
 
   private fun selectExistedTabOrCreate(
@@ -100,7 +108,6 @@ internal class GitLabToolwindowTabsManager private constructor(
     content.component = tabComponentFactory.createComponent(contentCs, connection, reviewTab)
 
     content.putUserData(GitLabReviewDataKeys.REVIEW_TAB, reviewTab)
-    content.putUserData(GitLabReviewDataKeys.REVIEW_TABS_CONTROLLER, reviewTabsController)
 
     modifier(content)
   }

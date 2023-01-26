@@ -3,16 +3,12 @@ package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.openapi.actionSystem.DataKey
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
-import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabFilesController
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestController
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabReviewTabsController
 
 internal object GitLabMergeRequestsActionKeys {
   @JvmStatic
   val SELECTED = DataKey.create<GitLabMergeRequestShortRestDTO>("org.jetbrains.plugins.gitlab.mergerequest.selected")
 
   @JvmStatic
-  val FILES_CONTROLLER = DataKey.create<GitLabFilesController>("org.jetbrains.plugins.gitlab.mergerequest.files.controller")
-
-  @JvmStatic
-  val MERGE_REQUEST_CONTROLLER = DataKey.create<GitLabMergeRequestController>("org.jetbrains.plugins.gitlab.mergerequest.controller")
+  val REVIEW_TABS_CONTROLLER = DataKey.create<GitLabReviewTabsController>("com.intellij.gitlab.vcs.review.tab.controller")
 }

@@ -27,6 +27,8 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabMergeRequestsListLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabProjectDetailsLoader
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModelImpl
@@ -39,10 +41,7 @@ import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-internal class GitLabReviewTabComponentFactory(
-  private val project: Project,
-  private val reviewTabsController: GitLabReviewTabsController
-) {
+internal class GitLabReviewTabComponentFactory(private val project: Project) {
   private val projectsManager = project.service<GitLabProjectsManager>()
   private val accountManager = service<GitLabAccountManager>()
   private val connectionManager = project.service<GitLabProjectConnectionManager>()
@@ -54,8 +53,20 @@ internal class GitLabReviewTabComponentFactory(
   ): JComponent {
     return when (reviewTab) {
       GitLabReviewTab.ReviewList -> createReviewListComponent(cs, connection)
-      is GitLabReviewTab.ReviewSelected -> TODO()
+      is GitLabReviewTab.ReviewSelected -> createReviewDetailsComponent(cs, connection, reviewTab)
     }
+  }
+
+  private fun createReviewDetailsComponent(
+    cs: CoroutineScope,
+    connection: GitLabProjectConnection,
+    reviewTab: GitLabReviewTab.ReviewSelected
+  ): JComponent {
+    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(cs, connection, reviewTab.reviewId).apply {
+      requestLoad()
+    }
+
+    return GitLabMergeRequestDetailsComponentFactory.createDetailsComponent(project, cs, connection, reviewDetailsVm)
   }
 
   private fun createReviewListComponent(cs: CoroutineScope, connection: GitLabProjectConnection): JComponent {
