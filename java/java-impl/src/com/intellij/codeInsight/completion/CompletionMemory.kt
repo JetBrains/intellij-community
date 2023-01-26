@@ -59,7 +59,7 @@ object CompletionMemory {
   @JvmStatic
   fun getChosenMethod(call: PsiCall): PsiMethod? {
     val range = getAnchorRange(call) ?: return null
-    val completedMethods = call.containingFile.viewProvider.document?.getUserData(LAST_CHOSEN_METHODS)
+    val completedMethods = call.containingFile.originalFile.viewProvider.document?.getUserData(LAST_CHOSEN_METHODS)
     val marker = completedMethods?.let { it.find { m -> haveSameRange(m, range) } }
     return marker?.getUserData(CHOSEN_METHODS)?.element
   }
