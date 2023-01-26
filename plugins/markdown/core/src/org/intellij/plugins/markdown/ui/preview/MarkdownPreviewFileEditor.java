@@ -200,7 +200,8 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     if (myPanel != null) {
       detachHtmlPanel();
     }
-    this.isDisposed = true;
+    myLastRenderedHtml = "";
+    isDisposed = true;
   }
 
   @Nullable
