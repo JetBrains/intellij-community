@@ -6,8 +6,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRAD
 import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.createJavaSourcePath
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
@@ -89,7 +87,6 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
 
     override fun setupAssets(project: Project) {
-      outputDirectory = "$path/$name"
       addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
       if (parent.addSampleCode) {
         val sourcePath = createJavaSourcePath("src/main/groovy", parent.groupId, "Main.groovy")

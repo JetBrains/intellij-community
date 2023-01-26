@@ -47,7 +47,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   final override val moduleFileLocationProperty = propertyGraph.lazyProperty(::suggestModuleFilePath)
   final override val addSampleCodeProperty = propertyGraph.property(true)
     .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
-  private val generateOnboardingTipsProperty = propertyGraph.property(proposeToGenerateOnboardingTipsByDefault())
+  final override val generateOnboardingTipsProperty = propertyGraph.property(proposeToGenerateOnboardingTipsByDefault())
     .bindBooleanStorage(GENERATE_ONBOARDING_TIPS_NAME)
 
   final override var sdk by sdkProperty
@@ -55,7 +55,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   final override var contentRoot by contentRootProperty
   final override var moduleFileLocation by moduleFileLocationProperty
   final override var addSampleCode by addSampleCodeProperty
-  final override val generateOnboardingTips by generateOnboardingTipsProperty
+  final override var generateOnboardingTips by generateOnboardingTipsProperty
 
   private var userDefinedContentRoot: Boolean = false
   private var userDefinedModuleFileLocation: Boolean = false

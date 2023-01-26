@@ -5,8 +5,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logA
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
@@ -83,8 +81,8 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
     }
 
     private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+
         override fun setupAssets(project: Project) {
-            outputDirectory = "$path/$name"
             addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
         }
     }

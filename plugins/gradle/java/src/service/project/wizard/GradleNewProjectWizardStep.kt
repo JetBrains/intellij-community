@@ -6,19 +6,21 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logD
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.wizard.NewProjectWizardBaseData
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep
-import com.intellij.openapi.externalSystem.service.ui.completion.*
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.observable.util.*
+import com.intellij.openapi.observable.util.bindEnumStorage
+import com.intellij.openapi.observable.util.not
+import com.intellij.openapi.observable.util.toUiPathProperty
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
@@ -338,8 +340,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   ) {
     val builder = InternalGradleModuleBuilder()
     builder.moduleJdk = sdk
-    builder.name = name
-    builder.contentEntryPath = "$path/$name"
+    builder.name = parentStep.name
+    builder.contentEntryPath = parentStep.path + "/" + parentStep.name
 
     builder.isCreatingNewProject = context.isCreatingNewProject
 

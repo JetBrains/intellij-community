@@ -5,8 +5,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTE
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.project.Project
@@ -46,8 +44,8 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
     }
 
     private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+
         override fun setupAssets(project: Project) {
-            outputDirectory = "$path/$name"
             addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
         }
     }

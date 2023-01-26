@@ -7,8 +7,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRAD
 import com.intellij.ide.projectWizard.generators.*
 import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.proposeToGenerateOnboardingTipsByDefault
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
@@ -16,9 +14,6 @@ import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.addSampleCode
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.gradleData
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.groupId
 
 internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
@@ -35,11 +30,11 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
     override val addSampleCodeProperty = propertyGraph.property(true)
       .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
-    private val generateOnboardingTipsProperty = propertyGraph.property(proposeToGenerateOnboardingTipsByDefault())
+    override val generateOnboardingTipsProperty = propertyGraph.property(proposeToGenerateOnboardingTipsByDefault())
       .bindBooleanStorage(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME)
 
     override var addSampleCode by addSampleCodeProperty
-    override val generateOnboardingTips by generateOnboardingTipsProperty
+    override var generateOnboardingTips by generateOnboardingTipsProperty
 
     private fun setupSampleCodeUI(builder: Panel) {
       builder.row {
@@ -85,18 +80,20 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
   }
 
-  private class AssetsStep(parent: NewProjectWizardStep) : AssetsJavaNewProjectWizardStep(parent) {
+  private class AssetsStep(
+    private val parent: Step
+  ) : AssetsJavaNewProjectWizardStep(parent) {
+
     override fun setupAssets(project: Project) {
-      outputDirectory = "$path/$name"
       addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
-      if (addSampleCode) {
-        withJavaSampleCodeAsset("src/main/java", groupId, gradleData.generateOnboardingTips)
+      if (parent.addSampleCode) {
+        withJavaSampleCodeAsset("src/main/java", parent.groupId, parent.generateOnboardingTips)
       }
     }
 
     override fun setupProject(project: Project) {
       super.setupProject(project)
-      if (gradleData.generateOnboardingTips) {
+      if (parent.generateOnboardingTips) {
         prepareTipsInEditor(project)
       }
     }

@@ -11,10 +11,11 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.util.PlatformUtils
 
-class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
-  AbstractNewProjectWizardMultiStepWithAddButton<NewProjectWizardLanguageStep, LanguageNewProjectWizard>(parent, LanguageNewProjectWizard.EP_NAME),
-  LanguageNewProjectWizardData,
-  NewProjectWizardBaseData by parent.baseData {
+class NewProjectWizardLanguageStep(
+  parent: NewProjectWizardStep
+) : AbstractNewProjectWizardMultiStepWithAddButton<NewProjectWizardLanguageStep, LanguageNewProjectWizard>(parent, LanguageNewProjectWizard.EP_NAME),
+    LanguageNewProjectWizardData,
+    NewProjectWizardBaseData by parent.baseData!! {
 
   override val self = this
 

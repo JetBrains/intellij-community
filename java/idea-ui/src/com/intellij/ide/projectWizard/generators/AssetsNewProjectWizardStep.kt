@@ -8,6 +8,7 @@ import com.intellij.ide.starters.local.GeneratorAsset
 import com.intellij.ide.starters.local.GeneratorTemplateFile
 import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.*
@@ -28,6 +29,13 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
   private val assets = ArrayList<GeneratorAsset>()
   private val templateProperties = HashMap<String, Any>()
   private val filesToOpen = HashSet<Path>()
+
+  init {
+    val baseData = baseData
+    if (baseData != null) {
+      outputDirectory = baseData.path + "/" + baseData.name
+    }
+  }
 
   @ApiStatus.Internal
   internal fun getTemplateProperties(): Map<String, Any> {

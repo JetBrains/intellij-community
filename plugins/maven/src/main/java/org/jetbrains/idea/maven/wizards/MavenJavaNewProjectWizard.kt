@@ -7,8 +7,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVE
 import com.intellij.ide.projectWizard.generators.*
 import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.proposeToGenerateOnboardingTipsByDefault
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
@@ -28,15 +26,16 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
   class Step(parent: JavaNewProjectWizard.Step) :
     MavenNewProjectWizardStep<JavaNewProjectWizard.Step>(parent),
-    BuildSystemJavaNewProjectWizardData by parent {
+    BuildSystemJavaNewProjectWizardData by parent,
+    MavenJavaNewProjectWizardData {
 
-    private val addSampleCodeProperty = propertyGraph.property(true)
+    override val addSampleCodeProperty = propertyGraph.property(true)
       .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
-    private val generateOnboardingTipsProperty = propertyGraph.property(proposeToGenerateOnboardingTipsByDefault())
+    override val generateOnboardingTipsProperty = propertyGraph.property(proposeToGenerateOnboardingTipsByDefault())
       .bindBooleanStorage(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME)
 
-    var addSampleCode by addSampleCodeProperty
-    val generateOnboardingTips by generateOnboardingTipsProperty
+    override var addSampleCode by addSampleCodeProperty
+    override var generateOnboardingTips by generateOnboardingTipsProperty
 
     private fun setupSampleCodeUI(builder: Panel) {
       builder.row {
@@ -87,8 +86,8 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   }
 
   private class AssetsStep(private val parent: Step) : AssetsJavaNewProjectWizardStep(parent) {
+
     override fun setupAssets(project: Project) {
-      outputDirectory = "$path/$name"
       addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
       if (parent.addSampleCode) {
         withJavaSampleCodeAsset("src/main/java", parent.groupId, parent.generateOnboardingTips)

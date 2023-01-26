@@ -5,9 +5,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logA
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
-import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.observable.util.bindBooleanStorage
@@ -66,8 +63,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         override fun setupProject(project: Project) {
             KotlinNewProjectWizard.generateProject(
                 project = project,
-                projectPath = "$path/$name",
-                projectName = name,
+                projectPath = parentStep.path + "/" + parentStep.name,
+                projectName = parentStep.name,
                 sdk = sdk,
                 buildSystemType = when (gradleDsl) {
                     GradleDsl.KOTLIN -> GradleKotlinDsl
@@ -81,9 +78,9 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         }
     }
 
-    private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+    private class AssetsStep(parent: Step) : AssetsNewProjectWizardStep(parent) {
+
         override fun setupAssets(project: Project) {
-            outputDirectory = "$path/$name"
             addAssets(StandardAssetsProvider().getGradlewAssets())
             addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
         }

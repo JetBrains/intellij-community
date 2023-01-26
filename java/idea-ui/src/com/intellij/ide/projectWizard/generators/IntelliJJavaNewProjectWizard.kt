@@ -3,9 +3,6 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
-import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.addSampleCode
-import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.contentRoot
-import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.javaData
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
 import com.intellij.ide.wizard.chain
@@ -60,18 +57,21 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
   }
 
-  private class AssetsStep(parent: Step) : AssetsJavaNewProjectWizardStep(parent) {
+  private class AssetsStep(
+    private val parent: Step
+  ) : AssetsJavaNewProjectWizardStep(parent) {
+
     override fun setupAssets(project: Project) {
-      outputDirectory = contentRoot
+      outputDirectory = parent.contentRoot
       addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
-      if (addSampleCode) {
-        withJavaSampleCodeAsset("src", "", javaData.generateOnboardingTips)
+      if (parent.addSampleCode) {
+        withJavaSampleCodeAsset("src", "", parent.generateOnboardingTips)
       }
     }
 
     override fun setupProject(project: Project) {
       super.setupProject(project)
-      if (javaData.generateOnboardingTips) {
+      if (parent.generateOnboardingTips) {
         prepareTipsInEditor(project)
       }
     }
