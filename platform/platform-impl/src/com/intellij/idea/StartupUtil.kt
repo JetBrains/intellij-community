@@ -17,7 +17,7 @@ import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
-import com.intellij.idea.SocketLock.ActivationStatus
+import com.intellij.idea.DirectoryLock.CannotActivateException
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -49,14 +49,13 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.io.BuiltInServer
 import sun.awt.AWTAutoShutdown
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
 import java.awt.dnd.DragSource
-import java.io.File
-import java.io.IOError
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -71,6 +70,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiConsumer
 import java.util.function.BiFunction
 import java.util.logging.ConsoleHandler
@@ -98,7 +98,8 @@ private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.ap
 private const val DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY = "idea.disable.implicit.read.on.edt"
 private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 
-private var socketLock: SocketLock? = null
+private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResult>> =
+  AtomicReference { CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"))) }
 
 // checked - using a Deferred type doesn't lead to loading this class on StartupUtil init
 internal var shellEnvDeferred: Deferred<Boolean?>? = null
@@ -113,21 +114,16 @@ fun CoroutineScope.startApplication(args: List<String>,
     // required for DisabledPluginsState and EUA
     ApplicationInfoImpl.getShadowInstance()
   }
-  val pathDeferred = async(CoroutineName("config path computing") + Dispatchers.IO) {
-    Pair(canonicalPath(PathManager.getConfigPath()), canonicalPath(PathManager.getSystemPath()))
-  }
 
   val isHeadless = AppMode.isHeadless()
 
-  val configImportNeededDeferred = async {
-    val (configPath, _) = pathDeferred.await()
-    !isHeadless && (!Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)))
+  val configImportNeededDeferred = if (isHeadless) CompletableDeferred(false) else async {
+    val configPath = PathManager.getConfigDir()
+    !Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
   }
 
-  val lockSystemDirsJob = lockSystemDirs(configImportNeededDeferred = configImportNeededDeferred,
-                                         pathDeferred = pathDeferred,
-                                         args = args,
-                                         mainScope = mainScope)
+  val lockSystemDirsJob = lockSystemDirs(configImportNeededDeferred, args)
+
   val consoleLoggerJob = configureJavaUtilLogging()
 
   launch {
@@ -175,7 +171,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   val initLafJob = initUi(initAwtToolkitAndEventQueueJob, preloadLafClassesJob)
 
   // system dirs checking must happen after locking system dirs
-  val checkSystemDirJob = checkSystemDirs(lockSystemDirsJob, pathDeferred)
+  val checkSystemDirJob = checkSystemDirs(lockSystemDirsJob)
 
   // log initialization must happen only after locking the system directory
   val logDeferred = setupLogger(consoleLoggerJob, checkSystemDirJob)
@@ -384,18 +380,8 @@ internal val isImplicitReadOnEDTDisabled: Boolean
   get() = java.lang.Boolean.getBoolean(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
 
 // called by the app after startup
-@Synchronized
-fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>) {
-  requireNotNull(socketLock) { "Not initialized yet" }.setCommandProcessor(processor)
-}
-
-// used externally by TeamCity plugin (as TeamCity cannot use modern API to support old IDE versions)
-@Synchronized
-@Deprecated("")
-fun getServer(): BuiltInServer? = socketLock?.getServer()
-
-@Synchronized
-fun getServerFutureAsync(): Deferred<BuiltInServer?> = socketLock?.serverFuture ?: CompletableDeferred(value = null)
+fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>) =
+  commandProcessor.set(processor)
 
 private fun runPreAppClass(log: Logger, args: List<String>) {
   val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY) ?: return
@@ -642,18 +628,17 @@ fun checkHiDPISettings() {
   }
 }
 
-private fun CoroutineScope.checkSystemDirs(lockSystemDirJob: Job, pathDeferred: Deferred<Pair<Path, Path>>): Job {
-  return launch {
+private fun CoroutineScope.checkSystemDirs(lockSystemDirJob: Job): Job =
+  launch {
     lockSystemDirJob.join()
 
-    val (configPath, systemPath) = pathDeferred.await()
+    val (configPath, systemPath) = PathManager.getConfigDir() to PathManager.getSystemDir()
     runActivity("system dirs checking") {
       if (!doCheckSystemDirs(configPath, systemPath)) {
         exitProcess(AppExitCodes.DIR_CHECK_FAILED)
       }
     }
   }
-}
 
 private suspend fun doCheckSystemDirs(configPath: Path, systemPath: Path): Boolean {
   if (configPath == systemPath) {
@@ -776,53 +761,43 @@ private fun checkDirectory(directory: Path,
   }
 }
 
-// returns `true` when `checkConfig` is requested and config import is needed
-private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job,
-                                          pathDeferred: Deferred<Pair<Path, Path>>,
-                                          args: List<String>,
-                                          mainScope: CoroutineScope): Job {
-  if (socketLock != null) {
-    throw AssertionError("Already initialized")
-  }
-
-  return launch(Dispatchers.IO) {
-    val (configPath, systemPath) = pathDeferred.await()
+private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job, args: List<String>): Job =
+  launch(Dispatchers.IO) {
+    // the "import-needed" check must be performed strictly before IDE directories are locked
     configImportNeededDeferred.join()
-    runActivity("system dirs locking") {
-      // this check must be performed before system directories are locked
-      socketLock = SocketLock(configPath, systemPath)
-      val status = socketLock!!.lockAndTryActivate(args = args, mainScope = mainScope)
-      when (status.first) {
-        ActivationStatus.NO_INSTANCE -> {
-          ShutDownTracker.getInstance().registerShutdownTask {
-            synchronized(AppStarter::class.java) {
-              socketLock!!.dispose()
-              socketLock = null
 
-              // Temporary hack to debug "Zombie" process issue. See CWM-7058
-              // TL;DR ShutDownTracker gets called but application still exists
-              if (AppMode.isRemoteDevHost()) {
-                val stacktrace = Thread.currentThread().stackTrace.joinToString("\n")
-                println("ShutDownTracker stacktrace:\n$stacktrace")
-              }
-            }
+    runActivity("system dirs locking") {
+      val directoryLock = DirectoryLock(PathManager.getConfigDir(), PathManager.getSystemDir()) { args ->
+        @Suppress("RAW_RUN_BLOCKING")
+        runBlocking {
+          commandProcessor.get()(args).await()
+        }
+      }
+
+      try {
+        val currentDir = Path.of(System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR) ?: "").toAbsolutePath()
+        when (val result = directoryLock.lockOrActivate(currentDir, args)) {
+          null -> ShutDownTracker.getInstance().registerShutdownTask {
+            directoryLock.dispose()
+          }
+          else -> {
+            result.message?.let { println(it) }
+            exitProcess(result.exitCode)
           }
         }
-        ActivationStatus.ACTIVATED -> {
-          val result = status.second!!
-          println(result.message ?: "Already running")
-          exitProcess(result.exitCode)
+      }
+      catch (e: CannotActivateException) {
+        val message = BootstrapBundle.message("bootstrap.error.cannot.activate.message", e.javaClass.simpleName, e.message)
+        if (args.isEmpty()) {
+          StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.cannot.activate.title"), message, true)
         }
-        ActivationStatus.CANNOT_ACTIVATE -> {
-          val message = BootstrapBundle.message("bootstrap.error.message.only.one.instance.of.0.can.be.run.at.a.time",
-                                                ApplicationNamesInfo.getInstance().productName)
-          StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.too.many.instances"), message, true)
-          exitProcess(AppExitCodes.INSTANCE_CHECK_FAILED)
+        else {
+          println(message)
         }
+        exitProcess(AppExitCodes.INSTANCE_CHECK_FAILED)
       }
     }
   }
-}
 
 private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob: Job): Deferred<Logger> {
   return async {
@@ -933,22 +908,6 @@ private fun patchSystem(isHeadless: Boolean) {
   }
 }
 
-fun canonicalPath(path: String): Path {
-  return try {
-    // `toRealPath` doesn't restore a canonical file name on case-insensitive UNIX filesystems
-    Path.of(File(path).canonicalPath)
-  }
-  catch (ignore: IOException) {
-    val file = Path.of(path)
-    try {
-      file.toAbsolutePath()
-    }
-    catch (ignored: IOError) {
-    }
-    file.normalize()
-  }
-}
-
 interface AppStarter {
   fun prepareStart(args: List<String>) {}
 
@@ -968,3 +927,13 @@ class Java11ShimImpl : Java11Shim() {
 
   override fun <E : Any> copyOfCollection(collection: Collection<E>): List<E> = java.util.List.copyOf(collection)
 }
+
+//<editor-fold desc="Deprecated stuff.">
+@Deprecated("Please use BuiltInServerManager instead")
+fun getServer(): BuiltInServer? {
+  val instance = BuiltInServerManager.getInstance()
+  instance.waitForStart()
+  val candidate = instance.serverDisposable
+  return if (candidate is BuiltInServer) candidate else null
+}
+//</editor-fold>
