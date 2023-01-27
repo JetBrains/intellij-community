@@ -383,7 +383,9 @@ public final class RefactoringUtil {
         body.delete();
       }
 
-      PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, true);
+      if (!targetClass.isInterface()) {
+        PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, true);
+      }
     }
 
     if (!targetClass.isInterface()) {

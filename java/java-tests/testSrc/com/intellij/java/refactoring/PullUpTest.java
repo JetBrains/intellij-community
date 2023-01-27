@@ -35,6 +35,10 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
   }
 
+  public void testNoAbstractModifiersOnInterfaceMethods() {
+    doTest(new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
+  }
+
   public void testQualifiedReference() {     // IDEADEV-25008
     doTest(new RefactoringTestUtil.MemberDescriptor("x", PsiField.class),
            new RefactoringTestUtil.MemberDescriptor("getX", PsiMethod.class),
