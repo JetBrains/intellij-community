@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.configurationStore.serialize
@@ -70,11 +70,12 @@ internal class WorkspaceModuleImporter(
                                  mavenModuleType: StandardMavenModuleType,
                                  dependencies: List<ModuleDependencyItem>,
                                  entitySource: EntitySource): ModuleEntity {
-    val moduleEntity = builder.addModuleEntity(moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
-    val externalSystemModuleOptionsEntity = ExternalSystemModuleOptionsEntity(entitySource) {
+    val moduleEntity = builder addEntity ModuleEntity(moduleName, dependencies, entitySource) {
+      this.type = ModuleTypeId.JAVA_MODULE
+    }
+    builder addEntity ExternalSystemModuleOptionsEntity(entitySource) {
       ExternalSystemData(moduleEntity, mavenProject.file.path, mavenModuleType).write(this)
     }
-    builder.addEntity(externalSystemModuleOptionsEntity)
     return moduleEntity
 
   }
@@ -194,11 +195,8 @@ internal class WorkspaceModuleImporter(
     sourceProvider: () -> EntitySource) {
     if (libraryId in builder) return
 
-    val libraryEntity = builder.addLibraryEntity(libraryId.name,
-                                                 libraryId.tableId,
-                                                 libraryRootsProvider(),
-                                                 emptyList(),
-                                                 sourceProvider())
+    val source = sourceProvider()
+    val libraryEntity = builder addEntity LibraryEntity(libraryId.name, libraryId.tableId, libraryRootsProvider(), source)
 
     if (mavenArtifact == null) return
     addMavenCoordinatesProperties(mavenArtifact, libraryEntity)
@@ -214,10 +212,10 @@ internal class WorkspaceModuleImporter(
                                                                                     mavenArtifact.classifier)).state) ?: return
     libPropertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG;
     val xmlTag = JDOMUtil.writeElement(libPropertiesElement)
-    builder.addEntity(LibraryPropertiesEntity(libraryKind.kindId, libraryEntity.entitySource) {
+    builder addEntity LibraryPropertiesEntity(libraryKind.kindId, libraryEntity.entitySource) {
       library = libraryEntity
       propertiesXmlTag = xmlTag
-    })
+    }
   }
 
   private val MavenArtifact.dependencyScope: ModuleDependencyItem.DependencyScope
@@ -250,8 +248,12 @@ internal class WorkspaceModuleImporter(
         compilerOutputUrlForTests = virtualFileUrlManager.fromPath(importFolderHolder.testOutputPath)
       }
     }
-    builder.addJavaModuleSettingsEntity(inheritCompilerOutput, false, compilerOutputUrl, compilerOutputUrlForTests,
-                                        languageLevel.name, moduleEntity, moduleEntity.entitySource)
+    builder addEntity JavaModuleSettingsEntity(inheritCompilerOutput, false, moduleEntity.entitySource) {
+      this.module = moduleEntity
+      this.compilerOutput = compilerOutputUrl
+      this.compilerOutputForTests = compilerOutputUrlForTests
+      this.languageLevelId = languageLevel.name
+    }
   }
 
   companion object {
