@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.toolwindow
 
 import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
@@ -113,7 +114,7 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
   }
 
   private fun findTabContent(reviewTab: T): Content? {
-    return contentManager.contents.find { it.getUserData(ReviewToolwindowUserDataKeys.REVIEW_TAB)?.id == reviewTab.id }
+    return contentManager.contents.find { it.getUserData(REVIEW_TAB)?.id == reviewTab.id }
   }
 
   private fun createReviewListContent(context: C): Content = createDisposableContent { content, contentCs ->
@@ -130,7 +131,7 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
 
     content.component = tabComponentFactory.createTabComponent(contentCs, context, reviewTab)
 
-    content.putUserData(ReviewToolwindowUserDataKeys.REVIEW_TAB, reviewTab)
+    content.putUserData(REVIEW_TAB, reviewTab)
   }
 
   private fun setEmptyContent() {
@@ -151,5 +152,10 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
       setDisposer(disposable)
       modifier(this, disposable.disposingMainScope())
     }
+  }
+
+  companion object {
+    @JvmStatic
+    private val REVIEW_TAB: Key<ReviewTab> = Key.create("com.intellij.collaboration.toolwindow.review.tab")
   }
 }
