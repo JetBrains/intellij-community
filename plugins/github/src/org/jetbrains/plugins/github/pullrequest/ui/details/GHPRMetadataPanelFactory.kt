@@ -57,8 +57,7 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
 
     override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHPullRequestRequestedReviewer>> {
       return GHUIUtil
-        .showChooserPopup(GithubBundle.message("pull.request.reviewers"), parentComponent,
-                          GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider),
+        .showChooserPopup(parentComponent, GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider),
                           model.reviewers, model.loadPotentialReviewers())
     }
 
@@ -77,8 +76,7 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
     override fun getItemComponent(item: GHUser) = createUserLabel(item)
 
     override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHUser>> = GHUIUtil
-      .showChooserPopup(GithubBundle.message("pull.request.assignees"), parentComponent,
-                        GHUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider),
+      .showChooserPopup(parentComponent, GHUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider),
                         model.assignees, model.loadPotentialAssignees())
 
     override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>) =
@@ -102,8 +100,7 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
     override fun getItemComponent(item: GHLabel) = createLabelLabel(item)
 
     override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHLabel>> =
-      GHUIUtil.showChooserPopup(GithubBundle.message("pull.request.labels"), parentComponent,
-                                GHUIUtil.SelectionListCellRenderer.Labels(),
+      GHUIUtil.showChooserPopup(parentComponent, GHUIUtil.SelectionListCellRenderer.Labels(),
                                 model.labels, model.loadAssignableLabels())
 
     override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>) =
