@@ -3,10 +3,15 @@ package com.intellij.collaboration.ui.toolwindow
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus
 
 object ReviewToolwindowDataKeys {
   @JvmStatic
   val REVIEW_TABS_CONTROLLER = DataKey.create<ReviewTabsController<*>>("com.intellij.collaboration.toolwindow.review.tabs.controller")
+
+  @ApiStatus.Internal
+  @JvmStatic
+  val REVIEW_TABS_CONTENT_SELECTOR = DataKey.create<ReviewToolwindowTabsContentSelector<*>>("com.intellij.collaboration.toolwindow.review.tabs.content.selector")
 }
 
 object ReviewToolwindowUserDataKeys {

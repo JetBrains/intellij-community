@@ -30,10 +30,19 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
 ) {
   private val cs = contentManager.disposingMainScope()
 
+  private val tabsSelector = object : ReviewToolwindowTabsContentSelector<T> {
+    override fun selectTab(reviewTab: T, whenSelected: (Content) -> Unit) {
+      val currentContext = projectContext.value ?: return
+      val content = selectExistedTabOrCreate(currentContext, reviewTab)
+      whenSelected(content)
+    }
+  }
+
   init {
     contentManager.addDataProvider {
       when {
         ReviewToolwindowDataKeys.REVIEW_TABS_CONTROLLER.`is`(it) -> reviewTabsController
+        ReviewToolwindowDataKeys.REVIEW_TABS_CONTENT_SELECTOR.`is`(it) -> tabsSelector
         else -> null
       }
     }
@@ -78,15 +87,17 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
     }
   }
 
-  private fun selectExistedTabOrCreate(context: C, reviewTab: T) {
+  private fun selectExistedTabOrCreate(context: C, reviewTab: T): Content {
     val existedTab = findTabContent(reviewTab)
     if (existedTab != null) {
       contentManager.setSelectedContent(existedTab)
+      return existedTab
     }
     else {
       val tabContent = createTabContent(context, reviewTab)
       contentManager.addContent(tabContent)
       contentManager.setSelectedContent(tabContent)
+      return tabContent
     }
   }
 
