@@ -12,6 +12,7 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBInsets
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -19,6 +20,7 @@ import javax.swing.JPanel
 /**
  * See [BrowsableTargetEnvironmentType.createBrowser]
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use overloaded method with Kotlin UI DSL 2 API")
 fun textFieldWithBrowseTargetButton(row: Row,
                                     targetType: BrowsableTargetEnvironmentType,

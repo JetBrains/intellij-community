@@ -14,32 +14,26 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.layout.PropertyBinding
 import com.intellij.util.PlatformUtils
 
 private val model: GeneralSettings
   get() = GeneralSettings.getInstance()
 
 private val myChkReopenLastProject: CheckboxDescriptor
-  get() = CheckboxDescriptor(IdeUICustomization.getInstance().projectMessage("checkbox.reopen.last.project.on.startup"),
-                             PropertyBinding(model::isReopenLastProject) { model.isReopenLastProject = it })
+  get() = CheckboxDescriptor(IdeUICustomization.getInstance().projectMessage("checkbox.reopen.last.project.on.startup"), model::isReopenLastProject)
 private val myConfirmExit: CheckboxDescriptor
-  get() = CheckboxDescriptor(IdeBundle.message("checkbox.confirm.application.exit"),
-                             PropertyBinding(model::isConfirmExit) { model.isConfirmExit = it })
+  get() = CheckboxDescriptor(IdeBundle.message("checkbox.confirm.application.exit"), model::isConfirmExit)
 private val mySkipWelcomeScreen
-  get() = CheckboxDescriptor(IdeBundle.message("checkbox.skip.welcome.screen"), PropertyBinding({ !model.isShowWelcomeScreen },
-                                                                                                { model.isShowWelcomeScreen = !it }))
+  get() = CheckboxDescriptor(IdeBundle.message("checkbox.skip.welcome.screen"),
+                             { !model.isShowWelcomeScreen }, { model.isShowWelcomeScreen = !it })
 private val myChkSyncOnFrameActivation
-  get() = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"),
-                             PropertyBinding(model::isSyncOnFrameActivation) { model.isSyncOnFrameActivation = it })
+  get() = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"), model::isSyncOnFrameActivation)
 private val myChkSaveOnFrameDeactivation
-  get() = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.on.frame.deactivation"),
-                             PropertyBinding(model::isSaveOnFrameDeactivation) { model.isSaveOnFrameDeactivation = it })
+  get() = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.on.frame.deactivation"), model::isSaveOnFrameDeactivation)
 private val myChkAutoSaveIfInactive
-  get() = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.automatically"),
-                             PropertyBinding(model::isAutoSaveIfInactive) { model.isAutoSaveIfInactive = it })
+  get() = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.automatically"), model::isAutoSaveIfInactive)
 private val myChkUseSafeWrite
-  get() = CheckboxDescriptor(IdeBundle.message("checkbox.safe.write"), PropertyBinding(model::isUseSafeWrite) { model.isUseSafeWrite = it })
+  get() = CheckboxDescriptor(IdeBundle.message("checkbox.safe.write"), model::isUseSafeWrite)
 
 internal val allOptionDescriptors: List<BooleanOptionDescription>
   get() {

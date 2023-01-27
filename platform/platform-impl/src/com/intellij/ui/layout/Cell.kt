@@ -45,6 +45,8 @@ import kotlin.reflect.KMutableProperty0
 @Deprecated("Use Kotlin UI DSL Version 2")
 annotation class CellMarker
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2 and MutableProperty")
 data class PropertyBinding<V>(val get: () -> V, val set: (V) -> Unit)
 
 @PublishedApi
