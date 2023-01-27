@@ -37,15 +37,17 @@ class OperationResult<out T : Any> private constructor(
         assert(enum >= 0)
         return -enum - 1
       }
-      return when (T::class) {
-        Int::class -> {
+      // XXX: kotlin can't properly optimize branch selection if T::class is used here (although T is reified),
+      // but using java class fixes it
+      return when (T::class.javaObjectType) {
+        Int::class.javaObjectType -> {
           assert(value as Int >= 0)
           value as Int
         }
-        Boolean::class -> {
+        Boolean::class.javaObjectType -> {
           if (value as Boolean) { 1 } else { 0 }
         }
-        Unit::class -> 0
+        Unit::class.javaObjectType -> 0
         else -> throw IllegalStateException("OperationResult is not designed to be used with type-parameter " + T::class.java.name)
       }
     }
@@ -57,15 +59,17 @@ class OperationResult<out T : Any> private constructor(
         val exceptionClass = deenumerator(enumVal)
         return fromException(exceptionClass)
       }
-      return when (T::class) {
-        Int::class -> {
+      // XXX: kotlin can't properly optimize branch selection if T::class is used here (although T is reified),
+      // but using java class fixes it
+      return when (T::class.javaObjectType) {
+        Int::class.javaObjectType -> {
           fromValue(data) as OperationResult<T>
         }
-        Boolean::class -> {
+        Boolean::class.javaObjectType -> {
           assert(data == 0 || data == 1)
           fromValue(data == 1) as OperationResult<T>
         }
-        Unit::class -> fromValue(Unit) as OperationResult<T>
+        Unit::class.javaObjectType -> fromValue(Unit) as OperationResult<T>
         else -> throw IllegalStateException("OperationResult is not designed to be used with type-parameter " + T::class.java.name)
       }
     }
