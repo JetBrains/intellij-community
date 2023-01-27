@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPullUp;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -201,8 +202,15 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       if (element instanceof PsiField) {
         return element.hasModifierProperty(PsiModifier.STATIC);
       }
-      if (element instanceof PsiMethod) {
-        final PsiMethod superClassMethod = findSuperMethod(currentSuperClass, (PsiMethod)element);
+      if (element instanceof PsiMethod method) {
+        PsiClass aClass = method.getContainingClass();
+        if (aClass != null && aClass.isEnum()) {
+          MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
+          if (HighlightMethodUtil.isEnumSyntheticMethod(methodSignature, aClass.getProject())) {
+            return false;
+          }
+        }
+        final PsiMethod superClassMethod = findSuperMethod(currentSuperClass, method);
         if (superClassMethod != null && !PsiUtil.isLanguageLevel8OrHigher(currentSuperClass)) return false;
         return !element.hasModifierProperty(PsiModifier.STATIC) || PsiUtil.isLanguageLevel8OrHigher(currentSuperClass);
       }

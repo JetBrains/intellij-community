@@ -13,7 +13,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -940,19 +939,6 @@ public final class GenericsHighlightUtil {
     }
 
     return null;
-  }
-
-  private static final MethodSignature ourValuesEnumSyntheticMethod = MethodSignatureUtil.createMethodSignature("values",
-                                                                                                                PsiType.EMPTY_ARRAY,
-                                                                                                                PsiTypeParameter.EMPTY_ARRAY,
-                                                                                                                PsiSubstitutor.EMPTY);
-
-  static boolean isEnumSyntheticMethod(@NotNull MethodSignature methodSignature, @NotNull Project project) {
-    if (methodSignature.equals(ourValuesEnumSyntheticMethod)) return true;
-    PsiType javaLangString = PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
-    MethodSignature valueOfMethod = MethodSignatureUtil.createMethodSignature("valueOf", new PsiType[]{javaLangString}, PsiTypeParameter.EMPTY_ARRAY,
-                                                                                    PsiSubstitutor.EMPTY);
-    return MethodSignatureUtil.areSignaturesErasureEqual(valueOfMethod, methodSignature);
   }
 
   static HighlightInfo.Builder checkTypeParametersList(@NotNull PsiTypeParameterList list, PsiTypeParameter @NotNull [] parameters, @NotNull LanguageLevel level) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -33,6 +34,7 @@ import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
@@ -63,6 +65,11 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class HighlightMethodUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
   private static final Logger LOG = Logger.getInstance(HighlightMethodUtil.class);
+
+  private static final MethodSignature ourValuesEnumSyntheticMethod = MethodSignatureUtil.createMethodSignature("values",
+                                                                                                                PsiType.EMPTY_ARRAY,
+                                                                                                                PsiTypeParameter.EMPTY_ARRAY,
+                                                                                                                PsiSubstitutor.EMPTY);
 
   private HighlightMethodUtil() { }
 
@@ -863,10 +870,9 @@ public final class HighlightMethodUtil {
       PsiClass qualifierClass = RefactoringChangeUtil.getQualifierClass(referenceToMethod);
       String qualifier = qualifierClass != null ? qualifierClass.getName() : null;
 
-      description = qualifier != null ? JavaErrorBundle
-        .message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), qualifier)
-                                      : JavaErrorBundle
-                      .message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list, true));
+      description = qualifier != null
+                    ? JavaErrorBundle.message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), qualifier)
+                    : JavaErrorBundle.message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list, true));
       highlightInfoType = HighlightInfoType.WRONG_REF;
     }
     else {
@@ -1321,8 +1327,7 @@ public final class HighlightMethodUtil {
       methodCount++;
     }
 
-    if (methodCount == 1 && aClass.isEnum() &&
-        GenericsHighlightUtil.isEnumSyntheticMethod(methodSignature, aClass.getProject())) {
+    if (methodCount == 1 && aClass.isEnum() && isEnumSyntheticMethod(methodSignature, aClass.getProject())) {
       methodCount++;
     }
     if (methodCount > 1) {
@@ -2256,6 +2261,14 @@ public final class HighlightMethodUtil {
       return info;
     }
     return null;
+  }
+
+  public static boolean isEnumSyntheticMethod(@NotNull MethodSignature methodSignature, @NotNull Project project) {
+    if (methodSignature.equals(ourValuesEnumSyntheticMethod)) return true;
+    PsiType javaLangString = PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
+    MethodSignature valueOfMethod = MethodSignatureUtil.createMethodSignature("valueOf", new PsiType[]{javaLangString},
+                                                                              PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+    return MethodSignatureUtil.areSignaturesErasureEqual(valueOfMethod, methodSignature);
   }
 
   private static final class ReturnModel {
