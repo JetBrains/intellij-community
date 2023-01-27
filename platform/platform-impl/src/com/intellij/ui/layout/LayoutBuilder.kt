@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.ButtonGroup
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder by builder.rootRow {
 
