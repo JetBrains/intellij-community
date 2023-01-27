@@ -156,6 +156,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotations.kt"));
         }
 
+        @TestMetadata("AnnotationsOnEnumEntry.kt")
+        public void testAnnotationsOnEnumEntry() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/AnnotationsOnEnumEntry.kt"));
+        }
+
         @TestMetadata("AnnotationsWithUnresolvedAnnotations.kt")
         public void testAnnotationsWithUnresolvedAnnotations() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/AnnotationsWithUnresolvedAnnotations.kt"));
@@ -219,6 +224,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
         @TestMetadata("exposedAnonymousType.kt")
         public void testExposedAnonymousType() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/exposedAnonymousType.kt"));
+        }
+
+        @TestMetadata("fieldModifiers.kt")
+        public void testFieldModifiers() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/fieldModifiers.kt"));
         }
 
         @TestMetadata("generics.kt")

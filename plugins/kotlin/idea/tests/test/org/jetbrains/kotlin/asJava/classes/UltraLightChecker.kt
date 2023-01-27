@@ -39,7 +39,10 @@ object UltraLightChecker {
     }
 
     fun getJavaFileForTest(testDataPath: String): File {
-        val expectedTextFile = KotlinTestUtils.replaceExtension(File(testDataPath), "java")
+        val testDataFile = File(testDataPath)
+        val expectedTextFile = KotlinTestUtils.replaceExtension(testDataFile, "descriptors.java").takeIf(File::exists)
+            ?: KotlinTestUtils.replaceExtension(testDataFile, "java")
+
         KotlinLightCodeInsightFixtureTestCaseBase.assertTrue(expectedTextFile.exists())
         return expectedTextFile
     }
