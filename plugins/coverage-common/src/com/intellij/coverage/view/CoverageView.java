@@ -335,13 +335,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     if (myViewExtension.supportFlattenPackages()) {
       actionGroup.add(new FlattenPackagesAction());
-      actionGroup.add(new HideFullyCoveredAction());
-    }
-    if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
-      actionGroup.add(new ShowOnlyModifiedAction());
-    }
-    else {
-      myStateBean.setShowOnlyModified(false);
     }
 
     installAutoScrollToSource(actionGroup);
@@ -351,6 +344,27 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     List<AnAction> extraActions = myViewExtension.createExtraToolbarActions();
     extraActions.forEach(actionGroup::add);
+
+
+    boolean hasFilters = false;
+    final DefaultActionGroup filtersActionGroup = new DefaultActionGroup();
+    if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
+      filtersActionGroup.add(new ShowOnlyModifiedAction());
+      hasFilters = true;
+    }
+    else {
+      myStateBean.setShowOnlyModified(false);
+    }
+    if (myViewExtension.supportFlattenPackages()) {
+      filtersActionGroup.add(new HideFullyCoveredAction());
+      hasFilters = true;
+    }
+    if (hasFilters) {
+      filtersActionGroup.setPopup(true);
+      filtersActionGroup.getTemplatePresentation().setIcon(AllIcons.General.Filter);
+      filtersActionGroup.getTemplatePresentation().setText("Filters");
+      actionGroup.add(filtersActionGroup);
+    }
 
     return actionGroup;
   }
@@ -461,9 +475,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private final class HideFullyCoveredAction extends ToggleAction {
 
     private HideFullyCoveredAction() {
-      super(CoverageBundle.messagePointer("coverage.hide.fully.covered.elements"),
-            CoverageBundle.messagePointer("coverage.hide.fully.covered.elements.comment"),
-            AllIcons.General.Filter);
+      super(CoverageBundle.messagePointer("coverage.hide.fully.covered.elements"));
     }
 
     @Override
@@ -486,9 +498,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private final class ShowOnlyModifiedAction extends ToggleAction {
 
     private ShowOnlyModifiedAction() {
-      super(CoverageBundle.messagePointer("coverage.show.only.modified.elements"),
-            CoverageBundle.messagePointer("coverage.show.only.modified.elements.comment"),
-            AllIcons.Vcs.Branch);
+      super(CoverageBundle.messagePointer("coverage.show.only.modified.elements"));
     }
 
     @Override
