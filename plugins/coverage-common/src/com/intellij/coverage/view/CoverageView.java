@@ -116,6 +116,14 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     setUpEmptyText(false, false);
     if (myTreeStructure.getRootElement() instanceof CoverageListRootNode root) {
       root.getState().afterChange(this, state -> {
+        if (state.myHasVCSFilteredChildren && myStateBean.isShowOnlyModified()
+            && myStateBean.isShowOnlyModifiedIsDefaultValue()) {
+          if (root.getChildren().isEmpty()) {
+            myStateBean.setShowOnlyModified(false);
+            resetView();
+            return Unit.INSTANCE;
+          }
+        }
         setUpEmptyText(state.myHasVCSFilteredChildren, state.myHasFullyCoveredChildren);
         return Unit.INSTANCE;
       });
@@ -236,15 +244,15 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       });
       emptyText.appendText(" " + CoverageBundle.message("coverage.view.edit.run.configuration.2"));
     }
-    if (hasVcsFiltered && myStateBean.myShowOnlyModified) {
+    if (hasVcsFiltered && myStateBean.isShowOnlyModified()) {
       emptyText.appendLine(CoverageBundle.message("coverage.show.unmodified.elements"), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
-        myStateBean.myShowOnlyModified = false;
+        myStateBean.setShowOnlyModified(false);
         resetView();
       });
     }
-    if (hasFullyCovered && myStateBean.myHideFullyCovered) {
+    if (hasFullyCovered && myStateBean.isHideFullyCovered()) {
       emptyText.appendLine(CoverageBundle.message("coverage.show.fully.covered.elements"), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
-        myStateBean.myHideFullyCovered = false;
+        myStateBean.setHideFullyCovered(false);
         resetView();
       });
     }
@@ -333,7 +341,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       actionGroup.add(new ShowOnlyModifiedAction());
     }
     else {
-      myStateBean.myShowOnlyModified = false;
+      myStateBean.setShowOnlyModified(false);
     }
 
     installAutoScrollToSource(actionGroup);
@@ -460,12 +468,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return myStateBean.myHideFullyCovered;
+      return myStateBean.isHideFullyCovered();
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.myHideFullyCovered = state;
+      myStateBean.setHideFullyCovered(state);
       resetView();
     }
 
@@ -485,12 +493,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return myStateBean.myShowOnlyModified;
+      return myStateBean.isShowOnlyModified();
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.myShowOnlyModified = state;
+      myStateBean.setShowOnlyModified(state);
       resetView();
     }
 

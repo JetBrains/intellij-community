@@ -138,10 +138,34 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     public boolean myFlattenPackages = false;
     public boolean myAutoScrollToSource = false;
     public boolean myAutoScrollFromSource = false;
-    public boolean myHideFullyCovered = false;
-    public boolean myShowOnlyModified = false;
     public List<Integer> myColumnSize;
     public boolean myAscendingOrder = true;
     public int mySortingColumn = 0;
+    private boolean myHideFullyCovered = false;
+    private boolean myShowOnlyModified = true;
+    private boolean myShowOnlyModifiedIsDefaultValue = true;
+
+    public boolean isHideFullyCovered() {
+      return myHideFullyCovered;
+    }
+
+    public void setHideFullyCovered(boolean hideFullyCovered) {
+      myHideFullyCovered = hideFullyCovered;
+    }
+
+    public boolean isShowOnlyModified() {
+      return myShowOnlyModified;
+    }
+
+    public void setShowOnlyModified(boolean showOnlyModified) {
+      if (myShowOnlyModified != showOnlyModified) {
+        myShowOnlyModifiedIsDefaultValue = false;
+      }
+      myShowOnlyModified = showOnlyModified;
+    }
+
+    public boolean isShowOnlyModifiedIsDefaultValue() {
+      return myShowOnlyModifiedIsDefaultValue;
+    }
   }
 }

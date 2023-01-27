@@ -98,19 +98,19 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   }
 
   protected List<AbstractTreeNode<?>> filterChildren(List<AbstractTreeNode<?>> nodes) {
-    if (myStateBean.myShowOnlyModified || myStateBean.myHideFullyCovered) {
+    if (myStateBean.isShowOnlyModified() || myStateBean.isHideFullyCovered()) {
       nodes = nodes.stream().filter((node) -> {
         boolean filtered = true;
         boolean isLeaf = false;
         if (node instanceof CoverageListNode coverageNode) {
           isLeaf = coverageNode.isLeaf();
           final boolean fullyCovered = coverageNode.isFullyCovered();
-          if (myStateBean.myHideFullyCovered && fullyCovered) {
+          if (myStateBean.isHideFullyCovered() && fullyCovered) {
             filtered = false;
             getRoot().setHasFullyCoveredChildren(true);
           }
         }
-        if (myStateBean.myShowOnlyModified && isLeaf) {
+        if (myStateBean.isShowOnlyModified() && isLeaf) {
           final FileStatus status = node.getFileStatus();
           final boolean isModified = status == FileStatus.MODIFIED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN;
           if (!isModified) {
