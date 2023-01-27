@@ -2,7 +2,10 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.ObservableProperty
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Not needed")
 interface PlaceholderGroup<K> : RowsRange {
 
   fun component(key: K, init: Panel.() -> Unit)
