@@ -1,8 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.statistics
 
+import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.internal.statistic.beans.*
+import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.beans.addBoolIfDiffers
+import com.intellij.internal.statistic.beans.addMetricIfDiffers
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId1
@@ -11,13 +14,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.ignore.IgnoredToExcludedSynchronizerConstants.ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
 import org.jetbrains.annotations.NonNls
-import java.util.*
 
 @NonNls
 class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  override fun getMetrics(project: Project): MutableSet<MetricEvent> {
+  override fun getMetrics(project: Project): Set<MetricEvent> {
+    if (!project.isTrusted()) return emptySet()
+
     val set = HashSet<MetricEvent>()
 
     val conf = VcsConfiguration.getInstance(project)
