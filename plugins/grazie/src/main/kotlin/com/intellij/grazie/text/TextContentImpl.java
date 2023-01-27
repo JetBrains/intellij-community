@@ -198,7 +198,7 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
     int end = findTokenIndex(rangeInText.getEndOffset(), offsets, true);
     for (int i = start; i <= end; i++) {
       TokenInfo token = tokens.get(i);
-      if (token instanceof PsiToken && ((PsiToken) token).unknown && rangeInText.containsOffset(offsets[i])) {
+      if (token instanceof PsiToken && ((PsiToken) token).kind == TokenKind.unknown && rangeInText.containsOffset(offsets[i])) {
         return true;
       }
     }
@@ -260,8 +260,10 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
 
     if (newTokens.isEmpty()) {
       PsiToken first = (PsiToken) tokens.get(0);
-      newTokens.add(new PsiToken("", first.psi, TextRange.from(first.rangeInPsi.getStartOffset(), 0),
-                                 first.unknown || ((PsiToken)tokens.get(tokens.size() - 1)).unknown));
+      TokenKind kind1 = first.kind;
+      TokenKind kind2 = ((PsiToken)tokens.get(tokens.size() - 1)).kind;
+      TokenKind mostUnknown = kind1.compareTo(kind2) > 0 ? kind1 : kind2;
+      newTokens.add(new PsiToken("", first.psi, TextRange.from(first.rangeInPsi.getStartOffset(), 0), mostUnknown));
     }
     
     return new TextContentImpl(domain, newTokens);
@@ -272,11 +274,11 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
 
     for (Exclusion range : ranges) {
       boolean emptyRange = range.start == range.end;
-      if (emptyRange && !range.markUnknown) continue;
+      if (emptyRange && range.kind == ExclusionKind.exclude) continue;
 
       int i1 = findTokenIndex(range.start, offsets, true);
       int i2 = findTokenIndex(range.end, offsets, emptyRange);
-      while (i2 > 0 && tokens.get(i2).length() == 0) i2--;
+      while (i2 > 0 && tokens.get(i2).length() == 0 && i2 > i1) i2--;
 
       for (int j = i1; j <= i2; j++) {
         List<Exclusion> affecting = affectingExclusions[j];
@@ -343,6 +345,60 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
     return excludeRanges(ContainerUtil.map(Text.allOccurrences(pattern, this), Exclusion::exclude));
   }
 
+  @Override
+  public int[] markupOffsets() {
+    List<Integer> result = new ArrayList<>();
+    int offset = 0;
+    for (TokenInfo token : tokens) {
+      if (token instanceof PsiToken pt && pt.kind == TokenKind.markup) {
+        result.add(offset);
+      }
+      offset += token.length();
+    }
+    return result.stream().mapToInt(i -> i).toArray();
+  }
+
+  @Override
+  public WithMarkup replaceMarkupWith(char c) {
+    StringBuilder sb = new StringBuilder(toString());
+    int[] offsets = markupOffsets();
+    for (int i = offsets.length - 1; i >= 0; i--) {
+      sb.insert(offsets[i], c);
+    }
+    return new WithMarkup() {
+      @Override
+      public int offsetToOriginal(int offsetWithMarkup) {
+        int result = offsetWithMarkup;
+        for (int offset : offsets) {
+          if (offset >= result) break;
+          result--;
+        }
+        return result;
+      }
+
+      @Override
+      public int length() {
+        return sb.length();
+      }
+
+      @Override
+      public char charAt(int index) {
+        return sb.charAt(index);
+      }
+
+      @NotNull
+      @Override
+      public CharSequence subSequence(int start, int end) {
+        return sb.subSequence(start, end);
+      }
+
+      @Override
+      public String toString() {
+        return sb.toString();
+      }
+    };
+  }
+
   private static boolean isSpace(String text, int start) {
     return Character.isWhitespace(text.charAt(start)) || Character.isSpaceChar(text.charAt(start));
   }
@@ -354,14 +410,14 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
   }
 
   private static TokenInfo mergePsiTokens(PsiToken t1, PsiToken t2) {
-    if (t1.unknown && t2.unknown) {
-      return t1;
+    if (t1.kind != TokenKind.text && t2.kind != TokenKind.text) {
+      return t1.kind.compareTo(t2.kind) > 0 ? t1 : t2;
     }
-    if (!t1.unknown && !t2.unknown) {
+    if (t1.kind == TokenKind.text && t2.kind == TokenKind.text) {
       if (t1.length() == 0) return t2;
       if (t2.length() == 0) return t1;
       if (t1.psi == t2.psi && t1.rangeInPsi.getStartOffset() + t1.length() == t2.rangeInPsi.getStartOffset()) {
-        return new PsiToken(t1.text + t2.text, t1.psi, t1.rangeInPsi.union(t2.rangeInPsi), false);
+        return new PsiToken(t1.text + t2.text, t1.psi, t1.rangeInPsi.union(t2.rangeInPsi), TokenKind.text);
       }
     }
     return null;
@@ -384,20 +440,22 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
     }
   }
 
+  enum TokenKind { text, markup, unknown }
+
   static class PsiToken extends TokenInfo {
     final PsiElement psi;
     final TextRange rangeInPsi;
     final TextRange rangeInFile;
-    final boolean unknown;
+    final TokenKind kind;
 
-    PsiToken(String text, PsiElement psi, TextRange rangeInPsi, boolean unknown) {
+    PsiToken(String text, PsiElement psi, TextRange rangeInPsi, TokenKind kind) {
       super(text);
       this.psi = psi;
       this.rangeInPsi = rangeInPsi;
       this.rangeInFile = rangeInPsi.shiftRight(psi.getTextRange().getStartOffset());
-      this.unknown = unknown;
+      this.kind = kind;
       assert rangeInPsi.getLength() == text.length();
-      assert !unknown || rangeInPsi.getLength() == 0;
+      assert kind == TokenKind.text || rangeInPsi.getLength() == 0;
     }
 
     private int psiStart() {
@@ -406,8 +464,8 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
 
     private PsiToken withRange(TextRange range) {
       assert range.getLength() > 0;
-      assert !unknown;
-      return new PsiToken(range.shiftLeft(rangeInPsi.getStartOffset()).substring(text), psi, range, false);
+      assert kind == TokenKind.text;
+      return new PsiToken(range.shiftLeft(rangeInPsi.getStartOffset()).substring(text), psi, range, kind);
     }
 
     @Override
@@ -415,17 +473,17 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
       if (this == o) return true;
       if (!(o instanceof PsiToken)) return false;
       PsiToken psiToken = (PsiToken) o;
-      return unknown == psiToken.unknown && psi.equals(psiToken.psi) && (unknown || rangeInPsi.equals(psiToken.rangeInPsi));
+      return kind == psiToken.kind && psi.equals(psiToken.psi) && (kind != TokenKind.text || rangeInPsi.equals(psiToken.rangeInPsi));
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(psi, rangeInPsi, unknown);
+      return Objects.hash(psi, rangeInPsi, kind);
     }
 
     @Override
     public String toString() {
-      return unknown ? "?" : super.toString();
+      return kind == TokenKind.markup ? "*" : kind == TokenKind.unknown ? "?" : super.toString();
     }
 
     private List<PsiToken> splitToken(int tokenStart, List<Exclusion> affecting) {
@@ -441,8 +499,9 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
         if (range.start > prevEnd) {
           shreds.add(withRange(TextRange.from(startInPsi + prevEnd - tokenStart, range.start - prevEnd)));
         }
-        if (range.markUnknown) {
-          shreds.add(new PsiToken("", psi, TextRange.from(startInPsi + range.start - tokenStart, 0), true));
+        if (range.kind != ExclusionKind.exclude) {
+          var tokenKind = range.kind == ExclusionKind.markup ? TextContentImpl.TokenKind.markup : TextContentImpl.TokenKind.unknown;
+          shreds.add(new PsiToken("", psi, TextRange.from(startInPsi + range.start - tokenStart, 0), tokenKind));
         }
         prevEnd = range.end;
       }
