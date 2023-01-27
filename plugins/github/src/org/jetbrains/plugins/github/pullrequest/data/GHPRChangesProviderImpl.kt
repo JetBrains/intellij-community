@@ -95,15 +95,8 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
           if (afterPath != null) {
             fileHistoriesByLastKnownFilePath[afterPath] = fileHistory
           }
-          val firstKnownPath = fileHistory.firstKnownFilePath
 
-          val cumulativePatch = findPatchByFilePaths(commitWithPatches.cumulativePatches, firstKnownPath, afterPath) as? TextFilePatch
-          if (cumulativePatch == null) {
-            LOG.debug("Unable to find cumulative patch for commit patch")
-            continue
-          }
-
-          diffDataByChange[change] = GHPRChangeDiffData.Commit(commitSha, patch.filePath, patch, cumulativePatch, fileHistory)
+          diffDataByChange[change] = GHPRChangeDiffData.Commit(commitSha, patch.filePath, patch, fileHistory)
         }
       }
       changesByCommits[commitWithPatches.commit.oid] = commitChanges
@@ -165,9 +158,6 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
 
     return beforeName?.let { VcsUtil.getFilePath(repository.root, it) } to afterName?.let { VcsUtil.getFilePath(repository.root, it) }
   }
-
-  private fun findPatchByFilePaths(patches: Collection<FilePatch>, beforePath: String?, afterPath: String?): FilePatch? =
-    patches.find { (afterPath != null && it.afterName == afterPath) || (afterPath == null && it.beforeName == beforePath) }
 
   companion object {
     private val LOG = logger<GHPRChangesProvider>()

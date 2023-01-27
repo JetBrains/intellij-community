@@ -75,7 +75,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
 
     loadReviewThreads(viewer)
 
-    val createCommentParametersHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath, diffData.linesMapper)
+    val createCommentParametersHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath)
     val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
                                                            viewer, repositoryDataService.remoteCoordinates.repository,
                                                            reviewDataProvider,

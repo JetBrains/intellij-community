@@ -87,19 +87,6 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
   override fun canComment() = reviewService.canComment()
 
   override fun addComment(progressIndicator: ProgressIndicator,
-                          reviewId: String,
-                          body: String,
-                          commitSha: String,
-                          fileName: String,
-                          diffLine: Int): CompletableFuture<out GHPullRequestReviewComment> {
-    val future =
-      reviewService.addComment(progressIndicator, reviewId, body, commitSha, fileName, diffLine)
-
-    pendingReviewRequestValue.overrideProcess(future.successOnEdt { it.pullRequestReview })
-    return future.dropReviews().notifyReviews()
-  }
-
-  override fun addComment(progressIndicator: ProgressIndicator,
                           replyToCommentId: String,
                           body: String): CompletableFuture<out GHPullRequestReviewComment> {
     return pendingReviewRequestValue.value.thenCompose {

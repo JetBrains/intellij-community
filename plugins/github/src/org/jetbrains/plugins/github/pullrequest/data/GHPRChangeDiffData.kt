@@ -7,7 +7,7 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
 sealed class GHPRChangeDiffData(val commitSha: String, val filePath: String,
-                                private val patch: TextFilePatch, private val cumulativePatch: TextFilePatch,
+                                private val patch: TextFilePatch,
                                 protected val fileHistory: GHPRFileHistory) {
 
   val diffRanges: List<Range> by lazy(LazyThreadSafetyMode.NONE) {
@@ -16,20 +16,13 @@ sealed class GHPRChangeDiffData(val commitSha: String, val filePath: String,
   val diffRangesWithoutContext: List<Range> by lazy(LazyThreadSafetyMode.NONE) {
     patch.hunks.map(GHPatchHunkUtil::getChangeOnlyRanges).flatten()
   }
-  val linesMapper: GHPRChangedFileLinesMapper by lazy(LazyThreadSafetyMode.NONE) {
-    GHPRChangedFileLinesMapperImpl(cumulativePatch)
-  }
 
   fun contains(commitSha: String, filePath: String): Boolean {
     return fileHistory.contains(commitSha, filePath)
   }
 
-  class Commit(commitSha: String, filePath: String,
-               patch: TextFilePatch, cumulativePatch: TextFilePatch,
-               fileHistory: GHPRFileHistory)
-    : GHPRChangeDiffData(commitSha, filePath,
-                         patch, cumulativePatch,
-                         fileHistory) {
+  class Commit(commitSha: String, filePath: String, patch: TextFilePatch, fileHistory: GHPRFileHistory)
+    : GHPRChangeDiffData(commitSha, filePath, patch, fileHistory) {
 
     fun mapPosition(fromCommitSha: String,
                     side: Side, line: Int): Pair<Side, Int>? {
@@ -86,10 +79,6 @@ sealed class GHPRChangeDiffData(val commitSha: String, val filePath: String,
     private fun reverseRange(range: Range) = Range(range.start2, range.end2, range.start1, range.end1)
   }
 
-  class Cumulative(commitSha: String, filePath: String,
-                   patch: TextFilePatch,
-                   fileHistory: GHPRFileHistory)
-    : GHPRChangeDiffData(commitSha, filePath,
-                         patch, patch,
-                         fileHistory)
+  class Cumulative(commitSha: String, filePath: String, patch: TextFilePatch, fileHistory: GHPRFileHistory)
+    : GHPRChangeDiffData(commitSha, filePath, patch, fileHistory)
 }
