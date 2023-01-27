@@ -6,6 +6,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.PastParticiple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -659,6 +661,16 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
         if ("map".equals(methodName) || "flatMap".equals(methodName) || "filter".equals(methodName)) {
           if (isJavaUtilMethodCall((PsiMethodCallExpression)expr)) {
+            if (Registry.is("add.past.participle.to.suggested.names")) {
+              String[] words = NameUtilCore.nameToWords(methodName);
+              if (words.length == 1) {
+                return new NamesByExprInfo(methodName, PastParticiple.pastParticiple(methodName));
+              }
+              else {
+                words[1] = PastParticiple.pastParticiple(words[1]);
+                return new NamesByExprInfo(methodName, words[0], StringUtil.join(words));
+              }
+            }
             return NamesByExprInfo.EMPTY;
           }
         }
@@ -684,7 +696,13 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             }
           }
           else if (words.length == 1 || useAllMethodNames) {
-            return new NamesByExprInfo(methodName);
+            if (Registry.is("add.past.participle.to.suggested.names") && !"equals".equals(firstWord)) {
+              words[0] = PastParticiple.pastParticiple(firstWord);
+              return new NamesByExprInfo(methodName, words[0], StringUtil.join(words));
+            }
+            else {
+              return new NamesByExprInfo(methodName);
+            }
           }
         }
       }
