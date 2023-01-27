@@ -45,29 +45,43 @@ internal fun populateModuleDependenciesWithDependenciesContainer(
 ) {
     mppModel.dependencyMap.values.modifyDependenciesOnMppModules(ideProject)
 
+    val extensionContext = KotlinMppGradleProjectResolverExtension.Context(mppModel, resolverCtx, gradleModule, ideModule)
+    val extension = KotlinMppGradleProjectResolverExtension.instance
+
     mppModel.sourceSetsByName.values.forEach { sourceSet ->
         val sourceSetModuleIde = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
         val sourceSetDataNode = ideModule.findSourceSetNode(sourceSetModuleIde) ?: return@forEach
+        val sourceSetDependencies = dependencies[sourceSet.name]
+
+        /* Call into extension points, skipping dependency population of source set if instructed */
+        if (
+            extension.beforePopulateSourceSetDependencies(
+                extensionContext, sourceSetDataNode, sourceSet, sourceSetDependencies
+            ) == KotlinMppGradleProjectResolverExtension.Result.Skip
+        ) return@forEach
 
         /*
         Some dependencies are represented as IdeaKotlinProjectArtifactDependency.
         Such dependencies can be resolved to the actual source sets that built this artifact.
          */
         val projectArtifactDependencyResolver = KotlinProjectArtifactDependencyResolver()
-        val resolvedDependencies = dependencies[sourceSet.name].flatMap { dependency ->
+        val resolvedSourceSetDependencies = sourceSetDependencies.flatMap { dependency ->
             if (dependency is IdeaKotlinProjectArtifactDependency)
                 projectArtifactDependencyResolver.resolve(ideProject, sourceSetDataNode, dependency)
             else listOf(dependency)
-        }
+        }.toSet()
 
-        /*
-        Add each resolved dependency
-         */
-        resolvedDependencies.forEachIndexed { index, dependency ->
+        /* Add each resolved dependency */
+        val createdDependencyNodes = resolvedSourceSetDependencies.flatMapIndexed { index, dependency ->
             sourceSetDataNode.addDependency(dependency)
                 /* The classpath order of the dependencies is given by the order they were sent by the Kotlin Gradle Plugin */
-                .forEach { it.data.setOrder(index) }
+                .onEach { it.data.setOrder(index) }
         }
+
+        /* Calling into extensions, notifying them about all populated dependencies */
+        extension.afterPopulateSourceSetDependencies(
+            extensionContext, sourceSetDataNode, sourceSet, resolvedSourceSetDependencies, createdDependencyNodes
+        )
     }
 }
 

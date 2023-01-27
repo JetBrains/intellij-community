@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.utils.predictedProductionS
 import org.jetbrains.kotlin.idea.gradleJava.configuration.*
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.resourceType
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.sourceType
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension.Result.Skip
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationImpl
@@ -261,6 +262,9 @@ private fun createMppGradleSourceSetDataNodes(
     val mainModuleConfigPath = mainModuleData.linkedExternalProjectPath
     val mainModuleFileDirectoryPath = mainModuleData.moduleFileDirectoryPath
 
+    val extensionContext = KotlinMppGradleProjectResolverExtension.Context(mppModel, resolverCtx, gradleModule, mainModuleNode)
+    val extensionInstance = KotlinMppGradleProjectResolverExtension.instance
+
     val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java) ?: return
     val projectDataNode = ExternalSystemApiUtil.findParent(mainModuleNode, ProjectKeys.PROJECT) ?: return
 
@@ -293,10 +297,9 @@ private fun createMppGradleSourceSetDataNodes(
             if (existingSourceSetDataNode?.kotlinSourceSetData?.sourceSetInfo != null) continue
 
             /* Execute extensions and do not create any GradleSourceSetData node if any extension wants us to Skip */
-            if (KotlinMppGradleProjectResolverExtension.beforeMppGradleSourceSetDataNodeCreation(
-                    mppModel, resolverCtx, gradleModule, mainModuleNode, compilation
-                ) == KotlinMppGradleProjectResolverExtension.Result.Skip
-            ) continue
+            if (extensionInstance.beforeMppGradleSourceSetDataNodeCreation(extensionContext, compilation) == Skip) {
+                continue
+            }
 
             compilationIds.add(moduleId)
 
@@ -355,9 +358,7 @@ private fun createMppGradleSourceSetDataNodes(
             }
 
             /* Execution all extensions after we freshly created a GradleSourceSetData node for the given compilation */
-            KotlinMppGradleProjectResolverExtension.afterMppGradleSourceSetDataNodeCreated(
-                mppModel, resolverCtx, gradleModule, mainModuleNode, compilation, compilationDataNode
-            )
+            extensionInstance.afterMppGradleSourceSetDataNodeCreated(extensionContext, compilation, compilationDataNode)
         }
 
         targetData.moduleIds = compilationIds
@@ -374,10 +375,9 @@ private fun createMppGradleSourceSetDataNodes(
         if (existingSourceSetDataNode?.kotlinSourceSetData != null) continue
 
         /* Execute extensions and do not create any GradleSourceSetData node if any extension wants us to Skip */
-        if (KotlinMppGradleProjectResolverExtension.beforeMppGradleSourceSetDataNodeCreation(
-                mppModel, resolverCtx, gradleModule, mainModuleNode, sourceSet
-            ) == KotlinMppGradleProjectResolverExtension.Result.Skip
-        ) continue
+        if (extensionInstance.beforeMppGradleSourceSetDataNodeCreation(extensionContext, sourceSet) == Skip) {
+            continue
+        }
 
         val sourceSetData = existingSourceSetDataNode?.data ?: createGradleSourceSetData(
             sourceSet, gradleModule, mainModuleNode, resolverCtx
@@ -428,9 +428,7 @@ private fun createMppGradleSourceSetDataNodes(
         }
 
         /* Execution all extensions after we freshly created a GradleSourceSetData node for the given compilation */
-        KotlinMppGradleProjectResolverExtension.afterMppGradleSourceSetDataNodeCreated(
-            mppModel, resolverCtx, gradleModule, mainModuleNode, sourceSet, sourceSetDataNode
-        )
+        extensionInstance.afterMppGradleSourceSetDataNodeCreated(extensionContext, sourceSet, sourceSetDataNode)
     }
 }
 
