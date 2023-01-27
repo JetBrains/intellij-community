@@ -22,12 +22,15 @@ interface GHPRChangesService {
     : CompletableFuture<Pair<GHCommit, Graph<GHCommit>>>
 
   @CalledInAny
-  fun loadCommitDiffs(progressIndicator: ProgressIndicator, baseRefOid: String, oid: String): CompletableFuture<Pair<String, String>>
+  fun loadCommitDiff(progressIndicator: ProgressIndicator, baseRefOid: String, oid: String): CompletableFuture<String>
 
   @CalledInAny
   fun loadMergeBaseOid(progressIndicator: ProgressIndicator, baseRefOid: String, headRefOid: String): CompletableFuture<String>
 
   @CalledInAny
-  fun createChangesProvider(progressIndicator: ProgressIndicator, mergeBaseOid: String, commits: Pair<GHCommit, Graph<GHCommit>>)
+  fun createChangesProvider(progressIndicator: ProgressIndicator,
+                            pullRequestId: GHPRIdentifier,
+                            mergeBaseOid: String,
+                            commits: Pair<GHCommit, Graph<GHCommit>>)
     : CompletableFuture<GHPRChangesProvider>
 }

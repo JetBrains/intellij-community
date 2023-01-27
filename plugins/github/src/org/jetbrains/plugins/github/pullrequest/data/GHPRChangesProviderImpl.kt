@@ -1,30 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import com.google.common.graph.Graph
-import com.google.common.graph.Traverser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
-import git4idea.repo.GitRepository
-import it.unimi.dsi.fastutil.Hash
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
-import org.jetbrains.plugins.github.api.data.GHCommit
 import java.util.*
 
-class GHPRChangesProviderImpl(private val repository: GitRepository,
-                              private val mergeBaseRef: String,
-                              commitsGraph: Graph<GHCommit>,
-                              private val lastCommit: GHCommit,
-                              patchesByCommits: Map<GHCommit, Pair<List<FilePatch>, List<FilePatch>>>)
+class GHPRChangesProviderImpl(private val project: Project,
+                              private val vcsRoot: VirtualFile,
+                              private val mergeBaseSha: String,
+                              commits: List<GHCommitWithPatches>,
+                              private val headPatches: List<FilePatch>)
   : GHPRChangesProvider {
+
+  private val headSha = commits.last().sha
 
   override val changes = mutableListOf<Change>()
   override val changesByCommits = mutableMapOf<String, List<Change>>()
@@ -49,38 +47,33 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
   }
 
   init {
-    val commitsBySha = LinkedHashMap<String, GHCommitWithPatches>()
-    Traverser.forGraph(commitsGraph).depthFirstPostOrder(lastCommit).forEach {
-      val (commitPatches, cumulativePatches) = patchesByCommits.getValue(it)
-      commitsBySha[it.oid] = GHCommitWithPatches(it, commitPatches, cumulativePatches)
-    }
+    val commitsHashes = commits.mapTo(mutableSetOf()) { it.sha }
 
     // One or more merge commit for changes that are included into PR (master merges are ignored)
-    linearHistory = commitsBySha.values.all { commit ->
-      commit.parents.count { commitsBySha.contains(it) } <= 1
+    linearHistory = commits.all { commit ->
+      commit.parents.count { commitsHashes.contains(it) } <= 1
     }
 
     if (linearHistory) {
-      initForLinearHistory(commitsBySha)
+      initForLinearHistory(commits)
     }
     else {
-      initForHistoryWithMerges(commitsBySha)
+      initForHistoryWithMerges(commits)
     }
   }
 
-  private fun initForLinearHistory(commitsBySha: Map<String, GHCommitWithPatches>) {
-    val commitsWithPatches = commitsBySha.values
+  private fun initForLinearHistory(commits: List<GHCommitWithPatches>) {
     val fileHistoriesByLastKnownFilePath = mutableMapOf<String, GHPRMutableLinearFileHistory>()
 
-    var previousCommitSha = mergeBaseRef
+    var previousCommitSha = mergeBaseSha
 
-    val commitsHashes = commitsWithPatches.map { it.sha }
-    for (commitWithPatches in commitsWithPatches) {
+    val commitsHashes = commits.map { it.sha }
+    for (commitWithPatches in commits) {
 
       val commitSha = commitWithPatches.sha
       val commitChanges = mutableListOf<Change>()
 
-      for (patch in commitWithPatches.commitPatches) {
+      for (patch in commitWithPatches.patches) {
         val change = createChangeFromPatch(previousCommitSha, commitSha, patch)
         commitChanges.add(change)
 
@@ -99,7 +92,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
           diffDataByChange[change] = GHPRChangeDiffData.Commit(commitSha, patch.filePath, patch, fileHistory)
         }
       }
-      changesByCommits[commitWithPatches.commit.oid] = commitChanges
+      changesByCommits[commitWithPatches.sha] = commitChanges
       previousCommitSha = commitSha
     }
 
@@ -107,8 +100,8 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
       it.value.lastKnownFilePath
     }
 
-    for (patch in commitsBySha.getValue(lastCommit.oid).cumulativePatches) {
-      val change = createChangeFromPatch(mergeBaseRef, lastCommit.oid, patch)
+    for (patch in headPatches) {
+      val change = createChangeFromPatch(mergeBaseSha, headSha, patch)
       changes.add(change)
 
       if (patch is TextFilePatch) {
@@ -119,32 +112,31 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
           continue
         }
 
-        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(lastCommit.oid, filePath, patch, fileHistory)
+        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(headSha, filePath, patch, fileHistory)
       }
     }
   }
 
-  private fun initForHistoryWithMerges(commitsBySha: Map<String, GHCommitWithPatches>) {
-    for (commitWithPatches in commitsBySha.values) {
-      val previousCommitSha = commitWithPatches.parents.find { commitsBySha.contains(it) } ?: mergeBaseRef
+  private fun initForHistoryWithMerges(commits: List<GHCommitWithPatches>) {
+    val commitsHashes = commits.mapTo(mutableSetOf()) { it.sha }
+    for (commitWithPatches in commits) {
+      val previousCommitSha = commitWithPatches.parents.find { commitsHashes.contains(it) } ?: mergeBaseSha
       val commitSha = commitWithPatches.sha
-      val commitChanges = commitWithPatches.commitPatches.map { createChangeFromPatch(previousCommitSha, commitSha, it) }
-      changesByCommits[commitWithPatches.commit.oid] = commitChanges
+      val commitChanges = commitWithPatches.patches.map { createChangeFromPatch(previousCommitSha, commitSha, it) }
+      changesByCommits[commitWithPatches.sha] = commitChanges
     }
 
-    for (patch in commitsBySha.getValue(lastCommit.oid).cumulativePatches) {
-      val change = createChangeFromPatch(mergeBaseRef, lastCommit.oid, patch)
+    for (patch in headPatches) {
+      val change = createChangeFromPatch(mergeBaseSha, headSha, patch)
       changes.add(change)
 
       if (patch is TextFilePatch) {
-        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(lastCommit.oid, patch.filePath, patch,
-                                                                 GHPRGraphFileHistory(commitsBySha, lastCommit, patch.filePath))
+        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(headSha, patch.filePath, patch, GHPRSinglePatchFileHistory(patch))
       }
     }
   }
 
   private fun createChangeFromPatch(beforeRef: String, afterRef: String, patch: FilePatch): Change {
-    val project = repository.project
     val (beforePath, afterPath) = getPatchPaths(patch)
     val beforeRevision = beforePath?.let { GitContentRevision.createRevision(it, GitRevisionNumber(beforeRef), project) }
     val afterRevision = afterPath?.let { GitContentRevision.createRevision(it, GitRevisionNumber(afterRef), project) }
@@ -156,7 +148,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
     val beforeName = if (patch.isNewFile) null else patch.beforeName
     val afterName = if (patch.isDeletedFile) null else patch.afterName
 
-    return beforeName?.let { VcsUtil.getFilePath(repository.root, it) } to afterName?.let { VcsUtil.getFilePath(repository.root, it) }
+    return beforeName?.let { VcsUtil.getFilePath(vcsRoot, it) } to afterName?.let { VcsUtil.getFilePath(vcsRoot, it) }
   }
 
   companion object {

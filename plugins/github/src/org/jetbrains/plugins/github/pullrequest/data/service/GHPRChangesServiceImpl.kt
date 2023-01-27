@@ -24,6 +24,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
+import org.jetbrains.plugins.github.pullrequest.data.GHCommitWithPatches
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProviderImpl
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -54,14 +55,10 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
       }).loadAll(indicator).map { it.commit }.let(::buildCommitsTree)
     }.logError(LOG, "Error occurred while loading commits for PR ${pullRequestId.number}")
 
-  override fun loadCommitDiffs(progressIndicator: ProgressIndicator, baseRefOid: String, oid: String) =
+  override fun loadCommitDiff(progressIndicator: ProgressIndicator, baseRefOid: String, oid: String) =
     progressManager.submitIOTask(progressIndicator) {
-      val commitDiff = requestExecutor.execute(it,
-                                               GithubApiRequests.Repos.Commits.getDiff(ghRepository, oid))
-
-      val cumulativeDiff = requestExecutor.execute(it,
-                                                   GithubApiRequests.Repos.Commits.getDiff(ghRepository, baseRefOid, oid))
-      commitDiff to cumulativeDiff
+      requestExecutor.execute(it,
+                              GithubApiRequests.Repos.Commits.getDiff(ghRepository, oid))
     }.logError(LOG, "Error occurred while loading diffs for commit $oid")
 
   override fun loadMergeBaseOid(progressIndicator: ProgressIndicator, baseRefOid: String, headRefOid: String) =
@@ -70,25 +67,34 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
                               GithubApiRequests.Repos.Commits.compare(ghRepository, baseRefOid, headRefOid)).mergeBaseCommit.sha
     }.logError(LOG, "Error occurred while calculating merge base for $baseRefOid and $headRefOid")
 
-  override fun createChangesProvider(progressIndicator: ProgressIndicator, mergeBaseOid: String, commits: Pair<GHCommit, Graph<GHCommit>>) =
-    progressManager.submitIOTask(progressIndicator) {
+  override fun createChangesProvider(progressIndicator: ProgressIndicator,
+                                     pullRequestId: GHPRIdentifier,
+                                     mergeBaseOid: String,
+                                     commits: Pair<GHCommit, Graph<GHCommit>>): CompletableFuture<GHPRChangesProvider> {
+    val prDiffRequest = progressManager.submitIOTask(ProgressWrapper.wrap(progressIndicator)) {
+      requestExecutor.execute(it, GithubApiRequests.Repos.PullRequests.getDiff(ghRepository, pullRequestId.number))
+    }
+
+    return progressManager.submitIOTask(ProgressWrapper.wrap(progressIndicator)) {
       val (lastCommit, graph) = commits
-      val commitsDiffsRequests = mutableMapOf<GHCommit, CompletableFuture<Pair<String, String>>>()
+      val commitsDiffsRequests = LinkedHashMap<GHCommit, CompletableFuture<String>>()
       for (commit in Traverser.forGraph(graph).depthFirstPostOrder(lastCommit)) {
-        commitsDiffsRequests[commit] = loadCommitDiffs(ProgressWrapper.wrap(it), mergeBaseOid, commit.oid)
+        commitsDiffsRequests[commit] = loadCommitDiff(ProgressWrapper.wrap(it), mergeBaseOid, commit.oid)
       }
 
-      CompletableFuture.allOf(*commitsDiffsRequests.values.toTypedArray()).joinCancellable()
-      val patchesByCommits = commitsDiffsRequests.mapValues { (_, request) ->
-        val diffs = request.joinCancellable()
-        val commitPatches = readAllPatches(diffs.first)
-        val cumulativePatches = readAllPatches(diffs.second)
-        commitPatches to cumulativePatches
+      val commitsList = commitsDiffsRequests.map {(commit, request) ->
+        val diff = request.joinCancellable()
+        val patches = readAllPatches(diff)
+        GHCommitWithPatches(commit.oid, commit.parents.map { it.oid }, patches)
+      }
+      val prPatches = prDiffRequest.joinCancellable().let {
+        readAllPatches(it)
       }
       it.checkCanceled()
 
-      GHPRChangesProviderImpl(gitRemote.repository, mergeBaseOid, graph, lastCommit, patchesByCommits) as GHPRChangesProvider
+      GHPRChangesProviderImpl(project, gitRemote.repository.root, mergeBaseOid, commitsList, prPatches) as GHPRChangesProvider
     }.logError(LOG, "Error occurred while building changes from commits")
+  }
 
   companion object {
     private val LOG = logger<GHPRChangesService>()
