@@ -37,7 +37,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 18)
+    val GROUP = EventLogGroup("usage.view", 19)
     val USAGE_VIEW = object : PrimitiveEventField<UsageView?>() {
       override val name: String = "usage_view"
 
@@ -59,6 +59,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val USAGE_NAVIGATE = GROUP.registerEvent("usage.navigate", REFERENCE_CLASS, EventFields.Language)
     // fields specific for items in popup
     private val SELECTED_ROW = EventFields.Int("selected_usage")
+    private val PRESELECTED_ROW = EventFields.Int("preselected_usage")
     private val NUMBER_OF_ROWS = EventFields.Int("number_of_usages")
     private val NUMBER_OF_LETTERS_TYPED = EventFields.Int("number_of_letters_typed")
 
@@ -110,8 +111,11 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val OPEN_IN_FIND_TOOL_WINDOW = GROUP.registerEvent("open.in.tool.window", USAGE_VIEW)
     private val USER_ACTION = EventFields.Enum("userAction", TooManyUsagesUserAction::class.java)
     private val ITEM_CHOSEN = EventFields.Boolean("item_chosen")
-    private val popupClosed = GROUP.registerVarargEvent("popup.closed", USAGE_VIEW, ITEM_CHOSEN, PRIMARY_TARGET, NUMBER_OF_TARGETS,
-                                                        EventFields.Language, REFERENCE_CLASS, EventFields.DurationMs)
+    private val popupClosed = GROUP.registerVarargEvent("popup.closed", USAGE_VIEW, PRESELECTED_ROW, SELECTED_ROW, ITEM_CHOSEN,
+                                                        PRIMARY_TARGET,
+                                                        NUMBER_OF_TARGETS,
+                                                        EventFields.Language, REFERENCE_CLASS,
+                                                        EventFields.DurationMs)
     private val tooManyUsagesDialog = GROUP.registerVarargEvent("tooManyResultsDialog",
       USAGE_VIEW,
       USER_ACTION,
@@ -285,13 +289,16 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     fun logPopupClosed(project: Project?,
                        usageView: UsageView,
                        itemChosen: Boolean,
-                       usage: UsageInfo2UsageAdapter?,
+                       preselectRow: Int,
+                       selectedRow: Int?,
+                       usage: Usage?,
                        startTime: Long?,
                        showUsagesHandlerEventData: List<EventPair<*>>) {
-      val data = mutableListOf(USAGE_VIEW.with(usageView), ITEM_CHOSEN.with(itemChosen),
-                               REFERENCE_CLASS.with(
-                                 usage?.referenceClass
-                               ))
+      val data = mutableListOf(USAGE_VIEW.with(usageView), ITEM_CHOSEN.with(itemChosen), PRESELECTED_ROW.with(preselectRow))
+      selectedRow?.let { data.add(SELECTED_ROW.with(it)) }
+      if (usage is UsageInfo2UsageAdapter) {
+        data.add(REFERENCE_CLASS.with(usage.referenceClass))
+      }
       data.addAll(showUsagesHandlerEventData)
       if (startTime != null) {
         data.add(EventFields.DurationMs.with(System.currentTimeMillis() - startTime))
