@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.fus
 
 import com.intellij.internal.statistic.config.EventLogExternalSettings
@@ -21,28 +21,31 @@ import java.util.concurrent.CancellationException
  */
 internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher: ModuleOutputPatcher,
                                                                                 context: BuildContext): Job? {
-  val featureUsageStatisticsProperties = context.proprietaryBuildTools.featureUsageStatisticsProperties ?: return null
+  val featureUsageStatisticsPropertiesList: List<FeatureUsageStatisticsProperties> =
+    context.proprietaryBuildTools.featureUsageStatisticsProperties ?: return null
   return createSkippableJob(
     spanBuilder("bundle a default version of feature usage statistics"),
     taskId = BuildOptions.FUS_METADATA_BUNDLE_STEP,
     context = context
   ) {
-    try {
-      val recorderId = featureUsageStatisticsProperties.recorderId
-      moduleOutputPatcher.patchModuleOutput(
-        moduleName = "intellij.platform.ide.impl",
-        path = "resources/event-log-metadata/$recorderId/events-scheme.json",
-        content = download(appendProductCode(metadataServiceUri(featureUsageStatisticsProperties, context), context))
-      )
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      // do not halt build, just record exception
-      val span = Span.current()
-      span.recordException(RuntimeException("Failed to bundle default version of feature usage statistics metadata", e))
-      span.setStatus(StatusCode.ERROR)
+    for (featureUsageStatisticsProperties in featureUsageStatisticsPropertiesList) {
+      try {
+        val recorderId = featureUsageStatisticsProperties.recorderId
+        moduleOutputPatcher.patchModuleOutput(
+          moduleName = "intellij.platform.ide.impl",
+          path = "resources/event-log-metadata/$recorderId/events-scheme.json",
+          content = download(appendProductCode(metadataServiceUri(featureUsageStatisticsProperties, context), context))
+        )
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        // do not halt build, just record exception
+        val span = Span.current()
+        span.recordException(RuntimeException("Failed to bundle default version of feature usage statistics metadata", e))
+        span.setStatus(StatusCode.ERROR)
+      }
     }
   }
 }
