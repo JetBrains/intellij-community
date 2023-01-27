@@ -168,7 +168,7 @@ public class CommanderListBuilderTest extends BaseProjectViewTestCase {
   }
 
   private static void checkSelectedElement(Object field, CommanderPanel panel) {
-    TestCase.assertEquals(field, panel.getSelectedElement());
+    TestCase.assertEquals(field, CommanderPanel.getNodeElement(panel.getSelectedNode()));
   }
 
   private void checkListInActivePanel(String expected) {
