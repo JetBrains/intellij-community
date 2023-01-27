@@ -153,11 +153,11 @@ public final class ProgressSuspender implements AutoCloseable {
       return false;
     }
 
-    if (isCurrentThreadHoldingKnownLocks()) {
+    if (myProgressesInNonSuspendableSections.containsKey(current)) {
       return false;
     }
 
-    if (myProgressesInNonSuspendableSections.containsKey(current)) {
+    if (isCurrentThreadHoldingKnownLocks()) {
       return false;
     }
 
