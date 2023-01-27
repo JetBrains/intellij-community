@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
+import com.google.common.collect.HashBiMap
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.ReplaceBySourceAsTree.OperationsApplier
 import it.unimi.dsi.fastutil.Hash
@@ -105,7 +106,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   // This class is just a wrapper to combine functions logically
   private inner class OperationsApplier {
     fun apply() {
-      val replaceToTarget = HashMap<EntityId, EntityId>()
+      val replaceToTarget = HashBiMap.create<EntityId, EntityId>()
       for (addOperation in addOperations) {
         val parents = addOperation.parents?.mapTo(HashSet()) {
           when (it) {
@@ -159,7 +160,9 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
                 .mapIndexed { index, childEntityId -> childEntityId.id to index }
                 .toMap()
               val sortedChildren = childEntityIds.mapIndexed { index, childEntityId ->
-                val myIndex = replaceWithEntityFromState(childEntityId.id)?.let { replaceWithChildren[it] } ?: index
+                val replaceWithChildAssociatedWithCurrentElement = replaceToTarget.inverse()[childEntityId.id]
+                                                                   ?: replaceWithEntityFromState(childEntityId.id)
+                val myIndex = replaceWithChildAssociatedWithCurrentElement?.let { replaceWithChildren[it] } ?: index
                 childEntityId to myIndex
               }.sortedBy { it.second }.map { it.first }
               targetStorage.refs.updateChildrenOfParent(connectionId, targetParent.asParent(), sortedChildren)
@@ -178,7 +181,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
     }
 
-    private fun addElement(parents: Set<EntityId>?, replaceWithDataSource: EntityId, replaceToTarget: HashMap<EntityId, EntityId>) {
+    private fun addElement(parents: Set<EntityId>?, replaceWithDataSource: EntityId, replaceToTarget: HashBiMap<EntityId, EntityId>) {
       val targetParents = mutableListOf<WorkspaceEntity>()
       parents?.forEach { parent ->
         targetParents += targetStorage.entityDataByIdOrDie(parent).createEntity(targetStorage)

@@ -1681,6 +1681,60 @@ class ReplaceBySourceTest {
     assertEquals("one", children[1].childProperty)
   }
 
+  @RepeatedTest(10)
+  fun `check ordering of the children as in replacement after add`() {
+    builder add NamedEntity("Name", MySource) {
+      this.children = listOf(
+        NamedChildEntity("one", MySource),
+      )
+    }
+
+    var children = builder.entities(NamedEntity::class.java).single().children
+    assertEquals("one", children[0].childProperty)
+
+    replacement add NamedEntity("Name", MySource) {
+      this.children = listOf(
+        NamedChildEntity("two", MySource),
+        NamedChildEntity("one", MySource),
+      )
+    }
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+
+    children = builder.entities(NamedEntity::class.java).single().children
+    assertEquals("two", children[0].childProperty)
+    assertEquals("one", children[1].childProperty)
+  }
+
+  @RepeatedTest(10)
+  fun `check ordering of the children as in replacement after add 2`() {
+    builder add NamedEntity("Name", MySource) {
+      this.children = listOf(
+        NamedChildEntity("one", MySource),
+      )
+    }
+
+    var children = builder.entities(NamedEntity::class.java).single().children
+    assertEquals("one", children[0].childProperty)
+
+    replacement add NamedEntity("Name", MySource) {
+      this.children = listOf(
+        NamedChildEntity("one", MySource),
+        NamedChildEntity("two", MySource),
+      )
+    }
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+
+    children = builder.entities(NamedEntity::class.java).single().children
+    assertEquals("one", children[0].childProperty)
+    assertEquals("two", children[1].childProperty)
+  }
+
   private inner class ThisStateChecker {
     infix fun WorkspaceEntity.assert(state: ReplaceState) {
       val thisState = engine.targetState[this.base.id]
