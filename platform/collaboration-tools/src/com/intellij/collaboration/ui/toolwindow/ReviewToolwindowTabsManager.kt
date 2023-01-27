@@ -13,7 +13,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
-
+/**
+ * Manages review toolwindow tabs and their content.
+ * If [projectContext] is [null] UI for acquiring this context is shown (by [ReviewTabsComponentFactory.createEmptyTabContent]).
+ *
+ * When [projectContext] appears Review List will be shown (by [ReviewTabsComponentFactory.createReviewListComponent]),
+ * and requests in [reviewTabsController] will be handled, according to described in [ReviewTab] [ReviewTab.id] logic.
+ * So, new tabs will be shown using [ReviewTabsComponentFactory.createTabComponent].
+ *
+ * Managing finishes when [contentManager] is disposed.
+ */
 @ApiStatus.Experimental
 fun <T : ReviewTab, C : ReviewToolwindowProjectContext> manageReviewToolwindowTabs(
   contentManager: ContentManager,
