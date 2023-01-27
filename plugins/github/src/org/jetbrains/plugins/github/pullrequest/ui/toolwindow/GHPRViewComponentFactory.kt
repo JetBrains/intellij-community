@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 import com.intellij.collaboration.async.DisposingScope
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -265,7 +266,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     emptyTextText: String,
     getCustomData: ChangesTree.(String) -> Any? = { null }
   ): ChangesTree {
-    val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText)
+    val tree = CodeReviewChangesTreeFactory(project, model).create(emptyTextText)
 
     val diffPreviewController = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, dataProvider,
                                                           dataContext.filesManager)
