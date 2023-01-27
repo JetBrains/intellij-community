@@ -41,7 +41,7 @@ class GitBranchesTreeSingleRepoModel(
 
   private fun rebuild(matcher: MinusculeMatcher?) {
     branchesTreeCache.keys.clear()
-    val localBranches = repository.branches.localBranches.ifEmpty { repository.currentBranch?.let(::setOf) ?: emptySet() }
+    val localBranches = repository.localBranchesOrCurrent
     val remoteBranches = repository.branches.remoteBranches
     localBranchesTree = LazyBranchesSubtreeHolder(localBranches, listOf(repository), matcher, ::isPrefixGrouping)
     remoteBranchesTree = LazyBranchesSubtreeHolder(remoteBranches, listOf(repository), matcher, ::isPrefixGrouping)
