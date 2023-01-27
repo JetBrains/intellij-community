@@ -4,7 +4,6 @@ package com.intellij.java.refactoring
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
-import com.intellij.codeInsight.template.impl.actions.NextVariableAction
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
@@ -342,7 +341,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
       LookupManager.getActiveLookup(templateState.editor)?.hideLookup(true)
       val dataContext = DataManager.getInstance().getDataContext(editor.component)
       val event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, Presentation(), dataContext)
-      ActionManager.getInstance().getAction("NextTemplateVariable").actionPerformed(event)
+      ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE).actionPerformed(event)
       UIUtil.dispatchAllInvocationEvents()
     } catch (ignore: RefactoringErrorHintException) {
     }

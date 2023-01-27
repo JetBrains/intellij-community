@@ -2,11 +2,15 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.template.*
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateBuilderImpl
+import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -142,7 +146,7 @@ data class ExtractMethodTemplateBuilder(
 
   private fun setTemplateValidator(templateState: TemplateState, validator: (TextRange) -> Boolean){
     val manager = EditorActionManager.getInstance()
-    val actionName = "NextTemplateVariable"
+    val actionName = IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE
     val defaultHandler = manager.getActionHandler(actionName)
     Disposer.register(templateState) { manager.setActionHandler(actionName, defaultHandler) }
     manager.setActionHandler(actionName, object : EditorActionHandler() {
