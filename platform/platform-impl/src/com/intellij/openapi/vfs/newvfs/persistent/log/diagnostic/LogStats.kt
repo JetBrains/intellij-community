@@ -6,7 +6,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -17,7 +16,7 @@ import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-data class Stats(
+private data class Stats(
   var descriptorStorageSize: Long = 0,
   var payloadStorageSize: Long = 0,
   val descriptorCount: AtomicInteger = AtomicInteger(0),
@@ -33,21 +32,10 @@ data class Stats(
   val avgDescPS get() = descriptorCount.toDouble() / elapsedTime.toDouble(DurationUnit.SECONDS)
 }
 
-@OptIn(DelicateCoroutinesApi::class, ExperimentalTime::class)
-fun main(args: Array<String>) {
-  assert(args.size == 1) { "Usage: <LogStats> <path to vfslog folder>" }
-
-  val log = VfsLog(Path.of(args[0]), true)
-
+@OptIn(ExperimentalTime::class)
+private fun calcStats(log: VfsLog): Stats {
+  fun <T> incStat(key: T, value: Int?) = if (value != null) { value + 1 } else { 1 }
   val stats = Stats()
-  fun <T> incStat(key: T, value: Int?) = if (value != null) {
-    value + 1
-  }
-  else {
-    1
-  }
-  fun Double.format(fmt: String) = String.format(fmt, this)
-
   stats.elapsedTime = measureTime {
     runBlocking {
       log.query {
@@ -88,9 +76,44 @@ fun main(args: Array<String>) {
       }
     }
   }
-  print("\r")
+  return stats
+}
+
+private fun Double.format(fmt: String) = String.format(fmt, this)
+
+
+private fun benchmark(log: VfsLog, runs: Int = 50) {
+  val statsArr = mutableListOf<Stats>()
+
+  repeat(runs) {
+    statsArr += calcStats(log)
+  }
+
+  val stats = statsArr[0]
+
+  fun List<Double>.avg() = sum() / size
+  fun <T> List<T>.avgOf(body: (T) -> Double) = map(body).avg()
+
   println(stats)
-  println("Calculated in ${stats.elapsedTime.toDouble(DurationUnit.SECONDS).format("%.1f")} seconds")
+  println("Benchmark, avg among $runs runs")
+  println("calc stats time: ${statsArr.avgOf { it.elapsedTime.toDouble(DurationUnit.SECONDS) }.format("%.1f")} seconds")
+  println("avg read speed: ${statsArr.avgOf { it.avgReadSpeedBPS / 1024.0 / 1024.0 }.format("%.1f")} MiB/s")
+  println("avg descriptor read speed: ${statsArr.avgOf { it.avgDescPS / 1000.0 }.format("%.1f")} KDesc/s")
+}
+
+private fun single(log: VfsLog) {
+  val stats = calcStats(log)
+  println(stats)
+  println("Single run")
+  println("calc stats time: ${stats.elapsedTime.toDouble(DurationUnit.SECONDS).format("%.1f")} seconds")
   println("avg read speed: ${(stats.avgReadSpeedBPS / 1024.0 / 1024.0).format("%.1f")} MiB/s")
   println("avg descriptor read speed: ${(stats.avgDescPS / 1000.0).format("%.1f")} KDesc/s")
+}
+
+fun main(args: Array<String>) {
+  assert(args.size == 1) { "Usage: <LogStats> <path to vfslog folder>" }
+
+  val log = VfsLog(Path.of(args[0]), true)
+
+  benchmark(log)
 }
