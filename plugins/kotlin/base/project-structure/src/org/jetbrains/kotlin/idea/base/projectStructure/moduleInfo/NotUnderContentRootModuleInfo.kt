@@ -55,12 +55,12 @@ class NotUnderContentRootModuleInfo(
         other as NotUnderContentRootModuleInfo
 
         if (project != other.project) return false
-        return file == other.file
+        return filePointer == other.filePointer
     }
 
     override fun hashCode(): Int {
         var result = project.hashCode()
-        result = 31 * result + (file?.hashCode() ?: 0)
+        result = 31 * result + (filePointer?.hashCode() ?: 0)
         return result
     }
 }
