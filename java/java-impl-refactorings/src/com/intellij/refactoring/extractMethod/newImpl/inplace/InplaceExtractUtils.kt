@@ -36,6 +36,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.range
 import com.intellij.ui.GotItTooltip
@@ -61,6 +62,10 @@ object InplaceExtractUtils {
       return false
     }
     return true
+  }
+
+  fun findTypeParameters(types: List<PsiType>): List<PsiTypeParameter>{
+    return types.mapNotNull{ type -> PsiUtil.resolveClassInClassTypeOnly(type) as? PsiTypeParameter }
   }
 
   fun checkReferenceIdentifier(editor: Editor, file: PsiFile, variableRange: TextRange): Boolean {
