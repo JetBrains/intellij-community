@@ -7,6 +7,8 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.impl.FinishMarkAction
+import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
@@ -51,15 +53,18 @@ interface ObjectBuilder {
         ClassObjectBuilder.create(variables, scope)
       }
       val file = scope.first().containingFile
+      val project = file.project
       val extractRange = createGreedyRangeMarker(file.viewProvider.document, scope.first().textRange.union(scope.last().textRange))
       val editorState = EditorState(editor)
-      WriteCommandAction.writeCommandAction(file.project).run<Throwable> {
+      WriteCommandAction.writeCommandAction(project).run<Throwable> {
         try {
+          val disposable = Disposer.newDisposable()
+          val startMarkAction = StartMarkAction.start(editor, project, ExtractMethodHandler.getRefactoringName())
+          Disposer.register(disposable) { FinishMarkAction.finish(project, editor, startMarkAction) }
           val (introducedClass, declaration, replacements) = introduceObjectForVariables(objectBuilder, variables, scope.last())
           val introducedVariableReferences = replacements.map { replacement ->
             objectBuilder.findVariableReferenceInReplacement(replacement) ?: throw IllegalStateException()
           }
-          val disposable = Disposer.newDisposable()
           val preview = createPreview(editor, introducedClass, declaration, replacements)
           Disposer.register(disposable, preview)
           ExtractMethodTemplateBuilder(editor, ExtractMethodHandler.getRefactoringName())
