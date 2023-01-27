@@ -85,7 +85,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       return object: NonOpaquePanel() {
         override fun paint(g: Graphics) {
           if (ExperimentalUI.isNewUI()) {
-            g.color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.getAreaBackground()
+            g.color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.AREA_BACKGROUND
           }
           else {
             g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND

@@ -505,8 +505,7 @@
         "DragAndDrop" : {
           "stripeBackground" : "Grey2",
           "buttonDropBackground": "#35538F99",
-          "buttonDropBorderColor": "Blue8",
-          "areaBackground": "Blue5"
+          "buttonDropBorderColor": "Blue8"
         }
       },
       "Stripe": {
@@ -514,6 +513,9 @@
         "DragAndDrop": {
           "separatorColor": "Blue8"
         }
+      },
+      "DragAndDrop": {
+        "areaBackground": "#366ACF4D"
       }
     },
 
