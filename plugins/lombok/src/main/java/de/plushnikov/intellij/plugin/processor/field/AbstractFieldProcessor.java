@@ -60,10 +60,18 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     return result;
   }
 
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
-    return true;
+  private boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                 @NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
+    if (null == nameHint) {
+      return true;
+    }
+    final Collection<String> namesOfGeneratedElements = getNamesOfPossibleGeneratedElements(psiClass, psiAnnotation, psiField);
+    return namesOfGeneratedElements.isEmpty() || namesOfGeneratedElements.contains(nameHint);
   }
+
+  protected abstract Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass,
+                                                                   @NotNull PsiAnnotation psiAnnotation,
+                                                                   @NotNull PsiField psiField);
 
   protected abstract void generatePsiElements(@NotNull PsiField psiField,
                                               @NotNull PsiAnnotation psiAnnotation,
@@ -103,7 +111,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
                                         @NotNull PsiField psiField,
                                         @NotNull ProblemSink problemSink,
                                         @NotNull String parameterName) {
-    if(problemSink.deepValidation()) {
+    if (problemSink.deepValidation()) {
       final @NotNull List<PsiAnnotation> copyableAnnotations = LombokCopyableAnnotations.BASE_COPYABLE.collectCopyableAnnotations(psiField);
 
       if (!copyableAnnotations.isEmpty()) {
@@ -155,7 +163,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
       if (!classMethods.isEmpty()) {
         builder.addWarningMessage("inspection.message.not.generated.s.method.with.similar.name.s.already.exists",
-                           accessorName, accessorName);
+                                  accessorName, accessorName);
         return false;
       }
     }

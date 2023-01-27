@@ -17,6 +17,7 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -28,6 +29,15 @@ import java.util.List;
 public final class SetterFieldProcessor extends AbstractFieldProcessor {
   SetterFieldProcessor() {
     super(PsiMethod.class, LombokClassNames.SETTER);
+  }
+
+  @Override
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass,
+                                                                   @NotNull PsiAnnotation psiAnnotation,
+                                                                   @NotNull PsiField psiField) {
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
+    final String generatedElementName = LombokUtils.getSetterName(psiField, accessorsInfo);
+    return Collections.singletonList(generatedElementName);
   }
 
   @Override

@@ -18,7 +18,6 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,12 +45,8 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation) {
-    return nameHint == null ||
-           nameHint.equals(EQUALS_METHOD_NAME) ||
-           nameHint.equals(HASH_CODE_METHOD_NAME) ||
-           nameHint.equals(CAN_EQUAL_METHOD_NAME);
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    return List.of(EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME, CAN_EQUAL_METHOD_NAME);
   }
 
   @Override

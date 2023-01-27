@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public final class WitherFieldProcessor extends AbstractFieldProcessor {
@@ -30,6 +31,15 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
 
   private static RequiredArgsConstructorProcessor getRequiredArgsConstructorProcessor() {
     return ApplicationManager.getApplication().getService(RequiredArgsConstructorProcessor.class);
+  }
+
+  @Override
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass,
+                                                                   @NotNull PsiAnnotation psiAnnotation,
+                                                                   @NotNull PsiField psiField) {
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
+    final String generatedElementName = LombokUtils.getWitherName(psiField, accessorsInfo);
+    return Collections.singletonList(generatedElementName);
   }
 
   @Override
