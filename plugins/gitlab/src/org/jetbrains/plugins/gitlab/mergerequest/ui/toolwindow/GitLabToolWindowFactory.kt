@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
 import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
@@ -27,6 +28,7 @@ internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
+    toolWindow.dontHideOnEmptyContent()
 
     val cs = toolWindow.contentManager.disposingMainScope()
     val projectContext = project.service<GitLabProjectConnectionManager>().connectionState.mapState(cs) { connection ->
