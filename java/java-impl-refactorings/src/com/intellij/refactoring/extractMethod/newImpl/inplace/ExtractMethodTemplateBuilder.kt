@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
@@ -102,6 +103,10 @@ data class ExtractMethodTemplateBuilder(
       setTemplateValidator(templateState) { range -> templateFields[templateState.currentVariableNumber].validator.invoke(range) }
       Disposer.register(templateState, disposable)
       templateState.addTemplateStateListener(object: TemplateEditingAdapter(){
+        override fun templateCancelled(template: Template?) {
+          if (UndoManager.getInstance(project).isUndoOrRedoInProgress) return
+          onBroken.invoke()
+        }
         override fun templateFinished(template: Template, brokenOff: Boolean) {
           if (brokenOff){
             onBroken.invoke()
