@@ -24,7 +24,7 @@ class MermaidNbspFoldingBuilder : CustomFoldingBuilder() {
       return
     }
 
-    val elements = SyntaxTraverser.psiTraverser(root).filterIsInstance<MermaidNamedPsiElement>()
+    val elements = SyntaxTraverser.psiTraverser(root).asSequence().filterIsInstance<MermaidNamedPsiElement>()
     for (element in elements) {
       val matches = nbspRegex.findAll(element.text)
       val rangeSequence = matches.map {

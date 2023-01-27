@@ -130,6 +130,7 @@ class UndeclaredGenericUsageInspection : LocalInspectionTool() {
 
     private fun findDeclarationAndParent(file: PsiFile, elementId: MermaidClassDiagramIdentifier): Pair<MermaidClassDiagramIdentifier, PsiElement>? {
       return SyntaxTraverser.psiTraverser(file)
+        .asSequence()
         .filterIsInstance<MermaidClassDiagramIdentifierHolder>()
         .firstNotNullOfOrNull { collectDeclaration(it.classDiagramIdentifier, elementId) }
     }
