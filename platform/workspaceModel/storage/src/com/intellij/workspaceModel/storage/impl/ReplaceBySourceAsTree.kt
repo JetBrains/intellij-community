@@ -127,7 +127,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           }
           targetStorage.entityDataByIdOrDie(targetEntityId).createEntity(targetStorage)
         }
-        // Here we get all parents which should be assosiated with the current entity in the target storage
+        // Here we get all parents which should be associated with the current entity in the target storage
         targetStorage.modifyEntity(WorkspaceEntity.Builder::class.java, targetEntity) {
           (this as ModifiableWorkspaceEntityBase<*, *>).relabel(replaceWithEntity, parents)
         }
@@ -193,8 +193,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       // We actually bind parents in [createDetachedEntity], but we can't do it for external entities (that are defined in a separate module)
       // Here we bind them again, so I guess we can remove "parents binding" from [createDetachedEntity], but let's do it twice for now.
       // Actually, I hope to get rid of [createDetachedEntity] at some moment.
-      targetParents.groupBy { it::class }.forEach { (_, ents) ->
-        modifiableEntity.updateReferenceToEntity(ents.first().getEntityInterface().kotlin, false, ents)
+      targetParents.groupBy { it::class }.forEach { (_, entities) ->
+        modifiableEntity.updateReferenceToEntity(entities.first().getEntityInterface().kotlin, false, entities)
       }
       targetStorage.addEntity(modifiableEntity)
       targetStorage.indexes.updateExternalMappingForEntityId(replaceWithDataSource, modifiableEntity.id, replaceWithStorage.indexes)
@@ -291,6 +291,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     private fun processEntity(replaceWithTrack: TrackToParents): ParentsRef? {
 
       val replaceWithEntityId = replaceWithTrack.entity
+
+      @Suppress("MoveVariableDeclarationIntoWhen")
       val replaceWithEntityState = replaceWithState[replaceWithEntityId]
       when (replaceWithEntityState) {
         ReplaceWithState.ElementMoved -> return ParentsRef.AddedElement(replaceWithEntityId)
@@ -358,6 +360,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       else {
 
         val targetEntityId = (targetEntity as WorkspaceEntityBase).id
+        @Suppress("MoveVariableDeclarationIntoWhen")
         val targetCurrentState = targetState[targetEntityId]
         when (targetCurrentState) {
           is ReplaceState.NoChange -> return ParentsRef.TargetRef(targetEntityId)
@@ -406,6 +409,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
     private fun findAndReplaceRootEntityInTargetStore(replaceWithRootEntity: WorkspaceEntityBase): ParentsRef? {
       val replaceRootEntityId = replaceWithRootEntity.id
+      @Suppress("MoveVariableDeclarationIntoWhen")
       val replaceWithCurrentState = replaceWithState[replaceRootEntityId]
       when (replaceWithCurrentState) {
         is ReplaceWithState.NoChange -> return ParentsRef.TargetRef(replaceWithCurrentState.targetEntityId)
@@ -421,11 +425,12 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     }
 
     /**
-     * This is a very similar thing as [findSameEntity]. But it finds an entity in the target storage (or the entity that will be added)
+     * This is a very similar thing as [TargetProcessor.findSameEntity]. But it finds an entity in the target storage (or the entity that will be added)
      */
     fun findSameEntityInTargetStore(replaceWithTrack: TrackToParents): ParentsRef? {
 
       // Check if this entity was already processed
+      @Suppress("MoveVariableDeclarationIntoWhen")
       val replaceWithCurrentState = replaceWithState[replaceWithTrack.entity]
       when (replaceWithCurrentState) {
         is ReplaceWithState.NoChange -> return ParentsRef.TargetRef(replaceWithCurrentState.targetEntityId)
@@ -437,9 +442,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
       val replaceWithEntityData = replaceWithStorage.entityDataByIdOrDie(replaceWithTrack.entity)
       if (replaceWithTrack.parents.isEmpty()) {
-        val targetRootEntityId = findAndReplaceRootEntityInTargetStore(
-          replaceWithEntityData.createEntity(replaceWithStorage) as WorkspaceEntityBase)
-        return targetRootEntityId
+        return findAndReplaceRootEntityInTargetStore(replaceWithEntityData.createEntity(replaceWithStorage) as WorkspaceEntityBase)
       }
       else {
         val parentsAssociation = replaceWithTrack.parents.associateWith { findSameEntityInTargetStore(it) }
@@ -470,6 +473,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     }
 
     private fun addSubtree(parents: Set<ParentsRef>?, replaceWithEntityId: EntityId) {
+      @Suppress("MoveVariableDeclarationIntoWhen")
       val currentState = replaceWithState[replaceWithEntityId]
       when (currentState) {
         ReplaceWithState.ElementMoved -> return
@@ -481,16 +485,16 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
       addElementOperation(parents, replaceWithEntityId)
 
-      replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithEntityId.asParent()).values.flatten().forEach {
-        val replaceWithChildEntityData = replaceWithStorage.entityDataByIdOrDie(it.id)
+      replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithEntityId.asParent()).values.flatten().forEach { childEntityId ->
+        val replaceWithChildEntityData = replaceWithStorage.entityDataByIdOrDie(childEntityId.id)
         if (!entityFilter(replaceWithChildEntityData.entitySource)) return@forEach
-        val trackToParents = TrackToParents(it.id, replaceWithStorage)
+        val trackToParents = TrackToParents(childEntityId.id, replaceWithStorage)
         val sameEntity = findSameEntityInTargetStore(trackToParents)
         if (sameEntity is ParentsRef.TargetRef) {
           return@forEach
         }
         val otherParents = trackToParents.parents.mapNotNull { findSameEntityInTargetStore(it) }
-        addSubtree((otherParents + ParentsRef.AddedElement(replaceWithEntityId)).toSet(), it.id)
+        addSubtree((otherParents + ParentsRef.AddedElement(replaceWithEntityId)).toSet(), childEntityId.id)
       }
     }
   }
@@ -501,14 +505,14 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       targetEntityToReplace as WorkspaceEntityBase
 
       // This method not only finds the same entity in the ReplaceWith storage, but also processes all entities it meets.
-      // So, for processing an entity, it's enough to call this methos on the entity.
+      // So, for processing an entity, it's enough to call this method on the entity.
       findSameEntity(TrackToParents(targetEntityToReplace.id, targetStorage))
     }
 
 
     /**
-     * This method searched for the "associated" entity of [targetEntityTrack] in the repalceWith storage
-     * Here, let's use "associated" termin to define what we're looking for. If the entity have a [SymbolicEntityId],
+     * This method searched for the "associated" entity of [targetEntityTrack] in the replaceWith storage
+     * Here, let's use "associated" terming to define what we're looking for. If the entity have a [SymbolicEntityId],
      *   this is super simple. "associated" entity is just an entity from the different storage with the same SymbolicId.
      *
      *   Things go complicated if there is no SymbolicId. In this case we build a track to the root entities in the graph, trying
@@ -521,7 +525,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
      *    - Try to find associated entity in replaceWith storage (by SymbolicId in most cases)
      * - if there are parents:
      *    - Run this algorithm on all parents to find associated parents in the replaceWith storage
-     *    - Based on found parents in replaceWith storage, find an associated entity for our currenly searched entity
+     *    - Based on found parents in replaceWith storage, find an associated entity for our currently searched entity
      */
     private fun findSameEntity(targetEntityTrack: TrackToParents): EntityId? {
 
@@ -550,7 +554,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     private fun processExactEntity(targetParents: MutableSet<ParentsRef>?,
                                    targetEntityData: WorkspaceEntityData<out WorkspaceEntity>,
                                    replaceWithEntity: WorkspaceEntityBase?): EntityId? {
-      // Here we check if any of the required parents is missing the our new parents
+      // Here we check if any of the required parents is missing in our new parents
       val requiredParentMissing = if (targetParents != null) {
         val targetParentClazzes = targetParents.map {
           when (it) {
@@ -679,7 +683,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
       // And here we get other parent' of the associated entity.
       // This is actually a complicated operation because it's not enough just to find parents in replaceWith storage.
-      //   We should also understand if this parent is a new entity or it already exists in the target storage.
+      //   We should also understand if this parent is a new entity, or it already exists in the target storage.
       if (replaceWithEntity != null) {
         val alsoTargetParents = TrackToParents(replaceWithEntity.id, replaceWithStorage).parents
           .map { ReplaceWithProcessor().findSameEntityInTargetStore(it) }
