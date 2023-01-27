@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsLi
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.util.ServiceLoaderLite
+import java.io.File
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentMap
@@ -131,13 +132,13 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
             // (or even a platform-agnostic alternative) should be added.
             if (compilerArguments is K2JVMCompilerArguments) {
                 val compilerExtension = CompilerModuleExtension.getInstance(module.ideaModule)
-                val outputPath = when (module.moduleInfo) {
-                    is ModuleTestSourceInfo -> compilerExtension?.compilerOutputPathForTests
-                    else -> compilerExtension?.compilerOutputPath
+                val outputUrl = when (module.moduleInfo) {
+                    is ModuleTestSourceInfo -> compilerExtension?.compilerOutputUrlForTests
+                    else -> compilerExtension?.compilerOutputUrl
                 }
 
                 putIfNotNull(JVMConfigurationKeys.JVM_TARGET, compilerArguments.jvmTarget?.let(JvmTarget::fromString))
-                putIfNotNull(JVMConfigurationKeys.OUTPUT_DIRECTORY, outputPath?.toNioPath()?.toFile())
+                putIfNotNull(JVMConfigurationKeys.OUTPUT_DIRECTORY, outputUrl?.let { File(it) })
                 put(JVMConfigurationKeys.IR, true) // FIR cannot work with the old backend
             }
 
