@@ -375,7 +375,8 @@
     <projectService serviceImplementation="com.intellij.ide.util.gotoByName.GotoFileConfiguration"/>
     <projectService serviceImplementation="com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration"/>
 
-    <projectService serviceImplementation="com.intellij.ide.hierarchy.HierarchyBrowserManager"/>
+    <projectService serviceImplementation="com.intellij.ide.hierarchy.HierarchyBrowserManager" client="all"/>
+    <toolWindowExtractorMode id="Hierarchy" mode="per_client"/>
 
     <projectService serviceImplementation="com.intellij.packageDependencies.DependenciesToolWindow"/>
 
@@ -996,7 +997,7 @@
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GeneralCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.OtherFileTypesCodeStyleOptionsProvider"/>
 
-    <projectService serviceImplementation="com.intellij.ide.todo.TodoView"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.TodoView" client="all"/>
     <projectService serviceInterface="com.intellij.ide.structureView.StructureViewFactory"
                     serviceImplementation="com.intellij.ide.structureView.impl.StructureViewFactoryImpl"/>
     <projectService serviceInterface="com.intellij.codeInspection.InspectionManager"
@@ -1028,8 +1029,8 @@
                 factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
     <toolWindow id="Bookmarks" anchor="left" icon="AllIcons.Toolwindows.ToolWindowBookmarks" secondary="true"
                 factoryClass="com.intellij.ide.bookmark.ui.BookmarksViewFactory" order="after Structure"/>
-    <toolWindowExtractorMode id="Bookmarks" mode="mirror"/>
-    <toolWindowExtractorMode id="Favorites" mode="mirror"/>
+    <toolWindowExtractorMode id="Bookmarks" mode="per_client"/>
+
 
     <postStartupActivity implementation="com.intellij.ide.bookmark.BookmarksStartupActivity"/>
     <projectService serviceImplementation="com.intellij.ide.bookmark.ui.BookmarksViewStateComponent"/>
