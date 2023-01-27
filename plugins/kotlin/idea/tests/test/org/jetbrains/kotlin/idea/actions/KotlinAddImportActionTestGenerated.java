@@ -123,6 +123,21 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
         runTest("testData/idea/actions/kotlinAddImportAction/OverloadsPresent.kt");
     }
 
+    @TestMetadata("PlusAssignOperator.kt")
+    public void testPlusAssignOperator() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/PlusAssignOperator.kt");
+    }
+
+    @TestMetadata("PlusOperator.kt")
+    public void testPlusOperator() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/PlusOperator.kt");
+    }
+
+    @TestMetadata("PlusOperator1.kt")
+    public void testPlusOperator1() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/PlusOperator1.kt");
+    }
+
     @TestMetadata("SingleMethodAvailable.kt")
     public void testSingleMethodAvailable() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/SingleMethodAvailable.kt");

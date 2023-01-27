@@ -1,4 +1,4 @@
-// "Import extension function 'H.unaryMinus'" "true"
+// "Import operator 'H.unaryMinus'" "true"
 // ERROR: Unresolved reference: -
 
 package h
