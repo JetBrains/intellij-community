@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui
+package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
 import com.intellij.util.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
@@ -15,8 +16,11 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsF
 import org.jetbrains.plugins.gitlab.testutil.MainDispatcherRule
 import org.junit.ClassRule
 import org.junit.Test
-import org.junit.jupiter.api.Assertions.*
-import org.mockito.kotlin.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.mockito.kotlin.clearInvocations
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabMergeRequestsFiltersViewModelImplTest {

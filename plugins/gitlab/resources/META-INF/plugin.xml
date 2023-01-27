@@ -32,7 +32,7 @@
     <!--TODO: correct icon-->
     <toolWindow id="Merge Requests" icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"
                 anchor="left" doNotActivateOnStart="true"
-                factoryClass="org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowFactory"
+                factoryClass="org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowFactory"
                 canCloseContents="true"/>
 
     <virtualFileSystem key="gitlabmr" implementationClass="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabVirtualFileSystem"/>

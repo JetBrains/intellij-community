@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.async.disposingMainScope
@@ -14,7 +14,6 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolwindowProjectContext
 
 internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(toolWindow: ToolWindow) {

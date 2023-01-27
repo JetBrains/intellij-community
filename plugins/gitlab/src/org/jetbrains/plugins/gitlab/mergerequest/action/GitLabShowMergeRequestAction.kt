@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabTimelinesController
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabReviewTabsController
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTabsController
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer("merge.request.show.action"),

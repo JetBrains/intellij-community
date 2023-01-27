@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
 import com.intellij.collaboration.api.page.SequentialListLoader
 import com.intellij.util.childScope
@@ -11,13 +11,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestsListViewModel.ListDataUpdate
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
 import org.jetbrains.plugins.gitlab.testutil.MainDispatcherRule
 import org.junit.ClassRule
 import org.junit.Test
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions
 import org.mockito.kotlin.doSuspendableAnswer
 import org.mockito.kotlin.mock
 
@@ -42,13 +41,13 @@ internal class GitLabMergeRequestsListViewModelImplTest {
     with(vm) {
       val updates = cs.asyncCollectLast(listDataFlow)
 
-      assertFalse(loadingState.value)
+      Assertions.assertFalse(loadingState.value)
       requestMore()
-      assertTrue(loadingState.value)
+      Assertions.assertTrue(loadingState.value)
       advanceTimeBy(3000)
-      assertInstanceOf(ListDataUpdate.NewBatch::class.java, updates.first())
-      assertTrue(canLoadMoreState.value)
-      assertFalse(loadingState.value)
+      Assertions.assertInstanceOf(GitLabMergeRequestsListViewModel.ListDataUpdate.NewBatch::class.java, updates.first())
+      Assertions.assertTrue(canLoadMoreState.value)
+      Assertions.assertFalse(loadingState.value)
     }
     cs.cancel()
   }
@@ -66,15 +65,15 @@ internal class GitLabMergeRequestsListViewModelImplTest {
     with(vm) {
       val updates = cs.asyncCollectLast(listDataFlow)
 
-      assertFalse(loadingState.value)
+      Assertions.assertFalse(loadingState.value)
       requestMore()
-      assertTrue(loadingState.value)
+      Assertions.assertTrue(loadingState.value)
       reset()
       advanceTimeBy(3000)
-      assertFalse(loadingState.value)
-      assertTrue(canLoadMoreState.value)
-      assertNull(errorState.value)
-      assertInstanceOf(ListDataUpdate.Clear::class.java, updates.first())
+      Assertions.assertFalse(loadingState.value)
+      Assertions.assertTrue(canLoadMoreState.value)
+      Assertions.assertNull(errorState.value)
+      Assertions.assertInstanceOf(GitLabMergeRequestsListViewModel.ListDataUpdate.Clear::class.java, updates.first())
     }
     cs.cancel()
   }
@@ -92,16 +91,16 @@ internal class GitLabMergeRequestsListViewModelImplTest {
     with(vm) {
       val updates = cs.asyncCollectLast(listDataFlow)
 
-      assertFalse(loadingState.value)
+      Assertions.assertFalse(loadingState.value)
       requestMore()
-      assertTrue(loadingState.value)
+      Assertions.assertTrue(loadingState.value)
       advanceTimeBy(3000)
-      assertFalse(loadingState.value)
-      assertInstanceOf(ListDataUpdate.NewBatch::class.java, updates.first())
+      Assertions.assertFalse(loadingState.value)
+      Assertions.assertInstanceOf(GitLabMergeRequestsListViewModel.ListDataUpdate.NewBatch::class.java, updates.first())
       reset()
-      assertTrue(canLoadMoreState.value)
-      assertNull(errorState.value)
-      assertInstanceOf(ListDataUpdate.Clear::class.java, updates.first())
+      Assertions.assertTrue(canLoadMoreState.value)
+      Assertions.assertNull(errorState.value)
+      Assertions.assertInstanceOf(GitLabMergeRequestsListViewModel.ListDataUpdate.Clear::class.java, updates.first())
     }
     cs.cancel()
   }
@@ -118,13 +117,13 @@ internal class GitLabMergeRequestsListViewModelImplTest {
 
     with(vm) {
       requestMore()
-      assertTrue(loadingState.value)
+      Assertions.assertTrue(loadingState.value)
       advanceTimeBy(3000)
-      assertFalse(loadingState.value)
-      assertNull(errorState.value)
+      Assertions.assertFalse(loadingState.value)
+      Assertions.assertNull(errorState.value)
       requestMore()
-      assertTrue(loadingState.value)
-      assertNull(errorState.value)
+      Assertions.assertTrue(loadingState.value)
+      Assertions.assertNull(errorState.value)
     }
     cs.cancel()
   }
@@ -140,12 +139,12 @@ internal class GitLabMergeRequestsListViewModelImplTest {
                                                   delayingLoader { error("test") })
 
     with(vm) {
-      assertNull(errorState.value)
+      Assertions.assertNull(errorState.value)
       requestMore()
-      assertNull(errorState.value)
+      Assertions.assertNull(errorState.value)
       advanceTimeBy(3000)
-      assertNotNull(errorState.value)
-      assertFalse(canLoadMoreState.value)
+      Assertions.assertNotNull(errorState.value)
+      Assertions.assertFalse(canLoadMoreState.value)
     }
     cs.cancel()
   }

@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui
+package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.toolwindow.ReviewTabsController
 import com.intellij.openapi.components.service
@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 
 internal class GitLabReviewTabsController(private val project: Project) : ReviewTabsController<GitLabReviewTab> {
   // TODO: make it more safe, so repository should be passed to places properly where needed
