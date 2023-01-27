@@ -15,8 +15,8 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExpandableItemsHandler
 import com.intellij.ui.SelectionSaver
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.Nls
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import javax.swing.JComponent
@@ -24,7 +24,7 @@ import javax.swing.JComponent
 class CodeReviewChangesTreeFactory(private val project: Project,
                                    private val changesModel: SingleValueModel<out Collection<Change>>) {
 
-  fun create(emptyTextText: String): ChangesTree {
+  fun create(emptyTextText: @Nls String): ChangesTree {
     val tree = object : ChangesTree(project, false, false) {
       override fun rebuildTree() {
         updateTreeModel(TreeModelBuilder(project, grouping).setChanges(changesModel.value, null).build())

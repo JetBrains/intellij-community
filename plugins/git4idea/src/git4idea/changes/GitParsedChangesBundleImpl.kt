@@ -25,7 +25,7 @@ class GitParsedChangesBundleImpl(private val project: Project,
   private val headSha = commits.last().sha
 
   override val changes = mutableListOf<Change>()
-  override val changesByCommits = mutableMapOf<String, List<Change>>()
+  override val changesByCommits = mutableMapOf<String, Collection<Change>>()
   override val linearHistory: Boolean
 
   private val diffDataByChange = CollectionFactory.createCustomHashingStrategyMap<Change, GitChangeDiffData>(object : HashingStrategy<Change> {

@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsCommitsViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -29,7 +29,7 @@ import javax.swing.JLabel
 internal object GitLabMergeRequestDetailsCommitsComponentFactory {
   private const val COMPONENTS_GAP = 4
 
-  fun create(scope: CoroutineScope, commitsVm: GitLabMergeRequestDetailsCommitsViewModel): JComponent {
+  fun create(scope: CoroutineScope, commitsVm: GitLabMergeRequestChangesViewModel): JComponent {
     val commitsPopupTitle = JLabel().apply {
       font = JBFont.regular().asBold()
       bindText(scope, commitsVm.reviewCommits.map { commits ->
@@ -60,7 +60,7 @@ internal object GitLabMergeRequestDetailsCommitsComponentFactory {
     }
   }
 
-  private fun createCommitChooserActionLink(scope: CoroutineScope, commitsVm: GitLabMergeRequestDetailsCommitsViewModel): JComponent {
+  private fun createCommitChooserActionLink(scope: CoroutineScope, commitsVm: GitLabMergeRequestChangesViewModel): JComponent {
     return ActionLink().apply {
       setDropDownLinkIcon()
       bindText(scope, combine(commitsVm.selectedCommit, commitsVm.reviewCommits) { selectedCommit, commits ->

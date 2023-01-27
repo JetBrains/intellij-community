@@ -1,15 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.async.modelFlow
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
-internal interface GitLabMergeRequestDetailsCommitsViewModel {
+internal interface GitLabMergeRequestChangesViewModel {
   val reviewCommits: StateFlow<List<GitLabCommitDTO>>
   val selectedCommit: StateFlow<GitLabCommitDTO?>
   val selectedCommitIndex: StateFlow<Int>
+  val changesResult: Flow<Result<Collection<Change>>>
 
   fun selectCommit(commit: GitLabCommitDTO?)
 
@@ -20,17 +25,26 @@ internal interface GitLabMergeRequestDetailsCommitsViewModel {
   fun selectPreviousCommit()
 }
 
-internal class GitLabMergeRequestDetailsCommitsViewModelImpl(
-  scope: CoroutineScope,
+internal class GitLabMergeRequestChangesViewModelImpl(
+  parentCs: CoroutineScope,
   mergeRequest: GitLabMergeRequest
-) : GitLabMergeRequestDetailsCommitsViewModel {
-  override val reviewCommits: StateFlow<List<GitLabCommitDTO>> = mergeRequest.commits.stateIn(scope, SharingStarted.Lazily, listOf())
+) : GitLabMergeRequestChangesViewModel {
+  private val cs = parentCs.childScope()
+
+  override val reviewCommits: StateFlow<List<GitLabCommitDTO>> = mergeRequest.commits.stateIn(cs, SharingStarted.Lazily, listOf())
 
   private val _selectedCommit: MutableStateFlow<GitLabCommitDTO?> = MutableStateFlow(null)
   override val selectedCommit: StateFlow<GitLabCommitDTO?> = _selectedCommit.asStateFlow()
 
   private val _selectedCommitIndex: MutableStateFlow<Int> = MutableStateFlow(0)
   override val selectedCommitIndex: StateFlow<Int> = _selectedCommitIndex.asStateFlow()
+
+  override val changesResult: Flow<Result<Collection<Change>>> =
+    combine(mergeRequest.changes, selectedCommit) { changesResult, commit ->
+      changesResult.map {
+        it.changesByCommits[commit?.sha] ?: it.changes
+      }
+    }.modelFlow(cs, thisLogger())
 
   override fun selectCommit(commit: GitLabCommitDTO?) {
     _selectedCommit.value = commit

@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.changes.Change
  */
 interface GitParsedChangesBundle {
   val changes: List<Change>
-  val changesByCommits: Map<String, List<Change>>
+  val changesByCommits: Map<String, Collection<Change>>
   val linearHistory: Boolean
 
   fun findChangeDiffData(change: Change): GitChangeDiffData?

@@ -167,6 +167,27 @@ fun Wrapper.bindContent(scope: CoroutineScope, contentFlow: Flow<JComponent>) {
   }
 }
 
+fun <D> Wrapper.bindContent(scope: CoroutineScope, dataFlow: Flow<D>,
+                            componentFactory: (CoroutineScope, D) -> JComponent?) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    dataFlow.collectLatest {
+      coroutineScope {
+        val component = componentFactory(this, it) ?: return@coroutineScope
+        setContent(component)
+        repaint()
+
+        try {
+          awaitCancellation()
+        }
+        finally {
+          setContent(null)
+          repaint()
+        }
+      }
+    }
+  }
+}
+
 fun <D> JPanel.bindChild(scope: CoroutineScope, dataFlow: Flow<D>,
                          constraints: Any? = null, index: Int? = null,
                          componentFactory: (CoroutineScope, D) -> JComponent?) {

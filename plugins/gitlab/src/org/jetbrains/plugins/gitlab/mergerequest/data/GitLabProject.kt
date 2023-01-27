@@ -5,14 +5,14 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
 import org.jetbrains.plugins.gitlab.api.request.getAllProjectMembers
 import org.jetbrains.plugins.gitlab.api.request.loadAllProjectLabels
+import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 interface GitLabProject {
-  val coordinates: GitLabProjectCoordinates
+  val projectMapping: GitLabProjectMapping
 
   val mergeRequests: GitLabProjectMergeRequestsStore
 
@@ -23,22 +23,22 @@ interface GitLabProject {
 class GitLabLazyProject(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
-  override val coordinates: GitLabProjectCoordinates
+  override val projectMapping: GitLabProjectMapping
 ) : GitLabProject {
 
   private val cs = parentCs.childScope()
 
   override val mergeRequests by lazy {
-    CachingGitLabProjectMergeRequestsStore(cs, api, coordinates)
+    CachingGitLabProjectMergeRequestsStore(cs, api, projectMapping)
   }
 
   override suspend fun getLabels(): List<GitLabLabelDTO> =
     withContext(cs.coroutineContext) {
-      api.loadAllProjectLabels(coordinates)
+      api.loadAllProjectLabels(projectMapping.repository)
     }
 
   override suspend fun getMembers(): List<GitLabMemberDTO> =
     withContext(cs.coroutineContext) {
-      api.getAllProjectMembers(coordinates)
+      api.getAllProjectMembers(projectMapping.repository)
     }
 }

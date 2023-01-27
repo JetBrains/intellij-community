@@ -18,19 +18,13 @@ data class GitLabNoteDTO(
   val userPermissions: UserPermissions
 ) {
   data class Position(
-    val diffRefs: DiffRefs,
+    val diffRefs: GitLabDiffRefs,
     val filePath: String,
     val positionType: String,
     val newLine: Int?,
     val newPath: String?,
     val oldLine: Int?,
     val oldPath: String?
-  )
-
-  data class DiffRefs(
-    val baseSha: String,
-    val headSha: String,
-    val startSha: String
   )
 
   data class UserPermissions(

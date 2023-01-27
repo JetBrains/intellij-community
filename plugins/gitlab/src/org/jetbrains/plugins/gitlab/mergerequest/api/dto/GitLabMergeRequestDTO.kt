@@ -5,6 +5,7 @@ import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffRefs
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
@@ -18,6 +19,7 @@ class GitLabMergeRequestDTO(
   val webUrl: String,
   val targetBranch: String,
   val sourceBranch: String,
+  val diffRefs: GitLabDiffRefs,
   val conflicts: Boolean,
   val state: GitLabMergeRequestState,
   val author: GitLabUserDTO,

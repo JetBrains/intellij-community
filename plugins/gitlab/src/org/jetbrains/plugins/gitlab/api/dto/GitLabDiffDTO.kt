@@ -2,12 +2,15 @@
 package org.jetbrains.plugins.gitlab.api.dto
 
 data class GitLabDiffDTO(
-  val aMode: String,
-  val bMode: String,
+  val aMode: String?,
+  val bMode: String?,
+
   val diff: String,
+
   val deletedFile: Boolean,
   val newFile: Boolean,
-  val newPath: String,
-  val oldPath: String,
-  val renamedFile: Boolean
+  val renamedFile: Boolean,
+
+  val newPath: String?,
+  val oldPath: String?
 )

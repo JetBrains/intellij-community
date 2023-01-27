@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 internal interface GitLabMergeRequestDetailsViewModel {
   val detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel
   val detailsReviewFlowVm: GitLabMergeRequestReviewFlowViewModel
-  val commitsVm: GitLabMergeRequestDetailsCommitsViewModel
+  val changesVm: GitLabMergeRequestChangesViewModel
 }
 
 internal class GitLabMergeRequestDetailsViewModelImpl(
@@ -20,5 +20,5 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
 ) : GitLabMergeRequestDetailsViewModel {
   override val detailsInfoVm = GitLabMergeRequestDetailsInfoViewModelImpl(mergeRequest)
   override val detailsReviewFlowVm = GitLabMergeRequestReviewFlowViewModelImpl(scope, currentUser, projectData, mergeRequest)
-  override val commitsVm = GitLabMergeRequestDetailsCommitsViewModelImpl(scope, mergeRequest)
+  override val changesVm = GitLabMergeRequestChangesViewModelImpl(scope, mergeRequest)
 }

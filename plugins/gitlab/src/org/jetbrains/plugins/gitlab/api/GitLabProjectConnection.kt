@@ -24,7 +24,7 @@ class GitLabProjectConnection(
 ) : HostedGitRepositoryConnection<GitLabProjectMapping, GitLabAccount> {
   val tokenRefreshFlow: Flow<Unit> = tokenState.map { }
 
-  val projectData = GitLabLazyProject(scope.childScope(), apiClient, repo.repository)
+  val projectData = GitLabLazyProject(scope.childScope(), apiClient, repo)
   val imageLoader = GitLabImageLoader(apiClient, repo.repository.serverPath)
 
   override suspend fun close() {

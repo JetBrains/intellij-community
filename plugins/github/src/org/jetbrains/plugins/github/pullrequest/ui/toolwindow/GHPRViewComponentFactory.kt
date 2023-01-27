@@ -247,8 +247,8 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     scope: CoroutineScope,
     changesProviderModel: SingleValueModel<GitParsedChangesBundle>,
     commitsAndFilesVm: GHPRCommitsViewModel
-  ): SingleValueModel<List<Change>> {
-    val commitChangesModel: SingleValueModel<List<Change>> = SingleValueModel(emptyList())
+  ): SingleValueModel<Collection<Change>> {
+    val commitChangesModel: SingleValueModel<Collection<Change>> = SingleValueModel(emptyList())
     scope.launch(start = CoroutineStart.UNDISPATCHED) {
       commitsAndFilesVm.selectedCommit.collect { selectedCommit ->
         commitChangesModel.value = if (selectedCommit == null) {
@@ -265,7 +265,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private fun createChangesTree(
     parentPanel: JPanel,
-    model: SingleValueModel<List<Change>>,
+    model: SingleValueModel<Collection<Change>>,
     emptyTextText: String,
     getCustomData: ChangesTree.(String) -> Any? = { null }
   ): ChangesTree {

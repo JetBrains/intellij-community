@@ -6,25 +6,26 @@ import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.util.bindTextHtml
 import com.intellij.collaboration.ui.util.bindVisibility
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsCommitsViewModel
+import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import javax.swing.JComponent
 
 internal object GitLabMergeRequestDetailsCommitInfoComponentFactory {
   private const val GAP = 8
 
-  fun create(scope: CoroutineScope, commitsVm: GitLabMergeRequestDetailsCommitsViewModel): JComponent {
+  fun create(scope: CoroutineScope, commit: Flow<GitLabCommitDTO?>): JComponent {
     val title = SimpleHtmlPane().apply {
-      bindTextHtml(scope, commitsVm.selectedCommit.map { commit -> commit?.title.orEmpty() })
+      bindTextHtml(scope, commit.map { it?.title.orEmpty() })
     }
     val description = SimpleHtmlPane().apply {
-      bindTextHtml(scope, commitsVm.selectedCommit.map { commit -> commit?.description.orEmpty() })
+      bindTextHtml(scope, commit.map { it?.description.orEmpty() })
     }
 
     return VerticalListPanel(GAP).apply {
       isOpaque = false
       name = "Commit details info"
-      bindVisibility(scope, commitsVm.selectedCommit.map { commit -> commit != null })
+      bindVisibility(scope, commit.map { it != null })
 
       add(title)
       add(description)
