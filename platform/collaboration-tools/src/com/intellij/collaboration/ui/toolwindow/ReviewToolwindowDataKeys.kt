@@ -8,6 +8,9 @@ object ReviewToolwindowDataKeys {
   @JvmStatic
   val REVIEW_TABS_CONTROLLER = DataKey.create<ReviewTabsController<*>>("com.intellij.collaboration.toolwindow.review.tabs.controller")
 
+  @JvmStatic
+  val REVIEW_PROJECT_CONTEXT = DataKey.create<ReviewToolwindowProjectContext>("com.intellij.collaboration.toolwindow.review.project.context")
+
   @ApiStatus.Internal
   @JvmStatic
   val REVIEW_TABS_CONTENT_SELECTOR = DataKey.create<ReviewToolwindowTabsContentSelector<*>>("com.intellij.collaboration.toolwindow.review.tabs.content.selector")

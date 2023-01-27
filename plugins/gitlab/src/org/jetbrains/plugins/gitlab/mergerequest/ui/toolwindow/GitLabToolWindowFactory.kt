@@ -35,7 +35,7 @@ internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
       connection?.let { GitLabToolwindowProjectContext(it) }
     }
 
-    val tabsController = GitLabReviewTabsController(project)
+    val tabsController = GitLabReviewTabsController()
     val componentFactory = GitLabReviewTabComponentFactory(project)
 
     manageReviewToolwindowTabs(toolWindow.contentManager, projectContext, tabsController, componentFactory)

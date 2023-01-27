@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
+
 @ApiStatus.Experimental
 fun <T : ReviewTab, C : ReviewToolwindowProjectContext> manageReviewToolwindowTabs(
   contentManager: ContentManager,
@@ -44,6 +45,7 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
       when {
         ReviewToolwindowDataKeys.REVIEW_TABS_CONTROLLER.`is`(it) -> reviewTabsController
         ReviewToolwindowDataKeys.REVIEW_TABS_CONTENT_SELECTOR.`is`(it) -> tabsSelector
+        ReviewToolwindowDataKeys.REVIEW_PROJECT_CONTEXT.`is`(it) -> projectContext.value
         else -> null
       }
     }
