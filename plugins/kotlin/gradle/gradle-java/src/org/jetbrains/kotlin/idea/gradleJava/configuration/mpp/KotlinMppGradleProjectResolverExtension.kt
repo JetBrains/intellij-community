@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import org.gradle.tooling.model.idea.IdeaModule
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
@@ -46,5 +48,20 @@ interface KotlinMppGradleProjectResolverExtension {
         context: Context, sourceSetDataNode: DataNode<GradleSourceSetData>, sourceSet: KotlinSourceSet
     ) = Unit
 
-    fun provideAdditionalProjectArtifactDependencyResolver(): KotlinProjectArtifactDependencyResolver? = null
+    fun beforePopulateSourceSetDependencies(
+        context: Context,
+        sourceSetDataNode: DataNode<GradleSourceSetData>,
+        sourceSet: KotlinSourceSet,
+        dependencies: Set<IdeaKotlinDependency>
+    ): Result = Result.Proceed
+
+    fun afterPopulateSourceSetDependencies(
+        context: Context,
+        sourceSetDataNode: DataNode<GradleSourceSetData>,
+        sourceSet: KotlinSourceSet,
+        dependencies: Set<IdeaKotlinDependency>,
+        dependencyNodes: List<DataNode<out AbstractDependencyData<*>>>
+    ) = Unit
+
+    fun provideAdditionalProjectArtifactDependencyResolvers(): List<KotlinProjectArtifactDependencyResolver> = emptyList()
 }
