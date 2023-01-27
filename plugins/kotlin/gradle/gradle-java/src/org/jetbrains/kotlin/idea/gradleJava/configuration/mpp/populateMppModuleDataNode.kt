@@ -263,7 +263,7 @@ private fun createMppGradleSourceSetDataNodes(
     val mainModuleFileDirectoryPath = mainModuleData.moduleFileDirectoryPath
 
     val extensionContext = KotlinMppGradleProjectResolverExtension.Context(mppModel, resolverCtx, gradleModule, mainModuleNode)
-    val extensionInstance = KotlinMppGradleProjectResolverExtension.instance
+    val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
 
     val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java) ?: return
     val projectDataNode = ExternalSystemApiUtil.findParent(mainModuleNode, ProjectKeys.PROJECT) ?: return
