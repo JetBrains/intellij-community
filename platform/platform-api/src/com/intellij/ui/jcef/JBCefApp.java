@@ -319,64 +319,63 @@ public final class JBCefApp {
    * In order to assuredly meet the above requirements, the IDE should run with a bundled JBR.
    */
   public static boolean isSupported() {
-    return true;
-    //boolean testModeEnabled = RegistryManager.getInstance().is("ide.browser.jcef.testMode.enabled");
-    //synchronized (ourSupportedLock) {
-    //  if (ourSupported != null && !testModeEnabled) {
-    //    return ourSupported.get();
-    //  }
-    //  if (testModeEnabled) {
-    //    ourSupported = null;
-    //  }
-    //  else if (ourSupported != null) {
-    //    return ourSupported.get();
-    //  }
-    //  Function<String, Boolean> unsupported = (msg) -> {
-    //    ourSupported = new AtomicBoolean(false);
-    //    LOG.warn(msg + (!msg.contains("disabled") ? " (Use JBR bundled with the IDE)" : ""));
-    //    return false;
-    //  };
-    //  // warn: do not change to Registry.is(), the method used at startup
-    //  if (!RegistryManager.getInstance().is("ide.browser.jcef.enabled")) {
-    //    return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled=false'");
-    //  }
-    //  if (GraphicsEnvironment.isHeadless() &&
-    //      !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled"))
-    //  {
-    //    return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
-    //  }
-    //  JCefVersionDetails version;
-    //  try {
-    //    version = JCefAppConfig.getVersionDetails();
-    //  }
-    //  catch (Throwable e) {
-    //    return unsupported.apply("JCEF runtime version is not supported");
-    //  }
-    //  if (MIN_SUPPORTED_CEF_MAJOR_VERSION > version.cefVersion.major) {
-    //    return unsupported.apply("JCEF: minimum supported CEF major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
-    //                             ", current is " + version.cefVersion.major);
-    //  }
-    //  if (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION > version.apiVersion.major ||
-    //      (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION == version.apiVersion.major &&
-    //       MIN_SUPPORTED_JCEF_API_MINOR_VERSION > version.apiVersion.minor))
-    //  {
-    //    return unsupported.apply("JCEF: minimum supported API version is " +
-    //                             MIN_SUPPORTED_JCEF_API_MAJOR_VERSION + "." + MIN_SUPPORTED_JCEF_API_MINOR_VERSION +
-    //                             ", current is " + version.apiVersion.major + "." + version.apiVersion.minor);
-    //  }
-    //  URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
-    //  if (url == null) {
-    //    return unsupported.apply("JCefAppConfig.class not found");
-    //  }
-    //  String path = url.toString();
-    //  String name = JCefAppConfig.class.getName().replace('.', '/');
-    //  boolean isJbrModule = path != null && path.contains("/jcef/" + name);
-    //  if (!isJbrModule) {
-    //    LOG.warn("JCefAppConfig is not from a JBR module, path: " + path);
-    //  }
-    //  ourSupported = new AtomicBoolean(true);
-    //  return true;
-    //}
+    boolean testModeEnabled = RegistryManager.getInstance().is("ide.browser.jcef.testMode.enabled");
+    synchronized (ourSupportedLock) {
+      if (ourSupported != null && !testModeEnabled) {
+        return ourSupported.get();
+      }
+      if (testModeEnabled) {
+        ourSupported = null;
+      }
+      else if (ourSupported != null) {
+        return ourSupported.get();
+      }
+      Function<String, Boolean> unsupported = (msg) -> {
+        ourSupported = new AtomicBoolean(false);
+        LOG.warn(msg + (!msg.contains("disabled") ? " (Use JBR bundled with the IDE)" : ""));
+        return false;
+      };
+      // warn: do not change to Registry.is(), the method used at startup
+      if (!RegistryManager.getInstance().is("ide.browser.jcef.enabled")) {
+        return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled=false'");
+      }
+      if (GraphicsEnvironment.isHeadless() &&
+          !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled"))
+      {
+        return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
+      }
+      JCefVersionDetails version;
+      try {
+        version = JCefAppConfig.getVersionDetails();
+      }
+      catch (Throwable e) {
+        return unsupported.apply("JCEF runtime version is not supported");
+      }
+      if (MIN_SUPPORTED_CEF_MAJOR_VERSION > version.cefVersion.major) {
+        return unsupported.apply("JCEF: minimum supported CEF major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
+                                 ", current is " + version.cefVersion.major);
+      }
+      if (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION > version.apiVersion.major ||
+          (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION == version.apiVersion.major &&
+           MIN_SUPPORTED_JCEF_API_MINOR_VERSION > version.apiVersion.minor))
+      {
+        return unsupported.apply("JCEF: minimum supported API version is " +
+                                 MIN_SUPPORTED_JCEF_API_MAJOR_VERSION + "." + MIN_SUPPORTED_JCEF_API_MINOR_VERSION +
+                                 ", current is " + version.apiVersion.major + "." + version.apiVersion.minor);
+      }
+      URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
+      if (url == null) {
+        return unsupported.apply("JCefAppConfig.class not found");
+      }
+      String path = url.toString();
+      String name = JCefAppConfig.class.getName().replace('.', '/');
+      boolean isJbrModule = path != null && path.contains("/jcef/" + name);
+      if (!isJbrModule) {
+        LOG.warn("JCefAppConfig is not from a JBR module, path: " + path);
+      }
+      ourSupported = new AtomicBoolean(true);
+      return true;
+    }
   }
 
   /**
