@@ -61,12 +61,12 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
         JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(isContrastRunWidget), JBUI.CurrentTheme.RunWidget.toolbarHeight())
       }
       if (isContrastRunWidget) {
+        setSeparatorCreator { RunToolbarSeparator(isCurrentConfigurationRunning) }
         setActionButtonBorder(JBUI.Borders.empty())
       }
       else {
         setActionButtonBorder(2, JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
       }
-      setSeparatorCreator { RunToolbarSeparator(isCurrentConfigurationRunning) }
       setCustomButtonLook(RunWidgetButtonLook(isCurrentConfigurationRunning))
       border = null
     }
@@ -378,9 +378,11 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object : ActionButtonWithText(this, presentation, place, {
-      JBUI.size(JBUI.CurrentTheme.RunWidget.configurationSelectorWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
+      if (isContrastRunWidget)
+        JBUI.size(JBUI.CurrentTheme.RunWidget.configurationSelectorWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
+      else JBUI.size(16, JBUI.CurrentTheme.RunWidget.toolbarHeight())
     }) {
-      override fun getMargins(): Insets = JBInsets.create(0, 10)
+      override fun getMargins(): Insets = JBInsets.create(0, 8)
       override fun iconTextSpace(): Int = JBUI.scale(6)
       override fun shallPaintDownArrow() = true
       override fun getInactiveTextColor() = JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND
