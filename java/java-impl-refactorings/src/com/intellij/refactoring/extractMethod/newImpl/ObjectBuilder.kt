@@ -9,7 +9,6 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
@@ -34,10 +33,6 @@ data class IntroduceObjectResult(
   val replacedReferences: List<PsiExpression>
 )
 
-enum class Chooser {
-  Yes, No;
-}
-
 interface ObjectBuilder {
   fun createClass(): PsiClass
   fun createDeclaration(): PsiDeclarationStatement
@@ -47,23 +42,6 @@ interface ObjectBuilder {
 
   companion object {
     fun run(editor: Editor, variables: List<PsiVariable>, scope: List<PsiElement>){
-      val message = JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs")
-      HintManager.getInstance().showErrorHint(editor, message)
-      JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(listOf(Chooser.Yes, Chooser.No))
-        .setItemChosenCallback { item ->
-          if (item == Chooser.Yes) {
-            doExtract(editor, variables.sortedBy { variable -> variable.textRange.startOffset }, scope)
-          }
-        }
-        .setMovable(true)
-        .setResizable(false)
-        .setRequestFocus(true)
-        .createPopup()
-        .showInBestPositionFor(editor)
-    }
-
-    fun doExtract(editor: Editor, variables: List<PsiVariable>, scope: List<PsiElement>){
       require(variables.isNotEmpty())
       require(scope.isNotEmpty())
 
@@ -89,6 +67,7 @@ interface ObjectBuilder {
             .onSuccess { invokeLater { MethodExtractor ().doExtract(file, extractRange.textRange) } }
             .disposeWithTemplate(disposable)
             .createTemplate(file, createTemplateFields(editor, introducedClass, declaration, introducedVariableReferences))
+          HintManager.getInstance().showInformationHint(editor, JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs"))
         } catch (e: Throwable) {
           editorState.revert()
           throw e
