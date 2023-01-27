@@ -17,6 +17,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -68,6 +69,7 @@ import java.util.List;
 public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
   @NonNls public static final String HELP_ID = "reference.toolWindows.Coverage";
+  public static final Icon FILTER_ICON = AllIcons.General.Filter;
 
   private final CoverageTableModel myModel;
   private final JBTreeTable myTable;
@@ -113,15 +115,36 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     });
     setUpShowRootNode();
 
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(CoverageViewManager.TOOLWINDOW_ID);
+    final boolean isHorizontalView = toolWindow != null && toolWindow.getAnchor().isHorizontal();
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("CoverageView", createToolbarActions(), !isHorizontalView);
+    actionToolbar.setTargetComponent(myTable);
+    final JComponent toolbarComponent = actionToolbar.getComponent();
+    if (isHorizontalView) {
+      addToLeft(toolbarComponent);
+    }
+    else {
+      addToTop(toolbarComponent);
+    }
+
     setUpEmptyText(false, false);
     if (myTreeStructure.getRootElement() instanceof CoverageListRootNode root) {
       root.getState().afterChange(this, state -> {
         if (state.myHasVCSFilteredChildren && myStateBean.isShowOnlyModified()
-            && myStateBean.isShowOnlyModifiedIsDefaultValue()) {
+            && myStateBean.isDefaultFilters()) {
           if (root.getChildren().isEmpty()) {
             myStateBean.setShowOnlyModified(false);
             resetView();
             return Unit.INSTANCE;
+          } else {
+            final String message = CoverageBundle.message("coverage.filter.gotit", myViewExtension.getElementsName());
+            final GotItTooltip gotIt = new GotItTooltip("coverage.view.elements.filter", message, this);
+            if (gotIt.canShow()) {
+              final JComponent filterAction = findToolbarActionButtonWithIcon(actionToolbar, FILTER_ICON);
+              if (filterAction != null) {
+                gotIt.show(filterAction, GotItTooltip.BOTTOM_MIDDLE);
+              }
+            }
           }
         }
         setUpEmptyText(state.myHasVCSFilteredChildren, state.myHasFullyCoveredChildren);
@@ -163,17 +186,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         enterSelected(true);
       }
     });
-    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(CoverageViewManager.TOOLWINDOW_ID);
-    final boolean isHorizontalView = toolWindow != null && toolWindow.getAnchor().isHorizontal();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("CoverageView", createToolbarActions(), !isHorizontalView);
-    actionToolbar.setTargetComponent(myTable);
-    final JComponent toolbarComponent = actionToolbar.getComponent();
-    if (isHorizontalView) {
-      addToLeft(toolbarComponent);
-    }
-    else {
-      addToTop(toolbarComponent);
-    }
   }
 
   private void setUpShowRootNode() {
@@ -361,7 +373,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
     if (hasFilters) {
       filtersActionGroup.setPopup(true);
-      filtersActionGroup.getTemplatePresentation().setIcon(AllIcons.General.Filter);
+      filtersActionGroup.getTemplatePresentation().setIcon(FILTER_ICON);
       filtersActionGroup.getTemplatePresentation().setText(CoverageBundle.messagePointer("coverage.view.filters.group"));
       actionGroup.add(filtersActionGroup);
     }
@@ -585,5 +597,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         }
       }
     }
+  }
+
+  private static JComponent findToolbarActionButtonWithIcon(ActionToolbar toolbar, Icon icon) {
+    return UIUtil.uiTraverser(toolbar.getComponent())
+      .filter(ActionButton.class)
+      .filter(button -> button.getIcon() == icon)
+      .first();
   }
 }

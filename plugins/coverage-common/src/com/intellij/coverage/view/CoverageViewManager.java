@@ -143,13 +143,16 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     public int mySortingColumn = 0;
     private boolean myHideFullyCovered = false;
     private boolean myShowOnlyModified = true;
-    private boolean myShowOnlyModifiedIsDefaultValue = true;
+    private boolean myDefaultFilters = true;
 
     public boolean isHideFullyCovered() {
       return myHideFullyCovered;
     }
 
     public void setHideFullyCovered(boolean hideFullyCovered) {
+      if (myHideFullyCovered != hideFullyCovered) {
+        myDefaultFilters = false;
+      }
       myHideFullyCovered = hideFullyCovered;
     }
 
@@ -159,13 +162,13 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
 
     public void setShowOnlyModified(boolean showOnlyModified) {
       if (myShowOnlyModified != showOnlyModified) {
-        myShowOnlyModifiedIsDefaultValue = false;
+        myDefaultFilters = false;
       }
       myShowOnlyModified = showOnlyModified;
     }
 
-    public boolean isShowOnlyModifiedIsDefaultValue() {
-      return myShowOnlyModifiedIsDefaultValue;
+    public boolean isDefaultFilters() {
+      return myDefaultFilters;
     }
   }
 }
