@@ -132,12 +132,27 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         when (withLibraryDirective.size) {
             0 -> return null
             1 -> {
+                val libraryDir = file.parentFile!!.resolve(withLibraryDirective.single())
                 return MockLibraryFacility(
-                    source = testDataDirectory.resolve(withLibraryDirective[0]),
+                    source = libraryDir,
+                    options = parseExtraLibraryCompileOptions(libraryDir),
                 )
             }
             else -> error("Only one library directive is allowed")
         }
+    }
+
+    private fun parseExtraLibraryCompileOptions(libraryDir: File): List<String> {
+        val extraDirectivesFile = libraryDir.resolve("directives.test")
+        if (extraDirectivesFile.exists()) {
+            val extraDirectivesFileText = FileUtil.loadFile(extraDirectivesFile, true)
+            val extraCompilerArguments =
+                InTextDirectivesUtils.findStringWithPrefixes(extraDirectivesFileText, COMPILER_ARGUMENTS_DIRECTIVE)
+            if (extraCompilerArguments != null) {
+                return extraCompilerArguments.split(" ")
+            }
+        }
+        return emptyList()
     }
 
     override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
