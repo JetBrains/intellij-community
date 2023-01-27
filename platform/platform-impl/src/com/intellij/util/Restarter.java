@@ -2,7 +2,6 @@
 package com.intellij.util;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,12 +13,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.io.File;
+import java.awt.Toolkit;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,11 +43,13 @@ public final class Restarter {
       }
     }
     else if (SystemInfo.isMac) {
-      File appDir = new File(PathManager.getHomePath()).getParentFile();
-      if (appDir != null && appDir.getName().endsWith(".app") && appDir.isDirectory()) return appDir.toPath();
+      var appDir = Path.of(PathManager.getHomePath()).getParent();
+      if (appDir != null && appDir.getFileName().toString().endsWith(".app") && Files.isDirectory(appDir)) {
+        return appDir;
+      }
     }
     else if (SystemInfo.isUnix) {
-      Path starter = Path.of(PathManager.getBinPath(), ApplicationNamesInfo.getInstance().getScriptName() + ".sh");
+      var starter = Path.of(PathManager.getBinPath(), ApplicationNamesInfo.getInstance().getScriptName() + ".sh");
       if (Files.exists(starter)) {
         return starter;
       }
@@ -62,10 +61,10 @@ public final class Restarter {
   private static final NotNullLazyValue<Boolean> ourRestartSupported = NotNullLazyValue.atomicLazy(() -> {
     String problem;
 
-    String restartExitCode = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
+    var restartExitCode = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
     if (restartExitCode != null) {
       try {
-        int code = Integer.parseInt(restartExitCode);
+        var code = Integer.parseInt(restartExitCode);
         if (code >= 0 && code <= 255) {
           return true;
         }
@@ -94,10 +93,7 @@ public final class Restarter {
       }
     }
     else if (SystemInfo.isUnix) {
-      if (OSProcessUtil.getCurrentProcessId() <= 0) {
-        problem = "cannot detect process ID";
-      }
-      else if (ourStarter.getValue() == null) {
+      if (ourStarter.getValue() == null) {
         problem = "cannot find launcher script in " + PathManager.getBinPath();
       }
       else if (PathEnvironmentVariableUtil.findInPath("python3") == null && PathEnvironmentVariableUtil.findInPath("python") == null) {
@@ -121,19 +117,18 @@ public final class Restarter {
   });
 
   private static String checkRestarter(String restarterName) {
-    Path restarter = PathManager.findBinFile(restarterName);
+    var restarter = PathManager.findBinFile(restarterName);
     return restarter != null && Files.isExecutable(restarter) ? null : "not an executable file: " + restarter;
   }
 
   public static void scheduleRestart(boolean elevate, String @NotNull ... beforeRestart) throws IOException {
-    String exitCodeVariable = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
+    var exitCodeVariable = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
     if (exitCodeVariable != null) {
       if (beforeRestart.length > 0) {
         throw new IOException("Cannot restart application: specific exit code restart mode does not support executing additional commands");
       }
       try {
-        int code = Integer.parseInt(exitCodeVariable);
-        System.exit(code);
+        System.exit(Integer.parseInt(exitCodeVariable));
       }
       catch (NumberFormatException ex) {
         throw new IOException("Cannot restart application: can't parse required exit code", ex);
@@ -170,8 +165,7 @@ public final class Restarter {
     }
 
     if (elevate) {
-      var launcher = PathManager.findBinFile("launcher.exe");
-      if (launcher == null) throw new IOException("Cannot find 'launcher.exe'; please reinstall the IDE");
+      var launcher = PathManager.findBinFileWithException("launcher.exe");
       args.add("2");
       args.add(launcher.toString());
     }
@@ -180,41 +174,33 @@ public final class Restarter {
     }
     args.add(starter.toString());
 
-    var restarter = PathManager.findBinFile("restarter.exe");
-    if (restarter == null) throw new IOException("Cannot find 'restarter.exe'; please reinstall the IDE");
+    var restarter = PathManager.findBinFileWithException("restarter.exe");
 
-    runRestarter(restarter.toFile(), args);
+    runRestarter(restarter, args);
   }
 
   private static void restartOnMac(String... beforeRestart) throws IOException {
-    Path appDir = ourStarter.getValue();
-    if (appDir == null) {
-      throw new IOException("Application bundle not found: " + PathManager.getHomePath());
-    }
-    List<String> args = new ArrayList<>();
+    var appDir = ourStarter.getValue();
+    if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomePath());
+    var args = new ArrayList<String>();
     args.add(appDir.toString());
     Collections.addAll(args, beforeRestart);
-    runRestarter(new File(PathManager.getBinPath(), "restarter"), args);
+    runRestarter(Path.of(PathManager.getBinPath(), "restarter"), args);
   }
 
   private static void restartOnUnix(String... beforeRestart) throws IOException {
-    Path starterScript = ourStarter.getValue();
-    if (starterScript == null) {
-      throw new IOException("Starter script not found in " + PathManager.getBinPath());
-    }
+    var starterScript = ourStarter.getValue();
+    if (starterScript == null) throw new IOException("Starter script not found in " + PathManager.getBinPath());
 
-    int pid = OSProcessUtil.getCurrentProcessId();
-    if (pid <= 0) throw new IOException("Invalid process ID: " + pid);
-
-    File python = PathEnvironmentVariableUtil.findInPath("python3");
+    var python = PathEnvironmentVariableUtil.findInPath("python3");
     if (python == null) python = PathEnvironmentVariableUtil.findInPath("python");
     if (python == null) throw new IOException("Cannot find neither 'python' nor 'python3' in 'PATH'");
-    List<String> args = new ArrayList<>();
+    var args = new ArrayList<String>();
     args.add(PathManager.findBinFileWithException("restart.py").toString());
-    args.add(String.valueOf(pid));
+    args.add(String.valueOf(ProcessHandle.current().pid()));
     args.add(starterScript.toString());
     Collections.addAll(args, beforeRestart);
-    runRestarter(python, args);
+    runRestarter(python.toPath(), args);
   }
 
   @ApiStatus.Internal
@@ -222,43 +208,41 @@ public final class Restarter {
     System.setProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, "true");
   }
 
-  private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {
-    String restarter = restarterFile.getPath();
-    boolean doNotLock = SystemProperties.getBooleanProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, false);
-    Path tempDir = null;
+  private static void runRestarter(Path restarter, List<String> restarterArgs) throws IOException {
+    var processBuilder = new ProcessBuilder(restarterArgs);
+
+    var doNotLock = SystemProperties.getBooleanProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, false);
     if (doNotLock || restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS)) {
-      tempDir = Paths.get(PathManager.getSystemPath(), "restart");
-      Files.createDirectories(tempDir);
-      Path copy = tempDir.resolve(restarterFile.getName());
-      Files.copy(restarterFile.toPath(), copy, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-      restarter = copy.toString();
+      var tempDir = Files.createDirectories(PathManager.getSystemDir().resolve("restart"));
+      restarter = Files.copy(restarter, tempDir.resolve(restarter.getFileName()), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+      processBuilder.directory(tempDir.toFile());
     }
-    restarterArgs.add(0, restarter);
+    restarterArgs.add(0, restarter.toString());
     Logger.getInstance(Restarter.class).info("run restarter: " + restarterArgs);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(restarterArgs);
-    if (doNotLock) processBuilder.directory(tempDir.toFile());
     if (SystemInfo.isXWindow) setDesktopStartupId(processBuilder);
+
     processBuilder.start();
   }
 
   // this is required to support X server's focus stealing prevention mechanism, see JBR-2503
   private static void setDesktopStartupId(ProcessBuilder processBuilder) {
-    if (!SystemInfo.isJetBrainsJvm || !"sun.awt.X11.XToolkit".equals(Toolkit.getDefaultToolkit().getClass().getName())) return;
-    try {
-      Long lastUserActionTime = ReflectionUtil.getStaticFieldValue(Class.forName("sun.awt.X11.XBaseWindow"), long.class, "globalUserTime");
-      if (lastUserActionTime == null) {
-        Logger.getInstance(Restarter.class).warn("Couldn't obtain last user action's timestamp");
+    if (SystemInfo.isJetBrainsJvm && "sun.awt.X11.XToolkit".equals(Toolkit.getDefaultToolkit().getClass().getName())) {
+      try {
+        var lastUserActionTime = ReflectionUtil.getStaticFieldValue(Class.forName("sun.awt.X11.XBaseWindow"), long.class, "globalUserTime");
+        if (lastUserActionTime == null) {
+          Logger.getInstance(Restarter.class).warn("Couldn't obtain last user action's timestamp");
+        }
+        else {
+          // this doesn't initiate a "proper" startup sequence (by sending the 'new:' message to the root window),
+          // but passing the event timestamp to the started process should be enough to prevent focus stealing
+          var restartId = ApplicationNamesInfo.getInstance().getProductName() + "-restart_TIME" + lastUserActionTime;
+          processBuilder.environment().put("DESKTOP_STARTUP_ID", restartId);
+        }
       }
-      else {
-        // this doesn't start 'proper' startup sequence (by sending 'new:' message to the root window),
-        // but passing the event timestamp to the started process should be enough to prevent focus stealing
-        processBuilder.environment().put("DESKTOP_STARTUP_ID",
-                                         ApplicationNamesInfo.getInstance().getProductName() + "-restart_TIME" + lastUserActionTime);
+      catch (Exception e) {
+        Logger.getInstance(Restarter.class).warn("Couldn't set DESKTOP_STARTUP_ID", e);
       }
-    }
-    catch (Exception e) {
-      Logger.getInstance(Restarter.class).warn("Couldn't set DESKTOP_STARTUP_ID", e);
     }
   }
 }
