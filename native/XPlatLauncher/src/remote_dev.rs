@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 use std::collections::HashMap;
 use std::{env, fs};
+use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
@@ -254,10 +255,8 @@ impl RemoteDevLaunchConfiguration {
         // PROJECT_PATH="$(cd "$(dirname "$PROJECT_PATH")" && pwd)/$(basename "$PROJECT_PATH")"
         // fi
 
-        let absolute_project_path = match project_path.is_dir() {
-            true => project_path,
-            false => project_path.parent_or_err()?,
-        }.absolutize()?.to_path_buf();
+        // taking parent dir in the bash launcher was added by @mfillipov for macos, let's ignore it
+        let absolute_project_path = project_path.absolutize()?.to_path_buf();
 
         return Ok(absolute_project_path);
     }
