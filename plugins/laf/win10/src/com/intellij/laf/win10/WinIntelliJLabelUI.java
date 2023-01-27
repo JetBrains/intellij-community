@@ -11,9 +11,4 @@ public final class WinIntelliJLabelUI extends DarculaLabelUI {
   public static ComponentUI createUI(JComponent c) {
     return new WinIntelliJLabelUI();
   }
-
-  @Override
-  protected int getMnemonicIndex(JLabel l) {
-    return l.getDisplayedMnemonicIndex();
-  }
 }
