@@ -53,9 +53,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.SourcePositionRefiner
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getElementsAtLineIfAny
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getLambdasAtLineIfAny
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
@@ -317,12 +315,34 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
               DebuggerUtilsEx.locationsOfLine(it, lineNumber + 1).isNotEmpty()
             }
 
-        if (lambdas.size == size) {
+        // To bring the list of fun literals into conformity with list of lambda-methods in bytecode above
+        // it is needed to filter out literals without executable code on current line.
+        val suitableFunLiterals = filter { it.hasExecutableCodeInsideOnLine(lineNumber) }
+
+        if (lambdas.size == suitableFunLiterals.size) {
             // All lambdas on the line compiled into methods
-            return this[lambdas.indexOf(method)]
+            return suitableFunLiterals[lambdas.indexOf(method)]
         }
         // SAM lambdas compiled into methods, and other non-SAM lambdas on same line compiled into anonymous classes
-        return getSamLambdaWithIndex(lambdas.indexOf(method))
+        return suitableFunLiterals.getSamLambdaWithIndex(lambdas.indexOf(method))
+    }
+
+    private fun KtFunction.hasExecutableCodeInsideOnLine(lineNumber: Int): Boolean {
+        val file = containingFile.virtualFile
+        return hasExecutableCodeInsideOnLine(file, lineNumber, project) { element ->
+            when (element) {
+                is KtNamedFunction -> ApplicabilityResult.UNKNOWN
+                is KtElement -> {
+                    val visitor = LineBreakpointExpressionVisitor.of(file, lineNumber)
+                    if (visitor != null) {
+                        element.accept(visitor, null)
+                    } else {
+                        ApplicabilityResult.UNKNOWN
+                    }
+                }
+                else -> ApplicabilityResult.UNKNOWN
+            }
+        }
     }
 
     private fun List<KtFunction>.getSamLambdaWithIndex(index: Int): KtFunction? {

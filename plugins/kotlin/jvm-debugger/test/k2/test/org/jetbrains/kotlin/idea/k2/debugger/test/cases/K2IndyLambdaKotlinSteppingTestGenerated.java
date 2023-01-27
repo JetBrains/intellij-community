@@ -1265,6 +1265,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/custom/lambdaBreakpoints.kt");
         }
 
+        @TestMetadata("lambdaWithNoExecutableCodeOnLine.kt")
+        public void testLambdaWithNoExecutableCodeOnLine() throws Exception {
+            runTest("../testData/stepping/custom/lambdaWithNoExecutableCodeOnLine.kt");
+        }
+
         @TestMetadata("manyFilesWithInlineCalls1.kt")
         public void testManyFilesWithInlineCalls1() throws Exception {
             runTest("../testData/stepping/custom/manyFilesWithInlineCalls1.kt");

@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
+import com.intellij.util.Processor
 import com.intellij.xdebugger.XDebuggerUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
@@ -20,6 +21,8 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.inline.INLINE_ONLY_ANNOTATION_FQ_NAME
+import kotlin.math.max
+import kotlin.math.min
 
 fun isBreakpointApplicable(file: VirtualFile, line: Int, project: Project, checker: (PsiElement) -> ApplicabilityResult): Boolean {
     val psiFile = PsiManager.getInstance(project).findFile(file)
@@ -31,35 +34,78 @@ fun isBreakpointApplicable(file: VirtualFile, line: Int, project: Project, check
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return false
 
     return runReadAction {
-        var isApplicable = false
-        val checked = HashSet<PsiElement>()
-
-        XDebuggerUtil.getInstance().iterateLine(
-            project, document, line,
-            fun(element: PsiElement): Boolean {
-                if (element is PsiWhiteSpace || element.getParentOfType<PsiComment>(false) != null || !element.isValid) {
-                    return true
-                }
-
-                val parent = getTopmostParentOnLineOrSelf(element, document, line)
-                if (!checked.add(parent)) {
-                    return true
-                }
-
-                val result = checker(parent)
-
-                if (result.shouldStop && !result.isApplicable) {
-                    isApplicable = false
-                    return false
-                }
-
-                isApplicable = isApplicable or result.isApplicable
-                return !result.shouldStop
-            },
-        )
-
-        return@runReadAction isApplicable
+        hasExecutableCodeImpl(checker, visitElements = { processor ->
+            XDebuggerUtil.getInstance().iterateLine(project, document, line, processor)
+        }) {
+            getTopmostParentOnLineOrSelf(it, document, line)
+        }
     }
+}
+
+internal fun KtElement.hasExecutableCodeInsideOnLine(
+    file: VirtualFile, line: Int, project: Project, checker: (PsiElement) -> ApplicabilityResult
+): Boolean {
+    val document = FileDocumentManager.getInstance().getDocument(file) ?: return false
+    return runReadAction {
+        val minOffset = max(startOffset, document.getLineStartOffset(line))
+        val maxOffset = min(endOffset, document.getLineEndOffset(line))
+
+        hasExecutableCodeImpl(checker, visitElements = { processor ->
+            iterateOffsetRange(project, document, minOffset, maxOffset, processor)
+        }) {
+            getTopmostParentWithinOffsetRangeOrSelf(it, minOffset, maxOffset)
+        }
+    }
+}
+
+// TODO(KTIJ-23034): move function to XDebuggerUtil in next PR. This wasn't done in current PR
+//  because this it going to be cherry-picked to kt- branches, and we can't modify java debugger part.
+private fun iterateOffsetRange(project: Project, document: Document, minOffset: Int, maxOffset: Int, processor: Processor<PsiElement>) {
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
+    var element: PsiElement?
+    var offset: Int = minOffset
+    while (offset < maxOffset) {
+        element = file.findElementAt(offset)
+        if (element != null && element.textLength > 0) {
+            offset = if (!processor.process(element)) {
+                return
+            } else {
+                element.textRange.endOffset
+            }
+        } else {
+            offset++
+        }
+    }
+}
+
+private fun hasExecutableCodeImpl(
+    checker: (PsiElement) -> ApplicabilityResult,
+    visitElements: (Processor<PsiElement>) -> Unit,
+    getParentToAnalyze: (PsiElement) -> PsiElement,
+): Boolean {
+    var isApplicable = false
+    val checked = HashSet<PsiElement>()
+
+    visitElements(fun(element: PsiElement): Boolean {
+        if (element is PsiWhiteSpace || element.getParentOfType<PsiComment>(false) != null || !element.isValid) {
+            return true
+        }
+        val parent = getParentToAnalyze(element)
+        if (!checked.add(parent)) {
+            return true
+        }
+
+        val result = checker(parent)
+
+        if (result.shouldStop && !result.isApplicable) {
+            isApplicable = false
+            return false
+        }
+
+        isApplicable = isApplicable or result.isApplicable
+        return !result.shouldStop
+    })
+    return isApplicable
 }
 
 private fun getTopmostParentOnLineOrSelf(element: PsiElement, document: Document, line: Int): PsiElement {
@@ -75,6 +121,19 @@ private fun getTopmostParentOnLineOrSelf(element: PsiElement, document: Document
     }
 
     return current
+}
+
+private fun getTopmostParentWithinOffsetRangeOrSelf(element: PsiElement, startOffset: Int, endOffset: Int): PsiElement {
+    var node = element
+    do {
+        val parent = node.parent
+        if (parent == null || parent.startOffset < startOffset || parent.endOffset > endOffset) {
+            break
+        }
+        node = parent
+    } while (true)
+
+    return node
 }
 
 fun getLambdasAtLineIfAny(sourcePosition: SourcePosition): List<KtFunction> {
