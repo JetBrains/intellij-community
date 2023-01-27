@@ -43,7 +43,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                       project: Project?): JComponent {
     return panel {
       pane.components.forEachIndexed { i, component ->
-        render(component, RendererContext(tool.optionController, project), i != 0 && !pane.components[i - 1].hasBottomGap)
+        render(component, RendererContext(tool.optionController, project), i == 0, component.hasBottomGap)
       }
     }
       .apply { if (parent != null) registerValidators(parent) }
@@ -82,7 +82,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           component.children.forEach { tab ->
             tabbedPane.add(tab.label.label(), com.intellij.ui.dsl.builder.panel {
               tab.children.forEachIndexed { i, tabComponent ->
-                render(tabComponent, context, i == 0)
+                render(tabComponent, context, i == 0, tabComponent.hasBottomGap)
               }
             })
           }
