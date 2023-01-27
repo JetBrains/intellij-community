@@ -2,6 +2,8 @@
 package com.jetbrains.python.ift
 
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -9,8 +11,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
@@ -61,15 +65,27 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
       return applyBaseSdk(project, selectedSdk, existingSdks, module)
     }
     if (project.pythonSdk != null) return null  // sdk already configured
-    return createVenv(project)
+
+    // Run in parallel, because we can not wait for SDK here
+    ApplicationManager.getApplication().executeOnPooledThread {
+      createAndSetVenvSdk(project)
+    }
+
+    return null
   }
 
-  private fun createVenv(project: Project): Sdk? {
+  @RequiresBackgroundThread
+  private fun createAndSetVenvSdk(project: Project) {
     val module = project.modules.first()
     val existingSdks = getExistingSdks()
     val baseSdks = findBaseSdks(existingSdks, module, project)
     val preferredSdk = PyProjectVirtualEnvConfiguration.findPreferredVirtualEnvBaseSdk(baseSdks)
-    return applyBaseSdk(project, preferredSdk, existingSdks, module)
+    invokeLater {
+      val venvSdk = applyBaseSdk(project, preferredSdk, existingSdks, module)
+      if (venvSdk != null) {
+        applyProjectSdk(venvSdk, project)
+      }
+    }
   }
 
   private fun applyBaseSdk(project: Project,
@@ -101,46 +117,58 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
   override fun startFromWelcomeFrame(startCallback: (Sdk?) -> Unit) {
     val allExistingSdks = listOf(*PyConfigurableInterpreterList.getInstance(null).model.sdks)
     val existingSdks = ProjectSpecificSettingsStep.getValidPythonSdks(allExistingSdks)
-    val context = UserDataHolderBase()
-    val baseSdks = findBaseSdks(existingSdks, null, context)
-    if (baseSdks.isEmpty()) {
-      val baseSdkField = PySdkPathChoosingComboBox()
 
-      val warningPlaceholder = JLabel()
-      val formPanel = FormBuilder.createFormBuilder()
-        .addComponent(warningPlaceholder)
-        .addLabeledComponent(PySdkBundle.message("python.venv.base.label"), baseSdkField)
-        .panel
+    ApplicationManager.getApplication().executeOnPooledThread {
+      val context = UserDataHolderBase()
+      val baseSdks = findBaseSdks(existingSdks, null, context)
 
-      formPanel.preferredSize = Dimension(max(formPanel.preferredSize.width, 500), formPanel.preferredSize.height)
-      val dialog = object : DialogWrapper(ProjectManager.getInstance().defaultProject) {
-        override fun createCenterPanel(): JComponent = formPanel
-
-        init {
-          title = PyBundle.message("sdk.select.path")
-          init()
+      invokeLater {
+        if (baseSdks.isEmpty()) {
+          val sdk = showSdkChoosingDialog(existingSdks, context)
+          if (sdk != null) {
+            startCallback(sdk)
+          }
         }
+        else startCallback(null)
       }
-
-      addBaseInterpretersAsync(baseSdkField, existingSdks, null, context) {
-        val selectedSdk = baseSdkField.selectedSdk
-        if (selectedSdk is PySdkToInstall) {
-          val installationWarning = selectedSdk.getInstallationWarning(Messages.getOkButton())
-          warningPlaceholder.text = "<html>$installationWarning</html>"
-        }
-        else {
-          warningPlaceholder.text = ""
-        }
-      }
-
-      dialog.title = PythonLessonsBundle.message("choose.python.sdk.to.start.learning.header")
-      if (dialog.showAndGet()) {
-        val selectedSdk = baseSdkField.selectedSdk ?: return
-        startCallback(selectedSdk)
-      }
-    } else {
-      startCallback(null)
     }
+  }
+
+  private fun showSdkChoosingDialog(existingSdks: List<Sdk>, context: UserDataHolder): Sdk? {
+    val baseSdkField = PySdkPathChoosingComboBox()
+
+    val warningPlaceholder = JLabel()
+    val formPanel = FormBuilder.createFormBuilder()
+      .addComponent(warningPlaceholder)
+      .addLabeledComponent(PySdkBundle.message("python.venv.base.label"), baseSdkField)
+      .panel
+
+    formPanel.preferredSize = Dimension(max(formPanel.preferredSize.width, 500), formPanel.preferredSize.height)
+    val dialog = object : DialogWrapper(ProjectManager.getInstance().defaultProject) {
+      override fun createCenterPanel(): JComponent = formPanel
+
+      init {
+        title = PyBundle.message("sdk.select.path")
+        init()
+      }
+    }
+
+    addBaseInterpretersAsync(baseSdkField, existingSdks, null, context) {
+      val selectedSdk = baseSdkField.selectedSdk
+      if (selectedSdk is PySdkToInstall) {
+        val installationWarning = selectedSdk.getInstallationWarning(Messages.getOkButton())
+        warningPlaceholder.text = "<html>$installationWarning</html>"
+      }
+      else {
+        warningPlaceholder.text = ""
+      }
+    }
+
+    dialog.title = PythonLessonsBundle.message("choose.python.sdk.to.start.learning.header")
+    return if (dialog.showAndGet()) {
+      baseSdkField.selectedSdk
+    }
+    else null
   }
 
   override fun isSdkConfigured(project: Project): Boolean = project.pythonSdk != null
