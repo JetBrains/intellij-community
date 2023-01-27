@@ -148,7 +148,7 @@ final class DirectoryLock {
         address = UnixDomainSocketAddress.of(Files.readString(myPortFile));
       }
       else {
-        address = UnixDomainSocketAddress.of(myPortFile);
+        address = openUnixDomainSocket(myPortFile);
       }
 
       socketChannel.connect(address);
@@ -186,10 +186,10 @@ final class DirectoryLock {
     UnixDomainSocketAddress address;
     if (myRedirectedPortFile != null) {
       Files.writeString(myPortFile, myRedirectedPortFile.toString(), StandardOpenOption.CREATE_NEW);
-      address = UnixDomainSocketAddress.of(myRedirectedPortFile);
+      address = openUnixDomainSocket(myRedirectedPortFile);
     }
     else {
-      address = UnixDomainSocketAddress.of(myPortFile);
+      address = openUnixDomainSocket(myPortFile);
     }
 
     serverChannel.bind(address);
@@ -281,7 +281,23 @@ final class DirectoryLock {
     }
   }
 
-  //<editor-fold desc="I/O helpers">
+  //<editor-fold desc="Helpers">
+  private static UnixDomainSocketAddress openUnixDomainSocket(Path file) {
+    if (file.getFileSystem().getClass().getModule() == Object.class.getModule()) {
+      return UnixDomainSocketAddress.of(file);
+    }
+    else {
+      try {
+        var ctor = UnixDomainSocketAddress.class.getDeclaredConstructor(Path.class);
+        ctor.setAccessible(true);
+        return ctor.newInstance(file);
+      }
+      catch (Exception e) {
+        throw new RuntimeException("Sorry, cannot open a Unix domain socket on this runtime", e);
+      }
+    }
+  }
+
   private static void sendLines(SocketChannel socketChannel, List<String> lines) throws IOException {
     var buffer = ByteBuffer.allocate(BUFFER_LENGTH);
     buffer.putInt(MARKER).putShort((short)0);
