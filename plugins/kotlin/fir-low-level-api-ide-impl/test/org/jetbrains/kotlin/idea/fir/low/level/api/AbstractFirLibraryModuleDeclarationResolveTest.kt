@@ -4,27 +4,18 @@
  */
 package org.jetbrains.kotlin.idea.fir.low.level.api
 
-import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbol
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.renderer.FirRenderer
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.SdkAndMockLibraryProjectDescriptor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractFirLibraryModuleDeclarationResolveTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun isFirPlugin(): Boolean = true
-
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        val pathToLibraryFiles = File(testDataPath).resolve("_library")
-        assertExists(pathToLibraryFiles)
-
-        return SdkAndMockLibraryProjectDescriptor(pathToLibraryFiles.toString(), true)
-    }
 
     /**
      * We want to check that resolving 'compiled' PSI-elements (i.e. elements from libraries)

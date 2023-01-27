@@ -133,7 +133,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
             0 -> return null
             1 -> {
                 return MockLibraryFacility(
-                    source = IDEA_TEST_DATA_DIR.resolve(withLibraryDirective[0]),
+                    source = testDataDirectory.resolve(withLibraryDirective[0]),
                 )
             }
             else -> error("Only one library directive is allowed")

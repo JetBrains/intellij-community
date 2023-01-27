@@ -1,4 +1,4 @@
-// WITH_LIBRARY: copyPaste/imports/KotlinLibrary
+// WITH_LIBRARY: KotlinLibrary
 package a
 
 import d.*
