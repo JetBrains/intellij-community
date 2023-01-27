@@ -66,6 +66,7 @@ class MergingQueueGuiSuspender {
     ProgressSuspender currentSuspender = myCurrentSuspender;
     if (currentSuspender != null && currentSuspender.isSuspended() && reason.equals(currentSuspender.getSuspendedText())) {
       currentSuspender.resumeProcess();
+      suspendIfRequested(currentSuspender); // take the following reason from the queue (if any)
     }
   }
 
