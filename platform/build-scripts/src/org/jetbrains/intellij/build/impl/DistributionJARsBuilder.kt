@@ -12,6 +12,10 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -25,6 +29,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
+import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.tasks.ZipSource
@@ -50,6 +55,8 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Predicate
 import java.util.stream.Collectors
+import kotlin.io.path.exists
+import kotlin.io.path.name
 
 /**
  * Assembles output of modules to platform JARs (in [BuildPaths.distAllDir]/lib directory),
@@ -158,6 +165,50 @@ class DistributionJARsBuilder {
   fun validateModuleStructure(context: BuildContext) {
     if (context.options.validateModuleStructure) {
       ModuleStructureValidator(context, state.platform.jarToModules).validate()
+    }
+  }
+
+  private fun validatePlugin(path: Path, context: BuildContext) {
+    spanBuilder("plugin validation").setAttribute("path", "$path").useWithScope {
+      if (!path.exists()) {
+        it.addEvent("path doesn't exist, skipped")
+        return@useWithScope
+      }
+      var id: String? = null
+      val problems = when (val result = IdePluginManager.createManager().createPlugin(path)) {
+        is PluginCreationSuccess -> {
+          id = result.plugin.pluginId
+          result.unacceptableWarnings
+        }
+        is PluginCreationFail -> {
+          result.errorsAndWarnings
+        }
+      }
+      if (problems.isNotEmpty()) {
+        val msg = problems.joinToString(
+          prefix = "${id ?: path}: ",
+          separator = ". ",
+          transform = PluginProblem::message
+        )
+        when (id) {
+          // https://youtrack.jetbrains.com/issue/IDEA-308174
+          "androidx.compose.plugins.idea",
+            // https://youtrack.jetbrains.com/issue/IDEA-312410
+          "com.intellij.tasks",
+            // https://youtrack.jetbrains.com/issue/IDEA-312409
+          "org.jetbrains.plugins.sass",
+            // https://youtrack.jetbrains.com/issue/IDEA-312408
+          "org.toml.lang",
+            // https://youtrack.jetbrains.com/issue/IDEA-312407
+          "com.intellij.plugins.webcomponents",
+            // https://youtrack.jetbrains.com/issue/IDEA-312406
+          "cucumber-javascript",
+            // https://youtrack.jetbrains.com/issue/IDEA-312405
+          "com.jetbrains.plugins.yeoman"
+          -> context.messages.warning(msg)
+          else -> reportBuildProblem(msg, identity = "${id ?: path}")
+        }
+      }
     }
   }
 
@@ -361,7 +412,7 @@ class DistributionJARsBuilder {
         }
 
         // buildPlugins pluginBuilt listener is called concurrently
-        val pluginsToIncludeInCustomRepository = ConcurrentLinkedQueue<PluginRepositorySpec>()
+        val pluginSpecs = ConcurrentLinkedQueue<PluginRepositorySpec>()
         val autoPublishPluginChecker = loadPluginAutoPublishList(context)
         val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                             !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
@@ -383,10 +434,8 @@ class DistributionJARsBuilder {
             defaultPluginVersion
           }
           val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
-          if (prepareCustomPluginRepository) {
-            val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
-            pluginsToIncludeInCustomRepository.add(PluginRepositorySpec(destFile, pluginXml))
-          }
+          val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
+          pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
           dirToJar.add(NonBundledPlugin(pluginDirOrFile, destFile, !plugin.enableSymlinksAndExecutableResources))
         }
 
@@ -399,21 +448,24 @@ class DistributionJARsBuilder {
                                      targetDir = autoUploadingDir,
                                      moduleOutputPatcher = moduleOutputPatcher,
                                      context = context)
-          if (prepareCustomPluginRepository) {
-            pluginsToIncludeInCustomRepository.add(spec)
-          }
+          pluginSpecs.add(spec)
         }
 
+        for (item in buildKeymapPluginsTask.await()) {
+          pluginSpecs.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
+        }
         if (prepareCustomPluginRepository) {
-          for (item in buildKeymapPluginsTask.await()) {
-            pluginsToIncludeInCustomRepository.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
-          }
-
-          val list = pluginsToIncludeInCustomRepository.sortedBy { it.pluginZip }
+          val list = pluginSpecs.sortedBy { it.pluginZip }
           generatePluginRepositoryMetaFile(list, nonBundledPluginsArtifacts, context)
           generatePluginRepositoryMetaFile(list.filter { it.pluginZip.startsWith(autoUploadingDir) }, autoUploadingDir, context)
         }
-
+        pluginSpecs.forEach {
+          if (it.pluginZip.startsWith(autoUploadingDir)) {
+            launch {
+              validatePlugin(it.pluginZip, context)
+            }
+          }
+        }
         mappings
       }
     }

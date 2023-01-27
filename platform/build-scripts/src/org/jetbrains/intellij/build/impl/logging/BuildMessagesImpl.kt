@@ -4,8 +4,11 @@ package org.jetbrains.intellij.build.impl.logging
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.containers.Stack
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
 import java.io.BufferedWriter
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -15,6 +18,7 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.function.Consumer
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes.BUILD_PORBLEM as BUILD_PROBLEM
 
 class BuildMessagesImpl private constructor(private val logger: BuildMessageLogger,
                                             private val debugLogger: DebugLogger) : BuildMessages {
@@ -22,8 +26,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
 
   companion object {
     fun create(): BuildMessagesImpl {
-      val underTeamCity = System.getenv("TEAMCITY_VERSION") != null
-      val mainLoggerFactory = if (underTeamCity) TeamCityBuildMessageLogger.FACTORY else ConsoleBuildMessageLogger.FACTORY
+      val mainLoggerFactory = if (isUnderTeamCity) TeamCityBuildMessageLogger.FACTORY else ConsoleBuildMessageLogger.FACTORY
       val debugLogger = DebugLogger()
       return BuildMessagesImpl(logger = CompositeBuildMessageLogger(listOf(mainLoggerFactory(), debugLogger.createLogger())),
                                debugLogger = debugLogger)
@@ -206,3 +209,18 @@ private class PrintWriterBuildMessageLogger(
     disposer.accept(this)
   }
 }
+
+@Internal
+fun reportBuildProblem(description: String, identity: String? = null) {
+  if (isUnderTeamCity) {
+    val attributes = mutableMapOf("description" to description)
+    if (identity != null) {
+      attributes["identity"] = identity
+    }
+    println(ServiceMessage.asString(BUILD_PROBLEM, attributes))
+  }
+  else {
+    error("$identity: $description")
+  }
+}
+
