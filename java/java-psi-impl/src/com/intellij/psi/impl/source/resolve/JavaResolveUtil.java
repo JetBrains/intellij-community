@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
@@ -338,6 +339,13 @@ public final class JavaResolveUtil {
     }
     if (parent instanceof PsiInstanceOfExpression) {
       return ((PsiInstanceOfExpression)parent).getOperand().getType();
+    }
+    if (parent instanceof PsiForeachPatternStatement) {
+      PsiExpression iteratedValue = ((PsiForeachPatternStatement)parent).getIteratedValue();
+      if (iteratedValue == null) {
+        return null;
+      }
+      return JavaGenericsUtil.getCollectionItemType(iteratedValue);
     }
     if (parent instanceof PsiCaseLabelElementList) {
       PsiSwitchLabelStatementBase label = ObjectUtils.tryCast(parent.getParent(), PsiSwitchLabelStatementBase.class);
