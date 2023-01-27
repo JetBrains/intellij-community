@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.ui.toolwindow.ReviewTabsComponentFactory
 import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.util.URIUtil
@@ -25,6 +26,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
@@ -32,6 +34,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsF
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsPersistentFiltersHistory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsPanelFactory
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolwindowProjectContext
 import org.jetbrains.plugins.gitlab.providers.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
@@ -39,31 +43,38 @@ import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-internal class GitLabReviewTabComponentFactory(private val project: Project) {
+internal class GitLabReviewTabComponentFactory(private val project: Project) : ReviewTabsComponentFactory<GitLabReviewTab, GitLabToolwindowProjectContext> {
   private val projectsManager = project.service<GitLabProjectsManager>()
   private val accountManager = service<GitLabAccountManager>()
   private val connectionManager = project.service<GitLabProjectConnectionManager>()
 
-  fun createComponent(
+  override fun createReviewListComponent(cs: CoroutineScope, projectContext: GitLabToolwindowProjectContext): JComponent {
+    return createReviewListComponent(cs, projectContext.connection)
+  }
+
+  override fun createTabComponent(
     cs: CoroutineScope,
-    connection: GitLabProjectConnection,
-    reviewTab: GitLabReviewTab
+    projectContext: GitLabToolwindowProjectContext,
+    reviewTabType: GitLabReviewTab
   ): JComponent {
-    return when (reviewTab) {
-      GitLabReviewTab.ReviewList -> createReviewListComponent(cs, connection)
-      is GitLabReviewTab.ReviewSelected -> createReviewDetailsComponent(cs, connection, reviewTab)
+    return when (reviewTabType) {
+      is GitLabReviewTab.ReviewSelected -> createReviewDetailsComponent(cs, projectContext.connection, reviewTabType.reviewId)
     }
+  }
+
+  override fun createEmptyTabContent(cs: CoroutineScope): JComponent {
+    return createSelectorsComponent(cs)
   }
 
   private fun createReviewDetailsComponent(
     cs: CoroutineScope,
     connection: GitLabProjectConnection,
-    reviewTab: GitLabReviewTab.ReviewSelected
+    reviewId: GitLabMergeRequestId
   ): JComponent {
     val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(cs,
                                                                         connection.currentUser,
                                                                         connection.projectData,
-                                                                        reviewTab.reviewId).apply {
+                                                                        reviewId).apply {
       requestLoad()
     }
 
@@ -95,10 +106,6 @@ internal class GitLabReviewTabComponentFactory(private val project: Project) {
     )
 
     return GitLabMergeRequestsPanelFactory().create(project, cs, listVm)
-  }
-
-  fun createEmptyContent(cs: CoroutineScope): JComponent {
-    return createSelectorsComponent(cs)
   }
 
   private fun createSelectorsComponent(cs: CoroutineScope): JComponent {

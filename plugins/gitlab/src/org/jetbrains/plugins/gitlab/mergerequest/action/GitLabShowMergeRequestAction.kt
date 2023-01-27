@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
+import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowDataKeys
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -16,7 +17,7 @@ class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val mergeRequestController: GitLabReviewTabsController? = e.getData(GitLabMergeRequestsActionKeys.REVIEW_TABS_CONTROLLER)
+    val mergeRequestController = e.getData(ReviewToolwindowDataKeys.REVIEW_TABS_CONTROLLER) as? GitLabReviewTabsController
     val selection: GitLabMergeRequestId? = e.getData(GitLabMergeRequestsActionKeys.SELECTED)
     val currentRepository = mergeRequestController?.currentRepository
 
@@ -24,7 +25,7 @@ class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val mergeRequestController: GitLabReviewTabsController = e.getRequiredData(GitLabMergeRequestsActionKeys.REVIEW_TABS_CONTROLLER)
+    val mergeRequestController = e.getRequiredData(ReviewToolwindowDataKeys.REVIEW_TABS_CONTROLLER) as GitLabReviewTabsController
     val selection: GitLabMergeRequestId = e.getRequiredData(GitLabMergeRequestsActionKeys.SELECTED)
 
     mergeRequestController.openReviewDetails(selection)
