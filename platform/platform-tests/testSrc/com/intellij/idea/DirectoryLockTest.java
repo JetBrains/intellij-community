@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.testFramework.TestLoggerFactory;
+import com.intellij.testFramework.rules.InMemoryFsRule;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.Suppressions;
 import org.junit.After;
@@ -61,6 +62,7 @@ public abstract sealed class DirectoryLockTest {
   @Rule public final TestRule watcher = TestLoggerFactory.createTestWatcher();
   @Rule public final Timeout timeout = Timeout.seconds(30);
   @Rule public final TempDirectory tempDir = new TempDirectory();
+  @Rule public final InMemoryFsRule memoryFs = new InMemoryFsRule(SystemInfo.isWindows);
 
   private Path testDir;
   private final List<DirectoryLock> activeLocks = new ArrayList<>();
@@ -86,6 +88,12 @@ public abstract sealed class DirectoryLockTest {
 
   private DirectoryLock createLock(Path configPath, Path systemPath) {
     var lock = new DirectoryLock(configPath, systemPath, args -> CliResult.OK);
+    activeLocks.add(lock);
+    return lock;
+  }
+
+  private DirectoryLock createSimpleLock(Path configPath, Path systemPath) {
+    var lock = new DirectoryLock(configPath, systemPath, null);
     activeLocks.add(lock);
     return lock;
   }
@@ -198,5 +206,29 @@ public abstract sealed class DirectoryLockTest {
     Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), String.valueOf(ProcessHandle.current().pid()));
     var lock = createLock(configDir, testDir.resolve("s"));
     assertThatThrownBy(() -> lock.lockOrActivate(Path.of(""), List.of())).isInstanceOf(CannotActivateException.class);
+  }
+
+  @Test
+  public void simpleLocking() throws Exception {
+    var localTestDir = memoryFs.getFs().getPath(testDir.toString());
+    var configDir = localTestDir.resolve("c");
+    var systemDir = localTestDir.resolve("s");
+    var lock1 = createSimpleLock(configDir, systemDir);
+    var lock2 = createSimpleLock(configDir, systemDir);
+    assertNull(lock1.lockOrActivate(Path.of(""), List.of()));
+    assertThatThrownBy(() -> lock2.lockOrActivate(Path.of(""), List.of())).isInstanceOf(CannotActivateException.class);
+  }
+
+  @Test
+  public void deletingStaleSimpleLockFiles() throws Exception {
+    var localTestDir = memoryFs.getFs().getPath(testDir.toString());
+    var configDir = Files.createDirectories(localTestDir.resolve("c"));
+    var systemDir = Files.createDirectories(localTestDir.resolve("s"));
+    Files.writeString(systemDir.resolve(SpecialConfigFiles.PORT_FILE), "---");
+    Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), "---");
+    var lock1 = createSimpleLock(configDir, systemDir);
+    var lock2 = createSimpleLock(configDir, systemDir);
+    assertNull(lock1.lockOrActivate(Path.of(""), List.of()));
+    assertThatThrownBy(() -> lock2.lockOrActivate(Path.of(""), List.of())).isInstanceOf(CannotActivateException.class);
   }
 }
