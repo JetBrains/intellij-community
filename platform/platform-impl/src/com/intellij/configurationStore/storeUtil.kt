@@ -43,7 +43,17 @@ object StoreUtil {
   @JvmOverloads
   @JvmStatic
   @CalledInAny
-  fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean = runInAutoSaveDisabledMode {
+  fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false) {
+    saveComponentManagerSettings(componentManager, forceSavingAllSettings)
+  }
+
+  /**
+   * Do not use this method in tests, instead directly save using state store.
+   */
+  @JvmOverloads
+  @JvmStatic
+  @CalledInAny
+  fun saveComponentManagerSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean = runInAutoSaveDisabledMode {
     runUnderModalProgressIfIsEdt {
       com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
     }

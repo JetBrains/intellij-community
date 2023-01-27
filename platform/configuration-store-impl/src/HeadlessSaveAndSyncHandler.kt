@@ -5,5 +5,5 @@ import com.intellij.openapi.components.ComponentManager
 
 internal class HeadlessSaveAndSyncHandler : NoOpSaveAndSyncHandler() {
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean =
-    StoreUtil.saveSettings(componentManager, true)
+    StoreUtil.saveComponentManagerSettings(componentManager, true)
 }
