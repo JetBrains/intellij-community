@@ -31,6 +31,10 @@ internal fun populateContentRoots(
     resolverCtx: ProjectResolverContext
 ) {
     val mppModel = resolverCtx.getMppModel(gradleModule) ?: return
+
+    val extensionContext = KotlinMppGradleProjectResolverExtension.Context(mppModel, resolverCtx, gradleModule, ideModule)
+    val extensionInstance = KotlinMppGradleProjectResolverExtension.instance
+
     val sourceSetToPackagePrefix = mppModel.targets.flatMap { it.compilations }
         .flatMap { compilation ->
             compilation.declaredSourceSets.map { sourceSet -> sourceSet.name to compilation.kotlinTaskProperties.packagePrefix }
@@ -41,10 +45,9 @@ internal fun populateContentRoots(
         if (dataNode == null || shouldDelegateToOtherPlugin(sourceSet)) return@processSourceSets
 
         /* Execute all registered extension points and skip population of content roots if instructed by extensions */
-        if (KotlinMppGradleProjectResolverExtension.beforePopulateContentRoots(
-                mppModel, resolverCtx, gradleModule, ideModule, dataNode, sourceSet
-            ) == Skip
-        ) return@processSourceSets
+        if (extensionInstance.beforePopulateContentRoots(extensionContext, dataNode, sourceSet) == Skip) {
+            return@processSourceSets
+        }
 
         createContentRootData(
             sourceSet.sourceDirs,
@@ -59,9 +62,7 @@ internal fun populateContentRoots(
             dataNode
         )
 
-        KotlinMppGradleProjectResolverExtension.afterPopulateContentRoots(
-            mppModel, resolverCtx, gradleModule, ideModule, dataNode, sourceSet
-        )
+        extensionInstance.afterPopulateContentRoots(extensionContext, dataNode, sourceSet)
     }
 
     for (gradleContentRoot in gradleModule.contentRoots ?: emptySet<IdeaContentRoot?>()) {
