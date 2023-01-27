@@ -97,7 +97,9 @@ interface ObjectBuilder {
       val referenceReplacements = builder.getAffectedReferences()
         .map { reference -> reference.replace(builder.createReferenceReplacement(reference)) as PsiExpression }
       val classAnchor = PsiTreeUtil.getParentOfType(variables.first(), PsiMember::class.java) ?: throw IllegalStateException()
-      val introducedClass = classAnchor.addAfter(builder.createClass())
+      val psiClass = builder.createClass()
+      psiClass.modifierList?.setModifierProperty(PsiModifier.PRIVATE, true)
+      val introducedClass = classAnchor.addAfter(psiClass)
       val declaration = placeForDeclaration.addAfter(builder.createDeclaration())
       val variableDeclaration = declaration.declaredElements.first() as PsiVariable
 
