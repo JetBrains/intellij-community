@@ -24,6 +24,7 @@ import java.awt.*;
 import java.awt.font.TextAttribute;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
@@ -613,7 +614,7 @@ public final class JBUI {
       }
 
       public static @NotNull Font font() {
-        return ObjectUtils.coalesce(UIManager.getFont(fontKey()), defaultFont());
+        return ObjectUtils.coalesce(getFont(fontKey()), defaultFont());
       }
 
       public static String fontKey() {
@@ -874,7 +875,7 @@ public final class JBUI {
 
 
       public static @NotNull Font headerFont() {
-        return ObjectUtils.coalesce(UIManager.getFont(headerFontKey()), defaultHeaderFont());
+        return ObjectUtils.coalesce(getFont(headerFontKey()), defaultHeaderFont());
       }
 
       public static @NotNull String headerFontKey() {
@@ -1868,5 +1869,19 @@ public final class JBUI {
   private static @NotNull Icon getIcon(@NonNls @NotNull String propertyName, @NotNull Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);
     return icon == null ? defaultIcon : icon;
+  }
+
+  private static @Nullable Font getFont(@NonNls @NotNull String propertyName) {
+    return maybeConvertToFont(UIManager.get(propertyName));
+  }
+
+  private static @Nullable Font maybeConvertToFont(Object maybeFont) {
+    if (maybeFont instanceof Font font) {
+      return font;
+    }
+    if (maybeFont instanceof Supplier<?> supplier) {
+      return maybeConvertToFont(supplier.get());
+    }
+    return null;
   }
 }
