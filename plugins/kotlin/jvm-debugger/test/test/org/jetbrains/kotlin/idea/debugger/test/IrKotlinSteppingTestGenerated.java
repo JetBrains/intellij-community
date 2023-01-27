@@ -1265,6 +1265,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/lambdaBreakpoints.kt");
         }
 
+        @TestMetadata("lambdaWithImplicitReturn.kt")
+        public void testLambdaWithImplicitReturn() throws Exception {
+            runTest("testData/stepping/custom/lambdaWithImplicitReturn.kt");
+        }
+
         @TestMetadata("lambdaWithNoExecutableCodeOnLine.kt")
         public void testLambdaWithNoExecutableCodeOnLine() throws Exception {
             runTest("testData/stepping/custom/lambdaWithNoExecutableCodeOnLine.kt");

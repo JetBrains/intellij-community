@@ -9,10 +9,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.Processor
 import com.intellij.xdebugger.XDebuggerUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
+import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
 import org.jetbrains.kotlin.idea.util.findElementsOfClassInRange
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -158,6 +161,35 @@ inline fun <reified T : PsiElement> getElementsAtLineIfAny(file: KtFile, line: I
 fun getLambdasAtLineIfAny(file: KtFile, line: Int): List<KtFunction> {
     return getElementsAtLineIfAny<KtFunction>(file, line)
         .filter { (it is KtFunctionLiteral || it.name == null) && it.getLineNumber() == line }
+}
+
+internal fun getLambdasStartingOrEndingAtLineIfAny(file: KtFile, line: Int): List<KtFunction> {
+    val start = file.getLineStartOffset(line)
+    val end = file.getLineEndOffset(line)
+    if (start == null || end == null) {
+        return emptyList()
+    }
+    val result = mutableSetOf<KtFunction>()
+
+    var offset: Int = start
+    while (offset <= end) {
+        val element = file.findElementAt(offset)
+        if (element != null) {
+            val function = element.parentOfType<KtFunction>(withSelf = true)
+            if (function != null) {
+                result.add(function)
+            }
+            offset = element.endOffset
+        } else {
+            offset++
+        }
+    }
+    return result.filter {
+        (it is KtFunctionLiteral || it.name == null) && it.isStartingOrEndingOnLine(line) }
+}
+
+private fun KtFunction.isStartingOrEndingOnLine(line: Int): Boolean {
+    return line == getLineNumber(start = true) || line == getLineNumber(start = false)
 }
 
 fun KtCallableDeclaration.isInlineOnly(): Boolean {

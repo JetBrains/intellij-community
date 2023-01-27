@@ -43,10 +43,7 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.analysis.isInlinedArgument
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
-import org.jetbrains.kotlin.idea.base.psi.getEndLineOffset
-import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
-import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
+import org.jetbrains.kotlin.idea.base.psi.*
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.debugger.base.util.*
@@ -148,9 +145,13 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             throw NoDataException.INSTANCE
         }
 
-        val lambdaOrFunIfInside = getLambdaOrFunIfInside(location, psiFile, sourceLineNumber)
+        val lambdaOrFunIfInside = getLambdaOrFunStartingOrEndingOnLineIfInside(location, psiFile, sourceLineNumber)
         if (lambdaOrFunIfInside != null) {
-            return SourcePosition.createFromElement(lambdaOrFunIfInside.bodyExpression!!)
+            val elementAt = getFirstElementInsideLambdaOnLine(psiFile, lambdaOrFunIfInside, sourceLineNumber)
+            if (elementAt != null) {
+                return SourcePosition.createFromElement(elementAt)
+            }
+            return SourcePosition.createFromLine(psiFile, sourceLineNumber)
         }
 
         val callableReferenceIfInside = getCallableReferenceIfInside(location, psiFile, sourceLineNumber)
@@ -174,6 +175,12 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
         val sourcePosition = SourcePosition.createFromLine(psiFile, sourceLineNumber)
         return decorateSourcePosition(location, sourcePosition)
+    }
+
+    private fun getFirstElementInsideLambdaOnLine(file: PsiFile, lambda: KtFunction, line: Int): PsiElement? {
+        val bodyRange = lambda.bodyExpression!!.textRange
+        val searchRange = file.getRangeOfLine(line)?.intersection(bodyRange) ?: return null
+        return file.findElementsOfTypeInRange<PsiElement>(searchRange).firstOrNull()
     }
 
     private fun Location.shouldBeTreatedAsReentrantSourcePosition(psiFile: PsiFile, sourceFileName: String): Boolean {
@@ -263,16 +270,20 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
     }
 
-    private fun getLambdaOrFunIfInside(location: Location, file: KtFile, lineNumber: Int): KtFunction? {
+    // We are not interested in lambdas when we in the middle of them
+    // because in such case there is only one possible source position on the line.
+    private fun getLambdaOrFunStartingOrEndingOnLineIfInside(location: Location, file: KtFile, lineNumber: Int): KtFunction? {
         val currentLocationClassName = location.getClassName() ?: return null
 
         val start = getStartLineOffset(file, lineNumber)
         val end = getEndLineOffset(file, lineNumber)
         if (start == null || end == null) return null
 
-        val literalsOrFunctions = getLambdasAtLineIfAny(file, lineNumber)
-
-        analyze(literalsOrFunctions.firstOrNull() ?: return null) {
+        val literalsOrFunctions = getLambdasStartingOrEndingAtLineIfAny(file, lineNumber)
+        if (literalsOrFunctions.isEmpty()) {
+            return null
+        }
+        analyze(literalsOrFunctions.first()) {
             val notInlinedLambdas = mutableListOf<KtFunction>()
             for (literal in literalsOrFunctions) {
                 if (isInlinedArgument(literal, checkNonLocalReturn = true)) {
@@ -342,7 +353,12 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                 }
                 else -> ApplicabilityResult.UNKNOWN
             }
-        }
+        } || hasImplicitReturnOnLine(lineNumber)
+    }
+
+    private fun KtFunction.hasImplicitReturnOnLine(lineNumber: Int): Boolean {
+        // TODO(Roman.Efremov): implement better check for implicit return in subsequent commits
+        return getLineNumber(start = false) == lineNumber
     }
 
     private fun List<KtFunction>.getSamLambdaWithIndex(index: Int): KtFunction? {
