@@ -323,7 +323,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           val panel = ToolbarDecorator.createDecorator(table)
             .setToolbarPosition(ActionToolbarPosition.LEFT)
             .setAddAction { _ ->
-              addRowWithSwingSelectors(table, component)
+              addRowWithSwingSelectors(table, component, context.project)
               EventQueue.invokeLater { editLastRow(table) }
             }
             .setRemoveAction { _ -> TableUtil.removeSelectedItems(table) }
@@ -351,10 +351,8 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     }
   }
 
-  private fun addRowWithSwingSelectors(table: ListTable, component: OptTable) {
+  private fun addRowWithSwingSelectors(table: ListTable, component: OptTable, project: Project?) {
     val tableModel = table.model
-    val dataContext = DataManager.getInstance().getDataContext(table)
-    val project = CommonDataKeys.PROJECT.getData(dataContext)
     val row = mutableListOf<String>()
     for (child in component.children) {
       val validator = child.validator
