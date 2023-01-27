@@ -41,7 +41,7 @@ internal class MermaidParserDefinition: ParserDefinition {
     return TokenSet.WHITE_SPACE
   }
 
-  override fun createElement(node: ASTNode?): PsiElement {
+  override fun createElement(node: ASTNode): PsiElement {
     return MermaidElements.Factory.createElement(node)
   }
 
