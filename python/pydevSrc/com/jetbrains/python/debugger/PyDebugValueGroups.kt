@@ -13,10 +13,6 @@ const val DUNDER_LEN = "__len__"
 const val DUNDER_EX = "__exception__"
 val PROTECTED_ATTRS_EXCLUDED = setOf(DUNDER_LEN, DUNDER_EX)
 
-const val DOUBLE_UNDERSCORE = "__"
-val HIDE_TYPES: Set<String> = setOf("function", "type", "classobj", "module")
-val HIDE_MODULES: Set<String> = setOf("typing")
-
 open class PyXValueGroup(groupName: String, val groupType: ProcessDebugger.GROUP_TYPE) : XValueGroup(groupName)
 
 
