@@ -338,6 +338,14 @@ fun createStopPopup(context: DataContext, project: Project): JBPopup {
   )
 }
 
+fun runCounterToString(e: AnActionEvent, stopCount: Int): String =
+  if (stopCount > 9 && e.place == ActionPlaces.NEW_UI_RUN_TOOLBAR) {
+    "9+"
+  }
+  else {
+    stopCount.toString()
+  }
+
 private class RunToolbarWidgetRunAction(
   executor: Executor,
   val hideIfDisable: Boolean = false,

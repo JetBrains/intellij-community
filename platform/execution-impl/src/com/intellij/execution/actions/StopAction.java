@@ -70,7 +70,8 @@ public class StopAction extends DumbAwareAction {
 
       if (stopCount > 1) {
         presentation.setText(getTemplatePresentation().getText() + "...");
-        icon = IconUtil.addText(icon, String.valueOf(stopCount));
+        String text = RunToolbarWidgetKt.runCounterToString(e, stopCount);
+        icon = IconUtil.addText(icon, text);
       }
       else if (stopCount == 1) {
           presentation.setText(ExecutionBundle.messagePointer("stop.configuration.action.name",

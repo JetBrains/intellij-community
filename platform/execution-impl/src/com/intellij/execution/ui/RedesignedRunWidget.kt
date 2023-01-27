@@ -251,12 +251,14 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     if (icon is LayeredIcon && icon.allLayers.size == 2) {
       val textIcon = icon.allLayers[1]
       if (textIcon is TextIcon) {
-        resultIcon = TextHoledIcon(icon.allLayers[0], textIcon.text, JBUIScale.scale(12.0f), JBUI.CurrentTheme.RunWidget.FOREGROUND, object : BadgeRectProvider() {
-          override fun getTop(): Double = 0.45
-          override fun getLeft(): Double = 0.75
-          override fun getBottom(): Double = 1.2
-          override fun getRight(): Double = 1.2
-        })
+        val text = textIcon.text
+        val provider = object : BadgeRectProvider() {
+          override fun getTop() = 0.45
+          override fun getLeft() = if (text.length == 1) 0.75 else 0.3
+          override fun getBottom() = 1.2
+          override fun getRight() = 1.2
+        }
+        resultIcon = TextHoledIcon(icon.allLayers[0], text, JBUIScale.scale(12.0f), JBUI.CurrentTheme.RunWidget.FOREGROUND, provider)
       }
     }
 
