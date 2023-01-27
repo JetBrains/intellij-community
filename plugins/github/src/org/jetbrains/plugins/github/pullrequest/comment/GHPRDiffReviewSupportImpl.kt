@@ -8,7 +8,6 @@ import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
@@ -28,7 +27,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 import java.util.function.Function
 import kotlin.properties.Delegates.observable
 
@@ -153,14 +151,11 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     if (!diffData.contains(originalCommitSha, thread.path)) return null
 
     val (side, line) = when (diffData) {
-      is GHPRChangeDiffData.Cumulative -> thread.side to thread.line - 1
+      is GHPRChangeDiffData.Cumulative -> {
+        thread.side to thread.line - 1
+      }
       is GHPRChangeDiffData.Commit -> {
-        val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk(thread.path, thread.diffHunk))
-        patchReader.readTextPatches()
-        val patchHunk = patchReader.textPatches[0].hunks.lastOrNull() ?: return null
-        val position = GHPatchHunkUtil.getHunkLinesCount(patchHunk) - 1
-        val (unmappedSide, unmappedLine) = GHPatchHunkUtil.findSideFileLineFromHunkLineIndex(patchHunk, position) ?: return null
-        diffData.mapPosition(originalCommitSha, unmappedSide, unmappedLine) ?: return null
+        diffData.mapPosition(originalCommitSha, thread.side, thread.originalLine - 1) ?: return null
       }
     }
 
