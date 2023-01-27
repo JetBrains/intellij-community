@@ -9,6 +9,9 @@ import javax.swing.JComponent
 class UpdateScaleHelper {
   private var savedUserScale = JBUIScale.scale(1f)
 
+  fun saveScaleAndRunIfChanged(runnable: Runnable): Boolean =
+    saveScaleAndRunIfChanged { runnable.run() }
+
   fun saveScaleAndRunIfChanged(block: () -> Unit): Boolean {
     if (savedUserScale == JBUIScale.scale(1f)) return false
 
