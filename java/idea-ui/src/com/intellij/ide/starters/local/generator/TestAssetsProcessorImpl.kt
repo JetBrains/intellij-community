@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.*
 import com.intellij.openapi.vfs.*
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
 
 @Suppress("TestOnlyProblems")
 fun convertOutputLocationForTests(moduleContentRoot: VirtualFile): Path {
@@ -32,37 +33,43 @@ class TestFileSystemLocation(
 @TestOnly
 class TestAssetsProcessorImpl : AssetsProcessorImpl() {
 
-  override fun writeText(file: Path, content: String) {
-    if (file is TestFileSystemLocation) {
-      file.virtualFile.writeText(content)
+  override fun writeText(path: Path, content: String) {
+    if (path is TestFileSystemLocation) {
+      path.virtualFile.writeText(content)
       return
     }
-    super.writeText(file, content)
+    super.writeText(path, content)
   }
 
-  override fun writeBytes(file: Path, content: ByteArray) {
-    if (file is TestFileSystemLocation) {
-      file.virtualFile.writeBytes(content)
+  override fun writeBytes(path: Path, content: ByteArray) {
+    if (path is TestFileSystemLocation) {
+      path.virtualFile.writeBytes(content)
       return
     }
-    super.writeBytes(file, content)
+    super.writeBytes(path, content)
   }
 
-  override fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path {
-    if (outputDirectory is TestFileSystemLocation) {
-      val vFile = outputDirectory.virtualFile.findOrCreateFile(relativePath)
-      val debugPath = outputDirectory.debugPath.getResolvedPath(relativePath)
+  override fun findOrCreateFile(path: Path, relativePath: String): Path {
+    if (path is TestFileSystemLocation) {
+      val vFile = path.virtualFile.findOrCreateFile(relativePath)
+      val debugPath = path.debugPath.getResolvedPath(relativePath)
       return TestFileSystemLocation(vFile, debugPath)
     }
-    return super.findOrCreateFile(outputDirectory, relativePath)
+    return super.findOrCreateFile(path, relativePath)
   }
 
-  override fun findOrCreateDirectory(outputDirectory: Path, relativePath: String): Path {
-    if (outputDirectory is TestFileSystemLocation) {
-      val vFile = outputDirectory.virtualFile.findOrCreateDirectory(relativePath)
-      val debugPath = outputDirectory.debugPath.getResolvedPath(relativePath)
+  override fun findOrCreateDirectory(path: Path, relativePath: String): Path {
+    if (path is TestFileSystemLocation) {
+      val vFile = path.virtualFile.findOrCreateDirectory(relativePath)
+      val debugPath = path.debugPath.getResolvedPath(relativePath)
       return TestFileSystemLocation(vFile, debugPath)
     }
-    return super.findOrCreateDirectory(outputDirectory, relativePath)
+    return super.findOrCreateDirectory(path, relativePath)
+  }
+
+  override fun addPosixFilePermissions(path: Path, permissions: Set<PosixFilePermission>) {
+    if (path !is TestFileSystemLocation) {
+      super.addPosixFilePermissions(path, permissions)
+    }
   }
 }
