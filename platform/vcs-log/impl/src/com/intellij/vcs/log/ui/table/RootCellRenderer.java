@@ -5,7 +5,6 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.scale.JBUIScale;
@@ -31,9 +30,9 @@ import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_ROOT_NAMES;
 public class RootCellRenderer extends SimpleColoredRenderer implements TableCellRenderer, VcsLogCellRenderer {
   private final @NotNull VcsLogUiProperties myProperties;
   private final @NotNull VcsLogColorManager myColorManager;
-  private @NotNull Color myColor = UIUtil.getTableBackground();
-  private @NotNull Color myBorderColor = UIUtil.getTableBackground();
-  private boolean isNarrow = true;
+  protected @NotNull Color myColor = UIUtil.getTableBackground();
+  protected @NotNull Color myBorderColor = UIUtil.getTableBackground();
+  protected boolean isNarrow = true;
   private @NotNull @Nls String myTooltip = "";
 
   public RootCellRenderer(@NotNull VcsLogUiProperties properties, @NotNull VcsLogColorManager colorManager) {
@@ -66,9 +65,7 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
 
     myColor = path == null ? UIUtil.getTableBackground(isSelected, hasFocus) :
               VcsLogGraphTable.getPathBackgroundColor(path, myColorManager);
-    // FIXME: temporary solution for the new UI
-    boolean hovered = ExperimentalUI.isNewUI() ? false : row == getHoveredRow(table);
-    isSelected = ExperimentalUI.isNewUI() ? false : isSelected;
+    boolean hovered = row == getHoveredRow(table);
 
     myBorderColor = Objects.requireNonNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected, hovered).getBackground());
     setForeground(UIUtil.getTableForeground(false, hasFocus));

@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.table.column
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.text.DateTimeFormatManager
@@ -20,10 +21,7 @@ import com.intellij.vcs.log.paint.SimpleGraphCellPainter
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import com.intellij.vcs.log.ui.render.GraphCommitCell
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer
-import com.intellij.vcs.log.ui.table.GraphTableModel
-import com.intellij.vcs.log.ui.table.RootCellRenderer
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable
-import com.intellij.vcs.log.ui.table.VcsLogStringCellRenderer
+import com.intellij.vcs.log.ui.table.*
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcsUtil.VcsUtil
@@ -67,7 +65,9 @@ internal object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) 
         table.rootColumnUpdated()
       }
     }
-    return RootCellRenderer(table.properties, table.colorManager)
+
+    if (ExperimentalUI.isNewUI()) return NewUiRootCellRenderer(table.properties, table.colorManager)
+    return RootCellRenderer(table.properties, table.colorManager);
   }
 
   override fun getStubValue(model: GraphTableModel): FilePath = VcsUtil.getFilePath(ContainerUtil.getFirstItem(model.logData.roots))

@@ -16,6 +16,9 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ValueKey;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -80,6 +83,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
   private static final int ROOT_INDICATOR_WIDTH = ROOT_INDICATOR_WHITE_WIDTH + 8;
+
+  private static final int NEW_UI_ROOT_INDICATOR_WIDTH = 10;
+
   private static final int ROOT_NAME_MAX_WIDTH = 300;
   private static final int MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH = 300;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
@@ -313,7 +319,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private @NotNull TableCellRenderer createColumnRenderer(VcsLogColumn<?> column) {
     TableCellRenderer renderer = column.createTableCellRenderer(this);
     if (ExperimentalUI.isNewUI() && column != Root.INSTANCE) {
-      renderer = new VcsLogNewUiTableCellRenderer(renderer);
+      renderer = new VcsLogNewUiTableCellRenderer(renderer, myColorManager::hasMultiplePaths);
     }
     return renderer;
   }
@@ -470,7 +476,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       rootWidth = 0;
     }
     else if (!isShowRootNames()) {
-      rootWidth = JBUIScale.scale(ROOT_INDICATOR_WIDTH);
+      rootWidth = JBUIScale.scale(ExperimentalUI.isNewUI() ? NEW_UI_ROOT_INDICATOR_WIDTH : ROOT_INDICATOR_WIDTH);
     }
     else {
       int width = 0;
@@ -787,13 +793,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     public @NotNull VcsCommitStyle getBaseStyle(int row, int column, boolean hasFocus, boolean selected) {
       Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(myTable, "", selected, hasFocus, row, column);
-      Color background = selected ? getSelectionBackground(myTable.hasFocus()) : getBackground();
+      Color background = selected ? getSelectionBackground(myTable.hasFocus()) : getTableBackground();
 
       return createStyle(dummyRendererComponent.getForeground(), background, VcsLogHighlighter.TextStyle.NORMAL);
-    }
-
-    private static @NotNull Color getBackground() {
-      return ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.ToolWindow.background() : UIUtil.getListBackground();
     }
   }
 
@@ -1068,6 +1070,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
   }
 
+  public static @NotNull Color getTableBackground() {
+    return ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.ToolWindow.background() : UIUtil.getListBackground();
+  }
 
   public static @NotNull Color getSelectionBackground(boolean hasFocus) {
     return hasFocus ? SELECTION_BACKGROUND : SELECTION_BACKGROUND_INACTIVE;
