@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 /**
+ * Adds informational text to the end of a line in a text editor.
+ *
  * @author Konstantin Bulenkov
  */
 public class LineExtensionInfo {
