@@ -8,10 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -226,6 +223,9 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
 
     @Override
     public boolean isAbstractEnabled(MemberInfo member) {
+      if (member.getMember() instanceof PsiMethod method && JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+        return false;
+      }
       PsiClass currentSuperClass = getSuperClass();
       if (currentSuperClass == null || !currentSuperClass.isInterface()) return true;
       if (PsiUtil.isLanguageLevel8OrHigher(currentSuperClass)) {
@@ -242,9 +242,11 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
         if (!PsiUtil.isLanguageLevel8OrHigher(currentSuperClass)) {
           return true;
         }
-        final PsiMember psiMember = member.getMember();
-        if (psiMember instanceof PsiMethod) {
-          return !psiMember.hasModifierProperty(PsiModifier.STATIC) && findSuperMethod(currentSuperClass, (PsiMethod)psiMember) == null;
+        if (member.getMember() instanceof PsiMethod method) {
+          if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+            return true;
+          }
+          return !method.hasModifierProperty(PsiModifier.STATIC) && findSuperMethod(currentSuperClass, method) == null;
         }
       }
       return false;
