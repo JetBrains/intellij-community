@@ -381,4 +381,14 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   public boolean supportFlattenPackages() {
     return true;
   }
+
+  @Override
+  public String getElementsName() {
+    return JavaCoverageBundle.message("coverage.classes");
+  }
+
+  @Override
+  public String getElementsCapitalisedName() {
+    return JavaCoverageBundle.message("coverage.classes.capitalised");
+  }
 }
