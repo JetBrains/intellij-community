@@ -9,6 +9,7 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.Suppressions;
 import com.intellij.util.User32Ex;
 import com.sun.jna.platform.win32.WinDef;
@@ -65,6 +66,7 @@ final class DirectoryLock {
   private static final Logger LOG = Logger.getInstance(DirectoryLock.class);
   private static final AtomicInteger COUNT = new AtomicInteger();  // to ensure redirected port file uniqueness in tests
 
+  private static final boolean SUPPORT_REQUESTS = !PlatformUtils.isFleetBackend();
   private final String myPid = String.valueOf(ProcessHandle.current().pid());
   private final Path myPortFile;
   private final Path myLockFile;
@@ -103,21 +105,23 @@ final class DirectoryLock {
       }
 
       try {
-        return tryListen();
+        return tryListenAndLock();
       }
       catch (BindException | FileAlreadyExistsException e) {
         LOG.debug(e);
       }
 
-      try {
-        return tryConnect(args, currentDirectory);
-      }
-      catch (SocketException e) {
-        LOG.debug(e);
+      if (SUPPORT_REQUESTS) {
+        try {
+          return tryConnect(args, currentDirectory);
+        }
+        catch (SocketException e) {
+          LOG.debug(e);
+        }
       }
 
       Files.deleteIfExists(myPortFile);
-      return tryListen();
+      return tryListenAndLock();
     }
     catch (IOException e) {
       LOG.debug(e);
@@ -180,20 +184,22 @@ final class DirectoryLock {
     }
   }
 
-  private @Nullable CliResult tryListen() throws IOException, CannotActivateException {
+  private @Nullable CliResult tryListenAndLock() throws IOException, CannotActivateException {
     var serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
 
-    UnixDomainSocketAddress address;
-    if (myRedirectedPortFile != null) {
-      Files.writeString(myPortFile, myRedirectedPortFile.toString(), StandardOpenOption.CREATE_NEW);
-      address = openUnixDomainSocket(myRedirectedPortFile);
-    }
-    else {
-      address = openUnixDomainSocket(myPortFile);
-    }
+    if (SUPPORT_REQUESTS) {
+      UnixDomainSocketAddress address;
+      if (myRedirectedPortFile != null) {
+        Files.writeString(myPortFile, myRedirectedPortFile.toString(), StandardOpenOption.CREATE_NEW);
+        address = openUnixDomainSocket(myRedirectedPortFile);
+      }
+      else {
+        address = openUnixDomainSocket(myPortFile);
+      }
 
-    serverChannel.bind(address);
-    myServerChannel = serverChannel;
+      serverChannel.bind(address);
+      myServerChannel = serverChannel;
+    }
 
     try {
       lockDirectory(myPid);
@@ -204,7 +210,9 @@ final class DirectoryLock {
       throw new CannotActivateException(e);
     }
 
-    new Thread(this::acceptConnections, SERVER_THREAD_NAME).start();
+    if (SUPPORT_REQUESTS) {
+      new Thread(this::acceptConnections, SERVER_THREAD_NAME).start();
+    }
     return null;
   }
 
