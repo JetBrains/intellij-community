@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.inspections.dfa.getArrayElementType
+import org.jetbrains.kotlin.idea.intentions.receiverType
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.parsing.KotlinExpressionParsing
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -64,15 +64,38 @@ internal abstract class AbstractExpressionWeigher: ExpressionWeigher {
                     // project source higher than libs
                     if (fileIndex.isInSourceContent(virtualFile)) 7 else 0
                 }
+
                 else -> 0
             }
         } ?: 0
 
-        val weigh = base + ownWeigh(descriptor)
-        return weigh
+        return base + ownWeigh(descriptor)
     }
 
     protected abstract fun ownWeigh(descriptor: DeclarationDescriptor): Int
+
+    protected fun KotlinType.weight(weight: Int, kotlinType: KotlinType?): Int? {
+        if (kotlinType == null) return null
+        val typeMarkedNullable = kotlinType.isMarkedNullable
+        val markedNullable = isMarkedNullable
+
+        val adjustedType: KotlinType
+        val nullablesWeight = if (typeMarkedNullable == markedNullable) {
+            adjustedType = this
+            2
+        } else {
+            adjustedType = if (markedNullable) makeNotNullable() else this
+            // no reason to make `kotlinType` not nullable as `T` is a subtype of `T?`
+            0
+        }
+
+        return if (KotlinTypeChecker.DEFAULT.isSubtypeOf(adjustedType, kotlinType)) {
+            100 * weight + 10 + nullablesWeight
+        } else {
+            null
+        }
+    }
+
 }
 
 internal class CallExpressionWeigher(element: KtNameReferenceExpression?): AbstractExpressionWeigher() {
@@ -189,41 +212,26 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?): Abstr
         return weight
     }
 
-    private fun KotlinType.weight(weight: Int, kotlinType: KotlinType?): Int? {
-        if (kotlinType == null) return null
-        val typeMarkedNullable = kotlinType.isMarkedNullable
-        val markedNullable = isMarkedNullable
-
-        val adjustedType: KotlinType
-        val nullablesWeight = if (typeMarkedNullable == markedNullable) {
-            adjustedType = this
-            2
-        } else {
-            adjustedType = if (markedNullable) makeNotNullable() else this
-            // no reason to make `kotlinType` not nullable as `T` is a subtype of `T?`
-            0
-        }
-
-        return if (KotlinTypeChecker.DEFAULT.isSubtypeOf(adjustedType, kotlinType)) {
-            100 * weight + 10 + nullablesWeight
-        } else {
-            null
-        }
-    }
-
 }
 
 internal class OperatorExpressionWeigher(element: KtOperationReferenceExpression): AbstractExpressionWeigher() {
 
+    private val leftType: KotlinType?
+    private val rightType: KotlinType?
     private val operatorName: Name?
 
     init {
         operatorName = element.operationSignTokenType?.let { operationSignTokenType ->
             OperatorConventions.getNameForOperationSymbol(operationSignTokenType, false, true)
         }
-        (element.parent as? KtBinaryExpression)?.let { binaryExpression ->
-            val context = binaryExpression.safeAnalyze(BodyResolveMode.PARTIAL)
-            context
+        val parent = element.parent
+        if (parent is KtBinaryExpression) {
+            val context = parent.safeAnalyze(BodyResolveMode.PARTIAL)
+            leftType = parent.left?.getType(context)
+            rightType = parent.right?.getType(context)
+        } else {
+            leftType = null
+            rightType = null
         }
     }
 
@@ -241,8 +249,18 @@ internal class OperatorExpressionWeigher(element: KtOperationReferenceExpression
         if (name == operatorName) {
             weight += 8
         }
+        (descriptor as? CallableDescriptor)?.let {
+            val receiverType = it.receiverType()?.replaceArgumentsWithStarProjections()
+            weight = leftType?.weight(weight, receiverType) ?: weight
 
-        return 10 * weight
+            val valueParameterDescriptor = it.valueParameters.firstOrNull()
+            val valueParameterType = valueParameterDescriptor?.returnType?.replaceArgumentsWithStarProjections()
+            if (valueParameterType != null) {
+                weight = rightType?.weight(weight, valueParameterType) ?: weight
+            }
+        }
+
+        return weight
     }
 
 }

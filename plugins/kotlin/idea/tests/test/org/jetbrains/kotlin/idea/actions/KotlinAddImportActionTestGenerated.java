@@ -128,6 +128,21 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
         runTest("testData/idea/actions/kotlinAddImportAction/PlusAssignOperator.kt");
     }
 
+    @TestMetadata("PlusAssignOperator2.kt")
+    public void testPlusAssignOperator2() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/PlusAssignOperator2.kt");
+    }
+
+    @TestMetadata("PlusAssignOperatorCall.kt")
+    public void testPlusAssignOperatorCall() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/PlusAssignOperatorCall.kt");
+    }
+
+    @TestMetadata("PlusAssignOperatorCall2.kt")
+    public void testPlusAssignOperatorCall2() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/PlusAssignOperatorCall2.kt");
+    }
+
     @TestMetadata("PlusOperator.kt")
     public void testPlusOperator() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/PlusOperator.kt");
@@ -136,6 +151,11 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
     @TestMetadata("PlusOperator1.kt")
     public void testPlusOperator1() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/PlusOperator1.kt");
+    }
+
+    @TestMetadata("PlusOperatorCall1.kt")
+    public void testPlusOperatorCall1() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/PlusOperatorCall1.kt");
     }
 
     @TestMetadata("SingleMethodAvailable.kt")

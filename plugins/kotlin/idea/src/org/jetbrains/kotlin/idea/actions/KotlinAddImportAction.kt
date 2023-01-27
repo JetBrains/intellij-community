@@ -63,7 +63,7 @@ internal fun createSingleImportAction(
 ): KotlinAddImportAction {
     val file = element.containingKtFile
     val prioritizer = Prioritizer(file, element)
-    val variants = fqNames.asSequence().mapNotNull {fqName ->
+    val variants = fqNames.asSequence().mapNotNull { fqName ->
         val sameFqNameDescriptors = file.resolveImportReference(fqName)
         createVariantWithPriority(fqName, sameFqNameDescriptors, file, prioritizer, project)
     }.sortedWith(compareBy({ it.priority }, { it.variant.hint }))
@@ -95,7 +95,7 @@ private fun createVariantWithPriority(
     file: KtFile,
     prioritizer: Prioritizer,
     project: Project
-):VariantWithPriority? {
+): VariantWithPriority? {
     val descriptorsWithPriority =
         sameFqNameDescriptors.map { it to prioritizer.priority(it, file.languageVersionSettings) }.sortedBy { it.second }
     val priority = descriptorsWithPriority.firstOrNull()?.second ?: return null
@@ -304,7 +304,7 @@ internal class Prioritizer(
     element: PsiElement? = null,
     private val compareNames: Boolean = true
 ) {
-    private val classifier = ImportableFqNameClassifier(file){
+    private val classifier = ImportableFqNameClassifier(file) {
         ImportInsertHelper.getInstance(file.project).isImportedWithDefault(ImportPath(it, false), file)
     }
     private val statsManager = StatisticsManager.getInstance()
