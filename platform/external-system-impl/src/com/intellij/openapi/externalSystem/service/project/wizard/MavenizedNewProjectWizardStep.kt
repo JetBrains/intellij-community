@@ -85,7 +85,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(
         .bindText(groupIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_GROUP_ID)
-        .validation { validateGroupId() }
+        .validationInfo { validateGroupId() }
         .whenTextChangedFromUi { logGroupIdChanged() }
     }
   }
@@ -96,7 +96,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(
         .bindText(artifactIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID)
-        .validation { validateArtifactId() }
+        .validationInfo { validateArtifactId() }
         .validationRequestor(WHEN_PROPERTY_CHANGED(artifactIdProperty))
         .validationRequestor(WHEN_PROPERTY_CHANGED(parentStep.nameProperty))
         .whenTextChangedFromUi { logArtifactIdChanged() }

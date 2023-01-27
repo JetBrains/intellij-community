@@ -224,7 +224,13 @@ internal class CellImpl<T : JComponent>(
     return validationRequestor(validationRequestor(component))
   }
 
+  @Deprecated("Use identical validationInfo method, validation method is reserved for new API")
+  @ApiStatus.ScheduledForRemoval
   override fun validation(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
+    return validationInfo(validation)
+  }
+
+  override fun validationInfo(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
     validationOnInput(validation)
     validationOnApply(validation)
     return this

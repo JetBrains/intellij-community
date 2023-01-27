@@ -164,12 +164,16 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    */
   fun validationRequestor(validationRequestor: DialogValidationRequestor.WithParameter<T>): Cell<T>
 
+  @Deprecated("Use identical validationInfo method, validation method is reserved for new API")
+  @ApiStatus.ScheduledForRemoval
+  fun validation(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+
   /**
    * Registers custom component data [validation].
    * [validation] will be called on [validationRequestor] events and
    * when [DialogPanel.apply] event is happens.
    */
-  fun validation(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+  fun validationInfo(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
 
   /**
    * Registers custom component data [validations].
