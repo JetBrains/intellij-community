@@ -6,7 +6,7 @@ import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.FileViewProvider
 
-class MermaidFile(viewProvider: FileViewProvider): PsiFileBase(viewProvider, MermaidLanguage) {
+class MermaidFile(viewProvider: FileViewProvider): PsiFileBase(viewProvider, MermaidLanguage), MermaidPsiElement {
   override fun getFileType(): FileType {
     return MermaidFileType
   }

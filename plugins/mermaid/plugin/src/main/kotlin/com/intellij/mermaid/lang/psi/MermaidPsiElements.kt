@@ -4,33 +4,31 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.psi.NavigatablePsiElement
-import com.intellij.psi.PsiElement
 
-interface MermaidDiagramDocument : PsiElement
+interface MermaidDiagramDocument: MermaidPsiElement
 
-interface MermaidDiagramInBracesDocument : PsiElement
+interface MermaidDiagramInBracesDocument: MermaidPsiElement
 
-interface MermaidFoldableElement : PsiElement
+interface MermaidFoldableElement: MermaidPsiElement
 
-interface MermaidClassDiagramIdentifierHolder : PsiElement {
+interface MermaidClassDiagramIdentifierHolder: MermaidPsiElement {
   val classDiagramIdentifier: MermaidClassDiagramIdentifier
   val generic: MermaidGeneric?
 }
 
-interface MermaidClassDiagramIdentifierDeclarationHolder : MermaidClassDiagramIdentifierHolder
+interface MermaidClassDiagramIdentifierDeclarationHolder: MermaidClassDiagramIdentifierHolder
 
-interface MermaidGitGraphBranchIdentifierHolder : PsiElement {
+interface MermaidGitGraphBranchIdentifierHolder: MermaidPsiElement {
   val gitGraphBranchIdentifier: MermaidGitGraphBranchIdentifier
 }
 
 fun MermaidGitGraphBranchIdentifierHolder.identifier() = gitGraphBranchIdentifier.identifier ?: gitGraphBranchIdentifier.quotedBranchIdentifier!!
 fun MermaidGitGraphBranchIdentifierHolder.isQuoted() = gitGraphBranchIdentifier.quotedBranchIdentifier != null
 
-interface MermaidPsiElement : NavigatablePsiElement
-
 @Suppress("UnstableApiUsage")
-open class MermaidNamedPsiElement(node: ASTNode) : ASTWrapperPsiElement(node), MermaidPsiElement,
-  PsiExternalReferenceHost {
+abstract class MermaidNamedPsiElement(
+  node: ASTNode
+): ASTWrapperPsiElement(node), MermaidPsiElement, NavigatablePsiElement, PsiExternalReferenceHost {
   override fun getName(): String {
     return text.trim()
   }

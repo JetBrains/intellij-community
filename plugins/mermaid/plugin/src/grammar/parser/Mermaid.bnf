@@ -24,6 +24,7 @@
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Mindmap.*'
   ]
   generateTokens=false
+  implements="com.intellij.mermaid.lang.psi.MermaidPsiElement"
 }
 
 file ::= [FRONTMATTER EOL] start
