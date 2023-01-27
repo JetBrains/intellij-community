@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +16,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,13 +86,20 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
   private final AtomicBoolean mySuspended = new AtomicBoolean();
   private final ExecutorStateListener myListener;
   private final MergingQueueGuiSuspender myGuiSuspender = new MergingQueueGuiSuspender();
+  private final @NlsContexts.ProgressTitle String myProgressTitle;
+  private final @NlsContexts.ProgressText String mySuspendedText;
 
   protected MergingQueueGuiExecutor(@NotNull Project project,
                                     @NotNull MergingTaskQueue<T> queue,
-                                    @NotNull MergingQueueGuiExecutor.ExecutorStateListener listener) {
+                                    @NotNull MergingQueueGuiExecutor.ExecutorStateListener listener,
+                                    @NlsContexts.ProgressTitle @NotNull String progressTitle,
+                                    @NotNull @NlsContexts.ProgressText String suspendedText
+  ) {
     myProject = project;
     myTaskQueue = queue;
     myListener = new SafeExecutorStateListenerWrapper(listener);
+    myProgressTitle = progressTitle;
+    mySuspendedText = suspendedText;
   }
 
   protected void processTasksWithProgress(@NotNull ProgressSuspender suspender,
@@ -131,7 +136,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     if (mySuspended.get()) return;
 
     try {
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IndexingBundle.message("progress.indexing"), false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myProgressTitle, false) {
         @Override
         public void run(final @NotNull ProgressIndicator visibleIndicator) {
           runBackgroundProcess(visibleIndicator);
@@ -187,7 +192,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
       LOG.error(throwable);
     }
 
-    try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, IdeBundle.message("progress.text.indexing.paused"))) {
+    try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, mySuspendedText)) {
       ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread(), ()-> {
         try {
           processTasksWithProgress(suspender, visibleIndicator, null);

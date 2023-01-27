@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,7 @@ final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask>
   DumbServiceGuiExecutor(@NotNull Project project,
                          @NotNull DumbServiceMergingTaskQueue queue,
                          @NotNull MergingQueueGuiExecutor.ExecutorStateListener listener) {
-    super(project, queue, listener);
+    super(project, queue, listener, IndexingBundle.message("progress.indexing"), IndexingBundle.message("progress.indexing.paused"));
   }
 
   @Override

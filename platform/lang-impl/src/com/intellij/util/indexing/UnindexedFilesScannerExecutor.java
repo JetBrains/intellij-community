@@ -47,7 +47,8 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   }
 
   public UnindexedFilesScannerExecutor(Project project) {
-    super(project, new MergingTaskQueue<>(), new TaskQueueListener(project));
+    super(project, new MergingTaskQueue<>(), new TaskQueueListener(project),
+          IndexingBundle.message("progress.indexing.scanning"), IndexingBundle.message("progress.indexing.scanning.paused"));
   }
 
   public void submitTask(UnindexedFilesScanner task) {
