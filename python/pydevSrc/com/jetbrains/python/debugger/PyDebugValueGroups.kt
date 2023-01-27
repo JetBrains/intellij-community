@@ -9,7 +9,6 @@ import com.jetbrains.python.debugger.pydev.ProcessDebugger
 import javax.swing.Icon
 
 
-const val PROTECTED_ATTRS_NAME = "Protected Attributes"
 const val DUNDER_LEN = "__len__"
 const val DUNDER_EX = "__exception__"
 val PROTECTED_ATTRS_EXCLUDED = setOf(DUNDER_LEN, DUNDER_EX)
