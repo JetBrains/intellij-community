@@ -134,8 +134,16 @@
       background-image: linear-gradient(to right, grey 1px, transparent 1px),
       linear-gradient(to bottom, grey 1px, transparent 1px);
       background-size: 1px 1px;
-      filter: invert(-1);
       mix-blend-mode: difference;
+    }
+
+    #image_border {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 1px solid gray;
+      mix-blend-mode: difference;
+      z-index: 20;
     }
   </style>
   <title>Image viewer</title>
@@ -152,6 +160,7 @@
   <button onclick="reload()">↺</button>
   <button onclick="toggleChessboard()">♔</button>
   <button onclick="toggleGrid()">▦</button>
+  <button onclick="toggleBorder()">Borders</button>
 </div>
 
 <div id="container">
@@ -161,6 +170,7 @@
       <object id="image"></object>
       <div id="chessboard" style="display: none"></div>
       <div id="pixel_grid" style="display: none"></div>
+      <div id="image_border" style="display: none"></div>
       <div id="zoom_anchor_cross_on_canvas"></div>
     </div>
   </div>
@@ -199,6 +209,7 @@
     'pixel_grid': document.getElementById('pixel_grid'),
     'control_panel': document.getElementById('control_panel'),
     'info_panel': document.getElementById('info_panel'),
+    'image_border': document.getElementById('image_border'),
   }
   let send_info = function (info_string) {
   }
@@ -375,8 +386,8 @@
   }
 
   function getFitToViewportScale() {
-    let x_scale = gUI.view_port.clientWidth / gUI.image.clientWidth
-    let y_scale = gUI.view_port.clientHeight / gUI.image.clientHeight
+    let x_scale = (gUI.view_port.clientWidth - 5) / gUI.image.clientWidth
+    let y_scale = (gUI.view_port.clientHeight - 5) / gUI.image.clientHeight
     return Math.min(x_scale, y_scale)
   }
 
@@ -432,6 +443,18 @@
     gState.chessboard_visible = value
     gUI.chessboard.style.display = value ? '' : "none"
     _update_info()
+  }
+
+  function setBorderVisible(value) {
+    gUI.image_border.style.display = value ? '' : 'none'
+  }
+
+  function isBorderVisible() {
+    return gUI.image_border.style.display !== 'none'
+  }
+
+  function toggleBorder() {
+    setBorderVisible(!isBorderVisible())
   }
 </script>
 

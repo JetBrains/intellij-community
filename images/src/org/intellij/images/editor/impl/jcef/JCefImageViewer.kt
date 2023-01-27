@@ -27,6 +27,7 @@ import org.intellij.images.editor.ImageZoomModel
 import org.intellij.images.editor.impl.ImageFileEditorState
 import org.intellij.images.options.OptionsManager
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions
+import org.intellij.images.thumbnail.actions.ShowBorderAction
 import org.intellij.images.ui.ImageComponentDecorator
 import org.jetbrains.annotations.Nls
 import java.awt.Point
@@ -114,6 +115,10 @@ class JCefImageViewer(private val myFile: VirtualFile,
     execute("setGridVisible(${if (visible) "true" else "false"});")
   }
 
+  override fun setBorderVisible(visible: Boolean) {
+    execute("setBorderVisible(${if (visible) "true" else "false"});")
+  }
+
   override fun isTransparencyChessboardVisible(): Boolean = myState.chessboardEnabled
   override fun isEnabledForActionPlace(place: String): Boolean = ThumbnailViewActions.ACTION_PLACE != place
   override fun getZoomModel(): ImageZoomModel = ZOOM_MODEL
@@ -191,6 +196,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
       execute("setImageUrl('$IMAGE_URL');")
       isGridVisible = OptionsManager.getInstance().options.editorOptions.gridOptions.isShowDefault
       isTransparencyChessboardVisible = OptionsManager.getInstance().options.editorOptions.transparencyChessboardOptions.isShowDefault
+      setBorderVisible(ShowBorderAction.isBorderVisible())
     }
 
     myCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
