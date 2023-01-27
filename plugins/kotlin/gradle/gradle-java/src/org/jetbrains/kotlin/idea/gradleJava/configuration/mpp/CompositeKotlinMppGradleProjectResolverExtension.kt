@@ -9,10 +9,10 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
-internal val KotlinMppGradleProjectResolverExtension.Companion.instance: KotlinMppGradleProjectResolverExtension
-    get() = KotlinMppGradleProjectResolverExtensionInstance(EP_NAME.extensionList)
+internal fun KotlinMppGradleProjectResolverExtension.Companion.buildInstance(): KotlinMppGradleProjectResolverExtension =
+    CompositeKotlinMppGradleProjectResolverExtension(EP_NAME.extensionList)
 
-private class KotlinMppGradleProjectResolverExtensionInstance(
+private class CompositeKotlinMppGradleProjectResolverExtension(
     private val extensions: List<KotlinMppGradleProjectResolverExtension>
 ) : KotlinMppGradleProjectResolverExtension {
 

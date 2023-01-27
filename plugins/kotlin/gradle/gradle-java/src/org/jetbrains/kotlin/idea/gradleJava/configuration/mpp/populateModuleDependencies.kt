@@ -46,7 +46,7 @@ internal fun populateModuleDependenciesWithDependenciesContainer(
     mppModel.dependencyMap.values.modifyDependenciesOnMppModules(ideProject)
 
     val extensionContext = KotlinMppGradleProjectResolverExtension.Context(mppModel, resolverCtx, gradleModule, ideModule)
-    val extension = KotlinMppGradleProjectResolverExtension.instance
+    val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
 
     mppModel.sourceSetsByName.values.forEach { sourceSet ->
         val sourceSetModuleIde = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
@@ -55,7 +55,7 @@ internal fun populateModuleDependenciesWithDependenciesContainer(
 
         /* Call into extension points, skipping dependency population of source set if instructed */
         if (
-            extension.beforePopulateSourceSetDependencies(
+            extensionInstance.beforePopulateSourceSetDependencies(
                 extensionContext, sourceSetDataNode, sourceSet, sourceSetDependencies
             ) == KotlinMppGradleProjectResolverExtension.Result.Skip
         ) return@forEach
@@ -79,7 +79,7 @@ internal fun populateModuleDependenciesWithDependenciesContainer(
         }
 
         /* Calling into extensions, notifying them about all populated dependencies */
-        extension.afterPopulateSourceSetDependencies(
+        extensionInstance.afterPopulateSourceSetDependencies(
             extensionContext, sourceSetDataNode, sourceSet, resolvedSourceSetDependencies, createdDependencyNodes
         )
     }
