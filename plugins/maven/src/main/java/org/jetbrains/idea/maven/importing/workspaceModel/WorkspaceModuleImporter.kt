@@ -18,6 +18,7 @@ import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -36,6 +37,7 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class WorkspaceModuleImporter(
   private val project: Project,
+  private val storageBeforeImport: EntityStorage,
   private val importData: MavenTreeModuleImportData,
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val builder: MutableEntityStorage,
@@ -54,7 +56,8 @@ internal class WorkspaceModuleImporter(
                                                                                  existingEntitySourceNames,
                                                                                  moduleName + ModuleManagerEx.IML_EXTENSION)
 
-    val dependencies = collectDependencies(moduleName, importData.dependencies, moduleLibrarySource)
+    val originalModule = storageBeforeImport.resolve(ModuleId(moduleName))
+    val dependencies = collectDependencies(moduleName, originalModule, importData.dependencies, moduleLibrarySource)
     val moduleEntity = createModuleEntity(moduleName, importData.mavenProject, importData.moduleData.type, dependencies,
                                           moduleLibrarySource)
     configureModuleEntity(importData, moduleEntity, folderImportingContext)
@@ -91,10 +94,21 @@ internal class WorkspaceModuleImporter(
   }
 
   private fun collectDependencies(moduleName: String,
+                                  originalModule: ModuleEntity?,
                                   dependencies: List<Any>,
                                   moduleLibrarySource: EntitySource): List<ModuleDependencyItem> {
     val result = ArrayList<ModuleDependencyItem>(2 + dependencies.size)
-    result.add(ModuleDependencyItem.InheritedSdkDependency)
+
+    // In this way we keep the manual change of the used JDK
+    // If the user changes the default JDK for the module, this information is not stored to maven and is removed after import
+    // By checking the state of the module before reimport, we can restore the used JDK
+    //
+    // With the new workspace model we can make this process working out of the box. For that we need to extract module
+    //   dependencies as separate entities and add the SDK dependency with the user defined EntitySource. However, this will require
+    //   the refactoring of the ModuleEntity
+    val moduleSdk = originalModule?.dependencies?.find { it is ModuleDependencyItem.SdkDependency }
+                    ?: ModuleDependencyItem.InheritedSdkDependency
+    result.add(moduleSdk)
     result.add(ModuleDependencyItem.ModuleSourceDependency)
 
     for (dependency in dependencies) {

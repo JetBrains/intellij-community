@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -211,6 +211,7 @@ internal class WorkspaceProjectImporter(
       if (importData.moduleData.moduleName in unloadedModuleNames) continue
 
       val moduleEntity = WorkspaceModuleImporter(myProject,
+                                                 storageBeforeImport,
                                                  importData,
                                                  virtualFileUrlManager,
                                                  builder,
