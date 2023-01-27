@@ -994,7 +994,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void assertReadAccessAllowed() {
     if (!isReadAccessAllowed()) {
-      throw new IllegalStateException(
+      LOG.error(
         "Read access is allowed from inside read-action (or EDT) only" +
         " (see com.intellij.openapi.application.Application.runReadAction())\n" + getThreadDetails());
     }
@@ -1003,7 +1003,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void assertReadAccessNotAllowed() {
     if (isReadAccessAllowed()) {
-      throw new IllegalStateException("Must not execute under read action.\n" + getThreadDetails());
+      LOG.error(
+        "Read access is not allowed",
+        getThreadDetails());
     }
   }
 
