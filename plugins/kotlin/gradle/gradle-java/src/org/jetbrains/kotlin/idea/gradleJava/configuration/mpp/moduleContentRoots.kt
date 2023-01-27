@@ -33,7 +33,7 @@ internal fun populateContentRoots(
     val mppModel = resolverCtx.getMppModel(gradleModule) ?: return
 
     val extensionContext = KotlinMppGradleProjectResolverExtension.Context(mppModel, resolverCtx, gradleModule, ideModule)
-    val extensionInstance = KotlinMppGradleProjectResolverExtension.instance
+    val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
 
     val sourceSetToPackagePrefix = mppModel.targets.flatMap { it.compilations }
         .flatMap { compilation ->
