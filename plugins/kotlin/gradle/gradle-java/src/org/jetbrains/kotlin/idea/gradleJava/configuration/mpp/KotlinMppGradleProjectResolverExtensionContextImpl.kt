@@ -7,9 +7,18 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
-internal class KotlinMppGradleProjectResolverExtensionContextImpl(
-  override val model: KotlinMPPGradleModel,
-  override val resolverCtx: ProjectResolverContext,
-  override val gradleModule: IdeaModule,
-  override val moduleDataNode: DataNode<ModuleData>
+fun KotlinMppGradleProjectResolverExtension.Companion.Context(
+    model: KotlinMPPGradleModel,
+    resolverCtx: ProjectResolverContext,
+    gradleModule: IdeaModule,
+    moduleDataNode: DataNode<ModuleData>
+): KotlinMppGradleProjectResolverExtension.Context = KotlinMppGradleProjectResolverExtensionContextImpl(
+    model, resolverCtx, gradleModule, moduleDataNode
+)
+
+private class KotlinMppGradleProjectResolverExtensionContextImpl(
+    override val model: KotlinMPPGradleModel,
+    override val resolverCtx: ProjectResolverContext,
+    override val gradleModule: IdeaModule,
+    override val moduleDataNode: DataNode<ModuleData>
 ) : KotlinMppGradleProjectResolverExtension.Context
