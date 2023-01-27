@@ -84,14 +84,22 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class));
   }
 
+  public void testRecordAbstractMethodWarning() {
+    setLanguageLevel(LanguageLevel.JDK_16);
+    doTest(true, "Concrete record <b><code>R1</code></b> will inherit a new abstract method",
+           new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class, true));
+  }
+
   public void testNotFunctionalAnymore() {
     setLanguageLevel(LanguageLevel.JDK_1_8);
-    doTest(true, "Functional expression demands functional interface to have exact one method", new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class, true));
+    doTest(true, "Functional expression demands functional interface to have exact one method",
+           new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class, true));
   }
 
   public void testPullToInterfaceAsDefault() {
     setLanguageLevel(LanguageLevel.JDK_1_8);
-    doTest(true, "Method <b><code>mass()</code></b> uses field <b><code>SimplePlanet.mass</code></b>, which is not moved to the superclass", new RefactoringTestUtil.MemberDescriptor("mass", PsiMethod.class, false));
+    doTest(true, "Method <b><code>mass()</code></b> uses field <b><code>SimplePlanet.mass</code></b>, which is not moved to the superclass",
+           new RefactoringTestUtil.MemberDescriptor("mass", PsiMethod.class, false));
   }
 
   public void testStillFunctional() {
@@ -162,7 +170,7 @@ public class PullUpTest extends LightRefactoringTestCase {
   }
 
   public void testConflictOnNewAbstractMethod() {
-    doTest(false, "Concrete 'class <b><code>C</code></b>' would inherit a new abstract method", new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+    doTest(false, "Concrete class <b><code>C</code></b> will inherit a new abstract method", new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
   public void testEscalateVisibility() {
