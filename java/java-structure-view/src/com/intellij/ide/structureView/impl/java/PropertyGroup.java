@@ -62,7 +62,7 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
       if (null != accessorInfo &&
           (accessorInfo.isKindOf(PropertyKind.GETTER) || accessorInfo.isKindOf(PropertyKind.SETTER))) {
 
-        PropertyGroup group = new PropertyGroup(accessorInfo.getPropertyName(), accessorInfo.getPropertyType(),
+        PropertyGroup group = new PropertyGroup(accessorInfo.propertyName(), accessorInfo.propertyType(),
                                                 method.hasModifierProperty(PsiModifier.STATIC), method.getProject());
         if (accessorInfo.isKindOf(PropertyKind.GETTER)) {
           group.setGetter(method);
