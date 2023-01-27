@@ -106,7 +106,10 @@ enum class WorkspaceFileKind {
    * referenced from [CONTENT] files. This kind was introduced mainly for compatibility with the old code, it corresponds to
    * [com.intellij.openapi.roots.ProjectFileIndex.isInLibrarySource] method. 
    */
-  EXTERNAL_SOURCE
+  EXTERNAL_SOURCE;
+  
+  val isContent: Boolean
+    get() = this == CONTENT || this == TEST_CONTENT
 }
 
 /**

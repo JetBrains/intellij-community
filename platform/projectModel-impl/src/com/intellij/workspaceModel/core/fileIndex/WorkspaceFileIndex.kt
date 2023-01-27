@@ -26,14 +26,14 @@ interface WorkspaceFileIndex {
   fun isInWorkspace(file: VirtualFile): Boolean
 
   /**
-   * Returns `true` if [file] is included to the workspace with [content][WorkspaceFileKind.CONTENT] kind assigned to it.
+   * Returns `true` if [file] is included to the workspace with [content][WorkspaceFileKind.isContent] kind assigned to it.
    * Currently, this function is equivalent to [com.intellij.openapi.roots.ProjectFileIndex.isInContent].
    */
   @RequiresReadLock
   fun isInContent(file: VirtualFile): Boolean
 
   /**
-   * Return the root file of a file set of [content][WorkspaceFileKind.CONTENT] kind containing [file]. 
+   * Return the root file of a file set of [content][WorkspaceFileKind.isContent] kind containing [file]. 
    * If [file] doesn't belong to such a file set, `null` is returned.
    * 
    * This function is similar to [com.intellij.openapi.roots.ProjectFileIndex.getContentRootForFile], but it processes custom file sets as 
@@ -50,7 +50,7 @@ interface WorkspaceFileIndex {
    * specific file set in such case, use [findFileSetWithCustomData] instead.
    * 
    * @param honorExclusion if `true` the function will return `null` if [file] is excluded from the found file set
-   * @param includeContentSets if `true` file sets of [WorkspaceFileKind.CONTENT] kind will be processed
+   * @param includeContentSets if `true` file sets of [content][WorkspaceFileKind.isContent] kind will be processed
    * @param includeExternalSets if `true` file sets of [WorkspaceFileKind.EXTERNAL] kind will be processed
    * @param includeExternalSourceSets if `true` file sets of [WorkspaceFileKind.EXTERNAL_SOURCE] kind will be processed
    */
