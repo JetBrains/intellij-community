@@ -7,6 +7,7 @@ import com.intellij.psi.JavaElementVisitor
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiMethodCallExpression
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.isGetEntriesMethod
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
@@ -23,7 +24,10 @@ class EnumValuesSoftDeprecateInJavaInspection : LocalInspectionTool() {
                     return
                 }
                 val resolvedMethod = expression.resolveMethod()
-                if ((resolvedMethod as? KtLightMethod)?.containingClass?.isEnum == true) {
+                val containingClass = (resolvedMethod as? KtLightMethod)?.containingClass
+                if (containingClass?.isEnum == true &&
+                    containingClass.methods.any { isGetEntriesMethod(it) }
+                ) {
                     holder.registerProblem(
                         expression,
                         KotlinBundle.message("inspection.enum.values.method.soft.deprecate.in.java.display.name"),
