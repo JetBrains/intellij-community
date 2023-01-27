@@ -140,7 +140,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     mySplitter.setDividerWidth(ExperimentalUI.isNewUI() ? 1 : 2);
     mySplitter.getDivider().setBackground(JBColor.lazy(() -> EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.PREVIEW_BORDER_COLOR)));
 
-    myToolbarWrapper = createMarkdownToolbarWrapper(mySplitter);
+    myToolbarWrapper = createSplitEditorToolbar(mySplitter);
 
     if (myLayout == null) {
       String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
@@ -199,7 +199,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     mySplitter.setOrientation(verticalSplit);
   }
 
-  private @NotNull SplitEditorToolbar createMarkdownToolbarWrapper(@NotNull JComponent targetComponentForActions) {
+  private @NotNull SplitEditorToolbar createSplitEditorToolbar(@NotNull JComponent targetComponentForActions) {
     final ActionToolbar leftToolbar = createToolbar();
     if (leftToolbar != null) {
       leftToolbar.setTargetComponent(targetComponentForActions);
