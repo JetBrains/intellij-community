@@ -26,13 +26,13 @@ public class UnindexedFilesUpdater {
   // Allows to specify number of indexing threads. -1 means the default value (currently, 4).
   private static final int INDEXER_THREAD_COUNT = SystemProperties.getIntProperty("caches.indexerThreadsCount", -1);
 
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final boolean myStartSuspended;
   private final boolean myOnProjectOpen;
-  private final String myIndexingReason;
-  private final ScanningType myScanningType;
-  private final DependenciesIndexedStatusService.StatusMark myMark;
-  private final List<IndexableFilesIterator> myPredefinedIndexableFilesIterators;
+  private final @Nullable String myIndexingReason;
+  private final @NotNull ScanningType myScanningType;
+  private final @Nullable DependenciesIndexedStatusService.StatusMark myMark;
+  private final @Nullable List<IndexableFilesIterator> myPredefinedIndexableFilesIterators;
 
   public UnindexedFilesUpdater(@NotNull Project project,
                                boolean startSuspended,
@@ -49,8 +49,13 @@ public class UnindexedFilesUpdater {
     myMark = mark;
     myPredefinedIndexableFilesIterators = predefinedIndexableFilesIterators;
     LOG.assertTrue(myPredefinedIndexableFilesIterators == null || !myPredefinedIndexableFilesIterators.isEmpty());
+    if (indexingReason == null) LOG.warn("Please provide an indexing reason (was provided 'null')");
   }
 
+  /**
+   * @deprecated please use {@link #UnindexedFilesUpdater(Project, String)} and provide a non-null reason
+   */
+  @Deprecated
   public UnindexedFilesUpdater(@NotNull Project project) {
     // If we haven't succeeded to fully scan the project content yet, then we must keep trying to run
     // file based index extensions for all project files until at least one of UnindexedFilesScanner-s finishes without cancellation.
