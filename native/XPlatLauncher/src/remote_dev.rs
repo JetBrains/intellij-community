@@ -294,20 +294,20 @@ impl RemoteDevLaunchConfiguration {
     }
 
     fn get_remote_dev_properties(&self) -> Result<Vec<IdeProperty>> {
-        let config_path = self.config_dir.to_string_lossy();
-        let plugins_path = self.config_dir.join("plugins").to_string_lossy().to_string();
-        let system_path = self.system_dir.to_string_lossy();
+        let config_path_string = escape_for_idea_properties(&self.config_dir);
+        let plugins_path_string = escape_for_idea_properties(&self.config_dir.join("plugins"));
+        let system_path_string = escape_for_idea_properties(&self.system_dir);
 
-        let logs_path = match &self.logs_dir {
-            None => self.system_dir.join("log").to_string_lossy().to_string(),
-            Some(x) => x.to_string_lossy().to_string()
+        let logs_path_string = match &self.logs_dir {
+            None => escape_for_idea_properties(&self.system_dir.join("log")),
+            Some(x) => escape_for_idea_properties(x)
         };
 
         let mut remote_dev_properties = vec![
-            ("idea.config.path", config_path.as_ref()),
-            ("idea.plugins.path", plugins_path.as_ref()),
-            ("idea.system.path", system_path.as_ref()),
-            ("idea.log.path", logs_path.as_ref()),
+            ("idea.config.path", config_path_string.as_str()),
+            ("idea.plugins.path", plugins_path_string.as_str()),
+            ("idea.system.path", system_path_string.as_str()),
+            ("idea.log.path", logs_path_string.as_str()),
 
             // TODO: remove once all of this is disabled for remote dev
             ("jb.privacy.policy.text", "<!--999.999-->"),
@@ -562,4 +562,8 @@ fn get_remote_dev_launcher_name_for_usage() -> Result<String>{
         .expect("Failed to convert current executable name to string");
 
     Ok(result)
+}
+
+fn escape_for_idea_properties(path: &Path) -> String {
+    path.to_string_lossy().replace("\\", "\\\\")
 }
