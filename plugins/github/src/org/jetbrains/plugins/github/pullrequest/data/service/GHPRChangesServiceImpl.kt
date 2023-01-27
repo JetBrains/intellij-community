@@ -16,6 +16,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
+import git4idea.changes.GitCommitShaWithPatches
+import git4idea.changes.GitParsedChangesBundle
+import git4idea.changes.GitParsedChangesBundleImpl
 import git4idea.fetch.GitFetchSupport
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -24,9 +27,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
-import org.jetbrains.plugins.github.pullrequest.data.GHCommitWithPatches
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProviderImpl
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHServiceUtil.logError
 import java.util.concurrent.CancellationException
@@ -70,7 +70,7 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
   override fun createChangesProvider(progressIndicator: ProgressIndicator,
                                      pullRequestId: GHPRIdentifier,
                                      mergeBaseOid: String,
-                                     commits: Pair<GHCommit, Graph<GHCommit>>): CompletableFuture<GHPRChangesProvider> {
+                                     commits: Pair<GHCommit, Graph<GHCommit>>): CompletableFuture<GitParsedChangesBundle> {
     val prDiffRequest = progressManager.submitIOTask(ProgressWrapper.wrap(progressIndicator)) {
       requestExecutor.execute(it, GithubApiRequests.Repos.PullRequests.getDiff(ghRepository, pullRequestId.number))
     }
@@ -85,14 +85,12 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
       val commitsList = commitsDiffsRequests.map {(commit, request) ->
         val diff = request.joinCancellable()
         val patches = readAllPatches(diff)
-        GHCommitWithPatches(commit.oid, commit.parents.map { it.oid }, patches)
+        GitCommitShaWithPatches(commit.oid, commit.parents.map { it.oid }, patches)
       }
-      val prPatches = prDiffRequest.joinCancellable().let {
-        readAllPatches(it)
-      }
+      val prPatches = readAllPatches(prDiffRequest.joinCancellable())
       it.checkCanceled()
 
-      GHPRChangesProviderImpl(project, gitRemote.repository.root, mergeBaseOid, commitsList, prPatches) as GHPRChangesProvider
+      GitParsedChangesBundleImpl(project, gitRemote.repository.root, mergeBaseOid, commitsList, prPatches) as GitParsedChangesBundle
     }.logError(LOG, "Error occurred while building changes from commits")
   }
 

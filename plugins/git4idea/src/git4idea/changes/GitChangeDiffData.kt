@@ -1,28 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.data
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.changes
 
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
-sealed class GHPRChangeDiffData(val commitSha: String, val filePath: String,
-                                private val patch: TextFilePatch,
-                                protected val fileHistory: GHPRFileHistory) {
+sealed class GitChangeDiffData(val commitSha: String, val filePath: String,
+                               private val patch: TextFilePatch,
+                               protected val fileHistory: GitFileHistory) {
 
   val diffRanges: List<Range> by lazy(LazyThreadSafetyMode.NONE) {
-    patch.hunks.map(GHPatchHunkUtil::getRange)
+    patch.hunks.map(PatchHunkUtil::getRange)
   }
   val diffRangesWithoutContext: List<Range> by lazy(LazyThreadSafetyMode.NONE) {
-    patch.hunks.map(GHPatchHunkUtil::getChangeOnlyRanges).flatten()
+    patch.hunks.map(PatchHunkUtil::getChangeOnlyRanges).flatten()
   }
 
   fun contains(commitSha: String, filePath: String): Boolean {
     return fileHistory.contains(commitSha, filePath)
   }
 
-  class Commit(commitSha: String, filePath: String, patch: TextFilePatch, fileHistory: GHPRFileHistory)
-    : GHPRChangeDiffData(commitSha, filePath, patch, fileHistory) {
+  class Commit(commitSha: String, filePath: String, patch: TextFilePatch, fileHistory: GitFileHistory)
+    : GitChangeDiffData(commitSha, filePath, patch, fileHistory) {
 
     fun mapPosition(fromCommitSha: String,
                     side: Side, line: Int): Pair<Side, Int>? {
@@ -52,7 +52,7 @@ sealed class GHPRChangeDiffData(val commitSha: String, val filePath: String,
       for (patch in patches) {
         if (currentSide == transferFrom) {
           val changeOnlyRanges = patch.hunks.map { hunk ->
-            val ranges = GHPatchHunkUtil.getChangeOnlyRanges(hunk)
+            val ranges = PatchHunkUtil.getChangeOnlyRanges(hunk)
             if (rightToLeft) ranges.map { reverseRange(it) } else ranges
           }.flatten()
 
@@ -79,6 +79,6 @@ sealed class GHPRChangeDiffData(val commitSha: String, val filePath: String,
     private fun reverseRange(range: Range) = Range(range.start2, range.end2, range.start1, range.end1)
   }
 
-  class Cumulative(commitSha: String, filePath: String, patch: TextFilePatch, fileHistory: GHPRFileHistory)
-    : GHPRChangeDiffData(commitSha, filePath, patch, fileHistory)
+  class Cumulative(commitSha: String, filePath: String, patch: TextFilePatch, fileHistory: GitFileHistory)
+    : GitChangeDiffData(commitSha, filePath, patch, fileHistory)
 }

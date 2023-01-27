@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.ex.isValidRanges
 import com.intellij.openapi.vcs.history.VcsDiffUtil
+import git4idea.changes.GitParsedChangesBundle
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -32,7 +33,6 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImp
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewResolvedThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsReloadAction
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsToggleAction
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -77,7 +77,7 @@ open class GHPRDiffRequestChainProducer(
 
   private fun loadRequestDataKeys(indicator: ProgressIndicator,
                                   change: Change,
-                                  changesProviderFuture: CompletableFuture<GHPRChangesProvider>,
+                                  changesProviderFuture: CompletableFuture<GitParsedChangesBundle>,
                                   fetchFuture: CompletableFuture<Void>): Map<Key<out Any>, Any?> {
 
     val changesProvider = ProgressIndicatorUtils.awaitWithCheckCanceled(changesProviderFuture, indicator)
@@ -116,7 +116,7 @@ open class GHPRDiffRequestChainProducer(
     return requestDataKeys
   }
 
-  private fun getReviewSupport(changesProvider: GHPRChangesProvider, change: Change): GHPRDiffReviewSupport? {
+  private fun getReviewSupport(changesProvider: GitParsedChangesBundle, change: Change): GHPRDiffReviewSupport? {
     val diffData = changesProvider.findChangeDiffData(change) ?: return null
 
     return GHPRDiffReviewSupportImpl(project,
@@ -127,7 +127,7 @@ open class GHPRDiffRequestChainProducer(
                                      currentUser)
   }
 
-  private fun getDiffComputer(changesProvider: GHPRChangesProvider, change: Change): DiffUserDataKeysEx.DiffComputer? {
+  private fun getDiffComputer(changesProvider: GitParsedChangesBundle, change: Change): DiffUserDataKeysEx.DiffComputer? {
     val diffRanges = changesProvider.findChangeDiffData(change)?.diffRangesWithoutContext ?: return null
 
     return DiffUserDataKeysEx.DiffComputer { text1, text2, policy, innerChanges, indicator ->

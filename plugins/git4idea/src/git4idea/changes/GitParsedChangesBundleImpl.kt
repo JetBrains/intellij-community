@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.data
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.changes
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
@@ -15,12 +15,12 @@ import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
 import java.util.*
 
-class GHPRChangesProviderImpl(private val project: Project,
-                              private val vcsRoot: VirtualFile,
-                              private val mergeBaseSha: String,
-                              commits: List<GHCommitWithPatches>,
-                              private val headPatches: List<FilePatch>)
-  : GHPRChangesProvider {
+class GitParsedChangesBundleImpl(private val project: Project,
+                                 private val vcsRoot: VirtualFile,
+                                 private val mergeBaseSha: String,
+                                 commits: List<GitCommitShaWithPatches>,
+                                 private val headPatches: List<FilePatch>)
+  : GitParsedChangesBundle {
 
   private val headSha = commits.last().sha
 
@@ -28,7 +28,7 @@ class GHPRChangesProviderImpl(private val project: Project,
   override val changesByCommits = mutableMapOf<String, List<Change>>()
   override val linearHistory: Boolean
 
-  private val diffDataByChange = CollectionFactory.createCustomHashingStrategyMap<Change, GHPRChangeDiffData>(object : HashingStrategy<Change> {
+  private val diffDataByChange = CollectionFactory.createCustomHashingStrategyMap<Change, GitChangeDiffData>(object : HashingStrategy<Change> {
     override fun equals(o1: Change?, o2: Change?): Boolean {
       return o1 == o2 &&
              o1?.beforeRevision == o2?.beforeRevision &&
@@ -42,7 +42,7 @@ class GHPRChangesProviderImpl(private val project: Project,
 
   override fun findCumulativeChange(commitSha: String, filePath: String): Change? {
     return diffDataByChange.entries.find {
-      it.value is GHPRChangeDiffData.Cumulative && it.value.contains(commitSha, filePath)
+      it.value is GitChangeDiffData.Cumulative && it.value.contains(commitSha, filePath)
     }?.key
   }
 
@@ -62,8 +62,8 @@ class GHPRChangesProviderImpl(private val project: Project,
     }
   }
 
-  private fun initForLinearHistory(commits: List<GHCommitWithPatches>) {
-    val fileHistoriesByLastKnownFilePath = mutableMapOf<String, GHPRMutableLinearFileHistory>()
+  private fun initForLinearHistory(commits: List<GitCommitShaWithPatches>) {
+    val fileHistoriesByLastKnownFilePath = mutableMapOf<String, MutableLinearGitFileHistory>()
 
     var previousCommitSha = mergeBaseSha
 
@@ -82,14 +82,14 @@ class GHPRChangesProviderImpl(private val project: Project,
           val afterPath = patch.afterName
 
           val historyBefore = beforePath?.let { fileHistoriesByLastKnownFilePath.remove(it) }
-          val fileHistory = (historyBefore ?: GHPRMutableLinearFileHistory(commitsHashes)).apply {
+          val fileHistory = (historyBefore ?: MutableLinearGitFileHistory(commitsHashes)).apply {
             append(commitSha, patch)
           }
           if (afterPath != null) {
             fileHistoriesByLastKnownFilePath[afterPath] = fileHistory
           }
 
-          diffDataByChange[change] = GHPRChangeDiffData.Commit(commitSha, patch.filePath, patch, fileHistory)
+          diffDataByChange[change] = GitChangeDiffData.Commit(commitSha, patch.filePath, patch, fileHistory)
         }
       }
       changesByCommits[commitWithPatches.sha] = commitChanges
@@ -112,12 +112,12 @@ class GHPRChangesProviderImpl(private val project: Project,
           continue
         }
 
-        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(headSha, filePath, patch, fileHistory)
+        diffDataByChange[change] = GitChangeDiffData.Cumulative(headSha, filePath, patch, fileHistory)
       }
     }
   }
 
-  private fun initForHistoryWithMerges(commits: List<GHCommitWithPatches>) {
+  private fun initForHistoryWithMerges(commits: List<GitCommitShaWithPatches>) {
     val commitsHashes = commits.mapTo(mutableSetOf()) { it.sha }
     for (commitWithPatches in commits) {
       val previousCommitSha = commitWithPatches.parents.find { commitsHashes.contains(it) } ?: mergeBaseSha
@@ -131,7 +131,7 @@ class GHPRChangesProviderImpl(private val project: Project,
       changes.add(change)
 
       if (patch is TextFilePatch) {
-        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(headSha, patch.filePath, patch, GHPRSinglePatchFileHistory(patch))
+        diffDataByChange[change] = GitChangeDiffData.Cumulative(headSha, patch.filePath, patch, SinglePatchGitFileHistory(patch))
       }
     }
   }
@@ -152,7 +152,7 @@ class GHPRChangesProviderImpl(private val project: Project,
   }
 
   companion object {
-    private val LOG = logger<GHPRChangesProvider>()
+    private val LOG = logger<GitParsedChangesBundle>()
 
     private val FilePatch.filePath
       get() = (afterName ?: beforeName)!!

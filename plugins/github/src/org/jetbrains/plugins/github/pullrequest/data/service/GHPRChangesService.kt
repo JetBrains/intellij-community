@@ -3,9 +3,9 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.google.common.graph.Graph
 import com.intellij.openapi.progress.ProgressIndicator
+import git4idea.changes.GitParsedChangesBundle
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.api.data.GHCommit
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.util.concurrent.CompletableFuture
 
@@ -32,5 +32,5 @@ interface GHPRChangesService {
                             pullRequestId: GHPRIdentifier,
                             mergeBaseOid: String,
                             commits: Pair<GHCommit, Graph<GHCommit>>)
-    : CompletableFuture<GHPRChangesProvider>
+    : CompletableFuture<GitParsedChangesBundle>
 }
