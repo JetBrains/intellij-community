@@ -21,6 +21,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +61,12 @@ public class StopAction extends DumbAwareAction {
       List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(e.getProject());
       int stopCount = stoppableDescriptors.size();
       enable = stopCount >= 1;
+
+      if (!enable && e.getPlace().equals(ActionPlaces.NEW_UI_RUN_TOOLBAR)) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
+
       if (stopCount > 1) {
         presentation.setText(getTemplatePresentation().getText() + "...");
         icon = IconUtil.addText(icon, String.valueOf(stopCount));
@@ -248,7 +255,8 @@ public class StopAction extends DumbAwareAction {
     }
   }
 
-  private static @NotNull List<RunContentDescriptor> getActiveStoppableDescriptors(@Nullable Project project) {
+  @ApiStatus.Internal
+  public static @NotNull List<RunContentDescriptor> getActiveStoppableDescriptors(@Nullable Project project) {
     List<RunContentDescriptor> runningProcesses = project != null ?
                                                   ExecutionManagerImpl.getAllDescriptors(project) :
                                                   Collections.emptyList();

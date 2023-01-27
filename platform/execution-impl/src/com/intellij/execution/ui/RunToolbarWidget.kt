@@ -250,6 +250,10 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
   }
 
   override fun update(e: AnActionEvent) {
+    if (!isContrastRunWidget) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
     val manger = ExecutionManagerImpl.getInstance(e.project ?: return)
     val running = manger.getRunningDescriptors { true }
     val activeProcesses = running.size

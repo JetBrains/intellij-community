@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -30,10 +31,7 @@ import com.intellij.ui.IconReplacer
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.*
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.geom.Area
@@ -87,13 +85,14 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
     val toolbar = createRunActionToolbar {
       presentation.getClientProperty(runToolbarDataKey) ?: false
     }
-    return if (isContrastRunWidget) {
-      DynamicBorderWrapper(toolbar.component) {
-        JBUI.Borders.empty(JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 12,
-                           JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 2)
-      }
+    toolbar.component.border = if (isContrastRunWidget) {
+      JBUI.Borders.empty(JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 12,
+                         JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 2)
     }
-    else toolbar.component
+    else {
+      JBUI.Borders.emptyRight(16)
+    }
+    return toolbar.component
   }
 
   override fun update(e: AnActionEvent) {
@@ -294,6 +293,25 @@ private abstract class TogglePopupAction : ToggleAction {
     null, actionGroup, e.dataContext, false, false, false, disposeCallback, 30, null)
 
   abstract fun getActionGroup(e: AnActionEvent): ActionGroup?
+}
+
+private class InactiveStopActionPlaceholder : DumbAwareAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    error("The placeholder should not be invoked")
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.icon = EmptyIcon.ICON_16
+    if (StopAction.getActiveStoppableDescriptors(e.project).isEmpty()) {
+      e.presentation.isEnabled = false
+      e.presentation.isVisible = true
+    }
+    else {
+      e.presentation.isEnabledAndVisible = false
+    }
+  }
 }
 
 private class MoreRunToolbarActions : TogglePopupAction(

@@ -1651,7 +1651,9 @@
     <group id="RunToolbarMainActionGroup">
       <reference ref="RedesignedRunConfigurationSelector"/>
       <reference ref="RunToolbarTopLevelExecutorActionGroup"/>
+      <reference ref="Stop"/>
       <reference ref="MoreRunToolbarActions"/>
+      <action id="InactiveStopActionPlaceholder" class="com.intellij.execution.ui.InactiveStopActionPlaceholder" />
     </group>
 
     <group id="ExecutionTargetsToolbarGroup" searchable="false" popup="false">
