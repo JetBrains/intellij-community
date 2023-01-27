@@ -25,7 +25,10 @@ import java.util.*
 @ApiStatus.Experimental
 abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
 
-  lateinit var outputDirectory: String
+  private val outputDirectoryProperty = propertyGraph.lateinitProperty<String>()
+
+  var outputDirectory by outputDirectoryProperty
+
   private val assets = ArrayList<GeneratorAsset>()
   private val templateProperties = HashMap<String, Any>()
   private val filesToOpen = HashSet<Path>()
@@ -33,7 +36,9 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
   init {
     val baseData = baseData
     if (baseData != null) {
-      outputDirectory = baseData.path + "/" + baseData.name
+      outputDirectoryProperty.set(baseData.location)
+      outputDirectoryProperty.dependsOn(baseData.nameProperty) { baseData.location }
+      outputDirectoryProperty.dependsOn(baseData.pathProperty) { baseData.location }
     }
   }
 
@@ -102,5 +107,11 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       fileEditorManager.openFile(file, true)
       projectView.select(null, file, false)
     }
+  }
+
+  companion object {
+
+    private val NewProjectWizardBaseData.location: String
+      get() = "$path/$name"
   }
 }
