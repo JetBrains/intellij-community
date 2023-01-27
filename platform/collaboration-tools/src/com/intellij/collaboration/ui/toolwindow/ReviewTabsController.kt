@@ -5,4 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface ReviewTabsController<T : ReviewTab> {
   val openReviewTabRequest: Flow<T>
+
+  val closeReviewTabRequest: Flow<T>
 }

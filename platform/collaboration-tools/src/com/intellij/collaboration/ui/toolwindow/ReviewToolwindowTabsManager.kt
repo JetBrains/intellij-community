@@ -64,10 +64,22 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
         }
       }
     }
+
+    cs.launch(start = CoroutineStart.UNDISPATCHED) {
+      reviewTabsController.closeReviewTabRequest.collect { reviewTab ->
+        val contentToClose = findTabContent(reviewTab)
+        if (contentToClose != null) {
+          contentManager.removeContent(contentToClose, true)
+
+          // select review list on requested tab close
+          contentManager.getContent(0)?.let { contentManager.setSelectedContent(it) }
+        }
+      }
+    }
   }
 
   private fun selectExistedTabOrCreate(context: C, reviewTab: T) {
-    val existedTab = contentManager.contents.find { it.getUserData(ReviewToolwindowUserDataKeys.REVIEW_TAB)?.id == reviewTab.id }
+    val existedTab = findTabContent(reviewTab)
     if (existedTab != null) {
       contentManager.setSelectedContent(existedTab)
     }
@@ -79,7 +91,7 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
   }
 
   private fun closeExistedTabAndCreateNew(context: C, reviewTab: T) {
-    val existedTab = contentManager.contents.find { it.getUserData(ReviewToolwindowUserDataKeys.REVIEW_TAB)?.id == reviewTab.id }
+    val existedTab = findTabContent(reviewTab)
     if (existedTab != null) {
       contentManager.removeContent(existedTab, true)
     }
@@ -87,6 +99,10 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
     val reviewDetailsContent = createTabContent(context, reviewTab)
     contentManager.addContent(reviewDetailsContent)
     contentManager.setSelectedContent(reviewDetailsContent)
+  }
+
+  private fun findTabContent(reviewTab: T): Content? {
+    return contentManager.contents.find { it.getUserData(ReviewToolwindowUserDataKeys.REVIEW_TAB)?.id == reviewTab.id }
   }
 
   private fun createReviewListContent(context: C): Content = createDisposableContent { content, contentCs ->

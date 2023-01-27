@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
@@ -18,6 +19,8 @@ internal class GitLabReviewTabsController(private val project: Project) : Review
 
   private val _openReviewTabRequest = MutableSharedFlow<GitLabReviewTab>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   override val openReviewTabRequest: Flow<GitLabReviewTab> = _openReviewTabRequest
+
+  override val closeReviewTabRequest: Flow<GitLabReviewTab> = emptyFlow() // GitLab are not closed externally (only by toolwindow functionality)
 
   fun openReviewDetails(reviewId: GitLabMergeRequestId) {
     _openReviewTabRequest.tryEmit(GitLabReviewTab.ReviewSelected(reviewId))
