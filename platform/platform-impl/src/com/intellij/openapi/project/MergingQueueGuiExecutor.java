@@ -254,7 +254,9 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
    */
   public final void resumeQueue() {
     if (mySuspended.compareAndSet(true, false)) {
-      startBackgroundProcess();
+      if (!myTaskQueue.isEmpty()) {
+        startBackgroundProcess();
+      }
     }
   }
 
