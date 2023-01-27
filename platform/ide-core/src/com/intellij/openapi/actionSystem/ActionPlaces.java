@@ -48,6 +48,7 @@ public abstract class ActionPlaces {
   public static final String EDITOR_INSPECTIONS_TOOLBAR = "EditorInspectionsToolbar";
   public static final String LEARN_TOOLWINDOW = "LearnToolwindow";
   public static final String TOOLWINDOW_GRADLE = "Gradle tool window";
+  public static final String NEW_UI_RUN_TOOLBAR = "NewUiRunToolbar";
 
   public static final String PROJECT_VIEW_POPUP = "ProjectViewPopup";
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";

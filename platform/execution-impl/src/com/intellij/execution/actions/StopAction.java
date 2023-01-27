@@ -39,6 +39,7 @@ public class StopAction extends DumbAwareAction {
 
   private static boolean isPlaceGlobal(@NotNull AnActionEvent e) {
     return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
+           || ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace());

@@ -341,7 +341,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         }
 
         // We can consider to add spinning to the inlined run actions. But there is a problem with redrawing
-        if (ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
+        if (ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace())) {
           RunStatusHistory startHistory = RunStatusHistory.getInstance(project);
 
           boolean isLoading = startHistory.firstOrNull(selectedSettings, it ->

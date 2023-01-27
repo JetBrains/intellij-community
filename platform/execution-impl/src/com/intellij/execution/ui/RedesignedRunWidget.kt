@@ -48,7 +48,7 @@ val isContrastRunWidget: Boolean get() = AdvancedSettings.getBoolean("contrast.r
 private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
   val toolbarId = if (isContrastRunWidget) "ContrastRunToolbarMainActionGroup" else "RunToolbarMainActionGroup"
   return ActionManager.getInstance().createActionToolbar(
-    ActionPlaces.MAIN_TOOLBAR,
+    ActionPlaces.NEW_UI_RUN_TOOLBAR,
     ActionManager.getInstance().getAction(toolbarId) as ActionGroup,
     true
   ).apply {
