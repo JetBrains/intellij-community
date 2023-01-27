@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.validation.impl
 
-import com.intellij.openapi.ui.validation.DialogValidation
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.CellBase
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.dsl.validation.Level
@@ -16,7 +16,7 @@ internal class CompoundCellValidation<T : CellBase<T>>(private vararg val cellVa
     }
   }
 
-  override fun addApplyRule(validation: DialogValidation) {
+  override fun addApplyRule(validation: () -> ValidationInfo?) {
     for (cellValidation in cellValidations) {
       cellValidation.addApplyRule(validation)
     }
