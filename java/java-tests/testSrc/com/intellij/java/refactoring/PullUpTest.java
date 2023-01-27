@@ -16,7 +16,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 public class PullUpTest extends LightRefactoringTestCase {
   private static final String BASE_PATH = "/refactoring/pullUp/";
@@ -82,6 +82,17 @@ public class PullUpTest extends LightRefactoringTestCase {
   public void testRemoveOverride() {
     setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest(new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class));
+  }
+
+  public void testWarningsWithPrettyDescriptions() {
+    doTest(true,
+           """
+             Concrete anonymous class derived from <b><code>X</code></b> will inherit a new abstract method
+             Concrete class body of enum constant <b><code>F.A</code></b> will inherit a new abstract method
+             Concrete enum <b><code>E</code></b> will inherit a new abstract method
+             Concrete enum <b><code>F</code></b> will inherit a new abstract method
+             Concrete record <b><code>Z</code></b> will inherit a new abstract method""",
+           new RefactoringTestUtil.MemberDescriptor("x", PsiMethod.class, true));
   }
 
   public void testRecordAbstractMethodWarning() {
@@ -206,7 +217,11 @@ public class PullUpTest extends LightRefactoringTestCase {
   }
 
   public void testOuterClassRefs() {
-    doTest(false, "Method <b><code>bar()</code></b> uses field <b><code>Outer.x</code></b>, which is not moved to the superclass", new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class));
+    doTest(false,
+           """
+             Method <b><code>bar()</code></b> uses field <b><code>Outer.x</code></b>, which is not moved to the superclass
+             Method <b><code>bar()</code></b> uses method <b><code>Outer.foo()</code></b>, which is not moved to the superclass""",
+           new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class));
   }
 
   public void testRenameConflictingTypeParameters() {
@@ -295,8 +310,8 @@ public class PullUpTest extends LightRefactoringTestCase {
     }
 
     if (conflictMessage != null && !IGNORE_CONFLICTS.equals(conflictMessage)) {
-      TreeSet<String> conflicts = new TreeSet<>(conflictsMap.values());
-      assertEquals(conflictMessage, conflicts.iterator().next());
+      String actualMessage = conflictsMap.values().stream().sorted().collect(Collectors.joining("\n"));
+      assertEquals(conflictMessage, actualMessage);
       return;
     }
 
