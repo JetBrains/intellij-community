@@ -133,9 +133,7 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
 
   @Override
   public boolean isEquivalentTo(PsiElement another) {
-    if (another instanceof LombokLightFieldBuilder) {
-      final LombokLightFieldBuilder anotherLightField = (LombokLightFieldBuilder) another;
-
+    if (another instanceof LombokLightFieldBuilder anotherLightField) {
       boolean stillEquivalent = getName().equals(anotherLightField.getName()) &&
         getType().equals(anotherLightField.getType());
 

@@ -58,8 +58,7 @@ public class CleanupProcessor extends AbstractProcessor {
                                                   @NotNull String cleanupName,
                                                   @NotNull ProblemValidationSink problemNewBuilder) {
     final PsiType psiType = psiVariable.getType();
-    if (psiType instanceof PsiClassType) {
-      final PsiClassType psiClassType = (PsiClassType) psiType;
+    if (psiType instanceof PsiClassType psiClassType) {
       final PsiClass psiClassOfField = psiClassType.resolve();
       final PsiMethod[] methods;
 

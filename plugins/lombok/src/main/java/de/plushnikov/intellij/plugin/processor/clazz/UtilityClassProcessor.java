@@ -51,8 +51,7 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
     if (!(context instanceof PsiFile)) {
       PsiElement contextUp = context;
       while (true) {
-        if (contextUp instanceof PsiClass) {
-          PsiClass psiClassUp = (PsiClass) contextUp;
+        if (contextUp instanceof PsiClass psiClassUp) {
           if (psiClassUp.getContext() instanceof PsiFile) {
             return true;
           }
