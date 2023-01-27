@@ -971,7 +971,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         List<PyDebugValue> frameVariables = loadFrame();
 
         // The effective maximum number of the debugger returns is MAX_ITEMS_TO_HANDLE
-        // plus the __len__ attribute.
+        // plus the "Protected Attributes" group.
         final int effectiveMaxItemsNumber = MAX_ITEMS_TO_HANDLE + 1;
 
         // Large list.
@@ -989,7 +989,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         L.setOffset(600);
         children = loadVariable(L);
         assertEquals(effectiveMaxItemsNumber, children.size());
-        for (int i = 600; i < MAX_ITEMS_TO_HANDLE; i++) {
+        for (int i = 600; i < 600 + MAX_ITEMS_TO_HANDLE; i++) {
           assertTrue(hasChildWithName(children, formatStr(i, collectionLength)));
           assertTrue(hasChildWithValue(children, i));
         }
@@ -1006,7 +1006,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         PyDebugValue D = findDebugValueByName(frameVariables, "D");
 
         children = loadVariable(D);
-        collectionLength = 1000;
 
         assertEquals(effectiveMaxItemsNumber, children.size());
         for (int i = 0; i < MAX_ITEMS_TO_HANDLE; i++) {
@@ -1017,7 +1016,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         D.setOffset(600);
         children = loadVariable(D);
         assertEquals(effectiveMaxItemsNumber, children.size());
-        for (int i = 600; i < MAX_ITEMS_TO_HANDLE; i++) {
+        for (int i = 600; i < 600 + MAX_ITEMS_TO_HANDLE; i++) {
           assertTrue(hasChildWithName(children, i));
           assertTrue(hasChildWithValue(children, i));
         }
@@ -1034,7 +1033,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         PyDebugValue S = findDebugValueByName(frameVariables, "S");
 
         children = loadVariable(S);
-        collectionLength = 1000;
 
         assertEquals(effectiveMaxItemsNumber, children.size());
         for (int i = 0; i < MAX_ITEMS_TO_HANDLE; i++) {
@@ -1044,7 +1042,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         S.setOffset(600);
         children = loadVariable(S);
         assertEquals(effectiveMaxItemsNumber, children.size());
-        for (int i = 600; i < MAX_ITEMS_TO_HANDLE; i++) {
+        for (int i = 600; i < 600 + MAX_ITEMS_TO_HANDLE; i++) {
           assertTrue(hasChildWithValue(children, i));
         }
 
@@ -1059,7 +1057,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         PyDebugValue dq = findDebugValueByName(frameVariables, "dq");
 
         children = loadVariable(dq);
-        collectionLength = 1000;
 
         assertEquals(effectiveMaxItemsNumber + 1, children.size()); // one extra child for maxlen
         for (int i = 1; i < MAX_ITEMS_TO_HANDLE; i++) {
@@ -1070,7 +1067,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         dq.setOffset(600);
         children = loadVariable(dq);
         assertEquals(effectiveMaxItemsNumber, children.size());
-        for (int i = 600; i < MAX_ITEMS_TO_HANDLE; i++) {
+        for (int i = 600; i < 600 + MAX_ITEMS_TO_HANDLE; i++) {
           assertTrue(hasChildWithName(children, formatStr(i, collectionLength)));
           assertTrue(hasChildWithValue(children, i));
         }
