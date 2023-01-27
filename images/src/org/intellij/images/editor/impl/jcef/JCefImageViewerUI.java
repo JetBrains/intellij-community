@@ -6,12 +6,14 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.components.ZoomableViewport;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.options.EditorOptions;
 import org.intellij.images.options.Options;
@@ -19,6 +21,7 @@ import org.intellij.images.options.OptionsManager;
 import org.intellij.images.options.ZoomOptions;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +33,12 @@ public class JCefImageViewerUI extends JPanel implements DataProvider, Disposabl
   private final @NotNull JCefImageViewer myViewer;
   private final @NotNull JLabel myInfoLabel;
   private final @NotNull Component myContentComponent;
+
+  @NonNls
+  private static final String IMAGE_PANEL = "image";
+  @NonNls
+  private static final String ERROR_PANEL = "error";
+  private final JPanel myViewPort;
 
   public JCefImageViewerUI(@NotNull Component component, @NotNull JCefImageViewer viewer) {
     myViewer = viewer;
@@ -50,14 +59,26 @@ public class JCefImageViewerUI extends JPanel implements DataProvider, Disposabl
     myInfoLabel.setBorder(JBUI.Borders.emptyRight(2));
     topPanel.add(myInfoLabel, BorderLayout.EAST);
     add(topPanel, BorderLayout.NORTH);
-    JPanel viewPort = new ViewPort();
-    PopupHandler.installPopupMenu(viewPort, ImageEditorActions.GROUP_POPUP, ImageEditorActions.ACTION_PLACE);
+    myViewPort = new ViewPort();
+    myViewPort.setLayout(new CardLayout());
+
+    PopupHandler.installPopupMenu(myViewPort, ImageEditorActions.GROUP_POPUP, ImageEditorActions.ACTION_PLACE);
 
     myViewer.getPreferredFocusedComponent().addMouseWheelListener(MOUSE_WHEEL_LISTENER);
 
-    viewPort.add(component);
+    myViewPort.add(component, IMAGE_PANEL);
+    JLabel errorLabel = new JLabel(
+      ImagesBundle.message("error.broken.image.file.format"),
+      Messages.getErrorIcon(), SwingConstants.CENTER
+    );
+
+    JPanel errorPanel = new JPanel(new BorderLayout());
+    errorPanel.add(errorLabel, BorderLayout.CENTER);
+    myViewPort.add(component, IMAGE_PANEL);
+    myViewPort.add(errorPanel, ERROR_PANEL);
+
     PopupHandler.installPopupMenu((JComponent)component, ImageEditorActions.GROUP_POPUP, ImageEditorActions.ACTION_PLACE);
-    add(viewPort, BorderLayout.CENTER);
+    add(myViewPort, BorderLayout.CENTER);
   }
 
   @Override
@@ -143,4 +164,14 @@ public class JCefImageViewerUI extends JPanel implements DataProvider, Disposabl
       }
     }
   };
+
+  public void showError() {
+    CardLayout layout = (CardLayout)myViewPort.getLayout();
+    layout.show(myViewPort, ERROR_PANEL);
+  }
+
+  public void showImage() {
+    CardLayout layout = (CardLayout)myViewPort.getLayout();
+    layout.show(myViewPort, IMAGE_PANEL);
+  }
 }

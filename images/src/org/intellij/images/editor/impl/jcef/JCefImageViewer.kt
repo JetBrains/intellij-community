@@ -177,6 +177,12 @@ class JCefImageViewer(private val myFile: VirtualFile,
       myUIComponent.setInfo(
         ImagesBundle.message("image.info.svg",
                              myState.imageSize.width, myState.imageSize.height, StringUtil.formatFileSize(myFile.length)))
+      if (myState.status == ViewerState.Status.ERROR) {
+        myUIComponent.showError()
+      }
+      else {
+        myUIComponent.showImage()
+      }
       null
     }
 
@@ -204,6 +210,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
   @Serializable
   private data class ViewerState(
     val status: Status = Status.OK,
+    val error_message: String = "",
     val zoom: Double = 0.0,
     val viewportSize: Size = Size(0, 0),
     val imageSize: Size = Size(0, 0),
@@ -215,7 +222,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
     val chessboardEnabled: Boolean = false
   ) {
     @Serializable
-    enum class Status { OK, FAILED }
+    enum class Status { OK, ERROR }
 
     @Serializable
     data class Size(val width: Int, val height: Int)

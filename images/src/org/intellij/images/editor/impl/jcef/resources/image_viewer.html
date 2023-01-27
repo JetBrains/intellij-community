@@ -84,16 +84,6 @@
       margin: 0;
     }
 
-    #error_message {
-      user-select: none;
-      width: 100%;
-      overflow: scroll;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-
     #view_port {
       height: 100%;
       width: 100%;
@@ -174,7 +164,6 @@
       <div id="zoom_anchor_cross_on_canvas"></div>
     </div>
   </div>
-  <div id="error_message" style="display: none"></div>
 </div>
 
 <div id="info_panel" style="display: none">No data</div>
@@ -208,17 +197,24 @@
     'view_port': document.getElementById('view_port'),
     'chessboard': document.getElementById('chessboard'),
     'pixel_grid': document.getElementById('pixel_grid'),
-    'error_message': document.getElementById('error_message'),
     'control_panel': document.getElementById('control_panel'),
     'info_panel': document.getElementById('info_panel'),
   }
   let send_info = function (info_string) {
   }
 
+  function _set_error() {
+    gState.status = ViewerStatus.ERROR
+  }
+
+  function _set_image_ready() {
+    gState.status = ViewerStatus.OK
+  }
+
   function _update_info() {
     let canvas_bbox = gUI.canvas.getBoundingClientRect()
     let info = {
-      'status': gUI.error_message.style.display === 'none' ? 'OK' : 'FAILED',
+      'status': gState.status,
 
       'zoom': gState.zoom,
       'viewportSize': {'width': gUI.view_port.clientWidth, 'height': gUI.view_port.clientHeight},
@@ -261,30 +257,22 @@
 
       let vb = e.viewBox
       if (!vb || !vb.baseVal) {
-        continue
+        _set_error()
       }
       e.setAttribute('width', vb.baseVal.width + 'px')
     }
 
-    const parserErrors = image.getElementsByTagName('parsererror')
-    const error_message = document.getElementById('error_message')
-    error_message.textContent = ''
-    let view_port = document.getElementById("view_port")
-    if (parserErrors.length > 0) {
-      error_message.appendChild(parserErrors[0])
-      error_message.style.display = ''
-      view_port.style.display = 'none'
+    if (image.getElementsByTagName('parsererror').length > 0) {
+      _set_error()
     }
     else {
-      error_message.style.display = 'none'
-      view_port.style.display = ''
+      _set_image_ready()
     }
   }
 
   let _init = function () {
     gUI.control_panel.style.display = gIsDebug ? '' : 'none'
     gUI.info_panel.style.display = gIsDebug ? '' : 'none'
-    gUI.error_message.style.display = 'none'
     document.getElementById('zoom_anchor_cross_on_canvas').style.display = gIsDebug ? '' : 'none'
     document.getElementById('zoom_anchor_cross_in_viewport').style.display = gIsDebug ? '' : 'none'
 
