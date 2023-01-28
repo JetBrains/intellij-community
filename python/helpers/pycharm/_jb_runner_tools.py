@@ -91,11 +91,12 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
             # tests with docstrings are reported in format "test.name (some test here)".
             # text should be part of name, but not location.
-            possible_location = str(properties["name"])
-            loc = possible_location.find("(")
-            if loc > 0:
-                possible_location = possible_location[:loc].strip()
-            properties["locationHint"] = "python<{0}>://{1}".format(PROJECT_DIR, possible_location)
+            if 'locationHint' not in properties:
+                possible_location = str(properties["name"])
+                loc = possible_location.find("(")
+                if loc > 0:
+                    possible_location = possible_location[:loc].strip()
+                properties["locationHint"] = "python<{0}>://{1}".format(PROJECT_DIR, possible_location)
         except KeyError:
             # If message does not have name, then it is not test
             # Simply pass it
@@ -166,13 +167,15 @@ class NewTeamcityServiceMessages(_old_service_messages):
         self.testStarted(".".join(_TREE_MANAGER_HOLDER.manager.current_branch + [name]))
         self._latest_subtest_result = subTestResult
 
-    def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False, metainfo=None):
+    def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False, metainfo=None, location=None):
         test_name_as_list = self._test_to_list(testName)
         testName = ".".join(test_name_as_list)
 
         def _write_start_message():
             # testName, captureStandardOutput, flowId
             args = {"name": testName, "captureStandardOutput": captureStandardOutput, "metainfo": metainfo}
+            if location is not None:
+                args["locationHint"] = location
             if is_suite:
                 self.message("testSuiteStarted", **args)
             else:
@@ -181,7 +184,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
         commands = _TREE_MANAGER_HOLDER.manager.level_opened(self._test_to_list(testName), _write_start_message)
         if commands:
             self.do_commands(commands)
-            self.testStarted(testName, captureStandardOutput, metainfo=metainfo)
+            self.testStarted(testName, captureStandardOutput, metainfo=metainfo, location=location)
 
     def testFailed(self, testName, message='', details='', flowId=None, comparison_failure=None):
         testName = ".".join(self._test_to_list(testName))
