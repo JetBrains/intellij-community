@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.tools.projectWizard.setupKmpWizardLinkUI
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType.GradleGroovyDsl
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType.GradleKotlinDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
-import java.io.File
+
 
 internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
@@ -86,15 +86,6 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         override fun setupAssets(project: Project) {
             addAssets(StandardAssetsProvider().getGradlewAssets())
             addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
-        }
-
-        override fun setupProject(project: Project) {
-            super.setupProject(project)
-
-            val gradlewFile = File(outputDirectory, "gradlew")
-            if (gradlewFile.exists()) {
-                gradlewFile.setExecutable(true, false)
-            }
         }
     }
 }
