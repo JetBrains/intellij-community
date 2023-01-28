@@ -21,11 +21,7 @@ abstract class KotlinMultiFileLightCodeInsightFixtureTestCase : KotlinLightCodeI
     )
 
     protected open fun doTest(testDataPath: String) {
-        if (testDataPath.endsWith(".test")) {
-            doMultiFileTest(testDataPath)
-        } else {
-            TODO("Not implemented yet")
-        }
+        doMultiFileTest(testDataPath)
     }
 
     private fun doMultiFileTest(testDataPath: String) {
@@ -76,7 +72,7 @@ abstract class KotlinMultiFileLightCodeInsightFixtureTestCase : KotlinLightCodeI
     }
 
     private fun createTestFiles(mainFile: Path): List<TestFile> = TestFiles.createTestFiles(
-        /* testFileName = */ "single.kt",
+        /* testFileName = */ mainFile.name.takeIf { it.endsWith("kt") || it.endsWith("kts") } ?: "single.kt",
         /* expectedText = */ mainFile.readText(),
         object : TestFiles.TestFileFactoryNoModules<TestFile>() {
             override fun create(fileName: String, text: String, directives: Directives): TestFile {
