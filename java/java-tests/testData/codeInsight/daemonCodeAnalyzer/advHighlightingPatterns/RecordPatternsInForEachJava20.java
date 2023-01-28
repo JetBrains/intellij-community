@@ -89,4 +89,14 @@ class Main {
       System.out.println("blah blah blah");
     }
   }
+
+  void testInappropriateType(Object obj, String text) {
+      for(Point(int x1, int y1) : <error descr="Foreach not applicable to type 'java.lang.Object'">obj</error>){
+        System.out.println(x1);
+      }
+      for (Point(int x1, int y1) : <error descr="Foreach not applicable to type 'java.lang.String'">text</error>){
+        System.out.println(x1);
+      }
+    }
 }
+

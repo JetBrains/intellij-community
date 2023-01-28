@@ -656,9 +656,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   private static boolean shouldReportForeachNotApplicable(@NotNull PsiExpression expression) {
-    if (!(expression.getParent() instanceof PsiForeachStatement)) return false;
+    if (!(expression.getParent() instanceof PsiForeachStatementBase)) return false;
 
-    @NotNull PsiForeachStatement parentForEach = (PsiForeachStatement)expression.getParent();
+    @NotNull PsiForeachStatementBase parentForEach = (PsiForeachStatementBase)expression.getParent();
     PsiExpression iteratedValue = parentForEach.getIteratedValue();
     if (iteratedValue != expression) return false;
 
