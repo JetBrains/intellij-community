@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.openapi.actionSystem.DataKey
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 
 internal object GitLabMergeRequestsActionKeys {
   @JvmStatic
-  val SELECTED = DataKey.create<GitLabMergeRequestShortRestDTO>("org.jetbrains.plugins.gitlab.mergerequest.selected")
+  val SELECTED = DataKey.create<GitLabMergeRequestDetails>("org.jetbrains.plugins.gitlab.mergerequest.selected")
 }
