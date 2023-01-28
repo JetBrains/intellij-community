@@ -1,71 +1,38 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.asJava.classes
 
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
-import org.jetbrains.kotlin.idea.KotlinDaemonAnalyzerTestCase
 import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.junit.Assume
-import java.io.File
 
-abstract class AbstractIdeCompiledLightClassesByFqNameTest : KotlinDaemonAnalyzerTestCase() {
+abstract class AbstractIdeCompiledLightClassesByFqNameTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
+    override val isLibraryByDefault: Boolean get() = true
+
     override fun setUp() {
         super.setUp()
-
-        val testName = getTestName(false)
-
-        val testDataDir = TestMetadataUtil.getTestData(this::class.java)
-        val testFile = listOf(File(testDataDir, "$testName.kt"), File(testDataDir, "$testName.kts")).first { it.exists() }
-
-        val extraClasspath = mutableListOf(TestKotlinArtifacts.jetbrainsAnnotations, TestKotlinArtifacts.kotlinStdlibJdk8)
-        if (testFile.extension == "kts") {
-            extraClasspath += TestKotlinArtifacts.kotlinScriptRuntime
-        }
-
-        val parsedDirectives = KotlinTestUtils.parseDirectives(testFile.readText())
+        val parsedDirectives = KotlinTestUtils.parseDirectives(dataFile().readText())
         Assume.assumeFalse("The test is not supported", LightClassTestCommon.SKIP_IDE_TEST_DIRECTIVE in parsedDirectives)
-
-        val extraOptions = buildList {
-            parsedDirectives[CompilerTestDirectives.JVM_TARGET_DIRECTIVE.substringBefore(":")]?.let {
-                add("-jvm-target")
-                add(it)
-            }
-            parsedDirectives[CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE.substringBefore(":")]?.let {
-                addAll(it.split(" "))
-            }
-        }
-
-        val libraryJar = KotlinCompilerStandalone(
-            listOf(testFile),
-            classpath = extraClasspath,
-            options = extraOptions
-        ).compile()
-
-        val jarUrl = "jar://" + FileUtilRt.toSystemIndependentName(libraryJar.absolutePath) + "!/"
-        ModuleRootModificationUtil.addModuleLibrary(module, jarUrl)
     }
 
-    fun doTest(testDataPath: String) {
-        val testDataFile = File(testDataPath)
-        val expectedFile = KotlinTestUtils.replaceExtension(testDataFile, "compiled.java").takeIf(File::exists)
-            ?: KotlinTestUtils.replaceExtension(testDataFile, "lib.java").takeIf(File::exists)
-            ?: KotlinTestUtils.replaceExtension(testDataFile, "java")
-
+    override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
+        val testDataFile = dataFile()
         withCustomCompilerOptions(testDataFile.readText(), project, module) {
             testLightClass(
-                expectedFile,
-                testDataFile,
-                { it },
-                {
+                testData = testDataFile,
+                suffixes = listOf("compiled", "lib"),
+                normalize = { it },
+                findLightClass = {
                     findLightClass(it, null, project)?.apply {
                         PsiElementChecker.checkPsiElementStructure(this)
                     }
                 },
-                MembersFilterForCompiledClasses
+                membersFilter = MembersFilterForCompiledClasses
             )
         }
     }

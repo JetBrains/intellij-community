@@ -10,6 +10,8 @@ import java.nio.file.Path
 import kotlin.io.path.*
 
 abstract class KotlinMultiFileLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFixtureTestCase() {
+    protected open val isLibraryByDefault: Boolean get() = false
+
     private var mockLibraryFacility: MockLibraryFacility? = null
     private var tempDirectory: Path? = null
 
@@ -27,9 +29,13 @@ abstract class KotlinMultiFileLightCodeInsightFixtureTestCase : KotlinLightCodeI
     private fun doMultiFileTest(testDataPath: String) {
         val mainFile = Path(testDataPath)
 
-        val subFiles: List<TestFile> = createTestFiles(mainFile)
+        val subFiles: List<TestFile> = if (isLibraryByDefault) {
+            emptyList()
+        } else {
+            createTestFiles(mainFile)
+        }
 
-        val libraryFile = Path("$testDataPath.lib")
+        val libraryFile = Path(if (isLibraryByDefault) testDataPath else "$testDataPath.lib")
         if (libraryFile.exists()) {
             configureLibraries(libraryFile)
         }
@@ -47,6 +53,8 @@ abstract class KotlinMultiFileLightCodeInsightFixtureTestCase : KotlinLightCodeI
         assertNotEmpty(libraryFiles)
 
         val directives = libraryFiles.first().directives
+        val compilerArguments = directives["COMPILER_ARGUMENTS"].orEmpty()
+
         val directoryForLibFiles = createTempDirectory(prefix = fileName()).also { tempDirectory = it }
         val sources = mutableListOf<File>()
         for (testFile in libraryFiles) {
@@ -66,6 +74,7 @@ abstract class KotlinMultiFileLightCodeInsightFixtureTestCase : KotlinLightCodeI
             attachSources = "WITH_SOURCES" in directives,
             libraryName = libraryName,
             target = jarFile,
+            options = compilerArguments.split(' ').map(String::trim).filter(String::isNotBlank),
         )
 
         mockLibraryFacility?.setUp(module)
