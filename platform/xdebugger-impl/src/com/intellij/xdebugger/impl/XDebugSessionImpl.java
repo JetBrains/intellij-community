@@ -71,6 +71,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = Collections.synchronizedSet(new HashSet<>());
   private boolean myBreakpointsDisabled;
   private final XDebuggerManagerImpl myDebuggerManager;
+  private final XDebuggerExecutionPointManager myExecutionPointManager;
   private Disposable myBreakpointListenerDisposable;
   private XSuspendContext mySuspendContext;
   private XExecutionStack myCurrentExecutionStack;
@@ -116,6 +117,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     myDebuggerManager = debuggerManager;
     myShowTabOnSuspend = new AtomicBoolean(showTabOnSuspend);
     myProject = debuggerManager.getProject();
+    myExecutionPointManager = debuggerManager.getExecutionPointManager();
     ValueLookupManager.getInstance(myProject).startListening();
     DebuggerInlayListener.getInstance(myProject).startListening();
     myIcon = icon;
@@ -650,7 +652,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       for (XSourceKind sourceKind : XSourceKind.values()) {
         XSourcePosition position = getFrameSourcePosition(myCurrentStackFrame, sourceKind);
         boolean isActiveSourceKind = sourceKind == myCurrentSourceKind;
-        myDebuggerManager.updateExecutionPoint(sourceKind, position, iconRenderer, isTopFrame, isActiveSourceKind);
+        myExecutionPointManager.updateExecutionPoint(sourceKind, position, iconRenderer, isTopFrame, isActiveSourceKind);
       }
     }
   }
@@ -668,7 +670,7 @@ public final class XDebugSessionImpl implements XDebugSession {
         XStackFrame topFrame = executionStack.getTopFrame();
         if (topFrame != null) {
           setCurrentStackFrame(executionStack, topFrame, true);
-          myDebuggerManager.showExecutionPosition(myCurrentSourceKind);
+          myExecutionPointManager.showExecutionPosition(myCurrentSourceKind);
         }
       }
     }
@@ -1087,7 +1089,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   public void clearActiveNonLineBreakpoint(boolean updateExecutionPointIcon) {
     myActiveNonLineBreakpoint.set(null);
     if (updateExecutionPointIcon) {
-      myDebuggerManager.updateExecutionPoint(getPositionIconRenderer(isTopFrameSelected()));
+      myExecutionPointManager.updateRenderer(getPositionIconRenderer(isTopFrameSelected()));
     }
   }
 
