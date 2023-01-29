@@ -5,6 +5,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -22,7 +23,16 @@ abstract class AbstractCommitChangesAction : DumbAwareAction() {
 
     val presentation = e.presentation
     if (presentation.isEnabled) {
+      val changeListManager = ChangeListManager.getInstance(e.project!!)
+
       val changes = e.getData(VcsDataKeys.CHANGES).orEmpty()
+        .let {
+          if (it.any()) {
+            it.toList()
+          } else {
+            e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY).orEmpty().mapNotNull { file -> changeListManager.getChange(file) }
+          }
+        }
 
       if (e.place == ActionPlaces.CHANGES_VIEW_POPUP) {
         val changeLists = e.getData(VcsDataKeys.CHANGE_LISTS).orEmpty()
@@ -34,10 +44,7 @@ abstract class AbstractCommitChangesAction : DumbAwareAction() {
         }
       }
 
-      if (presentation.isEnabled) {
-        val manager = ChangeListManager.getInstance(e.project!!)
-        presentation.isEnabled = changes.all { isActionEnabled(manager, it) }
-      }
+      presentation.isEnabled = changes.all { isActionEnabled(changeListManager, it) }
     }
   }
 
