@@ -2,6 +2,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiBreakStatement
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UBreakExpression
 import org.jetbrains.uast.UElement
@@ -15,7 +16,7 @@ class JavaUBreakExpression(
   override val label: String?
     get() = sourcePsi.labelIdentifier?.text
 
-  override val jumpTarget: UElement? by lz {
+  override val jumpTarget: UElement? by lazyPub {
     sourcePsi.findExitedStatement().takeIf { it !== sourcePsi }?.let { JavaConverter.convertStatement(it, null, UExpression::class.java) }
   }
 }
