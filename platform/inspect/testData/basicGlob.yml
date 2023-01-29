@@ -1,10 +1,11 @@
 $schema: https://json.schemastore.org/idea-inspection-profile-1.0.json
 
-include:
-  - "second.yml"
+name: Custom name
 
 inspections:
   - inspection: TodoComment
+    enabled: true
     severity: ERROR
     ignore:
-      - "!ijscope:file:Main.*"
+      - "!**/*.java"
+      - "path/Some.java"

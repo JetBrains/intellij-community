@@ -9,19 +9,27 @@ import com.intellij.codeInspection.ex.InspectionToolsSupplier
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.io.toNioPath
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.PROFILE_DIR
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.scope.packageSet.AbstractPackageSet
 import com.intellij.psi.search.scope.packageSet.NamedScope
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory
 import org.jdom.Element
 import java.io.File
 import java.io.Reader
-import java.lang.IllegalArgumentException
+import java.nio.file.FileSystems
+import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.exists
 import kotlin.io.path.reader
+
+private const val SCOPE_PREFIX = "ijscope:"
 
 class YamlInspectionConfigImpl(override val inspection: String,
                                override val enabled: Boolean?,
@@ -78,7 +86,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
   companion object {
     @JvmStatic
     fun loadFrom(reader: Reader,
-                 includeReaders: (String) -> Reader,
+                 includeReaders: (Path) -> Reader,
                  toolsSupplier: InspectionToolsSupplier,
                  profileManager: BaseInspectionProfileManager
     ): YamlInspectionProfileImpl {
@@ -87,6 +95,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       val configurations = profile.inspections.map(::createInspectionConfig)
       val groupProvider = CompositeGroupProvider()
       groupProvider.addProvider(InspectionGroupProvider.createDynamicGroupProvider())
+
       val groups = profile.groups.map { group -> createGroup(groupProvider, group) }
       val customGroupProvider = object : InspectionGroupProvider {
         val groupMap = groups.associateBy { group -> group.groupId }
@@ -95,7 +104,15 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
         }
       }
       groupProvider.addProvider(customGroupProvider)
-      return YamlInspectionProfileImpl(profile.name, toolsSupplier, profileManager, baseProfile, configurations, groups, groupProvider)
+
+      return YamlInspectionProfileImpl(
+        profile.name,
+        toolsSupplier,
+        profileManager,
+        baseProfile,
+        configurations,
+        groups,
+        groupProvider)
     }
 
     @JvmStatic
@@ -107,11 +124,13 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       val configFile = File(filePath).absoluteFile
       require(configFile.exists()) { "File does not exist: ${configFile.canonicalPath}" }
 
-      val includeProvider: (String) -> Reader = {
+      val includeProvider: (Path) -> Reader = {
         val includePath = configFile.parent.toNioPath().resolve(it)
         require(includePath.exists()) { "File does not exist: ${includePath.toCanonicalPath()}" }
         includePath.reader()
       }
+
+
 
       return loadFrom(configFile.reader(), includeProvider, toolsSupplier, profileManager)
     }
@@ -164,12 +183,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
     configurations.forEach { configuration ->
       val tools = findTools(configuration)
       val scopes = configuration.ignore.map { pattern ->
-        if (pattern.startsWith("!")) {
-          Pair(NamedScope.UnnamedScope(PackageSetFactory.getInstance().compile(pattern.drop(1))), true)
-        }
-        else {
-          Pair(NamedScope.UnnamedScope(PackageSetFactory.getInstance().compile(pattern)), false)
-        }
+        createScope(pattern)
       }
       tools.asSequence().mapNotNull { tool -> effectiveProfile.getToolsOrNull(tool.shortName, null) }.forEach { inspectionTools ->
         val enabled = configuration.enabled
@@ -196,6 +210,38 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
     }
     return effectiveProfile
   }
+
+  private fun createScope(pattern: String): Pair<NamedScope.UnnamedScope, Boolean> {
+    return if (pattern.startsWith("!")) {
+      Pair(parsePattern(pattern.drop(1)), true)
+    }
+    else {
+      Pair(parsePattern(pattern), false)
+    }
+  }
+
+  private fun parsePattern(pattern: String): NamedScope.UnnamedScope {
+    if (pattern.startsWith(SCOPE_PREFIX)) {
+     return NamedScope.UnnamedScope(PackageSetFactory.getInstance().compile(pattern.drop(SCOPE_PREFIX.length)))
+    }
+
+    return getGlobScope(pattern)
+  }
+
+  private fun getGlobScope(pattern: String): NamedScope.UnnamedScope {
+    val matcher = FileSystems.getDefault().getPathMatcher("glob:$pattern")
+
+    val packageSet = object : AbstractPackageSet("glob:$pattern") {
+      override fun contains(file: VirtualFile, project: Project, holder: NamedScopesHolder?): Boolean {
+        val root = holder?.projectBaseDir ?: return false
+        val relativePath = VfsUtilCore.getRelativePath(file, root,  File.separatorChar) ?: return false
+        return matcher.matches(Paths.get(relativePath))
+      }
+    }
+
+    return NamedScope.UnnamedScope(packageSet)
+  }
+
 
   private fun findTools(configuration: YamlBaseConfig): List<InspectionToolWrapper<*, *>> {
     return when (configuration) {

@@ -5,4 +5,4 @@ inspections:
     severity: INFO
     enabled: true
     ignore:
-      - "file:*.java"
+      - "ijscope:file:*.java"

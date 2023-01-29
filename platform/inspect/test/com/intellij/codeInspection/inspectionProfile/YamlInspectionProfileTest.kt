@@ -3,8 +3,11 @@ package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.TestDataPath
 import junit.framework.TestCase
@@ -17,6 +20,10 @@ class YamlInspectionProfileTest: LightPlatformTestCase() {
   override fun getTestDirectoryName(): String = PathManager.getCommunityHomePath() + "/platform/inspect/testData/"
 
   fun testBasic(){ checkEffectiveProfile() }
+
+  fun testBasicGlob(){
+    checkEffectiveProfile()
+  }
 
   fun testChainedInclude(){ checkEffectiveProfile() }
 

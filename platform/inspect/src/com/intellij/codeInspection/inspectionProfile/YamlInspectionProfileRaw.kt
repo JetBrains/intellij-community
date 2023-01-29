@@ -8,6 +8,8 @@ import org.yaml.snakeyaml.introspector.BeanAccess
 import org.yaml.snakeyaml.representer.Representer
 import java.io.File
 import java.io.Reader
+import java.nio.file.Path
+import java.nio.file.Paths
 
 class YamlInspectionProfileRaw(
   val baseProfile: String? = null,
@@ -32,7 +34,7 @@ class YamlInspectionConfigRaw(
 )
 
 
-fun readConfig(reader: Reader, includeReaders: (String) -> Reader): YamlInspectionProfileRaw {
+fun readConfig(reader: Reader, includeReaders: (Path) -> Reader): YamlInspectionProfileRaw {
   val merged = readRaw(reader, includeReaders)
   val representer = Representer()
   representer.propertyUtils.isSkipMissingProperties = true
@@ -61,9 +63,12 @@ private fun merge(first: Map<String, *>, second: Map<String, *>): Map<String, *>
   }
 }
 
-private fun readRaw(reader: Reader, includeReaders: (String) -> Reader): Map<String, *> {
+private fun readRaw(reader: Reader, includeReaders: (Path) -> Reader): Map<String, *> {
   val yamlReader = Yaml()
   val rawConfig: Map<String, *> = yamlReader.load(reader)
-  val includedConfigs = (rawConfig["include"] as? List<*>)?.filterIsInstance(String::class.java).orEmpty()
-  return includedConfigs.fold(rawConfig) { accumulator, path -> merge(accumulator, readRaw(includeReaders.invoke(path), includeReaders)) }
+  val includedConfigs = (rawConfig["include"] as? List<*>)?.filterIsInstance(String::class.java).orEmpty().map { Paths.get(it) }
+
+  return includedConfigs.fold(rawConfig) { accumulator, path ->
+    merge(accumulator, readRaw(includeReaders.invoke(path)) { includeReaders.invoke(path.parent.resolve(it)) })
+  }
 }
