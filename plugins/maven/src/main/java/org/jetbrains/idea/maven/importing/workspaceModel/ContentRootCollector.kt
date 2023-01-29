@@ -13,40 +13,46 @@ object ContentRootCollector {
 
     val result = mutableListOf<ContentRootWithFolders>()
 
-    val projectContentRoots = folders.filterIsInstance<ProjectRootFolder>().map { it.path }
+    var nearestRoot: ContentRootWithFolders? = null
+    var nearestRootFolder: ImportedFolder? = null
 
-    // don't add resource folders that are ancestors of a project content root
-    fun isResourceFolderAncestorOfContentRoot(folder: ImportedFolder) =
-      folder is SourceFolder
-      && folder.type is JavaResourceRootType
-      && projectContentRoots.any { projectContentRoot -> FileUtil.isAncestor(folder.path, projectContentRoot, true) }
+    for (curr in folders.sorted()) {
+      // 0. don't add resource folders that are ancestors of a project content root
+      if (nearestRoot != null
+          && curr is ProjectRootFolder
+          && nearestRootFolder is SourceFolder
+          && nearestRootFolder.type is JavaResourceRootType
+          && FileUtil.isAncestor(nearestRootFolder.path, curr.path, true)) {
+        result.removeLast()
+        nearestRoot.folders.remove(nearestRootFolder)
+        nearestRootFolder = curr
+        nearestRoot = ContentRootWithFolders(curr.path, nearestRoot.folders)
+        result.add(nearestRoot)
+      }
 
-    val filteredFolders = folders.filter { !isResourceFolderAncestorOfContentRoot(it) }
-
-    filteredFolders.sorted().forEach { curr ->
       // 1. ADD CONTENT ROOT, IF NEEDED:
-      var nearestRoot = result.lastOrNull()
       if (nearestRoot != null && FileUtil.isAncestor(nearestRoot.path, curr.path, false)) {
         if (curr is ProjectRootFolder) {
           // don't add nested content roots
-          return@forEach
+          continue
         }
 
         if (curr is ExcludedFolder && FileUtil.pathsEqual(nearestRoot.path, curr.path)) {
           // don't add exclude that points at the root
-          return@forEach
+          continue
         }
       }
       else {
         if (curr is ExcludedFolder) {
           // don't add root when there is only an exclude folder under it
-          return@forEach
+          continue
         }
+        nearestRootFolder = curr
         nearestRoot = ContentRootWithFolders(curr.path)
         result.add(nearestRoot)
 
         if (curr is ProjectRootFolder) {
-          return@forEach
+          continue
         }
       }
 
@@ -54,7 +60,7 @@ object ContentRootCollector {
       val prev = nearestRoot.folders.lastOrNull()
       if (prev != null && FileUtil.pathsEqual(prev.path, curr.path)) {
         if (prev.rank <= curr.rank) {
-          return@forEach
+          continue
         }
       }
 
@@ -63,25 +69,25 @@ object ContentRootCollector {
         if (prev is SourceFolder && curr is UserOrGeneratedSourceFolder) {
           // don't add resource under source folder, test under production
           if (prev.rootTypeRank <= curr.rootTypeRank) {
-            return@forEach
+            continue
           }
           nearestRoot.folders.removeLast()
         }
         else if (prev is GeneratedSourceFolder && curr is UserOrGeneratedSourceFolder) {
           // prefer generated folder to annotations subfolder
           if (curr is GeneratedSourceFolder && curr.isAnnotationFolder) {
-            return@forEach
+            continue
           }
           // don't add generated folder when there are sub source folder
           nearestRoot.folders.removeLast()
         }
         else if (prev is ExcludedFolderAndPreventSubfolders && curr is UserOrGeneratedSourceFolder) {
           // don't add source folders under corresponding exclude folders
-          return@forEach
+          continue
         }
         else if (prev.rank == curr.rank) {
           // merge other subfolders of the same type
-          return@forEach
+          continue
         }
       }
 
@@ -160,7 +166,10 @@ object ContentRootCollector {
   class ProjectRootFolder(path: String) : ImportedFolder(path, 0)
   class SourceFolder(path: String, type: JpsModuleSourceRootType<*>) : UserOrGeneratedSourceFolder(path, type, 1)
   class ExcludedFolderAndPreventSubfolders(path: String) : BaseExcludedFolder(path, 2)
-  class GeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>, val isAnnotationFolder: Boolean = false) : UserOrGeneratedSourceFolder(path, type, 3)
+  class GeneratedSourceFolder(path: String,
+                              type: JpsModuleSourceRootType<*>,
+                              val isAnnotationFolder: Boolean = false) : UserOrGeneratedSourceFolder(path, type, 3)
+
   class ExcludedFolder(path: String) : BaseExcludedFolder(path, 4)
 
   class ContentRootResult(val path: String,
