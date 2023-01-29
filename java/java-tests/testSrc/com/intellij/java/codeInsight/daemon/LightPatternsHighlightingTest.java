@@ -78,6 +78,9 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
   }
 
+  public void testDeconstructionInstanceOf20() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
+  }
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();

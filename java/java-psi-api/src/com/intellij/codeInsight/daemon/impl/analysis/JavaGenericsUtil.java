@@ -154,7 +154,7 @@ public final class JavaGenericsUtil {
 
       if (castClassType.hasNonTrivialParameters()) {
         if (operandClassType.isRaw()) return true;
-        if (castClass.isInheritor(operandClass, true)) {
+        if (InheritanceUtil.isInheritorOrSelf(castClass, operandClass, true)) {
           PsiSubstitutor castSubstitutor = castResult.getSubstitutor();
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(castClass.getProject());
           for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(castClass)) {
@@ -162,11 +162,29 @@ public final class JavaGenericsUtil {
             PsiClassType otherType = factory.createType(castClass, modifiedSubstitutor);
             if (TypeConversionUtil.isAssignable(operandType, otherType, false)) return true;
           }
-          for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(operandClass)) {
-            final PsiType operand = operandResult.getSubstitutor().substitute(typeParameter);
-            if (operand instanceof PsiCapturedWildcardType) return true;
+          //from Java7. Java 6 now is unsupported
+          //according to `Checked and Unchecked Narrowing Reference Conversions`
+          PsiSubstitutor superSubstitutor =
+            TypeConversionUtil.getSuperClassSubstitutor(operandClass, castClass, castResult.getSubstitutor());
+          PsiSubstitutor operandSubstitutor = operandResult.getSubstitutor();
+          PsiClass superClass = operandResult.getElement();
+          if (superClass == null) {
+            return true;
           }
-          return false;
+          boolean operandHasWildcard = false;
+          for (PsiTypeParameter parameter : superClass.getTypeParameters()) {
+            PsiType operandParameterType = operandSubstitutor.substitute(parameter);
+            if (operandParameterType instanceof PsiCapturedWildcardType) {
+              operandHasWildcard = true;
+            }
+            PsiType superParameterType = superSubstitutor.substitute(parameter);
+            if (operandParameterType != null &&
+                superParameterType != null &&
+                !TypeConversionUtil.typesAgree(superParameterType, operandParameterType, false)) {
+              return true;
+            }
+          }
+          return operandHasWildcard && !TypeConversionUtil.existSuperPathWithoutRepetitiveArguments(castClass, operandClass);
         }
         return true;
       }

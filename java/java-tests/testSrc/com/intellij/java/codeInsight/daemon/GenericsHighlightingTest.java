@@ -40,9 +40,11 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTool(new UnusedDeclarationInspection());
-    enableInspectionTool(new UnusedImportInspection());
-    enableInspectionTool(new JavacQuirksInspection());
+    if (!getTestName(false).startsWith("OnlyUncheckedWarning")) {
+      enableInspectionTool(new UnusedDeclarationInspection());
+      enableInspectionTool(new UnusedImportInspection());
+      enableInspectionTool(new JavacQuirksInspection());
+    }
   }
 
   @Override
@@ -448,4 +450,6 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA128159() { doTest6(false); }
   public void testIDEA139214() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_8, false); }
   public void testUnboxingWildcards() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_8, false); }
+  public void testOnlyUncheckedWarningWithCast(){doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);}
+  public void testOnlyUncheckedWarningCastWithDuplicatedArguments(){doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);}
 }
