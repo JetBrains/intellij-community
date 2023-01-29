@@ -1053,10 +1053,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     return (int)usages.stream().filter(usage -> !usageView.isVisible(usage)).count();
   }
 
-  @Nullable
-  private static UsageNode getSelectedUsageNode(@NotNull ShowUsagesTable table) {
-    Object selectedNode = table.getModel().getValueAt(table.getSelectedRow(), 0);
-    return ObjectUtils.tryCast(selectedNode, UsageNode.class);
+  private static @Nullable UsageNode getSelectedUsageNode(@NotNull ShowUsagesTable table) {
+    int selectedRowNumber = table.getSelectedRow();
+    if (selectedRowNumber != -1) {
+      Object selectedNode = table.getModel().getValueAt(selectedRowNumber, 0);
+      return ObjectUtils.tryCast(selectedNode, UsageNode.class);
+    }
+    else {
+      return null;
+    }
   }
 
   private static int getRowNumber(@Nullable UsageNode node, @NotNull ShowUsagesTable table) {
