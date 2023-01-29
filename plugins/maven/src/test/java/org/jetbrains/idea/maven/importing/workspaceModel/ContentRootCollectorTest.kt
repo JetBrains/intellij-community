@@ -162,15 +162,65 @@ class ContentRootCollectorTest : MavenTestCase() {
     )
   }
 
-
   @Test
-  fun `test skip resource folders that are ancestors of root`() {
+  fun `test skip main resource folders that are ancestors of root`() {
     val root = "/home/project/modules/m1"
     val parentResource = "/home/project/modules"
     val grandParentResource = "/home/project"
 
     val contentRoots = collect(projectRoots = listOf(root),
                                mainResourceFolders = listOf(parentResource, grandParentResource))
+
+    assertContentRoots(contentRoots,
+                       listOf(ContentRootTestData(
+                         expectedPath = root,
+                         expectedMainResourcesFolders = listOf(),
+                         expectedTestResourcesFolders = listOf()))
+    )
+  }
+
+  @Test
+  fun `test skip main source folders that are ancestors of root`() {
+    val root = "/home/project/modules/m1"
+    val parentResource = "/home/project/modules"
+    val grandParentResource = "/home/project"
+
+    val contentRoots = collect(projectRoots = listOf(root),
+                               mainSourceFolders = listOf(parentResource, grandParentResource))
+
+    assertContentRoots(contentRoots,
+                       listOf(ContentRootTestData(
+                         expectedPath = root,
+                         expectedMainResourcesFolders = listOf(),
+                         expectedTestResourcesFolders = listOf()))
+    )
+  }
+
+  @Test
+  fun `test skip test resource folders that are ancestors of root`() {
+    val root = "/home/project/modules/m1"
+    val parentResource = "/home/project/modules"
+    val grandParentResource = "/home/project"
+
+    val contentRoots = collect(projectRoots = listOf(root),
+                               testResourceFolders = listOf(parentResource, grandParentResource))
+
+    assertContentRoots(contentRoots,
+                       listOf(ContentRootTestData(
+                         expectedPath = root,
+                         expectedMainResourcesFolders = listOf(),
+                         expectedTestResourcesFolders = listOf()))
+    )
+  }
+
+  @Test
+  fun `test skip test source folders that are ancestors of root`() {
+    val root = "/home/project/modules/m1"
+    val parentResource = "/home/project/modules"
+    val grandParentResource = "/home/project"
+
+    val contentRoots = collect(projectRoots = listOf(root),
+                               testSourceFolders = listOf(parentResource, grandParentResource))
 
     assertContentRoots(contentRoots,
                        listOf(ContentRootTestData(

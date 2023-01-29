@@ -17,11 +17,11 @@ object ContentRootCollector {
     var nearestRootFolder: ImportedFolder? = null
 
     for (curr in folders.sorted()) {
-      // 0. don't add resource folders that are ancestors of a project content root
+      // 0. don't add source/resource folders that are ancestors of a project content root
       if (nearestRoot != null
           && curr is ProjectRootFolder
           && nearestRootFolder is SourceFolder
-          && nearestRootFolder.type is JavaResourceRootType
+          && (nearestRootFolder.type is JavaResourceRootType || nearestRootFolder.type is JavaSourceRootType)
           && FileUtil.isAncestor(nearestRootFolder.path, curr.path, true)) {
         result.removeLast()
         nearestRoot.folders.remove(nearestRootFolder)
