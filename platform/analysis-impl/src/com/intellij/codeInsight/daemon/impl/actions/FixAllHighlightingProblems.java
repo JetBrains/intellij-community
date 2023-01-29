@@ -36,7 +36,7 @@ class FixAllHighlightingProblems implements IntentionAction {
 
   @Override
   public @NotNull String getText() {
-    return AnalysisBundle.message("intention.name.apply.all.fixes.in.file", myAction.getFamilyName());
+    return myAction.getFixAllText();
   }
 
   @Override
