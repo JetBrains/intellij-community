@@ -11,24 +11,27 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupStep
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
-import com.intellij.problems.WolfTheProblemSolver
-import com.intellij.ui.*
+import com.intellij.ui.ClickListener
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Cursor
 import java.awt.event.MouseEvent
+import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.ListCellRenderer
 import javax.swing.SwingUtilities
 
 /**
@@ -47,7 +50,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     e.presentation.isEnabledAndVisible = noTabs && hasOpenedFiles
   }
 
-  override fun createCustomComponent(presentation: Presentation, place: String) = SimpleColoredComponent().apply {
+  override fun createCustomComponent(presentation: Presentation, place: String) = JBLabel().apply {
     isOpaque = false
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     object : ClickListener() {
@@ -67,69 +70,73 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
       val recentFiles = getInstance(project).fileList.asReversed()
       if (recentFiles.size > 1) {
         val files = recentFiles.subList(1, recentFiles.lastIndex + 1)
-        val renderer = SimpleColoredComponent()
-        JBPopupFactory.getInstance().createPopupChooserBuilder(files)
-          .setRenderer(ListCellRenderer { _, file, _, isSelected, _ -> renderer.apply {
-            clear()
-            ipad = JBInsets.create(4, 12)
-            file as VirtualFile
-            applyFor(renderer, file, isSelected, isInToolbar = false)
-          } })
-          .setItemChosenCallback { t -> FileEditorManager.getInstance(project).openFile(t!!, true) }
-          .createPopup()
+        JBPopupFactory.getInstance()
+          .createListPopup(RecentFilesListPopupStep(project, files))
           .showUnderneathOf(component)
       }
     }
   }
+  class RecentFilesListPopupStep(val project: Project, files: List<VirtualFile>) : BaseListPopupStep<VirtualFile>(null, files) {
+    override fun getIconFor(value: VirtualFile?): Icon? {
+      if (value == null) return null
+      return IconUtil.getIcon(value, Iconable.ICON_FLAG_READ_STATUS, project)
+    }
 
-  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    component as SimpleColoredComponent
-    component.clear()
-    applyFor(component, null, false, true)
+    override fun getForegroundFor(value: VirtualFile?): Color? {
+      if (value == null) return null
+      return FileStatusManager.getInstance(project).getStatus(value).color
+    }
+
+    override fun getTextFor(value: VirtualFile?): String {
+      if (value == null) return ""
+      return VfsPresentationUtil.getUniquePresentableNameForUI(project, value)
+    }
+
+    override fun onChosen(selectedValue: VirtualFile?, finalChoice: Boolean): PopupStep<*>? {
+      if (selectedValue != null && finalChoice) FileEditorManager.getInstance(project).openFile(selectedValue, true)
+      return null
+    }
   }
 
-  private fun applyFor(component: SimpleColoredComponent, f: VirtualFile?, selected: Boolean, isInToolbar: Boolean) {
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    component as JBLabel
+    component.icon = null
+    component.text = ""
+    applyFor(component)
+  }
+
+  private fun applyFor(component: JBLabel) {
     val window = SwingUtilities.windowForComponent(component)
     val project = ProjectFrameHelper.getFrameHelper(window)?.project
     if (project != null) {
       val openFiles = FileEditorManager.getInstance(project).selectedFiles
       if (openFiles.isNotEmpty()) {
-        val file = f ?: openFiles[0]
+        val file = openFiles[0]
         if (file != null) {
           val status = FileStatusManager.getInstance(project).getStatus(file)
           var fg:Color?
 
           val icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, project)
           @Suppress("UseJBColor")
-          if (isInToolbar && JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MainToolbar.background", Color.WHITE))) {
+          if (JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MainToolbar.background", Color.WHITE))) {
             component.icon = IconLoader.getDarkIcon(icon, true)
             fg = EditorColorsManager.getInstance().getScheme("Dark").getColor(status.colorKey)
           } else {
             component.icon = icon
-            fg = if (selected) null else status.color
+            fg = status.color
           }
           component.iconTextGap = JBUI.scale(4)
 
           if (fg == null) {
-            if (isInToolbar) {
-              @Suppress("UnregisteredNamedColor")
-              fg = JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
-            } else {
-              fg = UIUtil.getListForeground(selected, true)
-            }
+            @Suppress("UnregisteredNamedColor")
+            fg = JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
           }
 
           @Suppress("HardCodedStringLiteral")
           val filename = VfsPresentationUtil.getUniquePresentableNameForUI(project, file)
           component.isOpaque = false
-          val hasProblems = WolfTheProblemSolver.getInstance(project).isProblemFile(file)
-          val effectColor = if (hasProblems) JBColor.red else null
-          val style = when (effectColor) {
-            null -> SimpleTextAttributes.STYLE_PLAIN
-            else -> SimpleTextAttributes.STYLE_PLAIN or SimpleTextAttributes.STYLE_WAVED
-          }
-
-          component.append(filename, SimpleTextAttributes(style, fg, effectColor))
+          component.foreground = fg
+          component.text = filename
         }
       }
     }
