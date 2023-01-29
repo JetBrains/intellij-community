@@ -31,11 +31,7 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
 
   @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    final Integer count = (Integer)infos[0];
-    if (count == null || count == 0) {
-      return InspectionGadgetsFix.EMPTY_ARRAY;
-    }
-      return new InspectionGadgetsFix[]{new ThrowToReturnQuickFix(count)};
+    return new InspectionGadgetsFix[]{new ThrowToReturnQuickFix()};
   }
 
   @NotNull
@@ -50,10 +46,6 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
   }
 
   private static class ThrowToReturnQuickFix extends InspectionGadgetsFix {
-    private final int myCount;
-    private ThrowToReturnQuickFix(int count) {
-      myCount = count;
-    }
 
     @Override
     public @NotNull String getFamilyName() {
@@ -61,32 +53,18 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
     }
 
     @Override
-    public @NotNull String getName() {
-      if (myCount == 1) {
-        return InspectionGadgetsBundle.message("throwable.supplier.only.throw.exception.quickfix");
-      }
-      else {
-        return InspectionGadgetsBundle.message("throwable.supplier.only.throw.exception.all.quickfix");
-      }
-    }
-
-    @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
-      List<PsiThrowStatement> throwStatements;
-      if (element instanceof PsiLambdaExpression lambdaSupplier) {
-        Collection<PsiThrowStatement> statements =
-          PsiTreeUtil.collectElementsOfType(lambdaSupplier.getBody(), PsiThrowStatement.class);
-
-        throwStatements = ContainerUtil.findAll(statements, statement ->
-          PsiTreeUtil.skipParentsOfType(statement, PsiCodeBlock.class, PsiStatement.class) == lambdaSupplier);
-      }
-      else if (element instanceof PsiThrowStatement throwStatement) {
-        throwStatements = List.of(throwStatement);
-      }
-      else {
+      PsiLambdaExpression psiLambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
+      if (psiLambdaExpression == null) {
         return;
       }
+
+      Collection<PsiThrowStatement> statements =
+        PsiTreeUtil.collectElementsOfType(psiLambdaExpression.getBody(), PsiThrowStatement.class);
+
+      List<PsiThrowStatement> throwStatements = ContainerUtil.findAll(statements, statement ->
+        PsiTreeUtil.skipParentsOfType(statement, PsiCodeBlock.class, PsiStatement.class) == psiLambdaExpression);
 
       PsiElement returnStatement = null;
       for (PsiThrowStatement throwStatement : throwStatements) {
@@ -152,12 +130,18 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
 
       List<PsiThrowStatement> all = ContainerUtil.findAll(statements, statement ->
         PsiTreeUtil.skipParentsOfType(statement, PsiCodeBlock.class, PsiStatement.class) == lambdaSupplier);
-      if (all.size() != 1) {
-        registerError(lambdaSupplier, all.size());
+      if (all.size() == 0) {
+        return;
       }
-      else {
-        registerError(all.get(0), all.size());
+      PsiThrowStatement lastThrowStatement = all.get(all.size() - 1);
+      PsiElement highlightedElement = lastThrowStatement;
+      for (PsiElement child : lastThrowStatement.getChildren()) {
+        if (child instanceof PsiKeyword keyword && keyword.textMatches(PsiKeyword.THROW)) {
+          highlightedElement = child;
+          break;
+        }
       }
+      registerError(highlightedElement);
     }
   }
 }

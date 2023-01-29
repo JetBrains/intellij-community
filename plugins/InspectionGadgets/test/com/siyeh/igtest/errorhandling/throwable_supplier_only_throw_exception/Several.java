@@ -6,9 +6,9 @@ public class Several {
 
     optional.orElseThrow(() -> {
       if (args.length == 1) {
-          return<caret> new RuntimeException();
+        throw new RuntimeException();
       } else {
-          return new RuntimeException();
+        <warning descr="Throwable supplier doesn't return any exception">throw<caret></warning> new RuntimeException();
       }
     });
   }
