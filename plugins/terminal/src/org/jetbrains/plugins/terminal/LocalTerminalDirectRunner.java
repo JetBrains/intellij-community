@@ -32,6 +32,7 @@ import com.pty4j.PtyProcessBuilder;
 import com.pty4j.unix.UnixPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
 import java.awt.*;
 import java.io.File;
@@ -145,9 +146,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
     envs.put("TERM_SESSION_ID", UUID.randomUUID().toString());
 
-    if (SystemInfo.isMac) {
-      EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
-    }
+    TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
 
     if (TrustedProjects.isTrusted(myProject)) {
       PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
