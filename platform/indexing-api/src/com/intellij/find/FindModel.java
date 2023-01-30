@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -826,11 +826,17 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     return searchContext == SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS;
   }
 
+  /**
+   * @deprecated Use {@link #setSearchContext(SearchContext)} instead
+   */
   @Deprecated
   public void setInCommentsOnly(boolean inCommentsOnly) {
     doApplyContextChange(inCommentsOnly, SearchContext.IN_COMMENTS);
   }
 
+  /**
+   * @deprecated Use {@link #setSearchContext(SearchContext)} instead
+   */
   @Deprecated
   public void setInStringLiteralsOnly(boolean inStringLiteralsOnly) {
     doApplyContextChange(inStringLiteralsOnly, SearchContext.IN_STRING_LITERALS);
