@@ -25,7 +25,7 @@ class IdeaRunConfigurationsService(private val project: Project) : RunConfigurat
 
     private fun addGradleRunConfiguration(wizardConfiguration: WizardGradleRunConfiguration) {
         val runManager = RunManager.getInstance(project)
-        val configurationFactory = KotlinGradleFacade.instance?.runConfigurationFactory ?: return
+        val configurationFactory = KotlinGradleFacade.getInstance()?.runConfigurationFactory ?: return
         val ideaConfiguration = runManager.createConfiguration(wizardConfiguration.configurationName, configurationFactory)
         val runConfiguration = ideaConfiguration.configuration
         if (runConfiguration is ExternalSystemRunConfiguration) {

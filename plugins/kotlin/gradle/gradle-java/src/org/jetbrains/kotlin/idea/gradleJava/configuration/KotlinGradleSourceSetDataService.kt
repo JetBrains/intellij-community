@@ -281,7 +281,7 @@ fun configureFacetByGradleModule(
 
     val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion?.let(IdeKotlinVersion::opt)
     // required for GradleFacetImportTest.{testCommonImportByPlatformPlugin, testKotlinAndroidPluginDetection}
-        ?: KotlinGradleFacade.instance?.findKotlinPluginVersion(moduleNode)
+        ?: KotlinGradleFacade.getInstance()?.findKotlinPluginVersion(moduleNode)
 
     if (compilerVersion == null) {
         logger.error("[Kotlin Facet]: cannot create facet for module '${ideModule.name}' due to unknown compiler version. " +
