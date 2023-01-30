@@ -126,7 +126,12 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     assertNotExcluded(java);
     assertInLibrarySources(java, myModule);
 
-    assertIndexableContent(Arrays.asList(java, txt1, txt2), null);
+    if (WorkspaceFileIndexEx.IS_ENABLED) {
+      assertIndexableContent(Arrays.asList(java, txt1), Arrays.asList(txt2));
+    }
+    else {
+      assertIndexableContent(Arrays.asList(java, txt1, txt2), null);
+    }
   }
 
   public void testExcludeLibraryRoot() {
@@ -161,15 +166,16 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
       assertNotInLibrarySources(txt, null);
       assertExcluded(java, myModule);
       assertNotInLibrarySources(java, null);
+      assertIndexableContent(null, Arrays.asList(txt, java));
     }
     else {
       assertInProject(txt);
       assertNotInLibrarySources(txt, myModule);
       assertInProject(java);
       assertNotInLibrarySources(java, myModule);
+      assertIndexableContent(Arrays.asList(txt, java), null);
     }
     
-    assertIndexableContent(Arrays.asList(txt, java), null);
   }
 
   public void testExcludeOnlyFiles() {
