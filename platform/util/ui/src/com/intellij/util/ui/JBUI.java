@@ -685,6 +685,18 @@ public final class JBUI {
         return Widget.HOVER_BACKGROUND;
       }
 
+      public static @NotNull Font font() {
+        return ObjectUtils.coalesce(getFont(fontKey()), defaultFont());
+      }
+
+      public static @NotNull String fontKey() {
+        return "StatusBar.font";
+      }
+
+      public static @NotNull JBFont defaultFont() {
+        return JBFont.label();
+      }
+
       public interface Widget {
         Color FOREGROUND = JBColor.namedColor("StatusBar.Widget.foreground", UIUtil.getLabelForeground());
         Color HOVER_FOREGROUND = JBColor.namedColor("StatusBar.Widget.hoverForeground", UIUtil.getLabelForeground());
