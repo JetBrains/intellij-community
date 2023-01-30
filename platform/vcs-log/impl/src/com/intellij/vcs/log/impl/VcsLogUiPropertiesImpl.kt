@@ -21,24 +21,20 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
       return appSettings.get(property)
     }
     val state = logUiState
-    if (property is VcsLogHighlighterProperty) {
-      val result = state.HIGHLIGHTERS[property.id] ?: return true as T
-      return result as T
+    val result: Any = when (property) {
+      is VcsLogHighlighterProperty -> state.HIGHLIGHTERS[property.id] ?: true
+      is TableColumnWidthProperty -> state.COLUMN_ID_WIDTH[property.name] ?: -1
+      CommonUiProperties.SHOW_DETAILS -> state.SHOW_DETAILS_IN_CHANGES
+      MainVcsLogUiProperties.SHOW_LONG_EDGES -> state.LONG_EDGES_VISIBLE
+      CommonUiProperties.SHOW_ROOT_NAMES -> state.SHOW_ROOT_NAMES
+      MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES -> state.SHOW_ONLY_AFFECTED_CHANGES
+      MainVcsLogUiProperties.BEK_SORT_TYPE -> PermanentGraph.SortType.values()[state.BEK_SORT_TYPE]
+      MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE -> logUiState.TEXT_FILTER_SETTINGS.MATCH_CASE
+      MainVcsLogUiProperties.TEXT_FILTER_REGEX -> logUiState.TEXT_FILTER_SETTINGS.REGEX
+      else -> throw UnsupportedOperationException("Property $property does not exist")
     }
-    if (property is TableColumnWidthProperty) {
-      val savedWidth = state.COLUMN_ID_WIDTH[property.name] ?: return -1 as T
-      return savedWidth as T
-    }
-    val filterSettings = textFilterSettings
-    return property.match()
-      .ifEq(CommonUiProperties.SHOW_DETAILS).then(state.SHOW_DETAILS_IN_CHANGES)
-      .ifEq(MainVcsLogUiProperties.SHOW_LONG_EDGES).then(state.LONG_EDGES_VISIBLE)
-      .ifEq(CommonUiProperties.SHOW_ROOT_NAMES).then(state.SHOW_ROOT_NAMES)
-      .ifEq(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES).then(state.SHOW_ONLY_AFFECTED_CHANGES)
-      .ifEq(MainVcsLogUiProperties.BEK_SORT_TYPE).thenGet { PermanentGraph.SortType.values()[state.BEK_SORT_TYPE] }
-      .ifEq(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE).then(filterSettings.MATCH_CASE)
-      .ifEq(MainVcsLogUiProperties.TEXT_FILTER_REGEX).then(filterSettings.REGEX)
-      .get()
+    @Suppress("UNCHECKED_CAST")
+    return result as T
   }
 
   override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
@@ -46,35 +42,18 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
       appSettings.set(property, value)
       return
     }
-    if (CommonUiProperties.SHOW_DETAILS == property) {
-      logUiState.SHOW_DETAILS_IN_CHANGES = value as Boolean
-    }
-    else if (MainVcsLogUiProperties.SHOW_LONG_EDGES == property) {
-      logUiState.LONG_EDGES_VISIBLE = value as Boolean
-    }
-    else if (CommonUiProperties.SHOW_ROOT_NAMES == property) {
-      logUiState.SHOW_ROOT_NAMES = value as Boolean
-    }
-    else if (MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES == property) {
-      logUiState.SHOW_ONLY_AFFECTED_CHANGES = value as Boolean
-    }
-    else if (MainVcsLogUiProperties.BEK_SORT_TYPE == property) {
-      logUiState.BEK_SORT_TYPE = (value as PermanentGraph.SortType).ordinal
-    }
-    else if (MainVcsLogUiProperties.TEXT_FILTER_REGEX == property) {
-      textFilterSettings.REGEX = value as Boolean
-    }
-    else if (MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE == property) {
-      textFilterSettings.MATCH_CASE = value as Boolean
-    }
-    else if (property is VcsLogHighlighterProperty) {
-      logUiState.HIGHLIGHTERS[(property as VcsLogHighlighterProperty).id] = value as Boolean
-    }
-    else if (property is TableColumnWidthProperty) {
-      logUiState.COLUMN_ID_WIDTH[property.getName()] = value as Int
-    }
-    else {
-      throw UnsupportedOperationException("Property $property does not exist")
+
+    when (property) {
+      CommonUiProperties.SHOW_DETAILS -> logUiState.SHOW_DETAILS_IN_CHANGES = value as Boolean
+      MainVcsLogUiProperties.SHOW_LONG_EDGES -> logUiState.LONG_EDGES_VISIBLE = value as Boolean
+      CommonUiProperties.SHOW_ROOT_NAMES -> logUiState.SHOW_ROOT_NAMES = value as Boolean
+      MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES -> logUiState.SHOW_ONLY_AFFECTED_CHANGES = value as Boolean
+      MainVcsLogUiProperties.BEK_SORT_TYPE -> logUiState.BEK_SORT_TYPE = (value as PermanentGraph.SortType).ordinal
+      MainVcsLogUiProperties.TEXT_FILTER_REGEX -> logUiState.TEXT_FILTER_SETTINGS.REGEX = value as Boolean
+      MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE -> logUiState.TEXT_FILTER_SETTINGS.MATCH_CASE = value as Boolean
+      is VcsLogHighlighterProperty -> logUiState.HIGHLIGHTERS[(property as VcsLogHighlighterProperty).id] = value as Boolean
+      is TableColumnWidthProperty -> logUiState.COLUMN_ID_WIDTH[property.getName()] = value as Int
+      else -> throw UnsupportedOperationException("Property $property does not exist")
     }
     onPropertyChanged(property)
   }
@@ -89,8 +68,6 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
            property is VcsLogHighlighterProperty ||
            property is TableColumnWidthProperty
   }
-
-  private val textFilterSettings: TextFilterSettings get() = logUiState.TEXT_FILTER_SETTINGS
 
   override fun saveFilterValues(filterName: String, values: List<String>?) {
     if (values != null) {

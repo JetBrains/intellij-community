@@ -23,82 +23,55 @@ class VcsLogApplicationSettings : PersistentStateComponent<VcsLogApplicationSett
   }
 
   override fun <T : Any> get(property: VcsLogUiProperty<T>): T {
-    if (property is CustomBooleanProperty) {
-      var value = _state.CUSTOM_BOOLEAN_PROPERTIES[property.getName()]
-      if (value == null) {
-        value = (property as CustomBooleanProperty).defaultValue()
-      }
-      return value as T
+    val result: Any = when (property) {
+      is CustomBooleanProperty -> _state.CUSTOM_BOOLEAN_PROPERTIES[property.name] ?: property.defaultValue()
+      is TableColumnVisibilityProperty -> isColumnVisible(property)
+      CommonUiProperties.COLUMN_ID_ORDER -> getColumnOrder()
+      CommonUiProperties.COMPACT_REFERENCES_VIEW -> _state.COMPACT_REFERENCES_VIEW
+      CommonUiProperties.SHOW_TAG_NAMES -> _state.SHOW_TAG_NAMES
+      CommonUiProperties.LABELS_LEFT_ALIGNED -> _state.LABELS_LEFT_ALIGNED
+      MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS -> _state.SHOW_CHANGES_FROM_PARENTS
+      CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.SHOW_DIFF_PREVIEW
+      MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT -> _state.DIFF_PREVIEW_VERTICAL_SPLIT
+      CommonUiProperties.PREFER_COMMIT_DATE -> _state.PREFER_COMMIT_DATE
+      else -> throw UnsupportedOperationException("Property $property does not exist")
     }
-    if (property is TableColumnVisibilityProperty) {
-      val visibilityProperty = property as TableColumnVisibilityProperty
-      val isVisible = _state.COLUMN_ID_VISIBILITY[visibilityProperty.name]
-      if (isVisible != null) {
-        return isVisible as T
-      }
+    @Suppress("UNCHECKED_CAST")
+    return result as T
+  }
 
-      // visibility is not set, so we will get it from current/default order
-      // otherwise column will be visible but not exist in order
-      val column = visibilityProperty.column
-      if (get(CommonUiProperties.COLUMN_ID_ORDER).contains(column.id)) {
-        return true as T
-      }
-      if (column is VcsLogCustomColumn<*>) {
-        return column.isEnabledByDefault() as T
-      }
-      else return false as T
-    }
-    return property.match()
-      .ifEq(CommonUiProperties.COMPACT_REFERENCES_VIEW).then(_state.COMPACT_REFERENCES_VIEW)
-      .ifEq(CommonUiProperties.SHOW_TAG_NAMES).then(_state.SHOW_TAG_NAMES)
-      .ifEq(CommonUiProperties.LABELS_LEFT_ALIGNED).then(_state.LABELS_LEFT_ALIGNED)
-      .ifEq(MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS).then(_state.SHOW_CHANGES_FROM_PARENTS)
-      .ifEq(CommonUiProperties.SHOW_DIFF_PREVIEW).then(_state.SHOW_DIFF_PREVIEW)
-      .ifEq(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT).then(_state.DIFF_PREVIEW_VERTICAL_SPLIT)
-      .ifEq(CommonUiProperties.PREFER_COMMIT_DATE).then(_state.PREFER_COMMIT_DATE)
-      .ifEq(CommonUiProperties.COLUMN_ID_ORDER).thenGet {
-        val order = _state.COLUMN_ID_ORDER
-        if (!order.isNullOrEmpty()) {
-          return@thenGet order
-        }
-        listOf(Root, Commit, Author, Date).map { it.id }
-      }
-      .get()
+  private fun isColumnVisible(visibilityProperty: TableColumnVisibilityProperty): Boolean {
+    val isVisible = _state.COLUMN_ID_VISIBILITY[visibilityProperty.name]
+    if (isVisible != null) return isVisible
+
+    // visibility is not set, so we will get it from current/default order
+    // otherwise column will be visible but not exist in order
+    val column = visibilityProperty.column
+    if (get(CommonUiProperties.COLUMN_ID_ORDER).contains(column.id)) return true
+    if (column is VcsLogCustomColumn<*>) return column.isEnabledByDefault()
+    return false
+  }
+
+  private fun getColumnOrder(): List<String> {
+    val order = _state.COLUMN_ID_ORDER
+    if (order.isNullOrEmpty()) return listOf(Root, Commit, Author, Date).map { it.id }
+    return order
   }
 
   override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
-    if (property is CustomBooleanProperty) {
-      _state.CUSTOM_BOOLEAN_PROPERTIES[property.getName()] = value as Boolean
-    }
-    else if (CommonUiProperties.COMPACT_REFERENCES_VIEW == property) {
-      _state.COMPACT_REFERENCES_VIEW = value as Boolean
-    }
-    else if (CommonUiProperties.SHOW_TAG_NAMES == property) {
-      _state.SHOW_TAG_NAMES = value as Boolean
-    }
-    else if (CommonUiProperties.LABELS_LEFT_ALIGNED == property) {
-      _state.LABELS_LEFT_ALIGNED = value as Boolean
-    }
-    else if (MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS == property) {
-      _state.SHOW_CHANGES_FROM_PARENTS = value as Boolean
-    }
-    else if (CommonUiProperties.SHOW_DIFF_PREVIEW == property) {
-      _state.SHOW_DIFF_PREVIEW = value as Boolean
-    }
-    else if (MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT == property) {
-      _state.DIFF_PREVIEW_VERTICAL_SPLIT = value as Boolean
-    }
-    else if (CommonUiProperties.PREFER_COMMIT_DATE == property) {
-      _state.PREFER_COMMIT_DATE = value as Boolean
-    }
-    else if (CommonUiProperties.COLUMN_ID_ORDER == property) {
-      _state.COLUMN_ID_ORDER = value as List<String>
-    }
-    else if (property is TableColumnVisibilityProperty) {
-      _state.COLUMN_ID_VISIBILITY[property.getName()] = value as Boolean
-    }
-    else {
-      throw UnsupportedOperationException("Property $property does not exist")
+    @Suppress("UNCHECKED_CAST")
+    when (property) {
+      is CustomBooleanProperty -> _state.CUSTOM_BOOLEAN_PROPERTIES[property.getName()] = value as Boolean
+      CommonUiProperties.COMPACT_REFERENCES_VIEW -> _state.COMPACT_REFERENCES_VIEW = value as Boolean
+      CommonUiProperties.SHOW_TAG_NAMES -> _state.SHOW_TAG_NAMES = value as Boolean
+      CommonUiProperties.LABELS_LEFT_ALIGNED -> _state.LABELS_LEFT_ALIGNED = value as Boolean
+      MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS -> _state.SHOW_CHANGES_FROM_PARENTS = value as Boolean
+      CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.SHOW_DIFF_PREVIEW = value as Boolean
+      MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT -> _state.DIFF_PREVIEW_VERTICAL_SPLIT = value as Boolean
+      CommonUiProperties.PREFER_COMMIT_DATE -> _state.PREFER_COMMIT_DATE = value as Boolean
+      CommonUiProperties.COLUMN_ID_ORDER -> _state.COLUMN_ID_ORDER = value as List<String>
+      is TableColumnVisibilityProperty -> _state.COLUMN_ID_VISIBILITY[property.name] = value as Boolean
+      else -> throw UnsupportedOperationException("Property $property does not exist")
     }
     eventDispatcher.multicaster.onPropertyChanged(property)
   }

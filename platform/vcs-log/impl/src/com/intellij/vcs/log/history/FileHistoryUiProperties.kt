@@ -31,44 +31,40 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
   private var _state = State()
 
   override fun <T : Any> get(property: VcsLogUiProperty<T>): T {
-    if (property is TableColumnWidthProperty) {
-      val savedWidth = _state.COLUMN_ID_WIDTH[property.getName()] ?: return -1 as T
-      return savedWidth as T
+    if (applicationLevelProperties.contains(property)) {
+      return appSettings.get(property)
     }
-    if (property is TableColumnVisibilityProperty) {
-      val visibilityProperty = property as TableColumnVisibilityProperty
-      val isVisible = _state.COLUMN_ID_VISIBILITY[visibilityProperty.name]
-      if (isVisible != null) {
-        return isVisible as T
-      }
 
-      // visibility is not set, so we will get it from current/default order
-      // otherwise column will be visible but not exist in order
-      val column = visibilityProperty.column
-      if (get(CommonUiProperties.COLUMN_ID_ORDER).contains(column.id)) {
-        return true as T
-      }
-      if (column is VcsLogCustomColumn<*>) {
-        return column.isEnabledByDefault() as T
-      }
-      return false as T
+    val result: Any = when (property) {
+      is TableColumnWidthProperty -> _state.COLUMN_ID_WIDTH[property.name] ?: -1
+      is TableColumnVisibilityProperty -> isColumnVisible(property)
+      CommonUiProperties.COLUMN_ID_ORDER -> getColumnOrder()
+      CommonUiProperties.SHOW_DETAILS -> _state.SHOW_DETAILS
+      SHOW_ALL_BRANCHES -> _state.SHOW_OTHER_BRANCHES
+      CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.SHOW_DIFF_PREVIEW
+      CommonUiProperties.SHOW_ROOT_NAMES -> _state.SHOW_ROOT_NAMES
+      else -> throw UnsupportedOperationException("Unknown property $property")
     }
-    return if (applicationLevelProperties.contains(property)) {
-      appSettings.get(property)
-    }
-    else property.match()
-      .ifEq(CommonUiProperties.SHOW_DETAILS).then(_state.SHOW_DETAILS)
-      .ifEq(SHOW_ALL_BRANCHES).then(_state.SHOW_OTHER_BRANCHES)
-      .ifEq(CommonUiProperties.SHOW_DIFF_PREVIEW).then(_state.SHOW_DIFF_PREVIEW)
-      .ifEq(CommonUiProperties.SHOW_ROOT_NAMES).then(_state.SHOW_ROOT_NAMES)
-      .ifEq(CommonUiProperties.COLUMN_ID_ORDER).thenGet {
-        val order = _state.COLUMN_ID_ORDER
-        if (!order.isNullOrEmpty()) {
-          return@thenGet order
-        }
-        listOf(Root, Author, Date, Commit).map { it.id }
-      }
-      .get()
+    @Suppress("UNCHECKED_CAST")
+    return result as T
+  }
+
+  private fun isColumnVisible(visibilityProperty: TableColumnVisibilityProperty): Boolean {
+    val isVisible = _state.COLUMN_ID_VISIBILITY[visibilityProperty.name]
+    if (isVisible != null) return isVisible
+
+    // visibility is not set, so we will get it from current/default order
+    // otherwise column will be visible but not exist in order
+    val column = visibilityProperty.column
+    if (get(CommonUiProperties.COLUMN_ID_ORDER).contains(column.id)) return true
+    if (column is VcsLogCustomColumn<*>) return column.isEnabledByDefault()
+    return false
+  }
+
+  private fun getColumnOrder(): List<String> {
+    val order = _state.COLUMN_ID_ORDER
+    if (order.isNullOrEmpty()) return listOf(Root, Author, Date, Commit).map { it.id }
+    return order
   }
 
   private fun <T> onApplicationSettingChange(property: VcsLogUiProperty<T>) {
@@ -78,34 +74,22 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
   }
 
   override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
-    if (CommonUiProperties.SHOW_DETAILS == property) {
-      _state.SHOW_DETAILS = value as Boolean
-    }
-    else if (SHOW_ALL_BRANCHES == property) {
-      _state.SHOW_OTHER_BRANCHES = value as Boolean
-    }
-    else if (CommonUiProperties.COLUMN_ID_ORDER == property) {
-      _state.COLUMN_ID_ORDER = value as List<String>
-    }
-    else if (property is TableColumnWidthProperty) {
-      _state.COLUMN_ID_WIDTH[property.getName()] = value as Int
-    }
-    else if (property is TableColumnVisibilityProperty) {
-      _state.COLUMN_ID_VISIBILITY[property.getName()] = value as Boolean
-    }
-    else if (CommonUiProperties.SHOW_DIFF_PREVIEW == property) {
-      _state.SHOW_DIFF_PREVIEW = value as Boolean
-    }
-    else if (CommonUiProperties.SHOW_ROOT_NAMES == property) {
-      _state.SHOW_ROOT_NAMES = value as Boolean
-    }
-    else if (applicationLevelProperties.contains(property)) {
+    if (applicationLevelProperties.contains(property)) {
       appSettings.set(property, value)
       // listeners will be triggered via onApplicationSettingChange
       return
     }
-    else {
-      throw UnsupportedOperationException("Unknown property $property")
+
+    @Suppress("UNCHECKED_CAST")
+    when (property) {
+      CommonUiProperties.SHOW_DETAILS -> _state.SHOW_DETAILS = value as Boolean
+      SHOW_ALL_BRANCHES -> _state.SHOW_OTHER_BRANCHES = value as Boolean
+      CommonUiProperties.COLUMN_ID_ORDER -> _state.COLUMN_ID_ORDER = value as List<String>
+      is TableColumnWidthProperty -> _state.COLUMN_ID_WIDTH[property.getName()] = value as Int
+      is TableColumnVisibilityProperty -> _state.COLUMN_ID_VISIBILITY[property.getName()] = value as Boolean
+      CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.SHOW_DIFF_PREVIEW = value as Boolean
+      CommonUiProperties.SHOW_ROOT_NAMES -> _state.SHOW_ROOT_NAMES = value as Boolean
+      else -> throw UnsupportedOperationException("Unknown property $property")
     }
     eventDispatcher.multicaster.onPropertyChanged(property)
   }

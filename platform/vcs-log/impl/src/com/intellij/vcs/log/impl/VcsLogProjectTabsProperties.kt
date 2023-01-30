@@ -42,21 +42,25 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
   val tabs: Map<String, VcsLogTabLocation>
     get() = _state.OPEN_GENERIC_TABS
 
+  fun getRecentlyFilteredGroups(filterName: String): List<List<String>> {
+    return getRecentGroup(_state.RECENT_FILTERS, filterName)
+  }
+
+  fun addRecentlyFilteredGroup(filterName: String, values: Collection<String>) {
+    addRecentGroup(_state.RECENT_FILTERS, filterName, values)
+  }
+
   class State {
     var TAB_STATES: MutableMap<String, MyState> = TreeMap()
     var OPEN_GENERIC_TABS = LinkedHashMap<String, VcsLogTabLocation>()
-    @JvmField
     var RECENT_FILTERS: MutableMap<String, MutableList<RecentGroup>> = HashMap()
   }
 
-  class RecentGroup {
+  class RecentGroup(values: Collection<String>) {
     @XCollection
-    var FILTER_VALUES: MutableList<String> = ArrayList()
+    var FILTER_VALUES: MutableList<String> = values.toMutableList()
 
-    constructor()
-    constructor(values: Collection<String>) {
-      FILTER_VALUES.addAll(values)
-    }
+    constructor() : this(emptyList())
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
@@ -69,22 +73,12 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
   }
 
   private inner class MyVcsLogUiPropertiesImpl(private val id: String) : VcsLogUiPropertiesImpl<MyState>(appSettings) {
-    override fun getLogUiState(): MyState {
-      var state = _state.TAB_STATES[id]
-      if (state == null) {
-        state = MyState()
-        _state.TAB_STATES[id] = state
-      }
-      return state
-    }
+    override val logUiState = _state.TAB_STATES.getOrPut(id) { MyState() }
 
     override fun <T : Any> get(property: VcsLogUiProperty<T>): T {
       if (property is CustomBooleanTabProperty) {
-        var value = logUiState.CUSTOM_BOOLEAN_PROPERTIES[property.getName()]
-        if (value == null) {
-          value = (property as CustomBooleanTabProperty).defaultValue(id)
-        }
-        return value as T
+        @Suppress("UNCHECKED_CAST")
+        return (logUiState.CUSTOM_BOOLEAN_PROPERTIES[property.getName()] ?: property.defaultValue(id)) as T
       }
       return super.get(property)
     }
@@ -125,12 +119,9 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
 
     @JvmStatic
     fun addRecentGroup(stateField: MutableMap<String, MutableList<RecentGroup>>,
-                       filterName: String, values: Collection<String>) {
-      var recentGroups = stateField[filterName]
-      if (recentGroups == null) {
-        recentGroups = ArrayList()
-        stateField[filterName] = recentGroups
-      }
+                       filterName: String,
+                       values: Collection<String>) {
+      val recentGroups = stateField.getOrPut(filterName) { ArrayList() }
       val group = RecentGroup(values)
       recentGroups.remove(group)
       recentGroups.add(0, group)
@@ -141,8 +132,7 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
 
     @JvmStatic
     fun getRecentGroup(stateField: Map<String, MutableList<RecentGroup>>, filterName: String): List<List<String>> {
-      val values = stateField[filterName]
-                   ?: return emptyList()
+      val values = stateField[filterName] ?: return emptyList()
       return values.map { it.FILTER_VALUES }
     }
   }
