@@ -51,6 +51,7 @@ fun EditorEx.addComponentInlay(
       isRelatedToPrecedingText,
       showAbove,
       showWhenFolded,
+      true,
       priority,
       offset,
     )
