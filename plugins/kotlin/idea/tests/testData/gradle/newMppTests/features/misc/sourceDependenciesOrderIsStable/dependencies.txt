@@ -1,36 +1,44 @@
 MODULES
-    my-app
-    my-app.consumer
-    my-app.consumer.commonMain
-        my-app.lib2.commonMain (COMPILE)
-        my-app.lib1.commonMain (COMPILE)
-    my-app.consumer.commonTest
-        my-app.lib2.commonMain (TEST)
-        my-app.lib1.commonMain (TEST)
-    my-app.consumer.jvmMain
-        my-app.lib2.jvmMain (COMPILE)
-        my-app.lib2.commonMain (COMPILE)
-        my-app.lib1.jvmMain (COMPILE)
-        my-app.lib2.commonMain (COMPILE)
-        my-app.lib1.commonMain (COMPILE)
-        my-app.lib1.commonMain (COMPILE)
-    my-app.consumer.jvmTest
-        my-app.lib2.jvmMain (TEST)
-        my-app.lib2.commonMain (TEST)
-        my-app.lib2.commonMain (TEST)
-        my-app.lib1.commonMain (TEST)
-        my-app.lib1.jvmMain (TEST)
-        my-app.lib1.commonMain (TEST)
-    my-app.consumer.linuxX64Main
-        my-app.lib1.linuxX64Main (COMPILE)
-        my-app.lib2.linuxX64Main (COMPILE)
-        my-app.lib2.commonMain (COMPILE)
-        my-app.lib1.commonMain (COMPILE)
-    my-app.consumer.linuxX64Test
-        my-app.lib1.linuxX64Main (TEST)
-        my-app.lib2.linuxX64Main (TEST)
-        my-app.lib2.commonMain (TEST)
-        my-app.lib1.commonMain (TEST)
+my-app
+
+my-app.consumer
+
+my-app.consumer.commonMain
+    lib2.commonMain (COMPILE)
+    lib1.commonMain (COMPILE)
+
+my-app.consumer.commonTest
+    lib2.commonMain (TEST)
+    lib1.commonMain (TEST)
+
+my-app.consumer.jvmMain
+    lib2.jvmMain (COMPILE)
+    lib2.commonMain (COMPILE)
+    lib1.jvmMain (COMPILE)
+    lib2.commonMain (COMPILE)
+    lib1.commonMain (COMPILE)
+    lib1.commonMain (COMPILE)
+
+my-app.consumer.jvmTest
+    lib2.jvmMain (TEST)
+    lib2.commonMain (TEST)
+    lib1.jvmMain (TEST)
+    lib2.commonMain (TEST)
+    lib1.commonMain (TEST)
+    lib1.commonMain (TEST)
+
+my-app.consumer.linuxX64Main
+    lib1.linuxX64Main (COMPILE)
+    lib2.linuxX64Main (COMPILE)
+    lib2.commonMain (COMPILE)
+    lib1.commonMain (COMPILE)
+
+my-app.consumer.linuxX64Test
+    lib1.linuxX64Main (TEST)
+    lib2.linuxX64Main (TEST)
+    lib2.commonMain (TEST)
+    lib1.commonMain (TEST)
+
 
 Test configuration:
 - hiding following roots: resources, android-specific roots, generated

@@ -1,0 +1,54 @@
+MODULES
+project
+
+project.project1
+
+project.project1.custom
+
+project.project1.main
+
+project.project1.test
+    project1.main (COMPILE)
+    project1.main (RUNTIME)
+
+project.project2
+
+project.project2.custom
+    project1.custom (refines, COMPILE)
+
+project.project2.main
+    project1.main (refines, COMPILE)
+    project1.main (refines, COMPILE)
+
+project.project2.test
+    project1.main (COMPILE)
+    project1.main (COMPILE)
+    project1.test (refines, COMPILE)
+    project2.main (COMPILE)
+    project2.main (RUNTIME)
+
+project.project3
+
+project.project3.custom
+    project1.custom (COMPILE)
+    project1.main (COMPILE)
+    project2.main (COMPILE)
+
+project.project3.main
+    project1.main (COMPILE)
+    project1.main (COMPILE)
+    project2.main (COMPILE)
+
+project.project3.test
+    project1.main (COMPILE)
+    project1.main (COMPILE)
+    project1.test (COMPILE)
+    project2.main (COMPILE)
+    project2.test (COMPILE)
+    project3.main (COMPILE)
+    project3.main (RUNTIME)
+
+
+Test configuration:
+- hiding following standard dependencies: Kotlin/Native distribution, sdk, self
+- dependencies order is not checked

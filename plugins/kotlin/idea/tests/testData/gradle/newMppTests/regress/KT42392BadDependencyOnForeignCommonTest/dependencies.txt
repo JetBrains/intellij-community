@@ -1,9 +1,11 @@
 MODULES
-    project.p1.main
-        project.p1.commonMain (refines, COMPILE)
-        project.p2.jvmMain (COMPILE)
-        project.p2.commonMain (COMPILE)
+project.p1.main
+    p1.commonMain (refines, COMPILE)
+    p2.commonMain (COMPILE)
+    p2.jvmMain (COMPILE)
+
 
 Test configuration:
 - showing only source modules matching .*p1\.main.*
 - hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- dependencies order is not checked
