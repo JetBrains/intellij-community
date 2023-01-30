@@ -64,7 +64,11 @@ class VfsLog(
       while (true) {
         delay(5000)
         flush()
-        LOG.warn("# queued jobs: ${(coroutineDispatcher.executor as ScheduledThreadPoolExecutor).queue.size}")
+
+        val jobsQueued = (coroutineDispatcher.executor as ScheduledThreadPoolExecutor).queue.size
+        if (jobsQueued > 20) {
+          LOG.warn("VFS log # queued jobs: $jobsQueued")
+        }
       }
     }
   }
