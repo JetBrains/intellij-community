@@ -53,6 +53,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -775,32 +776,32 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @ApiStatus.Internal
+  @ApiStatus.Experimental
   public static void waitForUnresolvedReferencesQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    assert editor.getProject() == null || editor.getProject() == file.getProject();
-    CaretModel caretModel = editor.getCaretModel();
-    int offset = caretModel.getOffset();
-    Project project = file.getProject();
+    ApplicationManager.getApplication().assertReadAccessNotAllowed();
     List<HighlightInfo> relevantInfos = new ArrayList<>();
-    Document document = editor.getDocument();
-    int logicalLine = caretModel.getLogicalPosition().line;
-    processHighlights(document, project, null, 0, document.getTextLength(), info -> {
-      if (info.containsOffset(offset, true)) {
-        relevantInfos.add(info);
+    Project project = file.getProject();
+    ReadAction.run(() -> {
+      PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
+      CaretModel caretModel = editor.getCaretModel();
+      int offset = caretModel.getOffset();
+      Document document = editor.getDocument();
+      int logicalLine = caretModel.getLogicalPosition().line;
+      processHighlights(document, project, null, 0, document.getTextLength(), info -> {
+        if (info.containsOffset(offset, true) && info.isUnresolvedReference()) {
+          relevantInfos.add(info);
+          return true;
+        }
+        // since we don't know fix ranges of potentially not-yet-added quick fixes, consider all highlight infos at the same line
+        boolean atTheSameLine = editor.offsetToLogicalPosition(info.getActualStartOffset()).line <= logicalLine && logicalLine <= editor.offsetToLogicalPosition(info.getActualEndOffset()).line;
+        if (atTheSameLine && info.isUnresolvedReference()) {
+          relevantInfos.add(info);
+        }
         return true;
-      }
-      // since we don't know fix ranges of potentially not-yet-added quick fixes, consider all highlight infos at the same line
-      boolean atTheSameLine = editor.offsetToLogicalPosition(info.getActualStartOffset()).line <= logicalLine && logicalLine <= editor.offsetToLogicalPosition(info.getActualEndOffset()).line;
-      if (atTheSameLine) {
-        relevantInfos.add(info);
-      }
-      return true;
+      });
     });
-    for (HighlightInfo info : relevantInfos) {
-      if (info.isUnresolvedReference()) {
-        UnresolvedReferenceQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(info, file, editor);
-      }
-    }
+    UnresolvedReferenceQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(file, editor, relevantInfos);
   }
 
   static class HighlightByOffsetProcessor implements Processor<HighlightInfo> {
@@ -1058,6 +1059,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       stopProcess(true, "canceled in queuePassesCreation: "+progress.getCancellationTrace());
       return;
     }
+    //if (myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
+    //  stopProcess(true, "more documents to commit: " + Arrays.toString(myPsiDocumentManager.getUncommittedDocuments()));
+    //  return;
+    //}
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         // wait for heavy processing to stop, re-schedule daemon but not too soon

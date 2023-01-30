@@ -5,7 +5,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -155,6 +154,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -333,16 +333,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @TestOnly
   public static List<IntentionAction> getAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
-    return ReadAction.compute(() -> doGetAvailableIntentions(editor, file));
-  }
-
-  @NotNull
-  private static List<IntentionAction> doGetAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
     IdeaTestExecutionPolicy current = IdeaTestExecutionPolicy.current();
     if (current != null) {
       current.waitForHighlighting(file.getProject(), editor);
     }
     waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+    return ReadAction.compute(() -> doGetAvailableIntentions(editor, file));
+  }
+
+  @NotNull
+  private static List<IntentionAction> doGetAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
     ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file, false);
 
     List<IntentionAction> result = new ArrayList<>();
@@ -372,10 +372,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public static void waitForUnresolvedReferencesQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ActionUtil.underModalProgress(file.getProject(), CodeInsightBundle.message("progress.title.searching.for.context.actions"), () -> {
-        DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
-        return null;
-      });
+      assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "must not call under write action";
+
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
+        DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor));
+      while (!future.isDone()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      try {
+        future.get();
+      }
+      catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
     }
     else {
       DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
@@ -693,7 +702,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public List<IntentionAction> getAvailableIntentions() {
     doHighlighting();
-    return ReadAction.compute(() -> getAvailableIntentions(getHostEditor(), getHostFileAtCaret()));
+    return getAvailableIntentions(ReadAction.compute(() -> getHostEditor()), ReadAction.compute(() -> getHostFileAtCaret()));
   }
 
   @NotNull

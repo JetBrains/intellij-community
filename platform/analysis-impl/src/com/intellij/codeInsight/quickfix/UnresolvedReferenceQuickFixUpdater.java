@@ -12,6 +12,8 @@ import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 
 /**
  * Call each registered {@link UnresolvedReferenceQuickFixProvider} for its quick fixes.
@@ -46,7 +48,7 @@ public interface UnresolvedReferenceQuickFixUpdater {
    * Wait until the background calculation of unresolved reference quickfixes for {@code info} is completed.
    * This method might be needed when that information is required synchronously, e.g., when user pressed Alt-Enter.
    */
-  void waitQuickFixesSynchronously(@NotNull HighlightInfo info, @NotNull PsiFile file, @NotNull Editor editor);
+  void waitQuickFixesSynchronously(@NotNull PsiFile file, @NotNull Editor editor, @NotNull List<? extends HighlightInfo> infos);
 
   /**
    * Start background computation of quick fixes for unresolved references in the {code file} at the current caret offset
