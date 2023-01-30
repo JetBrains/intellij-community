@@ -3,6 +3,7 @@ package com.intellij.execution.ui
 
 import com.intellij.execution.*
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
+import com.intellij.execution.actions.StopAction
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.isOfSameType
@@ -26,11 +27,11 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.IconReplacer
-import com.intellij.ui.RetrievableIcon
+import com.intellij.ui.*
 import com.intellij.ui.popup.util.PopupImplUtil
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
+import com.intellij.util.TextIcon
 import com.intellij.util.ui.*
 import java.awt.*
 import java.awt.event.InputEvent
@@ -173,13 +174,15 @@ private class PreparedIcon(private val width: Int, private val height: Int, priv
 
 private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () -> Boolean) : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color? {
-    if (!isContrastRunWidget) {
+    val isStopButton = (component as? ActionButton)?.action is StopAction
+    if (!isContrastRunWidget && !isStopButton) {
       if (!buttonIsRunning(component)) {
         return getHeaderBackgroundColor(component, state)
       }
     }
 
-    val color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
+    val color = if (!isContrastRunWidget && isStopButton) JBUI.CurrentTheme.RunWidget.STOP_BACKGROUND
+    else getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
 
     return when (state) {
       ActionButtonComponent.NORMAL -> color
@@ -243,7 +246,21 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       return
     }
 
-    val toStrokeIcon = if (icon is PreparedIcon) icon else {
+    var resultIcon = icon
+
+    if (icon is LayeredIcon && icon.allLayers.size == 2) {
+      val textIcon = icon.allLayers[1]
+      if (textIcon is TextIcon) {
+        resultIcon = TextHoledIcon(icon.allLayers[0], textIcon.text, JBUIScale.scale(12.0f), JBUI.CurrentTheme.RunWidget.FOREGROUND, object : BadgeRectProvider() {
+          override fun getTop(): Double = 0.45
+          override fun getLeft(): Double = 0.75
+          override fun getBottom(): Double = 1.2
+          override fun getRight(): Double = 1.2
+        })
+      }
+    }
+
+    if (resultIcon !is PreparedIcon) {
       val resultColor = if (!isContrastRunWidget &&
                             (actionButton as? ActionButton)?.action is ExecutorRegistryImpl.ExecutorAction &&
                             !buttonIsRunning(actionButton)) {
@@ -252,10 +269,10 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       else {
         JBUI.CurrentTheme.RunWidget.FOREGROUND
       }
-      IconUtil.toStrokeIcon(icon, resultColor)
+      resultIcon = IconUtil.toStrokeIcon(resultIcon, resultColor)
     }
 
-    super.paintIcon(g, actionButton, toStrokeIcon, x, y)
+    super.paintIcon(g, actionButton, resultIcon, x, y)
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}

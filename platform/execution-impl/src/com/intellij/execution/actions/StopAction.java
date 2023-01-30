@@ -9,6 +9,7 @@ import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
+import com.intellij.execution.ui.RunToolbarWidgetKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -121,6 +122,12 @@ public class StopAction extends DumbAwareAction {
     if (isPlaceGlobal(e)) {
       if (stopCount == 1) {
         ExecutionManagerImpl.stopProcess(stoppableDescriptors.get(0));
+        return;
+      }
+
+      if (ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace()) && project != null) {
+        JBPopup popup = RunToolbarWidgetKt.createStopPopup(dataContext, project);
+        showStopPopup(e, dataContext, project, popup);
         return;
       }
 
