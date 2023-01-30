@@ -52,8 +52,10 @@ public final class TaskUtil {
   }
 
   public static String formatTask(@NotNull Task task, String format) {
-
     Map<String, String> map = formatFromExtensions(task instanceof LocalTask ? (LocalTask)task : new LocalTaskImpl(task));
+    if (!task.isIssue()) {
+      map.put("id", ""); // clear fake id
+    }
     format = updateToVelocity(format);
     return FileTemplateUtil.mergeTemplate(map, format, false);
   }
