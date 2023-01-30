@@ -249,7 +249,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       FileDocumentManager.getInstance().saveAllDocuments()
       return withContext(Dispatchers.IO) {
         blockingContext {
-          ScheduleForAdditionAction.addUnversionedFilesToVcsInSync(project, changeList, unversionedFiles) { newChanges ->
+          ScheduleForAdditionAction.Manager.addUnversionedFilesToVcsInSync(project, changeList, unversionedFiles) { newChanges ->
             inclusionModel.addInclusion(newChanges)
           }
         }
