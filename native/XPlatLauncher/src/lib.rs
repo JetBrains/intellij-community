@@ -35,6 +35,7 @@ mod remote_dev;
 mod default;
 mod docker;
 
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs::File;
@@ -109,6 +110,14 @@ fn main_impl() -> Result<()> {
     log::logger().flush();
 
     result
+}
+
+#[allow(non_snake_case)]
+#[derive(Debug)]
+pub struct IjStarterCommand {
+    pub ij_command: String,
+    pub is_project_path_required: bool,
+    pub is_arguments_required: bool,
 }
 
 #[allow(non_snake_case)]
@@ -240,6 +249,29 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
     full_vm_options.extend_from_slice(&intellij_vm_options);
 
     Ok(full_vm_options)
+}
+
+impl std::fmt::Display for IjStarterCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let path = if self.is_project_path_required {"/path/to/project"} else { "" };
+        let args = if self.is_arguments_required {"[arguments...]"} else { "" };
+        write!(f, "{} {}", path, args)
+    }
+}
+
+pub fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
+    std::collections::HashMap::from([
+        ("run", IjStarterCommand {ij_command: "cwmHostNoLobby".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("status", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("cwmHostStatus", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("dumpLaunchParameters", IjStarterCommand {ij_command: "dump-launch-parameters".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("warmup", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("warm-up", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("invalidate-caches", IjStarterCommand {ij_command: "invalidateCaches".to_string(), is_project_path_required: true, is_arguments_required: false}),
+        ("installPlugins", IjStarterCommand {ij_command: "installPlugins".to_string(), is_project_path_required: false, is_arguments_required: true}),
+        ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: true, is_arguments_required: false}),
+        ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
+    ])
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
