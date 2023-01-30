@@ -73,6 +73,15 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     assertTrue(moduleA.getModuleRuntimeScope(true).contains(libraryClass));
   }
 
+  public void testContentFileOutsideSourceRoots() throws IOException {
+    Module module = createModule("a");
+    VirtualFile file = myFixture.createFile("a/data/A.java", "class A {}");
+    PsiTestUtil.addContentRoot(module, file.getParent());
+    assertFalse(module.getModuleScope().contains(file));
+    assertFalse(module.getModuleWithDependenciesScope().contains(file));
+    assertFalse(module.getModuleWithDependenciesAndLibrariesScope(true).contains(file));
+  }
+
   public void testLibraryScope() throws IOException {
     VirtualFile libraryClass = myFixture.createFile("lib/classes/Test.class");
     VirtualFile librarySrc = myFixture.createFile("lib/src/Test.java", "public class Test { }");
