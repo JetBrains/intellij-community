@@ -2,7 +2,6 @@
 package com.intellij.java.devkit.psiViewer
 
 import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmParameter
 import com.intellij.lang.jvm.types.*
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -59,10 +58,21 @@ data class ClassPosition(val name: String, val index: Int)
 
 data class Edge(val from: String, val to: String)
 
+private val doNotAnalyzePackages: List<String> = listOf(
+  "sun.",
+  "jdk.",
+  "java.",
+  "javax.",
+  "com.google.common.",
+  "io.opentelemetry.",
+  "kotlinx.serialization.",
+  "kotlin.reflect.",
+)
+
 private fun parseLog(logPath: Path): Map<String, ClassPosition> {
   return readLog(logPath).asSequence()
     .filterNot { it.className.contains("LambdaForm\$") || it.className.contains("\$\$Lambda") }
-    .filterNot { it.className.startsWith("sun.") || it.className.startsWith("java.") || it.className.startsWith("javax.") }
+    .filterNot { clazz -> doNotAnalyzePackages.any { clazz.className.startsWith(it) } }
     .mapIndexed { index, loadingEntry ->
       val className = loadingEntry.className.replace("\$", ".")
       className to ClassPosition(className, index)
@@ -101,6 +111,10 @@ private fun visitClass(psiClass: PsiClass, edges: MutableCollection<Edge>, class
   for (psiMethod in psiClass.allMethods) {
     visitMethod(fromClass, psiMethod, edges, classesLog)
   }
+
+  for (constructor in psiClass.constructors) {
+    visitMethod(fromClass, constructor, edges, classesLog)
+  }
 }
 
 private fun visitField(fromClass: String, psiField: PsiField, edges: MutableCollection<Edge>, classesLog: Map<String, ClassPosition>) {
@@ -109,21 +123,15 @@ private fun visitField(fromClass: String, psiField: PsiField, edges: MutableColl
 
 private fun visitMethod(fromClass: String, psiMethod: PsiMethod, edges: MutableCollection<Edge>, classesLog: Map<String, ClassPosition>) {
   for (psiParameter in psiMethod.parameters) {
-    visitParameter(fromClass, psiParameter, edges, classesLog)
+    visitType(fromClass, psiParameter.type, edges, classesLog)
   }
+  visitType(fromClass, psiMethod.returnType, edges, classesLog)
 }
 
-private fun visitParameter(fromClass: String,
-                           psiParam: JvmParameter,
-                           edges: MutableCollection<Edge>,
-                           classesLog: Map<String, ClassPosition>) {
-  visitType(fromClass, psiParam.type, edges, classesLog)
-}
-
-private fun visitType(fromClass: String, psiType: JvmType, edges: MutableCollection<Edge>, classesLog: Map<String, ClassPosition>) {
+private fun visitType(fromClass: String, psiType: JvmType?, edges: MutableCollection<Edge>, classesLog: Map<String, ClassPosition>) {
   val fromClassEntry = classesLog[fromClass] ?: return
 
-  psiType.accept(object : JvmTypeVisitor<Unit> {
+  psiType?.accept(object : JvmTypeVisitor<Unit> {
     override fun visitType(type: JvmType) {
     }
 
