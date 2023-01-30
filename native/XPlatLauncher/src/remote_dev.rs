@@ -7,7 +7,7 @@ use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
 use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, read_file_to_end};
-use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_known_intellij_commands, get_logs_home, IjStarterCommand, LaunchConfiguration};
+use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_known_intellij_commands, get_logs_home, get_remote_dev_env_vars, IjStarterCommand, LaunchConfiguration};
 use crate::docker::is_running_in_docker;
 
 pub struct RemoteDevLaunchConfiguration {
@@ -487,29 +487,6 @@ pub struct RemoteDevArgs {
     pub ij_args: Vec<String>
 }
 
-pub struct RemoteDevEnvVar {
-    pub name: String,
-    pub description: String,
-}
-
-struct RemoteDevEnvVars(pub Vec<RemoteDevEnvVar>);
-
-impl std::fmt::Display for RemoteDevEnvVars {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let max_len = self
-            .0
-            .iter()
-            .map(|rde| rde.name.len())
-            .max()
-            .unwrap_or(0);
-
-        for rde in &self.0 {
-            write!(f, "\t{:max_len$} {}\n", rde.name, rde.description)?;
-        }
-        Ok(())
-    }
-}
-
 fn print_help() {
     let remote_dev_commands = &get_known_intellij_commands();
     let mut remote_dev_commands_message = String::from("\nExamples:\n");
@@ -518,14 +495,7 @@ fn print_help() {
         remote_dev_commands_message.push_str(command_string.as_str())
     }
 
-    let remote_dev_environment_variables = RemoteDevEnvVars(vec![
-        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_TRACE".to_string(), description: "set to any value to get more debug output from the startup script".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_JCEF_ENABLED".to_string(), description: "set to '1' to enable JCEF (embedded chromium) in IDE".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS".to_string(), description: "set to '0' to skip using bundled X11 and other linux libraries from plugins/remote-dev-server/selfcontained. Use everything from the system. by default bundled libraries are used".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE".to_string(), description: "set to any value to use as the script name in this output".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_TRUST_PROJECTS".to_string(), description: "set to any value to skip project trust warning (will execute build scripts automatically)".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_NON_INTERACTIVE".to_string(), description: "set to any value to skip all interactive shell prompts (set automatically if running without TTY)".to_string()},
-    ]);
+    let remote_dev_environment_variables = get_remote_dev_env_vars();
 
     let remote_dev_environment_variables_message = format!("Environment variables:\n{remote_dev_environment_variables}");
 
