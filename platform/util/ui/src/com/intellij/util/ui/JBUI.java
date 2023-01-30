@@ -1796,6 +1796,19 @@ public final class JBUI {
       public static int defaultConfigurationSelectorWidth() {
         return 90;
       }
+
+      public static Font configurationSelectorFont() {
+        return ObjectUtils.coalesce(getFont(configurationSelectorFontKey()), defaultConfigurationSelectorFont());
+      }
+
+      @NotNull
+      public static String configurationSelectorFontKey() {
+        return "RunWidget.configurationSelectorFont";
+      }
+
+      public static Font defaultConfigurationSelectorFont() {
+        return JBFont.label();
+      }
     }
 
     public final static class TitlePane {
