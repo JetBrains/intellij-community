@@ -90,8 +90,9 @@ internal object GHPRDetailsCommitsComponentFactory {
                         ?: CollaborationToolsBundle.message("review.details.commits.popup.all", commits.size)
             val isSelected = selectedCommit == commitsVm.selectedCommit.value
             val icon = if (isSelected) AllIcons.Actions.Checked_selected else JBUIScale.scaleIcon(EmptyIcon.create(12))
+            val isSeparated = selectedCommit == null
 
-            return@showChooserPopup ChooserPopupUtil.PopupItemPresentation.Simple(title, icon)
+            return@showChooserPopup ChooserPopupUtil.PopupItemPresentation.Simple(shortText = title, icon = icon, isSeparated = isSeparated)
           }
 
           commitsVm.selectCommit(selectedCommit)
