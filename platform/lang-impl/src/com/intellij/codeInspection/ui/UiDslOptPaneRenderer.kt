@@ -23,7 +23,7 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.layout.selected
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.applyIf
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory
@@ -176,8 +176,9 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         cell = renderOptCell(component, context)
 
         nestedInRow?.let { nested ->
+          val checkbox = cell.component as JBCheckBox
           renderOptCell(nested, context)
-            .enabledIf((cell.component as JBCheckBox).selected)
+            .enabledIf(checkboxPredicate(checkbox))
         }
       }
     }
@@ -187,14 +188,21 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
     // Nested components
     component.nestedControls?.let { nested ->
+      val controlsToRender = nested.drop(if (nestedInRow != null) 1 else 0)
       val group = indent {
-        nested
-          .drop(if (nestedInRow != null) 1 else 0)
+        controlsToRender
           .forEachIndexed { i, component -> render(component, context, i == 0) }
       }
-      if (cell.component is JBCheckBox) {
-        group.enabledIf((cell.component as JBCheckBox).selected)
+      if (controlsToRender.isNotEmpty() && cell.component is JBCheckBox) {
+        group.enabledIf(checkboxPredicate(cell.component as JBCheckBox))
       }
+    }
+  }
+
+  private fun checkboxPredicate(checkbox: JBCheckBox) = object : ComponentPredicate() {
+    override fun invoke(): Boolean = checkbox.isSelected && checkbox.isEnabled
+    override fun addListener(listener: (Boolean) -> Unit) {
+      checkbox.addChangeListener { listener(invoke()) }
     }
   }
 
