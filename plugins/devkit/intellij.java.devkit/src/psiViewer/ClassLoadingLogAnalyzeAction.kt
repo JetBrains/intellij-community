@@ -64,6 +64,7 @@ private val doNotAnalyzePackages: List<String> = listOf(
   "java.",
   "javax.",
   "com.google.common.",
+  "com.fasterxml.",
   "io.opentelemetry.",
   "kotlinx.serialization.",
   "kotlin.reflect.",
