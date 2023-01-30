@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.ui.GroupHeaderSeparator
+import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
@@ -139,12 +140,12 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     val actionsMap: Map<Boolean, List<AnAction>> = RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).groupBy { openProjectsPredicate.test(it) }
 
     actionsMap[true]?.let {
-      res.addSeparator(IdeBundle.message("project.widget.open.projects"))
+      res.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.open.projects"))
       res.addAll(it)
     }
 
     actionsMap[false]?.let {
-      res.addSeparator(IdeBundle.message("project.widget.recent.projects"))
+      res.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.recent.projects"))
       res.addAll(it)
     }
 
