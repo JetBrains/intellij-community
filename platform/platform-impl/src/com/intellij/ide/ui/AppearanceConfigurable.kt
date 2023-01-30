@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
@@ -130,8 +129,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   private var shouldUpdateLaF = false
 
   private val propertyGraph = PropertyGraph()
-  private val lafProperty = propertyGraph.graphProperty { lafManager.lookAndFeelReference }
-  private val syncThemeProperty = propertyGraph.graphProperty { lafManager.autodetect }
+  private val lafProperty = propertyGraph.lazyProperty { lafManager.lookAndFeelReference }
+  private val syncThemeProperty = propertyGraph.lazyProperty { lafManager.autodetect }
 
   override fun createPanel(): DialogPanel {
     lafProperty.afterChange(disposable!!) {
