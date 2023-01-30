@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui
 
-import com.intellij.application.options.editor.CheckboxDescriptor
-import com.intellij.application.options.editor.checkBox
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -89,53 +87,53 @@ class ShowGotItDemoAction : DumbAwareAction() {
         textArea()
           .label("Text:")
           .columns(COLUMNS_LARGE)
-          .bindText(this@GotItConfigurationDialog::text)
+          .bindText(::text)
           .align(AlignX.FILL)
       }
       row {
-        checkBox(CheckboxDescriptor("Add inline links to text", this@GotItConfigurationDialog::addInlineLinks))
+        checkBox("Add inline links to text").bindSelected(::addInlineLinks)
       }
       row {
-        val checkbox = checkBox(CheckboxDescriptor("Header:", this@GotItConfigurationDialog::showHeader))
+        val checkbox = checkBox("Header:").bindSelected(::showHeader)
         textField()
-          .bindText(this@GotItConfigurationDialog::headerText)
+          .bindText(::headerText)
           .enabledIf(checkbox.selected)
           .align(AlignX.FILL)
       }
       row {
-        val checkbox = checkBox(CheckboxDescriptor("Image", this@GotItConfigurationDialog::showImage))
+        val checkbox = checkBox("Image").bindSelected(::showImage)
         intTextField(IntRange(JBUI.scale(100), JBUI.scale(500)))
           .label("Width:")
-          .bindIntText(this@GotItConfigurationDialog::imageWidth)
+          .bindIntText(::imageWidth)
           .enabledIf(checkbox.selected)
         intTextField(IntRange(JBUI.scale(50), JBUI.scale(300)))
           .label("Height:")
-          .bindIntText(this@GotItConfigurationDialog::imageHeight)
+          .bindIntText(::imageHeight)
           .enabledIf(checkbox.selected)
       }
 
       lateinit var iconOrStepCheckbox: Cell<JBCheckBox>
       row {
         @Suppress("DialogTitleCapitalization")
-        iconOrStepCheckbox = checkBox(CheckboxDescriptor("Icon or Step Number:", this@GotItConfigurationDialog::showIconOrStep))
+        iconOrStepCheckbox = checkBox("Icon or Step Number:").bindSelected(::showIconOrStep)
       }
       buttonsGroup(indent = true) {
         row {
           val button = radioButton("Step number:")
-            .bindSelected(this@GotItConfigurationDialog::showStepNumber)
+            .bindSelected(::showStepNumber)
           intTextField(IntRange(1, 99))
-            .bindIntText(this@GotItConfigurationDialog::stepNumber)
+            .bindIntText(::stepNumber)
             .enabledIf(button.selected)
         }
         row {
           radioButton("Icon")
-            .bindSelected(this@GotItConfigurationDialog::showIcon)
+            .bindSelected(::showIcon)
         }
       }.enabledIf(iconOrStepCheckbox.selected)
 
       lateinit var linkCheckbox: Cell<JBCheckBox>
       row {
-        linkCheckbox = checkBox(CheckboxDescriptor("Link:", this@GotItConfigurationDialog::showLink))
+        linkCheckbox = checkBox("Link:").bindSelected(::showLink)
       }
       buttonsGroup(indent = true) {
         fun Row.radioButtonWithTextField(name: String, showProperty: KMutableProperty0<Boolean>, textProperty: KMutableProperty0<String>) {
@@ -148,17 +146,17 @@ class ShowGotItDemoAction : DumbAwareAction() {
         }
 
         row {
-          radioButtonWithTextField("Action:", this@GotItConfigurationDialog::actionLink,
-                                   this@GotItConfigurationDialog::actionLinkText)
+          radioButtonWithTextField("Action:", ::actionLink,
+                                   ::actionLinkText)
         }
         row {
-          radioButtonWithTextField("Browser:", this@GotItConfigurationDialog::browserLink,
-                                   this@GotItConfigurationDialog::browserLinkText)
+          radioButtonWithTextField("Browser:", ::browserLink,
+                                   ::browserLinkText)
         }
       }.enabledIf(linkCheckbox.selected)
 
       row {
-        checkBox(CheckboxDescriptor("GotIt button", this@GotItConfigurationDialog::showButton))
+        checkBox("GotIt button").bindSelected(::showButton)
       }
       row("Position:") {
         comboBox(positionsModel)
