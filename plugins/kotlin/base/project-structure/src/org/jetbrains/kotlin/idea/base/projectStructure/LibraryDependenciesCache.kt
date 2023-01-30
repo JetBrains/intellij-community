@@ -31,5 +31,12 @@ interface LibraryDependenciesCache {
         val sourcesOnlyDependencies: List<LibraryInfo>,
     ) {
         val librariesWithoutSelf: List<LibraryInfo> by lazy { libraries - library }
+
+        fun checkValidity() {
+            library.checkValidity()
+            libraries.forEach { it.checkValidity() }
+            sdk.forEach { it.checkValidity() }
+            sourcesOnlyDependencies.forEach { it.checkValidity() }
+        }
     }
 }
