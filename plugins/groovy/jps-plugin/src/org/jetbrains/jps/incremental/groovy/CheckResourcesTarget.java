@@ -37,7 +37,7 @@ import java.util.*;
 public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescriptor> {
   @NotNull private final JpsModule myModule;
 
-  CheckResourcesTarget(@NotNull JpsModule module, Type targetType) {
+  CheckResourcesTarget(@NotNull JpsModule module, @NotNull Type targetType) {
     super(targetType);
     myModule = module;
   }

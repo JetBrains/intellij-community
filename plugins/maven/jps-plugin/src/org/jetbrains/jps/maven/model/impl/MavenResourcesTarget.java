@@ -26,7 +26,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDescriptor> {
-  MavenResourcesTarget(final MavenResourcesTargetType type, @NotNull JpsModule module) {
+  MavenResourcesTarget(@NotNull MavenResourcesTargetType type, @NotNull JpsModule module) {
     super(type, module);
   }
 

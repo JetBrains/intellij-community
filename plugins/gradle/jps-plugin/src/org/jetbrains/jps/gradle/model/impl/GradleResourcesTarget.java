@@ -27,7 +27,7 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootDescriptor> {
-  GradleResourcesTarget(final GradleResourcesTargetType type, @NotNull JpsModule module) {
+  GradleResourcesTarget(@NotNull GradleResourcesTargetType type, @NotNull JpsModule module) {
     super(type, module);
   }
 
