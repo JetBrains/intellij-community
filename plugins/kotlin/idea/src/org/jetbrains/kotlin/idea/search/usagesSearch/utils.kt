@@ -3,16 +3,17 @@
 package org.jetbrains.kotlin.idea.search.usagesSearch
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.MethodSignatureUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.projectStructure.IDELanguageSettingsProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -267,9 +268,10 @@ fun PsiElement.getReceiverTypeSearcherInfo(isDestructionDeclarationSearch: Boole
 
 fun KtFile.getDefaultImports(): List<ImportPath> {
     val moduleInfo = this.moduleInfoOrNull ?: return emptyList()
+    val languageVersionSettings = project.service<LanguageSettingsProvider>().getLanguageVersionSettings(moduleInfo, project)
     return platform
         .findAnalyzerServices(project)
-        .getDefaultImports(IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, project), includeLowPriorityImports = true)
+        .getDefaultImports(languageVersionSettings, includeLowPriorityImports = true)
 }
 
 fun PsiFile.scriptDefinitionExists(): Boolean = findScriptDefinition() != null
