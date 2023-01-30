@@ -3,10 +3,7 @@ plugins {
     kotlin("android")
 }
 
-android {
-    compileSdkVersion({{compile_sdk_version}})
-    buildToolsVersion("{{build_tools_version}}")
-}
+{{default_android_block}}
 
 dependencies {
     implementation("org.jetbrains.kotlin.mpp.tests:kmmLib:1.0")
