@@ -221,7 +221,7 @@ object ProjectUtil {
           runConfigurators = true,
           beforeOpen = {
             it.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
-            true
+            options.beforeOpen?.invoke(it) ?: true
           },
         )
       )
