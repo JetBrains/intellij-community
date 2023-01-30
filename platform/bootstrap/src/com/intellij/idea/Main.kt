@@ -15,8 +15,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
-import sun.font.FontManager
-import sun.font.FontManagerFactory
 import java.awt.GraphicsEnvironment
 import java.io.IOException
 import java.lang.invoke.MethodHandles
@@ -53,6 +51,7 @@ fun main(rawArgs: Array<String>) {
         val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
         MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
       }
+
       initProjectorIfNeeded(args)
       // Must be called after projector init
       initLuxIfNeeded(args)
@@ -74,26 +73,6 @@ fun main(rawArgs: Array<String>) {
   }
 }
 
-private fun initLuxIfNeeded(args: List<String>) {
-  if (args.isEmpty() || (AppMode.CWM_HOST_COMMAND != args[0] && AppMode.CWM_HOST_NO_LOBBY_COMMAND != args[0])) {
-    return
-  }
-  if (System.getProperty("lux.enabled").toBoolean()) {
-    System.setProperty("awt.nativeDoubleBuffering", false.toString())
-    System.setProperty("swing.bufferPerWindow", true.toString())
-
-    System.clearProperty("sun.font.fontmanager")
-    FontManagerFactory::class.java.getDeclaredField("instance").apply {
-      isAccessible = true
-      set(null, null)
-      val luxClass = AppStarter::class.java.classLoader.loadClass("com.jetbrains.rdserver.lux.LuxFontManager")
-      val inst = luxClass.getDeclaredMethod("getInstance").invoke(null) as FontManager
-      set(null, inst)
-    }
-    System.setProperty("sun.font.fontmanager", "com.jetbrains.rdserver.lux.LuxFontManager")
-  }
-}
-
 private fun initProjectorIfNeeded(args: List<String>) {
   if (args.isEmpty() || (AppMode.CWM_HOST_COMMAND != args[0] && AppMode.CWM_HOST_NO_LOBBY_COMMAND != args[0] && AppMode.REMOTE_DEV_HOST_COMMAND != args[0])) {
     return
@@ -104,7 +83,7 @@ private fun initProjectorIfNeeded(args: List<String>) {
   }
 
   runActivity("cwm host init") {
-    JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider( Supplier {
+    JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider(Supplier {
       val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
       projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
     })
@@ -114,6 +93,21 @@ private fun initProjectorIfNeeded(args: List<String>) {
       projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)
     ).invoke()
   }
+}
+
+private fun initLuxIfNeeded(args: List<String>) {
+  if (args.isEmpty() || (AppMode.CWM_HOST_COMMAND != args[0] && AppMode.CWM_HOST_NO_LOBBY_COMMAND != args[0] && AppMode.REMOTE_DEV_HOST_COMMAND != args[0])) {
+    return
+  }
+  if (!System.getProperty("lux.enabled").toBoolean()) {
+    return
+  }
+  if (!JBR.isGraphicsUtilsSupported()) {
+    error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
+  }
+
+  System.setProperty("awt.nativeDoubleBuffering", false.toString())
+  System.setProperty("swing.bufferPerWindow", true.toString())
 }
 
 private fun bootstrap(startupTimings: ArrayList<Pair<String, Long>>) {
