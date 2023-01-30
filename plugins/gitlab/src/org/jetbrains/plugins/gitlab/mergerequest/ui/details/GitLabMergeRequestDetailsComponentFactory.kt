@@ -4,8 +4,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
-import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
-import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindContent
 import com.intellij.collaboration.ui.util.emptyBorders
@@ -18,10 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabTimelinesController
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import javax.swing.JComponent
@@ -31,10 +26,9 @@ internal object GitLabMergeRequestDetailsComponentFactory {
   fun createDetailsComponent(
     project: Project,
     scope: CoroutineScope,
-    connection: GitLabProjectConnection,
-    detailsVm: GitLabMergeRequestDetailsLoadingViewModel
+    detailsVm: GitLabMergeRequestDetailsLoadingViewModel,
+    avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
-    val repo = connection.repo.repository
     val wrapper = Wrapper()
 
     wrapper.bindContent(scope, detailsVm.mergeRequestLoadingFlow) { contentCs, loadingState ->
@@ -42,15 +36,11 @@ internal object GitLabMergeRequestDetailsComponentFactory {
         GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Loading -> LoadingLabel()
         is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error -> SimpleHtmlPane(loadingState.exception.localizedMessage)
         is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result -> {
-          val avatarIconsProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(
-            AsyncImageIconsProvider(contentCs, connection.imageLoader)
-          )
           createDetailsComponent(
             project,
             contentCs,
             loadingState.detailsVm,
-            avatarIconsProvider,
-            openTimeLineAction = { mergeRequestId, focus -> GitLabTimelinesController.openTimeline(project, repo, mergeRequestId, focus) }
+            avatarIconsProvider
           )
         }
       }
@@ -63,8 +53,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     project: Project,
     cs: CoroutineScope,
     detailsVm: GitLabMergeRequestDetailsViewModel,
-    avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-    openTimeLineAction: (GitLabMergeRequestId, Boolean) -> Unit
+    avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
     val detailsInfoVm = detailsVm.detailsInfoVm
     val detailsReviewFlowVm = detailsVm.detailsReviewFlowVm
@@ -93,7 +82,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
                            right = ReviewDetailsUIUtil.indentRight,
                            top = ReviewDetailsUIUtil.indentTop,
                            bottom = ReviewDetailsUIUtil.gapBetweenTitleAndDescription))
-      add(GitLabMergeRequestDetailsDescriptionComponentFactory.create(cs, detailsInfoVm, openTimeLineAction),
+      add(GitLabMergeRequestDetailsDescriptionComponentFactory.create(cs, detailsInfoVm),
           CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft,
                            right = ReviewDetailsUIUtil.indentRight,
                            bottom = ReviewDetailsUIUtil.gapBetweenDescriptionAndCommits))

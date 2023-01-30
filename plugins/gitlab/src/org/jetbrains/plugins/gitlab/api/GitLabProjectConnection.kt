@@ -13,6 +13,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
 import org.jetbrains.plugins.gitlab.providers.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import java.util.*
 
 class GitLabProjectConnection(
   private val scope: CoroutineScope,
@@ -22,6 +23,8 @@ class GitLabProjectConnection(
   val apiClient: GitLabApi,
   tokenState: Flow<String>
 ) : HostedGitRepositoryConnection<GitLabProjectMapping, GitLabAccount> {
+  val id: String = UUID.randomUUID().toString()
+
   val tokenRefreshFlow: Flow<Unit> = tokenState.map { }
 
   val projectData = GitLabLazyProject(scope.childScope(), apiClient, repo)
