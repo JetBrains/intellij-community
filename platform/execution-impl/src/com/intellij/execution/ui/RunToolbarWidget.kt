@@ -242,11 +242,7 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
-    ExecutionManagerImpl.getInstance(e.project ?: return)
-      .getRunningDescriptors { true }
-      .forEach { descr ->
-        ExecutionManagerImpl.stopProcess(descr)
-      }
+    stopAll(e)
   }
 
   override fun update(e: AnActionEvent) {
@@ -293,7 +289,9 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
     RunButtonColors.RED.updateColors(button)
     button.isPaintEnable = processes > 0
     button.isEnabled = presentation.isEnabled
-    button.dropDownPopup = if (processes == 1) null else { context -> createPopup(context, context.getData(PlatformDataKeys.PROJECT)!!) }
+    button.dropDownPopup = if (processes == 1) null else { context ->
+      context.getData(PlatformDataKeys.PROJECT)?. let { createStopPopup(context, it) }
+    }
     button.toolTipText = when {
       processes == 1 -> ExecutionBundle.message("run.toolbar.widget.stop.description", presentation.getClientProperty(SINGLE_RUNNING_NAME))
       processes > 1 -> ExecutionBundle.message("run.toolbar.widget.stop.multiple.description")
@@ -302,34 +300,42 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
     button.icon = presentation.icon
   }
 
-  private fun createPopup(context: DataContext, project: Project): JBPopup {
-    val group = DefaultActionGroup()
-    val manager = ExecutionManagerImpl.getInstance(project)
-    val running = manager.getRunningDescriptors { true }.asReversed()
-    running.forEach { descr ->
-      val name = getConfigurations(manager, descr)?.shortenName() ?: descr.displayName
-      group.add(DumbAwareAction.create(name) {
-        ExecutionManagerImpl.stopProcess(descr)
-      })
-    }
-    group.addSeparator()
-    group.add(DumbAwareAction.create(ExecutionBundle.message("stop.all", KeymapUtil.getFirstKeyboardShortcutText("Stop"))) {
-      actionPerformed(it)
-    })
-    return JBPopupFactory.getInstance().createActionGroupPopup(
-      null,
-      group,
-      context,
-      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-      true,
-      ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR)
-    )
-  }
-
   companion object {
     private val ACTIVE_PROCESSES: Key<Int> = Key.create("ACTIVE_PROCESSES")
     private val SINGLE_RUNNING_NAME: Key<String> = Key.create("SINGLE_RUNNING_NAME")
   }
+}
+
+private fun stopAll(e: AnActionEvent) {
+  ExecutionManagerImpl.getInstance(e.project ?: return)
+    .getRunningDescriptors { true }
+    .forEach { descr ->
+      ExecutionManagerImpl.stopProcess(descr)
+    }
+}
+
+fun createStopPopup(context: DataContext, project: Project): JBPopup {
+  val group = DefaultActionGroup()
+  val manager = ExecutionManagerImpl.getInstance(project)
+  val running = manager.getRunningDescriptors { true }.asReversed()
+  running.forEach { descr ->
+    val name = getConfigurations(manager, descr)?.shortenName() ?: descr.displayName
+    group.add(DumbAwareAction.create(name) {
+      ExecutionManagerImpl.stopProcess(descr)
+    })
+  }
+  group.addSeparator()
+  group.add(DumbAwareAction.create(ExecutionBundle.message("stop.all", KeymapUtil.getFirstKeyboardShortcutText("Stop"))) {
+    stopAll(it)
+  })
+  return JBPopupFactory.getInstance().createActionGroupPopup(
+    null,
+    group,
+    context,
+    JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+    true,
+    ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR)
+  )
 }
 
 private class RunToolbarWidgetRunAction(
@@ -380,7 +386,7 @@ private open class RunDropDownButton(
   icon: Icon? = null
 ) : JButton(text, icon) {
 
-  var dropDownPopup: ((DataContext) -> JBPopup)? by Delegates.observable(null) { prop, oldValue, newValue ->
+  var dropDownPopup: ((DataContext) -> JBPopup?)? by Delegates.observable(null) { prop, oldValue, newValue ->
     firePropertyChange(prop.name, oldValue, newValue)
     if (oldValue != newValue) {
       revalidate()
