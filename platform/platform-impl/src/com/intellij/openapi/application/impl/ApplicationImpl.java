@@ -61,7 +61,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   // do not use PluginManager.processException() because it can force app to exit, but we want just to log an error and continue
   private static final Logger LOG = Logger.getInstance(ApplicationImpl.class);
 
-  public static final boolean IMPLICIT_READ_ON_EDT_DISABLED = StartupUtil.isImplicitReadOnEDTDisabled();
+  static final boolean IMPLICIT_READ_ON_EDT_DISABLED = StartupUtil.isImplicitReadOnEDTDisabled();
 
   final ReadMostlyRWLock myLock;
 
@@ -1446,7 +1446,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     try {
       myLock.setImplicitReadAllowance(false);
       runnable.run();
-    } finally {
+    }
+    finally {
       myLock.setImplicitReadAllowance(oldVal);
     }
   }

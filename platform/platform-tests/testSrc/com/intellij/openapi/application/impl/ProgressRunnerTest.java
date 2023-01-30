@@ -1,14 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.progress.impl;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.impl.BlockingProgressIndicator;
+import com.intellij.openapi.progress.impl.ProgressResult;
+import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.ProgressWindowTest.TestProgressWindow;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -23,7 +24,6 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -269,7 +269,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
   @Test
   public void testToPooledThreadWithProgressWindowWithCanceledInvokeAndWait() throws Throwable {
-    Assume.assumeTrue(myOnEdt);
+    if (!myOnEdt) return; // non-EDT implementation doesn't go through startBlocking()
 
     var result = new ProgressRunner<>(() -> {
       var progressWindow = (TestProgressWindow)ProgressIndicatorProvider.getGlobalProgressIndicator();
@@ -359,7 +359,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
   @Test
   public void testStartBlockingExceptionPropagation() {
-    Assume.assumeTrue(myOnEdt); // non-EDT implementation doesn't go through startBlocking()
+    if (!myOnEdt) return; // non-EDT implementation doesn't go through startBlocking()
 
     var t = new RuntimeException();
     class ThrowingIndicator extends EmptyProgressIndicator implements BlockingProgressIndicator {
