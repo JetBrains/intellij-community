@@ -23,8 +23,8 @@ import org.jetbrains.kotlin.idea.base.facet.refinesFragmentIds
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.facet.*
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl.findKotlinPluginVersion
 import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
+import org.jetbrains.kotlin.idea.gradleJava.findKotlinPluginVersion
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.CommonPlatforms

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
@@ -183,7 +184,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             additionalRunTasks: Collection<ExternalSystemRunTask>? = null
         ): KotlinFacet {
 
-            val compilerVersion = KotlinGradleFacadeImpl.findKotlinPluginVersion(mainModuleNode)
+            val compilerVersion = KotlinGradleFacade.instance?.findKotlinPluginVersion(mainModuleNode)
             // ?: return null TODO: Fix in CLion or our plugin KT-27623
 
             val platformKinds = kotlinSourceSet.actualPlatforms.platforms //TODO(auskov): fix calculation of jvm target
