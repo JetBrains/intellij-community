@@ -7,8 +7,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
+import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -20,26 +22,26 @@ import org.jetbrains.annotations.ApiStatus
  * When [projectContext] appears Review List will be shown (by [ReviewTabsComponentFactory.createReviewListComponent]),
  * and requests in [reviewTabsController] will be handled, according to described in [ReviewTab] [ReviewTab.id] logic.
  * So, new tabs will be shown using [ReviewTabsComponentFactory.createTabComponent].
- *
- * Managing finishes when [contentManager] is disposed.
  */
 @ApiStatus.Experimental
 fun <T : ReviewTab, C : ReviewToolwindowProjectContext> manageReviewToolwindowTabs(
+  cs: CoroutineScope,
   contentManager: ContentManager,
   projectContext: StateFlow<C?>,
   reviewTabsController: ReviewTabsController<T>,
   tabComponentFactory: ReviewTabsComponentFactory<T, C>
 ) {
-  ReviewToolwindowTabsManager(contentManager, projectContext, reviewTabsController, tabComponentFactory)
+  ReviewToolwindowTabsManager(cs, contentManager, projectContext, reviewTabsController, tabComponentFactory)
 }
 
 private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowProjectContext>(
+  private val parentCs: CoroutineScope,
   private val contentManager: ContentManager,
   private val projectContext: StateFlow<C?>,
   private val reviewTabsController: ReviewTabsController<T>,
   private val tabComponentFactory: ReviewTabsComponentFactory<T, C>
 ) {
-  private val cs = contentManager.disposingMainScope()
+  private val cs = parentCs.childScope(Dispatchers.Main)
 
   private val tabsSelector = object : ReviewToolwindowTabsContentSelector<T> {
     override suspend fun selectTab(reviewTab: T): Content? {

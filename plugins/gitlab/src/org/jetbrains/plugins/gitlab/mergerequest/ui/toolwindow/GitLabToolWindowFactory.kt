@@ -38,7 +38,7 @@ internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
     val tabsController = GitLabReviewTabsController()
     val componentFactory = GitLabReviewTabComponentFactory(project)
 
-    manageReviewToolwindowTabs(toolWindow.contentManager, projectContext, tabsController, componentFactory)
+    manageReviewToolwindowTabs(cs, toolWindow.contentManager, projectContext, tabsController, componentFactory)
     // TODO: introduce account changing action under gear
   }
 
