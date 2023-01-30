@@ -756,13 +756,12 @@ private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job, args:
     configImportNeededDeferred.join()
 
     runActivity("system dirs locking") {
-      val simple = PlatformUtils.isFleetBackend()
-      val directoryLock = DirectoryLock(PathManager.getConfigDir(), PathManager.getSystemDir(), if (simple) null else { args ->
+      val directoryLock = DirectoryLock(PathManager.getConfigDir(), PathManager.getSystemDir()) { args ->
         @Suppress("RAW_RUN_BLOCKING")
         runBlocking {
           commandProcessor.get()(args).await()
         }
-      })
+      }
 
       try {
         val currentDir = Path.of(System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR) ?: "").toAbsolutePath()

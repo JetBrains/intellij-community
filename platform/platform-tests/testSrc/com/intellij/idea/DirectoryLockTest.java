@@ -59,6 +59,13 @@ public abstract sealed class DirectoryLockTest {
     }
   }
 
+  public static final class CustomFileSystemTest extends DirectoryLockTest {
+    @Override
+    protected Path getTestDir() {
+      return memoryFs.getFs().getPath(tempDir.getRootPath().toString());
+    }
+  }
+
   @Rule public final TestRule watcher = TestLoggerFactory.createTestWatcher();
   @Rule public final Timeout timeout = Timeout.seconds(30);
   @Rule public final TempDirectory tempDir = new TempDirectory();
@@ -88,12 +95,6 @@ public abstract sealed class DirectoryLockTest {
 
   private DirectoryLock createLock(Path configPath, Path systemPath) {
     var lock = new DirectoryLock(configPath, systemPath, args -> CliResult.OK);
-    activeLocks.add(lock);
-    return lock;
-  }
-
-  private DirectoryLock createSimpleLock(Path configPath, Path systemPath) {
-    var lock = new DirectoryLock(configPath, systemPath, null);
     activeLocks.add(lock);
     return lock;
   }
@@ -146,10 +147,12 @@ public abstract sealed class DirectoryLockTest {
 
   @Test
   public void activatingViaCaseMismatchingPath() throws Exception {
-    assumeTrue("case-insensitive system-only", !SystemInfo.isFileSystemCaseSensitive);
+    var configDir1 = Files.createDirectories(testDir.resolve("c"));
+    var configDir2 = Files.createDirectories(testDir.resolve("C"));
+    assumeTrue("case-insensitive system-only", Files.isSameFile(configDir1, configDir2));
 
-    var lock1 = createLock(testDir.resolve("c"), testDir.resolve("s"));
-    var lock2 = createLock(testDir.resolve("C"), testDir.resolve("S"));
+    var lock1 = createLock(configDir1, testDir.resolve("s"));
+    var lock2 = createLock(configDir2, testDir.resolve("S"));
     assertNull(lock1.lockOrActivate(Path.of(""), List.of()));
     assertNotNull(lock2.lockOrActivate(Path.of(""), List.of()));
   }
@@ -206,29 +209,5 @@ public abstract sealed class DirectoryLockTest {
     Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), String.valueOf(ProcessHandle.current().pid()));
     var lock = createLock(configDir, testDir.resolve("s"));
     assertThatThrownBy(() -> lock.lockOrActivate(Path.of(""), List.of())).isInstanceOf(CannotActivateException.class);
-  }
-
-  @Test
-  public void simpleLocking() throws Exception {
-    var localTestDir = memoryFs.getFs().getPath(testDir.toString());
-    var configDir = localTestDir.resolve("c");
-    var systemDir = localTestDir.resolve("s");
-    var lock1 = createSimpleLock(configDir, systemDir);
-    var lock2 = createSimpleLock(configDir, systemDir);
-    assertNull(lock1.lockOrActivate(Path.of(""), List.of()));
-    assertThatThrownBy(() -> lock2.lockOrActivate(Path.of(""), List.of())).isInstanceOf(CannotActivateException.class);
-  }
-
-  @Test
-  public void deletingStaleSimpleLockFiles() throws Exception {
-    var localTestDir = memoryFs.getFs().getPath(testDir.toString());
-    var configDir = Files.createDirectories(localTestDir.resolve("c"));
-    var systemDir = Files.createDirectories(localTestDir.resolve("s"));
-    Files.writeString(systemDir.resolve(SpecialConfigFiles.PORT_FILE), "---");
-    Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), "---");
-    var lock1 = createSimpleLock(configDir, systemDir);
-    var lock2 = createSimpleLock(configDir, systemDir);
-    assertNull(lock1.lockOrActivate(Path.of(""), List.of()));
-    assertThatThrownBy(() -> lock2.lockOrActivate(Path.of(""), List.of())).isInstanceOf(CannotActivateException.class);
   }
 }
