@@ -114,7 +114,7 @@ class DefaultStatementConverter : JavaElementVisitor(), StatementConverter {
 
     override fun visitIfStatement(statement: PsiIfStatement) {
         val condition = statement.condition
-        val expression = codeConverter.convertExpression(condition, PsiType.BOOLEAN)
+        val expression = codeConverter.convertExpression(condition, PsiTypes.booleanType())
         result = IfStatement(expression,
                              codeConverter.convertStatementOrBlock(statement.thenBranch),
                              codeConverter.convertStatementOrBlock(statement.elseBranch),

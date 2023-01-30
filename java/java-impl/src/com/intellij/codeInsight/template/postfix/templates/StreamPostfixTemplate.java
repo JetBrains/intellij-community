@@ -35,7 +35,7 @@ public class StreamPostfixTemplate extends StringBasedPostfixTemplate {
     PsiType componentType = ((PsiArrayType)type).getComponentType();
     if (!(componentType instanceof PsiPrimitiveType)) return true;
 
-    return componentType.equals(PsiType.INT) || componentType.equals(PsiType.LONG) || componentType.equals(PsiType.DOUBLE);
+    return componentType.equals(PsiTypes.intType()) || componentType.equals(PsiTypes.longType()) || componentType.equals(PsiTypes.doubleType());
   };
 
   public StreamPostfixTemplate() {

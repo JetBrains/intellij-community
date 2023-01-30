@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestsListViewModel.ListDataUpdate
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
@@ -37,7 +37,7 @@ internal interface GitLabMergeRequestsListViewModel {
   fun reset()
 
   sealed interface ListDataUpdate {
-    class NewBatch(val newList: List<GitLabMergeRequestShortDTO>, val batch: List<GitLabMergeRequestShortDTO>) : ListDataUpdate
+    class NewBatch(val newList: List<GitLabMergeRequestDetails>, val batch: List<GitLabMergeRequestDetails>) : ListDataUpdate
     object Clear : ListDataUpdate
   }
 }
@@ -50,12 +50,12 @@ internal class GitLabMergeRequestsListViewModelImpl(
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   override val accountManager: GitLabAccountManager,
   private val tokenRefreshFlow: Flow<Unit>,
-  private val loaderSupplier: (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestShortDTO>)
+  private val loaderSupplier: (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestDetails>)
   : GitLabMergeRequestsListViewModel {
 
   private val scope = parentCs.childScope(Dispatchers.Main)
 
-  private val listState = mutableListOf<GitLabMergeRequestShortDTO>()
+  private val listState = mutableListOf<GitLabMergeRequestDetails>()
   private val _listDataFlow: MutableSharedFlow<ListDataUpdate> = MutableSharedFlow()
   override val listDataFlow: SharedFlow<ListDataUpdate> = _listDataFlow.asSharedFlow()
 
@@ -106,7 +106,7 @@ internal class GitLabMergeRequestsListViewModelImpl(
     }
   }
 
-  private suspend fun handleLoadingRequest(loader: SequentialListLoader<GitLabMergeRequestShortDTO>) {
+  private suspend fun handleLoadingRequest(loader: SequentialListLoader<GitLabMergeRequestDetails>) {
     _loadingState.value = true
     try {
       val (data, hasMore) = loader.loadNext()

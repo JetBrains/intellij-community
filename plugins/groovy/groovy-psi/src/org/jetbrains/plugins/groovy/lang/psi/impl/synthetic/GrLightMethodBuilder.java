@@ -47,7 +47,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   public static final Key<String> KIND_KEY = Key.create("GrLightMethodBuilder.Key");
 
   protected @NlsSafe String myName;
-  private PsiType myReturnType = PsiType.VOID;
+  private PsiType myReturnType = PsiTypes.voidType();
   private final GrLightModifierList myModifierList;
   private final GrLightParameterListBuilder myParameterList;
   private final LightTypeParameterListBuilder myTypeParameterList;

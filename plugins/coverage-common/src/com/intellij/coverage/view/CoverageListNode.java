@@ -23,10 +23,12 @@ import java.awt.*;
 import java.util.List;
 
 public class CoverageListNode extends AbstractTreeNode<Object> {
-  protected CoverageSuitesBundle myBundle;
-  protected CoverageViewManager.StateBean myStateBean;
+  protected final CoverageSuitesBundle myBundle;
+  protected final CoverageViewManager.StateBean myStateBean;
   private final FileStatusManager myFileStatusManager;
+  private volatile List<AbstractTreeNode<?>> myChildren;
   private final boolean myIsLeaf;
+  private boolean myFullyCovered = false;
 
   public CoverageListNode(Project project,
                           @NotNull PsiNamedElement classOrPackage,
@@ -49,28 +51,77 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
     myIsLeaf = isLeaf;
   }
 
+  public synchronized void reset() {
+    myChildren = null;
+  }
+
   public boolean isLeaf() {
     return myIsLeaf;
+  }
+
+  protected boolean isFullyCovered() {
+    return myFullyCovered;
+  }
+
+  public void setFullyCovered(boolean value) {
+    myFullyCovered = value;
+  }
+
+  private CoverageListRootNode myRoot;
+
+  CoverageListRootNode getRoot() {
+    if (myRoot == null) {
+      var node = this;
+      while (true) {
+        var parent = (CoverageListNode)node.getParent();
+        if (parent == null) break;
+        node = parent;
+      }
+      myRoot = (CoverageListRootNode)node;
+    }
+    return myRoot;
   }
 
   @NotNull
   @Override
   public List<? extends AbstractTreeNode<?>> getChildren() {
-    final var nodes = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle, myStateBean)
-      .getChildrenNodes(this);
-    return filterChildren(nodes);
+    return getChildrenInternal();
+  }
+
+  private synchronized List<? extends AbstractTreeNode<?>> getChildrenInternal() {
+    if (myChildren == null) {
+      final var nodes = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle, myStateBean)
+        .getChildrenNodes(this);
+      myChildren = filterChildren(nodes);
+    }
+    return myChildren;
   }
 
   protected List<AbstractTreeNode<?>> filterChildren(List<AbstractTreeNode<?>> nodes) {
-    if (myStateBean.myShowOnlyModified) {
+    if (myStateBean.isShowOnlyModified() || myStateBean.isHideFullyCovered()) {
       nodes = nodes.stream().filter((node) -> {
-        if (node instanceof CoverageListNode) {
-          if (!((CoverageListNode)node).isLeaf()) return true;
+        boolean filtered = true;
+        boolean isLeaf = false;
+        if (node instanceof CoverageListNode coverageNode) {
+          isLeaf = coverageNode.isLeaf();
+          final boolean fullyCovered = coverageNode.isFullyCovered();
+          if (myStateBean.isHideFullyCovered() && fullyCovered) {
+            filtered = false;
+            getRoot().setHasFullyCoveredChildren(true);
+          }
         }
-        final FileStatus status = node.getFileStatus();
-        return status == FileStatus.MODIFIED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN;
+        if (myStateBean.isShowOnlyModified() && isLeaf) {
+          final FileStatus status = node.getFileStatus();
+          final boolean isModified = status == FileStatus.MODIFIED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN;
+          if (!isModified) {
+            filtered = false;
+            getRoot().setHasVCSFilteredChildren(true);
+          }
+        }
+        return filtered;
       }).toList();
     }
+
     return nodes.stream().filter((node) -> {
       if (node instanceof CoverageListNode) {
         if (((CoverageListNode)node).isLeaf()) return true;

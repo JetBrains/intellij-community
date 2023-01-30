@@ -39,9 +39,9 @@ import java.io.File
 
 internal class GradleModuleTransformer : ModuleTransformer {
 
-    companion object {
+    private object Handler {
 
-        private fun findDependencyElementIndex(dependency: DeclaredDependency): DependencyDeclarationIndexes? {
+        fun findDependencyElementIndex(dependency: DeclaredDependency): DependencyDeclarationIndexes? {
             val artifactId = dependency.coordinates.artifactId ?: return null
             val groupId = dependency.coordinates.groupId ?: return null
             val scope = dependency.unifiedDependency.scope ?: return null
@@ -138,7 +138,7 @@ internal class GradleModuleTransformer : ModuleTransformer {
             buildSystemType = buildSystemType,
             moduleType = GradleProjectModuleType,
             availableScopes = scopes,
-            dependencyDeclarationCallback = project.dependencyDeclarationCallback { findDependencyElementIndex(it) }
+            dependencyDeclarationCallback = project.dependencyDeclarationCallback { Handler.findDependencyElementIndex(it) }
         )
 
         for (childExternalProject in childProjects.values) {

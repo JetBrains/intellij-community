@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,7 +18,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class WaitForContributorsListenerWrapper implements SearchListener{
+public class WaitForContributorsListenerWrapper implements SearchListener, Disposable {
 
   private static final Logger LOG = Logger.getInstance(WaitForContributorsListenerWrapper.class);
 
@@ -42,6 +43,11 @@ public class WaitForContributorsListenerWrapper implements SearchListener{
     this.waitTimeoutMs = waitTimeoutMs;
     this.throttlingTimeoutMs = throttlingTimeoutMs;
     mySearchPattern = searchPattern;
+  }
+
+  @Override
+  public void dispose() {
+    cancelScheduledFlush();
   }
 
   @Override

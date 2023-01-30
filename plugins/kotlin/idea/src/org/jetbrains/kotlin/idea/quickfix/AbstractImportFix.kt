@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.elementType
 import com.intellij.util.Processors
@@ -86,12 +87,22 @@ import java.util.*
  */
 internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     expression: T,
+    val expressionToAnalyzePointer: SmartPsiElementPointer<KtExpression>?,
     factory: Factory
 ) : KotlinQuickFixAction<T>(expression), HintAction, HighPriorityAction {
+
+    constructor(expression: T, factory: Factory):
+        this(expression, null, factory)
+
+    constructor(expression: T, expressionToAnalyze: KtExpression, factory: Factory):
+        this(expression, expressionToAnalyze.createSmartPointer(), factory)
 
     private val project = expression.project
 
     private val modificationCountOnCreate = PsiModificationTracker.getInstance(project).modificationCount
+
+    protected val expressionToAnalyze: KtExpression?
+        get() = expressionToAnalyzePointer?.element ?: element
 
     protected lateinit var suggestions: Collection<FqName>
 
@@ -140,6 +151,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
                 descriptor.isExtensionProperty -> ImportKind.EXTENSION_PROPERTY
                 descriptor is PropertyDescriptor -> ImportKind.PROPERTY
                 descriptor is ClassConstructorDescriptor -> ImportKind.CLASS
+                descriptor is FunctionDescriptor && descriptor.isOperator -> ImportKind.OPERATOR
                 descriptor is FunctionDescriptor && descriptor.isExtension -> ImportKind.EXTENSION_FUNCTION
                 descriptor is FunctionDescriptor -> ImportKind.FUNCTION
                 DescriptorUtils.isObject(descriptor) -> ImportKind.OBJECT
@@ -210,7 +222,8 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
         OBJECT("text.object.0", true),
         FUNCTION("text.function.0"),
         EXTENSION_PROPERTY("text.extension.property.0"),
-        EXTENSION_FUNCTION("text.extension.function.0");
+        EXTENSION_FUNCTION("text.extension.function.0"),
+        OPERATOR("text.operator.0");
 
         fun toText(number: Int) = KotlinBundle.message(key, if (number == 1) 1 else 2)
     }
@@ -263,12 +276,13 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
     private fun collectSuggestionsForName(name: Name, callTypeAndReceiver: CallTypeAndReceiver<*, *>): Collection<DeclarationDescriptor> {
         val element = element ?: return emptyList()
+        val expressionToAnalyze = expressionToAnalyze ?: return emptyList()
         val nameStr = name.asString()
         if (nameStr.isEmpty()) return emptyList()
 
         val file = element.containingKtFile
 
-        val bindingContext = element.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
+        val bindingContext = expressionToAnalyze.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
         if (!checkErrorStillPresent(bindingContext)) return emptyList()
 
         val searchScope = getResolveScope(file)
@@ -794,8 +808,14 @@ internal class ComponentsImportFix(
 }
 
 internal open class ImportForMismatchingArgumentsFix(
-    expression: KtSimpleNameExpression, factory: Factory
-) : ImportFixBase<KtSimpleNameExpression>(expression, factory) {
+    expression: KtSimpleNameExpression,
+    expressionToAnalyze: KtExpression,
+    factory: Factory
+) : ImportFixBase<KtSimpleNameExpression>(expression, expressionToAnalyze, factory) {
+
+    constructor(expression: KtSimpleNameExpression, factory: Factory):
+        this(expression, expression, factory)
+
     override fun getCallTypeAndReceiver() = element?.let { CallTypeAndReceiver.detect(it) }
 
     override val importNames = element?.mainReference?.resolvesByNames ?: emptyList()
@@ -807,7 +827,9 @@ internal open class ImportForMismatchingArgumentsFix(
                     parent.valueArguments.mapNotNull { it.getArgumentExpression() } +
                     parent.valueArguments.mapNotNull { it.getArgumentName()?.referenceExpression } +
                     listOfNotNull(parent.valueArgumentList, parent.referenceExpression(), parent.typeArgumentList)
-            is KtBinaryExpression -> listOf(element)
+
+            is KtBinaryExpression -> setOfNotNull(element, expressionToAnalyze)
+
             else -> emptyList()
         }
     }
@@ -865,11 +887,20 @@ internal open class ImportForMismatchingArgumentsFix(
 
         ProgressManager.checkCanceled()
 
-        (element.parent as? KtCallExpression)?.let {callExpression ->
+        (element.parent as? KtCallExpression)?.let { callExpression ->
             val filterByCallType: (DeclarationDescriptor) -> Boolean = callTypeAndReceiver.toFilter()
             indicesHelper.getClassesByName(callExpression, name).filterTo(result) { classDescriptor ->
                 val original = classDescriptor.original
                 filterFunctionMatchesAllArguments(original) && filterByCallType(classDescriptor)
+            }
+        }
+
+        if (element.parent is KtBinaryExpression) {
+            if (callTypeAndReceiver.callType == CallType.OPERATOR) {
+                val type = (callTypeAndReceiver.receiver as? KtExpression)?.getCallableDescriptor()?.returnType ?: getReceiverTypeFromDiagnostic()
+                if (type != null) {
+                    result.addAll(indicesHelper.getCallableTopLevelExtensions(callTypeAndReceiver, listOf(type), { it == name }))
+                }
             }
         }
 
@@ -893,10 +924,14 @@ internal open class ImportForMismatchingArgumentsFix(
 internal abstract class AbstractImportForMismatchingArgumentsFixFactory : ImportFixBase.Factory() {
     override fun createImportAction(diagnostic: Diagnostic): ImportForMismatchingArgumentsFix? {
         val element = diagnostic.psiElement
-        val nameExpression = element.takeIf { it.elementType == KtNodeTypes.OPERATION_REFERENCE }.safeAs<KtSimpleNameExpression>()
-            ?: element.getStrictParentOfType<KtCallExpression>()?.calleeExpression?.safeAs<KtNameReferenceExpression>()
+        val nameExpression =
+            element.takeIf { it.elementType == KtNodeTypes.OPERATION_REFERENCE } as? KtSimpleNameExpression
+            ?: element.getStrictParentOfType<KtCallExpression>()?.calleeExpression as? KtNameReferenceExpression
+            ?: element.siblings(forward = false).firstOrNull{ it is KtSimpleNameExpression && it.elementType == KtNodeTypes.OPERATION_REFERENCE } as? KtSimpleNameExpression
+            ?: (element as? KtBinaryExpression)?.operationReference
             ?: return null
-        return ImportForMismatchingArgumentsFix(nameExpression, this)
+        val expressionToAnalyze = element as? KtSimpleNameExpression ?: element as? KtBinaryExpression ?: nameExpression
+        return ImportForMismatchingArgumentsFix(nameExpression, expressionToAnalyze, this)
     }
 }
 

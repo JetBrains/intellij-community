@@ -103,7 +103,7 @@ public final class JavaCompletionSorting {
 
     ContainerUtil.addIfNotNull(afterStats, recursion(parameters, expectedTypes));
     afterStats.add(new PreferSimilarlyEnding(project, expectedTypes));
-    if (ContainerUtil.or(expectedTypes, info -> !info.getType().equals(PsiType.VOID))) {
+    if (ContainerUtil.or(expectedTypes, info -> !info.getType().equals(PsiTypes.voidType()))) {
       afterStats.add(new PreferNonGeneric());
     }
     afterStats.add(new PreferSimple());
@@ -288,7 +288,7 @@ public final class JavaCompletionSorting {
   private static boolean hasNonVoid(ExpectedTypeInfo[] expectedInfos) {
     boolean hasNonVoid = false;
     for (ExpectedTypeInfo info : expectedInfos) {
-      if (!PsiType.VOID.equals(info.getType())) {
+      if (!PsiTypes.voidType().equals(info.getType())) {
         hasNonVoid = true;
       }
     }
@@ -408,7 +408,7 @@ public final class JavaCompletionSorting {
             return MyResult.ofDefaultType;
           }
         }
-        if (PsiType.VOID.equals(itemType) && PsiType.VOID.equals(expectedType)) {
+        if (PsiTypes.voidType().equals(itemType) && PsiTypes.voidType().equals(expectedType)) {
           return MyResult.exactlyExpected;
         }
       }
@@ -503,7 +503,7 @@ public final class JavaCompletionSorting {
     @Override
     public Integer weigh(@NotNull LookupElement element) {
       TypedLookupItem item = element.as(TypedLookupItem.class);
-      return item != null && element.getObject() instanceof PsiMethod && PsiType.VOID.equals(item.getType()) ? 1 : 0;
+      return item != null && element.getObject() instanceof PsiMethod && PsiTypes.voidType().equals(item.getType()) ? 1 : 0;
     }
   }
 

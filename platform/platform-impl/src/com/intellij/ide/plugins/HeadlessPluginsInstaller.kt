@@ -4,6 +4,8 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallAndEnableTaskHeadlessImpl
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.util.io.URLUtil
 import kotlin.system.exitProcess
@@ -37,10 +39,24 @@ internal class HeadlessPluginsInstaller : ApplicationStarter {
         println("plugin hosts: $newHosts")
         LOG.info("plugin hosts: $newHosts")
       }
-
       println("installing: $pluginIds")
       LOG.info("installing: $pluginIds")
-      installAndEnable(null, pluginIds) {}
+      ProgressManager.getInstance().run(object : InstallAndEnableTaskHeadlessImpl(pluginIds) {
+        override fun onSuccess() {
+          for (pluginId in pluginIds) {
+            if (!this.plugins.any { it.id == pluginId }) {
+              LOG.error("Plugin $pluginId was not installed")
+              exitProcess(1)
+            }
+          }
+          exitProcess(0)
+        }
+
+        override fun onThrowable(error: Throwable) {
+          LOG.error("Failed to install plugins:", error)
+          exitProcess(1)
+        }
+      })
       exitProcess(0)
     }
     catch (t: Throwable) {

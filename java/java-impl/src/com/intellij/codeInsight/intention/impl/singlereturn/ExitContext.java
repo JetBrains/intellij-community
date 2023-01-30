@@ -96,7 +96,7 @@ class ExitContext {
       PsiJavaToken start = requireNonNull(myBlock.getLBrace());
       PsiExpression initializer = myFactory.createExpressionFromText("false", null);
       PsiDeclarationStatement declaration =
-        myFactory.createVariableDeclarationStatement(myFinishedVariable, PsiType.BOOLEAN, initializer);
+        myFactory.createVariableDeclarationStatement(myFinishedVariable, PsiTypes.booleanType(), initializer);
       PsiModifierList list = ((PsiLocalVariable)declaration.getDeclaredElements()[0]).getModifierList();
       if (list != null) {
         // Cannot be final: always reassigned or useless

@@ -105,7 +105,7 @@ internal fun processSAMConversion(targetType: PsiType,
 private fun returnTypeConstraint(samReturnType: PsiType?,
                                  returnType: PsiType?,
                                  context: PsiElement): ConstraintFormula? {
-  if (returnType == null || samReturnType == null || samReturnType == PsiType.VOID) {
+  if (returnType == null || samReturnType == null || samReturnType == PsiTypes.voidType()) {
     return null
   }
 
@@ -130,7 +130,7 @@ private fun groundTypeForClosure(sam: PsiMethod,
   val groundClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(samContainingClass, groundClass, PsiSubstitutor.EMPTY)
 
   // erase all ground class parameters to null, otherwise explicit closure signature will be inapplicable
-  val erasingSubstitutor = PsiSubstitutor.createSubstitutor(typeParameters.associate { it to PsiType.NULL })
+  val erasingSubstitutor = PsiSubstitutor.createSubstitutor(typeParameters.associate { it to PsiTypes.nullType() })
   val samParameterTypes = sam.parameterList.parameters.map { it.type }
   val arguments = samParameterTypes.map {
     val withInheritance = groundClassSubstitutor.substitute(it)

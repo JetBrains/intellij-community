@@ -187,7 +187,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       traverseNodesAndExpand()
       expandPreviouslyExpandedBranches()
     }
-    super.updateSpeedSearchColors(!haveBranches)
+    val model = tree.model
+    super.updateSpeedSearchColors(model.getChildCount(model.root) == 0)
     if (!pattern.isNullOrBlank()) {
       tree.emptyText.text = GitBundle.message("git.branches.popup.tree.no.branches", pattern)
     }
@@ -692,7 +693,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
     internal val POPUP_KEY = DataKey.create<GitBranchesTreePopup>("GIT_BRANCHES_TREE_POPUP")
 
-    private val treeRowHeight = if (isNewUI) JBUI.CurrentTheme.List.rowHeight() else JBUIScale.scale(22)
+    internal val treeRowHeight: Int
+      get() = if (isNewUI) JBUI.CurrentTheme.List.rowHeight() else JBUIScale.scale(22)
 
     @JvmStatic
     fun isEnabled() = true

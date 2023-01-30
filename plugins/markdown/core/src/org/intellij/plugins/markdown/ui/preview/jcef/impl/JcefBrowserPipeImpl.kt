@@ -26,7 +26,10 @@ internal class JcefBrowserPipeImpl(
   browser: JBCefBrowserBase,
   private val injectionAllowedUrls: List<String>? = null
 ): BrowserPipe {
-  private val query = checkNotNull(JBCefJSQuery.create(browser))
+  private var queryInstance: JBCefJSQuery? = checkNotNull(JBCefJSQuery.create(browser))
+  private val query
+    get() = checkNotNull(queryInstance) { "JS query instance should not be accessed after disposal" }
+
   private val receiveSubscribers = hashMapOf<String, MutableList<BrowserPipe.Handler>>()
 
   private var browserInstance: JBCefBrowserBase? = browser
@@ -36,17 +39,19 @@ internal class JcefBrowserPipeImpl(
   init {
     Disposer.register(this, query)
     query.addHandler(::receiveHandler)
-    browser.jbCefClient.addLoadHandler(object: CefLoadHandlerAdapter() {
-      override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
-        val pageUrl = browser.url
-        when {
-          injectionAllowedUrls != null && pageUrl !in injectionAllowedUrls -> {
-            logger.warn("$pageUrl was not included in the list of allowed for injection urls! Allowed urls:\n$injectionAllowedUrls")
-          }
-          else -> inject(browser)
+    browser.jbCefClient.addLoadHandler(InjectionPerformerLoadHandler(), browser.cefBrowser, this)
+  }
+
+  private inner class InjectionPerformerLoadHandler: CefLoadHandlerAdapter() {
+    override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
+      val pageUrl = browser.url
+      when {
+        injectionAllowedUrls != null && pageUrl !in injectionAllowedUrls -> {
+          logger.warn("$pageUrl was not included in the list of allowed for injection urls! Allowed urls:\n$injectionAllowedUrls")
         }
+        else -> inject(browser)
       }
-    }, browser.cefBrowser)
+    }
   }
 
   override fun subscribe(type: String, handler: BrowserPipe.Handler) {
@@ -70,6 +75,7 @@ internal class JcefBrowserPipeImpl(
 
   override fun dispose() {
     receiveSubscribers.clear()
+    queryInstance = null
     browserInstance = null
   }
 

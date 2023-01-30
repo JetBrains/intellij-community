@@ -3,6 +3,7 @@ package com.intellij.coverage
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.project.Project
@@ -13,7 +14,7 @@ enum class RunnerType {
 
 class CoverageLogger : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("coverage", 4)
+    private val GROUP = EventLogGroup("coverage", 5)
 
     private val RUNNER_NAME = EventFields.String("runner", listOf("emma", "jacoco", "idea"))
 
@@ -24,6 +25,12 @@ class CoverageLogger : CounterUsagesCollector() {
     private val HTML = GROUP.registerEvent("html.generated", EventFields.DurationMs, EventFields.Long("generation_ms"))
     private val REPORT_BUILDING = GROUP.registerEvent("report.built", EventFields.DurationMs, EventFields.Int("annotated_classes"),
                                                       EventFields.Int("loaded_classes"))
+    private val SHOW_ONLY_MODIFIED = Boolean("show_only_modified")
+    private val CAN_SHOW_ONLY_MODIFIED = Boolean("can_show_only_modified")
+    private val HIDE_FULLY_COVERED = Boolean("hide_fully_covered")
+    private val CAN_HIDE_FULLY_COVERED = Boolean("can_hide_fully_covered")
+    private val FILTER_OPTIONS = GROUP.registerVarargEvent("view.opened", SHOW_ONLY_MODIFIED, CAN_SHOW_ONLY_MODIFIED,
+                                                           HIDE_FULLY_COVERED, CAN_HIDE_FULLY_COVERED)
 
     @JvmStatic
     fun logStarted(coverageRunner: CoverageRunner,
@@ -54,6 +61,15 @@ class CoverageLogger : CounterUsagesCollector() {
     @JvmStatic
     fun logReportBuilding(project: Project?, timeMs: Long, annotatedClasses: Int, loadedClasses: Int) =
       REPORT_BUILDING.log(project, timeMs, roundClasses(annotatedClasses), roundClasses(loadedClasses))
+
+    @JvmStatic
+    fun logViewOpen(project: Project?, vcsFilter: Boolean, canVcsFilter: Boolean,
+                    fullyCoveredFilter: Boolean, canFullyCoveredFilter: Boolean) =
+      FILTER_OPTIONS.log(project,
+                         SHOW_ONLY_MODIFIED.with(vcsFilter),
+                         CAN_SHOW_ONLY_MODIFIED.with(canVcsFilter),
+                         HIDE_FULLY_COVERED.with(fullyCoveredFilter),
+                         CAN_HIDE_FULLY_COVERED.with(canFullyCoveredFilter))
 
     private fun roundClasses(classes: Int) = StatisticsUtil.roundToPowerOfTwo(classes)
   }

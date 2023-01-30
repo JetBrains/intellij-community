@@ -102,7 +102,7 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
         val accepted = it.accept(this)
         when {
           accepted is PsiWildcardType -> accepted
-          accepted != null && accepted != PsiType.NULL -> PsiWildcardType.createExtends(manager, accepted)
+          accepted != null && accepted != PsiTypes.nullType() -> PsiWildcardType.createExtends(manager, accepted)
           else -> PsiWildcardType.createUnbounded(manager)
         }
       }
@@ -331,7 +331,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
 
   for ((typeParameter, type) in substitutionMap.entries) {
     typeParameters.add(typeParameter)
-    substitutions.add(type.accept(ForeignTypeParameterEraser()) ?: PsiType.NULL)
+    substitutions.add(type.accept(ForeignTypeParameterEraser()) ?: PsiTypes.nullType())
   }
   return PsiSubstitutor.EMPTY.putAll(typeParameters.toTypedArray(), substitutions.toTypedArray())
 }
@@ -340,7 +340,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
 internal fun compress(types: List<PsiType>?): PsiType? {
   types ?: return null
   return when {
-    types.isEmpty() -> PsiType.NULL
+    types.isEmpty() -> PsiTypes.nullType()
     types.size == 1 -> types.single()
     else -> PsiIntersectionType.createIntersection(types)
   }

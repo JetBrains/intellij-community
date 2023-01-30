@@ -55,9 +55,8 @@ public class HgRebaseCommand {
   @Nullable
   private HgCommandResult performRebase(@NonNls String @NotNull ... args) {
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, HgBundle.message("activity.name.rebase"))) {
-      final List<String> list = ContainerUtil.newArrayList(args);
-      list.add("--config");
-      list.add("extensions.rebase=");
+      final List<String> list = ContainerUtil.concat(List.of(args),
+      List.of("--config", "extensions.rebase="));
       HgCommandResult result =
         new HgCommandExecutor(project)
           .executeInCurrentThread(repo.getRoot(), "rebase", list);

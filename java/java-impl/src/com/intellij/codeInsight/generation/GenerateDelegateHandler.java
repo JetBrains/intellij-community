@@ -94,7 +94,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
     PsiModifierList modifierList = null;
 
-    if (!PsiType.VOID.equals(method.getReturnType())) {
+    if (!PsiTypes.voidType().equals(method.getReturnType())) {
       call.append("return ");
     }
 
@@ -387,7 +387,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
           final PsiVariable psiVariable = proc.getResult(i);
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
           final PsiType type = psiVariable.getType();
-          if (LambdaUtil.notInferredType(type) || PsiType.NULL.equals(type)) {
+          if (LambdaUtil.notInferredType(type) || PsiTypes.nullType().equals(type)) {
             continue;
           }
           result.add(new PsiFieldMember(elementFactory.createField(psiVariable.getName(), type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type)) {

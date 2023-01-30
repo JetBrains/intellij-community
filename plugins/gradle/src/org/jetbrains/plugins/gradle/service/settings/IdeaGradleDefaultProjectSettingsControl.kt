@@ -73,7 +73,7 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
                 .applyToComponent { bindSelectedItem(gradleVersionProperty) }
                 .applyToComponent { bindCompletionVariants(gradleVersionsProperty) }
                 .trimmedTextValidation(CHECK_NON_EMPTY)
-                .validation { validateGradleVersion(gradleVersion) }
+                .validationInfo { validateGradleVersion(gradleVersion) }
                 .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
                 .enabledIf(autoSelectGradleVersionProperty.not())
               checkBox(GradleBundle.message("gradle.project.settings.distribution.wrapper.version.auto.select"))
@@ -92,7 +92,7 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
                 .applyToComponent { setEmptyState(GradleBundle.message("gradle.project.settings.distribution.local.location.empty.state")) }
                 .bindText(gradleHomeProperty.toUiPathProperty())
                 .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
-                .validation { validateGradleHome(gradleHome) }
+                .validationInfo { validateGradleHome(gradleHome) }
                 .align(AlignX.FILL)
             }
           }

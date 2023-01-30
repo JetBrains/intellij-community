@@ -31,8 +31,12 @@ object JpsProjectEntitiesLoader {
   }
 
   @TestOnly
-  suspend fun loadProject(configLocation: JpsProjectConfigLocation, builder: MutableEntityStorage,
-                          externalStoragePath: Path, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager,
+  suspend fun loadProject(configLocation: JpsProjectConfigLocation,
+                          builder: MutableEntityStorage,
+                          orphanage: MutableEntityStorage,
+                          externalStoragePath: Path,
+                          errorReporter: ErrorReporter,
+                          virtualFileManager: VirtualFileUrlManager,
                           unloadedModuleNames: Set<String> = emptySet(),
                           unloadedEntitiesBuilder: MutableEntityStorage = MutableEntityStorage.create(),
                           fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
@@ -41,27 +45,28 @@ object JpsProjectEntitiesLoader {
     val data = createProjectEntitiesSerializers(configLocation, reader, externalStoragePath, virtualFileManager,
                                                 externalStorageConfigurationManager = externalStorageConfigurationManager,
                                                 fileInDirectorySourceNames = fileInDirectorySourceNames)
-    data.loadAll(reader, builder, unloadedEntitiesBuilder, unloadedModuleNames, errorReporter, null)
+    data.loadAll(reader, builder, orphanage, unloadedEntitiesBuilder, unloadedModuleNames, errorReporter, null)
     return data
   }
 
   fun loadModule(moduleFile: Path, configLocation: JpsProjectConfigLocation, builder: MutableEntityStorage,
                  errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager) {
     val source = JpsFileEntitySource.FileInDirectory(moduleFile.parent.toVirtualFileUrl(virtualFileManager), configLocation)
-    loadModule(moduleFile, source, configLocation, builder, errorReporter, virtualFileManager)
+    loadModule(moduleFile, source, configLocation, builder, builder, errorReporter, virtualFileManager)
   }
 
   internal fun loadModule(moduleFile: Path,
                           source: JpsFileEntitySource.FileInDirectory,
                           configLocation: JpsProjectConfigLocation,
                           builder: MutableEntityStorage,
+                          orphanage: MutableEntityStorage,
                           errorReporter: ErrorReporter,
                           virtualFileManager: VirtualFileUrlManager) {
     val reader = CachingJpsFileContentReader(configLocation)
     val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), null, source,
                                                                              virtualFileManager)
     val newEntities = serializer.loadEntities(reader, errorReporter, virtualFileManager)
-    serializer.checkAndAddToBuilder(builder, newEntities.data)
+    serializer.checkAndAddToBuilder(builder, orphanage, newEntities.data)
     newEntities.exception?.let { throw it }
   }
 

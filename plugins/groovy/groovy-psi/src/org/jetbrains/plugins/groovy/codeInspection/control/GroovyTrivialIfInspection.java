@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -229,7 +230,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
         return;
       }
       final PsiType type = condition.getType();
-      if (type == null || !(PsiType.BOOLEAN.isAssignableFrom(type))) {
+      if (type == null || !(PsiTypes.booleanType().isAssignableFrom(type))) {
         return;
       }
 

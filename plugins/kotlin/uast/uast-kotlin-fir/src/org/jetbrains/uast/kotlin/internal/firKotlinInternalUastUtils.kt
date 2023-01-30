@@ -56,10 +56,17 @@ internal fun KtAnalysisSession.toPsiClass(
     source: UElement?,
     context: KtElement,
     typeOwnerKind: TypeOwnerKind,
-    boxed: Boolean = true,
+    isBoxed: Boolean = true,
 ): PsiClass? {
     (context as? KtClass)?.toLightClass()?.let { return it }
-    return PsiTypesUtil.getPsiClass(toPsiType(ktType, source, context, typeOwnerKind, boxed))
+    return PsiTypesUtil.getPsiClass(
+        toPsiType(
+            ktType,
+            source,
+            context,
+            PsiTypeConversionConfiguration(typeOwnerKind, isBoxed = isBoxed)
+        )
+    )
 }
 
 internal fun KtAnalysisSession.toPsiMethod(
@@ -135,7 +142,7 @@ private fun KtAnalysisSession.toPsiMethodForDeserialized(
             source = null,
             context,
             TypeOwnerKind.DECLARATION,
-            boxed = false
+            isBoxed = false
         )?.lookup(fake = false)
     } ?:
     // Deserialized top-level function
@@ -153,8 +160,10 @@ private fun KtAnalysisSession.desc(
                 it.returnType,
                 containingLightDeclaration,
                 context,
-                TypeOwnerKind.DECLARATION,
-                ktTypeMappingMode = KtTypeMappingMode.VALUE_PARAMETER
+                PsiTypeConversionConfiguration(
+                    TypeOwnerKind.DECLARATION,
+                    typeMappingMode = KtTypeMappingMode.VALUE_PARAMETER,
+                )
             )
         )
     }
@@ -164,8 +173,10 @@ private fun KtAnalysisSession.desc(
                 functionSymbol.returnType,
                 containingLightDeclaration,
                 context,
-                TypeOwnerKind.DECLARATION,
-                ktTypeMappingMode = KtTypeMappingMode.RETURN_TYPE
+                PsiTypeConversionConfiguration(
+                    TypeOwnerKind.DECLARATION,
+                    typeMappingMode = KtTypeMappingMode.RETURN_TYPE,
+                )
             )
         )
     )
@@ -175,39 +186,33 @@ internal fun KtAnalysisSession.toPsiType(
     ktType: KtType,
     source: UElement?,
     context: KtElement,
-    typeOwnerKind: TypeOwnerKind,
-    boxed: Boolean = false,
-    ktTypeMappingMode: KtTypeMappingMode = KtTypeMappingMode.DEFAULT_UAST,
+    config: PsiTypeConversionConfiguration,
 ): PsiType =
     toPsiType(
         ktType,
         source?.getParentOfType<UDeclaration>(false)?.javaPsi as? PsiModifierListOwner,
         context,
-        typeOwnerKind,
-        boxed,
-        ktTypeMappingMode
+        config
     )
 
 internal fun KtAnalysisSession.toPsiType(
     ktType: KtType,
     containingLightDeclaration: PsiModifierListOwner?,
     context: KtElement,
-    typeOwnerKind: TypeOwnerKind,
-    boxed: Boolean = false,
-    ktTypeMappingMode: KtTypeMappingMode = KtTypeMappingMode.DEFAULT_UAST,
+    config: PsiTypeConversionConfiguration,
 ): PsiType {
     if (ktType is KtNonErrorClassType && ktType.ownTypeArguments.isEmpty()) {
-        fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
+        fun PsiPrimitiveType.orBoxed() = if (config.isBoxed) getBoxedType(context) else this
         val psiType = when (ktType.classId) {
-            StandardClassIds.Int -> PsiType.INT.orBoxed()
-            StandardClassIds.Long -> PsiType.LONG.orBoxed()
-            StandardClassIds.Short -> PsiType.SHORT.orBoxed()
-            StandardClassIds.Boolean -> PsiType.BOOLEAN.orBoxed()
-            StandardClassIds.Byte -> PsiType.BYTE.orBoxed()
-            StandardClassIds.Char -> PsiType.CHAR.orBoxed()
-            StandardClassIds.Double -> PsiType.DOUBLE.orBoxed()
-            StandardClassIds.Float -> PsiType.FLOAT.orBoxed()
-            StandardClassIds.Unit -> convertUnitToVoidIfNeeded(context, typeOwnerKind, boxed)
+            StandardClassIds.Int -> PsiTypes.intType().orBoxed()
+            StandardClassIds.Long -> PsiTypes.longType().orBoxed()
+            StandardClassIds.Short -> PsiTypes.shortType().orBoxed()
+            StandardClassIds.Boolean -> PsiTypes.booleanType().orBoxed()
+            StandardClassIds.Byte -> PsiTypes.byteType().orBoxed()
+            StandardClassIds.Char -> PsiTypes.charType().orBoxed()
+            StandardClassIds.Double -> PsiTypes.doubleType().orBoxed()
+            StandardClassIds.Float -> PsiTypes.floatType().orBoxed()
+            StandardClassIds.Unit -> convertUnitToVoidIfNeeded(context, config.typeOwnerKind, config.isBoxed)
             StandardClassIds.String -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> null
         }
@@ -217,7 +222,7 @@ internal fun KtAnalysisSession.toPsiType(
     return ktType.asPsiType(
         psiTypeParent,
         allowErrorTypes = false,
-        ktTypeMappingMode,
+        config.typeMappingMode,
         isAnnotationMethod = false
     ) ?: UastErrorType
 }
@@ -242,7 +247,15 @@ internal fun KtAnalysisSession.receiverType(
                 ktCall.partiallyAppliedSymbol.dispatchReceiver?.type
     }
     if (ktType == null || ktType is KtErrorType) return null
-    return toPsiType(ktType, source, context, context.typeOwnerKind, boxed = true)
+    return toPsiType(
+        ktType,
+        source,
+        context,
+        PsiTypeConversionConfiguration.create(
+            context,
+            isBoxed = true,
+        )
+    )
 }
 
 internal fun KtAnalysisSession.nullability(ktType: KtType?): KtTypeNullability? {

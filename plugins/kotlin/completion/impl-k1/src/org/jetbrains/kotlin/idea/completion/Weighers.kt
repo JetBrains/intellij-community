@@ -149,8 +149,8 @@ object CallableWeigher : LookupElementWeigher("kotlin.callableWeight") {
     private enum class Weight1 {
         local,
         memberOrExtension,
-        globalOrStatic,
         typeParameterExtension,
+        globalOrStatic,
         receiverCastRequired
     }
 

@@ -4,10 +4,10 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -38,10 +38,11 @@ public final class PsiReferenceUtil {
     return null;
   }
 
+  @Unmodifiable
   public static @NotNull List<PsiReference> unwrapMultiReference(@NotNull PsiReference maybeMultiReference) {
     if (maybeMultiReference instanceof PsiMultiReference) {
-      return ContainerUtil.immutableList(((PsiMultiReference)maybeMultiReference).getReferences());
+      return List.of(((PsiMultiReference)maybeMultiReference).getReferences());
     }
-    return ContainerUtil.immutableSingletonList(maybeMultiReference);
+    return List.of(maybeMultiReference);
   }
 }

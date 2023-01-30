@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public final class WitherFieldProcessor extends AbstractFieldProcessor {
@@ -30,6 +31,15 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
 
   private static RequiredArgsConstructorProcessor getRequiredArgsConstructorProcessor() {
     return ApplicationManager.getApplication().getService(RequiredArgsConstructorProcessor.class);
+  }
+
+  @Override
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass,
+                                                                   @NotNull PsiAnnotation psiAnnotation,
+                                                                   @NotNull PsiField psiField) {
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
+    final String generatedElementName = LombokUtils.getWitherName(psiField, accessorsInfo);
+    return Collections.singletonList(generatedElementName);
   }
 
   @Override
@@ -106,7 +116,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
       final AccessorsInfo accessorsInfo = buildAccessorsInfo(psiField);
       final String psiFieldName = psiField.getName();
       final Collection<String> possibleWitherNames =
-        LombokUtils.toAllWitherNames(accessorsInfo, psiFieldName, PsiType.BOOLEAN.equals(psiField.getType()));
+        LombokUtils.toAllWitherNames(accessorsInfo, psiFieldName, PsiTypes.booleanType().equals(psiField.getType()));
       for (String witherName : possibleWitherNames) {
         if (PsiMethodUtil.hasSimilarMethod(classMethods, witherName, 1)) {
           builder.addWarningMessage("inspection.message.not.generating.s.method.with.that.name.already.exists", witherName);

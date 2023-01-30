@@ -76,7 +76,7 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction imp
     if (type == null) {
       return false;
     }
-    return type.equals(PsiType.INT) || type.equals(PsiType.BYTE) || type.equals(PsiType.SHORT) || type.equals(PsiType.CHAR);
+    return type.equals(PsiTypes.intType()) || type.equals(PsiTypes.byteType()) || type.equals(PsiTypes.shortType()) || type.equals(PsiTypes.charType());
   }
 
   @NotNull

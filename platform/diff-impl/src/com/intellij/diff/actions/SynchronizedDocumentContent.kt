@@ -6,6 +6,7 @@ import com.intellij.diff.contents.DocumentContent
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.impl.EditorFactoryImpl
 
 /**
  * Diff content that shows a fake document for the diff and synchronizes changes with the real document.
@@ -17,7 +18,7 @@ abstract class SynchronizedDocumentContent(
 
   private var assignments = 0
   
-  protected val fakeDocument = EditorFactory.getInstance().createDocument("").apply {
+  protected val fakeDocument = (EditorFactory.getInstance() as EditorFactoryImpl).createDocument("", true, false).apply {
     putUserData(UndoManager.ORIGINAL_DOCUMENT, original.document)
   }
 

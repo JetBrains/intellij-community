@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -25,6 +25,60 @@ import java.awt.geom.Point2D;
 
 /**
  * Represents an instance of a text editor.
+ * <p>
+ * The data source of an editor consists of:
+ * <ul>
+ * <li>{@link #getDocument()}
+ * <li>{@link #getProject()}
+ * <li>{@link #getVirtualFile()}
+ * <li>{@link #getEditorKind()}
+ * </ul>
+ * The state of an editor consists of:
+ * <ul>
+ * <li>{@link #getSettings()}
+ * <li>{@link #isViewer()}
+ * <li>{@link #isInsertMode()}
+ * <li>{@link #isColumnMode()}
+ * <li>{@link #isOneLineMode()}
+ * <li>{@link #isDisposed()}
+ * <li>{@link #getCaretModel()}
+ * <li>{@link #getSelectionModel()}
+ * </ul>
+ * The appearance of an editor is determined by:
+ * <li>{@link #getColorsScheme()}
+ * <li>{@link #getScrollingModel()}
+ * <li>{@link #getSoftWrapModel()}
+ * <li>{@link #getFoldingModel()}
+ * <li>{@link #getHighlighter()}
+ * <li>{@link #getMarkupModel()}
+ * <li>{@link #getIndentsModel()}
+ * <li>{@link #getInlayModel()}
+ * </ul>
+ * The visual parts of an editor are:
+ * <ul>
+ * <li>{@link #getComponent()}
+ * <li>{@link #getContentComponent()}
+ * <li>{@link #setBorder(Border)}
+ * <li>{@link #getInsets()}
+ * <li>{@link #setHeaderComponent(JComponent)}
+ * <li>{@link #hasHeaderComponent()}
+ * <li>{@link #getHeaderComponent()}
+ * <li>{@link #getGutter()}
+ * <li>{@link #getLineHeight()}
+ * <li>{@link #getAscent()}
+ * </ul>
+ * The mouse interaction of an editor is controlled with:
+ * <ul>
+ * <li>{@link #addEditorMouseListener(EditorMouseListener)}
+ * <li>{@link #addEditorMouseListener(EditorMouseListener, Disposable)}
+ * <li>{@link #removeEditorMouseListener(EditorMouseListener)}
+ * <li>{@link #addEditorMouseMotionListener(EditorMouseMotionListener)}
+ * <li>{@link #addEditorMouseMotionListener(EditorMouseMotionListener, Disposable)}
+ * <li>{@link #removeEditorMouseMotionListener(EditorMouseMotionListener)}
+ * <li>{@link #getMouseEventArea(MouseEvent)}
+ * </ul>
+ * The remaining methods deal with conversion between offsets,
+ * logical positions, visual positions, and screen coordinates.
  *
  * @see EditorFactory#createEditor(Document)
  * @see EditorFactory#createViewer(Document)
@@ -48,7 +102,7 @@ public interface Editor extends UserDataHolder {
   boolean isViewer();
 
   /**
-   * Returns the component for the entire editor including the scrollbars, error stripe, gutter
+   * Returns the component for the entire editor, including the scrollbars, error stripe, gutter
    * and other decorations. The component can be used, for example, for converting logical to
    * screen coordinates.
    *
@@ -181,7 +235,7 @@ public interface Editor extends UserDataHolder {
   @NotNull Point visualPositionToXY(@NotNull VisualPosition visible);
 
   /**
-   * Same as {@link #visualPositionToXY(VisualPosition)}, but returns potentially more precise result.
+   * Same as {@link #visualPositionToXY(VisualPosition)}, but returns a potentially more precise result.
    */
   @NotNull Point2D visualPositionToPoint2D(@NotNull VisualPosition pos);
 
@@ -201,8 +255,8 @@ public interface Editor extends UserDataHolder {
   /**
    * Maps an offset in the document to a logical position.
    * <p>
-   * It's assumed that original position is associated with character immediately preceding given offset, so target logical position will
-   * have {@link LogicalPosition#leansForward leansForward} value set to {@code false}.
+   * It's assumed that the original position is associated with the character immediately preceding the given offset,
+   * so the resulting logical position will have its {@link LogicalPosition#leansForward leansForward} value set to {@code false}.
    *
    * @param offset the offset in the document. Negative values are clamped to zero; values bigger than text length are clamped
    *               to the text length
@@ -211,12 +265,12 @@ public interface Editor extends UserDataHolder {
   @NotNull LogicalPosition offsetToLogicalPosition(int offset);
 
   /**
-   * Maps an offset in the document to visual position.
+   * Maps an offset in the document to the corresponding visual position.
    * <p>
-   * It's assumed that original position is associated with the character immediately preceding given offset,
-   * {@link VisualPosition#leansRight leansRight} value for visual position will be determined correspondingly.
+   * It's assumed that the original position is associated with the character immediately preceding the given offset,
+   * the {@link VisualPosition#leansRight leansRight} value for the visual position will be determined accordingly.
    * <p>
-   * If there's a soft wrap at the given offset, visual position on a line following the wrap will be returned.
+   * If there's a soft wrap at the given offset, the visual position of the line following the wrap will be returned.
    *
    * @param offset the offset in the document.
    * @return the corresponding visual position.
@@ -224,24 +278,25 @@ public interface Editor extends UserDataHolder {
   @NotNull VisualPosition offsetToVisualPosition(int offset);
 
   /**
-   * Maps an offset in the document to visual position.
+   * Maps an offset in the document to the corresponding visual position.
    *
    * @param offset         the offset in the document.
-   * @param leanForward    if {@code true}, original position is associated with character after given offset, if {@code false} -
-   *                       with character before given offset. This can make a difference in bidirectional text (see {@link LogicalPosition},
-   *                       {@link VisualPosition})
-   * @param beforeSoftWrap if {@code true}, visual position at line preceeding the wrap will be returned, otherwise - visual position
-   *                       at line following the wrap.
+   * @param leanForward    if {@code true}, the original position is associated with the character after the given offset,
+   *                       if {@code false} - with the character before given offset.
+   *                       This can make a difference in bidirectional text (see {@link LogicalPosition}, {@link VisualPosition})
+   * @param beforeSoftWrap if {@code true}, the visual position at the line preceding the wrap will be returned,
+   *                       otherwise - visual position at line following the wrap.
    * @return the corresponding visual position.
    */
   @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap);
 
   /**
-   * Maps an offset in the document to a visual line in editor.
+   * Maps an offset in the document to a visual line in the editor.
    *
    * @param offset         the offset in the document.
-   * @param beforeSoftWrap flag to resolve the ambiguity, if there's a soft wrap at target offset. If {@code true}, visual line ending in
-   *                       soft wrap will be returned, otherwise - visual line following the wrap.
+   * @param beforeSoftWrap flag to resolve the ambiguity if there's a soft wrap at target offset.
+   *                       If {@code true}, the visual line ending in the soft wrap will be returned,
+   *                       otherwise the visual line following the wrap.
    * @return the visual line.
    */
   default int offsetToVisualLine(int offset, boolean beforeSoftWrap) {
@@ -265,7 +320,7 @@ public interface Editor extends UserDataHolder {
   @NotNull VisualPosition xyToVisualPosition(@NotNull Point p);
 
   /**
-   * Same as {{@link #xyToVisualPosition(Point)}}, but allows specifying target point with higher precision.
+   * Same as {{@link #xyToVisualPosition(Point)}}, but allows specifying the point with higher precision.
    */
   @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p);
 
@@ -311,7 +366,7 @@ public interface Editor extends UserDataHolder {
     int startOffset = visualPositionToOffset(new VisualPosition(visualLine, 0));
     FoldRegion foldRegion = getFoldingModel().getCollapsedRegionAtOffset(startOffset);
     int endY = startY + (foldRegion instanceof CustomFoldRegion ? ((CustomFoldRegion)foldRegion).getHeightInPixels() : getLineHeight());
-    return new int[] {startY, endY};
+    return new int[]{startY, endY};
   }
 
   /**
@@ -386,7 +441,7 @@ public interface Editor extends UserDataHolder {
   /**
    * Returns the file being edited.
    *
-   * @return file or {@code null} if the editor has not underlying virtual file.
+   * @return file or {@code null} if the editor has no underlying virtual file.
    */
   default VirtualFile getVirtualFile() {
     return null;
@@ -431,25 +486,30 @@ public interface Editor extends UserDataHolder {
   @Nullable EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e);
 
   /**
-   * Set up a header component for this text editor. Please note this is used for textual find feature so your component will most
-   * probably will be reset once the user presses Ctrl+F.
+   * Set up a header component for this text editor.
+   * <p>
+   * Please note that this is used for the textual find feature,
+   * so your component will most probably be reset once the user presses Ctrl+F.
    *
-   * @param header a component to setup as header for this text editor or {@code null} to remove existing one.
+   * @param header a component to set up as the header for this text editor, or {@code null} to remove existing one.
    */
   void setHeaderComponent(@Nullable JComponent header);
 
   /**
-   * @return {@code true} if this editor has active header component set up by {@link #setHeaderComponent(JComponent)}
+   * @return {@code true} if this editor has an active header component set up by {@link #setHeaderComponent(JComponent)}
    */
   boolean hasHeaderComponent();
 
   /**
-   * @return a component set by {@link #setHeaderComponent(JComponent)} or {@code null} if no header currently installed.
+   * @return the component set by {@link #setHeaderComponent(JComponent)}, or {@code null} if no header is currently installed.
    */
   @Nullable JComponent getHeaderComponent();
 
   @NotNull IndentsModel getIndentsModel();
 
+  /**
+   * Returns the inlay model, which allows adding custom visual elements to the editor's representation.
+   */
   @NotNull InlayModel getInlayModel();
 
   @NotNull EditorKind getEditorKind();
@@ -459,11 +519,13 @@ public interface Editor extends UserDataHolder {
   }
 
   /**
-   * Vertical distance, in pixels, between the top of visual line (corresponding coordinate is returned by {@link #visualLineToY(int)},
-   * {@link #visualPositionToXY(VisualPosition)}, etc) and baseline of text in that visual line.
+   * The vertical distance, in pixels, between the top of the visual line
+   * and the baseline of the text in that visual line.
+   * <p>
+   * To get the top of the visual line, see {@link #visualLineToY(int)}, {@link #visualPositionToXY(VisualPosition)}, etc.
    */
   default int getAscent() {
-    // actual implementation in EditorImpl is a bit more complex, but this gives an idea how it's constructed
+    // The actual implementation in EditorImpl is a bit more complex, but this gives an idea of how it's constructed.
     return (int)(getContentComponent().getFontMetrics(getColorsScheme().getFont(EditorFontType.PLAIN)).getAscent() *
                  getColorsScheme().getLineSpacing());
   }

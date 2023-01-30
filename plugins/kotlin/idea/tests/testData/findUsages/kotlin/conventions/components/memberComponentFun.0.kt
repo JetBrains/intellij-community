@@ -28,6 +28,5 @@ fun test() {
     val (x2, y2) = h()
 }
 
-// FIR_COMPARISON
+
 // IGNORE_FIR_LOG
-// FIR_COMPARISON_WITH_DISABLED_COMPONENTS

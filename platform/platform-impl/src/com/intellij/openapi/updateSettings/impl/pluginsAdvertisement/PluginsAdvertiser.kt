@@ -76,11 +76,11 @@ fun getInstallAndEnableTask(
   selectAlInDialog: Boolean = false,
   modalityState: ModalityState? = null,
   onSuccess: Runnable,
-): InstallAndEnableTask {
+): InstallAndEnableTaskImpl {
   require(!showDialog || modalityState == null) {
     "`modalityState` can be not null only if plugin installation won't show the dialog"
   }
-  return InstallAndEnableTask(project, pluginIds, showDialog, selectAlInDialog, modalityState, onSuccess)
+  return InstallAndEnableTaskImpl(project, pluginIds, showDialog, selectAlInDialog, modalityState, onSuccess)
 }
 
 

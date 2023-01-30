@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -42,7 +43,9 @@ public class LanguageMismatch extends LocalInspectionTool {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("CHECK_NON_ANNOTATED_REFERENCES", IntelliLangBundle.message("flag.usages.of.non.annotated.elements")));
+      checkbox("CHECK_NON_ANNOTATED_REFERENCES", IntelliLangBundle.message("flag.usages.of.non.annotated.elements"))
+        .description(HtmlChunk.text(IntelliLangBundle.message("flag.usages.of.non.annotated.elements.description")))
+    );
   }
 
   @Override

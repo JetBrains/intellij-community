@@ -40,7 +40,7 @@ public class MakeMethodDelegate extends FixableUsageInfo {
         }
         @NonNls final StringBuilder delegation = new StringBuilder();
         final PsiType returnType = method.getReturnType();
-        if(!PsiType.VOID.equals(returnType))
+        if(!PsiTypes.voidType().equals(returnType))
         {
            delegation.append("return ");
         }

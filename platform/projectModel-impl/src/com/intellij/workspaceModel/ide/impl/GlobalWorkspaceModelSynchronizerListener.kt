@@ -2,12 +2,13 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsGlobalFileEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
 import kotlin.reflect.KClass
@@ -20,7 +21,8 @@ class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : W
     if (globalWorkspaceModel.isFromGlobalWorkspaceModel) return
 
     if (isContainingGlobalEntities(event, LibraryEntity::class)
-        || isContainingGlobalEntities(event, LibraryPropertiesEntity::class)) {
+        || isContainingGlobalEntities(event, LibraryPropertiesEntity::class)
+        || isContainingGlobalEntities(event, ExcludeUrlEntity::class)) {
       globalWorkspaceModel.syncEntitiesWithProject(project)
     }
   }
@@ -32,7 +34,7 @@ class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : W
         is EntityChange.Replaced -> change.newEntity
         is EntityChange.Removed -> change.oldEntity
       }
-      entity.entitySource is JpsFileEntitySource.ExactGlobalFile
+      entity.entitySource is JpsGlobalFileEntitySource
     }
   }
 }

@@ -30,6 +30,13 @@ import kotlinx.coroutines.*
  * [x] Check sync with Maven and External system
  */
 
+/**
+ * The logic here is similar to [com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService]
+ * but for global level entities. This class orchestrates the global entities/bridges loading, it's responsible for:
+ * 1) Reading .xml files with configs if not loaded from cache.
+ * 2) Call initialization of bridges after cache loading
+ * 3) Reading .xml on delayed sync
+ */
 class JpsGlobalModelSynchronizerImpl: JpsGlobalModelSynchronizer {
   private var loadedFromDisk: Boolean = false
 
@@ -50,7 +57,7 @@ class JpsGlobalModelSynchronizerImpl: JpsGlobalModelSynchronizer {
 
       loadGlobalEntitiesToEmptyStorage(mutableStorage, globalWorkspaceModel.entityStorage)
       globalWorkspaceModel.updateModel("Sync global entities with state") { builder ->
-        builder.replaceBySource({ it is JpsFileEntitySource.ExactGlobalFile }, mutableStorage)
+        builder.replaceBySource({ it is JpsGlobalFileEntitySource }, mutableStorage)
       }
     }
   }
@@ -76,7 +83,7 @@ class JpsGlobalModelSynchronizerImpl: JpsGlobalModelSynchronizer {
     if (serializer != null) {
       LOG.info("Loading global entities from files")
       val newEntities = serializer.loadEntities(contentReader, errorReporter, VirtualFileUrlManager.getGlobalInstance())
-      serializer.checkAndAddToBuilder(mutableStorage, newEntities.data)
+      serializer.checkAndAddToBuilder(mutableStorage, mutableStorage, newEntities.data)
       newEntities.exception?.let { throw it }
     }
     val callback = GlobalLibraryTableBridge.getInstance().initializeLibraryBridgesAfterLoading(mutableStorage, initialEntityStorage)

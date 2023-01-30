@@ -118,7 +118,7 @@ class SameSignatureCallParametersProvider {
         final PsiClass psiClass = ((PsiMethod)element).getContainingClass();
         if (psiClass != null) {
           for (Pair<PsiMethod, PsiSubstitutor> overload : psiClass.findMethodsAndTheirSubstitutorsByName(((PsiMethod)element).getName(), true)) {
-            if (overload.first != toExclude && (chosenMethod == null || chosenMethod.equals(overload.first))) {
+            if (overload.first != toExclude && (chosenMethod == null || chosenMethod.isEquivalentTo(overload.first))) {
               candidates.add(Pair.create(overload.first, candidate.getSubstitutor().putAll(overload.second)));
             }
           }

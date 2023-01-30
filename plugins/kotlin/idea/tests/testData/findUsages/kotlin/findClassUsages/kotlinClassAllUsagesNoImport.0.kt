@@ -9,4 +9,3 @@ open class <caret>Server {
     }
 }
 
-// FIR_COMPARISON

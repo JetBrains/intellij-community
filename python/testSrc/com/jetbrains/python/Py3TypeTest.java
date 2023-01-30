@@ -6,13 +6,11 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.PyGenericType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
 
 public class Py3TypeTest extends PyTestCase {
@@ -1536,7 +1534,7 @@ public class Py3TypeTest extends PyTestCase {
     assertExpressionType("dict[str, Any]", dict);
   }
 
-  // PY-52656 Requires PY-53896 or patching Typeshed
+  // PY-52656
   public void testDictValuesType() {
     doTest("int",
            """
@@ -1550,11 +1548,11 @@ public class Py3TypeTest extends PyTestCase {
     doTest("int",
            """
              from enum import IntEnum, auto
-                          
+
              class State(IntEnum):
                  A = auto()
                  B = auto()
-                          
+
              def foo(arg: State):
                  expr = arg.value
              """);
@@ -1565,13 +1563,13 @@ public class Py3TypeTest extends PyTestCase {
     doTest("str",
            """
              from enum import Enum
-                          
-                          
+
+
              class IDE(Enum):
                  DS = 'DataSpell'
                  PY = 'PyCharm'
-                          
-                          
+
+
              IDE_TO_CLEAR_SETTINGS_FOR = IDE.PY
              expr = IDE_TO_CLEAR_SETTINGS_FOR.value
              """);
@@ -1582,37 +1580,16 @@ public class Py3TypeTest extends PyTestCase {
     doTest("int",
            """
              from enum import Enum
-                          
+
              class Fruit(Enum):
                  Apple = 1
                  Banana = 2
-                 
+
              def f():
                  return Fruit.Apple
-                 
+
              res = f()
              expr = res.value
-             """);
-  }
-
-  // PY-54336
-  public void testReusedTypeVarsCauseRecursiveSubstitution() {
-    doTest("Sub",
-           """
-             from typing import Generic, TypeVar
-                          
-             T1 = TypeVar('T1')
-             T2 = TypeVar('T2')
-                          
-             class Super(Generic[T1]):
-                 pass
-                          
-             class Sub(Super[T2]):
-                 def __init__(self, xs: list[T2]):
-                     pass
-                          
-             def func(xs: list[T1]):
-                 expr = Sub(xs)
              """);
   }
 
@@ -1621,14 +1598,45 @@ public class Py3TypeTest extends PyTestCase {
     PyGenericType typeVarT = new PyGenericType("T", null, false);
     PyGenericType typeVarV = new PyGenericType("V", null, false);
     TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    PyType substituted;
 
-    PyType substituted = PyTypeChecker.substitute(typeVarT, new GenericSubstitutions(Map.of(typeVarT, typeVarT)), context);
+    substituted = PyTypeChecker.substitute(typeVarT, new GenericSubstitutions(Map.of(typeVarT, typeVarT)), context);
     assertEquals(typeVarT, substituted);
 
     substituted = PyTypeChecker.substitute(typeVarT, new GenericSubstitutions(Map.of(typeVarT, typeVarV, typeVarV, typeVarT)), context);
     assertNull(substituted);
 
-    // TODO add tests on more complex substitutions, e.g T -> list[T2], T2 -> T. These are not implemented at the moment.
+    PyCallableType callable = new PyCallableTypeImpl(List.of(), typeVarT);
+    substituted = PyTypeChecker.substitute(callable, new GenericSubstitutions(Map.of(typeVarT, typeVarV, typeVarV, callable)), context);
+    PyCallableType substitutedCallable = assertInstanceOf(substituted, PyCallableType.class);
+    assertNull(substitutedCallable.getReturnType(context));
+  }
+
+  public void testListConstructorCallWithGeneratorExpression() {
+    doTest("list[int]",
+           "expr = list(int(i) for i in '1')");
+  }
+
+  public void testClassDunderNewResult() {
+    doTest("C",
+           """
+             class C(object):
+                 def __new__(cls):
+                     self = object.__new__(cls)
+                     self.foo = 1
+                     return self
+
+             expr = C()
+             """);
+  }
+
+  public void testObjectDunderNewResult() {
+    doTest("C",
+           """
+             class C(object):
+                 def __new__(cls):
+                     expr = object.__new__(cls)
+             """);
   }
 
   // PY-37678

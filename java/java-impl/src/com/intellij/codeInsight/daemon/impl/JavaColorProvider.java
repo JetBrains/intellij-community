@@ -96,7 +96,7 @@ public class JavaColorProvider implements ElementColorProvider {
 
   private static boolean isIntLiteralInsideNewJBColorExpression(PsiElement element) {
     ULiteralExpression literalExpression = UastContextKt.toUElement(element, ULiteralExpression.class);
-    if (literalExpression != null && PsiType.INT.equals(literalExpression.getExpressionType())) {
+    if (literalExpression != null && PsiTypes.intType().equals(literalExpression.getExpressionType())) {
       UElement parent = literalExpression.getUastParent();
       if (parent != null) {
         return isNewJBColorExpression(parent);
@@ -141,8 +141,8 @@ public class JavaColorProvider implements ElementColorProvider {
     return switch (paramCount) {
       case 1 -> ColorConstructors.INT;
       case 2 -> ColorConstructors.INT_BOOL;
-      case 3 -> PsiType.INT.equals(paramType) ? ColorConstructors.INT_x3 : ColorConstructors.FLOAT_x3;
-      case 4 -> PsiType.INT.equals(paramType) ? ColorConstructors.INT_x4 : ColorConstructors.FLOAT_x4;
+      case 3 -> PsiTypes.intType().equals(paramType) ? ColorConstructors.INT_x3 : ColorConstructors.FLOAT_x3;
+      case 4 -> PsiTypes.intType().equals(paramType) ? ColorConstructors.INT_x4 : ColorConstructors.FLOAT_x4;
       default -> null;
     };
   }

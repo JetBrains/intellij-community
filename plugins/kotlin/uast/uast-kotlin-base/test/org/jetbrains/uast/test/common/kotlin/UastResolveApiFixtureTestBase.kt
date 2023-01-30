@@ -12,10 +12,10 @@ import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUES
 import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUE_OF
+import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertSameElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
-import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertSameElements
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
@@ -74,7 +74,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             "fun foo(a: Int, b: Int): Int = TODO()"
         )
 
-        TestCase.assertEquals(PsiType.INT, functionCall.getExpressionType())
+        TestCase.assertEquals(PsiTypes.intType(), functionCall.getExpressionType())
 
         val firstArgument = main.findElementByText<UElement>("1")
         val firstParameter = functionCall.getArgumentForParameter(0)
@@ -161,7 +161,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
 
         )
 
-        TestCase.assertEquals(PsiType.VOID, functionCall.getExpressionType())
+        TestCase.assertEquals(PsiTypes.voidType(), functionCall.getExpressionType())
 
         val firstArgument = main.findElementByText<UElement>("1")
         val firstParameter = functionCall.getArgumentForParameter(0)
@@ -238,7 +238,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             "fun foo(a: Int, b: Int): Int = TODO()"
         )
         assertDoesntContain(resolvedDeclarationsStrings, "fun foo(string: String) = TODO()")
-        TestCase.assertEquals(PsiType.INT, functionCall.getExpressionType())
+        TestCase.assertEquals(PsiTypes.intType(), functionCall.getExpressionType())
     }
 
     fun checkResolveToFacade(myFixture: JavaCodeInsightTestFixture) {
@@ -366,7 +366,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             "operator fun invoke(i1: Int, i2: Int): Int = TODO()",
             "operator fun invoke(i1: Int, i2: Int, i3: Int): Int = TODO()"
         )
-        TestCase.assertEquals(PsiType.INT, functionCall.getExpressionType())
+        TestCase.assertEquals(PsiTypes.intType(), functionCall.getExpressionType())
     }
 
     fun checkMultiResolveJvmOverloads(myFixture: JavaCodeInsightTestFixture) {
@@ -395,7 +395,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             resolvedDeclarationsStrings,
             "@JvmOverloads\n                    fun foo(i1: Int = 1, i2: Int = 2): Int = TODO()"
         )
-        TestCase.assertEquals(PsiType.INT, functionCall.getExpressionType())
+        TestCase.assertEquals(PsiTypes.intType(), functionCall.getExpressionType())
     }
 
     fun checkLocalResolve(myFixture: JavaCodeInsightTestFixture) {

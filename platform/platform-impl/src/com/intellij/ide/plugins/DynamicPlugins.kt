@@ -108,9 +108,9 @@ object DynamicPlugins {
   /**
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
-  fun loadPlugins(descriptors: Collection<IdeaPluginDescriptorImpl>): Boolean {
+  fun loadPlugins(descriptors: Collection<IdeaPluginDescriptorImpl>, project: Project?): Boolean {
     return updateDescriptorsWithoutRestart(descriptors, load = true) {
-      loadPlugin(it, checkImplementationDetailDependencies = true)
+      loadPlugin(it, project)
     }
   }
 
@@ -381,12 +381,11 @@ object DynamicPlugins {
                                pluginDescriptor: IdeaPluginDescriptorImpl,
                                options: UnloadPluginOptions): Boolean {
     var result = false
-    if (!allowLoadUnloadSynchronously(pluginDescriptor)) {
+    if (options.save) {
       runInAutoSaveDisabledMode {
-        val saveAndSyncHandler = SaveAndSyncHandler.getInstance()
-        saveAndSyncHandler.saveSettingsUnderModalProgress(ApplicationManager.getApplication())
-        for (openProject in ProjectUtil.getOpenProjects()) {
-          saveAndSyncHandler.saveSettingsUnderModalProgress(openProject)
+        FileDocumentManager.getInstance().saveAllDocuments()
+        runBlockingUnderModalProgress {
+          saveProjectsAndApp(true)
         }
       }
     }
@@ -395,7 +394,7 @@ object DynamicPlugins {
                                      parentComponent,
                                      null)
     indicator.runInSwingThread {
-      result = unloadPlugin(pluginDescriptor, options.withSave(false))
+      result = unloadPluginWithoutProgress(pluginDescriptor, options.withSave(false))
     }
     return result
   }
@@ -441,6 +440,11 @@ object DynamicPlugins {
   @JvmOverloads
   fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
                    options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
+    return unloadPluginWithProgress(project = null, parentComponent = null, pluginDescriptor, options)
+  }
+
+  private fun unloadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl,
+                                          options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     val pluginId = pluginDescriptor.pluginId
     val pluginSet = PluginManagerCore.getPluginSet()
@@ -448,22 +452,13 @@ object DynamicPlugins {
     if (options.checkImplementationDetailDependencies) {
       processImplementationDetailDependenciesOnPlugin(pluginDescriptor, pluginSet) { dependentDescriptor ->
         dependentDescriptor.isEnabled = false
-        unloadPlugin(dependentDescriptor, UnloadPluginOptions(save = false,
-                                                              waitForClassloaderUnload = false,
-                                                              checkImplementationDetailDependencies = false))
+        unloadPluginWithoutProgress(dependentDescriptor, UnloadPluginOptions(waitForClassloaderUnload = false,
+                                                                             checkImplementationDetailDependencies = false))
         true
       }
     }
 
     try {
-      if (options.save) {
-        runInAutoSaveDisabledMode {
-          FileDocumentManager.getInstance().saveAllDocuments()
-          runBlockingUnderModalProgress {
-            saveProjectsAndApp(true)
-          }
-        }
-      }
       TipAndTrickManager.getInstance().closeTipDialog()
 
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
@@ -813,11 +808,20 @@ object DynamicPlugins {
     }
   }
 
-  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
-    return loadPlugin(pluginDescriptor, checkImplementationDetailDependencies = true)
+  @JvmOverloads
+  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, project: Project? = null): Boolean {
+    var result = false
+    val indicator = PotemkinProgress(IdeBundle.message("plugins.progress.loading.plugin.title", pluginDescriptor.name),
+                                     project,
+                                     null,
+                                     null)
+    indicator.runInSwingThread {
+      result = loadPluginWithoutProgress(pluginDescriptor, checkImplementationDetailDependencies = true)
+    }
+    return result
   }
 
-  private fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
+  private fun loadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
     if (classloadersFromUnloadedPlugins[pluginDescriptor.pluginId]?.isEmpty() == false) {
       LOG.info("Requiring restart for loading plugin ${pluginDescriptor.pluginId}" +
                " because previous version of the plugin wasn't fully unloaded")
@@ -832,7 +836,7 @@ object DynamicPlugins {
 
     val classLoaderConfigurator = ClassLoaderConfigurator(pluginSet)
 
-    // todo loadPlugin should be called per each module, temporary solution
+    // todo loadPluginWithoutProgress should be called per each module, temporary solution
     val pluginWithContentModules = pluginSet.getEnabledModules()
       .filter { it.pluginId == pluginDescriptor.pluginId }
       .filter(classLoaderConfigurator::configureModule)
@@ -872,7 +876,7 @@ object DynamicPlugins {
       processImplementationDetailDependenciesOnPlugin(pluginDescriptor, pluginSet) { dependentDescriptor ->
         val dependencies = dependentDescriptor.pluginDependencies
         if (dependencies.all { it.isOptional || PluginManagerCore.getPlugin(it.pluginId) != null }) {
-          if (!loadPlugin(dependentDescriptor, checkImplementationDetailDependencies = false)) {
+          if (!loadPluginWithoutProgress(dependentDescriptor, checkImplementationDetailDependencies = false)) {
             implementationDetailsLoadedWithoutRestart = false
           }
         }
@@ -994,7 +998,7 @@ private fun saveMemorySnapshot(pluginId: PluginId): Boolean {
   }
 
   DynamicPlugins.notify(
-    IdeBundle.message("memory.snapshot.captured.text", snapshotPath, snapshotFileName),
+    IdeBundle.message("memory.snapshot.captured.text", snapshotPath),
     NotificationType.WARNING,
     object : AnAction(IdeBundle.message("ide.restart.action")), DumbAware {
       override fun actionPerformed(e: AnActionEvent) = ApplicationManager.getApplication().restart()

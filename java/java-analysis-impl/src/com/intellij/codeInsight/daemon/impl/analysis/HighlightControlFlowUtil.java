@@ -45,7 +45,7 @@ public final class HighlightControlFlowUtil {
   private HighlightControlFlowUtil() { }
 
   static HighlightInfo.Builder checkMissingReturnStatement(@Nullable PsiCodeBlock body, @Nullable PsiType returnType) {
-    if (body == null || returnType == null || PsiType.VOID.equals(returnType.getDeepComponentType())) {
+    if (body == null || returnType == null || PsiTypes.voidType().equals(returnType.getDeepComponentType())) {
       return null;
     }
 
@@ -63,7 +63,7 @@ public final class HighlightControlFlowUtil {
           PsiMethod method = (PsiMethod)parent;
           IntentionAction action1 = QUICK_FIX_FACTORY.createAddReturnFix(method);
           info.registerFix(action1, null, null, null, null);
-          IntentionAction action = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, true);
+          IntentionAction action = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiTypes.voidType(), true);
           info.registerFix(action, null, null, null, null);
         }
         if (parent instanceof PsiLambdaExpression) {

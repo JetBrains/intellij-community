@@ -69,7 +69,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     return EclipseProjectFile(classpathUrl, internalEntitySource)
   }
 
-  override fun loadRoots(moduleEntity: ModuleEntity,
+  override fun loadRoots(moduleEntity: ModuleEntity.Builder,
                          reader: JpsFileContentReader,
                          customDir: String?,
                          imlFileUrl: VirtualFileUrl,
@@ -588,7 +588,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                 EclipseClasspathWriter.setOrRemoveAttribute(classpathEntry, EclipseXml.SOURCEPATH_ATTR,
                                                             if (addSrcRoots) eclipseSrcVariablePath ?: srcRelativePath else null)
                 EJavadocUtil.setupAttributes(classpathEntry,
-                                             { convertToEclipseJavadocPath(it, module, entitySource.internalSource.projectLocation, pathShortener) },
+                                             { convertToEclipseJavadocPath(it, module, entitySource.projectLocation, pathShortener) },
                                              EclipseXml.JAVADOC_LOCATION,
                                              libraryRoots.filter { it.type.name == "JAVADOC" }.map { it.url }.toList().toTypedArray())
                 val nativeRoots = libraryRoots.asSequence().filter { it.type.name == "NATIVE" }.map { it.url }.toList().toTypedArray()

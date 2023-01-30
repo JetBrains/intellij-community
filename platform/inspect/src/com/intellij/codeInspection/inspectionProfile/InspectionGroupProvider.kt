@@ -9,13 +9,8 @@ fun interface InspectionGroupProvider {
     @JvmStatic
     val EP = ExtensionPointName.create<InspectionGroupProvider>("com.intellij.inspectionGroupProvider")
 
-    private fun createYamlInspectionGroup(groupId: String): YamlInspectionGroup {
-      return object : YamlInspectionGroup {
-        override val groupId: String = groupId
-        override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
-          return EP.extensionList.any { extension -> extension.findGroup(groupId).includesInspection(tool) }
-        }
-      }
+    private fun createYamlInspectionGroup(groupId: String): YamlInspectionGroup? {
+      return EP.extensionList.firstNotNullOfOrNull { extension -> extension.findGroup(groupId) }
     }
 
     @JvmStatic

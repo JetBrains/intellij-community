@@ -21,7 +21,7 @@ final class TwoKeysFMap<K, V> implements FMap<K, V> {
   }
 
   @Override
-  public @NotNull FMap<K, V> plus(K key, V value) {
+  public @NotNull FMap<K, V> plus(@NotNull K key, @NotNull V value) {
     if (myKey1.equals(key)) {
       if (myValue1.equals(value)) {
         return this;
@@ -44,7 +44,7 @@ final class TwoKeysFMap<K, V> implements FMap<K, V> {
   }
 
   @Override
-  public @NotNull FMap<K, V> minus(K key) {
+  public @NotNull FMap<K, V> minus(@NotNull K key) {
     return myKey1.equals(key)
            ? new OneKeyFMap<>(myKey2, myValue2)
            : myKey2.equals(key)
@@ -53,7 +53,7 @@ final class TwoKeysFMap<K, V> implements FMap<K, V> {
   }
 
   @Override
-  public @Nullable V get(K key) {
+  public @Nullable V get(@NotNull K key) {
     return myKey1.equals(key)
            ? myValue1
            : myKey2.equals(key)

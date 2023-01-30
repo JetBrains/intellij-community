@@ -49,7 +49,7 @@ import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.*
@@ -119,7 +119,10 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @State(name = "FileEditorManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-open class FileEditorManagerImpl(private val project: Project) : FileEditorManagerEx(), PersistentStateComponent<Element?>, Disposable {
+open class FileEditorManagerImpl(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+) : FileEditorManagerEx(), PersistentStateComponent<Element?>, Disposable {
   enum class OpenMode {
     NEW_WINDOW, RIGHT_SPLIT, DEFAULT
   }
@@ -132,7 +135,10 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   private val isInitialized = AtomicBoolean()
 
-  private val dockable = lazy { DockableEditorTabbedContainer(mainSplitters, false, coroutineScope) }
+  private val dockable = lazy {
+    DockableEditorTabbedContainer(splitters = mainSplitters, disposeWhenEmpty = false, coroutineScope = coroutineScope)
+  }
+
   private val selectionHistory = SelectionHistory()
 
   private val fileUpdateChannel: MergingUpdateChannel<VirtualFile> = MergingUpdateChannel(delay = 50.milliseconds) { toUpdate ->
@@ -175,9 +181,6 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   private var contentFactory: DockableEditorContainerFactory? = null
   private val openedComposites = CopyOnWriteArrayList<EditorComposite>()
   private val listenerList = MessageListenerList(project.messageBus, FileEditorManagerListener.FILE_EDITOR_MANAGER)
-
-  @Suppress("DEPRECATION")
-  private val coroutineScope: CoroutineScope = project.coroutineScope.childScope()
 
   private val splitterFlow = MutableSharedFlow<EditorsSplitters>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
@@ -773,7 +776,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
         if (forbidSplitFor(file)) {
           closeFile(file)
         }
-        return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file, this)
+        return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file) { editorWindow ->
+          openFileImpl2(window = editorWindow, file = file, options = options)
+        }
       }
       if (mode == OpenMode.RIGHT_SPLIT) {
         val result = openInRightSplit(file)
@@ -783,7 +788,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       }
     }
 
-    if (windowToOpenIn == null && (options.reuseOpen || !getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER))) {
+    if (windowToOpenIn == null && (options.reuseOpen || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER))) {
       windowToOpenIn = findWindowInAllSplitters(file)
     }
     if (windowToOpenIn == null) {
@@ -800,8 +805,11 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     for (splitters in getAllSplitters()) {
       for (window in splitters.getWindows()) {
         if (isFileOpenInWindow(file, window)) {
-          return if (getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)) window else activeCurrentWindow
+          if (AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)) {
+            return window
+          }
           // return a window from here so that we don't look for it again in getOrCreateCurrentWindow
+          return activeCurrentWindow
         }
       }
     }
@@ -839,7 +847,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     if (forbidSplitFor(file)) {
       closeFile(file)
     }
-    return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file, this).retrofit()
+    return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file) { editorWindow ->
+      openFileImpl2(editorWindow, file, FileEditorOpenOptions(requestFocus = true))
+    }.retrofit()
   }
 
   private fun openInRightSplit(file: VirtualFile): FileEditorComposite? {
@@ -1096,9 +1106,8 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       IdeDocumentHistory.getInstance(project).onSelectionChanged()
     }
 
-    options.pin?.let {
-      window.setFilePinned(file = file, pinned = it)
-    }
+    window.setFilePinned(composite, pinned = options.pin)
+
     if (newEditor) {
       val messageBus = project.messageBus
       messageBus.syncPublisher(FileOpenedSyncListener.TOPIC).fileOpenedSync(this, file, editorsWithProviders)

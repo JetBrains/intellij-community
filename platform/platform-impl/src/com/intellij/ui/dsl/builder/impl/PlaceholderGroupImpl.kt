@@ -7,6 +7,8 @@ import com.intellij.ui.dsl.builder.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Not needed")
 @ApiStatus.Internal
 internal class PlaceholderGroupImpl<K>(
   panel: PanelImpl,

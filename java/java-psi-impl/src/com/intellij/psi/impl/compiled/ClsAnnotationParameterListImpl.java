@@ -35,7 +35,7 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
       if (value == null) {
         String anno = parent instanceof ClsAnnotationImpl ? ((ClsAnnotationImpl)parent).getStub().getText() : parent.getText();
         Logger.getInstance(getClass()).error("name=" + name + " anno=[" + anno + "] file=" + parent.getContainingFile());
-        value = new ClsLiteralExpressionImpl(this, "null", PsiType.NULL, null);
+        value = new ClsLiteralExpressionImpl(this, "null", PsiTypes.nullType(), null);
       }
 
       if (psiAttributes.length == 1 && "value".equals(name)) {

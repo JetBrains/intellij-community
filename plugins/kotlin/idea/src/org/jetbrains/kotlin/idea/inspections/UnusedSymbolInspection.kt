@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.project.implementingDescriptors
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
@@ -474,7 +475,8 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         if (declaration is KtSecondaryConstructor) {
             val containingClass = declaration.containingClass()
             if (containingClass != null && ReferencesSearch.search(KotlinReferencesSearchParameters(containingClass, useScope)).any {
-                    it.element.getStrictParentOfType<KtTypeAlias>() != null
+                    it.element.getStrictParentOfType<KtTypeAlias>() != null ||
+                            it.element.getStrictParentOfType<KtCallExpression>()?.resolveToCall()?.resultingDescriptor == descriptor
                 }) return true
         }
 

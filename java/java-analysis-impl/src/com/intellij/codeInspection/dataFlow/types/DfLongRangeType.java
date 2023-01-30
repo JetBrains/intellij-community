@@ -4,7 +4,7 @@ package com.intellij.codeInspection.dataFlow.types;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +16,6 @@ final class DfLongRangeType extends DfAbstractRangeType implements DfLongType {
   @Override
   public @NotNull String toString() {
     if (getRange() == LongRangeSet.all()) return PsiKeyword.LONG;
-    return PsiKeyword.LONG + " " + JvmPsiRangeSetUtil.getPresentationText(getRange(), PsiType.LONG);
+    return PsiKeyword.LONG + " " + JvmPsiRangeSetUtil.getPresentationText(getRange(), PsiTypes.longType());
   }
 }

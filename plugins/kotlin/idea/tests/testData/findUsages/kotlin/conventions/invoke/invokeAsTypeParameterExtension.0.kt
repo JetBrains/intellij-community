@@ -13,5 +13,5 @@ fun test() {
     Foo()
 }
 
-// FIR_COMPARISON
+
 // IGNORE_FIR_LOG

@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.psi.PsiArrayInitializerExpression;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -81,7 +78,7 @@ public class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
 
     private static boolean isDecimalLiteral(PsiLiteralExpression literal) {
       final PsiType type = literal.getType();
-      if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
+      if (!PsiTypes.intType().equals(type) && !PsiTypes.longType().equals(type)) {
         return false;
       }
       final String text = literal.getText();

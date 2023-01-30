@@ -3,9 +3,11 @@ package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
@@ -97,6 +99,59 @@ interface UastApiFixtureTestBase : UastPluginSelection {
                 // KTIJ-20200
                 TestCase.assertTrue("$mtd should be marked as a constructor", mtd.isConstructor)
             }
+        }
+    }
+
+    fun checkTypesOfDeprecatedHidden(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                interface State<out T> {
+                    val value: T
+                }
+
+                @Deprecated(level = DeprecationLevel.HIDDEN, message="no longer supported")
+                fun before(
+                    i : Int?,
+                    s : String?,
+                    vararg vs : Any,
+                ): State<String> {
+                    return object : State<String> {
+                        override val value: String = i?.toString() ?: s ?: "42"
+                    }
+                }
+                
+                fun after(
+                    i : Int?,
+                    s : String?,
+                    vararg vs : Any,
+                ): State<String> {
+                    return object : State<String> {
+                        override val value: String = i?.toString() ?: s ?: "42"
+                    }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val before = uFile.findElementByTextFromPsi<UMethod>("before", strict = false)
+            .orFail("cant convert to UMethod: before")
+        val after = uFile.findElementByTextFromPsi<UMethod>("after", strict = false)
+            .orFail("cant convert to UMethod: after")
+
+        TestCase.assertEquals("return type", after.returnType, before.returnType)
+
+        TestCase.assertEquals(after.uastParameters.size, before.uastParameters.size)
+        after.uastParameters.zip(before.uastParameters).forEach { (afterParam, beforeParam) ->
+            val paramName = afterParam.name
+            TestCase.assertEquals(paramName, beforeParam.name)
+            TestCase.assertEquals(paramName, afterParam.isVarArgs, beforeParam.isVarArgs)
+            TestCase.assertEquals(paramName, afterParam.type, beforeParam.type)
+            TestCase.assertEquals(
+                paramName,
+                (afterParam.javaPsi as PsiModifierListOwner).hasAnnotation(Nullable::class.java.name),
+                (beforeParam.javaPsi as PsiModifierListOwner).hasAnnotation(Nullable::class.java.name)
+            )
         }
     }
 

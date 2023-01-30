@@ -21,6 +21,7 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
+import kotlin.io.path.div
 import kotlin.io.path.exists
 
 internal suspend fun checkChildProcess(projectStoreBaseDir: Path, activity: Activity): Boolean {
@@ -115,6 +116,11 @@ private fun openProjectInstanceArgs(projectStoreBaseDir: Path): List<String> {
       val customTestScriptPath = PerProjectInstancePaths(projectStoreBaseDir).getSystemDir().resolve(VMOptions.TEST_SCRIPT_FILE_NAME)
       @Suppress("SpellCheckingInspection")
       add("-Dtestscript.filename=${customTestScriptPath}")
+
+      // Do not write metrics from the 2nd+ instances to the main json file
+      if (ProjectManagerEx.IS_CHILD_PROCESS) {
+        add("-Didea.diagnostic.opentelemetry.file=${instancePaths.getLogDir() / "opentelemetry.json"}")
+      }
     }
   }
 }

@@ -60,7 +60,7 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
         for (ExpectedTypeInfo info : myExpectedTypeInfos) {
           final PsiType infoType = info.getType();
           final PsiType originalInfoType = JavaCompletionUtil.originalize(infoType);
-          if (PsiType.VOID.equals(infoType)) {
+          if (PsiTypes.voidType().equals(infoType)) {
             voidTyped.add(info.getTailType());
           } else if (infoType.equals(type) || originalInfoType.equals(type)) {
             sameTyped.add(info.getTailType());

@@ -62,11 +62,11 @@ public class AssertMessageNotStringInspection extends BaseInspection {
       }
       final PsiType type = assertDescription.getType();
       if (onlyWarnOnBoolean) {
-        if (PsiType.BOOLEAN.equals(type)) {
+        if (PsiTypes.booleanType().equals(type)) {
           registerError(assertDescription, type);
           return;
         }
-        final PsiClassType javaLangBoolean = PsiType.BOOLEAN.getBoxedType(statement);
+        final PsiClassType javaLangBoolean = PsiTypes.booleanType().getBoxedType(statement);
         if (javaLangBoolean != null && javaLangBoolean.equals(type)) {
           registerError(assertDescription, type);
         }

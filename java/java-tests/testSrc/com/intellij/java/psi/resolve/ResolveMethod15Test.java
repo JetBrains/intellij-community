@@ -291,7 +291,7 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     assertNotNull(element);
     assertTrue(resolveResult.isValidResult());
     final PsiMethod method = (PsiMethod)element;
-    assertEquals(PsiType.BOOLEAN, method.getParameterList().getParameters()[1].getType());
+    assertEquals(PsiTypes.booleanType(), method.getParameterList().getParameters()[1].getType());
   }
 
   public void testFilterVarargsVsVarargs1() throws Exception {

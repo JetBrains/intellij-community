@@ -15,6 +15,7 @@
     <module name="intellij.searchEverywhereMl.yaml"/>
     <module name="intellij.searchEverywhereMl.vcs"/>
     <module name="intellij.searchEverywhereMl.java"/>
+    <module name="intellij.searchEverywhereMl.kotlin"/>
   </content>
 
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>

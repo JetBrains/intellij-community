@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -317,7 +317,10 @@ public class CustomizableActionsPanel {
             append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
             append(description, SimpleTextAttributes.GRAY_ATTRIBUTES);
           }
-          setIcon(icon);
+          // do not show the icon for the top groups
+          if (((DefaultMutableTreeNode)value).getLevel() > 1) {
+            setIcon(icon);
+          }
         });
         setForeground(UIUtil.getTreeForeground(selected, hasFocus));
       }

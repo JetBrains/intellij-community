@@ -55,21 +55,7 @@ interface CustomFacetRelatedEntitySerializer<T: ModuleSettingsBase> {
    * @param entities list of certain type entities
    * @param storeExternally indicator which tells where this data will be store, under `.idea` or in external system folder
    */
-  fun createFacetStateFromEntities(entities: List<T>, storeExternally: Boolean): List<FacetState>
-
-  /**
-   * Method for creation facet XML tag from root type entity passed as a parameter
-   */
-  fun serializeIntoXml(entity: T): Element
-
-  companion object {
-    val EP_NAME: ExtensionPointName<CustomFacetRelatedEntitySerializer<ModuleSettingsBase>> =
-      ExtensionPointName.create("com.intellij.workspaceModel.customFacetRelatedEntitySerializer")
-  }
-}
-
-interface ModuleSettingsBaseSerializer<T: ModuleSettingsBase> : CustomFacetRelatedEntitySerializer<T> {
-  override fun createFacetStateFromEntities(entities: List<T>, storeExternally: Boolean): List<FacetState> {
+  fun createFacetStateFromEntities(entities: List<T>, storeExternally: Boolean): List<FacetState> {
     return entities.map { settingsEntity ->
       val state = FacetState().apply {
         name = settingsEntity.name
@@ -87,6 +73,20 @@ interface ModuleSettingsBaseSerializer<T: ModuleSettingsBase> : CustomFacetRelat
       return@map state
     }
   }
-  override fun serializeIntoXml(entity: T): Element = serialize(entity, Element(JpsFacetSerializer.CONFIGURATION_TAG))
+
+  /**
+   * Method for creation facet XML tag from root type entity passed as a parameter
+   * Default implementation creates "configuration" root element and calls [serialize] method
+   */
+  fun serializeIntoXml(entity: T): Element = serialize(entity, Element(JpsFacetSerializer.CONFIGURATION_TAG))
+
+  /**
+   * Method for creation facet XML tag from root type entity and root element passed as parameters
+   */
   fun serialize(entity: T, rootElement: Element): Element
+
+  companion object {
+    val EP_NAME: ExtensionPointName<CustomFacetRelatedEntitySerializer<ModuleSettingsBase>> =
+      ExtensionPointName.create("com.intellij.workspaceModel.customFacetRelatedEntitySerializer")
+  }
 }

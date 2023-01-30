@@ -102,6 +102,15 @@ class ListTest {
     assertThat(deserializedBean.list).isSameAs(emptyList<String>())
   }
 
+  @Test
+  fun `bean implementing Collection`() {
+    data class TestBean(private val backingList: List<String>) : Collection<String> by backingList
+
+    val bean = TestBean(listOf("1", "a"))
+    val deserializedBean = test(bean)
+    assertThat(deserializedBean).isEqualTo(bean)
+  }
+
   @Ignore
   @Test
   fun `parameterized array`() {

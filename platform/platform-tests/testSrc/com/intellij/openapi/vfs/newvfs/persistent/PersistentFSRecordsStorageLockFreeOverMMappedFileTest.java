@@ -31,7 +31,7 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
       pageSize = file.getPagedFileStorage().getPageSize();
       nativeBytesOrder = file.isNativeBytesOrder();
     }
-    return new PersistentFSRecordsLockFreeOverMMappedFile(storagePath, PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_PAGE_SIZE);
+    return new PersistentFSRecordsLockFreeOverMMappedFile(storagePath, PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE);
   }
 
   @Override

@@ -691,12 +691,12 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-
     <group id="NewGroup" popup="true" searchable="false">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <reference id="NewScratchFile"/>
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
       <group class="com.intellij.ide.fileTemplates.actions.FileTemplateSeparator" id="FileTemplateSeparatorGroup"/>
+      <group id="NewWebDevelopment"/>
       <group id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
@@ -1637,16 +1637,21 @@
     
     <group id="RunToolbarWidgetCustomizableActionGroup">
       <add-to-group group-id="MainToolbarRight" anchor="first"/>
-      <action class="com.intellij.execution.ui.RunWithDropDownAction" id="RunWithDropDown"/>
       <action class="com.intellij.execution.ui.RedesignedRunToolbarWrapper" id="RedesignedRunToolbarWrapper"/>
       <action class="com.intellij.execution.ui.StopWithDropDownAction" id="StopWithDropDown"/>
     </group>
 
-    <group id="RunToolbarMainActionGroup">
+    <group id="ContrastRunToolbarMainActionGroup">
       <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
       <separator/>
       <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" />
       <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
+    </group>
+
+    <group id="RunToolbarMainActionGroup">
+      <reference ref="RedesignedRunConfigurationSelector"/>
+      <reference ref="RunToolbarTopLevelExecutorActionGroup"/>
+      <reference ref="MoreRunToolbarActions"/>
     </group>
 
     <group id="ExecutionTargetsToolbarGroup" searchable="false" popup="false">

@@ -221,7 +221,7 @@ public class GitRefManager implements VcsLogRefManager {
       VcsRef trackedRef = ContainerUtil.find(remoteBranches, ref -> ref.getName().equals(trackInfo.getRemoteBranch().getName()));
       if (trackedRef != null) {
         return new SimpleRefGroup(trackInfo.getRemote().getName() + REMOTE_TABLE_SEPARATOR + localRef.getName(),
-                                  ContainerUtil.newArrayList(localRef, trackedRef));
+                                  new ArrayList<>(Arrays.asList(localRef, trackedRef)));
       }
     }
 
@@ -230,7 +230,7 @@ public class GitRefManager implements VcsLogRefManager {
       for (VcsRef candidate : trackingCandidates) {
         if (candidate.getName().equals(remote.getName() + SEPARATOR + localRef.getName())) {
           return new SimpleRefGroup(remote.getName() + REMOTE_TABLE_SEPARATOR + localRef.getName(),
-                                    ContainerUtil.newArrayList(localRef, candidate));
+                                    new ArrayList<>(Arrays.asList(localRef, candidate)));
         }
       }
     }

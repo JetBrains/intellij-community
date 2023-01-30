@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
 import com.intellij.ide.CopyPasteDelegator
@@ -28,7 +28,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.speedSearch.SpeedSearchSupply
-import com.intellij.util.awaitCancellation
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -174,7 +174,7 @@ internal class NewNavBarPanel(
     popup.addHintListener {
       vm.cancel() // cancel vm when popup is cancelled
     }
-    cs.awaitCancellation {
+    cs.awaitCancellationAndInvoke {
       popupList = null
       popup.hide() // cancel the popup when coroutine is cancelled
     }

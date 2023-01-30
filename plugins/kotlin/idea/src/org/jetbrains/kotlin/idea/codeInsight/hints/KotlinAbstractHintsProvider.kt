@@ -73,102 +73,6 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
         }
     }
 
-    companion object {
-        fun getInlayPresentationForInlayInfoDetails(
-            element: PsiElement,
-            hintType: HintType?,
-            infoDetails: InlayInfoDetails,
-            factory: PresentationFactory,
-            project: Project,
-            provider: InlayHintsProvider<*>
-        ): InlayPresentation {
-            val details = mergeAdjacentTextInlayInfoDetails(infoDetails.details)
-            val basePresentation = when (details.size) {
-                1 -> getInlayPresentationForInlayInfoDetail(details.first(), factory, project)
-                else -> factory.seq(*(details.map { getInlayPresentationForInlayInfoDetail(it, factory, project) }.toTypedArray()))
-            }
-            val roundedPresentation = factory.roundWithBackground(basePresentation)
-            return InsetPresentation(
-                MenuOnClickPresentation(roundedPresentation, project) {
-                    listOfNotNull(
-                        hintType?.let { DisableKotlinInlayHintsAction(it.hideDescription, it, project, element) },
-                        ShowInlayHintsSettings(provider.key)
-                    )
-                }, left = 1
-            )
-        }
-
-        private fun mergeAdjacentTextInlayInfoDetails(details: List<InlayInfoDetail>): List<InlayInfoDetail> {
-            if (details.size <= 1) return details
-
-            val result = mutableListOf<InlayInfoDetail>()
-            val iterator = details.iterator()
-            var builder: StringBuilder? = null
-            var smallText = false
-            while (iterator.hasNext()) {
-                when (val next = iterator.next()) {
-                    is TextInlayInfoDetail -> {
-                        smallText = smallText or next.smallText
-                        builder = builder ?: StringBuilder()
-                        builder.append(next.text)
-                    }
-                    else -> {
-                        builder?.let {
-                            result.add(TextInlayInfoDetail(it.toString()))
-                            builder = null
-                        }
-                        result.add(next)
-                    }
-                }
-            }
-            builder?.let {
-                result.add(TextInlayInfoDetail(it.toString(), smallText = smallText))
-                builder = null
-            }
-            return result
-        }
-
-        private fun getInlayPresentationForInlayInfoDetail(
-            details: InlayInfoDetail,
-            factory: PresentationFactory,
-            project: Project
-        ): InlayPresentation {
-            val textPresentation =
-                details.safeAs<TextInlayInfoDetail>()?.run {
-                    if (!smallText) factory.text(details.text) else null
-                } ?: factory.smallText(details.text)
-
-            val navigationElementProvider: (() -> PsiElement?)? = when(details) {
-                is PsiInlayInfoDetail -> {{ details.element }}
-                is TypeInlayInfoDetail -> details.fqName?.run {
-                    { project.resolveClass(this)?.navigationElement }
-                }
-                else -> null
-            }
-            val basePresentation = navigationElementProvider?.let {
-                factory.psiSingleReference(textPresentation, withDebugToString = true, it)
-            } ?: textPresentation
-            return basePresentation
-        }
-
-        internal fun createKtFile(
-            project: Project,
-            document: Document,
-            fileType: FileType
-        ): KtFile {
-            val factory = KtPsiFactory(project)
-            val file = factory.createPhysicalFile("dummy.kt", document.text)
-            FileTypeIndex.processFiles(fileType, Processor { virtualFile ->
-                virtualFile.toPsiFile(project).safeAs<KtFile>()?.let {
-                    file.analysisContext = it
-                    false
-                } ?: true
-            }, GlobalSearchScope.projectScope(project))
-
-            return file
-        }
-    }
-
     data class PresentationAndSettings(val presentation: InlayPresentation, val offset: Int, val relatesToPrecedingText: Boolean)
 
     abstract class HintsSettings {
@@ -176,6 +80,100 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
         abstract fun enable(hintType: HintType, enable: Boolean)
     }
+}
+
+fun getInlayPresentationForInlayInfoDetails(
+    element: PsiElement,
+    hintType: HintType?,
+    infoDetails: InlayInfoDetails,
+    factory: PresentationFactory,
+    project: Project,
+    provider: InlayHintsProvider<*>
+): InlayPresentation {
+    val details = mergeAdjacentTextInlayInfoDetails(infoDetails.details)
+    val basePresentation = when (details.size) {
+        1 -> getInlayPresentationForInlayInfoDetail(details.first(), factory, project)
+        else -> factory.seq(*(details.map { getInlayPresentationForInlayInfoDetail(it, factory, project) }.toTypedArray()))
+    }
+    val roundedPresentation = factory.roundWithBackground(basePresentation)
+    return InsetPresentation(
+        MenuOnClickPresentation(roundedPresentation, project) {
+            listOfNotNull(
+                hintType?.let { DisableKotlinInlayHintsAction(it.hideDescription, it, project, element) },
+                ShowInlayHintsSettings(provider.key)
+            )
+        }, left = 1
+    )
+}
+
+private fun mergeAdjacentTextInlayInfoDetails(details: List<InlayInfoDetail>): List<InlayInfoDetail> {
+    if (details.size <= 1) return details
+
+    val result = mutableListOf<InlayInfoDetail>()
+    val iterator = details.iterator()
+    var builder: StringBuilder? = null
+    var smallText = false
+    while (iterator.hasNext()) {
+        when (val next = iterator.next()) {
+            is TextInlayInfoDetail -> {
+                smallText = smallText or next.smallText
+                builder = builder ?: StringBuilder()
+                builder.append(next.text)
+            }
+            else -> {
+                builder?.let {
+                    result.add(TextInlayInfoDetail(it.toString()))
+                    builder = null
+                }
+                result.add(next)
+            }
+        }
+    }
+    builder?.let {
+        result.add(TextInlayInfoDetail(it.toString(), smallText = smallText))
+        builder = null
+    }
+    return result
+}
+
+private fun getInlayPresentationForInlayInfoDetail(
+    details: InlayInfoDetail,
+    factory: PresentationFactory,
+    project: Project
+): InlayPresentation {
+    val textPresentation =
+        details.safeAs<TextInlayInfoDetail>()?.run {
+            if (!smallText) factory.text(details.text) else null
+        } ?: factory.smallText(details.text)
+
+    val navigationElementProvider: (() -> PsiElement?)? = when(details) {
+        is PsiInlayInfoDetail -> {{ details.element }}
+        is TypeInlayInfoDetail -> details.fqName?.run {
+            { project.resolveClass(this)?.navigationElement }
+        }
+        else -> null
+    }
+    val basePresentation = navigationElementProvider?.let {
+        factory.psiSingleReference(textPresentation, withDebugToString = true, it)
+    } ?: textPresentation
+    return basePresentation
+}
+
+internal fun createKtFile(
+    project: Project,
+    document: Document,
+    fileType: FileType
+): KtFile {
+    val factory = KtPsiFactory(project)
+    val file = factory.createPhysicalFile("dummy.kt", document.text)
+    FileTypeIndex.processFiles(fileType, Processor { virtualFile ->
+        virtualFile.toPsiFile(project).safeAs<KtFile>()?.let {
+            file.analysisContext = it
+            false
+        } ?: true
+    }, GlobalSearchScope.projectScope(project))
+
+    return file
 }
 
 internal fun refreshHints() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -18,11 +18,12 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
@@ -58,6 +59,8 @@ internal val AFTER_IMPORT_CONFIGURATOR_EP: ExtensionPointName<MavenAfterImportCo
 @Internal
 var WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = false
 
+internal val ARTIFACT_MODEL_KEY = Key.create<ImporterModifiableArtifactModel>("ARTIFACT_MODEL_KEY")
+
 internal class WorkspaceProjectImporter(
   private val myProjectsTree: MavenProjectsTree,
   private val projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
@@ -71,9 +74,11 @@ internal class WorkspaceProjectImporter(
   override fun importProject(): List<MavenProjectsProcessorTask> {
     MavenLog.LOG.info("Importing Maven project using Workspace API")
 
+    val migratedToExternalStorage = migrateToExternalStorageIfNeeded()
+
     val storageBeforeImport = WorkspaceModel.getInstance(myProject).currentSnapshot
 
-    val projectChangesInfo = collectProjectChanges(storageBeforeImport, projectsToImportWithChanges)
+    val projectChangesInfo = collectProjectChanges(storageBeforeImport, projectsToImportWithChanges, migratedToExternalStorage)
 
     if (!projectChangesInfo.hasChanges) return emptyList()
 
@@ -87,15 +92,17 @@ internal class WorkspaceProjectImporter(
     builder.addEntity(MavenProjectsTreeSettingsEntity(projectChangesInfo.projectFilePaths, MavenProjectsTreeEntitySource))
 
     val contextData = UserDataHolderBase()
-    val artifactModel = ImporterModifiableArtifactModel(myProject, builder)
+    ARTIFACT_MODEL_KEY[contextData] = ImporterModifiableArtifactModel(myProject, builder)
 
     val projectsWithModuleEntities = stats.recordPhase(MavenImportCollector.WORKSPACE_POPULATE_PHASE) {
-      importModules(storageBeforeImport, builder, allProjectsToChanges, mavenProjectToModuleName, artifactModel, contextData, stats).also {
-        beforeModelApplied(it, builder, artifactModel, contextData, stats)
+      importModules(storageBeforeImport, builder, allProjectsToChanges, mavenProjectToModuleName, contextData, stats).also {
+        beforeModelApplied(it, builder, contextData, stats)
+      }.apply {
+        ARTIFACT_MODEL_KEY[contextData].applyToStorage()
       }
     }
     val appliedProjectsWithModules = stats.recordPhase(MavenImportCollector.WORKSPACE_COMMIT_PHASE) {
-      commitModulesToWorkspaceModel(projectsWithModuleEntities, builder, artifactModel, contextData, stats)
+      commitModulesToWorkspaceModel(projectsWithModuleEntities, builder, contextData, stats)
     }
 
     stats.recordPhase(MavenImportCollector.WORKSPACE_LEGACY_IMPORTERS_PHASE) { activity ->
@@ -118,6 +125,27 @@ internal class WorkspaceProjectImporter(
 
   }
 
+  private fun migrateToExternalStorageIfNeeded(): Boolean {
+    var migratedToExternalStorage = false
+    val externalStorageManager = myProject.getService(ExternalStorageConfigurationManager::class.java)
+    if (!externalStorageManager.isEnabled) {
+      ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true)
+      migratedToExternalStorage = true
+
+      if (!externalStorageManager.isEnabled) {
+        MavenLog.LOG.error(
+          "Can't migrate the project to external project files storage: ExternalStorageConfigurationManager.isEnabled=false")
+      }
+      else if (!myProject.isExternalStorageEnabled) {
+        MavenLog.LOG.warn("Can't migrate the project to external project files storage: Project.isExternalStorageEnabled=false")
+      }
+      else {
+        MavenLog.LOG.info("Project has been migrated to external project files storage")
+      }
+    }
+    return migratedToExternalStorage
+  }
+
   private data class ProjectChangesInfo(val hasChanges: Boolean, val allProjectsToChanges: Map<MavenProject, MavenProjectChanges>) {
     val projectFilePaths : List<String> get() = allProjectsToChanges.keys.map { it.path }
     val changedProjectsOnly : Iterable<MavenProject> get() = allProjectsToChanges
@@ -128,7 +156,8 @@ internal class WorkspaceProjectImporter(
   }
 
   private fun collectProjectChanges(storageBeforeImport: EntityStorage,
-                                    originalProjectsChanges: Map<MavenProject, MavenProjectChanges>): ProjectChangesInfo {
+                                    originalProjectsChanges: Map<MavenProject, MavenProjectChanges>,
+                                    migratedToExternalStorage: Boolean): ProjectChangesInfo {
     val mavenProjectsTreeSettingsEntity = storageBeforeImport.entities(MavenProjectsTreeSettingsEntity::class.java).firstOrNull()
     val projectFilesFromPreviousImport = mavenProjectsTreeSettingsEntity?.importedFilePaths ?: listOf()
 
@@ -149,24 +178,7 @@ internal class WorkspaceProjectImporter(
       }
     }
 
-    var hasChanges = allProjectsToChanges.values.any { it.hasChanges() }
-
-    val externalStorageManager = myProject.getService(ExternalStorageConfigurationManager::class.java)
-    if (!externalStorageManager.isEnabled) {
-      ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true)
-      hasChanges = true
-
-      if (!externalStorageManager.isEnabled) {
-        MavenLog.LOG.error(
-          "Can't migrate the project to external project files storage: ExternalStorageConfigurationManager.isEnabled=false")
-      }
-      else if (!myProject.isExternalStorageEnabled) {
-        MavenLog.LOG.warn("Can't migrate the project to external project files storage: Project.isExternalStorageEnabled=false")
-      }
-      else {
-        MavenLog.LOG.info("Project has been migrated to external project files storage")
-      }
-    }
+    val hasChanges = allProjectsToChanges.values.any { it.hasChanges() } || migratedToExternalStorage
 
     return ProjectChangesInfo(hasChanges, allProjectsToChanges)
   }
@@ -181,7 +193,6 @@ internal class WorkspaceProjectImporter(
                             builder: MutableEntityStorage,
                             projectsToImport: Map<MavenProject, MavenProjectChanges>,
                             mavenProjectToModuleName: java.util.HashMap<MavenProject, String>,
-                            artifactModel: ModifiableArtifactModel,
                             contextData: UserDataHolderBase,
                             stats: WorkspaceImportStats): List<MavenProjectWithModulesData<ModuleEntity>> {
     val context = MavenProjectImportContextProvider(myProject, myProjectsTree, myImportingSettings,
@@ -195,11 +206,12 @@ internal class WorkspaceProjectImporter(
 
     val projectToModulesData = mutableMapOf<MavenProject, PartialModulesData>()
     val unloadedModuleNames = UnloadedModulesListStorage.getInstance(myProject).unloadedModuleNames.toSet()
-    
+
     for (importData in sortProjectsToImportByPrecedence(context)) {
       if (importData.moduleData.moduleName in unloadedModuleNames) continue
-      
+
       val moduleEntity = WorkspaceModuleImporter(myProject,
+                                                 storageBeforeImport,
                                                  importData,
                                                  virtualFileUrlManager,
                                                  builder,
@@ -218,7 +230,7 @@ internal class WorkspaceProjectImporter(
       MavenProjectWithModulesData(mavenProject, partialData.changes, partialData.modules)
     }
 
-    configureModules(result, builder, artifactModel, contextData, stats)
+    configureModules(result, builder, contextData, stats)
     return result
   }
 
@@ -249,11 +261,9 @@ internal class WorkspaceProjectImporter(
 
   private fun commitModulesToWorkspaceModel(mavenProjectsWithModules: List<MavenProjectWithModulesData<ModuleEntity>>,
                                             newStorage: MutableEntityStorage,
-                                            artifactModel: ImporterModifiableArtifactModel,
                                             contextData: UserDataHolderBase,
                                             stats: WorkspaceImportStats): List<MavenProjectWithModulesData<Module>> {
     val appliedModulesResult = mutableListOf<MavenProjectWithModulesData<Module>>()
-    artifactModel.applyToStorage()
     updateProjectModelFastOrSlow(myProject, stats,
                                  { snapshot -> applyToCurrentStorage(mavenProjectsWithModules, snapshot, newStorage) },
                                  { applied ->
@@ -382,14 +392,12 @@ internal class WorkspaceProjectImporter(
 
   private fun configureModules(projectsWithModules: List<MavenWorkspaceConfigurator.MavenProjectWithModules<ModuleEntity>>,
                                builder: MutableEntityStorage,
-                               artifactModel: ModifiableArtifactModel,
                                contextDataHolder: UserDataHolderBase,
                                stats: WorkspaceImportStats) {
-    val context = object : MavenWorkspaceConfigurator.MutableMavenProjectContext, UserDataHolder by contextDataHolder {
+    val context = object : MavenWorkspaceConfigurator.MutableMavenProjectContext, UserDataHolderEx by contextDataHolder {
       override val project = myProject
       override val storage = builder
       override val mavenProjectsTree = myProjectsTree
-      override val artifactModel = artifactModel
       override lateinit var mavenProjectWithModules: MavenWorkspaceConfigurator.MavenProjectWithModules<ModuleEntity>
     }
     WORKSPACE_CONFIGURATOR_EP.extensions.forEach { configurator ->
@@ -408,15 +416,13 @@ internal class WorkspaceProjectImporter(
 
   private fun beforeModelApplied(projectsWithModules: List<MavenWorkspaceConfigurator.MavenProjectWithModules<ModuleEntity>>,
                                  builder: MutableEntityStorage,
-                                 artifactModel: ModifiableArtifactModel,
                                  contextDataHolder: UserDataHolderBase,
                                  stats: WorkspaceImportStats) {
-    val context = object : MavenWorkspaceConfigurator.MutableModelContext, UserDataHolder by contextDataHolder {
+    val context = object : MavenWorkspaceConfigurator.MutableModelContext, UserDataHolderEx by contextDataHolder {
       override val project = myProject
       override val storage = builder
       override val mavenProjectsTree = myProjectsTree
       override val mavenProjectsWithModules = projectsWithModules.asSequence()
-      override val artifactModel = artifactModel
       override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = importedEntities(builder, clazz)
     }
     WORKSPACE_CONFIGURATOR_EP.extensions.forEach { configurator ->
@@ -435,7 +441,7 @@ internal class WorkspaceProjectImporter(
                                 builder: EntityStorage,
                                 contextDataHolder: UserDataHolderBase,
                                 stats: WorkspaceImportStats) {
-    val context = object : MavenWorkspaceConfigurator.AppliedModelContext, UserDataHolder by contextDataHolder {
+    val context = object : MavenWorkspaceConfigurator.AppliedModelContext, UserDataHolderEx by contextDataHolder {
       override val project = myProject
       override val storage = builder
       override val mavenProjectsTree = myProjectsTree

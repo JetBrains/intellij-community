@@ -256,8 +256,8 @@ public final class PsiImplUtil {
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     PsiType operandType = classAccessExpression.getOperand().getType();
-    if (operandType instanceof PsiPrimitiveType && !PsiType.NULL.equals(operandType)) {
-      if (PsiType.VOID.equals(operandType)) {
+    if (operandType instanceof PsiPrimitiveType && !PsiTypes.nullType().equals(operandType)) {
+      if (PsiTypes.voidType().equals(operandType)) {
         operandType = JavaPsiFacade.getElementFactory(manager.getProject())
             .createTypeByFQClassName("java.lang.Void", classAccessExpression.getResolveScope());
       }

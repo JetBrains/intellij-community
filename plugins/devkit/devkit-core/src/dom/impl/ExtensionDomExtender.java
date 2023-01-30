@@ -81,10 +81,10 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         final With withElement = findWithElement(elements, field);
         final PsiType fieldType = field.getType();
         Class<?> clazz = String.class;
-        if (PsiType.BOOLEAN.equals(fieldType)) {
+        if (PsiTypes.booleanType().equals(fieldType)) {
           clazz = Boolean.class;
         }
-        else if (PsiType.INT.equals(fieldType) ||
+        else if (PsiTypes.intType().equals(fieldType) ||
                  fieldType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)) {
           clazz = Integer.class;
         }

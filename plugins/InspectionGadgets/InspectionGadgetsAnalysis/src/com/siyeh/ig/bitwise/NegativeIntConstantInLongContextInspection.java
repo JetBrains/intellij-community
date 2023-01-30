@@ -40,7 +40,7 @@ public class NegativeIntConstantInLongContextInspection extends AbstractBaseJava
       }
 
       private void checkLongContext(@NotNull PsiExpression expression) {
-        if (!PsiType.LONG.equals(ExpectedTypeUtils.findExpectedType(expression, true))) return;
+        if (!PsiTypes.longType().equals(ExpectedTypeUtils.findExpectedType(expression, true))) return;
         if (isInAssertEqualsLong(expression)) return;
         LocalQuickFix[] fixes = null;
         if (expression instanceof PsiLiteralExpression) {
@@ -62,11 +62,11 @@ public class NegativeIntConstantInLongContextInspection extends AbstractBaseJava
     String name = call.getMethodExpression().getReferenceName();
     if (!"assertEquals".equals(name)) return false;
     PsiExpression[] args = ((PsiExpressionList)parent).getExpressions();
-    return ContainerUtil.exists(args, arg -> !PsiTreeUtil.isAncestor(arg, expression, false) && PsiType.INT.equals(arg.getType()));
+    return ContainerUtil.exists(args, arg -> !PsiTreeUtil.isAncestor(arg, expression, false) && PsiTypes.intType().equals(arg.getType()));
   }
 
   private static boolean isNegativeHexLiteral(@NotNull PsiLiteralExpression literal) {
-    if (!PsiType.INT.equals(literal.getType())) return false;
+    if (!PsiTypes.intType().equals(literal.getType())) return false;
     String text = literal.getText();
     if (!text.startsWith("0x") && !text.startsWith("0X")) return false;
     Integer value = tryCast(literal.getValue(), Integer.class);
@@ -84,7 +84,7 @@ public class NegativeIntConstantInLongContextInspection extends AbstractBaseJava
       PsiLiteralExpression literal = tryCast(descriptor.getStartElement(), PsiLiteralExpression.class);
       if (literal == null) return;
       PsiType type = literal.getType();
-      if (!PsiType.INT.equals(type)) return;
+      if (!PsiTypes.intType().equals(type)) return;
       new CommentTracker().replaceAndRestoreComments(literal, literal.getText() + "L");
     }
   }
@@ -102,7 +102,7 @@ public class NegativeIntConstantInLongContextInspection extends AbstractBaseJava
       Integer value = tryCast(literal.getValue(), Integer.class);
       if (value == null || value >= 0) return;
       String longLiteral = Long.toHexString(value);
-      String result = LiteralFormatUtil.format(literal.getText().substring(0, 2) + longLiteral + "L", PsiType.LONG);
+      String result = LiteralFormatUtil.format(literal.getText().substring(0, 2) + longLiteral + "L", PsiTypes.longType());
       new CommentTracker().replaceAndRestoreComments(literal, result);
     }
   }

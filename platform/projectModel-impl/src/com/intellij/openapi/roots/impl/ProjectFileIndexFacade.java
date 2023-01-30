@@ -10,11 +10,8 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
-import com.intellij.workspaceModel.core.fileIndex.impl.MultipleWorkspaceFileSets;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
 import org.jetbrains.annotations.NotNull;
@@ -109,11 +106,8 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
       if (fileInfo instanceof WorkspaceFileInternalInfo.NonWorkspace) {
         return false;
       }
-      if (fileInfo instanceof WorkspaceFileSet && ((WorkspaceFileSet)fileInfo).getKind() == WorkspaceFileKind.EXTERNAL
-          || fileInfo instanceof MultipleWorkspaceFileSets && ContainerUtil.exists(((MultipleWorkspaceFileSets)fileInfo).getFileSets(), fileSet -> fileSet.getKind() == WorkspaceFileKind.EXTERNAL)) {
-        if (!myFileIndex.isInSourceContent(file)) {
-          return false;
-        }
+      if (fileInfo.findFileSet(it -> it.getKind() == WorkspaceFileKind.EXTERNAL) != null && !myFileIndex.isInSourceContent(file)) {
+        return false;
       }
       return true;
     }

@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.Module;
@@ -400,6 +401,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
     if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
       return selectedUserObjects;
+    }
+    if (PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.is(dataId)) {
+      return FileEditorManagerEx.getInstanceEx(myProject).getSelectedEditor();
     }
 
     if (BGT_DATA_PROVIDER.is(dataId)) {

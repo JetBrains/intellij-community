@@ -11,6 +11,6 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
     <orderEntry type="module" module-name="intellij.markdown.core" />
-    <orderEntry type="module" module-name="intellij.toml" />
+    <orderEntry type="module" module-name="intellij.toml" scope="PROVIDED" />
   </component>
 </module>

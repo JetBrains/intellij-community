@@ -6,6 +6,7 @@ import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
 
 class AutoLinkTest : AutoLinkTestCase() {
+
   fun `test auto-link project`() {
     val projectDirectory = createProjectSubDir("project")
     val unlinkedProjectAware = createAndRegisterUnlinkedProjectAware("A", "a")

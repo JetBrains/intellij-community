@@ -388,7 +388,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     SwingUtilities.invokeLater { window.uiContainer.preferredSize = null }
   }
 
-  fun createNewDockContainerFor(file: VirtualFile, fileEditorManager: FileEditorManagerImpl): FileEditorComposite {
+  fun createNewDockContainerFor(file: VirtualFile, openFile: (EditorWindow) -> FileEditorComposite): FileEditorComposite {
     val container = getFactory(DockableEditorContainerFactory.TYPE)!!.createContainer(null)
 
     // Order is important here. Create the dock window, then create the editor window. That way, any listeners can check to see if the
@@ -398,7 +398,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       window.show(true)
     }
     val editorWindow = (container as DockableEditorTabbedContainer).splitters.getOrCreateCurrentWindow(file)
-    val result = fileEditorManager.openFileImpl2(editorWindow, file, FileEditorOpenOptions(requestFocus = true))
+    val result = openFile(editorWindow)
     if (!isSingletonEditorInWindow(result.allEditors)) {
       window.setupToolWindowPane()
     }

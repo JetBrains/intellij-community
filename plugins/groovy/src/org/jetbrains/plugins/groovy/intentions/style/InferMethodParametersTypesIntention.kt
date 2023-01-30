@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.intentions.base.Intention
@@ -70,7 +70,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
     }
     sinkMethod.typeParameters.forEach { GrReferenceAdjuster.shortenAllReferencesIn(it.originalElement as GroovyPsiElement?) }
     if (!sinkMethod.isConstructor && sinkMethod.returnTypeElement == null) {
-      val returnType = sinkMethod.inferredReturnType?.takeIf { it != PsiType.NULL } ?: getJavaLangObject(sinkMethod)
+      val returnType = sinkMethod.inferredReturnType?.takeIf { it != PsiTypes.nullType() } ?: getJavaLangObject(sinkMethod)
       GrReferenceAdjuster.shortenAllReferencesIn(sinkMethod.setReturnType(returnType))
     }
     sinkMethod.modifierList.setModifierProperty(GrModifier.DEF, false)

@@ -109,7 +109,7 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
                                                  }
                                                  else if (o instanceof String) {
                                                    if ("true".equals(o) || "false".equals(o)) {
-                                                     type = PsiType.BOOLEAN;
+                                                     type = PsiTypes.booleanType();
                                                    }
                                                  }
                                                  if (type == null) return;

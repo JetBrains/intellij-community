@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
+import org.junit.Assume
 import java.io.File
 
 abstract class AbstractIdeLightClassesByPsiTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -23,7 +24,10 @@ abstract class AbstractIdeLightClassesByPsiTest : KotlinLightCodeInsightFixtureT
     open fun doTest(testDataPath: String) {
         val testDataFile = File(testDataPath)
         val sourceText = testDataFile.readText()
-        InTextDirectivesUtils.checkIfMuted(sourceText)
+        Assume.assumeFalse(
+            "The test is not supported",
+            InTextDirectivesUtils.isDirectiveDefined(sourceText, LightClassTestCommon.SKIP_IDE_TEST_DIRECTIVE),
+        )
 
         withCustomCompilerOptions(sourceText, project, module) {
             val file = myFixture.addFileToProject(testDataFile.name, sourceText) as KtFile

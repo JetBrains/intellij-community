@@ -2,6 +2,7 @@
 package com.intellij.collaboration.async
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
@@ -93,6 +94,8 @@ suspend fun <T1, T2, T3> combineAndCollect(
   }
 }
 
+fun Flow<Boolean>.inverted() = map { !it }
+
 @ApiStatus.Experimental
 fun <T, M> StateFlow<T>.mapState(
   scope: CoroutineScope,
@@ -114,6 +117,17 @@ fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope,
   }.stateIn(scope, sharingStart, mapper(nestedScope, originalState.value))
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
+@ApiStatus.Experimental
+fun <T, R> Flow<T>.mapScoped(mapper: suspend CoroutineScope.(T) -> R): Flow<R> {
+  return transformLatest { newValue ->
+    coroutineScope {
+      emit(mapper(newValue))
+      awaitCancellation()
+    }
+  }
+}
+
 @ApiStatus.Experimental
 suspend fun <T> StateFlow<T>.collectScoped(collector: (CoroutineScope, T) -> Unit) {
   collectLatest { state ->
@@ -131,5 +145,53 @@ suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev
   collect {
     collector(prev, it)
     prev = it
+  }
+}
+
+/**
+ * Lazy shared flow that logs all exceptions as errors and never throws (beside cancellation)
+ */
+fun <T> Flow<T>.modelFlow(cs: CoroutineScope, log: Logger): SharedFlow<T> =
+  catch { log.error(it) }.shareIn(cs, SharingStarted.Lazily, 1)
+
+fun <ID : Any, T, R> Flow<List<T>>.mapCaching(sourceIdentifier: (T) -> ID,
+                                              mapper: suspend (T) -> R,
+                                              destroy: suspend R.() -> Unit,
+                                              update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> {
+  var initial = true
+  val result = LinkedHashMap<ID, R>()
+  return transform { items ->
+    var hasStructureChanges = false
+    val itemsById = items.associateBy(sourceIdentifier)
+
+    // remove missing
+    val iter = result.iterator()
+    while (iter.hasNext()) {
+      val (key, exisingResult) = iter.next()
+      if (!itemsById.containsKey(key)) {
+        iter.remove()
+        hasStructureChanges = true
+        exisingResult.destroy()
+      }
+    }
+
+    // add new or update existing
+    for (item in items) {
+      val id = sourceIdentifier(item)
+
+      val existing = result[id]
+      if (existing != null && update != null) {
+        existing.update(item)
+      }
+      else {
+        result[id] = mapper(item)
+        hasStructureChanges = true
+      }
+    }
+
+    if (hasStructureChanges || initial) {
+      initial = false
+      emit(result.values.toList())
+    }
   }
 }

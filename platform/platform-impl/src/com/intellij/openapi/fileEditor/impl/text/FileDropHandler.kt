@@ -54,7 +54,7 @@ open class FileDropHandler(private val myEditor: Editor?) : EditorDropHandler {
       for (vFile in vFiles) {
         if (editorWindow != null && !editorWindow.isDisposed) {
           val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
-          val pair = fileEditorManager.openFile(vFile, editorWindow, FileEditorOpenOptions().withRequestFocus())
+          val pair = fileEditorManager.openFile(vFile, editorWindow, FileEditorOpenOptions(requestFocus = true))
           if (pair.allEditors.isNotEmpty()) {
             continue
           }

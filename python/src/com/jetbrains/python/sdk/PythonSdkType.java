@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -286,7 +285,6 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @NotNull final Element additional) {
-    WSLUtil.fixWslPrefix(currentSdk);
     String homePath = currentSdk.getHomePath();
 
     if (homePath != null) {

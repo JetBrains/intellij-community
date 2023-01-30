@@ -167,7 +167,7 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
         return false;
       }
       final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      if (!MethodCallUtils.isCallToMethod(call, null, PsiType.BOOLEAN, methodName)) {
+      if (!MethodCallUtils.isCallToMethod(call, null, PsiTypes.booleanType(), methodName)) {
         return false;
       }
       final PsiReferenceExpression methodExpression = call.getMethodExpression();

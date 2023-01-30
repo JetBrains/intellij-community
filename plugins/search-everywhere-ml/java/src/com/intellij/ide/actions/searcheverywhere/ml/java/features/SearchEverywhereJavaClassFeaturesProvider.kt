@@ -26,10 +26,8 @@ class SearchEverywhereJavaClassFeaturesProvider : SearchEverywhereElementFeature
     private val IS_STATIC_KEY = EventFields.Boolean("javaIsStatic")
     private val NUMBER_OF_SUPERS_KEY = EventFields.Int("javaNumberOfSupers")
     private val NUMBER_OF_FIELDS = EventFields.Int("javaNumberOfFields")
-    private val NUMBER_OF_ALL_FIELDS = EventFields.Int("javaNumberOfAllFields")
     private val NUMBER_OF_DEPRECATED_FIELDS = EventFields.Int("javaNumberOfDeprecatedFields")
     private val NUMBER_OF_METHODS = EventFields.Int("javaNumberOfMethods")
-    private val NUMBER_OF_ALL_METHODS = EventFields.Int("javaNumberOfAllMethods")
     private val NUMBER_OF_DEPRECATED_METHODS = EventFields.Int("javaNumberOfDeprecatedMethods")
     private val NUMBER_OF_ANNOTATIONS = EventFields.Int("javaNumberOfAnnotations")
 
@@ -45,8 +43,7 @@ class SearchEverywhereJavaClassFeaturesProvider : SearchEverywhereElementFeature
     IS_INSTANTIATABLE_KEY, IS_INNER_CLASS_KEY, IS_STATIC_KEY,
     IS_PUBLIC_KEY, IS_PROTECTED_KEY, IS_PRIVATE_KEY,
     NUMBER_OF_SUPERS_KEY, NUMBER_OF_FIELDS, NUMBER_OF_METHODS,
-    NUMBER_OF_ALL_FIELDS, NUMBER_OF_DEPRECATED_FIELDS, NUMBER_OF_ALL_METHODS,
-    NUMBER_OF_DEPRECATED_METHODS, NUMBER_OF_ANNOTATIONS
+    NUMBER_OF_DEPRECATED_FIELDS, NUMBER_OF_DEPRECATED_METHODS, NUMBER_OF_ANNOTATIONS
   )
 
 
@@ -76,17 +73,15 @@ class SearchEverywhereJavaClassFeaturesProvider : SearchEverywhereElementFeature
       add(IS_PRIVATE_KEY.with(psiClass.hasModifierProperty(PsiModifier.PRIVATE)))
 
 
-      add(NUMBER_OF_SUPERS_KEY.with(psiClass.supers.size))
+      add(NUMBER_OF_SUPERS_KEY.with(psiClass.extendsListTypes.size + psiClass.implementsListTypes.size))
 
       val classFields = psiClass.fields
       add(NUMBER_OF_FIELDS.with(classFields.size))
       add(NUMBER_OF_DEPRECATED_FIELDS.with(classFields.filter { it.isDeprecated }.size))
-      add(NUMBER_OF_ALL_FIELDS.with(psiClass.allFields.size))
 
       val classMethods = psiClass.methods
       add(NUMBER_OF_METHODS.with(classMethods.size))
       add(NUMBER_OF_DEPRECATED_METHODS.with(classMethods.filter { it.isDeprecated }.size))
-      add(NUMBER_OF_ALL_METHODS.with(psiClass.allMethods.size))
 
       add(NUMBER_OF_ANNOTATIONS.with(psiClass.annotations.size))
     }

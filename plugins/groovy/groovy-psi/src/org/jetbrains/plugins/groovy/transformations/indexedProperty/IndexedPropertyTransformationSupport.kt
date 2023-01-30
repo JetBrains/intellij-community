@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.transformations.indexedProperty
 
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.PUBLIC_MASK
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getGetterNameNonBoolean
@@ -37,15 +37,15 @@ class IndexedPropertyTransformationSupport : AstTransformationSupport {
       context += context.memberBuilder.method(getGetterNameNonBoolean(fieldName)) {
         addModifier(PUBLIC_MASK)
         returnType = componentType
-        addParameter("index", PsiType.INT)
+        addParameter("index", PsiTypes.intType())
         navigationElement = field
         originInfo = indexedPropertyOriginInfo
         methodKind = indexedMethodKind
       }
       context += context.memberBuilder.method(getSetterName(fieldName)) {
         addModifier(PUBLIC_MASK)
-        returnType = PsiType.VOID
-        addParameter("index", PsiType.INT)
+        returnType = PsiTypes.voidType()
+        addParameter("index", PsiTypes.intType())
         addParameter("value", componentType)
         navigationElement = field
         originInfo = indexedPropertyOriginInfo

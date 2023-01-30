@@ -9,10 +9,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public abstract class DvcsBranchManager {
   @NotNull private final DvcsBranchSettings myBranchSettings;
@@ -27,11 +24,15 @@ public abstract class DvcsBranchManager {
     myProject = project;
     myBranchSettings = settings;
     for (BranchType type : branchTypes) {
+      Collection<String> predefinedFavoriteBranches = myPredefinedFavoriteBranches.computeIfAbsent(type, __ -> new HashSet<>());
+
       for (String branchName : getDefaultBranchNames(type)) {
         if (!StringUtil.isEmptyOrSpaces(branchName)) {
-          myPredefinedFavoriteBranches.put(type, Collections.singleton(branchName));
+          predefinedFavoriteBranches.add(branchName);
         }
       }
+
+      myPredefinedFavoriteBranches.put(type, predefinedFavoriteBranches);
     }
   }
 

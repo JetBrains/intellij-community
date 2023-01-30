@@ -72,16 +72,16 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   private static final Map<String, PsiPrimitiveType> PRIMITIVE_TYPES;
   static {
     PRIMITIVE_TYPES = new HashMap<>();
-    PRIMITIVE_TYPES.put(PsiType.BYTE.getCanonicalText(), PsiType.BYTE);
-    PRIMITIVE_TYPES.put(PsiType.CHAR.getCanonicalText(), PsiType.CHAR);
-    PRIMITIVE_TYPES.put(PsiType.DOUBLE.getCanonicalText(), PsiType.DOUBLE);
-    PRIMITIVE_TYPES.put(PsiType.FLOAT.getCanonicalText(), PsiType.FLOAT);
-    PRIMITIVE_TYPES.put(PsiType.INT.getCanonicalText(), PsiType.INT);
-    PRIMITIVE_TYPES.put(PsiType.LONG.getCanonicalText(), PsiType.LONG);
-    PRIMITIVE_TYPES.put(PsiType.SHORT.getCanonicalText(), PsiType.SHORT);
-    PRIMITIVE_TYPES.put(PsiType.BOOLEAN.getCanonicalText(), PsiType.BOOLEAN);
-    PRIMITIVE_TYPES.put(PsiType.VOID.getCanonicalText(), PsiType.VOID);
-    PRIMITIVE_TYPES.put(PsiType.NULL.getCanonicalText(), PsiType.NULL);
+    PRIMITIVE_TYPES.put(PsiTypes.byteType().getCanonicalText(), PsiTypes.byteType());
+    PRIMITIVE_TYPES.put(PsiTypes.charType().getCanonicalText(), PsiTypes.charType());
+    PRIMITIVE_TYPES.put(PsiTypes.doubleType().getCanonicalText(), PsiTypes.doubleType());
+    PRIMITIVE_TYPES.put(PsiTypes.floatType().getCanonicalText(), PsiTypes.floatType());
+    PRIMITIVE_TYPES.put(PsiTypes.intType().getCanonicalText(), PsiTypes.intType());
+    PRIMITIVE_TYPES.put(PsiTypes.longType().getCanonicalText(), PsiTypes.longType());
+    PRIMITIVE_TYPES.put(PsiTypes.shortType().getCanonicalText(), PsiTypes.shortType());
+    PRIMITIVE_TYPES.put(PsiTypes.booleanType().getCanonicalText(), PsiTypes.booleanType());
+    PRIMITIVE_TYPES.put(PsiTypes.voidType().getCanonicalText(), PsiTypes.voidType());
+    PRIMITIVE_TYPES.put(PsiTypes.nullType().getCanonicalText(), (PsiPrimitiveType)PsiTypes.nullType());
   }
 
   protected final PsiManager myManager;

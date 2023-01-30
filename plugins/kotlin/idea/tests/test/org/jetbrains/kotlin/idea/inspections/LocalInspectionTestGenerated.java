@@ -4015,6 +4015,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertObjectToDataObject/notCompatibleEquals.kt");
         }
 
+        @TestMetadata("notCompatibleEquals2.kt")
+        public void testNotCompatibleEquals2() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/notCompatibleEquals2.kt");
+        }
+
         @TestMetadata("notCompatibleInheritedEquals.kt")
         public void testNotCompatibleInheritedEquals() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/notCompatibleInheritedEquals.kt");
@@ -4950,6 +4955,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("featureDisabled.kt")
         public void testFeatureDisabled() throws Exception {
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/featureDisabled.kt");
+        }
+
+        @TestMetadata("forEachInsideEnumBody.kt")
+        public void testForEachInsideEnumBody() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/forEachInsideEnumBody.kt");
         }
 
         @TestMetadata("forLoop.kt")
@@ -16482,6 +16492,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("propertyOfInlineClassType.kt")
         public void testPropertyOfInlineClassType() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/propertyOfInlineClassType.kt");
+        }
+
+        @TestMetadata("secondaryConstructorCalledByImportAlias.kt")
+        public void testSecondaryConstructorCalledByImportAlias() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/secondaryConstructorCalledByImportAlias.kt");
         }
 
         @TestMetadata("secondaryConstructorCalledByTypeAlias.kt")

@@ -25,4 +25,12 @@ public class TruncaterTest extends LightPlatformCodeInsightFixture4TestCase {
     assertEquals("This is a long string", truncatedString);
   }
 
+  @Test
+  public void testTruncationByWordsWithoutSpace() {
+    FontMetrics metrics = new JLabel().getFontMetrics(new Font(Font.DIALOG, Font.PLAIN, 10));
+    String longString = "Thisisalongstringwithoutspaces".repeat(100);
+    String truncatedString = CommittedChangeListRenderer.truncateDescription(longString, metrics, 100000);
+    assertEquals("Thisisalongstringwithoutspaces".repeat(100), truncatedString);
+  }
+
 }

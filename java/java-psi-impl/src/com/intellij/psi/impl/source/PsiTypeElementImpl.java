@@ -137,7 +137,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
     }
 
-    if (type == null) return PsiType.NULL;
+    if (type == null) return PsiTypes.nullType();
 
     if (!arrayComponentAnnotations.isEmpty()) {
       type = createArray(type, arrayComponentAnnotations, ellipsis);
@@ -392,7 +392,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   public boolean acceptsAnnotations() {
     if (isInferredType()) return false;
     PsiType type = getType();
-    return !PsiType.VOID.equals(type) && !PsiType.NULL.equals(type);
+    return !PsiTypes.voidType().equals(type) && !PsiTypes.nullType().equals(type);
   }
 
   @Override

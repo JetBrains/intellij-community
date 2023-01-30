@@ -647,7 +647,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       if (typeParameterList != null) {
         createTypeParamsListComment(builder, commenter, typeParameterList);
       }
-      if (psiMethod.getReturnType() != null && !PsiType.VOID.equals(psiMethod.getReturnType())) {
+      if (psiMethod.getReturnType() != null && !PsiTypes.voidType().equals(psiMethod.getReturnType())) {
         builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, _comment.getContainingFile(), commenter));
         builder.append(LINE_SEPARATOR);
       }

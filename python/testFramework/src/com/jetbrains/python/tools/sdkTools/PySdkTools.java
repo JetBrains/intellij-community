@@ -1,17 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools.sdkTools;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,7 +51,8 @@ public final class PySdkTools {
   @NotNull
   public static Sdk createTempSdk(@NotNull final VirtualFile sdkHome,
                                   @NotNull final SdkCreationType sdkCreationType,
-                                  @Nullable final Module module
+                                  @Nullable final Module module,
+                                  @Nullable Disposable parentDisposable
   )
     throws InvalidSdkException {
     final Ref<Sdk> ref = Ref.create();
@@ -60,6 +65,9 @@ public final class PySdkTools {
     final Sdk sdk = ref.get();
     if (sdkCreationType != SdkCreationType.EMPTY_SDK) {
       try {
+        if (sdk != null && parentDisposable != null) {
+          Disposer.register(parentDisposable, () -> WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().removeJdk(sdk)));
+        }
         generateTempSkeletonsOrPackages(sdk, sdkCreationType == SdkCreationType.SDK_PACKAGES_AND_SKELETONS, module);
       }
       catch (ExecutionException e) {

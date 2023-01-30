@@ -17,9 +17,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionException
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionExceptionCause
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionStackTraceElement
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.util.application
 import com.intellij.util.ui.ImageUtil
@@ -42,13 +39,11 @@ import java.util.concurrent.TimeoutException
 import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 
-
-class DistributedTestHost(private val agentProject: Project) : DistributedTestHostBase() {
-  override val projectOrNull: Project
-    get() = agentProject
+class DistributedTestHost : DistributedTestHostBase() {
+  override val projectOrNull: Project?
+    get() = ProjectManagerEx.getOpenProjects().singleOrNull()
   override val project: Project
-    get() = agentProject
-
+    get() = projectOrNull!!
 }
 
 class DistributedTestHostGateway : DistributedTestHostBase() {
@@ -56,16 +51,18 @@ class DistributedTestHostGateway : DistributedTestHostBase() {
     get() = null
   override val project: Project
     get() = error("Project shouldn't be referenced for gateway")
-
 }
 
 @ApiStatus.Internal
-abstract class DistributedTestHostBase() {
-
+abstract class DistributedTestHostBase {
   companion object {
     private val logger = Logger.getInstance(DistributedTestHostBase::class.java)
 
     const val screenshotOnFailureFileName = "ScreenshotOnFailure"
+
+    fun getDistributedTestPort(): Int? =
+      (System.getProperty(AgentConstants.protocolPortEnvVar)
+       ?: System.getenv(AgentConstants.protocolPortEnvVar))?.toIntOrNull()
   }
 
   protected abstract val projectOrNull: Project?
@@ -84,8 +81,7 @@ abstract class DistributedTestHostBase() {
       false -> InetAddress.getLoopbackAddress()
     }
 
-    val port = (System.getProperty(AgentConstants.protocolPortEnvVar)
-                ?: System.getenv(AgentConstants.protocolPortEnvVar))?.toIntOrNull()
+    val port = getDistributedTestPort()
 
     if (port != null) {
       logger.info("Queue creating protocol on $hostAddress:$port")
@@ -97,7 +93,7 @@ abstract class DistributedTestHostBase() {
     logger.info("Creating protocol...")
 
     val lifetime = LifetimeDefinition()
-    (projectOrNull ?: application).whenDisposed { lifetime.terminate() }
+    application.whenDisposed { lifetime.terminate() }
 
     val wire = SocketWire.Client(lifetime, DistributedTestIdeScheduler, port, AgentConstants.protocolName, hostAddress)
     val protocol =
@@ -107,7 +103,6 @@ abstract class DistributedTestHostBase() {
     logger.info("Advise for session...")
     model.session.viewNotNull(lifetime) { lt, session ->
       try {
-        val context = AgentContext(session.agentId, application, projectOrNull, protocol)
         logger.info("New test session: ${session.testClassName}.${session.testMethodName}")
         logger.info("Setting up loggers")
         AgentTestLoggerFactory.bindSession(lt, session)
@@ -128,7 +123,6 @@ abstract class DistributedTestHostBase() {
           testClassObject.performInit(testMethod)
           testMethod.invoke(testClassObject)
 
-
           // Advice for processing events
           session.runNextAction.set { _, _ ->
             var actionTitle: String? = null
@@ -146,6 +140,7 @@ abstract class DistributedTestHostBase() {
 
               // Execute test method
               lateinit var result: RdTask<Boolean>
+              val context = AgentContext(session.agentId, application, projectOrNull, protocol)
               logger.info("'$actionTitle': starting action")
               val elapsedAction = measureTimeMillis {
                 result = action.action.invoke(context)
@@ -208,6 +203,17 @@ abstract class DistributedTestHostBase() {
         DebugLogManager.getInstance().applyCategories(
           session.traceCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.TRACE) }
         )
+
+        if (session.waitForProject) {
+          val projectLoadingTimeoutMs = 60 * 1000
+          val startTime = System.currentTimeMillis()
+          while (projectOrNull == null && System.currentTimeMillis() - startTime < projectLoadingTimeoutMs) {
+            IdeEventQueue.getInstance().flushQueue()
+          }
+          if (projectOrNull == null) {
+            error("Failed to load project in $projectLoadingTimeoutMs ms")
+          }
+        }
 
         logger.info("Test session ready!")
         session.ready.value = true
@@ -284,27 +290,5 @@ abstract class DistributedTestHostBase() {
                                     NotificationType.INFORMATION)
     Notifications.Bus.notify(notification)
     return notification
-  }
-
-  private fun Throwable.toModel(): RdTestSessionException {
-    fun getRdTestStackTraceElement(trace: Array<StackTraceElement>?): List<RdTestSessionStackTraceElement> =
-      trace?.map { it ->
-        RdTestSessionStackTraceElement(it.className, it.methodName, it.fileName.orEmpty(), it.lineNumber)
-      } ?: emptyList()
-
-    val rdTestSessionExceptionCause = this.cause?.let { cause ->
-      RdTestSessionExceptionCause(
-        cause.javaClass.typeName,
-        cause.message,
-        getRdTestStackTraceElement(cause.stackTrace)
-      )
-    }
-
-    return RdTestSessionException(
-      this.javaClass.typeName,
-      this.message,
-      getRdTestStackTraceElement(this.stackTrace),
-      rdTestSessionExceptionCause
-    )
   }
 }

@@ -239,7 +239,7 @@ fun getMainMethodClass(uMainMethod: UMethod): PsiClass? {
 private fun isKotlinParameterlessMain(mainMethod: PsiMethod) =
   mainMethod.language.id == "kotlin"
   && mainMethod.parameterList.parameters.isEmpty()
-  && PsiType.VOID == mainMethod.returnType
+  && PsiTypes.voidType() == mainMethod.returnType
   && mainMethod.hasModifierProperty(PsiModifier.STATIC)
 
 private fun isKotlinSuspendMain(uMainMethod: UMethod): Boolean {

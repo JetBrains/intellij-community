@@ -187,7 +187,9 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
   }
 
   public void addConfiguration(RegExpInspectionConfiguration configuration) {
-    myConfigurations.add(configuration);
+    if (!myConfigurations.contains(configuration)) {
+      myConfigurations.add(configuration);
+    }
   }
 
   public void updateConfiguration(RegExpInspectionConfiguration configuration) {

@@ -52,7 +52,7 @@ public final class CastMethodArgumentFix extends MethodArgumentFix implements Hi
         if (parameterType == null) return false;
       }
       if (exprType instanceof PsiPrimitiveType && parameterType instanceof PsiClassType) {
-        if (PsiType.NULL.equals(exprType)) {
+        if (PsiTypes.nullType().equals(exprType)) {
           return true;
         }
         parameterType = PsiPrimitiveType.getUnboxedType(parameterType);

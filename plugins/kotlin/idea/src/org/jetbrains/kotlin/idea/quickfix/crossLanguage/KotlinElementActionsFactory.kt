@@ -213,6 +213,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
+        if (!request.isValid) return emptyList()
+
         val targetKtClass =
             targetClass.toKtClassOrFile().safeAs<KtClass>() ?: return emptyList()
         val modifierBuilder = ModifierBuilder(targetKtClass).apply { addJvmModifiers(request.modifiers) }
@@ -331,7 +333,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             fun getCreatedPropertyType(): ExpectedType? {
                 if (setterRequired) {
                     val jvmPsiConversionHelper = JvmPsiConversionHelper.getInstance(targetContainer.project)
-                    if (returnTypes.any { jvmPsiConversionHelper.convertType(it.theType) != PsiType.VOID }) return null
+                    if (returnTypes.any { jvmPsiConversionHelper.convertType(it.theType) != PsiTypes.voidType() }) return null
                     val expectedParameter = expectedParameters.singleOrNull() ?: return null
                     return expectedParameter.expectedTypes.firstOrNull()
                 } else if (expectedParameters.isEmpty()) {
@@ -506,23 +508,23 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         companion object {
             private val primitiveTypeMapping = mapOf(
-                PsiType.VOID.name to "kotlin.Unit",
-                PsiType.BOOLEAN.name to "kotlin.Boolean",
-                PsiType.BYTE.name to "kotlin.Byte",
-                PsiType.CHAR.name to "kotlin.Char",
-                PsiType.SHORT.name to "kotlin.Short",
-                PsiType.INT.name to "kotlin.Int",
-                PsiType.FLOAT.name to "kotlin.Float",
-                PsiType.LONG.name to "kotlin.Long",
-                PsiType.DOUBLE.name to "kotlin.Double",
-                "${PsiType.BOOLEAN.name}[]" to "kotlin.BooleanArray",
-                "${PsiType.BYTE.name}[]" to "kotlin.ByteArray",
-                "${PsiType.CHAR.name}[]" to "kotlin.CharArray",
-                "${PsiType.SHORT.name}[]" to "kotlin.ShortArray",
-                "${PsiType.INT.name}[]" to "kotlin.IntArray",
-                "${PsiType.FLOAT.name}[]" to "kotlin.FloatArray",
-                "${PsiType.LONG.name}[]" to "kotlin.LongArray",
-                "${PsiType.DOUBLE.name}[]" to "kotlin.DoubleArray"
+                PsiTypes.voidType().name to "kotlin.Unit",
+                PsiTypes.booleanType().name to "kotlin.Boolean",
+                PsiTypes.byteType().name to "kotlin.Byte",
+                PsiTypes.charType().name to "kotlin.Char",
+                PsiTypes.shortType().name to "kotlin.Short",
+                PsiTypes.intType().name to "kotlin.Int",
+                PsiTypes.floatType().name to "kotlin.Float",
+                PsiTypes.longType().name to "kotlin.Long",
+                PsiTypes.doubleType().name to "kotlin.Double",
+                "${PsiTypes.booleanType().name}[]" to "kotlin.BooleanArray",
+                "${PsiTypes.byteType().name}[]" to "kotlin.ByteArray",
+                "${PsiTypes.charType().name}[]" to "kotlin.CharArray",
+                "${PsiTypes.shortType().name}[]" to "kotlin.ShortArray",
+                "${PsiTypes.intType().name}[]" to "kotlin.IntArray",
+                "${PsiTypes.floatType().name}[]" to "kotlin.FloatArray",
+                "${PsiTypes.longType().name}[]" to "kotlin.LongArray",
+                "${PsiTypes.doubleType().name}[]" to "kotlin.DoubleArray"
             )
         }
     }

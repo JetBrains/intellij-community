@@ -3,6 +3,10 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
@@ -11,14 +15,19 @@ import com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager
 import com.intellij.ui.scale.JBUIScale
 import kotlin.math.round
 
-
-object IdeScaleTransformer {
-  const val DEFAULT_SCALE = 1.0f
-  private const val SCALING_STEP = 0.25f
+@State(name = "IdeScaleTransformer", storages = [Storage("ideScaleTransformer.xml")])
+class IdeScaleTransformer : PersistentStateComponent<IdeScaleTransformer.PersistedScale> {
 
   @Volatile
   private var current: ScalingParameters? = null
-  private var savedOriginalConsoleFontSize: Float? = null
+    set(value) {
+      field = value
+      if (value?.shouldPersist == true) parametersToPersist = value
+    }
+
+  @Volatile
+  private var parametersToPersist: ScalingParameters? = null
+  private var savedOriginalConsoleFontSize: Float = -1f
 
   val currentScale: Float
     get() = current?.scale ?: DEFAULT_SCALE
@@ -47,13 +56,16 @@ object IdeScaleTransformer {
     scale(DEFAULT_SCALE)
   }
 
+  fun resetToLastPersistedScale(performBeforeTweaking: () -> Unit) {
+    scale(parametersToPersist?.scale ?: DEFAULT_SCALE, performBeforeTweaking)
+  }
+
   private fun prepareTweaking() {
     if (currentScale == DEFAULT_SCALE) {
       savedOriginalConsoleFontSize = EditorColorsManager.getInstance().globalScheme.consoleFontSize2D
     }
   }
 
-  @JvmStatic
   fun scaleToEditorFontSize(fontSize: Float, performBeforeTweaking: () -> Unit) {
     if (fontSize <= globalEditorFontSize) {
       scale(DEFAULT_SCALE, performBeforeTweaking)
@@ -69,7 +81,6 @@ object IdeScaleTransformer {
   private fun scale(newScaleFactor: Float, performBeforeTweaking: (() -> Unit)? = null) {
     prepareTweaking()
     performBeforeTweaking?.invoke()
-    val savedOriginalConsoleFontSize = savedOriginalConsoleFontSize ?: return
     val newParameters = ScalingParameters.ScaleOriented(newScaleFactor, savedOriginalConsoleFontSize)
     performTweaking(newParameters)
   }
@@ -96,11 +107,37 @@ object IdeScaleTransformer {
     LafManager.getInstance().updateUI()
     EditorUtil.reinitSettings()
   }
+
+  class PersistedScale {
+    var scaleFactor: Float = DEFAULT_SCALE
+    var savedOriginalConsoleFontSize: Float = -1f
+  }
+
+  override fun getState(): PersistedScale =
+    PersistedScale().also {
+      it.scaleFactor = parametersToPersist?.scale ?: DEFAULT_SCALE
+      it.savedOriginalConsoleFontSize = savedOriginalConsoleFontSize
+    }
+
+  override fun loadState(state: PersistedScale) {
+    savedOriginalConsoleFontSize = state.savedOriginalConsoleFontSize
+    current = ScalingParameters.ScaleOriented(state.scaleFactor, state.savedOriginalConsoleFontSize)
+  }
+
+  companion object {
+    const val DEFAULT_SCALE = 1.0f
+    private const val SCALING_STEP = 0.25f
+
+    @JvmStatic
+    val instance: IdeScaleTransformer
+      get() = service<IdeScaleTransformer>()
+  }
 }
 
 private abstract class ScalingParameters {
   abstract val scale: Float
   abstract val consoleFontSize: Float
+  open val shouldPersist = true
   open val editorFont: Float
     get() = scaledEditorFontSize(EditorColorsManager.getInstance().globalScheme.editorFontSize2D)
 
@@ -116,6 +153,7 @@ private abstract class ScalingParameters {
   class FontOriented(override val editorFont: Float) : ScalingParameters() {
     override val scale: Float get() = JBUIScale.getFontScale(editorFont)
     override val consoleFontSize: Float get() = editorFont
+    override val shouldPersist = false
     override fun scaledEditorFontSize(fontSize: Float): Float = editorFont
   }
 }

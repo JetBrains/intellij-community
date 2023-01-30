@@ -76,16 +76,16 @@ class ThreadContextPropagationTest {
     val service = EdtExecutorService.getInstance()
     doExecutorServiceTest(service)
     doTest {
-      service.execute(it, ModalityState.any())
+      service.execute(it)
     }
     doTest {
-      service.execute(it, ModalityState.any(), Conditions.alwaysFalse<Nothing?>())
+      service.execute(it)
     }
     doTest {
-      service.submit(it, ModalityState.any())
+      service.submit(it)
     }
     doTest {
-      service.submit(it.callable(), ModalityState.any())
+      service.submit(it.callable())
     }
   }
 

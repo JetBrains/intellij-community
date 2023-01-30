@@ -84,7 +84,7 @@ public class SystemExitInspection extends BaseInspection {
       }
       final PsiParameter[] parameters = parameterList.getParameters();
       final PsiType parameterType = parameters[0].getType();
-      if (!parameterType.equals(PsiType.INT)) {
+      if (!parameterType.equals(PsiTypes.intType())) {
         return;
       }
       final PsiClass aClass = method.getContainingClass();

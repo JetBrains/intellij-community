@@ -1679,17 +1679,23 @@ public final class PyUtil {
   public static boolean isForbiddenMutableDefault(@Nullable PyTypedElement value, @NotNull TypeEvalContext context) {
     if (value == null) return false;
 
-    final PyClassType type = as(context.getType(value), PyClassType.class);
-    if (type != null && !type.isDefinition()) {
-      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(value);
-      final Set<PyClass> forbiddenClasses = StreamEx
+    Set<PyClass> pyClasses = PyTypeUtil.toStream(context.getType(value))
+      .select(PyClassType.class)
+      .filter(clsType -> !clsType.isDefinition())
+      .map(PyClassType::getPyClass)
+      .toSet();
+
+    if (!pyClasses.isEmpty()) {
+      PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(value);
+      Set<PyClass> forbiddenClasses = StreamEx
         .of(builtinCache.getListType(), builtinCache.getSetType(), builtinCache.getDictType())
         .nonNull()
         .map(PyClassType::getPyClass)
         .toSet();
 
-      final PyClass cls = type.getPyClass();
-      return forbiddenClasses.contains(cls) || ContainerUtil.exists(cls.getAncestorClasses(context), forbiddenClasses::contains);
+      return StreamEx.of(pyClasses)
+        .flatMap(pyClass -> StreamEx.of(pyClass).append(pyClass.getAncestorClasses(context)))
+        .anyMatch(forbiddenClasses::contains);
     }
 
     return false;

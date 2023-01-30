@@ -652,11 +652,11 @@ internal object BranchesDashboardActions {
     }
 
     override fun update(e: AnActionEvent) {
-      val branchFilters = e.getData(GIT_BRANCH_FILTERS)
-      val uiController = e.getData(BRANCHES_UI_CONTROLLER)
-      val project = e.project
-      val enabled = project != null && uiController != null && !branchFilters.isNullOrEmpty()
+      val enabled = e.project != null
+                    && e.getData(BRANCHES_UI_CONTROLLER) != null
+                    && !e.getData(GIT_BRANCH_FILTERS).isNullOrEmpty()
                     && e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) is BranchesTreeComponent
+
       e.presentation.isEnabled = enabled
     }
 
@@ -671,7 +671,6 @@ internal object BranchesDashboardActions {
     }
 
     override fun update(e: AnActionEvent) {
-      val branchFilters = e.getData(GIT_BRANCH_FILTERS)
       val uiController = e.getData(BRANCHES_UI_CONTROLLER)
       val project = e.project
       val visible = project != null && uiController != null
@@ -679,9 +678,10 @@ internal object BranchesDashboardActions {
         e.presentation.isEnabledAndVisible = false
         return
       }
-      val enabled = branchFilters != null && branchFilters.size == 1
 
-      e.presentation.isEnabled = enabled
+      val branchFilters = e.getData(GIT_BRANCH_FILTERS)
+      e.presentation.isEnabled = branchFilters != null && branchFilters.size == 1
+      e.presentation.isVisible = true
     }
 
     override fun actionPerformed(e: AnActionEvent) {

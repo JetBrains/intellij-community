@@ -9,7 +9,7 @@ import org.gradle.tooling.internal.consumer.AbstractLongRunningOperation
 import org.gradle.tooling.internal.consumer.BlockingResultHandler
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 
-internal abstract class TargetBuildExecuter<T : AbstractLongRunningOperation<T>, R : Any?>(private val connection: TargetProjectConnection) :
+internal abstract class TargetBuildExecuter<T : AbstractLongRunningOperation<T>, R : Any?>(protected val connection: TargetProjectConnection) :
   AbstractLongRunningOperation<T>(connection.parameters.connectionParameters) {
   abstract val targetBuildParametersBuilder: TargetBuildParameters.Builder
   protected open val buildActions: List<BuildAction<*>> = emptyList()
@@ -43,6 +43,8 @@ internal abstract class TargetBuildExecuter<T : AbstractLongRunningOperation<T>,
     for (buildAction in buildActions) {
       classPathAssembler.add(buildAction)
     }
-    GradleServerRunner(connection, consumerOperationParameters).run(classPathAssembler, targetBuildParametersBuilder, handler)
+    getServerRunner().run(classPathAssembler, targetBuildParametersBuilder, handler)
   }
+
+  protected open fun getServerRunner(): GradleServerRunner = GradleServerRunner(connection, consumerOperationParameters, false)
 }

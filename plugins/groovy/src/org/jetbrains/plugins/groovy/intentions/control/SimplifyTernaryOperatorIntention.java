@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
@@ -118,7 +119,7 @@ public class SimplifyTernaryOperatorIntention extends Intention {
 
         GrConditionalExpression condExp = (GrConditionalExpression)element;
         PsiType condType = condExp.getType();
-        if (condType == null || !PsiType.BOOLEAN.isConvertibleFrom(condType)) {
+        if (condType == null || !PsiTypes.booleanType().isConvertibleFrom(condType)) {
           return false;
         }
 

@@ -79,10 +79,10 @@ abstract class TerminalOperation extends Operation {
       return TemplateBasedOperation.summing(resultType);
     }
     if(name.equals("average") && args.length == 0) {
-      if(elementType.equals(PsiType.DOUBLE)) {
+      if(elementType.equals(PsiTypes.doubleType())) {
         return new AverageTerminalOperation(true, true);
       }
-      else if(elementType.equals(PsiType.INT) || elementType.equals(PsiType.LONG)) {
+      else if(elementType.equals(PsiTypes.intType()) || elementType.equals(PsiTypes.longType())) {
         return new AverageTerminalOperation(false, true);
       }
     }
@@ -483,13 +483,13 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(ChainVariable inVar, StreamToLoopReplacementContext context) {
-      String sum = context.declareResult("sum", myDoubleAccumulator ? PsiType.DOUBLE : PsiType.LONG, "0", ResultKind.UNKNOWN);
+      String sum = context.declareResult("sum", myDoubleAccumulator ? PsiTypes.doubleType() : PsiTypes.longType(), "0", ResultKind.UNKNOWN);
       String count = context.declare("count", "long", "0");
       String seenCheck = count + ">0";
       String result = (myDoubleAccumulator ? "" : "(double)") + sum + "/" + count;
       ConditionalExpression conditionalExpression = myUseOptional ?
-                                                    new ConditionalExpression.Optional(PsiType.DOUBLE, seenCheck, result) :
-                                                    new ConditionalExpression.Plain(PsiType.DOUBLE, seenCheck, result, "0.0");
+                                                    new ConditionalExpression.Optional(PsiTypes.doubleType(), seenCheck, result) :
+                                                    new ConditionalExpression.Plain(PsiTypes.doubleType(), seenCheck, result, "0.0");
       context.setFinisher(conditionalExpression);
       return sum + "+=" + inVar + ";\n" + count + "++;\n";
     }
@@ -745,7 +745,7 @@ abstract class TerminalOperation extends Operation {
 
     @NotNull
     static TemplateBasedOperation counting() {
-      return new TemplateBasedOperation("count", PsiType.LONG, "0L", "{acc}++;");
+      return new TemplateBasedOperation("count", PsiTypes.longType(), "0L", "{acc}++;");
     }
   }
 
@@ -840,20 +840,20 @@ abstract class TerminalOperation extends Operation {
     }
 
     Number getExtremeValue() {
-      if (PsiType.INT.equals(myType)) {
+      if (PsiTypes.intType().equals(myType)) {
         return myMax ? Integer.MIN_VALUE : Integer.MAX_VALUE;
       }
-      if (PsiType.LONG.equals(myType)) {
+      if (PsiTypes.longType().equals(myType)) {
         return myMax ? Long.MIN_VALUE : Long.MAX_VALUE;
       }
       return null;
     }
 
     String getExtremeValueExpression() {
-      if (PsiType.INT.equals(myType)) {
+      if (PsiTypes.intType().equals(myType)) {
         return CommonClassNames.JAVA_LANG_INTEGER + (myMax ? ".MIN_VALUE" : ".MAX_VALUE");
       }
-      if (PsiType.LONG.equals(myType)) {
+      if (PsiTypes.longType().equals(myType)) {
         return CommonClassNames.JAVA_LANG_LONG + (myMax ? ".MIN_VALUE" : ".MAX_VALUE");
       }
       return null;
@@ -888,10 +888,10 @@ abstract class TerminalOperation extends Operation {
     static MinMaxTerminalOperation create(@Nullable PsiExpression comparator, PsiType elementType, boolean max) {
       String sign = max ? ">" : "<";
       if(comparator == null) {
-        if (PsiType.INT.equals(elementType) || PsiType.LONG.equals(elementType)) {
+        if (PsiTypes.intType().equals(elementType) || PsiTypes.longType().equals(elementType)) {
           return new MinMaxTerminalOperation(elementType, "{item}" + sign + "{best}", null, max);
         }
-        if (PsiType.DOUBLE.equals(elementType)) {
+        if (PsiTypes.doubleType().equals(elementType)) {
           return new MinMaxTerminalOperation(elementType, "java.lang.Double.compare({item},{best})" + sign + "0", null, max);
         }
       }

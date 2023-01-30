@@ -146,7 +146,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection implements Cle
         PsiParameter[] parameters = newTarget.getParameterList().getParameters();
         if (parameters.length > 0) {
           PsiType paramType = parameters[parameters.length - 1].getType();
-          if (PsiType.DOUBLE.equals(paramType) || PsiType.FLOAT.equals(paramType)) {
+          if (PsiTypes.doubleType().equals(paramType) || PsiTypes.floatType().equals(paramType)) {
             call.getArgumentList().add(JavaPsiFacade.getElementFactory(project).createExpressionFromText("0.0", call));
           }
         }

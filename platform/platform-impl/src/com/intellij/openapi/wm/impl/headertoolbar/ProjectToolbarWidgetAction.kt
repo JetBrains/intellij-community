@@ -38,11 +38,20 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.BorderLayout
 import java.awt.Component
 import java.util.function.Function
+import java.util.function.Predicate
 import javax.swing.*
 
 
 private const val MAX_RECENT_COUNT = 100
 private val projectKey = Key.create<Project>("project-widget-project")
+
+class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectionPredicateSupplier {
+  override fun getPredicate(): Predicate<AnAction> {
+    val openProjects = ProjectUtilCore.getOpenProjects()
+    val paths = openProjects.map { it.basePath }
+    return Predicate { action -> (action as? ReopenProjectAction)?.projectPath in paths }
+  }
+}
 
 class ProjectToolbarWidgetAction : ExpandableComboAction() {
 
@@ -126,8 +135,8 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
 
     val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
     res.addAll(group.getChildren(initEvent).asList())
-    val openProjects = ProjectUtilCore.getOpenProjects()
-    val actionsMap: Map<Boolean, List<AnAction>> = RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).groupBy(createSelector(openProjects))
+    val openProjectsPredicate = OpenProjectSelectionPredicateSupplier.getInstance().getPredicate()
+    val actionsMap: Map<Boolean, List<AnAction>> = RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).groupBy { openProjectsPredicate.test(it) }
 
     actionsMap[true]?.let {
       res.addSeparator(IdeBundle.message("project.widget.open.projects"))
@@ -140,11 +149,6 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     }
 
     return res
-  }
-
-  private fun createSelector(openProjects: Array<Project>): (AnAction) -> Boolean {
-    val paths = openProjects.map { it.basePath }
-    return { action -> (action as? ReopenProjectAction)?.projectPath in paths }
   }
 
 

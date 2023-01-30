@@ -44,7 +44,7 @@ public final class OptionalRefactoringUtil {
           return "(" + castType.getText() + ")" + qualifier + ".orElse(null)";
         }
       }
-      if (ExpressionUtils.isLiteral(falseExpression, Boolean.FALSE) && PsiType.BOOLEAN.equals(trueType)) {
+      if (ExpressionUtils.isLiteral(falseExpression, Boolean.FALSE) && PsiTypes.booleanType().equals(trueType)) {
         if (ExpressionUtils.isLiteral(trueExpression, Boolean.TRUE)) {
           return qualifier + ".isPresent()";
         }
@@ -138,11 +138,11 @@ public final class OptionalRefactoringUtil {
         Number falseValue = JavaPsiMathUtil.getNumberFromLiteral(falseExpression);
         if (falseValue != null) {
           falseText = falseValue.toString();
-          if (targetType.equals(PsiType.FLOAT)) {
+          if (targetType.equals(PsiTypes.floatType())) {
             falseText += "F";
-          } else if(targetType.equals(PsiType.DOUBLE) && !falseText.contains(".")) {
+          } else if(targetType.equals(PsiTypes.doubleType()) && !falseText.contains(".")) {
             falseText += ".0";
-          } else if(targetType.equals(PsiType.LONG)) {
+          } else if(targetType.equals(PsiTypes.longType())) {
             falseText += "L";
           }
         }
@@ -165,12 +165,12 @@ public final class OptionalRefactoringUtil {
     PsiExpression copy = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(text, expression);
     PsiType exprType = copy.getType();
     if (exprType != null &&
-        !exprType.equals(PsiType.NULL) &&
+        !exprType.equals(PsiTypes.nullType()) &&
         !LambdaUtil.notInferredType(exprType) &&
         TypeConversionUtil.isAssignable(type, exprType)) {
       if (falseExpression == null) return "";
       PsiType falseType = falseExpression.getType();
-      if (falseType != null && (falseType.isAssignableFrom(exprType) || falseType.equals(PsiType.NULL))) return "";
+      if (falseType != null && (falseType.isAssignableFrom(exprType) || falseType.equals(PsiTypes.nullType()))) return "";
     }
     return "<" + type.getCanonicalText() + ">";
   }

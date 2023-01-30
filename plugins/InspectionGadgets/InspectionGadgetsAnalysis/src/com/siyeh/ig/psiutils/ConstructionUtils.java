@@ -57,7 +57,7 @@ public final class ConstructionUtils {
     if (arguments.length != 1) return null;
     final PsiExpression argument = arguments[0];
     final PsiType argumentType = argument.getType();
-    if (PsiType.INT.equals(argumentType)) return "\"\"";
+    if (PsiTypes.intType().equals(argumentType)) return "\"\"";
     return argument.getText();
   }
 

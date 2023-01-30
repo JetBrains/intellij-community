@@ -2,8 +2,9 @@
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 
 fun inferYieldedType(statements : Array<GrStatement>) : PsiType {
-  return PsiType.NULL
+  return PsiTypes.nullType()
 }

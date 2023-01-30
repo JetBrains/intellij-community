@@ -1,17 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -31,10 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -68,11 +62,12 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
     if (isAllAccessAllowed()) return Collections.emptyList();
 
-    List<VirtualFile> deniedFiles = ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(() -> ReadAction.compute(() -> ContainerUtil.filter(files, o -> !isWriteAccessAllowed(o, myProject))),
-                                           IdeCoreBundle.message("progress.title.collect.non.project.files"),
-                                           true, myProject);
-
+    List<VirtualFile> deniedFiles = new ArrayList<>();
+    for (VirtualFile o : files) {
+      if (!isWriteAccessAllowed(o, myProject)) {
+        deniedFiles.add(o);
+      }
+    }
     if (deniedFiles.isEmpty()) {
       return Collections.emptyList();
     }
@@ -144,6 +139,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
         return true;
       }
 
+      String filePath = file.getPath();
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         if (VfsUtilCore.pathEqualsTo(file, module.getModuleFilePath())) {
           return true;

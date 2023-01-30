@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -186,7 +187,7 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
         if (scanningLatch.get() != null) return // already started
         val latch = CountDownLatch(1)
         if (scanningLatch.compareAndSet(null, latch)) {
-          DumbModeWhileScanning(latch, scanningLatch).queue(project)
+          DumbModeWhileScanning(latch, scanningLatch, project).queue(project)
         }
       }
       else {
@@ -201,11 +202,11 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
     }
   }
 
-  fun flushNow() {
+  fun flushNow(reason: String) {
     val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles()
     try {
       if (totalFiles > 0) {
-        UnindexedFilesIndexer(project, filesInQueue).queue(project)
+        UnindexedFilesIndexer(project, filesInQueue, reason).queue(project)
       }
       else {
         LOG.info("Finished for " + project.name + ". No files to index with loading content.")
@@ -219,7 +220,8 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
     val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles()
     try {
       if (totalFiles > 0) {
-        UnindexedFilesIndexer(project, filesInQueue).indexFiles(projectIndexingHistory, indicator)
+        val indexingReason = projectIndexingHistory.indexingReason ?: "Flushing queue of project ${project.name}"
+        UnindexedFilesIndexer(project, filesInQueue, indexingReason).indexFiles(projectIndexingHistory, indicator)
       }
       else {
         LOG.info("Finished for " + project.name + ". No files to index with loading content.")
@@ -230,7 +232,7 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
   }
 
   fun clear() {
-    val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles()
+    val (_, _, currentLatch) = getAndResetQueuedFiles()
     currentLatch?.countDown() // release DumbModeWhileScanning if it has already been queued or running
   }
 
@@ -276,12 +278,19 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
   }
 
   private class DumbModeWhileScanning(private val latch: CountDownLatch,
-                                      private val latchRef: AtomicReference<CountDownLatch?>) : DumbModeTask() {
+                                      private val latchRef: AtomicReference<CountDownLatch?>,
+                                      private val project: Project) : DumbModeTask() {
     override fun performInDumbMode(indicator: ProgressIndicator) {
       indicator.isIndeterminate = true
       indicator.text = IndexingBundle.message("progress.indexing.waiting.for.scanning.to.complete")
 
       ProgressIndicatorUtils.awaitWithCheckCanceled(latch)
+
+      // also wait for all the other scanning tasks to complete before starting indexing tasks
+      ProgressIndicatorUtils.awaitWithCheckCanceled {
+        LockSupport.parkNanos(50_000_000)
+        return@awaitWithCheckCanceled !project.service<UnindexedFilesScannerExecutor>().isRunning
+      }
     }
 
     override fun dispose() {
@@ -293,10 +302,6 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
 
   @TestOnly
   class TestCompanion(private val q: PerProjectIndexingQueue) {
-    companion object {
-      val DUMB_MODE_THRESHOLD = PerProjectIndexingQueue.DUMB_MODE_THRESHOLD
-    }
-
     fun getAndResetQueuedFiles(): Triple<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int, CountDownLatch?> {
       return q.getAndResetQueuedFiles()
     }

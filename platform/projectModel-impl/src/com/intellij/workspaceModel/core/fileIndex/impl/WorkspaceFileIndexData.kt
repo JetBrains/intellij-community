@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
 import com.intellij.util.containers.ConcurrentBitSet
@@ -27,6 +28,8 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
   /** these maps are accessed under 'Read Action' and updated under 'Write Action' or under 'Read Action' with a special lock in [NonIncrementalContributors.updateIfNeeded] */
   private val fileSets = HashMap<VirtualFile, StoredFileSetCollection>()
   private val fileSetsByPackagePrefix = PackagePrefixStorage()
+  
+  private val nonExistingFilesRegistry = NonExistingWorkspaceRootsRegistry(project, this)
   
   private val packageDirectoryCache: PackageDirectoryCacheImpl
   private val nonIncrementalContributors = NonIncrementalContributors(project, rootFileSupplier)
@@ -122,7 +125,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
       updateDirtyEntities()
     }
     ApplicationManager.getApplication().assertReadAccessAllowed()
-    nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix)
+    nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix, nonExistingFilesRegistry)
   }
 
   fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
@@ -139,6 +142,10 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     }
   }
 
+  fun processFileSets(virtualFile: VirtualFile, action: (StoredFileSet) -> Unit) {
+    fileSets[virtualFile]?.forEach(action)
+  }
+  
   private fun <E : WorkspaceEntity> getContributors(entityClass: Class<out E>, storageKind: EntityStorageKind): List<WorkspaceFileIndexContributor<E>> {
     val map = when (storageKind) {
       EntityStorageKind.MAIN -> contributors
@@ -301,6 +308,10 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     packageDirectoryCache.clear()
   }
 
+  fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? {
+    return nonExistingFilesRegistry.analyzeVfsChanges(events)
+  }
+
   private inner class StoreFileSetsRegistrarImpl(private val storageKind: EntityStorageKind) : WorkspaceFileSetRegistrar {
     override fun registerFileSet(root: VirtualFileUrl,
                                  kind: WorkspaceFileKind,
@@ -309,6 +320,9 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
       val rootFile = rootFileSupplier.findFile(root)
       if (rootFile != null) {
         registerFileSet(rootFile, kind, entity, customData)
+      }
+      else {
+        nonExistingFilesRegistry.registerUrl(root, entity, storageKind)
       }
     }
 
@@ -328,6 +342,19 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
       if (excludedRootFile != null) {
         fileSets.putValue(excludedRootFile, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.ALL, entity.createReference(), storageKind))
       }
+      else {
+        nonExistingFilesRegistry.registerUrl(excludedRoot, entity, storageKind)
+      }
+    }
+
+    override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, excludedFrom: WorkspaceFileKind, entity: WorkspaceEntity) {
+      val file = rootFileSupplier.findFile(excludedRoot)
+      if (file != null) {
+        registerExcludedRoot(file, excludedFrom, entity)
+      }
+      else {
+        nonExistingFilesRegistry.registerUrl(excludedRoot, entity, storageKind)
+      }
     }
 
     override fun registerExcludedRoot(excludedRoot: VirtualFile,
@@ -341,8 +368,23 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                                            patterns: List<String>,
                                            entity: WorkspaceEntity) {
       val rootFile = rootFileSupplier.findFile(root)
-      if (rootFile != null && !patterns.isEmpty()) {
-        fileSets.putValue(rootFile, ExcludedFileSet.ByPattern(rootFile, patterns, entity.createReference(), storageKind))
+      if (rootFile != null) {
+        if (!patterns.isEmpty()) {
+          fileSets.putValue(rootFile, ExcludedFileSet.ByPattern(rootFile, patterns, entity.createReference(), storageKind))
+        }
+      }
+      else {
+        nonExistingFilesRegistry.registerUrl(root, entity, storageKind)
+      }
+    }
+
+    override fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity) {
+      val rootFile = rootFileSupplier.findFile(root)
+      if (rootFile != null) {
+        registerExclusionCondition(rootFile, condition, entity)
+      }
+      else {
+        nonExistingFilesRegistry.registerUrl(root, entity, storageKind)
       }
     }
 
@@ -362,7 +404,11 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
       if (rootFile != null) {
         registerFileSet(rootFile, kind, entity, customData)
       }
+      else {
+        nonExistingFilesRegistry.unregisterUrl(root, entity, storageKind)
+      }
     }
+
 
     override fun registerFileSet(root: VirtualFile,
                                  kind: WorkspaceFileKind,
@@ -384,6 +430,19 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
         //todo compare origins, not just their entities?
         fileSets.removeValueIf(excludedRootFile) { it is ExcludedFileSet && it.entityReference.isReferenceTo(entity) }
       }
+      else {
+        nonExistingFilesRegistry.unregisterUrl(excludedRoot, entity, storageKind)
+      }
+    }
+
+    override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, excludedFrom: WorkspaceFileKind, entity: WorkspaceEntity) {
+      val excludedRootFile = rootFileSupplier.findFile(excludedRoot)
+      if (excludedRootFile != null) {
+        registerExcludedRoot(excludedRootFile, excludedFrom, entity)
+      }
+      else {
+        nonExistingFilesRegistry.unregisterUrl(excludedRoot, entity, storageKind)
+      }
     }
 
     override fun registerExcludedRoot(excludedRoot: VirtualFile,
@@ -398,6 +457,19 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
       val rootFile = rootFileSupplier.findFile(root)
       if (rootFile != null) {
         fileSets.removeValueIf(rootFile) { it is ExcludedFileSet.ByPattern && it.entityReference.isReferenceTo(entity) }
+      }
+      else {
+        nonExistingFilesRegistry.unregisterUrl(root, entity, storageKind)
+      }
+    }
+
+    override fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity) {
+      val rootFile = rootFileSupplier.findFile(root)
+      if (rootFile != null) {
+        registerExclusionCondition(rootFile, condition, entity)
+      }
+      else {
+        nonExistingFilesRegistry.unregisterUrl(root, entity, storageKind)
       }
     }
 

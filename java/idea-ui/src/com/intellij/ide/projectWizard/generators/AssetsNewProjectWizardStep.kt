@@ -8,6 +8,7 @@ import com.intellij.ide.starters.local.GeneratorAsset
 import com.intellij.ide.starters.local.GeneratorTemplateFile
 import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.*
@@ -24,10 +25,22 @@ import java.util.*
 @ApiStatus.Experimental
 abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
 
-  lateinit var outputDirectory: String
+  private val outputDirectoryProperty = propertyGraph.lateinitProperty<String>()
+
+  var outputDirectory by outputDirectoryProperty
+
   private val assets = ArrayList<GeneratorAsset>()
   private val templateProperties = HashMap<String, Any>()
   private val filesToOpen = HashSet<Path>()
+
+  init {
+    val baseData = baseData
+    if (baseData != null) {
+      outputDirectoryProperty.set(baseData.location)
+      outputDirectoryProperty.dependsOn(baseData.nameProperty) { baseData.location }
+      outputDirectoryProperty.dependsOn(baseData.pathProperty) { baseData.location }
+    }
+  }
 
   @ApiStatus.Internal
   internal fun getTemplateProperties(): Map<String, Any> {
@@ -94,5 +107,11 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       fileEditorManager.openFile(file, true)
       projectView.select(null, file, false)
     }
+  }
+
+  companion object {
+
+    private val NewProjectWizardBaseData.location: String
+      get() = "$path/$name"
   }
 }

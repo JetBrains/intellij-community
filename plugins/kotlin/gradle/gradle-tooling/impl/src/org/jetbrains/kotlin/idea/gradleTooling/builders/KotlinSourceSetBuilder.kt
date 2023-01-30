@@ -7,6 +7,7 @@ import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinAndroidSourceSetInfoBuilder.buildKotlinAndroidSourceSetInfo
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSourceSetReflection
+import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinExtras
 import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.tooling.core.withClosure
@@ -99,6 +100,8 @@ internal class KotlinSourceSetBuilder(
             context.kotlinExtensionReflection.sourceSetsByName[sourceSetName]?.dependsOn.orEmpty().map { it.name }
         }
 
+        val serializedExtras = context.importReflection?.resolveExtrasSerialized(sourceSetReflection.instance)
+
         return KotlinSourceSetImpl(
             name = sourceSetReflection.name,
             languageSettings = languageSettings,
@@ -110,6 +113,7 @@ internal class KotlinSourceSetBuilder(
             allDependsOnSourceSets = allDependsOnSourceSetNames.toMutableSet(),
             additionalVisibleSourceSets = additionalVisibleSourceSets.toMutableSet(),
             androidSourceSetInfo = androidSourceSetInfo,
+            extras = IdeaKotlinExtras.from(serializedExtras),
         )
     }
 

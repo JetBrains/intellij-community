@@ -133,13 +133,7 @@ public class ClassInitializerInspection extends BaseInspection {
         addDefaultConstructorFix.invoke(aClass.getProject(), null, aClass.getContainingFile());
       }
       constructors = aClass.getConstructors();
-      return removeChainedConstructors(ContainerUtil.newArrayList(constructors));
-    }
-
-    @NotNull
-    private static Collection<PsiMethod> removeChainedConstructors(@NotNull Collection<PsiMethod> constructors) {
-      constructors.removeIf(constructor -> !JavaHighlightUtil.getChainedConstructors(constructor).isEmpty());
-      return constructors;
+      return ContainerUtil.filter(constructors, constructor -> JavaHighlightUtil.getChainedConstructors(constructor).isEmpty());
     }
   }
 

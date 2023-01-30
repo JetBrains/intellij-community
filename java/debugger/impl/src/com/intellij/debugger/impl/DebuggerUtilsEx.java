@@ -704,82 +704,82 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, double value) {
-    if (PsiType.DOUBLE.getName().equals(expectedType)) {
+    if (PsiTypes.doubleType().getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.FLOAT.getName().equals(expectedType)) {
+    if (PsiTypes.floatType().getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
-    if (PsiType.LONG.getName().equals(expectedType)) {
+    if (PsiTypes.longType().getName().equals(expectedType)) {
       return vm.mirrorOf((long)value);
     }
-    if (PsiType.INT.getName().equals(expectedType)) {
+    if (PsiTypes.intType().getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getName().equals(expectedType)) {
+    if (PsiTypes.shortType().getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getName().equals(expectedType)) {
+    if (PsiTypes.byteType().getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
     }
-    if (PsiType.CHAR.getName().equals(expectedType)) {
+    if (PsiTypes.charType().getName().equals(expectedType)) {
       return vm.mirrorOf((char)value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, long value) {
-    if (PsiType.LONG.getName().equals(expectedType)) {
+    if (PsiTypes.longType().getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.INT.getName().equals(expectedType)) {
+    if (PsiTypes.intType().getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getName().equals(expectedType)) {
+    if (PsiTypes.shortType().getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getName().equals(expectedType)) {
+    if (PsiTypes.byteType().getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
     }
-    if (PsiType.CHAR.getName().equals(expectedType)) {
+    if (PsiTypes.charType().getName().equals(expectedType)) {
       return vm.mirrorOf((char)value);
     }
-    if (PsiType.DOUBLE.getName().equals(expectedType)) {
+    if (PsiTypes.doubleType().getName().equals(expectedType)) {
       return vm.mirrorOf((double)value);
     }
-    if (PsiType.FLOAT.getName().equals(expectedType)) {
+    if (PsiTypes.floatType().getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, boolean value) {
-    if (PsiType.BOOLEAN.getName().equals(expectedType)) {
+    if (PsiTypes.booleanType().getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, char value) {
-    if (PsiType.CHAR.getName().equals(expectedType)) {
+    if (PsiTypes.charType().getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.LONG.getName().equals(expectedType)) {
+    if (PsiTypes.longType().getName().equals(expectedType)) {
       return vm.mirrorOf((long)value);
     }
-    if (PsiType.INT.getName().equals(expectedType)) {
+    if (PsiTypes.intType().getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getName().equals(expectedType)) {
+    if (PsiTypes.shortType().getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getName().equals(expectedType)) {
+    if (PsiTypes.byteType().getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
     }
-    if (PsiType.DOUBLE.getName().equals(expectedType)) {
+    if (PsiTypes.doubleType().getName().equals(expectedType)) {
       return vm.mirrorOf((double)value);
     }
-    if (PsiType.FLOAT.getName().equals(expectedType)) {
+    if (PsiTypes.floatType().getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
     return null;

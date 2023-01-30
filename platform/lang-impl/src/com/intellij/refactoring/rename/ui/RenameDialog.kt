@@ -114,7 +114,7 @@ internal class RenameDialog(
               parentDisposable?.let { Disposer.register(it) { field.removeDataChangedListener(validate) } }
             }
           })
-        .validation { field ->
+        .validationInfo { field ->
           renameValidator
             .validate(field.enteredName)
             .asSafely<RenameValidationResultData>()

@@ -19,7 +19,10 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
 import java.util.List;
@@ -50,12 +53,12 @@ public final class MethodUtils {
 
   @Contract("null -> false")
   public static boolean isComparatorCompare(@Nullable PsiMethod method) {
-    return method != null && methodMatches(method, CommonClassNames.JAVA_UTIL_COMPARATOR, PsiType.INT, "compare", null, null);
+    return method != null && methodMatches(method, CommonClassNames.JAVA_UTIL_COMPARATOR, PsiTypes.intType(), "compare", null, null);
   }
 
   @Contract("null -> false")
   public static boolean isCompareTo(@Nullable PsiMethod method) {
-    return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, PsiType.NULL)
+    return method != null && methodMatches(method, null, PsiTypes.intType(), HardcodedMethodConstants.COMPARE_TO, PsiTypes.nullType())
       && InheritanceUtil.isInheritor(method.getContainingClass(), CommonClassNames.JAVA_LANG_COMPARABLE);
   }
 
@@ -65,17 +68,17 @@ public final class MethodUtils {
       return false;
     }
     final PsiClassType stringType = TypeUtils.getStringType(method);
-    return methodMatches(method, "java.lang.String", PsiType.INT, "compareToIgnoreCase", stringType);
+    return methodMatches(method, "java.lang.String", PsiTypes.intType(), "compareToIgnoreCase", stringType);
   }
 
   @Contract("null -> false")
   public static boolean isHashCode(@Nullable PsiMethod method) {
-    return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.HASH_CODE);
+    return method != null && methodMatches(method, null, PsiTypes.intType(), HardcodedMethodConstants.HASH_CODE);
   }
 
   @Contract("null -> false")
   public static boolean isFinalize(@Nullable PsiMethod method) {
-    return method != null && methodMatches(method, null, PsiType.VOID, HardcodedMethodConstants.FINALIZE);
+    return method != null && methodMatches(method, null, PsiTypes.voidType(), HardcodedMethodConstants.FINALIZE);
   }
 
   @Contract("null -> false")
@@ -92,7 +95,7 @@ public final class MethodUtils {
     if (method == null || !HardcodedMethodConstants.EQUALS.equals(method.getName())) return false;
     PsiParameterList parameterList = method.getParameterList();
     return parameterList.getParametersCount() == 1 &&
-           PsiType.BOOLEAN.equals(method.getReturnType()) &&
+           PsiTypes.booleanType().equals(method.getReturnType()) &&
            TypeUtils.isJavaLangObject(Objects.requireNonNull(parameterList.getParameter(0)).getType());
   }
 
@@ -102,7 +105,7 @@ public final class MethodUtils {
       return false;
     }
     final PsiClassType stringType = TypeUtils.getStringType(method);
-    return methodMatches(method, "java.lang.String", PsiType.BOOLEAN, HardcodedMethodConstants.EQUALS_IGNORE_CASE, stringType);
+    return methodMatches(method, "java.lang.String", PsiTypes.booleanType(), HardcodedMethodConstants.EQUALS_IGNORE_CASE, stringType);
   }
 
   /**
@@ -173,7 +176,7 @@ public final class MethodUtils {
         final PsiParameter parameter = parameters[i];
         final PsiType type = parameter.getType();
         final PsiType parameterType = parameterTypes[i];
-        if (PsiType.NULL.equals(parameterType)) {
+        if (PsiTypes.nullType().equals(parameterType)) {
           continue;
         }
         if (parameterType != null && !EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(type, parameterType)) {
@@ -261,7 +264,7 @@ public final class MethodUtils {
    * Try to avoid calling it in such cases.
    */
   public static boolean isOverridden(@NotNull PsiMethod method) {
-    return OverridingMethodsSearch.search(method).findFirst() != null;
+    return OverridingMethodsSearch.search(method, false).findFirst() != null;
   }
 
   public static boolean isOverriddenInHierarchy(@NotNull PsiMethod method, @NotNull PsiClass baseClass) {
@@ -421,11 +424,6 @@ public final class MethodUtils {
     if (!InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), PsiUtil.resolveClassInClassTypeOnly(method.getReturnType()), true)) {
       return false;
     }
-    final PsiElement navigationElement = method.getNavigationElement();
-    if (!(navigationElement instanceof PsiMethod)) {
-      return false;
-    }
-    method = (PsiMethod)navigationElement;
     final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
     if (!(lastStatement instanceof PsiReturnStatement)) {
       return false;
@@ -513,7 +511,7 @@ public final class MethodUtils {
     if (statement == null) {
       return false;
     }
-    if (PsiType.VOID.equals(returnType)) {
+    if (PsiTypes.voidType().equals(returnType)) {
       if (!(statement instanceof PsiExpressionStatement)) {
         return false;
       }

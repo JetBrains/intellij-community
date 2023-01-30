@@ -18,6 +18,7 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
+import com.intellij.util.childScope
 import com.intellij.util.io.write
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.nio.file.Path
@@ -28,7 +29,8 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
 
   public override fun setUp() {
     super.setUp()
-    manager = FileEditorManagerImpl(project)
+    @Suppress("DEPRECATION")
+    manager = FileEditorManagerImpl(project, project.coroutineScope.childScope())
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
     check(DockManager.getInstance(project).containers.size == 1) {

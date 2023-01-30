@@ -152,7 +152,8 @@ fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?, predicate
 
 fun adjustWithAllExtensions(element: PsiElement): PsiElement? {
   var result = element
-  for (ext in NavBarModelExtension.EP_NAME.extensionList) {
+
+  for (ext in NavBarModelExtension.EP_NAME.extensionList.asReversed()) {
     result = ext.adjustElement(result) ?: return null
     ensurePsiFromExtensionIsValid(result, "Invalid psi returned from ${ext.javaClass} while adjusting", ext.javaClass)
   }

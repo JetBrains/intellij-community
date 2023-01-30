@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
@@ -11,6 +12,7 @@ import java.awt.*;
 import java.awt.event.HierarchyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.Field;
 
 public class MovablePopup {
   private final HierarchyListener myListener = event -> setVisible(false);
@@ -177,7 +179,7 @@ public class MovablePopup {
       if (owner != null) {
         owner.addWindowFocusListener(myWindowFocusAdapter);
         if (myHeavyWeight) {
-          Window view = new JWindow(owner);
+          JWindow view = new JWindow(owner);
           view.setType(Window.Type.POPUP);
           setAlwaysOnTop(view, myAlwaysOnTop);
           setWindowFocusable(view, myWindowFocusable);
@@ -185,6 +187,15 @@ public class MovablePopup {
           view.setAutoRequestFocus(false);
           view.setFocusable(false);
           view.setFocusableWindowState(false);
+          if (myTransparent && SystemInfoRt.isMac) {
+            try {
+              Field field = JRootPane.class.getDeclaredField("useTrueDoubleBuffering");
+              field.setAccessible(true);
+              field.set(view.getRootPane(), false);
+            }
+            catch (NoSuchFieldException| IllegalAccessException ignore) {
+            }
+          }
           myView = view;
         }
         else if (owner instanceof RootPaneContainer) {

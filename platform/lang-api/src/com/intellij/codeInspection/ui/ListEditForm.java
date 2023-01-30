@@ -63,6 +63,7 @@ public class ListEditForm {
     table = new ListTable(new ListWrappingTableModel(stringList, title));
     myNewElementSupplier = newElementSupplier;
     table.setTableHeader(null);
+    table.setShowHorizontalLines(false);
 
     contentPanel = setupActions(ToolbarDecorator.createDecorator(table), defaultElement)
       .setToolbarPosition(ActionToolbarPosition.LEFT)

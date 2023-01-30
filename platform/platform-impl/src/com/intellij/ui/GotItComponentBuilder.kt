@@ -49,6 +49,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   @Nls
   private val text: String
   private val linkActionsMap: Map<Int, () -> Unit>
+  private val iconsMap: Map<Int, Icon>
 
   private var image: Icon? = null
 
@@ -67,6 +68,8 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   @Nls
   private var buttonLabel: String = IdeBundle.message("got.it.button.name")
   private var buttonAction: () -> Unit = {}
+  private var requestFocus: Boolean = false
+
   private var showCloseShortcut = false
 
   private var maxWidth = MAX_WIDTH
@@ -76,6 +79,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     val builder = GotItTextBuilderImpl()
     this.text = ShortcutExtension.patchShortcutTags(textSupplier(builder))
     this.linkActionsMap = builder.getLinkActions()
+    this.iconsMap = builder.getIcons()
   }
 
   /**
@@ -191,6 +195,15 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    */
   fun onButtonClick(action: () -> Unit): GotItComponentBuilder {
     this.buttonAction = action
+    return this
+  }
+
+  /**
+   * Request focus to "Got It" button after tooltip will be shown.
+   * Default is false.
+   */
+  fun requestFocus(request: Boolean): GotItComponentBuilder {
+    this.requestFocus = request
     return this
   }
 
@@ -327,7 +340,8 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
                                              textWidth,
                                              useContrastColors,
                                              // allow to extend width only if there is no image and maxWidth was not changed by developer
-                                             allowWidthExtending = image == null && maxWidth == MAX_WIDTH)
+                                             allowWidthExtending = image == null && maxWidth == MAX_WIDTH,
+                                             iconsMap)
     descriptionConsumer(description)
     panel.add(description,
               gc.setColumn(column).anchor(GridBagConstraints.LINE_START)
@@ -343,7 +357,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
         if (ExperimentalUI.isNewUI()) {
           font = JBFont.label().asBold()
         }
-        isFocusable = false
+        isFocusable = requestFocus
         isOpaque = false
         foreground = JBUI.CurrentTheme.GotItTooltip.buttonForeground()
         putClientProperty("gotItButton", true)
@@ -371,6 +385,17 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
         buttonPanel
       }
       else button
+
+      if (requestFocus) {
+        // Needed to provide right component to focus in com.intellij.ui.BalloonImpl.getContentToFocus
+        panel.isFocusTraversalPolicyProvider = true
+        panel.focusTraversalPolicy = object : SortingFocusTraversalPolicy(Comparator { _, _ -> 0 }) {
+          override fun getDefaultComponent(aContainer: Container?): Component {
+            return button
+          }
+        }
+      }
+
       panel.add(buttonComponent,
                 gc.nextLine().setColumn(column)
                   .insets(JBUI.CurrentTheme.GotItTooltip.BUTTON_TOP_INSET.get(), left,
@@ -403,7 +428,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
     @JvmStatic
     fun getArrowShift(): Int {
-      return JBUIScale.scale(20) + Registry.intValue("ide.balloon.shadow.size") + JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get()
+      return JBUIScale.scale(15) + JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get()
     }
 
     // returns dark icon if GotIt tooltip background is dark
@@ -419,13 +444,17 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
                                      maxWidth: Int,
                                      useContrastColors: Boolean,
-                                     allowWidthExtending: Boolean) : JEditorPane() {
+                                     allowWidthExtending: Boolean,
+                                     iconsMap: Map<Int, Icon>) : JEditorPane() {
   init {
     foreground = JBUI.CurrentTheme.GotItTooltip.foreground(useContrastColors)
     background = JBUI.CurrentTheme.GotItTooltip.background(useContrastColors)
 
-    editorKit = createEditorKit(useContrastColors)
+    editorKit = createEditorKit(useContrastColors, iconsMap)
 
+    putClientProperty("caretWidth", 0)
+
+    var additionalWidthAdded = false
     setTextAndUpdateLayout(htmlBuilder)
     if (getRootView().getPreferredSpan(X_AXIS) > maxWidth) {
       setTextAndUpdateLayout(htmlBuilder, maxWidth)
@@ -434,15 +463,17 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
         setTextAndUpdateLayout(htmlBuilder, EXTENDED_MAX_WIDTH)
         rows = getRows()
       }
-      val width = rows.maxOfOrNull { it.getPreferredSpan(X_AXIS) } ?: maxWidth.toFloat()
+      val width = rows.maxOfOrNull { it.getPreferredSpan(X_AXIS) + ADDITIONAL_WIDTH } ?: maxWidth.toFloat()
       setTextAndUpdateLayout(htmlBuilder, width.toInt())
+      additionalWidthAdded = true
     }
 
     val root = getRootView()
-    preferredSize = Dimension(root.getPreferredSpan(X_AXIS).toInt(), root.getPreferredSpan(Y_AXIS).toInt())
+    val width = root.getPreferredSpan(X_AXIS).toInt() + if (additionalWidthAdded) 0 else ADDITIONAL_WIDTH
+    preferredSize = Dimension(width, root.getPreferredSpan(Y_AXIS).toInt())
   }
 
-  private fun createEditorKit(useContrastColors: Boolean): HTMLEditorKit {
+  private fun createEditorKit(useContrastColors: Boolean, iconsMap: Map<Int, Icon>): HTMLEditorKit {
     val styleSheet = StyleSheet()
     val linkStyles = "a { color: #${ColorUtil.toHex(JBUI.CurrentTheme.GotItTooltip.linkForeground())} }"
     val shortcutStyles = ShortcutExtension.getStyles(JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors),
@@ -450,7 +481,11 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
     StringReader(linkStyles + shortcutStyles).use { styleSheet.loadRules(it, null) }
 
     val iconsExtension = ExtendableHTMLViewFactory.Extensions.icons { iconKey ->
-      IconLoader.findIcon(iconKey, GotItTooltip::class.java, true, false)?.let { icon ->
+      val explicitIcon = iconKey.toIntOrNull()?.let { iconsMap[it] }
+      if (explicitIcon != null) {
+        GotItComponentBuilder.adjustIcon(explicitIcon, useContrastColors)
+      }
+      else IconLoader.findIcon(iconKey, GotItTooltip::class.java, true, false)?.let { icon ->
         GotItComponentBuilder.adjustIcon(icon, useContrastColors)
       }
     }
@@ -491,6 +526,12 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
     isFocusable = false
     isEditable = false
     border = null
+  }
+
+  companion object {
+    // We need to make the resulting width little more than preferred,
+    // because size is calculated by summing up floats and there can be rounding problems
+    private const val ADDITIONAL_WIDTH = 1
   }
 }
 

@@ -13,6 +13,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +91,7 @@ public final class DfTypes {
   /**
    * A type that corresponds to JVM int type
    */
-  public static final DfIntType INT = new DfIntRangeType(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.INT)), null);
+  public static final DfIntType INT = new DfIntRangeType(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiTypes.intType())), null);
 
   /**
    * Creates a type that represents a subset of int values, clamping values not representable in the JVM int type.
@@ -415,16 +416,16 @@ public final class DfTypes {
   public static @NotNull DfType typedObject(@Nullable PsiType type, @NotNull Nullability nullability) {
     if (type == null) return DfType.TOP;
     if (type instanceof PsiPrimitiveType) {
-      if (type.equals(PsiType.VOID)) return DfType.BOTTOM;
-      if (type.equals(PsiType.BOOLEAN)) return BOOLEAN;
-      if (type.equals(PsiType.INT)) return INT;
-      if (type.equals(PsiType.CHAR) || type.equals(PsiType.SHORT) || type.equals(PsiType.BYTE)){
+      if (type.equals(PsiTypes.voidType())) return DfType.BOTTOM;
+      if (type.equals(PsiTypes.booleanType())) return BOOLEAN;
+      if (type.equals(PsiTypes.intType())) return INT;
+      if (type.equals(PsiTypes.charType()) || type.equals(PsiTypes.shortType()) || type.equals(PsiTypes.byteType())){
         return intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(type)));
       }
-      if (type.equals(PsiType.LONG)) return LONG;
-      if (type.equals(PsiType.DOUBLE)) return DOUBLE;
-      if (type.equals(PsiType.FLOAT)) return FLOAT;
-      if (type.equals(PsiType.NULL)) return NULL;
+      if (type.equals(PsiTypes.longType())) return LONG;
+      if (type.equals(PsiTypes.doubleType())) return DOUBLE;
+      if (type.equals(PsiTypes.floatType())) return FLOAT;
+      if (type.equals(PsiTypes.nullType())) return NULL;
     }
     TypeConstraint constraint = TypeConstraints.instanceOf(type);
     if (constraint == TypeConstraints.BOTTOM) {

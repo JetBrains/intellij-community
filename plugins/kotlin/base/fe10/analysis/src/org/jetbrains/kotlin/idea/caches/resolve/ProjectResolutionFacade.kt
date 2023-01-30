@@ -175,7 +175,8 @@ internal class ProjectResolutionFacade(
             }
         }
 
-        return cachedResolverForProject.tryGetResolverForModule(NotUnderContentRootModuleInfo(project))
+        val containingFile = element.containingFile as? KtFile
+        return cachedResolverForProject.tryGetResolverForModule(NotUnderContentRootModuleInfo(project, containingFile))
             ?: cachedResolverForProject.diagnoseUnknownModuleInfo(moduleInfos.toList())
     }
 

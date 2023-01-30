@@ -42,7 +42,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private Project myProject;
   private @Nullable Condition<? super ScopeDescriptor> myScopeFilter;
   private BrowseListener myBrowseListener;
-  private final ScopeModel scopeModel = new ScopeModel(EnumSet.of(Option.FROM_SELECTION, Option.USAGE_VIEW));
+  private final ScopeModel scopeModel = new ScopeModel(EnumSet.of(ScopeModel.Option.FROM_SELECTION, ScopeModel.Option.USAGE_VIEW));
 
   private @Nullable SearchScope preselectedScope;
 
@@ -77,8 +77,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
 
     scopeModel.init(project);
-    scopeModel.setOption(Option.LIBRARIES, suggestSearchInLibs);
-    scopeModel.setOption(Option.SEARCH_RESULTS, prevSearchWholeFiles);
+    scopeModel.setOption(ScopeModel.Option.LIBRARIES, suggestSearchInLibs);
+    scopeModel.setOption(ScopeModel.Option.SEARCH_RESULTS, prevSearchWholeFiles);
     myProject = project;
 
     NamedScopesHolder.ScopeListener scopeListener = () -> {
@@ -131,11 +131,11 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   }
 
   public void setCurrentSelection(boolean currentSelection) {
-    scopeModel.setOption(Option.FROM_SELECTION, currentSelection);
+    scopeModel.setOption(ScopeModel.Option.FROM_SELECTION, currentSelection);
   }
 
   public void setUsageView(boolean usageView) {
-    scopeModel.setOption(Option.USAGE_VIEW, usageView);
+    scopeModel.setOption(ScopeModel.Option.USAGE_VIEW, usageView);
   }
 
   public void selectItem(@Nullable Object selection) {
@@ -201,7 +201,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   }
 
   public void setShowEmptyScopes(boolean showEmptyScopes) {
-    scopeModel.setOption(Option.EMPTY_SCOPES, showEmptyScopes);
+    scopeModel.setOption(ScopeModel.Option.EMPTY_SCOPES, showEmptyScopes);
   }
 
   @Nullable

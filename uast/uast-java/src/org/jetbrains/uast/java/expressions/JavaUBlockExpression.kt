@@ -16,6 +16,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiBlockStatement
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UBlockExpression
 import org.jetbrains.uast.UElement
@@ -26,5 +27,5 @@ class JavaUBlockExpression(
   override val sourcePsi: PsiBlockStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBlockExpression {
-  override val expressions: List<UExpression> by lz { sourcePsi.codeBlock.statements.map { JavaConverter.convertOrEmpty(it, this) } }
+  override val expressions: List<UExpression> by lazyPub { sourcePsi.codeBlock.statements.map { JavaConverter.convertOrEmpty(it, this) } }
 }

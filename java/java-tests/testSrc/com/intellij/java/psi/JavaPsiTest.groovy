@@ -164,7 +164,7 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
 
     DefaultLogger.disableStderrDumping(testRootDisposable)
     assertThrows(Throwable, "Non-idempotent") {
-      IdempotenceChecker.checkEquivalence((PsiType)immediate, PsiType.VOID, getClass(), null)
+      IdempotenceChecker.checkEquivalence((PsiType)immediate, PsiTypes.voidType(), getClass(), null)
     }
   }
 

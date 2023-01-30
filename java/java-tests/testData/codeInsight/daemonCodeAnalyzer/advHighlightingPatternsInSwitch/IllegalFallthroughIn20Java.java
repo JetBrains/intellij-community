@@ -217,9 +217,30 @@ public class Main {
     }
   }
 
-  void too25(String s) {
+  void test25(String s) {
     switch (s) {
       case "hello", "world", <error descr="Invalid case label combination">String str</error>, null -> {}
+    }
+  }
+
+  void test26(Object obj) {
+    switch (obj) {
+      case String s:
+      case null:
+        System.out.println(<error descr="Cannot resolve symbol 's'">s</error>);
+      default:
+        throw new IllegalStateException("Unexpected value: " + obj);
+    }
+  }
+
+  void test27(Object obj) {
+    switch (obj) {
+      case String s:
+        System.out.println(s);
+      case null:
+        System.out.println(<error descr="Cannot resolve symbol 's'">s</error>);
+      default:
+        throw new IllegalStateException("Unexpected value: " + obj);
     }
   }
 }

@@ -129,7 +129,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
   public <R, E extends Throwable> R readRecord(final int recordId,
                                                final @NotNull RecordReader<R, E> reader) throws E, IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
-    final int recordOffsetOnPage = recordOffsetOnPage(recordId);
+    final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */false)) {
       page.lockPageForRead();
       try {
@@ -149,7 +149,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
                              allocateRecord() :
                              recordId;
     final long recordOffsetInFile = recordOffsetInFile(recordId);
-    final int recordOffsetOnPage = recordOffsetOnPage(recordId);
+    final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */true)) {
       page.lockPageForWrite();
       try {
@@ -496,7 +496,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
     try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
       page.lockPageForWrite();
       try {
-        incrementRecordVersion(page, recordOffsetOnPage + MOD_COUNT_OFFSET);
+        incrementRecordVersion(page.rawPageBuffer(), recordOffsetOnPage);
         page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
       }
       finally {
@@ -543,8 +543,8 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
                          final int nameId,
                          final int parentId,
                          final boolean overwriteAttrRef) throws IOException {
-    final int recordOffsetOnPage = recordOffsetOnPage(recordId);
     final long recordOffsetInFile = recordOffsetInFile(recordId);
+    final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
       page.lockPageForWrite();
       try {
@@ -576,8 +576,8 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
     assert RECORD_SIZE_IN_BYTES % Integer.BYTES == 0 : "RECORD_SIZE_IN_BYTES(=" + RECORD_SIZE_IN_BYTES + ") is expected to be 32-aligned";
     final int recordSizeInInts = RECORD_SIZE_IN_BYTES / Integer.BYTES;
 
-    final int recordOffsetOnPage = recordOffsetOnPage(recordId);
     final long recordOffsetInFile = recordOffsetInFile(recordId);
+    final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
       page.lockPageForWrite();
       try {
@@ -717,25 +717,6 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
     return recordOffsetInFileUnchecked(recordId);
   }
 
-  private int recordOffsetOnPage(final int recordId) throws IndexOutOfBoundsException {
-    checkRecordIdIsValid(recordId);
-
-    final int recordsOnHeaderPage = (pageSize - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
-    if (recordId < recordsOnHeaderPage) {
-      return HEADER_SIZE + recordId * RECORD_SIZE_IN_BYTES;
-    }
-
-    //as-if there were no header:
-    final int recordsOnLastPage = recordId % recordsPerPage;
-
-    //header on the first page "push out" few records:
-    final int recordsExcessBecauseOfHeader = recordsPerPage - recordsOnHeaderPage;
-
-    //so the last page could turn into +1 page:
-    final int recordsReallyOnLastPage = recordsOnLastPage + recordsExcessBecauseOfHeader;
-    return (recordsReallyOnLastPage % recordsPerPage) * RECORD_SIZE_IN_BYTES;
-  }
-
   private void checkRecordIdIsValid(final int recordId) throws IndexOutOfBoundsException {
     if (!(NULL_ID < recordId && recordId < allocatedRecordsCount.get())) {
       throw new IndexOutOfBoundsException(
@@ -815,11 +796,6 @@ public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRec
         page.unlockPageForRead();
       }
     }
-  }
-
-  private void incrementRecordVersion(final @NotNull Page page,
-                                      final int recordOffsetOnPage) {
-    page.putInt(recordOffsetOnPage + MOD_COUNT_OFFSET, globalModCount.incrementAndGet());
   }
 
   private void incrementRecordVersion(final @NotNull ByteBuffer pageBuffer,

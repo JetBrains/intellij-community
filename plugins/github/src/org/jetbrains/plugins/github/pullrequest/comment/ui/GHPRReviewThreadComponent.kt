@@ -1,22 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
-import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies.ActionsFolded
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
-import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.util.swingAction
-import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
@@ -26,7 +25,6 @@ import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -116,7 +114,7 @@ object GHPRReviewThreadComponent {
                                                     thread: GHPRReviewThreadModel,
                                                     onReply: () -> Unit): JComponent {
 
-    val toggleReplyLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.reply"), null) { _, _ ->
+    val toggleReplyLink = LinkLabel<Any>(CollaborationToolsBundle.message("review.comments.reply.action"), null) { _, _ ->
       onReply()
     }.apply {
       isFocusable = true
@@ -124,7 +122,7 @@ object GHPRReviewThreadComponent {
 
     val unResolveLink = createUnResolveLink(reviewDataProvider, thread)
 
-    return HorizontalListPanel(8).apply {
+    return HorizontalListPanel(ActionsFolded.HORIZONTAL_GAP).apply {
       border = JBUI.Borders.emptyLeft(INLAY_COMPONENT_TYPE.contentLeftShift)
 
       add(toggleReplyLink)
@@ -144,54 +142,51 @@ object GHPRReviewThreadComponent {
       }
     }
 
-    val submitShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommentInputComponentFactory.defaultSubmitShortcut)
-    val newLineShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.ENTER)
+    val submitShortcutText = CommentInputActionsComponentFactory.submitShortcutText
+    val newLineShortcutText = CommentInputActionsComponentFactory.newLineShortcutText
 
     val unResolveAction = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
-        textFieldModel.isBusy = true
+        textFieldModel.isBusyValue.value = true
         if (thread.isResolved) {
           reviewDataProvider.unresolveThread(EmptyProgressIndicator(), thread.id)
         }
         else {
           reviewDataProvider.resolveThread(EmptyProgressIndicator(), thread.id)
         }.handleOnEdt { _, _ ->
-          textFieldModel.isBusy = false
+          textFieldModel.isBusyValue.value = false
         }
       }
     }
 
     thread.addAndInvokeStateChangeListener {
       val name = if (thread.isResolved) {
-        GithubBundle.message("pull.request.review.thread.unresolve")
+        CollaborationToolsBundle.message("review.comments.unresolve.action")
       }
       else {
-        GithubBundle.message("pull.request.review.thread.resolve")
+        CollaborationToolsBundle.message("review.comments.resolve.action")
       }
       unResolveAction.putValue(Action.NAME, name)
     }
 
-    val unResolveEnabledListener: () -> Unit = {
-      unResolveAction.isEnabled = !textFieldModel.isBusy
+    textFieldModel.isBusyValue.addAndInvokeListener {
+      unResolveAction.isEnabled = !it
     }
-    textFieldModel.addStateListener(unResolveEnabledListener)
-    unResolveEnabledListener()
 
-    val cancelAction = swingAction(CommonBundle.getCancelButtonText()) {
+    val cancelAction = swingAction("") {
       onDone()
     }
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(textFieldModel.submitAction(GithubBundle.message("pull.request.review.thread.reply"))),
+      primaryAction = MutableStateFlow(textFieldModel.submitAction(CollaborationToolsBundle.message("review.comments.reply.action"))),
+      cancelAction = MutableStateFlow(cancelAction),
       additionalActions = MutableStateFlow(listOf(unResolveAction)),
-      hintInfo = MutableStateFlow(CommentInputActionsComponentFactory.HintInfo(
-        submitHint = GithubBundle.message("pull.request.review.thread.reply.hint", submitShortcutText),
-        newLineHint = GithubBundle.message("pull.request.new.line.hint", newLineShortcutText)
-      ))
+      submitHint = MutableStateFlow(GithubBundle.message("pull.request.review.thread.reply.hint", submitShortcutText))
+    )
+    val icon = CommentTextFieldFactory.IconConfig.of(
+      CodeReviewChatItemUIUtil.ComponentType.COMPACT, avatarIconsProvider, currentUser.avatarUrl
     )
 
-    return GHCommentTextFieldFactory(textFieldModel)
-      .create(GHCommentTextFieldFactory.ActionsConfig(actions, cancelAction),
-              GHCommentTextFieldFactory.AvatarConfig(avatarIconsProvider, currentUser))
+    return GHCommentTextFieldFactory(textFieldModel).create(actions, icon)
   }
 
   fun getCollapsedThreadActionsComponent(reviewDataProvider: GHPRReviewDataProvider,
@@ -230,10 +225,10 @@ object GHPRReviewThreadComponent {
 
         repliesLink.apply {
           text = if (repliesCount == 0) {
-            GithubBundle.message("pull.request.review.thread.reply")
+            CollaborationToolsBundle.message("review.comments.reply.action")
           }
           else {
-            GithubBundle.message("pull.request.review.thread.replies", repliesCount)
+            CollaborationToolsBundle.message("review.comments.replies.action", repliesCount)
           }
           isVisible = reviewDataProvider.canComment() || repliesCount > 0
         }
@@ -253,7 +248,7 @@ object GHPRReviewThreadComponent {
       override fun contentsChanged(e: ListDataEvent) = Unit
     })
 
-    val repliesPanel = HorizontalListPanel(8).apply {
+    val repliesPanel = HorizontalListPanel(ActionsFolded.HORIZONTAL_GAP).apply {
       add(authorsLabel)
       add(repliesLink)
       add(lastReplyDateLabel)
@@ -261,11 +256,9 @@ object GHPRReviewThreadComponent {
 
     val unResolveLink = createUnResolveLink(reviewDataProvider, thread)
 
-    return HorizontalListPanel(14).apply {
+    return HorizontalListPanel(ActionsFolded.HORIZONTAL_GROUP_GAP).apply {
       add(repliesPanel)
-      unResolveLink?.also {
-        add(it)
-      }
+      unResolveLink?.also(::add)
     }
   }
 
@@ -287,10 +280,10 @@ object GHPRReviewThreadComponent {
 
     thread.addAndInvokeStateChangeListener {
       unResolveLink.text = if (thread.isResolved) {
-        GithubBundle.message("pull.request.review.thread.unresolve")
+        CollaborationToolsBundle.message("review.comments.unresolve.action")
       }
       else {
-        GithubBundle.message("pull.request.review.thread.resolve")
+        CollaborationToolsBundle.message("review.comments.resolve.action")
       }
     }
     return unResolveLink

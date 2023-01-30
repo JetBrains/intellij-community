@@ -7,7 +7,6 @@ import com.intellij.webSymbols.WebSymbolOrigin
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.webTypes.json.SourceBase
 import org.jetbrains.annotations.ApiStatus.Internal
-import javax.swing.Icon
 
 @Suppress("DEPRECATION")
 @Internal
@@ -17,6 +16,6 @@ interface WebTypesJsonOrigin : WebSymbolOrigin {
 
   fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement?
   fun resolveSourceLocation(source: SourceBase): WebTypesSymbol.Location?
-  fun renderDescription(description: String): String?
+  fun renderDescription(description: String): String
   fun matchContext(context: WebSymbolsContext): Boolean
 }

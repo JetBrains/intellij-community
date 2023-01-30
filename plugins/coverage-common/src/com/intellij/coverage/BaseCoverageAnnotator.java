@@ -17,6 +17,7 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
   private final Project myProject;
   private volatile boolean myIsLoading = false;
 
+  @Override
   public boolean isLoading() {
     return myIsLoading;
   }

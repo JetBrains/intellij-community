@@ -6,7 +6,7 @@ import javax.swing.JComponent
 
 data class LearningBalloonConfig(
   val side: Balloon.Position,
-  /** 0 means to use one line in the text of the balloon with automatic width detection */
+  /** 0 means to use default width from GotIt [com.intellij.ui.GotItComponentBuilder.Companion.MAX_WIDTH] */
   val width: Int,
   val duplicateMessage: Boolean = false,
   val highlightingComponent: JComponent? = null,

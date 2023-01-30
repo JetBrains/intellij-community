@@ -343,7 +343,7 @@ public class ExpressionGenerator extends Generator {
       var = null;
     }
     final PsiType type = condition.getType();
-    if (type == null || PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(type))) {
+    if (type == null || PsiTypes.booleanType().equals(TypesUtil.unboxPrimitiveTypeWrapper(type))) {
       if (elvis) {
         builder.append(var);
       }
@@ -685,7 +685,7 @@ public class ExpressionGenerator extends Generator {
   }
 
   private static boolean isBooleanType(PsiType type) {
-    return PsiType.BOOLEAN.equals(type) || type != null && type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN);
+    return PsiTypes.booleanType().equals(type) || type != null && type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN);
   }
 
   private void writeSimpleBinaryExpression(PsiElement opToken, GrExpression left, GrExpression right) {
@@ -861,7 +861,7 @@ public class ExpressionGenerator extends Generator {
 
     boolean isChar = false;
     for (TypeConstraint constraint : constraints) {
-      if (constraint instanceof SubtypeConstraint && PsiType.CHAR.equals(TypesUtil.unboxPrimitiveTypeWrapper(constraint.getDefaultType()))) {
+      if (constraint instanceof SubtypeConstraint && PsiTypes.charType().equals(TypesUtil.unboxPrimitiveTypeWrapper(constraint.getDefaultType()))) {
         isChar = true;
       }
     }

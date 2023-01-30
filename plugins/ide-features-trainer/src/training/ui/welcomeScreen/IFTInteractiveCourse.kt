@@ -7,7 +7,6 @@ import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePanel
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
@@ -19,6 +18,7 @@ import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
 import training.learn.course.IftModule
 import training.ui.views.NewContentLabel
+import training.util.enableLessonsAndPromoters
 import training.util.iftPluginIsUsing
 import training.util.learningPanelWasOpenedInCurrentVersion
 import java.awt.Color
@@ -35,9 +35,9 @@ internal class IFTInteractiveCourse : InteractiveCourseFactory {
   override fun getInteractiveCourseComponent(): JComponent = IFTInteractiveCoursePanel()
 }
 
-private class IFTInteractiveCoursePanel : InteractiveCoursePanel(IFTInteractiveCourseData(), !ExperimentalUI.isNewUI()) {
+private class IFTInteractiveCoursePanel : InteractiveCoursePanel(IFTInteractiveCourseData(), enableLessonsAndPromoters) {
   init {
-    if (ExperimentalUI.isNewUI()) {
+    if (!enableLessonsAndPromoters) {
       add(JTextPane().apply {
         contentType = "text/html"
         addHyperlinkListener(object : HyperlinkAdapter() {

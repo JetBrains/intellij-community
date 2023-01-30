@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlinx-serialization-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlinx-serialization-compiler-plugin-for-ide:1.8.20-dev-5829" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlinx-serialization-compiler-plugin-for-ide:1.9.0-dev-484" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.8.20-dev-5829/kotlinx-serialization-compiler-plugin-for-ide-1.8.20-dev-5829.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.9.0-dev-484/kotlinx-serialization-compiler-plugin-for-ide-1.9.0-dev-484.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.8.20-dev-5829/kotlinx-serialization-compiler-plugin-for-ide-1.8.20-dev-5829-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.9.0-dev-484/kotlinx-serialization-compiler-plugin-for-ide-1.9.0-dev-484-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

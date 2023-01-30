@@ -8,4 +8,3 @@ fun bar() {
     foo(param = "")
 }
 
-// FIR_COMPARISON

@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider;
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider.LibraryRoots;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.text.StringUtil;
@@ -68,12 +67,11 @@ class RescannedRootsUtil {
 
     while (iterator.hasNext()) {
       VirtualFile excluded = iterator.next();
-      DirectoryInfo info = fileIndex.getInfoForFileOrDirectory(excluded);
-      if (!info.isInProject(excluded)) {
+      if (!fileIndex.isInProject(excluded)) {
         iterator.remove();
         continue;
       }
-      Module module = info.getModule();
+      Module module = fileIndex.getModuleForFile(excluded);
       if (module != null) {
         VirtualFileUrl url = urlManager.fromUrl(excluded.getUrl());
         result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleRoots(((ModuleBridge)module).getModuleEntityId(),

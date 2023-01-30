@@ -295,7 +295,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
     VariableKind variableKind = JavaCodeStyleManager.getInstance(project).getVariableKind(var);
 
     String prefix = matcher.getPrefix();
-    if (PsiType.VOID.equals(var.getType()) || psiField().inClass(psiClass().isInterface().andNot(psiClass().isAnnotationType())).accepts(var)) {
+    if (PsiTypes.voidType().equals(var.getType()) || psiField().inClass(psiClass().isInterface().andNot(psiClass().isAnnotationType())).accepts(var)) {
       completeVariableNameForRefactoring(project, set, matcher, var.getType(), variableKind, includeOverlapped, true);
       return;
     }
@@ -353,7 +353,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
       }
     }
 
-    if (!hasStartMatches(matcher, result) && !PsiType.VOID.equals(varType) && includeOverlapped) {
+    if (!hasStartMatches(matcher, result) && !PsiTypes.voidType().equals(varType) && includeOverlapped) {
       // use suggested names as suffixes
       String requiredSuffix = codeStyleManager.getSuffixByVariableKind(varKind);
       String prefix = matcher.getPrefix();
@@ -437,7 +437,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
         }
       }
 
-      if (PsiType.VOID.equals(varType)) {
+      if (PsiTypes.voidType().equals(varType)) {
         String setterName = PropertyUtilBase.suggestSetterName(field);
         if (psiClass.findMethodsByName(setterName, true).length == 0 ||
              psiClass.findMethodBySignature(GenerateMembersUtil.generateSetterPrototype(field), true) == null) {

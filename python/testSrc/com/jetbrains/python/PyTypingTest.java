@@ -1227,7 +1227,7 @@ public class PyTypingTest extends PyTestCase {
              T = TypeVar('T')
 
              def f(x: T) -> Type[T]:
-                 return type(T)
+                 return type(x)
                 \s
              expr = f(42)""");
   }
@@ -1606,7 +1606,7 @@ public class PyTypingTest extends PyTestCase {
 
              class C:
                  @classmethod
-                 def factory(cls) -> T:
+                 def factory(cls):
                      # type: (Type[T]) -> T
                      pass
 
@@ -2123,6 +2123,569 @@ public class PyTypingTest extends PyTestCase {
                  def m(self) -> Unresolved:
                      ...
              expr = Sub().m()
+             """);
+  }
+
+  public void testGenericProtocolUnificationSameTypeVar() {
+    doTest("list[int]",
+           """
+             from typing import Protocol
+             from typing import TypeVar
+
+             T = TypeVar('T', covariant=True)
+
+             class SupportsIter(Protocol[T]):
+                 def __iter__(self) -> T:
+                     pass
+
+             def my_iter(x: SupportsIter[T]) -> T:
+                 pass
+
+             class MyList:
+                 def __iter__(self) -> list[int]:
+                     pass
+
+             expr = my_iter(MyList())""");
+  }
+
+  public void testGenericProtocolUnificationSeparateTypeVar() {
+    doTest("list[int]",
+           """
+             from typing import Protocol
+             from typing import TypeVar
+
+             T = TypeVar('T', covariant=True)
+             T2 = TypeVar('T2')
+
+             class SupportsIter(Protocol[T]):
+                 def __iter__(self) -> T:
+                     pass
+
+             def my_iter(x: SupportsIter[T2]) -> T2:
+                 pass
+
+             class MyList:
+                 def __iter__(self) -> list[int]:
+                     pass
+
+             expr = my_iter(MyList())""");
+  }
+
+  public void testGenericProtocolUnificationGenericImplementation() {
+    doTest("int",
+           """
+             from typing import Generic, Protocol, TypeVar\s
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+             class Fooable(Protocol[T1]):
+                 def foo(self) -> T1:
+                     ...
+
+             class MyClass(Generic[T2]):
+                 def foo(self) -> T2:
+                     ...
+
+             def f(x: Fooable[T1]) -> T1:
+                 ...
+
+             obj: MyClass[int]
+             expr = f(obj)""");
+  }
+
+  public void testGenericProtocolUnificationNonGenericImplementationWithGenericSuperclass() {
+    doTest("int",
+           """
+             from typing import Generic, Protocol, TypeVar\s
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+             class Fooable(Protocol[T1]):
+                 def foo(self) -> T1:
+                     ...
+
+             class Super(Generic[T2]):
+                 def foo(self) -> T2:
+                     ...
+
+             class MyClass(Super[int]):
+                 pass
+
+             def f(x: Fooable[T1]) -> T1:
+                 ...
+
+             obj: MyClass
+             expr = f(obj)""");
+  }
+
+  public void testGenericProtocolUnificationGenericImplementationWithGenericSuperclass() {
+    doTest("int",
+           """
+             from typing import Generic, Protocol, TypeVar\s
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+             class Fooable(Protocol[T1]):
+                 def foo(self) -> T1:
+                     ...
+
+             class Super(Generic[T2]):
+                 def foo(self) -> T2:
+                     ...
+
+             class MyClass(Super[T2]):
+                 pass
+
+             def f(x: Fooable[T1]) -> T1:
+                 ...
+
+             obj: MyClass[int]
+             expr = f(obj)""");
+  }
+
+  public void testGenericProtocolUnificationGenericImplementationWithGenericSuperclassAndExtraParameter() {
+    doTest("int",
+           """
+             from typing import Generic, Protocol, TypeVar\s
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+             class Fooable(Protocol[T1]):
+                 def foo(self) -> T1:
+                     ...
+
+             class Super(Generic[T2]):
+                 def foo(self) -> T2:
+                     ...
+
+             class MyClass(Super[int], Generic[T1]):
+                 pass
+
+             def f(x: Fooable[T1]) -> T1:
+                 ...
+
+             obj: MyClass[str]
+             expr = f(obj)""");
+  }
+
+
+  public void testGenericMethodCallUnification() {
+    doTest("int", """
+      from typing import Generic, TypeVar
+      T = TypeVar("T")
+
+      class Box(Generic[T]):
+          def __init__(self, value: T) -> None:
+              self.value = value
+          def get(self) -> T:
+              return self.value
+
+      box = Box(42)
+      expr = box.get()
+      """);
+  }
+
+  public void testSingleTypeVarSpecifiedOnInheritance() {
+    doTest("str", """
+      from typing import Generic, TypeVar
+
+      T = TypeVar("T")
+
+      class Box(Generic[T]):
+          pass
+
+      class StrBox(Box[str]):
+          pass
+
+      def extract(b: Box[T]) -> T:
+          pass
+
+      box = StrBox()
+      expr = extract(box)""");
+  }
+
+  public void testPartialTypeVarSpecializationOnInheritanceInherited() {
+    doTest("str",
+           """
+             from typing import Generic, TypeVar
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+             class Pair(Generic[T1, T2]):
+                 pass
+
+             class StrFirstPair(Pair[str, T2]):
+                 def __init__(self, second: T2):
+                     pass
+
+             def first(pair: Pair[T1, T2]) -> T1:
+                 pass
+
+             expr = first(StrFirstPair(42))""");
+  }
+
+  public void testPartialTypeVarSpecializationOnInheritanceInstantiated() {
+    doTest("int",
+           """
+             from typing import Generic, TypeVar
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+             class Pair(Generic[T1, T2]):
+                 pass
+
+             class StrFirstPair(Pair[str, T2]):
+                 def __init__(self, second: T2):
+                     pass
+
+             def second(pair: Pair[T1, T2]) -> T2:
+                 pass
+
+             expr = second(StrFirstPair(42))""");
+  }
+
+  public void testTypeVarsNotSpecializedOnInheritanceDistinctTypeVars() {
+    doTest("tuple[int, str]",
+           """
+             from typing import Generic, TypeVar
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+             T3 = TypeVar('T3')
+             T4 = TypeVar('T4')
+             T5 = TypeVar('T5')
+             T6 = TypeVar('T6')
+
+             class Pair(Generic[T1, T2]):
+                 pass
+
+             class PairExt(Pair[T3, T4]):
+                 def __init__(self, first: T3, second: T4):
+                     pass
+
+             def to_tuple(pair: Pair[T5, T6]) -> tuple[T5, T6]:
+                 pass
+
+             expr = to_tuple(PairExt(42, 'foo'))""");
+  }
+
+  public void testTypeVarsNotSpecializedOnInheritanceReusedTypeVars() {
+    doTest("tuple[int, str]",
+           """
+             from typing import Generic, TypeVar
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+             class Pair(Generic[T1, T2]):
+                 pass
+
+             class PairExt(Pair[T1, T2]):
+                 def __init__(self, first: T1, second: T2):
+                     pass
+
+             def to_tuple(pair: Pair[T1, T2]) -> tuple[T1, T2]:
+                 pass
+
+             expr = to_tuple(PairExt(42, 'foo'))""");
+  }
+
+  public void testTypeVarSpecializedOnInheritanceExtraTypeVarAdded() {
+    doTest("str",
+           """
+             from typing import Generic, TypeVar
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+             T3 = TypeVar('T3')
+
+             class Box(Generic[T1]):
+                 pass
+
+             class StrBoxWithExtra(Box[str], Generic[T2]):
+                 def __init__(self, extra: T2):
+                     self.extra = extra
+
+             def func(b: Box[T3]) -> T3:
+                 pass
+
+             box = StrBoxWithExtra(42)
+             expr = func(box)""");
+  }
+
+  public void testGenericClassSpecializesInheritedParameterAndAddsNewOne() {
+    doTest("StrBoxWithExtra[int]",
+           """
+             from typing import Generic, TypeVar
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+             class Box(Generic[T1]):
+                 pass
+
+             class StrBoxWithExtra(Box[str], Generic[T2]):
+                 def __init__(self, extra: T2):
+                     self.extra = extra
+
+             expr = StrBoxWithExtra(42)""");
+  }
+
+  public void testGenericSelfSpecializationInOverloadedConstructor() {
+    doTest("Pair[int, int]",
+           """
+             from typing import Generic, TypeVar, overload
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+             class Pair(Generic[T1, T2]):
+                 @overload
+                 def __init__(self: 'Pair[str, str]', value: str):
+                     pass
+
+                 @overload
+                 def __init__(self: 'Pair[int, int]', value: int):
+                     pass
+
+             expr = Pair(42)""");
+  }
+
+  public void testIterResultOnIterable() {
+    doTest("Iterator[int]",
+           """
+             from typing import Iterable, TypeVar
+
+             T = TypeVar('T')
+
+             xs: Iterable[int]
+             expr = iter(xs)
+             """);
+  }
+
+  public void testNextResultOnIterator() {
+    doTest("int",
+           """
+             from typing import Iterable, TypeVar
+
+             T = TypeVar('T')
+
+             xs: Iterable[int]
+             expr = iter(xs).__next__()
+             """);
+  }
+
+  public void testWeakUnionTypeOfOfGenericMethodCallReceiver() {
+    doTest("str",
+           """
+             from typing import Any, Generic, TypeVar
+
+             T = TypeVar("T")
+
+             class Box(Generic[T]):
+                 def get(self) -> T:
+                     pass
+
+             class StrBox(Box[str]):
+                 pass
+
+             receiver: Any | int | StrBox = ...
+             expr = receiver.get()""");
+  }
+
+  public void testGenericClassTypeHintedInDocstrings() {
+    doTest("int",
+           """
+             from typing import Generic, TypeVar
+
+             T = TypeVar('T')
+
+             class User1(Generic[T]):
+                 def __init__(self, x: T):
+                     self.x = x
+
+                 def get(self) -> T:
+                     return self.x
+
+             c = User1(10)
+             expr = c.get()""");
+  }
+
+  public void testIterOnListOfListsResult() {
+    doTest("Iterator[list[int]]",
+           "expr = iter([[1, 2, 3]])");
+  }
+
+  public void testSwappingTypeParametersInConstructor() {
+    doTest("Pair[str, int]",
+           """
+             from typing import Generic, TypeVar
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+
+             class Pair(Generic[T1, T2]):
+                 def __init__(self, pair: 'Pair[T2, T1]'):
+                     pass
+
+
+             int_then_str: Pair[int, str] = ...()
+             expr = Pair(int_then_str)""");
+  }
+
+  public void testDefaultDictFromDict() {
+    doTest("defaultdict[Any, dict] | defaultdict[str, dict]",
+           "from collections import defaultdict\n" +
+           "expr = defaultdict(dict)");
+  }
+
+  public void testDecoratorWithArgumentCalledAsFunction() {
+    doTest("(str) -> int",
+           """
+             from typing import Callable, TypeVar
+
+             S = TypeVar('S')
+             T = TypeVar('T')
+
+             def dec(t: T):
+                 def g(fun: Callable[[], S]) -> Callable[[T], S]:
+                     ...
+
+                 return g
+
+             def func() -> int:
+                 ...
+
+             expr = dec('foo')(func)""");
+  }
+
+  public void testGenericParameterOfExpectedCallable() {
+    doTest("int",
+           """
+             from typing import Callable, Generic, TypeVar
+
+             T = TypeVar('T')
+
+             class Super(Generic[T]):
+                 pass
+
+             class Sub(Super[T]):
+                 pass
+
+             def f(x: Callable[[Sub[T]], None]) -> T:
+                 pass
+
+             def g(x: Super[int]):
+                 pass
+
+             expr = f(g)""");
+  }
+
+  // PY-53522
+  public void testGenericIteratorParameterizedWithAnotherGeneric() {
+    doTest("Entry[str]",
+           """
+             from typing import Iterator, Generic, TypeVar
+
+             T = TypeVar("T")
+
+             class Entry(Generic[T]):
+                 pass
+
+             class MyIterator(Iterator[Entry[T]]):
+                 def __next__(self) -> Entry[T]: ...
+
+             def iter_entries(path: T) -> MyIterator[T]: ...
+
+             def main() -> None:
+                 for x in iter_entries("some path"):
+                     expr = x
+             """);
+  }
+
+  // PY-53522
+  public void testGenericParameterizedWithGeneric() {
+    doTest("list[int]",
+           """
+             from typing import Generic, TypeVar
+
+             T = TypeVar('T')
+
+             class Box(Generic[T]):
+                 def get(self) -> T:
+                     pass
+
+             class ListBox(Box[list[T]]):
+                 pass
+
+             xs: ListBox[int] = ...
+             expr = xs.get()
+             """);
+  }
+
+  // PY-52656
+  public void testClassInheritsGenericToOrderTypeParameters() {
+    doTest("str",
+           """
+             from typing import Generic, TypeVar
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+             class Box(Generic[T1]):
+                 def get(self) -> T1:
+                     pass
+
+             class Pair(Box[T2], Generic[T1, T2]):
+                 pass
+
+             xs: Pair[int, str] = ...
+             expr = xs.get()
+             """);
+  }
+
+  // PY-54336
+  public void testReusedTypeVarsAndInheritanceDoNotCauseRecursiveSubstitution() {
+    doTest("Sub[T1]",
+           """
+             from typing import Generic, TypeVar
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+             class Super(Generic[T1]):
+                 pass
+
+             class Sub(Super[T2]):
+                 def __init__(self, xs: list[T2]):
+                     pass
+
+             def func(xs: list[T1]):
+                 expr = Sub(xs)
+             """);
+  }
+
+  // PY-50542
+  public void testReusedTypeVarsInOppositeOrderDoNotCauseRecursiveSubstitution() {
+    doTest("str",
+           """
+             from typing import TypeVar
+                          
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+                          
+             def f(x: T1, y: T2) -> T2:
+                 pass
+                          
+             def g(x: T2, y: T1):
+                 return f(x, y)
+                          
+             expr = g(42, 'foo')
              """);
   }
 

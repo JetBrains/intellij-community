@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -23,13 +24,13 @@ public class GrCharConverter extends GrTypeConverter {
                                         @NotNull PsiType rType,
                                         @NotNull Position position,
                                         @NotNull GroovyPsiElement context) {
-    if (!PsiType.CHAR.equals(TypesUtil.unboxPrimitiveTypeWrapper(lType))) return null;
-    if (PsiType.CHAR.equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) return ConversionResult.OK;
+    if (!PsiTypes.charType().equals(TypesUtil.unboxPrimitiveTypeWrapper(lType))) return null;
+    if (PsiTypes.charType().equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) return ConversionResult.OK;
 
     // can assign numeric types to char
     if (TypesUtil.isNumericType(rType)) {
       if (rType instanceof PsiPrimitiveType || TypesUtil.unboxPrimitiveTypeWrapper(rType) instanceof PsiPrimitiveType) {
-        return PsiType.CHAR.equals(lType) ? ConversionResult.OK : ConversionResult.ERROR;
+        return PsiTypes.charType().equals(lType) ? ConversionResult.OK : ConversionResult.ERROR;
       }
       else {
         // BigDecimal && BigInteger
@@ -56,7 +57,7 @@ public class GrCharConverter extends GrTypeConverter {
       }
     }
 
-    if (PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) {
+    if (PsiTypes.booleanType().equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) {
       return switch (position) {
         case ASSIGNMENT, RETURN_VALUE -> ConversionResult.WARNING;
         default -> null;

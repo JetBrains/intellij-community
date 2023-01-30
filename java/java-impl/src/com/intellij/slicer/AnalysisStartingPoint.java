@@ -193,8 +193,8 @@ class AnalysisStartingPoint {
     if (anchor != null) {
       PsiType anchorType = anchor.getType();
       if (anchorType == null || TypeUtils.isJavaLangString(anchorType)) return null;
-      if (anchorType.equals(PsiType.BYTE) || anchorType.equals(PsiType.CHAR) || anchorType.equals(PsiType.SHORT)) {
-        anchorType = PsiType.INT;
+      if (anchorType.equals(PsiTypes.byteType()) || anchorType.equals(PsiTypes.charType()) || anchorType.equals(PsiTypes.shortType())) {
+        anchorType = PsiTypes.intType();
       }
       if (constantType == DfTypes.NULL || DfTypes.typedObject(anchorType, Nullability.NOT_NULL).meet(constantType) != DfType.BOTTOM) {
         if (type.equals(JavaTokenType.EQEQ)) {
@@ -210,13 +210,13 @@ class AnalysisStartingPoint {
       LongRangeSet set = DfLongType.extractRange(constantType).fromRelation(relationType);
       if (anchor == null) return null;
       PsiType anchorType = anchor.getType();
-      if (PsiType.LONG.equals(anchorType)) {
+      if (PsiTypes.longType().equals(anchorType)) {
         return new AnalysisStartingPoint(DfTypes.longRange(set), anchor);
       }
-      if (PsiType.INT.equals(anchorType) ||
-          PsiType.SHORT.equals(anchorType) ||
-          PsiType.BYTE.equals(anchorType) ||
-          PsiType.CHAR.equals(anchorType)) {
+      if (PsiTypes.intType().equals(anchorType) ||
+          PsiTypes.shortType().equals(anchorType) ||
+          PsiTypes.byteType().equals(anchorType) ||
+          PsiTypes.charType().equals(anchorType)) {
         set = set.meet(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(anchorType)));
         return new AnalysisStartingPoint(DfTypes.intRangeClamped(set), anchor);
       }

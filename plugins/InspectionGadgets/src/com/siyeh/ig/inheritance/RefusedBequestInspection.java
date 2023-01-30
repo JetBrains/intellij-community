@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.util.AstLoadingFilter;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -105,7 +106,7 @@ public class RefusedBequestInspection extends BaseInspection {
       final PsiType returnType = method.getReturnType();
       final @NonNls StringBuilder statementText = new StringBuilder();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      if (returnType != null && !PsiType.VOID.equals(returnType)) {
+      if (returnType != null && !PsiTypes.voidType().equals(returnType)) {
         if (JavaCodeStyleSettings.getInstance(method.getContainingFile()).GENERATE_FINAL_LOCALS) {
           statementText.append("final ");
         }
@@ -195,12 +196,15 @@ public class RefusedBequestInspection extends BaseInspection {
       registerMethodError(method);
     }
 
-    private boolean isTrivial(PsiMethod method) {
+    private static boolean isTrivial(PsiMethod method) {
       final PsiElement element = method.getNavigationElement();
-      return MethodUtils.isTrivial(element instanceof PsiMethod ? (PsiMethod)element : method, s -> s instanceof PsiThrowStatement);
+      return AstLoadingFilter.forceAllowTreeLoading(method.getContainingFile(),
+                                                    () -> MethodUtils.isTrivial(element instanceof PsiMethod
+                                                                                ? (PsiMethod)element
+                                                                                : method, s -> s instanceof PsiThrowStatement));
     }
 
-    private boolean isJUnitSetUpOrTearDown(PsiMethod method) {
+    private static boolean isJUnitSetUpOrTearDown(PsiMethod method) {
       final String name = method.getName();
       if (!"setUp".equals(name) && !"tearDown".equals(name)) {
         return false;

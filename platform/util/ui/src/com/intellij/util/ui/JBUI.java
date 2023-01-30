@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
@@ -24,6 +24,7 @@ import java.awt.*;
 import java.awt.font.TextAttribute;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
@@ -396,16 +397,16 @@ public final class JBUI {
 
     public static final class Banner {
       public static final Color INFO_BACKGROUND = JBColor.namedColor("Banner.infoBackground", 0xF5F8FE, 0x25324D);
-      public static final Color INFO_BORDER_COLOR = JBColor.namedColor("Banner.infoBorderColor", 0xCFDEFC, 0x35538F);
+      public static final Color INFO_BORDER_COLOR = JBColor.namedColor("Banner.infoBorderColor", 0xC2D6FC, 0x35538F);
 
       public static final Color SUCCESS_BACKGROUND = JBColor.namedColor("Banner.successBackground", 0xF2FCF3, 0x253627);
-      public static final Color SUCCESS_BORDER_COLOR = JBColor.namedColor("Banner.successBorderColor", 0xC1E5C3, 0x375239);
+      public static final Color SUCCESS_BORDER_COLOR = JBColor.namedColor("Banner.successBorderColor", 0xC5E5CC, 0x375239);
 
-      public static final Color WARNING_BACKGROUND = JBColor.namedColor("Banner.warningBackground", 0xfff8e3, 0x3d3223);
-      public static final Color WARNING_BORDER_COLOR = JBColor.namedColor("Banner.warningBorderColor", 0xFCDB8D, 0x5E4D33);
+      public static final Color WARNING_BACKGROUND = JBColor.namedColor("Banner.warningBackground", 0xFFFAEB, 0x3d3223);
+      public static final Color WARNING_BORDER_COLOR = JBColor.namedColor("Banner.warningBorderColor", 0xFED277, 0x5E4D33);
 
-      public static final Color ERROR_BACKGROUND = JBColor.namedColor("Banner.errorBackground", 0xFFF5F5, 0x402929);
-      public static final Color ERROR_BORDER_COLOR = JBColor.namedColor("Banner.errorBorderColor", 0xFCD4D4, 0x5E3838);
+      public static final Color ERROR_BACKGROUND = JBColor.namedColor("Banner.errorBackground", 0xFFF7F7, 0x402929);
+      public static final Color ERROR_BORDER_COLOR = JBColor.namedColor("Banner.errorBorderColor", 0xFAD4D8, 0x5E3838);
 
       public static final Color FOREGROUND = JBColor.namedColor("Banner.foreground", 0x0, 0xDFE1E5);
     }
@@ -613,7 +614,7 @@ public final class JBUI {
       }
 
       public static @NotNull Font font() {
-        return ObjectUtils.coalesce(UIManager.getFont(fontKey()), defaultFont());
+        return ObjectUtils.coalesce(getFont(fontKey()), defaultFont());
       }
 
       public static String fontKey() {
@@ -656,10 +657,10 @@ public final class JBUI {
     }
 
     public interface IconBadge {
-      Color ERROR = JBColor.namedColor("IconBadge.errorBackground", 0xE35252, 0xDB5C5C);
-      Color WARNING = JBColor.namedColor("IconBadge.warningBackground", 0xFCC75B, 0xF2C55C);
+      Color ERROR = JBColor.namedColor("IconBadge.errorBackground", 0xE55765, 0xDB5C5C);
+      Color WARNING = JBColor.namedColor("IconBadge.warningBackground", 0xFFAF0F, 0xF2C55C);
       Color INFORMATION = JBColor.namedColor("IconBadge.infoBackground", 0x588CF3, 0x548AF7);
-      Color SUCCESS = JBColor.namedColor("IconBadge.successBackground", 0x5FB865, 0x5FAD65);
+      Color SUCCESS = JBColor.namedColor("IconBadge.successBackground", 0x55A76A, 0x5FAD65);
     }
 
     public interface Notification {
@@ -810,6 +811,14 @@ public final class JBUI {
         Color STRIPE_BACKGROUND = JBColor.namedColor("ToolWindow.Button.DragAndDrop.stripeBackground", CurrentTheme.DragAndDrop.Area.BACKGROUND);
         Color BUTTON_DROP_BACKGROUND = JBColor.namedColor("ToolWindow.Button.DragAndDrop.buttonDropBackground", CurrentTheme.DragAndDrop.Area.BACKGROUND);
         Color BUTTON_FLOATING_BACKGROUND = JBColor.namedColor("ToolWindow.Button.DragAndDrop.buttonFloatingBackground", ActionButton.pressedBackground());
+        Color BUTTON_DROP_BORDER = JBColor.namedColor("ToolWindow.Button.DragAndDrop.buttonDropBorderColor", new JBColor(0x407BF2, 0x548AF7));
+        Color AREA_BACKGROUND = JBColor.namedColor("ToolWindow.DragAndDrop.areaBackground", new JBColor(0xA0BDF8, 0x366ACF));
+      }
+
+      public static @NotNull Color stripeSeparatorColor(boolean dnd) {
+        return dnd
+               ? JBColor.namedColor("ToolWindow.Stripe.DragAndDrop.separatorColor", 0x407BF2, 0x548AF7)
+               : JBColor.namedColor("ToolWindow.Stripe.separatorColor", 0xC9CCD6, 0x43454A);
       }
 
       public static @NotNull Color headerBackground(boolean active) {
@@ -862,7 +871,7 @@ public final class JBUI {
 
 
       public static @NotNull Font headerFont() {
-        return ObjectUtils.coalesce(UIManager.getFont(headerFontKey()), defaultHeaderFont());
+        return ObjectUtils.coalesce(getFont(headerFontKey()), defaultHeaderFont());
       }
 
       public static @NotNull String headerFontKey() {
@@ -1726,6 +1735,7 @@ public final class JBUI {
     public final static class RunWidget {
       public static final Color FOREGROUND = JBColor.namedColor("RunWidget.foreground", Color.WHITE);
       public static final Color DISABLED_FOREGROUND = JBColor.namedColor("RunWidget.disabledForeground", new Color(0x66FFFFFF, true));
+      public static final Color RUN_MODE_ICON = JBColor.namedColor("RunWidget.runModeIconColor", new Color(0x5FAD65));
       public static final Color BACKGROUND = JBColor.namedColor("RunWidget.background", 0x3369D6);
       public static final Color RUNNING_BACKGROUND = JBColor.namedColor("RunWidget.runningBackground", 0x599E5E);
       public static final Color SEPARATOR = JBColor.namedColor("RunWidget.separatorColor", new Color(255, 255, 255, 64));
@@ -1760,8 +1770,8 @@ public final class JBUI {
         return 5;
       }
 
-      public static int actionButtonWidth() {
-        return getInt(actionButtonWidthKey(), defaultActionButtonWidth());
+      public static int actionButtonWidth(boolean isContrastWidget) {
+        return getInt(actionButtonWidthKey(), defaultActionButtonWidth(isContrastWidget));
       }
 
       @NotNull
@@ -1769,8 +1779,8 @@ public final class JBUI {
         return "RunWidget.actionButtonWidth";
       }
 
-      public static int defaultActionButtonWidth() {
-        return 36;
+      public static int defaultActionButtonWidth(boolean isContrastWidget) {
+        return isContrastWidget ? 36 : 30;
       }
 
       public static int configurationSelectorWidth() {
@@ -1855,5 +1865,19 @@ public final class JBUI {
   private static @NotNull Icon getIcon(@NonNls @NotNull String propertyName, @NotNull Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);
     return icon == null ? defaultIcon : icon;
+  }
+
+  private static @Nullable Font getFont(@NonNls @NotNull String propertyName) {
+    return maybeConvertToFont(UIManager.get(propertyName));
+  }
+
+  private static @Nullable Font maybeConvertToFont(Object maybeFont) {
+    if (maybeFont instanceof Font font) {
+      return font;
+    }
+    if (maybeFont instanceof Supplier<?> supplier) {
+      return maybeConvertToFont(supplier.get());
+    }
+    return null;
   }
 }

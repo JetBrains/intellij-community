@@ -46,7 +46,7 @@ internal object ToolboxLiteGen {
 
   @JvmStatic
   fun main(args: Array<String>) {
-    val path = downloadToolboxLiteGen(BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), "1.2.1553")
+    val path = downloadToolboxLiteGen(BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, "1.2.1553")
     println("litegen is at $path")
   }
 }

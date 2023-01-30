@@ -107,7 +107,7 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
       IElementType tokenType = ((PsiPolyadicExpression)expr).getOperationTokenType();
       if (BOOLEAN_TOKENS.contains(tokenType)) {
         PsiExpression firstOperand = ((PsiPolyadicExpression)expr).getOperands()[0];
-        if (firstOperand != null && PsiType.BOOLEAN.equals(firstOperand.getType())) {
+        if (firstOperand != null && PsiTypes.booleanType().equals(firstOperand.getType())) {
           // For polyadic boolean expression let's report components only, otherwise the report gets cluttered
           return false;
         }

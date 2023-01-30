@@ -26,7 +26,7 @@ import java.util.concurrent.CompletableFuture
 
 class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
                                  private val pullRequestId: GHPRIdentifier,
-                                 private val messageBus: MessageBus)
+                                 override val messageBus: MessageBus)
   : GHPRReviewDataProvider, Disposable {
 
   override val submitReviewCommentDocument by lazy(LazyThreadSafetyMode.NONE) { EditorFactory.getInstance().createDocument("") }

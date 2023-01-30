@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
@@ -131,7 +131,7 @@ class XDebugSessionTab3(
     val isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical")
     (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(isVerticalToolbar)
 
-    val toolbar = DefaultActionGroup()
+    val toolbar = DefaultActionGroupWithDelegate(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
 
     mySingleContentSupplier = object: RunTabSupplier(toolbar) {
       override fun getToolbarActions(): ActionGroup? {

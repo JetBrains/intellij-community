@@ -53,10 +53,10 @@ public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvid
 
   private static boolean isAtomicWrite(@NotNull PsiField field) {
     PsiType type = field.getType();
-    if (PsiType.INT.equals(type)) {
+    if (PsiTypes.intType().equals(type)) {
       return isAtomicWrite(field, ATOMIC_INTEGER_FIELD_UPDATER);
     }
-    if (PsiType.LONG.equals(type)) {
+    if (PsiTypes.longType().equals(type)) {
       return isAtomicWrite(field, ATOMIC_LONG_FIELD_UPDATER);
     }
     if (!(type instanceof PsiPrimitiveType)) {

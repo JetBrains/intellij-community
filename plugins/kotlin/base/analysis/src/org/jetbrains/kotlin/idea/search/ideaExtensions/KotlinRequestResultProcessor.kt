@@ -10,10 +10,10 @@ import com.intellij.psi.ReferenceRange
 import com.intellij.psi.search.RequestResultProcessor
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isCallableOverrideUsage
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isExtensionOfDeclarationClassUsage
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInvokeOfCompanionObject
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isUsageInContainingDeclaration
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isCallableOverrideUsage
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isExtensionOfDeclarationClassUsage
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInvokeOfCompanionObject
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isUsageInContainingDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 

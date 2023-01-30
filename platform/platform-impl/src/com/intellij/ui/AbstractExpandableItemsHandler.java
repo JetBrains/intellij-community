@@ -25,8 +25,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType extends JComponent> implements ExpandableItemsHandler<KeyType> {
   protected final ComponentType myComponent;
@@ -364,15 +366,16 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (renderer == null) return null;
     if (ClientProperty.isTrue(renderer, RENDERER_DISABLED)) return null;
 
-    if (ClientProperty.isTrue(rendererAndBounds.getFirst(), USE_RENDERER_BOUNDS)) {
-      rendererAndBounds.getSecond().translate(renderer.getX(), renderer.getY());
-      rendererAndBounds.getSecond().setSize(renderer.getSize());
+    myKeyItemBounds = rendererAndBounds.second;
+
+    if (ClientProperty.isTrue(renderer, USE_RENDERER_BOUNDS)) {
+      myKeyItemBounds.translate(renderer.getX(), renderer.getY());
+      myKeyItemBounds.setSize(renderer.getSize());
     }
 
     SelectablePanel selectablePanel = findSelectablePanel(renderer);
     int arc = selectablePanel == null ? borderArc : selectablePanel.getSelectionArc();
     transparentPopup = arc > 0;
-    myKeyItemBounds = rendererAndBounds.second;
 
     Rectangle cellBounds = myKeyItemBounds;
     Rectangle visibleRect = getVisibleRect(key);
@@ -404,23 +407,29 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (arc > 0) {
       width += borderSize;
       height += borderSize * 2;
+      int clippedY = 0;
+      int clippedHeight = height;
       if (selectablePanel != null) {
         width -= selectablePanel.getSelectionInsets().right;
         if (width <= 0) {
           return null;
         }
+        renderer.setBounds(cellBounds);
+        Rectangle rect = calcRectInParent(selectablePanel, renderer);
+        clippedY = rect.y;
+        clippedHeight = rect.height + borderSize * 2;
       }
       myImage = UIUtil.createImage(myComponent, width, height, BufferedImage.TYPE_INT_ARGB);
       g = myImage.createGraphics();
       //noinspection GraphicsSetClipInspection
-      g.setClip(new RoundRectangle2D.Float(-arc, 0, width + arc, height, arc, arc));
+      g.setClip(new RoundRectangle2D.Float(-arc, clippedY, width + arc, clippedHeight, arc, arc));
 
       if (borderSize > 0) {
         location.y -= borderSize;
         g.setColor(getBorderColor());
         g.fillRect(0, 0, width, height);
         //noinspection GraphicsSetClipInspection
-        g.setClip(new RoundRectangle2D.Float(-arc, borderSize, width + arc - borderSize, height - borderSize * 2, arc, arc));
+        g.setClip(new RoundRectangle2D.Float(-arc, clippedY + borderSize, width + arc - borderSize, clippedHeight - borderSize * 2, arc, arc));
       }
       doFillBackground(height, width, g);
       g.translate(cellBounds.x - visMaxX, borderSize);
@@ -476,4 +485,27 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   protected abstract Pair<Component, Rectangle> getCellRendererAndBounds(KeyType key);
 
   protected abstract KeyType getCellKeyForPoint(Point point);
+
+  private static @NotNull Rectangle calcRectInParent(@NotNull Container child, @NotNull JComponent parent) {
+    List<Container> chain = new ArrayList<>();
+    Container container = child;
+    while (container != parent) {
+      chain.add(container);
+      container = container.getParent();
+      if (container == null) {
+        throw new IllegalArgumentException("Source is not part of " + parent);
+      }
+    }
+
+    Rectangle result = new Rectangle();
+    parent.doLayout();
+    for (int i = chain.size() - 1; i >= 0; i--) {
+      Container c = chain.get(i);
+      c.doLayout();
+      result.x += c.getX();
+      result.y += c.getY();
+    }
+    result.setSize(child.getSize());
+    return result;
+  }
 }

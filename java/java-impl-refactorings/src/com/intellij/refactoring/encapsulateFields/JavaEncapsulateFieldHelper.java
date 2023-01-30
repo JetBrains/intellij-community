@@ -75,7 +75,7 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
     PsiModifierList newModifierList = null;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(descriptor.getTargetClass().getProject());
     try {
-      PsiField field = factory.createField("a", PsiType.INT);
+      PsiField field = factory.createField("a", PsiTypes.intType());
       EncapsulateFieldsProcessor.setNewFieldVisibility(field, descriptor);
       newModifierList = field.getModifierList();
     }

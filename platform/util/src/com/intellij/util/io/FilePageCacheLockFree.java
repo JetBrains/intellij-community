@@ -2,11 +2,11 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.pagecache.FilePageCacheStatistics;
 import com.intellij.util.io.pagecache.impl.FrugalQuantileEstimator;
 import com.intellij.util.io.pagecache.impl.PageImpl;
 import com.intellij.util.io.pagecache.impl.PagesTable;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,8 +77,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   private final AtomicLong totalHeapBytesCached = new AtomicLong(0);
 
   //@GuardedBy("pagesPerStorage")
-  @SuppressWarnings("SSBasedInspection")
-  private final Object2ObjectOpenHashMap<Path, PagesTable> pagesPerFile = new Object2ObjectOpenHashMap<>();
+  private final Map<Path, PagesTable> pagesPerFile = CollectionFactory.createSmallMemoryFootprintMap();
 
   /**
    * Queue of pages that are likely the best suited to reclaim -- i.e. to unmap, and re-use their

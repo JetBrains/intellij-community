@@ -15,14 +15,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.core.overrideImplement.AbstractGenerateMembersHandler
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.dumpErrorLines
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.jetbrains.kotlin.utils.rethrow
 import org.junit.Assert
@@ -114,7 +110,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         val classOrObject = PsiTreeUtil.getParentOfType(elementAtCaret, KtClassOrObject::class.java)
             ?: error("Caret should be inside class or object")
 
-        val chooserObjects = handler.collectMembersToGenerate(classOrObject)
+        val chooserObjects = handler.collectMembersToGenerateUnderProgress(classOrObject)
 
         val singleToOverride = if (memberToOverride == null) {
             val filtered = chooserObjects.filter { !isMemberOfAny(classOrObject, it) }
@@ -137,7 +133,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         val classOrObject = PsiTreeUtil.getParentOfType(elementAtCaret, KtClassOrObject::class.java)
             ?: error("Caret should be inside class or object")
 
-        val chooserObjects = handler.collectMembersToGenerate(classOrObject)
+        val chooserObjects = handler.collectMembersToGenerateUnderProgress(classOrObject)
             .sortedBy { getMemberName(classOrObject, it) + " in " + getContainingClassName(classOrObject, it) }
         performGenerateCommand(handler, classOrObject, chooserObjects)
     }

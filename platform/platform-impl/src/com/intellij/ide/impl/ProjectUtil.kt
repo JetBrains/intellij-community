@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
@@ -39,8 +39,8 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor
-import com.intellij.platform.PlatformProjectOpenProcessor.Companion.attachToProject
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
+import com.intellij.platform.attachToProjectAsync
 import com.intellij.project.stateStore
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
@@ -80,13 +80,6 @@ object ProjectUtil {
   private const val PROJECTS_DIR = "projects"
   private const val PROPERTY_PROJECT_PATH = "%s.project.path"
 
-  @Deprecated("Use {@link #updateLastProjectLocation(Path)} ", ReplaceWith("updateLastProjectLocation(Path.of(projectFilePath))",
-                                                                           "com.intellij.ide.impl.ProjectUtil.updateLastProjectLocation",
-                                                                           "java.nio.file.Path"))
-  fun updateLastProjectLocation(projectFilePath: String) {
-    updateLastProjectLocation(Path.of(projectFilePath))
-  }
-
   @JvmStatic
   fun updateLastProjectLocation(lastProjectLocation: Path) {
     var location: Path? = lastProjectLocation
@@ -116,7 +109,8 @@ object ProjectUtil {
   }
 
   @Deprecated("Use {@link ProjectManager#closeAndDispose(Project)} ",
-              ReplaceWith("ProjectManager.getInstance().closeAndDispose(project)", "com.intellij.openapi.project.ProjectManager"))
+              ReplaceWith("ProjectManager.getInstance().closeAndDispose(project)", "com.intellij.openapi.project.ProjectManager"),
+              level = DeprecationLevel.ERROR)
   @JvmStatic
   fun closeAndDispose(project: Project): Boolean {
     return ProjectManager.getInstance().closeAndDispose(project)
@@ -124,7 +118,10 @@ object ProjectUtil {
 
   @JvmStatic
   fun openOrImport(path: Path, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    return openOrImport(path, OpenProjectTask().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame))
+    return openOrImport(path, OpenProjectTask {
+      this.projectToClose = projectToClose
+      this.forceOpenInNewFrame = forceOpenInNewFrame
+    })
   }
 
   /**
@@ -137,7 +134,10 @@ object ProjectUtil {
    */
   @JvmStatic
   fun openOrImport(path: String, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    return openOrImport(Path.of(path), OpenProjectTask().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame))
+    return openOrImport(Path.of(path), OpenProjectTask {
+      this.projectToClose = projectToClose
+      this.forceOpenInNewFrame = forceOpenInNewFrame
+    })
   }
 
   @JvmStatic
@@ -192,6 +192,7 @@ object ProjectUtil {
       catch (ignore: IOException) {
       }
     }
+
     var nullableVirtualFileResult: Result<VirtualFile?>? = virtualFileResult
     val processors = blockingContext {
       computeProcessors(file) {
@@ -220,7 +221,7 @@ object ProjectUtil {
           runConfigurators = true,
           beforeOpen = {
             it.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
-            true
+            options.beforeOpen?.invoke(it) ?: true
           },
         )
       )
@@ -238,7 +239,7 @@ object ProjectUtil {
 
   private fun computeProcessors(file: Path, lazyVirtualFile: () -> VirtualFile?): MutableList<ProjectOpenProcessor> {
     val processors = ArrayList<ProjectOpenProcessor>()
-    ProjectOpenProcessor.EXTENSION_POINT_NAME.forEachExtensionSafe { processor: ProjectOpenProcessor ->
+    ProjectOpenProcessor.EXTENSION_POINT_NAME.forEachExtensionSafe { processor ->
       if (processor is PlatformProjectOpenProcessor) {
         if (Files.isDirectory(file)) {
           processors.add(processor)
@@ -268,7 +269,11 @@ object ProjectUtil {
   }
 
   fun openProject(path: String, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    return openProject(Path.of(path), OpenProjectTask().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame))
+    return openProject(file = Path.of(path),
+                       options = OpenProjectTask {
+                         this.projectToClose = projectToClose
+                         this.forceOpenInNewFrame = forceOpenInNewFrame
+                       })
   }
 
   private suspend fun chooseProcessorAndOpenAsync(processors: MutableList<ProjectOpenProcessor>,
@@ -298,8 +303,13 @@ object ProjectUtil {
       }
     }
 
-    processor.openProjectAsync(virtualFile, options.projectToClose, options.forceOpenInNewFrame)?.let {
-      return it.orElse(null)
+    try {
+      return processor.openProjectAsync(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
+    }
+    catch (e: UnsupportedOperationException) {
+      if (e != ProjectOpenProcessor.unimplementedOpenAsync) {
+        throw e
+      }
     }
 
     return withContext(Dispatchers.EDT) {
@@ -314,10 +324,11 @@ object ProjectUtil {
       Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", file.toString()), CommonBundle.getErrorTitle())
       return null
     }
-    val existing = findAndFocusExistingProjectForPath(file)
-    if (existing != null) {
-      return existing
+
+    findAndFocusExistingProjectForPath(file)?.let {
+      return it
     }
+
     if (isRemotePath(file.toString()) && !RecentProjectsManager.getInstance().hasPath(FileUtil.toSystemIndependentName(file.toString()))) {
       if (!confirmLoadingFromRemotePath(file.toString(), "warning.load.project.from.share", "title.load.project.from.share")) {
         return null
@@ -347,23 +358,18 @@ object ProjectUtil {
   }
 
   fun showYesNoDialog(message: @Nls String, titleKey: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String): Boolean {
-    return yesNo(IdeBundle.message(titleKey), message)
+    return MessageDialogBuilder
+      .yesNo(IdeBundle.message(titleKey), message)
       .icon(Messages.getWarningIcon())
       .ask(getActiveFrameOrWelcomeScreen())
   }
 
   @JvmStatic
   fun getActiveFrameOrWelcomeScreen(): Window? {
-    val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
-    if (window != null) {
-      return window
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow?.let {
+      return it
     }
-    for (frame in Frame.getFrames()) {
-      if (frame is IdeFrame && frame.isVisible) {
-        return frame
-      }
-    }
-    return null
+    return Frame.getFrames().firstOrNull { it is IdeFrame && it.isVisible }
   }
 
   fun isRemotePath(path: String): Boolean {
@@ -374,10 +380,8 @@ object ProjectUtil {
 
   @JvmStatic
   fun findAndFocusExistingProjectForPath(file: Path): Project? {
-    val project = findProject(file)
-    if (project != null) {
-      focusProjectWindow(project = project)
-    }
+    val project = findProject(file) ?: return null
+    focusProjectWindow(project = project)
     return project
   }
 
@@ -490,7 +494,7 @@ object ProjectUtil {
   @JvmStatic
   fun getBaseDir(): String {
     val defaultDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
-    if (!defaultDirectory.isNullOrEmpty()) {
+    if (defaultDirectory.isNotEmpty()) {
       return defaultDirectory.replace('/', File.separatorChar)
     }
     val lastProjectLocation = RecentProjectsManager.getInstance().lastProjectCreationLocation
@@ -547,7 +551,7 @@ object ProjectUtil {
 
   //todo: merge somehow with getBaseDir
   @JvmStatic
-  fun getProjectsPath(): @SystemDependent String {
+  fun getProjectPath(): @SystemDependent String {
     val application = ApplicationManager.getApplication()
     val fromSettings = if (application == null || application.isHeadlessEnvironment) null else GeneralLocalSettings.getInstance().defaultProjectDirectory
     if (!fromSettings.isNullOrEmpty()) {
@@ -558,8 +562,12 @@ object ProjectUtil {
       val produceName = ApplicationNamesInfo.getInstance().productName.lowercase()
       val propertyName = String.format(PROPERTY_PROJECT_PATH, produceName)
       val propertyValue = System.getProperty(propertyName)
-      ourProjectsPath = if (propertyValue != null) PathManager.getAbsolutePath(StringUtil.unquoteString(propertyValue, '\"'))
-      else projectsDirDefault
+      ourProjectsPath = if (propertyValue != null) {
+        PathManager.getAbsolutePath(StringUtil.unquoteString(propertyValue, '\"'))
+      }
+      else {
+        projectsDirDefault
+      }
     }
     return ourProjectsPath!!
   }
@@ -568,7 +576,7 @@ object ProjectUtil {
     get() = if (PlatformUtils.isDataGrip()) getUserHomeProjectDir() else PathManager.getConfigPath() + File.separator + PROJECTS_DIR
 
   fun getProjectPath(name: String): Path {
-    return Path.of(getProjectsPath(), name)
+    return Path.of(getProjectPath(), name)
   }
 
   fun getProjectFile(name: String): Path? {
@@ -591,10 +599,9 @@ object ProjectUtil {
     val existingFile = if (isProjectFile(file)) file else null
     val projectManager = ProjectManagerEx.getInstanceEx()
     if (existingFile != null) {
-      val openProjects = ProjectManager.getInstance().openProjects
-      for (p in openProjects) {
-        if (!p.isDefault && isSameProject(existingFile, p)) {
-          focusProjectWindow(p, false)
+      for (p in projectManager.openProjects) {
+        if (isSameProject(existingFile, p)) {
+          focusProjectWindow(project = p, stealFocusIfAppInactive = false)
           return p
         }
       }
@@ -659,10 +666,6 @@ object ProjectUtil {
   @JvmStatic
   fun getActiveProject(): Project? = getProjectForWindow(KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow)
 
-  interface ProjectCreatedCallback {
-    fun projectCreated(project: Project?)
-  }
-
   @JvmStatic
   fun getOpenProjects(): Array<Project> = ProjectUtilCore.getOpenProjects()
 
@@ -673,7 +676,7 @@ object ProjectUtil {
     val preferAttach = currentProject != null &&
                        canAttach &&
                        (PlatformUtils.isDataGrip() && !ProjectUtilCore.isValidProjectPath(file) || PlatformUtils.isDataSpell())
-    if (preferAttach && attachToProject(currentProject!!, file, null)) {
+    if (preferAttach && attachToProjectAsync(projectToClose = currentProject!!, projectDir = file, callback = null)) {
       return null
     }
 
@@ -696,8 +699,7 @@ object ProjectUtil {
   }
 }
 
-private val delegateToCoroutineOnlyRunBlocking: Boolean =
-  System.getProperty("ide.use.coroutine.only.runBlocking", "true").toBoolean()
+private val delegateToCoroutineOnlyRunBlocking: Boolean = System.getProperty("ide.use.coroutine.only.runBlocking", "true").toBoolean()
 
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Internal
@@ -722,7 +724,9 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
 @RequiresEdt
 @ScheduledForRemoval
 @Deprecated("Use runBlockingModal with proper owner and title")
-fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "", project: Project? = null, task: suspend CoroutineScope.() -> T): T {
+fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "",
+                                      project: Project? = null,
+                                      task: suspend CoroutineScope.() -> T): T {
   if (delegateToCoroutineOnlyRunBlocking) {
     val owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project)
     return runBlockingModalWithRawProgressReporter(owner, title, TaskCancellation.cancellable(), task)

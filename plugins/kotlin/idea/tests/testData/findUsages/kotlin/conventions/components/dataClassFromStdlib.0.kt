@@ -11,5 +11,4 @@ fun foo() {
     val (x, y) = 1 to "a"
 }
 
-// FIR_COMPARISON
-// FIR_COMPARISON_WITH_DISABLED_COMPONENTS
+

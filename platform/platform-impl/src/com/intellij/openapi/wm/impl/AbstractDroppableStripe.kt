@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.WindowInfo
 import com.intellij.toolWindow.StripeButtonManager
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.components.JBPanel
@@ -9,6 +10,7 @@ import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.max
@@ -28,6 +30,8 @@ internal class LayoutData(
   var dragTargetChosen: Boolean = false,
   @JvmField
   var dragToSide: Boolean = false,
+  @JvmField
+  var isSplit: Boolean = false,
   @JvmField
   var shouldSwapCoordinates: Boolean = false,
   @JvmField
@@ -81,6 +85,31 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
   open val split: Boolean = false
 
   private val stripeButtonManagerComparator by lazy(LazyThreadSafetyMode.NONE) { createButtonLayoutComparator(isNewStripes, anchor) }
+
+  private var separatorTopSide = false
+  private val separator = StripeButtonSeparator().also {
+    it.isVisible = false
+  }
+  private var separatorStripe = object : StripeButtonManager {
+    override val id = ""
+    override val toolWindow: ToolWindowImpl
+      get() = throw UnsupportedOperationException()
+    override val windowDescriptor = WindowInfoImpl()
+
+    override fun updateState(toolWindow: ToolWindowImpl) {
+    }
+
+    override fun updatePresentation() {
+    }
+
+    override fun updateIcon(icon: Icon?) {
+    }
+
+    override fun remove(anchor: ToolWindowAnchor, split: Boolean) {
+    }
+
+    override fun getComponent() = separator
+  }
 
   fun getButtons(): List<StripeButtonManager> = buttons
 
@@ -175,14 +204,14 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       if (isNewStripes && anchor == ToolWindowAnchor.BOTTOM) {
         order++
       }
-      val isSplit = if (isNewStripes) split else lastLayoutData.dragToSide
+      val isSplit = if (isNewStripes) lastLayoutData.isSplit else lastLayoutData.dragToSide
       manager.setSideToolAndAnchor(it.id, paneId, anchor, order, isSplit)
     }
     manager.invokeLater { resetDrop() }
   }
 
   fun getDropToSide(): Boolean? {
-    return if (lastLayoutData == null || !lastLayoutData!!.dragTargetChosen) null else lastLayoutData!!.dragToSide
+    return if (lastLayoutData == null || !lastLayoutData!!.dragTargetChosen) null else lastLayoutData!!.dragToSide || lastLayoutData!!.isSplit
   }
 
   override fun doLayout() {
@@ -246,7 +275,19 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     }
 
     var sidesStarted = false
-    for (b in getButtonsToLayOut()) {
+    val buttonsToLayOut = getButtonsToLayOut(processDrop)
+    var addSize = separatorTopSide
+
+    if (separatorTopSide) {
+      if (data.horizontal) {
+        data.eachX += dropRectangle.width
+      }
+      else {
+        data.eachY += dropRectangle.height
+      }
+    }
+
+    for (b in buttonsToLayOut) {
       val button = b.getComponent()
       val eachSize = button.preferredSize
       val windowInfo = b.windowDescriptor
@@ -282,6 +323,15 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
         }
 
         if (update) {
+          if (separatorTopSide && buttonsToLayOut.indexOf(b) == 0) {
+            if (data.horizontal) {
+              data.eachX -= dropRectangle.width
+            }
+            else {
+              data.eachY -= dropRectangle.height
+            }
+            addSize = false
+          }
           data.dragInsertPosition = insertOrder
           data.dragToSide = sidesStarted
           layoutDragButton(data, 0)
@@ -314,6 +364,33 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     if (!data.dragTargetChosen) {
       drawRectangle.apply { x = 0; y = 0; width = 0; height = 0}
     }
+
+    if (processDrop && separator.isVisible && separator.dndState) {
+      if (!separatorTopSide) {
+        val separatorLocation = if (data.horizontal) separator.x else separator.y
+        val dropLocation = if (data.horizontal) drawRectangle.x + drawRectangle.width else drawRectangle.y + drawRectangle.height
+        addSize = dropLocation <= separatorLocation
+      }
+      if (addSize) {
+        if (data.horizontal) {
+          data.size.width += drawRectangle.width
+        }
+        else {
+          data.size.height += drawRectangle.height
+        }
+      }
+    }
+
+    data.isSplit = split
+    if (!split && isNewStripes && separator.isVisible) {
+      if (data.horizontal) {
+        data.isSplit = drawRectangle.x > separator.x
+      }
+      else {
+        data.isSplit = drawRectangle.y > separator.y
+      }
+    }
+
     return data
   }
 
@@ -403,14 +480,59 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     }
   }
 
-  private fun getButtonsToLayOut(): List<StripeButtonManager> {
+  private fun getButtonsToLayOut(processDrop: Boolean): List<StripeButtonManager> {
     if (buttons.isEmpty()) {
       return emptyList()
     }
 
     val tools = ArrayList<StripeButtonManager>(buttons.size)
-    buttons.filterTo(tools) { it.getComponent().isVisible }
-    tools.sortWith(stripeButtonManagerComparator)
+
+    if (isNewStripes && (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT)) {
+      if (separator.parent == null) {
+        add(separator)
+      }
+      separator.isVisible = false
+      separator.dndState = false
+      separatorTopSide = false
+
+      buttons.filterTo(tools) {
+        val component = it.getComponent()
+        component.isVisible || component === dragButton
+      }
+      tools.sortWith(stripeButtonManagerComparator)
+
+      for ((index, tool) in tools.withIndex()) {
+        if (tool.windowDescriptor.isSplit) {
+          separator.isVisible = true
+          tools.add(index, separatorStripe)
+          break
+        }
+      }
+
+      tools.remove(dragButton)
+
+      if (separator.isVisible && tools.indexOf(separatorStripe) == 0) {
+        if (processDrop) {
+          separator.dndState = true
+          separatorTopSide = true
+        }
+        else {
+          separator.isVisible = false
+          tools.remove(separatorStripe)
+        }
+      }
+
+      if (!separator.isVisible && !tools.isEmpty() && processDrop) {
+        separator.isVisible = true
+        separator.dndState = true
+        tools.add(separatorStripe)
+      }
+    }
+    else {
+      buttons.filterTo(tools) { it.getComponent().isVisible }
+      tools.sortWith(stripeButtonManagerComparator)
+    }
+
     return tools
   }
 
@@ -419,10 +541,32 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     if (!isFinishingDrop && isDroppingButton()) {
       g.color = if (isNewStripes) JBUI.CurrentTheme.ToolWindow.DragAndDrop.STRIPE_BACKGROUND else background.brighter()
       g.fillRect(0, 0, width, height)
-      val rectangle = drawRectangle
+      val rectangle = Rectangle(drawRectangle)
       if (!rectangle.isEmpty) {
+        var round: Int? = null
+        if (isNewStripes) {
+          val size = JBUI.scale(30)
+          rectangle.x += (rectangle.width - size) / 2
+          rectangle.y += (rectangle.height - size) / 2
+          rectangle.width = size
+          rectangle.height = size
+          round = JBUI.scale(8)
+        }
         g.color = if (isNewStripes) JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_DROP_BACKGROUND else JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
-        RectanglePainter.FILL.paint(g as Graphics2D, rectangle.x, rectangle.y, rectangle.width, rectangle.height, null)
+        RectanglePainter.FILL.paint(g as Graphics2D, rectangle.x, rectangle.y, rectangle.width, rectangle.height, round)
+
+        if (!isHorizontal() && separator.isVisible && separator.dndState) {
+          val size = JBUI.scale(30)
+          val x = (width - size) / 2
+          val y = if (separatorTopSide) separator.y - (drawRectangle.height + size) / 2 else separator.y + separator.height + (drawRectangle.height - size) / 2
+
+          g.stroke = BasicStroke(1f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, floatArrayOf(4f, 4f), 0f)
+          g.color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_DROP_BORDER
+          g.drawLine(x, y, x + size, y)
+          g.drawLine(x + size, y, x + size, y + size)
+          g.drawLine(x, y, x, y + size)
+          g.drawLine(x + size, y + size, x, y + size)
+        }
       }
     }
   }

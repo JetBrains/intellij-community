@@ -41,6 +41,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
+import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
@@ -207,7 +208,8 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   private @NotNull WidgetState doGetWidgetState(@NotNull VirtualFile file, boolean isJsonFile) {
     JsonSchemaService service = getService();
-    if (service == null) {
+    JsonSchemaMappingsProjectConfiguration userMappingsConfiguration = JsonSchemaMappingsProjectConfiguration.getInstance(myProject);
+    if (service == null || userMappingsConfiguration.isIgnoredFile(file)) {
       return getNoSchemaState();
     }
     Collection<VirtualFile> schemaFiles = service.getSchemaFilesForFile(file);

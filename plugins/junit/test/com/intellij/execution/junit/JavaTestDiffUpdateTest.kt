@@ -96,6 +96,34 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
       """.trimIndent())
   }
 
+  fun `test accept string literal diff with carriage return and line feed in expected`() {
+    checkAcceptFullDiff("""
+        import org.junit.Assert;
+        import org.junit.Test;
+        
+        public class MyJUnitTest {
+            @Test
+            public void testFoo() {
+                Assert.assertEquals("expected\r\n", "actual");
+            }
+        }
+      """.trimIndent(), """
+        import org.junit.Assert;
+        import org.junit.Test;
+        
+        public class MyJUnitTest {
+            @Test
+            public void testFoo() {
+                Assert.assertEquals("actual", "actual");
+            }
+        }
+      """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+          at org.junit.Assert.assertEquals(Assert.java:117)
+          at org.junit.Assert.assertEquals(Assert.java:146)
+          at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+      """.trimIndent())
+  }
+
   fun `test accept diff is not available when expected is not a string literal`() {
     checkHasNoDiff("""
       import org.junit.Assert;

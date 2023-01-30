@@ -97,7 +97,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     JavaCompletionSession session = new JavaCompletionSession(result);
     for (final LookupElement base : suggestQualifierItems(parameters, (GrReferenceElement<?>)qualifier, session)) {
       final PsiType type = getPsiType(base.getObject());
-      if (type != null && !PsiType.VOID.equals(type)) {
+      if (type != null && !PsiTypes.voidType().equals(type)) {
         GrReferenceElement<?> ref = createMockReference(position, type, base);
         PsiElement refName = ref == null ? null : ref.getReferenceNameElement();
         if (refName == null) continue;

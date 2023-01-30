@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
@@ -43,6 +44,9 @@ import java.util.Map;
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
 public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
+
+  private boolean isCreatingNewProject;
+
   private MavenProject myAggregatorProject;
   private MavenProject myParentProject;
 
@@ -72,8 +76,14 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     // todo this should be moved to generic ModuleBuilder
     if (myJdk != null) {
       rootModel.setSdk(myJdk);
-    } else {
+    }
+    else {
       rootModel.inheritSdk();
+    }
+
+    if (isCreatingNewProject) {
+      ExternalProjectsManagerImpl.setupCreatedProject(project);
+      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true);
     }
 
     MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
@@ -165,6 +175,14 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   @Override
   public void addSourcePath(Pair<String, String> sourcePathInfo) {
+  }
+
+  public boolean isCreatingNewProject() {
+    return isCreatingNewProject;
+  }
+
+  public void setCreatingNewProject(boolean creatingNewProject) {
+    isCreatingNewProject = creatingNewProject;
   }
 
   public void setAggregatorProject(MavenProject project) {
@@ -265,11 +283,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   @Nullable
   @Override
   public Project createProject(String name, String path) {
-    Project project = super.createProject(name, path);
-    if (project != null) {
-      ExternalProjectsManagerImpl.setupCreatedProject(project);
-      MavenProjectsManager.setupCreatedMavenProject(project);
-    }
-    return project;
+    setCreatingNewProject(true);
+    return super.createProject(name, path);
   }
 }

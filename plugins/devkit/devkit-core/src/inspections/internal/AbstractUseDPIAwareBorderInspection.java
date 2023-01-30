@@ -94,7 +94,7 @@ abstract class AbstractUseDPIAwareBorderInspection extends DevKitUastInspectionB
     }
     List<UExpression> params = expression.getValueArguments();
     for (UExpression param : params) {
-      if (!PsiType.INT.equals(param.getExpressionType())) {
+      if (!PsiTypes.intType().equals(param.getExpressionType())) {
         return false;
       }
     }

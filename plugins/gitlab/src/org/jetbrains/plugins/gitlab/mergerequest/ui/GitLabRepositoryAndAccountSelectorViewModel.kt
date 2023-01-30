@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui
 
 import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.util.URIUtil
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModelBase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,12 +21,21 @@ internal class GitLabRepositoryAndAccountSelectorViewModel(
   projectsManager: GitLabProjectsManager,
   val accountManager: GitLabAccountManager,
   onSelected: suspend (GitLabProjectMapping, GitLabAccount) -> Unit,
-)
-  : RepositoryAndAccountSelectorViewModelBase<GitLabProjectMapping, GitLabAccount>(
+) : RepositoryAndAccountSelectorViewModelBase<GitLabProjectMapping, GitLabAccount>(
   scope,
   projectsManager,
   accountManager,
-  onSelected) {
+  onSelected
+) {
+
+  private val singleRepoAndAccountState: StateFlow<Pair<GitLabProjectMapping, GitLabAccount>?> =
+    combineState(scope, projectsManager.knownRepositoriesState, accountManager.accountsState) { repos, accounts ->
+      repos.singleOrNull()?.let { repo ->
+        accounts.singleOrNull { URIUtil.equalWithoutSchema(it.server.toURI(), repo.repository.serverPath.toURI()) }?.let {
+          repo to it
+        }
+      }
+    }
 
   val tokenLoginAvailableState: StateFlow<Boolean> =
     combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState, ::isTokenLoginAvailable)
@@ -34,6 +45,18 @@ internal class GitLabRepositoryAndAccountSelectorViewModel(
 
   private val _loginRequestsFlow = MutableSharedFlow<TokenLoginRequest>()
   val loginRequestsFlow: Flow<TokenLoginRequest> = _loginRequestsFlow.asSharedFlow()
+
+  init {
+    scope.launch(start = CoroutineStart.UNDISPATCHED) {
+      singleRepoAndAccountState.collect {
+        if (it != null) {
+          repoSelectionState.value = it.first
+          accountSelectionState.value = it.second
+          submitSelection()
+        }
+      }
+    }
+  }
 
   fun requestTokenLogin(forceNewAccount: Boolean, submit: Boolean) {
     val repo = repoSelectionState.value ?: return

@@ -155,7 +155,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
         if (!(to instanceof Integer) && !(to instanceof Long)) return Collections.emptyList();
         long toValue = ((Number)to).longValue();
         long diff = multiplier * (toValue - fromValue);
-        String suffix = PsiType.LONG.equals(countingLoop.getCounter().getType()) ? "L" : "";
+        String suffix = PsiTypes.longType().equals(countingLoop.getCounter().getType()) ? "L" : "";
         if (countingLoop.isIncluding()) {
           diff++; // overflow is ok: diff will become negative and we will exit
         }

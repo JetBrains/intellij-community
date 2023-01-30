@@ -32,7 +32,7 @@ interface KotlinApplicableTool<ELEMENT : KtElement> : KotlinApplicableToolBase<E
 
     /**
      * Applies a fix to [element]. [apply] should not use the Analysis API due to performance concerns, as [apply] is usually executed on
-     * the EDT. [apply] is guaranteed to be executed in a write action if [element] is physical.
+     * the EDT. [apply] is executed in a write action if [element] is physical and [shouldApplyInWriteAction] returns `true`.
      */
     fun apply(element: ELEMENT, project: Project, editor: Editor?)
 }

@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.library.metadata.KlibMetadataVersion
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.deserialization.NameResolver
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.resolve.jvm.EnumEntriesDeserializationSupportImpl
 import org.jetbrains.kotlin.resolve.sam.SamConversionResolverImpl
 import org.jetbrains.kotlin.serialization.SerializerExtensionProtocol
 import org.jetbrains.kotlin.serialization.deserialization.*
@@ -41,7 +42,8 @@ class KlibMetadataDeserializerForDecompiler(
             ResolveEverythingToKotlinAnyLocalClassifierResolver(builtIns), LoggingErrorReporter(LOG),
             LookupTracker.DO_NOTHING, flexibleTypeDeserializer, emptyList(), notFoundClasses, ContractDeserializer.DEFAULT,
             extensionRegistryLite = serializerProtocol.extensionRegistry,
-            samConversionResolver = SamConversionResolverImpl(storageManager, samWithReceiverResolvers = emptyList())
+            samConversionResolver = SamConversionResolverImpl(storageManager, samWithReceiverResolvers = emptyList()),
+            enumEntriesDeserializationSupport = EnumEntriesDeserializationSupportImpl(moduleDescriptor.platform),
         )
     }
 

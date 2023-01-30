@@ -89,10 +89,10 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
       if (!ClassUtils.isPrimitiveNumericType(operandType) || !TypeUtils.isNarrowingConversion(operandType, castType)) {
         return;
       }
-      if (ignoreIntegerCharCasts && PsiType.INT.equals(operandType) && PsiType.CHAR.equals(castType)) {
+      if (ignoreIntegerCharCasts && PsiTypes.intType().equals(operandType) && PsiTypes.charType().equals(castType)) {
         return;
       }
-      if (PsiType.LONG.equals(operandType) && PsiType.INT.equals(castType)) {
+      if (PsiTypes.longType().equals(operandType) && PsiTypes.intType().equals(castType)) {
         final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
         if (MethodUtils.isHashCode(method)) {
           return;
@@ -104,7 +104,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
       }
       if (result instanceof Number) {
         final Number number = (Number)result;
-        if (ignoreOverflowingByteCasts && PsiType.INT.equals(operandType) && PsiType.BYTE.equals(castType)) {
+        if (ignoreOverflowingByteCasts && PsiTypes.intType().equals(operandType) && PsiTypes.byteType().equals(castType)) {
           final int i = number.intValue();
           if (i > Byte.MIN_VALUE && i <= 255) {
             return;
@@ -131,37 +131,37 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
     private boolean valueIsContainableInType(Number value, PsiType type) {
       final long longValue = value.longValue();
       final double doubleValue = value.doubleValue();
-      if (PsiType.BYTE.equals(type)) {
+      if (PsiTypes.byteType().equals(type)) {
         return longValue >= (long)Byte.MIN_VALUE &&
                longValue <= (long)Byte.MAX_VALUE &&
                doubleValue >= (double)Byte.MIN_VALUE &&
                doubleValue <= (double)Byte.MAX_VALUE;
       }
-      else if (PsiType.CHAR.equals(type)) {
+      else if (PsiTypes.charType().equals(type)) {
         return longValue >= (long)Character.MIN_VALUE &&
                longValue <= (long)Character.MAX_VALUE &&
                doubleValue >= (double)Character.MIN_VALUE &&
                doubleValue <= (double)Character.MAX_VALUE;
       }
-      else if (PsiType.SHORT.equals(type)) {
+      else if (PsiTypes.shortType().equals(type)) {
         return longValue >= (long)Short.MIN_VALUE &&
                longValue <= (long)Short.MAX_VALUE &&
                doubleValue >= (double)Short.MIN_VALUE &&
                doubleValue <= (double)Short.MAX_VALUE;
       }
-      else if (PsiType.INT.equals(type)) {
+      else if (PsiTypes.intType().equals(type)) {
         return longValue >= (long)Integer.MIN_VALUE &&
                longValue <= (long)Integer.MAX_VALUE &&
                doubleValue >= (double)Integer.MIN_VALUE &&
                doubleValue <= (double)Integer.MAX_VALUE;
       }
-      else if (PsiType.LONG.equals(type)) {
+      else if (PsiTypes.longType().equals(type)) {
         return doubleValue >= (double)Long.MIN_VALUE && doubleValue <= (double)Long.MAX_VALUE;
       }
-      else if (PsiType.FLOAT.equals(type)) {
+      else if (PsiTypes.floatType().equals(type)) {
         return doubleValue == value.floatValue();
       }
-      else if (PsiType.DOUBLE.equals(type)) {
+      else if (PsiTypes.doubleType().equals(type)) {
         return true;
       }
       return false;

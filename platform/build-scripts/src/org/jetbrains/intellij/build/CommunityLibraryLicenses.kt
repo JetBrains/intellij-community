@@ -455,10 +455,10 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "JCodings", libraryName = "joni", transitiveDependency = true, version = "1.0.55",
                    url = "https://github.com/jruby/jcodings")
       .mit("https://github.com/jruby/jcodings/blob/master/LICENSE.txt"),
-    LibraryLicense(name = "JediTerm", libraryName = "jediterm-pty", license = "LGPL 3",
+    LibraryLicense(libraryName = "jediterm-core", license = "LGPL 3",
                    url = "https://github.com/JetBrains/jediterm",
                    licenseUrl = "https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt"),
-    LibraryLicense(name = "JediTerm Type Ahead", libraryName = "jediterm-typeahead", license = "LGPL 3",
+    LibraryLicense(libraryName = "jediterm-ui", license = "LGPL 3",
                    url = "https://github.com/JetBrains/jediterm",
                    licenseUrl = "https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt"),
     LibraryLicense(name = "JetBrains Annotations", libraryName = "jetbrains-annotations",
@@ -915,7 +915,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("find-classes-model"),
     jetbrainsLibrary("find-classes-model-experimental"),
     jetbrainsLibrary("find-file-model"),
-    jetbrainsLibrary("find-file-model-experimental"),
+    //jetbrainsLibrary("find-file-model-experimental"),  - IDEA-309409 means that for now no experimental model exists for ranking files
     jetbrainsLibrary("git-learning-project"),
     jetbrainsLibrary("intellij.remoterobot.remote.fixtures"),
     jetbrainsLibrary("intellij.remoterobot.robot.server.core"),

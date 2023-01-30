@@ -76,6 +76,6 @@ fun Y.aaYExt(){}
 // ORDER: aazCommon
 // ORDER: aaAnyExtensionProp
 // ORDER: aaAnyExtensionFun
+// ORDER: aaTypeParamExt
 // ORDER: aaGlobalProp
 // ORDER: aaGlobalFun
-// ORDER: aaTypeParamExt

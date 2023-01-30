@@ -105,7 +105,7 @@ public final class PsiTypesUtil {
       return buffer.toString();
     }
     if (type instanceof PsiPrimitiveType) {
-      return PsiType.BOOLEAN.equals(type) ? PsiKeyword.FALSE : "0";
+      return PsiTypes.booleanType().equals(type) ? PsiKeyword.FALSE : "0";
     }
     if (customDefaultValues) {
       PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : null;
@@ -202,7 +202,7 @@ public final class PsiTypesUtil {
           qualifierType = JavaPsiFacade.getElementFactory(project).createType((PsiClass)parent);
         }
       }
-      if (PsiType.NULL.equals(qualifierType)) {
+      if (PsiTypes.nullType().equals(qualifierType)) {
         LOG.error("Unexpected null qualifier", new Attachment("expression.txt", call.getText()));
       }
       return createJavaLangClassType(methodExpression, qualifierType, true);
@@ -253,7 +253,7 @@ public final class PsiTypesUtil {
       if (((PsiAssignmentExpression)parent).getOperationSign().getTokenType() == JavaTokenType.EQ &&
           PsiUtil.checkSameExpression(element, ((PsiAssignmentExpression)parent).getRExpression())) {
         PsiType type = ((PsiAssignmentExpression)parent).getLExpression().getType();
-        return !PsiType.NULL.equals(type) ? type : null;
+        return !PsiTypes.nullType().equals(type) ? type : null;
       }
     }
     else if (parent instanceof PsiReturnStatement) {
@@ -266,7 +266,7 @@ public final class PsiTypesUtil {
       }
     }
     else if (PsiUtil.isCondition(element, parent)) {
-      return PsiType.BOOLEAN;
+      return PsiTypes.booleanType();
     }
     else if (parent instanceof PsiArrayInitializerExpression) {
       final PsiElement gParent = parent.getParent();

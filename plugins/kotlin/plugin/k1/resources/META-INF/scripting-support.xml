@@ -68,6 +68,7 @@
 
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.configuration.MultipleScriptDefinitionsChecker"/>
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.configuration.ScriptingSupportChecker"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.configuration.IndexScriptDependenciesSourcesNotificationProvider"/>
 
     <projectConfigurable groupId="language"
                          bundle="messages.KotlinBundle"
@@ -123,8 +124,8 @@
                  defaultValue="false"
                  restartRequired="true"/>
 
-    <registryKey key="kotlin.scripting.filter.redundant.deps"
-                 description="Filter redundant dependencies from Kotlin/Gradle script dependencies like groovy/kotlin-daemon-embeddable/etc"
+    <registryKey key="kotlin.scripting.index.dependencies.sources"
+                 description="Index script dependencies sources eagerly (not deferred)"
                  defaultValue="false"
                  restartRequired="true"/>
 

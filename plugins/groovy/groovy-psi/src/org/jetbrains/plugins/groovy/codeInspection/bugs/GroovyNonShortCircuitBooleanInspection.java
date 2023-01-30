@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +97,7 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
           !GroovyTokenTypes.mBOR.equals(sign)) {
         return;
       }
-      if (!PsiType.BOOLEAN.equals(rhs.getType())) {
+      if (!PsiTypes.booleanType().equals(rhs.getType())) {
         return;
       }
       registerError(expression);

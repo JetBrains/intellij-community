@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.Id
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Success
@@ -85,7 +86,7 @@ private class GradleJvmResolutionContext(
 )
 
 private fun GradleJvmResolutionContext.canUseGradleJavaHomeJdk(): Boolean {
-  val properties = getGradleProperties(project, externalProjectPath)
+  val properties = GradlePropertiesFile.getProperties(project, externalProjectPath)
   val javaHome = properties.javaHomeProperty?.value
   val validationStatus = validateGradleJavaHome(gradleVersion, javaHome)
   return validationStatus is Success

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
 import com.intellij.DynamicBundle;
@@ -22,7 +22,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.execution.wsl.WslPath;
-import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.IdleFlow;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.file.BatchFileChangeListener;
@@ -74,6 +74,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -100,6 +101,8 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -118,8 +121,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -404,35 +406,37 @@ public final class BuildManager implements Disposable {
   }
 
   private void configureIdleAutomake() {
-    final int idleTimeout = getAutomakeWhileIdleTimeout();
-    final int listenerTimeout = idleTimeout > 0 ? idleTimeout : 60000;
-    IdeEventQueue.getInstance().addIdleListener(new Runnable() {
-      @Override
-      public void run() {
-        final int currentTimeout = getAutomakeWhileIdleTimeout();
-        if (idleTimeout != currentTimeout) {
-          // re-schedule with a changed period
-          IdeEventQueue.getInstance().removeIdleListener(this);
-          configureIdleAutomake();
+    int idleTimeout = getAutomakeWhileIdleTimeout();
+    int listenerTimeout = idleTimeout > 0 ? idleTimeout : 60000;
+    Ref<Function0<Unit>> idleListenerHandle = new Ref<>();
+    idleListenerHandle.set(IdleFlow.getInstance().addIdleListener(listenerTimeout, () -> {
+      int currentTimeout = getAutomakeWhileIdleTimeout();
+      if (idleTimeout != currentTimeout) {
+        // re-schedule with a changed period
+        Function0<Unit> removeListener = idleListenerHandle.get();
+        if (removeListener != null) {
+          removeListener.invoke();
         }
-        if (currentTimeout > 0 /*is enabled*/ && !myAutoMakeTask.myInProgress.get()) {
-          boolean hasChanges = false;
-          synchronized (myProjectDataMap) {
-            for (ProjectData data : myProjectDataMap.values()) {
-              if (data.hasChanges()) {
-                hasChanges = true;
-                break;
-              }
+        configureIdleAutomake();
+      }
+
+      if (currentTimeout > 0 /*is enabled*/ && !myAutoMakeTask.myInProgress.get()) {
+        boolean hasChanges = false;
+        synchronized (myProjectDataMap) {
+          for (ProjectData data : myProjectDataMap.values()) {
+            if (data.hasChanges()) {
+              hasChanges = true;
+              break;
             }
           }
-          if (hasChanges) {
-            // only schedule automake if the feature is enabled, no automake is running at the moment,
-            // and there is at least one watched project with pending changes
-            scheduleAutoMake();
-          }
+        }
+        if (hasChanges) {
+          // only schedule automake if the feature is enabled, no automake is running at the moment,
+          // and there is at least one watched project with pending changes
+          scheduleAutoMake();
         }
       }
-    }, listenerTimeout);
+    }));
   }
 
   public void postponeBackgroundTasks() {
@@ -1786,9 +1790,9 @@ public final class BuildManager implements Disposable {
       final boolean shouldPostponeAllTasks = HeavyProcessLatch.INSTANCE.isRunning() || mySuspendBackgroundTasksCounter.get() > 0;
       if (!shouldPostponeAllTasks && !shouldPostpone() && !myInProgress.getAndSet(true)) {
         try {
-          ApplicationManager.getApplication().executeOnPooledThread(myTaskRunnable);
+          AppJavaExecutorUtil.executeOnPooledIoThread(myTaskRunnable);
         }
-        catch (RejectedExecutionException ignored) {
+        catch (CancellationException ignored) {
           // we were shut down
           myInProgress.set(false);
         }
@@ -2394,9 +2398,7 @@ public final class BuildManager implements Disposable {
 
     @Override
     public Void get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, java.util.concurrent.ExecutionException, TimeoutException {
-      for (Future<?> delegate : getDelegates()) {
-        delegate.get(timeout, unit);
-      }
+      ConcurrencyUtil.getAll(timeout, unit, getDelegates());
       return null;
     }
   }

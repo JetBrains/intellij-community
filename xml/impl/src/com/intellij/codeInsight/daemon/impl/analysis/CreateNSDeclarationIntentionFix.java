@@ -39,7 +39,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNamespaceHelper;
@@ -299,7 +298,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
     if (namespacesToChooseFrom.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(ContainerUtil.newArrayList(namespacesToChooseFrom))
+        .createPopupChooserBuilder(List.of(namespacesToChooseFrom))
         .setRenderer(new XmlNSRenderer())
         .setTitle(title)
         .setItemChosenCallback(selectedValue -> {

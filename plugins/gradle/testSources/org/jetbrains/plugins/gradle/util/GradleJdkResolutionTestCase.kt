@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProviderImpl
 import com.intellij.openapi.util.io.FileUtil
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.properties.*
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -95,7 +96,7 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
   }
 
   fun assertGradleProperties(java: TestSdk?) {
-    assertEquals(java?.homePath, getGradleJavaHome(project, externalProjectPath))
+    assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, GradlePropertiesFile))
   }
 
   fun withServiceGradleUserHome(action: () -> Unit) {
@@ -118,7 +119,7 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
     }
 
     fun withGradleProperties(parentDirectory: String, java: TestSdk?, action: () -> Unit) {
-      val propertiesPath = FileUtil.join(parentDirectory, PROPERTIES_FILE_NAME)
+      val propertiesPath = FileUtil.join(parentDirectory, GRADLE_PROPERTIES_FILE_NAME)
       createProperties(propertiesPath) {
         java?.let { setProperty(GRADLE_JAVA_HOME_PROPERTY, it.homePath) }
       }

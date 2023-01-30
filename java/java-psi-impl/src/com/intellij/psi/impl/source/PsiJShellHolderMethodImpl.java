@@ -57,7 +57,7 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
   @Nullable
   @Override
   public PsiType getReturnType() {
-    return PsiType.VOID;
+    return PsiTypes.voidType();
   }
 
   @Nullable

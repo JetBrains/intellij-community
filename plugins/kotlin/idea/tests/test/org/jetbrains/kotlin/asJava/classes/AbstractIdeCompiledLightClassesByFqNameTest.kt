@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.KotlinDaemonAnalyzerTestCase
 import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.*
+import org.junit.Assume
 import java.io.File
 
 abstract class AbstractIdeCompiledLightClassesByFqNameTest : KotlinDaemonAnalyzerTestCase() {
@@ -26,6 +27,8 @@ abstract class AbstractIdeCompiledLightClassesByFqNameTest : KotlinDaemonAnalyze
         }
 
         val parsedDirectives = KotlinTestUtils.parseDirectives(testFile.readText())
+        Assume.assumeFalse("The test is not supported", LightClassTestCommon.SKIP_IDE_TEST_DIRECTIVE in parsedDirectives)
+
         val extraOptions = buildList {
             parsedDirectives[CompilerTestDirectives.JVM_TARGET_DIRECTIVE.substringBefore(":")]?.let {
                 add("-jvm-target")

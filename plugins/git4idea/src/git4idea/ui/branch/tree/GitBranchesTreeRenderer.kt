@@ -18,6 +18,8 @@ import com.intellij.ui.tree.ui.DefaultControl
 import com.intellij.ui.util.getAvailTextLength
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
@@ -32,6 +34,7 @@ import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.GitBranchesClippedNamesCache
+import git4idea.ui.branch.popup.GitBranchesTreePopup
 import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.Nls
@@ -46,6 +49,8 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
                                        private val repositories: List<GitRepository>) : TreeCellRenderer {
 
   private val colorManager = RepositoryChangesBrowserNode.getColorManager(project)
+
+  private val updateScaleHelper = UpdateScaleHelper()
 
   abstract fun hasRightArrow(nodeUserObject: Any?): Boolean
 
@@ -221,10 +226,11 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
                                             expanded: Boolean,
                                             leaf: Boolean,
                                             row: Int,
-                                            hasFocus: Boolean): Component? {
+                                            hasFocus: Boolean): Component {
     val userObject = TreeUtil.getUserObject(value)
     // render separator text in accessible mode
-    if (userObject is SeparatorWithText) return if (userObject.caption != null) userObject else null
+    if (userObject is SeparatorWithText) return userObject
+    val disabledAction = userObject is PopupFactoryImpl.ActionItem && !userObject.isEnabled
 
     mainIconComponent.apply {
       icon = getIcon(userObject, selected)
@@ -236,7 +242,14 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       foreground = JBUI.CurrentTheme.Tree.foreground(selected, true)
 
       clear()
-      appendWithClipping(getText(userObject, treeModel, repositories).orEmpty(), getBranchNameClipper(userObject))
+      val text = getText(userObject, treeModel, repositories).orEmpty()
+
+      if (disabledAction) {
+        append(text, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      }
+      else {
+        appendWithClipping(text, getBranchNameClipper(userObject))
+      }
     }
 
     val (inOutIcon, inOutTooltip) = getIncomingOutgoingIconWithTooltip(userObject)
@@ -255,7 +268,11 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     secondaryLabel.apply {
       text = getSecondaryText(userObject)
       //todo: LAF color
-      foreground = if (selected) JBUI.CurrentTheme.Tree.foreground(true, true) else JBColor.GRAY
+      foreground = when {
+        disabledAction -> NamedColorUtil.getInactiveTextColor()
+        selected -> JBUI.CurrentTheme.Tree.foreground(true, true)
+        else -> JBColor.GRAY
+      }
 
       border = if (!arrowLabel.isVisible && ExperimentalUI.isNewUI()) {
         JBUI.Borders.empty(0, 10, 0, JBUI.CurrentTheme.Popup.Selection.innerInsets().right)
@@ -267,6 +284,10 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
 
     if (tree != null && value != null) {
       SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, mainTextComponent, true, selected)
+    }
+
+    if (updateScaleHelper.saveScaleAndUpdateUIIfChanged(mainPanel)) {
+      tree?.rowHeight = GitBranchesTreePopup.treeRowHeight
     }
 
     return mainPanel

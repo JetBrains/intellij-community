@@ -65,6 +65,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static final Random RESTART_DAEMON_RANDOM = new Random();
 
   final boolean myUpdateAll;
+  @NotNull
   final ProperTextRange myPriorityRange;
 
   final List<HighlightInfo> myHighlights = new ArrayList<>();

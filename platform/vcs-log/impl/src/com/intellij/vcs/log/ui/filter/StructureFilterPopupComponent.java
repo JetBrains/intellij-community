@@ -193,13 +193,13 @@ public class StructureFilterPopupComponent
       structureActions.add(new SelectFromHistoryAction(filter));
     }
 
-    List<AnAction> actionsList = ContainerUtil.newArrayList(new EditPathsAction(), new SelectPathsInTreeAction(),
-                                                            new Separator(VcsLogBundle.messagePointer("vcs.log.filter.recent")),
-                                                            new DefaultActionGroup(structureActions));
+    List<AnAction> actionsList = new ArrayList<>(Arrays.asList(new EditPathsAction(), new SelectPathsInTreeAction(),
+                                                               new Separator(VcsLogBundle.messagePointer("vcs.log.filter.recent")),
+                                                               new DefaultActionGroup(structureActions)));
 
     int position = roots.size() > 15 ? actionsList.size() : actionsList.size() - 2;
-    actionsList.addAll(position, ContainerUtil.newArrayList(new Separator(VcsLogBundle.messagePointer("vcs.log.filter.roots")),
-                                                            new DefaultActionGroup(rootActions)));
+    actionsList.addAll(position, List.of(new Separator(VcsLogBundle.messagePointer("vcs.log.filter.roots")),
+                                         new DefaultActionGroup(rootActions)));
     return new DefaultActionGroup(actionsList);
   }
 

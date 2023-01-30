@@ -42,12 +42,13 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
  */
 public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable {
   public static final Key<Boolean> PAINT_VERTICAL_LINE = Key.create("PAINT_VERTICAL_LINE");
+  public static final String DISABLE_SETTING_FOREGROUND = "disable.setting.foreground";
+
   @SuppressWarnings("UnregisteredNamedColor")
   private static final Color NON_EDITABLE_BACKGROUND = JBColor.namedColor("ComboBox.nonEditableBackground",
                                                                           JBColor.namedColor("ComboBox.darcula.nonEditableBackground", new JBColor(0xfcfcfc, 0x3c3f41)));
 
   protected static final int DEFAULT_BORDER_COMPENSATION = 1;
-
   private float myArc = COMPONENT_ARC.getFloat();
   private Insets myBorderCompensation = JBUI.insets(DEFAULT_BORDER_COMPENSATION);
   private boolean myPaintArrowButton = true;
@@ -326,12 +327,14 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     c.setFont(comboBox.getFont());
     c.setBackground(getBackgroundColor());
 
-    if (hasFocus && !isPopupVisible(comboBox)) {
-      c.setForeground(listBox.getForeground());
-    }
-    else {
-      c.setForeground(comboBox.isEnabled() ? comboBox.getForeground() :
-                      JBColor.namedColor("ComboBox.disabledForeground", comboBox.getForeground()));
+    if (!Boolean.TRUE.equals(comboBox.getClientProperty(DISABLE_SETTING_FOREGROUND))) {
+      if (hasFocus && !isPopupVisible(comboBox)) {
+        c.setForeground(listBox.getForeground());
+      }
+      else {
+        c.setForeground(comboBox.isEnabled() ? comboBox.getForeground() :
+                        JBColor.namedColor("ComboBox.disabledForeground", comboBox.getForeground()));
+      }
     }
 
     // paint selection in table-cell-editor mode correctly

@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInheritable
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInheritable
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -170,7 +170,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                                 analyzeWithReadAction(declaration) {
                                     fun KtType.containsClassType(clazz: PsiClass?): Boolean {
                                         if (clazz == null) return false
-                                        return this is KtNonErrorClassType && (clazz.isEquivalentTo(getPsiClassOfKtType(this)) || this.ownTypeArguments.any { arg ->
+                                        return this is KtNonErrorClassType && (clazz.unwrapped?.isEquivalentTo(classSymbol.psi) == true || ownTypeArguments.any { arg ->
                                             when (arg) {
                                                 is KtStarTypeProjection -> false
                                                 is KtTypeArgumentWithVariance -> arg.type.containsClassType(clazz)

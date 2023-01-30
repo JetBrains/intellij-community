@@ -276,20 +276,25 @@ public class AutoUnboxingInspection extends BaseInspection {
       }
       final PsiExpression argument = arguments[0];
       final PsiType type = argument.getType();
-      return (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_INTEGER, null, "valueOf", PsiType.INT) &&
-              PsiType.INT.equals(type)) ||
-             (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_SHORT, null, "valueOf", PsiType.SHORT) &&
-              PsiType.SHORT.equals(type)) ||
-             (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_BYTE, null, "valueOf", PsiType.BYTE) &&
-              PsiType.BYTE.equals(type)) ||
-             (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_LONG, null, "valueOf", PsiType.LONG) &&
-              PsiType.LONG.equals(type)) ||
-             (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_CHARACTER, null, "valueOf", PsiType.CHAR) &&
-              PsiType.CHAR.equals(type)) ||
-             (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_DOUBLE, null, "valueOf", PsiType.DOUBLE) &&
-              PsiType.DOUBLE.equals(type)) ||
-             (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_FLOAT, null, "valueOf", PsiType.FLOAT) &&
-              PsiType.FLOAT.equals(type));
+      return (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_INTEGER, null, "valueOf",
+                                             PsiTypes.intType()) &&
+              PsiTypes.intType().equals(type)) ||
+             (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_SHORT, null, "valueOf",
+                                             PsiTypes.shortType()) &&
+              PsiTypes.shortType().equals(type)) ||
+             (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_BYTE, null, "valueOf", PsiTypes.byteType()) &&
+              PsiTypes.byteType().equals(type)) ||
+             (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_LONG, null, "valueOf", PsiTypes.longType()) &&
+              PsiTypes.longType().equals(type)) ||
+             (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_CHARACTER, null, "valueOf",
+                                             PsiTypes.charType()) &&
+              PsiTypes.charType().equals(type)) ||
+             (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_DOUBLE, null, "valueOf",
+                                             PsiTypes.doubleType()) &&
+              PsiTypes.doubleType().equals(type)) ||
+             (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_FLOAT, null, "valueOf",
+                                             PsiTypes.floatType()) &&
+              PsiTypes.floatType().equals(type));
     }
 
     @NonNls

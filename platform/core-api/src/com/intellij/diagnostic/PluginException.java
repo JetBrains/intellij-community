@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -31,7 +31,7 @@ public class PluginException extends RuntimeException implements ExceptionWithAt
   }
 
   public PluginException(@NotNull Throwable e, @Nullable PluginId pluginId) {
-    super (e.getMessage(), e);
+    super(e.getMessage(), e);
     myPluginId = pluginId;
     myAttachments = Collections.emptyList();
   }
@@ -48,7 +48,10 @@ public class PluginException extends RuntimeException implements ExceptionWithAt
     myAttachments = attachments;
   }
 
-  public PluginException(@NotNull String message, @Nullable Throwable cause, @Nullable PluginId pluginId, @NotNull List<Attachment> attachments) {
+  public PluginException(@NotNull String message,
+                         @Nullable Throwable cause,
+                         @Nullable PluginId pluginId,
+                         @NotNull List<Attachment> attachments) {
     super(message, cause);
     myPluginId = pluginId;
     myAttachments = attachments;
@@ -77,14 +80,18 @@ public class PluginException extends RuntimeException implements ExceptionWithAt
 
   /**
    * Creates an exception caused by a problem in a plugin's code.
+   *
    * @param pluginClass a problematic class which caused the error
    */
-  public static @NotNull PluginException createByClass(@NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class<?> pluginClass) {
+  public static @NotNull PluginException createByClass(@NotNull String errorMessage,
+                                                       @Nullable Throwable cause,
+                                                       @NotNull Class<?> pluginClass) {
     return PluginProblemReporter.getInstance().createPluginExceptionByClass(errorMessage, cause, pluginClass);
   }
 
   /**
    * Creates an exception caused by a problem in a plugin's code, takes error message from the cause exception.
+   *
    * @param pluginClass a problematic class which caused the error
    */
   public static @NotNull PluginException createByClass(@NotNull Throwable cause, @NotNull Class<?> pluginClass) {
@@ -94,9 +101,13 @@ public class PluginException extends RuntimeException implements ExceptionWithAt
 
   /**
    * Log an error caused by a problem in a plugin's code.
+   *
    * @param pluginClass a problematic class which caused the error
    */
-  public static void logPluginError(@NotNull Logger logger, @NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class<?> pluginClass) {
+  public static void logPluginError(@NotNull Logger logger,
+                                    @NotNull String errorMessage,
+                                    @Nullable Throwable cause,
+                                    @NotNull Class<?> pluginClass) {
     logger.error(createByClass(errorMessage, cause, pluginClass));
   }
 
@@ -106,7 +117,8 @@ public class PluginException extends RuntimeException implements ExceptionWithAt
   }
 
   public static void reportDeprecatedDefault(@NotNull Class<?> violator, @NotNull String methodName, @NotNull String details) {
-    String message = "The default implementation of method '" + methodName + "' is deprecated, you need to override it in '" + violator + "'. " + details;
+    String message = "The default implementation of method '" + methodName + "' is deprecated, " +
+                     "you need to override it in '" + violator + "'. " + details;
     Logger.getInstance(violator).error(createByClass(message, null, violator));
   }
 }

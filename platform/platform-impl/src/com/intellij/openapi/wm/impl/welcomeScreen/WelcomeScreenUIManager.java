@@ -69,7 +69,6 @@ public final class WelcomeScreenUIManager {
   }
 
   public static Color getMainAssociatedComponentBackground() {
-    //noinspection UseJBColor
     return JBColor.namedColor("WelcomeScreen.Details.background", new JBColor(Color.white, new Color(0x313335)));
   }
 
@@ -89,5 +88,9 @@ public final class WelcomeScreenUIManager {
     return isSelected
            ? JBColor.namedColor("WelcomeScreen.Projects.actions.selectionBackground", new JBColor(0x3587E5, 0X326FC1))
            : JBColor.namedColor("WelcomeScreen.Projects.actions.background", new JBColor(0xDCEDFE, 0x3C5C86));
+  }
+
+  public static JBColor getActionsButtonSelectionBorder() {
+    return JBColor.namedColor("WelcomeScreen.Projects.actions.selectionBorderColor", new JBColor(0x3574F0, 0x3574F0));
   }
 }

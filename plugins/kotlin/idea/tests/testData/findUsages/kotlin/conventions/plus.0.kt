@@ -22,5 +22,5 @@ fun test(array: Array<A>) {
     a1 + 1
 }
 
-// FIR_COMPARISON
+
 // IGNORE_FIR_LOG

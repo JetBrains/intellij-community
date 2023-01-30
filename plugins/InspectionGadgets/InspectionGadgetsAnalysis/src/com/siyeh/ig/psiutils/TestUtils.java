@@ -85,7 +85,7 @@ public final class TestUtils {
       return false;
     }
     final PsiType returnType = method.getReturnType();
-    if (!PsiType.VOID.equals(returnType)) {
+    if (!PsiTypes.voidType().equals(returnType)) {
       return false;
     }
     final PsiParameterList parameterList = method.getParameterList();

@@ -476,12 +476,12 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   protected void reportNullabilityProblems(ProblemReporter reporter, List<NullabilityProblem<?>> problems) {
     for (NullabilityProblem<?> problem : problems) {
       PsiExpression expression = problem.getDereferencedExpression();
-      boolean nullLiteral = ExpressionUtils.isNullLiteral(PsiUtil.skipParenthesizedExprDown(expression));
+      boolean nullLiteral = ExpressionUtils.isNullLiteral(expression);
       if (!REPORT_UNSOUND_WARNINGS) {
         if (expression == null || !nullLiteral && CommonDataflow.getDfType(expression, IGNORE_ASSERT_STATEMENTS) != DfTypes.NULL) continue;
       }
       // Expression of null type: could be failed LVTI, skip it to avoid confusion
-      if (expression != null && !nullLiteral && PsiType.NULL.equals(expression.getType())) continue;
+      if (expression != null && !nullLiteral && PsiTypes.nullType().equals(expression.getType())) continue;
       boolean alwaysNull = problem.isAlwaysNull(IGNORE_ASSERT_STATEMENTS);
       NullabilityProblemKind.innerClassNPE.ifMyProblem(problem, newExpression -> {
         List<LocalQuickFix> fixes = createNPEFixes(newExpression.getQualifier(), newExpression, reporter.isOnTheFly(), alwaysNull);
@@ -788,7 +788,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (nullability != Nullability.NOT_NULL && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
 
     // no warnings in void lambdas, where the expression is not returned anyway
-    if (block instanceof PsiExpression && block.getParent() instanceof PsiLambdaExpression && PsiType.VOID.equals(returnType)) return;
+    if (block instanceof PsiExpression && block.getParent() instanceof PsiLambdaExpression && PsiTypes.voidType().equals(returnType)) return;
 
     // no warnings for Void methods, where only null can be possibly returned
     if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) return;

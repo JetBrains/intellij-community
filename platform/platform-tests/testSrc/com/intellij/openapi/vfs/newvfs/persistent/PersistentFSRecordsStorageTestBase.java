@@ -66,8 +66,29 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
                storage.isDirty());
     storage.force();
     assertFalse(".force() is called -> storage must be !dirty",
-               storage.isDirty());
+                storage.isDirty());
   }
+
+  @Test
+  public void singleRecordWritten_AndCleaned_ReadsBackAsAllZeroes() throws Exception {
+    final int recordId = storage.allocateRecord();
+    final FSRecord recordOriginal = generateRecordFields(recordId);
+
+    recordOriginal.updateInStorage(storage);
+    storage.cleanRecord(recordId);
+    final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
+
+    //all fields are 0:
+    assertEquals("Cleaned record must have parent=0", recordReadBack.parentRef, 0);
+    assertEquals("Cleaned record must have name=0", recordReadBack.nameRef, 0);
+    assertEquals("Cleaned record must have flags=0", recordReadBack.flags, 0);
+    assertEquals("Cleaned record must have content=0", recordReadBack.contentRef, 0);
+    assertEquals("Cleaned record must have attribute=0", recordReadBack.attributeRef, 0);
+    assertEquals("Cleaned record must have length=0", recordReadBack.length, 0);
+    assertEquals("Cleaned record must have timestamp=0", recordReadBack.timestamp, 0);
+    assertEquals("Cleaned record must have modCount=0", recordReadBack.modCount, 0);
+  }
+
 
   @Test
   public void manyRecordsWritten_CouldBeReadBackUnchanged() throws Exception {
@@ -86,7 +107,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
         incorrectlyReadBackRecords.put(recordOriginal, recordReadBack);
       }
     }
-    
+
     if (!incorrectlyReadBackRecords.isEmpty()) {
       fail("Records read back should be all equal to their originals, but " + incorrectlyReadBackRecords.size() +
            " different: \n" +
@@ -97,6 +118,50 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       );
     }
   }
+
+  @Test
+  public void markModified_JustIncrementsRecordVersion_OtherRecordFieldsAreUnchanged() throws Exception {
+    final FSRecord[] recordsToInsert = new FSRecord[maxRecordsToInsert];
+
+    for (int i = 0; i < recordsToInsert.length; i++) {
+      final int recordId = storage.allocateRecord();
+      recordsToInsert[i] = generateRecordFields(recordId);
+      recordsToInsert[i].updateInStorage(storage);
+    }
+
+    final FSRecord[] recordsReadBack = new FSRecord[maxRecordsToInsert];
+    for (int i = 0; i < recordsToInsert.length; i++) {
+      recordsReadBack[i] = FSRecord.readFromStorage(storage, recordsToInsert[i].id);
+    }
+
+    for (FSRecord record : recordsReadBack) {
+      storage.markRecordAsModified(record.id);
+    }
+
+    final Map<FSRecord, FSRecord> incorrectlyReadBackRecords = new HashMap<>();
+    for (final FSRecord recordReadBack : recordsReadBack) {
+      final FSRecord recordReadBackAgain = FSRecord.readFromStorage(storage, recordReadBack.id);
+      assertTrue(
+        "Record.modCount was increased by .markRecordAsModified",
+        recordReadBackAgain.modCount > recordReadBack.modCount
+      );
+      //...but everything else in the record is unchanged:
+      if (!recordReadBack.equalsExceptModCount(recordReadBackAgain)) {
+        incorrectlyReadBackRecords.put(recordReadBack, recordReadBack);
+      }
+    }
+
+    if (!incorrectlyReadBackRecords.isEmpty()) {
+      fail("Records read back should be all equal to their originals, but " + incorrectlyReadBackRecords.size() +
+           " different: \n" +
+           incorrectlyReadBackRecords.entrySet().stream()
+             .sorted(comparing(e -> e.getKey().id))
+             .map(e -> e.getKey() + "\n" + e.getValue())
+             .collect(joining("\n"))
+      );
+    }
+  }
+
 
   @Test
   public void manyRecordsWritten_MultiThreadedWithoutContention_CouldBeReadBackUnchanged() throws Exception {
@@ -306,7 +371,8 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
           record.setLength(this.length);
           return true;
         });
-      } else {
+      }
+      else {
         storage.setParent(id, this.parentRef);
         storage.setNameId(id, this.nameRef);
         storage.setFlags(id, this.flags);

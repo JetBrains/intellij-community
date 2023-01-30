@@ -22,21 +22,20 @@ import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.runner.RunWith
-import org.junit.runners.BlockJUnit4ClassRunner
 import java.io.File
 import java.io.PrintStream
 
-@RunWith(BlockJUnit4ClassRunner::class)
+@RunWith(KotlinMppTestsJUnit4Runner::class)
 @TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
 abstract class AbstractKotlinMppGradleImportingTest :
     GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,HighlightingCheckDsl,
     TestWithKotlinPluginAndGradleVersions
 {
-    val kotlinTestPropertiesService: KotlinTestPropertiesService = KotlinTestPropertiesServiceImpl()
+    val kotlinTestPropertiesService: KotlinTestPropertiesService = KotlinTestPropertiesService.constructFromEnvironment()
 
     final override val gradleVersion: String
         // equal to this.gradleVersion, going through the Service for the sake of consistency
-        get() = kotlinTestPropertiesService.gradleVersion
+        get() = kotlinTestPropertiesService.gradleVersion.version
 
     final override val kotlinPluginVersion: KotlinToolingVersion
         get() = kotlinTestPropertiesService.kotlinGradlePluginVersion
@@ -94,7 +93,6 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
         importProject()
 
-
         noErrorEventsDuringImportService.checkImportErrors(testDataDirectoryService)
         workspaceModelTestingService.checkWorkspaceModel(configuration, this)
         highlightingCheckService.runHighlightingCheckOnAllModules(configuration, this)
@@ -114,7 +112,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
         // Hack: usually this is set-up by JUnit's Parametrized magic, but
         // our tests source versions from `kotlintestPropertiesService`, not from
         // @Parametrized
-        this.gradleVersion = kotlinTestPropertiesService.gradleVersion
+        this.gradleVersion = kotlinTestPropertiesService.gradleVersion.version
         super.setUp()
 
         // Otherwise Gradle Daemon fails with Metaspace exhausted periodically
@@ -122,7 +120,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
             "-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
     }
 
-    private fun configureByFiles(rootDir: File, properties: Map<String, String>? = null): List<VirtualFile> {
+    private fun configureByFiles(rootDir: File): List<VirtualFile> {
         assert(rootDir.exists()) { "Directory ${rootDir.path} doesn't exist" }
 
         return rootDir.walk().mapNotNull {
@@ -132,7 +130,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
                 !it.name.endsWith(KotlinGradleImportingTestCase.AFTER_SUFFIX) -> {
                     val text = kotlinTestPropertiesService.substituteKotlinTestPropertiesInText(
                         clearTextFromDiagnosticMarkup(FileUtil.loadFile(it, /* convertLineSeparators = */ true)),
-                        properties
+                        it
                     )
                     val virtualFile = createProjectSubFile(it.path.substringAfter(rootDir.path + File.separator), text)
 

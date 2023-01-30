@@ -13,10 +13,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
-import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider
-import com.intellij.ide.ui.customization.CustomizationUtil
-import com.intellij.ide.ui.customization.CustomizeActionGroupPanel
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -33,19 +30,16 @@ import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
-import com.intellij.ui.SpinningProgressIcon
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.popup.WizardPopup
-import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
@@ -56,7 +50,6 @@ import com.intellij.util.xmlb.annotations.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
 import java.awt.geom.Area
 import java.awt.geom.Line2D
@@ -77,10 +70,6 @@ import kotlin.properties.Delegates
 
 private const val RUN_TOOLBAR_WIDGET_GROUP = "RunToolbarWidgetCustomizableActionGroup"
 
-private val CONF: Key<RunnerAndConfigurationSettings> = Key.create("RUNNER_AND_CONFIGURATION_SETTINGS")
-private val COLOR: Key<RunButtonColors> = Key.create("RUN_BUTTON_COLOR")
-private val EXECUTOR_ID: Key<String> = Key.create("RUN_WIDGET_EXECUTOR_ID")
-
 private const val RUN: String = DefaultRunExecutor.EXECUTOR_ID
 private const val DEBUG: String = ToolWindowId.DEBUG
 private const val PROFILER: String = "Profiler"
@@ -93,113 +82,7 @@ internal class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableAct
   }
 }
 
-internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponentAction, DumbAware {
-  private val spinningIcon = SpinningProgressIcon()
-
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-  override fun actionPerformed(e: AnActionEvent) {
-    if (!e.presentation.isEnabled) return
-    val conf = e.presentation.getClientProperty(CONF)
-    if (conf != null) {
-      val executor = getExecutorByIdOrDefault(e.presentation.getClientProperty(EXECUTOR_ID)!!)
-      RunToolbarWidgetRunAction(executor, false) { conf }.actionPerformed(e)
-    }
-    else {
-      ActionManager.getInstance().getAction("editRunConfigurations").actionPerformed(e)
-    }
-  }
-
-  override fun update(e: AnActionEvent) {
-    if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-
-    val project = e.project
-    val runManager = project?.serviceIfCreated<RunManager>()
-    if (runManager == null) {
-      e.presentation.icon = spinningIcon
-      e.presentation.text = ExecutionBundle.message("run.toolbar.widget.loading.text")
-      e.presentation.isEnabled = false
-      return
-    }
-
-    val selectedConfiguration = runManager.selectedConfiguration
-    val history = RunStatusHistory.getInstance(project)
-    val run = history.firstOrNull(selectedConfiguration) { it.state.isRunningState() } ?: history.firstOrNull(selectedConfiguration)
-    val isLoading = run?.state?.isBusyState() == true
-    val lastExecutorId = run?.executorId ?: DefaultRunExecutor.EXECUTOR_ID
-    e.presentation.putClientProperty(CONF, selectedConfiguration)
-    e.presentation.putClientProperty(EXECUTOR_ID, lastExecutorId)
-    if (selectedConfiguration != null) {
-      val isRunning = run?.state == RunState.STARTED || run?.state == RunState.TERMINATING
-      val canRestart = isRunning && !selectedConfiguration.configuration.isAllowRunningInParallel
-      e.presentation.putClientProperty(COLOR, if (isRunning) RunButtonColors.GREEN else RunButtonColors.BLUE)
-      e.presentation.icon = if (isLoading) spinningIcon else iconFor(lastExecutorId, canRestart)
-      e.presentation.text = selectedConfiguration.shortenName()
-      e.presentation.description = RunToolbarWidgetRunAction.reword(getExecutorByIdOrDefault(lastExecutorId), canRestart, selectedConfiguration.shortenName())
-    } else {
-      e.presentation.putClientProperty(COLOR, RunButtonColors.BLUE)
-      e.presentation.icon = iconFor(RUN, false)
-      e.presentation.text = ExecutionBundle.message("run.toolbar.widget.run.text")
-      e.presentation.description = ExecutionBundle.message("run.toolbar.widget.run.description")
-    }
-    e.presentation.isEnabled = !isLoading
-  }
-
-  private fun getExecutorByIdOrDefault(executorId: String): Executor {
-    return ExecutorRegistryImpl.getInstance().getExecutorById(executorId)
-           ?: ExecutorRegistryImpl.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
-           ?: error("Run executor is not found")
-  }
-
-  private fun iconFor(executorId: String, needRerunIcon: Boolean): Icon {
-    val icon = getExecutorByIdOrDefault(executorId).let { if (needRerunIcon) it.rerunIcon else it.icon }
-    return IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.FOREGROUND)
-  }
-
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return RunDropDownButton(presentation.text, presentation.icon).apply {
-      addActionListener {
-        val anActionEvent = AnActionEvent.createFromDataContext(place, presentation, DataManager.getInstance().getDataContext(this))
-        if (it.modifiers and ActionEvent.SHIFT_MASK != 0) {
-          ActionUtil.performActionDumbAwareWithCallbacks(ActionManager.getInstance().getAction("editRunConfigurations"), anActionEvent)
-        }
-        else if (it.modifiers  and ActionEvent.ALT_MASK != 0) {
-          CustomizeActionGroupPanel.showDialog(RUN_TOOLBAR_WIDGET_GROUP, listOf(IdeActions.GROUP_NAVBAR_TOOLBAR), ExecutionBundle.message("run.toolbar.widget.customizable.group.dialog.title"))
-            ?.let { result ->
-              CustomizationUtil.updateActionGroup(result, RUN_TOOLBAR_WIDGET_GROUP)
-              CustomActionsSchema.setCustomizationSchemaForCurrentProjects()
-            }
-        }
-        else {
-          ActionUtil.performActionDumbAwareWithCallbacks(this@RunWithDropDownAction, anActionEvent)
-        }
-      }
-    }.let { Wrapper(it).apply { border = JBUI.Borders.empty(7,6) } }
-  }
-
-  override fun updateCustomComponent(wrapper: JComponent, presentation: Presentation) {
-    val component = (wrapper as Wrapper).targetComponent as RunDropDownButton
-    component.text = presentation.text?.let(::shorten)
-    component.icon = presentation.icon.also { currentIcon ->
-      if (spinningIcon === currentIcon) {
-        spinningIcon.setIconColor(component.foreground)
-      }
-    }
-    presentation.getClientProperty(COLOR)?.updateColors(component)
-    if (presentation.getClientProperty(CONF) == null) {
-      component.dropDownPopup = null
-    } else {
-      component.dropDownPopup = { context -> createRunConfigurationPopup(context, context.getData(PlatformDataKeys.PROJECT)!!) }
-    }
-    component.toolTipText = presentation.description
-    component.invalidate()
-  }
-}
-
-private val recentLimit: Int get() = AdvancedSettings.getInt("ide.max.recent.run.configurations")
+private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.configurations")
 
 internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boolean = true): ActionGroup {
   val actions = DefaultActionGroup()
@@ -261,7 +144,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
 
   override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
     val popup = super.createPopup(parent, step, parentValue)
-    popup.setMinimumSize(JBDimension(MINIMAL_POPUP_WIDTH, 0))
+    popup.minimumSize = JBDimension(MINIMAL_POPUP_WIDTH, 0)
     return popup
   }
 
@@ -320,23 +203,6 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
   val result = SelectRunConfigurationWithInlineActions(inlineActions, conf, project, shouldBeShown)
   addAdditionalActionsToRunConfigurationOptions(project, conf, result, false)
   return result
-}
-
-private fun createRunConfigurationPopup(context: DataContext, project: Project): JBPopup {
-  val actions = createRunConfigurationsActionGroup(project)
-  return JBPopupFactory.getInstance().createActionGroupPopup(
-    null,
-    actions,
-    context,
-    JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-    true,
-    ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR)
-  ).apply { disableExpandableItems(this) }
-}
-
-private fun disableExpandableItems(popup: ListPopup) {
-  val list = (popup as? ListPopupImpl)?.list
-  (list as? JBList<*>)?.setExpandableItemsEnabled(false)
 }
 
 private fun ExecutorGroup<*>.createExecutorActionGroup(conf: (Project) -> RunnerAndConfigurationSettings?) = DefaultActionGroup().apply {
@@ -411,8 +277,8 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
       }
       isPaintEnable = false
       isCombined = true
-    }.let { Wrapper(it).apply {
-      border = JBUI.Borders.empty(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) JBUI.CurrentTheme.RunWidget.toolbarBorderHeight() else 7,6)
+    }.let { DynamicBorderWrapper(it) {
+      JBUI.Borders.empty(JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 6)
     } }
   }
 
@@ -478,38 +344,9 @@ private class RunToolbarWidgetRunAction(
   override fun getSelectedConfiguration(e: AnActionEvent): RunnerAndConfigurationSettings? {
     return settingSupplier(e.project ?: return null)
   }
-
-  companion object {
-    @Nls
-    fun reword(executor: Executor, restart: Boolean, configuration: String): String {
-      return when {
-        !restart -> ExecutionBundle.message("run.toolbar.widget.run.tooltip.text", executor.actionName, configuration)
-        executor.id == RUN -> ExecutionBundle.message("run.toolbar.widget.rerun.text", configuration)
-        else -> ExecutionBundle.message("run.toolbar.widget.restart.text", executor.actionName, configuration)
-      }
-    }
-  }
 }
 
 private enum class RunButtonColors {
-  BLUE {
-    override fun updateColors(button: RunDropDownButton) {
-      button.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
-      button.separatorColor = getColor("RunWidget.separatorColor") { ColorUtil.withAlpha(JBUI.CurrentTheme.RunWidget.FOREGROUND, 0.3) }
-      button.background = getColor("RunWidget.background") { ColorUtil.fromHex("#3574F0") }
-      button.hoverBackground = getColor("RunWidget.leftHoverBackground") { ColorUtil.fromHex("#3369D6") }
-      button.pressedBackground = getColor("RunWidget.leftPressedBackground") { ColorUtil.fromHex("#315FBD") }
-    }
-  },
-  GREEN {
-    override fun updateColors(button: RunDropDownButton) {
-      button.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
-      button.separatorColor = getColor("RunWidget.Running.separatorColor") { ColorUtil.withAlpha(JBUI.CurrentTheme.RunWidget.FOREGROUND, 0.3) }
-      button.background = getColor("RunWidget.Running.background") { ColorUtil.fromHex("#599E5E") }
-      button.hoverBackground = getColor("RunWidget.Running.leftHoverBackground") { ColorUtil.fromHex("#4F8453") }
-      button.pressedBackground = getColor("RunWidget.Running.leftPressedBackground") { ColorUtil.fromHex("#456B47") }
-    }
-  },
   RED {
     override fun updateColors(button: RunDropDownButton) {
       button.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
@@ -608,7 +445,7 @@ private class RunDropDownButtonUI : BasicButtonUI() {
     val prefSize = BasicGraphicsUtils.getPreferredButtonSize(c, c.iconTextGap)
     return prefSize?.apply {
       width = maxOf(width, if (c.isCombined) 0 else 72)
-      height = JBUIScale.scale(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) JBUI.CurrentTheme.RunWidget.toolbarHeight() else 26)
+      height = JBUIScale.scale(JBUI.CurrentTheme.RunWidget.toolbarHeight())
       /**
        * If combined view is enabled the button should not draw a separate line
        * and reserve a place if dropdown is not enabled. Therefore, add only a half
@@ -908,18 +745,6 @@ enum class RunState {
   STARTED,
   TERMINATING,
   TERMINATED;
-
-  fun isBusyState(): Boolean {
-    return this == SCHEDULED || this == TERMINATING
-  }
-
-  fun isRunningState(): Boolean {
-    return this == SCHEDULED || this == STARTED
-  }
-}
-
-private fun isPersistedTask(env: ExecutionEnvironment): Boolean {
-  return getPersistedConfiguration(env.runnerAndConfigurationSettings) != null
 }
 
 private fun getPersistedConfiguration(configuration: RunnerAndConfigurationSettings?): RunnerAndConfigurationSettings? {
@@ -934,6 +759,3 @@ private fun getConfigurations(manager: ExecutionManagerImpl, descriptor: RunCont
 
 @Nls
 private fun RunnerAndConfigurationSettings.shortenName() = Executor.shortenNameIfNeeded(name)
-
-@Nls
-private fun shorten(@Nls text: String): String = StringUtil.shortenTextWithEllipsis(text, 27, 8)

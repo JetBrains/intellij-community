@@ -76,7 +76,7 @@ class WrapReturnValueHandler implements RefactoringActionHandler, ContextAwareAc
       return;
     }
     final PsiType returnType = method.getReturnType();
-    if(PsiType.VOID.equals(returnType)){
+    if(PsiTypes.voidType().equals(returnType)){
       CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + JavaRareRefactoringsBundle.message("method.selected.returns.void"),
                                           getRefactoringNameText(), this.getHelpID());
       return;

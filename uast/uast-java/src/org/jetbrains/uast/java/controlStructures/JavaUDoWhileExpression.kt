@@ -17,6 +17,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiDoWhileStatement
 import com.intellij.psi.impl.source.tree.ChildRole
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UDoWhileExpression
 import org.jetbrains.uast.UElement
@@ -28,8 +29,8 @@ class JavaUDoWhileExpression(
   override val sourcePsi: PsiDoWhileStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UDoWhileExpression {
-  override val condition: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.condition, this) }
-  override val body: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
+  override val condition: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.condition, this) }
+  override val body: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
 
   override val doIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.getChildByRole(ChildRole.DO_KEYWORD), this)

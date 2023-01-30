@@ -13,6 +13,9 @@ class LoadingResult<T>(
   val exception: Throwable? = null,
 )
 
+/**
+ * Receiver is used to reduce the visibility of the function
+ */
 @Suppress("UnusedReceiverParameter")
 @OptIn(ExperimentalContracts::class)
 inline fun <T> JpsFileEntitiesSerializer<*>.runCatchingXmlIssues(body: () -> T): Result<T> {
@@ -28,4 +31,22 @@ inline fun <T> JpsFileEntitiesSerializer<*>.runCatchingXmlIssues(body: () -> T):
   catch (e: IOException) {
     Result.failure(e)
   }
+}
+
+@Suppress("UnusedReceiverParameter")
+@OptIn(ExperimentalContracts::class)
+inline fun <T> JpsFileEntitiesSerializer<*>.runCatchingXmlIssues(exceptionsCollector: MutableCollection<Throwable>,body: () -> T): T? {
+  contract {
+    callsInPlace(body, InvocationKind.EXACTLY_ONCE)
+  }
+  try {
+    return body()
+  }
+  catch (e: JDOMException) {
+    exceptionsCollector.add(e)
+  }
+  catch (e: IOException) {
+    exceptionsCollector.add(e)
+  }
+  return null
 }

@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameHelper
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.GroovyFileType
@@ -81,7 +81,7 @@ private class MethodRenderer(
 
   fun renderMethod(): GrMethod {
     val factory = GroovyPsiElementFactory.getInstance(project)
-    val method = factory.createMethod(request.methodName, PsiType.VOID)
+    val method = factory.createMethod(request.methodName, PsiTypes.voidType())
 
     val modifiersToRender = request.modifiers.toMutableList()
     if (targetClass.isInterface) {

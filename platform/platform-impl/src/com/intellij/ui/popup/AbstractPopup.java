@@ -288,7 +288,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myHeaderAlwaysFocusable = headerAlwaysFocusable;
     myMovable = movable;
 
-    myHeaderPanel = new JPanel(new BorderLayout());
+    myHeaderPanel = new JPanel(new BorderLayout()) {
+      @Override
+      public Color getBackground() {
+        return ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.BACKGROUND : super.getBackground();
+      }
+    };
 
     if (caption != null) {
       if (!caption.isEmpty()) {

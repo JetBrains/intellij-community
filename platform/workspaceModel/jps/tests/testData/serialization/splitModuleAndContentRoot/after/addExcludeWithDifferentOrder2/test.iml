@@ -4,5 +4,6 @@
       <excludeFolder url="file://$MODULE_DIR$/myContentRoot2" />
       <excludeFolder url="file://$MODULE_DIR$/myContentRoot1" />
     </content>
+    <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

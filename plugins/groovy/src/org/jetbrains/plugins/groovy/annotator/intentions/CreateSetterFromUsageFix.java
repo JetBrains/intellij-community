@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -25,7 +26,7 @@ public class CreateSetterFromUsageFix extends CreateMethodFromUsageFix implement
 
   @Override
   protected TypeConstraint @NotNull [] getReturnTypeConstraints() {
-    return new TypeConstraint[]{SubtypeConstraint.create(PsiType.VOID)};
+    return new TypeConstraint[]{SubtypeConstraint.create(PsiTypes.voidType())};
   }
 
   @Override
@@ -42,7 +43,7 @@ public class CreateSetterFromUsageFix extends CreateMethodFromUsageFix implement
     final GrReferenceExpression ref = getRefExpr();
     assert PsiUtil.isLValue(ref);
     PsiType initializer = TypeInferenceHelper.getInitializerTypeFor(ref);
-    if (initializer == null || initializer == PsiType.NULL) {
+    if (initializer == null || initializer == PsiTypes.nullType()) {
       initializer = TypesUtil.getJavaLangObject(ref);
     }
     return new PsiType[]{initializer};

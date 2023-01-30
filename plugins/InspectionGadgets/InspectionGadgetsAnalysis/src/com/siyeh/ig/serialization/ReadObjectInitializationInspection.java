@@ -65,7 +65,7 @@ public class ReadObjectInitializationInspection extends BaseInspection {
       }
       final boolean defaultReadObjectCalled =
         ControlFlowUtils.elementContainsCallToMethod(method, "java.io.ObjectInputStream",
-                                                     PsiType.VOID, "defaultReadObject");
+                                                     PsiTypes.voidType(), "defaultReadObject");
       final PsiField[] fields = aClass.getFields();
       if (defaultReadObjectCalled) {
         for (final PsiField field : fields) {

@@ -86,7 +86,7 @@ public class MagicNumberInspection extends BaseInspection {
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
-      if (!ClassUtils.isPrimitiveNumericType(type) || PsiType.CHAR.equals(type)) {
+      if (!ClassUtils.isPrimitiveNumericType(type) || PsiTypes.charType().equals(type)) {
         return;
       }
       if (isSpecialCaseLiteral(expression) || isFinalVariableInitialization(expression)) {

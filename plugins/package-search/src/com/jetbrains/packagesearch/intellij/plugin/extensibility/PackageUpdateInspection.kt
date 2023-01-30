@@ -22,7 +22,6 @@ import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.options.OptPane.stringList
-import com.intellij.codeInspection.options.OptionController
 import com.intellij.openapi.module.Module
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiFile
@@ -70,11 +69,6 @@ abstract class PackageUpdateInspection : AbstractPackageUpdateInspectionCheck() 
           checkbox("onlyStable", PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable")),
           stringList("excludeList", PackageSearchBundle.message("packagesearch.inspection.upgrade.excluded.dependencies"))
         )
-    }
-
-    override fun getOptionController(): OptionController {
-        return super.getOptionController()
-            .onValueSet("excludeList") { excludeList.removeIf { it.isBlank() } }
     }
 
     override fun ProblemsHolder.checkFile(file: PsiFile, fileModule: Module) {

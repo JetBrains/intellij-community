@@ -220,6 +220,17 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     public synchronized void onStart(@NotNull ExternalSystemTaskId id) {
     }
 
+
+    @Override
+    public synchronized void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
+      try {
+        myManager.onEnvironmentPrepared(id);
+      }
+      catch (RemoteException e) {
+        // Ignore
+      }
+    }
+
     @Override
     public synchronized void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
       try {

@@ -31,10 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -102,19 +99,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     }
   }
 
-  private static void joinWithTimeout(Future<?> @NotNull ... threads) throws TimeoutException {
-    for (Future<?> thread : threads) {
-      try {
-        thread.get(20, TimeUnit.SECONDS);
-      }
-      catch (ExecutionException | InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-      if (!thread.isDone()) {
-        System.err.println(thread + " is still running. threaddump:\n" + ThreadDumper.dumpThreadsToString());
-        throw new TimeoutException();
-      }
-    }
+  private static void joinWithTimeout(Future<?> @NotNull ... threads) throws TimeoutException, ExecutionException, InterruptedException {
+    ConcurrencyUtil.getAll(20, TimeUnit.SECONDS, Arrays.asList(threads));
   }
   private static void waitWithTimeout(@NotNull List<? extends Job<?>> threads) throws TimeoutException {
     for (Job<?> thread : threads) {
@@ -422,7 +408,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     if (exception != null) throw exception;
   }
 
-  public void testWriteActionIsAllowedFromEDTOnly() throws TimeoutException {
+  public void testWriteActionIsAllowedFromEDTOnly() throws TimeoutException, ExecutionException, InterruptedException {
     Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(()-> {
         try {
           ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());

@@ -27,7 +27,7 @@ interface WorkspaceModel {
    * Currently, unloaded entities correspond to modules which are unloaded using 'Load/Unload Modules' action. 
    */
   val currentSnapshotOfUnloadedEntities: EntityStorageSnapshot
-  
+
   /**
    * Modifies the current model by calling [updater] and applying it to the storage. Requires write action.
    *

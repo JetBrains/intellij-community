@@ -42,7 +42,7 @@ public class MissingMethodBodyFixer implements Fixer {
       if (modifiers == null) return;
       // Impossible modifiers for a method
       if (modifiers.hasExplicitModifier(TRANSIENT) || modifiers.hasExplicitModifier(VOLATILE)) return;
-      if (!PsiType.VOID.equals(field.getType())) return;
+      if (!PsiTypes.voidType().equals(field.getType())) return;
       int endOffset = field.getTextRange().getEndOffset();
       editor.getDocument().insertString(endOffset, "(){}");
       editor.getCaretModel().moveToOffset(endOffset + 1);

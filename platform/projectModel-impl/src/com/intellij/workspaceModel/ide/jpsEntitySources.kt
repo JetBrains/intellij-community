@@ -9,10 +9,8 @@ import com.esotericsoftware.kryo.kryo5.io.Output
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
@@ -47,33 +45,28 @@ sealed class JpsProjectConfigLocation {
     override val projectFilePath: String
       get() = JpsPathUtil.urlToPath(iprFile.url)
   }
-
-  object DummyProjectConfigLocation : JpsProjectConfigLocation() {
-    override val projectFilePath: String
-      get() = "dummy"
-    override val baseDirectoryUrl: VirtualFileUrl
-      get() = VirtualFileUrlManager.getGlobalInstance().fromUrl("")
-  }
 }
+
+/**
+ * Represents a specific xml file containing configuration of global IntelliJ IDEA entities.
+ */
+data class JpsGlobalFileEntitySource(val file: VirtualFileUrl): JpsFileEntitySource()
 
 /**
  * Represents an xml file containing configuration of IntelliJ IDEA project in JPS format (*.ipr file or *.xml file under .idea directory)
  */
 sealed class JpsFileEntitySource : EntitySource {
-  abstract val projectLocation: JpsProjectConfigLocation
-
   /**
-   * Represents a specific xml file containing configuration of global IntelliJ IDEA entities.
+   * Entity source with the information about project location
    */
-  data class ExactGlobalFile(val file: VirtualFileUrl): JpsFileEntitySource() {
-    override val projectLocation: JpsProjectConfigLocation
-      get() = JpsProjectConfigLocation.DummyProjectConfigLocation
+  abstract class JpsProjectFileEntitySource: JpsFileEntitySource() {
+    abstract val projectLocation: JpsProjectConfigLocation
   }
 
   /**
    * Represents a specific xml file containing configuration of some entities of IntelliJ IDEA project.
    */
-  data class ExactFile(val file: VirtualFileUrl, override val projectLocation: JpsProjectConfigLocation) : JpsFileEntitySource() {
+  data class ExactFile(val file: VirtualFileUrl, override val projectLocation: JpsProjectConfigLocation) : JpsProjectFileEntitySource() {
     override val virtualFileUrl: VirtualFileUrl
       get() = file
   }
@@ -84,7 +77,7 @@ sealed class JpsFileEntitySource : EntitySource {
    */
   @DefaultSerializer(FileInDirectorySerializer::class)
   data class FileInDirectory(val directory: VirtualFileUrl,
-                             override val projectLocation: JpsProjectConfigLocation) : JpsFileEntitySource() {
+                             override val projectLocation: JpsProjectConfigLocation) : JpsProjectFileEntitySource() {
     /**
      * Automatically generated value which is used to distinguish different files in [directory]. The actual name is stored in serialization
      * structures and may change if name of the corresponding entity has changed.

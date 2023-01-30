@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
     <orderEntry type="library" scope="TEST" name="Gradle" level="project" />
+    <orderEntry type="library" name="kotlin-tooling-core" level="project" />
   </component>
 </module>

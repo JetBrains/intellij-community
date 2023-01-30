@@ -119,7 +119,7 @@ public final class ExpectedTypeUtils {
     public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
       final PsiExpression condition = statement.getAssertCondition();
       if (wrappedExpression == condition) {
-        expectedType = PsiType.BOOLEAN;
+        expectedType = PsiTypes.booleanType();
       }
       else {
         expectedType = TypeUtils.getStringType(statement);
@@ -141,7 +141,7 @@ public final class ExpectedTypeUtils {
     public void visitArrayAccessExpression(@NotNull PsiArrayAccessExpression accessExpression) {
       final PsiExpression indexExpression = accessExpression.getIndexExpression();
       if (wrappedExpression.equals(indexExpression)) {
-        expectedType = PsiType.INT;
+        expectedType = PsiTypes.intType();
       }
     }
 
@@ -185,7 +185,7 @@ public final class ExpectedTypeUtils {
         }
         else {
           // third or more operand must always be boolean or does not compile
-          expectedType = TypeConversionUtil.isBooleanType(wrappedExpressionType) ? PsiType.BOOLEAN : null;
+          expectedType = TypeConversionUtil.isBooleanType(wrappedExpressionType) ? PsiTypes.booleanType() : null;
         }
       }
       else if (ComparisonUtils.isComparisonOperation(tokenType)) {
@@ -210,11 +210,11 @@ public final class ExpectedTypeUtils {
         // JLS 15.21.1. Numerical Equality Operators == and !=
         return TypeConversionUtil.isNumericType(type2) ? TypeConversionUtil.binaryNumericPromotion(type1, type2) : null;
       }
-      else if (PsiType.BOOLEAN.equals(type1)) {
+      else if (PsiTypes.booleanType().equals(type1)) {
         // JLS 15.21.2. Boolean Equality Operators == and !=
-        return TypeConversionUtil.isBooleanType(type2) ? PsiType.BOOLEAN : null;
+        return TypeConversionUtil.isBooleanType(type2) ? PsiTypes.booleanType() : null;
       }
-      else if (PsiType.NULL.equals(type1)) {
+      else if (PsiTypes.nullType().equals(type1)) {
         return TypeUtils.getObjectType(wrappedExpression);
       }
       // void
@@ -288,13 +288,18 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
+    public void visitPatternGuard(@NotNull PsiPatternGuard guard) {
+      expectedType = PsiTypes.booleanType();
+    }
+
+    @Override
     public void visitWhileStatement(@NotNull PsiWhileStatement whileStatement) {
-      expectedType = PsiType.BOOLEAN;
+      expectedType = PsiTypes.booleanType();
     }
 
     @Override
     public void visitForStatement(@NotNull PsiForStatement statement) {
-      expectedType = PsiType.BOOLEAN;
+      expectedType = PsiTypes.booleanType();
     }
 
     @Override
@@ -322,12 +327,12 @@ public final class ExpectedTypeUtils {
 
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
-      expectedType = PsiType.BOOLEAN;
+      expectedType = PsiTypes.booleanType();
     }
 
     @Override
     public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
-      expectedType = PsiType.BOOLEAN;
+      expectedType = PsiTypes.booleanType();
     }
 
     @Override
@@ -380,7 +385,7 @@ public final class ExpectedTypeUtils {
     public void visitConditionalExpression(@NotNull PsiConditionalExpression conditional) {
       final PsiExpression condition = conditional.getCondition();
       if (condition.equals(wrappedExpression)) {
-        expectedType = PsiType.BOOLEAN;
+        expectedType = PsiTypes.booleanType();
       }
       else {
         expectedType = conditional.getType();
@@ -435,7 +440,7 @@ public final class ExpectedTypeUtils {
       final PsiExpression[] arrayDimensions = expression.getArrayDimensions();
       for (PsiExpression arrayDimension : arrayDimensions) {
         if (wrappedExpression.equals(arrayDimension)) {
-          expectedType = PsiType.INT;
+          expectedType = PsiTypes.intType();
           break;
         }
       }
@@ -484,7 +489,7 @@ public final class ExpectedTypeUtils {
           if (parent instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent;
             final PsiType type = methodCallExpression.getType();
-            if (!PsiType.VOID.equals(type)) {
+            if (!PsiTypes.voidType().equals(type)) {
               returnType = findExpectedType(methodCallExpression, true);
             }
             else {

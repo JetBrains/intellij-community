@@ -18,7 +18,7 @@ import javax.swing.JComponent
 
 class ScopeChooserGroup(project: Project, parentDisposable: Disposable, initialScope: SearchScope?) : ActionGroup(), CustomComponentAction {
 
-  private val scopeModel = ScopeModel(setOf(Option.FROM_SELECTION, Option.USAGE_VIEW))
+  private val scopeModel = ScopeModel(setOf(ScopeModel.Option.FROM_SELECTION, ScopeModel.Option.USAGE_VIEW))
   private var actions = arrayOf<AnAction>()
   private val changeListeners = mutableListOf<Consumer<SearchScope?>>()
 

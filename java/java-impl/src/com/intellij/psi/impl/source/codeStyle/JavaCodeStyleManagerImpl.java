@@ -6,6 +6,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.PastParticiple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -40,13 +42,14 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NonNls private static final String FIND_PREFIX = "find";
   @NonNls private static final String CREATE_PREFIX = "create";
   @NonNls private static final String SET_PREFIX = "set";
+  @NonNls private static final String AS_PREFIX = "as";
+  @NonNls private static final String TO_PREFIX = "to";
 
   @NonNls private static final String[] ourPrepositions = {
     "as", "at", "by", "down", "for", "from", "in", "into", "of", "on", "onto", "out", "over",
     "per", "to", "up", "upon", "via", "with"};
 
   @NonNls private static final String[] ourCommonTypeSuffixes = {"Entity"};
-
 
   private final Project myProject;
 
@@ -348,7 +351,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @Nullable
   private String suggestNameFromTypeMap(@NotNull PsiType type, @NotNull VariableKind variableKind, @Nullable String longTypeName) {
     if (longTypeName != null) {
-      if (type.equals(PsiType.NULL)) {
+      if (type.equals(PsiTypes.nullType())) {
         longTypeName = CommonClassNames.JAVA_LANG_OBJECT;
       }
       String name = nameByType(longTypeName, variableKind);
@@ -658,6 +661,16 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
         if ("map".equals(methodName) || "flatMap".equals(methodName) || "filter".equals(methodName)) {
           if (isJavaUtilMethodCall((PsiMethodCallExpression)expr)) {
+            if (Registry.is("add.past.participle.to.suggested.names")) {
+              String[] words = NameUtilCore.nameToWords(methodName);
+              if (words.length == 1) {
+                return new NamesByExprInfo(methodName, PastParticiple.pastParticiple(methodName));
+              }
+              else {
+                words[1] = PastParticiple.pastParticiple(words[1]);
+                return new NamesByExprInfo(methodName, words[0], StringUtil.join(words));
+              }
+            }
             return NamesByExprInfo.EMPTY;
           }
         }
@@ -668,7 +681,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           if (GET_PREFIX.equals(firstWord)
               || IS_PREFIX.equals(firstWord)
               || FIND_PREFIX.equals(firstWord)
-              || CREATE_PREFIX.equals(firstWord)) {
+              || CREATE_PREFIX.equals(firstWord)
+              || AS_PREFIX.equals(firstWord)
+              || TO_PREFIX.equals(firstWord)) {
             if (words.length > 1) {
               final String propertyName = methodName.substring(firstWord.length());
               final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
@@ -681,7 +696,13 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             }
           }
           else if (words.length == 1 || useAllMethodNames) {
-            return new NamesByExprInfo(methodName);
+            if (Registry.is("add.past.participle.to.suggested.names") && !"equals".equals(firstWord)) {
+              words[0] = PastParticiple.pastParticiple(firstWord);
+              return new NamesByExprInfo(methodName, words[0], StringUtil.join(words));
+            }
+            else {
+              return new NamesByExprInfo(methodName);
+            }
           }
         }
       }

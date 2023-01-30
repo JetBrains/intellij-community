@@ -6,7 +6,6 @@ import com.intellij.facet.ui.FacetDependentToolWindow;
 import com.intellij.ide.actions.ToolWindowMoveAction.Anchor;
 import com.intellij.ide.actions.ToolWindowViewModeAction.ViewMode;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
@@ -26,7 +25,9 @@ import com.intellij.toolWindow.ToolWindowEventSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.*;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
@@ -112,18 +113,18 @@ public final class ToolWindowCollector {
       return;
     }
 
-    PluginInfo info = getToolWindowInfo(toolWindowId);
-    List<EventPair<?>> data = new ArrayList<>();
-    data.add(TOOLWINDOW_ID.with(toolWindowId));
-    data.add(EventFields.PluginInfo.with(info));
-    if (windowInfo != null) {
-      data.add(VIEW_MODE.with(ViewMode.fromWindowInfo(windowInfo)));
-      data.add(LOCATION.with(Anchor.fromWindowInfo(windowInfo)));
-    }
-    if (source != null) {
-      data.add(SOURCE.with(source));
-    }
-    event.log(project, data.toArray(new EventPair[0]));
+    event.log(project, data -> {
+      PluginInfo info = getToolWindowInfo(toolWindowId);
+      data.add(TOOLWINDOW_ID.with(toolWindowId));
+      data.add(EventFields.PluginInfo.with(info));
+      if (windowInfo != null) {
+        data.add(VIEW_MODE.with(ViewMode.fromWindowInfo(windowInfo)));
+        data.add(LOCATION.with(Anchor.fromWindowInfo(windowInfo)));
+      }
+      if (source != null) {
+        data.add(SOURCE.with(source));
+      }
+    });
   }
 
   private static @NotNull PluginInfo getToolWindowInfo(@NotNull String toolWindowId) {

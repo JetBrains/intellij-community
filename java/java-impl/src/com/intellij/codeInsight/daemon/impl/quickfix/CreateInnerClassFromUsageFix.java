@@ -19,7 +19,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +106,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
   private void chooseTargetClass(PsiClass[] classes, final Editor editor, final String superClassName) {
     PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
     final IPopupChooserBuilder<PsiClass> builder = JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(ContainerUtil.newArrayList(classes))
+      .createPopupChooserBuilder(List.of(classes))
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setRenderer(renderer)
       .setTitle(QuickFixBundle.message("target.class.chooser.title"))

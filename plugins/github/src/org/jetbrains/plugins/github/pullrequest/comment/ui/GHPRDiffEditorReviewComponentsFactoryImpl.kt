@@ -1,15 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
-import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
-import com.intellij.collaboration.ui.codereview.comment.ReviewUIUtil
-import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.diff.util.Side
-import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
@@ -40,11 +38,11 @@ internal constructor(private val project: Project,
     GHPRReviewThreadComponent.createForInlay(project, thread, reviewDataProvider,
                                              avatarIconsProvider, suggestedChangeHelper,
                                              ghostUser, currentUser).apply {
-      border = JBUI.Borders.empty(ReviewUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.top,
+      border = JBUI.Borders.empty(CodeReviewCommentUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.top,
                                   0,
-                                  ReviewUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.bottom,
+                                  CodeReviewCommentUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.bottom,
                                   0)
-    }.let { ReviewUIUtil.createEditorInlayPanel(it) }
+    }.let { CodeReviewCommentUIUtil.createEditorInlayPanel(it) }
 
   override fun createSingleCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
     val textFieldModel = GHCommentTextFieldModel(project) {
@@ -117,34 +115,29 @@ internal constructor(private val project: Project,
     @NlsActions.ActionText actionName: String,
     hideCallback: () -> Unit
   ): JComponent {
-    val submitShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommentInputComponentFactory.defaultSubmitShortcut)
-    val newLineShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.ENTER)
+    val submitShortcutText = CommentInputActionsComponentFactory.submitShortcutText
 
-    val cancelAction = swingAction(CommonBundle.getCancelButtonText()) {
+    val cancelAction = swingAction("") {
       hideCallback()
     }
     val submitAction = swingAction(actionName) {
       textFieldModel.submit()
     }
-    val busyListener: () -> Unit = {
-      submitAction.isEnabled = !textFieldModel.isBusy
+    textFieldModel.isBusyValue.addAndInvokeListener {
+      submitAction.isEnabled = !it
     }
-    textFieldModel.addStateListener(busyListener)
-    busyListener()
 
     val actions = CommentInputActionsComponentFactory.Config(
       primaryAction = MutableStateFlow(submitAction),
-      hintInfo = MutableStateFlow(CommentInputActionsComponentFactory.HintInfo(
-        submitHint = GithubBundle.message("pull.request.comment.hint", submitShortcutText), //TODO: separate hint
-        newLineHint = GithubBundle.message("pull.request.new.line.hint", newLineShortcutText)
-      ))
+      cancelAction = MutableStateFlow(cancelAction),
+      submitHint = MutableStateFlow(GithubBundle.message("pull.request.comment.hint", submitShortcutText))
     )
 
     return GHCommentTextFieldFactory(textFieldModel).create(
-      GHCommentTextFieldFactory.ActionsConfig(actions, cancelAction),
-      GHCommentTextFieldFactory.AvatarConfig(avatarIconsProvider, currentUser)
+      actions,
+      CommentTextFieldFactory.IconConfig.of(CodeReviewChatItemUIUtil.ComponentType.COMPACT, avatarIconsProvider, currentUser.avatarUrl)
     ).apply {
       border = JBUI.Borders.empty(8)
-    }.let { ReviewUIUtil.createEditorInlayPanel(it) }
+    }.let { CodeReviewCommentUIUtil.createEditorInlayPanel(it) }
   }
 }

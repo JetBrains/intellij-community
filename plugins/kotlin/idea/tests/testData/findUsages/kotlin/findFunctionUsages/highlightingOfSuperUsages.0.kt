@@ -17,4 +17,3 @@ fun test(i: I) {
     B().foo()
 }
 
-// FIR_COMPARISON

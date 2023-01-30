@@ -94,7 +94,6 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>
         return super.getOptionController()
             .onValueSet("fqNameStrings") { newList ->
                 assert(newList === fqNameStrings)
-                fqNameStrings.removeIf { it.isBlank() }
                 fqNameList.clear()
                 fqNameStrings.mapTo(fqNameList, ::FqNameUnsafe)
             }

@@ -407,7 +407,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     if (patternCaseText != null) return patternCaseText;
     if (castToInt) {
       final PsiType type = expression.getType();
-      if (!PsiType.INT.equals(type)) {
+      if (!PsiTypes.intType().equals(type)) {
         /*
         because
         Integer a = 1;
@@ -557,7 +557,8 @@ public class IfCanBeSwitchInspection extends BaseInspection {
             return false;
           }
         }
-        else if (PsiType.INT.equals(type) || PsiType.SHORT.equals(type) || PsiType.BYTE.equals(type) || PsiType.CHAR.equals(type)) {
+        else if (PsiTypes.intType().equals(type) || PsiTypes.shortType().equals(type) || PsiTypes.byteType().equals(type) || PsiTypes.charType()
+          .equals(type)) {
           return false;
         }
       }

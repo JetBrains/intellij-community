@@ -17,22 +17,21 @@ import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ValidationInfoBuilder
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import javax.swing.Icon
 
 abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
-  MavenizedNewProjectWizardStep<MavenProject, ParentStep>(parent)
+  MavenizedNewProjectWizardStep<MavenProject, ParentStep>(parent),
+  MavenNewProjectWizardData
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  // used externally
-  @Suppress("MemberVisibilityCanBePrivate")
-  val sdkProperty = propertyGraph.property<Sdk?>(null)
+  final override val sdkProperty = propertyGraph.property<Sdk?>(null)
 
-  val sdk by sdkProperty
+  final override var sdk by sdkProperty
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
@@ -63,8 +62,11 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   private fun ValidationInfoBuilder.validateCoordinates(): ValidationInfo? {
     val mavenIds = parentsData.map { it.mavenId.groupId to it.mavenId.artifactId }.toSet()
     if (groupId to artifactId in mavenIds) {
-      val message = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.entity.coordinates.already.exists.error",
-        if (context.isCreatingNewProject) 1 else 0, "$groupId:$artifactId")
+      val message = ExternalSystemBundle.message(
+        "external.system.mavenized.structure.wizard.entity.coordinates.already.exists.error",
+        context.isCreatingNewProjectInt,
+        "$groupId:$artifactId"
+      )
       return error(message)
     }
     return null

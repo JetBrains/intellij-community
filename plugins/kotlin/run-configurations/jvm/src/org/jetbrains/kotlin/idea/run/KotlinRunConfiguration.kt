@@ -207,7 +207,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
 
     override fun getRefactoringElementListener(element: PsiElement): RefactoringElementListener? {
         val fqNameBeingRenamed: String? = when (element) {
-          is KtDeclarationContainer -> getMainClassJvmName(element as KtDeclarationContainer)
+            is KtDeclarationContainer -> getMainClassJvmName(element as KtDeclarationContainer)
             is PsiPackage -> element.qualifiedName
             else -> null
         }
@@ -311,7 +311,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
             params.setShortenCommandLine(myConfiguration.shortenCommandLine, module.project)
             params.mainClass = myConfiguration.runClass
             runReadAction { setupModulePath(params, module) }
-           return params
+            return params
         }
 
         override fun isReadActionRequired(): Boolean {
@@ -361,130 +361,125 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
             }
         }
     }
+}
 
-    companion object {
+private fun KtNamedFunction.isAMainCandidate(): Boolean {
+    if (isLocal) return false
 
-        private fun KtNamedFunction.isAMainCandidate(): Boolean {
-            if (isLocal) return false
+    val jvmName = KotlinPsiHeuristics.findJvmName(this)
+    if (!(name == "main" && jvmName == null || jvmName == "main")) return false
 
-            val jvmName = KotlinPsiHeuristics.findJvmName(this)
-            if (!(name == "main" && jvmName == null || jvmName == "main")) return false
+    // method annotated with @JvmName("main") could be a candidate as well
+    val valueParameter = valueParameters.singleOrNull()
+    val valueParameterType = valueParameter?.typeReference?.typeElement?.safeAs<KtUserType>()
+    val argsIsStringArray =
+        // `vararg String` has same semantic for main function as Array<String>
+        (valueParameter?.isVarArg == true && valueParameterType?.referencedName == "String") ||
+                // Array<String>
+                valueParameter?.typeReference?.typeElement?.run {
+                    // to handle `Array` or `Array?`
+                    safeAs<KtUserType>() ?: safeAs<KtNullableType>()?.innerType.safeAs<KtUserType>()
+                }?.run {
+                    referencedName == "Array" &&
+                            typeArgumentList?.arguments?.singleOrNull()?.run {
+                                typeReference?.typeElement?.safeAs<KtUserType>()?.referencedName == "String" &&
+                                        // <String> / <out String>
+                                        projectionKind.run { this == KtProjectionKind.NONE || this == KtProjectionKind.OUT }
+                            } ?: false
+                } ?: false
 
-            // method annotated with @JvmName("main") could be a candidate as well
-            val valueParameter = valueParameters.singleOrNull()
-            val valueParameterType = valueParameter?.typeReference?.typeElement?.safeAs<KtUserType>()
-            val argsIsStringArray =
-                // `vararg String` has same semantic for main function as Array<String>
-                (valueParameter?.isVarArg == true && valueParameterType?.referencedName == "String") ||
-                        // Array<String>
-                        valueParameter?.typeReference?.typeElement?.run {
-                            // to handle `Array` or `Array?`
-                            safeAs<KtUserType>() ?: safeAs<KtNullableType>()?.innerType.safeAs<KtUserType>()
-                        }?.run {
-                            referencedName == "Array" &&
-                                    typeArgumentList?.arguments?.singleOrNull()?.run {
-                                        typeReference?.typeElement?.safeAs<KtUserType>()?.referencedName == "String" &&
-                                                // <String> / <out String>
-                                                projectionKind.run { this == KtProjectionKind.NONE || this == KtProjectionKind.OUT }
-                                    } ?: false
-                        } ?: false
+    val topLevel = isTopLevel
+    return topLevel && (
+            // top level could be parameterless
+            name == "main" && jvmName == null && (valueParameters.isEmpty() || argsIsStringArray) ||
+                    // but if it has @JvmName("main") it has to have Array<String> parameter
+                    (jvmName == "main" && argsIsStringArray)
+            ) ||
+            !topLevel &&
+            // nested main method has to have Array<String> parameter
+            argsIsStringArray &&
+            // has to have @JvmStatic annotation
+            annotationEntries.any { it.shortName?.asString() == "JvmStatic" } &&
+            (getParentOfType<KtObjectDeclaration>(false) != null)
+}
 
-            val topLevel = isTopLevel
-            return topLevel && (
-                    // top level could be parameterless
-                    name == "main" && jvmName == null && (valueParameters.isEmpty() || argsIsStringArray) ||
-                            // but if it has @JvmName("main") it has to have Array<String> parameter
-                            (jvmName == "main" && argsIsStringArray)
-                    ) ||
-                    !topLevel &&
-                    // nested main method has to have Array<String> parameter
-                    argsIsStringArray &&
-                    // has to have @JvmStatic annotation
-                    annotationEntries.any { it.shortName?.asString() == "JvmStatic" } &&
-                    (getParentOfType<KtObjectDeclaration>(false) != null)
-        }
+private fun KtDeclarationContainer.getMainFunCandidates(): List<KtNamedFunction> =
+    declarations.filterIsInstance<KtNamedFunction>().filter { it.isAMainCandidate() }
 
-        private fun KtDeclarationContainer.getMainFunCandidates(): List<KtNamedFunction> =
-            declarations.filterIsInstance<KtNamedFunction>().filter { it.isAMainCandidate() }
+private fun KtElement.findMainFunCandidates(): List<KtNamedFunction> =
+    collectDescendantsOfType<KtNamedFunction>().filter { it.isAMainCandidate() }
 
-        private fun KtElement.findMainFunCandidates(): List<KtNamedFunction> =
-            collectDescendantsOfType<KtNamedFunction>().filter { it.isAMainCandidate() }
+fun findMainClassFile(
+    module: Module,
+    mainClassName: String,
+    shouldUseSlowResolve: Boolean = module.project.shouldUseSlowResolve()
+): KtFile? {
+    val project = module.project.takeUnless { it.isDefault } ?: return null
+    val scope = module.getModuleRuntimeScope(true)
+    val shortName = StringUtil.getShortName(mainClassName)
+    val psiFacade = JavaPsiFacade.getInstance(project)
 
-        fun findMainClassFile(
-            module: Module,
-            mainClassName: String,
-            shouldUseSlowResolve: Boolean = module.project.shouldUseSlowResolve()
-        ): KtFile? {
-            val project = module.project.takeUnless { it.isDefault } ?: return null
-            val scope = module.getModuleRuntimeScope(true)
-            val shortName = StringUtil.getShortName(mainClassName)
-            val psiFacade = JavaPsiFacade.getInstance(project)
-
-            fun findPackageNameHeuristically(base: String): String {
-                val packageName = StringUtil.getPackageName(base)
-                if (packageName.isEmpty()) return packageName
-                return packageName.takeIf { psiFacade.findPackage(it) != null } ?: findPackageNameHeuristically(packageName)
-            }
-
-            val packageName = findPackageNameHeuristically(mainClassName)
-            val dotNotationFqName = if (mainClassName.contains('$')) {
-                StringUtil.getQualifiedName(StringUtil.getPackageName(mainClassName), shortName.replace('$', '.'))
-            } else {
-                mainClassName
-            }
-
-            // heuristically here means that it follows some common sense:
-            // classes of package a.b.c are located in folder `a/b/c`
-            fun findMainClassFileHeuristically(): Collection<KtFile> {
-                val className = if (packageName.isEmpty()) dotNotationFqName else dotNotationFqName.substring(packageName.length + 1)
-                return psiFacade.findPackage(packageName)?.let { pkg ->
-                    pkg.getFiles(scope).filterIsInstance<KtFile>().filter { ktFile ->
-                        // for top level functions
-                        ktFile.javaFileFacadeFqName.shortName().asString() == shortName ||
-                                ktFile.resolveClassNameInFile(className)?.getMainFunCandidates()?.isNotEmpty() == true
-                    }
-                } ?: emptyList()
-            }
-
-            if (shouldUseSlowResolve) {
-                return runReadAction {
-                    findMainClassFileHeuristically().firstOrNull { it.hasMainFun(true) }
-                }
-            }
-
-            return project.runReadActionInSmartMode {
-                val candidates = KotlinFileFacadeFqNameIndex.get(dotNotationFqName, project, scope).takeIf { it.isNotEmpty() }
-                    ?: KotlinFullClassNameIndex.get(dotNotationFqName, project, scope)
-                        .flatMap { it.findMainFunCandidates() }
-                        .map { it.containingKtFile }
-
-                candidates.firstOrNull { it.hasMainFun(false) }
-            }
-        }
-
-        private fun KtFile.resolveClassNameInFile(className: String): KtDeclarationContainer? =
-            className.split('.').asSequence()
-                .runningFold<_, KtDeclarationContainer?>(this) { psiNode, classNamePart ->
-                    psiNode?.declarations?.filterIsInstance<KtClassOrObject>()?.firstOrNull { it.name == classNamePart }
-                }
-                .takeWhileInclusive { it != null }
-                .lastOrNull()
-
-        private fun Project.shouldUseSlowResolve(): Boolean =
-            takeUnless { it.isDefault }?.let { DumbService.getInstance(this).isDumb } ?: false
-
-        private fun KtFile.hasMainFun(
-            shouldUseSlowResolve: Boolean = project.shouldUseSlowResolve()
-        ): Boolean {
-            val mainFunCandidates = runReadAction { findMainFunCandidates() }
-            if (shouldUseSlowResolve && mainFunCandidates.size == 1) {
-                return true
-            }
-
-            val mainFunctionDetector = KotlinMainFunctionDetector.getInstance()
-            return mainFunCandidates.any { mainFunctionDetector.isMain(it) }
-        }
-
+    fun findPackageNameHeuristically(base: String): String {
+        val packageName = StringUtil.getPackageName(base)
+        if (packageName.isEmpty()) return packageName
+        return packageName.takeIf { psiFacade.findPackage(it) != null } ?: findPackageNameHeuristically(packageName)
     }
 
+    val packageName = findPackageNameHeuristically(mainClassName)
+    val dotNotationFqName = if (mainClassName.contains('$')) {
+        StringUtil.getQualifiedName(StringUtil.getPackageName(mainClassName), shortName.replace('$', '.'))
+    } else {
+        mainClassName
+    }
+
+    // heuristically here means that it follows some common sense:
+    // classes of package a.b.c are located in folder `a/b/c`
+    fun findMainClassFileHeuristically(): Collection<KtFile> {
+        val className = if (packageName.isEmpty()) dotNotationFqName else dotNotationFqName.substring(packageName.length + 1)
+        return psiFacade.findPackage(packageName)?.let { pkg ->
+            pkg.getFiles(scope).filterIsInstance<KtFile>().filter { ktFile ->
+                // for top level functions
+                ktFile.javaFileFacadeFqName.shortName().asString() == shortName ||
+                        ktFile.resolveClassNameInFile(className)?.getMainFunCandidates()?.isNotEmpty() == true
+            }
+        } ?: emptyList()
+    }
+
+    if (shouldUseSlowResolve) {
+        return runReadAction {
+            findMainClassFileHeuristically().firstOrNull { it.hasMainFun(true) }
+        }
+    }
+
+    return project.runReadActionInSmartMode {
+        val candidates = KotlinFileFacadeFqNameIndex.get(dotNotationFqName, project, scope).takeIf { it.isNotEmpty() }
+            ?: KotlinFullClassNameIndex.get(dotNotationFqName, project, scope)
+                .flatMap { it.findMainFunCandidates() }
+                .map { it.containingKtFile }
+
+        candidates.firstOrNull { it.hasMainFun(false) }
+    }
+}
+
+private fun KtFile.resolveClassNameInFile(className: String): KtDeclarationContainer? =
+    className.split('.').asSequence()
+        .runningFold<_, KtDeclarationContainer?>(this) { psiNode, classNamePart ->
+            psiNode?.declarations?.filterIsInstance<KtClassOrObject>()?.firstOrNull { it.name == classNamePart }
+        }
+        .takeWhileInclusive { it != null }
+        .lastOrNull()
+
+private fun Project.shouldUseSlowResolve(): Boolean =
+    takeUnless { it.isDefault }?.let { DumbService.getInstance(this).isDumb } ?: false
+
+private fun KtFile.hasMainFun(
+    shouldUseSlowResolve: Boolean = project.shouldUseSlowResolve()
+): Boolean {
+    val mainFunCandidates = runReadAction { findMainFunCandidates() }
+    if (shouldUseSlowResolve && mainFunCandidates.size == 1) {
+        return true
+    }
+
+    val mainFunctionDetector = KotlinMainFunctionDetector.getInstance()
+    return mainFunCandidates.any { mainFunctionDetector.isMain(it) }
 }

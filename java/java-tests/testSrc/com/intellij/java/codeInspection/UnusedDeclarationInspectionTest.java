@@ -131,6 +131,10 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
     doTest();
   }
 
+  public void testAnnotationInitializedByInheritedClassReference() {
+    doTest();
+  }
+
   public void testUnusedEnum() {
     doTest5();
   }

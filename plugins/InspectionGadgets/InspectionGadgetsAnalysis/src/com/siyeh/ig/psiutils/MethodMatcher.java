@@ -3,6 +3,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -131,6 +132,9 @@ public class MethodMatcher {
 
   private Pattern getPattern(int i) {
     final String methodNamePattern = myMethodNamePatterns.get(i);
+    if (StringUtil.isEmpty(methodNamePattern)) {
+      return null;
+    }
     Pattern pattern = myPatternCache.get(methodNamePattern);
     if (pattern == null) {
       try {

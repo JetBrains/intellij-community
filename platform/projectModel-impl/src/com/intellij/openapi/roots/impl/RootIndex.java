@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -185,6 +185,10 @@ class RootIndex {
 
   @NotNull
   private RootInfo buildRootInfo(@NotNull Project project) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Start building root info " + Thread.currentThread());
+    }
+
     final RootInfo info = new RootInfo();
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     boolean includeProjectJdk = true;

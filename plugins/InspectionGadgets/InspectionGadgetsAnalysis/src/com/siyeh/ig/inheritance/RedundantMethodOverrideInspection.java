@@ -97,7 +97,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       String qualifier = requiredQualifier != null ? requiredQualifier.rawType().getCanonicalText() + ".super." : "super.";
       String parameters = StringUtil.join(superMethod.getParameterList().getParameters(), PsiParameter::getName, ",");
       String call = qualifier + method.getName() + "(" + parameters + ");";
-      if (!PsiType.VOID.equals(method.getReturnType())) {
+      if (!PsiTypes.voidType().equals(method.getReturnType())) {
         call = "return " + call;
       }
       PsiSubstitutor substitutor = getSuperSubstitutor(method, superMethod);
@@ -282,7 +282,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       }
       final PsiStatement statement = statements[0];
       final PsiExpression expression;
-      if (PsiType.VOID.equals(method.getReturnType())) {
+      if (PsiTypes.voidType().equals(method.getReturnType())) {
         if (statement instanceof PsiExpressionStatement) {
           final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
           expression = expressionStatement.getExpression();

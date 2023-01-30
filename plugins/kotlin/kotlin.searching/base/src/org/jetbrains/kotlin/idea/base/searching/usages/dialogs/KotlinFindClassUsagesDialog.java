@@ -78,7 +78,7 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
         //noinspection ConstantConditions
         javaClass.getModifierList().setModifierProperty(
                 PsiModifier.FINAL,
-                !(classOrObject instanceof KtClass && KotlinSearchUsagesSupport.Companion.isInheritable((KtClass) classOrObject))
+                !(classOrObject instanceof KtClass && KotlinSearchUsagesSupport.SearchUtils.isInheritable((KtClass) classOrObject))
         );
 
         javaClass.putUserData(ORIGINAL_CLASS, classOrObject);

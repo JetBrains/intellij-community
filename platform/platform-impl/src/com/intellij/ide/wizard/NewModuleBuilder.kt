@@ -3,6 +3,7 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Generators
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ui.UIBundle
 import com.intellij.util.ui.EmptyIcon
 import javax.swing.Icon
@@ -14,8 +15,9 @@ class NewModuleBuilder : GeneratorNewProjectWizardBuilderAdapter(SimpleNewModule
     override val description: String = UIBundle.message("label.project.wizard.module.generator.description")
     override val icon: Icon = EmptyIcon.ICON_0
 
-    override fun createStep(context: WizardContext) =
+    override fun createStep(context: WizardContext): NewProjectWizardStep =
       RootNewProjectWizardStep(context)
-        .chain(::NewProjectWizardBaseStep, ::NewProjectWizardLanguageStep)
+        .nextStep(::NewProjectWizardBaseStep)
+        .nextStep(::NewProjectWizardLanguageStep)
   }
 }

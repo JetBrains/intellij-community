@@ -143,7 +143,7 @@ class GitBranchesTreeMultiRepoFilteringModel(
 
   private inner class LazyRepositoryBranchesSubtreeHolder(repository: GitRepository) {
     val localBranches by lazy {
-      LazyBranchesSubtreeHolder(repository.branches.localBranches, listOf(repository), branchNameMatcher, ::isPrefixGrouping)
+      LazyBranchesSubtreeHolder(repository.localBranchesOrCurrent, listOf(repository), branchNameMatcher, ::isPrefixGrouping)
     }
     val remoteBranches by lazy {
       LazyBranchesSubtreeHolder(repository.branches.remoteBranches, listOf(repository), branchNameMatcher, ::isPrefixGrouping)

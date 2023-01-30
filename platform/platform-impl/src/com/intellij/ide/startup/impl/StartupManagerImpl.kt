@@ -198,6 +198,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       if (!isCorePlugin(adapter.pluginDescriptor) && pluginId.idString != "com.jetbrains.performancePlugin"
           && pluginId.idString != "com.jetbrains.performancePlugin.yourkit"
           && pluginId.idString != "com.intellij.clion-swift"
+          && pluginId.idString != "com.intellij.clion.performanceTesting"
           && pluginId.idString != "com.intellij.appcode"
           && pluginId.idString != "com.intellij.kmm"
           && pluginId.idString != "org.jetbrains.plugins.clion.radler") {

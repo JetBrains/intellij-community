@@ -2,6 +2,8 @@ val Foo: String = ""
 
 var FOO_BAR: Int = 0
 
+private var FOO: Int = 0
+
 var _FOO: Int = 0
 
 const val THREE = 3

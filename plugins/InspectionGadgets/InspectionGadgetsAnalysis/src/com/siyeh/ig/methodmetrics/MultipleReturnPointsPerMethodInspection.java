@@ -19,6 +19,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -115,7 +116,7 @@ public class MultipleReturnPointsPerMethodInspection
         return true;
       }
       final PsiType returnType = method.getReturnType();
-      return PsiType.VOID.equals(returnType);
+      return PsiTypes.voidType().equals(returnType);
     }
   }
 }

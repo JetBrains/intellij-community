@@ -98,7 +98,7 @@ public class AddNewArrayExpressionFix extends LocalQuickFixAndIntentionActionOnP
   }
 
   private static PsiType validateType(PsiType type, @NotNull PsiElement context) {
-    if (PsiType.NULL.equals(type)) return null;
+    if (PsiTypes.nullType().equals(type)) return null;
     return LambdaUtil.notInferredType(type) || !PsiTypesUtil.isDenotableType(type, context) ? null
                                                                                    : TypeConversionUtil.erasure(type);
   }

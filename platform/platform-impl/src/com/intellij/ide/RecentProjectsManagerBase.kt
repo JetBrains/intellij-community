@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
@@ -339,7 +340,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       info.projectOpenTimestamp = openTimestamp
 
       state.lastOpenedProject = projectPath
-      state.validateRecentProjects(modCounter)
+      validateRecentProjects(modCounter, state.additionalInfo)
     }
 
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
@@ -384,7 +385,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   fun getRecentPaths(): List<String> {
     synchronized(stateLock) {
-      state.validateRecentProjects(modCounter)
+      validateRecentProjects(modCounter, state.additionalInfo)
       return state.additionalInfo.keys.reversed()
     }
   }
@@ -815,6 +816,33 @@ private fun updateSystemDockMenu() {
   if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
     runActivity("system dock menu") {
       SystemDock.updateMenu()
+    }
+  }
+}
+
+private fun validateRecentProjects(modCounter: LongAdder, map: MutableMap<String, RecentProjectMetaInfo>) {
+  val limit = AdvancedSettings.getInt("ide.max.recent.projects")
+  var toRemove = map.size - limit
+  if (limit < 1 || toRemove <= 0) {
+    return
+  }
+
+  val iterator = map.values.iterator()
+  while (true) {
+    if (!iterator.hasNext()) {
+      break
+    }
+
+    val info = iterator.next()
+    if (info.opened) {
+      continue
+    }
+
+    iterator.remove()
+    toRemove--
+
+    if (toRemove <= 0) {
+      break
     }
   }
 }

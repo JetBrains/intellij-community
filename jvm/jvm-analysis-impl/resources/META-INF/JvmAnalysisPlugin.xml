@@ -95,6 +95,14 @@
                      implementationClass="com.intellij.codeInspection.test.junit.JUnitMalformedDeclarationInspection"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.test.junit.JUnitMalformedDeclarationInspectionMerger"/>
 
+    <!--logging-->
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="LoggingStringTemplateAsArgument"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.logging.frameworks.group.name"
+                     key="jvm.inspection.logging.string.template.as.argument.display.name"
+                     implementationClass="com.intellij.codeInspection.logging.LoggingStringTemplateAsArgumentInspection"/>
+
+
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnstableApiUsage"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.unstable.api.usage.display.name"

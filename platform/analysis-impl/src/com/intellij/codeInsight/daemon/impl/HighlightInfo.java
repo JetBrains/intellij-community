@@ -152,7 +152,7 @@ public class HighlightInfo implements Segment {
   private RangeMarker fixMarker;
   volatile RangeHighlighterEx highlighter; // modified in EDT only
   @Nullable
-  PsiElement psiElement;
+  final PsiElement psiElement;
   /**
    * in case this HighlightInfo is created to highlight unresolved reference, store this reference here to be able to call {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider} later
    */
@@ -179,7 +179,8 @@ public class HighlightInfo implements Segment {
                           @Nullable String inspectionToolId,
                           GutterMark gutterIconRenderer,
                           int group,
-                          @Nullable PsiReference unresolvedReference) {
+                          @Nullable PsiReference unresolvedReference,
+                          @Nullable PsiElement psiElement) {
     if (startOffset < 0 || startOffset > endOffset) {
       LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
     }
@@ -202,6 +203,7 @@ public class HighlightInfo implements Segment {
     this.inspectionToolId = inspectionToolId;
     this.group = group;
     this.unresolvedReference = unresolvedReference;
+    this.psiElement = psiElement;
   }
 
   /**
@@ -594,11 +596,14 @@ public class HighlightInfo implements Segment {
     TextAttributesKey key = annotation.getTextAttributes();
     TextAttributesKey forcedAttributesKey = forcedAttributes == null && key != HighlighterColors.NO_HIGHLIGHTING ? key : null;
 
+    PsiReference unresolvedReference = annotation.getUnresolvedReference();
+    PsiElement psiElement = unresolvedReference == null ? null : unresolvedReference.getElement();
     HighlightInfo info = new HighlightInfo(
       forcedAttributes, forcedAttributesKey, convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
       annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(),
       annotation.needsUpdateOnTyping(),
-      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), null, annotation.getGutterIconRenderer(), Pass.UPDATE_ALL, null);
+      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), null, annotation.getGutterIconRenderer(), Pass.UPDATE_ALL,
+      unresolvedReference, psiElement);
 
     List<? extends Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
     if (fixes != null) {
@@ -759,16 +764,20 @@ public class HighlightInfo implements Segment {
           key = problemGroupKey;
         }
       }
-      if (key == null) {
-        IntentionAction action = IntentionActionDelegate.unwrap(myAction);
-        if (action instanceof IntentionActionWithOptions) {
-          options = ((IntentionActionWithOptions)action).getOptions();
+      IntentionAction action = IntentionActionDelegate.unwrap(myAction);
+      if (action instanceof IntentionActionWithOptions wo) {
+        if (key == null || wo.getCombiningPolicy() == IntentionActionWithOptions.CombiningPolicy.IntentionOptionsOnly) {
+          options = wo.getOptions();
           if (!options.isEmpty()) {
             return updateOptions(options);
           }
         }
+      }
+
+      if (key == null) {
         return Collections.emptyList();
       }
+
       IntentionManager intentionManager = IntentionManager.getInstance();
       List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
@@ -802,7 +811,7 @@ public class HighlightInfo implements Segment {
           }
           return actions;
         }
-        IntentionAction action = IntentionActionDelegate.unwrap(myAction);
+
         if (!(action instanceof EmptyIntentionAction)) {
           newOptions.add(new DisableHighlightingIntentionAction(toolWrapper.getShortName()));
         }

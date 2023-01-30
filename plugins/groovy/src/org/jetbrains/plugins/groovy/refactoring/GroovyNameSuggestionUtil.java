@@ -36,7 +36,7 @@ public final class GroovyNameSuggestionUtil {
     Set<String> possibleNames = new LinkedHashSet<>();
     PsiType type = expr.getType();
     generateNameByExpr(expr, possibleNames, validator, forStaticVariable);
-    if (type != null && !PsiType.VOID.equals(type)) {
+    if (type != null && !PsiTypes.voidType().equals(type)) {
       generateVariableNameByTypeInner(type, possibleNames,validator);
     }
 

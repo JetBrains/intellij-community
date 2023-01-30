@@ -46,7 +46,6 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
 import com.intellij.util.TextWithIcon;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +96,7 @@ public final class NavigationUtil {
                                                                   @Nullable T initialSelection) {
     assert elements.length > 0 : "Attempted to show a navigation popup with zero elements";
     IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(ContainerUtil.newArrayList(elements))
+      .createPopupChooserBuilder(List.of(elements))
       .setRenderer(renderer)
       .setFont(EditorUtil.getEditorFont())
       .withHintUpdateSupply();

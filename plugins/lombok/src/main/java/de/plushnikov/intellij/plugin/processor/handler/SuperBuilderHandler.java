@@ -305,7 +305,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       if (!existedMethodNames.contains(STATIC_FILL_VALUES_METHOD_NAME)) {
         // create '$fillValuesFromInstanceIntoBuilder' method
         final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, STATIC_FILL_VALUES_METHOD_NAME)
-          .withMethodReturnType(PsiType.VOID)
+          .withMethodReturnType(PsiTypes.voidType())
           .withParameter(INSTANCE_VARIABLE_NAME, PsiClassUtil.getTypeWithGenerics(psiClass))
           .withParameter(BUILDER_VARIABLE_NAME, getTypeWithWildcardsForSuperBuilderTypeParameters(baseClassBuilder))
           .withContainingClass(baseClassBuilder)

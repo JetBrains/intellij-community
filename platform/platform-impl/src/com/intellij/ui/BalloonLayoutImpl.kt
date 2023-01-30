@@ -7,6 +7,8 @@ import com.intellij.notification.ActionCenter
 import com.intellij.notification.EventLog
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.NotificationCollector
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
@@ -14,20 +16,27 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.toolWindow.ToolWindowPane
-import com.intellij.util.Alarm
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.lang.Runnable
 import java.util.function.IntSupplier
 import javax.swing.JLayeredPane
 import javax.swing.JRootPane
+import kotlin.time.Duration.Companion.milliseconds
 
 private val visibleCount: Int
   get() = Registry.intValue("ide.notification.visible.count", 2)
 
+@OptIn(FlowPreview::class)
 internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Insets) : BalloonLayout {
   private val resizeListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent) {
@@ -38,18 +47,12 @@ internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Ins
   @JvmField
   protected var layeredPane: JLayeredPane? = null
   private val insets: Insets
+
   @JvmField
   protected val balloons = ArrayList<Balloon>()
   protected val layoutData = HashMap<Balloon, BalloonLayoutData>()
   private var widthSupplier: IntSupplier? = null
-  private val relayoutAlarm = Alarm()
-  private val relayoutRunnable = Runnable {
-    if (layeredPane == null) {
-      return@Runnable
-    }
-    relayout()
-    fireRelayout()
-  }
+  private val relayoutRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   @JvmField
   protected val layoutRunnable = Runnable {
@@ -60,10 +63,26 @@ internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Ins
 
   private val listeners = ArrayList<Runnable>()
 
+  @Suppress("DEPRECATION")
+  private val coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
+
   init {
     layeredPane = parent.layeredPane
     this.insets = insets
     layeredPane!!.addComponentListener(resizeListener)
+
+    coroutineScope.launch {
+      relayoutRequests
+        .debounce(200.milliseconds)
+        .collect {
+          withContext(Dispatchers.EDT) {
+            if (layeredPane != null) {
+              relayout()
+              fireRelayout()
+            }
+          }
+        }
+    }
   }
 
   override fun closeAll() {
@@ -78,12 +97,13 @@ internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Ins
   }
 
   open fun dispose() {
+    coroutineScope.cancel()
+
     val layeredPane = layeredPane ?: return
     layeredPane.removeComponentListener(resizeListener)
     for (balloon in ArrayList(balloons)) {
       Disposer.dispose(balloon)
     }
-    relayoutAlarm.cancelAllRequests()
     balloons.clear()
     layoutData.clear()
     listeners.clear()
@@ -216,8 +236,7 @@ internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Ins
     get() = balloons.isEmpty()
 
   open fun queueRelayout() {
-    relayoutAlarm.cancelAllRequests()
-    relayoutAlarm.addRequest(relayoutRunnable, 200)
+    check(relayoutRequests.tryEmit(Unit))
   }
 
   protected open fun calculateSize() {

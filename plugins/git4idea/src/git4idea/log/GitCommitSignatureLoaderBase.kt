@@ -17,6 +17,7 @@ import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
 import git4idea.commands.Git
 import git4idea.commit.signature.GitCommitSignature
 import git4idea.history.GitLogUtil
+import git4idea.repo.GitRepositoryManager
 import kotlin.properties.Delegates.observable
 
 internal abstract class GitCommitSignatureLoaderBase(private val project: Project)
@@ -30,11 +31,16 @@ internal abstract class GitCommitSignatureLoaderBase(private val project: Projec
     currentIndicator = EmptyProgressIndicator()
     val indicator = currentIndicator ?: return
 
-    requestData(indicator, commits, onChange)
+    val commitsByRoot = commits.groupBy({ it.root }, { it.hash }).filter { (root, _) ->
+      GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root) != null
+    }
+    if (commitsByRoot.isEmpty()) return
+
+    requestData(indicator, commitsByRoot, onChange)
   }
 
   protected abstract fun requestData(indicator: ProgressIndicator,
-                                     commits: List<CommitId>,
+                                     commits: Map<VirtualFile, List<Hash>>,
                                      onChange: (Map<CommitId, GitCommitSignature>) -> Unit)
 
   override fun dispose() {

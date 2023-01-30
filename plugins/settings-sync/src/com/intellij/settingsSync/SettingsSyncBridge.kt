@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.settingsSync.SettingsSyncBridge.PushRequestMode.*
+import com.intellij.settingsSync.SettingsSynchronizer.Companion.checkCrossIdeSyncStatusOnServer
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
@@ -237,7 +238,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
   private fun deleteServerData(afterDeleting: (DeleteServerDataResult) -> Unit) {
     val deletionSnapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true),
-                                            emptySet(), null, emptySet())
+                                            emptySet(), null, emptyMap(), emptySet())
     val pushResult = pushToCloud(deletionSnapshot, force = true)
     LOG.info("Deleting server data. Result: $pushResult")
     when (pushResult) {
@@ -272,19 +273,6 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       is ServerState.Error -> {
         // error already logged in checkServerState
       }
-    }
-  }
-
-  private fun checkCrossIdeSyncStatusOnServer(remoteCommunicator: SettingsSyncRemoteCommunicator) {
-    try {
-      val crossIdeSyncEnabled = remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
-      if (crossIdeSyncEnabled != SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
-        LOG.info("Cross-IDE sync status on server is: ${enabledOrDisabled(crossIdeSyncEnabled)}. Updating local settings with it.")
-        SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = crossIdeSyncEnabled
-      }
-    }
-    catch (e: Throwable) {
-      LOG.error("Couldn't check if $CROSS_IDE_SYNC_MARKER_FILE exists", e)
     }
   }
 

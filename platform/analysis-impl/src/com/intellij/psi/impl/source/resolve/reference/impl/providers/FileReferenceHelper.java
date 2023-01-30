@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileContextProvider;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,6 +40,10 @@ import static java.util.Collections.emptyList;
  * by defining their root, their resolving mechanism and quickfixes to repair broken urls.
  * For example, {@link com.intellij.codeInsight.daemon.impl.analysis.HtmlFileReferenceHelper} defines resolving mechanism for
  * relative "href=" references based on the current module content root.
+ *
+ * @see FileContextProvider
+ * @see FileReferenceResolver
+ * @see CustomizableReferenceProvider
  */
 public abstract class FileReferenceHelper {
 
@@ -65,15 +70,16 @@ public abstract class FileReferenceHelper {
   }
 
   /**
-   * @return root that should be used as the context while refactor
+   * @return root which should be used as the context while refactor.
+   * Used only for {@link FileReferenceSet#isAbsolutePathReference()} references.
    */
   @Nullable
-  public PsiFileSystemItem findRoot(@NotNull Project project, @NotNull final VirtualFile file) {
+  public PsiFileSystemItem findRoot(@NotNull Project project, @NotNull final VirtualFile dstVFile) {
     return null;
   }
 
   /**
-   * Use {@link #getRoots(Module, VirtualFile)} that provides better context
+   * @deprecated use {@link #getRoots(Module, VirtualFile)} that provides better context
    */
   @Deprecated
   @NotNull
@@ -81,13 +87,23 @@ public abstract class FileReferenceHelper {
     return emptyList();
   }
 
+  /**
+   * This method is called if {@link FileReferenceSet#isAbsolutePathReference()} returns <b>true</b> e.g. for absolute references only
+   *
+   * @return roots, which could be used as the start resolution context.
+   */
   @NotNull
-  public Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile file) {
+  public Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile hostFile) {
     return getRoots(module);
   }
 
+  /**
+   * This method is called if {@link FileReferenceSet#isAbsolutePathReference()} returns <b>false</b> e.g. for relative references only
+   *
+   * @return roots, which could be used as the start resolution context.
+   */
   @NotNull
-  public abstract Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull final VirtualFile file);
+  public abstract Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull final VirtualFile hostFile);
 
   /**
    * @return true, if the helper can be applied
@@ -104,7 +120,7 @@ public abstract class FileReferenceHelper {
   /**
    * @return true, if the helper can be applied
    */
-  public abstract boolean isMine(@NotNull Project project, @NotNull final VirtualFile file);
+  public abstract boolean isMine(@NotNull Project project, @NotNull final VirtualFile hostFile);
 
   /**
    * @return true if the helper is an instance of {@link NullFileReferenceHelper}
@@ -117,16 +133,18 @@ public abstract class FileReferenceHelper {
    * Provides file target contexts, locations where users can create a file, depending on passed {@code file}.
    */
   @NotNull
-  public Collection<FileTargetContext> getTargetContexts(@NotNull Project project, @NotNull VirtualFile file, boolean isAbsoluteReference) {
+  public Collection<FileTargetContext> getTargetContexts(@NotNull Project project,
+                                                         @NotNull VirtualFile hostFile,
+                                                         boolean isAbsoluteReference) {
     if (isAbsoluteReference) {
       ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-      Module module = index.getModuleForFile(file);
+      Module module = index.getModuleForFile(hostFile);
       if (module == null) {
         return emptyList();
       }
-      return ContainerUtil.map(getRoots(module, file), FileTargetContext::new);
+      return ContainerUtil.map(getRoots(module, hostFile), FileTargetContext::new);
     }
 
-    return ContainerUtil.map(getContexts(project, file), FileTargetContext::new);
+    return ContainerUtil.map(getContexts(project, hostFile), FileTargetContext::new);
   }
 }

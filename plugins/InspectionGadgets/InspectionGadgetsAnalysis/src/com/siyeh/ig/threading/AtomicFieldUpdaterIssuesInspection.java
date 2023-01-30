@@ -84,7 +84,7 @@ public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
         if (arguments.length != 2) {
           return;
         }
-        if (!PsiType.LONG.equals(field.getType())) {
+        if (!PsiTypes.longType().equals(field.getType())) {
           registerError(lastArgument, InspectionGadgetsBundle.message("field.incorrect.type.problem.descriptor", fieldName, "long"));
           return;
         }
@@ -93,7 +93,7 @@ public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
         if (arguments.length != 2) {
           return;
         }
-        if (!PsiType.INT.equals(field.getType())) {
+        if (!PsiTypes.intType().equals(field.getType())) {
           registerError(lastArgument, InspectionGadgetsBundle.message("field.incorrect.type.problem.descriptor", fieldName, "int"));
           return;
         }

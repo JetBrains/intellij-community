@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.uncheckedWarnings;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -289,7 +289,6 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       super.visitForeachStatement(statement);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
       final PsiParameter parameter = statement.getIterationParameter();
-      if (parameter == null) return;
       final PsiType parameterType = parameter.getType();
       final PsiExpression iteratedValue = statement.getIteratedValue();
       if (iteratedValue == null) return;
@@ -427,7 +426,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       super.visitReturnStatement(statement);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
       final PsiType returnType = PsiTypesUtil.getMethodReturnType(statement);
-      if (returnType != null && !PsiType.VOID.equals(returnType)) {
+      if (returnType != null && !PsiTypes.voidType().equals(returnType)) {
         final PsiExpression returnValue = statement.getReturnValue();
         if (returnValue != null) {
           final PsiType valueType = returnValue.getType();
@@ -451,7 +450,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       PsiElement body = expression.getBody();
       if (body instanceof PsiExpression) {
         PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(expression);
-        if (interfaceReturnType != null && !PsiType.VOID.equals(interfaceReturnType)) {
+        if (interfaceReturnType != null && !PsiTypes.voidType().equals(interfaceReturnType)) {
           PsiType type = ((PsiExpression)body).getType();
           if (type != null) {
             checkRawToGenericsAssignment(body, (PsiExpression)body, interfaceReturnType, type, () -> LocalQuickFix.EMPTY_ARRAY);
@@ -461,7 +460,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     }
 
     @Nullable
-    private @InspectionMessage String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {
+    private static @InspectionMessage String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {
       final PsiElement element = resolveResult.getElement();
       if (!(element instanceof PsiMethod)) return null;
       final PsiMethod method = (PsiMethod)element;

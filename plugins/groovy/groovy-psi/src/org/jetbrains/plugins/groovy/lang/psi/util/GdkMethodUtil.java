@@ -491,7 +491,7 @@ public final class GdkMethodUtil {
       }
       else {
         PsiType type = actualParameter.getType();
-        if (!type.equals(PsiType.NULL)) {
+        if (!type.equals(PsiTypes.nullType())) {
           generatedParameterType = AST_TO_EXPR_MAPPER.getOrDefault(type.getCanonicalText(), CommonClassNames.JAVA_LANG_OBJECT);
         }
         else {

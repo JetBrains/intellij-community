@@ -860,7 +860,7 @@ public final class EditorUtil {
    * editor.
    */
   public static Font getEditorFont() {
-    float fontSize = IdeScaleTransformer.INSTANCE.getCurrentEditorFontSize();
+    float fontSize = IdeScaleTransformer.getInstance().getCurrentEditorFontSize();
     if (UISettings.getInstance().getPresentationMode()) {
       fontSize = UISettings.getInstance().getPresentationModeFontSize() - 4f;
     }

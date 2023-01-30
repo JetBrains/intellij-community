@@ -35,7 +35,7 @@ class JpsProjectSaveAfterChangesTest {
   fun `modify module`(unloaded: String) {
     val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
     checkSaveProjectAfterChange("common/modifyIml", "common/modifyIml", unloadedModuleNames) { 
-      mainBuilder, unloadedEntitiesBuilder, configLocation ->
+      mainBuilder, _, unloadedEntitiesBuilder, configLocation ->
       val builder = if ("util" in unloadedModuleNames) unloadedEntitiesBuilder else mainBuilder
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       val sourceRoot = utilModule.sourceRoots.first()
@@ -68,7 +68,7 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `rename module`() {
-    checkSaveProjectAfterChange("directoryBased/renameModule", "fileBased/renameModule") { builder, _, _ ->
+    checkSaveProjectAfterChange("directoryBased/renameModule", "fileBased/renameModule") { builder, _, _, _ ->
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       builder.modifyEntity(utilModule) {
         name = "util2"
@@ -79,7 +79,7 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `add library and check vfu index not empty`() {
-    checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, _, _, configLocation ->
       val root = LibraryRoot(virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"), LibraryRootTypeId.COMPILED)
       val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(configLocation)
       builder.addLibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), emptyList(), source)
@@ -96,7 +96,7 @@ class JpsProjectSaveAfterChangesTest {
   fun `add module`(unloaded: String) {
     val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
     checkSaveProjectAfterChange("directoryBased/addModule", "fileBased/addModule", unloadedModuleNames) { 
-      mainBuilder, unloadedEntitiesBuilder, configLocation ->
+      mainBuilder, _, unloadedEntitiesBuilder, configLocation ->
       val builder = if ("newModule" in unloadedModuleNames) unloadedEntitiesBuilder else mainBuilder
       val source = JpsFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
       val dependencies = listOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency)
@@ -118,7 +118,7 @@ class JpsProjectSaveAfterChangesTest {
   fun `remove module`(unloaded: String) {
     val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
     checkSaveProjectAfterChange("directoryBased/removeModule", "fileBased/removeModule", unloadedModuleNames) { 
-      mainBuilder, unloadedEntitiesBuilder, _ ->
+      mainBuilder, _, unloadedEntitiesBuilder, _ ->
       val builder = if ("util" in unloadedModuleNames) unloadedEntitiesBuilder else mainBuilder
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       //todo now we need to remove module libraries by hand, maybe we should somehow modify the model instead
@@ -132,7 +132,7 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `modify library`() {
-    checkSaveProjectAfterChange("directoryBased/modifyLibrary", "fileBased/modifyLibrary") { builder, _, configLocation ->
+    checkSaveProjectAfterChange("directoryBased/modifyLibrary", "fileBased/modifyLibrary") { builder, _, _, configLocation ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       val root = LibraryRoot(virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
                              LibraryRootTypeId.COMPILED)
@@ -144,7 +144,7 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `rename library`() {
-    checkSaveProjectAfterChange("directoryBased/renameLibrary", "fileBased/renameLibrary") { builder, _, _ ->
+    checkSaveProjectAfterChange("directoryBased/renameLibrary", "fileBased/renameLibrary") { builder, _, _, _ ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       builder.modifyEntity(junitLibrary) {
         name = "junit2"
@@ -154,7 +154,7 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `remove library`() {
-    checkSaveProjectAfterChange("directoryBased/removeLibrary", "fileBased/removeLibrary") { builder, _, _ ->
+    checkSaveProjectAfterChange("directoryBased/removeLibrary", "fileBased/removeLibrary") { builder, _, _, _ ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       builder.removeEntity(junitLibrary)
     }
@@ -163,7 +163,7 @@ class JpsProjectSaveAfterChangesTest {
   private fun checkSaveProjectAfterChange(directoryNameForDirectoryBased: String,
                                           directoryNameForFileBased: String,
                                           unloadedModuleNames: Set<String> = emptySet(),
-                                          change: (MutableEntityStorage, MutableEntityStorage, JpsProjectConfigLocation) -> Unit) {
+                                          change: (MutableEntityStorage, MutableEntityStorage, MutableEntityStorage, JpsProjectConfigLocation) -> Unit) {
     checkSaveProjectAfterChange(sampleDirBasedProjectFile, directoryNameForDirectoryBased, change, unloadedModuleNames, virtualFileManager, "serialization/reload")
     checkSaveProjectAfterChange(sampleFileBasedProjectFile, directoryNameForFileBased, change, unloadedModuleNames, virtualFileManager, "serialization/reload")
   }

@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,7 +11,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -193,7 +193,8 @@ public class PushDownConflicts {
         final PsiMethod overrider = MethodSignatureUtil.findMethodBySuperMethod(targetClass, method, false);
         if (overrider != null && ReferencesSearch.search(method, new LocalSearchScope(overrider)).findAll().size() != 1) {
           String message = RefactoringBundle.message("0.is.already.overridden.in.1",
-                                                     RefactoringUIUtil.getDescription(method, true), RefactoringUIUtil.getDescription(targetClass, false));
+                                                     RefactoringUIUtil.getDescription(method, true),
+                                                     RefactoringUIUtil.getDescription(targetClass, false));
           myConflicts.putValue(overrider, StringUtil.capitalize(message));
         }
       }
@@ -206,19 +207,21 @@ public class PushDownConflicts {
         if (innerClass.equals(movedMember)) continue;
 
         if (Objects.requireNonNull(name).equals(innerClass.getName())) {
-          String message = JavaRefactoringBundle.message("0.already.contains.inner.class.named.1", RefactoringUIUtil.getDescription(targetClass, false),
-                                                CommonRefactoringUtil.htmlEmphasize(name));
+          String message = JavaRefactoringBundle.message("0.already.contains.inner.class.named.1",
+                                                         RefactoringUIUtil.getDescription(targetClass, false),
+                                                         CommonRefactoringUtil.htmlEmphasize(name));
           myConflicts.putValue(innerClass, message);
         }
       }
     }
 
     if (movedMember.hasModifierProperty(PsiModifier.STATIC) &&
-        PsiUtil.getEnclosingStaticElement(targetClass, null) == null &&
-        !(targetClass.getParent() instanceof PsiFile)) {
-      myConflicts.putValue(movedMember, JavaBundle
-        .message("push.down.static.nonstatic.conflict", RefactoringUIUtil.getDescription(movedMember, false),
-                 RefactoringUIUtil.getDescription(targetClass, false)));
+        !targetClass.hasModifierProperty(PsiModifier.STATIC) &&
+        !(targetClass.getParent() instanceof PsiFile) &&
+        !HighlightingFeature.INNER_STATICS.isAvailable(targetClass)) {
+      myConflicts.putValue(movedMember, JavaBundle.message("push.down.static.nonstatic.conflict",
+                                              RefactoringUIUtil.getDescription(movedMember, false),
+                                              RefactoringUIUtil.getDescription(targetClass, false)));
     }
   }
 

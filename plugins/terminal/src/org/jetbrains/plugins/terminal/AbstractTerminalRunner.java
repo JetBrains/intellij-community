@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -30,14 +31,15 @@ import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.ui.TerminalSession;
-import com.pty4j.WinSize;
 import com.pty4j.windows.WinPtyException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.exp.TerminalWidgetImpl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -78,7 +80,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   private void doRun() {
     // Create Server process
     try {
-      final T process = createProcess(new TerminalProcessOptions(null, null, null), null);
+      final T process = createProcess(new TerminalProcessOptions(null, null), null);
 
       UIUtil.invokeLaterIfNeeded(() -> initConsoleUI(process));
     }
@@ -128,6 +130,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   public @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent,
                                                            @Nullable String currentWorkingDirectory,
                                                            boolean deferSessionStartUntilUiShown) {
+    if (Registry.is("ide.experimental.ui.new.terminal", false)) {
+      return new TerminalWidgetImpl(myProject, mySettingsProvider, parent);
+    }
     return createTerminalWidget(parent, currentWorkingDirectory, deferSessionStartUntilUiShown).asNewWidget();
   }
 
@@ -196,7 +201,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   protected abstract String getTerminalConnectionName(T process);
 
-  protected abstract TtyConnector createTtyConnector(T process);
+  public abstract TtyConnector createTtyConnector(T process);
 
   protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
     return new CloseAction(defaultExecutor, myDescriptor, myProject);
@@ -236,14 +241,12 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   private void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @Nullable String directory) {
     ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
-    WinSize size = terminalWidget.getWindowSize();
+    TermSize size = terminalWidget.getTermSize();
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (myProject.isDisposed()) return;
       try {
-        T process = createProcess(new TerminalProcessOptions(directory,
-                                                             size != null ? size.getColumns() : null,
-                                                             size != null ? size.getRows() : null));
+        T process = createProcess(new TerminalProcessOptions(directory, size));
         TtyConnector connector = createTtyConnector(process);
 
         ApplicationManager.getApplication().invokeLater(() -> {

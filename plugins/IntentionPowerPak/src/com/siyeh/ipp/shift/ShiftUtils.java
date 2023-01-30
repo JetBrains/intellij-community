@@ -18,6 +18,7 @@ package com.siyeh.ipp.shift;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 
 final class ShiftUtils {
 
@@ -75,10 +76,10 @@ final class ShiftUtils {
 
   public static boolean isIntegral(PsiType lhsType) {
     return lhsType != null &&
-           (lhsType.equals(PsiType.INT)
-            || lhsType.equals(PsiType.SHORT)
-            || lhsType.equals(PsiType.LONG)
-            || lhsType.equals(PsiType.BYTE));
+           (lhsType.equals(PsiTypes.intType())
+            || lhsType.equals(PsiTypes.shortType())
+            || lhsType.equals(PsiTypes.longType())
+            || lhsType.equals(PsiTypes.byteType()));
   }
 
   public static boolean isIntLiteral(PsiExpression rhs) {

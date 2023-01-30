@@ -5,10 +5,7 @@ package org.jetbrains.uast.test.kotlin
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
-import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
@@ -95,7 +92,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
     fun `test simple reference creating from variable`() {
         val context = dummyContextFile()
         val variable = uastElementFactory.createLocalVariable(
-            "a", PsiType.INT, uastElementFactory.createNullLiteral(context), false, context
+            "a", PsiTypes.intType(), uastElementFactory.createNullLiteral(context), false, context
         )
 
         val reference = uastElementFactory.createSimpleReference(variable, context) ?: kfail("cannot create reference")
@@ -138,7 +135,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val expression = psiFactory.createExpression("b").toUElementOfType<UExpression>()
             ?: kfail("cannot create variable declaration")
 
-        val declaration = uastElementFactory.createLocalVariable("a", PsiType.DOUBLE, expression, false, dummyContextFile())
+        val declaration = uastElementFactory.createLocalVariable("a", PsiTypes.doubleType(), expression, false, dummyContextFile())
 
         TestCase.assertEquals("var a: kotlin.Double = b", declaration.sourcePsi?.text)
     }
@@ -147,7 +144,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val expression = psiFactory.createExpression("b").toUElementOfType<UExpression>()
             ?: kfail("cannot create variable declaration")
 
-        val declaration = uastElementFactory.createLocalVariable("a", PsiType.DOUBLE, expression, true, dummyContextFile())
+        val declaration = uastElementFactory.createLocalVariable("a", PsiTypes.doubleType(), expression, true, dummyContextFile())
 
         TestCase.assertEquals("val a: kotlin.Double = b", declaration.sourcePsi?.text)
     }
@@ -156,7 +153,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val expression = psiFactory.createExpression("b").toUElementOfType<UExpression>()
             ?: kfail("cannot create variable declaration")
 
-        val declaration = uastElementFactory.createLocalVariable("a", PsiType.DOUBLE, expression, true, dummyContextFile())
+        val declaration = uastElementFactory.createLocalVariable("a", PsiTypes.doubleType(), expression, true, dummyContextFile())
 
         TestCase.assertEquals("val a: kotlin.Double = b", declaration.sourcePsi?.text)
         TestCase.assertEquals("""
@@ -188,7 +185,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
 
         val lambda = uastElementFactory.createLambdaExpression(
             listOf(
-                UParameterInfo(PsiType.INT, "a"),
+                UParameterInfo(PsiTypes.intType(), "a"),
                 UParameterInfo(null, "b")
             ),
             statement,
@@ -246,8 +243,8 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
 
         val lambda = uastElementFactory.createLambdaExpression(
             listOf(
-                UParameterInfo(PsiType.INT, "a"),
-                UParameterInfo(PsiType.DOUBLE, "b")
+                UParameterInfo(PsiTypes.intType(), "a"),
+                UParameterInfo(PsiTypes.doubleType(), "b")
             ),
             statement,
             dummyContextFile()
@@ -325,7 +322,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
     fun `test suggested name`() {
         val expression = psiFactory.createExpression("f(a) + 1").toUElementOfType<UExpression>()
             ?: kfail("cannot create expression")
-        val variable = uastElementFactory.createLocalVariable(null, PsiType.INT, expression, true, dummyContextFile())
+        val variable = uastElementFactory.createLocalVariable(null, PsiTypes.intType(), expression, true, dummyContextFile())
 
         TestCase.assertEquals("val i: kotlin.Int = f(a) + 1", variable.sourcePsi?.text)
         TestCase.assertEquals("""
@@ -925,7 +922,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
     fun `test expand oneline lambda`() {
 
         val context = dummyContextFile()
-        val parameters = listOf(UParameterInfo(PsiType.INT, "a"))
+        val parameters = listOf(UParameterInfo(PsiTypes.intType(), "a"))
         val oneLineLambda = with(uastElementFactory) {
             createLambdaExpression(
                 parameters,
@@ -945,12 +942,12 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
                 createBlockExpression(
                     listOf(
                         createCallExpression(
-                            null,
-                            "println",
-                            listOf(createSimpleReference("a", context)),
-                            PsiType.VOID,
-                            UastCallKind.METHOD_CALL,
-                            context
+                          null,
+                          "println",
+                          listOf(createSimpleReference("a", context)),
+                          PsiTypes.voidType(),
+                          UastCallKind.METHOD_CALL,
+                          context
                         )!!,
                         lambdaReturn
                     ),

@@ -41,6 +41,7 @@ import com.intellij.util.CachedValueImpl;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.indexing.UnindexedFilesScannerExecutor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -799,7 +800,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
   @Override
   public boolean showAndGet() {
     final BooleanValueHolder result = new BooleanValueHolder(false);
-    DumbService.getInstance(myProject).suspendIndexingAndRun(ExternalSystemBundle.message("activity.name.select.external.data"),
+    UnindexedFilesScannerExecutor.getInstance(myProject).suspendScanningAndIndexingThenRun(ExternalSystemBundle.message("activity.name.select.external.data"),
       () -> result.setValue(super.showAndGet())
     );
     return result.getValue();

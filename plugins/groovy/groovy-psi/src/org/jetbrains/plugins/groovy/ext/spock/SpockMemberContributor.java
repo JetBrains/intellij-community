@@ -52,7 +52,7 @@ public class SpockMemberContributor extends NonCodeMembersContributor {
           processor.execute(spockVar.getVariable(), state);
         }
         if (UNDERSCORES.matcher(nameHint).matches()) {
-          GrLightVariable variable = new GrLightVariable(place.getManager(), nameHint, PsiType.NULL, List.of(), method);
+          GrLightVariable variable = new GrLightVariable(place.getManager(), nameHint, PsiTypes.nullType(), List.of(), method);
           processor.execute(variable, state);
         }
       }

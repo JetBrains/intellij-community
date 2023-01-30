@@ -5,4 +5,3 @@ package server
 
 internal var <caret>foo: String = "foo"
 
-// FIR_COMPARISON

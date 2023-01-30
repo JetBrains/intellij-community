@@ -8,4 +8,3 @@ interface Bar {
     operator fun Foos.Companion.invoke() {}
 }
 
-// FIR_COMPARISON

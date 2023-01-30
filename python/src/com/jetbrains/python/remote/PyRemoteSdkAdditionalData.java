@@ -1,7 +1,6 @@
 package com.jetbrains.python.remote;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -293,7 +292,6 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     data.load(element);
 
     if (element != null) {
-      WSLUtil.fixWslPrefix(sdk);
       CredentialsManager.getInstance().loadCredentials(path, element, data);
       if (data.myRemoteConnectionCredentialsWrapper.getRemoteConnectionType().hasPrefix(RemoteCredentialsHolder.SSH_PREFIX)) {
         CredentialsManager.updateOutdatedSdk(data, null);

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.openapi.util.NlsSafe
@@ -21,7 +22,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createDescriptionComponent
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 
@@ -254,8 +254,8 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
     }
 
     private fun labelHTML(label: GHLabel): HtmlChunk {
-      val background = GHUIUtil.getLabelBackground(label)
-      val foreground = GHUIUtil.getLabelForeground(background)
+      val background = CollaborationToolsUIUtil.getLabelBackground(label.color)
+      val foreground = CollaborationToolsUIUtil.getLabelForeground(background)
 
       return HtmlChunk.span("color: #${ColorUtil.toHex(foreground)}; background: #${ColorUtil.toHex(background)}")
         .child(HtmlChunk.nbsp())

@@ -397,7 +397,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                             processExpression(storedValue)
                             addInstruction(PopInstruction())
                         }
-                        addInstruction(PushValueInstruction(DfTypes.typedObject(PsiType.CHAR, Nullability.UNKNOWN), anchor))
+                        addInstruction(PushValueInstruction(DfTypes.typedObject(PsiTypes.charType(), Nullability.UNKNOWN), anchor))
                     }
                     isList(kotlinType) -> {
                         if (indexType.canBeNull()) {

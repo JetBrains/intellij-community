@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform").version("{{kotlin_plugin_version}}")
+    kotlin("multiplatform").version("{{kgp_version}}")
 }
 
 repositories {
@@ -11,7 +11,7 @@ version = "1.0"
 
 kotlin {
     jvm() 
-    js()
+    js(IR)
 
     sourceSets {
         val orphan by creating { }

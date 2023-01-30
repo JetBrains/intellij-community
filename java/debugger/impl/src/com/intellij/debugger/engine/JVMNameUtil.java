@@ -33,31 +33,31 @@ public final class JVMNameUtil {
 
   @Nullable
   public static String getPrimitiveSignature(String typeName) {
-    if (PsiType.BOOLEAN.getCanonicalText().equals(typeName)) {
+    if (PsiTypes.booleanType().getCanonicalText().equals(typeName)) {
       return "Z";
     }
-    else if (PsiType.BYTE.getCanonicalText().equals(typeName)) {
+    else if (PsiTypes.byteType().getCanonicalText().equals(typeName)) {
       return "B";
     }
-    else if (PsiType.CHAR.getCanonicalText().equals(typeName)) {
+    else if (PsiTypes.charType().getCanonicalText().equals(typeName)) {
       return "C";
     }
-    else if (PsiType.SHORT.getCanonicalText().equals(typeName)) {
+    else if (PsiTypes.shortType().getCanonicalText().equals(typeName)) {
       return "S";
     }
-    else if (PsiType.INT.getCanonicalText().equals(typeName)) {
+    else if (PsiTypes.intType().getCanonicalText().equals(typeName)) {
       return "I";
     }
-    else if (PsiType.LONG.getCanonicalText().equals(typeName)) {
+    else if (PsiTypes.longType().getCanonicalText().equals(typeName)) {
       return "J";
     }
-    else if (PsiType.FLOAT.getCanonicalText().equals(typeName)) {
+    else if (PsiTypes.floatType().getCanonicalText().equals(typeName)) {
       return "F";
     }
-    else if (PsiType.DOUBLE.getCanonicalText().equals(typeName)) {
+    else if (PsiTypes.doubleType().getCanonicalText().equals(typeName)) {
       return "D";
     }
-    else if (PsiType.VOID.getCanonicalText().equals(typeName)) {
+    else if (PsiTypes.voidType().getCanonicalText().equals(typeName)) {
       return "V";
     }
     return null;

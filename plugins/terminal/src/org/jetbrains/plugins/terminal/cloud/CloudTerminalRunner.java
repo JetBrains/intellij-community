@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.remoteServer.agent.util.log.TerminalListener.TtyResizeHandler;
 import com.intellij.terminal.ui.TerminalWidget;
+import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
 import org.jetbrains.plugins.terminal.TerminalProcessOptions;
 
-import java.awt.*;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -90,21 +90,21 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   }
 
   @Override
-  protected TtyConnector createTtyConnector(CloudTerminalProcess process) {
+  public TtyConnector createTtyConnector(CloudTerminalProcess process) {
     return new ProcessTtyConnector(process, StandardCharsets.UTF_8) {
-      private Dimension myAppliedTermSize;
+      private TermSize myAppliedTermSize;
 
       @Override
       protected void resizeImmediately() {
         if (myTtyResizeHandler == null) {
           return;
         }
-        Dimension termSize = getPendingTermSize();
+        TermSize termSize = getPendingTermSize();
         if (Objects.equals(myAppliedTermSize, termSize)) {
           return;
         }
         if (termSize != null) {
-          myTtyResizeHandler.onTtyResizeRequest(termSize.width, termSize.height);
+          myTtyResizeHandler.onTtyResizeRequest(termSize.getColumns(), termSize.getRows());
         }
         myAppliedTermSize = termSize;
       }

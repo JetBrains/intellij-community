@@ -157,7 +157,7 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
       return VcsTreeModelData.getListSelectionOrAll(myViewer).map { (it as? SavedPatchesProvider.ChangeObject)?.asChange() }
     }
     else if (VcsDataKeys.CHANGE_LEAD_SELECTION.`is`(dataId)) {
-      return VcsTreeModelData.exactlySelected(myViewer).mapToChange().take(1).toList().toTypedArray()
+      return VcsTreeModelData.exactlySelected(myViewer).mapToChange().toList().toTypedArray()
     }
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId)) {
       return VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)

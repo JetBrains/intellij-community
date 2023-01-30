@@ -17,4 +17,4 @@ fun foo(n: Int) {
 
 val foo: Int = 42
 
-// FIR_COMPARISON
+

@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.target.value.TargetValue
+import com.intellij.task.RunConfigurationTaskState
 import org.gradle.tooling.internal.consumer.ConnectionParameters
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 internal class TargetConnectionParameters(val connectionParameters: ConnectionParameters,
-                                          val gradleUserHome: TargetValue<String>?) : ConnectionParameters by connectionParameters
+                                          val gradleUserHome: TargetValue<String>?,
+                                          val taskState: RunConfigurationTaskState?) : ConnectionParameters by connectionParameters

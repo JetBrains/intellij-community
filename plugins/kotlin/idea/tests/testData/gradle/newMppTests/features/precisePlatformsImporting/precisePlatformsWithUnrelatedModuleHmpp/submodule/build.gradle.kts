@@ -13,6 +13,6 @@ plugins {
 }
 
 kotlin {
-    js()
+    js(IR)
     jvm()
 }

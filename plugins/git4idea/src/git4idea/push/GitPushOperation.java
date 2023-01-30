@@ -148,7 +148,11 @@ public class GitPushOperation {
 
         if (!result.rejected.isEmpty()) {
 
-          if (myForceMode.isForce() || pushingToNotTrackedBranch(result.rejected) || pushingNotCurrentBranch(result.rejected)) break;
+          if (myForceMode.isForce() ||
+              pushingToNotTrackedBranch(result.rejected) ||
+              pushingNotCurrentBranch(result.rejected)) {
+            break;
+          }
 
           // propose to update if rejected
           if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {
@@ -217,7 +221,7 @@ public class GitPushOperation {
     boolean pushingToNotTrackedBranch = ContainerUtil.exists(rejected.entrySet(), entry -> {
       GitRepository repository = entry.getKey();
       GitLocalBranch currentBranch = repository.getCurrentBranch();
-      assert currentBranch != null;
+      if (currentBranch == null) return true;
       GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
       return trackInfo == null || !trackInfo.getRemoteBranch().getFullName().equals(entry.getValue().getTargetBranch());
     });
@@ -228,8 +232,9 @@ public class GitPushOperation {
   private static boolean pushingNotCurrentBranch(@NotNull Map<GitRepository, GitPushRepoResult> rejected) {
     boolean pushingNotCurrentBranch = ContainerUtil.exists(rejected.entrySet(), entry -> {
       GitRepository repository = entry.getKey();
-      String currentBranch = Objects.requireNonNull(repository.getCurrentBranch()).getFullName();
-      return !StringUtil.equals(currentBranch, entry.getValue().getSourceBranch());
+      GitLocalBranch currentBranch = repository.getCurrentBranch();
+      String pushedBranch = entry.getValue().getSourceBranch();
+      return currentBranch == null || !StringUtil.equals(currentBranch.getFullName(), pushedBranch);
     });
     LOG.debug("Pushing non current branch condition is [" + pushingNotCurrentBranch + "]");
     return pushingNotCurrentBranch;

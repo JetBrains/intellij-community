@@ -22,4 +22,3 @@ fun X.foo(n: Int) {
 
 }
 
-// FIR_COMPARISON

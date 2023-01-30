@@ -36,6 +36,7 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.resolved
 import java.util.concurrent.CompletableFuture
@@ -89,6 +90,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
         mavenProjectAware.linkAndLoadProject(project, basePath)
       }
     }
+    MavenLog.LOG.warn("linked finished for ${project.name}")
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     val promise = mavenProjectsManager.waitForImportCompletion()
     while (true) {

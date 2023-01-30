@@ -42,7 +42,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
   internal lateinit var accountManager: GitLabAccountManager
 
   @Test
-  fun `initial selection`() = runTest {
+  fun `single mapping and account initial selection`() = runTest {
     val projectMapping = mock<GitLabProjectMapping> {
       on { repository } doAnswer {
         mock {
@@ -55,6 +55,35 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
 
     val account = GitLabAccount(name = "test", server = GitLabServerPath.DEFAULT_SERVER)
     whenever(accountManager.accountsState) doReturn MutableStateFlow(setOf(account))
+    whenever(accountManager.getCredentialsState(any(), any())) doReturn MutableStateFlow("")
+
+    val scope = childScope(Dispatchers.Main)
+    val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectManager, accountManager) { _, _ -> mock() }
+
+    assertEquals(projectMapping, vm.repoSelectionState.value)
+    assertEquals(account, vm.accountSelectionState.value)
+    assertEquals(false, vm.missingCredentialsState.value)
+    assertEquals(false, vm.tokenLoginAvailableState.value)
+    assertEquals(true, vm.submitAvailableState.value)
+
+    scope.cancel()
+  }
+
+  @Test
+  fun `multiple accounts initial selection`() = runTest {
+    val projectMapping = mock<GitLabProjectMapping> {
+      on { repository } doAnswer {
+        mock {
+          on { serverPath } doReturn GitLabServerPath.DEFAULT_SERVER
+        }
+      }
+    }
+
+    whenever(projectManager.knownRepositoriesState) doReturn MutableStateFlow(setOf(projectMapping))
+
+    val account = GitLabAccount(name = "test", server = GitLabServerPath.DEFAULT_SERVER)
+    val secondAccount = GitLabAccount(name = "secondAccount", server = GitLabServerPath.DEFAULT_SERVER)
+    whenever(accountManager.accountsState) doReturn MutableStateFlow(setOf(account, secondAccount))
     whenever(accountManager.getCredentialsState(any(), any())) doReturn MutableStateFlow("")
 
     val scope = childScope(Dispatchers.Main)

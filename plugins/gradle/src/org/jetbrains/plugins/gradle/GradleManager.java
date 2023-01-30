@@ -44,6 +44,7 @@ import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.indexing.UnindexedFilesScannerExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
@@ -372,7 +373,7 @@ public final class GradleManager
         ProgressManager.getInstance().run(new Task.Backgroundable(project, title, false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            DumbService.getInstance(project).suspendIndexingAndRun(title, () -> {
+            UnindexedFilesScannerExecutor.getInstance(project).suspendScanningAndIndexingThenRun(title, () -> {
               for (DataNode<ModuleData> moduleDataNode : findAll(projectStructure, ProjectKeys.MODULE)) {
                 moduleDataNode.getData().useExternalCompilerOutput(delegatedBuild);
                 for (DataNode<GradleSourceSetData> sourceSetDataNode : findAll(moduleDataNode, GradleSourceSetData.KEY)) {

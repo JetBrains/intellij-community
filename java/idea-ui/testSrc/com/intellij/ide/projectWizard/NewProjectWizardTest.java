@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
-import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData;
-import com.intellij.ide.wizard.LanguageNewProjectWizardData;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -17,6 +15,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.SystemProperties;
+
+import static com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.getJavaData;
+import static com.intellij.ide.wizard.LanguageNewProjectWizardData.getLanguageData;
 
 /**
  * @author Dmitry Avdeev
@@ -60,15 +61,15 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
 
     // Project with default JDK
     Project project = createProjectFromTemplate(step -> {
-      IntelliJJavaNewProjectWizardData.setSdk(step, defaultSdk);
+      getJavaData(step).setSdk(defaultSdk);
     });
     assertEquals(ProjectRootManager.getInstance(project).getProjectSdk().getName(), defaultSdk.getName());
 
     // Module with custom JDK
     createModuleFromTemplate(project, step -> {
-      LanguageNewProjectWizardData.setLanguage(step, "Java");
-      IntelliJJavaNewProjectWizardData.setSdk(step, otherSdk);
-      IntelliJJavaNewProjectWizardData.setModuleName(step, moduleName);
+      getLanguageData(step).setLanguage("Java");
+      getJavaData(step).setSdk(otherSdk);
+      getJavaData(step).setModuleName(moduleName);
     });
 
     final var manager = ModuleManager.getInstance(project);
@@ -132,7 +133,7 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
 
   public void testSampleCode() throws Exception {
     Project project = createProjectFromTemplate(step -> {
-      IntelliJJavaNewProjectWizardData.setAddSampleCode(step, true);
+      getJavaData(step).setAddSampleCode(true);
     });
     final var mainSearch = FilenameIndex.getVirtualFilesByName("Main.java", GlobalSearchScope.projectScope(project));
     assertFalse(mainSearch.isEmpty());

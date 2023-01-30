@@ -12,4 +12,4 @@ val someObject3 = SomeObject
 val someObject4 = someObject3("some-string1", 3)
 val someObject5 = someObject3.invoke("some-string1", 4)
 
-// FIR_COMPARISON
+

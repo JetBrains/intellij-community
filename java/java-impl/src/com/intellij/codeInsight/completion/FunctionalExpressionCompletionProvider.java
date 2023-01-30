@@ -170,7 +170,7 @@ class MethodReferenceCompletion {
           result.consume(createConstructorReferenceLookup(eachReturnType));
         }
       }
-      else if (myParams.length == 1 && PsiType.INT.equals(myParams[0].getType())) {
+      else if (myParams.length == 1 && PsiTypes.intType().equals(myParams[0].getType())) {
         result.consume(createConstructorReferenceLookup(eachReturnType));
       }
     };

@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.DevicePoint
@@ -83,7 +84,12 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     internal fun createDropTargetHighlightComponent(): NonOpaquePanel {
       return object: NonOpaquePanel() {
         override fun paint(g: Graphics) {
-          g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
+          if (ExperimentalUI.isNewUI()) {
+            g.color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.AREA_BACKGROUND
+          }
+          else {
+            g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
+          }
           g.fillRect(0, 0, width, height)
         }
       }
@@ -271,40 +277,41 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         lastDropTargetPane = toolWindow.toolWindowManager.getToolWindowPane(targetStripe.paneId)
       }
 
-      if (!isNewUi) {
-        SwingUtilities.invokeLater(Runnable {
-          if (initialAnchor == null || initialIsSplit == null) return@Runnable
+      SwingUtilities.invokeLater(Runnable {
+        if (initialAnchor == null || initialIsSplit == null) return@Runnable
 
-          // Get the bounds of the drop target highlight. If the point is inside the drop target bounds, use those bounds. If it's not, but
-          // it's inside the bounds of the tool window (and the tool window is visible), then use the tool window bounds. Note that when
-          // docked, the tool window's screen coordinate system will be the same as the mouse event's. But if it's floating, it might be on
-          // another screen (although if it's floating, we don't get bounds)
-          val toolWindowBounds = getToolWindowScreenBoundsIfVisibleAndDocked(toolWindow)?.takeIf {
-            getTargetStripeByDropLocation(eventDevicePoint, preferredStripe) == null && it.contains(event.locationOnScreen)
-          }
-          val bounds = toolWindowBounds ?: getDropTargetScreenBounds(lastDropTargetPane!!, targetStripe.anchor)
+        // Get the bounds of the drop target highlight. If the point is inside the drop target bounds, use those bounds. If it's not, but
+        // it's inside the bounds of the tool window (and the tool window is visible), then use the tool window bounds. Note that when
+        // docked, the tool window's screen coordinate system will be the same as the mouse event's. But if it's floating, it might be on
+        // another screen (although if it's floating, we don't get bounds)
+        val toolWindowBounds = getToolWindowScreenBoundsIfVisibleAndDocked(toolWindow)?.takeIf {
+          getTargetStripeByDropLocation(eventDevicePoint, preferredStripe) == null && it.contains(event.locationOnScreen)
+        }
+        val bounds = toolWindowBounds ?: getDropTargetScreenBounds(lastDropTargetPane!!, targetStripe.anchor)
 
-          bounds.location = bounds.location.also { SwingUtilities.convertPointFromScreen(it, lastDropTargetPane!!.rootPane.layeredPane) }
+        bounds.location = bounds.location.also { SwingUtilities.convertPointFromScreen(it, lastDropTargetPane!!.rootPane.layeredPane) }
 
-          val dropToSide = targetStripe.getDropToSide()
-          if (dropToSide != null) {
-            val half = if (targetStripe.anchor.isHorizontal) bounds.width / 2 else bounds.height / 2
-            if (!targetStripe.anchor.isHorizontal) {
-              bounds.height -= half
-              if (dropToSide) {
-                bounds.y += half
-              }
-            }
-            else {
-              bounds.width -= half
-              if (dropToSide) {
-                bounds.x += half
-              }
+        var dropToSide = targetStripe.getDropToSide()
+        if (dropToSide == null && isNewUi) {
+          dropToSide = false
+        }
+        if (dropToSide != null) {
+          val half = if (targetStripe.anchor.isHorizontal) bounds.width / 2 else bounds.height / 2
+          if (!targetStripe.anchor.isHorizontal) {
+            bounds.height -= half
+            if (dropToSide) {
+              bounds.y += half
             }
           }
-          dropTargetHighlightComponent.bounds = bounds
-        })
-      }
+          else {
+            bounds.width -= half
+            if (dropToSide) {
+              bounds.x += half
+            }
+          }
+        }
+        dropTargetHighlightComponent.bounds = bounds
+      })
     }
   }
 
@@ -353,7 +360,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
                                                             paneId = info?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID,
                                                             anchor = preferredStripe.anchor,
                                                             order = info?.order ?: -1,
-                                                            isSplit = preferredStripe.split)
+                                                            isSplit = info?.isSplit ?: preferredStripe.split)
         }
       }
     }
@@ -436,6 +443,9 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
   private fun getPaneContentScreenBounds(pane: ToolWindowPane): Rectangle {
     val location = pane.locationOnScreen
+    if (isNewUi) {
+      return Rectangle(location.x, location.y, pane.width, pane.height)
+    }
     location.x += getStripeWidth(pane, LEFT)
     location.y += getStripeHeight(pane, TOP)
     val width = pane.width - getStripeWidth(pane, LEFT) - getStripeWidth(pane, RIGHT)

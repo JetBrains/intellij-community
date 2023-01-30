@@ -304,9 +304,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     finally {
       readyToFinish.countDown();
     }
-    for (Future<?> future : futures) {
-      future.get(Math.max(0, deadline-System.nanoTime()), TimeUnit.NANOSECONDS);
-    }
+    ConcurrencyUtil.getAll(Math.max(0, deadline-System.nanoTime()), TimeUnit.NANOSECONDS, futures);
   }
 
   public boolean isEmpty() {

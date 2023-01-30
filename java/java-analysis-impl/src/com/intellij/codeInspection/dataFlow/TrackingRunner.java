@@ -1547,9 +1547,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       if (range.equals(JvmPsiRangeSetUtil.typeRange(type))) {
         return null; // Range is any value of given type: no need to explain (except narrowing cast)
       }
-      if (PsiType.LONG.equals(type) || PsiType.INT.equals(type)) {
+      if (PsiTypes.longType().equals(type) || PsiTypes.intType().equals(type)) {
         if (expression instanceof PsiBinaryExpression) {
-          LongRangeType lrType = PsiType.LONG.equals(type) ? LongRangeType.INT64 : LongRangeType.INT32;
+          LongRangeType lrType = PsiTypes.longType().equals(type) ? LongRangeType.INT64 : LongRangeType.INT32;
           PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
           PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
           PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());

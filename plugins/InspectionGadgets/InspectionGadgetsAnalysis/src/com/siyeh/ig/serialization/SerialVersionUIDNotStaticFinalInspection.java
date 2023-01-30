@@ -99,7 +99,7 @@ public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
     private void visitVariable(@NotNull PsiVariable field, @Nullable PsiClass containingClass) {
       if (!SerializationUtils.isSerializable(containingClass)) return;
       if (!HardcodedMethodConstants.SERIAL_VERSION_UID.equals(field.getName())) return;
-      final boolean rightReturnType = PsiType.LONG.equals(field.getType());
+      final boolean rightReturnType = PsiTypes.longType().equals(field.getType());
       boolean isStaticField = field.hasModifierProperty(STATIC);
       if (rightReturnType && isStaticField && field.hasModifierProperty(PRIVATE) && field.hasModifierProperty(FINAL)) return;
       PsiIdentifier identifier = field.getNameIdentifier();

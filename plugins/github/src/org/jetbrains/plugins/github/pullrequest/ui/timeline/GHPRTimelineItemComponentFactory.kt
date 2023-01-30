@@ -3,20 +3,24 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.async.combineAndCollect
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
+import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil.Title
 import com.intellij.collaboration.ui.codereview.onHyperlinkActivated
 import com.intellij.collaboration.ui.codereview.setHtmlBody
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
-import com.intellij.collaboration.ui.codereview.timeline.TimelineItemComponentFactory
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -27,7 +31,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.text.JBDateFormat
@@ -57,7 +60,6 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataPr
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
-import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.buildTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
@@ -84,11 +86,12 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
                                        private val ghostUser: GHUser,
                                        private val prAuthor: GHActor?,
-                                       private val currentUser: GHUser) : TimelineItemComponentFactory<GHPRTimelineItem> {
+                                       private val currentUser: GHUser)
+  : (GHPRTimelineItem) -> JComponent {
 
   private val eventComponentFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider, ghostUser)
 
-  override fun createComponent(item: GHPRTimelineItem): JComponent {
+  override fun invoke(item: GHPRTimelineItem): JComponent {
     try {
       return when (item) {
         is GHPullRequestCommitShort -> createComponent(listOf(item))
@@ -195,8 +198,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
           .successOnEdt { textPane.updateText(it.body) }
       }
       contentPanel = panelHandle.panel
-      actionsPanel = if (details.viewerCanUpdate) HorizontalListPanel(8).apply {
-        add(GHTextActions.createEditButton(panelHandle))
+      actionsPanel = if (details.viewerCanUpdate) HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
+        add(CodeReviewCommentUIUtil.createEditButton {
+          panelHandle.showAndFocusEditor()
+        })
       }
       else null
     }
@@ -216,9 +221,11 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText)
         .successOnEdt { textPane.setHtmlBody(it.convertToHtml(project)) }
     }
-    val actionsPanel = HorizontalListPanel(8).apply {
-      if (comment.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
-      if (comment.viewerCanDelete) add(GHTextActions.createDeleteButton {
+    val actionsPanel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
+      if (comment.viewerCanUpdate) add(CodeReviewCommentUIUtil.createEditButton {
+        panelHandle.showAndFocusEditor()
+      })
+      if (comment.viewerCanDelete) add(CodeReviewCommentUIUtil.createDeleteCommentIconButton {
         commentsDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
       })
     }
@@ -286,9 +293,11 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       maxEditorWidth = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH
     }
 
-    val actionsPanel = HorizontalListPanel(8).apply {
-      if (firstComment.canBeUpdated) add(GHTextActions.createEditButton(panelHandle))
-      if (firstComment.canBeDeleted) add(GHTextActions.createDeleteButton {
+    val actionsPanel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
+      if (firstComment.canBeUpdated) add(CodeReviewCommentUIUtil.createEditButton {
+        panelHandle.showAndFocusEditor()
+      })
+      if (firstComment.canBeDeleted) add(CodeReviewCommentUIUtil.createDeleteCommentIconButton {
         reviewDataProvider.deleteComment(EmptyProgressIndicator(), firstComment.id)
       })
     }
@@ -316,7 +325,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                                                      CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
 
 
-    val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, commentComponentFactory, 0)
+    val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, componentFactory = commentComponentFactory)
 
     val commentsPanel = if (reviewDataProvider.canComment()) {
       val actionsComponent = GHPRReviewThreadComponent
@@ -349,11 +358,11 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val collapsedThreadActionsComponent = GHPRReviewThreadComponent
       .getCollapsedThreadActionsComponent(reviewDataProvider, avatarIconsProvider, thread, ghostUser) {
         repliesCollapsedState.update { !it }
-        CollaborationToolsUIUtil.focusPanel(commentsPanel)
-      }.let {
-        CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+        invokeLater {
+          CollaborationToolsUIUtil.focusPanel(commentsPanel)
+        }
       }.apply {
-        border = JBUI.Borders.empty(3, 0, 7, 0)
+        border = JBUI.Borders.empty(Thread.Replies.ActionsFolded.VERTICAL_PADDING, 0)
       }
 
     coroutineScopeProvider.launchInScope {
@@ -363,7 +372,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       }
     }
 
-    val content = VerticalListPanel(6).apply {
+    val diffAndText = VerticalListPanel(Thread.DIFF_TEXT_GAP).apply {
       coroutineScopeProvider.launchInScope {
         combineAndCollect(thread.collapsedState, textFlow) { collapsed, text ->
           removeAll()
@@ -378,7 +387,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
             bodyPanel.setContent(textPane)
             add(panelHandle.panel)
             add(diff)
-            add(collapsedThreadActionsComponent)
           }
           else {
             val commentComponent = GHPRReviewCommentComponent
@@ -386,14 +394,15 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
             bodyPanel.setContent(commentComponent)
             add(diff)
             add(panelHandle.panel)
-            add(collapsedThreadActionsComponent)
           }
           revalidate()
           repaint()
         }
       }
-    }.also {
-      coroutineScopeProvider.activateWith(it)
+    }
+    val content = VerticalListPanel().apply {
+      add(diffAndText)
+      add(collapsedThreadActionsComponent)
     }
 
     val actor = firstComment.author ?: ghostUser
@@ -401,6 +410,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val mainItem = buildTimelineItem(avatarIconsProvider, actor, content) {
       withHeader(titlePanel, actionsPanel)
       maxContentWidth = null
+    }.also {
+      coroutineScopeProvider.activateWith(it)
     }
 
     return VerticalListPanel().apply {
@@ -410,22 +421,11 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   }
 
   private fun createThreadTagsPanel(thread: GHPRReviewThreadModel): JPanel {
-    val outdatedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.thread.outdated")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-    }.andOpaque()
+    val outdatedLabel = CollaborationToolsUIUtil.createTagLabel(GithubBundle.message("pull.request.review.thread.outdated"))
+    val resolvedLabel = CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.resolved.tag"))
+    val pendingLabel = CollaborationToolsUIUtil.createTagLabel(GithubBundle.message("pull.request.review.comment.pending"))
 
-    val resolvedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.resolved")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-    }.andOpaque()
-
-    val pendingLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.pending")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-    }.andOpaque()
-
-    val tagsPanel = HorizontalListPanel(10).apply {
+    val tagsPanel = HorizontalListPanel(Title.HORIZONTAL_GAP).apply {
       isOpaque = false
       add(outdatedLabel)
       add(resolvedLabel)
@@ -460,7 +460,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
 
     val actionsPanel = HorizontalListPanel(8).apply {
-      if (panelHandle != null && review.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
+      if (panelHandle != null && review.viewerCanUpdate) add(CodeReviewCommentUIUtil.createEditButton {
+        panelHandle.showAndFocusEditor()
+      })
     }
 
     val stateText = when (review.state) {

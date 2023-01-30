@@ -2,8 +2,10 @@
 @file:Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
 package com.intellij.ui.layout
 
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPanel
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun separatorAndComment() : JPanel {
   return panel {

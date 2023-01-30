@@ -228,19 +228,21 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     val builder = MutableEntityStorage.create()
+    val orphanage = MutableEntityStorage.create()
     val unloadedEntityBuilder = MutableEntityStorage.create()
     affectedFileLoaders.forEach {
       val unloaded = (it as? ModuleImlFileEntitiesSerializer)?.modulePath?.moduleName in unloadedModuleNames
       val targetBuilder = if (unloaded) unloadedEntityBuilder else builder
-      loadEntitiesAndReportExceptions(it, targetBuilder, reader, errorReporter)
+      loadEntitiesAndReportExceptions(it, targetBuilder, orphanage, reader, errorReporter)
     }
-    return ReloadingResult(builder, unloadedEntityBuilder, changedSources)
+    return ReloadingResult(builder, orphanage, unloadedEntityBuilder, changedSources)
   }
 
-  private data class BuilderWithLoadedState(val builder: MutableEntityStorage, val unloaded: Boolean)
+  private data class BuilderWithLoadedState(val builder: MutableEntityStorage, val orphanage: MutableEntityStorage, val unloaded: Boolean)
   
   override suspend fun loadAll(reader: JpsFileContentReader,
                                builder: MutableEntityStorage,
+                               orphanageBuilder: MutableEntityStorage,
                                unloadedEntityBuilder: MutableEntityStorage,
                                unloadedModuleNames: Set<String>,
                                errorReporter: ErrorReporter,
@@ -250,9 +252,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       serializers.map { serializer ->
         async {
           val result = MutableEntityStorage.create()
-          loadEntitiesAndReportExceptions(serializer, result, reader, errorReporter)
+          val orphanage = MutableEntityStorage.create()
+          loadEntitiesAndReportExceptions(serializer, result, orphanage, reader, errorReporter)
           val unloaded = (serializer as? ModuleImlFileEntitiesSerializer)?.modulePath?.moduleName in unloadedModuleNames
-          BuilderWithLoadedState(result, unloaded)
+          BuilderWithLoadedState(result, orphanage, unloaded)
         }
       }
     }.awaitAll()
@@ -264,11 +267,13 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     if (unloadedBuilders.isNotEmpty()) {
       unloadedEntityBuilder.addDiff(squash(unloadedBuilders))
     }
+    orphanageBuilder.addDiff(squash(buildersWithLoadedState.map { it.orphanage }))
     return sourcesToUpdate
   }
 
   private fun loadEntitiesAndReportExceptions(serializer: JpsFileEntitiesSerializer<*>,
                                               builder: MutableEntityStorage,
+                                              orphanage: MutableEntityStorage,
                                               reader: JpsFileContentReader,
                                               errorReporter: ErrorReporter) {
     fun reportError(e: Exception, url: VirtualFileUrl) {
@@ -276,7 +281,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     val newEntities = serializer.loadEntities(reader, errorReporter, virtualFileManager)
-    serializer.checkAndAddToBuilder(builder, newEntities.data)
+    serializer.checkAndAddToBuilder(builder, orphanage, newEntities.data)
 
     when (newEntities.exception) {
       is JDOMException -> reportError(newEntities.exception, serializer.fileUrl)
@@ -479,7 +484,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val actualFileSource = getActualFileSource(source) ?: return null
 
     return when (actualFileSource) {
-      is JpsFileEntitySource.ExactGlobalFile -> actualFileSource.file.url
+      is JpsGlobalFileEntitySource -> actualFileSource.file.url
       is JpsFileEntitySource.ExactFile -> actualFileSource.file.url
       is JpsFileEntitySource.FileInDirectory -> {
         val fileName = fileIdToFileName.get(actualFileSource.fileNameId) ?: run {

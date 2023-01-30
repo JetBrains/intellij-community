@@ -50,7 +50,7 @@ public class ReplaceWithListAccessFix implements IntentionActionWithFixAllOption
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myArrayAccessExpression.isValid()) return false;
-    if (!TypeConversionUtil.areTypesAssignmentCompatible(PsiType.INT, myArrayAccessExpression.getIndexExpression())) {
+    if (!TypeConversionUtil.areTypesAssignmentCompatible(PsiTypes.intType(), myArrayAccessExpression.getIndexExpression())) {
       return false;
     }
     final PsiElement parent = myArrayAccessExpression.getParent();

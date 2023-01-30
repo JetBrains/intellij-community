@@ -87,7 +87,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   }
 
   protected @NotNull PsiType computeType() {
-    return PsiType.VOID;
+    return PsiTypes.voidType();
   }
 
   @Override

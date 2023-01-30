@@ -11,6 +11,7 @@ fun List<EvaluationWorkspace>.buildMultipleEvaluationsConfig(): Config {
       mergeFilters(config.reports.sessionsFilters)
       mergeComparisonFilters(config.reports.comparisonFilters)
     }
+    outputDir = existingConfig.outputDir
     evaluationTitle = "COMPARE_MULTIPLE"
   }
 }

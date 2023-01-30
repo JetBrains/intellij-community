@@ -2,12 +2,10 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.Stack;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -17,16 +15,14 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import one.util.streamex.EntryStream;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.*;
-import static com.intellij.codeInspection.options.OptPane.option;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
@@ -109,6 +105,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
     .register(instanceCall("org.apache.logging.log4j.LogBuilder", "log"),
               (PsiMethodCallExpression ex, LoggerContext context) -> LoggerType.EQUAL_PLACEHOLDERS);
   private static final int MAX_PARTS = 20;
+  public static final String LOG_4_J_LOGGER = "org.apache.logging.slf4j.Log4jLogger";
 
   @NotNull
   @Override
@@ -133,17 +130,15 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    Map<Slf4jToLog4J2Type, @Nls String> options = Map.of(
-      Slf4jToLog4J2Type.AUTO, InspectionGadgetsBundle.message( "placeholder.count.matches.argument.count.slf4j.throwable.option.auto"),
-      Slf4jToLog4J2Type.NO, InspectionGadgetsBundle.message( "placeholder.count.matches.argument.count.slf4j.throwable.option.no"),
-      Slf4jToLog4J2Type.YES, InspectionGadgetsBundle.message( "placeholder.count.matches.argument.count.slf4j.throwable.option.yes")
-    );
-
     return pane(
       dropdown("slf4jToLog4J2Type", InspectionGadgetsBundle.message(
                  "placeholder.count.matches.argument.count.slf4j.throwable.option"),
-               EntryStream.of(options).mapKeyValue((idx, name) -> option(String.valueOf(idx), name))
-                 .toArray(OptDropdown.Option.class)));
+               option(Slf4jToLog4J2Type.AUTO,
+                      InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.slf4j.throwable.option.auto")),
+               option(Slf4jToLog4J2Type.NO,
+                      InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.slf4j.throwable.option.no")),
+               option(Slf4jToLog4J2Type.YES,
+                      InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.slf4j.throwable.option.yes"))));
   }
 
   @Override
@@ -159,7 +154,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
 
       LoggerTypeSearcher holder = LOGGER_TYPE_SEARCHERS.mapFirst(expression);
       if (holder == null) return;
-      boolean log4jAsImplementationForSlf4j = switch (slf4jToLog4J2Type){
+      boolean log4jAsImplementationForSlf4j = switch (slf4jToLog4J2Type) {
         case AUTO -> hasBridgeFromSlf4jToLog4j2(expression);
         case YES -> true;
         case NO -> false;
@@ -273,13 +268,11 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
 
     private static boolean hasBridgeFromSlf4jToLog4j2(PsiElement element) {
       PsiFile file = element.getContainingFile();
-      return CachedValuesManager.<ConcurrentMap<String, PsiClass>>getCachedValue(file, () -> {
+      return CachedValuesManager.<Boolean>getCachedValue(file, () -> {
         var project = file.getProject();
-        return new CachedValueProvider.Result<>(
-          ConcurrentFactoryMap.createMap(
-            markerInterfaceName -> JavaPsiFacade.getInstance(project).findClass(markerInterfaceName, file.getResolveScope())),
-          ProjectRootManager.getInstance(project));
-      }).get("org.apache.logging.slf4j.Log4jLogger") != null;
+        PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(LOG_4_J_LOGGER, file.getResolveScope());
+        return new CachedValueProvider.Result<>(aClass != null, ProjectRootManager.getInstance(project));
+      });
     }
 
     @NotNull
@@ -396,7 +389,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
           continue;
         }
         final PsiType type = currentExpression.getType();
-        if (!TypeUtils.isJavaLangString(type) && !PsiType.CHAR.equals(type)) {
+        if (!TypeUtils.isJavaLangString(type) && !PsiTypes.charType().equals(type)) {
           parts.add(new PartHolder(null, true));
           continue;
         }
@@ -534,13 +527,13 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
   }
 
   /**
-   * @param text     - null if it is a literal, which is not String or Character
+   * @param text       - null if it is a literal, which is not String or Character
    * @param isConstant - it is a constant
    */
   private record PartHolder(@Nullable String text, boolean isConstant) {
   }
 
-  enum Slf4jToLog4J2Type{
+  enum Slf4jToLog4J2Type {
     AUTO, YES, NO
   }
 }

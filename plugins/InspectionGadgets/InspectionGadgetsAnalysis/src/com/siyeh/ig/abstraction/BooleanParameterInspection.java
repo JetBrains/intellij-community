@@ -83,7 +83,7 @@ public class BooleanParameterInspection extends BaseInspection {
       int count = 0;
       for (PsiParameter parameter : parameters) {
         final PsiType type = parameter.getType();
-        if (!PsiType.BOOLEAN.equals(type)) {
+        if (!PsiTypes.booleanType().equals(type)) {
           continue;
         }
         if (MethodCallUtils.isUsedAsSuperConstructorCallArgument(parameter, true)) {

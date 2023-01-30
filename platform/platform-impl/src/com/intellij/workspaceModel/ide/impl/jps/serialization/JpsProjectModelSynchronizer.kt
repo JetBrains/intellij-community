@@ -102,7 +102,10 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     fileContentReader.clearCache()
     LOG.debugValues("Changed entity sources", reloadingResult.affectedSources)
 
-    if (reloadingResult.affectedSources.isEmpty() && !reloadingResult.builder.hasChanges() && !reloadingResult.unloadedEntityBuilder.hasChanges()) return
+    if (reloadingResult.affectedSources.isEmpty()
+        && !reloadingResult.builder.hasChanges()
+        && !reloadingResult.unloadedEntityBuilder.hasChanges()
+        && !reloadingResult.orphanageBuilder.hasChanges()) return
 
     withContext(Dispatchers.EDT) {
       runWriteAction {
@@ -128,6 +131,11 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         }
         addUnloadedModuleEntities(unloadedBuilder)
         sourcesToSave.removeAll(reloadingResult.affectedSources)
+
+        // Update orphanage storage
+        if (reloadingResult.orphanageBuilder.hasChanges()) {
+          EntitiesOrphanage.getInstance(project).update { it.addDiff(reloadingResult.orphanageBuilder) }
+        }
       }
     }
   }
@@ -201,8 +209,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       override fun changed(event: VersionedStorageChange) {
         LOG.debug("Marking changed entities for save")
         event.getAllChanges().forEach { change ->
-          change.oldEntity?.entitySource?.let { if (it !is JpsFileEntitySource.ExactGlobalFile) sourcesToSave.add(it) }
-          change.newEntity?.entitySource?.let { if (it !is JpsFileEntitySource.ExactGlobalFile) sourcesToSave.add(it) }
+          change.oldEntity?.entitySource?.let { if (it !is JpsGlobalFileEntitySource) sourcesToSave.add(it) }
+          change.newEntity?.entitySource?.let { if (it !is JpsGlobalFileEntitySource) sourcesToSave.add(it) }
         }
       }
     }
@@ -218,21 +226,22 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val serializers = prepareSerializers()
     registerListener()
     val builder = MutableEntityStorage.create()
+    val orphanage = MutableEntityStorage.create()
     val unloadedEntitiesBuilder = MutableEntityStorage.create()
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
       childActivity = childActivity?.endAndStart("loading entities from files")
       val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
-      val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, unloadedEntitiesBuilder, unloadedModuleNames, it, project) }
+      val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModuleNames, it, project) }
       fileContentReader.clearCache()
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
       if (GlobalLibraryTableBridge.isEnabled()) {
         childActivity = childActivity?.endAndStart("applying entities from global storage")
         val mutableStorage = MutableEntityStorage.create()
-        GlobalWorkspaceModel.getInstance().applyStateToBuilder(mutableStorage)
+        GlobalWorkspaceModel.getInstance().applyStateToProjectBuilder(project, mutableStorage)
         builder.addDiff(mutableStorage)
       }
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
-      return LoadedProjectEntities(builder, unloadedEntitiesBuilder, sourcesToUpdate)
+      return LoadedProjectEntities(builder, orphanage, unloadedEntitiesBuilder, sourcesToUpdate)
     }
     else {
       childActivity?.end()
@@ -270,6 +279,10 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
           runAutomaticModuleUnloader(updater, unloadedBuilder)
         }
         addUnloadedModuleEntities(unloadedBuilder)
+
+        EntitiesOrphanage.getInstance(project).update {
+          it.addDiff(projectEntities.orphanageBuilder)
+        }
         childActivity?.end()
         childActivity = null
       }
@@ -412,6 +425,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
 class LoadedProjectEntities(
   val builder: MutableEntityStorage,
+  val orphanageBuilder: MutableEntityStorage,
   val unloadedEntitiesBuilder: MutableEntityStorage,
   val sourcesToUpdate: List<EntitySource>
 )

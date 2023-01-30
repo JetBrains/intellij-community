@@ -526,7 +526,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     StringBuilder buffer = new StringBuilder();
     buffer.append("{\n");
 
-    if (!PsiType.VOID.equals(methodToAdd.getReturnType())) {
+    if (!PsiTypes.voidType().equals(methodToAdd.getReturnType())) {
       buffer.append("return ");
     }
 

@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.ThrowableComputable
@@ -61,6 +63,7 @@ class PyPushingTest {
     excludedDir.writeChild("someDir/ExcludedFile.py", "")
     val languageLevel = LanguageLevel.PYTHON312
     val sdk = PythonMockSdk.create(languageLevel)
+    WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable) }
     module.pythonSdk = sdk
 
     val pusher = FilePropertyPusher.EP_NAME.findExtension(PythonLanguageLevelPusher::class.java)

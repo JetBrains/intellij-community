@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
@@ -1606,6 +1606,133 @@ class ReplaceBySourceTest {
     rbsAllSources()
 
     builder.assertConsistency()
+  }
+
+  @RepeatedTest(10)
+  fun `check ordering of the children as in replacement`() {
+    replacement add NamedEntity("Name", MySource) {
+      this.children = listOf(
+        NamedChildEntity("one", MySource),
+        NamedChildEntity("two", MySource),
+      )
+    }
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+
+    val children = builder.entities(NamedEntity::class.java).single().children
+    assertEquals("one", children[0].childProperty)
+    assertEquals("two", children[1].childProperty)
+  }
+
+  @RepeatedTest(10)
+  fun `check ordering of the children as in replacement2`() {
+    builder add NamedEntity("Name", MySource) {
+      this.children = listOf(
+        NamedChildEntity("unchanged", MySource),
+        NamedChildEntity("two", MySource),
+      )
+    }
+
+    replacement add NamedEntity("Name", MySource) {
+      this.children = listOf(
+        NamedChildEntity("one", MySource),
+        NamedChildEntity("unchanged", MySource),
+        NamedChildEntity("two", MySource),
+      )
+    }
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+
+    val children = builder.entities(NamedEntity::class.java).single().children
+    assertEquals("one", children[0].childProperty)
+    assertEquals("unchanged", children[1].childProperty)
+  }
+
+  @RepeatedTest(10)
+  fun `check ordering of the children as in replacement3`() {
+    builder add NamedEntity("Name", MySource) {
+      this.children = listOf(
+        NamedChildEntity("one", MySource),
+        NamedChildEntity("two", MySource),
+      )
+    }
+
+    var children = builder.entities(NamedEntity::class.java).single().children
+    assertEquals("one", children[0].childProperty)
+    assertEquals("two", children[1].childProperty)
+
+    replacement add NamedEntity("Name", MySource) {
+      this.children = listOf(
+        NamedChildEntity("two", MySource),
+        NamedChildEntity("one", MySource),
+      )
+    }
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+
+    children = builder.entities(NamedEntity::class.java).single().children
+    assertEquals("two", children[0].childProperty)
+    assertEquals("one", children[1].childProperty)
+  }
+
+  @RepeatedTest(10)
+  fun `check ordering of the children as in replacement after add`() {
+    builder add NamedEntity("Name", MySource) {
+      this.children = listOf(
+        NamedChildEntity("one", MySource),
+      )
+    }
+
+    var children = builder.entities(NamedEntity::class.java).single().children
+    assertEquals("one", children[0].childProperty)
+
+    replacement add NamedEntity("Name", MySource) {
+      this.children = listOf(
+        NamedChildEntity("two", MySource),
+        NamedChildEntity("one", MySource),
+      )
+    }
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+
+    children = builder.entities(NamedEntity::class.java).single().children
+    assertEquals("two", children[0].childProperty)
+    assertEquals("one", children[1].childProperty)
+  }
+
+  @RepeatedTest(10)
+  fun `check ordering of the children as in replacement after add 2`() {
+    builder add NamedEntity("Name", MySource) {
+      this.children = listOf(
+        NamedChildEntity("one", MySource),
+      )
+    }
+
+    var children = builder.entities(NamedEntity::class.java).single().children
+    assertEquals("one", children[0].childProperty)
+
+    replacement add NamedEntity("Name", MySource) {
+      this.children = listOf(
+        NamedChildEntity("one", MySource),
+        NamedChildEntity("two", MySource),
+      )
+    }
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+
+    children = builder.entities(NamedEntity::class.java).single().children
+    assertEquals("one", children[0].childProperty)
+    assertEquals("two", children[1].childProperty)
   }
 
   private inner class ThisStateChecker {

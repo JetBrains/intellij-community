@@ -867,7 +867,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     PsiElementFactory factory = facade.getElementFactory();
     PsiModifierList privateModifierList;
     try {
-      PsiMethod newMethod = factory.createMethod("x3", PsiType.VOID);
+      PsiMethod newMethod = factory.createMethod("x3", PsiTypes.voidType());
       privateModifierList = newMethod.getModifierList();
       privateModifierList.setModifierProperty(PsiModifier.PRIVATE, true);
     } catch (IncorrectOperationException e) {

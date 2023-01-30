@@ -151,7 +151,7 @@ public abstract class FunctionHelper {
       PsiElement body = lambda.getBody();
       PsiExpression lambdaExpression = LambdaUtil.extractSingleExpressionFromBody(body);
       if (lambdaExpression == null) {
-        if (PsiType.VOID.equals(returnType) && body instanceof PsiCodeBlock) {
+        if (PsiTypes.voidType().equals(returnType) && body instanceof PsiCodeBlock) {
           List<PsiReturnStatement> returns = getReturns(body);
           if (!allowReturns && (!returns.isEmpty() || !ControlFlowUtils.codeBlockMayCompleteNormally((PsiCodeBlock)body))) return null;
           // Return inside loop is not supported yet
@@ -620,7 +620,7 @@ public abstract class FunctionHelper {
 
   private static class VoidBlockLambdaFunctionHelper extends LambdaFunctionHelper {
     VoidBlockLambdaFunctionHelper(PsiCodeBlock body, String[] parameters) {
-      super(PsiType.VOID, body, parameters);
+      super(PsiTypes.voidType(), body, parameters);
     }
 
     @Override

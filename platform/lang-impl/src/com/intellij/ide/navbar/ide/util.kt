@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.awt.AWTEvent
+import java.awt.EventQueue
 import java.awt.event.MouseEvent
 import kotlin.coroutines.resume
 
@@ -50,7 +51,7 @@ internal fun activityFlow(project: Project): Flow<Unit> {
     }
 
     IdeEventQueue.getInstance().addActivityListener(Runnable {
-      val currentEvent = IdeEventQueue.getCurrentEvent() ?: return@Runnable
+      val currentEvent = EventQueue.getCurrentEvent() ?: return@Runnable
       if (!skipActivityEvent(currentEvent, project)) {
         fire()
       }

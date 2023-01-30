@@ -39,7 +39,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
     GroovyScriptClass scriptClass = (GroovyScriptClass)context.getCodeClass();
 
     LightMethodBuilder mainMethod = new LightMethodBuilder(scriptClass.getManager(), GroovyLanguage.INSTANCE, "main")
-      .setMethodReturnType(PsiType.VOID)
+      .setMethodReturnType(PsiTypes.voidType())
       .addParameter("args", new PsiArrayType(PsiType.getJavaLangString(scriptClass.getManager(), scriptClass.getResolveScope())))
       .addModifiers(PsiModifier.PUBLIC, PsiModifier.STATIC);
 

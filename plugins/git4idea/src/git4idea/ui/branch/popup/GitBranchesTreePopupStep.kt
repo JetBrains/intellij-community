@@ -7,6 +7,7 @@ import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopupStep
@@ -47,14 +48,18 @@ class GitBranchesTreePopupStep(internal val project: Project,
       val experimentalUIActionsGroup = ActionManager.getInstance().getAction(EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP) as? ActionGroup
       if (experimentalUIActionsGroup != null) {
         topLevelItems.addAll(createActionItems(experimentalUIActionsGroup, project, repositories).addSeparators())
-        topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
+        if (topLevelItems.isNotEmpty()) {
+          topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
+        }
       }
     }
     val actionGroup = ActionManager.getInstance().getAction(TOP_LEVEL_ACTION_GROUP) as? ActionGroup
     if (actionGroup != null) {
       // get selected repo inside actions
       topLevelItems.addAll(createActionItems(actionGroup, project, repositories).addSeparators())
-      topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
+      if (topLevelItems.isNotEmpty()) {
+        topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
+      }
     }
 
     treeModel = createTreeModel(false)
@@ -199,8 +204,14 @@ class GitBranchesTreePopupStep(internal val project: Project,
                                   project: Project,
                                   repositories: List<GitRepository>): List<PopupFactoryImpl.ActionItem> {
       val dataContext = createDataContext(project, repositories)
-      return ActionPopupStep
-        .createActionItems(actionGroup, dataContext, false, false, false, false, ACTION_PLACE, null)
+      val actionItems = ActionPopupStep
+        .createActionItems(actionGroup, dataContext, false, false, true, false, ACTION_PLACE, null)
+
+      if (actionItems.singleOrNull()?.action == Utils.EMPTY_MENU_FILLER) {
+        return emptyList()
+      }
+
+      return actionItems
     }
 
     private fun createActionStep(actionGroup: ActionGroup,

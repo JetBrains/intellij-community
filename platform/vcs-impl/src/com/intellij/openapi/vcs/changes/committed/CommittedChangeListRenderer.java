@@ -61,7 +61,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     }
 
     int lastSpaceIndex = initDescription.lastIndexOf(" ", low - 1);
-    return lastSpaceIndex == -1 ? initDescription.substring(0, maxWidth) : initDescription.substring(0, lastSpaceIndex);
+    return lastSpaceIndex == -1 ? initDescription : initDescription.substring(0, lastSpaceIndex);
   }
 
   @Override

@@ -42,19 +42,19 @@ public abstract class MockType extends MockMirror implements Type {
       return new MockArrayType(createType(virtualMachine, ((PsiArrayType)type).getComponentType()));
     }
     if (type instanceof PsiPrimitiveType) {
-      if (type.equals(PsiType.BOOLEAN)) {
+      if (type.equals(PsiTypes.booleanType())) {
         return virtualMachine.getBooleanType();
       }
-      if (type.equals(PsiType.INT)) {
+      if (type.equals(PsiTypes.intType())) {
         return virtualMachine.getIntType();
       }
-      if (type.equals(PsiType.LONG)) {
+      if (type.equals(PsiTypes.longType())) {
         return virtualMachine.getLongType();
       }
-      if (type.equals(PsiType.SHORT)) {
+      if (type.equals(PsiTypes.shortType())) {
         return virtualMachine.getShortType();
       }
-      if (type.equals(PsiType.VOID)) {
+      if (type.equals(PsiTypes.voidType())) {
         return virtualMachine.getVoidType();
       }
     }

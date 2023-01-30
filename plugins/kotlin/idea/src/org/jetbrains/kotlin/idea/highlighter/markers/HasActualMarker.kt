@@ -2,10 +2,9 @@
 
 package org.jetbrains.kotlin.idea.highlighter.markers
 
-import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.NavigationPopupDescriptor
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -14,31 +13,16 @@ fun getPlatformActualTooltip(declaration: KtDeclaration): String? {
     val actualDeclarations = declaration.actualsForExpected().mapNotNull { it.toDescriptor() }
     val modulesString = getModulesStringForExpectActualMarkerTooltip(actualDeclarations) ?: return null
 
-    return KotlinBundle.message("highlighter.prefix.text.has.actuals.in", modulesString)
+    return KotlinBundle.message(
+        "highlighter.prefix.text.has.actuals.in",
+        modulesString,
+        if (actualDeclarations.size == 1) 0 else 1
+    )
 }
 
 fun KtDeclaration.allNavigatableActualDeclarations(): Set<KtDeclaration> =
     actualsForExpected() + findMarkerBoundDeclarations().flatMap { it.actualsForExpected().asSequence() }
 
-class ActualExpectedPsiElementCellRenderer : DefaultPsiElementCellRenderer() {
-    override fun getContainerText(element: PsiElement?, name: String?) = ""
-}
 
-@Nls
-fun KtDeclaration.navigateToActualTitle() = KotlinBundle.message("highlighter.title.choose.actual.for", name.toString())
-
-@Nls
-fun KtDeclaration.navigateToActualUsagesTitle() = KotlinBundle.message("highlighter.title.actuals.for", name.toString())
-
-fun buildNavigateToActualDeclarationsPopup(element: PsiElement?): NavigationPopupDescriptor? {
-    return element?.markerDeclaration?.let {
-        val navigatableActualDeclarations = it.allNavigatableActualDeclarations()
-        if (navigatableActualDeclarations.isEmpty()) return null
-        return NavigationPopupDescriptor(
-            navigatableActualDeclarations,
-            it.navigateToActualTitle(),
-            it.navigateToActualUsagesTitle(),
-            ActualExpectedPsiElementCellRenderer()
-        )
-    }
-}
+fun buildNavigateToActualDeclarationsPopup(element: PsiElement?): NavigationPopupDescriptor? =
+    buildNavigateToActualDeclarationsPopup(element, KtDeclaration::allNavigatableActualDeclarations)

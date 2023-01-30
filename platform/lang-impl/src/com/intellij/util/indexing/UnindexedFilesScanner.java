@@ -79,7 +79,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
   protected final Project myProject;
   private final boolean myStartSuspended;
   private final boolean myOnProjectOpen;
-  private final @NonNls String myIndexingReason;
+  private final @NotNull @NonNls String myIndexingReason;
   private final @NotNull ScanningType myScanningType;
   private final PushedFilePropertiesUpdater myPusher;
   private final @Nullable StatusMark myProvidedStatusMark;
@@ -95,7 +95,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     myProject = project;
     myStartSuspended = startSuspended;
     myOnProjectOpen = onProjectOpen;
-    myIndexingReason = indexingReason;
+    myIndexingReason = (indexingReason != null) ? indexingReason : "<unknown>";
     myScanningType = scanningType;
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
     myProvidedStatusMark = predefinedIndexableFilesIterators == null ? null : mark;
@@ -217,7 +217,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     if (!IndexInfrastructure.hasIndices()) {
       return;
     }
-    LOG.info("Started scanning for indexing of " + myProject.getName() + (myIndexingReason == null ? "" : ". Reason: " + myIndexingReason));
+    LOG.info("Started scanning for indexing of " + myProject.getName() + ". Reason: " + myIndexingReason);
 
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender != null) {
@@ -259,7 +259,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
 
     if (shouldScanInSmartMode()) {
       // Switch to dumb mode and index
-      myProject.getService(PerProjectIndexingQueue.class).flushNow();
+      myProject.getService(PerProjectIndexingQueue.class).flushNow(myIndexingReason);
     }
     else {
       // Already in dumb mode. Just invoke indexer

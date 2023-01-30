@@ -96,7 +96,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
 
   private static String getLiteralExpressionText(PsiLiteralExpression expression) {
     final PsiType type = expression.getType();
-    if (PsiType.CHAR.equals(type)) {
+    if (PsiTypes.charType().equals(type)) {
       final String result = StringUtil.unquoteString(expression.getText());
       if (result.equals("\"")) return "\\\"";
       if (result.equals("\\'")) return "'";

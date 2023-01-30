@@ -2,8 +2,6 @@ MODULES
     project
     project.consumer
     project.consumer.androidTest
-        testDebugUnitTest|:consumer|android
-        jvmTest|:consumer|jvm
     project.consumer.commonMain
     project.consumer.commonTest
         testDebugUnitTest|:consumer|android
@@ -15,11 +13,8 @@ MODULES
     project.consumer.main
     project.consumer.unitTest
         testDebugUnitTest|:consumer|android
-        jvmTest|:consumer|jvm
     project.producer
     project.producer.androidTest
-        testDebugUnitTest|:producer|android
-        jvmTest|:producer|jvm
     project.producer.commonMain
     project.producer.commonTest
         testDebugUnitTest|:producer|android
@@ -31,7 +26,6 @@ MODULES
     project.producer.main
     project.producer.unitTest
         testDebugUnitTest|:producer|android
-        jvmTest|:producer|jvm
 
 Test configuration:
 - hiding following roots: resources, android-specific roots, generated

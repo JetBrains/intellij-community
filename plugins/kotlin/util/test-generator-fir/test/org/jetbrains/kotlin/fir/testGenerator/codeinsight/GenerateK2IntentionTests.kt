@@ -40,6 +40,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertPropertyGetterToInitializer", pattern = pattern)
             model("${idea}intentions/convertToRawStringTemplate", pattern = pattern)
             model("${idea}intentions/toRawStringLiteral", pattern = pattern)
+            model("${idea}intentions/movePropertyToConstructor", pattern = pattern)
             model("code-insight/intentions-k2/tests/testData/intentions", pattern = pattern)
         }
     }

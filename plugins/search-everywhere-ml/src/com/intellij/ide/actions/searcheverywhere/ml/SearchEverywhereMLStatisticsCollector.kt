@@ -270,7 +270,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 45, RECORDER_CODE)
+    private val GROUP = EventLogGroup("mlse.log", 49, RECORDER_CODE)
     private val EMPTY_ARRAY = IntArray(0)
     private const val REPORTED_ITEMS_LIMIT = 50
 
@@ -304,9 +304,11 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     internal val SEARCH_STATE_FEATURES_DATA_KEY =
       ObjectEventField("searchStateFeatures", *SearchEverywhereStateFeaturesProvider.getFeaturesDefinition().toTypedArray())
 
-    internal val ID_KEY = EventFields.Int("id")
+    @VisibleForTesting
+    val ID_KEY = EventFields.Int("id")
     internal val ACTION_ID_KEY = EventFields.StringValidatedByCustomRule("actionId", "action")
-    internal val FEATURES_DATA_KEY = createFeaturesEventObject()
+    @VisibleForTesting
+    val FEATURES_DATA_KEY = createFeaturesEventObject()
     internal val ML_WEIGHT_KEY = EventFields.Double("mlWeight")
     internal val CONTRIBUTOR_DATA_KEY = ObjectEventField(
       "contributor", *SearchEverywhereContributorFeaturesProvider.getFeaturesDeclarations().toTypedArray()

@@ -4,18 +4,29 @@ package com.intellij.ide
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.annotations.SystemDependent
 
 @Service(Service.Level.APP)
 @State(name = "GeneralLocalSettings",
        storages = [Storage(value = "ide.general.local.xml", roamingType = RoamingType.DISABLED)])
-class GeneralLocalSettings : SimplePersistentStateComponent<GeneralLocalSettings.GeneralLocalState>(GeneralLocalState()) {
+class GeneralLocalSettings : SimplePersistentStateComponent<GeneralLocalState>(GeneralLocalState()) {
+  companion object {
+    private const val MIGRATED_FROM_GENERAL_SETTINGS = "migrated.non.roamable.values.from.general.settings"
 
-  class GeneralLocalState : BaseState() {
-    var defaultProjectDirectory by string("")
-    var useDefaultBrowser by property(true)
-    var browserPath by string(null)
+    @JvmStatic
+    fun getInstance(): GeneralLocalSettings {
+      return ApplicationManager.getApplication().service<GeneralLocalSettings>()
+    }
+
+    private fun getDefaultAlternativeBrowserPath(): String {
+      return when {
+        SystemInfoRt.isWindows -> "C:\\Program Files\\Internet Explorer\\IExplore.exe"
+        SystemInfoRt.isMac -> "open"
+        SystemInfoRt.isUnix -> "/usr/bin/firefox"
+        else -> ""
+      }
+    }
   }
 
   override fun noStateLoaded() {
@@ -23,17 +34,21 @@ class GeneralLocalSettings : SimplePersistentStateComponent<GeneralLocalSettings
   }
 
   private fun migrateFromGeneralSettings() {
-    if (!PropertiesComponent.getInstance().getBoolean(MIGRATED_FROM_GENERAL_SETTINGS, false)) {
-      PropertiesComponent.getInstance().setValue(MIGRATED_FROM_GENERAL_SETTINGS, true)
-
-      defaultProjectDirectory = GeneralSettings.getInstance().myDefaultProjectDirectory
-      useDefaultBrowser = GeneralSettings.getInstance().myUseDefaultBrowser
-      browserPath = GeneralSettings.getInstance().myBrowserPath
-
-      GeneralSettings.getInstance().myDefaultProjectDirectory = ""
-      GeneralSettings.getInstance().myUseDefaultBrowser = true
-      GeneralSettings.getInstance().myBrowserPath = ""
+    val propertyManager = PropertiesComponent.getInstance()
+    if (propertyManager.getBoolean(MIGRATED_FROM_GENERAL_SETTINGS, false)) {
+      return
     }
+
+    propertyManager.setValue(MIGRATED_FROM_GENERAL_SETTINGS, true)
+
+    val generalSettingsState = GeneralSettings.getInstance().state
+    defaultProjectDirectory = generalSettingsState.defaultProjectDirectory ?: ""
+    useDefaultBrowser = generalSettingsState.useDefaultBrowser
+    browserPath = generalSettingsState.browserPath ?: ""
+
+    generalSettingsState.defaultProjectDirectory = ""
+    generalSettingsState.useDefaultBrowser = true
+    generalSettingsState.browserPath = ""
   }
 
   var defaultProjectDirectory: @SystemDependent String
@@ -53,29 +68,10 @@ class GeneralLocalSettings : SimplePersistentStateComponent<GeneralLocalSettings
     set(value) {
       state.useDefaultBrowser = value
     }
+}
 
-
-  companion object {
-    private const val MIGRATED_FROM_GENERAL_SETTINGS = "migrated.non.roamable.values.from.general.settings"
-
-    @JvmStatic
-    fun getInstance(): GeneralLocalSettings {
-      return ApplicationManager.getApplication().getService(GeneralLocalSettings::class.java)
-    }
-
-    private fun getDefaultAlternativeBrowserPath(): String {
-      return if (SystemInfo.isWindows) {
-        "C:\\Program Files\\Internet Explorer\\IExplore.exe"
-      }
-      else if (SystemInfo.isMac) {
-        "open"
-      }
-      else if (SystemInfo.isUnix) {
-        "/usr/bin/firefox"
-      }
-      else {
-        ""
-      }
-    }
-  }
+class GeneralLocalState : BaseState() {
+  var defaultProjectDirectory by string("")
+  var useDefaultBrowser by property(true)
+  var browserPath by string(null)
 }

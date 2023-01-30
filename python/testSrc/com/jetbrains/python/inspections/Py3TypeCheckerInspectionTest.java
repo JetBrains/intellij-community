@@ -415,7 +415,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                 pass
 
         p1: pathlib.Path
-        p2: os.PathLike[bytes] = p1  # false negative, see PyTypeChecker.matchGenerics
+        p2: os.PathLike[bytes] = <warning descr="Expected type 'PathLike[bytes]', got 'Path' instead">p1</warning>
         p3: os.PathLike[str] = p1"""
     );
   }
@@ -903,6 +903,55 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-38897
+  public void testDictItemsAndIterableMatches() {
+    doTestByText("""
+                   from typing import Iterable, Tuple
+                   
+                   def foo(bar: Iterable[Tuple[str, int]]):
+                       pass
+                   
+                   if __name__ == '__main__':
+                       bar_dict = {'abc': 42}
+                       foo(bar_dict.items())
+                   """);
+  }
+
+  // PY-38897
+  public void testDictItemsAndIterableMatchesGeneric() {
+    doTestByText("""
+                   from typing import Tuple
+                   
+                   def make_dict() -> dict[int, str]:
+                       ...
+                   
+                   def key_func(param: Tuple[int, str]) -> int:
+                       ...
+                   
+                   def foo() -> None:
+                       my_dict = make_dict()
+                       items = my_dict.items()
+                       print(max(items, key=key_func))
+                   """);
+  }
+
+  public void testClassConstructorTypeParameterDefinedOnInheritance() {
+    doTestByText("""
+                   from typing import Generic, TypeVar
+                   
+                   T = TypeVar('T')
+                   
+                   class Box(Generic[T]):
+                       def __init__(self, value: T) -> None:
+                           pass
+                   
+                   class StrBox(Box[str]):
+                       pass
+                   
+                   StrBox(<warning descr="Expected type 'str' (matched generic type 'T'), got 'int' instead">42</warning>)
+                   """);
+  }
+
   // PY-53611
   public void testTypedDictRequiredNotRequiredKeys() {
     runWithLanguageLevel(LanguageLevel.getLatest(),
@@ -955,9 +1004,14 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
-  // PY-52648 Requires PY-53896 or patching Typeshed
+  // PY-52648
   public void testListLiteralPassedToIter() {
     doTestByText("iter([1, 2, 3])");
+  }
+
+  // PY-52648
+  public void testListLiteralPassedToIterSimplified() {
+    doTest();
   }
 
   // PY-53104
@@ -1275,6 +1329,50 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
                    class SubBuilder(Builder):
                        pass
+                   """);
+  }
+
+  public void testNonGenericProtocolDoesNotMatchWithGenericClass() {
+    doTestByText("""
+                   from typing import Generic, Protocol, TypeVar
+                   
+                   T = TypeVar('T')
+                   
+                   class IntGetter(Protocol):
+                       def get(self) -> int:
+                           pass
+                   
+                   class Box(Generic[T]):
+                       def get(self) -> T:
+                           pass
+                   
+                   def f(x: IntGetter):
+                       pass
+                   
+                   box: Box[str] = ...
+                   f(<warning descr="Expected type 'IntGetter', got 'Box[str]' instead">box</warning>)
+                   """);
+  }
+
+  public void testGenericProtocolDoesNotMatchWithGenericClass() {
+    doTestByText("""
+                   from typing import Generic, Protocol, TypeVar
+                   
+                   T = TypeVar('T')
+                   
+                   class Getter(Protocol[T]):
+                       def get(self) -> T:
+                           pass
+                   
+                   class Box(Generic[T]):
+                       def get(self) -> T:
+                           pass
+                   
+                   def f(x: Getter[int]):
+                       pass
+                   
+                   box: Box[str] = ...
+                   f(<warning descr="Expected type 'Getter[int]', got 'Box[str]' instead">box</warning>)
                    """);
   }
 }

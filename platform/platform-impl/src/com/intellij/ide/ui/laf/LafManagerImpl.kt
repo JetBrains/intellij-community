@@ -11,7 +11,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.WelcomeWizardUtil
-import com.intellij.ide.actions.IdeScaleTransformer.currentScale
+import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -151,7 +151,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     get() {
       val result = when {
         useInterFont() -> defaultInterFont
-        UISettings.getInstance().overrideLafFonts -> storedLafFont
+        UISettings.getInstance().overrideLafFonts || IdeScaleTransformer.instance.currentScale != 1f -> storedLafFont
         else -> null
       }
       return result ?: JBFont.label()
@@ -653,7 +653,23 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   private fun applyDensity(defaults: UIDefaults) {
-    if (UISettings.getInstance().uiDensity == UIDensity.COMPACT) {
+    val densityKey = "ui.density"
+    val oldDensityName = defaults.get(densityKey) as? String
+    val newDensity = UISettings.getInstance().uiDensity
+    if (oldDensityName == newDensity.name) {
+      return // re-applying the same density would break HiDPI-scalable values like Tree.rowHeight
+    }
+    defaults.put(densityKey, newDensity.name)
+    if (newDensity == UIDensity.DEFAULT) {
+      // Special case: we need to set this one to its default value even in non-compact mode, UNLESS it was already set by the theme.
+      // If it's null, it can't be properly patched in patchRowHeight, which looks ugly with larger UI fonts.
+      val vcsLogHeight = defaults.get(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey())
+      // don't want to rely on putIfAbsent here, as UIDefaults is a rather messy combination of multiple hash tables
+      if (vcsLogHeight == null) {
+        defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), JBUI.CurrentTheme.VersionControl.Log.defaultRowHeight())
+      }
+    }
+    if (newDensity == UIDensity.COMPACT) {
       // main toolbar
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34))
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
@@ -668,18 +684,18 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // trees
       defaults.put(JBUI.CurrentTheme.Tree.rowHeightKey(), 22)
       // lists
-      defaults.put("List.rowHeight", 22)
+      defaults.put("List.rowHeight", 24)
       // status bar
       defaults.put(JBUI.CurrentTheme.StatusBar.Widget.insetsKey(), JBUI.insets(4, 8, 3, 8))
       defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), JBUI.insets(1, 0, 1, 4))
       // editor tabs
-      defaults.put("EditorTabs.tabInsets", JBInsets.create(1, 2).asUIResource())
-      defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), JBFont.medium())
+      defaults.put("EditorTabs.tabInsets", JBInsets(1, 12, 1, 8).asUIResource())
+      defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), Supplier { JBFont.medium() })
       // toolwindows
       defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), 32)
-      defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), JBFont.medium())
+      defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), Supplier { JBFont.medium() })
       // VCS log
-      defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), 22)
+      defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), 24)
       defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), 4)
     }
   }
@@ -733,7 +749,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     patchFileChooserStrings(uiDefaults)
     patchLafFonts(uiDefaults)
     patchTreeUI(uiDefaults)
-    applyDensity(uiDefaults)
+    if (ExperimentalUI.isNewUI()) {
+      applyDensity(uiDefaults)
+    }
 
     //should be called last because this method modifies uiDefault values
     patchHiDPI(uiDefaults)
@@ -764,6 +782,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
   private fun patchLafFonts(uiDefaults: UIDefaults) {
     val uiSettings = UISettings.getInstance()
+    val currentScale = IdeScaleTransformer.instance.currentScale
     if (uiSettings.overrideLafFonts || currentScale != 1f) {
       storeOriginalFontDefaults(uiDefaults)
       val fontSize = uiSettings.fontSize2D * currentScale
@@ -1266,6 +1285,7 @@ private fun patchHiDPI(defaults: UIDefaults) {
   patchRowHeight(defaults, "List.rowHeight", prevRowHeightScale)
   patchRowHeight(defaults, "Table.rowHeight", prevRowHeightScale)
   patchRowHeight(defaults, JBUI.CurrentTheme.Tree.rowHeightKey(), prevRowHeightScale)
+  patchRowHeight(defaults, JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), prevRowHeightScale)
   if (prevScale == scale(1f) && prevScaleVal != null) {
     return
   }

@@ -213,11 +213,17 @@ inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>
 
 inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Boolean), task: (stream: DirectoryStream<Path>) -> R): R? {
   try {
-    return Files.newDirectoryStream(this, DirectoryStream.Filter { filter(it) }).use(task)
+    return Files.newDirectoryStream(this, makeFilter(filter)).use(task)
   }
   catch (ignored: NoSuchFileException) {
   }
   return null
+}
+
+@PublishedApi
+internal fun makeFilter(filter: (path: Path) -> Boolean): DirectoryStream.Filter<Path> {
+  // extracted in order to not introduce additional JVM class for every directoryStreamIfExists call site
+  return DirectoryStream.Filter { filter(it) }
 }
 
 val Path.isWritable: Boolean

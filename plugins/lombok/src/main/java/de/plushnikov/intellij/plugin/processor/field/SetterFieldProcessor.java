@@ -17,6 +17,7 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -28,6 +29,15 @@ import java.util.List;
 public final class SetterFieldProcessor extends AbstractFieldProcessor {
   SetterFieldProcessor() {
     super(PsiMethod.class, LombokClassNames.SETTER);
+  }
+
+  @Override
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass,
+                                                                   @NotNull PsiAnnotation psiAnnotation,
+                                                                   @NotNull PsiField psiField) {
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
+    final String generatedElementName = LombokUtils.getSetterName(psiField, accessorsInfo);
+    return Collections.singletonList(generatedElementName);
   }
 
   @Override
@@ -148,7 +158,7 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     blockText = String.format("%s.%s = %s; ", thisOrClass, psiField.getName(), methodParameter.getName());
 
     String codeBlockText = blockText;
-    if (!isStatic && !PsiType.VOID.equals(returnType)) {
+    if (!isStatic && !PsiTypes.voidType().equals(returnType)) {
       codeBlockText += "return this;";
     }
 
@@ -156,7 +166,7 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
   }
 
   private static PsiType getReturnType(@NotNull PsiField psiField, boolean isChained) {
-    PsiType result = PsiType.VOID;
+    PsiType result = PsiTypes.voidType();
     if (!psiField.hasModifierProperty(PsiModifier.STATIC) && isChained) {
       final PsiClass fieldClass = psiField.getContainingClass();
       if (null != fieldClass) {

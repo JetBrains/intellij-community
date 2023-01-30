@@ -419,7 +419,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
       PsiType returnType = uMethod.getReturnType();
       if (!uMethod.isConstructor()) {
         final PsiType type = getFunctionalInterfaceType(callableReference);
-        if (!PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(type))) {
+        if (!PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(type))) {
           refMethod.setReturnValueUsed(true);
           addTypeReference(uFrom, returnType, refMethod.getRefManager());
         }
@@ -429,7 +429,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     }
     if (uExpression instanceof ULiteralExpression) { //references in literal expressions
       PsiType returnType = uMethod.getReturnType();
-      if (!uMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
+      if (!uMethod.isConstructor() && !PsiTypes.voidType().equals(returnType)) {
         refMethod.setReturnValueUsed(true);
         addTypeReference(uFrom, returnType, refMethod.getRefManager());
       }
@@ -437,7 +437,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     }
 
     PsiType returnType = uMethod.getReturnType();
-    if (!uMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
+    if (!uMethod.isConstructor() && !PsiTypes.voidType().equals(returnType)) {
       PsiExpression expression = ObjectUtils.tryCast(uExpression.getJavaPsi(), PsiExpression.class);
       if (expression == null || !ExpressionUtils.isVoidContext(expression)) {
         refMethod.setReturnValueUsed(true);

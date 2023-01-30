@@ -28,6 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -183,7 +184,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     int flags = HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;
 
-    Editor editorToShow = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : myEditor;
+    Editor editorToShow = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
 
     //update presentation of descriptors synchronously
     myComponent.update(mySingleParameterInfo);

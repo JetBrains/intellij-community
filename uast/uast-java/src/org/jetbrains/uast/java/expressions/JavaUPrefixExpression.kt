@@ -3,6 +3,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiPrefixExpression
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
@@ -11,7 +12,7 @@ class JavaUPrefixExpression(
   override val sourcePsi: PsiPrefixExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UPrefixExpression {
-  override val operand: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.operand, this) }
+  override val operand: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.operand, this) }
 
   override val operatorIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.operationSign, this)

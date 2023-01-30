@@ -515,7 +515,7 @@ public final class LocalVariablesUtil {
   }
 
   private static int getTypeSlotSize(PsiType varType) {
-    if (PsiType.DOUBLE.equals(varType) || PsiType.LONG.equals(varType)) {
+    if (PsiTypes.doubleType().equals(varType) || PsiTypes.longType().equals(varType)) {
       return 2;
     }
     return 1;

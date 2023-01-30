@@ -63,7 +63,7 @@
   <depends>org.jetbrains.idea.maven.server.api</depends>
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
-  <depends optional="true" config-file="performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
+  <depends optional="true" config-file="maven-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <pathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenPathMacroContributor"/>
@@ -532,8 +532,6 @@
     <importer implementation="org.jetbrains.idea.maven.importing.MavenIdeaPluginImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenWslTargetConfigurator"/>
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenWslTargetConfigurator"/>
-
-    <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenPostTaskConfigurator"/>
 
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerJavacExtension"/>
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>

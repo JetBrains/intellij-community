@@ -137,7 +137,7 @@ public class PointlessNullCheckInspection extends BaseInspection implements Clea
     private static PsiReferenceExpression getReferenceFromBooleanCall(PsiExpression expression) {
       if (!(expression instanceof PsiMethodCallExpression)) return null;
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      if (!PsiType.BOOLEAN.equals(call.getType())) return null;
+      if (!PsiTypes.booleanType().equals(call.getType())) return null;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier != null && SideEffectChecker.mayHaveSideEffects(qualifier)) return null;
       PsiMethod method = call.resolveMethod();

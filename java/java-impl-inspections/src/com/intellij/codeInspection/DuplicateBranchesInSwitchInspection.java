@@ -114,7 +114,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
             if (areDuplicates(branch, otherBranch)) {
               isDuplicate[otherIndex] = true;
-              LocalQuickFix fix = branch.newMergeCasesFix(otherBranch);
+              LocalQuickFix fix = branch.mergeCasesFix(otherBranch);
               if (fix != null) {
                 registerProblem(otherBranch, otherBranch.getCaseBranchMessage(), fix);
               }
@@ -125,8 +125,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     private void highlightDefaultDuplicate(@NotNull BranchBase<?> branch) {
-      LocalQuickFix deleteCaseFix = branch.newDeleteCaseFix();
-      LocalQuickFix mergeWithDefaultFix = branch.newMergeWithDefaultFix();
+      LocalQuickFix deleteCaseFix = branch.deleteCaseFix();
+      LocalQuickFix mergeWithDefaultFix = branch.mergeWithDefaultFix();
       if (deleteCaseFix == null && mergeWithDefaultFix == null) return;
       registerProblem(branch, branch.getDefaultBranchMessage(), deleteCaseFix, mergeWithDefaultFix);
     }
@@ -378,14 +378,25 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       if (context.prepare(descriptor.getStartElement(), BranchBase::isDefault)) {
         context.deleteBranchLabel();
         if (!context.myBranchToDelete.hasSingleNullCase()) {
-          // case R():
-          // case null:
-          // case S():
-          //   return 42;
-          //
-          // The 'default' case does not handle null values, so we cannot delete
-          // the 'case null:' and the 'return 42;' statement. However,
-          // we can delete the 'case R():' and 'case S():' statements."
+          /*
+           switch (obj) {
+             case R():
+             case null:
+             case S():
+               <caret>System.out.println(42); // Branch in 'switch' is a duplicate of the default branch
+               break;
+             case String s:
+               System.out.println(0);
+               break;
+             default:
+               System.out.println(42);
+           }
+
+           The 'case R():' and 'case S():' statements can be removed as redundant,
+           because the corresponding branch is a duplicate of the default branch.
+           But the 'default' case does not handle null values, so we cannot delete
+           the 'case null:' and the 'return 42;' statement.
+          */
           context.deleteStatements();
         }
       }
@@ -589,13 +600,14 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       myStatements = statements;
       myCommentTexts = commentTexts;
       myIsDefault = ContainerUtil.exists(labels, label -> label.isDefaultCase() || SwitchUtils.isCaseNullDefault(label));
-      myCanDeleteRedundantBranch = labels.length > 1 ||
-                                   !ContainerUtil.exists(labels, label -> {
-                                     PsiCaseLabelElementList list = label.getCaseLabelElementList();
-                                     if (list == null) return false;
-                                     return ContainerUtil.exists(list.getElements(), element -> element instanceof PsiExpression expr &&
-                                                                                                ExpressionUtils.isNullLiteral(expr));
-                                   });
+      myCanDeleteRedundantBranch = labels.length > 1 || !ContainerUtil.exists(labels, BranchBase::hasNullCase);
+    }
+
+    private static boolean hasNullCase(@NotNull PsiSwitchLabelStatementBase label) {
+      PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+      if (labelElementList == null) return false;
+      PsiCaseLabelElement[] elements = labelElementList.getElements();
+      return ContainerUtil.exists(elements, ExpressionUtils::isNullLiteral);
     }
 
     boolean isDefault() {
@@ -625,13 +637,13 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Nullable
-    abstract LocalQuickFix newMergeCasesFix(BranchBase<?> otherBranch);
+    abstract LocalQuickFix mergeCasesFix(BranchBase<?> otherBranch);
 
     @Nullable
-    abstract LocalQuickFix newDeleteCaseFix();
+    abstract LocalQuickFix deleteCaseFix();
 
     @Nullable
-    abstract LocalQuickFix newMergeWithDefaultFix();
+    abstract LocalQuickFix mergeWithDefaultFix();
 
     @Nullable
     Match match(BranchBase<?> other) {
@@ -819,7 +831,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
     @Nullable
     @Override
-    LocalQuickFix newMergeCasesFix(BranchBase<?> otherBranch) {
+    LocalQuickFix mergeCasesFix(BranchBase<?> otherBranch) {
       if (!otherBranch.canMergeBranch()) return null;
       String switchLabelText = getSwitchLabelText();
       if (switchLabelText == null) return null;
@@ -828,13 +840,13 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
     @Nullable
     @Override
-    LocalQuickFix newMergeWithDefaultFix() {
+    LocalQuickFix mergeWithDefaultFix() {
       return myCanMergeBranch ? new MergeWithDefaultBranchFix() : null;
     }
 
     @Nullable
     @Override
-    LocalQuickFix newDeleteCaseFix() {
+    LocalQuickFix deleteCaseFix() {
       return myCanDeleteRedundantBranch ? new DeleteRedundantBranchFix() : null;
     }
 
@@ -958,7 +970,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       PsiCaseLabelElement[] elements = labelElementList.getElements();
       return !ContainerUtil.exists(elements, element -> element instanceof PsiPattern ||
                                                         element instanceof PsiPatternGuard ||
-                                                        element instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
+                                                        ExpressionUtils.isNullLiteral(element));
     }
 
     @Override
@@ -978,7 +990,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
     @Nullable
     @Override
-    LocalQuickFix newMergeCasesFix(BranchBase<?> otherBranch) {
+    LocalQuickFix mergeCasesFix(BranchBase<?> otherBranch) {
       if (!otherBranch.canMergeBranch()) return null;
       String switchLabelText = getSwitchLabelText();
       if (switchLabelText == null) return null;
@@ -987,13 +999,13 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
     @Nullable
     @Override
-    LocalQuickFix newMergeWithDefaultFix() {
+    LocalQuickFix mergeWithDefaultFix() {
       return myCanMergeWithDefaultBranch ? new MergeWithDefaultRuleFix() : null;
     }
 
     @Nullable
     @Override
-    LocalQuickFix newDeleteCaseFix() {
+    LocalQuickFix deleteCaseFix() {
       return myCanDeleteRedundantBranch ? new DeleteRedundantRuleFix() : null;
     }
   }

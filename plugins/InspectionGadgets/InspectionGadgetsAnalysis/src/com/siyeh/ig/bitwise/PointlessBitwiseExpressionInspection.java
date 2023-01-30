@@ -17,7 +17,6 @@ package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -34,9 +33,8 @@ import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.psi.JavaTokenType.*;
 
 public class PointlessBitwiseExpressionInspection extends BaseInspection {
@@ -96,7 +94,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
       final PsiExpression operand = operands[i];
       if (isZero(operand)) {
         if (tokenType.equals(AND) || ExpressionParser.SHIFT_OPS.contains(tokenType) && previousOperand == null) {
-          return getText(expression, operands[0], operands[length - 1], PsiType.LONG.equals(expression.getType()) ? "0L" : "0", ct);
+          return getText(expression, operands[0], operands[length - 1], PsiTypes.longType().equals(expression.getType()) ? "0L" : "0", ct);
         }
         else if (tokenType.equals(OR) || tokenType.equals(XOR) ||
                  ExpressionParser.SHIFT_OPS.contains(tokenType) && previousOperand != null) {
@@ -125,7 +123,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
           return getText(expression, previousOperand, operand, ct.text(operand), ct);
         }
         else if (tokenType.equals(XOR)) {
-          return getText(expression, previousOperand, operand, PsiType.LONG.equals(expression.getType()) ? "0L" : "0", ct);
+          return getText(expression, previousOperand, operand, PsiTypes.longType().equals(expression.getType()) ? "0L" : "0", ct);
         }
       }
       else {
@@ -133,9 +131,9 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
         PsiExpression right = optionallyUnwrapComplement(operand);
         if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, right)) {
           if (tokenType.equals(AND)) {
-            return getText(expression, previousOperand, operand, PsiType.LONG.equals(expression.getType()) ? "0L" : "0", ct);
+            return getText(expression, previousOperand, operand, PsiTypes.longType().equals(expression.getType()) ? "0L" : "0", ct);
           } else if (tokenType.equals(OR) || tokenType.equals(XOR)) {
-            return getText(expression, previousOperand, operand, PsiType.LONG.equals(expression.getType()) ? "-1L" : "-1", ct);
+            return getText(expression, previousOperand, operand, PsiTypes.longType().equals(expression.getType()) ? "-1L" : "-1", ct);
           }
         }
       }
@@ -256,7 +254,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
           return;
         }
         final PsiType type = operand.getType();
-        if (type == null || type.equals(PsiType.BOOLEAN) ||
+        if (type == null || type.equals(PsiTypes.booleanType()) ||
             type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
           return;
         }

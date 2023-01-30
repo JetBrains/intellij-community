@@ -26,16 +26,17 @@ abstract class JsClientTemplate : Template() {
     override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
         module.configurator.moduleType == ModuleType.js
                 && when (module.configurator) {
-                    JsBrowserTargetConfigurator, MppLibJsBrowserTargetConfigurator -> true
-                    BrowserJsSinglePlatformModuleConfigurator -> {
-                        with(reader) {
-                            inContextOfModuleConfigurator(module, module.configurator) {
-                                JSConfigurator.kind.reference.notRequiredSettingValue == JsTargetKind.APPLICATION
-                            }
-                        }
+            JsBrowserTargetConfigurator, MppLibJsBrowserTargetConfigurator -> true
+            BrowserJsSinglePlatformModuleConfigurator -> {
+                with(reader) {
+                    inContextOfModuleConfigurator(module, module.configurator) {
+                        JSConfigurator.kind.reference.notRequiredSettingValue == JsTargetKind.APPLICATION
                     }
-                    else -> false
                 }
+            }
+
+            else -> false
+        }
 
     override fun Reader.createRunConfigurations(module: ModuleIR): List<WizardRunConfiguration> = buildList {
         if (module.originalModule.kind == ModuleKind.singlePlatformJsBrowser) {
@@ -144,8 +145,14 @@ abstract class JsClientTemplate : Template() {
     }
 
     protected fun Reader.jsSettings(module: Module): Map<String, String> {
-        return mapOf("indexFile" to indexFileName(module))
+        return mapOf(
+            "indexTitle" to indexTitleName(),
+            "indexFile" to indexFileName(module),
+        )
     }
+
+    protected open fun indexTitleName(): String =
+        "JS Client"
 
     private fun Reader.indexFileName(
         module: Module

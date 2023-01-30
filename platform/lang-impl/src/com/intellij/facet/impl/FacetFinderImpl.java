@@ -52,7 +52,7 @@ public class FacetFinderImpl extends FacetFinder {
   }
 
   @Override
-  public <F extends Facet<?>> ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type) {
+  public <F extends Facet<?>> @NotNull ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type) {
     AllFacetsOfTypeModificationTracker tracker = myAllFacetTrackers.get(type);
     if (tracker == null) {
       tracker = new AllFacetsOfTypeModificationTracker<>(myProject, type);

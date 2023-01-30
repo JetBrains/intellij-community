@@ -18,8 +18,10 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 fun enableCoroutineDump() {
-  DebugProbes.enableCreationStackTraces = false
-  DebugProbes.install()
+  runCatching {
+    DebugProbes.enableCreationStackTraces = false
+    DebugProbes.install()
+  }
 }
 
 @JvmOverloads

@@ -138,7 +138,7 @@ public final class BytecodeAnalysisConverter {
         keys.add(primaryKey.withDirection(new InThrow(i, Value.NotNull)));
         keys.add(primaryKey.withDirection(new InThrow(i, Value.Null)));
       }
-      else if (PsiType.BOOLEAN.equals(parameters[i].getType())) {
+      else if (PsiTypes.booleanType().equals(parameters[i].getType())) {
         keys.add(primaryKey.withDirection(new InOut(i, Value.True)));
         keys.add(primaryKey.withDirection(new InOut(i, Value.False)));
         keys.add(primaryKey.withDirection(new InThrow(i, Value.True)));

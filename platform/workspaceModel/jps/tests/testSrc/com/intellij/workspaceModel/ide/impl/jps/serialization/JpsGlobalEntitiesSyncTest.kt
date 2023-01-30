@@ -15,6 +15,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getGlobalInstance
+import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
@@ -28,6 +29,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import kotlin.test.assertEquals
+import kotlin.test.assertNotSame
+import kotlin.test.assertSame
 
 class JpsGlobalEntitiesSyncTest {
   companion object {
@@ -48,7 +52,6 @@ class JpsGlobalEntitiesSyncTest {
   fun `test project and global storage sync`() {
     copyAndLoadGlobalEntities(originalFile = "loading", expectedFile = "sync", testDir = temporaryFolder.newFolder(),
                               parentDisposable = disposableRule.disposable) { entitySource ->
-      val virtualFileManager = VirtualFileUrlManager.getGlobalInstance()
       val projectLibrariesNames = mutableListOf("spring", "junit", "kotlin")
       val globalLibrariesNames = mutableListOf("aws.s3", "org.maven.common", "com.google.plugin", "org.microsoft")
 
@@ -76,6 +79,7 @@ class JpsGlobalEntitiesSyncTest {
       val project = loadedProjects.first()
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
+          val virtualFileManager = VirtualFileUrlManager.getInstance(project)
           WorkspaceModel.getInstance(project).updateProjectModel("Test update") { builder ->
             val libraryEntity = builder.entities(LibraryEntity::class.java).first { globalLibrariesNames.contains(it.name) }
             val libraryNameToRemove = libraryEntity.name
@@ -104,14 +108,29 @@ class JpsGlobalEntitiesSyncTest {
     UsefulTestCase.assertSameElements(globalLibrariesNames, libraryBridges.map { it.name })
 
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
-    val globalLibraryEntities = globalWorkspaceModel.currentSnapshot.entities(LibraryEntity::class.java).toList()
-    UsefulTestCase.assertSameElements(globalLibrariesNames, globalLibraryEntities.map { it.name })
+    val globalVirtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+
+    val globalLibraryEntities = globalWorkspaceModel.currentSnapshot.entities(LibraryEntity::class.java).associateBy { it.name }
+    UsefulTestCase.assertSameElements(globalLibrariesNames, globalLibraryEntities.keys)
 
     loadedProjects.forEach { loadedProject ->
       val projectWorkspaceModel = WorkspaceModel.getInstance(loadedProject)
+      val projectVirtualFileUrlManager = VirtualFileUrlManager.getInstance(loadedProject)
       projectWorkspaceModel as WorkspaceModelImpl
       val projectLibraryEntities = projectWorkspaceModel.currentSnapshot.entities(LibraryEntity::class.java).toList()
       UsefulTestCase.assertSameElements(projectLibrariesNames + globalLibrariesNames, projectLibraryEntities.map { it.name })
+
+      // Check VirtualFileUrls are from different managers but same url
+      projectLibraryEntities.forEach libsLoop@{ projectLibrary ->
+        if (!globalLibrariesNames.contains(projectLibrary.name)) return@libsLoop
+        val projectVfu = projectLibrary.roots[0].url
+        val globalVfu = globalLibraryEntities[projectLibrary.name]!!.roots[0].url
+
+        assertEquals(globalVfu.url, projectVfu.url)
+        assertSame(projectVfu, projectVirtualFileUrlManager.fromUrl(projectVfu.url))
+        assertSame(globalVfu, globalVirtualFileUrlManager.fromUrl(globalVfu.url))
+        assertNotSame(globalVfu, projectVfu)
+      }
     }
   }
 

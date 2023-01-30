@@ -424,7 +424,7 @@ public final class PsiImplUtil {
   public static boolean isSimpleArrayAccess(PsiType exprType, PsiType[] argTypes, PsiElement context, boolean isLValue) {
     return exprType instanceof PsiArrayType &&
            (isLValue && argTypes.length == 2 || !isLValue && argTypes.length == 1) &&
-           TypesUtil.isAssignableByMethodCallConversion(PsiType.INT, argTypes[0], context);
+           TypesUtil.isAssignableByMethodCallConversion(PsiTypes.intType(), argTypes[0], context);
   }
 
   /**

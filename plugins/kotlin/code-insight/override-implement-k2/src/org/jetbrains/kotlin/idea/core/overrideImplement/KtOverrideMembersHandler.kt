@@ -3,12 +3,10 @@
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
@@ -19,12 +17,9 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 
 @ApiStatus.Internal
 open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
-    @OptIn(KtAllowAnalysisOnEdt::class)
     override fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<KtClassMember> {
-        return allowAnalysisOnEdt {
-            analyze(classOrObject) {
-                collectMembers(classOrObject)
-            }
+        return analyze(classOrObject) {
+            collectMembers(classOrObject)
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.configurationStore.deserializeInto
@@ -559,5 +559,115 @@ class RecentProjectManagerTest {
         "/home/boo/Documents/newproj201924",
         "/home/boo/Documents/BrightFuturesTestProj",
         "/home/boo/Documents/GoogleTestTests")
+  }
+
+  @Test
+  fun `validate a lot of recent opened projects`() {
+    val manager = RecentProjectsManagerBase()
+
+    val entries = StringBuilder()
+    val openedProjectCount = 2000
+    for (i in 0 until openedProjectCount) {
+      //language=XML
+      entries.append("""
+          <entry key="/home/boo/project-$i">
+            <value>
+              <RecentProjectMetaInfo opened="true">
+              </RecentProjectMetaInfo>
+            </value>
+          </entry>
+      """.trimIndent())
+    }
+
+    @Language("XML")
+    val element = JDOMUtil.load("""
+      <application>
+  <component name="RecentDirectoryProjectsManager">
+    <option name="additionalInfo">
+      <map>
+        $entries
+      </map>
+    </option>
+  </component>
+</application>
+      """.trimIndent())
+    val state = RecentProjectManagerState()
+    element.getChild("component")!!.deserializeInto(state)
+    manager.loadState(state)
+    assertThat(manager.getRecentPaths().first()).isEqualTo("/home/boo/project-1999")
+    assertThat(manager.getRecentPaths()).hasSize(openedProjectCount)
+  }
+
+  @Test
+  fun `validate a lot of recent projects`() {
+    val manager = RecentProjectsManagerBase()
+
+    val entries = StringBuilder()
+    val openedProjectCount = 2000
+    for (i in 0 until openedProjectCount) {
+      //language=XML
+      entries.append("""
+          <entry key="/home/boo/project-$i">
+            <value>
+              <RecentProjectMetaInfo opened="${i % 2 == 0}">
+              </RecentProjectMetaInfo>
+            </value>
+          </entry>
+      """.trimIndent())
+    }
+
+    @Language("XML")
+    val element = JDOMUtil.load("""
+      <application>
+  <component name="RecentDirectoryProjectsManager">
+    <option name="additionalInfo">
+      <map>
+        $entries
+      </map>
+    </option>
+  </component>
+</application>
+      """.trimIndent())
+    val state = RecentProjectManagerState()
+    element.getChild("component")!!.deserializeInto(state)
+    manager.loadState(state)
+    assertThat(manager.getRecentPaths().first()).isEqualTo("/home/boo/project-1998")
+    assertThat(manager.getRecentPaths()).hasSize(openedProjectCount / 2)
+  }
+
+  @Test
+  fun `remove old recent projects`() {
+    val manager = RecentProjectsManagerBase()
+
+    val entries = StringBuilder()
+    val openedProjectCount = 60
+    for (i in 0 until openedProjectCount) {
+      //language=XML
+      entries.append("""
+          <entry key="/home/boo/project-$i">
+            <value>
+              <RecentProjectMetaInfo>
+              </RecentProjectMetaInfo>
+            </value>
+          </entry>
+      """.trimIndent())
+    }
+
+    @Language("XML")
+    val element = JDOMUtil.load("""
+      <application>
+  <component name="RecentDirectoryProjectsManager">
+    <option name="additionalInfo">
+      <map>
+        $entries
+      </map>
+    </option>
+  </component>
+</application>
+      """.trimIndent())
+    val state = RecentProjectManagerState()
+    element.getChild("component")!!.deserializeInto(state)
+    manager.loadState(state)
+    assertThat(manager.getRecentPaths().joinToString(separator = "\n")).isEqualTo(Array(50) { "/home/boo/project-${it + 10}" }.reversed().joinToString(separator = "\n"))
   }
 }

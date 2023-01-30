@@ -97,7 +97,7 @@ private fun KtExpression.tryUnwrapElvisOrDoubleBang(context: Lazy<BindingContext
 private fun isCompatibleEquals(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName>): Boolean =
     when (val equals = ktObject.findEquals()) {
         is Function -> ktObjectFqn.value == equals.function.singleExpressionBody()
-            ?.asSafely<KtIsExpression>()?.typeReference?.let { typeReference ->
+            ?.asSafely<KtIsExpression>()?.takeUnless(KtIsExpression::isNegated)?.typeReference?.let { typeReference ->
                 typeReference.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)[BindingContext.TYPE, typeReference]?.fqName
             }
         NonTrivialSuper -> false

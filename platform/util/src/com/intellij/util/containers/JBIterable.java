@@ -177,7 +177,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @SafeVarargs
   public static @NotNull <E> JBIterable<E> of(E @Nullable ... elements) {
-    return elements == null || elements.length == 0 ? empty() : from(ContainerUtil.newArrayList(elements));
+    return elements == null || elements.length == 0 ? empty() : from(Arrays.asList(elements));
   }
 
   private static final JBIterable<?> EMPTY = new Empty();

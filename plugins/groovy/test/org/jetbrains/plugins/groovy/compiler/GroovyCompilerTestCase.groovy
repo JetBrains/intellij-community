@@ -115,7 +115,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   @Override
   protected void tearDown() throws Exception {
-    Path buildDir = BuildManager.getInstance().getBuildSystemDirectory(myFixture.getProject());
+    Path buildDir = BuildManager.getInstance().getBuildSystemDirectory(myFixture.getProject())
     try {
       EdtTestUtil.runInEdtAndWait {
         try {

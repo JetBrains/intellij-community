@@ -511,16 +511,16 @@ public final class HighlightUtil {
       }
 
       PsiType lType = variable.getType();
-      if (PsiType.NULL.equals(lType) && SyntaxTraverser.psiTraverser(initializer)
+      if (PsiTypes.nullType().equals(lType) && SyntaxTraverser.psiTraverser(initializer)
                                           .filter(PsiLiteralExpression.class)
-                                          .find(l -> PsiType.NULL.equals(l.getType())) != null) {
+                                          .find(l -> PsiTypes.nullType().equals(l.getType())) != null) {
         HighlightInfo.Builder info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
             .range(typeElement);
         HighlightFixUtil.registerSpecifyVarTypeFix((PsiLocalVariable)variable, info);
         return info;
       }
-      if (PsiType.VOID.equals(lType)) {
+      if (PsiTypes.voidType().equals(lType)) {
         String message = JavaErrorBundle.message("lvti.void");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement);
       }
@@ -561,7 +561,7 @@ public final class HighlightUtil {
     if (rType == null) {
       rType = expression.getType();
     }
-    if (lType == null || lType == PsiType.NULL) {
+    if (lType == null || lType == PsiTypes.nullType()) {
       return null;
     }
     HighlightInfo.Builder highlightInfo = createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift);
@@ -572,7 +572,7 @@ public final class HighlightUtil {
     }
     if (expression != null) {
       AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(highlightInfo, textRange, expression, lType, rType);
-      if (!(expression.getParent() instanceof PsiConditionalExpression && PsiType.VOID.equals(lType))) {
+      if (!(expression.getParent() instanceof PsiConditionalExpression && PsiTypes.voidType().equals(lType))) {
         HighlightFixUtil.registerChangeReturnTypeFix(highlightInfo, expression, lType);
       }
     }
@@ -607,7 +607,7 @@ public final class HighlightUtil {
     }
     else {
       PsiType returnType = method != null ? method.getReturnType() : null/*JSP page returns void*/;
-      boolean isMethodVoid = returnType == null || PsiType.VOID.equals(returnType);
+      boolean isMethodVoid = returnType == null || PsiTypes.voidType().equals(returnType);
       PsiExpression returnValue = statement.getReturnValue();
       if (returnValue != null) {
         PsiType valueType = RefactoringChangeUtil.getTypeByExpression(returnValue);
@@ -626,7 +626,7 @@ public final class HighlightUtil {
           TextRange textRange = statement.getTextRange();
           errorResult = checkAssignability(returnType, valueType, returnValue, textRange, returnValue.getStartOffsetInParent());
           if (errorResult != null && valueType != null) {
-            if (!PsiType.VOID.equals(valueType)) {
+            if (!PsiTypes.voidType().equals(valueType)) {
               IntentionAction action = getFixFactory().createMethodReturnFix(method, valueType, true);
               errorResult.registerFix(action, null, null, null, null);
             }
@@ -638,7 +638,7 @@ public final class HighlightUtil {
         description = JavaErrorBundle.message("missing.return.value");
         errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description)
           .navigationShift(PsiKeyword.RETURN.length());
-        IntentionAction action = getFixFactory().createMethodReturnFix(method, PsiType.VOID, true);
+        IntentionAction action = getFixFactory().createMethodReturnFix(method, PsiTypes.voidType(), true);
         errorResult.registerFix(action, null, null, null, null);
       }
     }
@@ -908,7 +908,7 @@ public final class HighlightUtil {
   }
 
   static HighlightInfo.Builder checkYieldExpressionType(@NotNull PsiExpression expression) {
-    if (PsiType.VOID.equals(expression.getType())) {
+    if (PsiTypes.voidType().equals(expression.getType())) {
       String message = JavaErrorBundle.message("yield.void");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
     }
@@ -1543,12 +1543,12 @@ public final class HighlightUtil {
 
   @NotNull
   private static HighlightInfo.Builder createMustBeBooleanInfo(@NotNull PsiExpression expr, @Nullable PsiType type) {
-    HighlightInfo.Builder info = createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, type, expr.getTextRange(), 0);
+    HighlightInfo.Builder info = createIncompatibleTypeHighlightInfo(PsiTypes.booleanType(), type, expr.getTextRange(), 0);
     if (expr instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expr;
       PsiMethod method = methodCall.resolveMethod();
       if (method != null) {
-        IntentionAction action = getFixFactory().createMethodReturnFix(method, PsiType.BOOLEAN, true);
+        IntentionAction action = getFixFactory().createMethodReturnFix(method, PsiTypes.booleanType(), true);
         info.registerFix(action, null, null, null, null);
       }
     }
@@ -1755,7 +1755,7 @@ public final class HighlightUtil {
         }
       }
 
-      if (PsiType.VOID.equals(switchExpressionType)) {
+      if (PsiTypes.voidType().equals(switchExpressionType)) {
         String text = JavaErrorBundle.message("switch.expression.cannot.be.void");
         holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(switchExpression.getFirstChild()).descriptionAndTooltip(text).create());
       }
@@ -1927,7 +1927,7 @@ public final class HighlightUtil {
         if (expression instanceof PsiMethodCallExpression) {
           PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
           if (method != null) {
-            IntentionAction action = getFixFactory().createMethodReturnFix(method, PsiType.BOOLEAN, true);
+            IntentionAction action = getFixFactory().createMethodReturnFix(method, PsiTypes.booleanType(), true);
             highlightInfo.registerFix(action, null, null, null, null);
           }
         }
@@ -2166,7 +2166,7 @@ public final class HighlightUtil {
     }
 
     PsiExpression indexExpression = arrayAccessExpression.getIndexExpression();
-    return indexExpression == null ? null : checkAssignability(PsiType.INT, indexExpression.getType(), indexExpression, indexExpression);
+    return indexExpression == null ? null : checkAssignability(PsiTypes.intType(), indexExpression.getType(), indexExpression, indexExpression);
   }
 
 
@@ -2531,7 +2531,7 @@ public final class HighlightUtil {
 
       if (typeOwner instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)typeOwner;
-        if (method.getReturnTypeElement() == parent && PsiType.VOID.equals(method.getReturnType())) return null;
+        if (method.getReturnTypeElement() == parent && PsiTypes.voidType().equals(method.getReturnType())) return null;
       }
       else if (typeOwner instanceof PsiClassObjectAccessExpression) {
         if (TypeConversionUtil.isVoidType(((PsiClassObjectAccessExpression)typeOwner).getOperand().getType())) return null;
@@ -2980,7 +2980,7 @@ public final class HighlightUtil {
     PsiAssertStatement assertStatement = (PsiAssertStatement)expression.getParent();
     if (expression == assertStatement.getAssertCondition() && !TypeConversionUtil.isBooleanType(type)) {
       // addTypeCast quickfix is not applicable here since no type can be cast to boolean
-      HighlightInfo.Builder builder = createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, type, expression.getTextRange(), 0);
+      HighlightInfo.Builder builder = createIncompatibleTypeHighlightInfo(PsiTypes.booleanType(), type, expression.getTextRange(), 0);
       if (expression instanceof PsiAssignmentExpression &&
           ((PsiAssignmentExpression)expression).getOperationTokenType() == JavaTokenType.EQ) {
         IntentionAction action = getFixFactory().createAssignmentToComparisonFix((PsiAssignmentExpression)expression);

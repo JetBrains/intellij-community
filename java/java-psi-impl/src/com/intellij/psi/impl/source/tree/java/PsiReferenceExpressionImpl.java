@@ -367,7 +367,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
           if (qualifier != null && ElementType.EXPRESSION_BIT_SET.contains(qualifier.getElementType())) {
             PsiType type = SourceTreeToPsiMap.<PsiExpression>treeToPsiNotNull(qualifier).getType();
             if (type instanceof PsiArrayType) {
-              return PsiType.INT;
+              return PsiTypes.intType();
             }
           }
         }

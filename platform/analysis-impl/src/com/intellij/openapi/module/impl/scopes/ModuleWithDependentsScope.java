@@ -7,7 +7,6 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -92,16 +91,14 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope {
   }
 
   boolean contains(@NotNull VirtualFile file, boolean fromTests) {
-    // optimization: fewer calls to getInfoForFileOrDirectory()
-    DirectoryInfo info = myProjectFileIndex.getInfoForFileOrDirectory(file);
-    Module moduleOfFile = info.getModule();
+    Module moduleOfFile = myProjectFileIndex.getModuleForFile(file);
     if (moduleOfFile == null || !myModules.contains(moduleOfFile)) return false;
     if (fromTests &&
         !myProductionOnTestModules.contains(moduleOfFile) &&
         !TestSourcesFilter.isTestSources(file, moduleOfFile.getProject())) {
       return false;
     }
-    return ProjectFileIndexImpl.isFileInContent(file, info);
+    return true;
   }
 
   @Override

@@ -7,18 +7,20 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
 import git4idea.commit.signature.GitCommitSignature
 
 internal class SimpleGitCommitSignatureLoader(private val project: Project) : GitCommitSignatureLoaderBase(project) {
 
-  override fun requestData(indicator: ProgressIndicator, commits: List<CommitId>, onChange: (Map<CommitId, GitCommitSignature>) -> Unit) {
+  override fun requestData(indicator: ProgressIndicator, commits: Map<VirtualFile, List<Hash>>, onChange: (Map<CommitId, GitCommitSignature>) -> Unit) {
     @Suppress("HardCodedStringLiteral")
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(
       object : Task.Backgroundable(project, "Loading git commit signatures") {
         override fun run(indicator: ProgressIndicator) {
 
-          for ((root, hashes) in commits.groupBy({ it.root }, { it.hash })) {
+          for ((root, hashes) in commits) {
             try {
               indicator.checkCanceled()
               val signatures = loadCommitSignatures(root, hashes)

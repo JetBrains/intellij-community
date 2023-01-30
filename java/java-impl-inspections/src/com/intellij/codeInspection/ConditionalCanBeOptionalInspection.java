@@ -68,7 +68,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
         PsiType nullType = ((PsiExpression)nullBranch.copy()).getType();
         if (nullType == null || notNullType == null) return false;
         if (nullType.isAssignableFrom(notNullType)) return true;
-        if (nullType.equals(PsiType.NULL)) return true;
+        if (nullType.equals(PsiTypes.nullType())) return true;
         if (OptionalUtil.isOptionalEmptyCall(nullBranch) && TypeUtils.isOptional(notNullType)) return true;
         return false;
       }

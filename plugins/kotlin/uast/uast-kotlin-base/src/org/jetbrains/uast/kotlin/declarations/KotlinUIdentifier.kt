@@ -9,7 +9,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.toUElement
@@ -58,15 +57,14 @@ class KotlinUIdentifier(
             return parentParent.toUElement()
         }
         return generateSequence(parent) { it.parent }.take(3)
-            .mapNotNull { it.safeAs<KtTypeReference>()?.parent?.safeAs<KtConstructorCalleeExpression>() }
+            .mapNotNull { (it as? KtTypeReference)?.parentAs<KtConstructorCalleeExpression>() }
             .mapNotNull {
-                val entry = it.parent as? KtSuperTypeCallEntry
+                val entry = it.parentAs<KtSuperTypeCallEntry>()
                 if (entry != null)
-                    entry.parent.safeAs<KtSuperTypeList>()?.parent?.safeAs<KtObjectDeclaration>()?.parent?.safeAs<KtObjectLiteralExpression>()
-                        ?.toUElement().safeAs<KotlinUObjectLiteralExpression>()?.constructorCall
+                    (entry.getParentObjectLiteralExpression()?.toUElement() as? KotlinUObjectLiteralExpression)?.constructorCall
                         ?: entry.toUElement()
                 else
-                    it.parent.safeAs<KtAnnotationEntry>()?.toUElement()
+                    it.parentAs<KtAnnotationEntry>()?.toUElement()
             }
             .firstOrNull()
     }

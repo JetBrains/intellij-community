@@ -172,7 +172,7 @@ private fun findOutputFromReturn(returnStatements: List<PsiStatement>): Expressi
     CodeFragmentAnalyzer.inferNullability(returnExpressions)
   }
 
-  val inferredType = returnExpressions.map { it.type ?: PsiType.NULL }
+  val inferredType = returnExpressions.map { it.type ?: PsiTypes.nullType() }
                     .reduce { commonType, type -> findCommonType(commonType, type, nullability, manager) ?: codeReturnType }
 
   val returnType = when {
@@ -188,7 +188,7 @@ private fun findFlowData(analyzer: CodeFragmentAnalyzer, flowOutput: FlowOutput)
   val returnOutput = findOutputFromReturn(flowOutput.statements)
   return when (flowOutput) {
     is ConditionalFlow -> when {
-      returnOutput?.nullability == Nullability.NOT_NULL && returnOutput.type != PsiType.BOOLEAN -> returnOutput.copy(nullability = Nullability.NULLABLE)
+      returnOutput?.nullability == Nullability.NOT_NULL && returnOutput.type != PsiTypes.booleanType() -> returnOutput.copy(nullability = Nullability.NULLABLE)
       ExtractMethodHelper.areSame(flowOutput.statements) && !ExtractMethodHelper.hasReferencesToScope(analyzer.elements, returnOutput?.returnExpressions.orEmpty()) ->
         ArtificialBooleanOutput
       else -> throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.exits"), analyzer.elements.first())

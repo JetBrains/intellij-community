@@ -16,6 +16,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +53,7 @@ public class LabelPainter {
   protected @NotNull Color myBackground = UIUtil.getTableBackground();
   private @Nullable Color myGreyBackground = null;
   private @NotNull Color myForeground = UIUtil.getTableForeground();
+  private UpdateScaleHelper myUpdateScaleHelper = new UpdateScaleHelper();
 
   private boolean myCompact;
   private boolean myLeftAligned;
@@ -62,6 +64,11 @@ public class LabelPainter {
     myIconCache = iconCache;
   }
 
+  public void updateHeight() {
+    FontMetrics metrics = myComponent.getFontMetrics(getReferenceFont());
+    myHeight = metrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get();
+  }
+
   public void customizePainter(@NotNull Color background,
                                @NotNull Color foreground,
                                boolean isSelected,
@@ -70,9 +77,8 @@ public class LabelPainter {
     myBackground = background;
     myForeground = isSelected ? foreground : TEXT_COLOR;
 
+    updateHeight();
     FontMetrics metrics = myComponent.getFontMetrics(getReferenceFont());
-    myHeight = metrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get();
-
     myGreyBackground = calculateGreyBackground(refGroups, background, isSelected, myCompact);
     Pair<List<Pair<String, LabelIcon>>, Integer> presentation =
       calculatePresentation(refGroups, metrics, myGreyBackground != null ? myGreyBackground : myBackground,
@@ -314,6 +320,7 @@ public class LabelPainter {
 
   public Dimension getSize() {
     if (myLabels.isEmpty()) return new Dimension();
+    myUpdateScaleHelper.saveScaleAndRunIfChanged(this::updateHeight);
     return new Dimension(myWidth, myHeight);
   }
 

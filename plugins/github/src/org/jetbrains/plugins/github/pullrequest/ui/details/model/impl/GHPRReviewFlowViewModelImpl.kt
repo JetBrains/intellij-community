@@ -3,6 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.ui.codereview.details.ReviewRole
+import com.intellij.collaboration.ui.codereview.details.ReviewState
 import com.intellij.openapi.Disposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,12 +13,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataOperationsListener
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRMetadataModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel.ReviewState
 
 internal class GHPRReviewFlowViewModelImpl(
   scope: CoroutineScope,
@@ -59,11 +61,11 @@ internal class GHPRReviewFlowViewModelImpl(
     }
   }
 
-  override val roleState: StateFlow<GHPRReviewFlowViewModel.ReviewRole> = reviewerAndReviewState.mapState(scope) {
+  override val roleState: StateFlow<ReviewRole> = reviewerAndReviewState.mapState(scope) {
     when {
-      currentUser == metadataModel.getAuthor() -> GHPRReviewFlowViewModel.ReviewRole.AUTHOR
-      reviewerAndReviewState.value.containsKey(currentUser) -> GHPRReviewFlowViewModel.ReviewRole.REVIEWER
-      else -> GHPRReviewFlowViewModel.ReviewRole.GUEST
+      currentUser == metadataModel.getAuthor() -> ReviewRole.AUTHOR
+      reviewerAndReviewState.value.containsKey(currentUser) -> ReviewRole.REVIEWER
+      else -> ReviewRole.GUEST
     }
   }
 
@@ -81,13 +83,13 @@ internal class GHPRReviewFlowViewModelImpl(
   init {
     metadataModel.addAndInvokeChangesListener {
       _requestedReviewersState.value = metadataModel.reviewers
-      pullRequestReviewState.value = metadataModel.reviews.associate { it.author!! as GHUser to it.state }
+      pullRequestReviewState.value = metadataModel.reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state }
     }
 
     with(detailsDataProvider) {
       addDetailsLoadedListener(disposable) {
         _requestedReviewersState.value = loadedDetails!!.reviewRequests.mapNotNull { it.requestedReviewer }
-        pullRequestReviewState.value = loadedDetails!!.reviews.associate { it.author!! as GHUser to it.state }
+        pullRequestReviewState.value = loadedDetails!!.reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state }
       }
     }
 
@@ -96,5 +98,13 @@ internal class GHPRReviewFlowViewModelImpl(
         _pendingCommentsState.value = pendingComments?.comments?.totalCount ?: 0
       }
     }
+
+    reviewDataProvider.messageBus
+      .connect(scope)
+      .subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
+        override fun onReviewsChanged() {
+          detailsDataProvider.reloadDetails()
+        }
+      })
   }
 }

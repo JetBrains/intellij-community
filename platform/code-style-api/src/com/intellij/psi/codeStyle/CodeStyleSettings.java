@@ -70,6 +70,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
+  private final StoredOptionsContainer myStoredOptions = new StoredOptionsContainer();
+
   /**
    * @deprecated Use {@link CodeStyleSettingsManager#createSettings()}or {@link CodeStyleSettingsManager#createTemporarySettings()}.
    * <p>
@@ -476,7 +478,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   // region Formatter control
 
-  public boolean FORMATTER_TAGS_ENABLED;
+  public boolean FORMATTER_TAGS_ENABLED = true;
   public String FORMATTER_ON_TAG = "@formatter:on";
   public String FORMATTER_OFF_TAG = "@formatter:off";
 
@@ -551,6 +553,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public void readExternal(Element element) throws InvalidDataException {
     myVersion = getVersion(element);
     myCustomCodeStyleSettingsManager.notifySettingsBeforeLoading();
+    myStoredOptions.processOptions(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     if (LAYOUT_STATIC_IMPORTS_SEPARATELY) {
       // add <all other static imports> entry if there is none
@@ -609,7 +612,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public void writeExternal(Element element) throws WriteExternalException {
     setVersion(element, myVersion);
     CodeStyleSettings defaultSettings = new CodeStyleSettings(true, false);
-    DefaultJDOMExternalizer.write(this, element, new DifferenceFilter<>(this, defaultSettings));
+    DefaultJDOMExternalizer.write(this, element, myStoredOptions.createDiffFilter(this, defaultSettings));
     mySoftMargins.serializeInto(element);
     myExcludedFiles.serializeInto(element);
 

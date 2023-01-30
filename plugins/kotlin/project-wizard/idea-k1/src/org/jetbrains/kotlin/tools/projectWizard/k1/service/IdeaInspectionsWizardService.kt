@@ -2,16 +2,21 @@
 package org.jetbrains.kotlin.tools.projectWizard.k1.service
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.inspections.EnumValuesSoftDeprecateInJavaInspection
+import com.intellij.profile.codeInspection.InspectionProfileManager
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import org.jetbrains.kotlin.idea.inspections.ReplaceUntilWithRangeUntilInspection
-import org.jetbrains.kotlin.idea.inspections.migration.EnumValuesSoftDeprecateMigrationInspection
-import org.jetbrains.kotlin.tools.projectWizard.wizard.service.BaseInspectionWizardService
+import org.jetbrains.kotlin.tools.projectWizard.core.service.InspectionWizardService
+import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaWizardService
 
-internal class IdeaInspectionsWizardService(project: Project) : BaseInspectionWizardService(project) {
-    override val inspectionsToEnable = listOf(
-        ::ReplaceUntilWithRangeUntilInspection to HighlightDisplayLevel.WEAK_WARNING,
-        ::EnumValuesSoftDeprecateInJavaInspection to HighlightDisplayLevel.WARNING,
-        ::EnumValuesSoftDeprecateMigrationInspection to HighlightDisplayLevel.WARNING,
-    )
+class IdeaInspectionsWizardService(private val project: Project) : InspectionWizardService, IdeaWizardService {
+    override fun changeInspectionSettings() {
+        val projectProfile = ProjectInspectionProfileManager.getInstance(project).projectProfile
+        val key = HighlightDisplayKey.find(ReplaceUntilWithRangeUntilInspection().shortName)
+        if (projectProfile != null && key != null) {
+            InspectionProfileManager.getInstance(project).getProfile(projectProfile)
+                .setErrorLevel(key, HighlightDisplayLevel.WEAK_WARNING, project)
+        }
+    }
 }

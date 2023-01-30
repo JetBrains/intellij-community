@@ -43,6 +43,7 @@ public final class GradleImprovedHotswapDetection {
       .forEach(output -> context.fileGenerated(output.getRoot(), output.getPath()));
 
     Set<String> dirtyRoots = outputs.stream()
+      .filter(output -> StringUtil.isEmpty(output.getPath()))
       .map(GradleImprovedHotswapOutput::getRoot)
       .collect(Collectors.toSet());
 

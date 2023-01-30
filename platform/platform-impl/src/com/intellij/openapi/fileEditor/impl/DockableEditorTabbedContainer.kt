@@ -149,7 +149,7 @@ class DockableEditorTabbedContainer internal constructor(
         val tabInfo = if (index == currentOver!!.tabCount) null else currentOver!!.getTabAt(index)
         val previousInfo = if (index > 0) currentOver!!.getTabAt(index - 1) else null
         val previousIsPinned = previousInfo != null && previousInfo.isPinned
-        dropInBetweenPinnedTabs = if (file.getUserData(DRAG_START_PINNED_KEY) === java.lang.Boolean.TRUE) {
+        dropInBetweenPinnedTabs = if (file.getUserData(DRAG_START_PINNED_KEY) == true) {
           index == 0 || tabInfo != null && tabInfo.isPinned || previousIsPinned
         }
         else {
@@ -170,16 +170,15 @@ class DockableEditorTabbedContainer internal constructor(
       }
       if (dropInPinnedRow) {
         file.putUserData(DRAG_START_INDEX_KEY, index + 1)
-        file.putUserData(DRAG_START_PINNED_KEY, java.lang.Boolean.TRUE)
+        file.putUserData(DRAG_START_PINNED_KEY, true)
         dropInBetweenPinnedTabs = true
       }
     }
     recordDragStats(if (dropIntoNewlyCreatedWindow) -1 else SwingConstants.CENTER, sameWindow)
-    val openOptions = FileEditorOpenOptions()
-      .withIndex(index)
-      .withRequestFocus()
+    val openOptions = FileEditorOpenOptions(index = index,
+                                            requestFocus = true,
+                                            pin = dropInBetweenPinnedTabs ?: dockableEditor.isPinned)
     splitters.manager.openFileImpl2(window, file, openOptions)
-    window.setFilePinned(file = file, pinned = dropInBetweenPinnedTabs ?: dockableEditor.isPinned)
   }
 
   private fun recordDragStats(dropSide: Int, sameWindow: Boolean) {

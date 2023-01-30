@@ -6,6 +6,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
@@ -27,11 +28,13 @@ public abstract class StatusText {
   private static final int Y_GAP = 2;
 
   private @Nullable Component myOwner;
-  private Component myMouseTarget;
+  private @Nullable Component myMouseTarget;
   private final @NotNull MouseMotionListener myMouseMotionListener;
   private final @NotNull ClickListener myClickListener;
+  private final @NotNull HierarchyListener myHierarchyListener;
 
   private boolean myIsDefaultText;
+  private boolean myInLoadingPanel;
 
   private String myText = "";
 
@@ -101,7 +104,7 @@ public abstract class StatusText {
 
       @Override
       public void mouseMoved(final MouseEvent e) {
-        if (isStatusVisible()) {
+        if (isStatusVisibleInner()) {
           if (findActionListenerAt(e.getPoint()) != null) {
             if (myOriginalCursor == null) {
               myOriginalCursor = myMouseTarget.getCursor();
@@ -114,6 +117,11 @@ public abstract class StatusText {
           }
         }
       }
+    };
+
+    myHierarchyListener = event -> {
+      if ((event.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) <= 0) return;
+      myInLoadingPanel = UIUtil.getParentOfType(JBLoadingPanel.class, myOwner) != null;
     };
 
     setText(getDefaultEmptyText(), DEFAULT_ATTRIBUTES);
@@ -143,6 +151,9 @@ public abstract class StatusText {
   }
 
   public void attachTo(@Nullable Component owner, @Nullable Component mouseTarget) {
+    if (myOwner != null) {
+      myOwner.removeHierarchyListener(myHierarchyListener);
+    }
     if (myMouseTarget != null) {
       myClickListener.uninstall(myMouseTarget);
       myMouseTarget.removeMouseMotionListener(myMouseMotionListener);
@@ -155,6 +166,16 @@ public abstract class StatusText {
       myClickListener.installOn(myMouseTarget);
       myMouseTarget.addMouseMotionListener(myMouseMotionListener);
     }
+    if (myOwner != null) {
+      myOwner.addHierarchyListener(myHierarchyListener);
+    }
+  }
+
+  private boolean isStatusVisibleInner() {
+    if (!isStatusVisible()) return false;
+    if (!myInLoadingPanel) return true;
+    JBLoadingPanel loadingPanel = UIUtil.getParentOfType(JBLoadingPanel.class, myOwner);
+    return loadingPanel == null || !loadingPanel.isLoading();
   }
 
   protected abstract boolean isStatusVisible();
@@ -170,7 +191,7 @@ public abstract class StatusText {
   }
 
   private @Nullable ActionListener findActionListenerAt(Point point) {
-    if (!myHasActiveClickListeners || !isStatusVisible()) return null;
+    if (!myHasActiveClickListeners || !isStatusVisibleInner()) return null;
 
     point = SwingUtilities.convertPoint(myMouseTarget, point, myOwner);
 
@@ -241,7 +262,7 @@ public abstract class StatusText {
   }
 
   private void repaintOwner() {
-    if (myOwner != null && isStatusVisible()) myOwner.repaint();
+    if (myOwner != null && isStatusVisibleInner()) myOwner.repaint();
   }
 
   public StatusText appendText(@NlsContexts.StatusText String text) {
@@ -370,7 +391,7 @@ public abstract class StatusText {
   }
 
   public void paint(Component owner, Graphics g) {
-    if (!isStatusVisible()) {
+    if (!isStatusVisibleInner()) {
       return;
     }
     if (owner == myOwner) {

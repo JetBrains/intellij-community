@@ -201,6 +201,22 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
       assertEquals("java.lang.CharSequence", variable.getType().getCanonicalText());
     }
   }
-  
-  
+
+  public void testForEach() {
+    myFixture.configureByText("Test.java", """
+      import java.util.List;
+            
+      record Box<T>(T t) {}
+            
+      class X {
+        void test(List<Box<String>> list) {
+          for(Box(var text) : list){
+            int length = text.length();
+          }
+        }
+      }
+      """);
+    myFixture.enableInspections(new RawUseOfParameterizedTypeInspection());
+    myFixture.checkHighlighting();
+  }
 }

@@ -311,9 +311,13 @@ public final class GradleProjectResolverUtil {
 
     final String moduleType = ExternalSystemApiUtil.getExternalModuleType(module);
     boolean trimSourceSet = GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(moduleType);
-    final List<String> pathParts = StringUtil.split(externalProjectId, ":");
-    if (!externalProjectId.startsWith(":") && !pathParts.isEmpty()) pathParts.remove(0);
-    if (trimSourceSet && !pathParts.isEmpty()) pathParts.remove(pathParts.size() - 1);
+    List<String> pathParts = StringUtil.split(externalProjectId, ":");
+    if (!externalProjectId.startsWith(":") && !pathParts.isEmpty()) {
+      pathParts = pathParts.subList(1, pathParts.size());
+    }
+    if (trimSourceSet && !pathParts.isEmpty()) {
+      pathParts = pathParts.subList(0, pathParts.size() - 1);
+    }
     String join = StringUtil.join(pathParts, ":");
     return join.isEmpty() ? ":" : ":" + join;
   }

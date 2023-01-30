@@ -19,8 +19,6 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtilities;
@@ -41,6 +39,7 @@ public class ContentTabLabel extends ContentLabel {
   private final TabContentLayout myLayout;
 
   private @NlsContexts.Label String myText;
+  private final SingleAlarm myRevalidateAlarm;
 
   @Override
   protected void handleMouseClick(@NotNull MouseEvent e) {
@@ -89,15 +88,11 @@ public class ContentTabLabel extends ContentLabel {
       }
 
       super.setText(myText);
-    } finally {
+    }
+    finally {
       //noinspection ConstantConditions
       if (myContent != null && !(myContent instanceof SingleContentLayout.SubContent) && !Disposer.isDisposed(myContent)) {
-        new SingleAlarm(() -> {
-          ObjectUtils.consumeIfNotNull(getParent(), c -> {
-            c.revalidate();
-            c.repaint();
-          });
-        }, 50, myContent, Alarm.ThreadToUse.SWING_THREAD).request();
+        myRevalidateAlarm.request();
       }
     }
   }
@@ -122,6 +117,13 @@ public class ContentTabLabel extends ContentLabel {
       SwingUtilities.invokeLater(this::updateCloseIcon);
     }
     setMaximumSize(new Dimension(MAX_WIDTH, getMaximumSize().height));
+    myRevalidateAlarm = new SingleAlarm(() -> {
+      Container parent = getParent();
+      if (parent != null) {
+        parent.revalidate();
+        parent.repaint();
+      }
+    }, 50, myContent);
   }
 
   @Override

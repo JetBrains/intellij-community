@@ -42,7 +42,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,23 +152,23 @@ public class TodoCheckinHandlerWorker {
   }
 
   private static List<TodoItem> applyFilterAndRemoveDuplicatesAndSort(TodoItem @NotNull [] items, @Nullable TodoFilter filter) {
-    List<TodoItem> todoItems = ContainerUtil.newArrayList(items);
-    todoItems.sort(TodoItem.BY_START_OFFSET);
-
-    TodoItem previous = null;
-    for (Iterator<TodoItem> iterator = todoItems.iterator(); iterator.hasNext(); ) {
-      final TodoItem next = iterator.next();
-      if (filter != null && !filter.contains(next.getPattern())) {
-        iterator.remove();
-        continue;
+    record ByRange(@NotNull TextRange range, @NotNull TodoItem item) {
+      @Override
+      public boolean equals(Object obj) {
+        return obj instanceof ByRange br && range.equals(br.range);
       }
-      if (previous != null && next.getTextRange().equals(previous.getTextRange())) {
-        iterator.remove();
-        continue;
+      @Override
+      public int hashCode() {
+        return range.hashCode();
       }
-      previous = next;
     }
-    return todoItems;
+    return Arrays.stream(items)
+      .filter(next -> filter == null || filter.contains(next.getPattern()))
+      .map(p->new ByRange(p.getTextRange(), p))
+      .distinct()
+      .map(br -> br.item())
+      .sorted(TodoItem.BY_START_OFFSET)
+      .toList();
   }
 
   private final class SimpleEditedFileProcessor extends EditedFileProcessorBase {

@@ -17,10 +17,8 @@
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.intellij.refactoring.inline.ReferencedElementsCollector;
 import com.intellij.refactoring.util.FixableUsageInfo;
@@ -55,7 +53,7 @@ public class InlineSuperCallUsageInfo extends FixableUsageInfo {
       PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
       final PsiMethod superConstructor = (PsiMethod)methodExpression.resolve();
       if (superConstructor != null) {
-        PsiMethod methodCopy = JavaPsiFacade.getElementFactory(getProject()).createMethod("toInline", PsiType.VOID);
+        PsiMethod methodCopy = JavaPsiFacade.getElementFactory(getProject()).createMethod("toInline", PsiTypes.voidType());
         final PsiCodeBlock constructorBody = superConstructor.getBody();
         if (constructorBody != null) {
           final PsiCodeBlock methodBody = methodCopy.getBody();

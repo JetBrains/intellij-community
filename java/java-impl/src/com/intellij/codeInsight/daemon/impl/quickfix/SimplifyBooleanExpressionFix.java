@@ -229,7 +229,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
 
   private static boolean simplifyIfOrLoopStatement(final PsiExpression expression) throws IncorrectOperationException {
     boolean condition = Boolean.parseBoolean(expression.getText());
-    if (!(expression instanceof PsiLiteralExpression) || !PsiType.BOOLEAN.equals(expression.getType())) return false;
+    if (!(expression instanceof PsiLiteralExpression) || !PsiTypes.booleanType().equals(expression.getType())) return false;
 
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == expression) {
@@ -413,7 +413,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
   }
 
   public static boolean canBeSimplified(@NotNull PsiExpression expression) {
-    if (!(expression instanceof PsiConditionalExpression) && !PsiType.BOOLEAN.equals(expression.getType())) return false;
+    if (!(expression instanceof PsiConditionalExpression) && !PsiTypes.booleanType().equals(expression.getType())) return false;
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiLambdaExpression &&
         !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent, () -> createSimplifiedReplacement(expression))) {

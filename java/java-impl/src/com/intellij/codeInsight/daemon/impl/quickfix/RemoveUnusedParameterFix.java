@@ -10,10 +10,7 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
+import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringFactory;
@@ -98,8 +95,9 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
   @NotNull
   private static String getMethodDescription(@NotNull PsiMethod method) {
     StringBuilder builder = new StringBuilder();
+    PsiCodeBlock body = method.getBody();
     for (PsiElement child : method.getChildren()) {
-      if (child == method.getBody()) {
+      if (child == body) {
         break;
       }
       builder.append(child.getText());

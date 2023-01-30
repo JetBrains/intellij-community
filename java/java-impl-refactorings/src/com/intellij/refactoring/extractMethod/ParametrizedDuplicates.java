@@ -487,7 +487,7 @@ public final class ParametrizedDuplicates {
 
     PsiExpression expression = (PsiExpression)copy[0];
     PsiType type = expression.getType();
-    if (type == null || PsiType.NULL.equals(type)) return null;
+    if (type == null || PsiTypes.nullType().equals(type)) return null;
 
     PsiElement parent = expression.getParent();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
@@ -498,7 +498,7 @@ public final class ParametrizedDuplicates {
     if (parentClassStart == null) return null;
 
     // It's syntactically correct to write "new Object() {void foo(){}}.foo()" - see JLS 15.9.5
-    @NonNls String wrapperBodyText = (PsiType.VOID.equals(type) ? "" : "return ") + expression.getText() + ";";
+    @NonNls String wrapperBodyText = (PsiTypes.voidType().equals(type) ? "" : "return ") + expression.getText() + ";";
     String wrapperClassImmediateCallText = "new " + CommonClassNames.JAVA_LANG_OBJECT + "() { " +
                                            type.getCanonicalText() + " wrapperMethod() {" + wrapperBodyText + "} " +
                                            "}.wrapperMethod()";
@@ -523,7 +523,7 @@ public final class ParametrizedDuplicates {
     }
 
     PsiExpression wrapped = null;
-    if (PsiType.VOID.equals(type) && bodyStatement instanceof PsiExpressionStatement) {
+    if (PsiTypes.voidType().equals(type) && bodyStatement instanceof PsiExpressionStatement) {
       wrapped = ((PsiExpressionStatement)bodyStatement).getExpression();
     }
     else if (bodyStatement instanceof PsiReturnStatement) {

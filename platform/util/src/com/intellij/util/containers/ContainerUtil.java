@@ -123,10 +123,11 @@ public final class ContainerUtil {
   }
 
   /**
-   * Please use {@link List#of(Object[])} or {@link Arrays#asList(Object[])} instead as more immutable
+   * @deprecated Use more immutable {@link List#of(Object[])} or {@link Arrays#asList(Object[])} instead
    */
   @SafeVarargs
   @Contract(pure = true)
+  @Deprecated
   public static @NotNull <E> ArrayList<E> newArrayList(E @NotNull ... array) {
     return new ArrayList<>(Arrays.asList(array));
   }
@@ -162,25 +163,26 @@ public final class ContainerUtil {
     return new ArrayList<>(size);
   }
 
+  /**
+   * create an immutable {@link List} with elements from {@code elements[start]...elements[end-1]} sub-array.
+   */
   @Contract(pure = true)
   @Unmodifiable
-  public static @NotNull <T> List<T> newArrayList(T @NotNull [] elements, int start, int end) {
+  public static @NotNull <T> List<T> subArrayAsList(T @NotNull [] elements, int start, int end) {
     if (start < 0 || start > end || end > elements.length) {
       throw new IllegalArgumentException("start:" + start + " end:" + end + " length:" + elements.length);
     }
 
     return new AbstractList<T>() {
-      private final int size = end - start;
-
       @Override
       public T get(int index) {
-        if (index < 0 || index >= size) throw new IndexOutOfBoundsException("index:" + index + " size:" + size);
+        if (index < 0 || index >= end - start) throw new IndexOutOfBoundsException("index:" + index + " size:" + (end - start));
         return elements[start + index];
       }
 
       @Override
       public int size() {
-        return size;
+        return end - start;
       }
     };
   }
@@ -437,12 +439,12 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code array} elements.
+   * @return unmodifiable list (in which mutation methods throw {@link UnsupportedOperationException}) which contains elements from {@code array}.
    * When contents of {@code array} changes (e.g. via {@code array[0] = null}), this collection contents changes accordingly.
    * This collection doesn't contain {@link Collections.UnmodifiableList#list} and {@link Collections.UnmodifiableCollection#c} fields,
    * unlike the {@link Collections#unmodifiableList(List)}, so it might be useful in extremely space-conscious places.
    * (Subject to change in subsequent JDKs).
-   * Otherwise, please prefer {@link Collections#unmodifiableList(List)}.
+   * Otherwise, please prefer {@link List#of} or {@link Collections#unmodifiableList(List)}.
    */
   @SafeVarargs
   @Contract(pure = true)
@@ -465,7 +467,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated use {@link List#of(Object)} or {@link Collections#singletonList(Object)} as more memory-consious alternatives
+   * @deprecated use more standard/memory-conscious alternatives {@link List#of(Object)} or {@link Collections#singletonList(Object)} instead
 
    * DO NOT REMOVE this method until {@link ContainerUtil#immutableList(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
@@ -480,7 +482,7 @@ public final class ContainerUtil {
   /**
    * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code element}.
    * This collection doesn't contain {@code modCount} field, unlike the {@link Collections#singletonList(Object)}, so it might be useful in extremely space-conscious places.
-   * Otherwise, please prefer {@link Collections#singletonList(Object)}.
+   * Otherwise, please prefer {@link Collections#singletonList(Object)} or {@link List#of(Object)}.
    */
   @Contract(pure = true)
   @Unmodifiable
@@ -2083,7 +2085,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated use {@link Collections#emptySet()}
+   * @deprecated use {@link Collections#emptySet()} or {@link Set#of()} instead
 
    * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
@@ -2096,7 +2098,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated use {@link Collections#singleton(Object)}
+   * @deprecated use {@link Collections#singleton(Object)} or {@link Set#of} instead
 
    * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
@@ -2109,7 +2111,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * Please use {@link Set#of(Object[])} instead
+   * Please use immutable {@link Set#of(Object[])} instead
    * If you need a mutable {@link Set} please use {@link HashSet#HashSet()};
    * If you need a mutable {@link Set} pre-populated with elements, use {@link #newHashSet}
    */

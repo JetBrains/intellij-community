@@ -499,7 +499,7 @@ public class PyDebugValue extends XNamedValue {
             values = processLargeCollection(values);
           }
           if (myFrameAccessor.isSimplifiedView()) {
-            extractChildrenToGroup(PROTECTED_ATTRS_NAME, AllIcons.Nodes.C_protected, node, values, (String name) -> name.startsWith("_"),
+            extractChildrenToGroup(PydevBundle.message("pydev.value.protected.attributes.group.name"), AllIcons.Nodes.C_protected, node, values, (String name) -> name.startsWith("_"),
                                    getPROTECTED_ATTRS_EXCLUDED());
           }
           else {

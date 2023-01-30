@@ -241,7 +241,7 @@ public final class DelegateHandler {
 
     final boolean isMethodCall = psiElement instanceof PsiMethod;
     blockText = String.format("%sthis.%s%s.%s(%s);",
-      PsiType.VOID.equals(returnType) ? "" : "return ",
+                              PsiTypes.voidType().equals(returnType) ? "" : "return ",
       psiElement.getName(),
       isMethodCall ? "()" : "",
       psiMethod.getName(),

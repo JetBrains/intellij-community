@@ -185,7 +185,7 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
         if (arg instanceof PsiWildcardType) arg = ((PsiWildcardType)arg).getBound();
         PsiType substitution =
           resolveHelper.getSubstitutionForTypeParameter(inheritorParameter, substituted, arg, true, PsiUtil.getLanguageLevel(context));
-        if (PsiType.NULL.equals(substitution)) continue;
+        if (PsiTypes.nullType().equals(substitution)) continue;
         if (substitution == null) {
           return facade.getElementFactory().createRawSubstitutor(inheritor);
         }

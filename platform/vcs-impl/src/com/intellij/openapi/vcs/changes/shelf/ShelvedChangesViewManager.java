@@ -441,9 +441,6 @@ public class ShelvedChangesViewManager implements Disposable {
           .map(s -> s.getBinaryFile())
           .filterNotNull().toList();
       }
-      else if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
-        return getSelectionCount() > 0;
-      }
       else if (VcsDataKeys.CHANGES.is(dataId)) {
         List<ShelvedWrapper> shelvedChanges = VcsTreeModelData.selected(this).userObjects(ShelvedWrapper.class);
         if (!shelvedChanges.isEmpty()) {
@@ -678,7 +675,7 @@ public class ShelvedChangesViewManager implements Disposable {
   private static boolean canHandleDropEvent(@NotNull Project project, @NotNull DnDEvent event) {
     Object attachedObject = event.getAttachedObject();
     if (attachedObject instanceof ChangeListDragBean) {
-      List<Change> changes = Arrays.asList(((ChangeListDragBean)attachedObject).getChanges());
+      List<Change> changes = ((ChangeListDragBean)attachedObject).getChanges();
       return !changes.isEmpty();
     }
     return false;
@@ -688,7 +685,7 @@ public class ShelvedChangesViewManager implements Disposable {
     Object attachedObject = event.getAttachedObject();
     if (attachedObject instanceof ChangeListDragBean) {
       FileDocumentManager.getInstance().saveAllDocuments();
-      List<Change> changes = Arrays.asList(((ChangeListDragBean)attachedObject).getChanges());
+      List<Change> changes = ((ChangeListDragBean)attachedObject).getChanges();
       ShelveChangesManager.getInstance(project).shelveSilentlyUnderProgress(changes, true);
     }
   }

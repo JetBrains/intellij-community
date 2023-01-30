@@ -96,7 +96,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       }
       else {
         JBPopupFactory.getInstance()
-          .createPopupChooserBuilder(ContainerUtil.newArrayList(descriptors))
+          .createPopupChooserBuilder(List.of(descriptors))
           .setRenderer(new MyListCellRenderer())
           .setTitle(XmlBundle.message("choose.tag.name"))
           .setItemChosenCallback(consumer)

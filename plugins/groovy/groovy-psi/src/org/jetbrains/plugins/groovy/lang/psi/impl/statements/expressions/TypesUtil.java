@@ -41,15 +41,15 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 public final class TypesUtil implements TypeConstants {
 
   public static final PsiPrimitiveType[] PRIMITIVES = {
-    PsiType.BYTE,
-    PsiType.CHAR,
-    PsiType.DOUBLE,
-    PsiType.FLOAT,
-    PsiType.INT,
-    PsiType.SHORT,
-    PsiType.LONG,
-    PsiType.BOOLEAN,
-    PsiType.VOID
+    PsiTypes.byteType(),
+    PsiTypes.charType(),
+    PsiTypes.doubleType(),
+    PsiTypes.floatType(),
+    PsiTypes.intType(),
+    PsiTypes.shortType(),
+    PsiTypes.longType(),
+    PsiTypes.booleanType(),
+    PsiTypes.voidType()
   };
 
   private TypesUtil() {
@@ -108,12 +108,12 @@ public final class TypesUtil implements TypeConstants {
     }
   }
 
-  private static final List<PsiType> LUB_NUMERIC_TYPES = List.of(PsiType.BYTE,
-                                                                 PsiType.SHORT,
-                                                                 PsiType.INT,
-                                                                 PsiType.LONG,
-                                                                 PsiType.FLOAT,
-                                                                 PsiType.DOUBLE);
+  private static final List<PsiType> LUB_NUMERIC_TYPES = List.of(PsiTypes.byteType(),
+                                                                 PsiTypes.shortType(),
+                                                                 PsiTypes.intType(),
+                                                                 PsiTypes.longType(),
+                                                                 PsiTypes.floatType(),
+                                                                 PsiTypes.doubleType());
 
   /**
    * @deprecated see {@link #canAssign}
@@ -214,7 +214,7 @@ public final class TypesUtil implements TypeConstants {
   public static boolean isAssignableWithoutConversions(@Nullable PsiType lType, @Nullable PsiType rType) {
     if (lType == null || rType == null) return false;
 
-    if (rType == PsiType.NULL) {
+    if (rType == PsiTypes.nullType()) {
       return !(lType instanceof PsiPrimitiveType);
     }
 
@@ -285,7 +285,7 @@ public final class TypesUtil implements TypeConstants {
                                          @NotNull PsiManager manager,
                                          @NotNull GlobalSearchScope resolveScope,
                                          boolean boxVoid) {
-    if (result instanceof PsiPrimitiveType && (boxVoid || !PsiType.VOID.equals(result))) {
+    if (result instanceof PsiPrimitiveType && (boxVoid || !PsiTypes.voidType().equals(result))) {
       PsiPrimitiveType primitive = (PsiPrimitiveType)result;
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {
@@ -341,8 +341,8 @@ public final class TypesUtil implements TypeConstants {
 
   @Nullable
   public static PsiType getLeastUpperBound(@NotNull PsiType type1, @NotNull PsiType type2, @NotNull PsiManager manager) {
-    if (type1 == PsiType.NULL) return type2;
-    if (type2 == PsiType.NULL) return type1;
+    if (type1 == PsiTypes.nullType()) return type2;
+    if (type2 == PsiTypes.nullType()) return type1;
     {
       PsiType numericLUB = getNumericLUB(type1, type2);
       if (numericLUB != null) return numericLUB;
@@ -469,7 +469,7 @@ public final class TypesUtil implements TypeConstants {
   @Nullable
   public static PsiType getPsiType(PsiElement context, IElementType elemType) {
     if (elemType == GroovyTokenTypes.kNULL) {
-      return PsiType.NULL;
+      return PsiTypes.nullType();
     }
     final String typeName = getBoxedTypeName(elemType);
     if (typeName != null) {
@@ -559,7 +559,7 @@ public final class TypesUtil implements TypeConstants {
   @NotNull
   public static PsiPrimitiveType getPrimitiveTypeByText(String typeText) {
     for (final PsiPrimitiveType primitive : PRIMITIVES) {
-      if (PsiType.VOID.equals(primitive)) {
+      if (PsiTypes.voidType().equals(primitive)) {
         return primitive;
       }
       if (primitive.getCanonicalText().equals(typeText)) {

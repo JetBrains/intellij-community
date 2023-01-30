@@ -8,9 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.idea.codeinsight.api.inspections.KotlinSingleElementInspection
-import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfNeeded
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
@@ -72,12 +71,14 @@ abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement>(
 internal abstract class AbstractKotlinApplicableInspectionQuickFix<ELEMENT : KtElement> : LocalQuickFix {
     abstract fun applyTo(element: ELEMENT)
 
+    abstract fun shouldApplyInWriteAction(): Boolean
+
     abstract override fun getName(): String
 
     final override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         @Suppress("UNCHECKED_CAST")
         val element = descriptor.psiElement as ELEMENT
-        runWriteActionIfPhysical(element) {
+        runWriteActionIfNeeded(shouldApplyInWriteAction() && element.isPhysical) {
             applyTo(element)
         }
     }

@@ -1366,7 +1366,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
           if (qualifierArg instanceof PsiMethodReferenceExpression) {
             PsiMethod method = tryCast(((PsiMethodReferenceExpression)qualifierArg).resolve(), PsiMethod.class);
             if (method == null) return null;
-            if (!PsiType.BOOLEAN.equals(method.getReturnType()) && !NullableNotNullManager.isNotNull(method)) return null;
+            if (!PsiTypes.booleanType().equals(method.getReturnType()) && !NullableNotNullManager.isNotNull(method)) return null;
           }
           else if (!(qualifierArg instanceof PsiLambdaExpression) ||
                    DfaUtil.inferLambdaNullability((PsiLambdaExpression)qualifierArg) != Nullability.NOT_NULL) {
@@ -1382,10 +1382,10 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     private static boolean isBooleanIdentity(PsiExpression arg) {
       arg = skipParenthesizedExprDown(arg);
-      if (FunctionalExpressionUtils.isFunctionalReferenceTo(arg, JAVA_LANG_BOOLEAN, PsiType.BOOLEAN,
+      if (FunctionalExpressionUtils.isFunctionalReferenceTo(arg, JAVA_LANG_BOOLEAN, PsiTypes.booleanType(),
                                                             "booleanValue", PsiType.EMPTY_ARRAY) ||
           FunctionalExpressionUtils.isFunctionalReferenceTo(arg, JAVA_LANG_BOOLEAN, null,
-                                                            "valueOf", PsiType.BOOLEAN)) {
+                                                            "valueOf", PsiTypes.booleanType())) {
         return true;
       }
       return arg instanceof PsiLambdaExpression && LambdaUtil.isIdentityLambda((PsiLambdaExpression)arg);
@@ -2172,7 +2172,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       if (mySize) {
         boolean addCast = true;
         PsiType expectedType = ExpectedTypeUtils.findExpectedType(sizeCheck, false);
-        if (PsiType.LONG.equals(expectedType)) addCast = false;
+        if (PsiTypes.longType().equals(expectedType)) addCast = false;
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(sizeCheck.getParent());
         if (parent instanceof PsiBinaryExpression &&
             ComparisonUtils.isComparisonOperation(((PsiBinaryExpression)parent).getOperationTokenType())) {

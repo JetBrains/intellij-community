@@ -22,32 +22,45 @@ import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
+/**
+ * UnindexedFilesIndexer is to index files: explicitly provided (see providerToFiles in constructor), and implicitly marked as dirty, e.g.
+ * by VFS (as reported by FileBasedIndexImpl#getFilesToUpdate).
+ */
 class UnindexedFilesIndexer extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesIndexer.class);
   private final Project myProject;
   private final FileBasedIndexImpl myIndex;
   private final Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles;
+  private final @NonNls @NotNull String indexingReason;
 
   UnindexedFilesIndexer(Project project,
-                        Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles) {
+                        @NonNls @NotNull String indexingReason) {
+    this(project, Collections.emptyMap(), indexingReason);
+  }
+
+  /**
+   * if providerToFiles is empty, only FileBasedIndexImpl#getFilesToUpdate files will be indexed.
+   * <p>
+   * if providerToFiles is not empty, providerToFiles files will be indexed in the first order, then files reported by FileBasedIndexImpl#getFilesToUpdate
+   */
+  UnindexedFilesIndexer(Project project,
+                        Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles,
+                        @NonNls @NotNull String indexingReason) {
     myProject = project;
     myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     this.providerToFiles = providerToFiles;
+    this.indexingReason = indexingReason;
   }
 
   void indexFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
                   @NotNull ProgressIndicator indicator) {
-    int totalFiles = providerToFiles.values().stream().mapToInt(Collection::size).sum();
-    if (totalFiles == 0) {
-      LOG.info("Finished for " + myProject.getName() + ". No files to index with loading content.");
-      return;
-    }
     if (SystemProperties.getBooleanProperty("idea.indexes.pretendNoFiles", false)) {
       LOG.info("Finished for " + myProject.getName() + ". System property 'idea.indexes.pretendNoFiles' is enabled.");
       return;
@@ -85,6 +98,27 @@ class UnindexedFilesIndexer extends DumbModeTask {
       " for indexing of " + myProject.getName());
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, numberOfIndexingThreads);
 
+    List<IndexUpdateRunner.FileSet> fileSets = getExplicitlyRequestedFilesSets();
+    if (!fileSets.isEmpty()) {
+      doIndexFiles(projectIndexingHistory, progressIndicator, indexUpdateRunner, fileSets);
+    }
+
+    // Order is important: getRefreshedFiles may return some subset of getExplicitlyRequestedFilesSets files (e.g. new files)
+    // We first index explicitly requested files, this will also mark indexed files as "up-to-date", then we index remaining dirty files
+    fileSets = getRefreshedFiles(projectIndexingHistory);
+    if (!fileSets.isEmpty()) {
+      doIndexFiles(projectIndexingHistory, progressIndicator, indexUpdateRunner, fileSets);
+    }
+  }
+
+  private List<IndexUpdateRunner.FileSet> getRefreshedFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory) {
+    String filesetName = "Refreshed files";
+    Collection<VirtualFile> files = new ProjectChangedFilesScanner(myProject).scan(projectIndexingHistory, filesetName);
+    return Collections.singletonList(new IndexUpdateRunner.FileSet(myProject, filesetName, files));
+  }
+
+  @NotNull
+  private List<IndexUpdateRunner.FileSet> getExplicitlyRequestedFilesSets() {
     ArrayList<IndexableFilesIterator> providers = new ArrayList<>(providerToFiles.keySet());
     List<IndexUpdateRunner.FileSet> fileSets = new ArrayList<>();
     for (IndexableFilesIterator provider : providers) {
@@ -94,11 +128,13 @@ class UnindexedFilesIndexer extends DumbModeTask {
         fileSets.add(new IndexUpdateRunner.FileSet(myProject, provider.getDebugName(), providerFiles, progressText));
       }
     }
+    return fileSets;
+  }
 
-    if (fileSets.isEmpty()) {
-      return;
-    }
-
+  private void doIndexFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+                            @NotNull ProgressIndicator progressIndicator,
+                            IndexUpdateRunner indexUpdateRunner,
+                            List<IndexUpdateRunner.FileSet> fileSets) {
     IndexUpdateRunner.IndexingInterruptedException exception = null;
     try {
       indexUpdateRunner.indexFiles(myProject, fileSets, progressIndicator, projectIndexingHistory);
@@ -124,7 +160,7 @@ class UnindexedFilesIndexer extends DumbModeTask {
     if (!IndexInfrastructure.hasIndices()) {
       return;
     }
-    ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(myProject, "Async indexing", ScanningType.REFRESH);
+    ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(myProject, indexingReason, ScanningType.REFRESH);
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender != null) {
@@ -173,7 +209,10 @@ class UnindexedFilesIndexer extends DumbModeTask {
       mergedFilesToIndex.put(e.getKey(), mergedList);
     }
 
-    return new UnindexedFilesIndexer(myProject, mergedFilesToIndex);
+    String mergedReason = "Merged " + StringUtil.trimStart(indexingReason, "Merged ") +
+                          " with " + StringUtil.trimStart(otherIndexingTask.indexingReason, "Merged ");
+
+    return new UnindexedFilesIndexer(myProject, mergedFilesToIndex, mergedReason);
   }
 
   private static double getPowerForSmoothProgressIndicator() {

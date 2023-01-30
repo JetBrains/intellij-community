@@ -3,22 +3,20 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
-import com.intellij.collaboration.ui.codereview.timeline.TimelineComponentFactory
-import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.PopupHandler
@@ -35,8 +33,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineIt
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRTimelineFileEditor
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory.ActionsConfig
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory.AvatarConfig
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldModel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.submitAction
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
@@ -138,7 +134,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       descriptionWrapper.setContent(itemComponentFactory.createComponent(detailsModel.value))
     }
 
-    val timeline = TimelineComponentFactory.create(timelineModel, itemComponentFactory, 0)
+    val timeline = ComponentListPanelFactory.createVertical(timelineModel, componentFactory = itemComponentFactory)
     val timelineLoader = editor.timelineLoader
 
     val progressAndErrorPanel = JPanel(ListLayout.vertical(0, ListLayout.Alignment.CENTER)).apply {
@@ -163,8 +159,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
         .wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + CodeReviewTimelineUIUtil.ITEM_HOR_PADDING * 2)
     }
 
-    val timelinePanel = ScrollablePanel(ListLayout.vertical(0)).apply {
-      isOpaque = false
+    val timelinePanel = VerticalListPanel().apply {
       border = JBUI.Borders.empty(CodeReviewTimelineUIUtil.VERT_PADDING, 0)
 
       add(header)
@@ -226,18 +221,16 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       commentService.addComment(EmptyProgressIndicator(), it)
     }
 
-    val submitShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommentInputComponentFactory.defaultSubmitShortcut)
-    val newLineShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.ENTER)
+    val submitShortcutText = CommentInputActionsComponentFactory.submitShortcutText
 
-    val actions = ActionsConfig(CommentInputActionsComponentFactory.Config(
+    val actions = CommentInputActionsComponentFactory.Config(
       primaryAction = MutableStateFlow(model.submitAction(GithubBundle.message("action.comment.text"))),
-      hintInfo = MutableStateFlow(CommentInputActionsComponentFactory.HintInfo(
-        submitHint = GithubBundle.message("pull.request.comment.hint", submitShortcutText),
-        newLineHint = GithubBundle.message("pull.request.new.line.hint", newLineShortcutText)
-      ))
-    ))
-    val avatarConfig = AvatarConfig(avatarIconsProvider, currentUser, CodeReviewChatItemUIUtil.ComponentType.FULL)
-    return GHCommentTextFieldFactory(model).create(actions, avatarConfig)
+      submitHint = MutableStateFlow(GithubBundle.message("pull.request.comment.hint", submitShortcutText))
+    )
+    val icon = CommentTextFieldFactory.IconConfig.of(CodeReviewChatItemUIUtil.ComponentType.FULL,
+                                                     avatarIconsProvider, currentUser.avatarUrl)
+
+    return GHCommentTextFieldFactory(model).create(actions, icon)
   }
 
   private fun createItemComponentFactory(project: Project,

@@ -11,5 +11,5 @@ fun f(p: P) {
     p.invoke()
 }
 
-// FIR_COMPARISON
+
 // IGNORE_FIR_LOG

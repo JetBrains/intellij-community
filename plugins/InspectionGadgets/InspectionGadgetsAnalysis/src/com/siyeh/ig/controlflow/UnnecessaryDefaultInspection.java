@@ -143,7 +143,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
       while (nextStatement != null) {
         if (statementSwitch && !ControlFlowUtils.statementMayCompleteNormally(nextStatement)) {
           final PsiMethod method = PsiTreeUtil.getParentOfType(switchBlock, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
-          if (method != null && !PsiType.VOID.equals(method.getReturnType()) &&
+          if (method != null && !PsiTypes.voidType().equals(method.getReturnType()) &&
               !ControlFlowUtils.statementContainsNakedBreak(nextStatement)) {
             final PsiCodeBlock body = method.getBody();
             assert body != null;

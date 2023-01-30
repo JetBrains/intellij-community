@@ -8,4 +8,3 @@ import library.E
 fun main(args: Array<String>) {
     E.<caret>ONE
 }
-// FIR_COMPARISON

@@ -8,7 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
@@ -49,7 +48,7 @@ class KotlinUObjectLiteralExpression(
     override val typeArguments by lz {
         val psi = superClassConstructorCall ?: return@lz emptyList<PsiType>()
         psi.typeArguments.map { typeArgument ->
-            typeArgument.typeReference?.let { baseResolveProviderService.resolveToType(it, this, boxed = true) } ?: UastErrorType
+            typeArgument.typeReference?.let { baseResolveProviderService.resolveToType(it, this, isBoxed = true) } ?: UastErrorType
         }
     }
 
@@ -65,8 +64,8 @@ class KotlinUObjectLiteralExpression(
      * `super` call in the fake-constructor of anonymous class
      */
     val constructorCall: UExpression?
-        get() = this.declaration.methods.asSequence().filterIsInstance<KotlinConstructorUMethod>()
-             .singleOrNull()?.uastBody?.safeAs<KotlinLazyUBlockExpression>()
+        get() = (this.declaration.methods.asSequence().filterIsInstance<KotlinConstructorUMethod>()
+             .singleOrNull()?.uastBody as? KotlinLazyUBlockExpression)
              ?.expressions
              ?.firstOrNull()
 

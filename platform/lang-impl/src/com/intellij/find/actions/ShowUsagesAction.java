@@ -377,7 +377,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       @Override
       public @NotNull List<EventPair<?>> getEventData() {
         return List.of(UsageViewStatisticsCollector.PRIMARY_TARGET.with(handler.getPsiElement().getClass()),
-                       EventFields.Language.with(handler.getPsiElement().getLanguage()));
+                       EventFields.Language.with(handler.getPsiElement().getLanguage()),
+                       UsageViewStatisticsCollector.NUMBER_OF_TARGETS.with(primaryElements.length + secondaryElements.length));
       }
     };
   }
@@ -387,11 +388,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     Project project = parameters.project;
     UsageViewImpl usageView = createUsageView(project);
-    UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup,
-                                                  actionHandler.getTargetLanguage(), actionHandler.getTargetClass());
+    UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup, actionHandler.getEventData());
     final SearchScope searchScope = actionHandler.getSelectedScope();
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();
+    Ref<UsageNode> preselectedRow = new Ref<>();
 
     Predicate<? super Usage> originUsageCheck = originUsageCheck(parameters.editor);
     var renderer = new ShowUsagesTableCellRenderer(originUsageCheck, outOfScopeUsages, searchScope);
@@ -424,10 +425,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
-        Object usageNode = table.getModel().getValueAt(table.getSelectedRow(), 0);
-        UsageInfo2UsageAdapter usageAdapter = getSelectedUsageAdapter(ObjectUtils.tryCast(usageNode, UsageNode.class));
+        @Nullable UsageNode node = getSelectedUsageNode(table);
         UsageViewStatisticsCollector.logPopupClosed(project, usageView, event.isOk(),
-                                                    usageAdapter,
+                                                    getRowNumber(preselectedRow.get(), table),
+                                                    getRowNumber(node, table),
+                                                    node != null ? node.getUsage() : null,
                                                     popupShownTime.get(), actionHandler.getEventData());
       }
     });
@@ -500,6 +502,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       int visibleCount = totalCount - filteredOutCount;
       showUsagesPopupData.header.setStatusText(hasMore, visibleCount, totalCount);
       rebuildTable(project, originUsageCheck, data, table, popup, parameters.popupPosition, parameters.minWidth, manuallyResized);
+      preselectedRow.set(getSelectedUsageNode(table));
     });
 
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
@@ -1049,12 +1052,24 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     return (int)usages.stream().filter(usage -> !usageView.isVisible(usage)).count();
   }
 
-  private static @Nullable UsageInfo2UsageAdapter getSelectedUsageAdapter(@Nullable UsageNode usageNode) {
-    UsageInfo2UsageAdapter usageAdapter = null;
-    if (usageNode != null) {
-      usageAdapter = ObjectUtils.tryCast(usageNode.getUsage(), UsageInfo2UsageAdapter.class);
+  private static @Nullable UsageNode getSelectedUsageNode(@NotNull ShowUsagesTable table) {
+    int selectedRowNumber = table.getSelectedRow();
+    if (selectedRowNumber != -1) {
+      Object selectedNode = table.getModel().getValueAt(selectedRowNumber, 0);
+      return ObjectUtils.tryCast(selectedNode, UsageNode.class);
     }
-    return usageAdapter;
+    else {
+      return null;
+    }
+  }
+
+  private static int getRowNumber(@Nullable UsageNode node, @NotNull ShowUsagesTable table) {
+    for (int i = 0; i < table.getRowCount(); i++) {
+      if (table.getValueAt(i, 0) == node) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   private static int getUsageOffset(@NotNull Usage usage) {

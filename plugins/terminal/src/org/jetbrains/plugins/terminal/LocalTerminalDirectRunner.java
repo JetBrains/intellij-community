@@ -19,18 +19,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
+import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import com.jediterm.pty.PtyProcessTtyConnector;
+import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import com.pty4j.PtyProcessBuilder;
 import com.pty4j.unix.UnixPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
 import java.awt.*;
 import java.io.File;
@@ -127,8 +129,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return new LocalTerminalDirectRunner(project);
   }
 
-
-  private Map<String, String> getTerminalEnvironment(@NotNull String workingDir) {
+  private @NotNull Map<String, String> getTerminalEnvironment(@NotNull String workingDir) {
     Map<String, String> envs = SystemInfo.isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
     if (envData.isPassParentEnvs()) {
@@ -145,9 +146,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
     envs.put("TERM_SESSION_ID", UUID.randomUUID().toString());
 
-    if (SystemInfo.isMac) {
-      EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
-    }
+    TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
 
     if (TrustedProjects.isTrusted(myProject)) {
       PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
@@ -193,46 +192,56 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     //}
 
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
+    TermSize initialTermSize = options.getInitialTermSize();
     try {
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("Starting " + Arrays.toString(command) + " in " + workingDir +
-                  " (" + (new File(workingDir).isDirectory() ? "exists" : "does not exist") + ")" +
-                  " [" + options.getInitialColumns() + "," + options.getInitialRows() + "], envs=" + envs);
-      }
       long startNano = System.nanoTime();
       PtyProcessBuilder builder = new PtyProcessBuilder(command)
         .setEnvironment(envs)
         .setDirectory(workingDir)
-        .setInitialColumns(options.getInitialColumns())
-        .setInitialRows(options.getInitialRows())
+        .setInitialColumns(initialTermSize != null ? initialTermSize.getColumns() : null)
+        .setInitialRows(initialTermSize != null ? initialTermSize.getRows() : null)
         .setUseWinConPty(LocalPtyOptions.shouldUseWinConPty());
       PtyProcess process = builder.start();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Started " + process.getClass().getName() + " from " + Arrays.toString(command) + " in " + workingDir +
-                  " [" + options.getInitialColumns() + "," + options.getInitialRows() + "]" +
-                  " (" + TimeoutUtil.getDurationMillis(startNano) + " ms)");
-      }
+      LOG.info("Started " + process.getClass().getName() + " in " + TimeoutUtil.getDurationMillis(startNano) + " ms from "
+               + stringifyProcessInfo(command, workingDir, initialTermSize, envs, !LOG.isDebugEnabled()));
       return process;
     }
     catch (IOException e) {
-      String errorMessage = "Failed to start " + Arrays.toString(command) + " in " + workingDir;
-      if (!new File(workingDir).isDirectory()) {
-        errorMessage = "No such directory: " + workingDir;
-      }
-      throw new ExecutionException(errorMessage, e);
+      throw new ExecutionException("Failed to start " + stringifyProcessInfo(command, workingDir, initialTermSize, envs, false), e);
     }
   }
 
+  private static @NotNull String stringifyProcessInfo(String @NotNull[] command,
+                                                      @NotNull String workingDirectory,
+                                                      @Nullable TermSize initialTermSize,
+                                                      @NotNull Map<String, String> environment,
+                                                      boolean envDiff) {
+    String info = Arrays.toString(command) + " in " + workingDirectory + (isDirectory(workingDirectory) ? "" : " [no such directory]") +
+                  ", term_size=[" + initialTermSize + "]";
+    if (envDiff) {
+      return info + ", diff_envs=" + getEnvironmentDiff(environment, System.getenv());
+    }
+    return info + ", envs=" + environment;
+  }
+
+  private static @NotNull Map<String, String> getEnvironmentDiff(@NotNull Map<String, String> environment,
+                                                                 @NotNull Map<String, String> baseEnvironment) {
+    return environment.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> {
+        return Objects.equals(entry.getValue(), baseEnvironment.get(entry.getKey())) ? null : entry;
+    }).filter(Objects::nonNull)
+      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1, LinkedHashMap::new));
+  }
+
   private @NotNull String getWorkingDirectory(@Nullable String directory) {
-    if (directory != null && checkDirectoryExistence(directory)) {
+    if (directory != null && isDirectory(directory)) {
       return directory;
     }
     String configuredWorkingDirectory = TerminalProjectOptionsProvider.getInstance(myProject).getStartingDirectory();
-    if (configuredWorkingDirectory != null && checkDirectoryExistence(configuredWorkingDirectory)) {
+    if (configuredWorkingDirectory != null && isDirectory(configuredWorkingDirectory)) {
       return configuredWorkingDirectory;
     }
     String defaultWorkingDirectory = TerminalProjectOptionsProvider.getInstance(myProject).getDefaultStartingDirectory();
-    if (defaultWorkingDirectory != null && checkDirectoryExistence(defaultWorkingDirectory)) {
+    if (defaultWorkingDirectory != null && isDirectory(defaultWorkingDirectory)) {
       return defaultWorkingDirectory;
     }
     VirtualFile projectDir = ProjectUtil.guessProjectDir(myProject);
@@ -242,7 +251,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return SystemProperties.getUserHome();
   }
 
-  private static boolean checkDirectoryExistence(@NotNull String directory) {
+  private static boolean isDirectory(@NotNull String directory) {
     try {
       boolean ok = Files.isDirectory(Path.of(directory));
       if (!ok) {
@@ -262,7 +271,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  protected @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
+  public @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
     return new PtyProcessTtyConnector(process, myDefaultCharset) {
 
       @Override

@@ -93,7 +93,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
             return;
           }
           final PsiType type = returnValue.getType();
-          if (newType.equals(type) || PsiType.NULL.equals(type)) {
+          if (newType.equals(type) || PsiTypes.nullType().equals(type)) {
             return;
           }
           final CommentTracker commentTracker = new CommentTracker();

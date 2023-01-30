@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.find.FindModel;
@@ -20,21 +20,22 @@ import java.util.UUID;
  */
 public class RegExpInspectionConfiguration implements Comparable<RegExpInspectionConfiguration> {
 
-  public List<InspectionPattern> patterns;
-  public @NotNull String name;
-  public String description;
-  public String uuid;
-  public String suppressId;
-  public String problemDescriptor;
+  public List<InspectionPattern> patterns; // keep public for settings serialization
+  private String name;
+  private String description;
+  private String uuid;
+  private String suppressId;
+  private String problemDescriptor;
 
   public RegExpInspectionConfiguration(@NotNull String name) {
     this.name = name;
-    uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8)).toString();
     patterns = new SmartList<>();
   }
 
   @SuppressWarnings("unused")
-  public RegExpInspectionConfiguration() {}
+  public RegExpInspectionConfiguration() {
+    patterns = new SmartList<>();
+  }
 
   public RegExpInspectionConfiguration(RegExpInspectionConfiguration other) {
     patterns = new SmartList<>(other.patterns);
@@ -51,12 +52,12 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
     if (o == null || getClass() != o.getClass()) return false;
 
     RegExpInspectionConfiguration that = (RegExpInspectionConfiguration)o;
-    return uuid.equals(that.uuid);
+    return Objects.equals(uuid, that.uuid);
   }
 
   @Override
   public int hashCode() {
-    return getUuid().hashCode();
+    return name.hashCode();
   }
 
   public RegExpInspectionConfiguration copy() {
@@ -67,30 +68,78 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
     return patterns;
   }
 
-  public @NlsSafe @NotNull String getName() {
+  public void addPattern(InspectionPattern pattern) {
+    if (!patterns.contains(pattern)) {
+      patterns.add(pattern);
+    }
+  }
+
+  public void removePattern(InspectionPattern pattern) {
+    patterns.remove(pattern);
+  }
+
+  public @NlsSafe String getName() {
     return name;
+  }
+
+  public void setName(@NotNull String name) {
+    if (uuid == null && this.name != null) { // name can be null on deserializing from settings
+      uuid = UUID.nameUUIDFromBytes(this.name.getBytes(StandardCharsets.UTF_8)).toString();
+    }
+    this.name = name;
   }
 
   public @NlsSafe String getDescription() {
     return description;
   }
 
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
   public String getUuid() {
+    if (uuid == null && name != null) { // name can be null on deserializing from settings
+      uuid = UUID.nameUUIDFromBytes(this.name.getBytes(StandardCharsets.UTF_8)).toString();
+    }
     return uuid;
+  }
+
+  public void setUuid(@Nullable String uuid) {
+    this.uuid = uuid;
   }
 
   public @NlsSafe String getSuppressId() {
     return suppressId;
   }
 
+  public void setSuppressId(String suppressId) {
+    this.suppressId = suppressId;
+  }
+
   public @NlsSafe String getProblemDescriptor() {
     return problemDescriptor;
+  }
+
+  public void setProblemDescriptor(String problemDescriptor) {
+    this.problemDescriptor = problemDescriptor;
   }
 
   @Override
   public int compareTo(@NotNull RegExpInspectionConfiguration o) {
     int result = name.compareToIgnoreCase(o.name);
-    if (result == 0) result = uuid.compareTo(o.uuid);
+    if (result == 0) {
+      if (uuid == null) {
+        if (o.uuid != null) {
+          result = -1;
+        }
+      }
+      else if (o.uuid == null) {
+        result = 1;
+      }
+      else {
+        result = uuid.compareTo(o.uuid);
+      }
+    }
     return result;
   }
 

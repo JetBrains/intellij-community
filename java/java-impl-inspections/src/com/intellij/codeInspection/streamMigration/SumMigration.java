@@ -27,9 +27,9 @@ class SumMigration extends BaseStreamApiMigration {
     PsiExpression addend = StreamApiMigrationInspection.extractAddend(assignment);
     if (addend == null) return null;
     PsiType type = var.getType();
-    if (!(type instanceof PsiPrimitiveType) || type.equals(PsiType.FLOAT)) return null;
-    if (!type.equals(PsiType.DOUBLE) && !type.equals(PsiType.LONG)) {
-      type = PsiType.INT;
+    if (!(type instanceof PsiPrimitiveType) || type.equals(PsiTypes.floatType())) return null;
+    if (!type.equals(PsiTypes.doubleType()) && !type.equals(PsiTypes.longType())) {
+      type = PsiTypes.intType();
     }
     PsiType addendType = addend.getType();
     CommentTracker ct = new CommentTracker();

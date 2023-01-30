@@ -1,0 +1,50 @@
+fragment mergeRequest on MergeRequest {
+  id
+  iid
+  title
+  description
+  webUrl
+
+  targetBranch
+  sourceBranch
+
+  conflicts
+  state
+
+  author {
+    ...user
+  }
+
+  approvedBy(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...user
+    }
+  }
+
+  reviewers(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...user
+    }
+  }
+
+  commits(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...glCommit
+    }
+  }
+  userPermissions {
+    createNote
+  }
+}

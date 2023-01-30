@@ -178,7 +178,7 @@ public class JavaKeywordCompletion {
 
       if (scope instanceof PsiMethod){
         final PsiMethod method = (PsiMethod)scope;
-        if(method.isConstructor() || PsiType.VOID.equals(method.getReturnType())) {
+        if(method.isConstructor() || PsiTypes.voidType().equals(method.getReturnType())) {
           return TailType.SEMICOLON;
         }
 
@@ -186,7 +186,7 @@ public class JavaKeywordCompletion {
       }
       if (scope instanceof PsiLambdaExpression) {
         final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)scope));
-        if (PsiType.VOID.equals(returnType)) {
+        if (PsiTypes.voidType().equals(returnType)) {
           return TailType.SEMICOLON;
         }
         return TailType.HUMBLE_SPACE_BEFORE_WORD;
@@ -869,7 +869,7 @@ public class JavaKeywordCompletion {
   private static boolean mayExpectBoolean(CompletionParameters parameters) {
     for (ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
       PsiType type = info.getType();
-      if (type instanceof PsiClassType || PsiType.BOOLEAN.equals(type)) return true;
+      if (type instanceof PsiClassType || PsiTypes.booleanType().equals(type)) return true;
     }
     return false;
   }

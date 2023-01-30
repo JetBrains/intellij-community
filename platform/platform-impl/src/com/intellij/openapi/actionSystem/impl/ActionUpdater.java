@@ -562,7 +562,8 @@ final class ActionUpdater {
     boolean isPopup = presentation.isPopupGroup();
     boolean canBePerformed = presentation.isPerformGroup();
     boolean performOnly = isPopup && canBePerformed && Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.SUPPRESS_SUBMENU));
-    boolean skipChecks = performOnly || child instanceof AlwaysVisibleActionGroup;
+    boolean alwaysVisible = child instanceof AlwaysVisibleActionGroup;
+    boolean skipChecks = performOnly || alwaysVisible;
     boolean hideDisabled = isPopup && !skipChecks && hideDisabledBase;
     boolean hideEmpty = isPopup && !skipChecks && (presentation.isHideGroupIfEmpty() || group.hideIfNoVisibleChildren());
     boolean disableEmpty = isPopup && !skipChecks && (presentation.isDisableGroupIfEmpty() && group.disableIfNoVisibleChildren());
@@ -589,15 +590,20 @@ final class ActionUpdater {
       }
     }
 
+    boolean hideDisabledChildren = (hideDisabledBase || group instanceof CompactActionGroup) && !alwaysVisible;
     if (!hasEnabled && hideDisabled || !hasVisible && hideEmpty) {
       return canBePerformed ? List.of(group) : Collections.emptyList();
     }
     else if (isPopup) {
-      return Collections.singletonList(!hideDisabledBase || child instanceof CompactActionGroup ? group :
-                                       new Compact(group));
+      if (hideDisabledChildren && !(group instanceof CompactActionGroup)) {
+        return Collections.singletonList(new Compact(group));
+      }
+      else {
+        return Collections.singletonList(group);
+      }
     }
     else {
-      return doExpandActionGroup(group, hideDisabledBase || child instanceof CompactActionGroup, strategy);
+      return doExpandActionGroup(group, hideDisabledChildren, strategy);
     }
   }
 

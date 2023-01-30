@@ -781,7 +781,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     myWizard.setDelegate(builder instanceof WizardDelegate ? (WizardDelegate)builder : null);
     myWizard.updateWizardButtons();
 
-    NewProjectWizardCollector.Companion.logGeneratorSelected(myContext);
+    NewProjectWizardCollector.logGeneratorSelected(myContext);
   }
 
   @TestOnly

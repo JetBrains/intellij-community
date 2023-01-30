@@ -2,19 +2,14 @@
 package org.jetbrains.idea.maven.plugins.groovy.wizard
 
 import com.intellij.framework.library.FrameworkLibraryVersion
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.chain
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.DistributionInfo
@@ -26,7 +21,6 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.asSafely
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.loadLatestGroovyVersions
@@ -42,7 +36,9 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
   override val ordinal = 100
 
-  override fun createStep(parent: GroovyNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
+  override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep =
+    Step(parent)
+      .nextStep(::AssetsStep)
 
   class Step(parent: GroovyNewProjectWizard.Step) :
     MavenNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent),
@@ -84,22 +80,21 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      val builder = MavenGroovyNewProjectBuilder(groovySdk.getVersion() ?: GROOVY_SDK_FALLBACK_VERSION).apply {
+      val groovySdkVersion = groovySdk.getVersion() ?: GROOVY_SDK_FALLBACK_VERSION
+      val builder = MavenGroovyNewProjectBuilder(groovySdkVersion).apply {
         moduleJdk = sdk
         name = parentStep.name
-        parentProject = parentData
         contentEntryPath = "${parentStep.path}/${parentStep.name}"
+
+        isCreatingNewProject = context.isCreatingNewProject
+
+        parentProject = parentData
         aggregatorProject = parentData
         projectId = MavenId(groupId, artifactId, version)
         isInheritGroupId = parentData?.mavenId?.groupId == groupId
         isInheritVersion = parentData?.mavenId?.version == version
         createSampleCode = addSampleCode
       }
-
-      ExternalProjectsManagerImpl.setupCreatedProject(project)
-      MavenProjectsManager.setupCreatedMavenProject(project)
-
-      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
       builder.commit(project)
     }
 
@@ -143,8 +138,8 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   }
 
   private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+
     override fun setupAssets(project: Project) {
-      outputDirectory = "$path/$name"
       addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
     }
   }

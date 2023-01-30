@@ -6,6 +6,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -73,7 +74,7 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
     @Override
     public boolean value(@NotNull PsiExpression element) {
       PsiType type = element.getType();
-      return type != null && PsiType.VOID.equals(type);
+      return type != null && PsiTypes.voidType().equals(type);
     }
 
     @NotNull

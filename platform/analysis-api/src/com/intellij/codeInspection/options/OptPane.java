@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -398,7 +398,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
   @Contract(pure = true)
   public static @NotNull OptSettingLink settingLink(@NotNull @NlsContexts.Label String displayName,
                                                     @NotNull @NonNls String configurableID) {
-    return new OptSettingLink(displayName, configurableID, null);
+    return new OptSettingLink(new PlainMessage(displayName), configurableID, null);
   }
 
   /**
@@ -411,6 +411,6 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
   public static @NotNull OptSettingLink settingLink(@NotNull @NlsContexts.Label String displayName,
                                                     @NotNull @NonNls String configurableID,
                                                     @NotNull @Nls String controlLabel) {
-    return new OptSettingLink(displayName, configurableID, controlLabel);
+    return new OptSettingLink(new PlainMessage(displayName), configurableID, controlLabel);
   }
 }

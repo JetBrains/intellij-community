@@ -6,7 +6,6 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -97,20 +96,6 @@ fun writeApplicationInfoJson(out: OutputStream, urlDecoder: QueryStringDecoder?,
             }
           }
         }
-      }
-
-      if (urlDecoder != null && getBooleanParameter("more", urlDecoder)) {
-        val appInfo = ApplicationInfoEx.getInstanceEx()
-        writer.writeStringField("vendor", appInfo.companyName)
-        writer.writeBooleanField("isEAP", appInfo.isEAP)
-        writer.writeStringField("productCode", appInfo.build.productCode)
-        writer.writeNumberField("buildDate", appInfo.buildDate.time.time)
-        writer.writeBooleanField("isSnapshot", appInfo.build.isSnapshot)
-        writer.writeStringField("configPath", PathManager.getConfigPath())
-        writer.writeStringField("systemPath", PathManager.getSystemPath())
-        writer.writeStringField("binPath", PathManager.getBinPath())
-        writer.writeStringField("logPath", PathManager.getLogPath())
-        writer.writeStringField("homePath", PathManager.getHomePath())
       }
     }
   }

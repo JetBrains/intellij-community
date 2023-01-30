@@ -2,7 +2,6 @@
 
 package com.intellij.psi.util;
 
-import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -224,28 +223,6 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("abc", "aaa:bbb:ccc");
     assertMatches("textField:sh", "textField:shouldChangeCharactersInRange:replacementString:");
     assertMatches("text*:sh", "textField:shouldChangeCharactersInRange:replacementString:");
-  }
-
-  public void testFileStructureComparator() {
-    SpeedSearchComparator comparator = FileStructureDialog.createSpeedSearchComparator();
-
-    assert comparator.matchingDegree("hint", "height: int") <= 0; // does not match
-    assert comparator.matchingDegree("Hint", "Height:int") > 0;
-    assert comparator.matchingDegree("Hint", "Height: int") <= 0; // does not match
-    assert comparator.matchingDegree("hI", "Height: int") > 0;
-
-    assert comparator.matchingDegree("getColor", "getBackground(): Color") > 0;
-    assert comparator.matchingDegree("get color", "getBackground(): Color") > 0;
-    assert comparator.matchingDegree("getcolor", "getBackground(): Color") <= 0; // does not match
-
-    assert comparator.matchingDegree("get()", "getBackground(): Color") > 0;
-
-    assert comparator.matchingDegree("setColor", "setBackground(Color): void") > 0;
-    assert comparator.matchingDegree("set color", "setBackground(Color): void") > 0;
-    assert comparator.matchingDegree("set Color", "setBackground(Color): void") > 0;
-    assert comparator.matchingDegree("set(color", "setBackground(Color): void") > 0;
-    assert comparator.matchingDegree("set(color)", "setBackground(Color): void") > 0;
-    assert comparator.matchingDegree("setcolor", "setBackground(Color): void") <= 0; // does not match
   }
 
   public void testMiddleMatchingMinimumTwoConsecutiveLettersInWordMiddle() {
@@ -573,11 +550,6 @@ public class NameUtilMatchingTest extends TestCase {
 
     assertPreference("*Icon", "getInitControl", "getErrorIcon", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*icon", "getInitControl", "getErrorIcon", NameUtil.MatchingCaseSensitivity.NONE);
-  }
-
-  public void testPreferBeforeSeparators() {
-    SpeedSearchComparator comparator = FileStructureDialog.createSpeedSearchComparator();
-    assertPreference("getLocation(): Point", "getPoint(): Point", text -> comparator.matchingDegree("*point", text));
   }
 
   public void testPreferNoWordSkipping() {

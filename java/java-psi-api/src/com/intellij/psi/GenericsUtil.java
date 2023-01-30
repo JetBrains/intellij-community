@@ -593,7 +593,7 @@ public final class GenericsUtil {
       PsiType argSubstitution = expectedType.getSubstitutor().substitute(parameter);
       PsiType substitution = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper()
         .getSubstitutionForTypeParameter(typeParam, paramSubstitution, argSubstitution, true, PsiUtil.getLanguageLevel(context));
-      if (substitution != null && substitution != PsiType.NULL) {
+      if (substitution != null && substitution != PsiTypes.nullType()) {
         return substitution;
       }
     }

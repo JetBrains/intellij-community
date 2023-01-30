@@ -332,7 +332,7 @@ private class JUnitMalformedSignatureVisitor(
     val containingClass = method.javaPsi.containingClass ?: return
     if (AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY)) return
     if (checkSuspendFunction(method)) return
-    if (PsiType.VOID != method.returnType || method.visibility != UastVisibility.PUBLIC || javaMethod.isStatic
+    if (PsiTypes.voidType() != method.returnType || method.visibility != UastVisibility.PUBLIC || javaMethod.isStatic
         || (!method.isNoArg() && !method.isParameterizedTest())) {
       val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.no.arg.descriptor", "public", "non-static", DOUBLE)
       return holder.registerUProblem(method, message, MethodSignatureQuickfix(method.name, false, newVisibility = JvmModifier.PUBLIC))
@@ -350,7 +350,7 @@ private class JUnitMalformedSignatureVisitor(
     if (checkSuspendFunction(method)) return
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
     val javaMethod = alternatives.firstOrNull { it.isStatic } ?: alternatives.firstOrNull() ?: return
-    if (PsiType.VOID != method.returnType || method.visibility == UastVisibility.PRIVATE || javaMethod.isStatic || !method.isNoArg()) {
+    if (PsiTypes.voidType() != method.returnType || method.visibility == UastVisibility.PRIVATE || javaMethod.isStatic || !method.isNoArg()) {
       val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.no.arg.descriptor", "non-private", "non-static", DOUBLE)
       val quickFix = MethodSignatureQuickfix(
         method.name, newVisibility = JvmModifier.PUBLIC, makeStatic = false, shouldBeVoidType = true, inCorrectParams = emptyMap()
@@ -583,9 +583,9 @@ private class JUnitMalformedSignatureVisitor(
   private fun getComponentType(returnType: PsiType?, method: PsiMethod): PsiType? {
     val collectionItemType = JavaGenericsUtil.getCollectionItemType(returnType, method.resolveScope)
     if (collectionItemType != null) return collectionItemType
-    if (InheritanceUtil.isInheritor(returnType, JAVA_UTIL_STREAM_INT_STREAM)) return PsiType.INT
-    if (InheritanceUtil.isInheritor(returnType, JAVA_UTIL_STREAM_LONG_STREAM)) return PsiType.LONG
-    if (InheritanceUtil.isInheritor(returnType, JAVA_UTIL_STREAM_DOUBLE_STREAM)) return PsiType.DOUBLE
+    if (InheritanceUtil.isInheritor(returnType, JAVA_UTIL_STREAM_INT_STREAM)) return PsiTypes.intType()
+    if (InheritanceUtil.isInheritor(returnType, JAVA_UTIL_STREAM_LONG_STREAM)) return PsiTypes.longType()
+    if (InheritanceUtil.isInheritor(returnType, JAVA_UTIL_STREAM_DOUBLE_STREAM)) return PsiTypes.doubleType()
     val streamItemType = PsiUtil.substituteTypeParameter(returnType, JAVA_UTIL_STREAM_STREAM, 0, true)
     if (streamItemType != null) return streamItemType
     return PsiUtil.substituteTypeParameter(returnType, JAVA_UTIL_ITERATOR, 0, true)
@@ -714,14 +714,14 @@ private class JUnitMalformedSignatureVisitor(
     val psiMethod = method.javaPsi
     val possibleValues = mapOf(
       "strings" to PsiType.getJavaLangString(psiMethod.manager, psiMethod.resolveScope),
-      "ints" to PsiType.INT,
-      "longs" to PsiType.LONG,
-      "doubles" to PsiType.DOUBLE,
-      "shorts" to PsiType.SHORT,
-      "bytes" to PsiType.BYTE,
-      "floats" to PsiType.FLOAT,
-      "chars" to PsiType.CHAR,
-      "booleans" to PsiType.BOOLEAN,
+      "ints" to PsiTypes.intType(),
+      "longs" to PsiTypes.longType(),
+      "doubles" to PsiTypes.doubleType(),
+      "shorts" to PsiTypes.shortType(),
+      "bytes" to PsiTypes.byteType(),
+      "floats" to PsiTypes.floatType(),
+      "chars" to PsiTypes.charType(),
+      "booleans" to PsiTypes.booleanType(),
       "classes" to PsiType.getJavaLangClass(psiMethod.manager, psiMethod.resolveScope)
     )
 
@@ -824,8 +824,8 @@ private class JUnitMalformedSignatureVisitor(
         ?.substringAfterLast(".") ?: return
       val visibility = validVisibility?.invoke(element)
       val problems = modifierProblems(visibility, element.visibility, element.isStatic, false)
-      if (shouldBeVoidType == true && element.type != PsiType.VOID) {
-        return holder.fieldTypeProblem(element, visibility, annotation, problems, PsiType.VOID.name)
+      if (shouldBeVoidType == true && element.type != PsiTypes.voidType()) {
+        return holder.fieldTypeProblem(element, visibility, annotation, problems, PsiTypes.voidType().name)
       }
       if (shouldBeSubTypeOf?.any { InheritanceUtil.isInheritor(element.type, it) } == false) {
         return holder.fieldTypeProblem(element, visibility, annotation, problems, shouldBeSubTypeOf.first())
@@ -892,16 +892,16 @@ private class JUnitMalformedSignatureVisitor(
         return holder.registerUProblem(element, message)
       }
       if (params != null && params.size != element.uastParameters.size) {
-        if (shouldBeVoidType == true && element.returnType != PsiType.VOID) {
-          return holder.methodParameterTypeProblem(element, visibility, annotation, problems, PsiType.VOID.name, params)
+        if (shouldBeVoidType == true && element.returnType != PsiTypes.voidType()) {
+          return holder.methodParameterTypeProblem(element, visibility, annotation, problems, PsiTypes.voidType().name, params)
         }
         if (shouldBeSubTypeOf?.any { InheritanceUtil.isInheritor(element.returnType, it) } == false) {
           return holder.methodParameterTypeProblem(element, visibility, annotation, problems, shouldBeSubTypeOf.first(), params)
         }
         return holder.methodParameterProblem(element, visibility, annotation, problems, params)
       }
-      if (shouldBeVoidType == true && element.returnType != PsiType.VOID) {
-        return holder.methodTypeProblem(element, visibility, annotation, problems, PsiType.VOID.name)
+      if (shouldBeVoidType == true && element.returnType != PsiTypes.voidType()) {
+        return holder.methodTypeProblem(element, visibility, annotation, problems, PsiTypes.voidType().name)
       }
       if (shouldBeSubTypeOf?.any { InheritanceUtil.isInheritor(element.returnType, it) } == false) {
         return holder.methodTypeProblem(element, visibility, annotation, problems, shouldBeSubTypeOf.first())

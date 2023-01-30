@@ -149,7 +149,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
       get() = (base.contribution.descriptionSections?.additionalProperties?.asSequence() ?: emptySequence())
         .plus(superContributions.asSequence().flatMap { it.descriptionSections.asSequence() })
         .distinctBy { it.key }
-        .associateBy({ it.key }, { it.value })
+        .associateBy({ it.key }, { base.jsonOrigin.renderDescription(it.value) })
 
     override val docUrl: String?
       get() = base.contribution.docUrl

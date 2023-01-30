@@ -71,7 +71,7 @@ public class CodeStyleManagerTest extends LightJavaCodeInsightFixtureTestCase {
                                     JANUARY
                                  }
                              }
-                             """, "month", VariableKind.PARAMETER);
+                             """, "Month", VariableKind.PARAMETER);
   }
 
   private void testSuggestedFirstName(@NotNull @Language("JAVA") String text, @NotNull String expected, @NotNull VariableKind parameter) {
@@ -81,6 +81,6 @@ public class CodeStyleManagerTest extends LightJavaCodeInsightFixtureTestCase {
     PsiExpression expression = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(getProject());
     Collection<String> names = javaCodeStyleManager.suggestSemanticNames(expression, parameter);
-    Assertions.assertThat(names.iterator().next()).isEqualToIgnoringCase(expected);
+    Assertions.assertThat(names.iterator().next()).isEqualTo(expected);
   }
 }

@@ -190,9 +190,9 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         final PsiExpression expression = assignment.getRExpression();
         final PsiTypeElement typeElement = iterator.getTypeElement();
         if (typeElement.isInferredType() &&
-            (expression == null || 
-             PsiType.NULL.equals(expression.getType()) || 
-             expression instanceof PsiArrayInitializerExpression || 
+            (expression == null ||
+             PsiTypes.nullType().equals(expression.getType()) ||
+             expression instanceof PsiArrayInitializerExpression ||
              expression instanceof PsiFunctionalExpression) &&     
             PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
           deleteIterator = false;

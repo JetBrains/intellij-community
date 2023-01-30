@@ -92,7 +92,7 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
       final PsiExpression rhs = binaryExpression.getROperand();
       if (rhs == null) return;
       final PsiExpression lhs = binaryExpression.getLOperand();
-      int mask = PsiType.LONG.equals(lhs.getType()) ? 63 : 31;
+      int mask = PsiTypes.longType().equals(lhs.getType()) ? 63 : 31;
       final String text = String.valueOf(myValue & mask);
       new CommentTracker().replaceAndRestoreComments(rhs, text);
     }
@@ -117,16 +117,16 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
       final PsiType expressionType = expression.getType();
       if (expressionType == null) return;
       LongRangeSet allowedRange;
-      if (expressionType.equals(PsiType.LONG)) {
+      if (expressionType.equals(PsiTypes.longType())) {
         allowedRange = LongRangeSet.range(0, Long.SIZE - 1);
-      } else if(expressionType.equals(PsiType.INT)) {
+      } else if(expressionType.equals(PsiTypes.intType())) {
         allowedRange = LongRangeSet.range(0, Integer.SIZE - 1);
       } else {
         return;
       }
       LongRangeSet actualRange = CommonDataflow.getExpressionRange(rhs);
       if (actualRange != null && !actualRange.isEmpty() && !actualRange.intersects(allowedRange)) {
-        registerError(sign, actualRange, expressionType.equals(PsiType.LONG));
+        registerError(sign, actualRange, expressionType.equals(PsiTypes.longType()));
       }
     }
   }

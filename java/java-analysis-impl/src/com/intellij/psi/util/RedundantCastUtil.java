@@ -798,26 +798,26 @@ public final class RedundantCastUtil {
 
     @Override
     public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
-      addIfNarrowing(statement.getAssertCondition(), PsiType.BOOLEAN);
+      addIfNarrowing(statement.getAssertCondition(), PsiTypes.booleanType());
       addIfNarrowing(statement.getAssertDescription(), PsiType.getJavaLangString(statement.getManager(), statement.getResolveScope()));
       super.visitAssertStatement(statement);
     }
 
     @Override
     public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
-      addIfNarrowing(statement.getCondition(), PsiType.BOOLEAN);
+      addIfNarrowing(statement.getCondition(), PsiTypes.booleanType());
       super.visitDoWhileStatement(statement);
     }
 
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
-      addIfNarrowing(statement.getCondition(), PsiType.BOOLEAN);
+      addIfNarrowing(statement.getCondition(), PsiTypes.booleanType());
       super.visitIfStatement(statement);
     }
 
     @Override
     public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
-      addIfNarrowing(statement.getCondition(), PsiType.BOOLEAN);
+      addIfNarrowing(statement.getCondition(), PsiTypes.booleanType());
       super.visitWhileStatement(statement);
     }
 
@@ -889,7 +889,7 @@ public final class RedundantCastUtil {
         }
       }
 
-      addIfNarrowing(conditionalExpression.getCondition(), PsiType.BOOLEAN);
+      addIfNarrowing(conditionalExpression.getCondition(), PsiTypes.booleanType());
       super.visitConditionalExpression(conditionalExpression);
     }
 

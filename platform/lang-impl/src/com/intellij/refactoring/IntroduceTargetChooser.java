@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -66,7 +67,7 @@ public final class IntroduceTargetChooser {
                                                         @NotNull @NlsContexts.PopupTitle String title,
                                                         int selection,
                                                         @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger) {
-    ReadAction.nonBlocking(() -> ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger, renderer)))
+    ReadAction.nonBlocking(() -> ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger.fun(t), renderer.fun(t))))
       .finishOnUiThread(ModalityState.NON_MODAL, targets ->
         showIntroduceTargetChooser(editor, targets, target -> callback.pass(target.getPlace()), title, selection))
       .expireWhen(() -> editor.isDisposed())
@@ -74,7 +75,7 @@ public final class IntroduceTargetChooser {
   }
 
   public static <T extends IntroduceTarget> void showIntroduceTargetChooser(@NotNull Editor editor,
-                                                                            @NotNull List<T> expressions,
+                                                                            @NotNull List<? extends T> expressions,
                                                                             @NotNull Consumer<? super T> callback,
                                                                             @NotNull @NlsContexts.PopupTitle String title,
                                                                             int selection) {
@@ -82,22 +83,24 @@ public final class IntroduceTargetChooser {
   }
 
   public static <T extends IntroduceTarget> void showIntroduceTargetChooser(@NotNull Editor editor,
-                                                                            @NotNull List<T> expressions,
+                                                                            @NotNull List<? extends T> expressions,
                                                                             @NotNull Pass<? super T> callback,
                                                                             @NotNull @NlsContexts.PopupTitle String title,
                                                                             @Nullable JComponent southComponent,
                                                                             int selection) {
     AtomicReference<ScopeHighlighter> highlighter = new AtomicReference<>(new ScopeHighlighter(editor));
-
-    IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(expressions)
+    T preselection = expressions.get(selection > -1 ? selection : 0);
+    List<? extends T> sorted = ContainerUtil.sorted(expressions, Comparator.comparingInt((T t) -> t.getTextRange().getStartOffset()));
+    IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
+      .<T>createPopupChooserBuilder(sorted)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-      .setSelectedValue(expressions.get(selection > -1 ? selection : 0), true)
+      .setSelectedValue(preselection, true)
       .setAccessibleName(title)
       .setTitle(title)
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemSelectedCallback((expr) -> {
+      .setItemSelectedCallback(expr -> {
         ScopeHighlighter h = highlighter.get();
         if (h == null) return;
         h.dropHighlight();
@@ -106,7 +109,7 @@ public final class IntroduceTargetChooser {
           h.highlight(Pair.create(range, Collections.singletonList(range)));
         }
       })
-      .setItemChosenCallback((expr) -> {
+      .setItemChosenCallback(expr -> {
         if (expr.isValid()) {
           callback.pass(expr);
         }
@@ -124,8 +127,8 @@ public final class IntroduceTargetChooser {
                                                       int index,
                                                       boolean isSelected,
                                                       boolean cellHasFocus) {
-          Component rendererComponent =
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          //noinspection unchecked
           IntroduceTarget expr = (T)value;
           if (expr.isValid()) {
             String text = expr.render();
@@ -158,11 +161,11 @@ public final class IntroduceTargetChooser {
     private final String myText;
 
     MyIntroduceTarget(@NotNull T psi,
-                      @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger,
-                      @NotNull Function<? super T, String> renderer) {
+                      @NotNull TextRange range,
+                      @NotNull String text) {
       super(psi);
-      myTextRange = ranger.fun(psi);
-      myText = renderer.fun(psi);
+      myTextRange = range;
+      myText = text;
     }
 
     @NotNull

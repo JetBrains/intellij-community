@@ -236,10 +236,10 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       if (parent instanceof PsiTypeCastExpression) {
         PsiType castType = ((PsiTypeCastExpression)parent).getType();
         if (isNonLongInteger(castType)) return;
-        if (PsiType.LONG.equals(castType)) context = (PsiExpression)parent;
+        if (PsiTypes.longType().equals(castType)) context = (PsiExpression)parent;
       }
-      if (!PsiType.LONG.equals(context.getType()) &&
-          !PsiType.LONG.equals(ExpectedTypeUtils.findExpectedType(context, true))) {
+      if (!PsiTypes.longType().equals(context.getType()) &&
+          !PsiTypes.longType().equals(ExpectedTypeUtils.findExpectedType(context, true))) {
         return;
       }
       if (ignoreNonOverflowingCompileTimeConstants) {

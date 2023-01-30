@@ -250,7 +250,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
 
   private static boolean isCondition(@NotNull PsiExpression expression) {
     PsiType type = expression.getType();
-    if (type == null || !PsiType.BOOLEAN.isAssignableFrom(type)) return false;
+    if (type == null || !PsiTypes.booleanType().isAssignableFrom(type)) return false;
     if (!(expression instanceof PsiMethodCallExpression) && !(expression instanceof PsiReferenceExpression)) return true;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiStatement) return !(parent instanceof PsiReturnStatement);
@@ -380,7 +380,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
           comparedWith = binOp.getROperand();
         }
         comparedWith = PsiUtil.skipParenthesizedExprDown(comparedWith);
-        if (isConstantOfType(comparedWith, PsiType.INT, PsiType.LONG)) {
+        if (isConstantOfType(comparedWith, PsiTypes.intType(), PsiTypes.longType())) {
           // like "if(DEBUG_LEVEL > 2)"
           return true;
         }
@@ -388,8 +388,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
           if(subOp.getOperationTokenType().equals(JavaTokenType.AND)) {
             PsiExpression left = PsiUtil.skipParenthesizedExprDown(subOp.getLOperand());
             PsiExpression right = PsiUtil.skipParenthesizedExprDown(subOp.getROperand());
-            if(isConstantOfType(left, PsiType.INT, PsiType.LONG) ||
-               isConstantOfType(right, PsiType.INT, PsiType.LONG)) {
+            if(isConstantOfType(left, PsiTypes.intType(), PsiTypes.longType()) ||
+               isConstantOfType(right, PsiTypes.intType(), PsiTypes.longType())) {
               // like "if((FLAGS & SOME_FLAG) != 0)"
               return true;
             }
@@ -398,7 +398,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
       }
     }
     // like "if(DEBUG)"
-    return isConstantOfType(element, PsiType.BOOLEAN);
+    return isConstantOfType(element, PsiTypes.booleanType());
   }
 
   private static boolean isConstantOfType(PsiElement element, PsiPrimitiveType... types) {

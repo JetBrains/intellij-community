@@ -86,16 +86,21 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
       PsiElement fileContext = file.getContext();
       String toInsert = tryCompleteQuotes(fileContext);
       boolean showPopup = true;
+      boolean showParameterInfo = false;
       if (toInsert == null) {
         final String quote = getDefaultQuote(file);
         AttributeValuePresentation presentation = getValuePresentation(editor, file, quote);
         toInsert = presentation.getPrefix() + presentation.getPostfix();
         showPopup = presentation.showAutoPopup();
+        showParameterInfo = "{}".equals(toInsert);
       }
       editor.getDocument().insertString(offset, toInsert);
       editor.getCaretModel().moveToOffset(offset + toInsert.length() / 2);
       if (showPopup) {
         AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
+      }
+      if (showParameterInfo) {
+        AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
       }
       needToInsertQuotes = false;
       Caret caret = editor.getCaretModel().getCurrentCaret();

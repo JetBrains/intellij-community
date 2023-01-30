@@ -79,7 +79,7 @@ class ImlSerializationTest {
 
   private fun loadProjectAndCheck(projectFile: File): ByteArray {
     val storageBuilder = MutableEntityStorage.create()
-    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
+    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, storageBuilder, virtualFileManager)
     return serializationRoundTrip(storageBuilder)
   }
 

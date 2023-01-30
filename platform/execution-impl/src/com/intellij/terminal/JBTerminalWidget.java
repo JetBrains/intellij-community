@@ -30,6 +30,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
+import com.jediterm.core.compatibility.Point;
+import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.SubstringFinder;
 import com.jediterm.terminal.TerminalColor;
@@ -41,13 +43,10 @@ import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.model.hyperlinks.LinkInfo;
 import com.jediterm.terminal.model.hyperlinks.LinkResult;
 import com.jediterm.terminal.model.hyperlinks.LinkResultItem;
-import com.jediterm.terminal.ui.JediTermWidget;
-import com.jediterm.terminal.ui.TerminalAction;
-import com.jediterm.terminal.ui.TerminalPanel;
-import com.jediterm.terminal.ui.TerminalWidgetListener;
+import com.jediterm.terminal.ui.*;
+import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.Pair;
-import com.pty4j.WinSize;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,11 +128,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   private @NotNull LinkInfo convertInfo(@NotNull Project project, @NotNull HyperlinkInfo info) {
-    LinkInfo.Builder builder = new LinkInfo.Builder().setNavigateCallback(() -> {
+    LinkInfoEx.Builder builder = new LinkInfoEx.Builder().setNavigateCallback(() -> {
       info.navigate(project);
     });
     if (info instanceof HyperlinkWithPopupMenuInfo) {
-      builder.setPopupMenuGroupProvider(new LinkInfo.PopupMenuGroupProvider() {
+      builder.setPopupMenuGroupProvider(new LinkInfoEx.PopupMenuGroupProvider() {
         @Override
         public @NotNull List<TerminalAction> getPopupMenuGroup(@NotNull MouseEvent event) {
           ActionGroup group = ((HyperlinkWithPopupMenuInfo)info).getPopupMenuGroup(event);
@@ -143,7 +142,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       });
     }
     if (info instanceof HyperlinkWithHoverInfo) {
-      builder.setHoverConsumer(new LinkInfo.HoverConsumer() {
+      builder.setHoverConsumer(new LinkInfoEx.HoverConsumer() {
         @Override
         public void onMouseEntered(@NotNull JComponent hostComponent, @NotNull Rectangle linkBounds) {
           ((HyperlinkWithHoverInfo)info).onMouseEntered(hostComponent, linkBounds);
@@ -224,7 +223,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
         TerminalColor backgroundColor = mySettingsProvider.getFoundPatternColor().getBackground();
         if (backgroundColor != null) {
-          g.setColor(mySettingsProvider.getTerminalColorPalette().getBackground(backgroundColor));
+          g.setColor(AwtTransformers.toAwtColor(mySettingsProvider.getTerminalColorPalette().getBackground(backgroundColor)));
         }
         int anchorHeight = Math.max(2, height / modelHeight);
         for (SubstringFinder.FindResult.FindItem r : result.getItems()) {
@@ -449,9 +448,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     }
 
     @Override
-    public @Nullable WinSize getWindowSize() {
-      Dimension size = widget().getTerminalPanel().getTerminalSizeFromComponent();
-      return size != null ? new WinSize(size.width, size.height) : null;
+    public @Nullable TermSize getTermSize() {
+      return widget().getTerminalPanel().getTerminalSizeFromComponent();
     }
 
     @Override

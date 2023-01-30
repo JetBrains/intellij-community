@@ -4,6 +4,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
+import com.intellij.settingsSync.SettingsSnapshotZipSerializer.deserializeSettingsProviders
+import com.intellij.settingsSync.SettingsSnapshotZipSerializer.serializeSettingsProviders
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsStateMerger.mergePluginStates
 import com.intellij.util.io.createFile
@@ -26,6 +28,7 @@ import org.eclipse.jgit.treewalk.TreeWalk
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.Instant
+import java.util.function.Consumer
 import java.util.regex.Pattern
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -155,6 +158,11 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       addCommand.addFilepattern("$METAINFO_FOLDER/$PLUGINS_FILE")
     }
 
+    for ((relativePath, content) in serializeSettingsProviders(snapshot.settingsFromProviders)) {
+      settingsSyncStorage.resolve(METAINFO_FOLDER).resolve(relativePath).write(content)
+      addCommand.addFilepattern("$METAINFO_FOLDER/$relativePath")
+    }
+
     addCommand.call()
 
     val info = snapshot.metaInfo.appInfo
@@ -234,12 +242,16 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), settingsSyncStorage) }
 
     val metaInfoFolder = settingsSyncStorage.resolve(METAINFO_FOLDER)
+
+    val (settingsFromProviders, filesFromProviders) = deserializeSettingsProviders(metaInfoFolder)
+
     val additionalFiles = metaInfoFolder.toFile().walkTopDown()
-      .filter { it.isFile && it.name != PLUGINS_FILE }
+      .filter { it.isFile && it.name != PLUGINS_FILE && !filesFromProviders.contains(it.toPath()) }
       .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), metaInfoFolder) }
 
     val pluginsState = readPluginsState()
-    return SettingsSnapshot(MetaInfo(lastModifiedDate, getLocalApplicationInfo()), settingFiles, pluginsState, additionalFiles)
+    return SettingsSnapshot(MetaInfo(lastModifiedDate, getLocalApplicationInfo()),
+                            settingFiles, pluginsState, settingsFromProviders, additionalFiles)
   }
 
   private fun readPluginsState(): SettingsSyncPluginsState? {
@@ -315,12 +327,25 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       val cloudBranchTip = getBranchTip(cloud)
 
       val addCommand = git.add()
-      val pluginJson = conflictingFiles.find { it == "$METAINFO_FOLDER/$PLUGINS_FILE" }
-      if (pluginJson != null) {
-        mergePluginJson(pluginJson, ideBranchTip, cloudBranchTip)
-        addCommand.addFilepattern(pluginJson)
-        conflictingFiles -= pluginJson
+      val pluginJsonPath = conflictingFiles.find { it == "$METAINFO_FOLDER/$PLUGINS_FILE" }
+      if (pluginJsonPath != null) {
+        val mergedContent = mergePluginJson(pluginJsonPath, ideBranchTip, cloudBranchTip)
+        pluginsFile.write(mergedContent)
+        addCommand.addFilepattern(pluginJsonPath)
+        conflictingFiles -= pluginJsonPath
       }
+
+      SettingsProvider.SETTINGS_PROVIDER_EP.forEachExtensionSafe(Consumer {
+        val relativePath = "$METAINFO_FOLDER/${it.id}/${it.fileName}"
+        val file = settingsSyncStorage.resolve(relativePath)
+        if (file.exists() && conflictingFiles.contains(relativePath)) {
+          val mergedContent = mergeSettingsProviderFile(it, relativePath, ideBranchTip, cloudBranchTip)
+          file.write(mergedContent)
+          addCommand.addFilepattern(relativePath)
+          conflictingFiles -= relativePath
+        }
+      })
+
       mergeFilesOneByOne(conflictingFiles, ideBranchTip, cloudBranchTip)
       for (file in conflictingFiles) {
         addCommand.addFilepattern(file)
@@ -333,19 +358,44 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     return getPosition(master)
   }
 
-  private fun mergePluginJson(pluginJson: String, ideBranchTip: RevCommit, cloudBranchTip: RevCommit) {
-    val ideContent = getFileContentInBranch(pluginJson, ideBranchTip)
-    val ideState = json.decodeFromString<SettingsSyncPluginsState>(ideContent)
-    val cloudContent = getFileContentInBranch(pluginJson, cloudBranchTip)
-    val cloudState = json.decodeFromString<SettingsSyncPluginsState>(cloudContent)
-    val mergeBaseContent = findMergeBaseContent(pluginJson, ideBranchTip, cloudBranchTip)
-    val baseState = if (mergeBaseContent != null)
-      json.decodeFromString<SettingsSyncPluginsState>(mergeBaseContent)
-      else SettingsSyncPluginsState(emptyMap())
+  private fun <T : Any> mergeSettingsProviderFile(settingsProvider: SettingsProvider<T>,
+                                                  relativePath: String,
+                                                  ideBranchTip: RevCommit,
+                                                  cloudBranchTip: RevCommit): String {
+    return smartMergeFile(relativePath, ideBranchTip, cloudBranchTip,
+                          deserializer = { settingsProvider.deserialize(it) },
+                          serializer = { settingsProvider.serialize(it) },
+                          merger = { base: T?, cloud: T, ide: T ->
+                            settingsProvider.mergeStates(base, cloud, ide)
+                          })
+  }
 
-    val mergedState = mergePluginStates(baseState, cloudState, ideState)
-    val mergedContent = json.encodeToString(mergedState)
-    pluginsFile.write(mergedContent)
+  private fun mergePluginJson(pluginJson: String, ideBranchTip: RevCommit, cloudBranchTip: RevCommit): String {
+    return smartMergeFile(pluginJson, ideBranchTip, cloudBranchTip,
+                          deserializer = { json.decodeFromString<SettingsSyncPluginsState>(it) },
+                          serializer = { json.encodeToString(it) },
+                          merger = { base, cloud, ide -> mergePluginStates(base ?: SettingsSyncPluginsState(emptyMap()), cloud, ide) })
+  }
+
+  private fun <T> smartMergeFile(
+    relativePath: String,
+    ideBranchTip: RevCommit,
+    cloudBranchTip: RevCommit,
+    serializer: (T) -> String,
+    deserializer: (String) -> T,
+    merger: (T?, T, T) -> T): String
+  {
+    val ideContent = getFileContentInBranch(relativePath, ideBranchTip)
+    val ideState = deserializer(ideContent)
+    val cloudContent = getFileContentInBranch(relativePath, cloudBranchTip)
+    val cloudState = deserializer(cloudContent)
+    val mergeBaseContent = findMergeBaseContent(relativePath, ideBranchTip, cloudBranchTip)
+    val baseState = if (mergeBaseContent != null)
+      deserializer(mergeBaseContent)
+    else null
+
+    val mergedState = merger(baseState, cloudState, ideState)
+    return serializer(mergedState)
   }
 
   private fun findMergeBaseContent(pluginJson: String, commit1: RevCommit, commit2: RevCommit): String? {
@@ -397,7 +447,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       val content = if (ideDateForFile >= cloudDateForFile) {
         LOG.info("File $file was modified later in 'ide' in ${ideTipForFile?.short ?: ideTip.short}")
         getFileContentInBranch(file, ideTip)
-      } else {
+      }
+      else {
         LOG.info("File $file was modified later in 'cloud' in ${cloudTipForFile?.short ?: cloudTip.short}")
         getFileContentInBranch(file, cloudTip)
       }

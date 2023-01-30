@@ -357,7 +357,7 @@ public final class LambdaUtil {
     PsiElement element = expression;
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiConditionalExpression) {
       if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() == element) {
-        return PsiType.BOOLEAN;
+        return PsiTypes.booleanType();
       }
       element = parent;
       parent = parent.getParent();
@@ -667,7 +667,7 @@ public final class LambdaUtil {
    */
   public static Map<PsiElement, @Nls String> checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceReturnType) {
     Map<PsiElement, @Nls String> errors = new LinkedHashMap<>();
-    if (PsiType.VOID.equals(functionalInterfaceReturnType)) {
+    if (PsiTypes.voidType().equals(functionalInterfaceReturnType)) {
       final PsiElement body = lambdaExpression.getBody();
       if (body instanceof PsiCodeBlock) {
         for (PsiExpression expression : getReturnExpressions(lambdaExpression)) {
@@ -678,12 +678,12 @@ public final class LambdaUtil {
         try {
           if (!PsiUtil.isStatement(JavaPsiFacade.getElementFactory(body.getProject()).createStatementFromText(body.getText(), body))) {
             final PsiType type = ((PsiExpression)body).getType();
-            if (PsiType.VOID.equals(type)) {
+            if (PsiTypes.voidType().equals(type)) {
               errors.put(body, JavaPsiBundle.message("lambda.body.must.be.a.statement.expression"));
             }
             else {
               errors.put(body, JavaPsiBundle.message("bad.return.type.in.lambda.expression1",
-                                                     (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText())));
+                                                     (type == PsiTypes.nullType() || type == null ? "<null>" : type.getPresentableText())));
             }
           }
         }

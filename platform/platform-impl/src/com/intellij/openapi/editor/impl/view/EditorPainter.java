@@ -765,7 +765,7 @@ public final class EditorPainter implements TextDrawingCallback {
       for (int i = start; i < end; i++) {
         int charOffset = isRtl ? baseStartOffset - i - 1 : baseStartOffset + i;
         char c = myText.charAt(charOffset);
-        if (" \t\u3000".indexOf(c) >= 0 && whitespacePaintingStrategy.showWhitespaceAtOffset(charOffset)) {
+        if (" \t\u3000".indexOf(c) >= 0 && whitespacePaintingStrategy.showWhitespaceAtOffset(charOffset, myEditor)) {
           int startX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i : baseStartOffset + i);
           int endX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i - 1 : baseStartOffset + i + 1);
 
@@ -1610,6 +1610,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final boolean myLeadingWhitespaceShown;
     private final boolean myInnerWhitespaceShown;
     private final boolean myTrailingWhitespaceShown;
+    private final boolean mySelectionWhitespaceShown;
 
     // Offsets on current line where leading whitespace ends and trailing whitespace starts correspondingly.
     private int currentLeadingEdge;
@@ -1620,10 +1621,11 @@ public final class EditorPainter implements TextDrawingCallback {
       myLeadingWhitespaceShown = settings.isLeadingWhitespaceShown();
       myInnerWhitespaceShown = settings.isInnerWhitespaceShown();
       myTrailingWhitespaceShown = settings.isTrailingWhitespaceShown();
+      mySelectionWhitespaceShown = settings.isSelectionWhitespaceShown();
     }
 
     private boolean showAnyWhitespace() {
-      return myWhitespaceShown && (myLeadingWhitespaceShown || myInnerWhitespaceShown || myTrailingWhitespaceShown);
+      return myWhitespaceShown && (myLeadingWhitespaceShown || myInnerWhitespaceShown || myTrailingWhitespaceShown || mySelectionWhitespaceShown);
     }
 
     private void update(CharSequence chars, int lineStart, int lineEnd) {
@@ -1633,11 +1635,22 @@ public final class EditorPainter implements TextDrawingCallback {
       }
     }
 
-    private boolean showWhitespaceAtOffset(int offset) {
-      return myWhitespaceShown
-             && (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
-                 offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
-                 myInnerWhitespaceShown);
+    private boolean showWhitespaceAtOffset(int offset, Editor editor) {
+      if (!myWhitespaceShown) return false;
+      if (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
+          offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
+          myInnerWhitespaceShown) {
+        return true;
+      } else {
+        return mySelectionWhitespaceShown && isOffsetInSelection(editor, offset);
+      }
+    }
+
+    private static boolean isOffsetInSelection(Editor editor, int offset) {
+      CaretModel caretModel = editor.getCaretModel();
+      return caretModel.getAllCarets().stream()
+        .filter(caret -> caret.hasSelection())
+        .anyMatch(it -> it.getSelectionRange().contains(offset));
     }
   }
 

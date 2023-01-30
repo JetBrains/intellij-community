@@ -116,6 +116,10 @@ internal class WorkspaceFileSetImpl(override val root: VirtualFile,
     }
     return currentMasks or update
   }
+
+  override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
+    return this.takeIf(condition)
+  }
 }
 
 /**
@@ -157,6 +161,10 @@ private data class TwoWorkspaceFileSets(private val first: WorkspaceFileSetImpl,
       acceptedCustomDataClass.isInstance(second.data) -> second
       else -> null
     }
+  }
+
+  override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
+    return first.takeIf(condition) ?: second.takeIf(condition)
   }
 }
 
@@ -210,11 +218,21 @@ internal class MultipleStoredWorkspaceFileSets(private val storedFileSets: Mutab
       it is WorkspaceFileSetImpl && (acceptedCustomDataClass == null || acceptedCustomDataClass.isInstance(it.data)) 
     } as? WorkspaceFileSetImpl
   }
+
+  override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
+    return storedFileSets.find { 
+      it is WorkspaceFileSetImpl && condition(it)
+    } as? WorkspaceFileSetWithCustomData<*>
+  }
 }
 
 internal class MultipleWorkspaceFileSetsImpl(override val fileSets: List<WorkspaceFileSetImpl>): MultipleWorkspaceFileSets {
   override fun find(acceptedCustomDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileSetImpl? {
     return fileSets.find { acceptedCustomDataClass == null || acceptedCustomDataClass.isInstance(it.data) }
+  }
+
+  override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
+    return fileSets.find(condition)
   }
 }
 

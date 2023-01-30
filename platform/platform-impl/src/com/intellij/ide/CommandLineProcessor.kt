@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
@@ -256,13 +256,16 @@ object CommandLineProcessor {
     val result = processOpenFile(args, currentDirectory)
     if (focusApp) {
       withContext(Dispatchers.EDT) {
-        if (!result.showErrorIfFailed()) {
-          if (result.project == null) {
+        when {
+          result.hasError -> {
+            result.showError()
+          }
+          result.project == null -> {
             findVisibleFrame()?.let { frame ->
               AppIcon.getInstance().requestFocus(frame)
             }
           }
-          else {
+          else -> {
             WindowManager.getInstance().getIdeFrame(result.project)?.let {
               AppIcon.getInstance().requestFocus(it)
             }

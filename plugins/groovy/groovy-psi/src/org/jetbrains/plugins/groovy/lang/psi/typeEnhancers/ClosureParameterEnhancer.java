@@ -248,7 +248,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiClass entryClass = JavaPsiFacade.getInstance(project).findClass(JAVA_UTIL_MAP_ENTRY, scope);
     if (entryClass == null) {
-      if (key != null && key != PsiType.NULL && value != null && value != PsiType.NULL) {
+      if (key != null && key != PsiTypes.nullType() && value != null && value != PsiTypes.nullType()) {
         final String text = String.format("%s<%s,%s>", JAVA_UTIL_MAP_ENTRY, key.getCanonicalText(), value.getCanonicalText());
         return factory.createTypeFromText(text, null);
       }

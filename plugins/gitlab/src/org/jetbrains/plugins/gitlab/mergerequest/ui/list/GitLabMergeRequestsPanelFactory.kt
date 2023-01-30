@@ -2,16 +2,20 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
 import com.intellij.collaboration.async.nestedDisposable
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.ui.CollectionListModel
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestsListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabFiltersPanelFactory
 import javax.swing.JComponent
@@ -20,9 +24,26 @@ import javax.swing.event.ChangeEvent
 
 internal class GitLabMergeRequestsPanelFactory {
 
-  fun create(project: Project, scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel): JComponent {
+  fun create(project: Project,
+             scope: CoroutineScope,
+             listVm: GitLabMergeRequestsListViewModel): JComponent {
+
     val listModel = collectMergeRequests(scope, listVm)
-    val listMergeRequests = GitLabMergeRequestsListComponentFactory.create(listModel, listVm.avatarIconsProvider)
+    val listMergeRequests = GitLabMergeRequestsListComponentFactory.create(listModel, listVm.avatarIconsProvider).also { list ->
+      DataManager.registerDataProvider(list) {
+        if (GitLabMergeRequestsActionKeys.SELECTED.`is`(it)) {
+          list.selectedValue
+        }
+        else {
+          null
+        }
+      }
+
+      val groupId = "GitLab.Merge.Requests.List.Actions"
+      PopupHandler.installSelectionListPopup(list, ActionManager.getInstance().getAction(groupId) as ActionGroup, groupId)
+      val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
+      EmptyAction.registerWithShortcutSet("GitLab.Merge.Request.Show", shortcuts, list)
+    }
 
     val listLoaderPanel = createListLoaderPanel(scope, listVm, listMergeRequests)
     val progressStripe = ProgressStripe(
@@ -47,8 +68,8 @@ internal class GitLabMergeRequestsPanelFactory {
   }
 
   private fun collectMergeRequests(scope: CoroutineScope,
-                                   listVm: GitLabMergeRequestsListViewModel): CollectionListModel<GitLabMergeRequestShortDTO> {
-    val listModel = CollectionListModel<GitLabMergeRequestShortDTO>()
+                                   listVm: GitLabMergeRequestsListViewModel): CollectionListModel<GitLabMergeRequestDetails> {
+    val listModel = CollectionListModel<GitLabMergeRequestDetails>()
     scope.launch {
       var firstEvent = true
       listVm.listDataFlow.collect {

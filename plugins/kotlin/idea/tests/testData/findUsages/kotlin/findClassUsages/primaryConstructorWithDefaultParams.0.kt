@@ -7,4 +7,4 @@ fun test() {
     A()
 }
 
-// FIR_COMPARISON
+

@@ -388,7 +388,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     pythonConsoleView.setConsoleCommunication(debugConsoleCommunication);
 
 
-    PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(pythonConsoleView,
+    PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(console,
                                                                                                                   processHandler,
                                                                                                                   debugConsoleCommunication);
     pythonConsoleView.setExecutionHandler(consoleExecuteActionHandler);

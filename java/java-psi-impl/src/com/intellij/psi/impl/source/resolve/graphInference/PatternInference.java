@@ -22,13 +22,13 @@ public class PatternInference {
    * @param resolveResult result of deconstruction pattern type element resolve before the inference
    * @param pattern deconstruction pattern itself, which has no type arguments specified 
    * @param recordClass record class of deconstruction pattern
-   * @param type context type
+   * @param type context type; type of the expression, which is matched against the pattern
    * @return updated {@link CandidateInfo} that contains a substitutor with inferred type arguments
    */
-  public static @NotNull CandidateInfo inferPatternType(@NotNull CandidateInfo resolveResult,
-                                                        @NotNull PsiDeconstructionPattern pattern,
-                                                        @NotNull PsiClass recordClass,
-                                                        @Nullable PsiType type) {
+  public static @NotNull CandidateInfo inferPatternGenerics(@NotNull CandidateInfo resolveResult,
+                                                            @NotNull PsiDeconstructionPattern pattern,
+                                                            @NotNull PsiClass recordClass,
+                                                            @Nullable PsiType type) {
     // JLS 18.5.5
     if (type == null) return resolveResult;
     if (type instanceof PsiCapturedWildcardType) {

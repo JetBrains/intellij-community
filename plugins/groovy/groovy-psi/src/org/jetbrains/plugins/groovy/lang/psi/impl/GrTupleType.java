@@ -16,7 +16,7 @@ public abstract class GrTupleType extends GrLiteralClassType {
     List<PsiType> types = getComponentTypes();
     if (types.isEmpty()) return PsiType.EMPTY_ARRAY;
     final PsiType leastUpperBound = getLeastUpperBound(types.toArray(PsiType.EMPTY_ARRAY));
-    if (leastUpperBound == PsiType.NULL) return EMPTY_ARRAY;
+    if (leastUpperBound == PsiTypes.nullType()) return EMPTY_ARRAY;
     return new PsiType[]{leastUpperBound};
   });
 

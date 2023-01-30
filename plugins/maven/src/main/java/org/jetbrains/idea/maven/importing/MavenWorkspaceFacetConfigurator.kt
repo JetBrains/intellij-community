@@ -6,19 +6,24 @@ import com.intellij.openapi.externalSystem.project.PackagingModel
 import com.intellij.openapi.externalSystem.service.project.ArtifactExternalDependenciesImporterImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.packaging.artifacts.ArtifactModel
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.packaging.elements.PackagingElementResolvingContext
 import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
+import org.jetbrains.idea.maven.importing.workspaceModel.ARTIFACT_MODEL_KEY
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
 import org.jetbrains.idea.maven.project.MavenProjectsTree
+import java.util.concurrent.ConcurrentHashMap
 
-val FACET_DETECTION_DISABLED_KEY = Key.create<MutableMap<MavenWorkspaceFacetConfigurator, Boolean>>("FACET_DETECTION_DISABLED_KEY")
+private val FACET_DETECTION_DISABLED_KEY = Key.create<ConcurrentHashMap<MavenWorkspaceFacetConfigurator, Boolean>>("FACET_DETECTION_DISABLED_KEY")
 
+@ApiStatus.Internal
 interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
   fun isApplicable(mavenProject: MavenProject): Boolean
   fun isFacetDetectionDisabled(project: Project): Boolean
@@ -39,24 +44,19 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
               mavenTree: MavenProjectsTree,
               mavenProjectToModuleName: Map<MavenProject, String>,
               packagingModel: PackagingModel,
-              postTasks: MutableList<MavenProjectsProcessorTask>) {
+              postTasks: MutableList<MavenProjectsProcessorTask>,
+              userDataHolder: UserDataHolderEx) {
   }
 
-  fun isFacetDetectionDisabled(context: Context<*>): Boolean {
-    if (null == context.getUserData(FACET_DETECTION_DISABLED_KEY)) {
-      context.putUserData(FACET_DETECTION_DISABLED_KEY, mutableMapOf())
-    }
-    val facetDetectionDisabledMap = context.getUserData(FACET_DETECTION_DISABLED_KEY)!!
-    if (!facetDetectionDisabledMap.containsKey(this)) {
-      facetDetectionDisabledMap[this] = isFacetDetectionDisabled(context.project)
-    }
-    return facetDetectionDisabledMap[this]!!
+  private fun isFacetDetectionDisabled(context: Context<*>): Boolean {
+    context.putUserDataIfAbsent(FACET_DETECTION_DISABLED_KEY, ConcurrentHashMap())
+    return FACET_DETECTION_DISABLED_KEY[context].computeIfAbsent(this) { isFacetDetectionDisabled(context.project) }
   }
 
   override fun configureMavenProject(context: MutableMavenProjectContext) {
-    val project = context.project
-    if (isFacetDetectionDisabled(project)) return
+    if (isFacetDetectionDisabled(context)) return
 
+    val project = context.project
     val mavenProjectWithModules = context.mavenProjectWithModules
     val mavenProject = mavenProjectWithModules.mavenProject
     if (!isApplicable(mavenProject)) return
@@ -66,16 +66,16 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
       val moduleType = moduleWithType.type
       if (moduleType.containsCode) {
         val module = moduleWithType.module
-        preProcess(context.storage, module, project, mavenProject, context.artifactModel)
+        preProcess(context.storage, module, project, mavenProject, ARTIFACT_MODEL_KEY[context])
       }
     }
   }
 
   override fun beforeModelApplied(context: MutableModelContext) {
-    val project = context.project
-    if (isFacetDetectionDisabled(project)) return
+    if (isFacetDetectionDisabled(context)) return
 
-    val artifactModel = context.artifactModel
+    val project = context.project
+    val artifactModel = ARTIFACT_MODEL_KEY[context]
     val resolvingContext = object : DefaultPackagingElementResolvingContext(project) {
       override fun getArtifactModel(): ArtifactModel {
         return artifactModel
@@ -83,10 +83,21 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
     }
     val packagingModel: PackagingModel = FacetPackagingModel(artifactModel, resolvingContext)
     val mavenProjectsWithModules = context.mavenProjectsWithModules
-    val mavenProjectToModuleName = mavenProjectsWithModules.associateBy({ it.mavenProject }, { it.modules.first().module.name })
     val storage = context.storage
     val mavenTree = context.mavenProjectsTree
     val postTasks = mutableListOf<MavenProjectsProcessorTask>()
+
+    fun mavenModuleTypeOrder(type: MavenModuleType): Int = when (type) {
+      StandardMavenModuleType.SINGLE_MODULE -> 0
+      StandardMavenModuleType.MAIN_ONLY -> 1
+      StandardMavenModuleType.TEST_ONLY -> 2
+      StandardMavenModuleType.COMPOUND_MODULE -> 3
+      StandardMavenModuleType.AGGREGATOR -> 4
+    }
+
+    val mavenProjectToModuleName = mavenProjectsWithModules.associateBy({ it.mavenProject }, {
+      it.modules.minByOrNull { moduleWithType -> mavenModuleTypeOrder(moduleWithType.type) }!!.module.name
+    })
 
     for (mavenProjectWithModules in mavenProjectsWithModules) {
       val mavenProject = mavenProjectWithModules.mavenProject
@@ -105,15 +116,11 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
                   mavenTree,
                   mavenProjectToModuleName,
                   packagingModel,
-                  postTasks)
+                  postTasks,
+                  context)
         }
       }
     }
-
-    if (null == context.getUserData(POST_TASKS_KEY)) {
-      context.putUserData(POST_TASKS_KEY, mutableListOf())
-    }
-    postTasks.forEach { context.getUserData(POST_TASKS_KEY)!!.add(it as MavenPostTask) }
   }
 
   class FacetPackagingModel(private val myArtifactModel: ModifiableArtifactModel,

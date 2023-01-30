@@ -184,4 +184,29 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
     assertEquals("*.java", descriptors.get(0).getPattern());
     assertEquals("/lib/**/*.min.js", descriptors.get(1).getPattern());
   }
+
+  public void testKeepExistingKeys() throws Exception {
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
+    String source =
+      """
+        <option name="config" value="root" version="173">
+          <option name="RIGHT_MARGIN" value="100" />
+          <option name="FORMATTER_TAGS_ENABLED" value="%b" />
+        </option>""";
+    boolean defaultValue = settings.FORMATTER_TAGS_ENABLED;
+    source = source.formatted(defaultValue);
+    Element root = JDOMUtil.load(source);
+    settings.readExternal(root);
+    assertEquals(defaultValue, settings.FORMATTER_TAGS_ENABLED);
+    Element output = createOption("config", "root");
+    settings.writeExternal(output);
+    assertXmlOutputEquals(
+      """
+        <option name="config" value="root" version="173">
+          <option name="RIGHT_MARGIN" value="100" />
+          <option name="FORMATTER_TAGS_ENABLED" value="%b" />
+        </option>""".formatted(defaultValue),
+      output
+    );
+  }
 }

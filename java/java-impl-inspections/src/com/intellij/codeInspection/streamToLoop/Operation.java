@@ -64,7 +64,7 @@ abstract class Operation {
       return fn == null ? null : new DropWhileOperation(fn);
     }
     if (name.equals("nonNull") && args.length == 0) { // StreamEx
-      return new FilterOperation(new FunctionHelper.InlinedFunctionHelper(PsiType.BOOLEAN, 1, "{0} != null"));
+      return new FilterOperation(new FunctionHelper.InlinedFunctionHelper(PsiTypes.booleanType(), 1, "{0} != null"));
     }
     if(name.equals("sorted") && !(inType instanceof PsiPrimitiveType)) {
       return new SortedOperation(args.length == 1 ? args[0] : null);

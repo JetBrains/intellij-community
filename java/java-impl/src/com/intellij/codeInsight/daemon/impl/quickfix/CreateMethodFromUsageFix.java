@@ -45,7 +45,7 @@ public final class CreateMethodFromUsageFix {
     PsiExpressionList argumentList = call.getArgumentList();
     for (PsiExpression expression : argumentList.getExpressions()) {
       PsiType type = expression.getType();
-      if (type == null || PsiType.VOID.equals(type)) return true;
+      if (type == null || PsiTypes.voidType().equals(type)) return true;
     }
     return false;
   }
@@ -59,7 +59,7 @@ public final class CreateMethodFromUsageFix {
       return null;
     }
 
-    PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
+    PsiMethod method = factory.createMethod(methodName, PsiTypes.voidType());
 
     if (targetClass.equals(parentClass)) {
       method = (PsiMethod)targetClass.addAfter(method, enclosingContext);

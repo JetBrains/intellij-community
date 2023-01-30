@@ -7,14 +7,14 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.asSafely
+import org.jetbrains.plugins.gradle.properties.GRADLE_PROPERTIES_FILE_NAME
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile.getGradleHomePropertiesPath
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
-import org.jetbrains.plugins.gradle.util.PROPERTIES_FILE_NAME
-import org.jetbrains.plugins.gradle.util.getGradleUserHomePropertiesPath
 import java.nio.file.Path
 
 internal fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> = sequence {
   val externalRootProjectPath = place.getRootGradleProjectPath() ?: return@sequence
-  val userHomePropertiesFile = getGradleUserHomePropertiesPath()?.parent?.toString()?.getGradlePropertiesFile(place.project)
+  val userHomePropertiesFile = getGradleHomePropertiesPath()?.parent?.toString()?.getGradlePropertiesFile(place.project)
   if (userHomePropertiesFile != null) {
     yield(userHomePropertiesFile)
   }
@@ -30,6 +30,6 @@ internal fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile>
 }
 
 private fun String.getGradlePropertiesFile(project: Project): PropertiesFile? {
-  val file = VfsUtil.findFile(Path.of(this), false)?.findChild(PROPERTIES_FILE_NAME)
+  val file = VfsUtil.findFile(Path.of(this), false)?.findChild(GRADLE_PROPERTIES_FILE_NAME)
   return file?.let { PsiUtilCore.getPsiFile(project, it) }.asSafely<PropertiesFile>()
 }

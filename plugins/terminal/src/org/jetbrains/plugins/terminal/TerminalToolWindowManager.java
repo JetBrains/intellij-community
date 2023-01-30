@@ -48,7 +48,6 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.jediterm.terminal.RequestOrigin;
 import com.jediterm.terminal.ui.TerminalPanelListener;
@@ -430,9 +429,10 @@ public final class TerminalToolWindowManager implements Disposable {
                                      @NotNull ToolWindow toolWindow,
                                      @NotNull Content content) {
     String title = terminalTitle.buildTitle();
-    List<Content> contents = ContainerUtil.newArrayList(toolWindow.getContentManager().getContents());
-    contents.remove(content);
-    content.setDisplayName(generateUniqueName(title, ContainerUtil.map(contents, c -> c.getDisplayName())));
+    List<String> tabs = Arrays.stream(toolWindow.getContentManager().getContents())
+      .filter(c -> c!= content)
+      .map(c -> c.getDisplayName()).toList();
+    content.setDisplayName(generateUniqueName(title, tabs));
   }
 
   private static void updatePreferredFocusableComponent(@NotNull Content content, @NotNull TerminalWidget terminalWidget) {

@@ -99,7 +99,9 @@ class TestDataDirectoryService : KotlinBeforeAfterTestRuleWithDescription {
 
     private fun getTestFolderName(description: Description): String {
         val testMetadataOnMethod = description.getAnnotation(TestMetadata::class.java)?.value
-        return testMetadataOnMethod ?: description.methodName.removePrefix("test").decapitalizeAsciiOnly()
+        return testMetadataOnMethod
+            // JUnit4 doesn't allow to have display name different
+            ?: testNamePattern.matchEntire(description.methodName)!!.groups[1]!!.value.decapitalizeAsciiOnly()
     }
 
     override fun before(description: Description) {
@@ -110,5 +112,11 @@ class TestDataDirectoryService : KotlinBeforeAfterTestRuleWithDescription {
         // to be extra safe and prevent following tests accidentally using 'description'
         // from the previous one
         testDescription = null
+    }
+
+    companion object {
+        // expected pattern:
+        //      testFoo[1.8.20-dev-3308, Gradle 7.5.1, AGP 7.4.0, any other string for describing versions]
+        private val testNamePattern = """test([^\[].*)\[.*\]""".toRegex()
     }
 }
