@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -502,15 +502,17 @@ public interface Application extends ComponentManager {
     runnable.run();
   }
 
+  //<editor-fold desc="Deprecated stuff">
   /**
    * @deprecated this scope will die only with the application => plugin coroutines which use it will leak on unloading.
-   * Instead, use Disposable application service approach described here https://youtrack.jetbrains.com/articles/IDEA-A-237338670
+   * Instead, use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#service-scopes">service constructor injection</a>.
+   * <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#why-application.getcoroutinescope-are-project.getcoroutinescope-are-bad">Why? See here.</a>
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @ApiStatus.Internal
   CoroutineScope getCoroutineScope();
 
-  //<editor-fold desc="Deprecated stuff">
   /** @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead */
   @Deprecated
   void addApplicationListener(@NotNull ApplicationListener listener);
