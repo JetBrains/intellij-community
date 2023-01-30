@@ -73,7 +73,7 @@ public final class AddAntBuildFile extends AnAction {
     if (filesAdded > 0) {
       ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD);
       if (window == null) {
-        window = ActivateAntToolWindowAction.createToolWindow(project);
+        window = ActivateAntToolWindowAction.Manager.createToolWindow(project);
       }
       window.activate(null);
     }
