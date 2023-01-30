@@ -21,6 +21,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @deprecated not that thing one should use, left only for backward compatibility
+ * There is no need for the complications around VFS timestamp -- {@link com.intellij.util.io.SimpleStringPersistentEnumerator}
+ * will do the job just fine, if we can guarantee its storage is re-created on VFS refresh.
  */
 // TODO remove once persistent fs version updated
 @SuppressWarnings("DeprecatedIsStillUsed")

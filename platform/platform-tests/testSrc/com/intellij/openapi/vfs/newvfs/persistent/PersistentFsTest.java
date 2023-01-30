@@ -43,7 +43,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.AssumptionViolatedException;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -83,9 +82,15 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     File file = tempDirectory.newFile("test.txt");
     VirtualFile vFile = refreshAndFind(file);
     int id = ((VirtualFileWithId)vFile).getId();
-    assertEquals(vFile, PersistentFS.getInstance().findFileById(id));
+
+    assertEquals("File is unique identified by its fileId",
+                 vFile,
+                 PersistentFS.getInstance().findFileById(id)
+    );
+
     VfsTestUtil.deleteFile(vFile);
-    assertNull(PersistentFS.getInstance().findFileById(id));
+    assertNull("Deleted file can't be found by its fileId anymore",
+               PersistentFS.getInstance().findFileById(id));
   }
 
   @NotNull
