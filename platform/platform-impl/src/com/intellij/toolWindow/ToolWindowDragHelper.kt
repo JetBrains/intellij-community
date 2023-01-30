@@ -486,7 +486,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
 
   private fun getToolWindowScreenBoundsIfVisibleAndDocked(toolWindow: ToolWindowImpl): Rectangle? {
-    if (!toolWindow.isVisible || toolWindow.type == ToolWindowType.FLOATING || toolWindow.type == ToolWindowType.WINDOWED) return null
+    if (!toolWindow.isVisible || !toolWindow.type.isInternal) return null
 
     // We can't just use toolWindow.component.bounds, as this doesn't include headers, etc.
     return getAdjustedPaneContentsScreenBounds(dragSourcePane, toolWindow.anchor,

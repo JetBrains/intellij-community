@@ -1274,7 +1274,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
 
       if (item.old.type != item.new.type) {
-        val dirtyMode = item.old.type == ToolWindowType.DOCKED || item.old.type == ToolWindowType.SLIDING
+        val dirtyMode = item.old.type.isInternal
         updateStateAndRemoveDecorator(item.old, item.entry, dirtyMode)
         if (item.new.isVisible) {
           toShowWindow = true
@@ -1761,10 +1761,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       return
     }
 
-    val dirtyMode = entry.readOnlyWindowInfo.type == ToolWindowType.DOCKED || entry.readOnlyWindowInfo.type == ToolWindowType.SLIDING
+    val dirtyMode = entry.readOnlyWindowInfo.type.isInternal
     updateStateAndRemoveDecorator(info, entry, dirtyMode)
     info.type = type
-    if (type != ToolWindowType.FLOATING && type != ToolWindowType.WINDOWED) {
+    if (type.isInternal) {
       info.internalType = type
     }
 
