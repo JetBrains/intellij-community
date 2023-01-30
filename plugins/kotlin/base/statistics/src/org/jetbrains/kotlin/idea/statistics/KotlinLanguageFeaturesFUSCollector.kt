@@ -69,6 +69,30 @@ class KotlinLanguageFeaturesFUSCollector : CounterUsagesCollector() {
         private fun log(event: EnumEntriesLanguageFeature, file: VirtualFile): Unit =
             enumEntriesFeatureEvent.log(enumEntriesEventField.with(event), EventFields.AnonymizedPath.with(file.path))
     }
+
+    object DataObject {
+        private const val DATA_OBJECT_FEATURE = "data_object_feature"
+        private val dataObjectEventField = EventFields.Enum<DataObjectLanguageFeature>(DATA_OBJECT_FEATURE)
+        private enum class DataObjectLanguageFeature {
+            OBJECT_TO_DATA_OBJECT_QUICK_FIX_IS_SUGGESTED,
+            OBJECT_TO_DATA_OBJECT_QUICK_FIX_IS_APPLIED,
+        }
+
+        private val dataObjectFeatureEvent = GROUP.registerVarargEvent(
+            DATA_OBJECT_FEATURE,
+            dataObjectEventField,
+            EventFields.AnonymizedPath
+        )
+
+        fun logObjectToDataObjectQuickFixIsSuggested(file: VirtualFile): Unit =
+            log(DataObjectLanguageFeature.OBJECT_TO_DATA_OBJECT_QUICK_FIX_IS_SUGGESTED, file)
+
+        fun logObjectToDataObjectQuickFixIsApplied(file: VirtualFile): Unit =
+            log(DataObjectLanguageFeature.OBJECT_TO_DATA_OBJECT_QUICK_FIX_IS_APPLIED, file)
+
+        private fun log(event: DataObjectLanguageFeature, file: VirtualFile): Unit =
+            dataObjectFeatureEvent.log(dataObjectEventField.with(event), EventFields.AnonymizedPath.with(file.path))
+    }
 }
 
 private val GROUP = EventLogGroup("kotlin.language.features", 1)
