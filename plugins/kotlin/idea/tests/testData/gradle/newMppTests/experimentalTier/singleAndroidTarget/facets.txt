@@ -1,24 +1,29 @@
 MODULES
-    project
-    project.androidTest
-        externalProjectId = project
-        languageLevel = {{LATEST_STABLE}}
-        apiLevel = {{LATEST_STABLE}}
-        mppVersion = M3
-        targetPlatform = JVM (1.8)
-    project.main
-        externalProjectId = project
-        languageLevel = {{LATEST_STABLE}}
-        apiLevel = {{LATEST_STABLE}}
-        mppVersion = M3
-        targetPlatform = JVM (1.8)
-    project.unitTest
-        externalProjectId = project
-        languageLevel = {{LATEST_STABLE}}
-        apiLevel = {{LATEST_STABLE}}
-        mppVersion = M3
-        targetPlatform = JVM (1.8)
+project
+
+project.androidTest
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    targetPlatform = JVM (17)
+
+project.main
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    targetPlatform = JVM (17)
+
+project.unitTest
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    targetPlatform = JVM (17)
+
 
 Test configuration:
 - hiding following roots: resources, android-specific roots, generated
 - hiding following standard dependencies: sdk, self
+- dependencies order is not checked

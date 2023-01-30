@@ -1,7 +1,7 @@
 package test
 
-expect class <!LINE_MARKER("descr='Has actuals in [project.kmmLib.iosMain, project.kmmLib.main] module'")!>CommonMainExpect<!> {
-    fun <!LINE_MARKER("descr='Has actuals in [project.kmmLib.iosMain, project.kmmLib.main] module'")!>commonApi<!>()
+expect class <!LINE_MARKER("descr='Has actuals in [project.kmmLib.iosMain, project.kmmLib.main] modules'")!>CommonMainExpect<!> {
+    fun <!LINE_MARKER("descr='Has actuals in [project.kmmLib.iosMain, project.kmmLib.main] modules'")!>commonApi<!>()
 }
 
 fun produceCommonMainExpect(): CommonMainExpect = null!!

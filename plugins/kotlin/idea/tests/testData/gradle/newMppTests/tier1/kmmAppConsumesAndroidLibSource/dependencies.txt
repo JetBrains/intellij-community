@@ -1,14 +1,20 @@
 MODULES
-    project
-    project.kmmApp
-    project.kmmApp.androidTest
-        project.androidLib.main (TEST)
-    project.kmmApp.main
-        project.androidLib.main (COMPILE)
-    project.kmmApp.unitTest
-        project.androidLib.main (TEST)
+project
+
+project.kmmApp
+
+project.kmmApp.androidTest
+    androidLib.main (TEST)
+
+project.kmmApp.main
+    androidLib.main (COMPILE)
+
+project.kmmApp.unitTest
+    androidLib.main (TEST)
+
 
 Test configuration:
 - hiding source modules matching .*(androidLib|common|ios).*
 - hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
 - hiding dependencies matching .*kmmApp.*
+- dependencies order is not checked
