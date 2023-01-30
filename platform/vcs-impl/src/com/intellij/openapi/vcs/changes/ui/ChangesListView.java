@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.FileSelectInContext;
+import com.intellij.ide.SelectInContext;
 import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.TreeState;
@@ -194,7 +196,12 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
                                     @NotNull VcsTreeModelData treeSelection,
                                     @NotNull VcsTreeModelData exactSelection,
                                     @NotNull String slowId) {
-    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(slowId)) {
+    if (SelectInContext.DATA_KEY.is(slowId)) {
+      VirtualFile file = VcsTreeModelData.mapObjectToVirtualFile(exactSelection.iterateRawUserObjects()).first();
+      if (file == null) return null;
+      return new FileSelectInContext(project, file, null);
+    }
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(slowId)) {
       return VcsTreeModelData.mapToVirtualFile(treeSelection)
         .toArray(VirtualFile.EMPTY_ARRAY);
     }
