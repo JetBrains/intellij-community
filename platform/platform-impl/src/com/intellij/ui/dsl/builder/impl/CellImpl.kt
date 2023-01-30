@@ -16,6 +16,7 @@ import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus
@@ -52,6 +53,8 @@ internal class CellImpl<T : JComponent>(
 
   private var visible = viewComponent.isVisible
   private var enabled = viewComponent.isEnabled
+
+  private val cellValidation = CellValidationImpl(dialogPanelConfig, component, component.interactiveComponent)
 
   val onChangeManager = OnChangeManager(component)
 
@@ -245,6 +248,11 @@ internal class CellImpl<T : JComponent>(
   override fun validation(vararg validations: DialogValidation.WithParameter<T>): CellImpl<T> {
     validationOnInput(*validations)
     validationOnApply(*validations)
+    return this
+  }
+
+  override fun cellValidation(init: CellValidation<T>.() -> Unit): CellImpl<T> {
+    cellValidation.init()
     return this
   }
 
