@@ -30,7 +30,7 @@ class NoErrorEventsDuringImportService : ExternalResource() {
 
             expectedFailure.exists() && buildErrors.isEmpty() ->
                 error(
-                    "Expected to have some import errors, but none were actually issues\n" +
+                    "Expected to have some import errors, but none were actually reported\n" +
                             "If that's the expected behaviour, remove the following file: \n" +
                             expectedFailure.canonicalPath
                 )
