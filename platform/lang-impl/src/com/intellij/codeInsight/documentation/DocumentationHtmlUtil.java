@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
-
 import java.util.List;
 import java.util.function.Function;
 
@@ -75,7 +74,7 @@ public final class DocumentationHtmlUtil {
       ".pre " + editorFontStyle,
 
       "html { padding-bottom: 8px; }",
-      "h1, h2, h3, h4, h5, h6 { margin-top: 0; padding-top: 1px; }",
+      "h1, h2, h3, h4, h5, h6 { margin-top: 8px; margin-bottom: 0 }",
       "a { color: " + linkColor + "; text-decoration: none;}",
       ".definition { padding: " + definitionTopPadding + "px 17px 1px " + leftPadding + "px;" +
       "              border-bottom: thin solid " + borderColor + "; }",
