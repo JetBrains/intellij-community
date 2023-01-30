@@ -25,8 +25,11 @@ import com.jetbrains.python.sdk.PythonSdkUtil
 class PyStdlibCanonicalPathProvider : PyCanonicalPathProvider {
   override fun getCanonicalPath(symbol: PsiElement?, qName: QualifiedName, foothold: PsiElement?): QualifiedName? {
     val virtualFile = PsiUtilCore.getVirtualFile(symbol)
-    if (virtualFile != null && foothold != null && PythonSdkUtil.isStdLib(virtualFile, PythonSdkUtil.findPythonSdk(foothold))) {
-      return restoreStdlibCanonicalPath(qName)
+    if (virtualFile != null && foothold != null) {
+      val canonicalPath = restoreStdlibCanonicalPath(qName)
+      if (canonicalPath != null && PythonSdkUtil.isStdLib(virtualFile, PythonSdkUtil.findPythonSdk(foothold))) {
+        return canonicalPath
+      }
     }
     return null
   }
@@ -36,7 +39,7 @@ private fun QualifiedName.replaceHead(newHead: String): QualifiedName {
   return QualifiedName.fromDottedString(newHead).append(removeHead(1))
 }
 
-private fun restoreStdlibCanonicalPath(qName: QualifiedName): QualifiedName? {
+fun restoreStdlibCanonicalPath(qName: QualifiedName): QualifiedName? {
   if (qName.matchesPrefix(QualifiedName.fromComponents("mock", "mock"))) {
     return qName.removeHead(1)
   }
