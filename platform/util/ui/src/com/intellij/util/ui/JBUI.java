@@ -943,6 +943,18 @@ public final class JBUI {
         return 20;
       }
 
+      public static Font experimentalToolbarFont() {
+        return ObjectUtils.coalesce(getFont(experimentalToolbarFontKey()), defaultExperimentalToolbarFont());
+      }
+
+      public @NotNull static String experimentalToolbarFontKey() {
+        return "MainToolbar.Button.font";
+      }
+
+      public static Font defaultExperimentalToolbarFont() {
+        return JBFont.label();
+      }
+
       public static int burgerMenuButtonIconSize() {
         return 20;
       }
