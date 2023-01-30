@@ -1,0 +1,31 @@
+MODULES
+wasm20221114
+
+wasm20221114.commonMain
+    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+
+wasm20221114.commonTest
+    commonMain (friend, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}} (TEST)
+    wasmMain (TEST)
+
+wasm20221114.wasmMain
+    commonMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (COMPILE)
+
+wasm20221114.wasmTest
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test-annotations-wasm:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test-wasm:klib:{{KGP_VERSION}} (TEST)
+    wasmMain (friend, RUNTIME)
+    wasmMain (friend, TEST)
+
+
+Test configuration:
+- hiding following standard dependencies: Kotlin/Native distribution, sdk, self
+- dependencies order is not checked
