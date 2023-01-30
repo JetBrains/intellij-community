@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -408,7 +409,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
   }
 
-  public static void startTemplate(@NotNull Project project, @NotNull PsiClass aClass, @NotNull Template template, @NotNull String text) {
+  public static void startTemplate(@NotNull Project project, @NotNull PsiClass aClass, @NotNull Template template, @Nls @NotNull String text) {
     aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
     template.setToReformat(true);
 
