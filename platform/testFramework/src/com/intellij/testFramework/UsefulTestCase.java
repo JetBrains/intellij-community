@@ -1058,7 +1058,7 @@ public abstract class UsefulTestCase extends TestCase {
       }
 
       if (expectedErrorMsgPart != null) {
-        assertTrue(cause.getMessage(), cause.getMessage().contains(expectedErrorMsgPart));
+        assertTrue(cause.getClass()+" message was expected to contain '"+expectedErrorMsgPart+"', but got: '"+cause.getMessage()+"'", cause.getMessage().contains(expectedErrorMsgPart));
       }
     }
     finally {
