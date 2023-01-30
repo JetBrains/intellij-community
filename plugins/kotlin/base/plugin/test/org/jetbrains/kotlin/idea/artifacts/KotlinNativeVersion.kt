@@ -17,7 +17,7 @@ object KotlinNativeVersion {
     /** This field is automatically setup from project-module-updater.
      *  See [org.jetbrains.tools.model.updater.updateKGPVersionForKotlinNativeTests]
      */
-    private const val kotlinGradlePluginVersion: String = "1.8.20-dev-5197"
+    private const val kotlinGradlePluginVersion: String = "1.9.0-dev-764"
 
     /** Return bootstrap version or version from properties file of specified Kotlin Gradle Plugin.
      *  Make sure localMaven has kotlin-gradle-plugin with required version for cooperative development environment.
