@@ -144,6 +144,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     initColumnModel();
     onColumnOrderSettingChanged();
     setRootColumnSize();
+    subscribeOnNewUiSwitching();
+
     myGraphCommitCellRenderer = getGraphCommitCellRenderer();
     VcsLogColumnManager.getInstance().addCurrentColumnsListener(this, new MyCurrentColumnsListener());
     VcsLogColumnManager.getInstance().addColumnModelListener(this, (column, index) -> {
@@ -314,6 +316,21 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     tableColumn.setResizable(column.isResizable());
     tableColumn.setCellRenderer(createColumnRenderer(column));
     return tableColumn;
+  }
+
+  private void subscribeOnNewUiSwitching() {
+    Registry.get(ExperimentalUI.KEY).addListener(new RegistryValueListener() {
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
+        updateColumnRenderers();
+      }
+    }, this);
+  }
+
+  private void updateColumnRenderers() {
+    myTableColumns.forEach((logColumn, tableColumn) -> {
+      tableColumn.setCellRenderer(createColumnRenderer(logColumn));
+    });
   }
 
   private @NotNull TableCellRenderer createColumnRenderer(VcsLogColumn<?> column) {
