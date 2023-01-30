@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.base.externalSystem.findAll
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
@@ -280,7 +281,7 @@ fun configureFacetByGradleModule(
 
     val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion?.let(IdeKotlinVersion::opt)
     // required for GradleFacetImportTest.{testCommonImportByPlatformPlugin, testKotlinAndroidPluginDetection}
-        ?: KotlinGradleFacadeImpl.findKotlinPluginVersion(moduleNode)
+        ?: KotlinGradleFacade.instance?.findKotlinPluginVersion(moduleNode)
 
     if (compilerVersion == null) {
         logger.error("[Kotlin Facet]: cannot create facet for module '${ideModule.name}' due to unknown compiler version. " +
