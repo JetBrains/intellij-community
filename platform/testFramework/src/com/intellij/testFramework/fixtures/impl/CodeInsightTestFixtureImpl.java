@@ -374,8 +374,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (ApplicationManager.getApplication().isDispatchThread()) {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "must not call under write action";
 
-      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
-        DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor));
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        if (!ReadAction.compute(() -> file.getProject().isDisposed() || editor.isDisposed())) {
+          DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+        }
+      });
       while (!future.isDone()) {
         UIUtil.dispatchAllInvocationEvents();
       }
