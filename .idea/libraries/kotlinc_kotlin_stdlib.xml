@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-stdlib" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20-dev-5814">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20-Beta-30">
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
       </exclude>
@@ -9,17 +9,17 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/kotlin" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.8.20-dev-5814/kotlin-stdlib-jdk8-1.8.20-dev-5814.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.8.20-dev-5814/kotlin-stdlib-1.8.20-dev-5814.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.8.20-dev-5814/kotlin-stdlib-common-1.8.20-dev-5814.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.8.20-dev-5814/kotlin-stdlib-jdk7-1.8.20-dev-5814.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.8.20-Beta-30/kotlin-stdlib-jdk8-1.8.20-Beta-30.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.8.20-Beta-30/kotlin-stdlib-1.8.20-Beta-30.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.8.20-Beta-30/kotlin-stdlib-common-1.8.20-Beta-30.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.8.20-Beta-30/kotlin-stdlib-jdk7-1.8.20-Beta-30.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.8.20-dev-5814/kotlin-stdlib-jdk8-1.8.20-dev-5814-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.8.20-dev-5814/kotlin-stdlib-1.8.20-dev-5814-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.8.20-dev-5814/kotlin-stdlib-common-1.8.20-dev-5814-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.8.20-dev-5814/kotlin-stdlib-jdk7-1.8.20-dev-5814-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.8.20-Beta-30/kotlin-stdlib-jdk8-1.8.20-Beta-30-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.8.20-Beta-30/kotlin-stdlib-1.8.20-Beta-30-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.8.20-Beta-30/kotlin-stdlib-common-1.8.20-Beta-30-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.8.20-Beta-30/kotlin-stdlib-jdk7-1.8.20-Beta-30-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
