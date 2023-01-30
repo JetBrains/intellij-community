@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPlainText;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,9 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
       TextRange whiteSpaceRange = expandToWhiteSpace(e, cursorOffset);
       if (whiteSpaceRange == null) return null;
       originalRange = whiteSpaceRange;
+    } else if (e instanceof PsiPlainText) {
+      TextRange whiteSpaceRange = expandToWhiteSpace(e, cursorOffset);
+      originalRange = whiteSpaceRange == null ? e.getTextRange() : whiteSpaceRange;
     } else {
       originalRange = e.getTextRange();
     }
