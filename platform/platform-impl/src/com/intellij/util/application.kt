@@ -3,9 +3,6 @@ package com.intellij.util
 
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import org.jetbrains.annotations.ApiStatus.Obsolete
 
-// we don't need such a symbol in a global scope
-@get:Obsolete
 val application: Application
   get() = ApplicationManager.getApplication()
