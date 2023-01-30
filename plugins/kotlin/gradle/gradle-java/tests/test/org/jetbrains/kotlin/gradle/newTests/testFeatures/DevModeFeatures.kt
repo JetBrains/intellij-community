@@ -33,9 +33,9 @@ interface DevModeTweaks {
      * If you want overridden version to be displayed in the test name, overwrite default values
      * in [DevModeTweaksImpl]
      */
-    var overrideGradleVersion: GradleVersionTestsProperty.Values?
-    var overrideAgpVersion: AndroidGradlePluginVersionTestsProperty.Values?
-    var overrideKgpVersion: KotlinGradlePluginVersionTestsProperty.Values?
+    var overrideGradleVersion: GradleVersionTestsProperty.Value?
+    var overrideAgpVersion: AndroidGradlePluginVersionTestsProperty.Value?
+    var overrideKgpVersion: KotlinGradlePluginVersionTestsProperty.Value?
 
     /**
      * Launches Gradle Daemon with suspend option, listening for debugger connection on [port]
@@ -44,13 +44,13 @@ interface DevModeTweaks {
 }
 
 class DevModeTweaksImpl : DevModeTweaks {
-    override var overrideGradleVersion: GradleVersionTestsProperty.Values? = null
+    override var overrideGradleVersion: GradleVersionTestsProperty.Value? = null
         get() = field.checkNotOverriddenOnTeamcity()
 
-    override var overrideAgpVersion: AndroidGradlePluginVersionTestsProperty.Values? = null
+    override var overrideAgpVersion: AndroidGradlePluginVersionTestsProperty.Value? = null
         get() = field.checkNotOverriddenOnTeamcity()
 
-    override var overrideKgpVersion: KotlinGradlePluginVersionTestsProperty.Values? = null
+    override var overrideKgpVersion: KotlinGradlePluginVersionTestsProperty.Value? = null
         get() = field.checkNotOverriddenOnTeamcity()
 
     var writeTestProjectTo: File? = null
