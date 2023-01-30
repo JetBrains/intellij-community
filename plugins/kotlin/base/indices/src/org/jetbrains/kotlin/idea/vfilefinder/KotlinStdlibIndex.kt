@@ -19,10 +19,11 @@ import java.io.DataOutput
 import java.util.*
 import java.util.jar.Manifest
 
-fun FileBasedIndexExtension<FqName, Void>.hasSomethingInPackage(fqName: FqName, scope: GlobalSearchScope): Boolean =
-    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-        !FileBasedIndex.getInstance().processValues(name, fqName, null, { _, _ -> false }, scope)
+fun hasSomethingInPackage(indexId: ID<FqName, Void>, fqName: FqName, scope: GlobalSearchScope): Boolean {
+    return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+        !FileBasedIndex.getInstance().processValues(indexId, fqName, null, { _, _ -> false }, scope)
     })
+}
 
 @ApiStatus.Internal
 object FqNameKeyDescriptor : KeyDescriptor<FqName> {

@@ -362,7 +362,7 @@ fun hasKotlinPlatformRuntimeInScope(
     ): Boolean {
     return module.project.runReadActionInSmartMode {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
-        KlibMetaFileIndex.hasSomethingInPackage(fqName, LibraryKindSearchScope(module, scope, libraryKind))
+        hasSomethingInPackage(KlibMetaFileIndex.KEY, fqName, LibraryKindSearchScope(module, scope, libraryKind))
     }
 }
 
@@ -371,7 +371,7 @@ private val KOTLIN_JS_FQ_NAME = FqName("kotlin.js")
 private val KOTLIN_NATIVE_FQ_NAME = FqName("kotlin.native")
 
 private fun hasKotlinJsKjsmFile(scope: GlobalSearchScope): Boolean {
-    return KotlinJavaScriptMetaFileIndex.hasSomethingInPackage(KOTLIN_JS_FQ_NAME, scope)
+    return hasSomethingInPackage(KotlinJavaScriptMetaFileIndex.KEY, KOTLIN_JS_FQ_NAME, scope)
 }
 
 class LibraryKindSearchScope(
