@@ -500,5 +500,10 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       if (taskFromQueue instanceof MyDumbModeTask && ((MyDumbModeTask)taskFromQueue).myUpdater == myUpdater) return this;
       return null;
     }
+
+    @Override
+    public String toString() {
+      return super.toString() + " (reason: " + myReason + ")";
+    }
   }
 }
