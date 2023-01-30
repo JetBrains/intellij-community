@@ -154,7 +154,7 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       // don't try to delete files when only a changelist node is selected
       boolean hasSelection = VcsTreeModelData.exactlySelected(this)
-        .iterateUserObjects()
+        .iterateRawUserObjects()
         .filter(userObject -> !(userObject instanceof ChangeList))
         .isNotEmpty();
       return hasSelection
