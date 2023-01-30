@@ -154,7 +154,7 @@ public final class JavaGenericsUtil {
 
       if (castClassType.hasNonTrivialParameters()) {
         if (operandClassType.isRaw()) return true;
-        if (InheritanceUtil.isInheritorOrSelf(castClass, operandClass, true)) {
+        if (castClass.isInheritor(operandClass, true)) {
           PsiSubstitutor castSubstitutor = castResult.getSubstitutor();
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(castClass.getProject());
           for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(castClass)) {
