@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -15,10 +16,12 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.codeInsight.ExceptionUtil.HandlePlace.UNHANDLED;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER;
 
 public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspection {
@@ -54,17 +57,13 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
 
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      PsiLambdaExpression psiLambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
-      if (psiLambdaExpression == null) {
+      PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+      if (callExpression == null) {
         return;
       }
-
-      Collection<PsiThrowStatement> statements =
-        PsiTreeUtil.collectElementsOfType(psiLambdaExpression.getBody(), PsiThrowStatement.class);
-
-      List<PsiThrowStatement> throwStatements = ContainerUtil.findAll(statements, statement ->
-        PsiTreeUtil.skipParentsOfType(statement, PsiCodeBlock.class, PsiStatement.class) == psiLambdaExpression);
+      PsiLambdaExpression psiLambdaExpression = getLambdaSupplier(callExpression);
+      if (psiLambdaExpression == null) return;
+      List<PsiThrowStatement> throwStatements = getThrowStatements(psiLambdaExpression);
 
       PsiElement returnStatement = null;
       for (PsiThrowStatement throwStatement : throwStatements) {
@@ -98,6 +97,39 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
     }
   }
 
+  @Nullable
+  private static PsiLambdaExpression getLambdaSupplier(@NotNull PsiMethodCallExpression expression) {
+    PsiExpression[] expressions = expression.getArgumentList().getExpressions();
+    if (expressions.length != 1) {
+      return null;
+    }
+    PsiExpression supplier = expressions[0];
+    if (!(supplier instanceof PsiLambdaExpression lambdaSupplier)) {
+      return null;
+    }
+    return lambdaSupplier;
+  }
+
+  @NotNull
+  private static List<PsiThrowStatement> getThrowStatements(@Nullable PsiLambdaExpression psiLambdaExpression) {
+    if (psiLambdaExpression == null) {
+      return List.of();
+    }
+    PsiElement lambdaSupplierBody = psiLambdaExpression.getBody();
+    if (lambdaSupplierBody == null) {
+      return List.of();
+    }
+
+    Collection<PsiThrowStatement> statements =
+      ContainerUtil.filter(PsiTreeUtil.collectElementsOfType(lambdaSupplierBody, PsiThrowStatement.class),
+                           e -> e.getException() != null &&
+                                e.getException().getType() instanceof PsiClassType exceptionType &&
+                                ExceptionUtil.getHandlePlace(e, exceptionType, lambdaSupplierBody) == UNHANDLED);
+
+    return ContainerUtil.findAll(statements, statement ->
+      PsiTreeUtil.skipParentsOfType(statement, PsiCodeBlock.class, PsiStatement.class) == psiLambdaExpression);
+  }
+
   private static class ThrowableSupplierOnlyThrowExceptionVisitor extends BaseInspectionVisitor {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
@@ -105,14 +137,8 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
       if (!OPTIONAL_OR_ELSE_THROW.test(expression)) {
         return;
       }
-      PsiExpression[] expressions = expression.getArgumentList().getExpressions();
-      if (expressions.length != 1) {
-        return;
-      }
-      PsiExpression supplier = expressions[0];
-      if (!(supplier instanceof PsiLambdaExpression lambdaSupplier)) {
-        return;
-      }
+      PsiLambdaExpression lambdaSupplier = getLambdaSupplier(expression);
+      if (lambdaSupplier == null) return;
       PsiType lambdaType = lambdaSupplier.getFunctionalInterfaceType();
       if (lambdaType == null ||
           !InheritanceUtil.isInheritor(lambdaType, JAVA_UTIL_FUNCTION_SUPPLIER) ||
@@ -121,27 +147,20 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
         return;
       }
 
-      if (!ControlFlowUtils.lambdaExpressionAlwaysThrowsException(lambdaSupplier)) {
+      PsiElement lambdaSupplierBody = lambdaSupplier.getBody();
+      if (lambdaSupplierBody == null || !ControlFlowUtils.lambdaExpressionAlwaysThrowsException(lambdaSupplier)) {
         return;
       }
 
-      Collection<PsiThrowStatement> statements =
-        PsiTreeUtil.collectElementsOfType(lambdaSupplier.getBody(), PsiThrowStatement.class);
-
-      List<PsiThrowStatement> all = ContainerUtil.findAll(statements, statement ->
-        PsiTreeUtil.skipParentsOfType(statement, PsiCodeBlock.class, PsiStatement.class) == lambdaSupplier);
+      List<PsiThrowStatement> all = getThrowStatements(lambdaSupplier);
       if (all.size() == 0) {
         return;
       }
-      PsiThrowStatement lastThrowStatement = all.get(all.size() - 1);
-      PsiElement highlightedElement = lastThrowStatement;
-      for (PsiElement child : lastThrowStatement.getChildren()) {
-        if (child instanceof PsiKeyword keyword && keyword.textMatches(PsiKeyword.THROW)) {
-          highlightedElement = child;
-          break;
-        }
+      PsiIdentifier[] identifiers = PsiTreeUtil.getChildrenOfType(expression.getMethodExpression(), PsiIdentifier.class);
+      if (identifiers == null || identifiers.length != 1) {
+        return;
       }
-      registerError(highlightedElement);
+      registerError(identifiers[0]);
     }
   }
 }
