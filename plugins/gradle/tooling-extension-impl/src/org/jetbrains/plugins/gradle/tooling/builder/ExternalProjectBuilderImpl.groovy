@@ -275,8 +275,13 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         if (is67OrBetter) {
           def compiler = javaCompileTask.javaCompiler
           if (compiler.present) {
-            def metadata = compiler.get().metadata
-            externalSourceSet.jdkInstallationPath = metadata.installationPath.asFile.canonicalPath
+            try {
+              def metadata = compiler.get().metadata
+              externalSourceSet.jdkInstallationPath = metadata.installationPath.asFile.canonicalPath
+            } catch (Throwable e) {
+              project.logger.warn("Skipping java toolchain information for $javaCompileTask.path : $e.message")
+              project.logger.info("Failed to resolve java toolchain info for $javaCompileTask.path", e)
+            }
           }
         }
         externalSourceSet.sourceCompatibility = javaCompileTask.sourceCompatibility ?: projectSourceCompatibility
