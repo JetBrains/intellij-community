@@ -220,8 +220,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun checkValueValidity(value: LibraryDependencies) {
-            value.libraries.forEach { it.checkValidity() }
-            value.sourcesOnlyDependencies.forEach { it.checkValidity() }
+            value.checkValidity()
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
