@@ -81,7 +81,8 @@ class MethodExtractor {
       return selectOptionWithTargetClass(editor, allOptionsToExtract)
     }
     catch (e: ExtractMultipleVariablesException) {
-      invokeLater { ParameterObjectExtractor.run(editor, e.variables, e.scope) }
+      val variables = e.variables.sortedBy { variable -> variable.textRange.startOffset }
+      invokeLater { ParameterObjectExtractor.run(editor, variables, e.scope) }
       return null
     }
     catch (e: ExtractException) {
