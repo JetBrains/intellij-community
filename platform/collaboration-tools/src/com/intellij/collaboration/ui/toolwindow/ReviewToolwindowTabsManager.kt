@@ -42,10 +42,9 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
   private val cs = contentManager.disposingMainScope()
 
   private val tabsSelector = object : ReviewToolwindowTabsContentSelector<T> {
-    override fun selectTab(reviewTab: T, whenSelected: (Content) -> Unit) {
-      val currentContext = projectContext.value ?: return
-      val content = selectExistedTabOrCreate(currentContext, reviewTab)
-      whenSelected(content)
+    override suspend fun selectTab(reviewTab: T): Content? {
+      val currentContext = projectContext.value ?: return null
+      return selectExistedTabOrCreate(currentContext, reviewTab)
     }
   }
 

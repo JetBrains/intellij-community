@@ -9,5 +9,5 @@ import org.jetbrains.annotations.ApiStatus
 interface ReviewToolwindowTabsContentSelector<T : ReviewTab> {
   // TODO: it is better to move this logic to ReviewTabsController but I don't want to provide Content there,
   //  so later it would be better to provide ViewModels instead of the Content and such API can be exposed in ReviewTabsController
-  fun selectTab(reviewTab: T, whenSelected: (Content) -> Unit)
+  suspend fun selectTab(reviewTab: T): Content?
 }
