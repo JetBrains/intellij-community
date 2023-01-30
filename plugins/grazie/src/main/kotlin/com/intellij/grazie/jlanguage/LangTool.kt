@@ -3,17 +3,13 @@ package com.intellij.grazie.jlanguage
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic
-import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
 import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
 import com.intellij.grazie.jlanguage.hunspell.LuceneHunspellDictionary
 import com.intellij.grazie.utils.text
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.*
 import org.apache.commons.text.similarity.LevenshteinDistance
 import org.languagetool.JLanguageTool
 import org.languagetool.ResultCache
@@ -26,12 +22,10 @@ import org.languagetool.rules.patterns.PatternToken
 import org.languagetool.rules.spelling.hunspell.Hunspell
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
 
 object LangTool : GrazieStateLifecycle {
   private val langs: MutableMap<Lang, JLanguageTool> = Collections.synchronizedMap(ContainerUtil.createSoftValueMap())
   private val rulesEnabledByDefault = ConcurrentHashMap<Lang, Set<String>>()
-  private val isInitialized = AtomicBoolean()
 
   init {
     JLanguageTool.useCustomPasswordAuthenticator(false)
@@ -195,22 +189,5 @@ object LangTool : GrazieStateLifecycle {
 
     langs.clear()
     rulesEnabledByDefault.clear()
-
-    if (isInitialized.compareAndSet(false, true)) {
-      ApplicationManager.getApplication().coroutineScope.launch { preloadLang() }
-    }
-  }
-
-  private fun preloadLang() {
-    LangDetector.getLanguage("Hello")
-    GrazieConfig.get().availableLanguages.forEach(::getTool)
-  }
-
-  internal class Preloader : PreloadingActivity() {
-    override suspend fun execute() {
-      if (isInitialized.compareAndSet(false, true)) {
-        preloadLang()
-      }
-    }
   }
 }
