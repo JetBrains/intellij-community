@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.validation
 
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.LayoutDslMarker
@@ -20,6 +21,8 @@ interface CellValidation<out T> {
   var enabled: Boolean
 
   fun enabledIf(predicate: ComponentPredicate)
+
+  fun enabledIf(property: ObservableProperty<Boolean>)
 
   fun addApplyRule(@NlsContexts.DialogMessage message: String, level: Level = Level.ERROR, condition: (T) -> Boolean)
 

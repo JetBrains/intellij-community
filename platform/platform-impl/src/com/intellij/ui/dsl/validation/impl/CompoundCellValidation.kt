@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.validation.impl
 
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.dsl.validation.Level
@@ -21,6 +22,12 @@ internal class CompoundCellValidation<out T>(private vararg val cellValidations:
   override fun enabledIf(predicate: ComponentPredicate) {
     for (cellValidation in cellValidations) {
       cellValidation.enabledIf(predicate)
+    }
+  }
+
+  override fun enabledIf(property: ObservableProperty<Boolean>) {
+    for (cellValidation in cellValidations) {
+      cellValidation.enabledIf(property)
     }
   }
 

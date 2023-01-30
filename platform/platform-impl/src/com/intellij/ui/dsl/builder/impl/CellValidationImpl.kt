@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.ui.dsl.validation.CellValidation
@@ -19,6 +21,13 @@ internal class CellValidationImpl<out T>(private val dialogPanelConfig: DialogPa
   override fun enabledIf(predicate: ComponentPredicate) {
     enabled = predicate()
     predicate.addListener { enabled = it }
+  }
+
+  override fun enabledIf(property: ObservableProperty<Boolean>) {
+    enabled = property.get()
+    property.whenPropertyChanged {
+      enabled = it
+    }
   }
 
   override fun addApplyRule(message: String, level: Level, condition: (T) -> Boolean) {
