@@ -648,8 +648,11 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   override fun applyDensity() {
+    val ideScale = IdeScaleTransformer.instance.currentScale
+    IdeScaleTransformer.instance.reset() // need to temporarily reset this to correctly apply new size values
     setCurrentLookAndFeel(currentLookAndFeel!!)
     updateUI()
+    IdeScaleTransformer.instance.scale(ideScale)
   }
 
   private fun applyDensity(defaults: UIDefaults) {

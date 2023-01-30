@@ -78,7 +78,11 @@ class IdeScaleTransformer : PersistentStateComponent<IdeScaleTransformer.Persist
     performTweaking(newParameters)
   }
 
-  private fun scale(newScaleFactor: Float, performBeforeTweaking: (() -> Unit)? = null) {
+  fun scale(newScaleFactor: Float) {
+    scale(newScaleFactor, null)
+  }
+
+  private fun scale(newScaleFactor: Float, performBeforeTweaking: (() -> Unit)?) {
     prepareTweaking()
     performBeforeTweaking?.invoke()
     val newParameters = ScalingParameters.ScaleOriented(newScaleFactor, savedOriginalConsoleFontSize)
