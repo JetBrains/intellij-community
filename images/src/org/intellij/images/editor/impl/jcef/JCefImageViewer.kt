@@ -178,15 +178,20 @@ class JCefImageViewer(private val myFile: VirtualFile,
         myState = jsonParser.decodeFromString(s)
       }
       catch (_: Exception) {
-      }
-      myUIComponent.setInfo(
-        ImagesBundle.message("image.info.svg",
-                             myState.imageSize.width, myState.imageSize.height, StringUtil.formatFileSize(myFile.length)))
-      if (myState.status == ViewerState.Status.ERROR) {
         myUIComponent.showError()
+        return@addHandler null
       }
-      else {
-        myUIComponent.showImage()
+
+      SwingUtilities.invokeLater {
+        myUIComponent.setInfo(
+          ImagesBundle.message("image.info.svg",
+                               myState.imageSize.width, myState.imageSize.height, StringUtil.formatFileSize(myFile.length)))
+        if (myState.status == ViewerState.Status.ERROR) {
+          myUIComponent.showError()
+        }
+        else {
+          myUIComponent.showImage()
+        }
       }
       null
     }
