@@ -98,8 +98,8 @@ abstract class AbstractKotlinMppGradleImportingTest :
     }
 
     final override fun findJdkPath(): String {
-        return System.getenv("JDK_11") ?: System.getenv("JAVA11_HOME") ?: run {
-            val message = "Missing JDK_11 or JAVA11_HOME environment variable"
+        return System.getenv("JDK_17") ?: System.getenv("JDK_17_0") ?: System.getenv("JAVA17_HOME") ?: run {
+            val message = "Missing JDK_17 or JDK_17_0 or JAVA17_HOME  environment variable"
             if (IS_UNDER_TEAMCITY) LOG.error(message) else LOG.warn(message)
             super.findJdkPath()
         }
