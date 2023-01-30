@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
@@ -137,15 +136,6 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   @Deprecated("Use overloaded method")
   @ApiStatus.ScheduledForRemoval
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
-
-  /**
-   * Installs [property] as validation requestor.
-   * @deprecated use [validationRequestor] instead
-   */
-  @Deprecated("Use validationRequestor instead", ReplaceWith("validationRequestor(property::afterPropagation)"))
-  @ApiStatus.ScheduledForRemoval
-  fun graphProperty(property: GraphProperty<*>): Cell<T> =
-    validationRequestor(property::afterPropagation)
 
   /**
    * Registers custom validation requestor for current [component].
