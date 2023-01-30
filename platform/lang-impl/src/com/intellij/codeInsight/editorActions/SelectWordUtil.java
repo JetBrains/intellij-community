@@ -10,10 +10,7 @@ import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -266,6 +263,52 @@ public final class SelectWordUtil {
       }
       lexer.advance();
     }
+  }
+
+  /**
+   * Returns if there is any expandable whitespace belonging to the given psiWhiteSpace
+   * by any side of a caret at specified cursorPosition
+   */
+  public static boolean canWhiteSpaceBeExpanded(PsiWhiteSpace psiWhiteSpace, int cursorPosition) {
+    Character charBeforeCursor = getCharBeforeCursorInPsiElement(psiWhiteSpace, cursorPosition);
+    if (charBeforeCursor != null && isExpandableWhiteSpace(charBeforeCursor)) return true;
+
+    Character charAfterCursor = getCharAfterCursorInPsiElement(psiWhiteSpace, cursorPosition);
+    if (charAfterCursor != null && isExpandableWhiteSpace(charAfterCursor)) return true;
+
+    return false;
+  }
+
+  /**
+   * Gets character in psiElement before specified caret position
+   * @param psiElement element at caret
+   * @param cursorPosition caret offset
+   * @return char before caret
+   *         null if char is outside the psiElement
+   */
+  public static @Nullable Character getCharBeforeCursorInPsiElement(PsiElement psiElement, int cursorPosition) {
+    TextRange elementRange = psiElement.getTextRange();
+    int index = cursorPosition - elementRange.getStartOffset() - 1;
+    String elementText = psiElement.getText();
+    if (index < 0 || index >= elementText.length()) return null;
+    return elementText.charAt(index);
+  }
+
+  /**
+   * Gets character in psiElement after (at) specified caret position
+   * @param psiElement element at caret
+   * @param cursorPosition caret offset
+   * @return char before caret
+   *         null if char is outside the psiElement
+   */
+  public static @Nullable Character getCharAfterCursorInPsiElement(PsiElement psiElement, int cursorPosition) {
+    return getCharBeforeCursorInPsiElement(psiElement, cursorPosition + 1);
+  }
+
+  // IDEA-110607
+  // whitespace characters that should be selected as one word on double-click
+  public static boolean isExpandableWhiteSpace(char ch) {
+    return ch == ' ' || ch == '\t';
   }
 
   @FunctionalInterface

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,15 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
 
   @Override
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
-    final TextRange originalRange = e.getTextRange();
+    final TextRange originalRange;
+    if (e instanceof PsiWhiteSpace) {
+      TextRange whiteSpaceRange = expandToWhiteSpace(e, cursorOffset);
+      if (whiteSpaceRange == null) return null;
+      originalRange = whiteSpaceRange;
+    } else {
+      originalRange = e.getTextRange();
+    }
+
     if (originalRange.getEndOffset() > editorText.length()) {
       throw new RuntimeExceptionWithAttachments(
         "Invalid element range in " + getClass(),
@@ -42,6 +51,36 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     }
 
     return ranges;
+  }
+
+  /**
+   * IDEA-110607
+   * @param element psiElement at caret
+   * @param cursorOffset current caret offset in editor
+   * @return range containing all space/tab characters around the cursor
+   *         null if there is no such characters or cursor is not at the psiWhiteSpace
+   */
+  private static @Nullable TextRange expandToWhiteSpace(@NotNull PsiElement element, int cursorOffset) {
+    TextRange elementRange = element.getTextRange();
+    if (cursorOffset < elementRange.getStartOffset() || cursorOffset > elementRange.getEndOffset()) return null;
+
+    Integer startOffset = cursorOffset;
+    for (int i = cursorOffset - 1; ; --i) {
+      Character charBeforeCursor = SelectWordUtil.getCharAfterCursorInPsiElement(element, i);
+      if (charBeforeCursor == null || !SelectWordUtil.isExpandableWhiteSpace(charBeforeCursor)) break;
+      startOffset = i;
+    }
+
+    Integer endOffset = cursorOffset;
+    for (int i = cursorOffset + 1; ; ++i) {
+      Character charAfterCursor = SelectWordUtil.getCharBeforeCursorInPsiElement(element, i);
+      if (charAfterCursor == null || !SelectWordUtil.isExpandableWhiteSpace(charAfterCursor)) break;
+      endOffset = i;
+    }
+
+    if (startOffset == cursorOffset && endOffset == cursorOffset) return null;
+
+    return new TextRange(startOffset, endOffset);
   }
 
   /**

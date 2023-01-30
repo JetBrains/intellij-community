@@ -127,27 +127,29 @@ public class SelectWordHandler extends EditorActionHandler.ForEachCaret {
       }
     }
 
-    while (element instanceof PsiWhiteSpace || element != null && StringUtil.isEmptyOrSpaces(element.getText())) {
-      while (element.getNextSibling() == null) {
+    if (!(element instanceof PsiWhiteSpace && SelectWordUtil.canWhiteSpaceBeExpanded((PsiWhiteSpace) element, caretOffset))) {
+      while (element instanceof PsiWhiteSpace || element != null && StringUtil.isEmptyOrSpaces(element.getText())) {
+        while (element.getNextSibling() == null) {
+          if (element instanceof PsiFile) return null;
+          final PsiElement parent = element.getParent();
+          final PsiElement[] children = parent.getChildren();
+
+          if (children.length > 0 && children[children.length - 1] == element) {
+            element = parent;
+          }
+          else {
+            element = parent;
+            break;
+          }
+        }
+
         if (element instanceof PsiFile) return null;
-        final PsiElement parent = element.getParent();
-        final PsiElement[] children = parent.getChildren();
-
-        if (children.length > 0 && children[children.length - 1] == element) {
-          element = parent;
-        }
-        else {
-          element = parent;
-          break;
-        }
+        element = element.getNextSibling();
+        if (element == null) return null;
+        TextRange range = element.getTextRange();
+        if (range == null) return null; // Fix NPE (EA-29110)
+        caretOffset = range.getStartOffset();
       }
-
-      if (element instanceof PsiFile) return null;
-      element = element.getNextSibling();
-      if (element == null) return null;
-      TextRange range = element.getTextRange();
-      if (range == null) return null; // Fix NPE (EA-29110)
-      caretOffset = range.getStartOffset();
     }
 
     if (element instanceof OuterLanguageElement) {
