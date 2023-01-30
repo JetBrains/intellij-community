@@ -20,6 +20,8 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
@@ -224,23 +226,31 @@ private fun CoroutineScope.postOpenUiTasks() {
   }
 
   launch {
-    suspend fun apply() {
-      withContext(Dispatchers.EDT) {
-        ScreenReader.setActive(GeneralSettings.getInstance().isSupportScreenReaders)
-      }
-    }
-
-    GeneralSettings.getInstance().propertyChangedFlow.collect {
-      if (it == GeneralSettings.PropertyNames.supportScreenReaders) {
-        apply()
-      }
-    }
-
-    apply()
+    // first apply in the scope of IdeStarter
+    service<ScreenReaderStateManager>().apply()
   }
 
   launch {
     startSystemHealthMonitor()
+  }
+}
+
+@Service(Service.Level.APP)
+private class ScreenReaderStateManager(coroutineScope: CoroutineScope) {
+  init {
+    coroutineScope.launch {
+      GeneralSettings.getInstance().propertyChangedFlow.collect {
+        if (it == GeneralSettings.PropertyNames.supportScreenReaders) {
+          apply()
+        }
+      }
+    }
+  }
+
+  suspend fun apply() {
+    withContext(Dispatchers.EDT) {
+      ScreenReader.setActive(GeneralSettings.getInstance().isSupportScreenReaders)
+    }
   }
 }
 
