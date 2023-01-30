@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -34,11 +35,17 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.refactoring.HelpID
+import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler
+import com.intellij.refactoring.extractMethod.newImpl.ExtractException
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.range
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
@@ -62,6 +69,24 @@ object InplaceExtractUtils {
       return false
     }
     return true
+  }
+
+  fun showExtractErrorHint(editor: Editor, exception: ExtractException){
+    val file = exception.file
+    val message = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + (exception.message ?: "")
+    CommonRefactoringUtil.showErrorHint(file.project, editor, message, ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD)
+    highlightErrors(editor, exception.problems)
+  }
+
+  private fun highlightErrors(editor: Editor, ranges: List<TextRange>) {
+    val project = editor.project ?: return
+    if (ranges.isEmpty()) return
+    val highlightManager = HighlightManager.getInstance(project)
+    ranges.forEach { textRange ->
+      highlightManager.addRangeHighlight(editor, textRange.startOffset, textRange.endOffset,
+                                         EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null)
+    }
+    WindowManager.getInstance().getStatusBar(project).info = RefactoringBundle.message("press.escape.to.remove.the.highlighting")
   }
 
   fun findTypeParameters(types: List<PsiType>): List<PsiTypeParameter>{

@@ -363,6 +363,18 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     require(getActiveTemplate() != null)
   }
 
+  fun testIntroduceObjectFailedWithAssignment1(){
+    assertThrows(RefactoringErrorHintException::class.java) {
+      doTest()
+    }
+  }
+
+  fun testIntroduceObjectFailedWithAssignment2(){
+    assertThrows(RefactoringErrorHintException::class.java) {
+      doTest()
+    }
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")

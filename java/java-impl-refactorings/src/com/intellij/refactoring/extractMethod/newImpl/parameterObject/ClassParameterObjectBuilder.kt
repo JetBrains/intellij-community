@@ -5,12 +5,10 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.siyeh.ig.psiutils.TypeUtils
 
-class ClassParameterObjectBuilder(private val pojoClass: PsiClass, private val references: List<PsiReferenceExpression>): ParameterObjectBuilder {
+class ClassParameterObjectBuilder(private val pojoClass: PsiClass): ParameterObjectBuilder {
   companion object {
-    fun create(variables: List<PsiVariable>, scope: List<PsiElement>): ClassParameterObjectBuilder {
-      val pojoClass = createPojoClass(variables)
-      val affectedReferences = ParameterObjectUtils.findAffectedReferences(variables, scope.last().nextSibling)
-      return ClassParameterObjectBuilder(pojoClass, affectedReferences)
+    fun create(variables: List<PsiVariable>): ClassParameterObjectBuilder {
+      return ClassParameterObjectBuilder(createPojoClass(variables))
     }
 
     private fun createPojoClass(variables: List<PsiVariable>): PsiClass {
@@ -57,6 +55,4 @@ class ClassParameterObjectBuilder(private val pojoClass: PsiClass, private val r
     val place = replacement.textRange.startOffset
     return PsiTreeUtil.findElementOfClassAtOffset(replacement.containingFile, place, PsiReferenceExpression::class.java, false)
   }
-
-  override fun getAffectedReferences(): List<PsiReferenceExpression> = references
 }

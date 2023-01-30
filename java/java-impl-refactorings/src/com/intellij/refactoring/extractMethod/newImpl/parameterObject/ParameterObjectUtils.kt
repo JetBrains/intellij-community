@@ -24,24 +24,21 @@ object ParameterObjectUtils {
     return factory.createVariableDeclarationStatement("result", type, expression)
   }
 
-  fun findAffectedReferences(variables: List<PsiVariable>, startingElement: PsiElement?): List<PsiReferenceExpression> {
-    val startingPoint = startingElement?.textRange?.startOffset ?: return emptyList()
-    return  variables.flatMap { findAffectedReferences(it, startingPoint) }
+  fun findAffectedReferences(variables: List<PsiVariable>, scope: List<PsiElement>): List<PsiReferenceExpression>? {
+    return  variables.flatMap { findAffectedReferences(it, scope) ?: return null }
   }
 
-  private fun findAffectedReferences(variable: PsiVariable, startingOffset: Int): List<PsiReferenceExpression> {
+  private fun findAffectedReferences(variable: PsiVariable, scope: List<PsiElement>): List<PsiReferenceExpression>? {
+    val startingOffset = scope.last().textRange.endOffset
     val references = ReferencesSearch.search(variable)
       .mapNotNull { it.element as? PsiReferenceExpression }
       .filter { reference -> reference.textRange.startOffset >= startingOffset }
       .sortedBy { reference -> reference.textRange.startOffset }
-    val firstAssignment = references.find { reference -> PsiUtil.isAccessedForWriting(reference) }
-    val endPoint = PsiTreeUtil.getParentOfType(firstAssignment, PsiAssignmentExpression::class.java)?.textRange?.endOffset
-    return if (firstAssignment != null && endPoint != null) {
-      references.filter { reference -> reference.textRange.endOffset <= endPoint } - firstAssignment
-    }
-    else {
-      references
-    }
+    val firstAssignment = references.find { reference -> PsiUtil.isAccessedForWriting(reference) } ?: return references
+    val assignmentExpression = PsiTreeUtil.getParentOfType(firstAssignment, PsiAssignmentExpression::class.java)
+    if (assignmentExpression == null) return null
+    if (assignmentExpression.parent.parent != PsiTreeUtil.findCommonParent(assignmentExpression, scope.last())) return null
+    return references.filter { reference -> reference.textRange.endOffset <= assignmentExpression.textRange.endOffset } - firstAssignment
   }
 
 }

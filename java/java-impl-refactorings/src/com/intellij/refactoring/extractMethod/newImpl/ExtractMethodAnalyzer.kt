@@ -40,12 +40,7 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
   val flowOutput = findFlowOutput(analyzer)
                    ?: throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.exits"), elements.first())
 
-  val outVariables = analyzer.findOutputVariables()
-  if (outVariables.size >= 2 && canExtractStatementsFromScope(flowOutput.statements, elements)) {
-    throw ExtractMultipleVariablesException(outVariables, elements)
-  }
-
-  val variableData = findVariableData(analyzer, outVariables)
+  val variableData = findVariableData(analyzer, analyzer.findOutputVariables())
 
   val expression = elements.singleOrNull() as? PsiExpression
 
@@ -204,9 +199,9 @@ private fun findFlowData(analyzer: CodeFragmentAnalyzer, flowOutput: FlowOutput)
 
 private fun findVariableData(analyzer: CodeFragmentAnalyzer, variables: List<PsiVariable>): DataOutput {
   val variable = when {
+    variables.size > 1 -> throw ExtractMultipleVariablesException(variables, analyzer.elements)
     analyzer.elements.singleOrNull() is PsiExpression && variables.isNotEmpty() ->
       throw ExtractException(JavaRefactoringBundle.message("extract.method.error.variable.in.expression"), variables)
-    variables.size > 1 -> throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.outputs"), variables)
     variables.isEmpty() -> return EmptyOutput()
     else -> variables.single()
   }

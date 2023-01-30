@@ -15,10 +15,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMultipleVariablesException
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplateBuilder
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createGreedyRangeMarker
 import com.intellij.refactoring.extractMethod.newImpl.inplace.TemplateField
 
 private data class IntroduceObjectResult(
@@ -32,22 +34,26 @@ object ParameterObjectExtractor {
     require(variables.isNotEmpty())
     require(scope.isNotEmpty())
 
+    val affectedReferences = ParameterObjectUtils.findAffectedReferences(variables, scope)
+    if (affectedReferences == null) {
+      InplaceExtractUtils.showExtractErrorHint(editor, ExtractMultipleVariablesException(variables, scope))
+      return
+    }
     val objectBuilder = if (HighlightingFeature.RECORDS.isAvailable(variables.first())) {
-      RecordParameterObjectBuilder.create(variables, scope)
+      RecordParameterObjectBuilder.create(variables)
     } else {
-      ClassParameterObjectBuilder.create(variables, scope)
+      ClassParameterObjectBuilder.create(variables)
     }
     val file = scope.first().containingFile
     val project = file.project
-    val extractRange = InplaceExtractUtils.createGreedyRangeMarker(file.viewProvider.document,
-                                                                   scope.first().textRange.union(scope.last().textRange))
+    val extractRange = createGreedyRangeMarker(file.viewProvider.document, scope.first().textRange.union(scope.last().textRange))
     val editorState = EditorState(editor)
     WriteCommandAction.writeCommandAction(project).run<Throwable> {
       try {
         val disposable = Disposer.newDisposable()
         val startMarkAction = StartMarkAction.start(editor, project, ExtractMethodHandler.getRefactoringName())
         Disposer.register(disposable) { FinishMarkAction.finish(project, editor, startMarkAction) }
-        val (introducedClass, declaration, replacements) = introduceObjectForVariables(objectBuilder, variables, scope.last())
+        val (introducedClass, declaration, replacements) = introduceObjectForVariables(objectBuilder, variables, affectedReferences, scope.last())
         val introducedVariableReferences = replacements.map { replacement ->
           objectBuilder.findVariableReferenceInReplacement(replacement) ?: throw IllegalStateException()
         }
@@ -84,8 +90,11 @@ object ParameterObjectExtractor {
     return preview
   }
 
-  private fun introduceObjectForVariables(builder: ParameterObjectBuilder, variables: List<PsiVariable>, placeForDeclaration: PsiElement): IntroduceObjectResult {
-    val referenceReplacements = builder.getAffectedReferences()
+  private fun introduceObjectForVariables(builder: ParameterObjectBuilder,
+                                          variables: List<PsiVariable>,
+                                          affectedReferences: List<PsiReferenceExpression>,
+                                          placeForDeclaration: PsiElement): IntroduceObjectResult {
+    val referenceReplacements = affectedReferences
       .map { reference -> reference.replace(builder.createReferenceReplacement(reference)) as PsiExpression }
     val classAnchor = PsiTreeUtil.getParentOfType(variables.first(), PsiMember::class.java) ?: throw IllegalStateException()
     val psiClass = builder.createClass()

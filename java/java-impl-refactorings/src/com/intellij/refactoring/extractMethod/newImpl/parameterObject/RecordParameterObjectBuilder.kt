@@ -4,14 +4,12 @@ package com.intellij.refactoring.extractMethod.newImpl.parameterObject
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
-class RecordParameterObjectBuilder(private val record: PsiClass, private val references: List<PsiReferenceExpression>): ParameterObjectBuilder {
+class RecordParameterObjectBuilder(private val record: PsiClass): ParameterObjectBuilder {
 
   companion object {
 
-    fun create(variables: List<PsiVariable>, scope: List<PsiElement>): RecordParameterObjectBuilder {
-      val record = createRecord(variables)
-      val affectedReferences = ParameterObjectUtils.findAffectedReferences(variables, scope.last().nextSibling)
-      return RecordParameterObjectBuilder(record, affectedReferences)
+    fun create(variables: List<PsiVariable>): RecordParameterObjectBuilder {
+      return RecordParameterObjectBuilder(createRecord(variables))
     }
 
     private fun createRecord(variables: List<PsiVariable>): PsiClass {
@@ -37,6 +35,4 @@ class RecordParameterObjectBuilder(private val record: PsiClass, private val ref
     val place = replacement.textRange.startOffset
     return PsiTreeUtil.findElementOfClassAtOffset(replacement.containingFile, place, PsiReferenceExpression::class.java, false)
   }
-
-  override fun getAffectedReferences(): List<PsiReferenceExpression> = references
 }

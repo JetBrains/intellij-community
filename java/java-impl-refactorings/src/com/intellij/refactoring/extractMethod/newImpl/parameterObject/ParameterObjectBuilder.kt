@@ -11,5 +11,4 @@ interface ParameterObjectBuilder {
   fun createDeclaration(): PsiDeclarationStatement
   fun createReferenceReplacement(reference: PsiReferenceExpression): PsiExpression
   fun findVariableReferenceInReplacement(replacement: PsiExpression): PsiReferenceExpression?
-  fun getAffectedReferences(): List<PsiReferenceExpression>
 }
