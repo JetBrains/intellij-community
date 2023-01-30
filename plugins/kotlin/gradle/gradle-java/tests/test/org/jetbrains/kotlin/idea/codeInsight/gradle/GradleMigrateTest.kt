@@ -30,14 +30,14 @@ class GradleMigrateTest : MultiplePluginVersionGradleImportingTestCase() {
                     ${GradleKotlinTestUtils.listRepositories(false, gradleVersion)}                    
                 }
                 dependencies {
-                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KotlinGradlePluginVersions.V_1_5_32}"
+                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KotlinGradlePluginVersions.V_1_7_21}"
                 }
             }
 
             apply plugin: 'kotlin'
 
             dependencies {
-                implementation "org.jetbrains.kotlin:kotlin-stdlib:${KotlinGradlePluginVersions.V_1_5_32}"
+                implementation "org.jetbrains.kotlin:kotlin-stdlib:${KotlinGradlePluginVersions.V_1_7_21}"
             }
             """,
             afterText =
@@ -47,21 +47,21 @@ class GradleMigrateTest : MultiplePluginVersionGradleImportingTestCase() {
                     ${GradleKotlinTestUtils.listRepositories(false, gradleVersion)}                    
                 }
                 dependencies {
-                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KotlinGradlePluginVersions.V_1_6_21}"
+                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KotlinGradlePluginVersions.V_1_8_0}"
                 }
             }
 
             apply plugin: 'kotlin'
 
             dependencies {
-                implementation "org.jetbrains.kotlin:kotlin-stdlib:${KotlinGradlePluginVersions.V_1_6_21}"
+                implementation "org.jetbrains.kotlin:kotlin-stdlib:${KotlinGradlePluginVersions.V_1_8_0}"
             }
             """
         )
 
         assertEquals(
             "Update your code to replace the use of deprecated language and library features with supported constructs<br/><br/>" +
-                    "Detected migration:<br/>&nbsp;&nbsp;Language version: 1.5 to 1.6<br/>&nbsp;&nbsp;API version: 1.5 to 1.6<br/>",
+                    "Detected migration:<br/>&nbsp;&nbsp;Language version: 1.7 to 1.8<br/>&nbsp;&nbsp;API version: 1.7 to 1.8<br/>",
             notificationText,
         )
     }
