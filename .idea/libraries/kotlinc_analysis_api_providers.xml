@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.analysis-api-providers" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-providers-for-ide:1.8.20-dev-5814" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-providers-for-ide:1.8.20-Beta-30" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/1.8.20-dev-5814/analysis-api-providers-for-ide-1.8.20-dev-5814.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/1.8.20-Beta-30/analysis-api-providers-for-ide-1.8.20-Beta-30.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/1.8.20-dev-5814/analysis-api-providers-for-ide-1.8.20-dev-5814-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/1.8.20-Beta-30/analysis-api-providers-for-ide-1.8.20-Beta-30-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
