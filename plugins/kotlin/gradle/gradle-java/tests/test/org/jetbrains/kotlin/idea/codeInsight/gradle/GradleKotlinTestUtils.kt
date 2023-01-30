@@ -30,6 +30,7 @@ object GradleKotlinTestUtils {
         repositories.addUrl("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/")
         repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap")
         repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+        repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
         repositories.addUrl("https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/")
         repositories.addUrl("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2/")
 
@@ -43,15 +44,30 @@ object GradleKotlinTestUtils {
         val repositories = mutableListOf<String>()
         operator fun String.unaryPlus() = repositories.add(this)
 
+        val mavenLocal = """
+            mavenLocal {
+                content {
+                    includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
+                }
+            }
+        """.trimIndent()
+
         if (kotlinVersion.isSnapshot) {
-            +"mavenLocal()"
+            +mavenLocal
         }
 
         if (!kotlinVersion.isStable) {
             if (localKotlinGradlePluginExists(kotlinVersion)) {
-                +"mavenLocal()"
+                +mavenLocal
             } else +"""
                 maven("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap") {
+                    content {
+                        includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
+                    }
+                }
+                
+                /* Repository used to resolve manual deployments of KGP (specifically to be resolved by IJ import tests) */
+                maven("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies") {
                     content {
                         includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
                     }
@@ -60,7 +76,17 @@ object GradleKotlinTestUtils {
         }
 
         +"""maven("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/")"""
-        +"""maven("https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/")"""
+
+        +"""
+            maven("https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/") {
+                content {
+                    includeGroupByRegex(".*android.*")
+                    includeGroupByRegex(".*google.*")
+                }
+            }
+            """
+            .trimIndent()
+
         +"""maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2/")"""
 
         if (!VersionMatcher(gradleVersion).isVersionMatch("7.0+", true)) {
