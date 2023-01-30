@@ -71,6 +71,16 @@ import java.util.regex.Pattern;
 
 public final class FindManagerImpl extends FindManager {
   private static final Logger LOG = Logger.getInstance(FindManagerImpl.class);
+  private static final Key<ThreadLocal<SoftReference<CommentsLiteralsSearchData>>> ourCommentsLiteralsSearchDataKey =
+    KeyWithDefaultValue.create("comments.literals.search.data", () -> new ThreadLocal<>());
+  private static final Key<ThreadLocal<SoftReference<FindExceptCommentsOrLiteralsData>>> ourExceptCommentsOrLiteralsDataKey =
+    KeyWithDefaultValue.create("except.comments.literals.search.data", () -> new ThreadLocal<>());
+  private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY =
+    Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
+
+  private static final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Find Problems");
+  private static final FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
+  private static final IntObjectMap<Boolean> ourReportedPatterns = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   private final FindUsagesManager myFindUsagesManager;
   private boolean isFindWasPerformed;
@@ -81,12 +91,8 @@ public final class FindManagerImpl extends FindManager {
   private final FindModel myFindInFileModel = new FindModel();
   private FindModel myFindNextModel;
   private FindModel myPreviousFindModel;
-  private static final FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
   private final Project myProject;
-  private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
-
   private FindUIHelper myHelper;
-  private static final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Find Problems");
 
   public FindManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -131,10 +137,10 @@ public final class FindManagerImpl extends FindManager {
       @Override
       @Nullable
       public Point getInitialLocation() {
-        if (model.isMultipleFiles() && myReplaceInProjectPromptPos.x >= 0 && myReplaceInProjectPromptPos.y >= 0){
+        if (model.isMultipleFiles() && myReplaceInProjectPromptPos.x >= 0 && myReplaceInProjectPromptPos.y >= 0) {
           return myReplaceInProjectPromptPos;
         }
-        if (!model.isMultipleFiles() && myReplaceInFilePromptPos.x >= 0 && myReplaceInFilePromptPos.y >= 0){
+        if (!model.isMultipleFiles() && myReplaceInFilePromptPos.x >= 0 && myReplaceInFilePromptPos.y >= 0) {
           return myReplaceInFilePromptPos;
         }
         return null;
@@ -143,7 +149,7 @@ public final class FindManagerImpl extends FindManager {
 
     replacePromptDialog.show();
 
-    if (model.isMultipleFiles()){
+    if (model.isMultipleFiles()) {
       myReplaceInProjectPromptPos = replacePromptDialog.getLocation();
     }
     else{
@@ -261,7 +267,7 @@ public final class FindManagerImpl extends FindManager {
 
   @Override
   @NotNull
-  public FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model){
+  public FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model) {
     return findString(text, offset, model, null);
   }
 
@@ -277,18 +283,13 @@ public final class FindManagerImpl extends FindManager {
     return findStringLoop(text, offset, model, file, getFindContextPredicate(model, file, text));
   }
 
-  private FindResult findStringLoop(CharSequence text, int offset, FindModel model, VirtualFile file, @Nullable Predicate<? super FindResult> filter) {
+  private FindResult findStringLoop(CharSequence text, int offset, FindModel model, VirtualFile file,
+                                    @Nullable Predicate<? super FindResult> filter) {
     final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     while(true) {
       FindResult result = doFindString(text, textArray, offset, model, file);
       if (filter == null || filter.test(result)) {
-        if (!model.isWholeWordsOnly()) {
-          return result;
-        }
-        if (!result.isStringFound()) {
-          return result;
-        }
-        if (isWholeWord(text, result.getStartOffset(), result.getEndOffset())) {
+        if (!model.isWholeWordsOnly() || !result.isStringFound() || isWholeWord(text, result.getStartOffset(), result.getEndOffset())) {
           return result;
         }
       }
@@ -346,7 +347,7 @@ public final class FindManagerImpl extends FindManager {
         FindResult customResult = manager.findStringLoop(text, offset, clonedModel, file, null);
         if (!customResult.isStringFound()) break;
         result.put(customResult.getStartOffset(), customResult.getEndOffset());
-        offset = Math.max(customResult.getEndOffset(), offset + 1);  // avoid loop for zero size reg exps matches
+        offset = Math.max(customResult.getEndOffset(), offset + 1); // avoid loop for zero size reg exps matches
         if (offset >= text.length()) break;
       }
     }
@@ -370,13 +371,11 @@ public final class FindManagerImpl extends FindManager {
       return true;
     }
   }
-  private static final Key<ThreadLocal<SoftReference<FindExceptCommentsOrLiteralsData>>> ourExceptCommentsOrLiteralsDataKey
-    = KeyWithDefaultValue.create("except.comments.literals.search.data", () -> new ThreadLocal<>());
 
   private Predicate<FindResult> getFindContextPredicate(@NotNull FindModel model, @Nullable VirtualFile file, @NotNull CharSequence text) {
     if (file == null) return null;
     FindModel.SearchContext context = model.getSearchContext();
-    if( context == FindModel.SearchContext.ANY || context == FindModel.SearchContext.IN_COMMENTS ||
+    if (context == FindModel.SearchContext.ANY || context == FindModel.SearchContext.IN_COMMENTS ||
         context == FindModel.SearchContext.IN_STRING_LITERALS) {
       return null;
     }
@@ -448,7 +447,7 @@ public final class FindManagerImpl extends FindManager {
                                   @NotNull FindModel model,
                                   @Nullable VirtualFile file) {
     String toFind = model.getStringToFind();
-    if (toFind.isEmpty()){
+    if (toFind.isEmpty()) {
       return NOT_FOUND_RESULT;
     }
 
@@ -457,21 +456,21 @@ public final class FindManagerImpl extends FindManager {
       return findInCommentsAndLiterals(text, textArray, offset, model, file);
     }
 
-    if (model.isRegularExpressions()){
+    if (model.isRegularExpressions()) {
       return findStringByRegularExpression(text, offset, model, file);
     }
 
     final StringSearcher searcher = createStringSearcher(model);
 
     int index;
-    if (model.isForward()){
+    if (model.isForward()) {
       final int res = searcher.scan(text, textArray, offset, text.length());
       index = res < 0 ? -1 : res;
     }
     else {
       index = offset == 0 ? -1 : searcher.scan(text, textArray, 0, offset-1);
     }
-    if (index < 0){
+    if (index < 0) {
       return NOT_FOUND_RESULT;
     }
     return new FindResultImpl(index, index + toFind.length());
@@ -513,15 +512,12 @@ public final class FindManagerImpl extends FindManager {
     }
   }
 
-  private static final Key<ThreadLocal<SoftReference<CommentsLiteralsSearchData>>> ourCommentsLiteralsSearchDataKey
-    = KeyWithDefaultValue.create("comments.literals.search.data", () -> new ThreadLocal<>());
-
   @NotNull
   private FindResult findInCommentsAndLiterals(@NotNull CharSequence text,
-                                                      char[] textArray,
-                                                      int offset,
-                                                      @NotNull FindModel model,
-                                                      @NotNull final VirtualFile file) {
+                                               char[] textArray,
+                                               int offset,
+                                               @NotNull FindModel model,
+                                               @NotNull final VirtualFile file) {
     ThreadLocal<SoftReference<CommentsLiteralsSearchData>> data;
     synchronized (model) {
       data = model.getUserData(ourCommentsLiteralsSearchDataKey);
@@ -755,9 +751,6 @@ public final class FindManagerImpl extends FindManager {
     }
   }
 
-  private static final IntObjectMap<Boolean> ourReportedPatterns =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
-
   private static Matcher compileRegExp(FindModel model, CharSequence text) {
     Pattern pattern = model.compileRegExp();
     return pattern == null ?
@@ -800,7 +793,7 @@ public final class FindManagerImpl extends FindManager {
     Matcher matcher = compileRegExp(model, text);
     assert matcher != null;
 
-    if (model.isForward()){
+    if (model.isForward()) {
       if (!matcher.find(startOffset)) {
         return null;
       }
@@ -810,10 +803,10 @@ public final class FindManagerImpl extends FindManager {
     }
     else {
       int start = -1;
-      while(matcher.find() && matcher.end() < startOffset){
+      while(matcher.find() && matcher.end() < startOffset) {
         start = matcher.start();
       }
-      if (start < 0){
+      if (start < 0) {
         return null;
       }
     }
