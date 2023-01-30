@@ -530,7 +530,7 @@ public final class IndexUpdateRunner {
   private static class IndexingJob {
     final Project myProject;
     final CachedFileContentLoader myContentLoader;
-    final ConcurrentLinkedQueue<FileIndexingJob> myQueueOfFiles;
+    final ArrayBlockingQueue<FileIndexingJob> myQueueOfFiles; // for Community sources the size is about 615K entries
     final ProgressIndicator myIndicator;
     final int myTotalFiles;
     final AtomicBoolean myNoMoreFilesInQueue = new AtomicBoolean();
@@ -547,7 +547,8 @@ public final class IndexUpdateRunner {
                 @Nullable ProgressSuspender originalProgressSuspender) {
       myProject = project;
       myIndicator = indicator;
-      myQueueOfFiles = new ConcurrentLinkedQueue<>();
+      int maxFilesCount = fileSets.stream().mapToInt(fileSet -> fileSet.files.size()).sum();
+      myQueueOfFiles = new ArrayBlockingQueue<>(maxFilesCount);
       // UnindexedFilesIndexer may produce duplicates during merging.
       // E.g. Indexer([origin:someFiles]) + Indexer[anotherOrigin:someFiles] => Indexer([origin:someFiles, anotherOrigin:someFiles])
       // Don't touch UnindexedFilesIndexer.tryMergeWith now, because eventually we want UnindexedFilesIndexer to process the queue itself
