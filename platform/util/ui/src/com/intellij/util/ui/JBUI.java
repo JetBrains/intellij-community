@@ -1508,6 +1508,25 @@ public final class JBUI {
                        : UIUtil.getPanelBackground();
       }
     }
+    
+    public static final class NavBar {
+
+      @NotNull
+      public static Insets itemInsets() {
+        return insets(itemInsetsKey(), defaultItemInsets());
+      }
+
+      @NotNull
+      public static JBInsets defaultItemInsets() {
+        return insets(4, 2);
+      }
+
+      @NotNull
+      public static String itemInsetsKey() {
+        return "NavBar.Breadcrumbs.itemInsets";
+      }
+      
+    }
 
     public static final class NewClassDialog {
       public static @NotNull Color searchFieldBackground() {

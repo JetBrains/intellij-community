@@ -691,6 +691,8 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaults.put(JBUI.CurrentTheme.StatusBar.Widget.insetsKey(), JBUI.insets(4, 8, 3, 8))
       defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), JBUI.insets(1, 0, 1, 4))
       defaults.put(JBUI.CurrentTheme.StatusBar.fontKey(), Supplier { JBFont.medium() })
+      // separate navbar
+      defaults.put(JBUI.CurrentTheme.NavBar.itemInsetsKey(), JBUI.insets(2))
       // editor tabs
       defaults.put("EditorTabs.tabInsets", JBInsets(1, 12, 1, 8).asUIResource())
       defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), Supplier { JBFont.medium() })
