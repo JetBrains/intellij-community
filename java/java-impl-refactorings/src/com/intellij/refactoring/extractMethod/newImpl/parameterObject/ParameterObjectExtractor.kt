@@ -114,15 +114,16 @@ object ParameterObjectExtractor {
                                    declaration: PsiVariable,
                                    referencesToDeclaration: List<PsiReferenceExpression>): List<TemplateField> {
     val file = introducedClass.containingFile
-    val classReference = (declaration.initializer as? PsiNewExpression)?.classReference?.element ?: throw IllegalStateException()
-    val variableName = declaration.nameIdentifier ?: throw IllegalStateException()
+    val classReference = (declaration.initializer as? PsiNewExpression)?.classReference?.referenceNameElement ?: throw IllegalStateException()
     val constructorIdentifiers = introducedClass.constructors.mapNotNull { method -> method.nameIdentifier }
-    val typeIdentifiersToUpdate = listOfNotNull(declaration.typeElement, introducedClass.nameIdentifier) + constructorIdentifiers
+    val declarationTypeIdentifier = declaration.typeElement?.innermostComponentReferenceElement?.referenceNameElement
+    val typeIdentifiersToUpdate = listOfNotNull(declarationTypeIdentifier, introducedClass.nameIdentifier) + constructorIdentifiers
     val typeNameField = TemplateField(
       classReference.textRange,
       typeIdentifiersToUpdate.map(PsiElement::getTextRange),
       validator = { variableRange -> InplaceExtractUtils.checkClassReference(editor, file, variableRange) }
     )
+    val variableName = declaration.nameIdentifier ?: throw IllegalStateException()
     val variableNameField = TemplateField(
       variableName.textRange,
       referencesToDeclaration.map(PsiElement::getTextRange),
