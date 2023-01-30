@@ -52,6 +52,11 @@ public final class SelectInContextImpl extends FileSelectInContext {
 
   @Nullable
   public static SelectInContext createContext(AnActionEvent event) {
+    SelectInContext result = event.getData(SelectInContext.DATA_KEY);
+    if (result != null) {
+      return result;
+    }
+
     Project project = event.getProject();
     FileEditor editor;
     final var contextComponent = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
@@ -62,13 +67,8 @@ public final class SelectInContextImpl extends FileSelectInContext {
     else {
       editor = event.getData(PlatformCoreDataKeys.FILE_EDITOR);
     }
+
     VirtualFile virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE);
-
-    SelectInContext result = event.getData(SelectInContext.DATA_KEY);
-    if (result != null) {
-      return result;
-    }
-
     result = createEditorContext(project, editor, virtualFile);
     if (result != null) {
       return result;
