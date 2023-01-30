@@ -205,14 +205,19 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
             continue
           }
 
-          val componentProvider = readAction {
-            if (file.isValid && !project.isDisposed) {
-              provider.collectNotificationData(project, file)
+          val result = readAction {
+            // recheck for dumb mode, since it could start before read action
+            if (file.isValid && !project.isDisposed &&
+                (!DumbService.isDumb(project) || DumbService.isDumbAware(provider))) {
+              Pair(provider.collectNotificationData(project, file), true)
             }
             else {
-              null
+              Pair(null, false)
             }
           }
+          if (!result.second) continue
+
+          val componentProvider = result.first
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             if (!file.isValid) {
               return@withContext
