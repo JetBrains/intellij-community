@@ -56,7 +56,7 @@ import java.util.concurrent.CompletableFuture
 
 object InplaceExtractUtils {
 
-  private fun showErrorHint(editor: Editor, offset: Int, message: @Nls String) {
+  fun showErrorHint(editor: Editor, offset: Int, message: @Nls String) {
     val options = HintManager.HIDE_BY_ESCAPE or HintManager.HIDE_BY_TEXT_CHANGE
     HintManager.getInstance().showErrorHint(editor, message, offset, offset, HintManager.ABOVE, options, 0)
   }

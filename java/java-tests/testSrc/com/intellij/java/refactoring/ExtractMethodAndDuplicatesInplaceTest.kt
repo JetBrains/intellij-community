@@ -25,6 +25,28 @@ import org.jetbrains.annotations.NonNls
 
 class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
 
+  companion object {
+    fun nextTemplateVariable(templateState: TemplateState?): Boolean {
+      if (templateState == null) return false
+      val previousRange = templateState.currentVariableRange
+      LookupManager.getActiveLookup(templateState.editor)?.hideLookup(true)
+      val dataContext = DataManager.getInstance().getDataContext(templateState.editor.component)
+      val event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, Presentation(), dataContext)
+      ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE).actionPerformed(event)
+      UIUtil.dispatchAllInvocationEvents()
+      return templateState.isFinished || templateState.currentVariableRange != previousRange
+    }
+
+    fun renameTemplate(templateState: TemplateState?, name: String) {
+      if (templateState == null) return
+      WriteCommandAction.runWriteCommandAction(templateState.project) {
+        val range = templateState.currentVariableRange!!
+        templateState.editor.document.replaceString(range.startOffset, range.endOffset, name)
+        templateState.update()
+      }
+    }
+  }
+
   private val BASE_PATH: @NonNls String = "/refactoring/extractMethodAndDuplicatesInplace"
 
   fun testStatement(){
@@ -444,25 +466,9 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
 
   private fun getActiveTemplate() = TemplateManagerImpl.getTemplateState(editor)
 
-  private fun nextTemplateVariable(): Boolean {
-    val templateState = getActiveTemplate() ?: return false
-    val previousRange = templateState.currentVariableRange
-    LookupManager.getActiveLookup(templateState.editor)?.hideLookup(true)
-    val dataContext = DataManager.getInstance().getDataContext(editor.component)
-    val event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, Presentation(), dataContext)
-    ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE).actionPerformed(event)
-    UIUtil.dispatchAllInvocationEvents()
-    return templateState.isFinished || templateState.currentVariableRange != previousRange
-  }
+  private fun nextTemplateVariable(): Boolean = nextTemplateVariable(getActiveTemplate())
 
-  private fun renameTemplate(name: String) {
-    val templateState = getActiveTemplate() ?: return
-    WriteCommandAction.runWriteCommandAction(project) {
-      val range = templateState.currentVariableRange!!
-      editor.document.replaceString(range.startOffset, range.endOffset, name)
-      templateState.update()
-    }
-  }
+  private fun renameTemplate(name: String)  = renameTemplate(getActiveTemplate(), name)
 
   private inline fun templateTest(test: () -> Unit) {
     val disposable = Disposer.newDisposable()

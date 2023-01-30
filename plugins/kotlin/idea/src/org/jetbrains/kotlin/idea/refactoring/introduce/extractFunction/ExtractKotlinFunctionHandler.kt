@@ -25,7 +25,6 @@ import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplateBuilder
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
 import com.intellij.refactoring.extractMethod.newImpl.inplace.TemplateField
-import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -122,7 +121,7 @@ class ExtractKotlinFunctionHandler(
                     .withValidation { variableRange ->
                         val error = getIdentifierError(file, variableRange)
                         if (error != null) {
-                            CommonRefactoringUtil.showErrorHint(project, editor, error, EXTRACT_FUNCTION, null)
+                            InplaceExtractUtils.showErrorHint(editor, variableRange.endOffset, error)
                         }
                         error == null
                     }
