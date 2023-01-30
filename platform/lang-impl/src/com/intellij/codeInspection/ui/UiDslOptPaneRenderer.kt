@@ -116,9 +116,12 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             context.setOption(component.children[index].bindId, value)
           })
             .apply {
+              installCellRenderer {
+                it.apply { border = JBUI.Borders.empty(0, 4) }
+              }
               // Add checkboxes
               component.children.forEach { checkbox ->
-                addItem(checkbox.bindId, "${checkbox.label.label()} ", context.getOption(checkbox.bindId) == true)
+                addItem(checkbox.bindId, checkbox.label.label(), context.getOption(checkbox.bindId) == true)
               }
               // Show correct panel on checkbox selection
               addListSelectionListener {
