@@ -80,7 +80,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       appendElementReference(buf, refElement, false);
     }
     else if (refElement instanceof RefDirectory){
-      buf.append("dir");
+      buf.append(AnalysisBundle.message("inspection.export.results.directory"));
       buf.append(NBSP);
       appendElementReference(buf, refElement, false);
     }
