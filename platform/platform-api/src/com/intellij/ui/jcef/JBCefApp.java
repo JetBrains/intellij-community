@@ -169,6 +169,14 @@ public final class JBCefApp {
           LOG.info("JCEF-sandbox was disabled because java-process initialized without sandbox");
           settings.no_sandbox = true;
         }
+      } else if (SystemInfoRt.isMac) {
+        ProcessHandle.Info i = ProcessHandle.current().info();
+        Optional<String> processAppPath = i.command();
+        if (processAppPath.isPresent() && processAppPath.get().endsWith("/bin/java")) {
+          // Sandbox must be disabled when user runs IDE from debugger (otherwise dlopen will fail)
+          LOG.info("JCEF-sandbox was disabled (to enable you should start IDE from launcher)");
+          settings.no_sandbox = true;
+        }
       }
     }
 
