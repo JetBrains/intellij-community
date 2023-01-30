@@ -207,7 +207,7 @@ final class DirectoryLock {
 
     try {
       if (myFallbackMode) {
-        @SuppressWarnings("DataFlowIssue") var port = ((InetSocketAddress)myServerChannel.getLocalAddress()).getPort();
+        var port = ((InetSocketAddress)serverChannel.getLocalAddress()).getPort();
         Files.writeString(myPortFile, String.valueOf(port), StandardOpenOption.TRUNCATE_EXISTING);
       }
       lockDirectory(myLockFile);

@@ -73,6 +73,7 @@ public abstract sealed class DirectoryLockTest {
 
   private Path testDir;
   private final List<DirectoryLock> activeLocks = new ArrayList<>();
+  private final Path currentDir = Path.of("");
 
   @Before
   public void setUp() throws Exception {
@@ -103,31 +104,31 @@ public abstract sealed class DirectoryLockTest {
   public void pathCollision() {
     var path = testDir.resolve("same");
     var lock = createLock(path, path);
-    assertThatThrownBy(() -> lock.lockOrActivate(Path.of(""), List.of())).isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> lock.lockOrActivate(currentDir, List.of())).isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   public void lockingNonExistingDirectories() throws Exception {
     var lock = createLock(testDir.resolve("c"), testDir.resolve("s"));
-    assertNull(lock.lockOrActivate(Path.of(""), List.of()));
+    assertNull(lock.lockOrActivate(currentDir, List.of()));
   }
 
   @Test
   public void lockingVacantDirectories() throws Exception {
     var lock = createLock(Files.createDirectories(testDir.resolve("c")), Files.createDirectories(testDir.resolve("s")));
-    assertNull(lock.lockOrActivate(Path.of(""), List.of()));
+    assertNull(lock.lockOrActivate(currentDir, List.of()));
   }
 
   @Test
   public void lockIndependence() throws Exception {
     var lock1 = createLock(testDir.resolve("c1"), testDir.resolve("s1"));
-    assertNull(lock1.lockOrActivate(Path.of(""), List.of()));
+    assertNull(lock1.lockOrActivate(currentDir, List.of()));
     var lock2 = createLock(testDir.resolve("c2"), testDir.resolve("s2"));
-    assertNull(lock2.lockOrActivate(Path.of(""), List.of()));
+    assertNull(lock2.lockOrActivate(currentDir, List.of()));
     var lock1copy = createLock(testDir.resolve("c1"), testDir.resolve("s1"));
-    assertNotNull(lock1copy.lockOrActivate(Path.of(""), List.of()));
+    assertNotNull(lock1copy.lockOrActivate(currentDir, List.of()));
     var lock2copy = createLock(testDir.resolve("c2"), testDir.resolve("s2"));
-    assertNotNull(lock2copy.lockOrActivate(Path.of(""), List.of()));
+    assertNotNull(lock2copy.lockOrActivate(currentDir, List.of()));
   }
 
   @Test
@@ -136,10 +137,10 @@ public abstract sealed class DirectoryLockTest {
     var systemDir = testDir.resolve("s");
     var lock1 = createLock(configDir, systemDir);
     var lock2 = createLock(configDir, systemDir);
-    assertNull(lock1.lockOrActivate(Path.of(""), List.of()));
-    assertNotNull(lock2.lockOrActivate(Path.of(""), List.of()));
+    assertNull(lock1.lockOrActivate(currentDir, List.of()));
+    assertNotNull(lock2.lockOrActivate(currentDir, List.of()));
     lock1.dispose();
-    assertNull(lock2.lockOrActivate(Path.of(""), List.of()));
+    assertNull(lock2.lockOrActivate(currentDir, List.of()));
     lock2.dispose();
     assertThat(configDir).isEmptyDirectory();
     assertThat(systemDir).isEmptyDirectory();
@@ -153,8 +154,8 @@ public abstract sealed class DirectoryLockTest {
 
     var lock1 = createLock(configDir1, testDir.resolve("s"));
     var lock2 = createLock(configDir2, testDir.resolve("S"));
-    assertNull(lock1.lockOrActivate(Path.of(""), List.of()));
-    assertNotNull(lock2.lockOrActivate(Path.of(""), List.of()));
+    assertNull(lock1.lockOrActivate(currentDir, List.of()));
+    assertNotNull(lock2.lockOrActivate(currentDir, List.of()));
   }
 
   @Test
@@ -163,8 +164,8 @@ public abstract sealed class DirectoryLockTest {
     var link = Files.createSymbolicLink(testDir.resolve("link"), dir);
     var lock1 = createLock(dir.resolve("c"), dir.resolve("s"));
     var lock2 = createLock(link.resolve("c"), link.resolve("s"));
-    assertNull(lock1.lockOrActivate(Path.of(""), List.of()));
-    assertNotNull(lock2.lockOrActivate(Path.of(""), List.of()));
+    assertNull(lock1.lockOrActivate(currentDir, List.of()));
+    assertNotNull(lock2.lockOrActivate(currentDir, List.of()));
   }
 
   @Test
@@ -173,7 +174,7 @@ public abstract sealed class DirectoryLockTest {
     var configLink = Files.createSymbolicLink(testDir.resolve("c"), dir);
     var systemLink = Files.createSymbolicLink(testDir.resolve("s"), dir);
     var lock = createLock(configLink, systemLink);
-    assertThatThrownBy(() -> lock.lockOrActivate(Path.of(""), List.of())).isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> lock.lockOrActivate(currentDir, List.of())).isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -183,8 +184,8 @@ public abstract sealed class DirectoryLockTest {
     var systemDir2 = Files.createDirectories(testDir.resolve("s2"));
     var lock1 = createLock(configDir, systemDir1);
     var lock2 = createLock(configDir, systemDir2);
-    assertNull(lock1.lockOrActivate(Path.of(""), List.of()));
-    assertThatThrownBy(() -> lock2.lockOrActivate(Path.of(""), List.of())).isInstanceOf(CannotActivateException.class);
+    assertNull(lock1.lockOrActivate(currentDir, List.of()));
+    assertThatThrownBy(() -> lock2.lockOrActivate(currentDir, List.of())).isInstanceOf(CannotActivateException.class);
   }
 
   @Test
@@ -192,7 +193,7 @@ public abstract sealed class DirectoryLockTest {
     var systemDir = Files.createDirectories(testDir.resolve("s"));
     Files.createFile(systemDir.resolve(SpecialConfigFiles.PORT_FILE));
     var lock = createLock(testDir.resolve("c"), systemDir);
-    assertNull(lock.lockOrActivate(Path.of(""), List.of()));
+    assertNull(lock.lockOrActivate(currentDir, List.of()));
   }
 
   @Test
@@ -200,7 +201,7 @@ public abstract sealed class DirectoryLockTest {
     var configDir = Files.createDirectories(testDir.resolve("c"));
     Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), "---");
     var lock = createLock(configDir, testDir.resolve("s"));
-    assertNull(lock.lockOrActivate(Path.of(""), List.of()));
+    assertNull(lock.lockOrActivate(currentDir, List.of()));
   }
 
   @Test
@@ -208,6 +209,6 @@ public abstract sealed class DirectoryLockTest {
     var configDir = Files.createDirectories(testDir.resolve("c"));
     Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), String.valueOf(ProcessHandle.current().pid()));
     var lock = createLock(configDir, testDir.resolve("s"));
-    assertThatThrownBy(() -> lock.lockOrActivate(Path.of(""), List.of())).isInstanceOf(CannotActivateException.class);
+    assertThatThrownBy(() -> lock.lockOrActivate(currentDir, List.of())).isInstanceOf(CannotActivateException.class);
   }
 }
