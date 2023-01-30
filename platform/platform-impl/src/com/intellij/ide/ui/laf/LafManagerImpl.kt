@@ -151,7 +151,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     get() {
       val result = when {
         useInterFont() -> defaultInterFont
-        UISettings.getInstance().overrideLafFonts -> storedLafFont
+        UISettings.getInstance().overrideLafFonts || IdeScaleTransformer.instance.currentScale != 1f -> storedLafFont
         else -> null
       }
       return result ?: JBFont.label()
