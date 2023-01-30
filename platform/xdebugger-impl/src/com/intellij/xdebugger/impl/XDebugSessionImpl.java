@@ -294,7 +294,9 @@ public final class XDebugSessionImpl implements XDebugSession {
   public void setCurrentSourceKind(@NotNull XSourceKind currentSourceKind) {
     if (myCurrentSourceKind == currentSourceKind) return;
     myCurrentSourceKind = currentSourceKind;
-    updateExecutionPosition();
+    if (myDebuggerManager.getCurrentSession() == this) {
+      myExecutionPointManager.setActiveSourceKind(myCurrentSourceKind);
+    }
   }
 
   void init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse) {
@@ -648,12 +650,12 @@ public final class XDebugSessionImpl implements XDebugSession {
     // allowed only for the active session
     if (myDebuggerManager.getCurrentSession() == this) {
       boolean isTopFrame = isTopFrameSelected();
-      GutterIconRenderer iconRenderer = getPositionIconRenderer(isTopFrame);
-      for (XSourceKind sourceKind : XSourceKind.values()) {
-        XSourcePosition position = getFrameSourcePosition(myCurrentStackFrame, sourceKind);
-        boolean isActiveSourceKind = sourceKind == myCurrentSourceKind;
-        myExecutionPointManager.updateExecutionPoint(sourceKind, position, iconRenderer, isTopFrame, isActiveSourceKind);
-      }
+      XSourcePosition mainSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.MAIN);
+      XSourcePosition alternativeSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.ALTERNATIVE);
+      ExecutionPoint executionPoint = new ExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame);
+      myExecutionPointManager.setExecutionPoint(executionPoint);
+      myExecutionPointManager.setActiveSourceKind(myCurrentSourceKind);
+      //myExecutionPointManager.showExecutionPosition();
     }
   }
 
@@ -670,7 +672,7 @@ public final class XDebugSessionImpl implements XDebugSession {
         XStackFrame topFrame = executionStack.getTopFrame();
         if (topFrame != null) {
           setCurrentStackFrame(executionStack, topFrame, true);
-          myExecutionPointManager.showExecutionPosition(myCurrentSourceKind);
+          //myExecutionPointManager.showExecutionPosition();
         }
       }
     }

@@ -62,6 +62,7 @@ import com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.ui.DebuggerColors;
+import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +93,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   private XDebuggerState myState = new XDebuggerState();
 
-  public XDebuggerManagerImpl(@NotNull Project project) {
+  public XDebuggerManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
 
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(this);
@@ -100,7 +101,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myBreakpointManager = new XBreakpointManagerImpl(project, this, messageBusConnection);
     myWatchesManager = new XDebuggerWatchesManager(project);
     myPinToTopManager = new XDebuggerPinToTopManager();
-    myExecutionPointManager = new XDebuggerExecutionPointManager(project, messageBusConnection);
+    myExecutionPointManager = new XDebuggerExecutionPointManager(project, coroutineScope);
 
     messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
@@ -387,6 +388,9 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         if (tab != null) {
           tab.select();
         }
+      }
+      else {
+        myExecutionPointManager.setExecutionPoint(null);
       }
       onActiveSessionChanged(previousSession, session);
     }
