@@ -210,7 +210,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     manager.invokeLater { resetDrop() }
   }
 
-  fun getDropToSide(): Boolean? {
+  open fun getDropToSide(): Boolean? {
     return if (lastLayoutData == null || !lastLayoutData!!.dragTargetChosen) null else lastLayoutData!!.dragToSide || lastLayoutData!!.isSplit
   }
 

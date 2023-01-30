@@ -118,7 +118,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     isDragOut(DevicePoint(event))
 
   private fun isDragOut(devicePoint: DevicePoint): Boolean {
-    if (!isNewUi && isPointInVisibleDockedToolWindow(devicePoint)) {
+    if (isPointInVisibleDockedToolWindow(devicePoint)) {
       return false
     }
 
@@ -238,7 +238,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
     val preferredStripe = getSourceStripe(toolWindow.anchor, toolWindow.isSplitMode)
     val targetStripe = getTargetStripeByDropLocation(eventDevicePoint, preferredStripe)
-                       ?: if (!isNewUi && isPointInVisibleDockedToolWindow(eventDevicePoint)) preferredStripe else null
+                       ?: if (isPointInVisibleDockedToolWindow(eventDevicePoint)) preferredStripe else null
     lastStripe?.let {
       if (it != targetStripe) {
         removeDropTargetHighlighter(toolWindow.toolWindowManager.getToolWindowPane(it.paneId))
@@ -334,7 +334,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
       // If the drop point is not inside a stripe bounds, but is inside the visible tool window bounds, do nothing - we're not moving.
       // Note that we must check the stripe because we might be moving from top to bottom or left to right
-      if (!isNewUi && getTargetStripeByDropLocation(devicePoint, preferredStripe) == null && isPointInVisibleDockedToolWindow(devicePoint)) {
+      if (getTargetStripeByDropLocation(devicePoint, preferredStripe) == null && isPointInVisibleDockedToolWindow(devicePoint)) {
         return
       }
 
