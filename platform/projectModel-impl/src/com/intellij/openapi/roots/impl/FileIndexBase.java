@@ -15,6 +15,8 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.containers.TreeNodeProcessingResult;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,10 @@ abstract class FileIndexBase implements FileIndex {
                                               @NotNull ContentIterator processor,
                                               @Nullable VirtualFileFilter customFilter) {
     ContentIteratorEx processorEx = toContentIteratorEx(processor);
+    if (myWorkspaceFileIndex != null) {
+      return myWorkspaceFileIndex.processContentFilesRecursively(dir, processorEx, customFilter, fileSet -> !isScopeDisposed() && isInContent(fileSet));
+    }
+    
     final VirtualFileVisitor.Result result = VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<Void>() {
       @NotNull
       @Override
@@ -106,5 +112,9 @@ abstract class FileIndexBase implements FileIndex {
 
   protected boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
     return ProjectFileIndexImpl.isFileInContent(file, info);
+  }
+  
+  protected boolean isInContent(@NotNull WorkspaceFileSetWithCustomData<?> fileSet) {
+    return fileSet.getData() instanceof ModuleContentOrSourceRootData;
   }
 }

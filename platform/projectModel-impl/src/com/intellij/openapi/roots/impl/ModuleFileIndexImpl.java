@@ -51,15 +51,15 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
       Set<VirtualFile> result = new LinkedHashSet<>();
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(myModule);
+      ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(myModule.getProject());
       for (VirtualFile[] roots : Arrays.asList(moduleRootManager.getContentRoots(), moduleRootManager.getSourceRoots())) {
         for (VirtualFile root : roots) {
-          DirectoryInfo info = getInfoForFileOrDirectory(root);
-          if (!info.isInProject(root)) continue;
+          if (!projectFileIndex.isInProject(root)) continue;
 
           VirtualFile parent = root.getParent();
           if (parent != null) {
-            DirectoryInfo parentInfo = myDirectoryIndex.getInfoForFile(parent);
-            if (myModule.equals(parentInfo.getModule())) {
+            Module parentModule = projectFileIndex.getModuleForFile(parent, false);
+            if (myModule.equals(parentModule)) {
               // inner content - skip it
               continue;
             }
@@ -223,5 +223,10 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @Override
   protected boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
     return ProjectFileIndexImpl.isFileInContent(file, info) && myModule.equals(info.getModule());
+  }
+
+  @Override
+  protected boolean isInContent(@NotNull WorkspaceFileSetWithCustomData<?> fileSet) {
+    return fileSet.getData() instanceof ModuleContentOrSourceRootData data && myModule.equals(data.getModule());
   }
 }

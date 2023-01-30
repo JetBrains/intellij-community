@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
+import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
@@ -43,6 +45,17 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    * @param filesToInvalidate files which were deleted or moved to other directories and was referenced from some entities
    */
   fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>)
+
+  /**
+   * Processes [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent] files from the file sets located under 
+   * [fileOrDir] directory using [processor].
+   * @param customFilter determines whether an individual file or directory should be processed;
+   * @param fileSetFilter determines whether files belonging to a specific file set should be processed;
+   * @return `true` if all files were processed, or `false` if processing was stopped because [processor] returned 
+   * [STOP][com.intellij.util.containers.TreeNodeProcessingResult.STOP]. 
+   */
+  fun processContentFilesRecursively(fileOrDir: VirtualFile, processor: ContentIteratorEx, customFilter: VirtualFileFilter?,
+                                     fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean): Boolean
 
   /**
    * Forces the index to update entities marked by [markDirty]. Must be called during execution of the same Write Action as [markDirty].
