@@ -21,6 +21,11 @@ import javax.swing.JComponent
 abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: String) : ContributedTypeBase<C>(id) {
 
   /**
+   * Returns true if configuration of given type should be run locally without additional preparations in advance
+   */
+  open fun isLocalTarget(): Boolean = false
+
+  /**
    * Returns true if configurations of given type can be run on this OS.
    */
   open fun isSystemCompatible(): Boolean = true
