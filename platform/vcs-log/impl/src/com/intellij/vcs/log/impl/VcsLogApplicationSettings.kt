@@ -1,162 +1,143 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.impl;
+package com.intellij.vcs.log.impl
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.SettingsCategory;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.ui.table.column.Date;
-import com.intellij.vcs.log.ui.table.column.*;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.util.EventDispatcher
+import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
+import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import com.intellij.vcs.log.ui.table.column.*
+import org.jetbrains.annotations.NonNls
 
-import java.util.*;
+@State(name = "Vcs.Log.App.Settings", storages = [Storage("vcs.xml")], category = SettingsCategory.TOOLS)
+class VcsLogApplicationSettings : PersistentStateComponent<VcsLogApplicationSettings.State?>, VcsLogUiProperties {
+  private val eventDispatcher = EventDispatcher.create(PropertiesChangeListener::class.java)
+  private var _state = State()
 
-import static com.intellij.vcs.log.impl.CommonUiProperties.*;
-import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT;
-import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;
+  override fun getState(): State = _state
 
-@State(name = "Vcs.Log.App.Settings", storages = @Storage("vcs.xml"), category = SettingsCategory.TOOLS)
-public final class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
-  private final @NotNull EventDispatcher<PropertiesChangeListener> myEventDispatcher = EventDispatcher.create(PropertiesChangeListener.class);
-  private State myState = new State();
-
-  @Override
-  public @Nullable State getState() {
-    return myState;
+  override fun loadState(state: State) {
+    _state = state
   }
 
-  @Override
-  public void loadState(@NotNull State state) {
-    myState = state;
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public @NotNull <T> T get(@NotNull VcsLogUiProperty<T> property) {
-    if (property instanceof CustomBooleanProperty) {
-      Boolean value = myState.CUSTOM_BOOLEAN_PROPERTIES.get(property.getName());
+  override fun <T : Any> get(property: VcsLogUiProperty<T>): T {
+    if (property is CustomBooleanProperty) {
+      var value = _state.CUSTOM_BOOLEAN_PROPERTIES[property.getName()]
       if (value == null) {
-        value = ((CustomBooleanProperty)property).defaultValue();
+        value = (property as CustomBooleanProperty).defaultValue()
       }
-      return (T)value;
+      return value as T
     }
-    if (property instanceof TableColumnVisibilityProperty visibilityProperty) {
-      Boolean isVisible = myState.COLUMN_ID_VISIBILITY.get(visibilityProperty.getName());
+    if (property is TableColumnVisibilityProperty) {
+      val visibilityProperty = property as TableColumnVisibilityProperty
+      val isVisible = _state.COLUMN_ID_VISIBILITY[visibilityProperty.name]
       if (isVisible != null) {
-        return (T)isVisible;
+        return isVisible as T
       }
 
       // visibility is not set, so we will get it from current/default order
       // otherwise column will be visible but not exist in order
-      VcsLogColumn<?> column = visibilityProperty.getColumn();
-      if (get(COLUMN_ID_ORDER).contains(column.getId())) {
-        return (T)Boolean.TRUE;
+      val column = visibilityProperty.column
+      if (get(CommonUiProperties.COLUMN_ID_ORDER).contains(column.id)) {
+        return true as T
       }
-      if (column instanceof VcsLogCustomColumn) {
-        return (T)Boolean.valueOf(((VcsLogCustomColumn<?>)column).isEnabledByDefault());
+      if (column is VcsLogCustomColumn<*>) {
+        return column.isEnabledByDefault() as T
       }
-      return (T)Boolean.FALSE;
+      else return false as T
     }
     return property.match()
-      .ifEq(COMPACT_REFERENCES_VIEW).then(myState.COMPACT_REFERENCES_VIEW)
-      .ifEq(SHOW_TAG_NAMES).then(myState.SHOW_TAG_NAMES)
-      .ifEq(LABELS_LEFT_ALIGNED).then(myState.LABELS_LEFT_ALIGNED)
-      .ifEq(SHOW_CHANGES_FROM_PARENTS).then(myState.SHOW_CHANGES_FROM_PARENTS)
-      .ifEq(SHOW_DIFF_PREVIEW).then(myState.SHOW_DIFF_PREVIEW)
-      .ifEq(DIFF_PREVIEW_VERTICAL_SPLIT).then(myState.DIFF_PREVIEW_VERTICAL_SPLIT)
-      .ifEq(PREFER_COMMIT_DATE).then(myState.PREFER_COMMIT_DATE)
-      .ifEq(COLUMN_ID_ORDER).thenGet(() -> {
-        List<String> order = myState.COLUMN_ID_ORDER;
-        if (order != null && !order.isEmpty()) {
-          return order;
+      .ifEq(CommonUiProperties.COMPACT_REFERENCES_VIEW).then(_state.COMPACT_REFERENCES_VIEW)
+      .ifEq(CommonUiProperties.SHOW_TAG_NAMES).then(_state.SHOW_TAG_NAMES)
+      .ifEq(CommonUiProperties.LABELS_LEFT_ALIGNED).then(_state.LABELS_LEFT_ALIGNED)
+      .ifEq(MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS).then(_state.SHOW_CHANGES_FROM_PARENTS)
+      .ifEq(CommonUiProperties.SHOW_DIFF_PREVIEW).then(_state.SHOW_DIFF_PREVIEW)
+      .ifEq(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT).then(_state.DIFF_PREVIEW_VERTICAL_SPLIT)
+      .ifEq(CommonUiProperties.PREFER_COMMIT_DATE).then(_state.PREFER_COMMIT_DATE)
+      .ifEq(CommonUiProperties.COLUMN_ID_ORDER).thenGet {
+        val order = _state.COLUMN_ID_ORDER
+        if (!order.isNullOrEmpty()) {
+          return@thenGet order
         }
-        return ContainerUtil.map(Arrays.asList(Root.INSTANCE, Commit.INSTANCE, Author.INSTANCE, Date.INSTANCE), VcsLogColumn::getId);
-      })
-      .get();
+        listOf(Root, Commit, Author, Date).map { it.id }
+      }
+      .get()
   }
 
-  @Override
-  public <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value) {
-    if (property instanceof CustomBooleanProperty) {
-      myState.CUSTOM_BOOLEAN_PROPERTIES.put(property.getName(), (Boolean)value);
+  override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
+    if (property is CustomBooleanProperty) {
+      _state.CUSTOM_BOOLEAN_PROPERTIES[property.getName()] = value as Boolean
     }
-    else if (COMPACT_REFERENCES_VIEW.equals(property)) {
-      myState.COMPACT_REFERENCES_VIEW = (Boolean)value;
+    else if (CommonUiProperties.COMPACT_REFERENCES_VIEW == property) {
+      _state.COMPACT_REFERENCES_VIEW = value as Boolean
     }
-    else if (SHOW_TAG_NAMES.equals(property)) {
-      myState.SHOW_TAG_NAMES = (Boolean)value;
+    else if (CommonUiProperties.SHOW_TAG_NAMES == property) {
+      _state.SHOW_TAG_NAMES = value as Boolean
     }
-    else if (LABELS_LEFT_ALIGNED.equals(property)) {
-      myState.LABELS_LEFT_ALIGNED = (Boolean)value;
+    else if (CommonUiProperties.LABELS_LEFT_ALIGNED == property) {
+      _state.LABELS_LEFT_ALIGNED = value as Boolean
     }
-    else if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
-      myState.SHOW_CHANGES_FROM_PARENTS = (Boolean)value;
+    else if (MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS == property) {
+      _state.SHOW_CHANGES_FROM_PARENTS = value as Boolean
     }
-    else if (SHOW_DIFF_PREVIEW.equals(property)) {
-      myState.SHOW_DIFF_PREVIEW = (Boolean)value;
+    else if (CommonUiProperties.SHOW_DIFF_PREVIEW == property) {
+      _state.SHOW_DIFF_PREVIEW = value as Boolean
     }
-    else if (DIFF_PREVIEW_VERTICAL_SPLIT.equals(property)) {
-      myState.DIFF_PREVIEW_VERTICAL_SPLIT = (Boolean)value;
+    else if (MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT == property) {
+      _state.DIFF_PREVIEW_VERTICAL_SPLIT = value as Boolean
     }
-    else if (PREFER_COMMIT_DATE.equals(property)) {
-      myState.PREFER_COMMIT_DATE = (Boolean)value;
+    else if (CommonUiProperties.PREFER_COMMIT_DATE == property) {
+      _state.PREFER_COMMIT_DATE = value as Boolean
     }
-    else if (COLUMN_ID_ORDER.equals(property)) {
-      //noinspection unchecked
-      myState.COLUMN_ID_ORDER = (List<String>)value;
+    else if (CommonUiProperties.COLUMN_ID_ORDER == property) {
+      _state.COLUMN_ID_ORDER = value as List<String>
     }
-    else if (property instanceof TableColumnVisibilityProperty) {
-      myState.COLUMN_ID_VISIBILITY.put(property.getName(), (Boolean)value);
+    else if (property is TableColumnVisibilityProperty) {
+      _state.COLUMN_ID_VISIBILITY[property.getName()] = value as Boolean
     }
     else {
-      throw new UnsupportedOperationException("Property " + property + " does not exist");
+      throw UnsupportedOperationException("Property $property does not exist")
     }
-    myEventDispatcher.getMulticaster().onPropertyChanged(property);
+    eventDispatcher.multicaster.onPropertyChanged(property)
   }
 
-  @Override
-  public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
-    return property instanceof CustomBooleanProperty ||
-           COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property) || LABELS_LEFT_ALIGNED.equals(property) ||
-           SHOW_DIFF_PREVIEW.equals(property) || DIFF_PREVIEW_VERTICAL_SPLIT.equals(property) ||
-           SHOW_CHANGES_FROM_PARENTS.equals(property) || COLUMN_ID_ORDER.equals(property) || PREFER_COMMIT_DATE.equals(property) ||
-           property instanceof TableColumnVisibilityProperty;
+  override fun <T> exists(property: VcsLogUiProperty<T>): Boolean {
+    return property is CustomBooleanProperty ||
+           CommonUiProperties.COMPACT_REFERENCES_VIEW == property ||
+           CommonUiProperties.SHOW_TAG_NAMES == property ||
+           CommonUiProperties.LABELS_LEFT_ALIGNED == property ||
+           CommonUiProperties.SHOW_DIFF_PREVIEW == property ||
+           MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT == property ||
+           MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS == property ||
+           CommonUiProperties.COLUMN_ID_ORDER == property ||
+           CommonUiProperties.PREFER_COMMIT_DATE == property ||
+           property is TableColumnVisibilityProperty
   }
 
-  @Override
-  public void addChangeListener(@NotNull VcsLogUiProperties.PropertiesChangeListener listener) {
-    myEventDispatcher.addListener(listener);
+  override fun addChangeListener(listener: PropertiesChangeListener) {
+    eventDispatcher.addListener(listener)
   }
 
-  @Override
-  public void removeChangeListener(@NotNull VcsLogUiProperties.PropertiesChangeListener listener) {
-    myEventDispatcher.removeListener(listener);
+  override fun removeChangeListener(listener: PropertiesChangeListener) {
+    eventDispatcher.removeListener(listener)
   }
 
-  public static class State {
-    public boolean COMPACT_REFERENCES_VIEW = true;
-    public boolean SHOW_TAG_NAMES = false;
-    public boolean LABELS_LEFT_ALIGNED = false;
-    public boolean SHOW_CHANGES_FROM_PARENTS = false;
-    public boolean SHOW_DIFF_PREVIEW = false;
-    public boolean DIFF_PREVIEW_VERTICAL_SPLIT = true;
-    public boolean PREFER_COMMIT_DATE = false;
-    public List<String> COLUMN_ID_ORDER = new ArrayList<>();
-    public Map<String, Boolean> COLUMN_ID_VISIBILITY = new HashMap<>();
-    public Map<String, Boolean> CUSTOM_BOOLEAN_PROPERTIES = new HashMap<>();
+  class State {
+    var COMPACT_REFERENCES_VIEW = true
+    var SHOW_TAG_NAMES = false
+    var LABELS_LEFT_ALIGNED = false
+    var SHOW_CHANGES_FROM_PARENTS = false
+    var SHOW_DIFF_PREVIEW = false
+    var DIFF_PREVIEW_VERTICAL_SPLIT = true
+    var PREFER_COMMIT_DATE = false
+    var COLUMN_ID_ORDER: List<String>? = ArrayList()
+    var COLUMN_ID_VISIBILITY: MutableMap<String, Boolean> = HashMap()
+    var CUSTOM_BOOLEAN_PROPERTIES: MutableMap<String, Boolean> = HashMap()
   }
 
-  public static class CustomBooleanProperty extends VcsLogUiProperties.VcsLogUiProperty<Boolean> {
-    public CustomBooleanProperty(@NotNull @NonNls String name) {
-      super(name);
-    }
-
-    public @NotNull Boolean defaultValue() {
-      return Boolean.FALSE;
-    }
+  open class CustomBooleanProperty(name: @NonNls String) : VcsLogUiProperty<Boolean>(name) {
+    open fun defaultValue() = false
   }
 }

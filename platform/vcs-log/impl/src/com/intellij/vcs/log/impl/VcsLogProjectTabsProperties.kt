@@ -1,187 +1,149 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.impl;
+package com.intellij.vcs.log.impl
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.XCollection;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.*
+import com.intellij.openapi.util.Comparing
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XCollection
+import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import org.jetbrains.annotations.NonNls
+import java.util.*
 
-import java.util.*;
-
-import static com.intellij.util.containers.ContainerUtil.emptyList;
-import static com.intellij.util.containers.ContainerUtil.map2List;
-
-@State(name = "Vcs.Log.Tabs.Properties", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "Vcs.Log.Tabs.Properties", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
-public final class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>,
-                                                          VcsLogTabsProperties {
-  private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
-  private final @NotNull VcsLogApplicationSettings myAppSettings;
-  private @NotNull State myState = new State();
+class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsProperties.State?>, VcsLogTabsProperties {
+  private val appSettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings::class.java)
+  private var _state = State()
 
-  public VcsLogProjectTabsProperties() {
-    myAppSettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
+  override fun getState(): State = _state
+
+  override fun loadState(state: State) {
+    _state = state
   }
 
-  @Override
-  public @NotNull State getState() {
-    return myState;
+  override fun createProperties(id: String): MainVcsLogUiProperties {
+    _state.TAB_STATES.putIfAbsent(id, MyState())
+    return MyVcsLogUiPropertiesImpl(id)
   }
 
-  @Override
-  public void loadState(@NotNull State state) {
-    myState = state;
+  fun addTab(tabId: String, location: VcsLogTabLocation) {
+    _state.OPEN_GENERIC_TABS[tabId] = location
   }
 
-  @Override
-  public @NotNull MainVcsLogUiProperties createProperties(final @NotNull String id) {
-    myState.TAB_STATES.putIfAbsent(id, new MyState());
-    return new MyVcsLogUiPropertiesImpl(id);
+  fun removeTab(tabId: String) {
+    _state.OPEN_GENERIC_TABS.remove(tabId)
   }
 
-  public void addTab(@NotNull String tabId, @NotNull VcsLogTabLocation location) {
-    myState.OPEN_GENERIC_TABS.put(tabId, location);
+  fun resetState(tabId: String) {
+    _state.TAB_STATES.remove(tabId)
   }
 
-  public void removeTab(@NotNull String tabId) {
-    myState.OPEN_GENERIC_TABS.remove(tabId);
+  val tabs: Map<String, VcsLogTabLocation>
+    get() = _state.OPEN_GENERIC_TABS
+
+  class State {
+    var TAB_STATES: MutableMap<String, MyState> = TreeMap()
+    var OPEN_GENERIC_TABS = LinkedHashMap<String, VcsLogTabLocation>()
+    @JvmField
+    var RECENT_FILTERS: MutableMap<String, MutableList<RecentGroup>> = HashMap()
   }
 
-  public void resetState(@NotNull String tabId) {
-    myState.TAB_STATES.put(tabId, null);
-  }
-
-  public @NotNull Map<String, VcsLogTabLocation> getTabs() {
-    return myState.OPEN_GENERIC_TABS;
-  }
-
-  public static void addRecentGroup(@NotNull Map<String, List<RecentGroup>> stateField,
-                                    @NotNull String filterName,
-                                    @NotNull Collection<String> values) {
-    List<RecentGroup> recentGroups = stateField.get(filterName);
-    if (recentGroups == null) {
-      recentGroups = new ArrayList<>();
-      stateField.put(filterName, recentGroups);
-    }
-    RecentGroup group = new RecentGroup(values);
-    recentGroups.remove(group);
-    recentGroups.add(0, group);
-    while (recentGroups.size() > RECENTLY_FILTERED_VALUES_LIMIT) {
-      recentGroups.remove(recentGroups.size() - 1);
-    }
-  }
-
-  public static @NotNull List<List<String>> getRecentGroup(@NotNull Map<String, List<RecentGroup>> stateField, @NotNull String filterName) {
-    List<RecentGroup> values = stateField.get(filterName);
-    if (values == null) {
-      return emptyList();
-    }
-    return map2List(values, group -> group.FILTER_VALUES);
-  }
-
-  public static class State {
-    public Map<String, MyState> TAB_STATES = new TreeMap<>();
-    public LinkedHashMap<String, VcsLogTabLocation> OPEN_GENERIC_TABS = new LinkedHashMap<>();
-    public Map<String, List<RecentGroup>> RECENT_FILTERS = new HashMap<>();
-  }
-
-  public static class RecentGroup {
+  class RecentGroup {
     @XCollection
-    public List<String> FILTER_VALUES = new ArrayList<>();
+    var FILTER_VALUES: MutableList<String> = ArrayList()
 
-    public RecentGroup() {
+    constructor()
+    constructor(values: Collection<String>) {
+      FILTER_VALUES.addAll(values)
     }
 
-    public RecentGroup(@NotNull Collection<String> values) {
-      FILTER_VALUES.addAll(values);
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other == null || javaClass != other.javaClass) return false
+      val group = other as RecentGroup
+      return Comparing.haveEqualElements(FILTER_VALUES, group.FILTER_VALUES)
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      RecentGroup group = (RecentGroup)o;
-      return Comparing.haveEqualElements(FILTER_VALUES, group.FILTER_VALUES);
-    }
-
-    @Override
-    public int hashCode() {
-      return Comparing.unorderedHashcode(FILTER_VALUES);
-    }
+    override fun hashCode(): Int = Comparing.unorderedHashcode(FILTER_VALUES)
   }
 
-  private class MyVcsLogUiPropertiesImpl extends VcsLogUiPropertiesImpl<MyState> {
-    private final String myId;
-
-    MyVcsLogUiPropertiesImpl(String id) {
-      super(myAppSettings);
-      myId = id;
-    }
-
-    @Override
-    protected @NotNull MyState getLogUiState() {
-      MyState state = myState.TAB_STATES.get(myId);
+  private inner class MyVcsLogUiPropertiesImpl(private val id: String) : VcsLogUiPropertiesImpl<MyState>(appSettings) {
+    override fun getLogUiState(): MyState {
+      var state = _state.TAB_STATES[id]
       if (state == null) {
-        state = new MyState();
-        myState.TAB_STATES.put(myId, state);
+        state = MyState()
+        _state.TAB_STATES[id] = state
       }
-      return state;
+      return state
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> @NotNull T get(@NotNull VcsLogUiProperty<T> property) {
-      if (property instanceof CustomBooleanTabProperty) {
-        Boolean value = getLogUiState().CUSTOM_BOOLEAN_PROPERTIES.get(property.getName());
+    override fun <T : Any> get(property: VcsLogUiProperty<T>): T {
+      if (property is CustomBooleanTabProperty) {
+        var value = logUiState.CUSTOM_BOOLEAN_PROPERTIES[property.getName()]
         if (value == null) {
-          value = ((CustomBooleanTabProperty)property).defaultValue(myId);
+          value = (property as CustomBooleanTabProperty).defaultValue(id)
         }
-        return (T)value;
+        return value as T
       }
-      return super.get(property);
+      return super.get(property)
     }
 
-    @Override
-    public <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value) {
-      if (property instanceof CustomBooleanTabProperty) {
-        getLogUiState().CUSTOM_BOOLEAN_PROPERTIES.put(property.getName(), (Boolean)value);
-        onPropertyChanged(property);
-        return;
+    override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
+      if (property is CustomBooleanTabProperty) {
+        logUiState.CUSTOM_BOOLEAN_PROPERTIES[property.getName()] = value as Boolean
+        onPropertyChanged(property)
+        return
       }
-      super.set(property, value);
+      super.set(property, value)
     }
 
-    @Override
-    public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
-      return super.exists(property) || property instanceof CustomBooleanTabProperty;
+    override fun <T> exists(property: VcsLogUiProperty<T>): Boolean {
+      return super.exists(property) || property is CustomBooleanTabProperty
     }
 
-    @Override
-    public void addRecentlyFilteredGroup(@NotNull String filterName, @NotNull Collection<String> values) {
-      addRecentGroup(myState.RECENT_FILTERS, filterName, values);
+    override fun addRecentlyFilteredGroup(filterName: String, values: Collection<String>) {
+      addRecentGroup(_state.RECENT_FILTERS, filterName, values)
     }
 
-    @Override
-    public @NotNull List<List<String>> getRecentlyFilteredGroups(@NotNull String filterName) {
-      return getRecentGroup(myState.RECENT_FILTERS, filterName);
+    override fun getRecentlyFilteredGroups(filterName: String): List<List<String>> {
+      return getRecentGroup(_state.RECENT_FILTERS, filterName)
     }
   }
 
   @Tag("State")
-  private static class MyState extends VcsLogUiPropertiesImpl.State {
-    public Map<String, Boolean> CUSTOM_BOOLEAN_PROPERTIES = new HashMap<>();
+  class MyState : VcsLogUiPropertiesImpl.State() {
+    var CUSTOM_BOOLEAN_PROPERTIES: MutableMap<String, Boolean> = HashMap()
   }
 
-  public static class CustomBooleanTabProperty extends VcsLogUiProperties.VcsLogUiProperty<Boolean> {
-    public CustomBooleanTabProperty(@NotNull @NonNls String name) {
-      super(name);
+  open class CustomBooleanTabProperty(name: @NonNls String) : VcsLogUiProperty<Boolean>(name) {
+    open fun defaultValue(logId: String) = false
+  }
+
+  companion object {
+    private const val RECENTLY_FILTERED_VALUES_LIMIT = 10
+
+    @JvmStatic
+    fun addRecentGroup(stateField: MutableMap<String, MutableList<RecentGroup>>,
+                       filterName: String, values: Collection<String>) {
+      var recentGroups = stateField[filterName]
+      if (recentGroups == null) {
+        recentGroups = ArrayList()
+        stateField[filterName] = recentGroups
+      }
+      val group = RecentGroup(values)
+      recentGroups.remove(group)
+      recentGroups.add(0, group)
+      while (recentGroups.size > RECENTLY_FILTERED_VALUES_LIMIT) {
+        recentGroups.removeAt(recentGroups.size - 1)
+      }
     }
 
-    public @NotNull Boolean defaultValue(@NotNull String logId) {
-      return Boolean.FALSE;
+    @JvmStatic
+    fun getRecentGroup(stateField: Map<String, MutableList<RecentGroup>>, filterName: String): List<List<String>> {
+      val values = stateField[filterName]
+                   ?: return emptyList()
+      return values.map { it.FILTER_VALUES }
     }
   }
 }

@@ -143,7 +143,7 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   }
 
   private static @NotNull VcsLogUiProperties createDefaultPropertiesInstance() {
-    return new VcsLogUiPropertiesImpl<>(new VcsLogApplicationSettings()) {
+    return new VcsLogUiPropertiesImpl<VcsLogUiPropertiesImpl.State>(new VcsLogApplicationSettings()) {
       private final @NotNull State myState = new State();
 
       @Override
