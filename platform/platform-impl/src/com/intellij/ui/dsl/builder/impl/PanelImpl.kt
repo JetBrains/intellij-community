@@ -280,13 +280,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  override fun <K> placeholderGroup(init: PlaceholderGroup<K>.() -> Unit): PlaceholderGroupImpl<K> {
-    val result = PlaceholderGroupImpl<K>(this, _rows.size)
-    result.init()
-    result.endIndex = _rows.size - 1
-    return result
-  }
-
   override fun onApply(callback: () -> Unit): PanelImpl {
     dialogPanelConfig.applyCallbacks.list(null).add(callback)
     return this
