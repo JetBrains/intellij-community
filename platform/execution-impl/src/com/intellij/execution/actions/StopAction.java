@@ -192,21 +192,26 @@ public class StopAction extends DumbAwareAction {
         .createPopup();
 
       myActivePopupRef = new WeakReference<>(popup);
-      InputEvent inputEvent = e.getInputEvent();
-      Component component = inputEvent != null ? inputEvent.getComponent() : null;
-      if (component != null && (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
-                                || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace()))) {
-        popup.showUnderneathOf(component);
-      }
-      else if (project == null) {
-        popup.showInBestPositionFor(dataContext);
-      }
-      else {
-        popup.showCenteredInCurrentWindow(project);
-      }
+      showStopPopup(e, dataContext, project, popup);
     }
     else {
       ExecutionManagerImpl.stopProcess(getRecentlyStartedContentDescriptor(dataContext));
+    }
+  }
+
+  private void showStopPopup(@NotNull AnActionEvent e, DataContext dataContext, Project project, JBPopup popup) {
+    InputEvent inputEvent = e.getInputEvent();
+    Component component = inputEvent != null ? inputEvent.getComponent() : null;
+    if (component != null && (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
+                              || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace()))
+                              || ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace())) {
+      popup.showUnderneathOf(component);
+    }
+    else if (project == null) {
+      popup.showInBestPositionFor(dataContext);
+    }
+    else {
+      popup.showCenteredInCurrentWindow(project);
     }
   }
 

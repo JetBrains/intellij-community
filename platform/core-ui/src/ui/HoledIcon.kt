@@ -4,6 +4,7 @@ package com.intellij.ui
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.ui.icons.ReplaceableIcon
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.JBScalableIcon
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.geom.Path2D
@@ -11,7 +12,7 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-abstract class HoledIcon(protected val icon: Icon) : ScalableIcon, ReplaceableIcon {
+abstract class HoledIcon(protected val icon: Icon) : JBScalableIcon(), ReplaceableIcon {
 
   protected abstract fun copyWith(icon: Icon):Icon
 
