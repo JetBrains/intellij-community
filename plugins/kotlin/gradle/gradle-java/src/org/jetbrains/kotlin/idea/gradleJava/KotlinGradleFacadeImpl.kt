@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.gradleJava
 
 import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.module.Module
@@ -23,7 +24,7 @@ private const val KOTLIN_PLUGIN_PATH_MARKER = "${KotlinGradleConstants.GROUP_ID}
 private val KOTLIN_PLUGIN_PATH_MARKER_FOR_MAVEN_LOCAL_REPO =
     "${KotlinGradleConstants.GROUP_ID.replace('.', '/')}/${KotlinGradleConstants.GRADLE_PLUGIN_ID}/"
 
-object KotlinGradleFacadeImpl : KotlinGradleFacade {
+internal class KotlinGradleFacadeImpl : KotlinGradleFacade {
     override val gradleIcon: Icon
         get() = GradleIcons.Gradle
 
@@ -39,30 +40,30 @@ object KotlinGradleFacadeImpl : KotlinGradleFacade {
         return findKotlinPluginVersion(buildScriptClasspathData)
     }
 
-    fun findKotlinPluginVersion(classpathData: BuildScriptClasspathData): IdeKotlinVersion? {
-        for (classPathEntry in classpathData.classpathEntries.asReversed()) {
-            for (path in classPathEntry.classesFile) {
-                val uniformedPath = path.replace('\\', '/')
-                // check / for local maven repo, and '.' for gradle
-                if (uniformedPath.contains(KOTLIN_PLUGIN_PATH_MARKER)) {
-                    val versionSubstring = uniformedPath.substringAfter(KOTLIN_PLUGIN_PATH_MARKER).substringBefore('/', "<error>")
-                    if (versionSubstring != "<error>") {
-                        return IdeKotlinVersion.opt(versionSubstring)
-                    }
-                } else if (uniformedPath.contains(KOTLIN_PLUGIN_PATH_MARKER_FOR_MAVEN_LOCAL_REPO)) {
-                    val versionSubstring =
-                        uniformedPath.substringAfter(KOTLIN_PLUGIN_PATH_MARKER_FOR_MAVEN_LOCAL_REPO).substringBefore('/', "<error>")
-                    if (versionSubstring != "<error>") {
-                        return IdeKotlinVersion.opt(versionSubstring)
-                    }
-                }
-            }
-        }
-
-        return null
-    }
-
     override fun findLibraryVersionByModuleData(node: DataNode<*>, groupId: String, libraryIds: List<String>): String? {
         return node.getResolvedVersionByModuleData(groupId, libraryIds)
     }
+}
+
+internal fun findKotlinPluginVersion(classpathData: BuildScriptClasspathData): IdeKotlinVersion? {
+    for (classPathEntry in classpathData.classpathEntries.asReversed()) {
+        for (path in classPathEntry.classesFile) {
+            val uniformedPath = path.replace('\\', '/')
+            // check / for local maven repo, and '.' for gradle
+            if (uniformedPath.contains(KOTLIN_PLUGIN_PATH_MARKER)) {
+                val versionSubstring = uniformedPath.substringAfter(KOTLIN_PLUGIN_PATH_MARKER).substringBefore('/', "<error>")
+                if (versionSubstring != "<error>") {
+                    return IdeKotlinVersion.opt(versionSubstring)
+                }
+            } else if (uniformedPath.contains(KOTLIN_PLUGIN_PATH_MARKER_FOR_MAVEN_LOCAL_REPO)) {
+                val versionSubstring =
+                    uniformedPath.substringAfter(KOTLIN_PLUGIN_PATH_MARKER_FOR_MAVEN_LOCAL_REPO).substringBefore('/', "<error>")
+                if (versionSubstring != "<error>") {
+                    return IdeKotlinVersion.opt(versionSubstring)
+                }
+            }
+        }
+    }
+
+    return null
 }
