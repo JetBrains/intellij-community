@@ -15,6 +15,7 @@ import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.InlineIconButton
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
@@ -23,12 +24,15 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCommitsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
+import java.awt.FontMetrics
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.SwingConstants
 
 internal object GHPRDetailsCommitsComponentFactory {
   private const val COMPONENTS_GAP = 4
+  private const val COMMIT_HASH_OFFSET = 8
 
   fun create(scope: CoroutineScope, commitsVm: GHPRCommitsViewModel, diffBridge: GHPRDiffController): JComponent {
     val commitsPopupTitle = JLabel().apply {
@@ -67,38 +71,58 @@ internal object GHPRDetailsCommitsComponentFactory {
     diffBridge: GHPRDiffController
   ): JComponent {
     return ActionLink().apply {
+      horizontalAlignment = SwingConstants.RIGHT
       setDropDownLinkIcon()
       bindText(scope, combine(commitsVm.selectedCommit, commitsVm.reviewCommits) { selectedCommit, commits ->
-        selectedCommit?.abbreviatedOid ?: CollaborationToolsBundle.message("review.details.commits.popup.text", commits.size)
+        if (selectedCommit != null) {
+          val metrics = getFontMetrics(font)
+          val commitHashWidth = calculateCommitHashWidth(metrics, commits)
+          preferredSize = JBDimension(commitHashWidth, preferredSize.height, true)
+          return@combine selectedCommit.abbreviatedOid
+        }
+        else {
+          preferredSize = null
+          return@combine CollaborationToolsBundle.message("review.details.commits.popup.text", commits.size)
+        }
       })
       bindDisabled(scope, commitsVm.reviewCommits.map { commits ->
         commits.size == 1
       })
-
-      addActionListener { event ->
-        val popupState: PopupState<JBPopup> = PopupState.forPopup()
-        val parentComponent = event.source as? JComponent ?: return@addActionListener
-        val point = RelativePoint.getSouthWestOf(parentComponent)
-        scope.launch {
-          val commits = commitsVm.reviewCommits.value
-          val popupItems: List<GHCommit?> = mutableListOf<GHCommit?>(null).apply {
-            addAll(commits)
-          }
-
-          val selectedCommit = ChooserPopupUtil.showChooserPopup(point, popupState, popupItems) { selectedCommit ->
-            val title = selectedCommit?.messageHeadline
-                        ?: CollaborationToolsBundle.message("review.details.commits.popup.all", commits.size)
-            val isSelected = selectedCommit == commitsVm.selectedCommit.value
-            val icon = if (isSelected) AllIcons.Actions.Checked_selected else JBUIScale.scaleIcon(EmptyIcon.create(12))
-            val isSeparated = selectedCommit == null
-
-            return@showChooserPopup ChooserPopupUtil.PopupItemPresentation.Simple(shortText = title, icon = icon, isSeparated = isSeparated)
-          }
-
-          commitsVm.selectCommit(selectedCommit)
-          diffBridge.activeTree = GHPRDiffController.ActiveTree.COMMITS
-        }
-      }
+      addActionListener(createCommitPopupAction(scope, commitsVm, diffBridge))
     }
+  }
+
+  private fun createCommitPopupAction(
+    scope: CoroutineScope,
+    commitsVm: GHPRCommitsViewModel,
+    diffBridge: GHPRDiffController
+  ): ActionListener = ActionListener { event ->
+    val popupState: PopupState<JBPopup> = PopupState.forPopup()
+    val parentComponent = event.source as? JComponent ?: return@ActionListener
+    val point = RelativePoint.getSouthWestOf(parentComponent)
+    scope.launch {
+      val commits = commitsVm.reviewCommits.value
+      val popupItems: List<GHCommit?> = mutableListOf<GHCommit?>(null).apply {
+        addAll(commits)
+      }
+
+      val selectedCommit = ChooserPopupUtil.showChooserPopup(point, popupState, popupItems) { selectedCommit ->
+        val title = selectedCommit?.messageHeadline
+                    ?: CollaborationToolsBundle.message("review.details.commits.popup.all", commits.size)
+        val isSelected = selectedCommit == commitsVm.selectedCommit.value
+        val icon = if (isSelected) AllIcons.Actions.Checked_selected else JBUIScale.scaleIcon(EmptyIcon.create(12))
+        val isSeparated = selectedCommit == null
+
+        return@showChooserPopup ChooserPopupUtil.PopupItemPresentation.Simple(shortText = title, icon = icon, isSeparated = isSeparated)
+      }
+
+      commitsVm.selectCommit(selectedCommit)
+      diffBridge.activeTree = GHPRDiffController.ActiveTree.COMMITS
+    }
+  }
+
+  private fun calculateCommitHashWidth(metrics: FontMetrics, commits: List<GHCommit>): Int {
+    val longestCommitHash = commits.maxOf { commit -> metrics.stringWidth(commit.abbreviatedOid) } // list always is not empty
+    return longestCommitHash + AllIcons.General.LinkDropTriangle.iconWidth + COMMIT_HASH_OFFSET
   }
 }
