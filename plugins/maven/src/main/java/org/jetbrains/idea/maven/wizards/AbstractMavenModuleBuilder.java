@@ -17,11 +17,13 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +39,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +62,26 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   private MavenEnvironmentForm myEnvironmentForm;
 
   private Map<String, String> myPropertiesToCreateByArtifact;
+
+  @Override
+  public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
+    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, ConfigurationException, JDOMException {
+    var module = super.createModule(moduleModel);
+
+    // handle the case when a maven module was deleted / ignored, and then the same module is created again
+    // we need to remove the module from the ignored list, otherwise it will disappear during the subsequent maven import
+    unignorePom(moduleModel);
+
+    return module;
+  }
+
+  private void unignorePom(@NotNull ModifiableModuleModel moduleModel) {
+    var project = moduleModel.getProject();
+    var contentEntryPath = getContentEntryPath();
+    if (null == contentEntryPath) return;
+    var mavenProjectsTree = MavenProjectsManager.getInstance(project).getProjectsTree();
+    mavenProjectsTree.removeIgnoredFilesPaths(List.of(contentEntryPath + "/pom.xml"));
+  }
 
   @Override
   protected void setupModule(Module module) throws ConfigurationException {
