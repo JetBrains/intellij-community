@@ -34,6 +34,7 @@ class WorkspaceModelTestingService : KotlinBeforeAfterTestRuleWithDescription {
         val actualTestProjectDir = testInstance.importedProjectRoot.toNioPath().toFile()
         val kotlinGradlePluginVersion = testInstance.kotlinTestPropertiesService.kotlinGradlePluginVersion
         val gradleVersion = testInstance.kotlinTestPropertiesService.gradleVersion.version
+        val agpVersionShort = testInstance.kotlinTestPropertiesService.agpVersion.let { if ("-" in it) it.substringBefore("-") else it }
         val modes = requireNotNull(currentModes) {
             "@WorkspaceChecks were not set. Please, annotate the test method with @WorkspaceChecks\n" +
                     "Available modes: ${WorkspacePrintingMode.values().joinToString()}"
@@ -46,7 +47,8 @@ class WorkspaceModelTestingService : KotlinBeforeAfterTestRuleWithDescription {
             kotlinGradlePluginVersion,
             gradleVersion,
             modes,
-            configuration
+            configuration,
+            agpClassifier = "agp$agpVersionShort"
         )
     }
 }

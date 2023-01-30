@@ -17,12 +17,14 @@ fun checkWorkspaceModel(
     checkModes: List<WorkspacePrintingMode>,
     testConfiguration: TestConfiguration,
     testClassifier: String? = null,
+    agpClassifier: String? = null,
 ) {
     val kotlinClassifier = with(kotlinPluginVersion) { "$major.$minor.$patch" }
     val filesWithExpectedTestData = findExpectedTestDataFiles(
         expectedTestDataDir,
         kotlinClassifier,
         gradleVersion,
+        agpClassifier,
         checkModes,
         testClassifier
     )
@@ -42,17 +44,23 @@ private fun findMostSpecificExistingFileOrNewDefault(
     testDataDir: File,
     kotlinClassifier: String,
     gradleClassifier: String,
+    agpClassifier: String?,
     mode: WorkspacePrintingMode,
     testClassifier: String?
 ): File {
     val prioritisedClassifyingParts = sequenceOf(
-        listOf(kotlinClassifier, gradleClassifier),
-        listOf(kotlinClassifier),
-        listOf(gradleClassifier),
         listOfNotNull(testClassifier),
+        listOfNotNull(kotlinClassifier, gradleClassifier, agpClassifier),
+        listOfNotNull(kotlinClassifier, gradleClassifier),
+        listOfNotNull(kotlinClassifier, agpClassifier),
+        listOfNotNull(gradleClassifier, agpClassifier),
+        listOfNotNull(kotlinClassifier),
+        listOfNotNull(gradleClassifier),
+        listOfNotNull(agpClassifier),
     )
 
     return prioritisedClassifyingParts
+        .filter { it.isNotEmpty() }
         .map { classifierParts -> fileWithClassifyingParts(testDataDir, mode, classifierParts) }
         .firstNotNullOfOrNull { it.takeIf(File::exists) }
         ?: fileWithClassifyingParts(testDataDir, mode, classifyingParts = emptyList()) // Non-existent file
@@ -62,10 +70,11 @@ private fun findExpectedTestDataFiles(
     testDataDir: File,
     kotlinClassifier: String,
     gradleClassifier: String,
+    agpClassifier: String?,
     checkModes: List<WorkspacePrintingMode>,
     testClassifier: String?,
 ): List<Pair<File, WorkspacePrintingMode>> = checkModes.map { mode ->
-    findMostSpecificExistingFileOrNewDefault(testDataDir, kotlinClassifier, gradleClassifier, mode, testClassifier) to mode
+    findMostSpecificExistingFileOrNewDefault(testDataDir, kotlinClassifier, gradleClassifier, agpClassifier, mode, testClassifier) to mode
 }
 
 enum class WorkspacePrintingMode(
