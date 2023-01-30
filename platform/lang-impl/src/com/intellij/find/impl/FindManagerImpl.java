@@ -442,34 +442,11 @@ public final class FindManagerImpl extends FindManager {
   }
 
   @NotNull
-  private static FindModel normalizeIfMultilined(@NotNull FindModel findmodel) {
-    if (findmodel.isMultiline()) {
-      final FindModel model = new FindModel();
-      model.copyFrom(findmodel);
-      final String s = model.getStringToFind();
-      String newStringToFind;
-
-      if (findmodel.isRegularExpressions()) {
-        newStringToFind = StringUtil.replace(s, "\\n", "\n"); // temporary convert back escaped symbols
-        newStringToFind = StringUtil.replace(newStringToFind, "\n", "\\n");
-      } else {
-        newStringToFind = StringUtil.escapeToRegexp(s);
-        model.setRegularExpressions(true);
-      }
-      model.setStringToFind(newStringToFind);
-
-      return model;
-    }
-    return findmodel;
-  }
-
-  @NotNull
   private FindResult doFindString(@NotNull CharSequence text,
-                                         char @Nullable [] textArray,
-                                         int offset,
-                                         @NotNull FindModel findmodel,
-                                         @Nullable VirtualFile file) {
-    FindModel model = normalizeIfMultilined(findmodel);
+                                  char @Nullable [] textArray,
+                                  int offset,
+                                  @NotNull FindModel model,
+                                  @Nullable VirtualFile file) {
     String toFind = model.getStringToFind();
     if (toFind.isEmpty()){
       return NOT_FOUND_RESULT;
@@ -820,7 +797,6 @@ public final class FindManagerImpl extends FindManager {
   }
 
   private static Matcher compileRegexAndFindFirst(FindModel model, CharSequence text, int startOffset) {
-    model = normalizeIfMultilined(model);
     Matcher matcher = compileRegExp(model, text);
     assert matcher != null;
 

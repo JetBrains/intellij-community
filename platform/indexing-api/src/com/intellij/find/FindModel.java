@@ -26,13 +26,10 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
   public static void initStringToFind(FindModel findModel, String s) {
     if (!StringUtil.isEmpty(s)) {
-      if (findModel.isMultiline() || !StringUtil.containsLineBreak(s)) {
-        findModel.setStringToFind(s);
+      if (StringUtil.containsLineBreak(s)) {
+        findModel.setMultiline(true);
       }
-      else {
-        findModel.setStringToFind(StringUtil.escapeToRegexp(s));
-        findModel.setRegularExpressions(true);
-      }
+      findModel.setStringToFind(s);
     }
   }
 
@@ -91,7 +88,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   public void setMultiline(boolean multiline) {
     if (multiline != isMultiline) {
       isMultiline = multiline;
-      initStringToFind(this, getStringToFind());
       notifyObservers();
     }
   }
