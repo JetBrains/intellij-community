@@ -36,6 +36,7 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.with
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodPopupProvider
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceMethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.extractInDialog
+import com.intellij.refactoring.extractMethod.newImpl.parameterObject.ParameterObjectExtractor
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
@@ -80,7 +81,7 @@ class MethodExtractor {
       return selectOptionWithTargetClass(editor, allOptionsToExtract)
     }
     catch (e: ExtractMultipleVariablesException) {
-      invokeLater { ObjectBuilder.run(editor, e.variables, e.scope) }
+      invokeLater { ParameterObjectExtractor.run(editor, e.variables, e.scope) }
       return null
     }
     catch (e: ExtractException) {
