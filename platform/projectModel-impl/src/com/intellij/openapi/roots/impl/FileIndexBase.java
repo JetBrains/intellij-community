@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.containers.TreeNodeProcessingResult;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -60,14 +61,13 @@ abstract class FileIndexBase implements FileIndex {
         }
         boolean accepted = ReadAction.compute(() -> !isScopeDisposed() && isInContent(file, info) &&
                                                     (customFilter == null || customFilter.accept(file)));
-        ContentIteratorEx.Status status = accepted ? processorEx.processFileEx(file) : ContentIteratorEx.Status.CONTINUE;
-        if (status == ContentIteratorEx.Status.CONTINUE) {
-          return CONTINUE;
-        }
-        if (status == ContentIteratorEx.Status.SKIP_CHILDREN) {
-          return SKIP_CHILDREN;
-        }
-        return skipTo(dir);
+        TreeNodeProcessingResult status = accepted ? processorEx.processFileEx(file) : TreeNodeProcessingResult.CONTINUE;
+        return switch (status) {
+          case CONTINUE -> CONTINUE;
+          case SKIP_CHILDREN -> SKIP_CHILDREN;
+          case SKIP_TO_PARENT -> skipTo(file.getParent());
+          case STOP -> skipTo(dir);
+        };
       }
     });
     return !Comparing.equal(result.skipToParent, dir);
@@ -77,7 +77,7 @@ abstract class FileIndexBase implements FileIndex {
     if (processor instanceof ContentIteratorEx) {
       return (ContentIteratorEx)processor;
     }
-    return fileOrDir -> processor.processFile(fileOrDir) ? ContentIteratorEx.Status.CONTINUE : ContentIteratorEx.Status.STOP;
+    return fileOrDir -> processor.processFile(fileOrDir) ? TreeNodeProcessingResult.CONTINUE : TreeNodeProcessingResult.STOP;
   }
 
   @Override

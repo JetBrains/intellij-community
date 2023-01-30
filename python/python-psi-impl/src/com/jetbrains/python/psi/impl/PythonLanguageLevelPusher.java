@@ -30,6 +30,7 @@ import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TreeNodeProcessingResult;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.jetbrains.python.PythonCodeStyleService;
@@ -350,9 +351,9 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
         final PushedFilePropertiesUpdater propertiesUpdater = PushedFilePropertiesUpdater.getInstance(myProject);
         index.iterateContentUnderDirectory(myRoot, (ContentIteratorEx)file -> {
           if (visitFileToPush(file, propertiesUpdater)) {
-            return ContentIteratorEx.Status.CONTINUE;
+            return TreeNodeProcessingResult.CONTINUE.CONTINUE;
           }
-          return ContentIteratorEx.Status.SKIP_CHILDREN;
+          return TreeNodeProcessingResult.SKIP_CHILDREN;
         });
         return;
       }
