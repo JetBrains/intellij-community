@@ -21,24 +21,49 @@ import java.util.*;
 public class VcsLogColorManagerImpl implements VcsLogColorManager {
   private static final Logger LOG = Logger.getInstance(VcsLogColorManagerImpl.class);
 
-  private final @NotNull Map<String, Color> myPaths2Colors;
+  private final @NotNull Map<String, Map<String, Color>> myPath2Palette;
   private final @NotNull List<FilePath> myPaths;
 
-  public VcsLogColorManagerImpl(@NotNull Set<? extends VirtualFile> roots, @NotNull List<Color> palette) {
+  public VcsLogColorManagerImpl(@NotNull Set<? extends VirtualFile> roots,
+                                @NotNull List<Color> defaultPalette,
+                                AdditionalColorSpace... additionalColorSpaces) {
     this(ContainerUtil.map(ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getName)),
                            file -> VcsUtil.getFilePath(file)),
-         palette
+         defaultPalette,
+         additionalColorSpaces
     );
   }
 
-  public VcsLogColorManagerImpl(@NotNull Collection<? extends FilePath> paths, @NotNull List<Color> palette) {
+  public VcsLogColorManagerImpl(
+    @NotNull Collection<? extends FilePath> paths,
+    @NotNull List<Color> defaultPalette,
+    AdditionalColorSpace... additionalColorSpaces
+  ) {
     myPaths = new ArrayList<>(paths);
-    myPaths2Colors = new HashMap<>();
+    myPath2Palette = new HashMap<>();
 
-    palette = palette.isEmpty() ? List.of(getDefaultRootColor()) : new ArrayList<>(palette);
-    for (int i = 0; i < myPaths.size(); i++) {
-      myPaths2Colors.put(myPaths.get(i).getPath(), getColor(i, myPaths.size(), palette));
+    defaultPalette = defaultPalette.isEmpty() ? List.of(getDefaultRootColor()) : new ArrayList<>(defaultPalette);
+    myPath2Palette.put(VcsLogColorManager.DEFAULT_COLOR_MODE, generateFromPalette(defaultPalette));
+
+    for (AdditionalColorSpace colorSpace : additionalColorSpaces) {
+      // do not allow to override default palette
+      if (colorSpace.colorMode.equals(VcsLogColorManager.DEFAULT_COLOR_MODE)) continue;
+
+      // allow additional palettes only the same size as the default
+      if (colorSpace.palette.size() != defaultPalette.size()) continue;
+
+      Map<String, Color> colors = generateFromPalette(new ArrayList<>(colorSpace.palette));
+      myPath2Palette.put(colorSpace.colorMode, colors);
     }
+  }
+
+  private Map<String, Color> generateFromPalette(@NotNull List<Color> defaultPalette) {
+    Map<String, Color> path2Palette = new HashMap<>();
+
+    for (int i = 0; i < myPaths.size(); i++) {
+      path2Palette.put(myPaths.get(i).getPath(), getColor(i, myPaths.size(), defaultPalette));
+    }
+    return path2Palette;
   }
 
   private static @NotNull Color getColor(int rootNumber, int rootsCount, @NotNull List<Color> palette) {
@@ -57,19 +82,20 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
   }
 
   @Override
-  public @NotNull Color getPathColor(@NotNull FilePath path) {
-    return getColor(path.getPath());
+  public @NotNull Color getPathColor(@NotNull FilePath path, @NotNull String colorMode) {
+    return getColor(path.getPath(), colorMode);
   }
 
   @Override
-  public @NotNull Color getRootColor(@NotNull VirtualFile root) {
-    return getColor(root.getPath());
+  public @NotNull Color getRootColor(@NotNull VirtualFile root, @NotNull String colorMode) {
+    return getColor(root.getPath(), colorMode);
   }
 
-  private @NotNull Color getColor(@NotNull String path) {
-    Color color = myPaths2Colors.get(path);
+  private @NotNull Color getColor(@NotNull String path, @NotNull String colorMode) {
+    Map<String, Color> paletteToColor = myPath2Palette.getOrDefault(colorMode, myPath2Palette.get(DEFAULT_COLOR_MODE));
+    Color color = paletteToColor.get(path);
     if (color == null) {
-      LOG.error("No color record for path " + path + ". All paths: " + myPaths2Colors);
+      LOG.error("No color record for path " + path + ". All paths: " + paletteToColor);
       color = getDefaultRootColor();
     }
     return color;
@@ -82,5 +108,15 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
   @Override
   public @NotNull Collection<FilePath> getPaths() {
     return myPaths;
+  }
+
+  static class AdditionalColorSpace {
+    private final String colorMode;
+    private final List<Color> palette;
+
+    AdditionalColorSpace(@NotNull String colorMode, @NotNull List<Color> palette) {
+      this.colorMode = colorMode;
+      this.palette = palette;
+    }
   }
 }

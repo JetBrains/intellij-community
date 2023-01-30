@@ -13,6 +13,7 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogColorManagerFactory;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -63,8 +64,6 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
 
     FilePath path = (FilePath)value;
 
-    myColor = path == null ? UIUtil.getTableBackground(isSelected, hasFocus) :
-              VcsLogGraphTable.getPathBackgroundColor(path, myColorManager);
     boolean hovered = row == getHoveredRow(table);
 
     myBorderColor = Objects.requireNonNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected, hovered).getBackground());
@@ -89,6 +88,13 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
     else {
       append("");
       isNarrow = true;
+    }
+
+    if (path == null) {
+      myColor = UIUtil.getTableBackground(isSelected, hasFocus);
+    }
+    else {
+      myColor = myColorManager.getPathColor(path, isNarrow ? VcsLogColorManager.DEFAULT_COLOR_MODE : VcsLogColorManagerFactory.ROOT_OPENED_STATE);
     }
 
     myTooltip = getTooltipText(path, isNarrow);
