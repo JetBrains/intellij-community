@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.ui.GroupedComboBoxRenderer
@@ -17,44 +17,48 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.DefaultComboBoxModel
 
-abstract class LanguageLevelCombo(defaultItem: @Nls String?) : ComboBox<LanguageLevelCombo.ComboItems>() {
-
-  sealed class ComboItems: GroupedComboBoxRenderer.Item {
-    data class Default(val label: @Nls String) : ComboItems() {
-      override fun getText(): String = label
-    }
-    data class Level(val level: LanguageLevel) : ComboItems() {
-      override fun getText(): String = level.presentableText
-    }
-    data class Separator(val label: @NlsContexts.Separator String) : ComboItems() {
-      override fun isSeparator(): Boolean = true
-      override fun getSeparatorText(): String = label
-    }
-  }
+abstract class LanguageLevelCombo(defaultItem: @Nls String?) : ComboBox<Any>() {
 
   init {
-    val items = mutableListOf<ComboItems>()
-    items.add(ComboItems.Default(defaultItem ?: ""))
-    items.add(ComboItems.Separator(JavaUiBundle.message("language.level.combo.lts.versions")))
+    val items = mutableListOf<Any>()
+    items.add(defaultItem ?: "")
+
+    val ltsSeparatorIndex = items.size
     for (level in LTS) {
-      items.add(ComboItems.Level(level))
+      items.add(level)
     }
-    items.add(ComboItems.Separator(JavaUiBundle.message("language.level.combo.other.versions")))
+
+    val otherSeparatorIndex = items.size
     val highestPreviewLevel = LanguageLevel.HIGHEST.previewLevel
     val highestWithPreview = highestPreviewLevel ?: LanguageLevel.HIGHEST
     LanguageLevel.values()
       .sortedBy { it.toJavaVersion().feature }
       .filter { level: LanguageLevel -> level <= highestWithPreview && (level.isPreview || !ArrayUtil.contains(level, *LTS)) }
-      .forEach { level: LanguageLevel -> items.add(ComboItems.Level(level)) }
-    items.add(ComboItems.Separator(JavaUiBundle.message("language.level.combo.experimental.versions")))
+      .forEach { level: LanguageLevel -> items.add(level) }
+
+    val experimentalSeparatorIndex = items.size
     for (level in LanguageLevel.values()) {
       if (level > highestWithPreview) {
-        items.add(ComboItems.Level(level))
+        items.add(level)
       }
     }
+
     isSwingPopup = false
     model = DefaultComboBoxModel(items.toTypedArray())
-    renderer = GroupedComboBoxRenderer(this)
+    renderer = object: GroupedComboBoxRenderer<Any>(this) {
+      override fun getText(item: Any): String = when (item) {
+        is String -> item
+        is LanguageLevel -> item.presentableText
+        else -> ""
+      }
+
+      override fun separatorFor(index: Int): ListSeparator? = when (index) {
+        ltsSeparatorIndex -> ListSeparator(JavaUiBundle.message("language.level.combo.lts.versions"))
+        otherSeparatorIndex -> ListSeparator(JavaUiBundle.message("language.level.combo.other.versions"))
+        experimentalSeparatorIndex -> ListSeparator(JavaUiBundle.message("language.level.combo.experimental.versions"))
+        else -> null
+      }
+    }
   }
 
   private fun checkAcceptedLevel(selectedLevel: LanguageLevel?) {
@@ -104,28 +108,28 @@ abstract class LanguageLevelCombo(defaultItem: @Nls String?) : ComboBox<Language
   val selectedLevel: LanguageLevel?
     get() {
       return when (val item = selectedItem) {
-        is ComboItems.Level -> item.level
-        is ComboItems.Default -> defaultLevel
+        is LanguageLevel -> item
+        is String -> defaultLevel
         else -> null
       }
     }
   val isDefault: Boolean
-    get() = selectedItem is ComboItems.Default
+    get() = selectedItem is String
 
   override fun setSelectedItem(anObject: Any?) {
     val levelToSelect: @NonNls Any = anObject ?: "default"
     val entryForLevel = getEntryForLevel(levelToSelect)
     if (entryForLevel != null) super.setSelectedItem(entryForLevel)
-    if (entryForLevel is ComboItems.Level) checkAcceptedLevel(entryForLevel.level)
+    if (entryForLevel is LanguageLevel) checkAcceptedLevel(entryForLevel)
   }
 
-  private fun getEntryForLevel(levelToSelect: Any?): ComboItems? {
+  private fun getEntryForLevel(levelToSelect: Any?): Any? {
     for (i in 0 until itemCount) {
       val entry = getItemAt(i)
       if (levelToSelect == entry) return entry
       when (entry) {
-        is ComboItems.Level -> if (levelToSelect == entry.level) return entry
-        is ComboItems.Default -> if (levelToSelect is String) return entry
+        is LanguageLevel -> if (levelToSelect == entry) return entry
+        is String -> if (levelToSelect is String) return entry
         else -> {}
       }
     }

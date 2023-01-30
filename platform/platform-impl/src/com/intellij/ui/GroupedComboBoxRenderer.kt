@@ -3,6 +3,7 @@ package com.intellij.ui
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -19,16 +20,11 @@ import java.awt.Dimension
 import javax.swing.*
 import javax.swing.border.CompoundBorder
 
-open class GroupedComboBoxRenderer(val combo: ComboBox<out Item>) : GroupedElementsRenderer(), ListCellRenderer<GroupedComboBoxRenderer.Item> {
+abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedElementsRenderer(), ListCellRenderer<T> {
 
-  interface Item {
-    fun getText(): @NlsContexts.ListItem String = ""
-    fun getSecondaryText(): @Nls String? = null
-    fun getIcon(): Icon? = null
-
-    fun isSeparator(): Boolean = false
-    fun getSeparatorText(): @NlsContexts.Separator String = ""
-  }
+  open fun getText(item: T): @NlsContexts.ListItem String = ""
+  open fun getSecondaryText(item: T): @Nls String? = null
+  open fun getIcon(item: T): Icon? = null
 
   private lateinit var coloredComponent: SimpleColoredComponent
 
@@ -48,16 +44,16 @@ open class GroupedComboBoxRenderer(val combo: ComboBox<out Item>) : GroupedEleme
     myRendererComponent.add(centerComponent, BorderLayout.CENTER)
   }
 
-  open fun customize(item: SimpleColoredComponent, value: Item, index: Int) {
-    val text = value.getText()
+  open fun customize(item: SimpleColoredComponent, value: T, index: Int) {
+    val text = getText(value)
     item.append(text)
 
-    val secondaryText = value.getSecondaryText()
+    val secondaryText = getSecondaryText(value)
     if (secondaryText != null) {
       item.append(" $secondaryText", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
 
-    item.icon = value.getIcon()
+    item.icon = getIcon(value)
   }
 
   override fun createSeparator(): SeparatorWithText = when {
@@ -79,28 +75,29 @@ open class GroupedComboBoxRenderer(val combo: ComboBox<out Item>) : GroupedEleme
     }
   }
 
-  fun getPopup(): ComboBoxPopup<out Any>? {
-    return (combo.popup as? DarculaJBPopupComboPopup<*>)?.popup
-  }
   override fun getBackground(): Color = UIUtil.getListBackground(false, false)
   override fun getForeground(): Color = UIUtil.getListForeground(false, false)
   override fun getSelectionBackground(): Color = UIUtil.getListSelectionBackground(true)
   override fun getSelectionForeground(): Color = UIUtil.getListSelectionForeground(true)
 
-  override fun getListCellRendererComponent(list: JList<out Item>?,
-                                            value: Item,
+  abstract fun separatorFor(index: Int): ListSeparator?
+
+  override fun getListCellRendererComponent(list: JList<out T>?,
+                                            value: T,
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
+    val popup = (combo.popup as? DarculaJBPopupComboPopup<*>)?.popup
+
     coloredComponent.apply {
       clear()
       customize(this, value, index)
     }
 
     mySeparatorComponent.apply {
-      isVisible = getPopup()?.isSeparatorAboveOf(value) == true
+      isVisible = popup?.isSeparatorAboveOf(value) == true
       if (isVisible) {
-        caption = getPopup()!!.getCaptionAboveOf(value)
+        caption = popup!!.getCaptionAboveOf(value)
         (this as GroupHeaderSeparator).setHideLine(index == 0)
       }
     }
