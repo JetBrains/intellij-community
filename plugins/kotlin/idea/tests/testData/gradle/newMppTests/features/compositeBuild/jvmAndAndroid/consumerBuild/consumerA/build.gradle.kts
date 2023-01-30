@@ -5,10 +5,7 @@ plugins {
     id("com.android.application")
 }
 
-android {
-    compileSdk = {{compile_sdk_version}}
-    sourceSets.getByName("main").manifest.srcFile("src/androidMain/AndroidManifest.xml")
-}
+{{default_android_block}}
 
 kotlin {
     jvm()
