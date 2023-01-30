@@ -1059,10 +1059,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       stopProcess(true, "canceled in queuePassesCreation: "+progress.getCancellationTrace());
       return;
     }
-    //if (myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
-    //  stopProcess(true, "more documents to commit: " + Arrays.toString(myPsiDocumentManager.getUncommittedDocuments()));
-    //  return;
-    //}
+    if (myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
+      stopProcess(true, "more documents to commit: " + Arrays.toString(myPsiDocumentManager.getUncommittedDocuments()));
+      return;
+    }
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         // wait for heavy processing to stop, re-schedule daemon but not too soon
