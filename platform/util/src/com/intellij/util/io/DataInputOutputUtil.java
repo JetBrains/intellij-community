@@ -86,7 +86,7 @@ public final class DataInputOutputUtil {
     }
   }
 
-  public static void writeTIME(@NotNull ByteBuffer buffer, long timestamp) throws IOException {
+  public static void writeTIME(@NotNull ByteBuffer buffer, long timestamp) {
     long relStamp = timestamp - timeBase;
     if (relStamp < 0 || relStamp >= 0xFF00000000L) {
       buffer.put((byte)255);
@@ -116,7 +116,7 @@ public final class DataInputOutputUtil {
     }
   }
 
-  public static long readTIME(@NotNull ByteBuffer buffer) throws IOException {
+  public static long readTIME(@NotNull ByteBuffer buffer) {
     final int first = Byte.toUnsignedInt(buffer.get());
     if (first == 0xFF) {
       return buffer.getLong();
