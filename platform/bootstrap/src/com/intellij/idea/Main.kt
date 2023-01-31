@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Main")
 @file:Suppress("ReplacePutWithAssignment")
 package com.intellij.idea
@@ -28,8 +28,9 @@ fun main(rawArgs: Array<String>) {
   val startupTimings = LinkedHashMap<String, Long>(6)
   startupTimings.put("startup begin", System.nanoTime())
 
-  val args: List<String> = preProcessRawArgs(rawArgs)
+  val args: List<String> = preprocessArgs(rawArgs)
   AppMode.setFlags(args)
+
   try {
     bootstrap(startupTimings)
     startupTimings.put("main scope creating", System.nanoTime())
@@ -113,18 +114,15 @@ private fun bootstrap(startupTimings: LinkedHashMap<String, Long>) {
   BootstrapClassLoaderUtil.initClassLoader(AppMode.isRemoteDevHost())
 }
 
-private fun preProcessRawArgs(rawArgs: Array<String>): List<String> {
-  if (rawArgs.size == 1 && rawArgs[0] == "%f") return emptyList()
+private fun preprocessArgs(args: Array<String>): List<String> {
+  if (args.size == 1 && args[0] == "%f") return emptyList()  // a buggy DE may fail to strip an unused parameter from a .desktop file
 
-  // Parse java properties from arguments and activate them
-  val (propArgs, other) = rawArgs.partition { it.startsWith("-D") && it.contains("=") }
-  propArgs.forEach { arg ->
-    val (option, value) = arg.removePrefix("-D").split("=")
-
+  val (propertyArgs, otherArgs) = args.partition { it.startsWith("-D") && it.contains("=") }
+  propertyArgs.forEach { arg ->
+    val (option, value) = arg.removePrefix("-D").split("=", limit = 2)
     System.setProperty(option, value)
   }
-
-  return other
+  return otherArgs
 }
 
 @Suppress("HardCodedStringLiteral")
