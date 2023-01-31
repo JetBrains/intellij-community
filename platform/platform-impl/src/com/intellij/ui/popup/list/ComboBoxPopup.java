@@ -247,9 +247,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
     @Override
     public @Nullable ListSeparator getSeparatorAbove(T value) {
-      final int index = getValues().indexOf(value);
-      if (myGetRenderer.get() instanceof GroupedComboBoxRenderer<?> renderer) {
-        return renderer.separatorFor(index);
+      if (myGetRenderer.get() instanceof GroupedComboBoxRenderer<? super T> renderer) {
+        return renderer.separatorFor(value);
       }
       return null;
     }
