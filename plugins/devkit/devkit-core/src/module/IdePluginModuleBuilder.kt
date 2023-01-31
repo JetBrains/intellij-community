@@ -95,6 +95,9 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
                                        javaClass.getResource("/assets/devkit-pluginIcon.svg")!!))
       assets.add(GeneratorTemplateFile("src/main/resources/META-INF/plugin.xml",
                                        ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.PLUGIN_XML)))
+
+      assets.add(GeneratorTemplateFile("gradle.properties",
+                                       ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.GRADLE_PROPERTIES)))
       assets.add(GeneratorTemplateFile("build.gradle.kts", ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.BUILD_GRADLE_KTS)))
       assets.add(GeneratorTemplateFile("settings.gradle.kts", ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.SETTINGS_GRADLE_KTS)))
       assets.add(GeneratorTemplateFile(standardAssetsProvider.gradleWrapperPropertiesLocation,
