@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle
 
 import com.intellij.ide.CommandLineInspectionProgressReporter
@@ -6,7 +6,10 @@ import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
 import com.intellij.ide.warmup.WarmupStatus
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.ide.EnvironmentParametersService
+import com.intellij.ide.impl.ProjectOpenKeyRegistry
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -57,6 +60,12 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
 
   override fun configureProject(project: Project, context: ConfiguratorContext) {
     val basePath = project.basePath ?: return
+    val service = service<EnvironmentParametersService>()
+    val projectSelectionKey = runCatching { service.getEnvironmentValue(project, ProjectOpenKeyRegistry.PROJECT_OPEN_PROCESSOR) }.getOrNull()
+    if (projectSelectionKey != null && projectSelectionKey != "Gradle") {
+      // something else was selected to open the project
+      return
+    }
     val state = GradleImportHintService.getInstance(project).state
 
     if (state.skip) return

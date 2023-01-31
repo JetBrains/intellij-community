@@ -1247,6 +1247,8 @@
     <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity" order="last"/>
     <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity" order="first"/>
 
+    <environmentKeyRegistry implementation="com.intellij.ide.impl.ProjectOpenKeyRegistry"/>
+
     <actionConfigurationCustomizer implementation="com.intellij.openapi.wm.impl.GlobalMenuLinux$MyActionTuner"/>
 
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.ProductTitleInfoProvider"/>

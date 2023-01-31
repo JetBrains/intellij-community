@@ -8,6 +8,8 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
+import com.intellij.ide.EnvironmentParametersService
+import com.intellij.ide.impl.ProjectOpenKeyRegistry
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
@@ -66,6 +68,13 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     val basePath = context.projectPath.pathString
     val pomXmlFile = basePath + "/" + MavenConstants.POM_XML
     if (FileUtil.findFirstThatExist(pomXmlFile) == null) return
+
+    val service = service<EnvironmentParametersService>()
+    val projectSelectionKey = runCatching { service.getEnvironmentValue(project, ProjectOpenKeyRegistry.PROJECT_OPEN_PROCESSOR) }.getOrNull()
+    if (projectSelectionKey != null && projectSelectionKey != "Maven") {
+      // something else was selected to open the project
+      return
+    }
 
     val mavenProjectAware = ExternalSystemUnlinkedProjectAware.getInstance(MavenUtil.SYSTEM_ID)!!
     val isMavenProjectLinked = mavenProjectAware.isLinkedProject(project, basePath)
