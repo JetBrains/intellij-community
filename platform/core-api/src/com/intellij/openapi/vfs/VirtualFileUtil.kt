@@ -74,7 +74,7 @@ fun VirtualFile.findPsiFile(project: Project): PsiFile? {
 }
 
 @RequiresReadLock
-private fun VirtualFile.findFileOrDirectory(relativePath: @SystemIndependent String): VirtualFile? {
+fun VirtualFile.findFileOrDirectory(relativePath: @SystemIndependent String): VirtualFile? {
   var virtualFile = checkNotNull(fileSystem.findFileByPath("/")) {
     "Cannot find file system root for file: $path/$relativePath"
   }
@@ -127,26 +127,6 @@ fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): 
     }
   }
   return directory
-}
-
-@RequiresWriteLock
-fun VirtualFile.deleteRecursively() {
-  delete(fileSystem)
-}
-
-@RequiresWriteLock
-fun VirtualFile.deleteChildrenRecursively(predicate: (VirtualFile) -> Boolean) {
-  children.filter(predicate).forEach { it.delete(fileSystem) }
-}
-
-@RequiresWriteLock
-fun VirtualFile.deleteRecursively(relativePath: String) {
-  findFileOrDirectory(relativePath)?.deleteRecursively()
-}
-
-@RequiresWriteLock
-fun VirtualFile.deleteChildrenRecursively(relativePath: String, predicate: (VirtualFile) -> Boolean) {
-  findFileOrDirectory(relativePath)?.deleteChildrenRecursively(predicate)
 }
 
 @RequiresWriteLock

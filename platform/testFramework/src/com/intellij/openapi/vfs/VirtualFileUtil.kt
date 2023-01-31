@@ -61,6 +61,26 @@ fun VirtualFile.createDirectory(relativePath: @SystemIndependent String): Virtua
 }
 
 @RequiresWriteLock
+fun VirtualFile.deleteRecursively() {
+  delete(fileSystem)
+}
+
+@RequiresWriteLock
+fun VirtualFile.deleteChildrenRecursively(predicate: (VirtualFile) -> Boolean) {
+  children.filter(predicate).forEach { it.delete(fileSystem) }
+}
+
+@RequiresWriteLock
+fun VirtualFile.deleteRecursively(relativePath: @SystemIndependent String) {
+  findFileOrDirectory(relativePath)?.deleteRecursively()
+}
+
+@RequiresWriteLock
+fun VirtualFile.deleteChildrenRecursively(relativePath: @SystemIndependent String, predicate: (VirtualFile) -> Boolean) {
+  findFileOrDirectory(relativePath)?.deleteChildrenRecursively(predicate)
+}
+
+@RequiresWriteLock
 fun Path.getVirtualFile(): VirtualFile {
   return checkNotNull(findVirtualFile()) {
     "File or directory doesn't exist: $this"

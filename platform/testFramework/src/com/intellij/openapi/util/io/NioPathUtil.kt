@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io
 
+import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -29,4 +30,23 @@ fun Path.createFile(relativePath: String): Path {
 
 fun Path.createDirectory(relativePath: String): Path {
   return getResolvedPath(relativePath).createDirectory()
+}
+
+fun Path.deleteRecursively() {
+  NioFiles.deleteRecursively(this)
+}
+
+fun Path.deleteChildrenRecursively(predicate: (Path) -> Boolean) {
+  val filter = DirectoryStream.Filter(predicate)
+  Files.newDirectoryStream(this, filter).use { stream ->
+    stream.forEach { it.deleteRecursively() }
+  }
+}
+
+fun Path.deleteRecursively(relativePath: String) {
+  getResolvedPath(relativePath).deleteRecursively()
+}
+
+fun Path.deleteChildrenRecursively(relativePath: String, predicate: (Path) -> Boolean) {
+  getResolvedPath(relativePath).deleteChildrenRecursively(predicate)
 }

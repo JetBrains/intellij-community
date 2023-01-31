@@ -60,31 +60,12 @@ fun Path.findOrCreateDirectory(): Path {
   return this
 }
 
-fun Path.deleteRecursively() {
-  NioFiles.deleteRecursively(this)
-}
-
-fun Path.deleteChildrenRecursively(predicate: (Path) -> Boolean) {
-  val filter = DirectoryStream.Filter(predicate)
-  Files.newDirectoryStream(this, filter).use { stream ->
-    stream.forEach { it.deleteRecursively() }
-  }
-}
-
 fun Path.findOrCreateFile(relativePath: String): Path {
   return getResolvedPath(relativePath).findOrCreateFile()
 }
 
 fun Path.findOrCreateDirectory(relativePath: String): Path {
   return getResolvedPath(relativePath).findOrCreateDirectory()
-}
-
-fun Path.deleteRecursively(relativePath: String) {
-  getResolvedPath(relativePath).deleteRecursively()
-}
-
-fun Path.deleteChildrenRecursively(relativePath: String, predicate: (Path) -> Boolean) {
-  getResolvedPath(relativePath).deleteChildrenRecursively(predicate)
 }
 
 fun String.toNioPath(): Path {
