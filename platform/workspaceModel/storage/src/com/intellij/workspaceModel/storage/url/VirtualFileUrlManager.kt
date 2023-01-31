@@ -5,32 +5,18 @@ import com.intellij.util.containers.TreeNodeProcessingResult
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Storage for URLs (in VFS format) of files that are referenced from workspace model entities.
+ * Storage for URLs (in the Virtual File System format) of files that are referenced from workspace model entities. 
+ * Use `VirtualFileUrlManager.getInstance(project)` extension function to get instance of this interface inside IDE.
  *
- * It's quite common to construct [VirtualFileUrl] instance from [com.intellij.openapi.vfs.VirtualFile]. However, this should be made with
- * care. Though [fromPath] and [fromUrl] look similar, they should be used with care. The result might differ depending on the underlying
- * protocol of the [com.intellij.openapi.vfs.VirtualFile] instance. Here is an example.
- * ```
- * val file: VirtualFile = ...
- * val urlManager: VirtualFileUrlManager = ...
- *
- * // Protocol prefix is preserved. Safe way.
- * val fromUrl = urlManager.fromUrl(file.url)
- *
- * // Beware of using this approach for .jar files, for example.
- * // Resulting URL might get protocol prefix different from the initial one, e.g. 'jar://' => 'file://'.
- * val fromPath = urlManager.fromPath(file.path)
- *
- * check(fromUrl.virtualFile != null)
- * check(fromPath.virtualFile != null) { "Might be null" }
- * ```
- *
+ * [fromUrl] path should be preferred over [fromPath], because the former support files not only from the local file system. 
+ * In order to obtain a [VirtualFileUrl] instance for a [VirtualFile][com.intellij.openapi.vfs.VirtualFile], use 
+ * `virtualFile.toVirtualFileUrl(virtualFileUrlManager)` extension function.
  */
 interface VirtualFileUrlManager {
   companion object
 
   /**
-   * Returns existing or creates a new instance of [VirtualFileUrl] instance for the given URL in the Virtual File System format.
+   * Returns an existing or creates a new instance of [VirtualFileUrl] instance for the given URL in the Virtual File System format.
    */
   fun fromUrl(url: String): VirtualFileUrl
 
@@ -41,10 +27,14 @@ interface VirtualFileUrlManager {
 
   @ApiStatus.Internal
   fun fromUrlSegments(urls: List<String>): VirtualFileUrl
+
   /**
-   * Method should be used with care. Please, see [class][VirtualFileUrlManager] kdoc for details.
+   * Returns an existing or creates a new instance of [VirtualFileUrl] instance for the given path to a file in the local filesystems. 
+   * It's better to use [fromUrl] wherever possible, because it works for files in other filesystems as well, e.g. inside JAR files and for
+   * remove filesystems.
    */
   fun fromPath(path: String): VirtualFileUrl
+  
   fun getSubtreeVirtualUrlsById(vfu: VirtualFileUrl): List<VirtualFileUrl>
 
   /**
