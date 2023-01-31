@@ -12,9 +12,9 @@ import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.createDirectory
+import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.openapi.vfs.findOrCreateDirectory
-import com.intellij.openapi.vfs.refreshAndGetVirtualDirectory
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture

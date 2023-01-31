@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.io.*
+import com.intellij.testFramework.utils.vfs.*
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.io.IOException

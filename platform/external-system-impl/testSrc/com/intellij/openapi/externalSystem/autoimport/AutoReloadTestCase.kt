@@ -30,6 +30,12 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.utils.io.createFile
+import com.intellij.testFramework.utils.io.deleteRecursively
+import com.intellij.testFramework.utils.vfs.createFile
+import com.intellij.testFramework.utils.vfs.deleteRecursively
+import com.intellij.testFramework.utils.vfs.getFile
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
 import org.jetbrains.concurrency.AsyncPromise
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit

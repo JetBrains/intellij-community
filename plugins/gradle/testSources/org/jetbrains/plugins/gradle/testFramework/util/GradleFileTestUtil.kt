@@ -6,7 +6,7 @@ package org.jetbrains.plugins.gradle.testFramework.util
 import com.intellij.openapi.externalSystem.util.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateFile
-import com.intellij.openapi.vfs.getFile
+import com.intellij.testFramework.utils.vfs.getFile
 import com.intellij.openapi.vfs.writeText
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase

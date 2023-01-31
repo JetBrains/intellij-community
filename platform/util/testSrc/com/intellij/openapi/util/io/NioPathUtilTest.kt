@@ -1,6 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io
 
+import com.intellij.testFramework.utils.io.createDirectory
+import com.intellij.testFramework.utils.io.createFile
+import com.intellij.testFramework.utils.io.deleteChildrenRecursively
+import com.intellij.testFramework.utils.io.deleteRecursively
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.io.IOException

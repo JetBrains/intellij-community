@@ -4,6 +4,7 @@ package com.intellij.openapi.util.io
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.utils.io.children
 import com.intellij.util.io.isFile
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions

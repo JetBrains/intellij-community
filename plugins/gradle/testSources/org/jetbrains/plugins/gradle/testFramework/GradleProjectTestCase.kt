@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.openapi.externalSystem.util.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.*
+import com.intellij.testFramework.utils.vfs.getFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan

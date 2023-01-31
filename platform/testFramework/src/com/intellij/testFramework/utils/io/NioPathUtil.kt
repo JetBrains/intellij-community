@@ -1,6 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.util.io
+package com.intellij.testFramework.utils.io
 
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.io.findOrCreateDirectory
+import com.intellij.openapi.util.io.findOrCreateFile
+import com.intellij.openapi.util.io.getResolvedPath
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
