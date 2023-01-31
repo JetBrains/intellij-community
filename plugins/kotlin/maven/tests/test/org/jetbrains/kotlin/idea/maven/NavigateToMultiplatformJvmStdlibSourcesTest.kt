@@ -22,7 +22,7 @@ class NavigateToMultipartJvmStdlibSourcesTest : LightJavaCodeInsightFixtureTestC
     }
 
     // See KTIJ-23874
-    fun testNavigateToCorrectStdlibSources() {
+    fun testNavigateToCorrectStdlibSourcesInMavenProject() {
         MavenProjectsManager.getInstance(myFixture.project).initForTests()
         val stdlibCommonElement = configureAndResolve("""
             fun foo() {
