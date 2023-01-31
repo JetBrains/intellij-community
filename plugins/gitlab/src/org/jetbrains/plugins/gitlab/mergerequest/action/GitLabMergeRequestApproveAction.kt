@@ -1,27 +1,25 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
+import com.intellij.collaboration.async.combineAndCollect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
 
 internal class GitLabMergeRequestApproveAction(
   scope: CoroutineScope,
   private val reviewFlowVm: GitLabMergeRequestReviewFlowViewModel
-) : GitLabMergeRequestAction(GitLabBundle.message("merge.request.details.action.review.approve.text"), scope, reviewFlowVm) {
+) : AbstractAction(GitLabBundle.message("merge.request.details.action.review.approve.text")) {
   init {
     scope.launch {
-      reviewFlowVm.approvedBy.collect {
-        update()
+      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.isApproved) { isBusy, isApproved ->
+        isEnabled = !isBusy && !isApproved
       }
     }
   }
 
   override fun actionPerformed(e: ActionEvent?) = reviewFlowVm.approve()
-
-  override fun enableCondition(): Boolean {
-    return !reviewFlowVm.isApproved.value
-  }
 }

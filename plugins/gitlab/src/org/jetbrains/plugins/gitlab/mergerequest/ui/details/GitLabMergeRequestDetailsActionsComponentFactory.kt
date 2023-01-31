@@ -55,6 +55,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     val requestReviewAction = GitLabMergeRequestRequestReviewAction(scope, reviewFlowVm, avatarIconsProvider)
     val mergeReviewAction = GitLabMergeRequestMergeAction(scope, reviewFlowVm)
     val closeReviewAction = GitLabMergeRequestCloseAction(scope, reviewFlowVm)
+    val reopenReviewAction = GitLabMergeRequestReopenAction(scope, reviewFlowVm)
 
     val requestReviewButton = JButton(requestReviewAction).apply {
       isOpaque = false
@@ -69,6 +70,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     val actionGroup = DefaultActionGroup(GitLabBundle.message("merge.request.details.action.review.more.text"), true).apply {
       add(if (reviewFlowVm.isApproved.value) requestReviewAction.toAnAction() else mergeReviewAction.toAnAction())
       add(closeReviewAction.toAnAction())
+      add(reopenReviewAction.toAnAction())
     }
     val moreActionsButton = createMoreButton(actionGroup)
 
@@ -105,6 +107,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     val requestReviewAction = GitLabMergeRequestRequestReviewAction(scope, reviewFlowVm, avatarIconsProvider)
     val mergeReviewAction = GitLabMergeRequestMergeAction(scope, reviewFlowVm)
     val closeReviewAction = GitLabMergeRequestCloseAction(scope, reviewFlowVm)
+    val reopenReviewAction = GitLabMergeRequestReopenAction(scope, reviewFlowVm)
 
     val setMyselfAsReviewerButton = JButton(GitLabMergeRequestSetMyselfAsReviewerAction(scope, reviewFlowVm)).apply {
       isOpaque = false
@@ -114,6 +117,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
       add(requestReviewAction.toAnAction())
       add(mergeReviewAction.toAnAction())
       add(closeReviewAction.toAnAction())
+      add(reopenReviewAction.toAnAction())
     }
 
     val moreActionsButton = createMoreButton(actionGroup)

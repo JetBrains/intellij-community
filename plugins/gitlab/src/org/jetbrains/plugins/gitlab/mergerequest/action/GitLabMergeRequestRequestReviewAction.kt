@@ -9,10 +9,10 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.PopupState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
 import javax.swing.JComponent
 
 // TODO: implement scenario with multiple reviewers
@@ -20,7 +20,15 @@ internal class GitLabMergeRequestRequestReviewAction(
   private val scope: CoroutineScope,
   private val reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
-) : GitLabMergeRequestAction(CollaborationToolsBundle.message("review.details.action.request"), scope, reviewFlowVm) {
+) : AbstractAction(CollaborationToolsBundle.message("review.details.action.request")) {
+  init {
+    scope.launch {
+      reviewFlowVm.isBusy.collect { isBusy ->
+        isEnabled = !isBusy
+      }
+    }
+  }
+
   override fun actionPerformed(event: ActionEvent) {
     val popupState: PopupState<JBPopup> = PopupState.forPopup()
     val parentComponent = event.source as? JComponent ?: return
@@ -37,10 +45,6 @@ internal class GitLabMergeRequestRequestReviewAction(
         reviewFlowVm.setReviewers(listOf(selectedUser))
       }
     }
-  }
-
-  override fun enableCondition(): Boolean {
-    return true // TODO: add condition
   }
 
   companion object {

@@ -3,16 +3,22 @@ package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
 
 internal class GitLabMergeRequestSetMyselfAsReviewerAction(
   scope: CoroutineScope,
   private val reviewFlowVm: GitLabMergeRequestReviewFlowViewModel
-) : GitLabMergeRequestAction(CollaborationToolsBundle.message("review.details.action.set.myself.as.reviewer"), scope, reviewFlowVm) {
-  override fun actionPerformed(e: ActionEvent?) = reviewFlowVm.setMyselfAsReviewer()
-
-  override fun enableCondition(): Boolean {
-    return true // TODO: add condition
+) : AbstractAction(CollaborationToolsBundle.message("review.details.action.set.myself.as.reviewer")) {
+  init {
+    scope.launch {
+      reviewFlowVm.isBusy.collect { isBusy ->
+        isEnabled = !isBusy
+      }
+    }
   }
+
+  override fun actionPerformed(e: ActionEvent?) = reviewFlowVm.setMyselfAsReviewer()
 }
