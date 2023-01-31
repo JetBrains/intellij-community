@@ -180,10 +180,6 @@ val Module.implementedModules: List<Module>
                 KotlinMultiplatformVersion.M3 -> {
                     facetSettings.dependsOnModuleNames
                         .mapNotNull { modulesByLinkedKey[it] }
-                        // HACK: we do not import proper dependsOn for android source-sets in M3, so fallback to M2-impl
-                        // to at least not make things worse.
-                        // See KT-33809 for details
-                        .plus(if (isAndroidModule()) implementedModulesM2() else emptyList())
                         .distinct()
                 }
 
