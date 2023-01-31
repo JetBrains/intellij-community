@@ -43,6 +43,8 @@ import static com.intellij.util.containers.ContainerUtil.filter;
 
 public final class RunContentBuilder extends RunTab {
   @ApiStatus.Experimental
+  public static final String RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP = "RunTab.TopToolbar.Old";
+  @ApiStatus.Experimental
   public static final String RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP = "RunTab.TopToolbar";
   @ApiStatus.Experimental
   public static final String RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP = "RunTab.TopToolbar.More";
@@ -209,7 +211,8 @@ public final class RunContentBuilder extends RunTab {
   private ActionGroup createActionToolbar(@NotNull RunContentDescriptor contentDescriptor, AnAction @NotNull [] consoleActions) {
     boolean isNewLayout = UIExperiment.isNewDebuggerUIEnabled();
 
-    ActionGroup toolbarGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP);
+    String mainGroupId = isNewLayout ? RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP : RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP;
+    ActionGroup toolbarGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(mainGroupId);
     AnAction[] mainChildren = toolbarGroup.getChildren(null);
     DefaultActionGroup actionGroup = new DefaultActionGroupWithDelegate(toolbarGroup);
     actionGroup.addAll(mainChildren);
@@ -246,12 +249,13 @@ public final class RunContentBuilder extends RunTab {
         }
       }
 
-      afterStopActions.addSeparator();
-      afterStopActions.add(myUi.getOptions().getLayoutActions());
-      afterStopActions.addSeparator();
-      afterStopActions.add(PinToolwindowTabAction.getPinAction());
       addActionsWithConstraints(afterStopActions.getChildren(null), new Constraints(AFTER, IdeActions.ACTION_STOP_PROGRAM),
                                 actionGroup, null);
+
+      actionGroup.addSeparator();
+      actionGroup.add(myUi.getOptions().getLayoutActions());
+      actionGroup.addSeparator();
+      actionGroup.add(PinToolwindowTabAction.getPinAction());
     }
     else {
       afterStopActions.addSeparator();

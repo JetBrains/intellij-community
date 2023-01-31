@@ -71,10 +71,12 @@
 
     <action id="JavaSoftExit" class="com.intellij.execution.impl.DefaultJavaProgramRunner$SoftExitAction">
       <add-to-group group-id="RunTab.TopToolbar.More"/>
+      <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
     </action>
 
     <action id="JavaControlBreak" class="com.intellij.execution.impl.DefaultJavaProgramRunner$ControlBreakAction">
       <add-to-group group-id="RunTab.TopToolbar.More"/>
+      <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
     </action>
 
     <!-- View -->

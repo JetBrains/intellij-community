@@ -14,5 +14,9 @@ public class RunTabCustomizableActionGroupProvider extends CustomizableActionGro
       registrar.addCustomizableActionGroup(RunContentBuilder.RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP,
                                            ExecutionBundle.message("run.tool.window.header.toolbar.more"));
     }
+    else {
+      registrar.addCustomizableActionGroup(RunContentBuilder.RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP,
+                                           ExecutionBundle.message("run.tool.window.header.toolbar"));
+    }
   }
 }

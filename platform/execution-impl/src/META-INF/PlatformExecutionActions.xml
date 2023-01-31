@@ -54,6 +54,11 @@
     <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction"/>
     <action id="RerunTests" class="com.intellij.execution.runners.RerunTestsAction"/>
 
+    <group id="RunTab.TopToolbar.Old">
+      <reference id="Rerun"/>
+      <reference id="Stop"/>
+    </group>
+
     <group id="RunTab.TopToolbar">
       <reference id="Rerun"/>
       <reference id="Stop"/>
