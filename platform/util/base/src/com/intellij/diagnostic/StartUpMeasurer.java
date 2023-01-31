@@ -21,12 +21,12 @@ public final class StartUpMeasurer {
 
   public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
 
-  // `what + noun` is used as scheme for name to make analyzing easier (to visually group - `components loading/initialization/etc`,
-  // not to put common part of name to end of).
-  // It is not serves only display purposes - it is IDs. Visualizer and another tools to analyze data uses phase IDs,
-  // so, any changes must be discussed across all involved and reflected in changelog (see `format-changelog.md`).
+  // `What + noun` is used as a naming scheme to make analyzing easier
+  // (to visually group `components loading/initialization/etc.`, a common part should be at the start).
+  // The names are not only for display purposes, they are also IDs - Visualizer and other tools use phase IDs,
+  // so any changes must be discussed among all involved people and reflected in the changelog (see `format-changelog.md`).
   public static final class Activities {
-    // actually, now it is also registers services, not only components,but it doesn't worth to rename
+    // actually, the phase also registers services (in addition to components), but it isn't worth to rename
     public static final String REGISTER_COMPONENTS_SUFFIX = "component registration";
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
@@ -61,6 +61,7 @@ public final class StartUpMeasurer {
   public static final Map<String, Object2LongMap<String>> pluginCostMap = new ConcurrentHashMap<>();
 
   @ApiStatus.Internal
+  @SuppressWarnings("StaticNonFinalField")
   public volatile static Activity appInitPreparationActivity;
 
   public static long getCurrentTime() {
@@ -72,16 +73,8 @@ public final class StartUpMeasurer {
   }
 
   /**
-   * Since start in ms.
-   */
-  public static long sinceStart() {
-    return TimeUnit.NANOSECONDS.toMillis(getCurrentTime() - startTime);
-  }
-
-  /**
    * The instant events correspond to something that happens but has no duration associated with it.
    * See <a href="https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview#heading=h.lenwiilchoxp">this document</a> for details.
-   *
    * Scope is not supported, reported as global.
    */
   public static void addInstantEvent(@NonNls @NotNull String name) {

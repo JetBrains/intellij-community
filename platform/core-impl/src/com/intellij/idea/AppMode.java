@@ -100,7 +100,7 @@ public final class AppMode {
           return false;
         }
       }
-      else if (arg.equals("-l") || arg.equals("--line") || arg.equals("-c") || arg.equals("--column")) { // NON-NLS
+      else if (arg.equals("-l") || arg.equals("--line") || arg.equals("-c") || arg.equals("--column")) {
         return true;
       }
     }
@@ -125,13 +125,13 @@ public final class AppMode {
 
     String firstArg = args.get(0);
 
-    @SuppressWarnings("SpellCheckingInspection")
-    List<String> headlessCommands = Arrays.asList(
-      "ant", "duplocate", "dataSources", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
-      "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "remoteDevStatus", "invalidateCaches", "warmup", "buildEventsScheme",
-      "inspectopedia-generator", "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler",
-      "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit", "qodanaExcludedPlugins");
-    return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
+    @SuppressWarnings("SpellCheckingInspection") List<String> headlessCommands = Arrays.asList(
+      "ant", "duplocate", "dataSources", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format",
+      "keymap", "update", "inspections", "intentions", "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions",
+      "cwmHostStatus", "remoteDevStatus", "invalidateCaches", "warmup", "buildEventsScheme", "inspectopedia-generator", "remoteDevShowHelp",
+      "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler", "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit",
+      "qodanaExcludedPlugins");
+    return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
   }
 
   public static boolean isDevServer() {
