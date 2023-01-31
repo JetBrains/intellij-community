@@ -19,6 +19,7 @@ object ProjectFileIndexScopes {
   private const val IN_LIBRARY_SOURCE_AND_CLASSES_FLAG = 1 shl 6
   private const val IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE_FLAG = 1 shl 7
   const val EXCLUDED_FROM_MODULE_ONLY = 1 shl 8
+  const val IN_LIBRARY_SOURCE_ONLY = 1 shl 9
   const val IN_LIBRARY_SOURCE_AND_CLASSES = IN_LIBRARY or IN_SOURCE or IN_LIBRARY_SOURCE_AND_CLASSES_FLAG
   const val IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE = IN_CONTENT or IN_SOURCE or IN_LIBRARY or IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE_FLAG
 
@@ -47,7 +48,7 @@ object ProjectFileIndexScopes {
     val isIgnored = scope and UNDER_IGNORED != 0
     checkScope(inContent, isInContent(file), "content", file)
     checkScope(inSource, isInSource(file), "source", file)
-    checkScope(inContent && inSource, isInSourceContent(file), "source content", file)
+    checkScope(inContent && inSource && scope and IN_LIBRARY_SOURCE_ONLY == 0, isInSourceContent(file), "source content", file)
     checkScope(scope and IN_TEST_SOURCE != 0, isInTestSourceContent(file), "test source", file)
     checkScope(inContent || inLibrary, isInProject(file), "project", file)
     checkScope(inContent || inLibrary || isExcluded, isInProjectOrExcluded(file), "project or excluded", file)

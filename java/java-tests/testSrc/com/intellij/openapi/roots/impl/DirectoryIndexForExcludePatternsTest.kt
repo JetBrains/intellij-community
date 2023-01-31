@@ -1,49 +1,58 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.roots.impl;
+package com.intellij.openapi.roots.impl
 
-import com.intellij.ide.projectView.actions.MarkRootActionBase;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.RootsChangeRescanningInfo;
-import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.SyntheticLibrary;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.SyntheticLibrary
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.EXCLUDED
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_CONTENT
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY_SOURCE_ONLY
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_SOURCE
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertInModule
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.junit5.RunInEdt
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+@TestApplication
+@RunInEdt
+class DirectoryIndexForExcludePatternsTest {
+  @JvmField
+  @RegisterExtension
+  val projectModel: ProjectModelExtension = ProjectModelExtension()
 
-public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase {
-  private VirtualFile myContentRoot;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final File root = createTempDirectory();
-    myContentRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
-    ModuleRootModificationUtil.addContentRoot(myModule, myContentRoot.getPath());
-  }
+  private val fileIndex
+    get() = ProjectFileIndex.getInstance(projectModel.project)
   
-  public void testIllegalArgumentInIsExcludedMethod() {
-    addExcludePattern("xxx_excluded_directory");
-    DirectoryInfo info = myIndex.getInfoForFile(myContentRoot);
-    try {
-      info.isExcluded(myContentRoot.getParent());
-      fail("DirectoryInfo#isExcluded must fail because its argument is not under DirectoryInfo's root");
-    }
-    catch (IllegalArgumentException expected) {
-    }
+  lateinit var contentRoot: VirtualFile
+  lateinit var module: Module
+  
+  @BeforeEach
+  fun setUp() {
+    contentRoot = projectModel.baseProjectDir.newVirtualDirectory("content")
+    module = projectModel.createModule()
+    ModuleRootModificationUtil.addContentRoot(module, contentRoot)
   }
 
-  public void testExcludeFileFromLibrary() {
+  @Test
+  fun testExcludeFileFromLibrary() {
     /*
       root/      (library root)
         dir/
@@ -51,26 +60,31 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
         a.txt    <- excluded by pattern
         A.java
      */
-    VirtualFile myLibraryRoot = getTempDir().createVirtualDir();
-    VirtualFile dir = createChildDirectory(myLibraryRoot, "dir");
-    VirtualFile txt1 = createChildData(myLibraryRoot, "a.txt");
-    VirtualFile txt2 = createChildData(dir, "a.txt");
-    VirtualFile java = createChildData(myLibraryRoot, "A.java");
-    registerLibrary(myLibraryRoot, file -> "a.txt".contentEquals(file.getNameSequence()));
-
-    assertExcluded(txt1, null);
-    assertNotInLibrarySources(txt1, null);
-
-    assertExcluded(txt2, null);
-    assertNotInLibrarySources(txt2, null);
-
-    assertNotExcluded(java);
-    assertInLibrarySources(java, null);
-
-    assertIndexableContent(Collections.singletonList(java), Arrays.asList(txt1, txt2));
+    val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("root")
+    val txt1 = projectModel.baseProjectDir.newVirtualFile("root/a.txt")
+    val txt2 = projectModel.baseProjectDir.newVirtualFile("root/dir/a.txt")
+    val java = projectModel.baseProjectDir.newVirtualFile("root/A.java")
+    registerLibrary(libraryRoot) { file: VirtualFile -> "a.txt".contentEquals(file.nameSequence) }
+    fileIndex.assertScope(txt1, EXCLUDED)
+    fileIndex.assertScope(txt2, EXCLUDED)
+    fileIndex.assertScope(java, IN_LIBRARY or IN_SOURCE)
+    assertIndexableContent(listOf(java), listOf(txt1, txt2))
   }
 
-  public void testExcludeDirectoryFromLibrary() {
+  private fun assertIndexableContent(mustContain: List<VirtualFile>?, mustNotContain: List<VirtualFile>?) {
+    val collected = HashSet<VirtualFile>()
+    FileBasedIndex.getInstance().iterateIndexableFiles({ fileOrDir: VirtualFile ->
+        if (!collected.add(fileOrDir)) {
+          return@iterateIndexableFiles Assertions.fail("$fileOrDir visited twice")
+        }
+        true
+      }, projectModel.project, EmptyProgressIndicator())
+    if (mustContain != null) UsefulTestCase.assertContainsElements(collected, mustContain)
+    if (mustNotContain != null) UsefulTestCase.assertDoesntContain(collected, mustNotContain)
+  }
+
+  @Test
+  fun testExcludeDirectoryFromLibrary() {
     /*
       root/      (library root)
         dir/     <- excluded directory
@@ -78,137 +92,116 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
         a.txt
         A.java
      */
-    VirtualFile myLibraryRoot = getTempDir().createVirtualDir();
-    VirtualFile dir = createChildDirectory(myLibraryRoot, "dir");
-    VirtualFile txt1 = createChildData(myLibraryRoot, "a.txt");
-    VirtualFile txt2 = createChildData(dir, "a.txt");
-    VirtualFile java = createChildData(myLibraryRoot, "A.java");
-    registerLibrary(myLibraryRoot, file -> "dir".contentEquals(file.getNameSequence()));
-
-    assertExcluded(txt2, null);
-    assertNotInLibrarySources(txt2, null);
-
-    assertNotExcluded(txt1);
-    assertInLibrarySources(txt1, null);
-    assertNotExcluded(java);
-    assertInLibrarySources(java, null);
-
-    assertIndexableContent(Arrays.asList(java, txt1), Collections.singletonList(txt2));
+    val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("root")
+    val txt1 = projectModel.baseProjectDir.newVirtualFile("root/a.txt")
+    val txt2 = projectModel.baseProjectDir.newVirtualFile("root/dir/a.txt")
+    val java = projectModel.baseProjectDir.newVirtualFile("root/A.java")
+    registerLibrary(libraryRoot) { file: VirtualFile -> "dir".contentEquals(file.nameSequence) }
+    fileIndex.assertScope(txt2, EXCLUDED)
+    fileIndex.assertScope(txt1, IN_LIBRARY or IN_SOURCE)
+    fileIndex.assertScope(java, IN_LIBRARY or IN_SOURCE)
+    assertIndexableContent(listOf(java, txt1), listOf(txt2))
   }
 
-  public void testExcludeDirectoryFromLibraryThatIsUnderContentRoot() {
+  @Test
+  fun testExcludeDirectoryFromLibraryThatIsUnderContentRoot() {
     /*
-      root/         (content root)
+      content/         (content root)
         library/    (library root)
           dir/      <- excluded by pattern
             a.txt
           a.txt
           A.java
      */
-    VirtualFile myLibraryRoot = createChildDirectory(myContentRoot, "library");
-    VirtualFile dir = createChildDirectory(myLibraryRoot, "dir");
-    VirtualFile txt1 = createChildData(myLibraryRoot, "a.txt");
-    VirtualFile txt2 = createChildData(dir, "a.txt");
-    VirtualFile java = createChildData(myLibraryRoot, "A.java");
-    registerLibrary(myLibraryRoot, file -> "dir".contentEquals(file.getNameSequence()));
-
+    val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("content/library")
+    val txt1 = projectModel.baseProjectDir.newVirtualFile("content/library/a.txt")
+    val txt2 = projectModel.baseProjectDir.newVirtualFile("content/library/dir/a.txt")
+    val java = projectModel.baseProjectDir.newVirtualFile("content/library/A.java")
+    registerLibrary(libraryRoot) { file: VirtualFile -> "dir".contentEquals(file.nameSequence) }
     if (WorkspaceFileIndexEx.IS_ENABLED) {
-      assertExcluded(txt2, myModule);
-      assertNotInLibrarySources(txt2, null);
+      fileIndex.assertInModule(txt2, module, contentRoot, EXCLUDED)
     }
     else {
-      assertNotExcluded(txt2);
-      assertNotInLibrarySources(txt2, myModule);
+      fileIndex.assertInModule(txt2, module, contentRoot)
     }
-
-    assertNotExcluded(txt1);
-    assertInLibrarySources(txt1, myModule);
-    assertNotExcluded(java);
-    assertInLibrarySources(java, myModule);
-
+    fileIndex.assertInModule(txt1, module, contentRoot, IN_CONTENT or IN_LIBRARY or IN_SOURCE or IN_LIBRARY_SOURCE_ONLY)
+    fileIndex.assertInModule(java, module, contentRoot, IN_CONTENT or IN_LIBRARY or IN_SOURCE or IN_LIBRARY_SOURCE_ONLY)
     if (WorkspaceFileIndexEx.IS_ENABLED) {
-      assertIndexableContent(Arrays.asList(java, txt1), Arrays.asList(txt2));
+      assertIndexableContent(listOf(java, txt1), listOf(txt2))
     }
     else {
-      assertIndexableContent(Arrays.asList(java, txt1, txt2), null);
+      assertIndexableContent(listOf(java, txt1, txt2), null)
     }
   }
 
-  public void testExcludeLibraryRoot() {
+  @Test
+  fun testExcludeLibraryRoot() {
     /*
       root/  (library root)  <- excluded library root
         a.txt
         A.java
      */
-    VirtualFile myLibraryRoot = getTempDir().createVirtualDir();
-    VirtualFile txt = createChildData(myLibraryRoot, "a.txt");
-    VirtualFile java = createChildData(myLibraryRoot, "A.java");
-    registerLibrary(myLibraryRoot, file -> file.equals(myLibraryRoot));
-
-    assertFalse(myFileIndex.isInProject(txt));
-    assertFalse(myFileIndex.isInProject(java));
+    val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("root")
+    val txt = projectModel.baseProjectDir.newVirtualFile("root/a.txt")
+    val java = projectModel.baseProjectDir.newVirtualFile("root/A.java")
+    registerLibrary(libraryRoot) { file: VirtualFile -> file == libraryRoot }
+    fileIndex.assertScope(txt, EXCLUDED)
+    fileIndex.assertScope(java, EXCLUDED)
   }
 
-  public void testExcludeLibraryRootThatIsUnderContentRoot() {
+  @Test
+  fun testExcludeLibraryRootThatIsUnderContentRoot() {
     /*
-      root/       (content root)
+      content/       (content root)
         library/  (library root) <- excluded library root
           a.txt
           A.java
      */
-    VirtualFile myLibraryRoot = createChildDirectory(myContentRoot, "library");
-    VirtualFile txt = createChildData(myLibraryRoot, "a.txt");
-    VirtualFile java = createChildData(myLibraryRoot, "A.java");
-    registerLibrary(myLibraryRoot, file -> file.equals(myLibraryRoot));
-
+    val myLibraryRoot = projectModel.baseProjectDir.newVirtualDirectory("content/library")
+    val txt = projectModel.baseProjectDir.newVirtualFile("content/library/a.txt")
+    val java = projectModel.baseProjectDir.newVirtualFile("content/library/A.java")
+    registerLibrary(myLibraryRoot) { file: VirtualFile -> file == myLibraryRoot }
     if (WorkspaceFileIndexEx.IS_ENABLED) {
-      assertExcluded(txt, myModule);
-      assertNotInLibrarySources(txt, null);
-      assertExcluded(java, myModule);
-      assertNotInLibrarySources(java, null);
-      assertIndexableContent(null, Arrays.asList(txt, java));
+      fileIndex.assertInModule(txt, module, contentRoot, EXCLUDED)
+      fileIndex.assertInModule(java, module, contentRoot, EXCLUDED)
+      assertIndexableContent(null, listOf(txt, java))
     }
     else {
-      assertInProject(txt);
-      assertNotInLibrarySources(txt, myModule);
-      assertInProject(java);
-      assertNotInLibrarySources(java, myModule);
-      assertIndexableContent(Arrays.asList(txt, java), null);
+      fileIndex.assertInModule(txt, module, contentRoot, EXCLUDED)
+      fileIndex.assertInModule(java, module, contentRoot, EXCLUDED)
+      assertIndexableContent(listOf(txt, java), null)
     }
-    
   }
 
-  public void testExcludeOnlyFiles() {
+  @Test
+  fun testExcludeOnlyFiles() {
     /*
       root/   (library root)
         dir/
         subdir/
           dir  (file that is named as directory)
      */
-    VirtualFile myLibraryRoot = getTempDir().createVirtualDir();
-    VirtualFile dir = createChildDirectory(myLibraryRoot, "dir");
-    VirtualFile txt = createChildData(createChildDirectory(myLibraryRoot, "subdir"), "dir");
-    registerLibrary(myLibraryRoot, file -> !file.isDirectory() && "dir".contentEquals(file.getNameSequence()));
-
-    assertFalse(myFileIndex.isInProject(txt));
-    assertTrue(myFileIndex.isInProject(dir));
+    val myLibraryRoot = projectModel.baseProjectDir.newVirtualDirectory("root")
+    val dir = projectModel.baseProjectDir.newVirtualDirectory("root/dir")
+    val txt = projectModel.baseProjectDir.newVirtualFile("root/subdir/dir")
+    registerLibrary(myLibraryRoot) { file: VirtualFile -> !file.isDirectory && "dir".contentEquals(file.nameSequence) }
+    fileIndex.assertScope(txt, EXCLUDED)
+    fileIndex.assertScope(dir, IN_LIBRARY or IN_SOURCE)
   }
 
-  private void addExcludePattern(@NotNull String pattern) {
-    ModuleRootModificationUtil.updateModel(myModule,
-                                           model -> MarkRootActionBase.findContentEntry(model, myContentRoot).addExcludePattern(pattern));
-  }
-
-  private void registerLibrary(@NotNull VirtualFile root, @Nullable Condition<? super VirtualFile> excludePattern) {
-    WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(
-      () -> AdditionalLibraryRootsProvider.EP_NAME.getPoint().registerExtension(new AdditionalLibraryRootsProvider() {
-              @NotNull
-              @Override
-              public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
-                return myProject == project ? Collections.singletonList(
-                  SyntheticLibrary.newImmutableLibrary(Collections.singletonList(root), Collections.emptyList(), Collections.emptySet(), excludePattern)
-                ) : Collections.emptyList();
-              }
-            }, getTestRootDisposable()), RootsChangeRescanningInfo.TOTAL_RESCAN));
+  private fun registerLibrary(root: VirtualFile, excludePattern: Condition<in VirtualFile>?) {
+    runWriteAction {
+      ProjectRootManagerEx.getInstanceEx(projectModel.project).makeRootsChange(
+        {
+          AdditionalLibraryRootsProvider.EP_NAME.point.registerExtension(object : AdditionalLibraryRootsProvider() {
+            override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> {
+              return if (projectModel.project === project) listOf(
+                SyntheticLibrary.newImmutableLibrary(listOf(root), emptyList<VirtualFile>(), emptySet<VirtualFile>(), excludePattern)
+              )
+              else emptyList()
+            }
+          }, projectModel.project)
+        }, RootsChangeRescanningInfo.TOTAL_RESCAN)
+    }
   }
 }
