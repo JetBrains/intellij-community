@@ -59,6 +59,7 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
     for (HighlightInfo info : infos) {
       PsiReference reference = info.unresolvedReference;
       if (reference == null) continue;
+      if (info.isUnresolvedReferenceQuickFixesComputed()) continue;
       PsiElement refElement = ReadAction.compute(() -> reference.getElement());
       Future<?> job = refElement.getUserData(JOB);
       if (job == null) {
