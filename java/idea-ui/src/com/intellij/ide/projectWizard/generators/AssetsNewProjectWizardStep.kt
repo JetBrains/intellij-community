@@ -70,7 +70,7 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
 
   private fun addFilesToOpen(relativeCanonicalPaths: Iterable<String>) {
     for (relativePath in relativeCanonicalPaths) {
-      filesToOpen.add(outputDirectory.getResolvedNioPath(relativePath))
+      filesToOpen.add(outputDirectory.toNioPath().getResolvedPath(relativePath))
     }
   }
 

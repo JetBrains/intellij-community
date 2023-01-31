@@ -58,7 +58,7 @@ internal class FileTestFixtureImpl(
     val configuration = createFixtureConfiguration()
 
     excludedFiles = configuration.excludedFiles
-      .map { root.path.getResolvedNioPath(it) }
+      .map { root.toNioPath().getResolvedPath(it) }
       .toSet()
 
     withSuppressedErrors {
@@ -171,7 +171,7 @@ internal class FileTestFixtureImpl(
   }
 
   override fun snapshot(relativePath: String) {
-    snapshot(root.path.getResolvedNioPath(relativePath))
+    snapshot(root.toNioPath().getResolvedPath(relativePath))
   }
 
   private fun snapshot(path: Path) {
@@ -188,7 +188,7 @@ internal class FileTestFixtureImpl(
   }
 
   override fun rollback(relativePath: String) {
-    rollback(root.path.getResolvedNioPath(relativePath))
+    rollback(root.toNioPath().getResolvedPath(relativePath))
   }
 
   private fun rollback(path: Path) {

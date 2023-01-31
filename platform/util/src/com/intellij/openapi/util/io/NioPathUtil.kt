@@ -8,7 +8,6 @@ import java.io.IOException
 import java.nio.file.*
 import kotlin.io.path.*
 
-
 /**
  * List of path directories and file name.
  *
@@ -17,18 +16,27 @@ import kotlin.io.path.*
 val Path.pathList: List<String>
   get() = map { it.pathString }
 
+/**
+ * Normalizes and returns path with forward slashes ('/').
+ */
 fun Path.toCanonicalPath(): String {
-  return getResolvedPathString(null)
+  return normalize().invariantSeparatorsPathString
 }
 
-fun Path.getResolvedPath(): Path {
-  return getResolvedPathString(null).toNioPath()
-}
-
+/**
+ * Resolves and normalizes path under [this] path.
+ * I.e. resolve joins [this] and [relativePath] using file system separator
+ */
 fun Path.getResolvedPath(relativePath: String): Path {
-  return getResolvedPathString(relativePath).toNioPath()
+  return resolve(FileUtil.toSystemDependentName(relativePath)).normalize()
 }
 
+/**
+ * Checks that [this] is an ancestor of [path].
+ *
+ * @param strict if `false` then this method returns `true` if [this] equals to [file].
+ * @return `true` if [this] is parent of [path]; `false` otherwise.
+ */
 fun Path.isAncestor(path: Path, strict: Boolean): Boolean {
   return FileUtil.isAncestor(this, path, strict)
 }
@@ -90,22 +98,6 @@ fun String.toNioPathOrNull(): Path? {
   catch (ex: InvalidPathException) {
     null
   }
-}
-
-fun String.getResolvedNioPath(relativePath: String): Path {
-  return getResolvedPathString(relativePath).toNioPath()
-}
-
-private fun Path.getResolvedPathString(relativePath: String?): String {
-  return invariantSeparatorsPathString.getResolvedPathString(relativePath)
-}
-
-private fun String.getResolvedPathString(relativePath: String?): String {
-  val path = when (relativePath) {
-    null -> this
-    else -> "$this/$relativePath"
-  }
-  return FileUtil.toCanonicalPath(path, '/', true)
 }
 
 object NioPathPrefixTreeFactory : AbstractPrefixTreeFactory<Path, String>() {

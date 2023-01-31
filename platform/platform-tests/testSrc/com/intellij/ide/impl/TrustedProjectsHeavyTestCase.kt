@@ -9,7 +9,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
-import com.intellij.openapi.util.io.getResolvedNioPath
+import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.createDirectory
@@ -160,7 +160,7 @@ abstract class TrustedProjectsHeavyTestCase {
   ) {
     val locatedProject = TrustedProjectsLocator.locateProject(project)
     Assertions.assertEquals(
-      relativeRoots.map { testRoot.path.getResolvedNioPath(it) }.toSet(),
+      relativeRoots.map { testRoot.toNioPath().getResolvedPath(it) }.toSet(),
       locatedProject.projectRoots.toSet()
     )
   }
