@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Main")
-@file:Suppress("ReplacePutWithAssignment")
 package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
@@ -27,15 +26,15 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
 
 fun main(rawArgs: Array<String>) {
-  val startupTimings = LinkedHashMap<String, Long>(6)
-  startupTimings.put("startup begin", System.nanoTime())
+  val startupTimings = ArrayList<Pair<String, Long>>(6)
+  startupTimings.add("startup begin" to System.nanoTime())
 
   val args: List<String> = preprocessArgs(rawArgs)
   AppMode.setFlags(args)
 
   try {
     bootstrap(startupTimings)
-    startupTimings.put("main scope creating", System.nanoTime())
+    startupTimings.add("main scope creating" to System.nanoTime())
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(rootTask()) {
       StartUpMeasurer.addTimings(startupTimings, "bootstrap")
@@ -93,11 +92,11 @@ private fun initProjectorIfNeeded(args: List<String>) {
   }
 }
 
-private fun bootstrap(startupTimings: LinkedHashMap<String, Long>) {
-  startupTimings.put("properties loading", System.nanoTime())
+private fun bootstrap(startupTimings: ArrayList<Pair<String, Long>>) {
+  startupTimings.add("properties loading" to System.nanoTime())
   PathManager.loadProperties()
 
-  startupTimings.put("plugin updates install", System.nanoTime())
+  startupTimings.add("plugin updates install" to System.nanoTime())
   // this check must be performed before system directories are locked
   if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
     val configImportNeeded = !AppMode.isHeadless() && !Files.exists(Path.of(PathManager.getConfigPath()))
@@ -112,7 +111,7 @@ private fun bootstrap(startupTimings: LinkedHashMap<String, Long>) {
     }
   }
 
-  startupTimings.put("classloader init", System.nanoTime())
+  startupTimings.add("classloader init" to System.nanoTime())
   BootstrapClassLoaderUtil.initClassLoader(AppMode.isRemoteDevHost())
 }
 
