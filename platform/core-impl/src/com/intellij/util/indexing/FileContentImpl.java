@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullComputable;
@@ -190,7 +189,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
         return content;
       }
       if (myContentAsText == null) {
-        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(getContent(), myFile);
+        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(getContent(), myFile, false, false);
       }
       return myContentAsText;
     } finally {
