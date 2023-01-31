@@ -48,7 +48,9 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchPopup
 import git4idea.ui.branch.GitBranchPopupFetchAction
+import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSITORY_ACTION_PLACE
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
+import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.TOP_LEVEL_ACTION_PLACE
 import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchTypeUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
@@ -337,7 +339,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private fun createToolbar(): ActionToolbar {
     val settingsGroup = am.getAction(GitBranchesTreePopupStep.HEADER_SETTINGS_ACTION_GROUP)
     val toolbarGroup = DefaultActionGroup(GitBranchPopupFetchAction(javaClass), settingsGroup)
-    return am.createActionToolbar(GitBranchesTreePopupStep.ACTION_PLACE, toolbarGroup, true)
+    return am.createActionToolbar(TOP_LEVEL_ACTION_PLACE, toolbarGroup, true)
       .apply {
         targetComponent = this@GitBranchesTreePopup.component
         setReservePlaceAutoPopupIcon(false)
@@ -352,7 +354,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     override fun actionPerformed(e: ActionEvent?) {
       if (closePopup) {
         cancel()
-        if (parent != null) {
+        if (isChild()) {
           parent.cancel()
         }
       }
@@ -364,7 +366,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
           build()
         }
 
-      ActionUtil.invokeAction(action, resultContext, GitBranchesTreePopupStep.ACTION_PLACE, null, afterActionPerformed)
+      val actionPlace = if (isChild()) SINGLE_REPOSITORY_ACTION_PLACE else TOP_LEVEL_ACTION_PLACE
+      ActionUtil.invokeAction(action, resultContext, actionPlace, null, afterActionPerformed)
     }
   }
 

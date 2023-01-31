@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
 import com.intellij.dvcs.DvcsUtil
@@ -47,7 +47,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
     if (ExperimentalUI.isNewUI() && isFirstStep) {
       val experimentalUIActionsGroup = ActionManager.getInstance().getAction(EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP) as? ActionGroup
       if (experimentalUIActionsGroup != null) {
-        topLevelItems.addAll(createActionItems(experimentalUIActionsGroup, project, repositories).addSeparators())
+        topLevelItems.addAll(createTopLevelActionItems(experimentalUIActionsGroup, project, repositories).addSeparators())
         if (topLevelItems.isNotEmpty()) {
           topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
         }
@@ -56,7 +56,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
     val actionGroup = ActionManager.getInstance().getAction(TOP_LEVEL_ACTION_GROUP) as? ActionGroup
     if (actionGroup != null) {
       // get selected repo inside actions
-      topLevelItems.addAll(createActionItems(actionGroup, project, repositories).addSeparators())
+      topLevelItems.addAll(createTopLevelActionItems(actionGroup, project, repositories).addSeparators())
       if (topLevelItems.isNotEmpty()) {
         topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
       }
@@ -157,7 +157,8 @@ class GitBranchesTreePopupStep(internal val project: Project,
       }
       else {
         finalRunnable = Runnable {
-          ActionUtil.invokeAction(action, createDataContext(project, repositories), ACTION_PLACE, null, null)
+          val place = if (isFirstStep) TOP_LEVEL_ACTION_PLACE else SINGLE_REPOSITORY_ACTION_PLACE
+          ActionUtil.invokeAction(action, createDataContext(project, repositories), place, null, null)
         }
       }
     }
@@ -198,14 +199,15 @@ class GitBranchesTreePopupStep(internal val project: Project,
     internal const val SPEED_SEARCH_DEFAULT_ACTIONS_GROUP = "Git.Branches.Popup.SpeedSearch"
     private const val BRANCH_ACTION_GROUP = "Git.Branch"
 
-    internal val ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup")
+    internal val SINGLE_REPOSITORY_ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup.SingleRepo.Branch.Actions")
+    internal val TOP_LEVEL_ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup.TopLevel.Branch.Actions")
 
-    private fun createActionItems(actionGroup: ActionGroup,
-                                  project: Project,
-                                  repositories: List<GitRepository>): List<PopupFactoryImpl.ActionItem> {
+    private fun createTopLevelActionItems(actionGroup: ActionGroup,
+                                          project: Project,
+                                          repositories: List<GitRepository>): List<PopupFactoryImpl.ActionItem> {
       val dataContext = createDataContext(project, repositories)
       val actionItems = ActionPopupStep
-        .createActionItems(actionGroup, dataContext, false, false, true, false, ACTION_PLACE, null)
+        .createActionItems(actionGroup, dataContext, false, false, true, false, TOP_LEVEL_ACTION_PLACE, null)
 
       if (actionItems.singleOrNull()?.action == Utils.EMPTY_MENU_FILLER) {
         return emptyList()
@@ -220,7 +222,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
                                  branch: GitBranch? = null): ListPopupStep<*> {
       val dataContext = createDataContext(project, repositories, branch)
       return JBPopupFactory.getInstance()
-        .createActionsStep(actionGroup, dataContext, ACTION_PLACE, false, true, null, null, true, 0, false)
+        .createActionsStep(actionGroup, dataContext, SINGLE_REPOSITORY_ACTION_PLACE, false, true, null, null, true, 0, false)
     }
 
     internal fun createDataContext(project: Project, repositories: List<GitRepository>, branch: GitBranch? = null): DataContext =
