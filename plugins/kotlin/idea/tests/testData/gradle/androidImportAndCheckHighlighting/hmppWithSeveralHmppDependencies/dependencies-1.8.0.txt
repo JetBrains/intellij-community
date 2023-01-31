@@ -4,7 +4,7 @@ MODULES
     mpp-issue-bootstrap.p1.androidTest
         mpp-issue-bootstrap.p1.commonTest (refines, TEST)
         mpp-issue-bootstrap.p1.main (friend, TEST)
-        mpp-issue-bootstrap.p1.commonMain (refines, friend, TEST)
+        mpp-issue-bootstrap.p1.commonMain (friend, TEST)
         mpp-issue-bootstrap.p1.jvmAndAndroidMain (friend, TEST)
         Gradle: org.jetbrains.kotlinx:atomicfu-jvm:0.19.0 (TEST)
         Gradle: io.ktor:ktor-client-core-jvm:2.2.1 (TEST)
@@ -240,7 +240,7 @@ MODULES
     mpp-issue-bootstrap.p1.unitTest
         mpp-issue-bootstrap.p1.commonTest (refines, TEST)
         mpp-issue-bootstrap.p1.main (friend, TEST)
-        mpp-issue-bootstrap.p1.commonMain (refines, friend, TEST)
+        mpp-issue-bootstrap.p1.commonMain (friend, TEST)
         mpp-issue-bootstrap.p1.jvmAndAndroidMain (friend, TEST)
         Gradle: org.jetbrains.kotlinx:atomicfu-jvm:0.19.0 (TEST)
         Gradle: io.ktor:ktor-client-core-jvm:2.2.1 (TEST)
