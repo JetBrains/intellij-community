@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.LoadingNode;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
@@ -234,16 +235,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
    */
   @NotNull
   public Promise<TreePath> accept(@NotNull TreeVisitor visitor, boolean allowLoading) {
-    AbstractTreeWalker<Node> walker = new AbstractTreeWalker<>(visitor, node -> node.object) {
-      @Override
-      protected Collection<Node> getChildren(@NotNull Node node) {
-        if (node.leafState == LeafState.ALWAYS || !allowLoading) return node.getChildren();
-        promiseChildren(node)
-          .onSuccess(parent -> setChildren(parent.getChildren()))
-          .onError(this::setError);
-        return null;
-      }
-    };
+    var walker = createWalker(visitor, allowLoading);
     if (allowLoading) {
       // start visiting on the background thread to ensure that root node is already invalidated
       background.invokeLater(() -> onValidThread(() -> promiseRootEntry().onSuccess(walker::start).onError(walker::setError)));
@@ -252,6 +244,36 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       onValidThread(() -> walker.start(tree.root));
     }
     return walker.promise();
+  }
+
+  private TreeWalkerBase<Node> createWalker(@NotNull TreeVisitor visitor, boolean allowLoading) {
+    if (Registry.is("ide.tree.async.visitor", false)) {
+      return new BgtTreeWalker<>(visitor, background, foreground, node -> node.object) {
+        @Nullable
+        @Override
+        protected Collection<Node> getChildren(@NotNull AsyncTreeModel.Node node) {
+          return getChildrenForWalker(node, this, allowLoading);
+        }
+      };
+    }
+    else {
+      return new AbstractTreeWalker<>(visitor, node -> node.object) {
+        @Nullable
+        @Override
+        protected Collection<Node> getChildren(@NotNull Node node) {
+          return getChildrenForWalker(node, this, allowLoading);
+        }
+      };
+    }
+  }
+
+  @Nullable
+  private Collection<@NotNull Node> getChildrenForWalker(@NotNull Node node, TreeWalkerBase<Node> walker, boolean allowLoading) {
+    if (node.leafState == LeafState.ALWAYS || !allowLoading) return node.getChildren();
+    promiseChildren(node)
+      .onSuccess(parent -> walker.setChildren(parent.getChildren()))
+      .onError(walker::setError);
+    return null;
   }
 
   /**
