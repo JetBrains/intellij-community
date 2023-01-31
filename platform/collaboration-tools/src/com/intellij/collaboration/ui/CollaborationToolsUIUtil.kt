@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
@@ -25,6 +26,7 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.ui.*
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.coroutines.CoroutineScope
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -39,6 +41,8 @@ import javax.swing.text.html.StyleSheet
 import kotlin.properties.Delegates
 
 object CollaborationToolsUIUtil {
+  val COMPONENT_SCOPE_KEY = Key.create<CoroutineScope>("Collaboration.Component.Coroutine.Scope")
+
   val animatedLoadingIcon = AnimatedIcon.Default.INSTANCE
 
   /**
