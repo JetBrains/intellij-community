@@ -1,6 +1,6 @@
 repositories {
     run {
-        val publishedLibRepoPath = "$rootDir/lib/repo"
+        val publishedLibRepoPath = "$rootDir/repo"
         if (!file(publishedLibRepoPath).isDirectory) {
             logger.error(
                 "\nThis module needs the lib from `lib-and-app` to be published to $publishedLibRepoPath." +
