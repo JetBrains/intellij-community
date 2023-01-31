@@ -3,6 +3,12 @@ package com.intellij.codeInspection.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.logging.LoggingUtil.Companion
+import com.intellij.codeInspection.logging.LoggingUtil.Companion.LOG_MATCHERS
+import com.intellij.codeInspection.logging.LoggingUtil.Companion.countPlaceHolders
+import com.intellij.codeInspection.logging.LoggingUtil.Companion.getLoggerLevel
+import com.intellij.codeInspection.logging.LoggingUtil.Companion.getLoggerType
+import com.intellij.codeInspection.logging.LoggingUtil.Companion.isGuarded
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
@@ -24,6 +30,11 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
 
   @JvmField
   var mySkipPrimitives: Boolean = true
+
+  enum class LimitLevelType {
+    ALL, WARN_AND_LOWER, INFO_AND_LOWER, DEBUG_AND_LOWER, TRACE
+  }
+
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(
       OptPane.dropdown(
@@ -117,12 +128,12 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
         val loggerLevel = getLoggerLevel(node)
         if (loggerLevel == null) return true
         val notSkip: Boolean = when (loggerLevel) {
-          LevelType.FATAL -> false
-          LevelType.ERROR -> false
-          LevelType.WARNING -> myLimitLevelType.ordinal == LimitLevelType.WARN_AND_LOWER.ordinal
-          LevelType.INFO -> myLimitLevelType.ordinal <= LimitLevelType.INFO_AND_LOWER.ordinal
-          LevelType.DEBUG -> myLimitLevelType.ordinal <= LimitLevelType.DEBUG_AND_LOWER.ordinal
-          LevelType.TRACE -> myLimitLevelType.ordinal <= LimitLevelType.TRACE.ordinal
+          Companion.LevelType.FATAL -> false
+          Companion.LevelType.ERROR -> false
+          Companion.LevelType.WARNING -> myLimitLevelType.ordinal == LimitLevelType.WARN_AND_LOWER.ordinal
+          Companion.LevelType.INFO -> myLimitLevelType.ordinal <= LimitLevelType.INFO_AND_LOWER.ordinal
+          Companion.LevelType.DEBUG -> myLimitLevelType.ordinal <= LimitLevelType.DEBUG_AND_LOWER.ordinal
+          Companion.LevelType.TRACE -> myLimitLevelType.ordinal <= LimitLevelType.TRACE.ordinal
         }
         return !notSkip
       }
@@ -151,11 +162,31 @@ private fun PsiType?.isPrimitiveOrWrappers(): Boolean {
                           canBeText())
 }
 
-class ConvertToPlaceHolderQuickfix(private val indexStringExpression: Int) : LocalQuickFix {
+private class ConvertToPlaceHolderQuickfix(private val indexStringExpression: Int) : LocalQuickFix {
 
   override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.quickfix.name")
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val uCallExpression = descriptor.psiElement.getUastParentOfType<UCallExpression>() ?: return
+    val (parametersBeforeString: MutableList<UExpression>, parametersAfterString: MutableList<UExpression>, builderString) =
+      createMethodContext(uCallExpression)
+
+    val elementFactory = uCallExpression.getUastElementFactory(project) ?: return
+    val newText = elementFactory.createStringLiteralExpression(builderString.toString(), uCallExpression.sourcePsi) ?: return
+    val newParameters = mutableListOf<UExpression>().apply {
+      addAll(parametersBeforeString)
+      add(newText)
+      addAll(parametersAfterString)
+    }
+
+    val methodName = uCallExpression.methodName ?: return
+    val newCall = elementFactory.createCallExpression(uCallExpression.receiver, methodName, newParameters, uCallExpression.returnType,
+                                                      uCallExpression.kind, uCallExpression.sourcePsi
+    ) ?: return
+    val oldCall = uCallExpression.getQualifiedParentOrThis()
+    oldCall.replace(newCall)
+  }
+
+  private fun createMethodContext(uCallExpression: UCallExpression): MethodContext {
     val parametersBeforeString: MutableList<UExpression> = mutableListOf()
     val parametersAfterString: MutableList<UExpression> = mutableListOf()
     val valueArguments = uCallExpression.valueArguments
@@ -185,7 +216,8 @@ class ConvertToPlaceHolderQuickfix(private val indexStringExpression: Int) : Loc
           builderString.append(text)
         }
         else {
-          if (builderString.endsWith("\\") && (loggerType == LoggerType.SLF4J_LOGGER_TYPE || loggerType == LoggerType.SLF4J_BUILDER_TYPE)) {
+          if (builderString.endsWith("\\") &&
+              (loggerType == Companion.LoggerType.SLF4J_LOGGER_TYPE || loggerType == Companion.LoggerType.SLF4J_BUILDER_TYPE)) {
             builderString.append("\\")
           }
           builderString.append("{}")
@@ -203,23 +235,10 @@ class ConvertToPlaceHolderQuickfix(private val indexStringExpression: Int) : Loc
         parametersAfterString.add(valueArguments[index])
       }
     }
-    val elementFactory = uCallExpression.getUastElementFactory(project) ?: return
-    val newText = elementFactory.createStringLiteralExpression(builderString.toString(), uCallExpression.sourcePsi) ?: return
-    val newParameters = mutableListOf<UExpression>().apply {
-      addAll(parametersBeforeString)
-      add(newText)
-      addAll(parametersAfterString)
-    }
-
-    val methodName = uCallExpression.methodName ?: return
-    val newCall = elementFactory.createCallExpression(uCallExpression.receiver, methodName, newParameters, uCallExpression.returnType,
-                                                      uCallExpression.kind, uCallExpression.sourcePsi
-    ) ?: return
-    val oldCall = uCallExpression.getQualifiedParentOrThis()
-    oldCall.replace(newCall)
+    return MethodContext(parametersBeforeString, parametersAfterString, builderString)
   }
-}
 
-enum class LimitLevelType {
-  ALL, WARN_AND_LOWER, INFO_AND_LOWER, DEBUG_AND_LOWER, TRACE
+  data class MethodContext(val parametersBeforeString: MutableList<UExpression>,
+                           val parametersAfterString: MutableList<UExpression>,
+                           val builderString: StringBuilder)
 }
