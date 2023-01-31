@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgressIfEdt
 import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -120,7 +119,11 @@ private fun KtAnnotationEntry.getRequiredAnnotationTargets(
         val otherReferenceRequiredTargets = ReferencesSearch.search(annotationClass, searchScope).mapNotNull { reference ->
             if (reference.element is KtNameReferenceExpression) {
                 // Kotlin annotation
-                reference.element.getNonStrictParentOfType<KtAnnotationEntry>()?.takeIf { it != this }?.getActualTargetList()
+                reference.element
+                    .getStrictParentOfType<KtConstructorCalleeExpression>()
+                    ?.parent.safeAs<KtAnnotationEntry>()
+                    ?.takeIf { it != this }
+                    ?.getActualTargetList()
             } else {
                 // Java annotation
                 (reference.element.parent as? PsiAnnotation)?.getActualTargetList()
