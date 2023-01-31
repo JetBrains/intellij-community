@@ -8,7 +8,7 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 
 internal interface GitLabMergeRequestChangesViewModel {
   val reviewCommits: StateFlow<List<GitLabCommitDTO>>
@@ -27,11 +27,13 @@ internal interface GitLabMergeRequestChangesViewModel {
 
 internal class GitLabMergeRequestChangesViewModelImpl(
   parentCs: CoroutineScope,
-  mergeRequest: GitLabMergeRequest
+  changes: Flow<GitLabMergeRequestChanges>
 ) : GitLabMergeRequestChangesViewModel {
   private val cs = parentCs.childScope()
 
-  override val reviewCommits: StateFlow<List<GitLabCommitDTO>> = mergeRequest.commits.stateIn(cs, SharingStarted.Lazily, listOf())
+  override val reviewCommits: StateFlow<List<GitLabCommitDTO>> =
+    changes.map { it.commits }
+      .stateIn(cs, SharingStarted.Lazily, listOf())
 
   private val _selectedCommit: MutableStateFlow<GitLabCommitDTO?> = MutableStateFlow(null)
   override val selectedCommit: StateFlow<GitLabCommitDTO?> = _selectedCommit.asStateFlow()
@@ -40,7 +42,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   override val selectedCommitIndex: StateFlow<Int> = _selectedCommitIndex.asStateFlow()
 
   override val changesResult: Flow<Result<Collection<Change>>> =
-    combine(mergeRequest.changes, selectedCommit) { changesResult, commit ->
+    combine(changes.map { runCatching { it.getParsedChanges() } }, selectedCommit) { changesResult, commit ->
       changesResult.map {
         it.changesByCommits[commit?.sha] ?: it.changes
       }

@@ -3,18 +3,9 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diff.impl.patch.PatchReader
-import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
-import git4idea.changes.GitCommitShaWithPatches
-import git4idea.changes.GitParsedChangesBundle
-import git4idea.changes.GitParsedChangesBundleImpl
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
@@ -38,8 +29,7 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: Flow<List<GitLabUserDTO>>
 
-  val commits: Flow<List<GitLabCommitDTO>>
-  val changes: Flow<Result<GitParsedChangesBundle>>
+  val changes: Flow<GitLabMergeRequestChanges>
 
   suspend fun merge()
 
@@ -60,7 +50,6 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   suspend fun getMilestoneEvents(): List<GitLabResourceMilestoneEventDTO>
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 internal class LoadedGitLabMergeRequest(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
@@ -88,9 +77,8 @@ internal class LoadedGitLabMergeRequest(
   override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequestState.map { it.approvedBy }
   override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestState.map { it.reviewers }
 
-  override val commits: Flow<List<GitLabCommitDTO>> = mergeRequestState.map { it.commits }
-  override val changes: Flow<Result<GitParsedChangesBundle>> = mergeRequestState.mapLatest {
-    runCatching { loadChanges(it.diffRefs, it.commits) }
+  override val changes: Flow<GitLabMergeRequestChanges> = mergeRequestState.map {
+    GitLabMergeRequestChangesImpl(cs, api, projectMapping, it)
   }.modelFlow(cs, LOG)
 
   private val stateEvents by lazy {
@@ -156,37 +144,4 @@ internal class LoadedGitLabMergeRequest(
   override suspend fun getStateEvents(): List<GitLabResourceStateEventDTO> = stateEvents.await()
 
   override suspend fun getMilestoneEvents(): List<GitLabResourceMilestoneEventDTO> = milestoneEvents.await()
-
-  private suspend fun loadChanges(diffRefs: GitLabDiffRefs, commits: List<GitLabCommitDTO>): GitParsedChangesBundle {
-    return withContext(cs.coroutineContext) {
-      val mergeBaseSha = diffRefs.baseSha ?: error("Missing merge base revision")
-      val commitsWithPatches = withContext(Dispatchers.IO) {
-        coroutineScope {
-          commits.map { commit ->
-            async {
-              val commitWithParents = api.loadCommit(glProject, commit.sha).body()!!
-              val patches = api.loadCommitDiffs(glProject, commit.sha).body()!!.map(GitLabDiffDTO::toPatch)
-              GitCommitShaWithPatches(commit.sha, commitWithParents.parentIds, patches)
-            }
-          }.awaitAll()
-        }
-      }
-      val headPatches = withContext(Dispatchers.IO) {
-        api.loadMergeRequestDiffs(glProject, mergeRequest).body()!!.map(GitLabDiffDTO::toPatch)
-      }
-      val project = projectMapping.remote.repository.project
-      GitParsedChangesBundleImpl(project, projectMapping.remote.repository.root, mergeBaseSha, commitsWithPatches, headPatches)
-    }
-  }
-}
-
-private fun GitLabDiffDTO.toPatch(): TextFilePatch {
-  val aPath = oldPath.takeIf { !newFile }?.let { "a/$it" } ?: "/dev/null"
-  val bPath = newPath.takeIf { !deletedFile }?.let { "b/$it" } ?: "/dev/null"
-  val header = """--- $aPath
-+++ $bPath
-"""
-
-  val patchReader = PatchReader(header + diff)
-  return patchReader.readTextPatches().firstOrNull() ?: throw IllegalStateException("Could not parse diff $this")
 }

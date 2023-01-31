@@ -24,5 +24,5 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
 
   override val detailsInfoVm = GitLabMergeRequestDetailsInfoViewModelImpl(cs, mergeRequest)
   override val detailsReviewFlowVm = GitLabMergeRequestReviewFlowViewModelImpl(cs, currentUser, projectData, mergeRequest)
-  override val changesVm = GitLabMergeRequestChangesViewModelImpl(cs, mergeRequest)
+  override val changesVm = GitLabMergeRequestChangesViewModelImpl(cs, mergeRequest.changes)
 }
