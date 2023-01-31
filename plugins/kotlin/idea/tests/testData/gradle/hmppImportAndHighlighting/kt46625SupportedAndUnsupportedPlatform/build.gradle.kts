@@ -17,7 +17,7 @@ kotlin {
     }
 
     when {
-        HostManager.hostIsMac -> linuxMips32("unsupported")
+        HostManager.hostIsMac -> null
         HostManager.hostIsLinux -> macosX64("unsupported")
         HostManager.hostIsMingw -> macosX64("unsupported")
         else -> throw UnsupportedOperationException("Test is not supported on host ${HostManager.host}")
@@ -25,8 +25,8 @@ kotlin {
 
     val commonMain by sourceSets.getting
     val supportedMain by sourceSets.getting
-    val unsupportedMain by sourceSets.getting
+    val unsupportedMain = sourceSets.findByName("unsupportedMain")
 
     supportedMain.dependsOn(commonMain)
-    unsupportedMain.dependsOn(commonMain)
+    unsupportedMain?.dependsOn(commonMain)
 }
