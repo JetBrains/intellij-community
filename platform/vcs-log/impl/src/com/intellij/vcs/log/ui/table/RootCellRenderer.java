@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -40,6 +41,7 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
     myProperties = properties;
     myColorManager = colorManager;
     setTextAlign(SwingConstants.CENTER);
+    updateInsets();
   }
 
   @Override
@@ -119,6 +121,15 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
         return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
       }
     };
+  }
+
+  public void updateInsets() {
+    boolean rootNamesVisible = myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES);
+    setBorderInsets(rootNamesVisible ? getRootNameInsets() : JBUI.emptyInsets());
+  }
+
+  protected Insets getRootNameInsets() {
+    return JBUI.emptyInsets();
   }
 
   private static boolean isTextShown(JTable table, Object value, int row, int column) {

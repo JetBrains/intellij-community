@@ -4,10 +4,12 @@ package com.intellij.vcs.log.ui.table
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import java.awt.Component
 import java.awt.Graphics2D
+import java.awt.Insets
 import javax.swing.JTable
 import javax.swing.SwingConstants
 
@@ -59,6 +61,8 @@ class NewUiRootCellRenderer(properties: VcsLogUiProperties,
 
     return renderer
   }
+
+  override fun getRootNameInsets(): Insets = JBUI.insets(0, 4)
 
   companion object {
     private val LEFT_RIGHT_GAP

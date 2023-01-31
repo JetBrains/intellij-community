@@ -323,6 +323,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
         updateColumnRenderers();
+        setRootColumnSize();
       }
     }, this);
   }
@@ -489,6 +490,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private void setRootColumnSize() {
     TableColumn column = getRootColumn();
     int rootWidth;
+
+    TableCellRenderer component = column.getCellRenderer();
+    if (component instanceof RootCellRenderer) {
+      RootCellRenderer rootCellRenderer = (RootCellRenderer)component;
+      rootCellRenderer.updateInsets();
+    }
+
     if (!myColorManager.hasMultiplePaths()) {
       rootWidth = 0;
     }
@@ -496,12 +504,20 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       rootWidth = JBUIScale.scale(ExperimentalUI.isNewUI() ? NEW_UI_ROOT_INDICATOR_WIDTH : ROOT_INDICATOR_WIDTH);
     }
     else {
-      int width = 0;
+      int textWidth = 0;
       for (FilePath file : myColorManager.getPaths()) {
         Font tableFont = getTableFont();
-        width = Math.max(getFontMetrics(tableFont).stringWidth(file.getName() + "  "), width);
+        textWidth = Math.max(getFontMetrics(tableFont).stringWidth(file.getName() + "  "), textWidth);
       }
-      rootWidth = Math.min(width, JBUIScale.scale(ROOT_NAME_MAX_WIDTH));
+
+      int insets = 0;
+
+      if (component instanceof SimpleColoredRenderer)  {
+        SimpleColoredComponent coloredComponent = (SimpleColoredComponent)component;
+        Insets componentInsets = coloredComponent.getMyBorder().getBorderInsets(coloredComponent);
+        insets = componentInsets.left + componentInsets.right;
+      }
+      rootWidth = Math.min(textWidth + insets, JBUIScale.scale(ROOT_NAME_MAX_WIDTH));
     }
 
     // NB: all further instructions and their order are important, otherwise the minimum size which is less than 15 won't be applied
@@ -659,15 +675,17 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (details != null) {
       int columnModelIndex = convertColumnIndexToModel(column);
       List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> {
-          try {
-            return highlighter.getStyle(commitId, details, columnModelIndex, selected);
-          } catch (ProcessCanceledException e) {
-            return VcsCommitStyle.DEFAULT;
-          } catch (Throwable t) {
-            LOG.error("Exception while getting style from highlighter " + highlighter, t);
-            return VcsCommitStyle.DEFAULT;
-          }
-        });
+        try {
+          return highlighter.getStyle(commitId, details, columnModelIndex, selected);
+        }
+        catch (ProcessCanceledException e) {
+          return VcsCommitStyle.DEFAULT;
+        }
+        catch (Throwable t) {
+          LOG.error("Exception while getting style from highlighter " + highlighter, t);
+          return VcsCommitStyle.DEFAULT;
+        }
+      });
       style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
     }
 
