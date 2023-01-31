@@ -10,7 +10,7 @@
  *   Item item = env.generateData(Generator.sampledFrom(sys.currentItems), "working on %s item");
  * </code>
  *
- * @param T the type of member in this group.
+ * @param T the type of member in this group. And another sentence.
  */
 class ExampleClassWithNoTypos<T> {
 
@@ -19,7 +19,7 @@ class ExampleClassWithNoTypos<T> {
     /**
      * Creates an empty group.
      *
-     * @param name The name of the group.
+     * @param name The name of the group. And another sentence.
      */
     public ExampleClassWithNoTypos(String name) {
         this.name = name;
@@ -30,7 +30,7 @@ class ExampleClassWithNoTypos<T> {
      *
      * @param cancellable Whether the progress can be cancelled.
      * @param member member to add
-     * @return the new size of the group.
+     * @return the new size of the group. And another sentence.
      */
     Integer goodFunction(boolean cancellable, T member) {
         return 1; // no error comment
@@ -70,8 +70,8 @@ class ExampleClassWithTypos<T> {
      * It <warning descr="IT_VBZ">add</warning> a [member] to this <TYPO descr="Typo: In word 'grooup'">grooup</TYPO>.
      * <warning descr="UPPERCASE_SENTENCE_START">second</warning> sentence.
      * 
-     * @param member member to add
-     * @return the new size of <warning descr="DT_DT">a the</warning> group.
+     * @param member member to add. And another sentence.
+     * @return the new size of <warning descr="DT_DT">a the</warning> group. <warning descr="UPPERCASE_SENTENCE_START">and</warning> another sentence.
      */
     Integer badFunction(T member) {
         return 1; // It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO> in the comment
