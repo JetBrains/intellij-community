@@ -1260,7 +1260,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
       var toShowWindow = false
 
-      if (item.old.isSplit != item.new.isSplit) {
+      if (item.old.isSplit != item.new.isSplit && item.old.type.isInternal && item.new.type.isInternal) {
         val wasVisible = item.old.isVisible
         // we should hide the window and show it in a 'new place'
         // to automatically hide a possible window that is already located in a 'new place'
