@@ -355,18 +355,18 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   @NotNull
   public List<PyClass> getTopLevelClasses() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.CLASS_DECLARATION);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyClass.class);
   }
 
   @NotNull
   @Override
   public List<PyFunction> getTopLevelFunctions() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FUNCTION_DECLARATION);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyFunction.class);
   }
 
   @Override
   public List<PyTargetExpression> getTopLevelAttributes() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.TARGET_EXPRESSION);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyTargetExpression.class);
   }
 
   @Override
@@ -475,7 +475,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @NotNull
   public List<PyImportElement> getImportTargets() {
     final List<PyImportElement> ret = new ArrayList<>();
-    final List<PyImportStatement> imports = PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.IMPORT_STATEMENT);
+    final List<PyImportStatement> imports = PyPsiUtils.collectStubChildren(this, getStub(), PyImportStatement.class);
     for (PyImportStatement one : imports) {
       ContainerUtil.addAll(ret, one.getImportElements());
     }
@@ -485,7 +485,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   @NotNull
   public List<PyFromImportStatement> getFromImports() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FROM_IMPORT_STATEMENT);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyFromImportStatement.class);
   }
 
   @Nullable

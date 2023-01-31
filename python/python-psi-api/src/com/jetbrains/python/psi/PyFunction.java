@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Function declaration in source (the {@code def} and everything within).
  */
-public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunctionStub>, PsiNameIdentifierOwner, PyStatement, PyCallable,
+public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunctionStub>, PsiNameIdentifierOwner, PyCompoundStatement, PyCallable,
                                     PyDocStringOwner, ScopeOwner, PyDecoratable, PyTypedElement, PyStatementListContainer,
                                     PyPossibleClassMember, PyTypeCommentOwner, PyAnnotationOwner {
 
