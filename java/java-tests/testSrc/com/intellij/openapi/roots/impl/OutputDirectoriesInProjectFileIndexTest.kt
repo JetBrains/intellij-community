@@ -1,158 +1,171 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.roots.impl;
+package com.intellij.openapi.roots.impl
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.vfs.*;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.VfsTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.RootsChangeRescanningInfo
+import com.intellij.openapi.roots.CompilerProjectExtension
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.EXCLUDED
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.NOT_IN_PROJECT
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertInModule
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
+import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileEvent
+import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.junit5.RunInEdt
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.rules.ProjectModelExtension
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+@TestApplication
+@RunInEdt
+class OutputDirectoriesInProjectFileIndexTest {
+  @JvmField
+  @RegisterExtension
+  val projectModel: ProjectModelExtension = ProjectModelExtension()
 
-public class OutputDirectoriesInProjectFileIndexTest extends DirectoryIndexTestCase {
-  private VirtualFile myRootDir;
-  private VirtualFile myOutputDir;
-  private VirtualFile myModule1Dir;
-  private VirtualFile mySrcDir1;
-  private VirtualFile myModule1OutputDir;
-  private Module myModule2;
-  private VirtualFile myModule2Dir;
+  private val fileIndex
+    get() = ProjectFileIndex.getInstance(projectModel.project)
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final File root = createTempDirectory();
-    myRootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
-    myOutputDir = createChildDirectory(myRootDir, "out");
-    myModule1Dir = createChildDirectory(myRootDir, "module1");
-    mySrcDir1 = createChildDirectory(myModule1Dir, "src1");
-    myModule1OutputDir = createChildDirectory(myOutputDir, "module1");
-    myModule2Dir = createChildDirectory(myModule1Dir, "module2");
-    myModule2 = createJavaModuleWithContent(getProject(), "module2", myModule2Dir);
+  private val compilerProjectExtension: CompilerProjectExtension
+    get() = CompilerProjectExtension.getInstance(projectModel.project)!!
 
-    getCompilerProjectExtension().setCompilerOutputUrl(myOutputDir.getUrl());
-    PsiTestUtil.addContentRoot(myModule, myModule1Dir);
-    PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
+  private lateinit var outputDir: VirtualFile
+  private lateinit var module1Dir: VirtualFile
+  private lateinit var srcDir1: VirtualFile
+  private lateinit var module1OutputDir: VirtualFile
+  private lateinit var module1: Module
+  private lateinit var module2: Module
+  private lateinit var module2Dir: VirtualFile
+  
+  @BeforeEach
+  fun setUp() {
+    outputDir = projectModel.baseProjectDir.newVirtualDirectory("out")
+    module1Dir = projectModel.baseProjectDir.newVirtualDirectory("module1")
+    srcDir1 = projectModel.baseProjectDir.newVirtualDirectory("module1/src1")
+    module1OutputDir = projectModel.baseProjectDir.newVirtualDirectory("out/module1")
+    module2Dir = projectModel.baseProjectDir.newVirtualDirectory("module1/module2")
+    module1 = projectModel.createModule("module1")
+    module2 = projectModel.createModule("module2")
+    compilerProjectExtension.compilerOutputUrl = outputDir.url
+    PsiTestUtil.addContentRoot(module1, module1Dir)
+    PsiTestUtil.addSourceRoot(module1, srcDir1)
+    PsiTestUtil.addContentRoot(module2, module2Dir)
   }
 
-  public void testExcludeCompilerOutputOutsideOfContentRoot() {
-    assertTrue(myFileIndex.isExcluded(myOutputDir));
-    assertFalse(myFileIndex.isUnderIgnored(myOutputDir));
-    assertTrue(myFileIndex.isExcluded(myModule1OutputDir));
-    assertFalse(myFileIndex.isExcluded(myOutputDir.getParent()));
-    assertExcludedFromProject(myOutputDir);
-    assertExcludedFromProject(myModule1OutputDir);
-    String moduleOutputUrl = myModule1OutputDir.getUrl();
-
-    VfsTestUtil.deleteFile(myOutputDir);
-
-    PsiTestUtil.setCompilerOutputPath(myModule, moduleOutputUrl, false);
-    myOutputDir = createChildDirectory(myRootDir, "out");
-    myModule1OutputDir = createChildDirectory(myOutputDir, "module1");
-
-    assertExcludedFromProject(myOutputDir);
-    assertExcludedFromProject(myModule1OutputDir);
-    assertTrue(myFileIndex.isExcluded(myModule1OutputDir));
-
-    PsiTestUtil.setCompilerOutputPath(myModule, moduleOutputUrl, true);
-    PsiTestUtil.setCompilerOutputPath(myModule2, moduleOutputUrl, false);
-    PsiTestUtil.setCompilerOutputPath(myModule2, moduleOutputUrl, true);
+  @Test
+  fun testExcludeCompilerOutputOutsideOfContentRoot() {
+    fileIndex.assertScope(outputDir, EXCLUDED)
+    fileIndex.assertScope(module1OutputDir, EXCLUDED)
+    fileIndex.assertScope(outputDir.parent, NOT_IN_PROJECT)
+    
+    val moduleOutputUrl = module1OutputDir.url
+    VfsTestUtil.deleteFile(outputDir)
+    PsiTestUtil.setCompilerOutputPath(module1, moduleOutputUrl, false)
+    outputDir = projectModel.baseProjectDir.newVirtualDirectory("out")
+    module1OutputDir = projectModel.baseProjectDir.newVirtualDirectory("out/module1")
+    fileIndex.assertScope(outputDir, EXCLUDED)
+    fileIndex.assertScope(module1OutputDir, EXCLUDED)
+    
+    PsiTestUtil.setCompilerOutputPath(module1, moduleOutputUrl, true)
+    PsiTestUtil.setCompilerOutputPath(module2, moduleOutputUrl, false)
+    PsiTestUtil.setCompilerOutputPath(module2, moduleOutputUrl, true)
 
     // now no module inherits project output dir, but it still should be project-excluded
-    assertExcludedFromProject(myOutputDir);
+    fileIndex.assertScope(outputDir, EXCLUDED)
 
     // project output inside module content shouldn't be projectExcludeRoot
-    VirtualFile projectOutputUnderContent = createChildDirectory(myModule1Dir, "projectOutputUnderContent");
-    getCompilerProjectExtension().setCompilerOutputUrl(projectOutputUnderContent.getUrl());
-    fireRootsChanged();
+    var projectOutputUnderContent = projectModel.baseProjectDir.newVirtualDirectory("module1/projectOutputUnderContent")
+    compilerProjectExtension.compilerOutputUrl = projectOutputUnderContent.url
+    fireRootsChanged()
+    fileIndex.assertScope(outputDir, NOT_IN_PROJECT)
+    fileIndex.assertInModule(projectOutputUnderContent, module1, module1Dir, EXCLUDED)
 
-    assertNotExcluded(myOutputDir);
-    assertExcluded(projectOutputUnderContent, myModule);
-
-    VfsTestUtil.deleteFile(projectOutputUnderContent);
-    projectOutputUnderContent = createChildDirectory(myModule1Dir, "projectOutputUnderContent");
-    assertNotExcluded(myOutputDir);
-    assertExcluded(projectOutputUnderContent, myModule);
+    VfsTestUtil.deleteFile(projectOutputUnderContent)
+    projectOutputUnderContent = projectModel.baseProjectDir.newVirtualDirectory("module1/projectOutputUnderContent")
+    fileIndex.assertScope(outputDir, NOT_IN_PROJECT)
+    fileIndex.assertInModule(projectOutputUnderContent, module1, module1Dir, EXCLUDED)
   }
 
-  public void testResettingProjectOutputPath() {
-    VirtualFile output1 = createChildDirectory(myModule1Dir, "output1");
-    VirtualFile output2 = createChildDirectory(myModule1Dir, "output2");
-
-    assertInProject(output1);
-    assertInProject(output2);
-
-    getCompilerProjectExtension().setCompilerOutputUrl(output1.getUrl());
-    fireRootsChanged();
-
-    assertExcluded(output1, myModule);
-    assertInProject(output2);
-
-    getCompilerProjectExtension().setCompilerOutputUrl(output2.getUrl());
-    fireRootsChanged();
-
-    assertInProject(output1);
-    assertExcluded(output2, myModule);
+  @Test
+  fun testResettingProjectOutputPath() {
+    val output1 = projectModel.baseProjectDir.newVirtualDirectory("module1/output1")
+    val output2 = projectModel.baseProjectDir.newVirtualDirectory("module1/output2")
+    fileIndex.assertInModule(output1, module1, module1Dir)
+    fileIndex.assertInModule(output2, module1, module1Dir)
+    
+    compilerProjectExtension.compilerOutputUrl = output1.url
+    fireRootsChanged()
+    fileIndex.assertInModule(output1, module1, module1Dir, EXCLUDED)
+    fileIndex.assertInModule(output2, module1, module1Dir)
+    
+    compilerProjectExtension.compilerOutputUrl = output2.url
+    fireRootsChanged()
+    fileIndex.assertInModule(output1, module1, module1Dir)
+    fileIndex.assertInModule(output2, module1, module1Dir, EXCLUDED)
   }
 
-  public void testExcludedOutputDirShouldBeExcludedRightAfterItsCreation() {
-    VirtualFile projectOutput = createChildDirectory(myModule1Dir, "projectOutput");
-    VirtualFile module2Output = createChildDirectory(myModule1Dir, "module2Output");
-    VirtualFile module2TestOutput = createChildDirectory(myModule2Dir, "module2TestOutput");
-
-    assertInProject(projectOutput);
-    assertInProject(module2Output);
-    assertInProject(module2TestOutput);
-
-    getCompilerProjectExtension().setCompilerOutputUrl(projectOutput.getUrl());
-
-    PsiTestUtil.setCompilerOutputPath(myModule2, module2Output.getUrl(), false);
-    PsiTestUtil.setCompilerOutputPath(myModule2, module2TestOutput.getUrl(), true);
-    PsiTestUtil.setExcludeCompileOutput(myModule2, true);
-
-    assertExcluded(projectOutput, myModule);
-    assertExcluded(module2Output, myModule);
-    assertExcluded(module2TestOutput, myModule2);
-
-    VfsTestUtil.deleteFile(projectOutput);
-    VfsTestUtil.deleteFile(module2Output);
-    VfsTestUtil.deleteFile(module2TestOutput);
-
-    final List<VirtualFile> created = new ArrayList<>();
-    VirtualFileListener l = new VirtualFileListener() {
-      @Override
-      public void fileCreated(@NotNull VirtualFileEvent e) {
-        VirtualFile file = e.getFile();
-        String fileName = e.getFileName();
-        assertExcluded(file, fileName.contains("module2TestOutput") ? myModule2 : myModule);
-        created.add(file);
+  @Test
+  fun testExcludedOutputDirShouldBeExcludedRightAfterItsCreation(@TestDisposable disposable: Disposable) {
+    var projectOutput = projectModel.baseProjectDir.newVirtualDirectory("module1/projectOutput")
+    var module2Output = projectModel.baseProjectDir.newVirtualDirectory("module1/module2Output")
+    var module2TestOutput = projectModel.baseProjectDir.newVirtualDirectory("module1/module2/module2TestOutput")
+    fileIndex.assertInModule(projectOutput, module1, module1Dir)
+    fileIndex.assertInModule(module2Output, module1, module1Dir)
+    fileIndex.assertInModule(module2TestOutput, module2, module2Dir)
+    
+    compilerProjectExtension.compilerOutputUrl = projectOutput.url
+    PsiTestUtil.setCompilerOutputPath(module2, module2Output.url, false)
+    PsiTestUtil.setCompilerOutputPath(module2, module2TestOutput.url, true)
+    PsiTestUtil.setExcludeCompileOutput(module2, true)
+    fileIndex.assertInModule(projectOutput, module1, module1Dir, EXCLUDED)
+    fileIndex.assertInModule(module2Output, module1, module1Dir, EXCLUDED)
+    fileIndex.assertInModule(module2TestOutput, module2, module2Dir, EXCLUDED)
+    
+    VfsTestUtil.deleteFile(projectOutput)
+    VfsTestUtil.deleteFile(module2Output)
+    VfsTestUtil.deleteFile(module2TestOutput)
+    val created: MutableList<VirtualFile> = ArrayList()
+    val l: VirtualFileListener = object : VirtualFileListener {
+      override fun fileCreated(e: VirtualFileEvent) {
+        val file = e.file
+        val fileName = e.fileName
+        val (module, dir) = if (fileName.contains("module2TestOutput")) module2 to module2Dir else module1 to module1Dir
+        fileIndex.assertInModule(file, module, dir, EXCLUDED)
+        created.add(file)
       }
-    };
-    VirtualFileManager.getInstance().addVirtualFileListener(l, getTestRootDisposable());
-
-    projectOutput = createChildDirectory(myModule1Dir, projectOutput.getName());
-    assertExcluded(projectOutput, myModule);
-
-    module2Output = createChildDirectory(myModule1Dir, module2Output.getName());
-    assertExcluded(module2Output, myModule);
-
-    module2TestOutput = createChildDirectory(myModule2Dir, module2TestOutput.getName());
-    assertExcluded(module2TestOutput, myModule2);
-
-    assertEquals(created.toString(), 3, created.size());
+    }
+    VirtualFileManager.getInstance().addVirtualFileListener(l, disposable)
+    projectOutput = projectModel.baseProjectDir.newVirtualDirectory("module1/${projectOutput.name}")
+    fileIndex.assertInModule(projectOutput, module1, module1Dir, EXCLUDED)
+    module2Output = projectModel.baseProjectDir.newVirtualDirectory("module1/${module2Output.name}")
+    fileIndex.assertInModule(module2Output, module1, module1Dir, EXCLUDED)
+    module2TestOutput = projectModel.baseProjectDir.newVirtualDirectory("module1/module2/${module2TestOutput.name}")
+    fileIndex.assertInModule(module2TestOutput, module2, module2Dir, EXCLUDED)
+    assertEquals(3, created.size, created.toString())
   }
 
-  public void testSameSourceAndOutput() {
-    PsiTestUtil.setCompilerOutputPath(myModule, mySrcDir1.getUrl(), false);
-    assertExcluded(mySrcDir1, myModule);
+  @Test
+  fun testSameSourceAndOutput() {
+    PsiTestUtil.setCompilerOutputPath(module1, srcDir1.url, false)
+    fileIndex.assertInModule(srcDir1, module1, module1Dir, EXCLUDED)
   }
 
-  private CompilerProjectExtension getCompilerProjectExtension() {
-    final CompilerProjectExtension instance = CompilerProjectExtension.getInstance(myProject);
-    assertNotNull(instance);
-    return instance;
+  private fun fireRootsChanged() {
+    runWriteAction {
+      ProjectRootManagerEx.getInstanceEx(projectModel.project).makeRootsChange(EmptyRunnable.getInstance(), 
+                                                                               RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
+    }
   }
 }

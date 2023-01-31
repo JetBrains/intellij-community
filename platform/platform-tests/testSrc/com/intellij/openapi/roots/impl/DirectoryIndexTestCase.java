@@ -1,19 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -104,11 +100,6 @@ public abstract class DirectoryIndexTestCase extends HeavyPlatformTestCase {
     }, getProject(), new EmptyProgressIndicator());
     if (mustContain != null) assertContainsElements(collected, mustContain);
     if (mustNotContain != null) assertDoesntContain(collected, mustNotContain);
-  }
-
-  protected void fireRootsChanged() {
-    ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManagerEx.getInstanceEx(getProject()).
-      makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.NO_RESCAN_NEEDED));
   }
 
   protected static void assertIteratedContent(@NotNull FileIndex fileIndex,
