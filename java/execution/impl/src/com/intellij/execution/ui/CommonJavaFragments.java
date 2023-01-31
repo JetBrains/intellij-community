@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -14,10 +14,13 @@ import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.EditCustomVmOptionsAction;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
@@ -32,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
@@ -236,7 +241,8 @@ public final class CommonJavaFragments {
 
   @NotNull
   public static <T extends JavaRunConfigurationBase> SettingsEditorFragment<T, VmOptionsEditor> vmOptionsEx(JavaRunConfigurationBase settings,
-                                                                                                            Computable<Boolean> hasModule) {
+                                                                                                            Computable<Boolean> hasModule,
+                                                                                                            @Nullable JrePathEditor pathEditor) {
     String group = ExecutionBundle.message("group.java.options");
     VmOptionsEditor vmOptions = new VmOptionsEditor(settings) {
       @Override
@@ -248,6 +254,19 @@ public final class CommonJavaFragments {
             () -> MacrosDialog.show(editor, MacrosDialog.Filters.ALL, MacrosDialog.getPathMacros(hasModule.compute())));
           ExtendableEditorSupport.setupExtension(e, editor.getBackground(), extension);
         });
+        if (pathEditor != null) {
+          pathEditor.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              String jrePath = pathEditor.getJrePathOrName();
+              Sdk sdk = jrePath == null ? null : ProjectJdkTable.getInstance().findJdk(jrePath);
+              if (sdk != null) {
+                jrePath = sdk.getHomePath();
+              }
+              editor.getDocument().putUserData(EditCustomVmOptionsAction.Companion.getVmPathKey(), jrePath);
+            }
+          });
+        }
       }
     };
     SettingsEditorFragment<T, VmOptionsEditor> vmParameters =
