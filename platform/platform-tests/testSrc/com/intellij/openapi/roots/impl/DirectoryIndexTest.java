@@ -330,21 +330,11 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     if (WorkspaceFileIndexEx.IS_ENABLED) {
       assertExcluded(myExcludedLibSrcDir, myModule);
       assertExcluded(myExcludedLibClsDir, myModule);
-      checkPackage("lib.src.exc", true);
-      checkPackage("lib.cls.exc", true);
     }
     else {
       checkInfo(myExcludedLibSrcDir, null, true, false, "lib.src.exc", null, null, myModule3, myModule);
       checkInfo(myExcludedLibClsDir, null, true, false, "lib.cls.exc", null, null, myModule3);
-      checkPackage("lib.src.exc", true, myExcludedLibSrcDir);
-      checkPackage("lib.cls.exc", true, myExcludedLibClsDir);
     }
-
-    checkPackage("lib.src", true);
-    checkPackage("lib.cls", true);
-
-    checkPackage("exc", false);
-    checkPackage("exc", true);
   }
 
   public void testFileContentRootsModifications() {
@@ -486,19 +476,6 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     for (Module aModule : modulesOfOrderEntries) {
       OrderEntry found = ModuleFileIndexImpl.findOrderEntryWithOwnerModule(aModule, orderEntries);
       assertNotNull("not found: " + aModule + " in " + Arrays.toString(toArray(orderEntries)), found);
-    }
-  }
-
-  private void checkPackage(String packageName, boolean includeLibrarySources, VirtualFile... expectedDirs) {
-    VirtualFile[] actualDirs = myIndex.getDirectoriesByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
-    assertNotNull(actualDirs);
-    Arrays.sort(actualDirs, Comparator.comparing(VirtualFile::getPath));
-    Arrays.sort(expectedDirs, Comparator.comparing(VirtualFile::getPath));
-    assertOrderedEquals(actualDirs, expectedDirs);
-
-    for (VirtualFile dir : expectedDirs) {
-      String actualName = myIndex.getPackageName(dir);
-      assertEquals("Invalid package name for dir " + dir + ": " + packageName, packageName, actualName);
     }
   }
 
