@@ -11,6 +11,7 @@ import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.customization.CustomActionsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
 import com.intellij.openapi.actionSystem.*;
@@ -86,7 +87,7 @@ public final class RunContentBuilder extends RunTab {
 
     ExecutionConsole console = myExecutionResult.getExecutionConsole();
     RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi);
-    AnAction[] consoleActionsToMerge = AnAction.EMPTY_ARRAY;
+    AnAction[] consoleActionsToMerge;
     Content consoleContent = null;
     if (console != null) {
       if (console instanceof ExecutionConsoleEx) {
@@ -107,7 +108,29 @@ public final class RunContentBuilder extends RunTab {
       // clear console toolbar actions to remove the console toolbar
       consoleContent.setActions(new DefaultActionGroup(), ActionPlaces.RUNNER_TOOLBAR, console.getComponent());
     }
-    ActionGroup toolbar = createActionToolbar(contentDescriptor, consoleActionsToMerge);
+    else {
+      consoleActionsToMerge = AnAction.EMPTY_ARRAY;
+    }
+
+    AnAction[] restartActions = contentDescriptor.getRestartActions();
+    CustomActionsListener.subscribe(this, () -> initToolbars(restartActions, consoleActionsToMerge));
+    initToolbars(restartActions, consoleActionsToMerge);
+
+    if (profile instanceof RunConfigurationBase) {
+      if (console instanceof ObservableConsoleView && !ApplicationManager.getApplication().isUnitTestMode()) {
+        ((ObservableConsoleView)console).addChangeListener(new ConsoleToFrontListener((RunConfigurationBase)profile,
+                                                                                      myProject,
+                                                                                      myEnvironment.getExecutor(),
+                                                                                      contentDescriptor,
+                                                                                      myUi), this);
+      }
+    }
+
+    return contentDescriptor;
+  }
+
+  private void initToolbars(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions) {
+    ActionGroup toolbar = createActionToolbar(restartActions, consoleActions);
     if (UIExperiment.isNewDebuggerUIEnabled()) {
       var isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical");
 
@@ -153,18 +176,6 @@ public final class RunContentBuilder extends RunTab {
     } else {
       myUi.getOptions().setLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
     }
-
-    if (profile instanceof RunConfigurationBase) {
-      if (console instanceof ObservableConsoleView && !ApplicationManager.getApplication().isUnitTestMode()) {
-        ((ObservableConsoleView)console).addChangeListener(new ConsoleToFrontListener((RunConfigurationBase)profile,
-                                                                                      myProject,
-                                                                                      myEnvironment.getExecutor(),
-                                                                                      contentDescriptor,
-                                                                                      myUi), this);
-      }
-    }
-
-    return contentDescriptor;
   }
 
   @Override
@@ -208,7 +219,7 @@ public final class RunContentBuilder extends RunTab {
   }
 
   @NotNull
-  private ActionGroup createActionToolbar(@NotNull RunContentDescriptor contentDescriptor, AnAction @NotNull [] consoleActions) {
+  private ActionGroup createActionToolbar(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions) {
     boolean isNewLayout = UIExperiment.isNewDebuggerUIEnabled();
 
     String mainGroupId = isNewLayout ? RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP : RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP;
@@ -217,7 +228,7 @@ public final class RunContentBuilder extends RunTab {
     DefaultActionGroup actionGroup = new DefaultActionGroupWithDelegate(toolbarGroup);
     actionGroup.addAll(mainChildren);
 
-    DefaultActionGroup afterRunActions = new DefaultActionGroup(contentDescriptor.getRestartActions());
+    DefaultActionGroup afterRunActions = new DefaultActionGroup(restartActions);
     if (!isNewLayout) {
       afterRunActions.add(new CreateAction(AllIcons.General.Settings));
       afterRunActions.addSeparator();
