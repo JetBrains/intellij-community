@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndSeparatedMultiplatformJvmStdlibDescriptor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
-import org.junit.Test
 
 class NavigateToMultipartJvmStdlibSourcesTest : LightJavaCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
@@ -23,7 +22,6 @@ class NavigateToMultipartJvmStdlibSourcesTest : LightJavaCodeInsightFixtureTestC
     }
 
     // See KTIJ-23874
-    @Test
     fun testNavigateToCorrectStdlibSources() {
         MavenProjectsManager.getInstance(myFixture.project).initForTests()
         val stdlibCommonElement = configureAndResolve("""
