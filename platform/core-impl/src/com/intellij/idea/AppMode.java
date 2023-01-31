@@ -18,6 +18,7 @@ public final class AppMode {
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String CWM_HOST_COMMAND = "cwmHost";
   public static final String CWM_HOST_NO_LOBBY_COMMAND = "cwmHostNoLobby";
+  public static final String REMOTE_DEV_HOST_COMMAND = "remoteDevHost";
 
   static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
 
@@ -69,7 +70,7 @@ public final class AppMode {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
 
-    isRemoteDevHost = args.size() > 0 && (CWM_HOST_COMMAND.equals(args.get(0)) || CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)));
+    isRemoteDevHost = args.size() > 0 && (CWM_HOST_COMMAND.equals(args.get(0)) || CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) || REMOTE_DEV_HOST_COMMAND.equals(args.get(0)));
 
     for (String arg : args) {
       if (DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg)) {

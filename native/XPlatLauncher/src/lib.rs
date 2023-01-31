@@ -272,7 +272,7 @@ impl std::fmt::Display for IjStarterCommand {
 
 pub fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
     std::collections::HashMap::from([
-        ("run", IjStarterCommand {ij_command: "cwmHostNoLobby".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("run", IjStarterCommand {ij_command: "remoteDevServer".to_string(), is_project_path_required: true, is_arguments_required: true}),
         ("status", IjStarterCommand {ij_command: "remoteDevStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("cwmHostStatus", IjStarterCommand {ij_command: "remoteDevStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("remoteDevStatus", IjStarterCommand {ij_command: "remoteDevStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
