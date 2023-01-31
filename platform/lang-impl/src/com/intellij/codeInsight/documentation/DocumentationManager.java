@@ -638,12 +638,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return findTargetElement(editor, file, getContextElement(editor, file));
   }
 
-  private static @Nullable PsiElement getContextElement(Editor editor, PsiFile file) {
+  @Internal
+  public static @Nullable PsiElement getContextElement(Editor editor, PsiFile file) {
     return getContextElement(file, editor.getCaretModel().getOffset());
   }
 
   private static @Nullable PsiElement getContextElement(@Nullable PsiFile file, int offset) {
-    return file != null ? file.findElementAt(offset) : null;
+    if (file == null) return null;
+    if (offset == file.getTextLength()) {
+      offset = Math.max(0, offset - 1);
+    }
+    return file.findElementAt(offset);
   }
 
   protected void doShowJavaDocInfo(@NotNull PsiElement element,
