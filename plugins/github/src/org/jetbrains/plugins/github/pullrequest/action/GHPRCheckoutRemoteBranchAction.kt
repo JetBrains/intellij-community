@@ -26,10 +26,11 @@ import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubSettings
 
-class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.branch.checkout.create.action"),
-                                               GithubBundle.messagePointer("pull.request.branch.checkout.create.action.description"),
-                                               null) {
-
+class GHPRCheckoutRemoteBranchAction : DumbAwareAction(
+  GithubBundle.messagePointer("pull.request.branch.checkout.create.action"),
+  GithubBundle.messagePointer("pull.request.branch.checkout.create.action.description"),
+  null
+) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
