@@ -10,7 +10,10 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.logState
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger.Companion.LOG
+import com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -18,13 +21,20 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.waitForSmartMode
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.concurrency.asDeferred
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+
+private val LOG_APPLICATION_STATES_INITIAL_DELAY = 10.minutes
+private val LOG_APPLICATION_STATES_DELAY = 24.hours
+private val LOG_PROJECTS_STATES_INITIAL_DELAY = 5.minutes
+private val LOG_PROJECTS_STATES_DELAY = 12.hours
+private const val REDUCE_DELAY_FLAG_KEY = "fus.internal.reduce.initial.delay"
 
 /**
  * Called by a scheduler once a day and records IDE/project state. <br></br>
@@ -37,15 +47,14 @@ import org.jetbrains.concurrency.asDeferred
  */
 @Service(Service.Level.APP)
 @Internal
-class FUStateUsagesLogger private constructor(cs: CoroutineScope) : UsagesCollectorConsumer {
-  // https://github.com/Kotlin/kotlinx.coroutines/issues/2603#issuecomment-808859170
-  private val logAppStateRequests = MutableSharedFlow<Boolean?>()
+class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : UsagesCollectorConsumer {
 
   init {
     cs.launch {
-      logAppStateRequests
-        .filterNotNull()
-        .collectLatest(::logApplicationStates)
+      if (!StatisticsUploadAssistant.isSendAllowed()) {
+        return@launch
+      }
+      logApplicationStateRegularly()
     }
   }
 
@@ -141,18 +150,22 @@ class FUStateUsagesLogger private constructor(cs: CoroutineScope) : UsagesCollec
     }
   }
 
-  suspend fun logProjectStates(project: Project) {
-    project.service<ProjectFUStateUsagesLogger>().logProjectStates()
+  private suspend fun logApplicationStateRegularly() {
+    StatisticsStateCollectorsScheduler.allowExecution.set(true)
+    delay(LOG_APPLICATION_STATES_INITIAL_DELAY)
+    StatisticsStateCollectorsScheduler.allowExecution.set(false)
+    while (true) {
+      logApplicationStates(onStartup = false)
+      delay(LOG_APPLICATION_STATES_DELAY)
+    }
   }
 
-  suspend fun logApplicationStates() {
-    logAppStateRequests.emit(false)
-    logAppStateRequests.emit(null)
+  fun scheduleLogApplicationStatesOnStartup(): Job = cs.launch {
+    logApplicationStates(onStartup = true)
   }
 
-  suspend fun logApplicationStatesOnStartup() {
-    logAppStateRequests.emit(true)
-    logAppStateRequests.emit(null)
+  fun scheduleLogApplicationState(): Job = cs.launch {
+    logApplicationStates(onStartup = false)
   }
 
   private suspend fun logApplicationStates(onStartup: Boolean) {
@@ -179,47 +192,91 @@ class FUStateUsagesLogger private constructor(cs: CoroutineScope) : UsagesCollec
       }
     }
   }
+
+  @ScheduledForRemoval
+  @Deprecated(
+    message = "Use ProjectFUStateUsagesLogger.scheduleLogProjectState",
+    ReplaceWith(
+      "project.service<ProjectFUStateUsagesLogger>().scheduleLogProjectState().join()",
+      "com.intellij.openapi.components.service"
+    ),
+  )
+  suspend fun logProjectStates(project: Project) {
+    project.service<ProjectFUStateUsagesLogger>().scheduleLogProjectState().join()
+  }
+
+  @ScheduledForRemoval
+  @Deprecated(
+    message = "Use FUStateUsagesLogger.scheduleLogProjectState",
+    replaceWith = ReplaceWith(
+      "scheduleLogApplicationState().join()"
+    ),
+  )
+  suspend fun logApplicationStates() {
+    scheduleLogApplicationState().join()
+  }
 }
 
+@Internal
 @Service(Service.Level.PROJECT)
-private class ProjectFUStateUsagesLogger(
+class ProjectFUStateUsagesLogger(
   private val project: Project,
-  cs: CoroutineScope,
+  private val cs: CoroutineScope,
 ) : UsagesCollectorConsumer {
-  // https://github.com/Kotlin/kotlinx.coroutines/issues/2603#issuecomment-808859170
-  private val logProjectStateRequests = MutableSharedFlow<Unit?>()
 
   init {
     cs.launch {
-      logProjectStateRequests
-        .filterNotNull()
-        .collectLatest {
-          coroutineScope {
-            val recorderLoggers = HashMap<String, StatisticsEventLogger>()
-            for (usagesCollector in ProjectUsagesCollector.getExtensions(this@ProjectFUStateUsagesLogger)) {
-              if (!getPluginInfo(usagesCollector.javaClass).isDevelopedByJetBrains()) {
-                @Suppress("removal", "DEPRECATION")
-                LOG.warn("Skip '${usagesCollector.groupId}' because its registered in a third-party plugin")
-                continue
-              }
-
-              launch {
-                val metrics = blockingContext { usagesCollector.getMetrics(project, null) }
-                FUStateUsagesLogger.logMetricsOrError(
-                  project = project,
-                  recorderLoggers = recorderLoggers,
-                  usagesCollector = usagesCollector,
-                  metrics = metrics.asDeferred().await() ?: emptySet(),
-                )
-              }
-            }
-          }
-        }
+      project.waitForSmartMode()
+      logProjectStateRegularly()
     }
   }
 
-  suspend fun logProjectStates() {
-    logProjectStateRequests.emit(Unit)
-    logProjectStateRequests.emit(null)
+  private suspend fun logProjectStateRegularly() {
+    val reduceInitialDelay = System.getProperty(REDUCE_DELAY_FLAG_KEY).toBoolean()
+    if (!reduceInitialDelay) {
+      delay(LOG_PROJECTS_STATES_INITIAL_DELAY)
+    }
+    while (true) {
+      logProjectState()
+      delay(LOG_PROJECTS_STATES_DELAY)
+    }
+  }
+
+  fun scheduleLogProjectState(): Job = cs.launch {
+    logProjectState()
+  }
+
+  private suspend fun logProjectState(): Unit = coroutineScope {
+    val recorderLoggers = HashMap<String, StatisticsEventLogger>()
+    for (usagesCollector in ProjectUsagesCollector.getExtensions(this@ProjectFUStateUsagesLogger)) {
+      if (!getPluginInfo(usagesCollector.javaClass).isDevelopedByJetBrains()) {
+        @Suppress("removal", "DEPRECATION")
+        LOG.warn("Skip '${usagesCollector.groupId}' because its registered in a third-party plugin")
+        continue
+      }
+
+      launch {
+        val metrics = blockingContext { usagesCollector.getMetrics(project, null) }
+        FUStateUsagesLogger.logMetricsOrError(
+          project = project,
+          recorderLoggers = recorderLoggers,
+          usagesCollector = usagesCollector,
+          metrics = metrics.asDeferred().await() ?: emptySet(),
+        )
+      }
+    }
+  }
+
+  fun scheduleLogApplicationAndProjectState(): Deferred<Unit> = cs.async {
+    launch {
+      FUStateUsagesLogger.getInstance().scheduleLogApplicationState().join()
+      logProjectState()
+    }
+
+    for (extension in FeatureUsageStateEventTracker.EP_NAME.extensions) {
+      launch {
+        extension.reportNow()
+      }
+    }
   }
 }
