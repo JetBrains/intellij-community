@@ -4,10 +4,17 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import git4idea.changes.GitCommitShaWithPatches
 import git4idea.changes.GitParsedChangesBundle
 import git4idea.changes.GitParsedChangesBundleImpl
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitHandlerInputProcessorUtil
+import git4idea.commands.GitLineHandler
+import git4idea.fetch.GitFetchSupport
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
@@ -17,16 +24,20 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadCommit
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadCommitDiffs
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestDiffs
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import java.nio.charset.StandardCharsets
 
 interface GitLabMergeRequestChanges {
   val commits: List<GitLabCommitDTO>
 
   suspend fun getParsedChanges(): GitParsedChangesBundle
+
+  suspend fun ensureAllRevisionsFetched()
 }
 
 private val LOG = logger<GitLabMergeRequestChanges>()
 
 class GitLabMergeRequestChangesImpl(
+  private val project: Project,
   parentCs: CoroutineScope,
   private val api: GitLabApi,
   private val projectMapping: GitLabProjectMapping,
@@ -37,7 +48,7 @@ class GitLabMergeRequestChangesImpl(
 
   private val glProject = projectMapping.repository
 
-  override val commits: List<GitLabCommitDTO> = mergeRequest.commits
+  override val commits: List<GitLabCommitDTO> = mergeRequest.commits.asReversed()
 
   private val parsedChanges = cs.async(start = CoroutineStart.LAZY) {
     val mergeBaseSha = mergeRequest.diffRefs.baseSha ?: error("Missing merge base revision")
@@ -63,6 +74,41 @@ class GitLabMergeRequestChangesImpl(
     }
     val project = projectMapping.remote.repository.project
     return GitParsedChangesBundleImpl(project, projectMapping.remote.repository.root, mergeBaseSha, commitsWithPatches, headPatches)
+  }
+
+  override suspend fun ensureAllRevisionsFetched() {
+    val revsToCheck = commits.map { it.sha }.toMutableList()
+    mergeRequest.diffRefs.baseSha?.also {
+      revsToCheck.add(it)
+    }
+    withContext(Dispatchers.IO) {
+      if (areAllRevisionPresent(revsToCheck)) return@withContext
+
+      fetch(mergeRequest.targetBranch)
+      fetch("""merge-requests/${mergeRequest.iid}/head:""")
+
+      check(areAllRevisionPresent(revsToCheck)) { "Failed to fetch some revisions" }
+    }
+  }
+
+  private suspend fun areAllRevisionPresent(revisions: List<String>): Boolean {
+    return coroutineToIndicator {
+      val h = GitLineHandler(project, projectMapping.remote.repository.root, GitCommand.CAT_FILE)
+      h.setSilent(true)
+      h.addParameters("--batch-check=%(objecttype)")
+      h.endOptions()
+      h.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(revisions, StandardCharsets.UTF_8))
+
+      !Git.getInstance().runCommand(h).getOutputOrThrow().contains("missing")
+    }
+  }
+
+  private suspend fun fetch(refspec: String) {
+    coroutineToIndicator {
+      val remote = projectMapping.remote
+      GitFetchSupport.fetchSupport(project)
+        .fetch(remote.repository, remote.remote, refspec).throwExceptionIfFailed()
+    }
   }
 }
 

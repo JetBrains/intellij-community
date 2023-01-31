@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
@@ -21,6 +22,7 @@ interface GitLabProject {
 }
 
 class GitLabLazyProject(
+  private val project: Project,
   parentCs: CoroutineScope,
   private val api: GitLabApi,
   override val projectMapping: GitLabProjectMapping
@@ -29,7 +31,7 @@ class GitLabLazyProject(
   private val cs = parentCs.childScope()
 
   override val mergeRequests by lazy {
-    CachingGitLabProjectMergeRequestsStore(cs, api, projectMapping)
+    CachingGitLabProjectMergeRequestsStore(project, cs, api, projectMapping)
   }
 
   override suspend fun getLabels(): List<GitLabLabelDTO> =

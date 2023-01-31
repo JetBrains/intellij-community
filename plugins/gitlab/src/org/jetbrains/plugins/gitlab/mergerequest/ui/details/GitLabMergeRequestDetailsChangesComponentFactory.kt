@@ -9,7 +9,10 @@ import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFac
 import com.intellij.collaboration.ui.util.bindContent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.Processor
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -23,7 +26,7 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
     val wrapper = Wrapper(LoadingLabel())
     wrapper.bindContent(cs, vm.changesResult) { _, result ->
       result.fold(
-        onSuccess = { createChangesTree(it) },
+        onSuccess = { createChangesTree(vm, it) },
         onFailure = { SimpleHtmlPane(it.localizedMessage) }
       )
     }
@@ -34,9 +37,24 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
   }
 
   // TODO: do not recreate the tree
-  private fun createChangesTree(changes: Collection<Change>): JComponent {
+  private fun createChangesTree(vm: GitLabMergeRequestChangesViewModel, changes: Collection<Change>): JComponent {
     val changesModel = SingleValueModel(changes)
     return CodeReviewChangesTreeFactory(project, changesModel)
-      .create(GitLabBundle.message("merge.request.details.changes.empty"))
+      .create(GitLabBundle.message("merge.request.details.changes.empty")).apply {
+        doubleClickHandler = Processor { e ->
+          if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
+          vm.showDiff()
+          true
+        }
+        enterKeyHandler = Processor {
+          vm.showDiff()
+          true
+        }
+      }.also {
+        it.addSelectionListener {
+          vm.updateSelectedChanges(VcsTreeModelData.getListSelectionOrAll(it).map { it as? Change })
+        }
+        vm.updateSelectedChanges(VcsTreeModelData.getListSelectionOrAll(it).map { it as? Change })
+      }
   }
 }

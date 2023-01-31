@@ -15,8 +15,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.mapLatest
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
@@ -27,6 +29,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
+import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffModelRepository
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
@@ -105,12 +108,33 @@ internal class GitLabReviewTabComponentFactory(private val project: Project) : R
       requestLoad()
     }
 
+    val detailsVmFlow = reviewDetailsVm.mergeRequestLoadingFlow.mapLatest {
+      (it as? GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result)?.detailsVm
+    }.filterNotNull()
+
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
-      reviewDetailsVm.mergeRequestLoadingFlow.flatMapLatest {
-        (it as? GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result)?.detailsVm?.detailsInfoVm?.showTimelineRequests
-        ?: emptyFlow()
+      detailsVmFlow.flatMapLatest {
+        it.detailsInfoVm.showTimelineRequests
       }.collect {
         projectContext.filesController.openTimeline(reviewId, true)
+      }
+    }
+
+    cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
+      project.service<GitLabMergeRequestDiffModelRepository>().getShared(conn, reviewId).collectLatest {diffVm ->
+        detailsVmFlow.flatMapLatest {
+          it.changesVm.selectedChanges
+        }.collectLatest {
+          diffVm.setChanges(it)
+        }
+      }
+    }
+
+    cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
+      detailsVmFlow.flatMapLatest {
+        it.changesVm.showDiffRequests
+      }.collect {
+        projectContext.filesController.openDiff(reviewId, true)
       }
     }
 

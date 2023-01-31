@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -51,6 +52,7 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
 }
 
 internal class LoadedGitLabMergeRequest(
+  private val project: Project,
   parentCs: CoroutineScope,
   private val api: GitLabApi,
   private val projectMapping: GitLabProjectMapping,
@@ -78,7 +80,7 @@ internal class LoadedGitLabMergeRequest(
   override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestState.map { it.reviewers }
 
   override val changes: Flow<GitLabMergeRequestChanges> = mergeRequestState.map {
-    GitLabMergeRequestChangesImpl(cs, api, projectMapping, it)
+    GitLabMergeRequestChangesImpl(project, cs, api, projectMapping, it)
   }.modelFlow(cs, LOG)
 
   private val stateEvents by lazy {

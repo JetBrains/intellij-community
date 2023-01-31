@@ -32,7 +32,8 @@ interface GitLabProjectMergeRequestsStore {
   fun findCachedDetails(id: GitLabMergeRequestId): GitLabMergeRequestDetails?
 }
 
-class CachingGitLabProjectMergeRequestsStore(parentCs: CoroutineScope,
+class CachingGitLabProjectMergeRequestsStore(private val project: Project,
+                                             parentCs: CoroutineScope,
                                              private val api: GitLabApi,
                                              private val projectMapping: GitLabProjectMapping) : GitLabProjectMergeRequestsStore {
 
@@ -57,7 +58,7 @@ class CachingGitLabProjectMergeRequestsStore(parentCs: CoroutineScope,
           val mrData = withContext(Dispatchers.IO) {
             api.loadMergeRequest(glProject, id).body()!!
           }
-          LoadedGitLabMergeRequest( this, api, projectMapping, mrData)
+          LoadedGitLabMergeRequest(project, this, api, projectMapping, mrData)
         }
         send(result)
         awaitClose()

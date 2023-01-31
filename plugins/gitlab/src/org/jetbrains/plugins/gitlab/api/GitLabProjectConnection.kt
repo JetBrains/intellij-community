@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.api
 
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import git4idea.remote.hosting.HostedGitRepositoryConnection
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +17,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.util.*
 
 class GitLabProjectConnection(
+  project: Project,
   private val scope: CoroutineScope,
   override val repo: GitLabProjectMapping,
   override val account: GitLabAccount,
@@ -27,7 +29,7 @@ class GitLabProjectConnection(
 
   val tokenRefreshFlow: Flow<Unit> = tokenState.map { }
 
-  val projectData = GitLabLazyProject(scope.childScope(), apiClient, repo)
+  val projectData = GitLabLazyProject(project, scope.childScope(), apiClient, repo)
   val imageLoader = GitLabImageLoader(apiClient, repo.repository.serverPath)
 
   override suspend fun close() {

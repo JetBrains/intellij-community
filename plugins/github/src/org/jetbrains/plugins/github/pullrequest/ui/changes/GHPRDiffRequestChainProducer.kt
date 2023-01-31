@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.ex.isValidRanges
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 import git4idea.changes.GitParsedChangesBundle
+import git4idea.changes.getDiffComputer
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -87,7 +88,7 @@ open class GHPRDiffRequestChainProducer(
 
     VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
 
-    val diffComputer = getDiffComputer(changesProvider, change)
+    val diffComputer = changesProvider.findChangeDiffData(change)?.getDiffComputer()
     if (diffComputer != null) {
       requestDataKeys[DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER] = diffComputer
     }
@@ -125,24 +126,5 @@ open class GHPRDiffRequestChainProducer(
                                      diffData,
                                      ghostUser,
                                      currentUser)
-  }
-
-  private fun getDiffComputer(changesProvider: GitParsedChangesBundle, change: Change): DiffUserDataKeysEx.DiffComputer? {
-    val diffRanges = changesProvider.findChangeDiffData(change)?.diffRangesWithoutContext ?: return null
-
-    return DiffUserDataKeysEx.DiffComputer { text1, text2, policy, innerChanges, indicator ->
-      val comparisonManager = ComparisonManagerImpl.getInstanceImpl()
-      val lineOffsets1 = LineOffsetsUtil.create(text1)
-      val lineOffsets2 = LineOffsetsUtil.create(text2)
-
-      if (!isValidRanges(text1, text2, lineOffsets1, lineOffsets2, diffRanges)) {
-        error("Invalid diff line ranges for change $change")
-      }
-      val iterable = DiffIterableUtil.create(diffRanges, lineOffsets1.lineCount, lineOffsets2.lineCount)
-      DiffIterableUtil.iterateAll(iterable).map {
-        comparisonManager.compareLinesInner(it.first, text1, text2, lineOffsets1, lineOffsets2, policy, innerChanges,
-                                            indicator)
-      }.flatten()
-    }
   }
 }

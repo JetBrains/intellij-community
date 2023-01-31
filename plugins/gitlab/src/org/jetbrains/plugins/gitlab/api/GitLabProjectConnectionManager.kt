@@ -25,7 +25,7 @@ internal class GitLabProjectConnectionManager(project: Project) :
                                                                                  serviceGet<GitLabAccountManager>()) { glProject, account, tokenState ->
     val apiClient = GitLabApiImpl { tokenState.value }
     val currentUser = apiClient.getCurrentUser(glProject.repository.serverPath) ?: error("Unable to load current user")
-    GitLabProjectConnection( this, glProject, account, currentUser, apiClient, tokenState)
+    GitLabProjectConnection(project, this, glProject, account, currentUser, apiClient, tokenState)
   }
 
   private val delegate = SingleHostedGitRepositoryConnectionManagerImpl(disposingScope(), connectionFactory)

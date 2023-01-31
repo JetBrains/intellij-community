@@ -15,6 +15,9 @@ interface GitLabMergeRequestsFilesController {
   @RequiresEdt
   fun openTimeline(mr: GitLabMergeRequestId, focus: Boolean)
 
+  @RequiresEdt
+  fun openDiff(mr: GitLabMergeRequestId, focus: Boolean)
+
   suspend fun closeAllFiles()
 }
 
@@ -30,6 +33,13 @@ class GitLabMergeRequestsFilesControllerImpl(
     FileEditorManager.getInstance(project).openFile(file, focus)
   }
 
+  override fun openDiff(mr: GitLabMergeRequestId, focus: Boolean) {
+    val fs = GitLabVirtualFileSystem.getInstance()
+    val path = fs.getPath(connection.id, project, connection.repo.repository, mr, true)
+    val file = fs.refreshAndFindFileByPath(path) ?: return
+    FileEditorManager.getInstance(project).openFile(file, focus)
+  }
+
   override suspend fun closeAllFiles() {
     withContext(Dispatchers.EDT) {
       if (project.isDisposed) return@withContext
@@ -37,7 +47,7 @@ class GitLabMergeRequestsFilesControllerImpl(
       writeAction {
         // cache?
         fileManager.openFiles.forEach { file ->
-          if (GitLabVirtualFileSystem.MANAGED_FILE_CLASSES.any { it.isInstance(file) }) {
+          if (file is GitLabVirtualFile && connection.id == file.connectionId) {
             fileManager.closeFile(file)
           }
         }
