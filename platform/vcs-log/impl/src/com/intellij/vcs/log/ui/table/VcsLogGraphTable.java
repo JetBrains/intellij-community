@@ -775,20 +775,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     int targetRow = isTopBorder ? 0 : getRowCount() - 1;
     if (targetRow >= 0 && targetRow < getRowCount()) {
       g.setColor(getStyle(targetRow, getColumnViewIndex(Commit.INSTANCE), hasFocus(), false, false).getBackground());
-      g.fillRect(x, y, width, height);
-      if (myColorManager.hasMultiplePaths()) {
-        g.setColor(getPathBackgroundColor(getModel().getValueAt(targetRow, Root.INSTANCE), myColorManager));
-
-        int rootWidth = getRootColumn().getWidth();
-        if (!isShowRootNames()) rootWidth -= JBUIScale.scale(ROOT_INDICATOR_WHITE_WIDTH);
-
-        g.fillRect(x, y, rootWidth, height);
-      }
     }
     else {
       g.setColor(getBaseStyle(targetRow, getColumnViewIndex(Commit.INSTANCE), hasFocus(), false).getBackground());
-      g.fillRect(x, y, width, height);
     }
+    g.fillRect(x, y, width, height);
   }
 
   public @NotNull Border createTopBottomBorder(int top, int bottom) {
