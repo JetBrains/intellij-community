@@ -685,7 +685,7 @@
     },
 
     "RunWidget" : {
-      "foreground": "Grey14",
+      "foreground": "Grey12",
       "disabledForeground": "#FFFFFF66",
       "background": "#3369D6",
       "runningBackground": "#599E5E",
