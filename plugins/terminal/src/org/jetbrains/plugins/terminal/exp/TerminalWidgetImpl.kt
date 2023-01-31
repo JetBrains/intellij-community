@@ -18,20 +18,26 @@ class TerminalWidgetImpl(private val project: Project,
   override val terminalTitle: TerminalTitle = TerminalTitle()
 
   override val termSize: TermSize
-    get() = TermSize(80, 24)
+    get() = blocksContainer.getTerminalSize()
 
   override val ttyConnectorAccessor: TtyConnectorAccessor = TtyConnectorAccessor()
 
 
-  private val blocksContainer: TerminalBlocksContainer = TerminalBlocksContainer(project, terminalSettings)
+  private val session: TerminalSession
+  private val blocksContainer: TerminalBlocksContainer
 
   init {
+    session = TerminalSession(project, terminalSettings)
+    blocksContainer = TerminalBlocksContainer(project, session, terminalSettings)
+
     Disposer.register(parent, this)
+    Disposer.register(this, session)
     Disposer.register(this, blocksContainer)
   }
 
   override fun connectToTty(ttyConnector: TtyConnector) {
-
+    session.start(ttyConnector)
+    blocksContainer.sizeTerminalToComponent()
   }
 
   override fun writePlainMessage(message: String) {

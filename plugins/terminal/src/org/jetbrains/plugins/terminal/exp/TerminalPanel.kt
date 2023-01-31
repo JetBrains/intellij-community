@@ -59,9 +59,6 @@ class TerminalPanel(private val project: Project,
 
   private val runningDisposable: Disposable = Disposer.newDisposable()
 
-  val charSize: Dimension
-    get() = Dimension(editor.charHeight, editor.lineHeight)
-
   private val palette: ColorPalette
     get() = settings.terminalColorPalette
 
@@ -97,7 +94,7 @@ class TerminalPanel(private val project: Project,
       override fun onContentChanged() {
         updateEditorContent()
       }
-    })
+    }, runningDisposable)
   }
 
   private fun updateEditorContent() {
@@ -147,7 +144,7 @@ class TerminalPanel(private val project: Project,
       model.processScreenLines(0, model.screenLinesCount, consumer)
     }
     else {
-      model.processHistoryAndScreenLines(-model.historyLinesCount, model.historyLinesCount + model.screenLinesCount, consumer)
+      model.processHistoryAndScreenLines(-model.historyLinesCount, model.historyLinesCount + model.cursorY, consumer)
     }
 
     while (builder.lastOrNull() == '\n') {
@@ -288,10 +285,6 @@ class TerminalPanel(private val project: Project,
   }
 
   fun isFocused(): Boolean = editor.contentComponent.hasFocus()
-
-  fun getContentSize(): Dimension {
-    return Dimension(editor.component.width, editor.contentComponent.height)
-  }
 
   override fun getPreferredSize(): Dimension {
     val baseSize = super.getPreferredSize()

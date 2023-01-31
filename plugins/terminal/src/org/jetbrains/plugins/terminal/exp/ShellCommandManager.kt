@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.model.TerminalLine
-import java.awt.event.KeyEvent
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -26,7 +25,7 @@ class ShellCommandManager(private val model: TerminalModel) {
         if (command != null) {
           val finished: Boolean = prompt.processTerminalBuffer {
             val terminalLine = prompt.getLineAtCursor()
-            val text = prompt.getLineTextUpToCursor(terminalLine)
+            val text = terminalLine.text.trimEnd()
             text.isNotEmpty() && text == command.prompt
           }
           if (finished) {
@@ -38,23 +37,20 @@ class ShellCommandManager(private val model: TerminalModel) {
     })
   }
 
-  fun onKeyPressed(e: KeyEvent) {
-    if (e.id == KeyEvent.KEY_PRESSED) {
-      if (e.keyCode == KeyEvent.VK_ENTER) {
-        val commandRun: CommandRun = prompt.processTerminalBuffer {
-          val command = prompt.getTypedShellCommand()
-          val prompt = model.promptText
-          return@processTerminalBuffer CommandRun(System.nanoTime(), prompt, command)
-        }
-        if (commandRun.command.isNotEmpty() && commandRun.prompt.isNotEmpty()) {
-          prompt.reset()
-          this.commandRun = commandRun
-          fireCommandStarted(commandRun)
-        }
-      }
-      else {
-        prompt.onKeyPressed()
-      }
+  fun rememberPromptText() {
+    prompt.onKeyPressed()
+  }
+
+  fun onEnterPressed() {
+    val commandRun: CommandRun = prompt.processTerminalBuffer {
+      val command = prompt.getTypedShellCommand()
+      val prompt = model.promptText
+      return@processTerminalBuffer CommandRun(System.nanoTime(), prompt, command)
+    }
+    if (commandRun.prompt.isNotEmpty()) {
+      prompt.reset()
+      this.commandRun = commandRun
+      fireCommandStarted(commandRun)
     }
   }
 
@@ -79,8 +75,8 @@ class ShellCommandManager(private val model: TerminalModel) {
 }
 
 interface ShellCommandListener {
-  fun commandStarted(command: String)
-  fun commandFinished(command: String, exitCode: Int, duration: Long)
+  fun commandStarted(command: String) {}
+  fun commandFinished(command: String, exitCode: Int, duration: Long) {}
 }
 
 private class Prompt(val model: TerminalModel) {

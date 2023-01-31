@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.RequestOrigin
@@ -200,6 +202,12 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     method.invoke(textBuffer)
   }
 
+  fun clearAllExceptPrompt() {
+    textBuffer.scrollArea(1, 1 - cursorY, height)
+    textBuffer.clearHistory()
+    cursorY = 1
+  }
+
   fun lock() = textBuffer.lock()
 
   fun unlock() = textBuffer.unlock()
@@ -210,8 +218,14 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
   private val terminalListeners: MutableList<TerminalListener> = mutableListOf()
   private val cursorListeners: MutableList<CursorListener> = mutableListOf()
 
-  fun addContentListener(listener: ContentListener) {
-    textBuffer.addModelListener { listener.onContentChanged() }
+  fun addContentListener(listener: ContentListener, parentDisposable: Disposable? = null) {
+    val terminalListener = TerminalModelListener { listener.onContentChanged() }
+    textBuffer.addModelListener(terminalListener)
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable) {
+        textBuffer.removeModelListener(terminalListener)
+      }
+    }
   }
 
   fun addTerminalListener(listener: TerminalListener) {

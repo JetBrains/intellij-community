@@ -131,7 +131,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
                                                            @Nullable String currentWorkingDirectory,
                                                            boolean deferSessionStartUntilUiShown) {
     if (Registry.is("ide.experimental.ui.new.terminal", false)) {
-      return new TerminalWidgetImpl(myProject, mySettingsProvider, parent);
+      TerminalWidget widget = new TerminalWidgetImpl(myProject, mySettingsProvider, parent);
+      scheduleOpenSessionInDirectory(widget, currentWorkingDirectory, deferSessionStartUntilUiShown);
+      return widget;
     }
     return createTerminalWidget(parent, currentWorkingDirectory, deferSessionStartUntilUiShown).asNewWidget();
   }
