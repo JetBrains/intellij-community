@@ -25,7 +25,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
@@ -355,18 +354,18 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   @NotNull
   public List<PyClass> getTopLevelClasses() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyClass.class);
+    return PyPsiUtils.collectStubChildren(this, getGreenStub(), PyClass.class);
   }
 
   @NotNull
   @Override
   public List<PyFunction> getTopLevelFunctions() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyFunction.class);
+    return PyPsiUtils.collectStubChildren(this, getGreenStub(), PyFunction.class);
   }
 
   @Override
   public List<PyTargetExpression> getTopLevelAttributes() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyTargetExpression.class);
+    return PyPsiUtils.collectStubChildren(this, getGreenStub(), PyTargetExpression.class);
   }
 
   @Override
@@ -475,7 +474,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @NotNull
   public List<PyImportElement> getImportTargets() {
     final List<PyImportElement> ret = new ArrayList<>();
-    final List<PyImportStatement> imports = PyPsiUtils.collectStubChildren(this, getStub(), PyImportStatement.class);
+    final List<PyImportStatement> imports = PyPsiUtils.collectStubChildren(this, getGreenStub(), PyImportStatement.class);
     for (PyImportStatement one : imports) {
       ContainerUtil.addAll(ret, one.getImportElements());
     }
@@ -485,15 +484,14 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   @NotNull
   public List<PyFromImportStatement> getFromImports() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyFromImportStatement.class);
+    return PyPsiUtils.collectStubChildren(this, getGreenStub(), PyFromImportStatement.class);
   }
 
   @Nullable
   @Override
   public List<String> getDunderAll() {
-    final StubElement stubElement = getStub();
-    if (stubElement instanceof PyFileStub) {
-      return ((PyFileStub)stubElement).getDunderAll();
+    if (getGreenStub() instanceof PyFileStub stubElement) {
+      return stubElement.getDunderAll();
     }
     if (!myDunderAllCalculated) {
       final List<String> dunderAll = calculateDunderAll();
@@ -623,9 +621,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Override
   public boolean hasImportFromFuture(FutureFeature feature) {
-    final StubElement stub = getStub();
-    if (stub instanceof PyFileStub) {
-      return ((PyFileStub)stub).getFutureFeatures().get(feature.ordinal());
+    if (getGreenStub() instanceof PyFileStub stub) {
+      return stub.getFutureFeatures().get(feature.ordinal());
     }
     Boolean enabled = myFutureFeatures.get(feature);
     if (enabled == null) {
@@ -638,9 +635,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Override
   public String getDeprecationMessage() {
-    final StubElement stub = getStub();
-    if (stub instanceof PyFileStub) {
-      return ((PyFileStub)stub).getDeprecationMessage();
+    if (getGreenStub() instanceof PyFileStub stub) {
+      return stub.getDeprecationMessage();
     }
     return extractDeprecationMessage();
   }
