@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.ibm.icu.text.MessagePattern;
@@ -35,13 +35,16 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
+      @SuppressWarnings("unchecked") 
+      private static final Class<? extends UExpression>[] uExpressionClasses = new Class[] 
+        {UInjectionHost.class, UCallExpression.class, UReferenceExpression.class};
+      
       @Override
       public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
-        UExpression uElement =
-          UastContextKt.toUElementOfExpectedTypes(element, UInjectionHost.class, UCallExpression.class, UReferenceExpression.class);
+        UExpression uElement = UastContextKt.toUElementOfExpectedTypes(element, uExpressionClasses);
         if (uElement == null) return;
-        Value titleValue = getTitleValue(uElement, new HashSet<>());
+        Value titleValue = getTitleValue(uElement, null);
         if (titleValue == null) return;
         List<UExpression> usages = I18nInspection.findIndirectUsages(uElement, false);
         if (usages.isEmpty()) {
@@ -74,7 +77,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
         }
       }
 
-      private Nls.Capitalization getCapitalization(UExpression usage) {
+      private static Nls.Capitalization getCapitalization(UExpression usage) {
         Nls.Capitalization capitalization = Nls.Capitalization.NotSpecified;
         NlsInfo info = NlsInfo.forExpression(usage, false);
         if (info instanceof NlsInfo.Localized) {
@@ -110,7 +113,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
   }
 
   @Nullable
-  private static Value getTitleValue(@Nullable UExpression arg, Set<? super UExpression> processed) {
+  private static Value getTitleValue(@Nullable UExpression arg, @Nullable Set<? super UExpression> processed) {
     if (arg instanceof UInjectionHost) {
       return Value.of((UInjectionHost)arg);
     }
@@ -120,8 +123,13 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       if (arg.equals(returnValue)) {
         return null;
       }
-      if (returnValue != null && processed.add(returnValue)) {
-        return getTitleValue(returnValue, processed);
+      if (returnValue != null) {
+        if (processed == null) {
+          processed = new HashSet<>();
+        }
+        if (processed.add(returnValue)) {
+          return getTitleValue(returnValue, processed);
+        }
       }
       Value fromProperty = Value.of(getPropertyArgument(call), call.getValueArgumentCount() > 1);
       if (fromProperty != null) {
