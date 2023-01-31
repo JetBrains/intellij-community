@@ -11,8 +11,8 @@ import com.intellij.util.applyIf
 import com.intellij.workspaceModel.ide.BuilderSnapshot
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager

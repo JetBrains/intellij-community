@@ -8,7 +8,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
+import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.aether.ArtifactKind

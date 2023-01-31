@@ -32,4 +32,5 @@ fun VirtualFileUrl.toVirtualFile(): VirtualFile? = this.virtualFile
  *
  * **Important Note:** method can return different instances of `VirtualFileUrl` for the same `VirtualFile` e.g. then the file was moved.
  */
+@Deprecated("Use toVirtualFileUrl from API instead", ReplaceWith("toVirtualFileUrl(virtualFileManager)", "com.intellij.workspaceModel.ide.toVirtualFileUrl"))
 fun VirtualFile.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromUrl(this.url)
