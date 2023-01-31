@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import org.jdom.Element
+import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -19,10 +20,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.configuration.ui.NotPropertyListPanel
@@ -168,9 +166,13 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
             // Don't suggest replacing is-getters because is-getter method reference and is-getter property references have the same syntax
             return null
         }
+        if (referenceExpression.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
+                .get(BindingContext.EXPECTED_EXPRESSION_TYPE, referenceExpression)?.isBuiltinFunctionalType != true
+        ) {
+            return null
+        }
 
-        return referenceExpression.callableReference.resolveToCall()?.resultingDescriptor
-            ?.let { it as? FunctionDescriptor }
+        return (referenceExpression.callableReference.resolveToCall()?.resultingDescriptor as? FunctionDescriptor)
             ?.let {
                 @OptIn(FrontendInternals::class)
                 findSyntheticProperty(it, referenceExpression.getResolutionFacade().getFrontendService(SyntheticScopes::class.java))

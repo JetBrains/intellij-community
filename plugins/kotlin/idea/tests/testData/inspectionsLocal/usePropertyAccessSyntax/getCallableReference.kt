@@ -1,4 +1,4 @@
-// PROBLEM: "Use of getter method instead of property access syntax"
+// PROBLEM: none
 // WITH_STDLIB
 // LANGUAGE_VERSION: 1.9
 import java.io.File

@@ -18140,6 +18140,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/referenceGetter1.kt");
         }
 
+        @TestMetadata("referenceGetterFunctionalInterface.kt")
+        public void testReferenceGetterFunctionalInterface() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/referenceGetterFunctionalInterface.kt");
+        }
+
+        @TestMetadata("referenceGetterNotBuiltInFunctionType.kt")
+        public void testReferenceGetterNotBuiltInFunctionType() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/referenceGetterNotBuiltInFunctionType.kt");
+        }
+
         @TestMetadata("referenceGetterOldLv.kt")
         public void testReferenceGetterOldLv() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/referenceGetterOldLv.kt");
