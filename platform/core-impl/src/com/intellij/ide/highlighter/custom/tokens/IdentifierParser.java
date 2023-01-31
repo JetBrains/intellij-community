@@ -18,12 +18,15 @@ package com.intellij.ide.highlighter.custom.tokens;
 
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 
 public class IdentifierParser extends TokenParser {
   private final KeywordParser myKeywordParser;
+  private final boolean myIsAdmittingQuote;
 
   public IdentifierParser(KeywordParser keywordParser) {
     myKeywordParser = keywordParser;
+    myIsAdmittingQuote = ContainerUtil.exists(keywordParser.getAllKeywords(), it -> it.contains("'"));
   }
 
   @Override
@@ -41,6 +44,9 @@ public class IdentifierParser extends TokenParser {
   private boolean isIdentifierPart(int position) {
     if (myBuffer.charAt(position) == '-') {
       return !myKeywordParser.hasToken(position, myBuffer, null);
+    }
+    if (myBuffer.charAt(position) == '\'') {
+      return myIsAdmittingQuote;
     }
     return Character.isJavaIdentifierPart(myBuffer.charAt(position));
   }
