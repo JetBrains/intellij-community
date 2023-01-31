@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -548,7 +548,7 @@ public final class GradleProjectResolverUtil {
                                        @Nullable DataNode<ProjectData> ideProject) throws IllegalStateException {
     Map<ExternalDependencyId, ExternalDependency> dependencyMap = new HashMap<>();
 
-    Queue<ExternalDependency> queue = new LinkedList<>(dependencies);
+    Queue<ExternalDependency> queue = new ArrayDeque<>(dependencies);
     while (!queue.isEmpty()) {
       final ExternalDependency dependency = queue.remove();
       DefaultExternalDependencyId key = new DefaultExternalDependencyId(dependency.getId());
