@@ -3,7 +3,9 @@ package com.intellij.diagnostic
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.CollapsibleRow
+import com.intellij.ui.dsl.builder.cleanupHtml
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.Nls
 import javax.swing.JEditorPane
 
 class PrivacyNotice(@NlsContexts.Label label: String, @NlsContexts.Label privacyPolicy: String) {
@@ -18,7 +20,10 @@ class PrivacyNotice(@NlsContexts.Label label: String, @NlsContexts.Label privacy
   }
 
   var expanded: Boolean by collapsibleRow::expanded
-  var privacyPolicy: String by privacyPolicyPane::text
+
+  fun setPrivacyPolicy(@Nls text: String) {
+    privacyPolicyPane.text = cleanupHtml(text)
+  }
 
   private lateinit var collapsibleRow: CollapsibleRow
   private lateinit var privacyPolicyPane: JEditorPane
