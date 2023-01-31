@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ClassUtil;
@@ -1262,10 +1262,12 @@ public final class HighlightClassUtil {
               IntentionAction markNonSealed = QUICK_FIX_FACTORY.createModifierListFix(inheritorClass, PsiModifier.NON_SEALED, true, false);
               info.registerFix(markNonSealed, null, null, null, null);
               boolean hasInheritors = DirectClassInheritorsSearch.search(inheritorClass).findFirst() != null;
-              IntentionAction action = hasInheritors ?
-                                       QUICK_FIX_FACTORY.createSealClassFromPermitsListFix(inheritorClass) :
-                                       QUICK_FIX_FACTORY.createModifierListFix(inheritorClass, PsiModifier.FINAL, true, false);
-              info.registerFix(action, null, null, null, null);
+              if (!inheritorClass.isInterface() || hasInheritors) {
+                IntentionAction action = hasInheritors ?
+                                         QUICK_FIX_FACTORY.createSealClassFromPermitsListFix(inheritorClass) :
+                                         QUICK_FIX_FACTORY.createModifierListFix(inheritorClass, PsiModifier.FINAL, true, false);
+                info.registerFix(action, null, null, null, null);
+              }
               holder.add(info.create());
             }
           }
