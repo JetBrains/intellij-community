@@ -54,8 +54,6 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         let project_trust_file = self.init_project_trust_file_if_needed()?;
         debug!("Project trust file is: {:?}", project_trust_file);
 
-        self.set_ij_stored_host_password_if_needed()?;
-
         self.default.prepare_for_launch()
     }
 
@@ -63,7 +61,6 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<PathBuf> {
         init_env_vars()?;
         self.init_project_trust_file_if_needed()?;
-        self.set_ij_stored_host_password_if_needed()?;
 
         // TODO: ld patching
         self.default.prepare_for_launch()
@@ -391,7 +388,7 @@ impl RemoteDevLaunchConfiguration {
     fn init_project_trust_file_if_needed(&self) -> Result<PathBuf> {
         let ij_started_command = (&self.ij_starter_command).as_str();
         match ij_started_command {
-            "cwmHost" | "cwmHostNoLobby" => {
+            "cwmHost" | "cwmHostNoLobby" | "remoteDevHost" => {
                 debug!("Running with '{ij_started_command}' command, considering making project trust checks")
             }
             _ => { }
@@ -426,43 +423,6 @@ impl RemoteDevLaunchConfiguration {
             .context("Failed to create a trust file")?;
 
         Ok(trust_file_path)
-    }
-
-    fn set_ij_stored_host_password_if_needed(&self) -> Result<()> {
-        if &self.ij_starter_command != "cwmHost" {
-            return Ok(())
-        }
-
-        let ij_host_config_dir = &self.config_dir;
-        let ij_stored_host_passwd = ij_host_config_dir.join("cwm-passwd");
-
-        if ij_stored_host_passwd.exists() {
-            info!("{:?} already exists", ij_stored_host_passwd);
-            return Ok(());
-        }
-
-        if env::var("CWM_NO_PASSWORD").is_ok()
-            && env::var("CWM_HOST_PASSWORD").is_ok()
-            && env::var("REMOTE_DEV_NON_INTERACTIVE").is_ok() {
-
-            info!("No password required. As CWM_NO_PASSWORD, CWM_HOST_PASSWORD and REMOTE_DEV_NON_INTERACTIVE are set");
-            return Ok(());
-        }
-
-        info!(
-            "\n***\n\
-            Connecting via Lobby Server requires a password for security.\n\
-            You may also specify this password by setting CWM_HOST_PASSWORD environment variable or by putting it into {:?}\n\
-            Disable password by setting REMOTE_DEV_NON_INTERACTIVE environment variable to any non-empty value\n\n\
-            Enter a password that will be used to connect to the host\n", ij_stored_host_passwd
-        );
-
-        let password = rpassword::read_password()?;
-        env::set_var("CWM_HOST_PASSWORD", &password);
-
-        info!("Delete {:?} and re-run host if you want to change provided password.", ij_stored_host_passwd);
-
-        Ok(())
     }
 
     #[cfg(any(target_os = "macos", target_os = "windows"))]
