@@ -4,9 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.model.TerminalLine
-import com.jediterm.terminal.model.TerminalTextBuffer
 import java.awt.event.KeyEvent
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
@@ -14,27 +12,30 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 import kotlin.math.min
 
-class ShellCommandManager(terminalTextBuffer: TerminalTextBuffer, terminal: Terminal) {
+class ShellCommandManager(private val model: TerminalModel) {
   private val listeners: CopyOnWriteArrayList<ShellCommandListener> = CopyOnWriteArrayList()
-  private val prompt: Prompt = Prompt(terminalTextBuffer, terminal)
+  private val prompt: Prompt = Prompt(model)
+
   @Volatile
   private var commandRun: CommandRun? = null
 
   init {
-    terminalTextBuffer.addModelListener {
-      val commandRun = this.commandRun
-      if (commandRun != null) {
-        val finished: Boolean = prompt.processTerminalBuffer {
-          val terminalLine = prompt.getLineAtCursor()
-          val text = prompt.getLineTextUpToCursor(terminalLine)
-          return@processTerminalBuffer text.isNotEmpty() && text == commandRun.prompt
-        }
-        if (finished) {
-          this.commandRun = null
-          fireCommandFinished(commandRun)
+    model.addContentListener(object : TerminalModel.ContentListener {
+      override fun onContentChanged() {
+        val command = commandRun
+        if (command != null) {
+          val finished: Boolean = prompt.processTerminalBuffer {
+            val terminalLine = prompt.getLineAtCursor()
+            val text = prompt.getLineTextUpToCursor(terminalLine)
+            text.isNotEmpty() && text == command.prompt
+          }
+          if (finished) {
+            commandRun = null
+            fireCommandFinished(command)
+          }
         }
       }
-    }
+    })
   }
 
   fun onKeyPressed(e: KeyEvent) {
@@ -42,7 +43,7 @@ class ShellCommandManager(terminalTextBuffer: TerminalTextBuffer, terminal: Term
       if (e.keyCode == KeyEvent.VK_ENTER) {
         val commandRun: CommandRun = prompt.processTerminalBuffer {
           val command = prompt.getTypedShellCommand()
-          val prompt = prompt.prompt
+          val prompt = model.promptText
           return@processTerminalBuffer CommandRun(System.nanoTime(), prompt, command)
         }
         if (commandRun.command.isNotEmpty() && commandRun.prompt.isNotEmpty()) {
@@ -82,9 +83,7 @@ interface ShellCommandListener {
   fun commandFinished(command: String, exitCode: Int, duration: Long)
 }
 
-private class Prompt(val terminalTextBuffer: TerminalTextBuffer, val terminal: Terminal) {
-  @Volatile
-  var prompt = ""
+private class Prompt(val model: TerminalModel) {
   private val typings = AtomicInteger(0)
   private var terminalLine: TerminalLine? = null
   private var maxCursorX = -1
@@ -106,14 +105,14 @@ private class Prompt(val terminalTextBuffer: TerminalTextBuffer, val terminal: T
     }
     val prompt = getLineTextUpToCursor(terminalLine)
     if (typings.get() == 0) {
-      this.prompt = prompt
+      model.promptText = prompt
       this.terminalLine = terminalLine
       if (LOG.isDebugEnabled) {
-        LOG.debug("Guessed shell prompt: ${this.prompt}")
+        LOG.debug("Guessed shell prompt: ${model.promptText}")
       }
     }
     else {
-      if (prompt.startsWith(this.prompt)) {
+      if (prompt.startsWith(model.promptText)) {
         if (LOG.isDebugEnabled) {
           LOG.debug("Guessed prompt confirmed by typing# " + (typings.get() + 1))
         }
@@ -122,7 +121,7 @@ private class Prompt(val terminalTextBuffer: TerminalTextBuffer, val terminal: T
         if (LOG.isDebugEnabled) {
           LOG.debug("Prompt rejected by typing#" + (typings.get() + 1) + ", new prompt: " + prompt)
         }
-        this.prompt = prompt
+        model.promptText = prompt
         typings.set(1)
       }
     }
@@ -140,20 +139,21 @@ private class Prompt(val terminalTextBuffer: TerminalTextBuffer, val terminal: T
       return ""
     }
     val lineTextUpToCursor = getLineTextUpToCursor(terminalLine)
-    if (lineTextUpToCursor.startsWith(prompt)) {
-      return lineTextUpToCursor.substring(prompt.length)
+    val promptText = model.promptText
+    if (lineTextUpToCursor.startsWith(promptText)) {
+      return lineTextUpToCursor.substring(promptText.length)
     }
     return ""
   }
 
   fun getLineAtCursor(): TerminalLine {
-    return terminalTextBuffer.getLine(getLineNumberAtCursor())
+    return model.getLine(getLineNumberAtCursor())
   }
 
   fun getLineTextUpToCursor(line: TerminalLine?): String {
     line ?: return ""
     return processTerminalBuffer {
-      val cursorX: Int = terminal.cursorX - 1
+      val cursorX: Int = model.cursorX - 1
       val lineStr = line.text
       var maxCursorX = max(maxCursorX, cursorX)
       while (maxCursorX < lineStr.length && !Character.isWhitespace(lineStr[maxCursorX])) {
@@ -165,16 +165,16 @@ private class Prompt(val terminalTextBuffer: TerminalTextBuffer, val terminal: T
   }
 
   private fun getLineNumberAtCursor(): Int {
-    return max(0, min(terminal.cursorY - 1, terminalTextBuffer.height - 1))
+    return max(0, min(model.cursorY - 1, model.height - 1))
   }
 
   fun <T> processTerminalBuffer(processor: () -> T): T {
-    terminalTextBuffer.lock()
+    model.lock()
     return try {
       processor()
     }
     finally {
-      terminalTextBuffer.unlock()
+      model.unlock()
     }
   }
 

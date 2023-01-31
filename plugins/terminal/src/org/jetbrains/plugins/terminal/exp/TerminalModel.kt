@@ -7,11 +7,8 @@ import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
-import com.jediterm.terminal.model.CharBuffer
+import com.jediterm.terminal.model.*
 import com.jediterm.terminal.model.JediTerminal.ResizeHandler
-import com.jediterm.terminal.model.StyleState
-import com.jediterm.terminal.model.TerminalSelection
-import com.jediterm.terminal.model.TerminalTextBuffer
 import java.awt.Dimension
 
 class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: StyleState) {
@@ -98,6 +95,15 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
       }
     }
 
+  @Volatile
+  var promptText: String = ""
+    set(value) {
+      if (value != field) {
+        field = value
+        terminalListeners.forEach { it.onPromptTextChanged(value) }
+      }
+    }
+
   val historyLinesCount: Int
     get() = textBuffer.historyLinesCount
 
@@ -114,7 +120,7 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
 
   fun charAt(x: Int, y: Int): Char = textBuffer.getCharAt(x, y)
 
-  fun getLineText(line: Int): String = textBuffer.getLine(line).text
+  fun getLine(index: Int): TerminalLine = textBuffer.getLine(index)
 
   fun processHistoryAndScreenLines(scrollOrigin: Int, maxLinesToProcess: Int, consumer: StyledTextConsumer) {
     textBuffer.processHistoryAndScreenLines(scrollOrigin, maxLinesToProcess, consumer)
@@ -230,6 +236,8 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     fun onAlternateBufferChanged(enabled: Boolean) {}
 
     fun onBracketedPasteModeChanged(bracketed: Boolean) {}
+
+    fun onPromptTextChanged(newText: String) {}
   }
 
   interface CursorListener {

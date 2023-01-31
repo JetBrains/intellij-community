@@ -114,7 +114,7 @@ class TerminalController(private val model: TerminalModel,
     if (model.cursorX >= model.width) {
       return
     }
-    val length: Int = model.getLineText(model.cursorY - 1).length
+    val length: Int = model.getLine(model.cursorY - 1).text.length
     val stop: Int = tabulator.nextTab(model.cursorX)
     var newCursorX = max(model.cursorX, length)
     if (newCursorX < stop) {
