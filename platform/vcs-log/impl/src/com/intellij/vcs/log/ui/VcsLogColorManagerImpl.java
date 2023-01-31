@@ -73,7 +73,12 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
       double balance = ((double)(rootNumber / size)) / (rootsCount / size);
       Color mix = ColorUtil.mix(palette.get(rootNumber % size), palette.get((rootNumber + 1) % size), balance);
       int tones = (int)(Math.abs(balance - 0.5) * 2 * (rootsCount / size) + 1);
-      color = new JBColor(ColorUtil.darker(mix, tones), ColorUtil.brighter(mix, 2 * tones));
+      if (mix instanceof JBColor) {
+        color = JBColor.lazy(() -> new JBColor(ColorUtil.darker(mix, tones), ColorUtil.brighter(mix, 2 * tones)));
+      }
+      else {
+        color = new JBColor(ColorUtil.darker(mix, tones), ColorUtil.brighter(mix, 2 * tones));
+      }
     }
     else {
       color = palette.get(rootNumber);
