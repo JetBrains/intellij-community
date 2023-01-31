@@ -41,10 +41,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.utils.module.ModuleAssertionsKt;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
-import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,19 +80,8 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     assertModulesContains(myProject, expectedNames);
   }
 
-  public static void assertModules(@NotNull Project project, String... expectedNames) {
-    Module[] actual = ModuleManager.getInstance(project).getModules();
-    List<String> actualNames = new ArrayList<>();
-
-    for (Module m : actual) {
-      actualNames.add(m.getName());
-    }
-
-    Assertions.assertThat(actualNames).containsExactlyInAnyOrder(expectedNames);
-  }
-
   protected void assertModules(String... expectedNames) {
-    assertModules(myProject, expectedNames);
+    ModuleAssertionsKt.assertModules(myProject, expectedNames);
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {

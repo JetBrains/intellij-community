@@ -35,20 +35,22 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleImportingTestUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 
-import static com.intellij.ide.wizard.NewProjectWizardBaseData.getBaseData;
-import static com.intellij.ide.wizard.LanguageNewProjectWizardData.getLanguageData;
 import static com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.getJavaBuildSystemData;
-import static org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.getJavaGradleData;
+import static com.intellij.ide.wizard.LanguageNewProjectWizardData.getLanguageData;
+import static com.intellij.ide.wizard.NewProjectWizardBaseData.getBaseData;
 import static com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase.collectRootsInside;
+import static com.intellij.testFramework.utils.module.ModuleAssertionsKt.assertModules;
+import static org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.getJavaGradleData;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 
 public class GradleProjectWizardTest extends NewProjectWizardTestCase {
@@ -194,12 +196,6 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
                                  """, projectName, childModule.getName()),
                  StringUtil.convertLineSeparators(VfsUtilCore.loadText(settingsScript)));
-  }
-
-  private static void assertModules(@NotNull Project project, String @NotNull ... expectedNames) {
-    Module[] actual = ModuleManager.getInstance(project).getModules();
-    Collection<String> actualNames = ContainerUtil.map(actual, it -> it.getName());
-    assertEquals(ContainerUtil.newHashSet(expectedNames), new HashSet<>(actualNames));
   }
 
   @Override

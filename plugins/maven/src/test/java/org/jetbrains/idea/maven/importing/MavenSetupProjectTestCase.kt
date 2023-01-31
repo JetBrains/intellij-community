@@ -11,7 +11,7 @@ import com.intellij.openapi.externalSystem.util.importProjectAsync
 import com.intellij.openapi.externalSystem.util.performAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase.assertModules
+import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.asDeferred
