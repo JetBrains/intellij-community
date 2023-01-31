@@ -27,10 +27,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -202,6 +199,9 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
     catch (ProcessCanceledException e) {
       throw e;
+    }
+    catch (ExtensionNotApplicableException e) {
+      return null;
     }
     catch (Throwable e) {
       LOG.error(e);
