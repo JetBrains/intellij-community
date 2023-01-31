@@ -61,7 +61,7 @@ object SVGLoader {
   }
 
   @Throws(IOException::class)
-  fun load(url: URL?, stream: InputStream, scale: Float): Image {
+  fun load(url: URL?, stream: InputStream, scale: Float): BufferedImage {
     return load(path = url?.path, stream = stream, SvgCacheMapper(scale = scale), colorPatcher = null)
   }
 
@@ -111,7 +111,7 @@ object SVGLoader {
   internal fun load(path: String?,
                     stream: InputStream,
                     mapper: SvgCacheMapper,
-                    colorPatcher: SvgElementColorPatcherProvider?): Image {
+                    colorPatcher: SvgElementColorPatcherProvider?): BufferedImage {
     val persistentCache = SvgCache.persistentCache
     val elementColorPatcher = colorPatcher?.forPath(path)
     val digest = elementColorPatcher?.digest()

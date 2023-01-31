@@ -1,192 +1,177 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.scale;
+@file:Suppress("UndesirableClassUsage")
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.ui.JreHiDpiUtil;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.junit.AfterClass;
-import org.junit.Assume;
-import org.junit.BeforeClass;
+package com.intellij.ui.scale
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.io.File;
-import java.net.MalformedURLException;
-import java.util.HashMap;
-import java.util.Map;
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.scale.JBUIScale.setSystemScaleFactor
+import com.intellij.ui.scale.JBUIScale.setUserScaleFactor
+import com.intellij.ui.scale.JBUIScale.sysScale
+import com.intellij.util.SVGLoader
+import com.intellij.util.SystemProperties
+import com.intellij.util.io.inputStream
+import com.intellij.util.loadPng
+import org.junit.AfterClass
+import org.junit.Assume
+import org.junit.BeforeClass
+import java.awt.*
+import java.awt.geom.AffineTransform
+import java.awt.image.BufferedImage
+import java.awt.image.ColorModel
+import java.io.File
+import java.io.IOException
+import java.nio.file.Path
+import javax.imageio.ImageIO
+import javax.swing.JComponent
+import kotlin.math.ceil
 
-import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
-
-/**
- * @author tav
- */
-public final class TestScaleHelper {
-  private static final String STANDALONE_PROP = "intellij.test.standalone";
-
-  private static final Map<String, String> originalSysProps = new HashMap<>();
-  private static final Map<String, String> originalRegProps = new HashMap<>();
-
-  private static float originalUserScale;
-  private static float originalSysScale;
-  private static boolean originalJreHiDPIEnabled;
+object TestScaleHelper {
+  private const val STANDALONE_PROP = "intellij.test.standalone"
+  private val originalSysProps = HashMap<String, String?>()
+  private val originalRegProps = HashMap<String, String?>()
+  private var originalUserScale = 0f
+  private var originalSysScale = 0f
+  private var originalJreHiDPIEnabled = false
 
   @BeforeClass
-  public static void setState() {
-    originalUserScale = JBUIScale.scale(1f);
-    originalSysScale = JBUIScale.sysScale();
-    originalJreHiDPIEnabled = JreHiDpiUtil.isJreHiDPIEnabled();
+  @JvmStatic
+  fun setState() {
+    originalUserScale = scale(1f)
+    originalSysScale = sysScale()
+    originalJreHiDPIEnabled = JreHiDpiUtil.isJreHiDPIEnabled()
   }
 
   @AfterClass
-  public static void restoreState() {
-    JBUIScale.setUserScaleFactor(originalUserScale);
-    JBUIScale.setSystemScaleFactor(originalSysScale);
-    overrideJreHiDPIEnabled(originalJreHiDPIEnabled);
-    restoreRegistryProperties();
-    restoreSystemProperties();
+  @JvmStatic
+  fun restoreState() {
+    setUserScaleFactor(originalUserScale)
+    setSystemScaleFactor(originalSysScale)
+    overrideJreHiDPIEnabled(originalJreHiDPIEnabled)
+    restoreRegistryProperties()
+    restoreSystemProperties()
   }
 
-  public static void setRegistryProperty(@NotNull String key, @NotNull String value) {
-    RegistryValue prop = Registry.get(key);
-    if (originalRegProps.get(key) == null) originalRegProps.put(key, prop.asString());
-    prop.setValue(value);
+  @JvmStatic
+  fun setRegistryProperty(key: String, value: String) {
+    val prop = Registry.get(key)
+    if (originalRegProps[key] == null) originalRegProps[key] = prop.asString()
+    prop.setValue(value)
   }
 
-  public static void setSystemProperty(@NotNull String name, @Nullable String value) {
-    if (originalSysProps.get(name) == null) originalSysProps.put(name, System.getProperty(name));
-    SystemProperties.setProperty(name, value);
+  @JvmStatic
+  fun setSystemProperty(name: String, value: String?) {
+    if (originalSysProps[name] == null) originalSysProps[name] = System.getProperty(name)
+    SystemProperties.setProperty(name, value)
   }
 
-  public static void restoreProperties() {
-    restoreSystemProperties();
-    restoreRegistryProperties();
+  @JvmStatic
+  fun restoreProperties() {
+    restoreSystemProperties()
+    restoreRegistryProperties()
   }
 
-  public static void restoreSystemProperties() {
-    for (Map.Entry<String, String> entry : originalSysProps.entrySet()) {
-      SystemProperties.setProperty(entry.getKey(), entry.getValue());
+  @JvmStatic
+  fun restoreSystemProperties() {
+    for ((key, value) in originalSysProps) {
+      SystemProperties.setProperty(key, value)
     }
   }
 
-  public static void restoreRegistryProperties() {
-    for (Map.Entry<String, String> entry : originalRegProps.entrySet()) {
-      Registry.get(entry.getKey()).setValue(entry.getValue());
+  @JvmStatic
+  fun restoreRegistryProperties() {
+    for ((key, value) in originalRegProps) {
+      Registry.get(key).setValue(value)
     }
   }
 
-  public static void overrideJreHiDPIEnabled(boolean enabled) {
-    JreHiDpiUtil.test_jreHiDPI().set(enabled);
+  @JvmStatic
+  fun overrideJreHiDPIEnabled(enabled: Boolean) {
+    JreHiDpiUtil.test_jreHiDPI().set(enabled)
   }
 
-  public static void assumeStandalone() {
-    Assume.assumeTrue("not in " + STANDALONE_PROP + " mode", Boolean.getBoolean(STANDALONE_PROP));
+  @JvmStatic
+  fun assumeStandalone() {
+    Assume.assumeTrue("not in $STANDALONE_PROP mode", java.lang.Boolean.getBoolean(STANDALONE_PROP))
   }
 
-  public static void assumeHeadful() {
-    Assume.assumeFalse("should not be headless", GraphicsEnvironment.isHeadless());
+  @Suppress("SpellCheckingInspection")
+  @JvmStatic
+  fun assumeHeadful() {
+    Assume.assumeFalse("should not be headless", GraphicsEnvironment.isHeadless())
   }
 
-  public static Graphics2D createGraphics(double scale) {
-    //noinspection UndesirableClassUsage
-    Graphics2D g = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB).createGraphics();
-    g.scale(scale, scale);
-    return g;
+  @JvmStatic
+  fun createGraphics(scale: Double): Graphics2D {
+    val g = BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB).createGraphics()
+    g.scale(scale, scale)
+    return g
   }
 
-  public static Pair<BufferedImage, Graphics2D> createImageAndGraphics(double scale, int width, int height) {
-    //noinspection UndesirableClassUsage
-    final BufferedImage image = new BufferedImage((int)Math.ceil(width * scale), (int)Math.ceil(height * scale), BufferedImage.TYPE_INT_ARGB);
-    Graphics2D g = image.createGraphics();
-    double gScale = JreHiDpiUtil.isJreHiDPIEnabled() ? scale : 1;
-    g.scale(gScale, gScale);
-    return Pair.create(image, g);
+  @JvmStatic
+  fun createImageAndGraphics(scale: Double, width: Int, height: Int): Pair<BufferedImage, Graphics2D> {
+    val image = BufferedImage(ceil(width * scale).toInt(), ceil(height * scale).toInt(), BufferedImage.TYPE_INT_ARGB)
+    val g = image.createGraphics()
+    val gScale: Double = if (JreHiDpiUtil.isJreHiDPIEnabled()) scale else 1.0
+    g.scale(gScale, gScale)
+    return Pair(image, g)
   }
 
-  public static JComponent createComponent(ScaleContext ctx) {
-    return new JComponent() {
-      final MyGraphicsConfiguration myGC = new MyGraphicsConfiguration(ctx.getScale(SYS_SCALE));
-      @Override
-      public GraphicsConfiguration getGraphicsConfiguration() {
-        return myGC;
+  @JvmStatic
+  fun createComponent(ctx: ScaleContext): JComponent {
+    return object : JComponent() {
+      val myGC = MyGraphicsConfiguration(ctx.getScale(ScaleType.SYS_SCALE))
+      override fun getGraphicsConfiguration(): GraphicsConfiguration {
+        return myGC
       }
-    };
+    }
   }
 
-  public static void saveImage(BufferedImage image, String path) {
+  @JvmStatic
+  fun saveImage(image: BufferedImage?, path: String) {
     try {
-      javax.imageio.ImageIO.write(image, "png", new File(path));
-    } catch (java.io.IOException e) {
-      e.printStackTrace();
+      ImageIO.write(image, "png", File(path))
+    }
+    catch (e: IOException) {
+      e.printStackTrace()
     }
   }
 
-  public static BufferedImage loadImage(String path) {
-    return loadImage(path, ScaleContext.createIdentity());
-  }
-
-  public static BufferedImage loadImage(String path, ScaleContext ctx) {
-    try {
-      int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
-      if (StartupUiUtil.isUnderDarcula()) {
-        flags |= ImageLoader.USE_DARK;
-      }
-      Image img = ImageLoader.INSTANCE.loadFromUrl(new File(path).toURI().toURL().toString(), null, flags, ctx);
-      return ImageUtil.toBufferedImage(img);
+  @JvmOverloads
+  @JvmStatic
+  fun loadImage(file: Path, scaleContext: ScaleContext = ScaleContext.createIdentity()): BufferedImage {
+    val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+    if (file.toString().endsWith(".svg")) {
+      return SVGLoader.load(file.toUri().toURL(), file.inputStream(), scale)
     }
-    catch (MalformedURLException e) {
-      throw new RuntimeException(e);
+    else {
+      return loadPng(stream = file.inputStream(), scale = scale)
     }
   }
 
-  public static String msg(UserScaleContext ctx) {
-    return "[JRE-HiDPI " + JreHiDpiUtil.isJreHiDPIEnabled() + "], " + ctx.toString();
-  }
-
-  private static class MyGraphicsConfiguration extends GraphicsConfiguration {
-    private final AffineTransform myTx;
-
-    protected MyGraphicsConfiguration(double scale) {
-      myTx = AffineTransform.getScaleInstance(scale, scale);
-    }
-
-    @Override
-    public GraphicsDevice getDevice() {
-      return null;
-    }
-
-    @Override
-    public ColorModel getColorModel() {
-      return null;
-    }
-
-    @Override
-    public ColorModel getColorModel(int transparency) {
-      return null;
-    }
-
-    @Override
-    public AffineTransform getDefaultTransform() {
-      return myTx;
-    }
-
-    @Override
-    public AffineTransform getNormalizingTransform() {
-      return myTx;
-    }
-
-    @Override
-    public Rectangle getBounds() {
-      return new Rectangle();
-    }
-  }
+  @JvmStatic
+  fun msg(ctx: UserScaleContext): String = "[JRE-HiDPI ${JreHiDpiUtil.isJreHiDPIEnabled()}], $ctx"
 }
+
+private class MyGraphicsConfiguration(scale: Double) : GraphicsConfiguration() {
+  private val tx: AffineTransform
+
+  init {
+    tx = AffineTransform.getScaleInstance(scale, scale)
+  }
+
+  override fun getDevice(): GraphicsDevice? = null
+
+  override fun getColorModel(): ColorModel? = null
+
+  override fun getColorModel(transparency: Int): ColorModel? = null
+
+  override fun getDefaultTransform(): AffineTransform = tx
+
+  override fun getNormalizingTransform(): AffineTransform = tx
+
+  override fun getBounds(): Rectangle = Rectangle()
+}
+

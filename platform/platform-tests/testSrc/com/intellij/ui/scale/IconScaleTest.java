@@ -22,8 +22,8 @@ import org.junit.rules.ExternalResource;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.net.MalformedURLException;
+import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -102,7 +102,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
   }
 
   private static @NotNull CachedImageIcon createIcon() throws MalformedURLException {
-    return new CachedImageIcon(new File(getIconPath()).toURI().toURL(), false);
+    return new CachedImageIcon(getIconPath().toUri().toURL(), false);
   }
 
   private static void test(@NotNull Icon icon, @NotNull UserScaleContext iconUserContext) {
@@ -198,7 +198,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     assertThat(ImageUtil.getRealHeight(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real height").isEqualTo(devSize);
   }
 
-  private static String getIconPath() {
-    return PlatformTestUtil.getPlatformTestDataPath() + "ui/abstractClass.svg";
+  private static Path getIconPath() {
+    return Path.of(PlatformTestUtil.getPlatformTestDataPath() + "ui/abstractClass.svg");
   }
 }

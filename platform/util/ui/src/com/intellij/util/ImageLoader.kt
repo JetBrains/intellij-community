@@ -26,6 +26,7 @@ import org.imgscalr.Scalr
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.Image
 import java.awt.Toolkit
@@ -178,7 +179,7 @@ object ImageLoader {
   fun loadFromStream(stream: InputStream,
                      path: String?,
                      scale: Float,
-                     originalUserSize: Dimension2DDouble,
+                     originalUserSize: Dimension2DDouble? = null,
                      @MagicConstant(flags = [USE_DARK.toLong(), USE_SVG.toLong()]) flags: Int): Image {
     stream.use {
       return if (flags and USE_SVG == USE_SVG) {
@@ -597,7 +598,8 @@ private fun loadByDescriptorWithoutCache(descriptor: ImageDescriptor,
   return image
 }
 
-private fun loadPng(stream: InputStream, scale: Float, originalUserSize: ImageLoader.Dimension2DDouble?): BufferedImage {
+@VisibleForTesting
+fun loadPng(stream: InputStream, scale: Float, originalUserSize: ImageLoader.Dimension2DDouble? = null): BufferedImage {
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
   var image: BufferedImage
   val reader = ImageIO.getImageReadersByFormatName("png").next()

@@ -66,7 +66,7 @@ class SvgCacheManager(dbFile: Path) {
     store.commit()
   }
 
-  fun loadFromCache(themeDigest: ByteArray, imageBytes: ByteArray, mapper: SvgCacheMapper): Image? {
+  fun loadFromCache(themeDigest: ByteArray, imageBytes: ByteArray, mapper: SvgCacheMapper): BufferedImage? {
     val key = getCacheKey(imageBytes = imageBytes, themeDigest = themeDigest)
     val map = getMap(mapper = mapper, classifierToMap = classifierToMap, store = store, mapBuilder = mapBuilder)
     try {
@@ -115,7 +115,7 @@ private fun createImage(w: Int, h: Int, dataBuffer: DataBufferInt): BufferedImag
   return BufferedImage(colorModel, raster, false, null)
 }
 
-private fun readImage(value: ImageValue): Image {
+private fun readImage(value: ImageValue): BufferedImage {
   val dataBuffer = DataBufferInt(value.data, value.data.size)
   SunWritableRaster.makeTrackable(dataBuffer)
   return createImage(value.w, value.h, dataBuffer)
