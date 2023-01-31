@@ -1,9 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.vmOptions.*;
@@ -138,6 +142,7 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
         elements.add(element);
       }
     }
+    result = result.withPrefixMatcher(new CamelHumpMatcher(result.getPrefixMatcher().getPrefix(), false));
     result.addAllElements(elements);
     return true;
   }
