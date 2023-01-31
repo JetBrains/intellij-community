@@ -1528,9 +1528,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   @RequiresEdt
   override fun closeBalloons() {
     for (entry in idToEntry.values) {
-      entry.balloon?.let {
-        it.hideImmediately()
-      }
+      entry.balloon?.hideImmediately()
     }
   }
 
