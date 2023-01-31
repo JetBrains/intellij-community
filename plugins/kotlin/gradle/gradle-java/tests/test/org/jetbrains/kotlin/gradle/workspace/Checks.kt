@@ -30,6 +30,8 @@ fun checkWorkspaceModel(
     )
 
     for ((expectedFile, mode) in filesWithExpectedTestData) {
+        // Temporary mute TEST_TASKS checks due to issues with hosts on CI. See KT-56332
+        if (mode == WorkspacePrintingMode.TEST_TASKS) continue
         val actualWorkspaceModelText = mode.printer.build().print(project, actualTestProjectRoot, testConfiguration, kotlinPluginVersion)
 
         // NB: KotlinTestUtils handle non-existent expectedFile fine
