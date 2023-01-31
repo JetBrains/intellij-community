@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.debugger.engine.JavaDebugProcess;
@@ -288,6 +288,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       super(ExecutionBundle.message("run.configuration.dump.threads.action.name"), null, AllIcons.Actions.Dump, processHandler);
       mySearchScope = searchScope;
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_CANCEL, InputEvent.CTRL_DOWN_MASK)));
+      getTemplatePresentation().putClientProperty(RunTab.PREFERRED_PLACE, PreferredPlace.MORE_GROUP);
     }
 
     @Override
@@ -498,6 +499,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
   protected static final class SoftExitAction extends ProxyBasedAction {
     public SoftExitAction(final ProcessHandler processHandler) {
       super(ExecutionBundle.message("run.configuration.exit.action.name"), null, AllIcons.Actions.Exit, processHandler);
+      getTemplatePresentation().putClientProperty(RunTab.PREFERRED_PLACE, PreferredPlace.MORE_GROUP);
     }
 
     @Override

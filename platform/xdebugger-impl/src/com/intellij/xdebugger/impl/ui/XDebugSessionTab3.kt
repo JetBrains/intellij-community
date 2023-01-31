@@ -3,8 +3,7 @@ package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.PreferredPlace
-import com.intellij.execution.runners.RunTab
+import com.intellij.execution.runners.RunContentBuilder.addActionsWithConstraints
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.actions.CustomContentLayoutSettings
@@ -179,22 +178,11 @@ class XDebugSessionTab3(
     more.addAll(moreActionsWithoutDuplicates)
     more.addSeparator()
 
-    fun addWithConstraints(actions: List<AnAction>, constraints: Constraints) {
-      actions.asSequence()
-        .forEach {
-          if (it.templatePresentation.getClientProperty(RunTab.PREFERRED_PLACE) == PreferredPlace.MORE_GROUP) {
-            more.add(it)
-          } else {
-            toolbar.add(it, constraints)
-          }
-        }
-    }
-
     // reversed because it was like this in the original tab
     if (session != null) {
-      addWithConstraints(session.restartActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
-      addWithConstraints(session.extraActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
-      addWithConstraints(session.extraStopActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+      addActionsWithConstraints(session.restartActions, Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN), toolbar, more)
+      addActionsWithConstraints(session.extraActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM), toolbar, more)
+      addActionsWithConstraints(session.extraStopActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM), toolbar, more)
     }
 
     more.addSeparator()
