@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -23,29 +23,29 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
   public void testEmptyPrompt() {
     configure("<caret>");
     myFixture.completeBasic();
-    assertEquals(List.of("--add-exports", "--add-opens", "--add-reads", "--limit-modules", "--patch-module",
+    assertEquals(List.of("--add-exports", "--add-opens",
                          "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-dsa", "-ea", "-enableassertions", "-esa",
                          "-javaagent:", "-Xmx", "-XX:"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
-    checkPresentation(myFixture.getLookupElements()[5], "-agentlib:|null/null");
+    checkPresentation(myFixture.getLookupElements()[2], "-agentlib:|null/null");
   }
 
   @Test
   public void testSimpleOptions() {
     configure("-<caret>");
     myFixture.completeBasic();
-    assertEquals(List.of("-add-exports", "-add-opens", "-add-reads", "-limit-modules", "-patch-module",
+    assertEquals(List.of("-add-exports", "-add-opens",
                          "agentlib:", "agentpath:", "D", "da", "disableassertions", "dsa", "ea", "enableassertions", "esa",
                          "javaagent:", "Xmx", "XX:"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
-    checkPresentation(myFixture.getLookupElements()[5], "-agentlib:|null/null");
+    checkPresentation(myFixture.getLookupElements()[2], "-agentlib:|null/null");
   }
 
   @Test
   public void testDoubleDash() {
     configure("--<caret>");
     myFixture.completeBasic();
-    assertEquals(List.of("add-exports", "add-opens", "add-reads", "limit-modules", "patch-module"), myFixture.getLookupElementStrings());
+    assertEquals(List.of("add-exports", "add-opens"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
   }
 
@@ -143,7 +143,9 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
         new VMOption("Value", "uint", "10", VMOptionKind.Product, null, VMOptionVariant.XX),
         new VMOption("Experimental", "uint", "10", VMOptionKind.Experimental, null, VMOptionVariant.XX),
         new VMOption("Diagnostic", "uint", "20", VMOptionKind.Diagnostic, null, VMOptionVariant.XX),
-        new VMOption("mx", null, null, VMOptionKind.Product, null, VMOptionVariant.X)
+        new VMOption("mx", null, null, VMOptionKind.Product, null, VMOptionVariant.X),
+        new VMOption("add-exports", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH),
+        new VMOption("add-opens", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH)
       )));
     }
   }

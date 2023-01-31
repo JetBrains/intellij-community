@@ -58,43 +58,27 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
                                           @NotNull JdkOptionsData data,
                                           int offset,
                                           @NotNull String text) {
-    if (hasOptionPrefix(text, offset, "--")) {
-      addDoubleDashOptions(result, 0);
-      return true;
+    String[] prefixes = {"--", "-", ""};
+    for (String prefix : prefixes) {
+      if (hasOptionPrefix(text, offset, prefix)) {
+        addDashOptions(result, data, prefix);
+        return true;
+      }
     }
-    if (hasOptionPrefix(text, offset, "-")) {
-      addDoubleDashOptions(result, 1);
-      addSingleDashOptions(result, data, 0);
-      return true;
-    }
-    if (hasOptionPrefix(text, offset, "")) {
-      addDoubleDashOptions(result, 2);
-      addSingleDashOptions(result, data, 1);
-      return true;
-    }
-      return false;
-    }
-
-  private static void addDoubleDashOptions(@NotNull CompletionResultSet result, int prefix) {
-    String[] options = {"add-reads", "add-exports", "add-opens", "limit-modules", "patch-module"};
-    for (String option : options) {
-      option = "-".repeat(prefix) + option;
-      result.addElement(
-        TailTypeDecorator.withTail(LookupElementBuilder.create(option).withPresentableText("-".repeat(2 - prefix) + option),
-                                   TailType.SPACE));
-    }
+    return false;
   }
 
-  private static void addSingleDashOptions(@NotNull CompletionResultSet result, @NotNull JdkOptionsData data, int prefix) {
+  private static void addDashOptions(@NotNull CompletionResultSet result, @NotNull JdkOptionsData data, String prefix) {
     String[] options = {"ea", "enableassertions", "da", "disableassertions", "esa", "dsa", "agentpath:", "agentlib:",
       "javaagent:", "XX:", "D"};
-    Stream<String> stream = Stream.concat(data.getOptions().stream()
-                                            .filter(option -> option.getVariant() == VMOptionVariant.X)
-                                            .map(option -> "X" + option.getOptionName()),
-                                          Stream.of(options));
+    Stream<VMOption> stream = Stream.concat(
+      data.getOptions().stream().filter(option -> option.getVariant() != VMOptionVariant.XX),
+      Stream.of(options).map(opt -> new VMOption(opt, null, null, VMOptionKind.Product, null, VMOptionVariant.DASH)));
     stream.forEach(option -> {
-      option = "-".repeat(prefix) + option;
-      result.addElement(LookupElementBuilder.create(option).withPresentableText("-".repeat(1 - prefix) + option));
+      String fullLookup = option.getVariant().prefix() + option.getOptionName();
+      if (!fullLookup.startsWith(prefix)) return;
+      String lookup = fullLookup.substring(prefix.length());
+      result.addElement(LookupElementBuilder.create(option, lookup).withPresentableText(fullLookup));
     });
   }
 
@@ -117,20 +101,16 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       String type = option.getType();
       LookupElementBuilder e = null;
       TailType tailType = null;
-      Icon icon = switch (option.getKind()) {
-        case Product -> AllIcons.Actions.ArrowExpand;
-        case Diagnostic -> AllIcons.General.ShowInfos;
-        case Experimental -> AllIcons.General.Warning;
-      };
+      Icon icon = option.getKind().icon();
       if ("bool".equals(type)) {
         String lookupString = (booleanStart ? "" : Boolean.parseBoolean(option.getDefaultValue()) ? "-" : "+") + option.getOptionName();
         tailType = TailType.SPACE;
-        e = LookupElementBuilder.create(lookupString);
+        e = LookupElementBuilder.create(option, lookupString);
       }
       else if (!booleanStart) {
         String tailText = " = " + option.getDefaultValue();
         tailType = TailType.EQUALS;
-        e = LookupElementBuilder.create(option.getOptionName()).withTailText(tailText, true);
+        e = LookupElementBuilder.create(option, option.getOptionName()).withTailText(tailText, true);
       }
       if (e != null) {
         LookupElement element = TailTypeDecorator.withTail(e.withTypeText(type).withIcon(icon), tailType);
@@ -147,11 +127,8 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
   }
 
   private static InsertHandler<LookupElement> getInsertHandler(VMOptionKind kind) {
-    return switch (kind) {
-      case Product -> null;
-      case Diagnostic -> (context, item) -> unlock(context, "-XX:+UnlockDiagnosticVMOptions");
-      case Experimental -> (context, item) -> unlock(context, "-XX:+UnlockExperimentalVMOptions");
-    };
+    String unlockOption = kind.unlockOption();
+    return unlockOption == null ? null : (context, item) -> unlock(context, unlockOption);
   }
 
   private static void unlock(InsertionContext context, String option) {
