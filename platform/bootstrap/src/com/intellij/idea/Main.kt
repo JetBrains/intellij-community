@@ -10,7 +10,9 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.startup.StartupActionScriptManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import java.awt.GraphicsEnvironment
@@ -116,6 +118,14 @@ private fun bootstrap(startupTimings: LinkedHashMap<String, Long>) {
 
 private fun preprocessArgs(args: Array<String>): List<String> {
   if (args.size == 1 && args[0] == "%f") return emptyList()  // a buggy DE may fail to strip an unused parameter from a .desktop file
+
+  @Suppress("SuspiciousPackagePrivateAccess")
+  if (AppMode.VERSION_OPTION in args) {
+    val appInfo = ApplicationInfoImpl.getShadowInstance()
+    val edition = ApplicationNamesInfo.getInstance().editionName?.let { " (${it})" } ?: ""
+    println("${appInfo.fullApplicationName}${edition}\nBuild #${appInfo.build.asString()}")
+    exitProcess(0)
+  }
 
   val (propertyArgs, otherArgs) = args.partition { it.startsWith("-D") && it.contains("=") }
   propertyArgs.forEach { arg ->

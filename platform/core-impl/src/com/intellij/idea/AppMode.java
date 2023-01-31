@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -21,6 +21,7 @@ public final class AppMode {
   public static final String REMOTE_DEV_HOST_COMMAND = "remoteDevHost";
 
   static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
+  static final String VERSION_OPTION = "--version";
 
   private static final String AWT_HEADLESS = "java.awt.headless";
 
