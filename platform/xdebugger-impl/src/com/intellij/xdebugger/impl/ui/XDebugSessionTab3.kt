@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui
 import com.intellij.debugger.ui.DebuggerContentInfo
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.RunContentBuilder.addActionsWithConstraints
+import com.intellij.execution.runners.RunContentBuilder.removeDuplicatesExceptSeparators
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.actions.CustomContentLayoutSettings
@@ -155,26 +156,13 @@ class XDebugSessionTab3(
     val session = mySession
     toolbar.removeAll()
 
-    fun Array<AnAction>.removeDuplicatesExceptSeparators(collection: Collection<AnAction>): List<AnAction> {
-      val actions = toMutableList()
-      val visited = collection.toMutableSet()
-      val iterator = actions.iterator()
-      while (iterator.hasNext()) {
-        val action = iterator.next()
-        if (action !is Separator && !visited.add(action)) {
-          iterator.remove()
-        }
-      }
-      return actions
-    }
-
     val headerGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
-    val headerActionsWithoutDuplicates = headerGroup.getChildren(null).removeDuplicatesExceptSeparators(emptyList())
-    toolbar.addAll(headerActionsWithoutDuplicates)
+    val headerActions = headerGroup.getChildren(null).toList()
+    toolbar.addAll(headerActions)
 
     val more = MoreActionGroup()
     val moreGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP)
-    val moreActionsWithoutDuplicates = moreGroup.getChildren(null).removeDuplicatesExceptSeparators(headerActionsWithoutDuplicates)
+    val moreActionsWithoutDuplicates = removeDuplicatesExceptSeparators(moreGroup.getChildren(null), headerActions)
     more.addAll(moreActionsWithoutDuplicates)
     more.addSeparator()
 

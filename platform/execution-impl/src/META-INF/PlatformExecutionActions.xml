@@ -59,6 +59,8 @@
       <reference id="Stop"/>
     </group>
 
+    <group id="RunTab.TopToolbar.More" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup"/>
+
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>

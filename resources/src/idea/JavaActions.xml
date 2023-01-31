@@ -69,6 +69,14 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
+    <action id="JavaSoftExit" class="com.intellij.execution.impl.DefaultJavaProgramRunner$SoftExitAction">
+      <add-to-group group-id="RunTab.TopToolbar.More"/>
+    </action>
+
+    <action id="JavaControlBreak" class="com.intellij.execution.impl.DefaultJavaProgramRunner$ControlBreakAction">
+      <add-to-group group-id="RunTab.TopToolbar.More"/>
+    </action>
+
     <!-- View -->
     <reference ref="DelegateMethods">
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>

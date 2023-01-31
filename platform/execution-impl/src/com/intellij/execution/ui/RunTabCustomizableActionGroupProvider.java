@@ -11,6 +11,8 @@ public class RunTabCustomizableActionGroupProvider extends CustomizableActionGro
     if (UIExperiment.isNewDebuggerUIEnabled()) {
       registrar.addCustomizableActionGroup(RunContentBuilder.RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP,
                                            ExecutionBundle.message("run.tool.window.header.toolbar"));
+      registrar.addCustomizableActionGroup(RunContentBuilder.RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP,
+                                           ExecutionBundle.message("run.tool.window.header.toolbar.more"));
     }
   }
 }

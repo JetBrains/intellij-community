@@ -33,16 +33,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.actionSystem.Anchor.AFTER;
+import static com.intellij.util.containers.ContainerUtil.filter;
 
 public final class RunContentBuilder extends RunTab {
   @ApiStatus.Experimental
   public static final String RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP = "RunTab.TopToolbar";
+  @ApiStatus.Experimental
+  public static final String RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP = "RunTab.TopToolbar.More";
+
   private static final String JAVA_RUNNER = "JavaRunner";
 
   private final List<AnAction> myRunnerActions = new SmartList<>();
@@ -206,8 +210,9 @@ public final class RunContentBuilder extends RunTab {
     boolean isNewLayout = UIExperiment.isNewDebuggerUIEnabled();
 
     ActionGroup toolbarGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP);
+    AnAction[] mainChildren = toolbarGroup.getChildren(null);
     DefaultActionGroup actionGroup = new DefaultActionGroupWithDelegate(toolbarGroup);
-    actionGroup.addAll(toolbarGroup);
+    actionGroup.addAll(mainChildren);
 
     DefaultActionGroup afterRunActions = new DefaultActionGroup(contentDescriptor.getRestartActions());
     if (!isNewLayout) {
@@ -215,7 +220,14 @@ public final class RunContentBuilder extends RunTab {
       afterRunActions.addSeparator();
     }
 
-    MoreActionGroup moreGroup = isNewLayout ? new MoreActionGroup() : null;
+    MoreActionGroup moreGroup = null;
+    if (isNewLayout) {
+      moreGroup = new MoreActionGroup();
+      ActionGroup moreActionGroup =
+        (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP);
+      moreGroup.addAll(removeDuplicatesExceptSeparators(moreActionGroup.getChildren(null), Arrays.asList(mainChildren)));
+    }
+
     addActionsWithConstraints(afterRunActions.getChildren(null), new Constraints(AFTER, IdeActions.ACTION_RERUN), actionGroup, moreGroup);
 
     DefaultActionGroup afterStopActions = new DefaultActionGroup(myExecutionResult.getActions());
@@ -367,5 +379,10 @@ public final class RunContentBuilder extends RunTab {
         actionGroup.add(action, constraints);
       }
     }
+  }
+
+  public static List<AnAction> removeDuplicatesExceptSeparators(AnAction[] actionsToFilter, Collection<AnAction> mainActions) {
+    HashSet<AnAction> visited = new HashSet<>(mainActions);
+    return filter(actionsToFilter, action -> action instanceof Separator || !visited.contains(action));
   }
 }
