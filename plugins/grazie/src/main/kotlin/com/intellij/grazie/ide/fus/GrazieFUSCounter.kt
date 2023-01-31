@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 internal object GrazieFUSCounter : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("grazie.count", 6)
+  private val GROUP = EventLogGroup("grazie.count", 7)
 
   private val actionsInfo = listOf("accept.suggestion",
                                    "add.exception",
