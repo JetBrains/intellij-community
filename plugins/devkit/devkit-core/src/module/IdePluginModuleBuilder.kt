@@ -51,10 +51,7 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
   override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_11.toJavaVersion()
 
   override fun getLanguages(): List<StarterLanguage> {
-    return listOf(
-      JAVA_STARTER_LANGUAGE,
-      KOTLIN_STARTER_LANGUAGE
-    )
+    return listOf(KOTLIN_STARTER_LANGUAGE) // Java and Kotlin both are available out of the box
   }
 
   override fun getStarterPack(): StarterPack {
@@ -200,7 +197,6 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
       typeProperty.afterChange { pluginType ->
         setPluginType(pluginType)
 
-        languageRow.visible(pluginType == PluginType.PLUGIN)
         groupRow.visible(pluginType == PluginType.PLUGIN)
         artifactRow.visible(pluginType == PluginType.PLUGIN)
 

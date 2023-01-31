@@ -44,7 +44,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
 
   private val contentPanel: DialogPanel by lazy { createComponent() }
 
-  protected lateinit var languageRow: Row
+  private lateinit var languageRow: Row
 
   @Volatile
   private var isDisposed: Boolean = false
