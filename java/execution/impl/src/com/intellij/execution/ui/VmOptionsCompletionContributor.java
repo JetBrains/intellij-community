@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import org.jetbrains.annotations.NotNull;
@@ -178,21 +179,22 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
   @Nullable
   private static String getJrePath(JavaRunConfigurationBase settings) {
     String jrePath = null;
+    Sdk sdk;
     if (settings.isAlternativeJrePathEnabled()) {
       jrePath = settings.getAlternativeJrePath();
+      sdk = jrePath == null ? null : ProjectJdkTable.getInstance().findJdk(jrePath);
     }
     else {
       Module module = settings.getConfigurationModule().getModule();
-      Sdk sdk;
       if (module != null) {
         sdk = JavaParameters.getJdkToRunModule(module, false);
       }
       else {
         sdk = PathUtilEx.getAnyJdk(settings.getProject());
       }
-      if (sdk != null) {
-        jrePath = sdk.getHomePath();
-      }
+    }
+    if (sdk != null) {
+      jrePath = sdk.getHomePath();
     }
     return jrePath;
   }
