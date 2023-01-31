@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.fir.testGenerator
 
@@ -23,7 +23,9 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDecla
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveInJavaTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceToCompiledKotlinResolveInJavaTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
 import org.jetbrains.kotlin.idea.fir.uast.*
@@ -31,6 +33,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
+import org.jetbrains.kotlin.testGenerator.model.Patterns.JAVA
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
@@ -79,6 +82,14 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("resolve/references", pattern = KT_WITHOUT_DOTS)
         }
 
+        testClass<AbstractFirReferenceResolveInJavaTest> {
+            model("resolve/referenceInJava/binaryAndSource", pattern = JAVA)
+            model("resolve/referenceInJava/sourceOnly", pattern = JAVA)
+        }
+
+        testClass<AbstractFirReferenceToCompiledKotlinResolveInJavaTest> {
+            model("resolve/referenceInJava/binaryAndSource", pattern = JAVA)
+        }
 
         testClass<AbstractHighLevelQuickFixTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
@@ -226,7 +237,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractHLImplementationSearcherTest> {
             model("search/implementations", pattern = KT_WITHOUT_DOTS)
         }
-        
+
         testClass<AbstractFirQuickDocTest> {
             model("quickDoc", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
         }

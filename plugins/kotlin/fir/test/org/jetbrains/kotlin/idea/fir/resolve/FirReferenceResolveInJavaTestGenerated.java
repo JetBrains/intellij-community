@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.resolve;
+package org.jetbrains.kotlin.idea.fir.resolve;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,133 +14,133 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("idea/tests")
+@TestRoot("fir")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class ReferenceResolveInJavaTestGenerated extends AbstractReferenceResolveInJavaTest {
+public abstract class FirReferenceResolveInJavaTestGenerated extends AbstractFirReferenceResolveInJavaTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/resolve/referenceInJava/binaryAndSource")
-    public static class BinaryAndSource extends AbstractReferenceResolveInJavaTest {
+    @TestMetadata("../idea/tests/testData/resolve/referenceInJava/binaryAndSource")
+    public static class BinaryAndSource extends AbstractFirReferenceResolveInJavaTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("Class.java")
         public void testClass() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/Class.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/Class.java");
         }
 
         @TestMetadata("ClassObjectField.java")
         public void testClassObjectField() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/ClassObjectField.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/ClassObjectField.java");
         }
 
         @TestMetadata("Constructor.java")
         public void testConstructor() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/Constructor.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/Constructor.java");
         }
 
         @TestMetadata("EnumEntry.java")
         public void testEnumEntry() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/EnumEntry.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/EnumEntry.java");
         }
 
         @TestMetadata("Field.java")
         public void testField() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/Field.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/Field.java");
         }
 
         @TestMetadata("FileFacade.java")
         public void testFileFacade() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/FileFacade.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/FileFacade.java");
         }
 
         @TestMetadata("Getter.java")
         public void testGetter() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/Getter.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/Getter.java");
         }
 
         @TestMetadata("Method.java")
         public void testMethod() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/Method.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/Method.java");
         }
 
         @TestMetadata("MethodOfDeeplyNested.java")
         public void testMethodOfDeeplyNested() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/MethodOfDeeplyNested.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/MethodOfDeeplyNested.java");
         }
 
         @TestMetadata("MethodWithParameters.java")
         public void testMethodWithParameters() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/MethodWithParameters.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/MethodWithParameters.java");
         }
 
         @TestMetadata("MultifileFacade1.java")
         public void testMultifileFacade1() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/MultifileFacade1.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/MultifileFacade1.java");
         }
 
         @TestMetadata("MultifileFacade2.java")
         public void testMultifileFacade2() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/MultifileFacade2.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/MultifileFacade2.java");
         }
 
         @TestMetadata("ObjectInstance.java")
         public void testObjectInstance() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/ObjectInstance.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/ObjectInstance.java");
         }
 
         @TestMetadata("PlatformStaticFun.java")
         public void testPlatformStaticFun() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/PlatformStaticFun.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/PlatformStaticFun.java");
         }
 
         @TestMetadata("SingleFileMultifileFacade.java")
         public void testSingleFileMultifileFacade() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/SingleFileMultifileFacade.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/SingleFileMultifileFacade.java");
         }
 
         @TestMetadata("TopLevelFunction.java")
         public void testTopLevelFunction() throws Exception {
-            runTest("testData/resolve/referenceInJava/binaryAndSource/TopLevelFunction.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/binaryAndSource/TopLevelFunction.java");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/resolve/referenceInJava/sourceOnly")
-    public static class SourceOnly extends AbstractReferenceResolveInJavaTest {
+    @TestMetadata("../idea/tests/testData/resolve/referenceInJava/sourceOnly")
+    public static class SourceOnly extends AbstractFirReferenceResolveInJavaTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("AnnotationParameterReference.java")
         public void testAnnotationParameterReference() throws Exception {
-            runTest("testData/resolve/referenceInJava/sourceOnly/AnnotationParameterReference.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/sourceOnly/AnnotationParameterReference.java");
         }
 
         @TestMetadata("AutoGeneratedOverloads.java")
         public void testAutoGeneratedOverloads() throws Exception {
-            runTest("testData/resolve/referenceInJava/sourceOnly/AutoGeneratedOverloads.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/sourceOnly/AutoGeneratedOverloads.java");
         }
 
         @TestMetadata("ClassObjectStaticField.java")
         public void testClassObjectStaticField() throws Exception {
-            runTest("testData/resolve/referenceInJava/sourceOnly/ClassObjectStaticField.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/sourceOnly/ClassObjectStaticField.java");
         }
 
         @TestMetadata("DelegatedMethodFromInterfaceNoImpl.java")
         public void testDelegatedMethodFromInterfaceNoImpl() throws Exception {
-            runTest("testData/resolve/referenceInJava/sourceOnly/DelegatedMethodFromInterfaceNoImpl.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/sourceOnly/DelegatedMethodFromInterfaceNoImpl.java");
         }
 
         @TestMetadata("DelegatedMethodFromInterfaceWithImpl.java")
         public void testDelegatedMethodFromInterfaceWithImpl() throws Exception {
-            runTest("testData/resolve/referenceInJava/sourceOnly/DelegatedMethodFromInterfaceWithImpl.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/sourceOnly/DelegatedMethodFromInterfaceWithImpl.java");
         }
 
         @TestMetadata("KotlinCollection.java")
         public void testKotlinCollection() throws Exception {
-            runTest("testData/resolve/referenceInJava/sourceOnly/KotlinCollection.java");
+            runTest("../idea/tests/testData/resolve/referenceInJava/sourceOnly/KotlinCollection.java");
         }
     }
 }

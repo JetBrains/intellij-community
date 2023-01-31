@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -51,9 +51,9 @@ abstract class AbstractIdeCompiledLightClassesByFqNameTest : KotlinDaemonAnalyze
 
     fun doTest(testDataPath: String) {
         val testDataFile = File(testDataPath)
-        val expectedFile = KotlinTestUtils.replaceExtension(testDataFile, "compiled.java").let {
-            if (it.exists()) it else KotlinTestUtils.replaceExtension(testDataFile, "java")
-        }
+        val expectedFile = KotlinTestUtils.replaceExtension(testDataFile, "compiled.java").takeIf(File::exists)
+            ?: KotlinTestUtils.replaceExtension(testDataFile, "lib.java").takeIf(File::exists)
+            ?: KotlinTestUtils.replaceExtension(testDataFile, "java")
 
         withCustomCompilerOptions(testDataFile.readText(), project, module) {
             testLightClass(
