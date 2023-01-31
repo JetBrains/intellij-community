@@ -68,7 +68,10 @@ public class XmlTextExtractor extends TextExtractor {
     }
 
     if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && allowedDomains.contains(LITERALS) && hasSuitableDialect(element)) {
-      return builder.build(element, LITERALS);
+      TextContent content = builder.build(element, LITERALS);
+      if (content != null && seemsNatural(content)) {
+        return content;
+      }
     }
 
     return null;
@@ -155,6 +158,10 @@ public class XmlTextExtractor extends TextExtractor {
     container.acceptChildren(visitor);
     visitor.flushGroup(unknownContainer);
     return visitor.result;
+  }
+
+  private static boolean seemsNatural(TextContent content) {
+    return content.toString().contains(" ");
   }
 
   private static TextContent extractRange(TextContent full, TextRange range) {

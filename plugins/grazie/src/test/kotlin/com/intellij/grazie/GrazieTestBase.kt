@@ -22,7 +22,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
   companion object {
     val inspectionTools by lazy { arrayOf(GrazieInspection(), SpellCheckingInspection()) }
     val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.RUSSIAN, Lang.ITALIAN)
-    val enabledRules = setOf("LanguageTool.EN.COMMA_WHICH")
+    val enabledRules = setOf("LanguageTool.EN.COMMA_WHICH", "LanguageTool.EN.UPPERCASE_SENTENCE_START")
   }
 
   protected open val additionalEnabledRules: Set<String> = emptySet()

@@ -33,13 +33,18 @@ open class RuleGroup(rules: Set<String>) {
     val EMPTY = RuleGroup()
 
     /** Rules for checking casing errors */
+    @JvmField
     val CASING = RuleGroup(SENTENCE_START_CASE)
 
     /** Rules for checking punctuation errors */
+    @JvmField
     val PUNCTUATION = RuleGroup(SENTENCE_END_PUNCTUATION, UNLIKELY_OPENING_PUNCTUATION)
 
     /** Rules that are usually disabled for literal strings */
+    @JvmField
     val LITERALS = CASING + PUNCTUATION
+
+    fun getLITERALS(): RuleGroup = LITERALS
 
     /**
      * Rules that allow for single sentences to be lowercase and lack starting/finishing punctuation,
