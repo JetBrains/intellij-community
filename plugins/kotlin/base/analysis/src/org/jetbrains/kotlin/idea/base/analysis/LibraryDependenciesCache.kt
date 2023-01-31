@@ -201,7 +201,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
-            invalidateEntries({ k, v -> k in libraryInfos || v.libraries.any { it in libraryInfos } })
+            fun LibraryDependencies.haveOutdatedLibraries() =
+                libraries.any { it in libraryInfos } || sourcesOnlyDependencies.any { it in libraryInfos }
+
+            invalidateEntries({ k, v -> k in libraryInfos || v.haveOutdatedLibraries() })
         }
 
         override fun jdkRemoved(jdk: Sdk) {
