@@ -7,6 +7,7 @@ import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -178,7 +179,7 @@ object KotlinArtifactsDownloader {
         val repos = getMavenRepos(project) + additionalMavenRepos
 
         return JarRepositoryManager.loadDependenciesSync(project, prop, false, false, null, repos, indicator)
-            .map { File(it.file.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl).canonicalFile }
+            .map { VfsUtilCore.virtualToIoFile(it.file).canonicalFile }
             .distinct()
     }
 
