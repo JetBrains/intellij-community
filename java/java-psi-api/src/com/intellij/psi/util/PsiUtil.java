@@ -826,6 +826,32 @@ public final class PsiUtil extends PsiUtilCore {
     return null;
   }
 
+  @NotNull
+  public static PsiType uncaptureToplevelWildcards(@NotNull PsiType type) {
+    if (type instanceof PsiClassType) {
+      PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+      PsiClass aClass = result.getElement();
+      if (aClass != null) {
+        PsiSubstitutor substitutor = result.getSubstitutor();
+        PsiSubstitutor uncaptureSubstitutor = substitutor;
+        boolean hasCaptured = false;
+        for (PsiTypeParameter typeParameter : typeParametersIterable(aClass)) {
+          PsiType substituted = substitutor.substitute(typeParameter);
+          if (substituted instanceof PsiCapturedWildcardType) {
+            hasCaptured = true;
+            uncaptureSubstitutor = uncaptureSubstitutor.put(typeParameter, ((PsiCapturedWildcardType)substituted).getWildcard());
+          }
+        }
+
+        if (hasCaptured) {
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
+          return factory.createType(aClass, uncaptureSubstitutor);
+        }
+      }
+    }
+    return type;
+  }
+
   /**
    * Applies capture conversion to the type in context
    */

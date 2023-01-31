@@ -219,7 +219,13 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
                 System.out.println(x.isEmpty());
             }
         }
-      }
+    
+        public static void test3(List<Box<? extends Box<? extends Box<? extends String>>>> records) {
+            for (Box(Box(Box(var x))) : records) {
+                System.out.println(x.isEmpty());
+            }
+        }
+     }
       """);
     myFixture.enableInspections(new RawUseOfParameterizedTypeInspection());
     myFixture.checkHighlighting();

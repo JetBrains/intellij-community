@@ -2032,7 +2032,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!TypeConversionUtil.areTypesConvertible(itemType, patternType)) {
       add(HighlightUtil.createIncompatibleTypeHighlightInfo(itemType, patternType, pattern.getTextRange(), 0));
     }
-    else if (JavaGenericsUtil.isUncheckedCast(patternType, itemType)) {
+    else if (JavaGenericsUtil.isUncheckedCast(PsiUtil.uncaptureToplevelWildcards(patternType), itemType)) {
       String message = JavaErrorBundle.message("unsafe.cast.in.instanceof", JavaHighlightUtil.formatType(itemType),
                                                JavaHighlightUtil.formatType(patternType));
       add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(message));
