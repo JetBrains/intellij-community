@@ -339,7 +339,7 @@ class MermaidCompletionContributor : CompletionContributor() {
 
         val file = psiElement.containingFile
         for (child in file.children) {
-          if (whitespaceCommentEmptyErrorEolOrDirective().accepts(child, context)) {
+          if (whitespaceCommentEmptyErrorEolDirectiveOrFrontmatter().accepts(child, context)) {
             continue
           }
           return pattern.accepts(child, context) && !rightAfterDiagramHeader
@@ -371,17 +371,18 @@ class MermaidCompletionContributor : CompletionContributor() {
   private fun PsiElementPattern.Capture<PsiElement>.notInsideDiagram(): PsiElementPattern.Capture<PsiElement> {
     return with(object : PatternCondition<PsiElement>("notInsideDiagram") {
       override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
-        return psiElement.containingFile.children().map { whitespaceCommentEmptyErrorEolOrDirective().accepts(it) }.all { it }
+        return psiElement.containingFile.children().map { whitespaceCommentEmptyErrorEolDirectiveOrFrontmatter().accepts(it) }.all { it }
       }
     })
   }
 
 
-  private fun PsiElementPattern.Capture<PsiElement>.whitespaceCommentEmptyErrorEolOrDirective(): PsiElementPattern.Capture<PsiElement> {
+  private fun PsiElementPattern.Capture<PsiElement>.whitespaceCommentEmptyErrorEolDirectiveOrFrontmatter(): PsiElementPattern.Capture<PsiElement> {
     return andOr(
       psiElement().whitespaceCommentEmptyOrError(),
       psiElement(MermaidTokens.EOL),
-      psiElement(MermaidDirective::class.java)
+      psiElement(MermaidDirective::class.java),
+      psiElement(MermaidTokens.FRONTMATTER)
     )
   }
 

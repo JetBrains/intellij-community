@@ -10,6 +10,8 @@ class ClassCompletionTest : MermaidBaseTestCase("completion/diagrams/class") {
 
   fun `test annotation`() = doTest("interface", "abstract", "service", "enumeration")
 
+  fun `test at top level with frontmatter`() = doTest("class", "direction")
+
   private fun doTest(vararg variants: String) {
     val testName = getTestName(true)
     myFixture.testCompletionVariants("${testName}.mermaid", *variants)

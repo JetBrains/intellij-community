@@ -3,7 +3,7 @@ package com.intellij.mermaid.lang.completion
 import com.intellij.mermaid.lang.MermaidBaseTestCase
 
 class DiagramsHeadersCompletionTest : MermaidBaseTestCase("completion/diagrams") {
-  fun `test diagrams headers`() = doTest(
+  val diagrams = arrayOf(
     "pie",
     "journey",
     "flowchart",
@@ -22,6 +22,10 @@ class DiagramsHeadersCompletionTest : MermaidBaseTestCase("completion/diagrams")
     "C4Deployment",
     "mindmap"
   )
+
+  fun `test diagrams headers`() = doTest(*diagrams)
+
+  fun `test diagrams headers after frontmatter`() = doTest(*diagrams)
 
   private fun doTest(vararg variants: String) {
     val testName = getTestName(true)
