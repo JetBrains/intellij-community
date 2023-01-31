@@ -156,6 +156,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -379,10 +380,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
         }
       });
-      while (!future.isDone()) {
-        UIUtil.dispatchAllInvocationEvents();
-      }
       try {
+        while (!future.isDone()) {
+          try {
+            future.get(10, TimeUnit.MILLISECONDS);
+          }
+          catch (TimeoutException ignored) {
+          }
+          UIUtil.dispatchAllInvocationEvents();
+        }
         future.get();
       }
       catch (InterruptedException | ExecutionException e) {

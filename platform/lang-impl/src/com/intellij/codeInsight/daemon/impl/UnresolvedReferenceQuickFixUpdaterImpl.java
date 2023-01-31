@@ -20,10 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -63,16 +60,24 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
       PsiElement refElement = ReadAction.compute(() -> reference.getElement());
       Future<?> job = refElement.getUserData(JOB);
       if (job == null) {
-        ReadAction.run(() -> registerReferenceFixes(info, editor, file, reference));
+        CompletableFuture<Object> newFuture = new CompletableFuture<>();
+        job = ((UserDataHolderEx)refElement).putUserDataIfAbsent(JOB, newFuture);
+        if (job == newFuture) {
+          try {
+            ReadAction.run(() -> registerReferenceFixes(info, editor, file, reference));
+            newFuture.complete(null);
+          }
+          catch (Throwable t) {
+            newFuture.completeExceptionally(t);
+          }
+        }
       }
-      else {
-        try {
-          // wait outside RA
-          job.get(100, TimeUnit.SECONDS);
-        }
-        catch (InterruptedException | ExecutionException | TimeoutException e) {
-          throw new RuntimeException(e);
-        }
+      try {
+        // wait outside RA
+        job.get(100, TimeUnit.SECONDS);
+      }
+      catch (InterruptedException | ExecutionException | TimeoutException e) {
+        throw new RuntimeException(e);
       }
     }
   }
