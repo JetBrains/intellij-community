@@ -9,6 +9,11 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtFile
 
+/**
+ * Map from internal facade class to the facade file
+ * "kotlin.LazyKt__LazyKt" -> KtClsFile("LazyKt.class")
+ * "kotlin.text.StringsKt___StringsJvmKt" -> KtClsFile("StringsKt.class")
+ */
 object KotlinMultiFileClassPartIndex : StringStubIndexExtension<KtFile>() {
     private val KEY: StubIndexKey<String, KtFile> =
         StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinMultifileClassPartIndex")
