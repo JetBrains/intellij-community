@@ -24,11 +24,17 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
 
   private final ProcessHandler myProcessHandler;
   private final Process myPtyProcess;
+  private boolean myDestroyProcessOnClose;
   private final Charset myCharset;
 
   public ProcessHandlerTtyConnector(@NotNull ProcessHandler processHandler, @NotNull Charset charset) {
+    this(processHandler, false, charset);
+  }
+
+  public ProcessHandlerTtyConnector(@NotNull ProcessHandler processHandler, boolean destroyProcessOnClose, @NotNull Charset charset) {
     myProcessHandler = processHandler;
     myPtyProcess = getPtyProcess(processHandler);
+    myDestroyProcessOnClose = destroyProcessOnClose;
     myCharset = charset;
   }
 
@@ -55,7 +61,9 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
 
   @Override
   public void close() {
-    myProcessHandler.destroyProcess();
+    if (myDestroyProcessOnClose) {
+      myProcessHandler.destroyProcess();
+    }
   }
 
   @Override
