@@ -10,10 +10,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 
 open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val sessionId: String,
@@ -65,6 +62,10 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       //executor is shutdown
       CompletableFuture<Void>().also { it.completeExceptionally(e) }
     }
+  }
+
+  override fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit) {
+    computation(logExecutor)
   }
 
   override fun logAsync(group: EventLogGroup,
