@@ -308,10 +308,7 @@ object BuildDependenciesUtil {
     check(!normalizedEntryName.contains(
       doubleForwardSlashString)) { "Normalized entry name should not contain '$doubleForwardSlashString': $normalizedEntryName" }
     check(!(normalizedEntryName.contains("..") &&
-            listOf(
-              *normalizedEntryName.split(
-                forwardSlashString.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()).contains(
-              ".."))) { "Invalid entry name: $normalizedEntryName" }
+            normalizedEntryName.split(forwardSlash).contains(".."))) { "Invalid entry name: $normalizedEntryName" }
   }
 
   fun trim(s: String, charToTrim: Char): String {
