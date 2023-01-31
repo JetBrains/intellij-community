@@ -5,20 +5,22 @@ package org.jetbrains.plugins.github.pullrequest.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsNotifier
-import git4idea.branch.GitBranchUiHandlerImpl
-import git4idea.branch.GitBranchUtil
-import git4idea.branch.GitBranchWorker
 import git4idea.commands.Git
 import git4idea.fetch.GitFetchSupport
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -27,175 +29,85 @@ import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubSettings
 
 class GHPRCheckoutRemoteBranchAction : DumbAwareAction(
-  GithubBundle.messagePointer("pull.request.branch.checkout.create.action"),
-  GithubBundle.messagePointer("pull.request.branch.checkout.create.action.description"),
+  GithubBundle.message("pull.request.branch.checkout.remote.action"),
+  GithubBundle.message("pull.request.branch.checkout.remote.action.description"),
   null
 ) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    val project = e.getData(CommonDataKeys.PROJECT)
-    val repository = e.getData(GHPRActionKeys.GIT_REPOSITORY)
-    val selection = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
-    if (repository != null) {
-      val loadedDetails = selection?.detailsData?.loadedDetails
-      val headRefName = loadedDetails?.headRefName
-      val httpUrl = loadedDetails?.headRepository?.url
-      val sshUrl = loadedDetails?.headRepository?.sshUrl
-      val isFork = loadedDetails?.headRepository?.isFork ?: false
-      val remote = GithubGitHelper.getInstance().findRemote(repository, httpUrl, sshUrl)
-      if (remote != null) {
-        val localBranch = GithubGitHelper.getInstance().findLocalBranch(repository, remote, isFork, headRefName)
-        val currentBranch = repository.currentBranchName
-        if (currentBranch != null && currentBranch == localBranch) {
-          e.presentation.isEnabled = false
-          return
-        }
-      }
-    }
-    e.presentation.isEnabled = project != null && !project.isDefault && selection != null && repository != null
+    val project: Project? = e.getData(CommonDataKeys.PROJECT)
+    val repository: GitRepository? = e.getData(GHPRActionKeys.GIT_REPOSITORY)
+    val dataProvider: GHPRDataProvider? = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+
+    e.presentation.text = GithubBundle.message("pull.request.branch.checkout.remote", dataProvider?.detailsData?.loadedDetails?.headRefName)
+    e.presentation.isEnabled = project != null && !project.isDefault && repository != null && dataProvider != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val repository = e.getRequiredData(GHPRActionKeys.GIT_REPOSITORY)
-    val dataProvider = e.getRequiredData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+    val project: Project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val repository: GitRepository = e.getRequiredData(GHPRActionKeys.GIT_REPOSITORY)
+    val dataProvider: GHPRDataProvider = e.getRequiredData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
 
-    val pullRequestNumber = dataProvider.id.number
-    checkoutOrCreateNew(project, repository, pullRequestNumber, dataProvider)
-  }
-
-  private fun checkoutOrCreateNew(project: Project, repository: GitRepository, pullRequestNumber: Long, dataProvider: GHPRDataProvider) {
-    val httpForkUrl = dataProvider.httpForkUrl
-    val sshForkUrl = dataProvider.sshForkUrl
-    val possibleBranchName = dataProvider.detailsData.loadedDetails?.headRefName
-    val existingRemote = GithubGitHelper.getInstance().findRemote(repository, httpForkUrl, sshForkUrl)
-    if (existingRemote != null) {
-      val localBranch = GithubGitHelper.getInstance().findLocalBranch(repository, existingRemote, dataProvider.isFork, possibleBranchName)
-      if (localBranch != null) {
-        checkoutBranch(project, repository, localBranch, dataProvider)
-        return
-      }
+    val vcsNotifier = project.service<VcsNotifier>()
+    val pullRequest = ProgressIndicatorUtils.awaitWithCheckCanceled(dataProvider.detailsData.loadDetails(), EmptyProgressIndicator())
+    if (pullRequest.author == null) {
+      vcsNotifier.notifyError(
+        GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
+        GithubBundle.message("pull.request.branch.checkout.remote.cannot.find"),
+        GithubBundle.message("pull.request.branch.checkout.resolve.author.failed")
+      )
+      return
     }
-    checkoutNewBranch(project, repository, pullRequestNumber, dataProvider)
+
+    fetchAndCheckoutRemoteBranch(project, repository, pullRequest, vcsNotifier)
   }
 
-  private fun checkoutBranch(project: Project, repository: GitRepository, localBranch: String, dataProvider: GHPRDataProvider) {
-    object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.task.title"), true) {
+  private fun fetchAndCheckoutRemoteBranch(
+    project: Project,
+    repository: GitRepository,
+    pullRequest: GHPullRequest,
+    vcsNotifier: VcsNotifier
+  ) {
+    object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.task.indicator"), true) {
       private val git = Git.getInstance()
 
       override fun run(indicator: ProgressIndicator) {
-        ProgressIndicatorUtils.awaitWithCheckCanceled(dataProvider.changesData.fetchHeadBranch(), indicator)
+        val headBranch = pullRequest.headRefName
+        val httpForkUrl = pullRequest.headRepository?.url
+        val sshForkUrl = pullRequest.headRepository?.sshUrl
+        val pullRequestAuthor = pullRequest.author!!
 
-        indicator.text = GithubBundle.message("pull.request.branch.checkout.task.indicator")
-        GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, indicator))
-          .checkout(localBranch, false, listOf(repository))
+        val headRemote = git.findOrCreateRemote(repository, pullRequestAuthor.login, httpForkUrl, sshForkUrl)
+        if (headRemote == null) {
+          notifyRemoteError(vcsNotifier, httpForkUrl, sshForkUrl)
+          return
+        }
+
+        val fetchResult = GitFetchSupport.fetchSupport(project).fetch(repository, headRemote, headBranch)
+        if (fetchResult.showNotificationIfFailed(GitBundle.message("branches.update.failed"))) {
+          val branch = "${headRemote.name}/${headBranch}"
+          invokeLater {
+            CheckoutRemoteBranchAction.checkoutRemoteBranch(project, listOf(repository), branch)
+          }
+        }
+      }
+
+      private fun notifyRemoteError(vcsNotifier: VcsNotifier, httpForkUrl: @NlsSafe String?, sshForkUrl: @NlsSafe String?) {
+        var failedMessage = GithubBundle.message("pull.request.branch.checkout.resolve.remote.failed")
+        if (httpForkUrl != null) {
+          failedMessage += "\n$httpForkUrl"
+        }
+        if (sshForkUrl != null) {
+          failedMessage += "\n$sshForkUrl"
+        }
+        vcsNotifier.notifyError(
+          GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
+          GithubBundle.message("pull.request.branch.checkout.remote.cannot.find"),
+          failedMessage
+        )
       }
     }.queue()
-  }
-
-  private fun checkoutNewBranch(project: Project, repository: GitRepository, pullRequestNumber: Long, dataProvider: GHPRDataProvider) {
-    val options = GitBranchUtil.getNewBranchNameFromUser(project, listOf(repository),
-                                                         GithubBundle.message("pull.request.branch.checkout.create.dialog.title",
-                                                                              pullRequestNumber),
-                                                         generateSuggestedBranchName(repository, pullRequestNumber,
-                                                                                     dataProvider), true) ?: return
-
-    if (!options.checkout) {
-      object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.create.task.title"), true) {
-        private val git = Git.getInstance()
-
-        override fun run(indicator: ProgressIndicator) {
-          val ghPullRequest = ProgressIndicatorUtils.awaitWithCheckCanceled(dataProvider.detailsData.loadDetails(), indicator)
-          val sha = ghPullRequest.headRefOid
-          ProgressIndicatorUtils.awaitWithCheckCanceled(dataProvider.changesData.fetchHeadBranch(), indicator)
-
-          indicator.text = GithubBundle.message("pull.request.branch.checkout.create.task.indicator")
-          GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, indicator))
-            .createBranch(options.name, mapOf(repository to sha))
-          if (options.setTracking) {
-            trySetTrackingUpstreamBranch(git, repository, dataProvider, options.name, ghPullRequest)
-          }
-          repository.update()
-        }
-      }.queue()
-    }
-    else {
-      object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.task.title"), true) {
-        private val git = Git.getInstance()
-
-        override fun run(indicator: ProgressIndicator) {
-          val ghPullRequest = ProgressIndicatorUtils.awaitWithCheckCanceled(dataProvider.detailsData.loadDetails(), indicator)
-          val sha = ghPullRequest.headRefOid
-          ProgressIndicatorUtils.awaitWithCheckCanceled(dataProvider.changesData.fetchHeadBranch(), indicator)
-
-          indicator.text = GithubBundle.message("pull.request.branch.checkout.task.indicator")
-          GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, indicator))
-            .checkoutNewBranchStartingFrom(options.name, sha, listOf(repository))
-          if (options.setTracking) {
-            trySetTrackingUpstreamBranch(git, repository, dataProvider, options.name, ghPullRequest)
-          }
-          repository.update()
-        }
-      }.queue()
-    }
-  }
-
-  private fun generateSuggestedBranchName(repository: GitRepository, pullRequestNumber: Long, dataProvider: GHPRDataProvider): String =
-    dataProvider.detailsData.loadedDetails.let { ghPullRequest ->
-      val login = ghPullRequest?.headRepository?.owner?.login
-      val headRefName = ghPullRequest?.headRefName
-      when {
-        headRefName == null || login == null -> "pull/${pullRequestNumber}"
-        repository.branchWithTrackingExist(headRefName) -> "${login}_${headRefName}"
-        else -> headRefName
-      }
-    }
-
-  private fun GitRepository.branchWithTrackingExist(branchName: String) =
-    branches.findLocalBranch(branchName)?.findTrackedBranch(this) != null
-
-  private fun trySetTrackingUpstreamBranch(git: Git,
-                                           repository: GitRepository,
-                                           dataProvider: GHPRDataProvider,
-                                           branchName: String,
-                                           ghPullRequest: GHPullRequest) {
-    val project = repository.project
-    val vcsNotifier = project.service<VcsNotifier>()
-    val pullRequestAuthor = ghPullRequest.author
-    if (pullRequestAuthor == null) {
-      vcsNotifier.notifyError(GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
-                              GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"),
-                              GithubBundle.message("pull.request.branch.checkout.resolve.author.failed"))
-      return
-    }
-    val httpForkUrl = dataProvider.httpForkUrl
-    val sshForkUrl = dataProvider.sshForkUrl
-    val forkRemote = git.findOrCreateRemote(repository, pullRequestAuthor.login, httpForkUrl, sshForkUrl)
-
-    if (forkRemote == null) {
-      var failedMessage = GithubBundle.message("pull.request.branch.checkout.resolve.remote.failed")
-      if (httpForkUrl != null) {
-        failedMessage += "\n$httpForkUrl"
-      }
-      if (sshForkUrl != null) {
-        failedMessage += "\n$sshForkUrl"
-      }
-      vcsNotifier.notifyError(GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
-                              GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"), failedMessage)
-      return
-    }
-
-    val forkBranchName = "${forkRemote.name}/${ghPullRequest.headRefName}"
-    val fetchResult = GitFetchSupport.fetchSupport(project).fetch(repository, forkRemote, ghPullRequest.headRefName)
-    if (fetchResult.showNotificationIfFailed(GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"))) {
-      val setUpstream = git.setUpstream(repository, forkBranchName, branchName)
-      if (!setUpstream.success()) {
-        vcsNotifier.notifyError(GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
-                                GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"),
-                                setUpstream.errorOutputAsHtmlString)
-      }
-    }
   }
 
   private fun Git.findOrCreateRemote(repository: GitRepository, remoteName: String, httpUrl: String?, sshUrl: String?): GitRemote? {
@@ -224,8 +136,4 @@ class GHPRCheckoutRemoteBranchAction : DumbAwareAction(
       update()
       remotes.find { it.name == remoteName }
     }
-
-  private val GHPRDataProvider.isFork get() = detailsData.loadedDetails?.headRepository?.isFork ?: false
-  private val GHPRDataProvider.httpForkUrl get() = detailsData.loadedDetails?.headRepository?.url
-  private val GHPRDataProvider.sshForkUrl get() = detailsData.loadedDetails?.headRepository?.sshUrl
 }

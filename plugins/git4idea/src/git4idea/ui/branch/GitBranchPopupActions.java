@@ -20,6 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
@@ -708,6 +709,7 @@ public class GitBranchPopupActions {
         checkoutRemoteBranch(myProject, myRepositories, myRemoteBranchName);
       }
 
+      @RequiresEdt
       public static void checkoutRemoteBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
                                               @NotNull String remoteBranchName) {
         GitRepository repository = repositories.get(0);
@@ -733,6 +735,7 @@ public class GitBranchPopupActions {
           .perform(remoteBranchName, new GitNewBranchOptions(suggestedLocalName, true, true));
       }
 
+      @RequiresEdt
       private static void askNewBranchNameAndCheckout(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
                                                       @NotNull String remoteBranchName, @NotNull String suggestedLocalName) {
         //do not allow name conflicts
