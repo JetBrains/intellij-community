@@ -78,7 +78,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
-import static com.intellij.diagnostic.telemetry.TraceKt.*;
+import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
+import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
 import static com.intellij.diagnostic.telemetry.TraceUtil.computeWithSpanThrows;
 import static com.intellij.diagnostic.telemetry.TraceUtil.runWithSpanThrows;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
@@ -229,6 +230,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       filterNonValidShelvedChangeLists();
       markDeletedSystemUnshelved();
       cleanDeletedOlderOneWeek();
+      notifyStateChanged();
     }
     catch (Exception e) {
       LOG.error("Couldn't read shelf information", e);
