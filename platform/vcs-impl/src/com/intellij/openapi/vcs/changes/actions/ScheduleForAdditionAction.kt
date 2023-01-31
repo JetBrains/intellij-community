@@ -49,7 +49,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val unversionedFiles = Manager.getUnversionedFiles(e, project).toList()
 
-    performUnversionedFilesAddition(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY), null)
+    Manager.performUnversionedFilesAddition(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY), null)
   }
 
   protected open fun isEnabled(e: AnActionEvent): Boolean {
@@ -57,33 +57,33 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
     return project != null && Manager.getUnversionedFiles(e, project).isNotEmpty
   }
 
-  protected fun performUnversionedFilesAddition(project: Project,
-                                                files: List<VirtualFile>,
-                                                browser: ChangesBrowserBase?,
-                                                additionalTask: PairConsumer<in ProgressIndicator, in MutableList<VcsException>>?) {
-    if (files.isEmpty() && additionalTask == null) return
-
-    val targetChangeList = when (browser) {
-      is CommitDialogChangesBrowser -> browser.selectedChangeList
-      else -> ChangeListManager.getInstance(project).defaultChangeList
-    }
-
-    val changesConsumer = if (browser is CommitDialogChangesBrowser) {
-      Consumer { changes: List<Change> -> browser.viewer.includeChanges(changes) }
-    }
-    else null
-
-    FileDocumentManager.getInstance().saveAllDocuments()
-
-    if (ModalityState.current() == ModalityState.NON_MODAL) {
-      Manager.addUnversionedFilesToVcsInBackground(project, targetChangeList, files, changesConsumer, additionalTask)
-    }
-    else {
-      Manager.addUnversionedFilesToVcs(project, targetChangeList, files, changesConsumer, additionalTask)
-    }
-  }
-
   object Manager {
+    internal fun performUnversionedFilesAddition(project: Project,
+                                                 files: List<VirtualFile>,
+                                                 browser: ChangesBrowserBase?,
+                                                 additionalTask: PairConsumer<in ProgressIndicator, in MutableList<VcsException>>?) {
+      if (files.isEmpty() && additionalTask == null) return
+
+      val targetChangeList = when (browser) {
+        is CommitDialogChangesBrowser -> browser.selectedChangeList
+        else -> ChangeListManager.getInstance(project).defaultChangeList
+      }
+
+      val changesConsumer = if (browser is CommitDialogChangesBrowser) {
+        Consumer { changes: List<Change> -> browser.viewer.includeChanges(changes) }
+      }
+      else null
+
+      FileDocumentManager.getInstance().saveAllDocuments()
+
+      if (ModalityState.current() == ModalityState.NON_MODAL) {
+        addUnversionedFilesToVcsInBackground(project, targetChangeList, files, changesConsumer, additionalTask)
+      }
+      else {
+        addUnversionedFilesToVcs(project, targetChangeList, files, changesConsumer, additionalTask)
+      }
+    }
+
     fun getUnversionedFiles(e: AnActionEvent, project: Project): JBIterable<VirtualFile> {
       return getUnversionedFiles(e.dataContext, project)
     }
