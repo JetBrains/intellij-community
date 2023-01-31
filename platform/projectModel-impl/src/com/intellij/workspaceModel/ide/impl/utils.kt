@@ -17,6 +17,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
  * cheap as getting property value. If cache is empty or invalid the call will be redirected  into the
  * `VirtualFileManager` for search.
  */
+@Deprecated("Use virtualFile extension property from API instead", ReplaceWith("virtualFile", "com.intellij.workspaceModel.ide.virtualFile"))
 val VirtualFileUrl.virtualFile: VirtualFile?
   get() = if (this is VirtualFileUrlBridge) file else VirtualFileManager.getInstance().findFileByUrl(url)
 

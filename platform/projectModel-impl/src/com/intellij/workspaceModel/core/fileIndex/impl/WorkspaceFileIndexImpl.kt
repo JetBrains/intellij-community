@@ -16,11 +16,7 @@ import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.search.GlobalSearchScope
@@ -30,7 +26,7 @@ import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
