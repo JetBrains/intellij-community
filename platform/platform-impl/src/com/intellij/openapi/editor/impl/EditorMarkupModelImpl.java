@@ -874,6 +874,28 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     protected int getThickness() {
       return SCROLLBAR_WIDTH.get() + getThinGap() + getMinMarkHeight();
     }
+
+    @Override
+    protected void doPaintTrack(Graphics g, JComponent c, Rectangle bounds) {
+      if (!SystemInfo.isMac || !transparent()) super.doPaintTrack(g, c, bounds);
+    }
+
+    @Override
+    protected Rectangle getMacScrollBarBounds(Rectangle baseBounds, boolean thumb) {
+      Rectangle bounds = super.getMacScrollBarBounds(baseBounds, thumb);
+      int middleLocationValue = getThinGap() + getMinMarkHeight() + SCROLLBAR_WIDTH.get() / 2;
+
+      if (isVertical()) {
+        bounds.width = Math.min(bounds.width, getMaxMacThumbWidth());
+        bounds.x = middleLocationValue - (bounds.width / 2);
+      }
+      else {
+        bounds.height = Math.min(bounds.height, getMaxMacThumbWidth());
+        bounds.y = middleLocationValue - (bounds.height / 2);
+      }
+
+      return bounds;
+    }
   }
 
   @DirtyUI
@@ -960,16 +982,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     @Override
     protected boolean alwaysPaintThumb() {
       return true;
-    }
-
-    @Override
-    protected Rectangle getMacScrollBarBounds(Rectangle baseBounds, boolean thumb) {
-      Rectangle bounds = super.getMacScrollBarBounds(baseBounds, thumb);
-      bounds.width = Math.min(bounds.width, getMaxMacThumbWidth());
-      int b2 =  bounds.width / 2;
-      bounds.x = getThinGap() + getMinMarkHeight() + SCROLLBAR_WIDTH.get() / 2 - b2;
-
-      return bounds;
     }
 
     @Override
