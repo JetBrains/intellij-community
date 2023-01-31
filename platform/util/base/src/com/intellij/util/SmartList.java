@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -8,11 +8,11 @@ import java.util.*;
 import java.util.function.Consumer;
 
 /**
- * A List which is optimised for the sizes of 0 and 1,
- * in which cases it would not allocate array at all.
+ * A List which with optimized memory usage for the sizes of 0 and 1,
+ * in which cases it does not allocate an array.
  * <p>
- * The tradeoff is the following: this list is slower than {@link ArrayList} but occupies less memory in case of 0 or 1 elements.
- * Please use it only if your code contains many near-empty lists outside the very hot loops.
+ * The tradeoff is the following: This list is slower than {@link ArrayList} but occupies less memory in case of exactly 1 element.
+ * Please use it only if your code contains many 1-element lists outside very hot loops.
  */
 public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   private int mySize;
