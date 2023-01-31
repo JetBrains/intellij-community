@@ -15,7 +15,7 @@ import com.intellij.openapi.util.io.*
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.findVirtualFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
@@ -87,8 +87,8 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       }
 
       whenProjectCreated(project) { //IDEA-244863
-        reformatCode(project, generatedFiles.mapNotNull { it.findVirtualFile() })
-        openFilesInEditor(project, filesToOpen.mapNotNull { it.findVirtualFile() })
+        reformatCode(project, generatedFiles.mapNotNull { it.refreshAndFindVirtualFile() })
+        openFilesInEditor(project, filesToOpen.mapNotNull { it.refreshAndFindVirtualFile() })
       }
     }
   }

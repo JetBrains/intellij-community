@@ -126,10 +126,10 @@ class VirtualFileUtilTest : VirtualFileUtilTestCase() {
       assertNioPath { getResolvedPath("file.txt") }
         .doesNotExist()
       assertNioPath { findOrCreateFile("file.txt") }
-        .assertVirtualFile { writeAction { findVirtualFile() } }
+        .assertVirtualFile { writeAction { refreshAndFindVirtualFile() } }
         .isExistedFile()
       assertNioPath { findOrCreateDirectory("directory") }
-        .assertVirtualFile { writeAction { findVirtualDirectory() } }
+        .assertVirtualFile { writeAction { refreshAndFindVirtualDirectory() } }
         .isExistedDirectory()
     }
   }
@@ -137,7 +137,7 @@ class VirtualFileUtilTest : VirtualFileUtilTestCase() {
   @Test
   fun `test delete`() {
     runBlocking {
-      val root = writeAction { root.getVirtualDirectory() }
+      val root = writeAction { root.refreshAndGetVirtualDirectory() }
       writeAction { root.createFile("file.txt") }
       writeAction { root.deleteRecursively("file.txt") }
       assertVirtualFile { readAction { findFile("file.txt") } }

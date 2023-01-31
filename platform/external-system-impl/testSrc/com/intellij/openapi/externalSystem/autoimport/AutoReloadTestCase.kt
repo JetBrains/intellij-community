@@ -77,7 +77,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
   protected fun createIoFile(relativePath: String): VirtualFile {
     projectNioPath.refreshVfs(relativePath) // ensure that file is removed from VFS
     projectNioPath.createFile(relativePath)
-    return projectNioPath.getResolvedPath(relativePath).getVirtualFile()
+    return projectNioPath.getResolvedPath(relativePath).refreshAndGetVirtualFile()
   }
 
   private fun VirtualFile.updateIoFile(action: (Path) -> Unit) {

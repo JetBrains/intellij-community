@@ -84,7 +84,7 @@ internal class FileTestFixtureImpl(
 
   private fun createFixtureRoot(relativePath: String): VirtualFile {
     val systemPath = Path.of(PathManager.getSystemPath())
-    val systemDirectory = systemPath.findOrCreateDirectory().getVirtualDirectory()
+    val systemDirectory = systemPath.findOrCreateDirectory().refreshAndGetVirtualDirectory()
     val fixtureRoot = "FileTestFixture/$relativePath"
     VfsRootAccess.allowRootAccess(testRootDisposable, systemDirectory.path + "/$fixtureRoot")
     return runWriteActionAndGet {
@@ -202,19 +202,19 @@ internal class FileTestFixtureImpl(
     runWriteActionAndWait {
       if (text != null) {
         path.findOrCreateFile()
-        val file = path.getVirtualFile()
+        val file = path.refreshAndGetVirtualFile()
         file.reloadDocument()
         file.writeText(text)
       }
       else {
-        val file = path.findVirtualFile()
+        val file = path.refreshAndFindVirtualFile()
         file?.deleteRecursively()
       }
     }
   }
 
   private fun getTextContent(path: Path): String? {
-    val file = path.findVirtualFile() ?: return null
+    val file = path.refreshAndFindVirtualFile() ?: return null
     return file.readText()
   }
 

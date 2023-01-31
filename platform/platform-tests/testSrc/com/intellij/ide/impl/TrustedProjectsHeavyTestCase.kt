@@ -14,7 +14,7 @@ import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.createDirectory
 import com.intellij.openapi.vfs.findOrCreateDirectory
-import com.intellij.openapi.vfs.getVirtualDirectory
+import com.intellij.openapi.vfs.refreshAndGetVirtualDirectory
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
@@ -49,7 +49,7 @@ abstract class TrustedProjectsHeavyTestCase {
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory()
       .createTempDirTestFixture()
     fileFixture.setUp()
-    testRoot = fileFixture.tempDirPath.toNioPath().getVirtualDirectory()
+    testRoot = fileFixture.tempDirPath.toNioPath().refreshAndGetVirtualDirectory()
   }
 
   @AfterEach

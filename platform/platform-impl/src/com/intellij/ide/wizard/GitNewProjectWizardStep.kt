@@ -10,7 +10,7 @@ import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toNioPath
-import com.intellij.openapi.vfs.findVirtualDirectory
+import com.intellij.openapi.vfs.refreshAndFindVirtualDirectory
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
@@ -45,7 +45,7 @@ class GitNewProjectWizardStep(
   override fun setupProject(project: Project) {
     setupProjectSafe(project, UIBundle.message("error.project.wizard.new.project.git")) {
       if (git) {
-        val rootDirectory = path.toNioPath().resolve(name).findVirtualDirectory()
+        val rootDirectory = path.toNioPath().resolve(name).refreshAndFindVirtualDirectory()
         if (rootDirectory != null) {
           whenProjectCreated(project) {
             runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {

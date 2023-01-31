@@ -81,15 +81,15 @@ fun VirtualFile.deleteChildrenRecursively(relativePath: @SystemIndependent Strin
 }
 
 @RequiresWriteLock
-fun Path.getVirtualFile(): VirtualFile {
-  return checkNotNull(findVirtualFile()) {
+fun Path.refreshAndGetVirtualFile(): VirtualFile {
+  return checkNotNull(refreshAndFindVirtualFile()) {
     "File or directory doesn't exist: $this"
   }
 }
 
 @RequiresWriteLock
-fun Path.getVirtualDirectory(): VirtualFile {
-  return checkNotNull(findVirtualDirectory()) {
+fun Path.refreshAndGetVirtualDirectory(): VirtualFile {
+  return checkNotNull(refreshAndFindVirtualDirectory()) {
     "File or directory doesn't exist: $this"
   }
 }

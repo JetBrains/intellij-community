@@ -130,7 +130,7 @@ fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): 
 }
 
 @RequiresWriteLock
-fun Path.findVirtualFile(): VirtualFile? {
+fun Path.refreshAndFindVirtualFile(): VirtualFile? {
   val fileManager = VirtualFileManager.getInstance()
   val file = fileManager.refreshAndFindFileByNioPath(this) ?: return null
   if (!file.isFile) {
@@ -140,7 +140,7 @@ fun Path.findVirtualFile(): VirtualFile? {
 }
 
 @RequiresWriteLock
-fun Path.findVirtualDirectory(): VirtualFile? {
+fun Path.refreshAndFindVirtualDirectory(): VirtualFile? {
   val fileManager = VirtualFileManager.getInstance()
   val file = fileManager.refreshAndFindFileByNioPath(this) ?: return null
   if (!file.isDirectory) {
