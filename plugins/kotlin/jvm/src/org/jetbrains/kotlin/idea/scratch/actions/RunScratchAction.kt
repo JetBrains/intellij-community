@@ -31,10 +31,10 @@ class RunScratchAction : ScratchAction(
     override fun actionPerformed(e: AnActionEvent) {
         val scratchFile = e.currentScratchFile ?: return
 
-        doAction(scratchFile, false)
+        Handler.doAction(scratchFile, false)
     }
 
-    companion object {
+    object Handler {
         fun doAction(scratchFile: ScratchFile, isAutoRun: Boolean) {
             val project = scratchFile.project
             val isRepl = scratchFile.options.isRepl
