@@ -49,6 +49,14 @@ class TerminalBlocksContainer(private val project: Project,
       }
     }, parentDisposable = this)
 
+    session.model.addTerminalListener(object : TerminalModel.TerminalListener {
+      override fun onAlternateBufferChanged(enabled: Boolean) {
+        invokeLater {
+          toggleFullScreen(enabled)
+        }
+      }
+    })
+
     blocksPanel = object : JPanel(VerticalLayout(0)) {
       override fun getBackground(): Color {
         return UIUtil.getTextFieldBackground()
@@ -108,6 +116,24 @@ class TerminalBlocksContainer(private val project: Project,
     repaint()
 
     IdeFocusManager.getInstance(project).requestFocus(promptPanel.preferredFocusableComponent, true)
+  }
+
+  private fun toggleFullScreen(isFullScreen: Boolean) {
+    val panel = runningPanel ?: error("Running panel is null")
+    panel.toggleFullScreen(isFullScreen)
+    if (isFullScreen) {
+      remove(scrollPane)
+      add(panel, BorderLayout.CENTER)
+    }
+    else {
+      remove(panel)
+      blocksPanel.add(panel, VerticalLayout.BOTTOM)
+      add(scrollPane, BorderLayout.CENTER)
+    }
+
+    revalidate()
+    repaint()
+    IdeFocusManager.getInstance(project).requestFocus(panel.preferredFocusableComponent, true)
   }
 
   fun sizeTerminalToComponent() {

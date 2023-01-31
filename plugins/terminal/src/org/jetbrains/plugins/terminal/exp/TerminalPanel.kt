@@ -48,6 +48,7 @@ import java.awt.event.MouseWheelListener
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
+import javax.swing.border.Border
 import kotlin.math.max
 
 class TerminalPanel(private val project: Project,
@@ -73,9 +74,7 @@ class TerminalPanel(private val project: Project,
     setupEventDispatcher()
     setupMouseListener()
 
-    val innerBorder = JBUI.Borders.customLine(UIUtil.getTextFieldBackground(), 6, 0, 6, 0)
-    val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
-    border = JBUI.Borders.compound(outerBorder, innerBorder)
+    border = createBorder(isFullScreen = false)
 
     layout = BorderLayout()
     add(editor.component, BorderLayout.CENTER)
@@ -87,6 +86,19 @@ class TerminalPanel(private val project: Project,
     editor.setCaretEnabled(false)
     editor.isViewer = true
     Disposer.dispose(runningDisposable)
+  }
+
+  fun toggleFullScreen(isFullScreen: Boolean) {
+    border = createBorder(isFullScreen)
+  }
+
+  private fun createBorder(isFullScreen: Boolean): Border {
+    return if (!isFullScreen) {
+      val innerBorder = JBUI.Borders.customLine(UIUtil.getTextFieldBackground(), 6, 0, 6, 0)
+      val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
+      JBUI.Borders.compound(outerBorder, innerBorder)!!
+    }
+    else JBUI.Borders.empty()
   }
 
   private fun setupContentListener() {
