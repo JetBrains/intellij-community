@@ -11,7 +11,7 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.vmOptions.*;
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.EditCustomVmOptionsAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -38,9 +38,7 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     Document document = parameters.getEditor().getDocument();
-    JavaRunConfigurationBase settings = document.getUserData(VmOptionsEditor.SETTINGS_KEY);
-    if (settings == null) return;
-    String jrePath = getJrePath(settings);
+    String jrePath = getJrePathForVmOptionsDocument(document);
     if (jrePath == null) return;
     CompletableFuture<JdkOptionsData> jdk = VMOptionsService.getInstance().getOrComputeOptionsForJdk(jrePath);
     JdkOptionsData data = ProgressIndicatorUtils.awaitWithCheckCanceled(jdk);
@@ -164,6 +162,17 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
   private static boolean hasOptionPrefix(@NotNull CharSequence sequence, int offset, @NotNull String xxPrefix) {
     return offset >= xxPrefix.length() && sequence.subSequence(offset - xxPrefix.length(), offset).toString().equals(xxPrefix) &&
            (offset == xxPrefix.length() || Character.isWhitespace(sequence.charAt(offset - xxPrefix.length() - 1)));
+  }
+
+  @Nullable
+  private static String getJrePathForVmOptionsDocument(Document document) {
+    String path = document.getUserData(EditCustomVmOptionsAction.Companion.getVmPathKey());
+    if (path != null) {
+      return path;
+    }
+    JavaRunConfigurationBase settings = document.getUserData(VmOptionsEditor.SETTINGS_KEY);
+    if (settings == null) return null;
+    return getJrePath(settings);
   }
 
   @Nullable

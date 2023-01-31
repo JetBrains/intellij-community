@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.CommonBundle
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
@@ -19,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -80,9 +82,13 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
       vFile.refresh(false, false)
       val psiFile = PsiManager.getInstance(project).findFile(vFile)
       if (psiFile != null) {
+        prepareDocument(psiFile.viewProvider.document)
         PsiNavigationSupport.getInstance().createNavigatable(project, vFile, psiFile.textLength).navigate(true)
       }
     }
+  }
+
+  open fun prepareDocument(document: Document?) {
   }
 
   private fun openInDialog(file: Path, frame: JFrame) {
@@ -157,8 +163,9 @@ class EditCustomPropertiesAction : EditCustomSettingsAction() {
 }
 
 class EditCustomVmOptionsAction : EditCustomSettingsAction() {
-  private companion object {
-    val file: Lazy<Path?> = lazy { VMOptions.getUserOptionsFile() }
+  companion object {
+    private val file: Lazy<Path?> = lazy { VMOptions.getUserOptionsFile() }
+    val vmPathKey: Key<String> = Key.create("VM_PATH_KEY")
   }
 
   override fun file(): Path? = file.value
@@ -167,6 +174,14 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   override fun charset(): Charset = VMOptions.getFileCharset()
 
   fun isEnabled(): Boolean = file() != null
+
+  override fun prepareDocument(document: Document?) {
+    document ?: return
+    val vmPath = System.getProperty("java.home")
+    if (vmPath != null) {
+      document.putUserData(vmPathKey, vmPath)
+    }
+  }
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
     override fun isWritable(file: VirtualFile): Boolean =
