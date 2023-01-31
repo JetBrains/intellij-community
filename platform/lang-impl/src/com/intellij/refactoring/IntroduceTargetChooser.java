@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -89,12 +88,10 @@ public final class IntroduceTargetChooser {
                                                                             @Nullable JComponent southComponent,
                                                                             int selection) {
     AtomicReference<ScopeHighlighter> highlighter = new AtomicReference<>(new ScopeHighlighter(editor));
-    T preselection = expressions.get(selection > -1 ? selection : 0);
-    List<? extends T> sorted = ContainerUtil.sorted(expressions, Comparator.comparingInt((T t) -> t.getTextRange().getStartOffset()));
-    IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
-      .<T>createPopupChooserBuilder(sorted)
+
+    IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance().<T>createPopupChooserBuilder(expressions)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-      .setSelectedValue(preselection, true)
+      .setSelectedValue(expressions.get(selection > -1 ? selection : 0), true)
       .setAccessibleName(title)
       .setTitle(title)
       .setMovable(false)
