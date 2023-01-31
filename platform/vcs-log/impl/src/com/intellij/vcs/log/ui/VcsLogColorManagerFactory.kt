@@ -13,22 +13,84 @@ object VcsLogColorManagerFactory {
   const val ROOT_OPENED_STATE = "NEW_UI_ROOT_OPEN_STATE"
 
   @JvmStatic
-  fun create(roots: Set<VirtualFile>): VcsLogColorManager {
-    if (ExperimentalUI.isNewUI()) return VcsLogColorManagerImpl(roots, NEW_UI_ROOT_COLORS_CLOSED_STATE, NEW_UI_ROOTS_OPENED_COLOR_SPACE)
-    return ClassicUiVcsLogColorManager.forRoots(roots)
-  }
+  fun create(roots: Set<VirtualFile>): VcsLogColorManager = VcsLogColorManagerSwitcher(roots)
 
   @JvmStatic
-  fun create(paths: Collection<FilePath>): VcsLogColorManager {
-    if (ExperimentalUI.isNewUI()) return VcsLogColorManagerImpl(paths, NEW_UI_ROOT_COLORS_CLOSED_STATE, NEW_UI_ROOTS_OPENED_COLOR_SPACE)
-    return ClassicUiVcsLogColorManager.forPaths(paths)
+  fun create(paths: Collection<FilePath>): VcsLogColorManager = VcsLogColorManagerSwitcher(paths)
+}
+
+private class VcsLogColorManagerSwitcher private constructor(
+  private val roots: Set<VirtualFile>?,
+  private val paths: Collection<FilePath>?
+) : VcsLogColorManager {
+  constructor(roots: Set<VirtualFile>) : this(roots, null)
+  constructor(paths: Collection<FilePath>) : this(null, paths)
+
+  private var isNewUI: Boolean = ExperimentalUI.isNewUI()
+
+  private var colorManager: VcsLogColorManager
+
+  init {
+    colorManager = createColorManager()
+    updateColorManagerIfNeeded()
   }
+
+  private fun createColorManager(): VcsLogColorManager {
+    if (isNewUI) {
+      return when {
+        roots != null -> VcsLogColorManagerImpl(roots, NEW_UI_ROOT_COLORS_CLOSED_STATE, NEW_UI_ROOTS_OPENED_COLOR_SPACE)
+        paths != null -> VcsLogColorManagerImpl(paths, NEW_UI_ROOT_COLORS_CLOSED_STATE, NEW_UI_ROOTS_OPENED_COLOR_SPACE)
+        else -> error("Unexpected state in VcsLogColorManagerSwitcher")
+      }
+    }
+
+    return when {
+      roots != null -> ClassicUiVcsLogColorManager.forRoots(roots)
+      paths != null -> ClassicUiVcsLogColorManager.forPaths(paths)
+      else -> error("Unexpected state in VcsLogColorManagerSwitcher")
+    }
+  }
+
+  private fun updateColorManagerIfNeeded() {
+    if (isNewUI == ExperimentalUI.isNewUI()) return
+
+    isNewUI = ExperimentalUI.isNewUI()
+    colorManager = createColorManager()
+  }
+
+  override fun getPathColor(path: FilePath): Color {
+    updateColorManagerIfNeeded()
+    return colorManager.getPathColor(path)
+  }
+
+  override fun getPathColor(path: FilePath, colorMode: String): Color {
+    updateColorManagerIfNeeded()
+    return colorManager.getPathColor(path, colorMode)
+  }
+
+  override fun getRootColor(root: VirtualFile): Color {
+    updateColorManagerIfNeeded()
+    return colorManager.getRootColor(root)
+  }
+
+  override fun getRootColor(root: VirtualFile, colorMode: String): Color {
+    updateColorManagerIfNeeded()
+    return colorManager.getRootColor(root, colorMode)
+  }
+
+  override fun getLongName(path: FilePath): String = colorManager.getLongName(path)
+
+  override fun hasMultiplePaths(): Boolean = colorManager.hasMultiplePaths()
+
+  override fun getPaths(): Collection<FilePath> = colorManager.paths
 }
 
 private class ClassicUiVcsLogColorManager(private val delegate: VcsLogColorManager) : VcsLogColorManager by delegate {
   override fun getPathColor(path: FilePath): Color = delegate.getPathColor(path).mixWithTableBackground()
 
   override fun getRootColor(root: VirtualFile): Color = delegate.getRootColor(root).mixWithTableBackground()
+
+  override fun getPathColor(path: FilePath, colorMode: String): Color = delegate.getPathColor(path, colorMode).mixWithTableBackground()
 
   private fun Color.mixWithTableBackground(): Color = JBColor.lazy { ColorUtil.mix(this, UIUtil.getTableBackground(), 0.75) }
 
