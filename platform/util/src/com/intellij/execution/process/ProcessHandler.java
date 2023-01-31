@@ -177,10 +177,6 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     myListeners.remove(listener);
   }
 
-  protected List<ProcessListener> getListeners() {
-    return myListeners;
-  }
-
   protected void notifyProcessDetached() {
     notifyTerminated(0, false);
   }
