@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.vmOptions.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.documentation.DocumentationResultData;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -119,6 +120,20 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     configure("-XX:+Flag -XX:+<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("MinusFlag"), myFixture.getLookupElementStrings());
+  }
+  
+  @Test
+  public void testVmOptionDocumentation() {
+    VMOption option = new VMOption("Flag", "bool", "true", VMOptionKind.Experimental, "SuperOption", VMOptionVariant.XX);
+    DocumentationResultData result = (DocumentationResultData)option.computeDocumentation();
+    String doc = result.getHtml();
+    assertEquals("""
+                   <table>\
+                   <tr><td align="right" valign="top"><b>Option: </b></td><td>-XX:Flag</td></tr>\
+                   <tr><td align="right" valign="top"><b>Category: </b></td><td>Experimental (requires -XX:+UnlockExperimentalVMOptions)</td></tr>\
+                   <tr><td align="right" valign="top"><b>Type: </b></td><td>bool</td></tr>\
+                   <tr><td align="right" valign="top"><b>Default value: </b></td><td>true</td></tr>\
+                   <tr><td align="right" valign="top"><b>Description: </b></td><td>SuperOption</td></tr></table>""", doc);
   }
 
   private void configure(String text) {
