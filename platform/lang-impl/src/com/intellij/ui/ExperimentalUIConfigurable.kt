@@ -53,7 +53,11 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
     }
 
     row { browserLink(IdeBundle.message("new.ui.blog.changes.and.issues"), "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues") }
+/* Android Studio: send feedback to issuetracker.google.com
     row { link(IdeBundle.message("new.ui.submit.feedback")) { NewUIFeedbackDialog(null, false).show() } }
+*/  val url = "https://issuetracker.google.com/issues/new?component=1359421&template=1819244&foundIn=" +
+      com.intellij.openapi.application.ApplicationInfo.getInstance().strictVersion
+    row { browserLink(IdeBundle.message("new.ui.submit.feedback"), url) }
   }
 
   override fun getHelpTopic(): String? {
