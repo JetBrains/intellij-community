@@ -3,7 +3,6 @@ package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +26,11 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
   public AbstractTreeNodeVisitor(@NotNull Supplier<? extends T> supplier, @Nullable Predicate<? super TreePath> predicate) {
     this.supplier = supplier;
     this.predicate = predicate;
+  }
+
+  @Override
+  public @NotNull VisitThread visitThread() {
+    return VisitThread.BGT;
   }
 
   /**
@@ -93,8 +97,8 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
    * @param element an element to find
    * @return {@code true} if the specified node represents the given element
    */
-  protected boolean matches(@NotNull AbstractTreeNode node, @NotNull T element) {
-    return SlowOperations.allowSlowOperations(() -> node.canRepresent(element));
+  protected boolean matches(@NotNull AbstractTreeNode<?> node, @NotNull T element) {
+    return node.canRepresent(element);
   }
 
   /**
@@ -102,7 +106,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
    * @param element an element to find
    * @return {@code true} if the specified node is an ancestor of the given element
    */
-  protected boolean contains(@NotNull AbstractTreeNode node, @NotNull T element) {
+  protected boolean contains(@NotNull AbstractTreeNode<?> node, @NotNull T element) {
     T content = getContent(node);
     return content != null && isAncestor(content, element);
   }

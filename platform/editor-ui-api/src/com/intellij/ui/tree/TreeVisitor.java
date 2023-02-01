@@ -2,6 +2,7 @@
 package com.intellij.ui.tree;
 
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
@@ -14,6 +15,12 @@ public interface TreeVisitor {
    */
   @NotNull
   Action visit(@NotNull TreePath path);
+
+  @NotNull
+  @ApiStatus.Experimental
+  default TreeVisitor.VisitThread visitThread() {
+    return VisitThread.EDT;
+  }
 
   enum Action {
     /**
@@ -32,6 +39,12 @@ public interface TreeVisitor {
      * Continue without visiting the node siblings.
      */
     SKIP_SIBLINGS,
+  }
+
+  @ApiStatus.Experimental
+  enum VisitThread {
+    EDT,
+    BGT
   }
 
 
