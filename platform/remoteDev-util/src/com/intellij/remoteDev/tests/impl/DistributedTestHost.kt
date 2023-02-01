@@ -39,24 +39,10 @@ import java.util.concurrent.TimeoutException
 import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 
-class DistributedTestHost : DistributedTestHostBase() {
-  override val projectOrNull: Project?
-    get() = ProjectManagerEx.getOpenProjects().singleOrNull()
-  override val project: Project
-    get() = projectOrNull!!
-}
-
-class DistributedTestHostGateway : DistributedTestHostBase() {
-  override val projectOrNull: Project?
-    get() = null
-  override val project: Project
-    get() = error("Project shouldn't be referenced for gateway")
-}
-
 @ApiStatus.Internal
-abstract class DistributedTestHostBase {
+class DistributedTestHost {
   companion object {
-    private val logger = Logger.getInstance(DistributedTestHostBase::class.java)
+    private val logger = Logger.getInstance(DistributedTestHost::class.java)
 
     const val screenshotOnFailureFileName = "ScreenshotOnFailure"
 
@@ -65,8 +51,10 @@ abstract class DistributedTestHostBase {
        ?: System.getenv(AgentConstants.protocolPortEnvVar))?.toIntOrNull()
   }
 
-  protected abstract val projectOrNull: Project?
-  protected abstract val project: Project
+  val projectOrNull: Project?
+    get() = ProjectManagerEx.getOpenProjects().singleOrNull()
+  val project: Project
+    get() = projectOrNull!!
 
   init {
     val hostAddress = when (SystemInfo.isLinux) {
@@ -203,18 +191,6 @@ abstract class DistributedTestHostBase {
         DebugLogManager.getInstance().applyCategories(
           session.traceCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.TRACE) }
         )
-
-        if (session.waitForProject) {
-          val projectLoadingTimeoutMs = 60 * 1000
-          val startTime = System.currentTimeMillis()
-          while (projectOrNull == null && System.currentTimeMillis() - startTime < projectLoadingTimeoutMs) {
-            IdeEventQueue.getInstance().flushQueue()
-          }
-          if (projectOrNull == null) {
-            error("Failed to load project in $projectLoadingTimeoutMs ms")
-          }
-        }
-
         logger.info("Test session ready!")
         session.ready.value = true
       }
