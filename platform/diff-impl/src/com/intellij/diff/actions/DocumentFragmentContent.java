@@ -5,6 +5,8 @@ import com.intellij.diff.contents.DiffContentBase;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.LineCol;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -14,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -142,18 +145,38 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
 
     @Override
     public void startListen() {
-      if (myRangeMarker.isValid()) {
-        myDocument2.setReadOnly(false);
-        CharSequence nexText = myDocument1.getCharsSequence().subSequence(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset());
-        replaceString(myDocument2, 0, myDocument2.getTextLength(), nexText);
-        myDocument2.setReadOnly(!myDocument1.isWritable());
-      }
-      else {
-        myDocument2.setReadOnly(false);
-        replaceString(myDocument2, 0, myDocument2.getTextLength(), DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
-        myDocument2.setReadOnly(true);
-      }
+      // no need to set myDuringModification - listeners are not added yet
+      CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          if (myRangeMarker.isValid()) {
+            myDocument2.setReadOnly(false);
+            CharSequence nexText = myRangeMarker.getTextRange().subSequence(myDocument1.getCharsSequence());
+            myDocument2.setText(nexText);
+            myDocument2.setReadOnly(!myDocument1.isWritable());
+          }
+          else {
+            myDocument2.setReadOnly(false);
+            myDocument2.setText(DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
+            myDocument2.setReadOnly(true);
+          }
+        });
+      });
+
       super.startListen();
+    }
+
+    @RequiresEdt
+    private void replaceString(@NotNull Document document,
+                               int startOffset,
+                               int endOffset,
+                               @NotNull CharSequence newText) {
+      try {
+        myDuringModification = true;
+        document.replaceString(startOffset, endOffset, newText);
+      }
+      finally {
+        myDuringModification = false;
+      }
     }
   }
 }
