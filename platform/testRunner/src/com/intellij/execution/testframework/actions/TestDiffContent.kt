@@ -3,9 +3,10 @@ package com.intellij.execution.testframework.actions
 
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.actions.DocumentsSynchronizer
-import com.intellij.diff.actions.SynchronizedDocumentContent
+import com.intellij.diff.contents.DiffContentBase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
@@ -19,13 +20,16 @@ import java.util.function.IntUnaryOperator
 
 class TestDiffContent(
   private val project: Project,
-  original: DocumentContent,
+  private val original: DocumentContent,
   text: String,
   private val elemPtr: SmartPsiElementPointer<PsiElement>
-) : SynchronizedDocumentContent(original) {
+) : DiffContentBase(), DocumentContent {
+  override fun getDocument(): Document = fakeDocument
+
   override fun getContentType(): FileType = FileTypes.PLAIN_TEXT
 
-  override val synchronizer: DocumentsSynchronizer = object : DocumentsSynchronizer(project, original.document, fakeDocument) {
+  private val fakeDocument = DocumentsSynchronizer.createFakeDocument(original.document)
+  private val synchronizer: DocumentsSynchronizer = object : DocumentsSynchronizer(project, original.document, fakeDocument) {
     override fun onDocumentChanged1(event: DocumentEvent) {
       PsiDocumentManager.getInstance(project).performForCommittedDocument(document1, Runnable {
         val element = elemPtr.element ?: return@Runnable
@@ -51,6 +55,19 @@ class TestDiffContent(
     }
   }
 
+  private var assignments = 0
+  override fun onAssigned(isAssigned: Boolean) {
+    if (isAssigned) {
+      if (assignments == 0) synchronizer.startListen()
+      assignments++
+    }
+    else {
+      assignments--
+      if (assignments == 0) synchronizer.stopListen()
+    }
+    assert(assignments >= 0)
+  }
+
   companion object {
     fun create(
       project: Project,
@@ -63,7 +80,7 @@ class TestDiffContent(
       return TestDiffContent(project, diffContent, text, elemPtr).apply {
         val originalLineConvertor = original.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR)
         putUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR, IntUnaryOperator { value ->
-          if (!element.isValid) return@IntUnaryOperator - 1
+          if (!element.isValid) return@IntUnaryOperator -1
           val line = value + original.document.getLineNumber(element.startOffset)
           originalLineConvertor?.applyAsInt(line) ?: line
         })

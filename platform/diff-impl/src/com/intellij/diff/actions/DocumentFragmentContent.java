@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.actions;
 
+import com.intellij.diff.contents.DiffContentBase;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.LineCol;
@@ -21,23 +22,26 @@ import java.util.function.IntUnaryOperator;
 /**
  * Represents sub text of other content.
  */
-public final class DocumentFragmentContent extends SynchronizedDocumentContent {
-  // TODO: reuse DocumentWindow ?
+public final class DocumentFragmentContent extends DiffContentBase implements DocumentContent {
+  @NotNull private final DocumentContent myOriginal;
   @NotNull private final RangeMarker myRangeMarker;
 
   @NotNull private final MyDocumentsSynchronizer mySynchronizer;
+
+  private int myAssignments = 0;
 
   public DocumentFragmentContent(@Nullable Project project, @NotNull DocumentContent original, @NotNull TextRange range) {
     this(project, original, createRangeMarker(original.getDocument(), range));
   }
 
   public DocumentFragmentContent(@Nullable Project project, @NotNull DocumentContent original, @NotNull RangeMarker rangeMarker) {
-    super(original);
+    myOriginal = original;
     myRangeMarker = rangeMarker;
 
-    Document document1 = getOriginal().getDocument();
+    Document document1 = myOriginal.getDocument();
+    Document document2 = DocumentsSynchronizer.createFakeDocument(document1);
 
-    mySynchronizer = new MyDocumentsSynchronizer(project, myRangeMarker, document1, getFakeDocument());
+    mySynchronizer = new MyDocumentsSynchronizer(project, myRangeMarker, document1, document2);
 
     IntUnaryOperator originalLineConvertor = original.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR);
     putUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR, value -> {
@@ -64,7 +68,7 @@ public final class DocumentFragmentContent extends SynchronizedDocumentContent {
   @Nullable
   @Override
   public VirtualFile getHighlightFile() {
-    return getOriginal().getHighlightFile();
+    return myOriginal.getHighlightFile();
   }
 
   @Nullable
@@ -73,14 +77,14 @@ public final class DocumentFragmentContent extends SynchronizedDocumentContent {
     if (!myRangeMarker.isValid()) return null;
     int offset = position.toOffset(getDocument());
     int originalOffset = offset + myRangeMarker.getStartOffset();
-    LineCol originalPosition = LineCol.fromOffset(getOriginal().getDocument(), originalOffset);
-    return getOriginal().getNavigatable(originalPosition);
+    LineCol originalPosition = LineCol.fromOffset(myOriginal.getDocument(), originalOffset);
+    return myOriginal.getNavigatable(originalPosition);
   }
 
   @Nullable
   @Override
   public FileType getContentType() {
-    return getOriginal().getContentType();
+    return myOriginal.getContentType();
   }
 
   @Nullable
@@ -89,19 +93,26 @@ public final class DocumentFragmentContent extends SynchronizedDocumentContent {
     return getNavigatable(new LineCol(0));
   }
 
-  @NotNull
   @Override
-  public DocumentsSynchronizer getSynchronizer() {
-    return mySynchronizer;
+  public void onAssigned(boolean isAssigned) {
+    if (isAssigned) {
+      if (myAssignments == 0) mySynchronizer.startListen();
+      myAssignments++;
+    }
+    else {
+      myAssignments--;
+      if (myAssignments == 0) mySynchronizer.stopListen();
+    }
+    assert myAssignments >= 0;
   }
 
   private static class MyDocumentsSynchronizer extends DocumentsSynchronizer {
     @NotNull private final RangeMarker myRangeMarker;
 
     MyDocumentsSynchronizer(@Nullable Project project,
-                                   @NotNull RangeMarker range,
-                                   @NotNull Document document1,
-                                   @NotNull Document document2) {
+                            @NotNull RangeMarker range,
+                            @NotNull Document document1,
+                            @NotNull Document document2) {
       super(project, document1, document2);
       myRangeMarker = range;
     }

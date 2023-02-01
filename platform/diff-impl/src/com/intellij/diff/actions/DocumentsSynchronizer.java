@@ -3,10 +3,13 @@ package com.intellij.diff.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
@@ -90,5 +93,12 @@ public abstract class DocumentsSynchronizer {
     myDocument1.removeDocumentListener(myListener1);
     myDocument2.removeDocumentListener(myListener2);
     myDocument1.removePropertyChangeListener(myROListener);
+  }
+
+  public static @NotNull Document createFakeDocument(@NotNull Document original) {
+    EditorFactoryImpl editorFactory = (EditorFactoryImpl)EditorFactory.getInstance();
+    Document document = editorFactory.createDocument("", true, false);
+    document.putUserData(UndoManager.ORIGINAL_DOCUMENT, original);
+    return document;
   }
 }
