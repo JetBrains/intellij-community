@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.DvcsUtil
@@ -46,6 +46,7 @@ import javax.swing.tree.TreePath
 
 abstract class GitBranchesTreeRenderer(private val project: Project,
                                        private val treeModel: GitBranchesTreeModel,
+                                       private val selectedRepository: GitRepository?,
                                        private val repositories: List<GitRepository>) : TreeCellRenderer {
 
   private val colorManager = RepositoryChangesBrowserNode.getColorManager(project)
@@ -76,9 +77,13 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
   }
 
   private fun getBranchIcon(branch: GitBranch, repositories: List<GitRepository>, isSelected: Boolean): Icon {
-    val isCurrent = repositories.all { it.currentBranch == branch }
+    val isCurrent =
+      selectedRepository?.let { it.currentBranch == branch } ?: repositories.all { it.currentBranch == branch }
+
     val branchManager = project.service<GitBranchManager>()
-    val isFavorite = repositories.all { branchManager.isFavorite(GitBranchType.of(branch), it, branch.name) }
+    val isFavorite =
+      selectedRepository?.let { branchManager.isFavorite(GitBranchType.of(branch), it, branch.name) }
+      ?: repositories.all { branchManager.isFavorite(GitBranchType.of(branch), it, branch.name) }
 
     return when {
       isSelected && isFavorite -> AllIcons.Nodes.Favorite
@@ -297,14 +302,24 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     @JvmField
     internal val MAIN_ICON = Key.create<Boolean>("MAIN_ICON")
 
-    internal fun getText(treeNode: Any?, treeModel: GitBranchesTreeModel, repositories: List<GitRepository>): @NlsSafe String? {
+    internal fun getText(treeNode: Any?, model: GitBranchesTreeModel, repositories: List<GitRepository>): @NlsSafe String? {
       val value = treeNode ?: return null
       return when (value) {
         GitBranchType.LOCAL -> {
-          if (repositories.size > 1) GitBundle.message("common.local.branches") else GitBundle.message("group.Git.Local.Branch.title")
+          when {
+            model is GitBranchesTreeSelectedRepoModel -> GitBundle.message("branches.local.branches.in.repo",
+                                                                           DvcsUtil.getShortRepositoryName(model.selectedRepository))
+            repositories.size > 1 -> GitBundle.message("common.local.branches")
+            else -> GitBundle.message("group.Git.Local.Branch.title")
+          }
         }
         GitBranchType.REMOTE -> {
-          if (repositories.size > 1) GitBundle.message("common.remote.branches") else GitBundle.message("group.Git.Remote.Branch.title")
+          when {
+            model is GitBranchesTreeSelectedRepoModel -> GitBundle.message("branches.remote.branches.in.repo",
+                                                                           DvcsUtil.getShortRepositoryName(model.selectedRepository))
+            repositories.size > 1 -> GitBundle.message("common.remote.branches")
+            else -> GitBundle.message("group.Git.Remote.Branch.title")
+          }
         }
         is GitBranchesTreeModel.BranchesPrefixGroup -> value.prefix.last()
         is GitRepository -> DvcsUtil.getShortRepositoryName(value)
@@ -314,8 +329,8 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
             GitBranchType.REMOTE -> GitBundle.message("group.Git.Remote.Branch.title")
           }
         }
-        is BranchUnderRepository -> getText(value.branch, treeModel, repositories)
-        is GitBranch -> if (treeModel.isPrefixGrouping) value.name.split('/').last() else value.name
+        is BranchUnderRepository -> getText(value.branch, model, repositories)
+        is GitBranch -> if (model.isPrefixGrouping) value.name.split('/').last() else value.name
         is PopupFactoryImpl.ActionItem -> value.text
         else -> null
       }

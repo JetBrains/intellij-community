@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
@@ -15,10 +15,10 @@ import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import javax.swing.tree.TreePath
 import kotlin.properties.Delegates.observable
 
-class GitBranchesTreeSingleRepoModel(
+open class GitBranchesTreeSingleRepoModel(
   private val project: Project,
-  private val repository: GitRepository,
-  private val topLevelActions: List<Any> = emptyList()
+  protected val repository: GitRepository,
+  protected val topLevelActions: List<Any> = emptyList()
 ) : AbstractTreeModel(), GitBranchesTreeModel {
 
   private val branchManager = project.service<GitBranchManager>()
@@ -73,7 +73,7 @@ class GitBranchesTreeSingleRepoModel(
     }
   }
 
-  private fun getTopLevelNodes(): List<Any> {
+  protected open fun getTopLevelNodes(): List<Any> {
     return topLevelActions + GitBranchType.LOCAL + GitBranchType.REMOTE
   }
 

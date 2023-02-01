@@ -701,15 +701,23 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     @JvmStatic
     fun isEnabled() = true
 
+    /**
+     * @param selectedRepository - Selected repository:
+     * e.g. [git4idea.branch.GitBranchUtil.guessRepositoryForOperation] or [git4idea.branch.GitBranchUtil.guessWidgetRepository]
+     */
     @JvmStatic
-    fun show(project: Project) {
-      create(project).showCenteredInCurrentWindow(project)
+    fun show(project: Project, selectedRepository: GitRepository?) {
+      create(project, selectedRepository).showCenteredInCurrentWindow(project)
     }
 
+    /**
+     * @param selectedRepository - Selected repository:
+     * e.g. [git4idea.branch.GitBranchUtil.guessRepositoryForOperation] or [git4idea.branch.GitBranchUtil.guessWidgetRepository]
+     */
     @JvmStatic
-    fun create(project: Project): JBPopup {
+    fun create(project: Project, selectedRepository: GitRepository?): JBPopup {
       val repositories = GitRepositoryManager.getInstance(project).repositories
-      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, repositories, true))
+      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, selectedRepository, repositories, true))
     }
 
     @JvmStatic

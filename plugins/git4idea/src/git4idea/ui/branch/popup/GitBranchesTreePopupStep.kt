@@ -25,12 +25,14 @@ import com.intellij.util.containers.FList
 import git4idea.GitBranch
 import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsUtil
+import git4idea.actions.branch.GitBranchActionsUtil.userWantsSyncControl
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
 import git4idea.ui.branch.tree.*
 import javax.swing.tree.TreePath
 
 class GitBranchesTreePopupStep(internal val project: Project,
+                               internal val selectedRepository: GitRepository?,
                                internal val repositories: List<GitRepository>,
                                private val isFirstStep: Boolean) : PopupStep<Any> {
 
@@ -66,6 +68,10 @@ class GitBranchesTreePopupStep(internal val project: Project,
   }
   private fun createTreeModel(filterActive: Boolean): GitBranchesTreeModel {
     return when {
+      !filterActive && repositories.size > 1
+      && !userWantsSyncControl(project) && selectedRepository != null -> {
+        GitBranchesTreeSelectedRepoModel(project, selectedRepository, repositories, topLevelItems)
+      }
       filterActive && repositories.size > 1 -> GitBranchesTreeMultiRepoFilteringModel(project, repositories, topLevelItems)
       !filterActive && repositories.size > 1 -> GitBranchesTreeMultiRepoModel(project, repositories, topLevelItems)
       else -> GitBranchesTreeSingleRepoModel(project, repositories.first(), topLevelItems)
@@ -86,7 +92,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
   fun isBranchesDiverged(): Boolean {
     return repositories.size > 1
            && repositories.diverged()
-           && GitBranchActionsUtil.userWantsSyncControl(project)
+           && userWantsSyncControl(project)
   }
 
   fun getPreferredSelection(): TreePath? {
@@ -138,7 +144,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
 
   override fun onChosen(selectedValue: Any?, finalChoice: Boolean): PopupStep<out Any>? {
     if (selectedValue is GitRepository) {
-      return GitBranchesTreePopupStep(project, listOf(selectedValue), false)
+      return GitBranchesTreePopupStep(project, null, listOf(selectedValue), false)
     }
 
     val branchUnderRepository = selectedValue as? GitBranchesTreeModel.BranchUnderRepository

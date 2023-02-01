@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.toolbar
 
 import com.intellij.dvcs.repo.Repository
@@ -44,7 +44,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     val repository = GitBranchUtil.guessWidgetRepository(project, event.dataContext)
 
     val popup: JBPopup = if (repository != null) {
-      if (GitBranchesTreePopup.isEnabled()) GitBranchesTreePopup.create(project)
+      if (GitBranchesTreePopup.isEnabled()) GitBranchesTreePopup.create(project, repository)
       else GitBranchPopup.getInstance(project, repository, event.dataContext).asListPopup()
     }
     else {
