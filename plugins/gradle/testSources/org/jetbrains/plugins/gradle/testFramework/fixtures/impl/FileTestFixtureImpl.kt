@@ -14,10 +14,8 @@ import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.utils.vfs.deleteChildrenRecursively
-import com.intellij.testFramework.utils.vfs.deleteRecursively
-import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
-import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
+import com.intellij.testFramework.utils.editor.reloadFromDisk
+import com.intellij.testFramework.utils.vfs.*
 import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfigurationImpl
@@ -207,7 +205,7 @@ internal class FileTestFixtureImpl(
       if (text != null) {
         path.findOrCreateFile()
         val file = path.refreshAndGetVirtualFile()
-        file.reloadDocument()
+        file.findDocument()?.reloadFromDisk()
         file.writeText(text)
       }
       else {

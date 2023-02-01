@@ -18,12 +18,6 @@ fun VirtualFile.getDocument(): Document {
   }
 }
 
-fun Document.getVirtualFile(): VirtualFile {
-  return checkNotNull(findVirtualFile()) {
-    "Cannot find virtual file for $this"
-  }
-}
-
 @RequiresReadLock
 fun VirtualFile.getPsiFile(project: Project): PsiFile {
   return checkNotNull(findPsiFile(project)) {

@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.*
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -45,27 +44,6 @@ fun VirtualFile.toNioPathOrNull(): Path? {
 @RequiresReadLock
 fun VirtualFile.findDocument(): Document? {
   return FileDocumentManager.getInstance().getDocument(this)
-}
-
-@RequiresWriteLock
-fun VirtualFile.reloadDocument() {
-  val document = findDocument() ?: return
-  FileDocumentManager.getInstance().reloadFromDisk(document)
-}
-
-@RequiresWriteLock
-fun VirtualFile.commitDocument(project: Project) {
-  val document = findDocument() ?: return
-  PsiDocumentManager.getInstance(project).commitDocument(document)
-}
-
-fun Document.findVirtualFile(): VirtualFile? {
-  return FileDocumentManager.getInstance().getFile(this)
-}
-
-@RequiresWriteLock
-fun Document.saveDocument() {
-  FileDocumentManager.getInstance().saveDocument(this)
 }
 
 @RequiresReadLock

@@ -30,6 +30,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.utils.editor.saveToDisk
 import com.intellij.testFramework.utils.io.createFile
 import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.testFramework.utils.vfs.createFile
@@ -169,7 +170,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     replaceString("$SAMPLE_TEXT\n", "")
 
   protected fun Document.save() =
-    runWriteAction { saveDocument() }
+    runWriteAction { saveToDisk() }
 
   protected fun Document.replaceContent(content: String) =
     runWriteAction { setText(content) }
