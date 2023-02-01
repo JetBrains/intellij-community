@@ -3,6 +3,7 @@ package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
 
   @NotNull
   @Override
+  @RequiresBackgroundThread
   public Action visit(@NotNull TreePath path) {
     if (LOG.isTraceEnabled()) LOG.debug("process ", path);
     T element = getElement();

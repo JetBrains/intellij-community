@@ -18,6 +18,7 @@ internal abstract class BgtTreeWalker<N : Any>(
   val promise = AsyncPromise<TreePath>()
   private inner class Level(val path: TreePath?, val nodes: ArrayDeque<N>)
   private val stack = ArrayDeque<Level>()
+  @set:RequiresEdt
   private var state: State = InitialState
     set(value) {
       checkValidStateTransition(field, value)
@@ -100,29 +101,41 @@ internal abstract class BgtTreeWalker<N : Any>(
     fun enter(node: N, path: TreePath) {
       state = this
       debug("Visiting node ", node, path)
+      val edtBgtVisitor = visitor as? EdtBgtTreeVisitor
+      val preVisitResult = edtBgtVisitor?.preVisitEDT(path)
+      if (preVisitResult != null) {
+        processVisitResult(preVisitResult, path, node)
+        return
+      }
       background.computeLater {
         visitor.visit(path)
       }.onSuccess { action ->
         foreground.invoke {
-          when (action!!) {
-            TreeVisitor.Action.INTERRUPT -> {
-              success.enter(path)
-            }
-            TreeVisitor.Action.CONTINUE -> {
-              requestingChildren.enter(node, path)
-            }
-            TreeVisitor.Action.SKIP_CHILDREN -> {
-              lookingForNextNode.enter()
-            }
-            TreeVisitor.Action.SKIP_SIBLINGS -> {
-              stack.removeLastOrNull()
-              lookingForNextNode.enter()
-            }
-          }
+          val visitResult = action!!
+          val postVisitResult = edtBgtVisitor?.postVisitEDT(path, visitResult)
+          processVisitResult(postVisitResult ?: visitResult, path, node)
         }
       }.onError { error ->
         foreground.invoke {
           failure.enter(error)
+        }
+      }
+    }
+
+    private fun processVisitResult(visitResult: TreeVisitor.Action, path: TreePath, node: N) {
+      when (visitResult) {
+        TreeVisitor.Action.INTERRUPT -> {
+          success.enter(path)
+        }
+        TreeVisitor.Action.CONTINUE -> {
+          requestingChildren.enter(node, path)
+        }
+        TreeVisitor.Action.SKIP_CHILDREN -> {
+          lookingForNextNode.enter()
+        }
+        TreeVisitor.Action.SKIP_SIBLINGS -> {
+          stack.removeLastOrNull()
+          lookingForNextNode.enter()
         }
       }
     }
