@@ -62,7 +62,7 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
       }
     };
     project.getMessageBus().connect(this).subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener);
-    getTextEditor().getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener());
+    getTextEditor().getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener(), this);
   }
 
   @Override
