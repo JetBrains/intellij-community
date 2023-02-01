@@ -25,7 +25,7 @@ class PyTestFixtureReference(namedParameter: PyNamedParameter, fixture: PyTestFi
 }
 
 
-object PyTextFixtureTypeProvider : PyTypeProviderBase() {
+class PyTextFixtureTypeProvider : PyTypeProviderBase() {
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
     if (! context.maySwitchToAST(func)) {
       return null
