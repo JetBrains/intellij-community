@@ -98,10 +98,15 @@ internal class GHPRStatePanel(
         action = GHPRReopenAction(stateModel, securityService)
         bindVisibility(scope, reviewDetailsVm.requestState.map { it == RequestState.CLOSED })
       }
+      val reviewActionsComponentForDraftReview = JButton(GHPRPostReviewAction(stateModel, securityService)).apply {
+        isOpaque = false
+        bindVisibility(scope, reviewDetailsVm.requestState.map { it == RequestState.DRAFT })
+      }
 
       return HorizontalListPanel().apply {
         add(reviewActionsComponentForOpenReview)
         add(reviewActionsComponentForCloseReview)
+        add(reviewActionsComponentForDraftReview)
       }
     }
 
