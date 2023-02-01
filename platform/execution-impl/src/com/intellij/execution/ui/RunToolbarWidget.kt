@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.components.*
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -320,13 +319,17 @@ fun createStopPopup(context: DataContext, project: Project): JBPopup {
   val running = manager.getRunningDescriptors { true }.asReversed()
   running.forEach { descr ->
     val name = getConfigurations(manager, descr)?.shortenName() ?: descr.displayName
-    group.add(DumbAwareAction.create(name) {
+    group.add(DumbAwareAction.create(ExecutionBundle.message("stop.item.new.ui.popup", name)) {
       ExecutionManagerImpl.stopProcess(descr)
     })
   }
   group.addSeparator()
-  group.add(DumbAwareAction.create(ExecutionBundle.message("stop.all", KeymapUtil.getFirstKeyboardShortcutText("Stop"))) {
+  val textColor = ColorUtil.toHex(JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND)
+  val message = ExecutionBundle.message("stop.all.new.ui.popup", """<a style="color:#$textColor;">${running.size}</a>""")
+  group.add(DumbAwareAction.create("""<html>$message</html>""") {
     stopAll(it)
+  }.also {
+    it.copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM))
   })
   return JBPopupFactory.getInstance().createActionGroupPopup(
     null,
