@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.collaboration.ui.codereview.details.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.ReviewState
 import com.intellij.collaboration.ui.util.bindText
@@ -24,7 +25,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
@@ -90,13 +90,13 @@ internal class GHPRStatePanel(
 
     fun createComponent(): JComponent {
       val reviewActionsComponentForOpenReview = createReviewActionsForOpenReview().apply {
-        bindVisibility(scope, reviewDetailsVm.reviewMergeState.map { it == GHPullRequestState.OPEN })
+        bindVisibility(scope, reviewDetailsVm.requestState.map { it == RequestState.OPENED })
       }
       val reviewActionsComponentForCloseReview = JButton().apply {
         isOpaque = false
         text = GithubBundle.message("pull.request.reopen.action")
         action = GHPRReopenAction(stateModel, securityService)
-        bindVisibility(scope, reviewDetailsVm.reviewMergeState.map { it == GHPullRequestState.CLOSED })
+        bindVisibility(scope, reviewDetailsVm.requestState.map { it == RequestState.CLOSED })
       }
 
       return HorizontalListPanel().apply {

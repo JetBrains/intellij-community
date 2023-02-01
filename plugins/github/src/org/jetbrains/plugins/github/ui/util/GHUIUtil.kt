@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.ui.util
 
 import com.intellij.UtilBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.application.ApplicationBundle
@@ -54,13 +55,12 @@ object GHUIUtil {
       GHPullRequestState.OPEN -> CollaborationToolsIcons.PullRequestOpen
     }
 
-  @NlsSafe
-  fun getPullRequestStateText(state: GHPullRequestState, isDraft: Boolean): String =
-    if (isDraft) GithubBundle.message("pull.request.state.draft")
+  fun getPullRequestStateText(state: GHPullRequestState, isDraft: Boolean): @NlsSafe String =
+    if (isDraft) CollaborationToolsBundle.message("review.details.review.state.draft")
     else when (state) {
-      GHPullRequestState.CLOSED -> GithubBundle.message("pull.request.state.closed")
-      GHPullRequestState.MERGED -> GithubBundle.message("pull.request.state.merged")
-      GHPullRequestState.OPEN -> GithubBundle.message("pull.request.state.open")
+      GHPullRequestState.CLOSED -> CollaborationToolsBundle.message("review.details.review.state.closed")
+      GHPullRequestState.MERGED -> CollaborationToolsBundle.message("review.details.review.state.merged")
+      GHPullRequestState.OPEN -> CollaborationToolsBundle.message("review.details.review.state.open")
     }
 
   fun getIssueStateIcon(state: GithubIssueState): Icon =

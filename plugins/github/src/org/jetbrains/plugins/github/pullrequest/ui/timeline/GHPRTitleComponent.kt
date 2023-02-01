@@ -3,6 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
+import com.intellij.collaboration.ui.codereview.details.RequestState
+import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.ui.util.emptyBorders
@@ -12,15 +14,12 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.*
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -49,15 +48,15 @@ internal object GHPRTitleComponent {
       font = JBFont.small()
       foreground = UIUtil.getContextHelpForeground()
       border = JBUI.Borders.empty(0, 4)
-      bindText(scope, combine(reviewDetailsVm.reviewMergeState, reviewDetailsVm.isDraftState) { mergeState, isDraft ->
-        GHUIUtil.getPullRequestStateText(mergeState, isDraft)
+      bindText(scope, reviewDetailsVm.requestState.map { requestState ->
+        ReviewDetailsUIUtil.getRequestStateText(requestState)
       })
     }.let {
       RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
         border = JBUI.Borders.empty()
         background = UIUtil.getPanelBackground()
-        bindVisibility(scope, combine(reviewDetailsVm.reviewMergeState, reviewDetailsVm.isDraftState) { mergeState, isDraft ->
-          isDraft || mergeState == GHPullRequestState.CLOSED || mergeState == GHPullRequestState.MERGED
+        bindVisibility(scope, reviewDetailsVm.requestState.map { mergeState ->
+          mergeState == RequestState.CLOSED || mergeState == RequestState.MERGED || mergeState == RequestState.DRAFT
         })
         add(it)
       }
