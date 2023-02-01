@@ -5434,6 +5434,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertForEachToForLoop/implicitFunctionLiteralParameter.kt");
         }
 
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("testData/intentions/convertForEachToForLoop/implicitReceiver.kt");
+        }
+
+        @TestMetadata("implicitReceiverWithMultipleReceivers.kt")
+        public void testImplicitReceiverWithMultipleReceivers() throws Exception {
+            runTest("testData/intentions/convertForEachToForLoop/implicitReceiverWithMultipleReceivers.kt");
+        }
+
         @TestMetadata("keepComments.kt")
         public void testKeepComments() throws Exception {
             runTest("testData/intentions/convertForEachToForLoop/keepComments.kt");
