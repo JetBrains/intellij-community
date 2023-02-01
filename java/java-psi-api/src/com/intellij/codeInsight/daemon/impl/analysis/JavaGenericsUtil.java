@@ -172,7 +172,7 @@ public final class JavaGenericsUtil {
             return true;
           }
           boolean operandHasWildcard = false;
-          for (PsiTypeParameter parameter : superClass.getTypeParameters()) {
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(operandClass)) {
             PsiType operandParameterType = operandSubstitutor.substitute(parameter);
             if (operandParameterType instanceof PsiCapturedWildcardType) {
               operandHasWildcard = true;
