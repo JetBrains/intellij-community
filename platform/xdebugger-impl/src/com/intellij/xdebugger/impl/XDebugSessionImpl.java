@@ -641,7 +641,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;
     myTopStackFrame = null;
-    clearActiveNonLineBreakpoint(false);
+    clearActiveNonLineBreakpoint();
     updateExecutionPosition();
   }
 
@@ -655,6 +655,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       ExecutionPoint executionPoint = new ExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame);
       myExecutionPointManager.setExecutionPoint(executionPoint);
       myExecutionPointManager.setActiveSourceKind(myCurrentSourceKind);
+      updateExecutionPointGutterIconRenderer();
       //myExecutionPointManager.showExecutionPosition();
     }
   }
@@ -705,11 +706,32 @@ public final class XDebugSessionImpl implements XDebugSession {
       XSourcePosition breakpointPosition = pair.getSecond();
       XSourcePosition position = getTopFramePosition();
       if (breakpointPosition == null ||
-          (position != null && !(breakpointPosition.getFile().equals(position.getFile()) && breakpointPosition.getLine() == position.getLine()))) {
+          (position != null &&
+           !(breakpointPosition.getFile().equals(position.getFile()) && breakpointPosition.getLine() == position.getLine()))) {
         return pair.getFirst();
       }
     }
     return null;
+  }
+
+  public void checkActiveNonLineBreakpointOnRemoval(@NotNull XBreakpoint<?> removedBreakpoint) {
+    Pair<XBreakpoint<?>, XSourcePosition> pair = myActiveNonLineBreakpoint.get();
+    if (pair != null && pair.getFirst() == removedBreakpoint) {
+      clearActiveNonLineBreakpoint();
+      updateExecutionPointGutterIconRenderer();
+    }
+  }
+
+  private void clearActiveNonLineBreakpoint() {
+    myActiveNonLineBreakpoint.set(null);
+  }
+
+  void updateExecutionPointGutterIconRenderer() {
+    if (myDebuggerManager.getCurrentSession() == this) {
+      boolean isTopFrame = isTopFrameSelected();
+      GutterIconRenderer renderer = getPositionIconRenderer(isTopFrame);
+      myExecutionPointManager.setGutterIconRenderer(renderer);
+    }
   }
 
   @Nullable
@@ -932,7 +954,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   public void positionReached(@NotNull XSuspendContext suspendContext, boolean attract) {
-    clearActiveNonLineBreakpoint(false);
+    clearActiveNonLineBreakpoint();
     positionReachedInternal(suspendContext, attract);
   }
 
@@ -1063,9 +1085,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     @Override
     public void breakpointRemoved(@NotNull final XBreakpoint<?> breakpoint) {
-      if (getActiveNonLineBreakpoint() == breakpoint) {
-        clearActiveNonLineBreakpoint(true);
-      }
+      checkActiveNonLineBreakpointOnRemoval(breakpoint);
       processRemove(breakpoint);
     }
 
@@ -1085,13 +1105,6 @@ public final class XDebugSessionImpl implements XDebugSession {
     public void breakpointChanged(@NotNull final XBreakpoint<?> breakpoint) {
       processRemove(breakpoint);
       processAdd(breakpoint);
-    }
-  }
-
-  public void clearActiveNonLineBreakpoint(boolean updateExecutionPointIcon) {
-    myActiveNonLineBreakpoint.set(null);
-    if (updateExecutionPointIcon) {
-      myExecutionPointManager.updateRenderer(getPositionIconRenderer(isTopFrameSelected()));
     }
   }
 

@@ -76,10 +76,6 @@ internal class XDebuggerExecutionPointManager(project: Project,
     }
   }
 
-  fun updateRenderer(renderer: GutterIconRenderer?) {
-    gutterIconRenderer = renderer
-  }
-
   @RequiresEdt
   fun isFullLineHighlighter(): Boolean {
     return highlightState.value?.isFullLineHighlighter == true

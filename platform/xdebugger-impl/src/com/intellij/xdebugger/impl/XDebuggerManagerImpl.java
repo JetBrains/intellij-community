@@ -50,10 +50,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
-import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointListener;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
@@ -123,21 +125,18 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     messageBusConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
       @Override
       public void breakpointChanged(@NotNull XBreakpoint<?> breakpoint) {
-        if (!(breakpoint instanceof XLineBreakpoint)) {
-          final XDebugSessionImpl session = getCurrentSession();
-          if (session != null && breakpoint.equals(session.getActiveNonLineBreakpoint())) {
-            var breakpointBase = (XBreakpointBase<?, ?, ?>)breakpoint;
-            breakpointBase.clearIcon();
-            myExecutionPointManager.updateRenderer(breakpointBase.createGutterIconRenderer());
-          }
-        }
+        updateActiveNonLineBreakpointGutterIconRenderer(breakpoint);
       }
 
       @Override
       public void breakpointRemoved(@NotNull XBreakpoint<?> breakpoint) {
+        updateActiveNonLineBreakpointGutterIconRenderer(breakpoint);
+      }
+
+      private void updateActiveNonLineBreakpointGutterIconRenderer(@NotNull XBreakpoint<?> breakpoint) {
         XDebugSessionImpl session = getCurrentSession();
         if (session != null && breakpoint == session.getActiveNonLineBreakpoint()) {
-          myExecutionPointManager.updateRenderer(null);
+          session.updateExecutionPointGutterIconRenderer();
         }
       }
     });
