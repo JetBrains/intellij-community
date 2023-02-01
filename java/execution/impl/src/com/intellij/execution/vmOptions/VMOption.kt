@@ -4,8 +4,6 @@ package com.intellij.execution.vmOptions
 
 import com.intellij.icons.AllIcons
 import com.intellij.java.JavaBundle
-import com.intellij.lang.documentation.DocumentationResult
-import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.navigation.TargetPresentation
@@ -13,6 +11,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.tag
 import com.intellij.openapi.util.text.HtmlChunk.text
+import com.intellij.platform.documentation.DocumentationResult
+import com.intellij.platform.documentation.DocumentationTarget
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 

@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.lang.documentation.impl
 
 import com.intellij.codeInsight.documentation.DocumentationManager
-import com.intellij.lang.documentation.*
 import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.model.Pointer
 import com.intellij.model.psi.impl.mockEditor
@@ -13,11 +12,12 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
+import com.intellij.platform.documentation.*
 import com.intellij.psi.PsiFile
 import com.intellij.util.AsyncSupplier
 import com.intellij.util.SmartList
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 
 @Internal // for Fleet

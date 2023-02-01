@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
-import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.project.Project
+import com.intellij.platform.documentation.DocumentationTarget
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.symbol.RenameableSymbol

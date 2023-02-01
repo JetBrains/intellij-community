@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.lang.documentation.ide.ui
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.documentation.CornerAwareScrollPaneLayout
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.lang.documentation.LinkData
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -15,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.platform.documentation.LinkData
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLayeredPane

@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.documentation.symbol;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.documentation;
 
-import com.intellij.lang.documentation.DocumentationTarget;
 import com.intellij.model.Pointer;
 import com.intellij.model.Symbol;
 import org.jetbrains.annotations.ApiStatus.Experimental;

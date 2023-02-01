@@ -1,16 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickDoc
 
 import com.google.common.html.HtmlEscapers
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.codeInsight.navigation.targetPresentation
-import com.intellij.lang.documentation.DocumentationResult
 import com.intellij.lang.documentation.DocumentationSettings
-import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.model.Pointer
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.platform.documentation.DocumentationResult
+import com.intellij.platform.documentation.DocumentationTarget
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod

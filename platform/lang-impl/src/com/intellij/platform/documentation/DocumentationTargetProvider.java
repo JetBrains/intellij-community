@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.documentation;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.documentation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
@@ -14,8 +14,8 @@ import java.util.List;
  * Implement this interface and register as {@code com.intellij.lang.documentation} extension
  * to provide a {@link DocumentationTarget} implementation by an offset in a {@link PsiFile}.
  *
- * @see com.intellij.lang.documentation.symbol.SymbolDocumentationTargetProvider
- * @see com.intellij.lang.documentation.psi.PsiDocumentationTargetProvider
+ * @see SymbolDocumentationTargetProvider
+ * @see PsiDocumentationTargetProvider
  */
 public interface DocumentationTargetProvider {
 

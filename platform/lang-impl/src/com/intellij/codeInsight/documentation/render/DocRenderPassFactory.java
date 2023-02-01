@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.lang.documentation.InlineDocumentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
@@ -13,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.platform.documentation.InlineDocumentation;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.Nls;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.lang.documentation.psi
@@ -6,11 +6,14 @@ package com.intellij.lang.documentation.psi
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.navigation.SingleTargetElementInfo
 import com.intellij.codeInsight.navigation.targetPresentation
-import com.intellij.lang.documentation.*
+import com.intellij.lang.documentation.DocumentationImageResolver
+import com.intellij.lang.documentation.DocumentationProvider
+import com.intellij.lang.documentation.ExternalDocumentationProvider
 import com.intellij.model.Pointer
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.platform.documentation.*
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile

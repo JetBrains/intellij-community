@@ -640,13 +640,13 @@
     <extensionPoint name="readerModeProvider" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeProvider"/>
     <extensionPoint name="readerModeMatcher" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeMatcher"/>
     <extensionPoint name="lang.documentationLinkHandler" dynamic="true"
-                    interface="com.intellij.lang.documentation.DocumentationLinkHandler"/>
+                    interface="com.intellij.platform.documentation.DocumentationLinkHandler"/>
     <extensionPoint name="lang.documentation" dynamic="true"
-                    interface="com.intellij.lang.documentation.DocumentationTargetProvider"/>
+                    interface="com.intellij.platform.documentation.DocumentationTargetProvider"/>
     <extensionPoint name="lang.symbolDocumentation" dynamic="true"
-                    interface="com.intellij.lang.documentation.symbol.SymbolDocumentationTargetProvider"/>
+                    interface="com.intellij.platform.documentation.SymbolDocumentationTargetProvider"/>
     <extensionPoint name="lang.psiDocumentation" dynamic="true"
-                    interface="com.intellij.lang.documentation.psi.PsiDocumentationTargetProvider"/>
+                    interface="com.intellij.platform.documentation.PsiDocumentationTargetProvider"/>
     <extensionPoint qualifiedName="com.intellij.properties.files.provider"
                     interface="com.intellij.properties.provider.PropertiesProvider" dynamic="true"/>
     <extensionPoint name="safeDeleteTargetProvider" interface="com.intellij.refactoring.safeDelete.api.SafeDeleteTargetProvider" dynamic="true"/>

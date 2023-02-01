@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.documentation.symbol;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.documentation;
 
-import com.intellij.lang.documentation.DocumentationTarget;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -18,8 +17,8 @@ import org.jetbrains.annotations.Nullable;
  * <li>implement {@link DocumentationTarget} directly in a Symbol</li>
  * </ul>
  *
- * @see com.intellij.lang.documentation.DocumentationTargetProvider
- * @see com.intellij.lang.documentation.psi.PsiDocumentationTargetProvider
+ * @see DocumentationTargetProvider
+ * @see PsiDocumentationTargetProvider
  */
 @Experimental
 public interface SymbolDocumentationTargetProvider {

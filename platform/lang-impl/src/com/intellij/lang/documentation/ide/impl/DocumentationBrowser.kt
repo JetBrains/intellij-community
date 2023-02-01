@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.DocumentationBrowserFacade
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.UISnapshot
@@ -15,6 +14,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+import com.intellij.platform.documentation.DocumentationTarget
 import com.intellij.util.lateinitVal
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow

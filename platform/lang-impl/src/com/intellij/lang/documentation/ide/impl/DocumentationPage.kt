@@ -1,16 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.lang.documentation.ContentUpdater
-import com.intellij.lang.documentation.DocumentationContentData
-import com.intellij.lang.documentation.LinkData
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.lang.documentation.ide.ui.UIState
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.computeDocumentation
 import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.platform.documentation.ContentUpdater
+import com.intellij.platform.documentation.DocumentationContentData
+import com.intellij.platform.documentation.LinkData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 
