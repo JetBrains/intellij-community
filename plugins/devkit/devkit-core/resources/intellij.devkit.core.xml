@@ -231,7 +231,7 @@
                      key="inspection.migrate.to.opt.control.display.name"/>
     <localInspection language="UAST" shortName="LightService"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceInspection"
                      key="inspection.light.service.display.name"/>
     <localInspection language="UAST" shortName="NonDefaultConstructor"
@@ -262,7 +262,7 @@
     <localInspection language="UAST"
                      key="inspections.leakable.map.key.name"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="WARNING"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LeakableMapKeyInspection"/>
     <localInspection language="UAST"
                      key="inspections.unresolved.plugin.config.reference"
