@@ -14,8 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-import static com.intellij.lang.documentation.ide.actions.ActionsKt.DOCUMENTATION_TARGETS;
 import static com.intellij.openapi.actionSystem.impl.Utils.wrapToAsyncDataContext;
+import static com.intellij.platform.ide.documentation.ActionsKt.DOCUMENTATION_TARGETS;
 
 public final class DocumentationTest extends LightJavaCodeInsightTestCase {
 

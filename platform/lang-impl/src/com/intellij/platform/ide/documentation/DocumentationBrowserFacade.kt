@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.documentation.ide
+package com.intellij.platform.ide.documentation
 
 import com.intellij.model.Pointer
 import com.intellij.platform.documentation.DocumentationTarget
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable
 
 /**
  * Facade for consumption in actions.
- * Use [com.intellij.lang.documentation.ide.actions.DOCUMENTATION_BROWSER] to obtain the current instance.
+ * Use [DOCUMENTATION_BROWSER] to obtain the current instance.
  * The instance must not be stored in a field or elsewhere.
  */
 @Experimental

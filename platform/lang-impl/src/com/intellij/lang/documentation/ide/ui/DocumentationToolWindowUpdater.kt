@@ -4,7 +4,6 @@ package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -17,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.documentation.impl.documentationRequest
+import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.Activatable
 import kotlinx.coroutines.*

@@ -9,7 +9,6 @@ import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.util.propComponentProperty
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -27,6 +26,7 @@ import com.intellij.platform.documentation.impl.DocumentationRequest
 import com.intellij.platform.documentation.impl.InternalResolveLinkResult
 import com.intellij.platform.documentation.impl.documentationRequest
 import com.intellij.platform.documentation.impl.resolveLink
+import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*

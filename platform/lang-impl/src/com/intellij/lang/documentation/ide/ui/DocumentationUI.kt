@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.documentation.ide.ui
 
@@ -10,7 +10,6 @@ import com.intellij.codeInsight.documentation.DocumentationManager.decorate
 import com.intellij.codeInsight.documentation.DocumentationScrollPane
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationImageResolver
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_BROWSER
 import com.intellij.lang.documentation.ide.actions.PRIMARY_GROUP_ID
 import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
@@ -23,6 +22,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.platform.ide.documentation.DOCUMENTATION_BROWSER
 import com.intellij.ui.FontSizeModel
 import com.intellij.ui.PopupHandler
 import com.intellij.util.flow.collectLatestUndispatched
@@ -34,7 +34,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collect
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
