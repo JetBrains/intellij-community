@@ -168,9 +168,8 @@ public final class RunContentBuilder extends RunTab {
         myUi.getOptions().setLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
       } else {
         // wrapped into DefaultActionGroup to prevent loading all actions instantly
-        DefaultActionGroup topToolbar = new DefaultActionGroupWithDelegate(
-          new EmptyWhenDuplicate(toolbar, group -> group instanceof RunTab.ToolbarActionGroup)
-        );
+        DefaultActionGroup topToolbar = new DefaultActionGroupWithDelegate(toolbar);
+        topToolbar.add(new EmptyWhenDuplicate(toolbar, group -> group instanceof RunTab.ToolbarActionGroup));
         myUi.getOptions().setTopLeftToolbar(topToolbar, ActionPlaces.RUNNER_TOOLBAR);
       }
     } else {
