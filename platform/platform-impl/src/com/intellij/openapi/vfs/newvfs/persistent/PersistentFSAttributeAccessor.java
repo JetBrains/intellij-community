@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
@@ -74,6 +75,25 @@ final class PersistentFSAttributeAccessor {
         }
         return reader.read(buffer);
       });
+    }
+    else {
+      throw new UnsupportedOperationException("Raw attribute access is not implemented for " + attributesStorage.getClass().getName());
+    }
+  }
+
+  public void writeAttributeRaw(final int fileId,
+                                final @NotNull FileAttribute attribute,
+                                final ByteBufferWriter writer) {
+    if (attributesStorage instanceof AttributesStorageOverBlobStorage) {
+      final AttributesStorageOverBlobStorage storage = (AttributesStorageOverBlobStorage)attributesStorage;
+      throw new UnsupportedOperationException("Method not implemented yet");
+      //TODO RC: drill hole for storage.writeAttributeRaw(connection, fileId, attribute, writer)
+      //return storage.writeAttribute(connection, fileId, attribute, buffer -> {
+      //  if (attribute.isVersioned()) {
+      //    final int actualVersion = DataInputOutputUtil.writeINT(buffer);
+      //  }
+      //  return writer.write(buffer);
+      //});
     }
     else {
       throw new UnsupportedOperationException("Raw attribute access is not implemented for " + attributesStorage.getClass().getName());

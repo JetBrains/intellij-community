@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
@@ -75,7 +76,8 @@ public final class FSRecords {
   public static final String IDE_USE_FS_ROOTS_DATA_LOADER = "idea.fs.roots.data.loader";
 
   public static final boolean USE_FAST_NAMES_IMPLEMENTATION = SystemProperties.getBooleanProperty("idea.vfs.use-fast-names-storage", false);
-  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = SystemProperties.getBooleanProperty("idea.vfs.use-streamlined-attributes-storage", false);
+  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION =
+    SystemProperties.getBooleanProperty("vfs.use-streamlined-attributes-storage", false);
 
   private static volatile PersistentFSConnection ourConnection;
   private static volatile PersistentFSContentAccessor ourContentAccessor;
@@ -828,7 +830,19 @@ public final class FSRecords {
     }
   }
 
-  public static boolean supportsRawAttributesAccess(){
+  /** must be called under r or w lock */
+  private static @Nullable AttributeInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
+    return ourAttributeAccessor.readAttribute(fileId, attribute);
+  }
+
+  public static @NotNull AttributeOutputStream writeAttribute(final int fileId,
+                                                              final @NotNull FileAttribute attribute) {
+    return ourAttributeAccessor.writeAttribute(fileId, attribute);
+  }
+
+  //'raw' (lambda + ByteBuffer instead of Input/OutputStream) attributes access: experimental
+
+  public static boolean supportsRawAttributesAccess() {
     return ourAttributeAccessor.supportsRawAccess();
   }
 
@@ -844,13 +858,10 @@ public final class FSRecords {
     }
   }
 
-  /** must be called under r or w lock */
-  private static @Nullable AttributeInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
-    return ourAttributeAccessor.readAttribute(fileId, attribute);
-  }
-
-  public static @NotNull AttributeOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
-    return ourAttributeAccessor.writeAttribute(fileId, att);
+  public static void writeAttributeRaw(final int fileId,
+                                       final FileAttribute attribute,
+                                       final ByteBufferWriter writer) {
+    ourAttributeAccessor.writeAttributeRaw(fileId, attribute, writer);
   }
 
   //========== file content accessors: ========================================

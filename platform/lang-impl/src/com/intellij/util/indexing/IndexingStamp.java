@@ -16,10 +16,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -77,12 +74,17 @@ public final class IndexingStamp {
   /**
    * The class is meant to be accessed from synchronized block only
    */
-  private static final class Timestamps {
-    private static final FileAttribute PERSISTENCE = new FileAttribute("__index_stamps__", 2, false);
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static final class Timestamps {
+    @VisibleForTesting
+    @ApiStatus.Internal
+    public static final FileAttribute PERSISTENCE = new FileAttribute("__index_stamps__", 2, false);
     private Object2LongMap<ID<?, ?>> myIndexStamps;
     private boolean myIsDirty = false;
 
-    private Timestamps(@Nullable DataInputStream stream) throws IOException {
+    @VisibleForTesting
+    public Timestamps(@Nullable DataInputStream stream) throws IOException {
       if (stream != null) {
         int[] outdatedIndices = null;
         //'header' is either timestamp (dominatingIndexStamp), or, if timestamp is small enough
@@ -137,7 +139,7 @@ public final class IndexingStamp {
       }
     }
 
-    private Timestamps(final @Nullable ByteBuffer buffer) throws IOException {
+    public Timestamps(final @Nullable ByteBuffer buffer) {
       if (buffer != null) {
         int[] outdatedIndices = null;
         //'header' is either timestamp (dominatingIndexStamp), or, if timestamp is small enough
@@ -274,7 +276,8 @@ public final class IndexingStamp {
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
 
-  static void dropTimestampMemoryCaches() {
+  @TestOnly
+  public static void dropTimestampMemoryCaches() {
     flushCaches();
     ourTimestampsCache.clear();
   }
@@ -407,14 +410,17 @@ public final class IndexingStamp {
     ourFinishedFiles.drainTo(files);
 
     if (!files.isEmpty()) {
-      for (Integer file : files) {
-        RuntimeException exception = ourLock.withWriteLock(file, () -> {
+      for (Integer fileId : files) {
+        RuntimeException exception = ourLock.withWriteLock(fileId, () -> {
           try {
-            Timestamps timestamp = ourTimestampsCache.remove(file);
+            final Timestamps timestamp = ourTimestampsCache.remove(fileId);
             if (timestamp == null) return null;
 
             if (timestamp.isDirty() /*&& file.isValid()*/) {
-              try (DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE)) {
+              //RC: now I don't see the benefits of implementing timestamps write via raw attribute bytebuffer access
+              //    doFlush() is mostly outside the critical path, while implementing timestamps.writeToBuffer(buffer)
+              //    is complicated with all those variable-sized numbers used.
+              try (DataOutputStream sink = FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
                 timestamp.writeToStream(sink);
               }
             }

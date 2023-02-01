@@ -452,6 +452,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
   }
 
   private static void storeFailureToFile(String errorMessage) {
+    //TODO: if errorMessage = null -> very unclear message about 'String.codec()' is printed
     try {
       Path logDir = Path.of(PathManager.getLogPath());
       String ideaLogContent = Files.readString(logDir.resolve(LoggerFactory.LOG_FILE_NAME));

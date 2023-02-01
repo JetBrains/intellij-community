@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage.Page;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -106,6 +107,9 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   public PersistentFSRecordsLockFreeOverMMappedFile(final @NotNull Path path,
                                                     final int mappedChunkSize) throws IOException {
     this.storage = new MMappedFileStorage(path, mappedChunkSize);
+
+    //TODO RC: read path+'.len' file, if exists, and use it to calculate recordsCount?
+    //         That way transition between records storage will be seemless
 
     this.pageSize = mappedChunkSize;
     recordsPerPage = mappedChunkSize / RECORD_SIZE_IN_BYTES;
@@ -599,7 +603,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     if (dirty.compareAndSet(true, false)) {
       setIntHeaderField(HEADER_RECORDS_ALLOCATED, allocatedRecordsCount.get());
       setIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
-      //TODO RC: should we do fsync() here, or we could trust OS flush mmapped pages to disk?
+      //TODO RC: should we do fsync() here, or we could trust OS will flush mmapped pages to disk?
     }
   }
 
@@ -611,8 +615,8 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
   //TODO RC: do we need method like 'unmap', which forcibly unmaps pages, or it is enough to rely
   //         on JVM which will unmap pages eventually, as they collected by GC?
-  //         Forcible unmap allows to 'clean after yourself', but carries a risk if JVM crash if
-  //         somebody still tries to access pages.
+  //         Forcible unmap allows to 'clean after yourself', but carries a risk of JVM crash if
+  //         somebody still tries to access unmapped pages.
   //         Seems like the best solution would be to provide 'unmap' as dedicated method, not
   //         as a part of .close() -- so it could be used in e.g. tests, and in cases there we
   //         could 100% guarantee no usages anymore. But in regular use VFS exists for
@@ -875,18 +879,8 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
       }
 
       public MappedByteBuffer map() throws IOException {
-        final long channelSize = channel.size();
-        if (channelSize < offsetInFile + pageSize) {
-          //TODO RC: this could cause noticeable pauses, hence it is worth to enlarge file in advance, async
-          //enlarge space (fallocate() call would be better, if available):
-          final ByteBuffer stick = ByteBuffer.allocate(1);
-          stick.put((byte)0);
-          for (long pos = Math.max(offsetInFile, channelSize);
-               pos < offsetInFile + pageSize;
-               pos += 1024) {
-            channel.write(stick, pos);
-          }
-        }
+        //TODO RC: this could cause noticeable pauses, hence it may worth to enlarge file in advance, async
+        IOUtil.allocateFileRegion(channel, offsetInFile, pageSize);
         return channel.map(READ_WRITE, offsetInFile, pageSize);
       }
 
