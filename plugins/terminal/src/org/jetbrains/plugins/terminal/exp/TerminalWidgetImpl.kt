@@ -17,8 +17,8 @@ class TerminalWidgetImpl(private val project: Project,
                          private val parent: Disposable) : TerminalWidget {
   override val terminalTitle: TerminalTitle = TerminalTitle()
 
-  override val termSize: TermSize
-    get() = blocksContainer.getTerminalSize()
+  override val termSize: TermSize?
+    get() = if (!blocksContainer.bounds.isEmpty) blocksContainer.getTerminalSize() else null
 
   override val ttyConnectorAccessor: TtyConnectorAccessor = TtyConnectorAccessor()
 
