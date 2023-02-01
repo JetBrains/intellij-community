@@ -72,7 +72,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
   public FacetConfigurable getOrCreateConfigurable(final Facet facet) {
     FacetConfigurable configurable = myConfigurables.get(facet);
     if (configurable == null) {
-      configurable = new FacetConfigurable(facet, myStructureConfigurable.getContext(), myTreeUpdater);
+      configurable = new FacetConfigurable(myConfigurables, facet, myStructureConfigurable.getContext(), myTreeUpdater);
       myConfigurables.put(facet, configurable);
     }
     return configurable;
