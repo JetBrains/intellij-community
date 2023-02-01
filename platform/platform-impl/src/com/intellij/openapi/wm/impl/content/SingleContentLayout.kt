@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content
 
 import com.intellij.CommonBundle
@@ -50,11 +50,11 @@ import javax.swing.SwingUtilities
 /**
  * Tool window header that shows tabs and actions from its content.
  *
- * If toolwindow [Content] returns [SingleContentSupplier] as a data provider
- * via [SingleContentSupplier.KEY] that in case of single content view
+ * If the toolwindow [Content] returns [SingleContentSupplier] as a data provider
+ * via [SingleContentSupplier.KEY], then in case of a single content view,
  * all [JBTabs] and actions are moved into this header.
  *
- * When two or more contents exist, then header looks like [TabContentLayout].
+ * When two or more contents exist, the header looks like [TabContentLayout].
  */
 internal class SingleContentLayout(
   ui: ToolWindowContentUi
