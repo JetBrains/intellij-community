@@ -352,7 +352,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     VirtualFile file = getFile(document);
     if (LOG.isTraceEnabled()) LOG.trace("saving: " + file);
 
-    if (file == null || file instanceof LightVirtualFile || file.isValid() && !isFileModified(file)) {
+    if (file == null ||
+        !isTrackable(file) ||
+        file.isValid() && !isFileModified(file)) {
       removeFromUnsaved(document);
       return;
     }
