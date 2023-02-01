@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
-import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabDiscussionResolveViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabDiscussionResolveViewModelImpl
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionResolveViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionResolveViewModelImpl
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModelImpl
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
