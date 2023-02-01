@@ -266,7 +266,7 @@ public interface IntentionPreviewInfo {
   static @NotNull IntentionPreviewInfo moveMultiplePsi(
     @NotNull List<PsiNamedElement> sources,
     @NotNull PsiNamedElement target,
-    @Nullable @NlsSafe String explicitTargetName) {
+    @Nullable @Nls String explicitTargetName) {
 
     HtmlBuilder builder = new HtmlBuilder();
 
@@ -292,8 +292,8 @@ public interface IntentionPreviewInfo {
   @NotNull
   private static HtmlChunk getHtmlMoveFragment(@Nullable Icon sourceIcon,
                                                @Nullable Icon targetIcon,
-                                               @Nullable @NlsSafe String sourceName,
-                                               @Nullable @NlsSafe String targetName) {
+                                               @Nullable @Nls String sourceName,
+                                               @Nullable @Nls String targetName) {
     return new HtmlBuilder()
       .append(getIconChunk(sourceIcon, "source"))
       .append(Objects.requireNonNull(sourceName))
