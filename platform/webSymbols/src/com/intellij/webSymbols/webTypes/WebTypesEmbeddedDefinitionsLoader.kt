@@ -39,9 +39,9 @@ class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposab
     WebTypesDefinitionsEP.EP_NAME_DEPRECATED.addChangeListener(Runnable { it.drop() }, this)
   }
 
-  private val webTypesEnabledPackages: Set<String> = state.value.versionsRegistry.packages
-  private val packagesEnabledByDefault: Map<String, SemVer> = state.value.packagesEnabledByDefault
-  private val defaultWebTypesScope: WebTypesSymbolsScopeBase = state.value.defaultWebTypesScope
+  private val webTypesEnabledPackages: Set<String> get() = state.value.versionsRegistry.packages
+  private val packagesEnabledByDefault: Map<String, SemVer> get() = state.value.packagesEnabledByDefault
+  private val defaultWebTypesScope: WebTypesSymbolsScopeBase get() = state.value.defaultWebTypesScope
 
   private fun getWebTypes(packageName: String, packageVersion: SemVer?): Pair<PluginDescriptor, WebTypes>? {
     return state.value.versionsRegistry.get(packageName, packageVersion)
