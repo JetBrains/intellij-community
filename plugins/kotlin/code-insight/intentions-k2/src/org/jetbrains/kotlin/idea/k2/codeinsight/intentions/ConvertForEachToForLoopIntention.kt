@@ -47,10 +47,6 @@ internal class ConvertForEachToForLoopIntention
     override fun isApplicableByPsi(element: KtCallExpression): Boolean {
         if (element.getCallNameExpression()?.getReferencedName() != FOR_EACH_NAME.asString()) return false
 
-        // We only want to convert calls of the form `c.forEach { ... }`, so the parent of `forEach { ... }` must be a
-        // KtDotQualifiedExpression.
-        if (element.parent !is KtDotQualifiedExpression) return false
-
         val lambdaArgument = element.getSingleLambdaArgument() ?: return false
         return lambdaArgument.valueParameters.size <= 1 && lambdaArgument.bodyExpression != null
     }
@@ -85,25 +81,27 @@ internal class ConvertForEachToForLoopIntention
     }
 
     override fun apply(element: KtCallExpression, context: Context, project: Project, editor: Editor?) {
-        val dotQualifiedExpression = element.parent as? KtDotQualifiedExpression ?: return
-        val commentSaver = CommentSaver(dotQualifiedExpression)
+        val dotQualifiedExpression = element.parent as? KtDotQualifiedExpression
+        val receiverExpression = dotQualifiedExpression?.receiverExpression
+        val targetExpression = dotQualifiedExpression ?: element
+        val commentSaver = CommentSaver(targetExpression)
 
         val lambda = element.getSingleLambdaArgument() ?: return
-        val loop = generateLoop(dotQualifiedExpression.receiverExpression, lambda, context) ?: return
-        val result = dotQualifiedExpression.replace(loop) as KtForExpression
+        val loop = generateLoop(receiverExpression, lambda, context) ?: return
+        val result = targetExpression.replace(loop) as KtForExpression
         result.loopParameter?.let { editor?.caretModel?.moveToOffset(it.startOffset) }
 
         commentSaver.restore(result)
     }
 
-    private fun generateLoop(receiver: KtExpression, lambda: KtLambdaExpression, context: Context): KtForExpression? {
+    private fun generateLoop(receiver: KtExpression?, lambda: KtLambdaExpression, context: Context): KtForExpression? {
         val factory = KtPsiFactory(lambda)
         val body = lambda.bodyExpression ?: return null
 
         val returnsToReplace = context.returnsToReplace.dereferenceValidPointers()
         returnsToReplace.forEach { it.replace(factory.createExpression("continue")) }
 
-        val loopRange = KtPsiUtil.safeDeparenthesize(receiver)
+        val loopRange = if (receiver != null) KtPsiUtil.safeDeparenthesize(receiver) else factory.createThisExpression()
         val parameter = lambda.valueParameters.singleOrNull()
         return factory.createExpressionByPattern(
             "for($0 in $1){ $2 }",

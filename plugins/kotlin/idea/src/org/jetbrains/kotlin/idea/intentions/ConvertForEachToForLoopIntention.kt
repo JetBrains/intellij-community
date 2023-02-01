@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -51,30 +52,29 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
 
     private data class Data(
         val expressionToReplace: KtExpression,
-        val receiver: KtExpression,
+        val receiver: KtExpression?,
         val functionLiteral: KtLambdaExpression,
         val context: BindingContext
     )
 
     private fun extractData(nameExpr: KtSimpleNameExpression): Data? {
-        val parent = nameExpr.parent
-        val expression = (when (parent) {
-            is KtCallExpression -> parent.parent as? KtDotQualifiedExpression
+        val expression = when (val parent = nameExpr.parent) {
+            is KtCallExpression -> parent.getQualifiedExpressionForSelectorOrThis()
             is KtBinaryExpression -> parent
             else -> null
-        } ?: return null) as KtExpression //TODO: submit bug
+        } ?: return null
 
         val context = expression.analyze()
         val resolvedCall = expression.getResolvedCall(context) ?: return null
         if (DescriptorUtils.getFqName(resolvedCall.resultingDescriptor).toString() !in FOR_EACH_FQ_NAMES) return null
 
-        val receiver = resolvedCall.call.explicitReceiver as? ExpressionReceiver ?: return null
+        val receiver = resolvedCall.call.explicitReceiver as? ExpressionReceiver
         val argument = resolvedCall.call.valueArguments.singleOrNull() ?: return null
         val functionLiteral = argument.getArgumentExpression() as? KtLambdaExpression ?: return null
-        return Data(expression, receiver.expression, functionLiteral, context)
+        return Data(expression, receiver?.expression, functionLiteral, context)
     }
 
-    private fun generateLoop(functionLiteral: KtLambdaExpression, receiver: KtExpression, context: BindingContext): KtExpression {
+    private fun generateLoop(functionLiteral: KtLambdaExpression, receiver: KtExpression?, context: BindingContext): KtExpression {
         val psiFactory = KtPsiFactory(functionLiteral.project)
 
         val body = functionLiteral.bodyExpression!!
@@ -86,7 +86,7 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
             }
         }
 
-        val loopRange = KtPsiUtil.safeDeparenthesize(receiver)
+        val loopRange = if (receiver != null) KtPsiUtil.safeDeparenthesize(receiver) else psiFactory.createThisExpression()
         val parameter = functionLiteral.valueParameters.singleOrNull()
 
         return psiFactory.createExpressionByPattern("for($0 in $1){ $2 }", parameter ?: "it", loopRange, body.allChildren)
