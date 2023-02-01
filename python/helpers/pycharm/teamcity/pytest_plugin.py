@@ -88,6 +88,7 @@ class EchoTeamCityMessages(object):
 
         self.teamcity = TeamcityServiceMessages()
         self.test_start_reported_mark = set()
+        self.rootdir = None
         self.current_test_item = None
 
         self.max_reported_output_size = 1 * 1024 * 1024
@@ -162,6 +163,7 @@ class EchoTeamCityMessages(object):
         return str(location)
 
     def pytest_collection_finish(self, session):
+        self.rootdir = str(session.config.rootdir)  # using pytest<6 rootdir
         self.teamcity.testCount(len(session.items))
 
     def pytest_runtest_logstart(self, nodeid, location):
@@ -171,20 +173,20 @@ class EchoTeamCityMessages(object):
         path, lineno, test_name = location
         if test_name:
             test_name = str(test_name).split(".")[-1]
-        location_url = "file://{}:{}".format(os.path.join(os.getcwd(), path), lineno)
-        self.ensure_test_start_reported(self.format_test_id(nodeid, location), test_name, location=location_url)
+        path = os.path.join(self.rootdir, path)
+        self.ensure_test_start_reported(self.format_test_id(nodeid, location), test_name, path=path, lineno=lineno + 1)
 
     def pytest_runtest_protocol(self, item):
         self.current_test_item = item
         return None  # continue to next hook
 
-    def ensure_test_start_reported(self, test_id, metainfo=None, location=None):
+    def ensure_test_start_reported(self, test_id, metainfo=None, path=None, lineno=None):
         if test_id not in self.test_start_reported_mark:
             if self.output_capture_enabled:
                 capture_standard_output = "false"
             else:
                 capture_standard_output = "true"
-            self.teamcity.testStarted(test_id, flowId=test_id, captureStandardOutput=capture_standard_output, metainfo=metainfo, location=location)
+            self.teamcity.testStarted(test_id, flowId=test_id, captureStandardOutput=capture_standard_output, metainfo=metainfo, path=path, lineno=lineno)
             self.test_start_reported_mark.add(test_id)
 
     def report_has_output(self, report):
