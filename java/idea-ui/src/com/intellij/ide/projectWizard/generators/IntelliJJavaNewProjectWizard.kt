@@ -34,6 +34,12 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       setupSampleCodeWithOnBoardingTipsUI(builder)
     }
 
+    override fun setupAdvancedSettingsUI(builder: Panel) {
+      setupModuleNameUI(builder)
+      setupModuleContentRootUI(builder)
+      setupModuleFileLocationUI(builder)
+    }
+
     override fun setupProject(project: Project) {
       val builder = JavaModuleBuilder()
       val moduleFile = Paths.get(moduleFileLocation, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)

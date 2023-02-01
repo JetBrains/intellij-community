@@ -53,6 +53,12 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       setupSampleCodeUI(builder)
     }
 
+    override fun setupAdvancedSettingsUI(builder: Panel) {
+      setupModuleNameUI(builder)
+      setupModuleContentRootUI(builder)
+      setupModuleFileLocationUI(builder)
+    }
+
     override fun setupProject(project: Project) {
       val groovyModuleBuilder = GroovyAwareModuleBuilder().apply {
         val contentRoot = FileUtil.toSystemDependentName(contentRoot)
