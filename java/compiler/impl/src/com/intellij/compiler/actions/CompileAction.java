@@ -37,8 +37,7 @@ public class CompileAction extends CompileActionBase {
   }
 
   @Override
-  protected void doAction(@NotNull AnActionEvent event, Project project) {
-    final DataContext dataContext = event.getDataContext();
+  protected void doAction(@NotNull DataContext dataContext, Project project) {
     Module module = dataContext.getData(LangDataKeys.MODULE_CONTEXT);
     if (module != null) {
       ProjectTaskManager.getInstance(project).rebuild(module);
