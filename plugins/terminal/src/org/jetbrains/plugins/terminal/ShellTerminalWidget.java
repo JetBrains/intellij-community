@@ -179,13 +179,12 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   @Override
-  public @Nls @Nullable String getDefaultSessionName() {
-    ProcessTtyConnector connector = getProcessTtyConnector();
-    if (connector instanceof PtyProcessTtyConnector) {
+  public @Nls @Nullable String getDefaultSessionName(@NotNull TtyConnector connector) {
+    if (getProcessTtyConnector(connector) instanceof PtyProcessTtyConnector) {
       // use name from settings for local terminal
       return TerminalOptionsProvider.getInstance().getTabName();
     }
-    return super.getDefaultSessionName();
+    return super.getDefaultSessionName(connector);
   }
 
   @Override
