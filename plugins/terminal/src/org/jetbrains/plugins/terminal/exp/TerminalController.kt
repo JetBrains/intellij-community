@@ -13,9 +13,7 @@ import com.jediterm.terminal.model.StoredCursor
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.Tabulator
 import com.jediterm.terminal.model.hyperlinks.LinkInfo
-import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.util.CharUtils
-import java.awt.Color
 import java.awt.Desktop
 import java.awt.Dimension
 import java.awt.Toolkit
@@ -771,14 +769,12 @@ class TerminalController(private val model: TerminalModel,
     model.isBracketedPasteMode = enabled
   }
 
-  override fun getWindowForeground(): TerminalColor? {
-    val color: Color? = AwtTransformers.toAwtColor(settings.terminalColorPalette.getForeground(model.styleState.foreground))
-    return AwtTransformers.fromAwtToTerminalColor(color)
+  override fun getWindowForeground(): com.jediterm.core.Color {
+    return settings.terminalColorPalette.getForeground(model.styleState.foreground)
   }
 
-  override fun getWindowBackground(): TerminalColor? {
-    val color: Color? = AwtTransformers.toAwtColor(settings.terminalColorPalette.getBackground(model.styleState.background))
-    return AwtTransformers.fromAwtToTerminalColor(color)
+  override fun getWindowBackground(): com.jediterm.core.Color {
+    return settings.terminalColorPalette.getBackground(model.styleState.background)
   }
 
   private class DefaultTabulator(private var myWidth: Int,
