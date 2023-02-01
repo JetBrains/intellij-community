@@ -48,6 +48,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.jediterm.terminal.RequestOrigin;
 import com.jediterm.terminal.ui.TerminalPanelListener;
@@ -68,7 +69,6 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public final class TerminalToolWindowManager implements Disposable {
   private final static Key<TerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
@@ -103,9 +103,8 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   public Set<JBTerminalWidget> getWidgets() {
-    return myContainerByWidgetMap.keySet().stream()
-      .map(widget -> JBTerminalWidget.asJediTermWidget(widget))
-      .collect(Collectors.toSet());
+    return ContainerUtil.map2SetNotNull(myContainerByWidgetMap.keySet(),
+                                        widget -> JBTerminalWidget.asJediTermWidget(widget));
   }
 
   private final List<Consumer<TerminalWidget>> myTerminalSetupHandlers = new CopyOnWriteArrayList<>();
