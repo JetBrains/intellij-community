@@ -368,7 +368,7 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
         }
         ActionGroup group = mySelectedContainer.getGridLayoutManager().getCaptionActions();
         if (group != null) {
-          final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+          final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("GridCaptionPanel", group);
           popupMenu.getComponent().show(GridCaptionPanel.this, e.getX(), e.getY());
           return true;
         }

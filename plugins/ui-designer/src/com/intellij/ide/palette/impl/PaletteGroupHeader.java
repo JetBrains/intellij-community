@@ -100,7 +100,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   public void showGroupPopupMenu(final Component comp, final int x, final int y) {
     ActionGroup group = myGroup.getPopupActionGroup();
     if (group != null) {
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PaletteGroupHeader", group);
       popupMenu.getComponent().show(comp, x, y);
     }
   }
