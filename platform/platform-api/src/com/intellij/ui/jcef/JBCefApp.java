@@ -143,6 +143,8 @@ public final class JBCefApp {
     settings.log_severity = getLogLevel();
     settings.log_file = System.getProperty("ide.browser.jcef.log.path",
       System.getProperty("user.home") + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + ".log");
+    if (settings.log_file.trim().isEmpty())
+      settings.log_file = null;
     //todo[tav] IDEA-260446 & IDEA-260344 However, without proper background the CEF component flashes white in dark themes
     //settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
     int port = Registry.intValue("ide.browser.jcef.debug.port");
