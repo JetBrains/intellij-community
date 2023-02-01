@@ -22,7 +22,7 @@ cd ..
 
 echo
 echo ">>>>> Building schema drivers"
-python build/build.py build
+python3 build/build.py build
 
 echo
 echo ">>>>> Collecting schemas"
@@ -32,7 +32,8 @@ mkdir result/html5
 cp temp/validator/schema/*.rnc result
 rsync -r --include=*.rnc temp/validator/schema/* result
 rm -rf result/xhtml10
-ruby html5charref.rb > result/html5chars.ent
+pwd
+ruby ../../scripts/html5charref.rb > result/html5chars.ent
 
 echo
 echo ">>>>> Patching html5 schema"
@@ -60,8 +61,8 @@ cp -R html5-schema/svg20 result
 # Remove unnecessary files
 rm result/html5/.htaccess
 rm result/html5/assertions.sch
-rm result/html5/mml3/Makefile
-rm result/html5/mml3/patch-vnu
+rm result/mml3/Makefile
+rm result/mml3/patch-vnu
 
 # Update html5-schema dir
 rm -rf html5-schema
