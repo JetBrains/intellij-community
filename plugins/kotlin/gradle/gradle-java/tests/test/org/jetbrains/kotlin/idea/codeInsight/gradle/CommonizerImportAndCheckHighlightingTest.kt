@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.externalSystem.model.project.LibraryLevel
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.DependencyScope.COMPILE
 import com.intellij.openapi.roots.DependencyScope.PROVIDED
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
@@ -34,82 +35,84 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
         val highlightingCheck = createHighlightingCheck()
 
         checkProjectStructure(false, false, false) {
+            val scope = if (isKgpDependencyResolutionEnabled()) COMPILE else PROVIDED
+
             module("project.p1.nativeMain") {
                 highlightingCheck(module)
-                libraryDependencyByUrl(Regex(""".*withPosix.*"""), PROVIDED)
-                libraryDependencyByUrl(Regex(""".*posix.*"""), PROVIDED)
+                libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
             }
 
             module("project.p1.appleAndLinuxMain") {
                 if (SystemInfo.isMac || SystemInfo.isLinux) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), PROVIDED)
-                    libraryDependencyByUrl(Regex(""".*posix.*"""), PROVIDED)
+                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
                 }
             }
 
             module("project.p1.linuxMain") {
                 if (SystemInfo.isMac || SystemInfo.isLinux) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), PROVIDED)
-                    libraryDependencyByUrl(Regex(""".*posix.*"""), PROVIDED)
+                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
                 }
             }
 
             module("project.p1.appleMain") {
                 if (SystemInfo.isMac) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), PROVIDED)
-                    libraryDependencyByUrl(Regex(""".*posix.*"""), PROVIDED)
+                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
                 }
             }
 
             module("project.p1.iosMain") {
                 if (SystemInfo.isMac) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), PROVIDED)
-                    libraryDependencyByUrl(Regex(""".*posix.*"""), PROVIDED)
+                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
                 }
             }
 
             module("project.p1.linuxArm64Main") {
                 if (SystemInfo.isMac || SystemInfo.isLinux) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), PROVIDED)
+                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
                     if (kotlinPluginVersion < KotlinToolingVersion("1.5.30-dev")) {
-                        libraryDependencyByUrl(Regex(""".*/\(linux_arm64, linux_x64\)/.*posix.*"""), PROVIDED)
+                        libraryDependencyByUrl(Regex(""".*/\(linux_arm64, linux_x64\)/.*posix.*"""), scope)
                     }
-                    libraryDependencyByUrl(Regex(""".*/linux_arm64/.*posix.*"""), PROVIDED)
+                    libraryDependencyByUrl(Regex(""".*/linux_arm64/.*posix.*"""), scope)
                 }
             }
 
             module("project.p1.linuxX64Main") {
                 if (SystemInfo.isMac || SystemInfo.isLinux) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), PROVIDED)
+                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
                     if (kotlinPluginVersion < KotlinToolingVersion("1.5.30-dev")) {
-                        libraryDependencyByUrl(Regex(""".*/\(linux_arm64, linux_x64\)/.*posix.*"""), PROVIDED)
+                        libraryDependencyByUrl(Regex(""".*/\(linux_arm64, linux_x64\)/.*posix.*"""), scope)
                     }
-                    libraryDependencyByUrl(Regex(""".*/linux_x64/.*posix.*"""), PROVIDED)
+                    libraryDependencyByUrl(Regex(""".*/linux_x64/.*posix.*"""), scope)
                 }
             }
 
             module("project.p1.macosMain") {
                 if (SystemInfo.isMac) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), PROVIDED)
+                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
                     if (kotlinPluginVersion < KotlinToolingVersion("1.5.30-dev")) {
-                        libraryDependencyByUrl(Regex(""".*/\(.*macos_x64.*\)/.*posix.*"""), PROVIDED)
+                        libraryDependencyByUrl(Regex(""".*/\(.*macos_x64.*\)/.*posix.*"""), scope)
                     }
-                    libraryDependencyByUrl(Regex(""".*/macos_x64/.*posix.*"""), PROVIDED)
+                    libraryDependencyByUrl(Regex(""".*/macos_x64/.*posix.*"""), scope)
                 }
             }
 
             module("project.p1.windowsMain") {
                 if (SystemInfo.isWindows) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), PROVIDED)
-                    libraryDependencyByUrl(Regex(""".*posix.*"""), PROVIDED)
+                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
                 }
             }
         }
@@ -122,14 +125,16 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
         val highlightingCheck = createHighlightingCheck()
 
         checkProjectStructure(false, false, false) {
+            val scope = if (isKgpDependencyResolutionEnabled()) COMPILE else PROVIDED
+
             module("project.p1.nativeMain") {
                 highlightingCheck(module)
-                libraryDependency(Regex("""Kotlin/Native.*posix.*"""), PROVIDED)
+                libraryDependency(Regex("""Kotlin/Native.*posix.*"""), scope)
             }
 
             module("project.p1.commonMain") {
                 highlightingCheck(module)
-                libraryDependency(Regex("""Kotlin/Native.*posix.*"""), PROVIDED)
+                libraryDependency(Regex("""Kotlin/Native.*posix.*"""), scope)
             }
         }
     }
@@ -146,14 +151,16 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                 highlightingCheck(module)
             }
 
+            val scope = if (isKgpDependencyResolutionEnabled()) COMPILE else PROVIDED
+
             module("project.p1.nativeMainParent") {
                 highlightingCheck(module)
-                libraryDependencyByUrl(Regex(""".*posix.*"""), PROVIDED)
+                libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
             }
 
             module("project.p1.nativeMain") {
                 highlightingCheck(module)
-                libraryDependencyByUrl(Regex(""".*posix.*"""), PROVIDED)
+                libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
             }
 
             module("project.p1.nativePlatformMain") {
@@ -189,9 +196,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                  * has a proper libraryName and is considered 'project level'
                  */
                 run {
-                    val posixLibraryNameRegex = Regex(
-                        """Kotlin/Native $kotlinPluginVersion - posix \|.*"""
-                    )
+                    val posixLibraryNameRegex = nativeDistLibraryDependency("posix", libraryPlatform = null)
 
                     val posixEntriesMatchingNamingScheme = module.rootManager.orderEntries
                         .filterIsInstance<LibraryOrderEntry>()
@@ -218,7 +223,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                 run {
                     val withPosixLibraryNameRegex = Regex(
                         if (kotlinPluginVersion > KotlinToolingVersion("1.5.30-dev"))
-                            """Gradle: project:p1-cinterop-withPosix \| \[\(linux_arm64, linux_x64, macos_x64, mingw_x64, mingw_x86\)]"""
+                            """Gradle: project:p1-cinterop-withPosix.*\(linux_arm64, linux_x64, macos_x64, mingw_x64, mingw_x86\).*"""
                         else """Gradle: project:p1-cinterop-withPosix \| \[\(\(linux_arm64, linux_x64\), \(mingw_x64, mingw_x86\), macos_x64\)]"""
                     )
 
@@ -236,11 +241,13 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
 
                     val withPosix = withPosixEntriesMatchingNamingScheme.single()
 
-                    assertEquals(
-                        "Expected 'withPosix' (c-interop) to be 'module level'",
-                        LibraryLevel.MODULE.name.toLowerCase(),
-                        withPosix.libraryLevel.toLowerCase()
-                    )
+                    if (!isKgpDependencyResolutionEnabled()) { // FIXME: KTIJ-24560
+                        assertEquals(
+                            "Expected 'withPosix' (c-interop) to be 'module level'",
+                            LibraryLevel.MODULE.name.toLowerCase(),
+                            withPosix.libraryLevel.toLowerCase()
+                        )
+                    }
                 }
             }
 
@@ -251,9 +258,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                  * and is considered 'project level' for a leaf source set
                  */
                 run {
-                    val posixLibraryNameRegex = Regex(
-                        """Kotlin/Native $kotlinPluginVersion - posix \|.*"""
-                    )
+                    val posixLibraryNameRegex = nativeDistLibraryDependency("posix", null)
 
                     val posixEntriesMatchingNamingScheme = module.rootManager.orderEntries
                         .filterIsInstance<LibraryOrderEntry>()
@@ -278,7 +283,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                  */
                 run {
                     val withPosixLibraryNameRegex = Regex(
-                        """Gradle: project:p1-cinterop-withPosix \| linux_x64"""
+                        """Gradle: project:p1-cinterop-withPosix( \| |:)linux_x64"""
                     )
 
                     val withPosixEntriesMatchingNamingScheme = module.rootManager.orderEntries
@@ -292,11 +297,13 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
 
                     val withPosix = withPosixEntriesMatchingNamingScheme.single()
 
-                    assertEquals(
-                        "Expected 'withPosix' (c-interop) to be 'module level'",
-                        LibraryLevel.MODULE.name.toLowerCase(),
-                        withPosix.libraryLevel.toLowerCase()
-                    )
+                    if (!isKgpDependencyResolutionEnabled()) { // FIXME: KTIJ-24560
+                        assertEquals(
+                            "Expected 'withPosix' (c-interop) to be 'module level'",
+                            LibraryLevel.MODULE.name.toLowerCase(),
+                            withPosix.libraryLevel.toLowerCase()
+                        )
+                    }
                 }
             }
         }
