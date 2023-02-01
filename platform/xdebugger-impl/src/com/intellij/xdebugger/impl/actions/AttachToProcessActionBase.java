@@ -40,6 +40,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.time.Instant;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -342,6 +343,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     @NotNull private final ProcessInfo myProcessInfo;
     @NotNull private final XAttachPresentationGroup myGroup;
     @NotNull private final String myDebuggerName;
+    @NotNull private final Instant myRecentItemCreationTime = Instant.now();
 
     public RecentItem(@NotNull XAttachHost host,
                       @NotNull AttachToProcessItem item) {
@@ -384,6 +386,11 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     @NotNull
     public String getDebuggerName() {
       return myDebuggerName;
+    }
+
+    @SuppressWarnings("unused")
+    public @NotNull Instant getRecentItemCreationTime() {
+      return myRecentItemCreationTime;
     }
 
     @Override
