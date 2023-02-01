@@ -126,9 +126,21 @@ class GroovyBuildScriptManipulator(
             )
         }
 
-        if (jvmTarget != null) {
-            changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = false)
-            changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = true)
+        jvmTarget?.let {
+            addJdkSpec(it, version, gradleVersion) { useToolchain, useToolchainHelper, targetVersionNumber ->
+                when {
+                    useToolchainHelper -> scriptFile.getKotlinBlock()
+                        .addFirstExpressionInBlockIfNeeded("jvmToolchain($targetVersionNumber)")
+
+                    useToolchain -> scriptFile.getKotlinBlock().getBlockOrCreate("jvmToolchain")
+                        .addFirstExpressionInBlockIfNeeded("languageVersion = JavaLanguageVersion.of($targetVersionNumber)")
+
+                    else -> {
+                        changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = false)
+                        changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = true)
+                    }
+                }
+            }
         }
 
         return scriptFile.text != oldText
