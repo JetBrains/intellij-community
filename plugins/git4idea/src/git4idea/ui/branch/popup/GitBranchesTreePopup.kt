@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
+import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
 import com.intellij.dvcs.branch.GroupingKey
@@ -716,7 +717,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
      */
     @JvmStatic
     fun create(project: Project, selectedRepository: GitRepository?): JBPopup {
-      val repositories = GitRepositoryManager.getInstance(project).repositories
+      val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
       return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, selectedRepository, repositories, true))
     }
 
