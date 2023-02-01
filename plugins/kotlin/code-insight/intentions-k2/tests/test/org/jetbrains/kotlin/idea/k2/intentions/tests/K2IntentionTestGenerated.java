@@ -2363,6 +2363,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/implicitReceiver.kt");
         }
 
+        @TestMetadata("implicitReceiverWithMultipleReceivers.kt")
+        public void testImplicitReceiverWithMultipleReceivers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/implicitReceiverWithMultipleReceivers.kt");
+        }
+
         @TestMetadata("keepComments.kt")
         public void testKeepComments() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/keepComments.kt");

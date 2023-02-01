@@ -9,7 +9,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidPointers
+import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -18,6 +20,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.renderer.render
 
 private val FOR_EACH_NAME = Name.identifier("forEach")
 
@@ -37,6 +40,7 @@ internal class ConvertForEachToForLoopIntention
     class Context(
         /** Caches the [KtReturnExpression]s which need to be replaced with `continue`. */
         val returnsToReplace: ReturnsToReplace,
+        val implicitReceiverInfo: ImplicitReceiverInfo?,
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.for.loop")
@@ -57,7 +61,15 @@ internal class ConvertForEachToForLoopIntention
     context(KtAnalysisSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         if (!element.isForEachByAnalyze()) return null
-        return computeReturnsToReplace(element)?.let { Context(it) }
+
+        val returnsToReplace = computeReturnsToReplace(element) ?: return null
+
+        val receiver = element.getQualifiedExpressionForSelector()?.receiverExpression
+        val implicitReceiverInfo = if (receiver == null) {
+            element.getImplicitReceiverInfo() ?: return null
+        } else null
+
+        return Context(returnsToReplace, implicitReceiverInfo)
     }
 
     context(KtAnalysisSession)
@@ -101,7 +113,18 @@ internal class ConvertForEachToForLoopIntention
         val returnsToReplace = context.returnsToReplace.dereferenceValidPointers()
         returnsToReplace.forEach { it.replace(factory.createExpression("continue")) }
 
-        val loopRange = if (receiver != null) KtPsiUtil.safeDeparenthesize(receiver) else factory.createThisExpression()
+        val loopRange = if (receiver != null) {
+            KtPsiUtil.safeDeparenthesize(receiver)
+        } else {
+            val implicitReceiverInfo = context.implicitReceiverInfo ?: return null
+            if (implicitReceiverInfo.isUnambiguousLabel) {
+                factory.createThisExpression()
+            } else {
+                val label = implicitReceiverInfo.receiverLabel ?: return null
+                factory.createThisExpression(label.render())
+            }
+        }
+
         val parameter = lambda.valueParameters.singleOrNull()
         return factory.createExpressionByPattern(
             "for($0 in $1){ $2 }",
