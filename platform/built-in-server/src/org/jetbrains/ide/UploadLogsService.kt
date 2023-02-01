@@ -20,6 +20,7 @@ import com.intellij.util.net.NetUtils
 import com.intellij.util.ui.IoErrorText
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
 import java.io.File
@@ -36,6 +37,8 @@ class UploadLogsService : RestService() {
   override fun getServiceName(): String {
     return serviceName
   }
+
+  override fun isOriginAllowed(request: HttpRequest) = OriginCheckResult.ALLOW
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     val path = urlDecoder.path().split(serviceName).last().trimStart('/')
