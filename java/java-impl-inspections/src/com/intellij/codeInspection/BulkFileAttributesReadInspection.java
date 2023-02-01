@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -265,8 +265,7 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
 
     private static @NotNull PsiElement getTopLevelQualifier(@NotNull PsiMethodCallExpression methodCall) {
       PsiElement qualifier = PsiUtil.skipParenthesizedExprUp(methodCall.getMethodExpression().getQualifier());
-      while (qualifier instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)qualifier;
+      while (qualifier instanceof PsiMethodCallExpression call) {
         qualifier = PsiUtil.skipParenthesizedExprUp(call.getMethodExpression().getQualifier());
       }
       return Objects.requireNonNull(qualifier);

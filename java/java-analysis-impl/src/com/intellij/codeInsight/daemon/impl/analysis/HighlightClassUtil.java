@@ -58,10 +58,9 @@ public final class HighlightClassUtil {
   static HighlightInfo.Builder checkAbstractInstantiation(@NotNull PsiJavaCodeReferenceElement ref) {
     PsiElement parent = ref.getParent();
     HighlightInfo.Builder highlightInfo = null;
-    if (parent instanceof PsiAnonymousClass
+    if (parent instanceof PsiAnonymousClass aClass
         && parent.getParent() instanceof PsiNewExpression
         && !PsiUtilCore.hasErrorElementChild(parent.getParent())) {
-      PsiAnonymousClass aClass = (PsiAnonymousClass)parent;
       highlightInfo = checkClassWithAbstractMethods(aClass, ref.getTextRange());
     }
     return highlightInfo;
@@ -86,9 +85,8 @@ public final class HighlightClassUtil {
 
     final String messageKey;
     final String referenceName;
-    if (aClass instanceof PsiEnumConstantInitializer) {
+    if (aClass instanceof PsiEnumConstantInitializer enumConstant) {
       messageKey = "enum.constant.must.implement.method";
-      PsiEnumConstantInitializer enumConstant = (PsiEnumConstantInitializer)aClass;
       referenceName = enumConstant.getEnumConstant().getName();
     }
     else {
@@ -280,9 +278,8 @@ public final class HighlightClassUtil {
 
   static HighlightInfo.Builder checkPublicClassInRightFile(@NotNull PsiClass aClass) {
     PsiFile containingFile = aClass.getContainingFile();
-    if (aClass.getParent() != containingFile || !aClass.hasModifierProperty(PsiModifier.PUBLIC) || !(containingFile instanceof PsiJavaFile))
+    if (aClass.getParent() != containingFile || !aClass.hasModifierProperty(PsiModifier.PUBLIC) || !(containingFile instanceof PsiJavaFile file))
       return null;
-    PsiJavaFile file = (PsiJavaFile)containingFile;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null || virtualFile.getNameWithoutExtension().equals(aClass.getName())) {
       return null;
@@ -518,39 +515,33 @@ public final class HighlightClassUtil {
   }
 
   static HighlightInfo.Builder checkExtendsAllowed(@NotNull PsiReferenceList list) {
-    if (list.getParent() instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)list.getParent();
-      if (aClass.isEnum() || aClass.isRecord()) {
-        boolean isExtends = list.equals(aClass.getExtendsList());
-        if (isExtends) {
-          String description = JavaErrorBundle.message(aClass.isRecord() ? "record.extends" : "extends.after.enum");
-          HighlightInfo.Builder info =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description);
-          IntentionAction action = QUICK_FIX_FACTORY.createDeleteFix(list);
-          info.registerFix(action, null, null, null, null);
-          return info;
-        }
+    if (list.getParent() instanceof PsiClass aClass && (aClass.isEnum() || aClass.isRecord())) {
+      boolean isExtends = list.equals(aClass.getExtendsList());
+      if (isExtends) {
+        String description = JavaErrorBundle.message(aClass.isRecord() ? "record.extends" : "extends.after.enum");
+        HighlightInfo.Builder info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description);
+        IntentionAction action = QUICK_FIX_FACTORY.createDeleteFix(list);
+        info.registerFix(action, null, null, null, null);
+        return info;
       }
     }
     return null;
   }
 
   static HighlightInfo.Builder checkImplementsAllowed(@NotNull PsiReferenceList list) {
-    if (list.getParent() instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)list.getParent();
-      if (aClass.isInterface()) {
-        boolean isImplements = list.equals(aClass.getImplementsList());
-        if (isImplements) {
-          String description = JavaErrorBundle.message("implements.after.interface");
-          HighlightInfo.Builder result =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description);
-          PsiClassType[] referencedTypes = list.getReferencedTypes();
-          if (referencedTypes.length > 0) {
-            IntentionAction action = QUICK_FIX_FACTORY.createChangeExtendsToImplementsFix(aClass, referencedTypes[0]);
-            result.registerFix(action, null, null, null, null);
-          }
-          return result;
+    if (list.getParent() instanceof PsiClass aClass && aClass.isInterface()) {
+      boolean isImplements = list.equals(aClass.getImplementsList());
+      if (isImplements) {
+        String description = JavaErrorBundle.message("implements.after.interface");
+        HighlightInfo.Builder result =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description);
+        PsiClassType[] referencedTypes = list.getReferencedTypes();
+        if (referencedTypes.length > 0) {
+          IntentionAction action = QUICK_FIX_FACTORY.createChangeExtendsToImplementsFix(aClass, referencedTypes[0]);
+          result.registerFix(action, null, null, null, null);
         }
+        return result;
       }
     }
     return null;
@@ -731,11 +722,9 @@ public final class HighlightClassUtil {
   }
 
   static HighlightInfo.Builder checkExtendsDuplicate(@NotNull PsiJavaCodeReferenceElement element, @Nullable PsiElement resolved, @NotNull PsiFile containingFile) {
-    if (!(element.getParent() instanceof PsiReferenceList)) return null;
-    PsiReferenceList list = (PsiReferenceList)element.getParent();
+    if (!(element.getParent() instanceof PsiReferenceList list)) return null;
     if (!(list.getParent() instanceof PsiClass)) return null;
-    if (!(resolved instanceof PsiClass)) return null;
-    PsiClass aClass = (PsiClass)resolved;
+    if (!(resolved instanceof PsiClass aClass)) return null;
     PsiClassType[] referencedTypes = list.getReferencedTypes();
     int dupCount = 0;
     PsiManager manager = containingFile.getManager();
@@ -759,8 +748,7 @@ public final class HighlightClassUtil {
 
   static HighlightInfo.Builder checkClassAlreadyImported(@NotNull PsiClass aClass, @NotNull PsiElement elementToHighlight) {
     PsiFile file = aClass.getContainingFile();
-    if (!(file instanceof PsiJavaFile)) return null;
-    PsiJavaFile javaFile = (PsiJavaFile)file;
+    if (!(file instanceof PsiJavaFile javaFile)) return null;
     // check only top-level classes conflicts
     if (aClass.getParent() != javaFile) return null;
     PsiImportList importList = javaFile.getImportList();
@@ -780,9 +768,8 @@ public final class HighlightClassUtil {
   static HighlightInfo.Builder checkClassExtendsOnlyOneClass(@NotNull PsiReferenceList list) {
     PsiClassType[] referencedTypes = list.getReferencedTypes();
     PsiElement parent = list.getParent();
-    if (!(parent instanceof PsiClass)) return null;
+    if (!(parent instanceof PsiClass aClass)) return null;
 
-    PsiClass aClass = (PsiClass)parent;
     if (!aClass.isInterface()
         && referencedTypes.length > 1
         && aClass.getExtendsList() == list) {
@@ -871,17 +858,15 @@ public final class HighlightClassUtil {
       return null;
     }
     PsiElement grand = parent.getParent();
-    if (!(grand instanceof PsiClass)) {
+    if (!(grand instanceof PsiClass aClass)) {
       return null;
     }
-    PsiClass aClass = (PsiClass)grand;
     PsiClass containerClass;
-    if (aClass instanceof PsiTypeParameter) {
-      PsiTypeParameterListOwner owner = ((PsiTypeParameter)aClass).getOwner();
-      if (!(owner instanceof PsiClass)) {
+    if (aClass instanceof PsiTypeParameter typeParameter) {
+      if (!(typeParameter.getOwner() instanceof PsiClass cls)) {
         return null;
       }
-      containerClass = (PsiClass)owner;
+      containerClass = cls;
     }
     else {
       containerClass = aClass;
@@ -905,8 +890,7 @@ public final class HighlightClassUtil {
       public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         PsiElement resolve = reference.resolve();
-        if (resolve instanceof PsiClass) {
-          PsiClass base = (PsiClass)resolve;
+        if (resolve instanceof PsiClass base) {
           PsiClass baseClass = base.getContainingClass();
           if (baseClass != null && base.hasModifierProperty(PsiModifier.PRIVATE) && baseClass == containerClass && baseClass.getContainingClass() == null) {
             String description = JavaErrorBundle.message("private.symbol",
@@ -1182,8 +1166,7 @@ public final class HighlightClassUtil {
 
   static void checkPermitsList(@NotNull PsiReferenceList list, @NotNull HighlightInfoHolder holder) {
     PsiElement parent = list.getParent();
-    if (parent instanceof PsiClass && list.equals(((PsiClass)parent).getPermitsList())) {
-      PsiClass aClass = (PsiClass)parent;
+    if (parent instanceof PsiClass aClass && list.equals(aClass.getPermitsList())) {
       PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       if (nameIdentifier == null) return;
       if (aClass.isEnum() || aClass.isRecord() || aClass.isAnnotationType()) {
@@ -1221,8 +1204,7 @@ public final class HighlightClassUtil {
           continue;
         }
         @Nullable PsiElement resolve = permitted.resolve();
-        if (resolve instanceof PsiClass) {
-          PsiClass inheritorClass = (PsiClass)resolve;
+        if (resolve instanceof PsiClass inheritorClass) {
           PsiManager manager = inheritorClass.getManager();
           if (!ContainerUtil.exists(inheritorClass.getSuperTypes(), type -> manager.areElementsEquivalent(aClass, type.resolve()))) {
             HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(permitted)

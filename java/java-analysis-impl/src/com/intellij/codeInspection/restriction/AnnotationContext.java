@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.restriction;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -85,8 +85,7 @@ public final class AnnotationContext {
           .append(StreamEx.ofTree(method, m -> StreamEx.of(m.findSuperMethods()).filter(visited::add)).skip(1));
       });
     }
-    if (owner instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)owner;
+    if (owner instanceof PsiParameter parameter) {
       PsiParameterList parameterList = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
       PsiMethod method = parameterList == null ? null : ObjectUtils.tryCast(parameterList.getParent(), PsiMethod.class);
       if (parameterList != null && method != null) {
@@ -174,10 +173,9 @@ public final class AnnotationContext {
   }
 
   private static @Nullable PsiModifierListOwner getKotlinProperty(@NotNull PsiModifierListOwner owner) {
-    if (!(owner instanceof PsiMethod)) return null;
+    if (!(owner instanceof PsiMethod method)) return null;
     // Looks ugly but without this check, owner.getNavigationElement() may load PSI or even call decompiler
     if (!owner.getClass().getSimpleName().equals("KtUltraLightMethodForSourceDeclaration")) return null;
-    PsiMethod method = (PsiMethod)owner;
     String name = method.getName();
     boolean maybeGetter = (name.startsWith("get") || name.startsWith("is")) && method.getParameterList().isEmpty();
     boolean maybeSetter = name.startsWith("set") && method.getParameterList().getParametersCount() == 1;
@@ -245,8 +243,7 @@ public final class AnnotationContext {
     if (parent instanceof UVariable) {
       var = ObjectUtils.tryCast(parent.getJavaPsi(), PsiModifierListOwner.class);
     }
-    else if (parent instanceof UBinaryExpression) {
-      UBinaryExpression binOp = (UBinaryExpression)parent;
+    else if (parent instanceof UBinaryExpression binOp) {
       UastBinaryOperator operator = binOp.getOperator();
       UExpression rightOperand = binOp.getRightOperand();
       if ((operator == UastBinaryOperator.ASSIGN || operator == UastBinaryOperator.PLUS_ASSIGN) &&

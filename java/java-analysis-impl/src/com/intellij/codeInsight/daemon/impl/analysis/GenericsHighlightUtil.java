@@ -79,8 +79,7 @@ public final class GenericsHighlightUtil {
                                                                 @NotNull PsiJavaCodeReferenceElement referenceElement,
                                                                 @NotNull PsiSubstitutor substitutor,
                                                                 @NotNull JavaSdkVersion javaSdkVersion) {
-    if (!(resolved instanceof PsiTypeParameterListOwner)) return null;
-    PsiTypeParameterListOwner typeParameterListOwner = (PsiTypeParameterListOwner)resolved;
+    if (!(resolved instanceof PsiTypeParameterListOwner typeParameterListOwner)) return null;
     return checkReferenceTypeArgumentList(typeParameterListOwner, referenceElement.getParameterList(), substitutor, true, javaSdkVersion);
   }
 
@@ -123,12 +122,11 @@ public final class GenericsHighlightUtil {
         }
 
         PsiElement parent = referenceParameterList.getParent().getParent();
-        if (parent instanceof PsiAnonymousClass) {
-          PsiAnonymousClass anonymousClass = (PsiAnonymousClass)parent;
-          if (ContainerUtil.exists(anonymousClass.getMethods(), method -> !method.hasModifierProperty(PsiModifier.PRIVATE) && method.findSuperMethods().length == 0)) {
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList)
-              .descriptionAndTooltip(JavaPsiBundle.message("diamond.error.anonymous.inner.classes.non.private"));
-          }
+        if (parent instanceof PsiAnonymousClass anonymousClass &&
+            ContainerUtil.exists(anonymousClass.getMethods(),
+                                 method -> !method.hasModifierProperty(PsiModifier.PRIVATE) && method.findSuperMethods().length == 0)) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList)
+            .descriptionAndTooltip(JavaPsiBundle.message("diamond.error.anonymous.inner.classes.non.private"));
         }
       }
     }
@@ -769,8 +767,7 @@ public final class GenericsHighlightUtil {
         LOG.assertTrue(parent instanceof PsiJavaCodeReferenceElement, parent);
         PsiElement refParent = parent.getParent();
         if (refParent instanceof PsiAnonymousClass) refParent = refParent.getParent();
-        if (refParent instanceof PsiNewExpression) {
-          PsiNewExpression newExpression = (PsiNewExpression)refParent;
+        if (refParent instanceof PsiNewExpression newExpression) {
           if (!(newExpression.getType() instanceof PsiArrayType)) {
             String description = JavaErrorBundle.message("wildcard.type.cannot.be.instantiated", JavaHighlightUtil.formatType(type));
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description);
@@ -1311,8 +1308,7 @@ public final class GenericsHighlightUtil {
 
   static HighlightInfo.Builder checkGenericCannotExtendException(@NotNull PsiReferenceList list) {
     PsiElement parent = list.getParent();
-    if (parent instanceof PsiClass) {
-      PsiClass klass = (PsiClass)parent;
+    if (parent instanceof PsiClass klass) {
       if (hasGenericSignature(klass) && klass.getExtendsList() == list) {
         PsiClass throwableClass = null;
         for (PsiJavaCodeReferenceElement refElement : list.getReferenceElements()) {
@@ -1334,15 +1330,12 @@ public final class GenericsHighlightUtil {
         }
       }
     }
-    else if (parent instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)parent;
-      if (method.getThrowsList() == list) {
-        for (PsiJavaCodeReferenceElement refElement : list.getReferenceElements()) {
-          PsiReferenceParameterList parameterList = refElement.getParameterList();
-          if (parameterList != null && parameterList.getTypeParameterElements().length != 0) {
-            String message = JavaErrorBundle.message("generic.extend.exception");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message);
-          }
+    else if (parent instanceof PsiMethod method && method.getThrowsList() == list) {
+      for (PsiJavaCodeReferenceElement refElement : list.getReferenceElements()) {
+        PsiReferenceParameterList parameterList = refElement.getParameterList();
+        if (parameterList != null && parameterList.getTypeParameterElements().length != 0) {
+          String message = JavaErrorBundle.message("generic.extend.exception");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message);
         }
       }
     }

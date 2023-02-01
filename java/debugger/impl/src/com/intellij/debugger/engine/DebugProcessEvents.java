@@ -559,8 +559,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (Registry.is("debugger.preload.event.info") && DebuggerUtilsAsync.isAsyncEnabled()) {
       List<CompletableFuture> commands = new ArrayList<>();
       ThreadReference thread = event.thread();
-      if (thread instanceof ThreadReferenceImpl) {
-        ThreadReferenceImpl t = (ThreadReferenceImpl)thread;
+      if (thread instanceof ThreadReferenceImpl t) {
         commands.addAll(List.of(t.frameCountAsync(), t.nameAsync(), t.statusAsync(), t.frameAsync(0)));
       }
       Location location = event.location();

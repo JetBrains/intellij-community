@@ -62,8 +62,7 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
 
   @Override
   public void drop(@NotNull XStackFrame frame) {
-    if (frame instanceof JavaStackFrame) {
-      var stackFrame = (JavaStackFrame)frame;
+    if (frame instanceof JavaStackFrame stackFrame) {
       var project = myDebugSession.getProject();
       var debugProcess = myDebugSession.getProcess();
       var debuggerContext = myDebugSession.getContextManager().getContext();

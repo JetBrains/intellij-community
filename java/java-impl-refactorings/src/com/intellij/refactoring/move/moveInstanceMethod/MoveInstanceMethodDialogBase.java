@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -133,16 +133,15 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (value instanceof PsiVariable) {
-        final PsiVariable psiVariable = (PsiVariable)value;
+      if (value instanceof PsiVariable psiVariable) {
         final String text = PsiFormatUtil.formatVariable(psiVariable,
                                                          PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE,
                                                          PsiSubstitutor.EMPTY);
         setIcon(psiVariable.getIcon(0));
         setText(text);
       }
-      else if (value instanceof String) {
-        setText((String)value);
+      else if (value instanceof String s) {
+        setText(s);
       }
       return this;
     }

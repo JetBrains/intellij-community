@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
@@ -357,8 +357,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
         }
         return new FactDefinition<>(null, extractor.extract(((DfaVariableValue)value).getInherentType()), null);
       }
-      if (value instanceof DfaBinOpValue) {
-        DfaBinOpValue binOp = (DfaBinOpValue)value;
+      if (value instanceof DfaBinOpValue binOp) {
         FactDefinition<T> left = findFact(binOp.getLeft(), extractor);
         FactDefinition<T> right = findFact(binOp.getRight(), extractor);
         if (left.myFact instanceof LongRangeSet && right.myFact instanceof LongRangeSet) {

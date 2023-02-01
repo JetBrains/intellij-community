@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -334,17 +334,14 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   private static boolean writtenInside(@NotNull PsiVariable variable, @NotNull PsiElement element) {
-    if (element instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
+    if (element instanceof PsiAssignmentExpression assignmentExpression) {
       PsiExpression lExpression = assignmentExpression.getLExpression();
-      if (lExpression instanceof PsiReferenceExpression
-          && ((PsiReferenceExpression) lExpression).resolve() == variable)
+      if (lExpression instanceof PsiReferenceExpression ref && ref.resolve() == variable)
         return true;
     }
     else if (PsiUtil.isIncrementDecrementOperation(element)) {
       PsiElement operand = ((PsiUnaryExpression) element).getOperand();
-      if (operand instanceof PsiReferenceExpression
-          && ((PsiReferenceExpression) operand).resolve() == variable)
+      if (operand instanceof PsiReferenceExpression ref && ref.resolve() == variable)
         return true;
     }
     PsiElement[] children = element.getChildren();

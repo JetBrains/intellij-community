@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -906,17 +906,15 @@ public final class ImportHelper{
         if (resolveResult == null) continue;
 
         PsiJavaCodeReferenceElement referenceElement = null;
-        if (reference instanceof PsiJavaReference) {
-          final PsiJavaReference javaReference = (PsiJavaReference)reference;
-          if (javaReference instanceof JavaClassReference && ((JavaClassReference)javaReference).getContextReference() != null) continue;
-          referenceElement = null;
+        if (reference instanceof PsiJavaReference javaReference) {
+          if (javaReference instanceof JavaClassReference classReference && classReference.getContextReference() != null) continue;
           if (reference instanceof PsiJavaCodeReferenceElement) {
             referenceElement = (PsiJavaCodeReferenceElement)child;
             if (referenceElement.getQualifier() != null) {
               continue;
             }
-            if (reference instanceof PsiJavaCodeReferenceElementImpl
-                && ((PsiJavaCodeReferenceElementImpl)reference).getKindEnum(((PsiJavaCodeReferenceElementImpl)reference).getContainingFile()) == PsiJavaCodeReferenceElementImpl.Kind.CLASS_IN_QUALIFIED_NEW_KIND) {
+            if (reference instanceof PsiJavaCodeReferenceElementImpl refImpl
+                && refImpl.getKindEnum(refImpl.getContainingFile()) == PsiJavaCodeReferenceElementImpl.Kind.CLASS_IN_QUALIFIED_NEW_KIND) {
               continue;
             }
           }
@@ -939,21 +937,18 @@ public final class ImportHelper{
         }
         if (refElement == null) continue;
 
-        if (referenceElement != null) {
-          if (currentFileResolveScope instanceof PsiImportStaticStatement) {
-            PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)currentFileResolveScope;
-            String name = importStaticStatement.getImportReference().getCanonicalText();
-            if (importStaticStatement.isOnDemand()) {
-              String refName = referenceElement.getReferenceName();
-              if (refName != null) name = name + "." + refName;
-            }
-            names.add(Pair.create(name, Boolean.TRUE));
-            continue;
+        if (referenceElement != null && currentFileResolveScope instanceof PsiImportStaticStatement importStaticStatement) {
+          String name = importStaticStatement.getImportReference().getCanonicalText();
+          if (importStaticStatement.isOnDemand()) {
+            String refName = referenceElement.getReferenceName();
+            if (refName != null) name = name + "." + refName;
           }
+          names.add(Pair.create(name, Boolean.TRUE));
+          continue;
         }
 
-        if (refElement instanceof PsiClass) {
-          String qName = ((PsiClass)refElement).getQualifiedName();
+        if (refElement instanceof PsiClass psiClass) {
+          String qName = psiClass.getQualifiedName();
           if (qName == null || hasPackage(qName, thisPackageName)) continue;
           names.add(Pair.create(qName, Boolean.FALSE));
         }

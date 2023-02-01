@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -72,7 +72,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         PsiMethod resolved = (PsiMethod)collidingRef.resolve();
         outerHides.add(new MemberHidesOuterMemberUsageInfo(element, resolved));
       }
-      else if (!(element instanceof PsiMethod)) {
+      else if (!(element instanceof PsiMethod overrider)) {
         final PsiReference ref;
         if (usage instanceof MoveRenameUsageInfo) {
           ref = usage.getReference();
@@ -91,7 +91,6 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         }
       }
       else {
-        PsiMethod overrider = (PsiMethod)element;
         methodAndOverriders.add(overrider);
         containingClasses.add(overrider.getContainingClass());
       }
@@ -138,8 +137,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     if (!(element instanceof PsiReferenceExpression) || ((PsiReferenceExpression)element).getQualifierExpression() != null) return;
     PsiElement elem = ((PsiReferenceExpression)element).resolve();
 
-    if (elem instanceof PsiMethod) {
-      PsiMethod actualMethod = (PsiMethod) elem;
+    if (elem instanceof PsiMethod actualMethod) {
       if (actualMethod instanceof LightRecordMethod || actualMethod instanceof LightRecordCanonicalConstructor) return;
       if (!methodAndOverriders.contains(actualMethod)) {
         PsiClass outerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);

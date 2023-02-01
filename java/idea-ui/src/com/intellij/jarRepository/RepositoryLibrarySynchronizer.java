@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository;
 
 import com.intellij.ide.JavaUiBundle;
@@ -157,13 +157,9 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
 
   @NotNull
   public static Set<Library> collectLibrariesToSync(@NotNull Project project) {
-    return collectLibraries(project, library -> {
-      if (library instanceof LibraryEx) {
-        final LibraryEx libraryEx = (LibraryEx)library;
-        return libraryEx.getProperties() instanceof RepositoryLibraryProperties &&
-               isLibraryNeedToBeReloaded(libraryEx, (RepositoryLibraryProperties)libraryEx.getProperties());
-      }
-      return false;
-    });
+    return collectLibraries(
+      project,
+      library -> library instanceof LibraryEx libraryEx && libraryEx.getProperties() instanceof RepositoryLibraryProperties properties &&
+                 isLibraryNeedToBeReloaded(libraryEx, properties));
   }
 }

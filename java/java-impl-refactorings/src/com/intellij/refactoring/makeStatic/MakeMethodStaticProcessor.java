@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -271,8 +271,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     else if (element instanceof PsiSuperExpression && mySettings.isMakeClassParameter()) {
       element.replace(factory.createExpressionFromText(mySettings.getClassParameterName(), null));
     }
-    else if (element instanceof PsiNewExpression && mySettings.isMakeClassParameter()) {
-      final PsiNewExpression newExpression = ((PsiNewExpression)element);
+    else if (element instanceof PsiNewExpression newExpression && mySettings.isMakeClassParameter()) {
       LOG.assertTrue(newExpression.getQualifier() == null);
       final String newText = mySettings.getClassParameterName() + "." + newExpression.getText();
       final PsiExpression expr = factory.createExpressionFromText(newText, null);
@@ -284,24 +283,23 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
   protected void changeExternalUsage(UsageInfo usage, PsiElementFactory factory)
           throws IncorrectOperationException {
     final PsiElement element = usage.getElement();
-    if (!(element instanceof PsiReferenceExpression)) return;
+    if (!(element instanceof PsiReferenceExpression ref)) return;
 
-    PsiReferenceExpression methodRef = (PsiReferenceExpression) element;
-    if (methodRef instanceof PsiMethodReferenceExpression && needLambdaConversion((PsiMethodReferenceExpression)methodRef)) {
-      PsiMethodCallExpression expression = getMethodCallExpression((PsiMethodReferenceExpression)methodRef);
+    if (ref instanceof PsiMethodReferenceExpression methodRef && needLambdaConversion(methodRef)) {
+      PsiMethodCallExpression expression = getMethodCallExpression(methodRef);
       if (expression == null) return;
-      methodRef = expression.getMethodExpression();
+      ref = expression.getMethodExpression();
     }
-    PsiElement parent = methodRef.getParent();
+    PsiElement parent = ref.getParent();
 
     PsiExpression instanceRef;
 
-    instanceRef = methodRef.getQualifierExpression();
+    instanceRef = ref.getQualifierExpression();
     PsiElement newQualifier;
 
     final PsiClass memberClass = myMember.getContainingClass();
     if (instanceRef == null || instanceRef instanceof PsiSuperExpression) {
-      PsiClass contextClass = PsiTreeUtil.getParentOfType(methodRef, PsiClass.class);
+      PsiClass contextClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
       if (!InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
         instanceRef = factory.createExpressionFromText(memberClass.getQualifiedName() + ".this", null);
       } else {
@@ -368,7 +366,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     }
 
     if (newQualifier != null) {
-      methodRef.getQualifierExpression().replace(newQualifier);
+      ref.getQualifierExpression().replace(newQualifier);
     }
   }
 

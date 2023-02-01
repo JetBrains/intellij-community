@@ -31,11 +31,10 @@ public class JavaSimpleGetterProvider implements SimplePropertyGetterProvider {
     }
 
     final PsiExpression value = ((PsiReturnStatement)statement).getReturnValue();
-    if (!(value instanceof PsiReferenceExpression)) {
+    if (!(value instanceof PsiReferenceExpression reference)) {
       return false;
     }
 
-    final PsiReferenceExpression reference = (PsiReferenceExpression)value;
     final PsiExpression qualifier = reference.getQualifierExpression();
     if (qualifier != null && !"this".equals(qualifier.getText())) {
       return false;

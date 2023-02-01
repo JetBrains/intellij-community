@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -20,10 +20,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
     PsiElement resolved = reference.resolve();
 
-    if (!(resolved instanceof PsiModifierListOwner)) return;
-
-    PsiModifierListOwner owner = (PsiModifierListOwner)resolved;
-
+    if (!(resolved instanceof PsiModifierListOwner owner)) return;
     checkPreviewFeature(reference, reference, owner);
   }
 
@@ -31,17 +28,13 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     PsiElement resolved = expression.resolve();
 
-    if (!(resolved instanceof PsiModifierListOwner)) return;
-
-    PsiModifierListOwner owner = (PsiModifierListOwner)resolved;
-
+    if (!(resolved instanceof PsiModifierListOwner owner)) return;
     checkPreviewFeature(expression, expression, owner);
   }
 
   @Override
   public void visitModuleStatement(@NotNull PsiStatement statement) {
-    if (statement instanceof PsiRequiresStatement) {
-      PsiRequiresStatement requiresStatement = (PsiRequiresStatement)statement;
+    if (statement instanceof PsiRequiresStatement requiresStatement) {
       PsiJavaModule module = requiresStatement.resolve();
       if (module == null) return;
 
@@ -52,15 +45,13 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
       String description = JavaBundle.message("inspection.preview.feature.0.is.preview.api.message", module.getName());
       registerProblem(requiresStatement.getReferenceElement(), description, feature, annotation);
     }
-    else if (statement instanceof PsiProvidesStatement) {
-      PsiProvidesStatement providesStatement = (PsiProvidesStatement)statement;
+    else if (statement instanceof PsiProvidesStatement providesStatement) {
       PsiReferenceList list = providesStatement.getImplementationList();
       if (list == null) return;
 
       for (PsiJavaCodeReferenceElement element : list.getReferenceElements()) {
         PsiElement resolved = element.resolve();
-        if (resolved instanceof PsiClass) {
-          PsiClass psiClass = (PsiClass)resolved;
+        if (resolved instanceof PsiClass psiClass) {
           PsiAnnotation annotation = getPreviewFeatureAnnotation(psiClass);
           HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);
           if (feature == null) continue;
@@ -99,15 +90,13 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
     if (isParticipating(reference, owner)) return;
 
     @NotNull String name;
-    if (owner instanceof PsiMember) {
-      PsiMember member = (PsiMember)owner;
+    if (owner instanceof PsiMember member) {
       PsiClass className = member.getContainingClass();
       String methodName = member.getName();
-      if (member instanceof PsiClass) {
-        PsiClass psiClass = (PsiClass)member;
+      if (member instanceof PsiClass psiClass) {
         name = Objects.requireNonNull(psiClass.getQualifiedName());
       }
-      else if (member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
+      else if (member instanceof PsiMethod method && method.isConstructor()) {
         name = className != null && className.getQualifiedName() != null ? className.getQualifiedName() : reference.getQualifiedName();
       }
       else {

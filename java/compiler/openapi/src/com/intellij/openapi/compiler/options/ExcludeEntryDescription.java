@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.compiler.options;
 
@@ -71,10 +71,9 @@ public class ExcludeEntryDescription implements Disposable {
   }
 
   public boolean equals(Object obj) {
-    if(!(obj instanceof ExcludeEntryDescription)) {
+    if(!(obj instanceof ExcludeEntryDescription entryDescription)) {
       return false;
     }
-    ExcludeEntryDescription entryDescription = (ExcludeEntryDescription)obj;
     if(entryDescription.myIsFile != myIsFile) {
       return false;
     }

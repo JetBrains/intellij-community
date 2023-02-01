@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.scratch;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -54,10 +54,9 @@ final class JavaScratchCompilationSupport implements CompileTask {
     final Project project = context.getProject();
 
     final RunConfiguration configuration = CompileStepBeforeRun.getRunConfiguration(context);
-    if (!(configuration instanceof JavaScratchConfiguration)) {
+    if (!(configuration instanceof JavaScratchConfiguration scratchConfig)) {
       return true;
     }
-    final JavaScratchConfiguration scratchConfig = (JavaScratchConfiguration)configuration;
     final String scratchUrl = scratchConfig.getScratchFileUrl();
     if (scratchUrl == null) {
       context.addMessage(CompilerMessageCategory.ERROR, ExecutionBundle.message("run.java.scratch.associated.file.not.specified"), null, -1, -1);

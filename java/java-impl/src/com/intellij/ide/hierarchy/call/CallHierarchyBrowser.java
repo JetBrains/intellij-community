@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.CallHierarchyBrowserBase;
@@ -48,8 +48,7 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
 
   @Override
   protected PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
-    if (descriptor instanceof CallHierarchyNodeDescriptor) {
-      CallHierarchyNodeDescriptor nodeDescriptor = (CallHierarchyNodeDescriptor)descriptor;
+    if (descriptor instanceof CallHierarchyNodeDescriptor nodeDescriptor) {
       return nodeDescriptor.getEnclosingElement();
     }
     return null;
@@ -57,8 +56,7 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
 
   @Override
   protected PsiElement getOpenFileElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
-    if (descriptor instanceof CallHierarchyNodeDescriptor) {
-      CallHierarchyNodeDescriptor nodeDescriptor = (CallHierarchyNodeDescriptor)descriptor;
+    if (descriptor instanceof CallHierarchyNodeDescriptor nodeDescriptor) {
       return nodeDescriptor.getTargetElement();
     }
     return null;

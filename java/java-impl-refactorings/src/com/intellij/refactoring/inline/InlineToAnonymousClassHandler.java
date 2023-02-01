@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -48,17 +48,15 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   @Override
   public boolean canInlineElement(final PsiElement element) {
     if (element.getLanguage() != JavaLanguage.INSTANCE) return false;
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
       if (method.isConstructor() && !InlineUtil.isChainingConstructor(method)) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) return false;
         return !hasInheritors(containingClass);
       }
     }
-    if (!(element instanceof PsiClass)) return false;
+    if (!(element instanceof PsiClass psiClass)) return false;
     if (element instanceof PsiAnonymousClass) return false;
-    PsiClass psiClass = (PsiClass)element;
     if (hasInheritors(psiClass)) return false;
     boolean hasMembers = PsiTreeUtil.findChildOfType(psiClass, PsiMember.class) != null;
     return !hasMembers || !SealedUtils.hasSealedParent(psiClass);
@@ -324,8 +322,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       if (parentElement instanceof PsiThisExpression) {
         return JavaBundle.message("class.cannot.be.inlined.because.it.is.used.as.a.this.qualifier");
       }
-      if (parentElement instanceof PsiNewExpression) {
-        final PsiNewExpression newExpression = (PsiNewExpression)parentElement;
+      if (parentElement instanceof PsiNewExpression newExpression) {
         final PsiMethod[] constructors = aClass.getConstructors();
         if (constructors.length == 0) {
           PsiExpressionList newArgumentList = newExpression.getArgumentList();
@@ -365,8 +362,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
         while (qualifier instanceof PsiParenthesizedExpression) {
           qualifier = ((PsiParenthesizedExpression) qualifier).getExpression();
         }
-        if (qualifier instanceof PsiNewExpression) {
-          PsiNewExpression newExpr = (PsiNewExpression) qualifier;
+        if (qualifier instanceof PsiNewExpression newExpr) {
           PsiJavaCodeReferenceElement classRef = newExpr.getClassReference();
           if (classRef != null && myPsiElement.isEquivalentTo(classRef.resolve())) {
             return true;

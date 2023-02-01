@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.build.*;
@@ -161,8 +161,7 @@ public class BuildOutputService implements BuildViewService {
     else if (virtualFile != null) {
       File file = virtualToIoFile(virtualFile);
       FilePosition filePosition;
-      if (navigatable instanceof OpenFileDescriptor) {
-        OpenFileDescriptor fileDescriptor = (OpenFileDescriptor)navigatable;
+      if (navigatable instanceof OpenFileDescriptor fileDescriptor) {
         int column = fileDescriptor.getColumn();
         int line = fileDescriptor.getLine();
         filePosition = new FilePosition(file, line, column);

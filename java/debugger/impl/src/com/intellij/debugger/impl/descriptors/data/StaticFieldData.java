@@ -19,10 +19,9 @@ public final class StaticFieldData extends DescriptorData<FieldDescriptorImpl> {
   }
 
   public boolean equals(Object object) {
-    if (!(object instanceof StaticFieldData)) {
+    if (!(object instanceof StaticFieldData fieldData)) {
       return false;
     }
-    final StaticFieldData fieldData = (StaticFieldData)object;
     return (fieldData.myField == myField);
   }
 

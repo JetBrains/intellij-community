@@ -217,8 +217,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
   @Override
   public void invokeCommand(final DebuggerCommand command) {
-    if (command instanceof SuspendContextCommand) {
-      SuspendContextCommand suspendContextCommand = (SuspendContextCommand)command;
+    if (command instanceof SuspendContextCommand suspendContextCommand) {
       schedule(new SuspendContextCommandImpl((SuspendContextImpl)suspendContextCommand.getSuspendContext()) {
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {

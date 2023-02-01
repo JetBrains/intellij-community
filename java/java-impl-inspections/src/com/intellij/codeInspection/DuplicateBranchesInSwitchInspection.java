@@ -200,15 +200,13 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     Branch previousBranch = null;
     Int2ObjectMap<List<Branch>> branchesByHash = new Int2ObjectOpenHashMap<>();
     for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof PsiSwitchLabelStatement) {
-        PsiSwitchLabelStatement switchLabel = (PsiSwitchLabelStatement)child;
+      if (child instanceof PsiSwitchLabelStatement switchLabel) {
         previousBranch = addBranchToMap(branchesByHash, statementList, hasImplicitBreak(switchLabel), comments, previousBranch);
 
         statementList = null;
         comments.addFrom(switchLabel);
       }
-      else if (child instanceof PsiStatement) {
-        PsiStatement statement = (PsiStatement)child;
+      else if (child instanceof PsiStatement statement) {
         if (statementList == null) {
           statementList = new ArrayList<>();
         }

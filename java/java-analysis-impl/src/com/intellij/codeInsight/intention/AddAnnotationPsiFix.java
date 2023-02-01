@@ -156,10 +156,9 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
 
     if (modifierListOwner instanceof PsiParameter && ((PsiParameter)modifierListOwner).getTypeElement() == null) {
       if (modifierListOwner.getParent() instanceof PsiParameterList &&
-          modifierListOwner.getParent().getParent() instanceof PsiLambdaExpression) {
+          modifierListOwner.getParent().getParent() instanceof PsiLambdaExpression lambda) {
         // Lambda parameter without type cannot be annotated. Check if we can specify types
         if (PsiUtil.isLanguageLevel11OrHigher(modifierListOwner)) return true;
-        PsiLambdaExpression lambda = (PsiLambdaExpression)modifierListOwner.getParent().getParent();
         return LambdaUtil.createLambdaParameterListWithFormalTypes(lambda.getFunctionalInterfaceType(), lambda, false) != null;
       }
       return false;

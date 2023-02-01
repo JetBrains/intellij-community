@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -121,8 +121,7 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
   private static void replaceOrAddTypeParameterList(@NotNull PsiElement methodOrClass,
                                                     @Nullable PsiTypeParameterList typeParameterList,
                                                     @NotNull PsiTypeParameterList newTypeParameterList) {
-    if (methodOrClass instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)methodOrClass;
+    if (methodOrClass instanceof PsiMethod method) {
       if (typeParameterList == null) {
         PsiTypeElement returnTypeElement = method.getReturnTypeElement();
         if (returnTypeElement == null) return;

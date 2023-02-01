@@ -265,14 +265,13 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private void addAnnotationRenderers(List<NodeRenderer> renderers, Project project) {
     try {
       visitAnnotatedElements(Debug.Renderer.class.getName().replace("$", "."), project, (e, annotation) -> {
-        if (e instanceof PsiClass) {
+        if (e instanceof PsiClass cls) {
           String text = getAttributeValue(annotation, "text");
           LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text);
           String childrenArray = getAttributeValue(annotation, "childrenArray");
           String isLeaf = getAttributeValue(annotation, "hasChildren");
           ExpressionChildrenRenderer childrenRenderer =
             StringUtil.isEmpty(childrenArray) ? null : createExpressionArrayChildrenRenderer(childrenArray, isLeaf, myArrayRenderer);
-          PsiClass cls = ((PsiClass)e);
           CompoundReferenceRenderer renderer = createCompoundReferenceRenderer(
             cls.getQualifiedName(), cls.getQualifiedName(), labelRenderer, childrenRenderer);
           renderer.setEnabled(true);

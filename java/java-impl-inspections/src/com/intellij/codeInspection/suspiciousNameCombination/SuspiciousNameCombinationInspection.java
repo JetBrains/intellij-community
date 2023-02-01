@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.suspiciousNameCombination;
 
@@ -219,8 +219,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     @Override public void visitVariable(@NotNull PsiVariable variable) {
       if (variable.hasInitializer()) {
         PsiExpression expr = variable.getInitializer();
-        if (expr instanceof PsiReferenceExpression) {
-          PsiReferenceExpression refExpr = (PsiReferenceExpression) expr;
+        if (expr instanceof PsiReferenceExpression refExpr) {
           PsiIdentifier nameIdentifier = variable.getNameIdentifier();
           checkCombination(nameIdentifier != null ? nameIdentifier : variable, variable.getName(), refExpr.getReferenceName(), "suspicious.name.assignment");
         }
@@ -230,9 +229,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     @Override public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       PsiExpression lhs = expression.getLExpression();
       PsiExpression rhs = expression.getRExpression();
-      if (lhs instanceof PsiReferenceExpression && rhs instanceof PsiReferenceExpression) {
-        PsiReferenceExpression lhsExpr = (PsiReferenceExpression) lhs;
-        PsiReferenceExpression rhsExpr = (PsiReferenceExpression) rhs;
+      if (lhs instanceof PsiReferenceExpression lhsExpr && rhs instanceof PsiReferenceExpression rhsExpr) {
         checkCombination(lhsExpr, lhsExpr.getReferenceName(), rhsExpr.getReferenceName(), "suspicious.name.assignment");
       }
     }

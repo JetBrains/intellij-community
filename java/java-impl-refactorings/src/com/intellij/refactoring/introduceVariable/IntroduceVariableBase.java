@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -671,7 +671,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       if (containerParent instanceof PsiMethod) {
         PsiClass containingClass = ((PsiMethod)containerParent).getContainingClass();
         if (containingClass == null || !PsiUtil.isLocalOrAnonymousClass(containingClass)) break;
-        if (vars.stream().anyMatch(variable -> PsiTreeUtil.isAncestor(containingClass, variable, true))) {
+        if (ContainerUtil.exists(vars, variable -> PsiTreeUtil.isAncestor(containingClass, variable, true))) {
           break;
         }
       }
@@ -681,11 +681,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           break;
         }
       }
-      if (containerParent instanceof PsiForStatement) {
-        PsiForStatement forStatement = (PsiForStatement)containerParent;
-        if (vars.stream().anyMatch(variable -> PsiTreeUtil.isAncestor(forStatement.getInitialization(), variable, true))) {
-          break;
-        }
+      if (containerParent instanceof PsiForStatement forStatement &&
+          ContainerUtil.exists(vars, variable -> PsiTreeUtil.isAncestor(forStatement.getInitialization(), variable, true))) {
+        break;
       }
       containerParent = containerParent.getParent();
       if (containerParent instanceof PsiCodeBlock) {
@@ -735,8 +733,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         }
       }
     }
-    else if (initializer instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)initializer;
+    else if (initializer instanceof PsiNewExpression newExpression) {
       if (newExpression.getArrayInitializer() != null) {
         if (inDeclaration) {
           return newExpression.getArrayInitializer();

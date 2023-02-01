@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.makeStatic;
 
@@ -55,9 +55,8 @@ public class MakeStaticHandler implements RefactoringActionHandler, ContextAware
 
   @Override
   public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
-    if(elements.length != 1 || !(elements[0] instanceof PsiTypeParameterListOwner)) return;
+    if(elements.length != 1 || !(elements[0] instanceof PsiTypeParameterListOwner member)) return;
 
-    final PsiTypeParameterListOwner member = (PsiTypeParameterListOwner)elements[0];
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, member)) return;
 
     String error = validateTarget(member);

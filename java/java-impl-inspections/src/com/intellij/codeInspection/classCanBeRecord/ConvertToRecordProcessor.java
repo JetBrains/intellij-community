@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInspection.RedundantRecordConstructorInspection;
@@ -194,8 +194,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       else if (usage instanceof FieldUsageInfo) {
         conflictingFields.add(((FieldUsageInfo)usage).myField);
       }
-      else if (usage instanceof RenameMethodUsageInfo) {
-        RenameMethodUsageInfo renameMethodInfo = (RenameMethodUsageInfo)usage;
+      else if (usage instanceof RenameMethodUsageInfo renameMethodInfo) {
         RenamePsiElementProcessor renameMethodProcessor = RenamePsiElementProcessor.forElement(renameMethodInfo.myMethod);
         renameMethodProcessor.findExistingNameConflicts(renameMethodInfo.myMethod, renameMethodInfo.myNewName, conflicts, myAllRenames);
       }
@@ -238,11 +237,10 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
           classIdentifier = null;
         }
       }
-      else if (nextElement instanceof PsiModifierList) {
-        recordBuilder.addModifierList((PsiModifierList)nextElement);
+      else if (nextElement instanceof PsiModifierList modifierList) {
+        recordBuilder.addModifierList(modifierList);
       }
-      else if (nextElement instanceof PsiField) {
-        PsiField psiField = (PsiField)nextElement;
+      else if (nextElement instanceof PsiField psiField) {
         psiField.normalizeDeclaration();
         if (fieldAccessors.containsKey(psiField)) {
           nextElement = PsiTreeUtil.skipWhitespacesForward(nextElement);

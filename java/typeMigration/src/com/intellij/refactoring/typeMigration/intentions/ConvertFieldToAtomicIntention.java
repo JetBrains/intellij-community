@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -231,11 +231,8 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
 
     @Override
     PsiVariable getVariable(PsiElement element) {
-      if(myContext instanceof PsiReferenceExpression && myContext.isValid()) {
-        PsiReferenceExpression ref = (PsiReferenceExpression)myContext;
-        if(PsiUtil.isAccessedForWriting(ref)) {
-          return ObjectUtils.tryCast(ref.resolve(), PsiLocalVariable.class);
-        }
+      if (myContext instanceof PsiReferenceExpression ref && myContext.isValid() && PsiUtil.isAccessedForWriting(ref)) {
+        return ObjectUtils.tryCast(ref.resolve(), PsiLocalVariable.class);
       }
       return null;
     }

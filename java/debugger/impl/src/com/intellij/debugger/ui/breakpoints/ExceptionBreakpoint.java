@@ -157,8 +157,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
   public String getEventMessage(LocatableEvent event) {
     String exceptionName = (getQualifiedName() != null) ? getQualifiedName() : CommonClassNames.JAVA_LANG_THROWABLE;
     String threadName = null;
-    if (event instanceof ExceptionEvent) {
-      ExceptionEvent exceptionEvent = (ExceptionEvent)event;
+    if (event instanceof ExceptionEvent exceptionEvent) {
       try {
         exceptionName = exceptionEvent.exception().type().name();
         threadName = exceptionEvent.thread().name();

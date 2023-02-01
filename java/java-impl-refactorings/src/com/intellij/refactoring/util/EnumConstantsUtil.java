@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.util;
 
@@ -49,8 +49,7 @@ public final class EnumConstantsUtil {
       final PsiCodeBlock body = switchStatement.getBody();
       if (body != null) {
         for (PsiStatement statement : body.getStatements()) {
-          if (statement instanceof PsiSwitchLabelStatement) {
-            final PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)statement;
+          if (statement instanceof PsiSwitchLabelStatement labelStatement) {
             final Object caseValue = evaluationHelper.computeConstantExpression(labelStatement.getCaseValue());
             if (caseValue != null && !enumValues.contains(caseValue)) return statement;
           }

@@ -98,8 +98,7 @@ public final class PsiTypeLookupItem extends LookupItem implements TypedLookupIt
   @Override
   public void handleInsert(@NotNull InsertionContext context) {
     SmartPsiElementPointer<PsiElement> pointer = null;
-    if (getObject() instanceof PsiElement) {
-      PsiElement psiElement = (PsiElement)getObject();
+    if (getObject() instanceof PsiElement psiElement) {
       pointer = SmartPointerManager.getInstance(context.getProject()).createSmartPsiElementPointer(psiElement);
     }
     myImportFixer.handleInsert(context, this);
@@ -154,8 +153,7 @@ public final class PsiTypeLookupItem extends LookupItem implements TypedLookupIt
       return "<>";
     }
 
-    if (getObject() instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)getObject();
+    if (getObject() instanceof PsiClass psiClass) {
       PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper();
       PsiSubstitutor substitutor = getSubstitutor();
       StringBuilder builder = new StringBuilder();

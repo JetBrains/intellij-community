@@ -977,8 +977,7 @@ public final class HighlightMethodUtil {
     MethodCandidateInfo methodCandidate1 = null;
     MethodCandidateInfo methodCandidate2 = null;
     for (JavaResolveResult result : resolveResults) {
-      if (!(result instanceof MethodCandidateInfo)) continue;
-      MethodCandidateInfo candidate = (MethodCandidateInfo)result;
+      if (!(result instanceof MethodCandidateInfo candidate)) continue;
       if (candidate.isApplicable() && !candidate.getElement().isConstructor()) {
         if (methodCandidate1 == null) {
           methodCandidate1 = candidate;
@@ -995,8 +994,7 @@ public final class HighlightMethodUtil {
   private static MethodCandidateInfo @NotNull [] toMethodCandidates(JavaResolveResult @NotNull [] resolveResults) {
     List<MethodCandidateInfo> candidateList = new ArrayList<>(resolveResults.length);
     for (JavaResolveResult result : resolveResults) {
-      if (!(result instanceof MethodCandidateInfo)) continue;
-      MethodCandidateInfo candidate = (MethodCandidateInfo)result;
+      if (!(result instanceof MethodCandidateInfo candidate)) continue;
       if (candidate.isAccessible()) candidateList.add(candidate);
     }
     return candidateList.toArray(new MethodCandidateInfo[0]);
@@ -1767,8 +1765,8 @@ public final class HighlightMethodUtil {
                                             PsiElement parent, 
                                             HighlightInfoHolder holder, 
                                             JavaSdkVersion version) {
-    if (resolved instanceof PsiClass && parent instanceof PsiNewExpression && ((PsiClass)resolved).getConstructors().length > 0) {
-      PsiNewExpression newExpression = (PsiNewExpression)parent;
+    if (resolved instanceof PsiClass psiClass &&
+        parent instanceof PsiNewExpression newExpression && psiClass.getConstructors().length > 0) {
       if (newExpression.resolveMethod() == null && !PsiTreeUtil.findChildrenOfType(newExpression.getArgumentList(), PsiFunctionalExpression.class).isEmpty()) {
         PsiType type = newExpression.getType();
         if (type != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -9,7 +9,9 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -48,8 +50,7 @@ public class JavaReferenceImporter implements ReferenceImporter {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset);
     for (PsiElement element : elements) {
-      if (element instanceof PsiJavaCodeReferenceElement) {
-        PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
+      if (element instanceof PsiJavaCodeReferenceElement ref) {
         ImportClassFix fix = new ImportClassFix(ref);
         if (fix.isAvailable(file.getProject(), null, file)) {
           fix.surviveOnPSIModifications(); // make possible to apply several of these actions at once

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -478,8 +478,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
   @Override
   public boolean isEntryPoint(@NotNull PsiElement element) {
-    if (!(element instanceof PsiModifierListOwner)) return false;
-    PsiModifierListOwner owner = (PsiModifierListOwner)element;
+    if (!(element instanceof PsiModifierListOwner owner)) return false;
     if (!ADDITIONAL_ANNOTATIONS.isEmpty() && ADDITIONAL_ANNOTATIONS.contains(Deprecated.class.getName()) &&
         element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated()) {
       return true;

@@ -11,8 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaRefactoringElementDescriptionProvider implements ElementDescriptionProvider {
   @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
-    if (!(location instanceof RefactoringDescriptionLocation)) return null;
-    RefactoringDescriptionLocation rdLocation = (RefactoringDescriptionLocation) location;
+    if (!(location instanceof RefactoringDescriptionLocation rdLocation)) return null;
 
     if (element instanceof PsiField field) {
       int options = PsiFormatUtilBase.SHOW_NAME;

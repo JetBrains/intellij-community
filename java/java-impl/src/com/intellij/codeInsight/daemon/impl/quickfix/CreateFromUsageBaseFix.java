@@ -141,12 +141,8 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       qualifierExpression = ((PsiParenthesizedExpression) qualifierExpression).getExpression();
     }
 
-    if (qualifierExpression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression referenceExpression = (PsiReferenceExpression) qualifierExpression;
-
-      PsiElement resolvedElement = referenceExpression.resolve();
-
-      return resolvedElement instanceof PsiClass;
+    if (qualifierExpression instanceof PsiReferenceExpression referenceExpression) {
+      return referenceExpression.resolve() instanceof PsiClass;
     } else if (qualifierExpression != null) {
       return false;
     } else if (ref instanceof PsiMethodReferenceExpression) {
@@ -155,7 +151,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     else {
       assert PsiTreeUtil.isAncestor(targetClass, ref, true);
       PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(ref, PsiModifierListOwner.class);
-      if (owner instanceof PsiMethod && ((PsiMethod)owner).isConstructor()) {
+      if (owner instanceof PsiMethod method && method.isConstructor()) {
         //usages inside delegating constructor call
         PsiExpression run = ref;
         while (run.getParent() instanceof PsiExpression) {
@@ -240,20 +236,16 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         }
       }
     }
-    if (element instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)element;
+    if (element instanceof PsiNewExpression newExpression) {
       PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
       if (ref != null) {
         PsiElement refElement = ref.resolve();
-        if (refElement instanceof PsiClass) {
-          psiClass = (PsiClass)refElement;
-        } else {
-          final PsiElement refQualifier = ref.getQualifier();
-          if (refQualifier instanceof PsiJavaCodeReferenceElement) {
-            refElement = ((PsiJavaCodeReferenceElement)refQualifier).resolve();
-            if (refElement instanceof PsiClass) {
-              psiClass = (PsiClass)refElement;
-            }
+        if (refElement instanceof PsiClass cls) {
+          psiClass = cls;
+        } else if (ref.getQualifier() instanceof PsiJavaCodeReferenceElement refQualifier) {
+          refElement = refQualifier.resolve();
+          if (refElement instanceof PsiClass cls) {
+            psiClass = cls;
           }
         }
       }

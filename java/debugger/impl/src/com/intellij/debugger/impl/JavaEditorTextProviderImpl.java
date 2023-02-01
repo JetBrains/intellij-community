@@ -30,8 +30,7 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     else if (element instanceof PsiMethod) {
       result = ((PsiMethod)element).getName() + "()";
     }
-    else if (element instanceof PsiReferenceExpression) {
-      PsiReferenceExpression reference = (PsiReferenceExpression)element;
+    else if (element instanceof PsiReferenceExpression reference) {
       result = qualifyEnumConstant(reference.resolve(), element.getText());
     }
     else {
@@ -171,8 +170,7 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
 
   @Nullable
   private static String qualifyEnumConstant(PsiElement resolved, @Nullable String def) {
-    if (resolved instanceof PsiEnumConstant) {
-      final PsiEnumConstant enumConstant = (PsiEnumConstant)resolved;
+    if (resolved instanceof PsiEnumConstant enumConstant) {
       final PsiClass enumClass = enumConstant.getContainingClass();
       if (enumClass != null) {
         return enumClass.getName() + "." + enumConstant.getName();

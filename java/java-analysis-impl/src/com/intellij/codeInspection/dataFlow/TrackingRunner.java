@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.ibm.icu.text.ListFormatter;
@@ -104,14 +104,11 @@ public final class TrackingRunner extends StandardDataFlowRunner {
         if (states.length == 0) {
           killedStates.add(memState);
         }
-        if (instruction instanceof ExpressionPushingInstruction) {
-          ExpressionPushingInstruction pushing = (ExpressionPushingInstruction)instruction;
-          if (pushing.getDfaAnchor() instanceof JavaExpressionAnchor &&
-              ((JavaExpressionAnchor)pushing.getDfaAnchor()).getExpression() == myExpression) {
-            for (DfaInstructionState state : states) {
-              MemoryStateChange history = ((TrackingDfaMemoryState)state.getMemoryState()).getHistory();
-              myHistoryForContext = myHistoryForContext == null ? history : myHistoryForContext.merge(history);
-            }
+        if (instruction instanceof ExpressionPushingInstruction pushing && pushing.getDfaAnchor() instanceof JavaExpressionAnchor anchor &&
+            anchor.getExpression() == myExpression) {
+          for (DfaInstructionState state : states) {
+            MemoryStateChange history = ((TrackingDfaMemoryState)state.getMemoryState()).getHistory();
+            myHistoryForContext = myHistoryForContext == null ? history : myHistoryForContext.merge(history);
           }
         }
         return states;
@@ -509,11 +506,10 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     @Nullable
     @Override
     DfaProblemType tryMerge(DfaProblemType other) {
-      if (other instanceof RangeDfaProblemType) {
-        RangeDfaProblemType rangeProblem = (RangeDfaProblemType)other;
-        if (myTemplate.equals(rangeProblem.myTemplate) && Objects.equals(myType, rangeProblem.myType)) {
-          return new RangeDfaProblemType(myTemplate, myRangeSet.join(((RangeDfaProblemType)other).myRangeSet), myType);
-        }
+      if (other instanceof RangeDfaProblemType rangeProblem &&
+          myTemplate.equals(rangeProblem.myTemplate) &&
+          Objects.equals(myType, rangeProblem.myType)) {
+        return new RangeDfaProblemType(myTemplate, myRangeSet.join(((RangeDfaProblemType)other).myRangeSet), myType);
       }
       return super.tryMerge(other);
     }
@@ -682,13 +678,10 @@ public final class TrackingRunner extends StandardDataFlowRunner {
               push = previous;
             }
           }
-          if (push.myInstruction instanceof PushValueInstruction) {
-            PushValueInstruction pushValueInstruction = (PushValueInstruction)push.myInstruction;
-            if (pushValueInstruction.getValue().isConst(value) &&
-                pushValueInstruction.getDfaAnchor() instanceof JavaExpressionAnchor &&
-                ((JavaExpressionAnchor)pushValueInstruction.getDfaAnchor()).getExpression() == expression) {
-              push = push.getPrevious();
-            }
+          if (push.myInstruction instanceof PushValueInstruction pushValueInstruction && pushValueInstruction.getValue().isConst(value) &&
+              pushValueInstruction.getDfaAnchor() instanceof JavaExpressionAnchor anchor &&
+              anchor.getExpression() == expression) {
+            push = push.getPrevious();
           }
           if (push != null) {
             push = push.getNonMerge();
@@ -696,20 +689,20 @@ public final class TrackingRunner extends StandardDataFlowRunner {
           if (push != null && push.myInstruction instanceof ConditionalGotoInstruction) {
             push = push.getPrevious();
           }
-          if (push != null && push.myInstruction instanceof ExpressionPushingInstruction) {
-            ExpressionPushingInstruction instruction = (ExpressionPushingInstruction)push.myInstruction;
-            if (instruction.getDfaAnchor() instanceof JavaExpressionAnchor) {
-              PsiExpression operand = ((JavaExpressionAnchor)instruction.getDfaAnchor()).getExpression();
-              if (expression.equals(PsiUtil.skipParenthesizedExprUp(operand.getParent()))) {
-                int i = IntStreamEx.ofIndices(((PsiPolyadicExpression)expression).getOperands(), e -> PsiTreeUtil.isAncestor(e, operand, false))
-                    .findFirst().orElse(-1);
-                if (i >= 0) {
-                  CauseItem cause = new CauseItem(
-                    JavaAnalysisBundle.message("dfa.find.cause.operand.of.boolean.expression.is.the.same", i + 1, and ? 0 : 1, value),
-                    operand);
-                  cause.addChildren(findConstantValueCause(operand, push, value));
-                  return new CauseItem[]{cause};
-                }
+          if (push != null &&
+              push.myInstruction instanceof ExpressionPushingInstruction instruction &&
+              instruction.getDfaAnchor() instanceof JavaExpressionAnchor anchor) {
+            PsiExpression operand = anchor.getExpression();
+            if (expression.equals(PsiUtil.skipParenthesizedExprUp(operand.getParent()))) {
+              int i =
+                IntStreamEx.ofIndices(((PsiPolyadicExpression)expression).getOperands(), e -> PsiTreeUtil.isAncestor(e, operand, false))
+                  .findFirst().orElse(-1);
+              if (i >= 0) {
+                CauseItem cause = new CauseItem(
+                  JavaAnalysisBundle.message("dfa.find.cause.operand.of.boolean.expression.is.the.same", i + 1, and ? 0 : 1, value),
+                  operand);
+                cause.addChildren(findConstantValueCause(operand, push, value));
+                return new CauseItem[]{cause};
               }
             }
           }
@@ -722,8 +715,8 @@ public final class TrackingRunner extends StandardDataFlowRunner {
           operand = PsiUtil.skipParenthesizedExprDown(operand);
           MemoryStateChange push = history.findExpressionPush(operand);
           if (push != null &&
-              ((push.myInstruction instanceof ConditionalGotoInstruction &&
-                ((ConditionalGotoInstruction)push.myInstruction).isTarget(DfTypes.booleanValue(value), history.myInstruction)) ||
+              ((push.myInstruction instanceof ConditionalGotoInstruction gotoInstruction &&
+                gotoInstruction.isTarget(DfTypes.booleanValue(value), history.myInstruction)) ||
                push.myTopOfStack.getDfType().isConst(value))) {
             int andVal = and ? 1 : 0;
             CauseItem cause = new CauseItem(
@@ -738,8 +731,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
         }
       }
     }
-    if (expression instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
+    if (expression instanceof PsiBinaryExpression binOp) {
       RelationType relationType =
         DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
       if (relationType != null) {
@@ -780,8 +772,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
         }
       }
     }
-    if (expression instanceof PsiInstanceOfExpression) {
-      PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
+    if (expression instanceof PsiInstanceOfExpression instanceOfExpression) {
       PsiExpression operand = instanceOfExpression.getOperand();
       MemoryStateChange operandHistory = history.findExpressionPush(operand);
       if (operandHistory != null) {
@@ -1147,8 +1138,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
         return findNullabilityCause(operandPush, nullability);
       }
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) {
       PsiMethod method = call.resolveMethod();
       CauseItem causeItem = fromMemberNullability(nullability, method, JavaElementKind.METHOD,
                                                   call.getMethodExpression().getReferenceNameElement());
@@ -1217,8 +1207,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
           if (rValuePush != null) {
             CauseItem assignmentItem = createAssignmentCause((AssignInstruction)factDef.myInstruction, value);
             MemoryStateChange previous = factDef.getPrevious();
-            if (previous != null && previous.myInstruction instanceof WrapDerivedVariableInstruction) {
-              WrapDerivedVariableInstruction instruction = (WrapDerivedVariableInstruction)previous.myInstruction;
+            if (previous != null && previous.myInstruction instanceof WrapDerivedVariableInstruction instruction) {
               DerivedVariableDescriptor descriptor = instruction.getDerivedVariableDescriptor();
               if (descriptor == SpecialField.UNBOX) {
                 DfaAnchor anchor = instruction.getDfaAnchor();
@@ -1267,19 +1256,15 @@ public final class TrackingRunner extends StandardDataFlowRunner {
           PsiAnnotationOwner annoOwner = info.getAnnotation().getOwner();
           message = JavaAnalysisBundle.message("dfa.find.cause.nullability.inherited.from.container",
                                                memberKind.subject(), name, nullability.getPresentationName());
-          if (annoOwner instanceof PsiModifierList) {
-            PsiElement parent = ((PsiModifierList)annoOwner).getParent();
-            if (parent instanceof PsiClass) {
-              PsiClass aClass = (PsiClass)parent;
-              message = JavaAnalysisBundle.message("dfa.find.cause.nullability.inherited.from.class",
-                                                   memberKind.subject(), name, aClass.getName(), nullability.getPresentationName());
-              if ("package-info".equals(aClass.getName())) {
-                PsiFile file = aClass.getContainingFile();
-                if (file instanceof PsiJavaFile) {
-                  message = JavaAnalysisBundle.message("dfa.find.cause.nullability.inherited.from.package",
-                                                       memberKind.subject(), name, ((PsiJavaFile)file).getPackageName(),
-                                                       nullability.getPresentationName());
-                }
+          if (annoOwner instanceof PsiModifierList modifierList && modifierList.getParent() instanceof PsiClass aClass) {
+            message = JavaAnalysisBundle.message("dfa.find.cause.nullability.inherited.from.class",
+                                                 memberKind.subject(), name, aClass.getName(), nullability.getPresentationName());
+            if ("package-info".equals(aClass.getName())) {
+              PsiFile file = aClass.getContainingFile();
+              if (file instanceof PsiJavaFile) {
+                message = JavaAnalysisBundle.message("dfa.find.cause.nullability.inherited.from.package",
+                                                     memberKind.subject(), name, ((PsiJavaFile)file).getPackageName(),
+                                                     nullability.getPresentationName());
               }
             }
           }
@@ -1451,10 +1436,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     }
     CauseItem causeItem = new CauseItem(message, getCallAnchor(call));
     for (ContractValue contractValue : conditions) {
-      if (!(contractValue instanceof ContractValue.Condition)) {
+      if (!(contractValue instanceof ContractValue.Condition condition)) {
         continue;
       }
-      ContractValue.Condition condition = (ContractValue.Condition)contractValue;
       ContractValue leftVal = condition.getLeft();
       ContractValue rightVal = condition.getRight();
       RelationType type = condition.getRelationType();
@@ -1512,8 +1496,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       if (expression instanceof PsiLiteralExpression) {
         return null; // Literal range is quite evident
       }
-      if (expression instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      if (expression instanceof PsiMethodCallExpression call) {
         PsiMethod method = call.resolveMethod();
         if (method != null) {
           LongRangeSet fromAnnotation = JvmPsiRangeSetUtil.fromPsiElement(method);
@@ -1548,9 +1531,8 @@ public final class TrackingRunner extends StandardDataFlowRunner {
         return null; // Range is any value of given type: no need to explain (except narrowing cast)
       }
       if (PsiTypes.longType().equals(type) || PsiTypes.intType().equals(type)) {
-        if (expression instanceof PsiBinaryExpression) {
+        if (expression instanceof PsiBinaryExpression binOp) {
           LongRangeType lrType = PsiTypes.longType().equals(type) ? LongRangeType.INT64 : LongRangeType.INT32;
-          PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
           PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
           PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
           MemoryStateChange leftPush = factUse.findExpressionPush(left);

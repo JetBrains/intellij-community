@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
@@ -65,8 +65,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     if (from != null && to != null && !canConvert(from, to, ruleFromClass(), ruleToClass())) {
       return null;
     }
-    if (member instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)member;
+    if (member instanceof PsiMethod method) {
       final String methodName = method.getName();
       final PsiClass aClass = method.getContainingClass();
       if (isValidMethodQualifierToConvert(aClass)) {

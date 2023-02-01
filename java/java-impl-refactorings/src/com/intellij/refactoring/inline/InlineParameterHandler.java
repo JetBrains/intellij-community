@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -53,11 +53,10 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
   public void inlineElement(final Project project, final Editor editor, @NotNull PsiElement psiElement) {
     final PsiParameter psiParameter = (PsiParameter) psiElement;
     final PsiParameterList parameterList = (PsiParameterList) psiParameter.getParent();
-    if (!(parameterList.getParent() instanceof PsiMethod)) {
+    if (!(parameterList.getParent() instanceof PsiMethod method)) {
       return;
     }
     final int index = parameterList.getParameterIndex(psiParameter);
-    final PsiMethod method = (PsiMethod) parameterList.getParent();
 
     String errorMessage = getCannotInlineMessage(psiParameter, method);
     if (errorMessage != null) {
@@ -76,8 +75,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       result[0] = ReferencesSearch.search(method).forEach(psiReference -> {
         PsiElement element = psiReference.getElement();
         final PsiElement parent = element.getParent();
-        if (parent instanceof PsiCallExpression) {
-          final PsiCallExpression methodCall = (PsiCallExpression)parent;
+        if (parent instanceof PsiCallExpression methodCall) {
           occurrences.add(psiReference);
           containingFiles.add(element.getContainingFile());
           final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
@@ -217,14 +215,10 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
 
   @Nullable
   private static PsiField getReferencedFinalField(final PsiExpression argument) {
-    if (argument instanceof PsiReferenceExpression) {
-      final PsiElement element = ((PsiReferenceExpression)argument).resolve();
-      if (element instanceof PsiField) {
-        final PsiField field = (PsiField)element;
-        final PsiModifierList modifierList = field.getModifierList();
-        if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.FINAL)) {
-          return field;
-        }
+    if (argument instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiField field) {
+      final PsiModifierList modifierList = field.getModifierList();
+      if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.FINAL)) {
+        return field;
       }
     }
     return null;

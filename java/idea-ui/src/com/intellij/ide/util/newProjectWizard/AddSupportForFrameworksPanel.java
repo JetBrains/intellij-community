@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.newProjectWizard;
 
@@ -82,9 +82,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
     myFrameworksTree = new FrameworksTree(model) {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
-        if (!(node instanceof FrameworkSupportNode)) return;
+        if (!(node instanceof FrameworkSupportNode frameworkSupportNode)) return;
 
-        final FrameworkSupportNode frameworkSupportNode = (FrameworkSupportNode)node;
         if (frameworkSupportNode == getSelectedNode()) {
           updateOptionsPanel();
         }
@@ -200,8 +199,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private void updateOptionsPanel() {
     final FrameworkSupportNodeBase node = getSelectedNode();
-    if (node instanceof FrameworkSupportNode) {
-      FrameworkSupportNode frameworkSupportNode = (FrameworkSupportNode)node;
+    if (node instanceof FrameworkSupportNode frameworkSupportNode) {
       initializeOptionsPanel(frameworkSupportNode, true);
       showCard(frameworkSupportNode.getId());
       UIUtil.setEnabled(myOptionsPanel, frameworkSupportNode.isChecked(), true);

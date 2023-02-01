@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,8 +30,7 @@ public class JavaElementSignatureProvider extends AbstractElementSignatureProvid
         return null;
       }
     }
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
       PsiElement parent = method.getParent();
 
       StringBuilder buffer = new StringBuilder();
@@ -52,8 +51,7 @@ public class JavaElementSignatureProvider extends AbstractElementSignatureProvid
 
       return buffer.toString();
     }
-    if (element instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)element;
+    if (element instanceof PsiClass aClass) {
       PsiElement parent = aClass.getParent();
 
       StringBuilder buffer = new StringBuilder();
@@ -81,8 +79,7 @@ public class JavaElementSignatureProvider extends AbstractElementSignatureProvid
 
       return buffer.toString();
     }
-    if (element instanceof PsiClassInitializer) {
-      PsiClassInitializer initializer = (PsiClassInitializer)element;
+    if (element instanceof PsiClassInitializer initializer) {
       PsiElement parent = initializer.getParent();
 
       StringBuilder buffer = new StringBuilder();
@@ -108,8 +105,7 @@ public class JavaElementSignatureProvider extends AbstractElementSignatureProvid
 
       return buffer.toString();
     }
-    if (element instanceof PsiField) { // needed for doc-comments only
-      PsiField field = (PsiField)element;
+    if (element instanceof PsiField field) { // needed for doc-comments only
       PsiElement parent = field.getParent();
 
       StringBuilder buffer = new StringBuilder();

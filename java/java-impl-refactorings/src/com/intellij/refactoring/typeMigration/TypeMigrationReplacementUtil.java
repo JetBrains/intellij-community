@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
@@ -37,8 +37,7 @@ public final class TypeMigrationReplacementUtil {
       } catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-    } else if (conversion instanceof String) {
-      String replacement = (String)conversion;
+    } else if (conversion instanceof String replacement) {
       try {
         return expression.replace(
             JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, expression));
@@ -47,8 +46,8 @@ public final class TypeMigrationReplacementUtil {
         LOG.error(e);
       }
     }
-    else if (expression instanceof PsiReferenceExpression) {
-      final PsiElement resolved = ((PsiReferenceExpression)expression).resolve();
+    else if (expression instanceof PsiReferenceExpression reference) {
+      final PsiElement resolved = reference.resolve();
       final PsiMember replacer = ((PsiMember)conversion);
       final String method = ((PsiMember)resolved).getName();
       final String ref = expression.getText();

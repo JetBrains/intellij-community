@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -53,12 +53,10 @@ public final class OriginsAnalysis {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof InsnLocation)) return false;
-      InsnLocation insnLocation = (InsnLocation)o;
-      if (local != insnLocation.local) return false;
-      if (insnIndex != insnLocation.insnIndex) return false;
-      if (slot != insnLocation.slot) return false;
-      return true;
+      return o instanceof InsnLocation insnLocation &&
+             local == insnLocation.local &&
+             insnIndex == insnLocation.insnIndex &&
+             slot == insnLocation.slot;
     }
 
     @Override
@@ -145,15 +143,13 @@ public final class OriginsAnalysis {
     preFrame.execute(insn, ourInterpreter);
     if (location.local) {
       SourceValue preVal = preFrame.getLocal(location.slot);
-      if (preVal instanceof PreValue) {
-        PreValue val = (PreValue)preVal;
+      if (preVal instanceof PreValue val) {
         return new Location(val.local, val.slot);
       }
     }
     else {
       SourceValue preVal = preFrame.getStack(location.slot);
-      if (preVal instanceof PreValue) {
-        PreValue val = (PreValue)preVal;
+      if (preVal instanceof PreValue val) {
         return new Location(val.local, val.slot);
       }
     }

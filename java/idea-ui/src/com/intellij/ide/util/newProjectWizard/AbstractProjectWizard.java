@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -121,8 +121,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   public @Nullable ProjectBuilder getBuilder(Project project) {
     final ProjectBuilder builder = getProjectBuilder();
-    if (builder instanceof ModuleBuilder) {
-      final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
+    if (builder instanceof ModuleBuilder moduleBuilder) {
       if (moduleBuilder.getName() == null) {
         moduleBuilder.setName(getProjectName());
       }

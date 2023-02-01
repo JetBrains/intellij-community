@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -139,8 +139,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       psiMethods.add((PsiMethod)element);
       return psiMethods;
     }
-    if (element instanceof PsiParameter param && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) ((PsiParameter) element).getDeclarationScope();
+    if (element instanceof PsiParameter param && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod method) {
       Set<PsiElement> parametersToDelete = new HashSet<>();
       parametersToDelete.add(element);
       int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter) element);
@@ -232,8 +231,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull PsiElement element,
                                                               @NotNull Collection<? extends PsiElement> allElementsToDelete,
                                                               boolean askUser) {
-    if (element instanceof PsiField) {
-      PsiField field = (PsiField)element;
+    if (element instanceof PsiField field) {
       Project project = element.getProject();
       String propertyName = JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
 
@@ -323,8 +321,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
     else if (element instanceof PsiParameter) {
       PsiElement scope = ((PsiParameter)element).getDeclarationScope();
-      if (scope instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)scope;
+      if (scope instanceof PsiMethod method) {
         MultiMap<PsiElement, String> conflicts = new MultiMap<>();
         collectMethodConflicts(conflicts, method, (PsiParameter)element);
         return conflicts.values();
@@ -480,8 +477,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     if (element instanceof PsiVariable) {
       ((PsiVariable)element).normalizeDeclaration();
     }
-    if (element instanceof PsiParameter && element.getParent() instanceof PsiParameterList) {
-      PsiParameterList parameterList = (PsiParameterList)element.getParent();
+    if (element instanceof PsiParameter && element.getParent() instanceof PsiParameterList parameterList) {
       PsiMethod method = ObjectUtils.tryCast(parameterList.getParent(), PsiMethod.class);
       if (method != null) {
         PsiAnnotation contract = method.getModifierList().findAnnotation(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
@@ -891,18 +887,12 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       if (!isInsideDeleted.value(reference.getElement())) {
         PsiElement element = reference.getElement();
         PsiElement parent = element.getParent();
-        if (parent instanceof PsiAssignmentExpression && element == ((PsiAssignmentExpression)parent).getLExpression()) {
-          usages.add(new SafeDeleteFieldWriteReference((PsiAssignmentExpression)parent, psiField));
-          PsiExpression rExpression = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getRExpression());
-          if (rExpression instanceof PsiReferenceExpression) {
-            PsiElement resolve = ((PsiReferenceExpression)rExpression).resolve();
-            if (resolve instanceof PsiParameter) {
-              PsiParameter parameter = (PsiParameter)resolve;
-              PsiElement scope = parameter.getDeclarationScope();
-              if (scope instanceof PsiMethod && ((PsiMethod)scope).isConstructor()) {
-                parameters.add(parameter);
-              }
-            }
+        if (parent instanceof PsiAssignmentExpression assignment && element == assignment.getLExpression()) {
+          usages.add(new SafeDeleteFieldWriteReference(assignment, psiField));
+          PsiExpression rExpression = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
+          if (rExpression instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiParameter parameter &&
+              parameter.getDeclarationScope() instanceof PsiMethod method && method.isConstructor()) {
+            parameters.add(parameter);
           }
         }
         else {
@@ -987,8 +977,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       }
 
       boolean isSafeDelete = false;
-      if (element.getParent().getParent() instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)element.getParent().getParent();
+      if (element.getParent().getParent() instanceof PsiMethodCallExpression call) {
         if (JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
           isSafeDelete = true;
         }
@@ -1021,19 +1010,12 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   public static boolean isInside(@NotNull PsiElement place, PsiElement ancestor) {
     if (SafeDeleteProcessor.isInside(place, ancestor)) return true;
-    if (PsiTreeUtil.getParentOfType(place, PsiComment.class, false) != null && ancestor instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)ancestor;
-      if (aClass.getParent() instanceof PsiJavaFile) {
-        PsiJavaFile file = (PsiJavaFile)aClass.getParent();
-        if (PsiTreeUtil.isAncestor(file, place, false)) {
-          if (file.getClasses().length == 1) { // file will be deleted on class deletion
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
+    // file will be deleted on class deletion
+    return PsiTreeUtil.getParentOfType(place, PsiComment.class, false) != null &&
+           ancestor instanceof PsiClass aClass &&
+           aClass.getParent() instanceof PsiJavaFile file &&
+           PsiTreeUtil.isAncestor(file, place, false) &&
+           file.getClasses().length == 1;
   }
 
   public static void collectMethodConflicts(MultiMap<PsiElement, String> conflicts, PsiMethod method, PsiParameter parameter) {

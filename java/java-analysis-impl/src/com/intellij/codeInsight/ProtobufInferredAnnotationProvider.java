@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
@@ -24,8 +24,7 @@ public class ProtobufInferredAnnotationProvider implements InferredAnnotationPro
   }
 
   private static boolean isProtobufGetter(@NotNull PsiModifierListOwner listOwner) {
-    if (!(listOwner instanceof PsiMethod)) return false;
-    PsiMethod method = (PsiMethod)listOwner;
+    if (!(listOwner instanceof PsiMethod method)) return false;
     if (!method.getName().startsWith("get")) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();

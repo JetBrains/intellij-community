@@ -163,8 +163,7 @@ public class DebuggerDfaRunner {
                                                                               @NotNull StackFrameProxyEx proxy) throws EvaluateException {
       Map<Value, List<DfaVariableValue>> myMap = new HashMap<>();
       for (DfaValue dfaValue : factory.getValues().toArray(DfaValue.EMPTY_ARRAY)) {
-        if (dfaValue instanceof DfaVariableValue) {
-          DfaVariableValue dfaVar = (DfaVariableValue)dfaValue;
+        if (dfaValue instanceof DfaVariableValue dfaVar) {
           Value jdiValue = resolveJdiValue(provider, anchor, proxy, dfaVar);
           if (jdiValue != null) {
             myMap.computeIfAbsent(jdiValue, v -> new ArrayList<>()).add(dfaVar);
@@ -308,8 +307,7 @@ public class DebuggerDfaRunner {
           }
         }
       }
-      if (valueInfo instanceof JdiValueInfo.ObjectWithSpecialField) {
-        JdiValueInfo.ObjectWithSpecialField withSpecialField = (JdiValueInfo.ObjectWithSpecialField)valueInfo;
+      if (valueInfo instanceof JdiValueInfo.ObjectWithSpecialField withSpecialField) {
         SpecialField field = withSpecialField.getField();
         JdiValueInfo fieldValue = withSpecialField.getValue();
         DfaVariableValue dfaField = ObjectUtils.tryCast(field.createValue(myFactory, var), DfaVariableValue.class);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.todo.nodes;
 
@@ -33,8 +33,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
 
   @Override
   public PsiElement getSelectedElement(final Object userObject) {
-    if (userObject instanceof TodoPackageNode) {
-      TodoPackageNode descriptor = (TodoPackageNode)userObject;
+    if (userObject instanceof TodoPackageNode descriptor) {
       final PackageElement packageElement = descriptor.getValue();
       return packageElement != null ? packageElement.getPackage() : null;
     }

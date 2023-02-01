@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.codeInsight.Nullability;
@@ -87,8 +87,7 @@ public final class FinishMarker {
       }
       return parent != block;
     }
-    if (!(parent instanceof PsiStatement)) return true;
-    PsiStatement currentContext = (PsiStatement)parent;
+    if (!(parent instanceof PsiStatement currentContext)) return true;
     PsiStatement loopOrSwitch = PsiTreeUtil.getNonStrictParentOfType(currentContext, PsiLoopStatement.class, PsiSwitchStatement.class);
     if (loopOrSwitch != null && PsiTreeUtil.isAncestor(block, loopOrSwitch, true)) {
       currentContext = loopOrSwitch;

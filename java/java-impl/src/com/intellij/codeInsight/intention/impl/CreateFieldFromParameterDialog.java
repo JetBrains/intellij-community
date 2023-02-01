@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -89,8 +89,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
   }
 
   public String getEnteredName() {
-    if (myNameField instanceof JComboBox) {
-      JComboBox combobox = (JComboBox)myNameField;
+    if (myNameField instanceof JComboBox<?> combobox) {
       return (String)combobox.getEditor().getItem();
     }
     return ((JTextField)myNameField).getText();

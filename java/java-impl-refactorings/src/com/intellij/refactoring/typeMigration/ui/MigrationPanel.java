@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
@@ -130,8 +130,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
     final DefaultMutableTreeNode[] migrationNodes = myRootsTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
     if (migrationNodes.length == 0) return;
     final Object userObject = migrationNodes[0].getUserObject();
-    if (userObject instanceof MigrationNode) {
-      final MigrationNode migrationNode = (MigrationNode)userObject;
+    if (userObject instanceof MigrationNode migrationNode) {
       final UsageInfo[] failedUsages = myLabeler.getFailedUsages(migrationNode.getInfo());
       if (failedUsages.length > 0) {
         myConflictsPanel.showUsages(PsiElement.EMPTY_ARRAY, failedUsages);

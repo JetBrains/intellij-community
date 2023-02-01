@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -431,10 +431,9 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                 return false;
               }
               UElement parent = uElement.getUastParent();
-              if (!(parent instanceof UCallExpression)) {
+              if (!(parent instanceof UCallExpression methodCall)) {
                 return false;
               }
-              UCallExpression methodCall = (UCallExpression) parent;
               List<UExpression> arguments = methodCall.getValueArguments();
               if (arguments.size() < paramValues.length) return false;
 

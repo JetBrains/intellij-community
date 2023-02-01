@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.nodes;
 
 import com.intellij.openapi.roots.ui.configuration.artifacts.ComplexElementSubstitutionParameters;
@@ -40,8 +40,7 @@ public final class PackagingTreeNodeFactory {
         nodes.add(new CompositePackagingElementNode((CompositePackagingElement<?>)element, context, parentNode, parentElement, substitutionParameters, nodeSources,
                                                     artifactType));
       }
-      else if (element instanceof ComplexPackagingElement) {
-        final ComplexPackagingElement<?> complexElement = (ComplexPackagingElement<?>)element;
+      else if (element instanceof ComplexPackagingElement<?> complexElement) {
         if (processed.add(element) && substitutionParameters.shouldSubstitute(complexElement)) {
           final List<? extends PackagingElement<?>> substitution = complexElement.getSubstitution(context, artifactType);
           if (substitution != null) {

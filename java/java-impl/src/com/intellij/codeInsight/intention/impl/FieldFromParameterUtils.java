@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -105,8 +91,7 @@ public final class FieldFromParameterUtils {
   @Nullable
   public static PsiField getParameterAssignedToField(@NotNull PsiParameter parameter, boolean findIndirectAssignments) {
     for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false)) {
-      if (!(reference instanceof PsiReferenceExpression)) continue;
-      PsiReferenceExpression expression = (PsiReferenceExpression)reference;
+      if (!(reference instanceof PsiReferenceExpression expression)) continue;
       PsiAssignmentExpression assignmentExpression;
       if (findIndirectAssignments) {
         assignmentExpression = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class, true, PsiClass.class);
@@ -142,19 +127,16 @@ public final class FieldFromParameterUtils {
     for (; i < statements.length; i++) {
       PsiStatement psiStatement = statements[i];
 
-      if (psiStatement instanceof PsiExpressionStatement) {
-        PsiExpressionStatement expressionStatement = (PsiExpressionStatement)psiStatement;
+      if (psiStatement instanceof PsiExpressionStatement expressionStatement) {
         PsiExpression expression = expressionStatement.getExpression();
 
-        if (expression instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+        if (expression instanceof PsiMethodCallExpression methodCallExpression) {
           String text = methodCallExpression.getMethodExpression().getText();
           if (text.equals("super") || text.equals("this")) {
             continue;
           }
         }
-        else if (expression instanceof PsiAssignmentExpression) {
-          PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+        else if (expression instanceof PsiAssignmentExpression assignmentExpression) {
           PsiExpression lExpression = assignmentExpression.getLExpression();
 
           if (!(lExpression instanceof PsiReferenceExpression)) break;

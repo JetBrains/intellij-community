@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
@@ -91,8 +91,7 @@ interface CombinedData {
       Set<EKey> keys = new HashSet<>();
       for (int argI = 0; argI < this.args.size(); argI++) {
         BasicValue arg = this.args.get(argI);
-        if (arg instanceof NthParamValue) {
-          NthParamValue npv = (NthParamValue)arg;
+        if (arg instanceof NthParamValue npv) {
           if (npv.n == idx) {
             keys.add(new EKey(this.method, direction.withIndex(argI), this.stableCall));
           }
@@ -248,8 +247,7 @@ final class CombinedAnalysis {
     else if (returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
       result = inValue;
     }
-    else if (returnValue instanceof TrackableCallValue) {
-      TrackableCallValue call = (TrackableCallValue)returnValue;
+    else if (returnValue instanceof TrackableCallValue call) {
       Set<EKey> keys = call.getKeysForParameter(i, direction);
       if (ASMUtils.isReferenceType(call.getType())) {
         keys.add(new EKey(call.method, Out, call.stableCall));
@@ -337,8 +335,7 @@ final class CombinedAnalysis {
     else if (returnValue instanceof NotNullValue || returnValue == ThisValue) {
       result = Value.NotNull;
     }
-    else if (returnValue instanceof TrackableCallValue) {
-      TrackableCallValue call = (TrackableCallValue)returnValue;
+    else if (returnValue instanceof TrackableCallValue call) {
       EKey callKey = new EKey(call.method, Out, call.stableCall);
       Set<EKey> keys = Collections.singleton(callKey);
       result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
@@ -356,8 +353,7 @@ final class CombinedAnalysis {
         returnValue instanceof Trackable && interpreter.dereferencedValues[((Trackable)returnValue).getOriginInsnIndex()]) {
       result = Value.Bot;
     }
-    else if (returnValue instanceof TrackableCallValue) {
-      TrackableCallValue call = (TrackableCallValue)returnValue;
+    else if (returnValue instanceof TrackableCallValue call) {
       EKey callKey = new EKey(call.method, NullableOut, call.stableCall || call.thisCall);
       Set<EKey> keys = Collections.singleton(callKey);
       result = new Pending(Collections.singleton(new Component(Value.Null, keys)));
@@ -722,11 +718,8 @@ final class NegationAnalysis {
     HashSet<EKey> keys = new HashSet<>();
     for (int argI = 0; argI < conditionValue.args.size(); argI++) {
       BasicValue arg = conditionValue.args.get(argI);
-      if (arg instanceof NthParamValue) {
-        NthParamValue npv = (NthParamValue)arg;
-        if (npv.n == i) {
-          keys.add(new EKey(conditionValue.method, new InOut(argI, inValue), conditionValue.stableCall, true));
-        }
+      if (arg instanceof NthParamValue npv && npv.n == i) {
+        keys.add(new EKey(conditionValue.method, new InOut(argI, inValue), conditionValue.stableCall, true));
       }
     }
     if (keys.isEmpty()) {

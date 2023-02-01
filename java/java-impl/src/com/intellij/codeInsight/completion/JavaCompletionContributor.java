@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -426,8 +426,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
 
       List<LookupElement> refSuggestions = Collections.emptyList();
-      if (parent instanceof PsiJavaCodeReferenceElement && mayCompleteReference) {
-        PsiJavaCodeReferenceElement parentRef = (PsiJavaCodeReferenceElement)parent;
+      if (parent instanceof PsiJavaCodeReferenceElement parentRef && mayCompleteReference) {
         if (IN_PERMITS_LIST.accepts(parent) && parameters.getInvocationCount() <= 1 && !parentRef.isQualified()) {
           refSuggestions = completePermitsListReference(parameters, parentRef, matcher);
         }
@@ -792,8 +791,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
         item.setTailType(TailType.NONE);
       }
-      if (item instanceof JavaMethodCallElement) {
-        JavaMethodCallElement call = (JavaMethodCallElement)item;
+      if (item instanceof JavaMethodCallElement call) {
         PsiMethod method = call.getObject();
         if (method.getTypeParameters().length > 0) {
           PsiType returned = TypeConversionUtil.erasure(method.getReturnType());
@@ -1073,11 +1071,9 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         return LangBundle.message("completion.no.suggestions") + suffix;
       }
 
-      if (expression instanceof PsiInstanceOfExpression) {
-        PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
-        if (PsiTreeUtil.isAncestor(instanceOfExpression.getCheckType(), parameters.getPosition(), false)) {
-          return LangBundle.message("completion.no.suggestions") + suffix;
-        }
+      if (expression instanceof PsiInstanceOfExpression instanceOfExpression &&
+          PsiTreeUtil.isAncestor(instanceOfExpression.getCheckType(), parameters.getPosition(), false)) {
+        return LangBundle.message("completion.no.suggestions") + suffix;
       }
 
       Set<PsiType> expectedTypes = JavaCompletionUtil.getExpectedTypes(parameters);

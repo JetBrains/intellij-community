@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -63,8 +49,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
 
   @Override
   public PsiElement adjustElement(PsiElement element, Project project, Editor editor) {
-    if (element instanceof PsiVariable) {
-      PsiVariable var = (PsiVariable)element;
+    if (element instanceof PsiVariable var) {
       final PsiType returnType = var.getType();
       if (!PsiTypes.booleanType().equals(returnType)) {
         CommonRefactoringUtil.showErrorHint(project, editor,
@@ -74,15 +59,14 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         return null;
       }
 
-      if (var instanceof PsiParameter) {
-        final PsiElement declarationScope = ((PsiParameter)var).getDeclarationScope();
-        if (declarationScope instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)declarationScope;
+      if (var instanceof PsiParameter parameter) {
+        final PsiElement declarationScope = parameter.getDeclarationScope();
+        if (declarationScope instanceof PsiMethod method) {
           final PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method);
           if (superMethod == null) {
             return null;
           }
-          var = superMethod.getParameterList().getParameters()[method.getParameterList().getParameterIndex((PsiParameter)var)];
+          var = superMethod.getParameterList().getParameters()[method.getParameterList().getParameterIndex(parameter)];
         }
         else if (declarationScope instanceof PsiForeachStatement) {
           CommonRefactoringUtil.showErrorHint(project, editor,
@@ -135,8 +119,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
 
   @Override
   public PsiElement getElementToInvert(PsiElement namedElement, PsiElement element) {
-    if (element instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression refExpr = (PsiReferenceExpression)element;
+    if (element instanceof PsiReferenceExpression refExpr) {
       PsiElement parent = refExpr.getParent();
       if (parent instanceof PsiAssignmentExpression && refExpr.equals(((PsiAssignmentExpression)parent).getLExpression())) {
         return ((PsiAssignmentExpression)parent).getOperationTokenType() == JavaTokenType.EQ ? ((PsiAssignmentExpression)parent).getRExpression() : parent;
@@ -287,8 +270,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         if (parent instanceof PsiAnonymousClass) {
           parent = parent.getParent();
         }
-        if (parent instanceof PsiCall) {
-          final PsiCall call = (PsiCall)parent;
+        if (parent instanceof PsiCall call) {
           final PsiReferenceExpression methodExpression = call instanceof PsiMethodCallExpression ?
                                                           ((PsiMethodCallExpression)call).getMethodExpression() :
                                                           null;

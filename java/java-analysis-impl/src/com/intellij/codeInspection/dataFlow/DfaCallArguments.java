@@ -39,9 +39,8 @@ public final class DfaCallArguments {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof DfaCallArguments)) return false;
-    DfaCallArguments that = (DfaCallArguments)o;
-    return myQualifier == that.myQualifier &&
+    return o instanceof DfaCallArguments that && 
+           myQualifier == that.myQualifier &&
            myMutation.equals(that.myMutation) &&
            Arrays.equals(myArguments, that.myArguments);
   }
@@ -63,12 +62,11 @@ public final class DfaCallArguments {
       return;
     }
     if (myMutation.isPure()) {
-      if (myQualifier instanceof DfaVariableValue) {
-        DfaVariableValue qualifier = (DfaVariableValue)myQualifier;
+      if (myQualifier instanceof DfaVariableValue qualifier) {
         // We assume that even pure call may modify private fields (e.g., to cache something)
         state.flushVariables(v -> v.getQualifier() == qualifier &&
-                                  v.getPsiVariable() instanceof PsiMember &&
-                                  ((PsiMember)v.getPsiVariable()).hasModifierProperty(PsiModifier.PRIVATE));
+                                  v.getPsiVariable() instanceof PsiMember member &&
+                                  member.hasModifierProperty(PsiModifier.PRIVATE));
       }
       return;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.extractclass;
 
@@ -48,10 +48,9 @@ class BackpointerUsageVisitor extends JavaRecursiveElementWalkingVisitor {
     final PsiExpression qualifier = expression.getQualifierExpression();
 
     final PsiElement referent = expression.resolve();
-    if (!(referent instanceof PsiField)) {
+    if (!(referent instanceof PsiField field)) {
       return;
     }
-    final PsiField field = (PsiField)referent;
     if (myFields.contains(field) || myInnerClasses.contains(field.getContainingClass())) {
       return;
     }

@@ -47,9 +47,8 @@ public class DfNullConstantType extends DfConstantType<Object> implements DfRefe
   public DfType join(@NotNull DfType other) {
     if (isSuperType(other)) return this;
     if (other.isSuperType(this)) return other;
-    if (!(other instanceof DfReferenceType)) return TOP;
-    DfReferenceType type = (DfReferenceType)other;
-    Set<Object> notValues = type instanceof DfGenericObjectType ? ((DfGenericObjectType)type).getRawNotValues() : Set.of();
+    if (!(other instanceof DfReferenceType type)) return TOP;
+    Set<Object> notValues = type instanceof DfGenericObjectType objectType ? objectType.getRawNotValues() : Set.of();
     return new DfGenericObjectType(notValues, type.getConstraint(), DfaNullability.NULL.unite(type.getNullability()),
                                    type.getMutability(), type.getSpecialField(), type.getSpecialFieldType(), false);
   }

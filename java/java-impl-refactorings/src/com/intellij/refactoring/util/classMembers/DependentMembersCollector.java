@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.psi.*;
@@ -27,8 +27,7 @@ public class DependentMembersCollector extends DependentMembersCollectorBase<Psi
 
   private boolean existsInSuperClass(PsiMember classMember) {
     if (getSuperClass() == null) return false;
-    if (!(classMember instanceof PsiMethod)) return false;
-    final PsiMethod method = ((PsiMethod)classMember);
+    if (!(classMember instanceof PsiMethod method)) return false;
     final PsiMethod methodBySignature = (getSuperClass()).findMethodBySignature(method, true);
     return methodBySignature != null;
   }

@@ -507,10 +507,9 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
 
 
   public boolean equals(final Object obj) {
-    if (!(obj instanceof StackFrameProxyImpl)) {
+    if (!(obj instanceof StackFrameProxyImpl frameProxy)) {
       return false;
     }
-    StackFrameProxyImpl frameProxy = (StackFrameProxyImpl)obj;
     if (frameProxy == this) return true;
 
     return (myFrameFromBottomIndex == frameProxy.myFrameFromBottomIndex) &&

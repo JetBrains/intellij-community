@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
@@ -371,18 +371,15 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
   }
 
   private static void completeMethodName(Set<LookupElement> set, PsiElement element, PrefixMatcher matcher){
-    if(element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      if (method.isConstructor()) {
-        PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null) {
-          String name = containingClass.getName();
-          if (StringUtil.isNotEmpty(name)) {
-            addLookupItems(set, null, matcher, element.getProject(), name);
-          }
+    if (element instanceof PsiMethod method && method.isConstructor()) {
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null) {
+        String name = containingClass.getName();
+        if (StringUtil.isNotEmpty(name)) {
+          addLookupItems(set, null, matcher, element.getProject(), name);
         }
-        return;
       }
+      return;
     }
 
     PsiClass ourClassParent = PsiTreeUtil.getParentOfType(element, PsiClass.class);

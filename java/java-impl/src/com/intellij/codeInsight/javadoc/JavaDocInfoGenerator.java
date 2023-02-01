@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.CommonBundle;
@@ -1392,8 +1392,7 @@ public class JavaDocInfoGenerator {
     generateVariableDefinition(buffer, parameter, true);
 
     PsiElement method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class, PsiLambdaExpression.class);
-    if (method instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)method;
+    if (method instanceof PsiMethod psiMethod) {
       PsiParameterList parameterList = psiMethod.getParameterList();
       if (parameter.getParent() == parameterList) { // this can also be a parameter in foreach statement or in catch clause
         ParamInfo tagInfoProvider = findTagInfoProvider(parameter, psiMethod, parameterList);
@@ -1408,8 +1407,7 @@ public class JavaDocInfoGenerator {
   }
 
   public String generateMethodParameterJavaDoc() {
-    if (myElement instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)myElement;
+    if (myElement instanceof PsiParameter parameter) {
       PsiMethod method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
       if (method != null) {
         PsiParameterList parameterList = method.getParameterList();
@@ -1748,8 +1746,7 @@ public class JavaDocInfoGenerator {
       if (elements[i].getTextOffset() > predictOffset) buffer.append(' ');
       predictOffset = elements[i].getTextOffset() + elements[i].getText().length();
       PsiElement element = elements[i];
-      if (element instanceof PsiInlineDocTag) {
-        PsiInlineDocTag tag = (PsiInlineDocTag)element;
+      if (element instanceof PsiInlineDocTag tag) {
         String tagName = tag.getName();
         if (tagName.equals(LINK_TAG)) {
           generateLinkValue(tag, buffer, false);
@@ -2746,8 +2743,7 @@ public class JavaDocInfoGenerator {
       type = ((PsiCapturedWildcardType)type).getWildcard();
     }
 
-    if (type instanceof PsiWildcardType) {
-      PsiWildcardType wt = (PsiWildcardType)type;
+    if (type instanceof PsiWildcardType wt) {
       appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), "?");
       PsiType bound = wt.getBound();
       if (bound != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -87,8 +87,7 @@ public final class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpress
         }
         PsiElement parent = plusToken.getParent();
 
-        if (parent instanceof PsiPolyadicExpression) {
-          PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+        if (parent instanceof PsiPolyadicExpression polyadicExpression) {
           PsiType exprType = polyadicExpression.getType();
           if (exprType == null || !exprType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             continue;

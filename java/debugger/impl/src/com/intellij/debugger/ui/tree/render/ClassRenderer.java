@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -166,12 +166,11 @@ public class ClassRenderer extends NodeRendererImpl {
     final NodeManager nodeManager = builder.getNodeManager();
     final NodeDescriptorFactory nodeDescriptorFactory = builder.getDescriptorManager();
 
-    if (!(value instanceof ObjectReference)) {
+    if (!(value instanceof ObjectReference objRef)) {
       builder.setChildren(Collections.emptyList());
       return;
     }
 
-    final ObjectReference objRef = (ObjectReference)value;
     final ReferenceType refType = objRef.referenceType();
     // default ObjectReference processing
     DebuggerUtilsAsync.allFields(refType)

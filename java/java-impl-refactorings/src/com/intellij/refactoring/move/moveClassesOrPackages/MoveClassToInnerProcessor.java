@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.EditorHelper;
@@ -170,8 +170,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   private void saveNonCodeUsages(final UsageInfo[] usages) {
     for (PsiClass classToMove : myClassesToMove) {
       for(UsageInfo usageInfo: usages) {
-        if (usageInfo instanceof NonCodeUsageInfo) {
-          final NonCodeUsageInfo nonCodeUsage = (NonCodeUsageInfo)usageInfo;
+        if (usageInfo instanceof NonCodeUsageInfo nonCodeUsage) {
           PsiElement element = nonCodeUsage.getElement();
           if (element != null && PsiTreeUtil.isAncestor(classToMove, element, false)) {
             List<NonCodeUsageInfo> list = element.getCopyableUserData(ourNonCodeUsageKey);
@@ -287,15 +286,8 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   private static PsiElement[] collectPackageLocalMembers(PsiElement classToMove) {
-    return PsiTreeUtil.collectElements(classToMove, element -> {
-      if (element instanceof PsiMember) {
-        PsiMember member = (PsiMember) element;
-        if (VisibilityUtil.getVisibilityModifier(member.getModifierList()) == PsiModifier.PACKAGE_LOCAL) {
-          return true;
-        }
-      }
-      return false;
-    });
+    return PsiTreeUtil.collectElements(classToMove, element -> element instanceof PsiMember member &&
+           VisibilityUtil.getVisibilityModifier(member.getModifierList()) == PsiModifier.PACKAGE_LOCAL);
   }
 
   public void setOpenInEditor(boolean openInEditor) {

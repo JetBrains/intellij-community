@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.ResultKind;
@@ -157,8 +143,7 @@ abstract class TerminalOperation extends Operation {
   @Nullable
   private static TerminalOperation fromCollector(@NotNull PsiType elementType, @NotNull PsiType resultType, PsiExpression expr) {
     expr = PsiUtil.skipParenthesizedExprDown(expr);
-    if (!(expr instanceof PsiMethodCallExpression)) return null;
-    PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)expr;
+    if (!(expr instanceof PsiMethodCallExpression collectorCall)) return null;
     PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();
     PsiMethod collector = collectorCall.resolveMethod();
     if (collector == null) return null;
@@ -351,8 +336,7 @@ abstract class TerminalOperation extends Operation {
     }
     for (PsiTypeParameter baseParameter : superClass.getTypeParameters()) {
       PsiClass substitution = PsiUtil.resolveClassInClassTypeOnly(superClassSubstitutor.substitute(baseParameter));
-      if(substitution instanceof PsiTypeParameter) {
-        PsiTypeParameter subClassParameter = (PsiTypeParameter)substitution;
+      if(substitution instanceof PsiTypeParameter subClassParameter) {
         PsiType origType = origSubstitutor.substitute(subClassParameter);
         PsiType replacedType = GenericsUtil.eliminateWildcards(origType, false, true);
         replacedType = downstreamCorrectors.getOrDefault(subClassParameter.getName(), Function.identity()).apply(replacedType);
@@ -952,23 +936,19 @@ abstract class TerminalOperation extends Operation {
         return "if("+map+".put("+myKeyExtractor.getText()+","+myValueExtractor.getText()+")!=null) {\n"+
                "throw new java.lang.IllegalStateException(\"Duplicate key\");\n}\n";
       }
-      if(myMerger instanceof PsiLambdaExpression) {
-        PsiLambdaExpression lambda = (PsiLambdaExpression)myMerger;
+      if(myMerger instanceof PsiLambdaExpression lambda) {
         PsiParameter[] parameters = lambda.getParameterList().getParameters();
         if(parameters.length == 2) {
           PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-          if(body instanceof PsiReferenceExpression) {
-            PsiReferenceExpression ref = (PsiReferenceExpression)body;
-            if(ref.getQualifierExpression() == null) {
-              // cannot use isReferenceTo here as lambda could be detached from PsiFile
-              if (Objects.equals(parameters[0].getName(), ref.getReferenceName())) {
-                // like (a, b) -> a
-                return map + ".putIfAbsent(" + myKeyExtractor.getText() + "," + myValueExtractor.getText() + ");\n";
-              }
-              else if (Objects.equals(parameters[1].getName(), ref.getReferenceName())) {
-                // like (a, b) -> b
-                return map + ".put(" + myKeyExtractor.getText() + "," + myValueExtractor.getText() + ");\n";
-              }
+          if (body instanceof PsiReferenceExpression ref && ref.getQualifierExpression() == null) {
+            // cannot use isReferenceTo here as lambda could be detached from PsiFile
+            if (Objects.equals(parameters[0].getName(), ref.getReferenceName())) {
+              // like (a, b) -> a
+              return map + ".putIfAbsent(" + myKeyExtractor.getText() + "," + myValueExtractor.getText() + ");\n";
+            }
+            else if (Objects.equals(parameters[1].getName(), ref.getReferenceName())) {
+              // like (a, b) -> b
+              return map + ".put(" + myKeyExtractor.getText() + "," + myValueExtractor.getText() + ");\n";
             }
           }
         }

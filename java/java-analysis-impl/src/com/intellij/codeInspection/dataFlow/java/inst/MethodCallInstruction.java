@@ -489,14 +489,11 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
         // If we write to local object only, it should not leak
         arg = JavaDfaHelpers.dropLocality(arg, memState);
       }
-      if (getContext() instanceof PsiMethodReferenceExpression) {
-        PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)getContext();
-        if (paramList != null) {
-          PsiParameter parameter = paramList.getParameter(paramIndex);
-          if (parameter != null) {
-            Nullability nullability = getArgRequiredNullability(paramIndex);
-            arg = MethodReferenceInstruction.adaptMethodRefArgument(interpreter, memState, arg, methodRef, parameter, nullability);
-          }
+      if (getContext() instanceof PsiMethodReferenceExpression methodRef && paramList != null) {
+        PsiParameter parameter = paramList.getParameter(paramIndex);
+        if (parameter != null) {
+          Nullability nullability = getArgRequiredNullability(paramIndex);
+          arg = MethodReferenceInstruction.adaptMethodRefArgument(interpreter, memState, arg, methodRef, parameter, nullability);
         }
       }
       if (myMutation.mutatesArg(paramIndex)) {

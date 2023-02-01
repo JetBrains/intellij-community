@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -261,8 +261,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull final RefEntity refEntity) {
-        if (refEntity instanceof RefElementImpl) {
-          final RefElementImpl refElement = (RefElementImpl)refEntity;
+        if (refEntity instanceof RefElementImpl refElement) {
           if (!refElement.isSuspicious()) return;
 
           PsiFile file = refElement.getContainingFile();
@@ -324,8 +323,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     if (element instanceof PsiMethod && isAddMainsEnabled() && PsiClassImplUtil.isMainOrPremainMethod((PsiMethod)element)) {
       return true;
     }
-    if (element instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)element;
+    if (element instanceof PsiClass aClass) {
       final PsiClass applet = psiFacade.findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
       if (isAddAppletEnabled() && applet != null && aClass.isInheritor(applet, true)) {
         return true;
@@ -406,9 +404,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
-        if (!(refEntity instanceof RefJavaElement)) return;
-        if (refEntity instanceof RefClass && ((RefClass)refEntity).isAnonymous()) return;
-        RefJavaElement refElement = (RefJavaElement)refEntity;
+        if (!(refEntity instanceof RefJavaElement refElement)) return;
+        if (refEntity instanceof RefClass refClass && refClass.isAnonymous()) return;
         if (filter.accepts(refElement) && !processedSuspicious.contains(refElement)) {
           refEntity.accept(new RefJavaVisitor() {
             @Override
@@ -560,8 +557,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     refManager.iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefJavaElementImpl) {
-          final RefJavaElementImpl refElement = (RefJavaElementImpl)refEntity;
+        if (refEntity instanceof RefJavaElementImpl refElement) {
           if (!((GlobalInspectionContextBase)context).isToCheckMember(refElement, UnusedDeclarationInspectionBase.this)) return;
           refElement.setReachable(false);
         }
