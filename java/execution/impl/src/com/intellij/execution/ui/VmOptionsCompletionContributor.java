@@ -159,7 +159,7 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
 
   @Nullable
   private static String getJrePathForVmOptionsDocument(Document document) {
-    String path = document.getUserData(EditCustomVmOptionsAction.Companion.getVmPathKey());
+    String path = document.getUserData(EditCustomVmOptionsAction.JRE_PATH_KEY);
     if (path != null) {
       return path;
     }

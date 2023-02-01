@@ -42,6 +42,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
   protected abstract fun file(): Path?
   protected abstract fun template(): String
   protected open fun charset(): Charset = StandardCharsets.UTF_8
+  protected open fun prepareDocument(document: Document?) { }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -86,9 +87,6 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
         PsiNavigationSupport.getInstance().createNavigatable(project, vFile, psiFile.textLength).navigate(true)
       }
     }
-  }
-
-  open fun prepareDocument(document: Document?) {
   }
 
   private fun openInDialog(file: Path, frame: JFrame) {
@@ -164,8 +162,8 @@ class EditCustomPropertiesAction : EditCustomSettingsAction() {
 
 class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   companion object {
+    @JvmField val JRE_PATH_KEY: Key<String> = Key.create("JRE_PATH_KEY")
     private val file: Lazy<Path?> = lazy { VMOptions.getUserOptionsFile() }
-    val vmPathKey: Key<String> = Key.create("VM_PATH_KEY")
   }
 
   override fun file(): Path? = file.value
@@ -176,10 +174,9 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   fun isEnabled(): Boolean = file() != null
 
   override fun prepareDocument(document: Document?) {
-    document ?: return
-    val vmPath = System.getProperty("java.home")
-    if (vmPath != null) {
-      document.putUserData(vmPathKey, vmPath)
+    val jrePath = System.getProperty("java.home")
+    if (jrePath != null && document != null) {
+      document.putUserData(JRE_PATH_KEY, jrePath)
     }
   }
 

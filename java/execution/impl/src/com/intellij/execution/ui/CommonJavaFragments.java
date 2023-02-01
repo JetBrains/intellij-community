@@ -263,7 +263,7 @@ public final class CommonJavaFragments {
               if (sdk != null) {
                 jrePath = sdk.getHomePath();
               }
-              editor.getDocument().putUserData(EditCustomVmOptionsAction.Companion.getVmPathKey(), jrePath);
+              editor.getDocument().putUserData(EditCustomVmOptionsAction.JRE_PATH_KEY, jrePath);
             }
           });
         }
