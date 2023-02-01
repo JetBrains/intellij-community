@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
@@ -453,6 +454,21 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
       if (subTaskIndicator.isCanceled()) {
         return false;
       }
+
+      try {
+        processFileRethrowExceptions(fileOrDir);
+      }
+      catch (ProcessCanceledException pce) {
+        throw pce;
+      }
+      catch (Exception e) {
+        LOG.error("Error while scanning " + fileOrDir.getPresentableUrl() + "\n" +
+                                     "To reindex this file IDEA has to be restarted", e);
+      }
+      return true;
+    }
+
+    private void processFileRethrowExceptions(@NotNull VirtualFile fileOrDir) {
       long scanningStart = System.nanoTime();
       PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
       if (pushers != null && pushedFilePropertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
@@ -477,7 +493,6 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
         scanningStatistics.addStatus(fileOrDir, status, statusTime, project);
       }
       scanningStatistics.addScanningTime(System.nanoTime() - scanningStart);
-      return true;
     }
   }
 
