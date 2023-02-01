@@ -10,25 +10,21 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
     val line = checkForPerfectLine(normalizedExpectedLine, suggestions, lookup.prefix)
     val token = checkForFirstToken(normalizedExpectedLine, suggestions, lookup.prefix)
 
-    val new = when {
+    val selectedPosition = when {
       settings.checkLine && line != null -> {
-        if (line.first.length > expectedLine.length / 2) {
+        if (line.first.length > expectedLine.trim().length / 2) {
           session.success = true
         }
         suggestions[line.second] = suggestions[line.second].withSuggestionKind(SuggestionKind.LINE)
-        line
+        line.second
       }
       settings.checkToken && token != null -> {
         suggestions[token.second] = suggestions[token.second].withSuggestionKind(SuggestionKind.TOKEN)
-        token
+        token.second
       }
-      else -> Pair(expectedLine[currentLine.length].toString(), -1)
+      else -> -1
     }
-    return Lookup(lookup.prefix, suggestions, lookup.latency, selectedPosition = new.second, isNew = lookup.isNew)
-  }
-
-  fun isSkippable(str: String): Boolean {
-    return str.isBlank()
+    return Lookup(lookup.prefix, currentLine.length, suggestions, lookup.latency, selectedPosition = selectedPosition, isNew = lookup.isNew)
   }
 
   private fun checkForPerfectLine(expectedLine: String, suggestions: List<Suggestion>, prefix: String): Pair<String, Int>? {

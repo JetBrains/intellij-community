@@ -1,7 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij.cce">
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.PythonCompletionEvaluationVisitor"/>
-    <completionGolfEvaluationVisitor implementation="com.intellij.cce.visitor.PythonCompletionGolfEvaluationVisitor"/>
+    <completionGolfVisitorFactory implementation="com.intellij.cce.visitor.PythonCompletionGolfVisitorFactory"/>
     <setupSdkStep implementation="com.intellij.cce.evaluation.SetupPythonInterpreterStep"/>
   </extensions>
 </idea-plugin>

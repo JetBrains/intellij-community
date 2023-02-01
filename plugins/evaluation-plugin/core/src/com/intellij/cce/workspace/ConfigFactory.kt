@@ -117,7 +117,9 @@ object ConfigFactory {
   private class CompletionStrategyDeserializer {
     fun deserialize(strategy: Map<String, Any>, language: String, builder: Config.Builder) {
       builder.emulateUser = if (strategy.containsKey("emulateUser")) strategy.getAs("emulateUser") else false
-      builder.completionGolf = if (strategy.containsKey("completionGolf")) strategy.getAs("completionGolf") else false
+      if (strategy.containsKey("completionGolf")) {
+        builder.completionGolfMode = CompletionGolfMode.valueOf(strategy.getAs("completionGolf"))
+      }
       builder.contextStrategy = CompletionContext.valueOf(strategy.getAs("context"))
       if (strategy.containsKey("filters")) {
         builder.filters.putAll(readFilters(strategy, language))

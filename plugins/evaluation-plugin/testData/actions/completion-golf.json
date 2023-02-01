@@ -15,12 +15,12 @@
     },
     {
       "expectedText": "public",
-      "nodeProperties": {
-        "tokenType": "LINE",
-        "location": "UNKNOWN",
-        "features": [],
-        "additional": {}
-      },
+      "ranges": [
+        {
+          "start": 0,
+          "end": 6
+        }
+      ],
       "type": "CODE_GOLF"
     },
     {
@@ -35,12 +35,12 @@
     },
     {
       "expectedText": "class",
-      "nodeProperties": {
-        "tokenType": "LINE",
-        "location": "UNKNOWN",
-        "features": [],
-        "additional": {}
-      },
+      "ranges": [
+        {
+          "start": 7,
+          "end": 12
+        }
+      ],
       "type": "CODE_GOLF"
     },
     {
@@ -55,12 +55,12 @@
     },
     {
       "expectedText": "public",
-      "nodeProperties": {
-        "tokenType": "LINE",
-        "location": "UNKNOWN",
-        "features": [],
-        "additional": {}
-      },
+      "ranges": [
+        {
+          "start": 27,
+          "end": 33
+        }
+      ],
       "type": "CODE_GOLF"
     },
     {
@@ -75,12 +75,12 @@
     },
     {
       "expectedText": "static",
-      "nodeProperties": {
-        "tokenType": "LINE",
-        "location": "UNKNOWN",
-        "features": [],
-        "additional": {}
-      },
+      "ranges": [
+        {
+          "start": 34,
+          "end": 40
+        }
+      ],
       "type": "CODE_GOLF"
     },
     {
@@ -95,12 +95,12 @@
     },
     {
       "expectedText": "void",
-      "nodeProperties": {
-        "tokenType": "LINE",
-        "location": "UNKNOWN",
-        "features": [],
-        "additional": {}
-      },
+      "ranges": [
+        {
+          "start": 41,
+          "end": 45
+        }
+      ],
       "type": "CODE_GOLF"
     },
     {
@@ -115,12 +115,12 @@
     },
     {
       "expectedText": "String",
-      "nodeProperties": {
-        "tokenType": "LINE",
-        "location": "UNKNOWN",
-        "features": [],
-        "additional": {}
-      },
+      "ranges": [
+        {
+          "start": 51,
+          "end": 57
+        }
+      ],
       "type": "CODE_GOLF"
     },
     {
@@ -135,12 +135,12 @@
     },
     {
       "expectedText": "test",
-      "nodeProperties": {
-        "tokenType": "LINE",
-        "location": "UNKNOWN",
-        "features": [],
-        "additional": {}
-      },
+      "ranges": [
+        {
+          "start": 76,
+          "end": 80
+        }
+      ],
       "type": "CODE_GOLF"
     },
     {
@@ -155,12 +155,12 @@
     },
     {
       "expectedText": "args",
-      "nodeProperties": {
-        "tokenType": "LINE",
-        "location": "UNKNOWN",
-        "features": [],
-        "additional": {}
-      },
+      "ranges": [
+        {
+          "start": 81,
+          "end": 85
+        }
+      ],
       "type": "CODE_GOLF"
     },
     {
@@ -175,12 +175,12 @@
     },
     {
       "expectedText": "length",
-      "nodeProperties": {
-        "tokenType": "LINE",
-        "location": "UNKNOWN",
-        "features": [],
-        "additional": {}
-      },
+      "ranges": [
+        {
+          "start": 86,
+          "end": 92
+        }
+      ],
       "type": "CODE_GOLF"
     },
     {
@@ -195,12 +195,12 @@
     },
     {
       "expectedText": "private",
-      "nodeProperties": {
-        "tokenType": "LINE",
-        "location": "UNKNOWN",
-        "features": [],
-        "additional": {}
-      },
+      "ranges": [
+        {
+          "start": 105,
+          "end": 112
+        }
+      ],
       "type": "CODE_GOLF"
     },
     {
@@ -215,12 +215,12 @@
     },
     {
       "expectedText": "static",
-      "nodeProperties": {
-        "tokenType": "LINE",
-        "location": "UNKNOWN",
-        "features": [],
-        "additional": {}
-      },
+      "ranges": [
+        {
+          "start": 113,
+          "end": 119
+        }
+      ],
       "type": "CODE_GOLF"
     },
     {
@@ -235,12 +235,12 @@
     },
     {
       "expectedText": "void",
-      "nodeProperties": {
-        "tokenType": "LINE",
-        "location": "UNKNOWN",
-        "features": [],
-        "additional": {}
-      },
+      "ranges": [
+        {
+          "start": 120,
+          "end": 124
+        }
+      ],
       "type": "CODE_GOLF"
     },
     {
@@ -255,12 +255,12 @@
     },
     {
       "expectedText": "Object",
-      "nodeProperties": {
-        "tokenType": "LINE",
-        "location": "UNKNOWN",
-        "features": [],
-        "additional": {}
-      },
+      "ranges": [
+        {
+          "start": 130,
+          "end": 136
+        }
+      ],
       "type": "CODE_GOLF"
     }
   ]

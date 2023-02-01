@@ -8,7 +8,7 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
     fun withDefaultMetrics(evaluationType: String, strategy: CompletionStrategy): MetricsEvaluator {
       val evaluator = MetricsEvaluator(evaluationType)
 
-      if (strategy.completionGolf) {
+      if (strategy.completionGolf != null) {
         evaluator.registerCompletionGolfMetrics()
       }
       else {

@@ -24,7 +24,7 @@ class PythonCompletionEvaluationVisitor : CompletionEvaluationVisitor, PyRecursi
 
   override fun visitElement(node: PsiElement) {
     if (tokenSetContributor.keywordTokens.contains(node.elementType)) {
-      val token = CodeToken(node.text, node.textOffset, node.textLength, keywordProperties())
+      val token = CodeToken(node.text, node.textOffset, keywordProperties())
       _codeFragment?.addChild(token)
     }
     super.visitElement(node)
@@ -39,7 +39,7 @@ class PythonCompletionEvaluationVisitor : CompletionEvaluationVisitor, PyRecursi
       } else {
         TokenProperties.UNKNOWN
       }
-      val token = CodeToken(name.text, name.startOffset, name.textLength, properties)
+      val token = CodeToken(name.text, name.startOffset, properties)
       _codeFragment?.addChild(token)
     }
     super.visitPyReferenceExpression(node)
@@ -48,7 +48,7 @@ class PythonCompletionEvaluationVisitor : CompletionEvaluationVisitor, PyRecursi
   override fun visitPyKeywordArgument(node: PyKeywordArgument) {
     val keyword = node.keywordNode
     if (keyword != null) {
-      val token = CodeToken(keyword.text, keyword.startOffset, keyword.textLength, keywordProperties())
+      val token = CodeToken(keyword.text, keyword.startOffset, keywordProperties())
       _codeFragment?.addChild(token)
     }
     super.visitPyKeywordArgument(node)

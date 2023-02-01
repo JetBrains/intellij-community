@@ -157,7 +157,7 @@ class CompletionInvokerImpl(private val project: Project,
 
   override fun emulateUserSession(expectedText: String, nodeProperties: TokenProperties, offset: Int): Session {
     val editorImpl = editor as EditorImpl
-    val session = Session(offset, expectedText, null, nodeProperties)
+    val session = Session(offset, expectedText, expectedText.length, null, nodeProperties)
     val firstPrefixLen = userEmulator.firstPrefixLen()
     if (firstPrefixLen >= expectedText.length) {
       printText(expectedText)
@@ -185,19 +185,15 @@ class CompletionInvokerImpl(private val project: Project,
     return session
   }
 
-  override fun emulateCompletionGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session {
-    val document = editor!!.document
+  override fun emulateCompletionGolfSession(expectedLine: String, completableRanges: List<com.intellij.cce.actions.TextRange>, offset: Int): Session {
     val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
     val invokeOnEachChar = completionGolfSettings?.invokeOnEachChar ?: false
-    val session = Session(offset, expectedLine, null, nodeProperties)
-    val line = document.getLineNumber(offset)
-    val tail = document.getLineEndOffset(line) - offset
+    val session = Session(offset, expectedLine, completableRanges.sumOf { it.end - it.start }, null, TokenProperties.UNKNOWN)
     var currentString = ""
 
     while (currentString != expectedLine) {
       val nextChar = expectedLine[currentString.length].toString()
-
-      if (emulator.isSkippable(nextChar)) {
+      if (!completableRanges.any { offset + currentString.length >= it.start && offset + currentString.length < it.end }) {
         printText(nextChar)
         currentString += nextChar
         continue
@@ -209,9 +205,14 @@ class CompletionInvokerImpl(private val project: Project,
         if (invokeOnEachChar) {
           LookupManager.hideActiveLookup(project)
         }
-        printText(it.selectedWithoutPrefix() ?: nextChar)
-        currentString = document.getText(TextRange(offset, document.getLineEndOffset(line) - tail))
-
+        val selected = it.selectedWithoutPrefix()
+        if (selected != null) {
+          printText(selected)
+          currentString += selected
+        } else {
+          printText(nextChar)
+          currentString += nextChar
+        }
         if (currentString.isNotEmpty() && !invokeOnEachChar) {
           if (it.suggestions.isEmpty() || currentString.last().let { ch -> !(ch == '_' || ch.isLetter() || ch.isDigit()) }) {
             LookupManager.hideActiveLookup(project)

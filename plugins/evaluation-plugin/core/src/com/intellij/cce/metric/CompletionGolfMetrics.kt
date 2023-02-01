@@ -60,7 +60,7 @@ internal class TypingsCount : CompletionGolfMetric<Int>() {
     get() = sample.sum()
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
-    sessions.sumOf { it.lookups.count() + it.totalSkippableChars() - it.completedSkippableChars() }
+    sessions.sumOf { it.lookups.count() }
 
   companion object {
     const val NAME = "Typings"
@@ -112,7 +112,7 @@ internal class MovesCountNormalised : Metric {
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
     val movesCount = MovesCount().compute(sessions, comparator)
     val minPossibleMoves = sessions.count() * 2
-    val maxPossibleMoves = sessions.sumOf { it.expectedText.length } * 2 - sessions.sumOf { it.totalSkippableChars() }
+    val maxPossibleMoves = sessions.sumOf { it.completableLength } * 2
     movesCountTotal += movesCount
     minPossibleMovesTotal += minPossibleMoves
     maxPossibleMovesTotal += maxPossibleMoves
@@ -122,6 +122,9 @@ internal class MovesCountNormalised : Metric {
     // To reach 0%, you also need to subtract the minimum number of lookups (eq. number of sessions plus minimum amount of completion calls)
     // 0% - best scenario, every line was completed from start to end with first suggestion in list
     // >100% is possible, when navigation in completion takes too many moves
+    if (maxPossibleMoves == minPossibleMoves) {
+      return 0.0
+    }
     return ((movesCount - minPossibleMoves).toDouble() / (maxPossibleMoves - minPossibleMoves))
   }
 
@@ -196,11 +199,4 @@ internal class RecallAt(private val n: Int) : Metric {
   companion object {
     const val NAME_PREFIX = "RecallAt"
   }
-}
-
-private fun Session.totalSkippableChars() = expectedText.count { it.isWhitespace() }
-
-private fun Session.completedSkippableChars() = lookups.sumOf {
-  if (it.selectedPosition < 0) 0
-  else it.suggestions[it.selectedPosition].text.count { it.isWhitespace() }
 }
