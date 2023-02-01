@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -29,11 +30,16 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
 
   private static class TaskQueueListener implements ExecutorStateListener {
     private final Project project;
+    private final FilesScanningListener projectLevelEventPublisher;
 
-    private TaskQueueListener(Project project) { this.project = project; }
+    private TaskQueueListener(Project project) {
+      this.project = project;
+      this.projectLevelEventPublisher = project.getMessageBus().syncPublisher(FilesScanningListener.TOPIC);
+    }
 
     @Override
     public boolean beforeFirstTask() {
+      projectLevelEventPublisher.filesScanningStarted();
       return true;
     }
 
@@ -44,6 +50,7 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
         // process the tasks which were submitted after background thread finished polling, but before is set "completed" flag
         executor.startBackgroundProcess();
       }
+      projectLevelEventPublisher.filesScanningFinished();
     }
   }
 
@@ -128,7 +135,7 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   }
 
   /**
-   * This method does not have "happens before" semantics. It requests GUI supender to suspend and executes runnable without waiting for
+   * This method does not have "happens before" semantics. It requests GUI suspender to suspend and executes runnable without waiting for
    * all the running tasks to pause.
    */
   public void suspendScanningAndIndexingThenRun(@NotNull @NlsContexts.ProgressText String activityName, @NotNull Runnable runnable) {
