@@ -4,16 +4,21 @@ package org.jetbrains.idea.maven.wizards
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChangedEvent
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
-import com.intellij.ide.projectWizard.generators.*
+import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.proposeToGenerateOnboardingTipsByDefault
+import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
+import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
+import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import org.jetbrains.idea.maven.model.MavenId
 
 class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
@@ -84,6 +89,10 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         isInheritVersion = parentData?.mavenId?.version == version
       }
       builder.commit(project)
+    }
+
+    init {
+      data.putUserData(MavenJavaNewProjectWizardData.KEY, this)
     }
   }
 
