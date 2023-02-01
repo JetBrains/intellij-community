@@ -295,10 +295,10 @@ public interface IntentionPreviewInfo {
                                                @Nullable @Nls String sourceName,
                                                @Nullable @Nls String targetName) {
     return new HtmlBuilder()
-      .append(getIconChunk(sourceIcon, "source"))
+      .append(getIconChunk(sourceIcon, "source_" + sourceName))
       .append(Objects.requireNonNull(sourceName))
       .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
-      .append(getIconChunk(targetIcon, "target"))
+      .append(getIconChunk(targetIcon, "target_" + targetName))
       .append(Objects.requireNonNull(targetName))
       .append(HtmlChunk.br())
       .toFragment();
