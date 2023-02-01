@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
 import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
+import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.editor.DiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.requests.LoadingDiffRequest
 import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileTypes.FileType
@@ -15,12 +17,11 @@ import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffModelRepository
+import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
+import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridgeRepository
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabMergeRequestDiffFile(override val connectionId: String,
@@ -48,11 +49,11 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
     it.id == connectionId
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   override fun createProcessor(project: Project): DiffRequestProcessor {
     val connection = findConnection() ?: error("Missing connection for $this")
-    val vmFlow = project.serviceIfCreated<GitLabMergeRequestDiffModelRepository>()?.getShared(connection, mergeRequestId)
-                 ?: error("Missing diff model for $this")
+    val diffBridge: GitLabMergeRequestDiffBridge =
+      project.serviceIfCreated<GitLabMergeRequestDiffBridgeRepository>()?.get(connection, mergeRequestId)
+      ?: error("Missing diff model for $this")
 
     val job = SupervisorJob()
     val cs = CoroutineScope(job + Dispatchers.Main.immediate)
@@ -60,16 +61,15 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
     val processor = object : MutableDiffRequestChainProcessor(project, null) {
       override fun selectFilePath(filePath: FilePath) {
         cs.launch(start = CoroutineStart.UNDISPATCHED) {
-          vmFlow.first().selectFilePath(filePath)
+          diffBridge.selectFilePath(filePath)
         }
       }
     }
     job.cancelOnDispose(processor)
 
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      vmFlow.flatMapLatest {
-        it.chain
-      }.collectLatest {
+      processor.chain = SimpleDiffRequestChain(LoadingDiffRequest())
+      diffBridge.chain.collectLatest {
         processor.chain = it
       }
     }

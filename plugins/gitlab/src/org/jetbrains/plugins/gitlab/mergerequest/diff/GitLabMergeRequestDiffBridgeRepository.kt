@@ -6,8 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
@@ -15,28 +13,25 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
-class GitLabMergeRequestDiffModelRepository(
+class GitLabMergeRequestDiffBridgeRepository(
   private val project: Project,
   cs: CoroutineScope
 ) {
 
   private val cs = cs.childScope(Dispatchers.Default)
 
-  private val models = ConcurrentHashMap<ModelId, Flow<GitLabDiffRequestChainViewModel>>()
+  private val models = ConcurrentHashMap<ModelId, GitLabMergeRequestDiffBridge>()
 
-  fun getShared(connection: GitLabProjectConnection, mr: GitLabMergeRequestId): Flow<GitLabDiffRequestChainViewModel> {
+  fun get(connection: GitLabProjectConnection, mr: GitLabMergeRequestId): GitLabMergeRequestDiffBridge {
+    connection.checkIsOpen()
     val id = ModelId(connection.id, connection.repo.repository, GitLabMergeRequestId.Simple(mr))
     return models.getOrPut(id) {
-      channelFlow {
-        val model = MutableGitLabDiffRequestChainViewModel(project, this, connection.projectData, mr)
-        send(model)
-
-        launch {
+      GitLabMergeRequestDiffBridgeImpl(project, connection.projectData, mr).also {
+        cs.launch {
           connection.awaitClose()
+          models.remove(id)
         }
-        awaitClose()
-      }.onCompletion { models.remove(id) }
-        .shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
+      }
     }
   }
 

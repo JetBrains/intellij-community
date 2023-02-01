@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.requests.ErrorDiffRequest
-import com.intellij.diff.requests.LoadingDiffRequest
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.project.Project
@@ -13,37 +12,37 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.history.VcsDiffUtil
-import com.intellij.util.childScope
 import git4idea.changes.GitParsedChangesBundle
 import git4idea.changes.getDiffComputer
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 
-interface GitLabDiffRequestChainViewModel {
-  val chain: StateFlow<DiffRequestChain?>
+interface GitLabMergeRequestDiffBridge {
+  val chain: Flow<DiffRequestChain?>
 
   fun setChanges(changes: ListSelection<Change>)
   fun selectFilePath(filePath: FilePath)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class MutableGitLabDiffRequestChainViewModel(private val project: Project,
-                                             parentCs: CoroutineScope,
-                                             projectData: GitLabLazyProject,
-                                             mrId: GitLabMergeRequestId) : GitLabDiffRequestChainViewModel {
-  private val cs = parentCs.childScope()
+class GitLabMergeRequestDiffBridgeImpl(private val project: Project,
+                                       projectData: GitLabLazyProject,
+                                       mrId: GitLabMergeRequestId) : GitLabMergeRequestDiffBridge {
 
   private val selectionState = MutableStateFlow<ListSelection<Change>?>(null)
 
-  override val chain: StateFlow<DiffRequestChain?> = projectData.mergeRequests.getShared(mrId).flatMapLatest { mrRes ->
+  override val chain: Flow<DiffRequestChain?> = projectData.mergeRequests.getShared(mrId).flatMapLatest { mrRes ->
     mrRes.fold(
       onSuccess = { selectionState.mapToDiffChain(it.changes) },
       onFailure = { flowOf(SimpleDiffRequestChain(ErrorDiffRequest(it))) }
     )
-  }.stateIn(cs, SharingStarted.Lazily, SimpleDiffRequestChain(LoadingDiffRequest()))
+  }
 
   override fun setChanges(changes: ListSelection<Change>) {
     selectionState.value = changes

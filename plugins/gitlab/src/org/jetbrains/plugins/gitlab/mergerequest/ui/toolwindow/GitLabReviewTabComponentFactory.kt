@@ -26,7 +26,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffModelRepository
+import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridgeRepository
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
@@ -85,12 +85,11 @@ internal class GitLabReviewTabComponentFactory(
     }
 
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
-      project.service<GitLabMergeRequestDiffModelRepository>().getShared(conn, reviewId).collectLatest {diffVm ->
-        detailsVmFlow.flatMapLatest {
-          it.changesVm.selectedChanges
-        }.collectLatest {
-          diffVm.setChanges(it)
-        }
+      val diffBridge = project.service<GitLabMergeRequestDiffBridgeRepository>().get(conn, reviewId)
+      detailsVmFlow.flatMapLatest {
+        it.changesVm.selectedChanges
+      }.collectLatest {
+        diffBridge.setChanges(it)
       }
     }
 
