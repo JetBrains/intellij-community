@@ -208,7 +208,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     if (myEscapePressed) {
       result.append((char)KeyEvent.VK_BACK_SPACE); // remove Escape first, workaround for IDEA-221031
     }
-    String enterCode = new String(getTerminalStarter().getCode(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
+    String enterCode = new String(getTerminal().getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
     result.append(shellCommand).append(enterCode);
     connector.write(result.toString());
   }
