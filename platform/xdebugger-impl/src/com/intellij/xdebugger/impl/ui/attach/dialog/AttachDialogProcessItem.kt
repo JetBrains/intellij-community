@@ -66,7 +66,7 @@ internal class AttachDialogRecentItem(dialogItem: AttachDialogProcessItem,
   }
 }
 
-internal data class AttachItemsInfo(
+data class AttachItemsInfo(
   val processItems: List<AttachDialogProcessItem>,
   val recentItems: List<AttachDialogProcessItem>,
   val dataHolder: UserDataHolder) {
