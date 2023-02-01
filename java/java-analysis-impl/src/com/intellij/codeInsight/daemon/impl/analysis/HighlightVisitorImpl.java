@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.intellij.psi.PsiModifier.SEALED;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 // java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
@@ -2018,12 +2019,24 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (itemType == null) return;
       checkForEachPatternApplicable(deconstructionPattern, patternType, itemType);
       if (myHolder.hasErrorResults()) return;
-      if (!PatternsInSwitchBlockHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern))) {
-        String description = JavaErrorBundle.message("pattern.is.not.exhaustive", JavaHighlightUtil.formatType(patternType),
-                                                     JavaHighlightUtil.formatType(itemType));
-        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(deconstructionPattern).descriptionAndTooltip(description));
+      PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(itemType));
+      if (selectorClass != null && (selectorClass.hasModifierProperty(SEALED) || selectorClass.isRecord())) {
+        if (!PatternsInSwitchBlockHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern))) {
+          add(createPatternIsNotExhaustiveError(deconstructionPattern, patternType, itemType));
+        }
+      }
+      else {
+        add(createPatternIsNotExhaustiveError(deconstructionPattern, patternType, itemType));
       }
     }
+  }
+
+  private static HighlightInfo.Builder createPatternIsNotExhaustiveError(@NotNull PsiDeconstructionPattern pattern,
+                                                                         @NotNull PsiType patternType,
+                                                                         @NotNull PsiType itemType) {
+    String description = JavaErrorBundle.message("pattern.is.not.exhaustive", JavaHighlightUtil.formatType(patternType),
+                                                 JavaHighlightUtil.formatType(itemType));
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(description);
   }
 
   private void checkForEachPatternApplicable(@NotNull PsiDeconstructionPattern pattern,
