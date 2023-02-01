@@ -17,10 +17,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 import com.intellij.util.indexing.roots.IndexingRootsCollectionUtil;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
+import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
 import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils;
@@ -55,6 +57,8 @@ class RescannedRootsUtil {
 
     if (excludedRoots.isEmpty()) return Collections.emptyList();
 
+    List<VirtualFile> filesFromIndexableSetContributors = new ArrayList<>();
+
     ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     if (!(index instanceof ProjectFileIndexImpl)) return Collections.emptyList();
     ProjectFileIndexImpl fileIndex = (ProjectFileIndexImpl)index;
@@ -65,6 +69,7 @@ class RescannedRootsUtil {
     while (iterator.hasNext()) {
       VirtualFile excluded = iterator.next();
       if (!fileIndex.isInProject(excluded)) {
+        filesFromIndexableSetContributors.add(excluded);
         iterator.remove();
         continue;
       }
@@ -106,6 +111,26 @@ class RescannedRootsUtil {
 
       if (found) {
         iterator.remove();
+      }
+    }
+
+    if (!filesFromIndexableSetContributors.isEmpty()) {
+      for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
+        Set<VirtualFile> applicationRoots =
+          collectAndRemoveFilesUnder(filesFromIndexableSetContributors, contributor.getAdditionalRootsToIndex());
+        Set<VirtualFile> projectRoots =
+          collectAndRemoveFilesUnder(filesFromIndexableSetContributors, contributor.getAdditionalProjectRootsToIndex(project));
+
+        if (!applicationRoots.isEmpty()) {
+          result.add(
+            new IndexableSetContributorFilesIteratorBuilder(null, contributor.getDebugName(), applicationRoots, false, contributor));
+        }
+        if (!projectRoots.isEmpty()) {
+          result.add(new IndexableSetContributorFilesIteratorBuilder(null, contributor.getDebugName(), projectRoots, true, contributor));
+        }
+        if (filesFromIndexableSetContributors.isEmpty()) {
+          break;
+        }
       }
     }
 
@@ -160,6 +185,20 @@ class RescannedRootsUtil {
       throw new IllegalStateException("Roots were not found: " + StringUtil.join(excludedRoots, "\n"));
     }
     return result;
+  }
+
+  @NotNull
+  private static Set<VirtualFile> collectAndRemoveFilesUnder(List<VirtualFile> fileToCheck, Set<VirtualFile> roots) {
+    Iterator<VirtualFile> iterator = fileToCheck.iterator();
+    Set<VirtualFile> applicationRoots = new HashSet<>();
+    while (iterator.hasNext()) {
+      VirtualFile next = iterator.next();
+      if (VfsUtilCore.isUnder(next, roots)) {
+        applicationRoots.add(next);
+        iterator.remove();
+      }
+    }
+    return applicationRoots;
   }
 
   @NotNull
