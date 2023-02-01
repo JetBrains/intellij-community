@@ -115,6 +115,7 @@ public class PastParticipleTest {
     assertEquals("matches", pastParticiple("matches"));
     assertEquals("equals", pastParticiple("equals"));
     assertEquals("of", pastParticiple("of"));
-    //assertEquals("running", generatePastParticiple("running"));
+    assertEquals("проблем", pastParticiple("проблем"));
+    assertEquals("string1", pastParticiple("string1"));
   }
 }
