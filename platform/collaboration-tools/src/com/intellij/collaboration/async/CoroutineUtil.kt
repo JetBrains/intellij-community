@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
@@ -155,43 +156,47 @@ fun <T> Flow<T>.modelFlow(cs: CoroutineScope, log: Logger): SharedFlow<T> =
   catch { log.error(it) }.shareIn(cs, SharingStarted.Lazily, 1)
 
 fun <ID : Any, T, R> Flow<List<T>>.mapCaching(sourceIdentifier: (T) -> ID,
-                                              mapper: suspend (T) -> R,
+                                              mapper: suspend (CoroutineScope, T) -> R,
                                               destroy: suspend R.() -> Unit,
-                                              update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> {
-  var initial = true
-  val result = LinkedHashMap<ID, R>()
-  return transform { items ->
-    var hasStructureChanges = false
-    val itemsById = items.associateBy(sourceIdentifier)
+                                              update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
+  channelFlow {
+    val cs = this
+    var initial = true
+    val result = LinkedHashMap<ID, R>()
 
-    // remove missing
-    val iter = result.iterator()
-    while (iter.hasNext()) {
-      val (key, exisingResult) = iter.next()
-      if (!itemsById.containsKey(key)) {
-        iter.remove()
-        hasStructureChanges = true
-        exisingResult.destroy()
+    collect { items ->
+      var hasStructureChanges = false
+      val itemsById = items.associateBy(sourceIdentifier)
+
+      // remove missing
+      val iter = result.iterator()
+      while (iter.hasNext()) {
+        val (key, exisingResult) = iter.next()
+        if (!itemsById.containsKey(key)) {
+          iter.remove()
+          hasStructureChanges = true
+          exisingResult.destroy()
+        }
+      }
+
+      // add new or update existing
+      for (item in items) {
+        val id = sourceIdentifier(item)
+
+        val existing = result[id]
+        if (existing != null && update != null) {
+          existing.update(item)
+        }
+        else {
+          result[id] = mapper(cs, item)
+          hasStructureChanges = true
+        }
+      }
+
+      if (hasStructureChanges || initial) {
+        initial = false
+        send(result.values.toList())
       }
     }
-
-    // add new or update existing
-    for (item in items) {
-      val id = sourceIdentifier(item)
-
-      val existing = result[id]
-      if (existing != null && update != null) {
-        existing.update(item)
-      }
-      else {
-        result[id] = mapper(item)
-        hasStructureChanges = true
-      }
-    }
-
-    if (hasStructureChanges || initial) {
-      initial = false
-      emit(result.values.toList())
-    }
+    awaitClose()
   }
-}

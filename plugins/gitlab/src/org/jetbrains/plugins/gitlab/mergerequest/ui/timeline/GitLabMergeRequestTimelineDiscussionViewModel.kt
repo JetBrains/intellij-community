@@ -62,7 +62,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .map { it.drop(1) }
     .mapCaching(
       GitLabNote::id,
-      { GitLabNoteViewModelImpl(cs, it) },
+      { cs, note -> GitLabNoteViewModelImpl(cs, note) },
       GitLabNoteViewModelImpl::destroy
     )
     .modelFlow(cs, LOG)

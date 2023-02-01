@@ -62,7 +62,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       .mapFiltered { !it.notes.first().system }
       .mapCaching(
         GitLabDiscussionDTO::id,
-        { LoadedGitLabDiscussion(cs, api, project, { discussionEvents.emit(it) }, mr, it) },
+        { cs, disc -> LoadedGitLabDiscussion(cs, api, project, { discussionEvents.emit(it) }, mr, disc) },
         LoadedGitLabDiscussion::destroy
       )
       .modelFlow(cs, LOG)

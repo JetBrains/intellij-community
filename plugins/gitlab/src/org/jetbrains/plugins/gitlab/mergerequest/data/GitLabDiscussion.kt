@@ -82,7 +82,7 @@ class LoadedGitLabDiscussion(
     loadedNotes
       .mapCaching(
         GitLabNoteDTO::id,
-        { LoadedGitLabNote(cs, api, project, { noteEvents.emit(it) }, it) },
+        { cs, note -> LoadedGitLabNote(cs, api, project, { noteEvents.emit(it) }, note) },
         LoadedGitLabNote::destroy,
         LoadedGitLabNote::update
       )

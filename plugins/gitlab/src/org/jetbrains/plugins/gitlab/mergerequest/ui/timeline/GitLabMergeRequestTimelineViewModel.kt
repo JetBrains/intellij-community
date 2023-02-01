@@ -55,7 +55,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
     mergeRequestFlow.collectLatest { mr ->
       coroutineScope {
         val result = try {
-          LoadingState.Result(createItemsFlow(this, mr.getOrThrow()).mapToVms(this).stateIn(this))
+          LoadingState.Result(createItemsFlow(this, mr.getOrThrow()).mapToVms().stateIn(this))
         }
         catch (ce: CancellationException) {
           throw ce
@@ -128,10 +128,10 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
     }
   }
 
-  private suspend fun Flow<List<GitLabMergeRequestTimelineItem>>.mapToVms(cs: CoroutineScope) =
+  private suspend fun Flow<List<GitLabMergeRequestTimelineItem>>.mapToVms() =
     mapCaching(
       GitLabMergeRequestTimelineItem::id,
-      { createVm(cs, it) },
+      { cs, item -> createVm(cs, item) },
       { if (this is GitLabMergeRequestTimelineItemViewModel.Discussion) destroy() }
     )
 
