@@ -18,17 +18,11 @@ interface EnvironmentParametersService {
    * Retrieves a value from environment.
    *
    * @return If a value for [key] is defined in environment, then returns this value.
-   * Otherwise, returns null if the absence of a value can be tolerated by the environment
-   * (i.e. the environment can show a modal dialog instead).
-   * @throws MissingEnvironmentKeyException if [key] is not defined in the environment, and it cannot be tolerated.
+   * If a value for [key] is not defined, and it can be tolerated, then returns `null`.
+   * If a value for [key] is not defined, and it cannot be tolerated, then the behavior is implementation-defined.
+   * Most likely it will throw a [kotlinx.coroutines.CancellationException]
    */
-  @Throws(MissingEnvironmentKeyException::class)
-  fun getEnvironmentValue(project: Project?, key: EnvironmentKey): String?
+  suspend fun getEnvironmentValue(project: Project?, key: EnvironmentKey): String?
 
-  class MissingEnvironmentKeyException(val key: EnvironmentKey)
-    : RuntimeException(
-    """Missing key: ${key.getId()}
-      |Usage:
-      |${key.getDescription().get()}
-      |""".trimMargin())
+
 }

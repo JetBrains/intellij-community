@@ -18,12 +18,12 @@ sealed interface EnvironmentKey {
    * Representation of a key in the user environment.
    * By convention, all ids look like "foo.bar.baz"
    */
-  fun getId(): @NonNls String
+  val id: @NonNls String
 
   /**
    * The purpose of this key and the format of its values.
    */
-  fun getDescription(): Supplier<@Nls String>
+  val description: Supplier<@Nls String>
 
 
   companion object {
@@ -32,10 +32,7 @@ sealed interface EnvironmentKey {
       return EnvironmentKeyImpl(id, description)
     }
 
-    private data class EnvironmentKeyImpl(private val id: @NonNls String, private val description: Supplier<@Nls String>) : EnvironmentKey {
-      override fun getId(): String = id
-      override fun getDescription(): Supplier<String> = description
-
+    private class EnvironmentKeyImpl(override val id: @NonNls String, override val description: Supplier<@Nls String>) : EnvironmentKey {
       override fun equals(other: Any?): Boolean = other is EnvironmentKeyImpl && other.id == this.id
 
       override fun hashCode(): Int = id.hashCode()

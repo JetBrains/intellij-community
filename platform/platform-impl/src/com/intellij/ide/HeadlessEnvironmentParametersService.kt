@@ -2,22 +2,25 @@
 package com.intellij.ide
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CancellationException
 
 class HeadlessEnvironmentParametersService : BaseEnvironmentParametersService() {
 
-  override fun getEnvironmentValue(project: Project?, key: EnvironmentKey): String {
+  override suspend fun getEnvironmentValue(project: Project?, key: EnvironmentKey): String {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       LOG.warn("Access to environment parameters in the IDE with UI must be delegated to the user")
     }
     checkKeyRegistered(key)
     val property = System.getProperty(key.getId())
     if (property == null) {
-      throw EnvironmentParametersService.MissingEnvironmentKeyException(key)
+      throw CancellationException(
+        """Missing key: ${key.getId()}
+          |Usage:
+          |${key.getDescription().get()}
+          |""".trimMargin())
     }
     return property
   }
-
 }
 

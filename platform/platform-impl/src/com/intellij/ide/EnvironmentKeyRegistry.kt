@@ -18,15 +18,16 @@ interface EnvironmentKeyRegistry {
   }
 
   /**
-   * Returns all keys that are absolutely required for a project to be configured without interaction with the user.
-   */
-  fun getRequiredKeys(project: Project) : List<EnvironmentKey>
-
-  /**
    * Returns all keys that are used by a client of [EnvironmentParametersService].
    * Each [EnvironmentKey] must be registered at least in one [EnvironmentKeyRegistry].
    */
   fun getAllKeys(): List<EnvironmentKey>
+
+  /**
+   * Returns all keys that are absolutely required for a project to be configured without interaction with the user.
+   */
+  suspend fun getRequiredKeys(project: Project) : List<EnvironmentKey>
+
 
 
 }

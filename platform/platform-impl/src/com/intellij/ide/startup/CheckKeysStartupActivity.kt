@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
+import kotlinx.coroutines.CancellationException
 
 class CheckKeysStartupActivity : ProjectPostStartupActivity {
   override suspend fun execute(project: Project) {
@@ -16,18 +17,18 @@ class CheckKeysStartupActivity : ProjectPostStartupActivity {
       return
     }
 
-    blockingContext {
-      val environmentService = service<EnvironmentParametersService>()
-      for (registry in EnvironmentKeyRegistry.EP_NAME.extensionList) {
-        for (requiredKey in registry.getRequiredKeys(project)) {
-          try {
-            environmentService.getEnvironmentValue(project, requiredKey)
-          }
-          catch (e: EnvironmentParametersService.MissingEnvironmentKeyException) {
-            thisLogger().warn(e.message)
-          }
+    val environmentService = blockingContext { service<EnvironmentParametersService>() }
+    val messageBuilder = StringBuilder()
+    for (registry in blockingContext { EnvironmentKeyRegistry.EP_NAME.extensionList }) {
+      for (requiredKey in registry.getRequiredKeys(project)) {
+        try {
+          environmentService.getEnvironmentValue(project, requiredKey)
+        }
+        catch (e: CancellationException) {
+          messageBuilder.appendLine(e.message)
         }
       }
     }
+    thisLogger().error(messageBuilder)
   }
 }

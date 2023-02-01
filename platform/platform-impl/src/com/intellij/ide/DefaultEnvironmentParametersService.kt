@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 
 class DefaultEnvironmentParametersService : BaseEnvironmentParametersService() {
 
-  override fun getEnvironmentValue(project: Project?, key: EnvironmentKey): String? {
+  override suspend fun getEnvironmentValue(project: Project?, key: EnvironmentKey): String? {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       LOG.warn("Access to UI is not allowed in the headless environment")
     }
