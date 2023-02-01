@@ -3,9 +3,11 @@
 
 package com.intellij.xdebugger.impl
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
@@ -51,6 +53,20 @@ internal class XDebuggerExecutionPointManager(project: Project,
       .zipWithNext { oldValue, _ ->
         oldValue?.hideAndDispose()
       }.launchIn(coroutineScope)
+
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      highlightFlow.onCompletion { emit(null) }
+        .map { it != null }.distinctUntilChanged()
+        .dropWhile { !it }  // ignore initial 'false' value
+        .onEach { hasHighlight ->
+          if (hasHighlight) {
+            EditorMouseHoverPopupControl.disablePopups(project)
+          }
+          else {
+            EditorMouseHoverPopupControl.enablePopups(project)
+          }
+        }.launchIn(coroutineScope)
+    }
 
     highlightState = highlightFlow.stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
 
