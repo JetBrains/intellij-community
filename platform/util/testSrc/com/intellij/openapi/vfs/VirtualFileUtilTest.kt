@@ -105,9 +105,9 @@ class VirtualFileUtilTest : VirtualFileUtilTestCase() {
         .isExistedDirectory()
 
       assertVirtualFile { writeAction { createFile("file.txt") } }
-        .isFailedWithException<IllegalStateException>("File already exists: .*")
+        .isFailedWithException<IOException>("File already exists: .*")
       assertVirtualFile { writeAction { createDirectory("directory") } }
-        .isFailedWithException<IllegalStateException>("Directory already exists: .*")
+        .isFailedWithException<IOException>("Directory already exists: .*")
 
       assertVirtualFile { writeAction { findOrCreateFile("directory") } }
         .isFailedWithException<IOException>("Expected file instead of directory: .*")

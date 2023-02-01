@@ -8,8 +8,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.SystemIndependent
+import java.io.IOException
 import java.nio.file.Path
-
 
 @RequiresReadLock
 fun VirtualFile.getDocument(): Document {
@@ -27,30 +27,34 @@ fun VirtualFile.getPsiFile(project: Project): PsiFile {
 
 @RequiresReadLock
 fun VirtualFile.getFile(relativePath: @SystemIndependent String): VirtualFile {
-  return checkNotNull(findFile(relativePath)) {
-    "File or directory doesn't exist: $path/$relativePath"
+  val file = findFile(relativePath)
+  if (file == null) {
+    throw IOException("File doesn't exist: $path/$relativePath")
   }
+  return file
 }
 
 @RequiresReadLock
 fun VirtualFile.getDirectory(relativePath: @SystemIndependent String): VirtualFile {
-  return checkNotNull(findDirectory(relativePath)) {
-    "File or directory doesn't exist: $path/$relativePath"
+  val directory = findDirectory(relativePath)
+  if (directory == null) {
+    throw IOException("Directory doesn't exist: $path/$relativePath")
   }
+  return directory
 }
 
 @RequiresWriteLock
 fun VirtualFile.createFile(relativePath: @SystemIndependent String): VirtualFile {
-  check(findFile(relativePath) == null) {
-    "File already exists: $path/$relativePath"
+  if (findFile(relativePath) != null) {
+    throw IOException("File already exists: $path/$relativePath")
   }
   return findOrCreateFile(relativePath)
 }
 
 @RequiresWriteLock
 fun VirtualFile.createDirectory(relativePath: @SystemIndependent String): VirtualFile {
-  check(findDirectory(relativePath) == null) {
-    "Directory already exists: $path/$relativePath"
+  if (findDirectory(relativePath) != null) {
+    throw IOException("Directory already exists: $path/$relativePath")
   }
   return findOrCreateDirectory(relativePath)
 }
@@ -77,14 +81,18 @@ fun VirtualFile.deleteChildrenRecursively(relativePath: @SystemIndependent Strin
 
 @RequiresWriteLock
 fun Path.refreshAndGetVirtualFile(): VirtualFile {
-  return checkNotNull(refreshAndFindVirtualFile()) {
-    "File or directory doesn't exist: $this"
+  val file = refreshAndFindVirtualFile()
+  if (file == null) {
+    throw IOException("File doesn't exist: $this")
   }
+  return file
 }
 
 @RequiresWriteLock
 fun Path.refreshAndGetVirtualDirectory(): VirtualFile {
-  return checkNotNull(refreshAndFindVirtualDirectory()) {
-    "File or directory doesn't exist: $this"
+  val directory = refreshAndFindVirtualDirectory()
+  if (directory == null) {
+    throw IOException("Directory doesn't exist: $this")
   }
+  return directory
 }

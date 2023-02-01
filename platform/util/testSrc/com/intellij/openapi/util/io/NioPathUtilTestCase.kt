@@ -95,7 +95,6 @@ abstract class NioPathUtilTestCase {
     inline fun <reified Ex : Exception> isFailedWithException(pattern: String = ".*") =
       isFailedWithException(Ex::class.java, Regex(pattern))
 
-
     fun doesNotExist() = withFile { path ->
       Assertions.assertTrue(path == null || !exists(path)) {
         "Expected file doesn't exist: $path"

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.util.io.getResolvedPath
+import java.io.IOException
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -15,15 +16,15 @@ val Path.children: List<Path>
   get() = Files.newDirectoryStream(this).use { it.toList() }
 
 fun Path.createFile(): Path {
-  check(!exists()) {
-    "File already exists: $this"
+  if (exists()) {
+    throw IOException("File already exists: $this")
   }
   return findOrCreateFile()
 }
 
 fun Path.createDirectory(): Path {
-  check(!exists()) {
-    "Directory already exists: $this"
+  if (exists()) {
+    throw IOException("Directory already exists: $this")
   }
   return findOrCreateDirectory()
 }
