@@ -36,6 +36,24 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
   private static final Pattern OPTION_SEPARATOR = Pattern.compile("\\s+");
   private static final Pattern OPTION_MATCHER = Pattern.compile("^-XX:[+\\-]?(\\w+)(=.+)?$");
 
+  private static final VMOption[] STANDARD_OPTIONS = {
+    opt("ea", "enable assertions with specified granularity"),
+    opt("enableassertions", "enable assertions with specified granularity"),
+    opt("da", "disable assertions with specified granularity"),
+    opt("disableassertions", "disable assertions with specified granularity"),
+    opt("esa", "enable system assertions"),
+    opt("dsa", "disable system assertions"),
+    opt("agentpath:", "load native agent library by full pathname"),
+    opt("agentlib:", "load native agent library <libname>, e.g. -agentlib:jdwp"),
+    opt("javaagent:", "load Java programming language agent"),
+    opt("D", "set a system property in format <name>=<value>"),
+    opt("XX:", "specify non-standard JVM-specific option"),
+  };
+  
+  private static VMOption opt(@NotNull String name, @NotNull String doc) {
+    return new VMOption(name, null, null, VMOptionKind.Standard, doc, VMOptionVariant.DASH);
+  }
+
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     Document document = parameters.getEditor().getDocument();
@@ -69,12 +87,9 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
   }
 
   private static void addDashOptions(@NotNull CompletionResultSet result, @NotNull JdkOptionsData data, String prefix) {
-    String[] options = {"ea", "enableassertions", "da", "disableassertions", "esa", "dsa", "agentpath:", "agentlib:",
-      "javaagent:", "XX:", "D"};
-    Stream<VMOption> stream = Stream.concat(
-      data.getOptions().stream().filter(option -> option.getVariant() != VMOptionVariant.XX),
-      Stream.of(options).map(opt -> new VMOption(opt, null, null, VMOptionKind.Product, null, VMOptionVariant.DASH)));
-    stream.forEach(option -> {
+    Stream.concat(
+      data.getOptions().stream().filter(option1 -> option1.getVariant() != VMOptionVariant.XX),
+      Stream.of(STANDARD_OPTIONS)).forEach(option -> {
       String fullLookup = option.getVariant().prefix() + option.getOptionName();
       if (!fullLookup.startsWith(prefix)) return;
       String lookup = fullLookup.substring(prefix.length());

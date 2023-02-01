@@ -72,23 +72,26 @@ enum class VMOptionVariant {
 }
 
 enum class VMOptionKind {
+  Standard,                      
   Product,
   Diagnostic,
   Experimental;
 
   fun presentation(): @Nls String = when (this) {
+    Standard -> JavaBundle.message("vm.option.description.standard")
     Product -> JavaBundle.message("vm.option.description.product")
     Diagnostic -> JavaBundle.message("vm.option.description.diagnostic")
     Experimental -> JavaBundle.message("vm.option.description.experimental")
   }
 
   fun unlockOption(): @NlsSafe String? = when (this) {
-    Product -> null
+    Product, Standard -> null
     Diagnostic -> "-XX:+UnlockDiagnosticVMOptions"
     Experimental -> "-XX:+UnlockExperimentalVMOptions"
   }
 
-  fun icon(): Icon = when (this) {
+  fun icon(): Icon? = when (this) {
+    Standard -> null
     Product -> AllIcons.Actions.ArrowExpand
     Diagnostic -> AllIcons.General.ShowInfos
     Experimental -> AllIcons.General.Warning
