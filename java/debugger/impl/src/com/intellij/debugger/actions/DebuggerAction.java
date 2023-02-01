@@ -9,10 +9,14 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.DebuggerTreePanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -23,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,5 +136,57 @@ public abstract class DebuggerAction extends AnAction {
   public static boolean isInJavaSession(AnActionEvent e) {
     XDebugSession session = DebuggerUIUtil.getSession(e);
     return session != null && session.getDebugProcess() instanceof JavaDebugProcess;
+  }
+
+  static JavaStackFrame getStackFrame(AnActionEvent e) {
+    StackFrameDescriptorImpl descriptor = getSelectedStackFrameDescriptor(e);
+    if (descriptor != null) {
+      return new JavaStackFrame(descriptor, false);
+    }
+    return getSelectedStackFrame(e);
+  }
+
+  static StackFrameProxyImpl getStackFrameProxy(AnActionEvent e) {
+    DebuggerTreeNodeImpl node = getSelectedNode(e.getDataContext());
+    if (node != null) {
+      NodeDescriptorImpl descriptor = node.getDescriptor();
+      if (descriptor instanceof StackFrameDescriptorImpl) {
+        return ((StackFrameDescriptorImpl)descriptor).getFrameProxy();
+      }
+    }
+    else {
+      JavaStackFrame stackFrame = getSelectedStackFrame(e);
+      if (stackFrame != null) {
+        return stackFrame.getStackFrameProxy();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static StackFrameDescriptorImpl getSelectedStackFrameDescriptor(AnActionEvent e) {
+    DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
+    if (selectedNode != null) {
+      NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
+      if (descriptor instanceof StackFrameDescriptorImpl) {
+        return (StackFrameDescriptorImpl)descriptor;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static JavaStackFrame getSelectedStackFrame(AnActionEvent e) {
+    Project project = e.getProject();
+    if (project != null) {
+      XDebugSession session = DebuggerUIUtil.getSession(e);
+      if (session != null) {
+        XStackFrame frame = session.getCurrentStackFrame();
+        if (frame instanceof JavaStackFrame) {
+          return ((JavaStackFrame)frame);
+        }
+      }
+    }
+    return null;
   }
 }

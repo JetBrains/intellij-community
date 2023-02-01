@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -15,7 +15,6 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +27,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.evaluate.XExpressionDialog;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Method;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
-    final JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
+    final JavaStackFrame stackFrame = getStackFrame(e);
     if (stackFrame == null || project == null) {
       return;
     }
@@ -170,17 +170,12 @@ public class ForceEarlyReturnAction extends DebuggerAction {
   public void update(@NotNull AnActionEvent e) {
     boolean enable = false;
 
-    JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
+    JavaStackFrame stackFrame = getStackFrame(e);
     if (stackFrame != null && stackFrame.getDescriptor().getUiIndex() == 0) {
       enable = stackFrame.getStackFrameProxy().getVirtualMachine().canForceEarlyReturn();
     }
 
-    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
-      e.getPresentation().setEnabled(enable);
-    }
-    else {
-      e.getPresentation().setVisible(enable);
-    }
+    DebuggerUIUtil.setActionEnabled(e, enable);
   }
 
   @Override

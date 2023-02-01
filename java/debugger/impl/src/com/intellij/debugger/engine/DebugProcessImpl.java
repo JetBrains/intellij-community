@@ -6,7 +6,6 @@ import com.intellij.ProjectTopics;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerAction;
-import com.intellij.debugger.actions.PopFrameAction;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -64,6 +63,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
@@ -2004,7 +2004,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       if (myStackFrame.isBottom()) {
         DebuggerInvocationUtil.swingInvokeLater(myProject, () -> Messages.showMessageDialog(myProject, JavaDebuggerBundle
-          .message("error.pop.bottom.stackframe"), ActionsBundle.actionText(PopFrameAction.ACTION_NAME), Messages.getErrorIcon()));
+          .message("error.pop.bottom.stackframe"), XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon()));
         return;
       }
 
@@ -2013,10 +2013,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         getSuspendManager().popFrame(suspendContext);
       }
       catch (final EvaluateException e) {
-        DebuggerInvocationUtil.swingInvokeLater(myProject,
-                                                () -> Messages.showMessageDialog(myProject, JavaDebuggerBundle
-                                                  .message("error.pop.stackframe", e.getLocalizedMessage()), ActionsBundle.actionText(
-                                                  PopFrameAction.ACTION_NAME), Messages.getErrorIcon()));
+        DebuggerInvocationUtil.swingInvokeLater(myProject, () ->
+          Messages.showMessageDialog(myProject, JavaDebuggerBundle.message("error.pop.stackframe", e.getLocalizedMessage()),
+                                     XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon()));
         LOG.info(e);
       }
     }
