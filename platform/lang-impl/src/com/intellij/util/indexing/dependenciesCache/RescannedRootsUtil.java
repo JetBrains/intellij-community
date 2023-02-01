@@ -55,7 +55,14 @@ class RescannedRootsUtil {
       excludedRoots.addAll(value.excludedFromSdkRoots);
     }
 
-    if (excludedRoots.isEmpty()) return Collections.emptyList();
+    return createBuildersForReincludedFiles(project, excludedRoots, librariesDescriptorsAfter);
+  }
+
+  @NotNull
+  private static List<IndexableIteratorBuilder> createBuildersForReincludedFiles(@NotNull Project project,
+                                                                                 @NotNull Collection<VirtualFile> reincludedRoots,
+                                                                                 @NotNull List<? extends SyntheticLibraryDescriptor> librariesDescriptorsAfter) {
+    if (reincludedRoots.isEmpty()) return Collections.emptyList();
 
     List<VirtualFile> filesFromIndexableSetContributors = new ArrayList<>();
 
@@ -63,7 +70,7 @@ class RescannedRootsUtil {
     if (!(index instanceof ProjectFileIndexImpl)) return Collections.emptyList();
     ProjectFileIndexImpl fileIndex = (ProjectFileIndexImpl)index;
     ArrayList<IndexableIteratorBuilder> result = new ArrayList<>();
-    Iterator<VirtualFile> iterator = excludedRoots.iterator();
+    Iterator<VirtualFile> iterator = reincludedRoots.iterator();
     VirtualFileUrlManager urlManager = ApplicationManager.getApplication().getService(VirtualFileUrlManager.class);
 
     while (iterator.hasNext()) {
@@ -134,14 +141,14 @@ class RescannedRootsUtil {
       }
     }
 
-    if (excludedRoots.isEmpty()) {
+    if (reincludedRoots.isEmpty()) {
       return result;
     }
 
     EntityStorage current = WorkspaceModel.getInstance(project).getCurrentSnapshot();
     for (CustomEntityProjectModelInfoProvider<?> provider : CustomEntityProjectModelInfoProvider.EP.getExtensionList()) {
       for (LibraryRoots<? extends WorkspaceEntity> roots : getRoots(provider, current)) {
-        Iterator<VirtualFile> rootsIterator = excludedRoots.iterator();
+        Iterator<VirtualFile> rootsIterator = reincludedRoots.iterator();
         while (rootsIterator.hasNext()) {
           VirtualFile next = rootsIterator.next();
           if (VfsUtilCore.isUnderFiles(next, roots.sources) || VfsUtilCore.isUnderFiles(next, roots.classes)) {
@@ -154,13 +161,13 @@ class RescannedRootsUtil {
             }
           }
         }
-        if (excludedRoots.isEmpty()) {
+        if (reincludedRoots.isEmpty()) {
           break;
         }
       }
     }
 
-    if (excludedRoots.isEmpty()) {
+    if (reincludedRoots.isEmpty()) {
       return result;
     }
 
@@ -171,7 +178,7 @@ class RescannedRootsUtil {
 
     IndexingRootsCollectionUtil.IndexingRootsDescriptions roots =
       IndexingRootsCollectionUtil.collectRootsFromWorkspaceFileIndexContributors(project, current, settings);
-    Iterator<VirtualFile> rootsIterator = excludedRoots.iterator();
+    Iterator<VirtualFile> rootsIterator = reincludedRoots.iterator();
     while (rootsIterator.hasNext()) {
       VirtualFile next = rootsIterator.next();
       Collection<? extends IndexableIteratorBuilder> builders = IndexingRootsCollectionUtil.createBuilderForFile(roots, next);
@@ -181,8 +188,8 @@ class RescannedRootsUtil {
       }
     }
 
-    if (!excludedRoots.isEmpty()) {
-      throw new IllegalStateException("Roots were not found: " + StringUtil.join(excludedRoots, "\n"));
+    if (!reincludedRoots.isEmpty()) {
+      throw new IllegalStateException("Roots were not found: " + StringUtil.join(reincludedRoots, "\n"));
     }
     return result;
   }
