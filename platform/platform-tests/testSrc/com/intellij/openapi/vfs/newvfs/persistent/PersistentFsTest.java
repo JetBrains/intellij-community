@@ -299,7 +299,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     assertEquals(globalFsModCount + 1, managingFS.getFilesystemModificationCount());
 
     FSRecords.force();
-    assertFalse(FSRecords.isDirty());
+    assertFalse("FSRecords.force() was just called, must be !dirty",
+                FSRecords.isDirty());
     ++globalFsModCount;
 
     int finalGlobalModCount = globalFsModCount;

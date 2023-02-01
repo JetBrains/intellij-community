@@ -153,14 +153,13 @@ final class PersistentFSConnector {
 
       records = PersistentFSRecordsStorageFactory.createStorage(recordsFile);
 
-      final boolean initial = records.length() == 0;
+      final boolean initial = records.recordsCount() == 0;
 
       if (initial) {
-        // Clean header
-        //FIXME RC: 0-th record as header is an implementation detail of specific records impl, and shouldn't be exposed here
-        records.cleanRecord(0);
         // Create root record
-        records.cleanRecord(1);
+        final int rootRecordId = records.allocateRecord();
+        assert rootRecordId == FSRecords.ROOT_FILE_ID;
+        records.cleanRecord(rootRecordId);
 
         setCurrentVersion(records, attributes, contents, expectedVersion);
       }

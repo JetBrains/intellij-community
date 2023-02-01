@@ -46,11 +46,52 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   protected abstract T openStorage(final Path storageFile) throws IOException;
 
   @Test
+  public void recordsCountIsZeroForEmptyStorage() {
+    assertEquals(
+      "Should be 0 records in the empty storage",
+      0,
+      storage.recordsCount()
+    );
+  }
+
+  @Test
+  public void firstRecordInserted_MustGetValidId() throws Exception {
+    final int recordId = storage.allocateRecord();
+
+    assertTrue("First inserted record should get id (=" + recordId + ") > FSRecords.RESERVED_FILE_ID",
+               recordId > FSRecords.NULL_FILE_ID //TODO replace with universal NULL_ID
+    );
+
+    assertEquals("Should be 1 (just inserted) record in the storage",
+                 1,
+                 storage.recordsCount()
+    );
+  }
+
+  @Test
+  public void cleanRecord_throwsException_IfRecordIdIsOutsideOfAllocatedRange() throws IOException {
+    final int cleanedRecordId = 10;
+    try {
+      storage.cleanRecord(cleanedRecordId);
+      fail(".cleanRecord(" + cleanedRecordId + ") must throw IndexOutOfBoundsException since there record " + cleanedRecordId + " is not allocated");
+    }
+    catch (IndexOutOfBoundsException e) {
+      //OK
+    }
+  }
+
+  @Test
   public void singleWrittenRecord_CouldBeReadBackUnchanged() throws Exception {
     final int recordId = storage.allocateRecord();
     final FSRecord recordOriginal = generateRecordFields(recordId);
 
     recordOriginal.updateInStorage(storage);
+
+    assertEquals("Should be 1 (just inserted) record in the storage",
+                 1,
+                 storage.recordsCount()
+    );
+
     final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
 
     assertEqualExceptModCount("Record updated and record read back by same ID should be equal", recordOriginal, recordReadBack);
@@ -99,6 +140,12 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       records[i] = generateRecordFields(recordId);
       records[i].updateInStorage(storage);
     }
+
+    assertEquals(
+      "storage.recordsCount() should be == number of inserted records",
+      records.length,
+      storage.recordsCount()
+    );
 
     final Map<FSRecord, FSRecord> incorrectlyReadBackRecords = new HashMap<>();
     for (final FSRecord recordOriginal : records) {
@@ -294,6 +341,10 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     final T storageReopened = openStorage(storagePath);
     storage = storageReopened;//for tearDown to successfully close it
 
+    assertEquals("Records count should be still 1 after re-open",
+                 1,
+                 storage.recordsCount()
+    );
     final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordId);
     assertEqualExceptModCount("Record written should be read back as-is", recordWritten, recordReadBack);
   }

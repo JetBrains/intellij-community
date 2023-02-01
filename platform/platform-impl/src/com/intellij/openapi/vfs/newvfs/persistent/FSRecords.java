@@ -79,6 +79,23 @@ public final class FSRecords {
   public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION =
     SystemProperties.getBooleanProperty("vfs.use-streamlined-attributes-storage", false);
 
+  /**
+   * Initially record=0 was used as a storage header record, hence fileId=0 was reserved.
+   * New storages still reserve id=0, even though they usually separate the header from
+   * records explicitly -- because it is consistent with 0 being used as NULL in other parts
+   * of app, e.g. in DataEnumerator
+   */
+  static final int NULL_FILE_ID = 0;
+
+  /**
+   * fileId of artificial 'directory' all FS roots are attached to as children. This fs-record
+   * is special in a few ways -- e.g. it has CHILDREN storage format different from regular
+   * directories (see {@link PersistentFSTreeAccessor#findOrCreateRootRecord(String)}
+   */
+  static final int ROOT_FILE_ID = NULL_FILE_ID + 1;
+  static final int MIN_REGULAR_FILE_ID = ROOT_FILE_ID + 1;
+
+
   private static volatile PersistentFSConnection ourConnection;
   private static volatile PersistentFSContentAccessor ourContentAccessor;
   private static volatile PersistentFSAttributeAccessor ourAttributeAccessor;

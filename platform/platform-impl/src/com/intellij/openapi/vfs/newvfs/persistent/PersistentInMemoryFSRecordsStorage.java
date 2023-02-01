@@ -115,7 +115,7 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
 
   @Override
   public int allocateRecord() {
-    final int recordId = allocatedRecordsCount.getAndIncrement();
+    final int recordId = allocatedRecordsCount.incrementAndGet();
     if (recordId > maxRecords) {
       throw new IndexOutOfBoundsException("maxRecords(=" + maxRecords + ") limit exceeded");
     }
@@ -248,7 +248,7 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
 
   @Override
   public void cleanRecord(final int recordId) throws IOException {
-    allocatedRecordsCount.updateAndGet(allocatedRecords -> Math.max(recordId + 1, allocatedRecords));
+    checkRecordId(recordId);
     //fill record with zeros, by 4 bytes at once:
     final int recordStartAtBytes = recordOffsetInBytes(recordId, 0);
     for (int wordNo = 0; wordNo < RECORD_SIZE_IN_INTS; wordNo++) {
@@ -310,8 +310,13 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
     return actualDataLength();
   }
 
+  @Override
+  public int recordsCount() {
+    return allocatedRecordsCount.get();
+  }
+
   public long actualDataLength() {
-    final int recordsCount = allocatedRecordsCount.get();
+    final int recordsCount = recordsCount();
     return (RECORD_SIZE_IN_INTS * (long)recordsCount) * Integer.BYTES + HEADER_SIZE;
   }
 
@@ -388,14 +393,15 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
 
   private int recordOffsetInBytes(final int recordId,
                                   final int fieldRelativeOffset) throws IndexOutOfBoundsException {
-    checkFileId(recordId);
-    return (RECORD_SIZE_IN_INTS * recordId + fieldRelativeOffset) * Integer.BYTES + HEADER_SIZE;
+    checkRecordId(recordId);
+    return (RECORD_SIZE_IN_INTS * (recordId - 1) + fieldRelativeOffset) * Integer.BYTES + HEADER_SIZE;
   }
 
-  private void checkFileId(final int recordId) throws IndexOutOfBoundsException {
-    if (!(0 <= recordId && recordId < allocatedRecordsCount.get())) {
+  private void checkRecordId(final int recordId) throws IndexOutOfBoundsException {
+    final int allocatedSoFar = allocatedRecordsCount.get();
+    if (!(FSRecords.NULL_FILE_ID < recordId && recordId <= allocatedSoFar)) {
       throw new IndexOutOfBoundsException(
-        "recordId(=" + recordId + ") is outside of allocated IDs range [0, " + allocatedRecordsCount + ")");
+        "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + allocatedSoFar + "]");
     }
   }
 

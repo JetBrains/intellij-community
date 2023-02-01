@@ -30,11 +30,6 @@ import static java.nio.file.StandardOpenOption.*;
 @ApiStatus.Internal
 public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
 
-  //FIXME RC: check is id=0 valid for FSRecords? Better to use 0, as all other storages use NULL_ID=0
-  //          seems like id=0 is valid, but not used by PersistentFSRecordsStorage, because legacy implementations
-  //          use 0-th record as a header.
-  public static final int NULL_ID = -1;
-
   /* ================ RECORD FIELDS LAYOUT (in ints = 4 bytes) ======================================== */
 
   /**
@@ -119,11 +114,6 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
     allocatedRecordsCount.set(recordsCountInStorage);
     globalModCount.set(modCount);
-  }
-
-  @Override
-  public int recordsCount() {
-    return allocatedRecordsCount.get();
   }
 
   @Override
@@ -346,8 +336,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
   @Override
   public int allocateRecord() {
-    final int recordId = allocatedRecordsCount.getAndIncrement();
-    return recordId;
+    return allocatedRecordsCount.incrementAndGet();
   }
 
   // 'one field at a time' operations
@@ -503,7 +492,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
   @Override
   public void cleanRecord(final int recordId) throws IOException {
-    allocatedRecordsCount.updateAndGet(allocatedRecords -> Math.max(recordId + 1, allocatedRecords));
+    checkRecordIdIsValid(recordId);
 
     //fill record with zeroes, by 4 bytes at once:
     assert RECORD_SIZE_IN_BYTES % Integer.BYTES == 0 : "RECORD_SIZE_IN_BYTES(=" + RECORD_SIZE_IN_BYTES + ") is expected to be 32-aligned";
@@ -576,21 +565,17 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
   @Override
   public long length() {
-    final int recordsCount = allocatedRecordsCount.get();
-    final boolean anythingChanged = globalModCount.get() > 0;
-    if (recordsCount == 0 && !anythingChanged) {
-      //Try to mimic other implementations' behavior: they return actual file size, which is 0
-      //  before first record allocated -- really it should be >0, since even no-record storage
-      //  contains _header_, but other implementations use 0-th record as header...
-      //TODO RC: it is better to have recordsCount() method
-      return 0;
-    }
     return actualDataLength();
   }
 
   public long actualDataLength() {
-    final int recordsCount = allocatedRecordsCount.get();
+    final int recordsCount = allocatedRecordsCount.get() + 1;
     return recordOffsetInFileUnchecked(recordsCount);
+  }
+
+  @Override
+  public int recordsCount() {
+    return allocatedRecordsCount.get();
   }
 
   @Override
@@ -614,7 +599,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   }
 
   //TODO RC: do we need method like 'unmap', which forcibly unmaps pages, or it is enough to rely
-  //         on JVM which will unmap pages eventually, as they collected by GC?
+  //         on JVM which will unmap pages eventually, as they are collected by GC?
   //         Forcible unmap allows to 'clean after yourself', but carries a risk of JVM crash if
   //         somebody still tries to access unmapped pages.
   //         Seems like the best solution would be to provide 'unmap' as dedicated method, not
@@ -628,14 +613,17 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   /** Without recordId bounds checking */
   @VisibleForTesting
   protected long recordOffsetInFileUnchecked(final int recordId) {
+    //recordId is 1-based, convert to 0-based recordNo:
+    final int recordNo = recordId - 1;
+
     final int recordsOnHeaderPage = (pageSize - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
-    if (recordId < recordsOnHeaderPage) {
-      return HEADER_SIZE + recordId * (long)RECORD_SIZE_IN_BYTES;
+    if (recordNo < recordsOnHeaderPage) {
+      return HEADER_SIZE + recordNo * (long)RECORD_SIZE_IN_BYTES;
     }
 
     //as-if there were no header:
-    final int fullPages = recordId / recordsPerPage;
-    final int recordsOnLastPage = recordId % recordsPerPage;
+    final int fullPages = recordNo / recordsPerPage;
+    final int recordsOnLastPage = recordNo % recordsPerPage;
 
     //header on the first page "push out" few records:
     final int recordsExcessBecauseOfHeader = recordsPerPage - recordsOnHeaderPage;
@@ -657,9 +645,10 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
 
   private void checkRecordIdIsValid(final int recordId) throws IndexOutOfBoundsException {
-    if (!(NULL_ID < recordId && recordId < allocatedRecordsCount.get())) {
+    final int recordsAllocatedSoFar = allocatedRecordsCount.get();
+    if (!(NULL_ID < recordId && recordId <= recordsAllocatedSoFar)) {
       throw new IndexOutOfBoundsException(
-        "recordId(=" + recordId + ") is outside of allocated IDs range [0, " + allocatedRecordsCount + ")");
+        "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + recordsAllocatedSoFar + "]");
     }
   }
 

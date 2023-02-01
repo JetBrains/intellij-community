@@ -240,7 +240,7 @@ final public class PersistentFSConnection {
       myAttributesStorage.force();
       myContents.force();
       if (myContentHashesEnumerator != null) myContentHashesEnumerator.force();
-      markClean();
+      writeConnectionState();
       myRecords.force();
     }
   }
@@ -255,7 +255,7 @@ final public class PersistentFSConnection {
       flushingTask.close();
     }
 
-    markClean(); 
+    writeConnectionState();
     closeStorages(myRecords,
                   myNames,
                   myAttributesStorage,
@@ -302,7 +302,7 @@ final public class PersistentFSConnection {
     }
   }
 
-  void markClean() throws IOException {
+  private void writeConnectionState() throws IOException {
     // no synchronization, it's ok to have race here
     if (myDirty) {
       myDirty = false;
@@ -497,7 +497,7 @@ final public class PersistentFSConnection {
           }
         }
 
-        markClean();
+        writeConnectionState();
         myRecords.force();
 
         unspentContentionQuota -= competingThreads();

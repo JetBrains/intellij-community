@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsOverLockFreePagedStorage.NULL_ID;
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
@@ -77,7 +78,7 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
     final int enoughRecords = (pageSize / RECORD_SIZE_IN_BYTES) * 16;
 
     long expectedRecordOffsetInFile = PersistentFSRecordsOverLockFreePagedStorage.HEADER_SIZE;
-    for (int recordId = 0; recordId < enoughRecords; recordId++) {
+    for (int recordId = NULL_ID + 1; recordId < enoughRecords; recordId++) {
 
       final long recordOffsetInFile = storage.recordOffsetInFileUnchecked(recordId);
       assertEquals("recordOffset(recordId:" + recordId + ") must be " + expectedRecordOffsetInFile,
@@ -97,11 +98,12 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
     final int pageSize = pagedStorage.getPageSize();
     final int enoughRecords = (pageSize / RECORD_SIZE_IN_BYTES) * 16;
 
-    for (int recordId = 0; recordId < enoughRecords; recordId++) {
+    for (int recordId = NULL_ID + 1; recordId < enoughRecords; recordId++) {
       final long recordOffsetInFile = storage.recordOffsetInFileUnchecked(recordId);
       final int calculatedRecordNo = storage.loadRecordsCount(recordOffsetInFile);
-      assertEquals("storage(" + recordOffsetInFile + "b) must contain " + recordId + " records",
-                   recordId,
+      final int expectedRecordNo = recordId - 1;
+      assertEquals("storage(" + recordOffsetInFile + "b) must contain " + expectedRecordNo + " records",
+                   expectedRecordNo,
                    calculatedRecordNo
       );
     }
@@ -114,7 +116,7 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
     final int pageSize = pagedStorage.getPageSize();
     final int enoughRecords = (pageSize / RECORD_SIZE_IN_BYTES) * 16;
 
-    for (int recordId = 0; recordId < enoughRecords; recordId++) {
+    for (int recordId = NULL_ID + 1; recordId < enoughRecords; recordId++) {
       final long recordOffsetInFile = storage.recordOffsetInFileUnchecked(recordId);
       final int excessBytes = ThreadLocalRandom.current().nextInt(1, RECORD_SIZE_IN_BYTES);
       final long storageSizeWithExcess = recordOffsetInFile + excessBytes;

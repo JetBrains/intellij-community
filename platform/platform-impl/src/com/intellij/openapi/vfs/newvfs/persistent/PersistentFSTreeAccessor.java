@@ -37,7 +37,7 @@ class PersistentFSTreeAccessor {
    * fileId of super-root, 'root of all roots' record: superficial file record to which all FS roots are
    * attached as children -- see {@link #findOrCreateRootRecord(String)} for details.
    */
-  protected static final int ROOT_RECORD_ID = 1;
+  protected static final int ROOT_RECORD_ID = FSRecords.ROOT_FILE_ID;
 
   protected final PersistentFSAttributeAccessor myAttributeAccessor;
   protected final PersistentFSConnection myFSConnection;
