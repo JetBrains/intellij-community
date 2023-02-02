@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,10 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -34,7 +32,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.components.state.ButtonMouseState
 import org.jetbrains.jewel.components.state.CheckboxState
-import org.jetbrains.jewel.shape
+import org.jetbrains.jewel.modifiers.BorderAlignment
+import org.jetbrains.jewel.modifiers.border
 import org.jetbrains.jewel.styles.CheckboxStyle
 import org.jetbrains.jewel.styles.LocalCheckboxStyle
 import org.jetbrains.jewel.styles.LocalTextStyle
@@ -120,21 +119,19 @@ fun CheckboxImpl(
         indication = null
     )
 
-    val haloModifier = if (appearance.haloStroke != null) {
-        Modifier.drawBehind {
-            val outline = appearance.haloShape.createOutline(size, layoutDirection, this)
-            drawOutline(
-                outline = outline,
-                brush = appearance.haloStroke.brush,
-                style = Stroke(appearance.haloStroke.width.toPx())
-            )
-        }
-    } else {
-        Modifier
-    }
+    val backgroundModifier = Modifier.background(appearance.backgroundColor, appearance.shape)
+
+    val borderModifier = appearance.shapeStroke?.let {
+        Modifier.border(BorderAlignment.Inside, it.width, it.brush, appearance.shape)
+    } ?: Modifier
+
+    val haloModifier = appearance.haloStroke?.let {
+        Modifier.border(BorderAlignment.Outside, it.width, it.brush, appearance.shape)
+    } ?: Modifier
 
     val designModifier = Modifier.size(appearance.width, appearance.height)
-        .shape(appearance.shape, appearance.shapeStroke, appearance.backgroundColor)
+        .then(backgroundModifier)
+        .then(borderModifier)
         .then(haloModifier)
         .padding(appearance.symbolPadding)
 

@@ -10,7 +10,7 @@ import org.jetbrains.jewel.util.isMacOs
 val IntelliJMetrics.Button.Companion.default
     get() = IntelliJMetrics.Button(
         strokeWidth = 1.dp,
-        arc = CornerSize(2.5.dp),
+        arc = CornerSize(3.dp),
         padding = PaddingValues(horizontal = 14.dp, vertical = 4.dp)
     )
 
