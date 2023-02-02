@@ -211,16 +211,6 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
         return noSuggestions()
       }
 
-      val pluginsForExactFileName = cache.getIfPresent(fileName)
-      if (pluginsForExactFileName != null && pluginsForExactFileName.plugins.isNotEmpty()) {
-        return pluginsForExactFileName
-      }
-      if (knownExtensions.get(fileName).isNotEmpty()) {
-        // there is a plugin that can support the exact file name, but we don't know a compatible version,
-        // return null to force request to update cache
-        return null
-      }
-
       // Check if there's an installed plugin matching the extension
       fullExtension?.let { getByFilenameOrExt(it) }?.let {
         return it
