@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.svg.SvgTranscoder
-import com.intellij.ui.svg.createSvgDocument
+import com.intellij.ui.svg.getSvgDocumentSize
 import com.intellij.util.LineSeparator
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.diff.Diff
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.loadPng
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -18,28 +18,28 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.xxh3.Xxh3
-import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.file.*
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
-import javax.imageio.ImageIO
 import javax.xml.stream.XMLStreamException
 
-internal data class ModifiedClass(val module: JpsModule, val file: Path, val result: CharSequence)
+internal data class ModifiedClass(@JvmField val module: JpsModule,
+                                  @JvmField val file: Path,
+                                  @JvmField val result: CharSequence)
 
 // legacy ordering
 private val NAME_COMPARATOR: Comparator<String> = compareBy { it.lowercase(Locale.ENGLISH) + '.' }
 
-internal data class IconClassInfo(val customLoad: Boolean,
-                                  val packageName: String,
-                                  val className: String,
-                                  val outFile: Path,
-                                  val images: Collection<ImageInfo>)
+internal data class IconClassInfo(@JvmField val customLoad: Boolean,
+                                  @JvmField val packageName: String,
+                                  @JvmField val className: String,
+                                  @JvmField val outFile: Path,
+                                  @JvmField val images: Collection<ImageInfo>)
 
 internal open class IconsClassGenerator(private val projectHome: Path,
-                                        val modules: List<JpsModule>,
+                                        @JvmField val modules: List<JpsModule>,
                                         private val writeChangesToDisk: Boolean = true) {
   companion object {
     private val deprecatedIconFieldNameMap = CollectionFactory.createCharSequenceMap<String>(true)
@@ -443,19 +443,18 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     var javaDoc: String
     var key: Int
     try {
-      val loadedImage: BufferedImage
       if (file.toString().endsWith(".svg")) {
         // don't mask any exception for svg file
         val data = loadAndNormalizeSvgFile(imageFile).toByteArray()
-        loadedImage = SvgTranscoder.createImage(1f, createSvgDocument(null, data), null)
+        val size = getSvgDocumentSize(data = data, scale = 1f)
         key = getImageKey(data, file.fileName.toString())
+        javaDoc = "/** ${size.width.toInt()}x${size.height.toInt()} */ "
       }
       else {
-        loadedImage = Files.newInputStream(file).buffered().use { ImageIO.read(it) }
+        val loadedImage = Files.newInputStream(file).use { loadPng(it, scale = 1f) }
         key = 0
+        javaDoc = "/** ${loadedImage.width}x${loadedImage.height} */ "
       }
-
-      javaDoc = "/** ${loadedImage.width}x${loadedImage.height} */ "
     }
     catch (e: NoSuchFileException) {
       if (!image.phantom) {

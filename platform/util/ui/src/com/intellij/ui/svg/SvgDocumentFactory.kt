@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.svg
 
 import com.intellij.util.xml.dom.createXmlStreamReader
@@ -7,37 +7,38 @@ import org.apache.batik.anim.dom.SVGDOMImplementation
 import org.apache.batik.anim.dom.SVGOMDocument
 import org.apache.batik.dom.GenericCDATASection
 import org.apache.batik.dom.GenericText
-import org.apache.batik.transcoder.TranscoderException
-import org.apache.batik.util.ParsedURL
 import org.codehaus.stax2.XMLStreamReader2
-import org.jetbrains.annotations.ApiStatus
-import org.w3c.dom.Document
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.w3c.dom.Element
 import org.w3c.dom.Node
+import java.io.IOException
 import java.io.InputStream
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 
-@ApiStatus.Internal
-fun createSvgDocument(uri: String?, reader: InputStream) = createSvgDocument(uri, createXmlStreamReader(reader))
+@Internal
+fun createSvgDocument(inputStream: InputStream, uri: String? = null): SVGOMDocument {
+  return createSvgDocument(xmlStreamReader = createXmlStreamReader(inputStream), uri = uri)
+}
 
-@ApiStatus.Internal
-fun createSvgDocument(uri: String?, data: ByteArray) = createSvgDocument(uri, createXmlStreamReader(data))
+@Internal
+fun createSvgDocument(data: ByteArray, uri: String?  = null): SVGOMDocument {
+  return createSvgDocument(xmlStreamReader = createXmlStreamReader(data), uri = uri)
+}
 
-private fun createSvgDocument(uri: String?, xmlStreamReader: XMLStreamReader2): Document {
+private fun createSvgDocument(xmlStreamReader: XMLStreamReader2, uri: String?): SVGOMDocument {
   val result = try {
     buildDocument(xmlStreamReader)
   }
   catch (e: XMLStreamException) {
-    throw TranscoderException(e)
+    throw IOException(e)
   }
   finally {
     xmlStreamReader.close()
   }
 
   if (uri != null) {
-    result.parsedURL = ParsedURL(uri)
     result.documentURI = uri
   }
   return result
@@ -46,7 +47,7 @@ private fun createSvgDocument(uri: String?, xmlStreamReader: XMLStreamReader2): 
 private fun buildDocument(reader: XMLStreamReader): SVGOMDocument {
   var state = reader.eventType
   if (XMLStreamConstants.START_DOCUMENT != state) {
-    throw TranscoderException("Incorrect state: $state")
+    throw IOException("Incorrect state: $state")
   }
 
   var document: SVGOMDocument? = null
@@ -72,7 +73,7 @@ private fun buildDocument(reader: XMLStreamReader): SVGOMDocument {
         val implementation: SVGDOMImplementation = when {
           version.isNullOrEmpty() || version == "1.0" || version == "1.1" -> SVGDOMImplementation.getDOMImplementation() as SVGDOMImplementation
           version == "1.2" -> SVG12DOMImplementation.getDOMImplementation() as SVGDOMImplementation
-          else -> throw TranscoderException("Unsupported SVG version: $version")
+          else -> throw IOException("Unsupported SVG version: $version")
         }
 
         val localName = reader.localName
@@ -81,23 +82,23 @@ private fun buildDocument(reader: XMLStreamReader): SVGOMDocument {
         readAttributes(element, reader)
 
         if (localName != "svg") {
-          throw TranscoderException("Root element does not match that requested:\nRequested: svg\nFound: $localName")
+          throw IOException("Root element does not match that requested:\nRequested: svg\nFound: $localName")
         }
         processElementFragment(reader, document, implementation, element)
       }
       XMLStreamConstants.CHARACTERS -> {
         val badContent = reader.text
         if (!isAllXMLWhitespace(badContent)) {
-          throw TranscoderException("Unexpected XMLStream event at Document level: CHARACTERS ($badContent)")
+          throw IOException("Unexpected XMLStream event at Document level: CHARACTERS ($badContent)")
         }
       }
-      else -> throw TranscoderException("Unexpected XMLStream event at Document level:$state")
+      else -> throw IOException("Unexpected XMLStream event at Document level:$state")
     }
     state = if (reader.hasNext()) {
       reader.next()
     }
     else {
-      throw TranscoderException("Unexpected end-of-XMLStreamReader")
+      throw IOException("Unexpected end-of-XMLStreamReader")
     }
   }
   return document!!
@@ -127,7 +128,7 @@ private fun processElementFragment(reader: XMLStreamReader, document: SVGOMDocum
       }
       XMLStreamConstants.ENTITY_REFERENCE, XMLStreamConstants.COMMENT, XMLStreamConstants.PROCESSING_INSTRUCTION -> {
       }
-      else -> throw TranscoderException("Unexpected XMLStream event: ${reader.eventType}")
+      else -> throw IOException("Unexpected XMLStream event: ${reader.eventType}")
     }
   }
 }

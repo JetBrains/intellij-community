@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.DigestUtil
 import org.jetbrains.intellij.build.images.ImageExtension.*
 import org.jetbrains.intellij.build.images.ImageType.*
 import org.jetbrains.jps.model.module.JpsModule
@@ -9,7 +10,7 @@ import java.awt.Dimension
 import java.nio.file.Path
 
 abstract class ImageSanityCheckerBase(private val projectHome: Path, private val ignoreSkipTag: Boolean) {
-  private val STUB_PNG_MD5 = "5a87124746c39b00aad480e92672eca0" // /actions/stub.svg - 16x16
+  private val STUB_PNG_SHA256 = "4b7871718d0eb6404dc1cf9aeaeb564f116485683ada2418528fb74344b97170" // /actions/stub.svg - 16x16
 
   fun check(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?) {
     val allImages = ImageCollector(projectHome = projectHome, iconsOnly = false, ignoreSkipTag = ignoreSkipTag,
@@ -95,7 +96,7 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
 
   private fun checkNoStubIcons(images: List<ImageInfo>, module: JpsModule) {
     process(images, Severity.WARNING, "copies of the stub.png image must be removed", module) { image ->
-      return@process image.files.none { STUB_PNG_MD5 == md5(it) }
+      return@process image.files.none { STUB_PNG_SHA256 == DigestUtil.sha256Hex(it) }
     }
   }
 

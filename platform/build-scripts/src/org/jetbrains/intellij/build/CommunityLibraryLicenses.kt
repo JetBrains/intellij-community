@@ -193,8 +193,6 @@ object CommunityLibraryLicenses {
       .simplifiedBsd("https://github.com/cs-au-dk/dk.brics.automaton/blob/master/COPYING"),
     LibraryLicense(name = "batik", libraryName = "batik-transcoder", url = "https://xmlgraphics.apache.org/batik/")
       .apache("https://xmlgraphics.apache.org/batik/license.html"),
-    LibraryLicense(name = "batik", libraryName = "batik-codec", url = "https://xmlgraphics.apache.org/batik/")
-      .apache("https://xmlgraphics.apache.org/batik/license.html"),
     LibraryLicense(libraryName = "blockmap",
                    url = "https://github.com/JetBrains/plugin-blockmap-patches")
       .apache("https://github.com/JetBrains/plugin-blockmap-patches/blob/master/LICENSE"),

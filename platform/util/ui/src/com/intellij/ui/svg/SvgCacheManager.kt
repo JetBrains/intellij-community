@@ -8,7 +8,6 @@ import com.intellij.mvstore.openOrRecreateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.icons.IconLoadMeasurer
-import com.intellij.util.ImageLoader
 import org.h2.mvstore.DataUtils
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
@@ -33,7 +32,6 @@ class SvgCacheMapper(
   @JvmField internal val scale: Float,
   @JvmField internal val isDark: Boolean,
   @JvmField internal val isStroke: Boolean,
-  @JvmField internal val docSize: ImageLoader.Dimension2DDouble? = null,
 ) {
   constructor(scale: Float) : this(scale = scale, isDark = false, isStroke = false)
 
@@ -73,7 +71,6 @@ class SvgCacheManager(dbFile: Path) {
       val start = StartUpMeasurer.getCurrentTimeIfEnabled()
       val data = map.get(key) ?: return null
       val image = readImage(data)
-      mapper.docSize?.setSize((data.w / mapper.scale).toDouble(), (data.h / mapper.scale).toDouble())
       IconLoadMeasurer.svgCacheRead.end(start)
       return image
     }

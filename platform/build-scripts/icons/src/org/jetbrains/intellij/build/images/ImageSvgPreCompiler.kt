@@ -7,6 +7,8 @@ package org.jetbrains.intellij.build.images
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
 import com.intellij.ui.svg.SvgCacheManager
+import com.intellij.ui.svg.SvgTranscoder
+import com.intellij.ui.svg.createSvgDocument
 import com.intellij.util.io.DigestUtil
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.common.AttributeKey
@@ -18,12 +20,10 @@ import org.jetbrains.ikv.builder.sizeUnawareIkvWriter
 import org.jetbrains.intellij.build.io.ByteBufferAllocator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.skia.Bitmap
-import org.jetbrains.skia.ColorType
-import org.jetbrains.skia.Data
-import org.jetbrains.skia.impl.BufferUtil
-import org.jetbrains.skia.svg.SVGDOM
+import java.awt.image.BufferedImage
+import java.awt.image.DataBufferInt
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -259,24 +259,32 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     val variants = icon.variants
     // the key is the same for all variants
     val imageKey = icon.imageKey
-    val light1x = SVGDOM(Data.makeFromBytes(inlineSvgStyles(icon.light1xData.decodeToString())))
-    val light2x = variants.firstOrNull { it.toString().endsWith("@2x.svg") }?.let {
-      SVGDOM(Data.makeFromBytes(inlineSvgStyles(Files.readString(it))))
+    //val light1x = SVGDOM(Data.makeFromBytes(inlineSvgStyles(icon.light1xData.decodeToString())))
+    val light1x = createSvgDocument(data = icon.light1xData)
+    val light2x = variants.firstOrNull { it.toString().endsWith("@2x.svg") }?.let { file ->
+      //SVGDOM(Data.makeFromBytes(inlineSvgStyles(Files.readString(it))))
+      Files.newInputStream(file).use { createSvgDocument(inputStream = it, uri = "@2x") }
     }
 
     val dark2xFile = variants.find { it.toString().endsWith("@2x_dark.svg") }
-    val dark1x = variants.find { it !== dark2xFile && it.toString().endsWith("_dark.svg") }?.let { createSvgDom(it) }
-    val dark2x = dark2xFile?.let { createSvgDom(it) }
+    //val dark1x = variants.find { it !== dark2xFile && it.toString().endsWith("_dark.svg") }?.let { createSvgDom(it) }
+    val dark1x = variants.find { it !== dark2xFile && it.toString().endsWith("_dark.svg") }?.let { file ->
+      Files.newInputStream(file).use(::createSvgDocument)
+    }
+    //val dark2x = dark2xFile?.let { createSvgDom(it) }
+    val dark2x = dark2xFile?.let { file -> Files.newInputStream(file).use { createSvgDocument(inputStream = it, uri = "@2x") } }
 
     for (scale in scales) {
       addEntry(map = getMapByScale(list = lightStores, scale = scale),
-               bitmap = renderSvgUsingSkia(svg = if (scale >= 2 && light2x != null) light2x else light1x, scale = scale),
+               //bitmap = renderSvgUsingSkia(svg = if (scale >= 2 && light2x != null) light2x else light1x, scale = scale),
+               bitmap = SvgTranscoder.createImage(scale = scale, document = if (scale >= 2 && light2x != null) light2x else light1x),
                imageKey = imageKey,
                totalSize = totalSize,
                bufferAllocator = bufferAllocator)
 
       addEntry(map = getMapByScale(list = darkStores, scale = scale),
-               bitmap = renderSvgUsingSkia(svg = if (scale >= 2 && dark2x != null) dark2x else (dark1x ?: continue), scale = scale),
+               //bitmap = renderSvgUsingSkia(svg = if (scale >= 2 && dark2x != null) dark2x else (dark1x ?: continue), scale = scale),
+               bitmap = SvgTranscoder.createImage(scale = scale, document = if (scale >= 2 && dark2x != null) dark2x else (dark1x ?: continue)),
                imageKey = imageKey,
                totalSize = totalSize,
                bufferAllocator = bufferAllocator)
@@ -325,7 +333,7 @@ private class IconData(@JvmField val light1xData: ByteArray,
                        @JvmField val imageKey: Int)
 
 @Suppress("DuplicatedCode")
-private fun addEntry(map: IkvWriter, bitmap: Bitmap, imageKey: Int, totalSize: AtomicInteger, bufferAllocator: ByteBufferAllocator) {
+private fun addEntry(map: IkvWriter, /*bitmap: Bitmap*/bitmap: BufferedImage, imageKey: Int, totalSize: AtomicInteger, bufferAllocator: ByteBufferAllocator) {
   val w = bitmap.width
   val h = bitmap.height
 
@@ -336,14 +344,23 @@ private fun addEntry(map: IkvWriter, bitmap: Bitmap, imageKey: Int, totalSize: A
     headerBuffer.flip()
     currentPosition = writeData(currentPosition, channel, headerBuffer, totalSize)
 
-    val pixelNativePointer = bitmap.peekPixels()!!.addr
-    val pixelBuffer = BufferUtil.getByteBufferFromPointer(pixelNativePointer, bitmap.rowBytes * bitmap.height)
-    if (bitmap.colorInfo.colorType == ColorType.BGRA_8888) {
-      currentPosition = writeData(currentPosition, channel, pixelBuffer, totalSize)
-    }
-    else {
-      throw UnsupportedOperationException(bitmap.colorInfo.colorType.toString())
-    }
+    //val pixelNativePointer = bitmap.peekPixels()!!.addr
+    //val pixelBuffer = BufferUtil.getByteBufferFromPointer(pixelNativePointer, bitmap.rowBytes * bitmap.height)
+    //if (bitmap.colorInfo.colorType == ColorType.BGRA_8888) {
+    //  currentPosition = writeData(currentPosition, channel, pixelBuffer, totalSize)
+    //}
+    //else {
+    //  throw UnsupportedOperationException(bitmap.colorInfo.colorType.toString())
+    //}
+
+    assert(bitmap.type == BufferedImage.TYPE_INT_ARGB)
+    assert(!bitmap.colorModel.isAlphaPremultiplied)
+
+    val data = (bitmap.raster.dataBuffer as DataBufferInt).data
+    val buffer = ByteBuffer.allocateDirect(data.size * Int.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN)
+    buffer.asIntBuffer().put(data)
+
+    currentPosition = writeData(currentPosition, channel, buffer, totalSize)
 
     currentPosition
   }
