@@ -112,6 +112,8 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
         orderEntry.presentableName
             // Be careful not to use KGP_VERSION placeholder for 3rd-party libraries (e.g. those that try to align versioning with Kotlin)
             .let { if ("org.jetbrains.kotlin" in it || "Kotlin/Native" in it) it.replace(kotlinGradlePluginVersion.toString(), "{{KGP_VERSION}}") else it }
+            .removePrefix("${project.name}.")
+            .removePrefix("Gradle: ")
 
     private fun PrinterContext.getModuleInfos(orderEntry: OrderEntry): Set<IdeaModuleInfo> {
         when (orderEntry) {
@@ -144,12 +146,12 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
 
     companion object {
         private val STDLIB_MODULES = setOf(
-            "Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}}",
-            "Gradle: org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}}",
-            "Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}}",
-            "Gradle: org.jetbrains:annotations:13.0",
-            "Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}}",
-            "Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}}",
+            "org.jetbrains:annotations:13.0",
+            "org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}}",
         )
         // Old import: Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         // KGP based import: Kotlin/Native: stdlib (COMPILE)
@@ -157,15 +159,15 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
         private val NATIVE_STDLIB_KGP_BASED_IMPORT: String = "Kotlin/Native: stdlib"
 
         private val KOTLIN_TEST_MODULES = setOf(
-            "Gradle: org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}}",
-            "Gradle: org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}}",
 
-            "Gradle: org.jetbrains.kotlin:kotlin-test-js:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-test-js:{{KGP_VERSION}}",
 
-            "Gradle: org.jetbrains.kotlin:kotlin-test:{{KGP_VERSION}}",
-            "Gradle: org.jetbrains.kotlin:kotlin-test-junit:{{KGP_VERSION}}",
-            "Gradle: org.hamcrest:hamcrest-core:1.3",
-            "Gradle: junit:junit:4.13.2"
+            "jetbrains.kotlin:kotlin-test:{{KGP_VERSION}}",
+            "jetbrains.kotlin:kotlin-test-junit:{{KGP_VERSION}}",
+            "hamcrest:hamcrest-core:1.3",
+            "junit:4.13.2"
         )
 
         private val NATIVE_DISTRIBUTION_LIBRARY_PATTERN = "^Kotlin/Native.*".toRegex()
