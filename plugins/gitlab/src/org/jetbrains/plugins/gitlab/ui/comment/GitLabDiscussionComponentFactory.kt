@@ -4,20 +4,26 @@ package org.jetbrains.plugins.gitlab.ui.comment
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.ComponentListPanelFactory
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
+import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
+import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bindEnabled
-import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.swingAction
+import com.intellij.collaboration.ui.util.*
 import com.intellij.openapi.project.Project
+import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionViewModel.NoteItem
+import javax.swing.Action
 import javax.swing.JComponent
 
 object GitLabDiscussionComponentFactory {
@@ -58,6 +64,15 @@ object GitLabDiscussionComponentFactory {
       border = JBUI.Borders.empty(componentType.inputPaddingInsets)
     }
   }
+
+  fun createUnResolveLink(cs: CoroutineScope, vm: GitLabDiscussionResolveViewModel): JComponent =
+    ActionLink("") {
+      vm.changeResolvedState()
+    }.apply {
+      isFocusable = true
+      bindDisabled(cs, vm.busy)
+      bindText(cs, vm.actionTextFlow)
+    }
 }
 
 val GitLabDiscussionResolveViewModel.actionTextFlow

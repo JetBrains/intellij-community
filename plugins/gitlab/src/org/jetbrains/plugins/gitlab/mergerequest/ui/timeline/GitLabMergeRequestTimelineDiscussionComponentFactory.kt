@@ -11,7 +11,10 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.bindChild
+import com.intellij.collaboration.ui.util.bindIcon
+import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
@@ -21,6 +24,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -48,12 +52,6 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       bindVisibility(cs, vm.collapsed.inverted())
     }
 
-    val replyField = vm.newNoteVm?.let {
-      GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, cs, it, vm.resolveVm, avatarIconsProvider)
-    }?.apply {
-      bindVisibility(cs, vm.collapsed.inverted())
-    }
-
     val titlePanel = HorizontalListPanel(CodeReviewCommentUIUtil.Title.HORIZONTAL_GAP).apply {
       add(createTitleTextPane(cs, vm.author, vm.date))
 
@@ -77,7 +75,22 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       VerticalListPanel().apply {
         add(it)
         add(repliesPanel)
-        replyField?.let(::add)
+
+        val replyVm = vm.replyVm
+        if (replyVm != null) {
+          bindChild(cs, replyVm.newNoteVm) { cs, newNoteVm ->
+            newNoteVm?.let {
+              GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, cs, it, vm.resolveVm,
+                                                                avatarIconsProvider)
+            }
+          }
+
+          cs.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.collapsed.collect {
+              if (!it) replyVm.startWriting()
+            }
+          }
+        }
       }
     }
   }
@@ -143,7 +156,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       })
     }
 
-    val hasRepliesOrCanCreateNewFlow = vm.replies.map { it.isNotEmpty() || vm.newNoteVm != null }
+    val hasRepliesOrCanCreateNewFlow = vm.replies.map { it.isNotEmpty() || vm.replyVm != null }
 
     val repliesLink = LinkLabel<Any>("", null, LinkListener { _, _ ->
       vm.setRepliesFolded(false)
@@ -180,20 +193,10 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       add(repliesActions)
 
       vm.resolveVm?.let {
-        createUnResolveLink(cs, it).also(::add)
+        GitLabDiscussionComponentFactory.createUnResolveLink(cs, it).also(::add)
       }
     }
   }
-
-  private fun createUnResolveLink(cs: CoroutineScope,
-                                  vm: GitLabDiscussionResolveViewModel): LinkLabel<Any> =
-    LinkLabel<Any>("", null) { _, _ ->
-      vm.changeResolvedState()
-    }.apply {
-      isFocusable = true
-      bindDisabled(cs, vm.busy)
-      bindText(cs, vm.actionTextFlow)
-    }
 
   private fun collapseDiscussionTextIfNeeded(cs: CoroutineScope, vm: GitLabMergeRequestTimelineDiscussionViewModel,
                                              textPane: JComponent): JComponent {
