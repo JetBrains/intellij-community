@@ -342,29 +342,8 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferr
   }
 
   launch {
-    if (!CommandLineArgs.isSplashNeeded(args)) {
-      return@launch
-    }
-
-    // A splash instance must not be created before base LaF is created.
-    // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
-    // https://youtrack.jetbrains.com/issue/IDEA-286544
-    initUiDeferred.join()
-
-    // before showEuaIfNeededJob to prepare during showing EUA dialog
-    // products may specify `splash` VM property; `nosplash` is deprecated and should be checked first
-    val appInfo = appInfoDeferred.await()
-    val runnable = runActivity("splash preparation") {
-      try {
-        SplashManager.scheduleShow(appInfo)
-      }
-      catch (e: Exception) {
-        logger<StartupUiUtil>().error("Cannot schedule splash showing", e)
-        return@launch
-      }
-    }
-    withContext(RawSwingDispatcher) {
-      runnable()
+    if (CommandLineArgs.isSplashNeeded(args)) {
+      scheduleShowSplash(initUiDeferred, appInfoDeferred)
     }
   }
 }

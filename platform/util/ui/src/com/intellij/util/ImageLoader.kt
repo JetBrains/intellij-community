@@ -123,8 +123,8 @@ object ImageLoader {
       try {
         val data = getResourceData(path = descriptor.path, resourceClass = null, classLoader = classLoader) ?: continue
         val image: Image
-        return if (descriptor.isSvg) {
-          SVGLoader.loadWithoutCache(data, descriptor.scale)
+        if (descriptor.isSvg) {
+          return SVGLoader.loadWithoutCache(data, descriptor.scale)
         }
         else {
           image = loadPng(stream = ByteArrayInputStream(data), scale = descriptor.scale, originalUserSize = null)
@@ -133,7 +133,7 @@ object ImageLoader {
             // compensate the image original scale
             scale /= descriptor.scale
           }
-          scaleImage(image, scale.toDouble()) as BufferedImage
+          return scaleImage(image, scale.toDouble()) as BufferedImage
         }
       }
       catch (ignore: IOException) {

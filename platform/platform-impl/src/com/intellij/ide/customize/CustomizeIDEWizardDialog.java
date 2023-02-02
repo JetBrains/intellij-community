@@ -4,7 +4,7 @@ package com.intellij.ide.customize;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.AppStarter;
-import com.intellij.idea.SplashManager;
+import com.intellij.idea.SplashManagerKt;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -85,7 +85,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCus
       throw new IllegalStateException("no steps provided");
     }
     CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.WizardDisplayed);
-    SplashManager.hide();
+    SplashManagerKt.hideSplash();
     super.show();
   }
 

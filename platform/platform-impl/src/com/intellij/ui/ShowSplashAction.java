@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -9,15 +9,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.*;
 
+import static com.intellij.ui.SplashKt.loadSplashImage;
+
 /**
  * @author Konstantin Bulenkov
  */
 public final class ShowSplashAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Splash splash = new Splash(ApplicationInfoImpl.getShadowInstance());
-    splash.initAndShow(true);
-
+    Splash splash = new Splash(loadSplashImage(ApplicationInfoImpl.getShadowInstance()));
     SplashListener listener = new SplashListener(splash);
     splash.addFocusListener(listener);
     splash.addKeyListener(listener);

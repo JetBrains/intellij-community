@@ -4,7 +4,7 @@ package com.intellij.ide.gdpr
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.ui.HtmlRtfPane
 import com.intellij.idea.AppExitCodes
-import com.intellij.idea.SplashManager
+import com.intellij.idea.hideSplashBeforeShow
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OnePixelDivider
@@ -142,6 +142,7 @@ class AgreementUiBuilder internal constructor() {
       val html = SwingHelper.createHtmlLabel(text, null, null)
       html.border = JBUI.Borders.empty(10, 16, 10, 0)
       html.isOpaque = true
+      @Suppress("UseJBColor")
       html.background = Color(0xDCE4E8)
       val eapLabelStyleSheet = (html.document as HTMLDocument).styleSheet
       eapLabelStyleSheet.addRule("a {color:#4a78c2;}")
@@ -153,7 +154,7 @@ class AgreementUiBuilder internal constructor() {
     title?.let { ui.title = it }
     ui.setSize(JBUI.scale(600), JBUI.scale(460))
     ui.isModal = true
-    SplashManager.hideBeforeShow(ui.window)
+    hideSplashBeforeShow(ui.window)
     return ui.showAndGet()
   }
 
@@ -285,6 +286,7 @@ private class AgreementUi(@NlsSafe private val htmlText: String,
       text = htmlText
 
       val styleSheet = (document as HTMLDocument).styleSheet
+      @Suppress("SpellCheckingInspection")
       styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}")
       styleSheet.addRule("body {font-size:${JBUI.Fonts.label()}pt;}")
       foreground = JBColor.BLACK
