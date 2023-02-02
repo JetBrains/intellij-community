@@ -54,6 +54,7 @@
 
 package org.jdom;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -72,7 +73,8 @@ import java.util.*;
  * @author Bradley S. Huffman
  * @author Rolf Lear
  */
-final class AttributeList extends AbstractList<Attribute> implements RandomAccess {
+@ApiStatus.Internal
+public final class AttributeList extends AbstractList<Attribute> implements RandomAccess {
   /**
    * The initial size to start the backing array.
    */
@@ -104,6 +106,11 @@ final class AttributeList extends AbstractList<Attribute> implements RandomAcces
    */
   AttributeList(final Element parent) {
     this.parent = parent;
+  }
+
+  AttributeList(Element parent, int count) {
+    this.parent = parent;
+    attributeData = new Attribute[count];
   }
 
   /**
@@ -143,6 +150,12 @@ final class AttributeList extends AbstractList<Attribute> implements RandomAcces
       attribute.setParent(parent);
     }
     return true;
+  }
+
+  @ApiStatus.Internal
+  public void doAdd(Attribute attribute) {
+    attribute.setParent(parent);
+    attributeData[size++] = attribute;
   }
 
   /**
