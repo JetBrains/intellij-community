@@ -57,13 +57,13 @@ interface JKMultiverseSymbol<T : PsiNamedElement> : JKSymbol {
     override val fqName: String
         get() = target.kotlinFqName?.asString() ?: name
     override val name: String
-        get() = target.name!!
+        get() = target.name ?: ""
 }
 
 interface JKMultiverseKtSymbol<T : KtNamedDeclaration> : JKSymbol {
     override val target: T
     override val name: String
-        get() = target.name!!
+        get() = target.name ?: ""
     override val declaredIn: JKSymbol?
         get() = target.getStrictParentOfType<KtDeclaration>()?.let { symbolProvider.provideDirectSymbol(it) }
     override val fqName: String

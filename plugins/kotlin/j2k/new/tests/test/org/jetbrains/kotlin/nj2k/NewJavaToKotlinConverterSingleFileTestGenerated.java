@@ -276,6 +276,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         public void testLocalSelfReference() throws Exception {
             runTest("testData/newJ2k/anonymousClass/localSelfReference.java");
         }
+
+        @TestMetadata("staticMembers.java")
+        public void testStaticMembers() throws Exception {
+            runTest("testData/newJ2k/anonymousClass/staticMembers.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
