@@ -62,9 +62,11 @@ class CoroutineFrameBuilder {
 
             // @TODO perhaps we need to merge the dropped variables with the frame below...
             val framesLeft = preflightFrame.threadPreCoroutineFrames
-            stackFrames.addAll(framesLeft.mapIndexedNotNull { _, stackFrameProxyImpl ->
-                suspendContext.invokeInManagerThread { buildRealStackFrameItem(stackFrameProxyImpl) }
-            })
+            suspendContext.invokeInManagerThread {
+                stackFrames.addAll(framesLeft.mapIndexedNotNull { _, stackFrameProxyImpl ->
+                    buildRealStackFrameItem(stackFrameProxyImpl)
+                })
+            }
 
             return CoroutineFrameItemLists(stackFrames, preflightFrame.coroutineInfoData.creationStackTrace)
         }
