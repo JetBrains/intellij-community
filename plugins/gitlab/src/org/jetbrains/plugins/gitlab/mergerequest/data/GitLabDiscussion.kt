@@ -12,9 +12,9 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestDiscussionResolve
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createReplyNote
 import java.util.*
@@ -24,6 +24,8 @@ interface GitLabDiscussion : GitLabNotesContainer {
 
   val createdAt: Date
   val notes: Flow<List<GitLabNote>>
+
+  val position: GitLabNoteDTO.Position?
 
   val canResolve: Boolean
   val resolved: Flow<Boolean>
@@ -89,6 +91,8 @@ class LoadedGitLabDiscussion(
       .modelFlow(cs, LOG)
 
   override val canAddNotes: Boolean = mr.userPermissions.createNote
+
+  override val position: GitLabNoteDTO.Position? = discussionData.notes.first().position
 
   // a little cheat that greatly simplifies the implementation
   override val canResolve: Boolean = discussionData.notes.first().let { it.resolvable && it.userPermissions.resolveNote }

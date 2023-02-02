@@ -28,12 +28,51 @@ import javax.swing.JComponent
 
 object GitLabDiscussionComponentFactory {
 
+  fun create(project: Project,
+             cs: CoroutineScope,
+             avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+             vm: GitLabDiscussionViewModel): JComponent {
+    val notesPanel = ComponentListPanelFactory.createVertical(cs, vm.notes, NoteItem::id) { itemCs, item ->
+      when (item) {
+        is NoteItem.Expander -> TimelineThreadCommentsPanel.createUnfoldComponent(item.collapsedCount) {
+          item.expand()
+        }.apply {
+          border = JBUI.Borders.empty(TimelineThreadCommentsPanel.UNFOLD_BUTTON_VERTICAL_GAP,
+                                      ComponentType.COMPACT.fullLeftShift,
+                                      TimelineThreadCommentsPanel.UNFOLD_BUTTON_VERTICAL_GAP,
+                                      0)
+        }
+        is NoteItem.Note -> GitLabNoteComponentFactory.create(ComponentType.COMPACT, project, itemCs, avatarIconsProvider, item.vm)
+      }
+    }
+
+    return VerticalListPanel().apply {
+      add(notesPanel)
+      val replyVm = vm.replyVm
+      if (replyVm != null) {
+        bindChild(cs, replyVm.newNoteVm) { cs, newNoteVm ->
+          if (newNoteVm == null) {
+            createReplyActionsPanel(cs, replyVm, vm.resolveVm).apply {
+              border = JBUI.Borders.empty(8, ComponentType.COMPACT.fullLeftShift)
+            }
+          }
+          else {
+            createReplyField(ComponentType.COMPACT, project, cs, newNoteVm, vm.resolveVm, avatarIconsProvider, swingAction("") {
+              replyVm.stopWriting()
+            })
+          }
+        }
+      }
+    }
+  }
+
   fun createReplyField(componentType: ComponentType,
                        project: Project,
                        cs: CoroutineScope,
                        vm: NewGitLabNoteViewModel,
                        resolveVm: GitLabDiscussionResolveViewModel?,
-                       iconsProvider: IconsProvider<GitLabUserDTO>): JComponent {
+                       iconsProvider: IconsProvider<GitLabUserDTO>,
+                       cancelAction: Action? = null): JComponent {
     val submitAction = swingAction(CollaborationToolsBundle.message("review.comments.reply.action")) {
       vm.submit()
     }.apply {
@@ -52,6 +91,7 @@ object GitLabDiscussionComponentFactory {
     val actions = CommentInputActionsComponentFactory.Config(
       primaryAction = MutableStateFlow(submitAction),
       additionalActions = MutableStateFlow(listOfNotNull(resolveAction)),
+      cancelAction = MutableStateFlow(cancelAction),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
                                                                      CommentInputActionsComponentFactory.submitShortcutText))
     )
@@ -65,11 +105,29 @@ object GitLabDiscussionComponentFactory {
     }
   }
 
+  private fun createReplyActionsPanel(cs: CoroutineScope,
+                                      replyVm: GitLabDiscussionReplyViewModel,
+                                      resolveVm: GitLabDiscussionResolveViewModel?): JComponent {
+    val replyLink = ActionLink(CollaborationToolsBundle.message("review.comments.reply.action")) {
+      replyVm.startWriting()
+    }.apply {
+      isFocusPainted = false
+    }
+
+    return HorizontalListPanel(CodeReviewTimelineUIUtil.Thread.Replies.ActionsFolded.HORIZONTAL_GROUP_GAP).apply {
+      add(replyLink)
+
+      if (resolveVm != null) {
+        createUnResolveLink(cs, resolveVm).also(::add)
+      }
+    }
+  }
+
   fun createUnResolveLink(cs: CoroutineScope, vm: GitLabDiscussionResolveViewModel): JComponent =
     ActionLink("") {
       vm.changeResolvedState()
     }.apply {
-      isFocusable = true
+      isFocusPainted = false
       bindDisabled(cs, vm.busy)
       bindText(cs, vm.actionTextFlow)
     }

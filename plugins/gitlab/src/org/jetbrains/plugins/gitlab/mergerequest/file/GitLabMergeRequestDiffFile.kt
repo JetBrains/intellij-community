@@ -17,11 +17,14 @@ import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridgeRepository
+import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModelImpl
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabMergeRequestDiffFile(override val connectionId: String,
@@ -64,6 +67,10 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
           diffBridge.selectFilePath(filePath)
         }
       }
+    }.apply {
+      putContextUserData(GitLabProjectConnection.KEY, connection)
+      val reviewVm = GitLabMergeRequestDiffReviewViewModelImpl(connection, mergeRequestId)
+      putContextUserData(GitLabMergeRequestDiffReviewViewModel.KEY, reviewVm)
     }
     job.cancelOnDispose(processor)
 

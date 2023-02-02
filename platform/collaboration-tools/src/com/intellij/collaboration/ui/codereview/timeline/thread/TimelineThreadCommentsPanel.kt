@@ -153,13 +153,18 @@ class TimelineThreadCommentsPanel<T>(
     }
 
   companion object {
-    private const val FOLD_THRESHOLD = 3
+    const val FOLD_THRESHOLD = 3
+
+    const val UNFOLD_BUTTON_VERTICAL_GAP = 18
+
+    fun createUnfoldComponent(foldedCount: Int, actionListener: (ActionEvent) -> Unit): JComponent =
+      createUnfoldComponent(SingleValueModel(foldedCount), actionListener)
 
     private fun createUnfoldComponent(foldedCount: SingleValueModel<Int>, actionListener: (ActionEvent) -> Unit): JComponent {
       return ActionLink("", actionListener).apply {
         icon = AllIcons.Actions.MoreHorizontal
       }.apply {
-        border = JBUI.Borders.empty(18, 0)
+        border = JBUI.Borders.empty(UNFOLD_BUTTON_VERTICAL_GAP, 0)
 
         foldedCount.addAndInvokeListener {
           text = CollaborationToolsBundle.message("review.thread.more.replies", it)

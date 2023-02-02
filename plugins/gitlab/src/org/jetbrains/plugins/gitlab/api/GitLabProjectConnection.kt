@@ -53,4 +53,8 @@ class GitLabProjectConnection(
   fun checkIsOpen() {
     (scope.coroutineContext[Job] ?: error("Missing job")).ensureActive()
   }
+
+  companion object {
+    val KEY: Key<GitLabProjectConnection> = Key.create("GitLab.Project.Connection")
+  }
 }

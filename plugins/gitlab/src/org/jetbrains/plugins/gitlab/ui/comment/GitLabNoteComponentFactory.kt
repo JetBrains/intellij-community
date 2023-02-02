@@ -15,6 +15,7 @@ import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.project.Project
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
@@ -76,6 +77,7 @@ object GitLabNoteComponentFactory {
 
   fun createTextPanel(cs: CoroutineScope, textFlow: Flow<@Nls String>): JComponent =
     SimpleHtmlPane().apply {
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       bindText(cs, textFlow)
     }
 
