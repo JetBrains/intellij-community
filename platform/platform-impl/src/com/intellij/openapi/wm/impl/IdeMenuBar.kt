@@ -1,795 +1,698 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm.impl
 
-import com.intellij.DynamicBundle;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
-import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.CheckedDisposable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.impl.status.ClockPanel;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.mac.foundation.NSDefaults;
-import com.intellij.ui.mac.screenmenu.Menu;
-import com.intellij.ui.mac.screenmenu.MenuBar;
-import com.intellij.ui.plaf.beg.IdeaMenuUI;
-import com.intellij.util.Alarm;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.DynamicBundle
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.DataManager
+import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.doWithLazyActionManager
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionMenu
+import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
+import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFloatingMenuBarSupported
+import com.intellij.openapi.wm.impl.IdeRootPane.Companion.executeWithPrepareActionManagerAndCustomActionScheme
+import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
+import com.intellij.openapi.wm.impl.status.ClockPanel
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.Gray
+import com.intellij.ui.ScreenUtil
+import com.intellij.ui.mac.foundation.NSDefaults
+import com.intellij.ui.mac.screenmenu.Menu
+import com.intellij.ui.mac.screenmenu.MenuBar
+import com.intellij.ui.plaf.beg.IdeaMenuUI
+import com.intellij.util.Alarm
+import com.intellij.util.IJSwingUtilities
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.*
+import java.awt.*
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.geom.AffineTransform
+import java.awt.geom.GeneralPath
+import java.awt.geom.RoundRectangle2D
+import javax.swing.*
+import javax.swing.border.Border
+import kotlin.math.cos
+import kotlin.math.sqrt
 
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.RoundRectangle2D;
-import java.util.ArrayList;
-import java.util.List;
+@Suppress("LeakingThis")
+open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDispatcher, UISettingsListener {
+  enum class State {
+    EXPANDED,
+    COLLAPSING,
+    COLLAPSED,
+    EXPANDING,
+    TEMPORARY_EXPANDED;
 
-public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatcher, UISettingsListener {
-  private static final Logger LOG = Logger.getInstance(IdeMenuBar.class);
-  private static final int COLLAPSED_HEIGHT = 2;
-
-  private enum State {
-    EXPANDED, COLLAPSING, COLLAPSED, EXPANDING, TEMPORARY_EXPANDED;
-
-    boolean isInProgress() {
-      return this == COLLAPSING || this == EXPANDING;
-    }
+    val isInProgress: Boolean
+      get() = this == COLLAPSING || this == EXPANDING
   }
 
-  private List<AnAction> myVisibleActions = new ArrayList<>();
-  private final MenuItemPresentationFactory myPresentationFactory = new MenuItemPresentationFactory();
-  private final TimerListener myTimerListener = new MyTimerListener();
-  protected final CheckedDisposable myDisposable = Disposer.newCheckedDisposable();
+  private var visibleActions = ArrayList<AnAction>()
+  private val presentationFactory = MenuItemPresentationFactory()
+  private val timerListener: TimerListener = MyTimerListener()
+  protected val disposable = Disposer.newCheckedDisposable()
+  private var clockPanel: ClockPanel? = null
+  private var button: MyExitFullScreenButton? = null
+  private var animator: MyAnimator? = null
+  private var activationWatcher: Timer? = null
+  private val updateAlarm = Alarm()
+  private var state = State.EXPANDED
+  private var progress = 0.0
+  private var activated = false
+  private var screenMenuPeer: MenuBar? = null
 
-  private final @Nullable ClockPanel myClockPanel;
-  private final @Nullable MyExitFullScreenButton myButton;
-  private final @Nullable MyAnimator myAnimator;
-  private final @Nullable Timer myActivationWatcher;
-  private final Alarm myUpdateAlarm = new Alarm();
-  private @NotNull State myState = State.EXPANDED;
-  private double myProgress;
-  private boolean myActivated;
-
-  private MenuBar myScreenMenuPeer;
-
-  public static @NotNull IdeMenuBar createMenuBar() {
-    return SystemInfoRt.isLinux ? new LinuxIdeMenuBar() : new IdeMenuBar();
-  }
-
-  @ApiStatus.Internal
-  public IdeMenuBar() {
-    if (FrameInfoHelper.isFloatingMenuBarSupported()) {
-      myAnimator = new MyAnimator();
-      myActivationWatcher = TimerUtil.createNamedTimer("IdeMenuBar", 100, new MyActionListener());
-      myClockPanel = new ClockPanel();
-      myButton = new MyExitFullScreenButton();
-      add(myClockPanel);
-      add(myButton);
-      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN, event -> updateState());
-      addMouseListener(new MyMouseListener());
+  init {
+    if (isFloatingMenuBarSupported) {
+      animator = MyAnimator()
+      activationWatcher = TimerUtil.createNamedTimer("IdeMenuBar", 100, MyActionListener())
+      clockPanel = ClockPanel()
+      button = MyExitFullScreenButton()
+      add(clockPanel)
+      add(button)
+      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateState() }
+      addMouseListener(MyMouseListener())
     }
     else {
-      myAnimator = null;
-      myActivationWatcher = null;
-      myClockPanel = null;
-      myButton = null;
+      animator = null
+      activationWatcher = null
+      clockPanel = null
+      button = null
     }
-
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      setOpaque(false);
+      isOpaque = false
     }
   }
 
-  @Override
-  protected Graphics getComponentGraphics(Graphics graphics) {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  companion object {
+    fun createMenuBar(): IdeMenuBar {
+      return if (SystemInfoRt.isLinux) LinuxIdeMenuBar() else IdeMenuBar()
+    }
+
+    fun installAppMenuIfNeeded(frame: JFrame) {
+      val menuBar = frame.jMenuBar
+      // must be called when frame is visible (otherwise frame.getPeer() == null)
+      if (menuBar is IdeMenuBar) {
+        try {
+          menuBar.doInstallAppMenuIfNeeded(frame)
+        }
+        catch (e: Throwable) {
+          LOG.warn("cannot install app menu", e)
+        }
+      }
+      else if (menuBar != null) {
+        LOG.info("The menu bar '$menuBar of frame '$frame' isn't instance of IdeMenuBar")
+      }
+    }
   }
 
-  public @NotNull State getState() {
-    // JMenuBar calls getBorder on init before our own init (super is called before our constructor).
-    //noinspection ConstantConditions
-    return myState == null ? State.EXPANDING : myState;
+  override fun getComponentGraphics(graphics: Graphics): Graphics {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
   }
 
-  @Override
-  public JMenu add(JMenu menu) {
-    menu.setFocusable(false);
-    return super.add(menu);
+  // JMenuBar calls getBorder on init before our own init (super is called before our constructor).
+  fun getState(): State {
+    return state
   }
 
-  @Override
-  public Border getBorder() {
+  fun setState(state: State) {
+    this.state = state
+    val activationWatcher = activationWatcher ?: return
+    if (state == State.EXPANDING && !activationWatcher.isRunning) {
+      activationWatcher.start()
+    }
+    else if (activationWatcher.isRunning && (state == State.EXPANDED || state == State.COLLAPSED)) {
+      activationWatcher.stop()
+    }
+  }
+
+  override fun add(menu: JMenu): JMenu {
+    menu.isFocusable = false
+    return super.add(menu)
+  }
+
+  override fun getBorder(): Border? {
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      return JBUI.Borders.empty();
+      return JBUI.Borders.empty()
     }
 
-    State state = getState();
+    val state = state
     // avoid moving lines
     if (state == State.EXPANDING || state == State.COLLAPSING) {
-      return JBUI.Borders.empty();
+      return JBUI.Borders.empty()
     }
 
-    // fix for Darcula double border
+    // fix for a Darcula double border
     if (state == State.TEMPORARY_EXPANDED && StartupUiUtil.isUnderDarcula()) {
-      return JBUI.Borders.customLine(Gray._75, 0, 0, 1, 0);
+      return JBUI.Borders.customLine(Gray._75, 0, 0, 1, 0)
     }
 
     // save 1px for mouse handler
     if (state == State.COLLAPSED) {
-      return JBUI.Borders.emptyBottom(1);
+      return JBUI.Borders.emptyBottom(1)
     }
 
-    UISettings uiSettings = UISettings.getInstance();
-    return uiSettings.getShowMainToolbar() || uiSettings.getShowNavigationBar() ? super.getBorder() : null;
+    val uiSettings = UISettings.getInstance()
+    return if (uiSettings.showMainToolbar || uiSettings.showNavigationBar) super.getBorder() else null
   }
 
-  @Override
-  public void paint(Graphics g) {
-    // otherwise, there will be 1px line on top
-    if (getState() == State.COLLAPSED) {
-      return;
+  override fun paint(g: Graphics) {
+    // otherwise, there will be a 1px line on top
+    if (state == State.COLLAPSED) {
+      return
     }
-    super.paint(g);
+
+    super.paint(g)
   }
 
-  @Override
-  public void doLayout() {
-    super.doLayout();
+  override fun doLayout() {
+    super.doLayout()
 
-    if (myClockPanel == null || myButton == null) {
-      return;
-    }
-
-    if (getState() == State.EXPANDED) {
-      myClockPanel.setVisible(false);
-      myButton.setVisible(false);
+    val clockPanel = clockPanel ?: return
+    val button = button ?: return
+    if (state == State.EXPANDED) {
+      clockPanel.isVisible = false
+      button.isVisible = false
     }
     else {
-      myClockPanel.setVisible(true);
-      myButton.setVisible(true);
-      Dimension preferredSize = myButton.getPreferredSize();
-      myButton.setBounds(getBounds().width - preferredSize.width, 0, preferredSize.width, preferredSize.height);
-      preferredSize = myClockPanel.getPreferredSize();
-      myClockPanel.setBounds(getBounds().width - preferredSize.width - myButton.getWidth(), 0, preferredSize.width, preferredSize.height);
+      clockPanel.isVisible = true
+      button.isVisible = true
+      var preferredSize = button.preferredSize
+      button.setBounds(bounds.width - preferredSize.width, 0, preferredSize.width, preferredSize.height)
+      preferredSize = clockPanel.preferredSize
+      clockPanel.setBounds(bounds.width - preferredSize.width - button.width, 0, preferredSize.width, preferredSize.height)
     }
   }
 
-  @Override
-  public void menuSelectionChanged(boolean isIncluded) {
-    if (!isIncluded && getState() == State.TEMPORARY_EXPANDED) {
-      myActivated = false;
-      setState(State.COLLAPSING);
-      restartAnimator();
-      return;
+  override fun menuSelectionChanged(isIncluded: Boolean) {
+    if (!isIncluded && state == State.TEMPORARY_EXPANDED) {
+      activated = false
+      state = State.COLLAPSING
+      restartAnimator()
+      return
     }
 
-    if (isIncluded && getState() == State.COLLAPSED) {
-      myActivated = true;
-      setState(State.TEMPORARY_EXPANDED);
-      revalidate();
-      repaint();
-      SwingUtilities.invokeLater(() -> {
-        JMenu menu = getMenu(getSelectionModel().getSelectedIndex());
-        if (menu.isPopupMenuVisible()) {
-          menu.setPopupMenuVisible(false);
-          menu.setPopupMenuVisible(true);
+    if (isIncluded && state == State.COLLAPSED) {
+      activated = true
+      state = State.TEMPORARY_EXPANDED
+      revalidate()
+      repaint()
+      SwingUtilities.invokeLater {
+        val menu = getMenu(selectionModel.selectedIndex)
+        if (menu.isPopupMenuVisible) {
+          menu.isPopupMenuVisible = false
+          menu.isPopupMenuVisible = true
         }
-      });
+      }
     }
-
-    super.menuSelectionChanged(isIncluded);
+    super.menuSelectionChanged(isIncluded)
   }
 
-  private boolean isActivated() {
-    int index = getSelectionModel().getSelectedIndex();
-    return index != -1 && getMenu(index).isPopupMenuVisible();
-  }
-
-  private void updateState() {
-    if (myAnimator == null) {
-      return;
+  private val isActivated: Boolean
+    get() {
+      val index = selectionModel.selectedIndex
+      return index != -1 && getMenu(index).isPopupMenuVisible
     }
 
-    Window window = SwingUtilities.getWindowAncestor(this);
-    if (!(window instanceof IdeFrame)) {
-      return;
-    }
-
-    boolean fullScreen = ((IdeFrame)window).isInFullScreen();
+  private fun updateState() {
+    val animator = animator ?: return
+    val window = (SwingUtilities.getWindowAncestor(this) as? IdeFrame) ?: return
+    val fullScreen = window.isInFullScreen
     if (fullScreen) {
-      setState(State.COLLAPSING);
-      restartAnimator();
+      state = State.COLLAPSING
+      restartAnimator()
     }
     else {
-      myAnimator.suspend();
-      setState(State.EXPANDED);
-      if (myClockPanel != null) {
-        myClockPanel.setVisible(false);
-        if (myButton != null) {
-          myButton.setVisible(false);
-        }
+      animator.suspend()
+      state = State.EXPANDED
+      clockPanel?.let { clockPanel ->
+        clockPanel.isVisible = false
+        button?.isVisible = false
       }
     }
   }
 
-  private void setState(@NotNull State state) {
-    myState = state;
-    if (myState == State.EXPANDING && myActivationWatcher != null && !myActivationWatcher.isRunning()) {
-      myActivationWatcher.start();
+  override fun getPreferredSize(): Dimension {
+    val dimension = super.getPreferredSize()
+    if (state.isInProgress) {
+      dimension.height = COLLAPSED_HEIGHT +
+                         ((if (state == State.COLLAPSING) 1 - progress else progress) * (dimension.height - COLLAPSED_HEIGHT)).toInt()
     }
-    else if (myActivationWatcher != null && myActivationWatcher.isRunning()) {
-      if (state == State.EXPANDED || state == State.COLLAPSED) {
-        myActivationWatcher.stop();
-      }
+    else if (state == State.COLLAPSED) {
+      dimension.height = COLLAPSED_HEIGHT
     }
+    return dimension
   }
 
-  @Override
-  public Dimension getPreferredSize() {
-    Dimension dimension = super.getPreferredSize();
-    if (getState().isInProgress()) {
-      dimension.height =
-        COLLAPSED_HEIGHT + (int)((getState() == State.COLLAPSING ? 1 - myProgress : myProgress) * (dimension.height - COLLAPSED_HEIGHT));
-    }
-    else if (getState() == State.COLLAPSED) {
-      dimension.height = COLLAPSED_HEIGHT;
-    }
-    return dimension;
+  private fun restartAnimator() {
+    val animator = animator ?: return
+    animator.reset()
+    animator.resume()
   }
 
-  private void restartAnimator() {
-    if (myAnimator != null) {
-      myAnimator.reset();
-      myAnimator.resume();
-    }
-  }
-
-  @Override
-  public void addNotify() {
-    super.addNotify();
-
-    Activity activity = StartUpMeasurer.startActivity("ide menu bar init");
-    MenuBar screenMenuPeer;
+  override fun addNotify() {
+    super.addNotify()
+    val activity = StartUpMeasurer.startActivity("ide menu bar init")
+    val screenMenuPeer: MenuBar?
     if (Menu.isJbScreenMenuEnabled()) {
-      screenMenuPeer = new MenuBar("MainMenu");
-      myScreenMenuPeer = screenMenuPeer;
-      screenMenuPeer.setFrame(SwingUtilities.getWindowAncestor(this));
+      screenMenuPeer = MenuBar("MainMenu")
+      this.screenMenuPeer = screenMenuPeer
+      screenMenuPeer.setFrame(SwingUtilities.getWindowAncestor(this))
     }
     else {
-      screenMenuPeer = null;
+      screenMenuPeer = null
     }
-
-    Disposer.register(ApplicationManager.getApplication(), myDisposable);
-
-    IdeRootPane.Companion.executeWithPrepareActionManagerAndCustomActionScheme(myDisposable, actionManager -> {
-      Activity a = StartUpMeasurer.startActivity("ide menu bar actions init");
-      updateActions(actionManager, screenMenuPeer);
-      a.end();
-    });
-    activity.end();
-
-    IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
+    Disposer.register(ApplicationManager.getApplication(), disposable)
+    executeWithPrepareActionManagerAndCustomActionScheme(disposable) { actionManager: ActionManager ->
+      val a = StartUpMeasurer.startActivity("ide menu bar actions init")
+      updateActions(actionManager, screenMenuPeer)
+      a.end()
+    }
+    activity.end()
+    IdeEventQueue.getInstance().addDispatcher(this, disposable)
   }
 
   @RequiresEdt
-  private void updateActions(@NotNull ActionManager actionManager, @Nullable MenuBar screenMenuPeer) {
-    List<AnAction> actions = doUpdateMenuActions(false, actionManager, screenMenuPeer);
-    for (AnAction action : actions) {
-      if (action instanceof ActionGroup) {
-        PopupMenuPreloader.install(this, ActionPlaces.MAIN_MENU, null, () -> (ActionGroup)action);
+  private fun updateActions(actionManager: ActionManager, screenMenuPeer: MenuBar?) {
+    val actions = doUpdateMenuActions(forceRebuild = false, manager = actionManager, screenMenuPeer = screenMenuPeer)
+    for (action in actions) {
+      if (action is ActionGroup) {
+        PopupMenuPreloader.install(this, ActionPlaces.MAIN_MENU, null) { action }
       }
     }
-    actionManager.addTimerListener(myTimerListener);
-    Disposer.register(myDisposable, () -> actionManager.removeTimerListener(myTimerListener));
+    actionManager.addTimerListener(timerListener)
+    Disposer.register(disposable) { actionManager.removeTimerListener(timerListener) }
   }
 
-  @Override
-  public void removeNotify() {
-    if (myScreenMenuPeer != null) {
-      //noinspection SSBasedInspection
-      myScreenMenuPeer.dispose();
-      myScreenMenuPeer = null;
+  override fun removeNotify() {
+    screenMenuPeer?.let {
+      @Suppress("SSBasedInspection")
+      it.dispose()
+      screenMenuPeer = null
     }
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      if (myAnimator != null) {
-        myAnimator.suspend();
-      }
-      Disposer.dispose(myDisposable);
+      animator?.suspend()
+      Disposer.dispose(disposable)
     }
-    super.removeNotify();
+    super.removeNotify()
   }
 
-  @Override
-  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(() -> {
-      myPresentationFactory.reset();
-      updateMenuActions(true);
-    }, 50);
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    updateAlarm.cancelAllRequests()
+    updateAlarm.addRequest({
+                               presentationFactory.reset()
+                               updateMenuActions(true)
+                             }, 50)
   }
 
-  @Override
-  public boolean dispatch(@NotNull AWTEvent e) {
-    if (e instanceof MouseEvent && getState() != State.EXPANDED /*&& !myState.isInProgress()*/) {
-      considerRestartingAnimator((MouseEvent)e);
+  override fun dispatch(e: AWTEvent): Boolean {
+    if (e is MouseEvent && state != State.EXPANDED /*&& !myState.isInProgress()*/) {
+      considerRestartingAnimator(e)
     }
-    return false;
+    return false
   }
 
-  private void considerRestartingAnimator(MouseEvent mouseEvent) {
-    boolean mouseInside = myActivated || UIUtil.isDescendingFrom(findActualComponent(mouseEvent), this);
-    if (mouseEvent.getID() == MouseEvent.MOUSE_EXITED &&
-        mouseEvent.getSource() == SwingUtilities.windowForComponent(this) &&
-        !myActivated) {
-      mouseInside = false;
+  private fun considerRestartingAnimator(mouseEvent: MouseEvent) {
+    var mouseInside = activated || UIUtil.isDescendingFrom(findActualComponent(mouseEvent), this)
+    if (mouseEvent.id == MouseEvent.MOUSE_EXITED && mouseEvent.source === SwingUtilities.windowForComponent(this) && !activated) {
+      mouseInside = false
     }
-    if (mouseInside && getState() == State.COLLAPSED) {
-      setState(State.EXPANDING);
-      restartAnimator();
+    if (mouseInside && state == State.COLLAPSED) {
+      state = State.EXPANDING
+      restartAnimator()
     }
-    else if (!mouseInside && getState() != State.COLLAPSING && getState() != State.COLLAPSED) {
-      setState(State.COLLAPSING);
-      restartAnimator();
+    else if (!mouseInside && state != State.COLLAPSING && state != State.COLLAPSED) {
+      state = State.COLLAPSING
+      restartAnimator()
     }
   }
 
-  private @Nullable Component findActualComponent(MouseEvent mouseEvent) {
-    Component component = mouseEvent.getComponent();
-    if (component == null) {
-      return null;
-    }
-    Component deepestComponent;
-    if (getState() != State.EXPANDED &&
-        !getState().isInProgress() &&
-        contains(SwingUtilities.convertPoint(component, mouseEvent.getPoint(), this))) {
-      deepestComponent = this;
+  private fun findActualComponent(mouseEvent: MouseEvent): Component? {
+    var component: Component? = mouseEvent.component ?: return null
+    val deepestComponent = if (state != State.EXPANDED &&
+                               !state.isInProgress &&
+                               contains(SwingUtilities.convertPoint(component, mouseEvent.point, this))) {
+      this
     }
     else {
-      deepestComponent = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+      SwingUtilities.getDeepestComponentAt(mouseEvent.component, mouseEvent.x, mouseEvent.y)
     }
     if (deepestComponent != null) {
-      component = deepestComponent;
+      component = deepestComponent
     }
-    return component;
+    return component
   }
 
-  public void updateMenuActions() {
-    updateMenuActions(false);
+  @JvmOverloads
+  fun updateMenuActions(forceRebuild: Boolean = false) {
+    doUpdateMenuActions(forceRebuild, ActionManager.getInstance(), screenMenuPeer)
   }
 
-  public void updateMenuActions(boolean forceRebuild) {
-    doUpdateMenuActions(forceRebuild, ActionManager.getInstance(), myScreenMenuPeer);
+  fun updateMenuActionsLazily(forceRebuild: Boolean) {
+    doWithLazyActionManager { manager -> doUpdateMenuActions(forceRebuild, manager, screenMenuPeer) }
   }
 
-  public void updateMenuActionsLazily(boolean forceRebuild) {
-    ActionManagerEx.doWithLazyActionManager(manager -> doUpdateMenuActions(forceRebuild, manager, myScreenMenuPeer));
-  }
-
-  // NOTE: for OSX only
-  private static void updateAppMenu() {
-    if (!Menu.isJbScreenMenuEnabled()) {
-      return;
-    }
-
-    // 1. rename with localized
-    Menu.renameAppMenuItems(new DynamicBundle("messages.MacAppMenuBundle"));
-
-    //
-    // 2. add custom new items in AppMenu
-    //
-
-    //Example (add new item after "Preferences"):
-    //int pos = appMenu.findIndexByTitle("Pref.*");
-    //int pos2 = appMenu.findIndexByTitle("NewCustomItem");
-    //if (pos2 < 0) {
-    //  MenuItem mi = new MenuItem();
-    //  mi.setLabel("NewCustomItem", null);
-    //  mi.setActionDelegate(() -> System.err.println("NewCustomItem executes"));
-    //  appMenu.add(mi, pos, true);
-    //}
-  }
-
-  private @NotNull List<AnAction> doUpdateMenuActions(boolean forceRebuild, @NotNull ActionManager manager, @Nullable MenuBar screenMenuPeer) {
-    boolean enableMnemonics = !UISettings.getInstance().getDisableMnemonics();
-
-    List<AnAction> newVisibleActions = new ArrayList<>();
-
-    Component targetComponent = IJSwingUtilities.getFocusedComponentInWindowOrSelf(this);
-    DataContext dataContext = DataManager.getInstance().getDataContext(targetComponent);
-    expandActionGroup(dataContext, newVisibleActions, manager);
-
-    if (!forceRebuild && !myPresentationFactory.isNeedRebuild() && newVisibleActions.equals(myVisibleActions)) {
-      for (Component child : getComponents()) {
-        if (child instanceof ActionMenu) {
-          ((ActionMenu)child).updateFromPresentation(enableMnemonics);
+  private fun doUpdateMenuActions(forceRebuild: Boolean, manager: ActionManager, screenMenuPeer: MenuBar?): List<AnAction> {
+    val enableMnemonics = !UISettings.getInstance().disableMnemonics
+    val newVisibleActions = ArrayList<AnAction>()
+    val targetComponent = IJSwingUtilities.getFocusedComponentInWindowOrSelf(this)
+    val dataContext = DataManager.getInstance().getDataContext(targetComponent)
+    expandActionGroup(dataContext, newVisibleActions, manager)
+    if (!forceRebuild && !presentationFactory.isNeedRebuild && newVisibleActions == visibleActions) {
+      for (child in components) {
+        if (child is ActionMenu) {
+          child.updateFromPresentation(enableMnemonics)
         }
       }
-      return newVisibleActions;
+      return newVisibleActions
     }
 
     // should rebuild UI
-    boolean changeBarVisibility = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
-    myVisibleActions = newVisibleActions;
-
-    removeAll();
-    if (screenMenuPeer != null) {
-      screenMenuPeer.beginFill();
-    }
-
-    boolean isDarkMenu = isDarkMenu();
-    for (AnAction action : newVisibleActions) {
-      ActionMenu actionMenu =
-        new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu, true);
-
+    val changeBarVisibility = newVisibleActions.isEmpty() || visibleActions.isEmpty()
+    visibleActions = newVisibleActions
+    removeAll()
+    screenMenuPeer?.beginFill()
+    val isDarkMenu = isDarkMenu
+    for (action in newVisibleActions) {
+      val actionMenu = ActionMenu(null, ActionPlaces.MAIN_MENU, (action as ActionGroup), presentationFactory, enableMnemonics, isDarkMenu,
+                                  true)
       if (IdeFrameDecorator.isCustomDecorationActive()) {
-        actionMenu.setOpaque(false);
-        actionMenu.setFocusable(false);
+        actionMenu.isOpaque = false
+        actionMenu.isFocusable = false
       }
-
       if (screenMenuPeer != null) {
-        screenMenuPeer.add(actionMenu.getScreenMenuPeer());
+        screenMenuPeer.add(actionMenu.screenMenuPeer)
       }
       else {
-        add(actionMenu);
+        add(actionMenu)
       }
     }
-
-    myPresentationFactory.resetNeedRebuild();
-
-    if (screenMenuPeer != null) {
-      screenMenuPeer.endFill();
+    presentationFactory.resetNeedRebuild()
+    screenMenuPeer?.endFill()
+    updateAppMenu()
+    updateGlobalMenuRoots()
+    if (clockPanel != null) {
+      add(clockPanel)
+      add(button)
     }
-
-    updateAppMenu();
-
-    updateGlobalMenuRoots();
-    if (myClockPanel != null) {
-      add(myClockPanel);
-      add(myButton);
-    }
-    validate();
-
+    validate()
     if (changeBarVisibility) {
-      invalidate();
-      JFrame frame = (JFrame)SwingUtilities.getAncestorOfClass(JFrame.class, this);
-      if (frame != null) {
-        frame.validate();
-      }
+      invalidate()
+      (SwingUtilities.getAncestorOfClass(JFrame::class.java, this) as JFrame?)?.validate()
     }
-
-    return newVisibleActions;
+    return newVisibleActions
   }
 
-  protected boolean isDarkMenu() {
-    return SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar();
+  protected open val isDarkMenu: Boolean
+    get() = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar()
+
+  override fun paintComponent(g: Graphics) {
+    super.paintComponent(g)
+    paintBackground(g)
   }
 
-  @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    paintBackground(g);
-  }
-
-  protected void paintBackground(Graphics g) {
+  protected fun paintBackground(g: Graphics) {
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      Window window = SwingUtilities.getWindowAncestor(this);
-      if (window instanceof IdeFrame) {
-        boolean fullScreen = ((IdeFrame)window).isInFullScreen();
+      val window = SwingUtilities.getWindowAncestor(this)
+      if (window is IdeFrame) {
+        val fullScreen = (window as IdeFrame).isInFullScreen
         if (!fullScreen) {
-          return;
+          return
         }
       }
     }
-
     if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      g.setColor(IdeaMenuUI.getMenuBackgroundColor());
-      g.fillRect(0, 0, getWidth(), getHeight());
+      g.color = IdeaMenuUI.getMenuBackgroundColor()
+      g.fillRect(0, 0, width, height)
     }
   }
 
-  @Override
-  protected void paintChildren(Graphics g) {
-    if (getState().isInProgress()) {
-      Graphics2D g2 = (Graphics2D)g;
-      AffineTransform oldTransform = g2.getTransform();
-      AffineTransform newTransform = oldTransform != null ? new AffineTransform(oldTransform) : new AffineTransform();
-      newTransform.concatenate(AffineTransform.getTranslateInstance(0, getHeight() - super.getPreferredSize().height));
-      g2.setTransform(newTransform);
-      super.paintChildren(g2);
-      g2.setTransform(oldTransform);
+  override fun paintChildren(g: Graphics) {
+    if (state.isInProgress) {
+      val g2 = g as Graphics2D
+      val oldTransform = g2.transform
+      val newTransform = if (oldTransform == null) AffineTransform() else AffineTransform(oldTransform)
+      newTransform.concatenate(AffineTransform.getTranslateInstance(0.0, (height - super.getPreferredSize().height).toDouble()))
+      g2.transform = newTransform
+      super.paintChildren(g2)
+      g2.transform = oldTransform
     }
-    else if (getState() != State.COLLAPSED) {
-      super.paintChildren(g);
+    else if (state != State.COLLAPSED) {
+      super.paintChildren(g)
     }
   }
 
-  private void expandActionGroup(@NotNull DataContext context,
-                                 @NotNull List<? super AnAction> newVisibleActions,
-                                 @NotNull ActionManager actionManager) {
-    ActionGroup mainActionGroup = getMainMenuActionGroup();
-    if (mainActionGroup == null) {
-      return;
-    }
+  private fun expandActionGroup(context: DataContext, newVisibleActions: MutableList<in AnAction>, actionManager: ActionManager) {
+    val mainActionGroup = getMainMenuActionGroup() ?: return
     // the only code that does not reuse ActionUpdater (do not repeat that anywhere else)
-    AnAction[] children = mainActionGroup.getChildren(null);
-    for (AnAction action : children) {
-      if (!(action instanceof ActionGroup)) {
-        continue;
+    val children = mainActionGroup.getChildren(null)
+    for (action in children) {
+      if (action !is ActionGroup) {
+        continue
       }
-      Presentation presentation = myPresentationFactory.getPresentation(action);
-      AnActionEvent e = new AnActionEvent(null, context, ActionPlaces.MAIN_MENU, presentation, actionManager, 0);
-      ActionUtil.performDumbAwareUpdate(action, e, false);
-      if (presentation.isVisible()) {
-        newVisibleActions.add(action);
+
+      val presentation = presentationFactory.getPresentation(action)
+      val e = AnActionEvent(null, context, ActionPlaces.MAIN_MENU, presentation, actionManager, 0)
+      ActionUtil.performDumbAwareUpdate(action, e, false)
+      if (presentation.isVisible) {
+        newVisibleActions.add(action)
       }
     }
   }
 
-  public @Nullable ActionGroup getMainMenuActionGroup() {
-    JRootPane rootPane = getRootPane();
-    ActionGroup group = rootPane instanceof IdeRootPane ? ((IdeRootPane)rootPane).getMainMenuActionGroup() : null;
-    if (group != null) {
-      return group;
-    }
-    return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU);
+  open fun getMainMenuActionGroup(): ActionGroup? {
+    val rootPane = rootPane
+    val group = if (rootPane is IdeRootPane) rootPane.mainMenuActionGroup else null
+    return group ?: CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup?
   }
 
-  @Override
-  public int getMenuCount() {
-    int menuCount = super.getMenuCount();
-    return myClockPanel != null ? menuCount - 2: menuCount;
+  override fun getMenuCount(): Int {
+    val menuCount = super.getMenuCount()
+    return if (clockPanel == null) menuCount else menuCount - 2
   }
 
-  protected void updateGlobalMenuRoots() {
-  }
+  protected open fun updateGlobalMenuRoots() {}
 
-  private final class MyTimerListener implements TimerListener {
-    @Override
-    public ModalityState getModalityState() {
-      return ModalityState.stateForComponent(IdeMenuBar.this);
-    }
+  private inner class MyTimerListener : TimerListener {
+    override fun getModalityState(): ModalityState = ModalityState.stateForComponent(this@IdeMenuBar)
 
-    @Override
-    public void run() {
-      if (!isShowing()) {
-        return;
+    override fun run() {
+      if (!isShowing) {
+        return
       }
 
-      Window myWindow = SwingUtilities.windowForComponent(IdeMenuBar.this);
-      if (myWindow != null && !myWindow.isActive()) {
-        return;
+      val w = SwingUtilities.windowForComponent(this@IdeMenuBar)
+      if (w != null && !w.isActive) {
+        return
       }
 
-      // do not update when a popup menu is shown (if popup menu contains action which is also in the menu bar, it should not be enabled/disabled)
-      MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
-      MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
-      if (selectedPath.length > 0) {
-        return;
+      // do not update when a popup menu is shown
+      // (if a popup menu contains action which is also in the menu bar, it should not be enabled/disabled)
+      val menuSelectionManager = MenuSelectionManager.defaultManager()
+      val selectedPath = menuSelectionManager.selectedPath
+      if (selectedPath.isNotEmpty()) {
+        return
       }
 
       // don't update toolbar if there is currently active modal dialog
-      Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-      if (window instanceof Dialog && ((Dialog)window).isModal()) {
-        return;
+      val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
+      if (window is Dialog && window.isModal) {
+        return
       }
-
-      updateMenuActions();
+      updateMenuActions()
     }
   }
 
-  private final class MyAnimator extends Animator {
-    MyAnimator() {
-      super("MenuBarAnimator", 16, 300, false);
+  private inner class MyAnimator : Animator("MenuBarAnimator", 16, 300, false) {
+    override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
+      progress = (1 - cos(Math.PI * (frame.toFloat() / totalFrames))) / 2
+      revalidate()
+      repaint()
     }
 
-    @Override
-    public void paintNow(int frame, int totalFrames, int cycle) {
-      myProgress = (1 - Math.cos(Math.PI * ((float)frame / totalFrames))) / 2;
-      revalidate();
-      repaint();
-    }
+    override fun paintCycleEnd() {
+      progress = 1.0
+      when (state) {
+        State.COLLAPSING -> state = State.COLLAPSED
+        State.EXPANDING -> state = State.TEMPORARY_EXPANDED
+        else -> {}
+      }
+      if (!isShowing) {
+        return
+      }
 
-    @Override
-    protected void paintCycleEnd() {
-      myProgress = 1;
-      switch (getState()) {
-        case COLLAPSING -> setState(State.COLLAPSED);
-        case EXPANDING -> setState(State.TEMPORARY_EXPANDED);
-        default -> {
-        }
-      }
-      if (!isShowing()) {
-        return;
-      }
-      revalidate();
-      if (getState() == State.COLLAPSED) {
-        //we should repaint parent, to clear 1px on top when menu is collapsed
-        getParent().repaint();
+      revalidate()
+      if (state == State.COLLAPSED) {
+        // we should repaint the parent, to clear 1px on top when a menu is collapsed
+        parent.repaint()
       }
       else {
-        repaint();
+        repaint()
       }
     }
   }
 
-  private final class MyActionListener implements ActionListener {
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      if (getState() == State.EXPANDED || getState() == State.EXPANDING) {
-        return;
+  private inner class MyActionListener : ActionListener {
+    override fun actionPerformed(e: ActionEvent) {
+      if (state == State.EXPANDED || state == State.EXPANDING) {
+        return
       }
-      boolean activated = isActivated();
-      if (myActivated && !activated && getState() == State.TEMPORARY_EXPANDED) {
-        myActivated = false;
-        setState(State.COLLAPSING);
-        restartAnimator();
+
+      val activated: Boolean = isActivated
+      if (this@IdeMenuBar.activated && !activated && state == State.TEMPORARY_EXPANDED) {
+        this@IdeMenuBar.activated = false
+        state = State.COLLAPSING
+        restartAnimator()
       }
       if (activated) {
-        myActivated = true;
+        this@IdeMenuBar.activated = true
       }
     }
   }
 
-  private static final class MyMouseListener extends MouseAdapter {
-    @Override
-    public void mousePressed(MouseEvent e) {
-      Component c = e.getComponent();
-      if (c instanceof IdeMenuBar) {
-        Dimension size = c.getSize();
-        Insets insets = ((IdeMenuBar)c).getInsets();
-        Point p = e.getPoint();
-        if (p.y < insets.top || p.y >= size.height - insets.bottom) {
-          Component item = ((IdeMenuBar)c).findComponentAt(p.x, size.height / 2);
-          if (item instanceof JMenuItem) {
-            // re-target border clicks as a menu item ones
-            item.dispatchEvent(MouseEventAdapter.convert(e, item, 1, 1));
-            e.consume();
-          }
-        }
+  protected open fun doInstallAppMenuIfNeeded(frame: JFrame) {}
+
+  open fun onToggleFullScreen(isFullScreen: Boolean) {}
+}
+
+private val LOG = logger<IdeMenuBar>()
+private const val COLLAPSED_HEIGHT = 2
+
+private class MyMouseListener : MouseAdapter() {
+  override fun mousePressed(e: MouseEvent) {
+    val c = e.component
+    if (c !is IdeMenuBar) {
+      return
+    }
+
+    val size = c.getSize()
+    val insets = c.insets
+    val p = e.point
+    if (p.y < insets.top || p.y >= size.height - insets.bottom) {
+      val item = c.findComponentAt(p.x, size.height / 2)
+      if (item is JMenuItem) {
+        // re-target border clicks as a menu item ones
+        item.dispatchEvent(MouseEventAdapter.convert(e, item, 1, 1))
+        e.consume()
       }
     }
   }
+}
 
-  public static void installAppMenuIfNeeded(@NotNull JFrame frame) {
-    JMenuBar menuBar = frame.getJMenuBar();
-    // must be called when frame is visible (otherwise frame.getPeer() == null)
-    if (menuBar instanceof IdeMenuBar) {
-      try {
-        ((IdeMenuBar)menuBar).doInstallAppMenuIfNeeded(frame);
-      }
-      catch (Throwable e) {
-        LOG.warn("cannot install app menu", e);
-      }
-    }
-    else if (menuBar != null) {
-      LOG.info("The menu bar '" + menuBar + " of frame '" + frame + "' isn't instance of IdeMenuBar");
-    }
+// NOTE: for OSX only
+private fun updateAppMenu() {
+  if (!Menu.isJbScreenMenuEnabled()) {
+    return
   }
 
-  protected void doInstallAppMenuIfNeeded(@NotNull JFrame frame) {
+  // 1. rename with localized
+  Menu.renameAppMenuItems(DynamicBundle("messages.MacAppMenuBundle"))
+
+  //
+  // 2. add custom new items in AppMenu
+  //
+
+  //Example (add new item after "Preferences"):
+  //int pos = appMenu.findIndexByTitle("Pref.*");
+  //int pos2 = appMenu.findIndexByTitle("NewCustomItem");
+  //if (pos2 < 0) {
+  //  MenuItem mi = new MenuItem();
+  //  mi.setLabel("NewCustomItem", null);
+  //  mi.setActionDelegate(() -> System.err.println("NewCustomItem executes"));
+  //  appMenu.add(mi, pos, true);
+  //}
+}
+
+private class MyExitFullScreenButton : JButton() {
+  init {
+    isFocusable = false
+    addActionListener {
+      getFrameHelper(SwingUtilities.getWindowAncestor(this))?.toggleFullScreen(false)
+    }
+    addMouseListener(object : MouseAdapter() {
+      override fun mouseEntered(e: MouseEvent) {
+        model.isRollover = true
+      }
+
+      override fun mouseExited(e: MouseEvent) {
+        model.isRollover = false
+      }
+    })
   }
 
-  public void onToggleFullScreen(boolean isFullScreen) {
+  override fun getPreferredSize(): Dimension {
+    val height: Int
+    val parent = parent
+    height = if (isVisible && parent != null) {
+      parent.size.height - parent.insets.top - parent.insets.bottom
+    }
+    else {
+      super.getPreferredSize().height
+    }
+    return Dimension(height, height)
   }
 
-  private static final class MyExitFullScreenButton extends JButton {
-    private MyExitFullScreenButton() {
-      setFocusable(false);
-      addActionListener(e -> {
-        ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(SwingUtilities.getWindowAncestor(this));
-        if (frameHelper != null) {
-          frameHelper.toggleFullScreen(false);
-        }
-      });
-      addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseEntered(MouseEvent e) {
-          model.setRollover(true);
-        }
+  override fun getMaximumSize(): Dimension = preferredSize
 
-        @Override
-        public void mouseExited(MouseEvent e) {
-          model.setRollover(false);
-        }
-      });
+  override fun paint(g: Graphics) {
+    val g2d = g.create() as Graphics2D
+    try {
+      g2d.color = UIManager.getColor("Label.background")
+      g2d.fillRect(0, 0, width + 1, height + 1)
+      g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON)
+      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY)
+      val s = height.toDouble() / 13
+      g2d.translate(s, s)
+      val plate: Shape = RoundRectangle2D.Double(0.0, 0.0, s * 11, s * 11, s, s)
+      val color = UIManager.getColor("Label.foreground")
+      val hover = model.isRollover || model.isPressed
+      g2d.color = ColorUtil.withAlpha(color, if (hover) .25 else .18)
+      g2d.fill(plate)
+      g2d.color = ColorUtil.withAlpha(color, if (hover) .4 else .33)
+      g2d.draw(plate)
+      g2d.color = ColorUtil.withAlpha(color, if (hover) .7 else .66)
+      var path = GeneralPath()
+      path.moveTo(s * 2, s * 6)
+      path.lineTo(s * 5, s * 6)
+      path.lineTo(s * 5, s * 9)
+      path.lineTo(s * 4, s * 8)
+      path.lineTo(s * 2, s * 10)
+      path.quadTo(s * 2 - s / sqrt(2.0), s * 9 + s / sqrt(2.0), s, s * 9)
+      path.lineTo(s * 3, s * 7)
+      path.lineTo(s * 2, s * 6)
+      path.closePath()
+      g2d.fill(path)
+      g2d.draw(path)
+      path = GeneralPath()
+      path.moveTo(s * 6, s * 2)
+      path.lineTo(s * 6, s * 5)
+      path.lineTo(s * 9, s * 5)
+      path.lineTo(s * 8, s * 4)
+      path.lineTo(s * 10, s * 2)
+      path.quadTo(s * 9 + s / sqrt(2.0), s * 2 - s / sqrt(2.0), s * 9, s)
+      path.lineTo(s * 7, s * 3)
+      path.lineTo(s * 6, s * 2)
+      path.closePath()
+      g2d.fill(path)
+      g2d.draw(path)
     }
-
-    @Override
-    public Dimension getPreferredSize() {
-      int height;
-      Container parent = getParent();
-      if (isVisible() && parent != null) {
-        height = parent.getSize().height - parent.getInsets().top - parent.getInsets().bottom;
-      }
-      else {
-        height = super.getPreferredSize().height;
-      }
-      //noinspection SuspiciousNameCombination
-      return new Dimension(height, height);
-    }
-
-    @Override
-    public Dimension getMaximumSize() {
-      return getPreferredSize();
-    }
-
-    @Override
-    public void paint(Graphics g) {
-      Graphics2D g2d = (Graphics2D)g.create();
-      try {
-        g2d.setColor(UIManager.getColor("Label.background"));
-        g2d.fillRect(0, 0, getWidth()+1, getHeight()+1);
-        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-        double s = (double)getHeight() / 13;
-        g2d.translate(s, s);
-        Shape plate = new RoundRectangle2D.Double(0, 0, s * 11, s * 11, s, s);
-        Color color = UIManager.getColor("Label.foreground");
-        boolean hover = model.isRollover() || model.isPressed();
-        g2d.setColor(ColorUtil.withAlpha(color, hover? .25: .18));
-        g2d.fill(plate);
-        g2d.setColor(ColorUtil.withAlpha(color, hover? .4 : .33));
-        g2d.draw(plate);
-        g2d.setColor(ColorUtil.withAlpha(color, hover ? .7 : .66));
-        GeneralPath path = new GeneralPath();
-        path.moveTo(s * 2, s * 6);
-        path.lineTo(s * 5, s * 6);
-        path.lineTo(s * 5, s * 9);
-        path.lineTo(s * 4, s * 8);
-        path.lineTo(s * 2, s * 10);
-        //noinspection DuplicateExpressions
-        path.quadTo(s * 2 - s/ Math.sqrt(2), s * 9 + s/Math.sqrt(2), s, s * 9);
-        path.lineTo(s * 3, s * 7);
-        path.lineTo(s * 2, s * 6);
-        path.closePath();
-        g2d.fill(path);
-        g2d.draw(path);
-        path = new GeneralPath();
-        path.moveTo(s * 6, s * 2);
-        path.lineTo(s * 6, s * 5);
-        path.lineTo(s * 9, s * 5);
-        path.lineTo(s * 8, s * 4);
-        path.lineTo(s * 10, s * 2);
-        //noinspection DuplicateExpressions
-        path.quadTo(s * 9 + s/ Math.sqrt(2), s * 2 - s/Math.sqrt(2), s * 9 , s);
-        path.lineTo(s * 7, s * 3);
-        path.lineTo(s * 6, s * 2);
-        path.closePath();
-        g2d.fill(path);
-        g2d.draw(path);
-      }
-      finally {
-        g2d.dispose();
-      }
+    finally {
+      g2d.dispose()
     }
   }
 }

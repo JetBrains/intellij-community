@@ -30,7 +30,8 @@ internal class LinuxIdeMenuBar : IdeMenuBar() {
 
   private var globalMenu: GlobalMenuLinux? = null
 
-  override fun isDarkMenu() = super.isDarkMenu() || globalMenu != null
+  override val isDarkMenu: Boolean
+    get() = super.isDarkMenu || globalMenu != null
 
   override fun updateGlobalMenuRoots() {
     globalMenu?.setRoots(components.mapNotNull { it as? ActionMenu })
@@ -44,7 +45,7 @@ internal class LinuxIdeMenuBar : IdeMenuBar() {
     if (globalMenu == null) {
       val globalMenuLinux = GlobalMenuLinux.create(frame) ?: return
       globalMenu = globalMenuLinux
-      Disposer.register(myDisposable, globalMenuLinux)
+      Disposer.register(disposable, globalMenuLinux)
       updateMenuActionsLazily(true)
     }
   }
