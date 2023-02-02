@@ -316,9 +316,7 @@ public final class JavaGenericsUtil {
       PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor(owner, aClass, substitutor);
       if (superClassSubstitutor == null) return null;
       PsiType itemType = superClassSubstitutor.substitute(typeParameter);
-      if (itemType != null) {
-        itemType = PsiUtil.captureToplevelWildcards(itemType, aClass);
-      }
+      itemType = PsiUtil.captureToplevelWildcards(itemType, aClass);
       return itemType == null ? PsiType.getJavaLangObject(manager, aClass.getResolveScope()) : itemType;
     }
     if (type instanceof PsiIntersectionType) {
