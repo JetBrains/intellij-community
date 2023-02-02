@@ -8,11 +8,14 @@ import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 
 internal interface GHPRReviewFlowViewModel {
+  val isBusy: Flow<Boolean>
   val requestedReviewersState: StateFlow<List<GHPullRequestRequestedReviewer>>
   val reviewerAndReviewState: StateFlow<Map<GHPullRequestRequestedReviewer, ReviewState>>
   val reviewState: Flow<ReviewState>
   val roleState: StateFlow<ReviewRole>
   val pendingCommentsState: StateFlow<Int>
+
+  val userCanManageReview: Boolean
 
   fun removeReviewer(reviewer: GHPullRequestRequestedReviewer)
 }

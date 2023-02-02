@@ -207,7 +207,7 @@ internal object GHPRStatusChecksComponentFactory {
       reviewFlowVm.reviewerAndReviewState.collect { reviewerAndReview ->
         panel.removeAll()
         reviewerAndReview.forEach { (reviewer, reviewState) ->
-          panel.add(createReviewerReviewStatus(reviewFlowVm, reviewer, reviewState, avatarIconsProvider))
+          panel.add(createReviewerReviewStatus(scope, reviewFlowVm, reviewer, reviewState, avatarIconsProvider))
         }
         panel.revalidate()
         panel.repaint()
@@ -218,6 +218,7 @@ internal object GHPRStatusChecksComponentFactory {
   }
 
   private fun createReviewerReviewStatus(
+    scope: CoroutineScope,
     reviewFlowVm: GHPRReviewFlowViewModel,
     reviewer: GHPullRequestRequestedReviewer,
     reviewState: ReviewState,
@@ -238,7 +239,7 @@ internal object GHPRStatusChecksComponentFactory {
 
       PopupHandler.installPopupMenu(
         this,
-        DefaultActionGroup(GHPRRemoveReviewerAction(reviewFlowVm, reviewer).toAnAction()),
+        DefaultActionGroup(GHPRRemoveReviewerAction(scope, reviewFlowVm, reviewer).toAnAction()),
         "GHPRReviewerStatus"
       )
     }

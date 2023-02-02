@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewDecision
@@ -35,6 +36,10 @@ internal class GHPRReviewFlowViewModelImpl(
   private val ghostUser = securityService.ghostUser
 
   private val _requestedReviewersState: MutableStateFlow<List<GHPullRequestRequestedReviewer>> = MutableStateFlow(metadataModel.reviewers)
+
+  private val _isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
+  override val isBusy: Flow<Boolean> = _isBusy.asStateFlow()
+
   override val requestedReviewersState: StateFlow<List<GHPullRequestRequestedReviewer>> = _requestedReviewersState.asStateFlow()
 
   private val pullRequestReviewState: MutableStateFlow<Map<GHPullRequestRequestedReviewer, GHPullRequestReviewState>> = MutableStateFlow(
@@ -77,6 +82,9 @@ internal class GHPRReviewFlowViewModelImpl(
   private val _pendingCommentsState: MutableStateFlow<Int> = MutableStateFlow(0)
   override val pendingCommentsState: StateFlow<Int> = _pendingCommentsState.asStateFlow()
 
+  override val userCanManageReview: Boolean = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) ||
+                                              stateModel.viewerDidAuthor
+
   override fun removeReviewer(reviewer: GHPullRequestRequestedReviewer) = stateModel.submitTask {
     val newReviewers = metadataModel.reviewers.toMutableList().apply {
       remove(reviewer)
@@ -97,6 +105,10 @@ internal class GHPRReviewFlowViewModelImpl(
     metadataModel.addAndInvokeChangesListener {
       _requestedReviewersState.value = metadataModel.reviewers
       pullRequestReviewState.value = metadataModel.reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state }
+    }
+
+    stateModel.addAndInvokeBusyStateChangedListener {
+      _isBusy.value = stateModel.isBusy
     }
 
     with(detailsDataProvider) {
