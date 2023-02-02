@@ -23,14 +23,14 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
 
   private final ProcessHandler myProcessHandler;
   private final Process myPtyProcess;
-  private boolean myDestroyProcessOnClose;
+  private final boolean myDestroyProcessOnClose;
   private final Charset myCharset;
 
   public ProcessHandlerTtyConnector(@NotNull ProcessHandler processHandler, @NotNull Charset charset) {
-    this(processHandler, false, charset);
+    this(processHandler, charset, false);
   }
 
-  public ProcessHandlerTtyConnector(@NotNull ProcessHandler processHandler, boolean destroyProcessOnClose, @NotNull Charset charset) {
+  public ProcessHandlerTtyConnector(@NotNull ProcessHandler processHandler, @NotNull Charset charset, boolean destroyProcessOnClose) {
     myProcessHandler = processHandler;
     myPtyProcess = getPtyProcess(processHandler);
     myDestroyProcessOnClose = destroyProcessOnClose;
