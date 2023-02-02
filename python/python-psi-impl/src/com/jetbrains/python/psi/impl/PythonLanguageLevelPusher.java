@@ -351,7 +351,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
         final PushedFilePropertiesUpdater propertiesUpdater = PushedFilePropertiesUpdater.getInstance(myProject);
         index.iterateContentUnderDirectory(myRoot, (ContentIteratorEx)file -> {
           if (visitFileToPush(file, propertiesUpdater)) {
-            return TreeNodeProcessingResult.CONTINUE.CONTINUE;
+            return TreeNodeProcessingResult.CONTINUE;
           }
           return TreeNodeProcessingResult.SKIP_CHILDREN;
         });
