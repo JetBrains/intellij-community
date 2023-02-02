@@ -1694,7 +1694,6 @@
       <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
       <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
       <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
-      <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
       <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
       <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
       <action id="DumpIElementTypesAction" internal="true" class="com.intellij.internal.DumpIElementTypesAction"/>
