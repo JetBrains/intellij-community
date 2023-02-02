@@ -101,6 +101,14 @@ class PythonCompletionGolfVisitorFactory : CompletionGolfVisitorFactory {
       super.visitPyKeywordArgument(node)
     }
 
+    override fun visitPyStringLiteralExpression(node: PyStringLiteralExpression) {
+      if (node.parent is PySubscriptionExpression) {
+        addElement(node.node)
+      } else {
+        super.visitPyStringLiteralExpression(node)
+      }
+    }
+
     private fun addElement(element: ASTNode) {
       val text = element.text.take(MAX_PREFIX_LENGTH)
       if (text.isValuableString()) {
