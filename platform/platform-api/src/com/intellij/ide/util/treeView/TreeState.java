@@ -14,6 +14,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -44,6 +45,8 @@ import java.util.function.Consumer;
  * @see #applyTo(JTree, Object)
  */
 public final class TreeState implements JDOMExternalizable {
+  private static final Interner<String> INTERNER = Interner.createStringInterner();
+
   private static final Logger LOG = Logger.getInstance(TreeState.class);
 
   public static final Key<WeakReference<ActionCallback>> CALLBACK = Key.create("Callback");
@@ -57,10 +60,8 @@ public final class TreeState implements JDOMExternalizable {
 
   @Tag("item")
   static final class PathElement {
-    @Attribute("name")
-    public String id;
-    @Attribute("type")
-    public String type;
+    String id;
+    String type;
     transient Object userObject;
     transient final int index;
 
@@ -70,11 +71,11 @@ public final class TreeState implements JDOMExternalizable {
     }
 
     PathElement(String itemId, String itemType, int itemIndex, Object userObject) {
-      id = itemId;
-      type = itemType;
+      setId(itemId);
+      setType(itemType);
 
       index = itemIndex;
-      this.userObject = userObject;
+      this.userObject = userObject instanceof String stringObject ? INTERNER.intern(stringObject) : userObject;
     }
 
     @Override
@@ -93,6 +94,26 @@ public final class TreeState implements JDOMExternalizable {
       }
       return Objects.equals(id, calcId(userObject)) &&
              Objects.equals(type, calcType(userObject)) ? Match.ID_TYPE : null;
+    }
+
+    @Attribute("name")
+    public void setId(String id) {
+      this.id = id == null ? null : INTERNER.intern(id);
+    }
+
+    @Attribute("name")
+    public String getId() {
+      return id;
+    }
+
+    @Attribute("type")
+    public void setType(String type) {
+      this.type = type == null ? null : INTERNER.intern(type);
+    }
+
+    @Attribute("type")
+    public String getType() {
+      return type;
     }
   }
 
