@@ -70,7 +70,13 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
           else -> {
             if (!isErrorLogged && !ComponentManager::class.java.isAssignableFrom(parameterType)) {
               isErrorLogged = true
-              LOG.warn("Do not use constructor injection (requestorClass=${aClass.name})")
+              // a special unit test
+              if (componentManager.getApplication() == null) {
+                LOG.warn("Do not use constructor injection (requestorClass=${aClass.name})")
+              }
+              else {
+                LOG.error("Do not use constructor injection (requestorClass=${aClass.name})")
+              }
             }
             parameterResolver.resolveInstance(componentManager = componentManager,
                                               requestorKey = requestorKey,

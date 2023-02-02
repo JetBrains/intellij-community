@@ -39,19 +39,19 @@ import java.util.*;
 import java.util.stream.Stream;
 
 @State(name = "HighlightingSettingsPerFile", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class HighlightingSettingsPerFile extends HighlightingLevelManager implements PersistentStateComponent<Element>, ModificationTracker {
+public final class HighlightingSettingsPerFile extends HighlightingLevelManager implements PersistentStateComponent<Element>, ModificationTracker {
   @NonNls private static final String SETTING_TAG = "setting";
   @NonNls private static final String ROOT_ATT_PREFIX = "root";
   @NonNls private static final String FILE_ATT = "file";
-  private final MessageBus myBus;
+  private final MessageBus messageBus;
   private final Set<String> vcsIgnoreFileNames;
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
   private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<>();
 
-  public HighlightingSettingsPerFile(@NotNull Project project, @NotNull MessageBus bus) {
-    myBus = bus;
+  public HighlightingSettingsPerFile(@NotNull Project project) {
     vcsIgnoreFileNames = VcsFacade.getInstance().getVcsIgnoreFileNames(project);
+    messageBus = project.getMessageBus();
   }
 
   public static HighlightingSettingsPerFile getInstance(@NotNull Project project) {
@@ -134,7 +134,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     }
 
     incModificationCount();
-    myBus.syncPublisher(FileHighlightingSettingListener.SETTING_CHANGE).settingChanged(root, setting);
+    messageBus.syncPublisher(FileHighlightingSettingListener.SETTING_CHANGE).settingChanged(root, setting);
     InspectionWidgetUsageCollector.HIGHLIGHT_LEVEL_CHANGED.log(root.getProject(), root.getLanguage(), FileHighlightingSetting.toInspectionsLevel(setting));
   }
 
