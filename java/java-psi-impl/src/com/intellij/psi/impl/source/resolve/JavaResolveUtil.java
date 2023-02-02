@@ -345,11 +345,7 @@ public final class JavaResolveUtil {
       if (iteratedValue == null) {
         return null;
       }
-      PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-      if (itemType != null) {
-        itemType = PsiUtil.captureToplevelWildcards(itemType, parent);
-      }
-      return itemType;
+      return JavaGenericsUtil.getCollectionItemType(iteratedValue);
     }
     if (parent instanceof PsiCaseLabelElementList) {
       PsiSwitchLabelStatementBase label = ObjectUtils.tryCast(parent.getParent(), PsiSwitchLabelStatementBase.class);

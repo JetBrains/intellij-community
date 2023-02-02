@@ -70,7 +70,7 @@ final class PatternHighlightingModel {
           holder.add(builder.create());
         }
       }
-      else if (JavaGenericsUtil.isUncheckedCast(PsiUtil.uncaptureToplevelWildcards(Objects.requireNonNull(deconstructionComponentType)),
+      else if (JavaGenericsUtil.isUncheckedCast(Objects.requireNonNull(deconstructionComponentType),
                                                 GenericsUtil.getVariableTypeByExpressionType(substitutedRecordComponentType))) {
         hasMismatchedPattern = true;
         if (recordComponents.length == deconstructionComponents.length) {
