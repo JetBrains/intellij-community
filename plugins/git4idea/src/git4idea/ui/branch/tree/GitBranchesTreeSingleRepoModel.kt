@@ -61,7 +61,7 @@ open class GitBranchesTreeSingleRepoModel(
                                              || (node === GitBranchType.REMOTE && remoteBranchesTree.isEmpty())
 
   private fun getChildren(parent: Any?): List<Any> {
-    if (parent == null) return emptyList()
+    if (parent == null || notHaveFilteredBranches()) return emptyList()
     return when (parent) {
       TreeRoot -> getTopLevelNodes()
       is GitBranchType -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent, emptyList()) }
@@ -95,4 +95,7 @@ open class GitBranchesTreeSingleRepoModel(
   override fun filterBranches(matcher: MinusculeMatcher?) {
     branchNameMatcher = matcher
   }
+
+  private fun notHaveFilteredBranches(): Boolean =
+    branchNameMatcher != null && localBranchesTree.isEmpty() && remoteBranchesTree.isEmpty()
 }
