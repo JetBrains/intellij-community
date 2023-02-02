@@ -7,27 +7,25 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.ENUM_STATIC_METHOD_NAMES
+import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ImportAllMembersIntention :
@@ -131,19 +129,34 @@ private fun KtAnalysisSession.isReferenceToObjectMemberOrUnresolved(qualifiedAcc
     return (referencedSymbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind?.isObject ?: true
 }
 
-private val enumSyntheticMethodNames = setOf("values", "valueOf")
-
 private fun KtDeclarationSymbol.isEnum(): Boolean = safeAs<KtClassOrObjectSymbol>()?.classKind == KtClassKind.ENUM_CLASS
 
 private fun KtCallableSymbol.isEnumSyntheticMethodCall(target: KtNamedClassOrObjectSymbol): Boolean =
-    target.isEnum() && callableIdIfNonLocal?.callableName?.asString() in enumSyntheticMethodNames
+    target.isEnum() && origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED && callableIdIfNonLocal?.callableName in ENUM_STATIC_METHOD_NAMES
 
 private fun KtQualifiedExpression.isEnumSyntheticMethodCall(target: KtNamedClassOrObjectSymbol): Boolean =
-    target.isEnum() && callExpression?.calleeExpression?.text in enumSyntheticMethodNames
+    target.isEnum() && canBeReferenceToBuiltInEnumFunction()
 
 context(KtAnalysisSession)
-private fun KtFile.hasImportedEnumSyntheticMethodCall(): Boolean = anyDescendantOfType<KtCallExpression> { call ->
-    call.getQualifiedExpressionForSelector() == null &&
-            call.calleeExpression?.text in enumSyntheticMethodNames &&
-            call.resolveCall().singleFunctionCallOrNull()?.symbol?.psiSafe<KtClass>()?.isEnum() == true
+private fun KtFile.hasImportedEnumSyntheticMethodCall(): Boolean = importDirectives.any { importDirective ->
+    if (importDirective.importPath?.isAllUnder != true) return false
+    val importedEnumFqName = importDirective.importedFqName ?: return false
+    if ((importDirective.importedReference?.mainReference?.resolve() as? KtClass)?.isEnum() != true) return false
+
+    fun KtExpression.isFqNameInEnumStaticMethods(): Boolean {
+        if (getQualifiedExpressionForSelector() != null) return false
+        if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false
+        val referencedSymbol = when (this) {
+            is KtCallExpression -> resolveCall().successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
+            is KtNameReferenceExpression -> mainReference.resolveToSymbol()
+            else -> return false
+        } ?: return false
+        val referencedName = (referencedSymbol as? KtCallableSymbol)?.callableIdIfNonLocal?.callableName ?: return false
+        return referencedSymbol.psi?.kotlinFqName == importedEnumFqName && referencedName in ENUM_STATIC_METHOD_NAMES
+    }
+
+    return containingFile.anyDescendantOfType<KtExpression> {
+        (it as? KtCallExpression)?.isFqNameInEnumStaticMethods() == true
+                || (it as? KtCallableReferenceExpression)?.callableReference?.isFqNameInEnumStaticMethods() == true
+    }
 }
