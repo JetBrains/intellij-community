@@ -36,10 +36,7 @@ internal constructor(private val project: Project,
     GHPRReviewThreadComponent.createForInlay(project, thread, reviewDataProvider,
                                              avatarIconsProvider, suggestedChangeHelper,
                                              ghostUser, currentUser).apply {
-      border = JBUI.Borders.empty(CodeReviewCommentUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.top,
-                                  0,
-                                  CodeReviewCommentUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.bottom,
-                                  0)
+      border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE))
     }.let { CodeReviewCommentUIUtil.createEditorInlayPanel(it) }
 
   override fun createSingleCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {

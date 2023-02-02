@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.codereview.comment
 import com.intellij.CommonBundle
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -11,8 +12,10 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.InlineIconButton
+import com.intellij.util.ui.JBInsets
 import icons.CollaborationToolsIcons
 import java.awt.BorderLayout
+import java.awt.Insets
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.ComponentAdapter
@@ -24,6 +27,13 @@ object CodeReviewCommentUIUtil {
 
   const val INLAY_PADDING = 10
   private const val EDITOR_INLAY_PANEL_ARC = 10
+
+  fun getInlayPadding(componentType: CodeReviewChatItemUIUtil.ComponentType): Insets {
+    val paddingInsets = componentType.paddingInsets
+    val top = INLAY_PADDING - paddingInsets.top
+    val bottom = INLAY_PADDING - paddingInsets.bottom
+    return JBInsets(top, 0, bottom, 0)
+  }
 
   fun createEditorInlayPanel(component: JComponent): JPanel {
     val roundedLineBorder = IdeBorderFactory.createRoundedBorder(EDITOR_INLAY_PANEL_ARC)
