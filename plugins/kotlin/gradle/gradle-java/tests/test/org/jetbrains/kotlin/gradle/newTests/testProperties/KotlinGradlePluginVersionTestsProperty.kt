@@ -11,8 +11,7 @@ object KotlinGradlePluginVersionTestsProperty : KotlinTestsResolvableProperty {
 
     enum class Value(val acronym: String, val version: String) {
         PreviousMajorRelease("PREV_RELEASE", "1.7.10"),
-        LatestStable("STABLE", "1.7.20"),
-        NextRelease("NEXT_RELEASE", "1.8.0"),
+        LatestStable("STABLE", "1.8.0"),
         Latest("LATEST", KotlinGradlePluginVersions.latest.toString())
     }
 
