@@ -3,26 +3,27 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.DynamicBundle
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.runActivity
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.doWithLazyActionManager
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.withLazyActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFloatingMenuBarSupported
-import com.intellij.openapi.wm.impl.IdeRootPane.Companion.executeWithPrepareActionManagerAndCustomActionScheme
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.openapi.wm.impl.status.ClockPanel
 import com.intellij.ui.ColorUtil
@@ -34,8 +35,10 @@ import com.intellij.ui.mac.screenmenu.MenuBar
 import com.intellij.ui.plaf.beg.IdeaMenuUI
 import com.intellij.util.Alarm
 import com.intellij.util.IJSwingUtilities
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
+import kotlinx.coroutines.*
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -64,8 +67,11 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
 
   private var visibleActions = ArrayList<AnAction>()
   private val presentationFactory = MenuItemPresentationFactory()
-  private val timerListener: TimerListener = MyTimerListener()
-  protected val disposable = Disposer.newCheckedDisposable()
+  private val timerListener = MyTimerListener()
+
+  @Suppress("DEPRECATION")
+  protected val coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
+
   private var clockPanel: ClockPanel? = null
   private var button: MyExitFullScreenButton? = null
   private var animator: MyAnimator? = null
@@ -276,14 +282,20 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
     else {
       screenMenuPeer = null
     }
-    Disposer.register(ApplicationManager.getApplication(), disposable)
-    executeWithPrepareActionManagerAndCustomActionScheme(disposable) { actionManager: ActionManager ->
-      val a = StartUpMeasurer.startActivity("ide menu bar actions init")
-      updateActions(actionManager, screenMenuPeer)
-      a.end()
+
+    coroutineScope.launch {
+      val app = ApplicationManager.getApplication()
+      val actionManager = app.serviceAsync<ActionManager>().await()
+      app.serviceAsync<CustomActionsSchema>().join()
+      withContext(Dispatchers.EDT) {
+        runActivity("ide menu bar actions init") {
+          updateActions(actionManager = actionManager, screenMenuPeer = screenMenuPeer)
+        }
+      }
     }
     activity.end()
-    IdeEventQueue.getInstance().addDispatcher(this, disposable)
+
+    IdeEventQueue.getInstance().addDispatcher(dispatcher = this, scope = coroutineScope)
   }
 
   @RequiresEdt
@@ -295,7 +307,9 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
       }
     }
     actionManager.addTimerListener(timerListener)
-    Disposer.register(disposable) { actionManager.removeTimerListener(timerListener) }
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      actionManager.removeTimerListener(timerListener)
+    }
   }
 
   override fun removeNotify() {
@@ -306,7 +320,7 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
     }
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       animator?.suspend()
-      Disposer.dispose(disposable)
+      coroutineScope.cancel()
     }
     super.removeNotify()
   }
@@ -314,9 +328,9 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
   override fun uiSettingsChanged(uiSettings: UISettings) {
     updateAlarm.cancelAllRequests()
     updateAlarm.addRequest({
-                               presentationFactory.reset()
-                               updateMenuActions(true)
-                             }, 50)
+                             presentationFactory.reset()
+                             updateMenuActions(true)
+                           }, 50)
   }
 
   override fun dispatch(e: AWTEvent): Boolean {
@@ -362,8 +376,10 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
     doUpdateMenuActions(forceRebuild, ActionManager.getInstance(), screenMenuPeer)
   }
 
-  fun updateMenuActionsLazily(forceRebuild: Boolean) {
-    doWithLazyActionManager { manager -> doUpdateMenuActions(forceRebuild, manager, screenMenuPeer) }
+  protected fun updateMenuActionsLazily() {
+    withLazyActionManager(coroutineScope) { manager ->
+      doUpdateMenuActions(forceRebuild = true, manager = manager, screenMenuPeer = screenMenuPeer)
+    }
   }
 
   private fun doUpdateMenuActions(forceRebuild: Boolean, manager: ActionManager, screenMenuPeer: MenuBar?): List<AnAction> {
@@ -696,3 +712,4 @@ private class MyExitFullScreenButton : JButton() {
     }
   }
 }
+

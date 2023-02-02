@@ -10,11 +10,11 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -43,19 +43,14 @@ import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.mac.MacWinTabsHandler
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseMotionAdapter
-import java.util.function.Consumer
 import javax.swing.*
 
 private const val EXTENSION_KEY = "extensionKey"
@@ -212,23 +207,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
       frame.doSetRootPane(rootPane)
       if (SystemInfoRt.isMac) {
         MacWinTabsHandler.fastInit(frame)
-      }
-    }
-
-    @ApiStatus.Internal
-    fun executeWithPrepareActionManagerAndCustomActionScheme(disposable: Disposable?, task: Consumer<ActionManager>) {
-      val app = ApplicationManager.getApplication()
-      @Suppress("DEPRECATION")
-      val job = app.coroutineScope.launch {
-        val actionManager = app.serviceAsync<ActionManager>().await()
-        app.serviceAsync<CustomActionsSchema>().join()
-        withContext(Dispatchers.EDT) {
-          task.accept(actionManager)
-        }
-      }
-
-      if (disposable != null) {
-        job.cancelOnDispose(disposable)
       }
     }
   }

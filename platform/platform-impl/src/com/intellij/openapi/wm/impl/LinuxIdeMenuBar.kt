@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.job
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.JFrame
@@ -45,8 +46,10 @@ internal class LinuxIdeMenuBar : IdeMenuBar() {
     if (globalMenu == null) {
       val globalMenuLinux = GlobalMenuLinux.create(frame) ?: return
       globalMenu = globalMenuLinux
-      Disposer.register(disposable, globalMenuLinux)
-      updateMenuActionsLazily(true)
+      coroutineScope.coroutineContext.job.invokeOnCompletion {
+        Disposer.dispose(globalMenuLinux)
+      }
+      updateMenuActionsLazily()
     }
   }
 

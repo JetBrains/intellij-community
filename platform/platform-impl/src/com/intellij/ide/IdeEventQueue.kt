@@ -234,6 +234,13 @@ class IdeEventQueue private constructor() : EventQueue() {
     _addProcessor(dispatcher, parent, dispatchers)
   }
 
+  fun addDispatcher(dispatcher: EventDispatcher, scope: CoroutineScope) {
+    dispatchers.add(dispatcher)
+    scope.coroutineContext.job.invokeOnCompletion {
+      dispatchers.remove(dispatcher)
+    }
+  }
+
   fun removeDispatcher(dispatcher: EventDispatcher) {
     dispatchers.remove(dispatcher)
   }
