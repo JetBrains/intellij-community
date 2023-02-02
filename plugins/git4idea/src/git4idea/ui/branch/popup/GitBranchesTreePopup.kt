@@ -3,6 +3,7 @@ package git4idea.ui.branch.popup
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.DvcsBranchManager
+import com.intellij.dvcs.branch.DvcsBranchSyncPolicyUpdateNotifier
 import com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.ui.DvcsBundle
@@ -40,8 +41,10 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
+import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.branch.GitBranchType
+import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
@@ -112,6 +115,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       installRepoListener()
       installResizeListener()
       warnThatBranchesDivergedIfNeeded()
+      DvcsBranchSyncPolicyUpdateNotifier(project, GitVcs.getInstance(project),
+                                         GitVcsSettings.getInstance(project), GitRepositoryManager.getInstance(project))
+        .initBranchSyncPolicyIfNotInitialized()
     }
     installBranchSettingsListener()
     DataManager.registerDataProvider(component, DataProvider { dataId ->
