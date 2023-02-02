@@ -1150,13 +1150,11 @@ open class FileEditorManagerImpl(
       catch (e: ProcessCanceledException) {
         throw e
       }
-      catch (e: Exception) {
-        LOG.error(e)
-      }
-      catch (e: AssertionError) {
+      catch (e: Throwable) {
         LOG.error(e)
       }
     }
+    if (editorsWithProviders.isEmpty()) return null
     return createComposite(file, editorsWithProviders)
   }
 
