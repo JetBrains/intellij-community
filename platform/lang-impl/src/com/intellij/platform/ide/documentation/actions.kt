@@ -3,9 +3,11 @@ package com.intellij.platform.ide.documentation
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.platform.documentation.DocumentationTarget
+import org.jetbrains.annotations.ApiStatus.Experimental
 
 @JvmField
 val DOCUMENTATION_TARGETS: DataKey<List<DocumentationTarget>> = DataKey.create("documentation.targets")
 
+@Experimental
 @JvmField
 val DOCUMENTATION_BROWSER: DataKey<DocumentationBrowserFacade> = DataKey.create("documentation.browser")
