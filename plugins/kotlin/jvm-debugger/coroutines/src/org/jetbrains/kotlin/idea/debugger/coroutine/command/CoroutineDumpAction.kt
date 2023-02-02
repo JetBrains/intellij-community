@@ -26,9 +26,13 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBund
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CompleteCoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.toCompleteCoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineDumpPanel
 
 class CoroutineDumpAction : AnAction() {
+    companion object {
+        val log by logger
+    }
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
@@ -40,20 +44,30 @@ class CoroutineDumpAction : AnAction() {
                 override fun contextAction(suspendContext: SuspendContextImpl) {
                     val states = CoroutineDebugProbesProxy(suspendContext).dumpCoroutines()
                     if (states.isOk()) {
-                        val f = fun() {
-                            val ui = session.xDebugSession?.ui ?: return
-                            val coroutines = states.cache.map { it.toCompleteCoroutineInfoData() }
+                        val coroutines = states.cache.map { it.toCompleteCoroutineInfoData() }
+                        ApplicationManager.getApplication().invokeLater({
+                            val ui = session.xDebugSession?.ui
+                            if (ui == null) {
+                                log.warn("Failed to retrieve UI instance")
+                                createCoroutineDumpFailedErrorNotification(project)
+                                return@invokeLater
+                            }
+
                             addCoroutineDump(project, coroutines, ui, session.searchScope)
-                        }
-                        ApplicationManager.getApplication().invokeLater(f, ModalityState.NON_MODAL)
+                        }, ModalityState.NON_MODAL)
                     } else {
-                        val message = KotlinDebuggerCoroutinesBundle.message("coroutine.dump.failed")
-                        XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.ERROR).notify(project)
+                        createCoroutineDumpFailedErrorNotification(project)
                     }
                 }
             })
         }
     }
+
+    fun createCoroutineDumpFailedErrorNotification(project: Project) =
+        XDebuggerManagerImpl.getNotificationGroup().createNotification(
+            KotlinDebuggerCoroutinesBundle.message("coroutine.dump.failed"),
+            MessageType.ERROR
+        ).notify(project)
 
     /**
      * Analog of [DebuggerUtilsEx.addThreadDump].
