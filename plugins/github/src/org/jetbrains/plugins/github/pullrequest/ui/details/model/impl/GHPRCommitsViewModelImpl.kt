@@ -18,7 +18,7 @@ internal class GHPRCommitsViewModelImpl(
   override val ghostUser: GHUser = securityService.ghostUser
 
   override val reviewCommits: StateFlow<List<GHCommit>> = commitsLoadingModel.getResultFlow()
-    .map { commits -> commits ?: listOf() }
+    .map { commits -> commits?.asReversed() ?: listOf() }
     .stateIn(scope, SharingStarted.Eagerly, listOf())
 
   private val _selectedCommit: MutableStateFlow<GHCommit?> = MutableStateFlow(null)
