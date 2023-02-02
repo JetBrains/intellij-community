@@ -5,18 +5,12 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.jediterm.terminal.HyperlinkStyle;
-import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalTypeAheadSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
 
 public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
-  @Override
-  public boolean shouldCloseTabOnLogout(TtyConnector ttyConnector) {
-    return TerminalOptionsProvider.getInstance().getCloseSessionOnLogout();
-  }
-
   @Override
   public boolean audibleBell() {
     return TerminalOptionsProvider.getInstance().getAudibleBell();

@@ -376,7 +376,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   @Override
-  protected SearchComponent createSearchComponent() {
+  protected @NotNull SearchComponent createSearchComponent() {
     return new TerminalSearchSession(this).getTerminalSearchComponent();
   }
 }

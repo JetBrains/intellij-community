@@ -6,14 +6,13 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.PtyBasedProcess;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ObjectUtils;
-import com.jediterm.terminal.Questioner;
+import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import com.pty4j.WinSize;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -55,11 +54,6 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
   }
 
   @Override
-  public boolean init(Questioner q) {
-    return true;
-  }
-
-  @Override
   public void close() {
     if (myDestroyProcessOnClose) {
       myProcessHandler.destroyProcess();
@@ -67,19 +61,20 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
   }
 
   @Override
-  public void resize(@NotNull Dimension termSize) {
+  public void resize(@NotNull TermSize termSize) {
     if (myPtyProcess instanceof PtyProcess ptyProcess) {
       if (ptyProcess.isAlive()) {
-        ptyProcess.setWinSize(new WinSize(termSize.width, termSize.height));
+        ptyProcess.setWinSize(new WinSize(termSize.getColumns(), termSize.getRows()));
       }
     }
     else if (myPtyProcess instanceof PtyBasedProcess ptyBasedProcess) {
-      ptyBasedProcess.setWindowSize(termSize.width, termSize.height);
+      ptyBasedProcess.setWindowSize(termSize.getColumns(), termSize.getRows());
     }
   }
 
   @Override
   public String getName() {
+    //noinspection HardCodedStringLiteral
     return "TtyConnector:" + myProcessHandler.toString();
   }
 

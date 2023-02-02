@@ -24,7 +24,7 @@ import com.jediterm.terminal.emulator.ColorPalette;
 import com.jediterm.terminal.ui.AwtTransformers;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
-import com.jediterm.terminal.ui.settings.DefaultTabbedSettingsProvider;
+import com.jediterm.terminal.ui.settings.DefaultSettingsProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,7 @@ import java.util.List;
 
 import static com.jediterm.terminal.ui.AwtTransformers.fromAwtToTerminalColor;
 
-public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsProvider {
+public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvider {
 
   public static final TextAttributesKey COMMAND_TO_RUN_USING_IDE_KEY =
     TextAttributesKey.createTextAttributesKey("TERMINAL_COMMAND_TO_RUN_USING_IDE");
@@ -173,12 +173,10 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     return keyStrokes;
   }
 
-  @Override
   public @NotNull TerminalActionPresentation getNextTabActionPresentation() {
     return new TerminalActionPresentation(IdeBundle.message("terminal.action.SelectNextTab.text"), getKeyStrokesByActionId("NextTab"));
   }
 
-  @Override
   public @NotNull TerminalActionPresentation getPreviousTabActionPresentation() {
     return new TerminalActionPresentation(IdeBundle.message("terminal.action.SelectPreviousTab.text"),
                                           getKeyStrokesByActionId("PreviousTab"));

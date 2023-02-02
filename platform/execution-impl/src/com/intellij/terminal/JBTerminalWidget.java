@@ -52,9 +52,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -268,12 +268,12 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   @Override
-  protected SearchComponent createSearchComponent() {
+  protected @NotNull SearchComponent createSearchComponent() {
     return new SearchComponent() {
       private final SearchTextField myTextField = new SearchTextField(false);
 
       @Override
-      public String getText() {
+      public @NotNull String getText() {
         return myTextField.getText();
       }
 
@@ -283,24 +283,34 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       }
 
       @Override
-      public JComponent getComponent() {
+      public @NotNull JComponent getComponent() {
         myTextField.setOpaque(false);
         return myTextField;
       }
 
       @Override
-      public void addDocumentChangeListener(DocumentListener listener) {
-        myTextField.addDocumentListener(listener);
+      public void addSettingsChangedListener(@NotNull Runnable onChangeListener) {
+        myTextField.addDocumentListener(new DocumentListener() {
+          @Override
+          public void insertUpdate(DocumentEvent e) {
+            onChangeListener.run();
+          }
+
+          @Override
+          public void removeUpdate(DocumentEvent e) {
+            onChangeListener.run();
+          }
+
+          @Override
+          public void changedUpdate(DocumentEvent e) {
+            onChangeListener.run();
+          }
+        });
       }
 
       @Override
-      public void addKeyListener(KeyListener listener) {
+      public void addKeyListener(@NotNull KeyListener listener) {
         myTextField.addKeyboardListener(listener);
-      }
-
-      @Override
-      public void addIgnoreCaseListener(ItemListener listener) {
-
       }
 
       @Override

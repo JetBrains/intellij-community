@@ -14,12 +14,10 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.terminal.SubstringFinder
 import com.jediterm.terminal.ui.JediTermWidget
-import java.awt.event.ItemListener
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
-import javax.swing.event.DocumentListener
 
 internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidget) : SearchSession, DataProvider {
   private val searchComponent: SearchReplaceComponent = createSearchComponent()
@@ -43,12 +41,8 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
 
   private fun createFindModel(): FindModel {
     return FindModel().also {
-      var prevIsCaseSensitive = it.isCaseSensitive
       it.addObserver {
-        if (prevIsCaseSensitive != findModel.isCaseSensitive) {
-          prevIsCaseSensitive = findModel.isCaseSensitive
-          terminalSearchComponent.fireCaseSensitiveChanged()
-        }
+        terminalSearchComponent.fireSettingsChanged()
       }
     }
   }
@@ -60,15 +54,15 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
   override fun hasMatches(): Boolean = hasMatches
 
   override fun searchForward() {
-    terminalSearchComponent.fireKeyEvent(KeyEvent.VK_UP)
+    terminalSearchComponent.fireKeyPressedEvent(KeyEvent.VK_UP)
   }
 
   override fun searchBackward() {
-    terminalSearchComponent.fireKeyEvent(KeyEvent.VK_DOWN)
+    terminalSearchComponent.fireKeyPressedEvent(KeyEvent.VK_DOWN)
   }
 
   override fun close() {
-    terminalSearchComponent.fireKeyEvent(KeyEvent.VK_ESCAPE)
+    terminalSearchComponent.fireKeyPressedEvent(KeyEvent.VK_ESCAPE)
     IdeFocusManager.getInstance(terminalWidget.project).requestFocus(terminalWidget.terminalPanel, false)
   }
 
@@ -84,36 +78,36 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
       .addExtraSearchActions(ToggleMatchCase())
       .withCloseAction { close() }
       .withDataProvider(this)
-      .build()
+      .build().also {
+        it.addListener(object : SearchReplaceComponent.Listener {
+          override fun searchFieldDocumentChanged() {
+            findModel.stringToFind = searchComponent.searchTextComponent.text
+          }
+
+          override fun replaceFieldDocumentChanged() {}
+
+          override fun multilineStateChanged() {}
+        })
+      }
   }
 
   private inner class MySearchComponent : JediTermWidget.SearchComponent {
-    private val ignoreCaseListeners: CopyOnWriteArrayList<ItemListener> = CopyOnWriteArrayList()
+    private val settingsChangedListeners: CopyOnWriteArrayList<Runnable> = CopyOnWriteArrayList()
     private val keyListeners: CopyOnWriteArrayList<KeyListener> = CopyOnWriteArrayList()
 
-    override fun getText(): String {
-      return searchComponent.searchTextComponent.text
-    }
+    override fun getText(): String = findModel.stringToFind
 
-    override fun ignoreCase(): Boolean {
-      return !findModel.isCaseSensitive
-    }
+    override fun ignoreCase(): Boolean = !findModel.isCaseSensitive
 
-    override fun getComponent(): JComponent {
-      return searchComponentWrapper
-    }
+    override fun getComponent(): JComponent = searchComponentWrapper
 
-    override fun addDocumentChangeListener(listener: DocumentListener) {
-      searchComponent.searchTextComponent.document.addDocumentListener(listener)
+    override fun addSettingsChangedListener(onChangeListener: Runnable) {
+      settingsChangedListeners.add(onChangeListener)
     }
 
     override fun addKeyListener(listener: KeyListener) {
       searchComponent.searchTextComponent.addKeyListener(listener)
       keyListeners.add(listener)
-    }
-
-    override fun addIgnoreCaseListener(listener: ItemListener) {
-      ignoreCaseListeners.add(listener)
     }
 
     override fun onResultUpdated(results: SubstringFinder.FindResult?) {
@@ -126,15 +120,15 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
     override fun prevFindResultItem(selectedItem: SubstringFinder.FindResult.FindItem?) {
     }
 
-    fun fireKeyEvent(keyCode: Int) {
+    fun fireKeyPressedEvent(keyCode: Int) {
       for (keyListener in keyListeners) {
         keyListener.keyPressed(KeyEvent(searchComponent.searchTextComponent, 0, System.currentTimeMillis(), 0, keyCode, ' '))
       }
     }
 
-    fun fireCaseSensitiveChanged() {
-      for (ignoreCaseListener in ignoreCaseListeners) {
-        ignoreCaseListener.itemStateChanged(null)
+    fun fireSettingsChanged() {
+      for (settingsChangedListener in settingsChangedListeners) {
+        settingsChangedListener.run()
       }
     }
   }
