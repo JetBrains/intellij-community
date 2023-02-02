@@ -2,7 +2,6 @@
 package com.intellij.platform.documentation
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.AsyncSupplier
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -32,7 +31,7 @@ sealed interface LinkResolveResult {
      */
     @RequiresReadLock(generateAssertion = false)
     @RequiresBackgroundThread
-    fun asyncResult(supplier: AsyncSupplier<Async?>): LinkResolveResult {
+    fun asyncResult(supplier: suspend () -> Async?): LinkResolveResult {
       ApplicationManager.getApplication().assertReadAccessAllowed()
       return AsyncLinkResolveResult(supplier)
     }
