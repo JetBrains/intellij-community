@@ -13,6 +13,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -208,6 +209,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
     else {
       showPopup.consume(popup);
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      popup.closeOk(null);
     }
   }
 
