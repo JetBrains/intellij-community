@@ -31,7 +31,7 @@ class GithubShareDialog(private val project: Project,
   private val GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+")
 
   private val repositoryTextField = JBTextField(project.name)
-  private val privateCheckBox = JBCheckBox(message("share.dialog.private"), false)
+  private val privateCheckBox = JBCheckBox(message("share.dialog.private"), true)
 
   @NlsSafe
   private val remoteName = if (existingRemotes.isEmpty()) "origin" else "github"
