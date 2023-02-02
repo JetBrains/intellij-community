@@ -3,6 +3,8 @@ package com.intellij.platform.documentation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -26,5 +28,7 @@ public interface PsiDocumentationTargetProvider {
    * or {@code null} if this provider is not aware of the given element
    * @see com.intellij.lang.documentation.DocumentationProvider#generateDoc
    */
+  @RequiresReadLock
+  @RequiresBackgroundThread
   @Nullable DocumentationTarget documentationTarget(@NotNull PsiElement element, @Nullable PsiElement originalElement);
 }

@@ -3,6 +3,7 @@ package com.intellij.platform.documentation
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.AsyncSupplier
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.function.Supplier
@@ -16,6 +17,7 @@ sealed interface LinkResolveResult {
      * @return a result, which makes the browser load the documentation for the [target]
      */
     @RequiresReadLock(generateAssertion = false)
+    @RequiresBackgroundThread
     @JvmStatic
     fun resolvedTarget(target: DocumentationTarget): LinkResolveResult {
       ApplicationManager.getApplication().assertReadAccessAllowed()
@@ -29,6 +31,7 @@ sealed interface LinkResolveResult {
      * - must create its result in a read action.
      */
     @RequiresReadLock(generateAssertion = false)
+    @RequiresBackgroundThread
     fun asyncResult(supplier: AsyncSupplier<Async?>): LinkResolveResult {
       ApplicationManager.getApplication().assertReadAccessAllowed()
       return AsyncLinkResolveResult(supplier)
@@ -52,6 +55,7 @@ sealed interface LinkResolveResult {
        * @return a result, which makes the browser load the documentation for the [target]
        */
       @RequiresReadLock(generateAssertion = false)
+      @RequiresBackgroundThread
       @JvmStatic
       fun resolvedTarget(target: DocumentationTarget): Async {
         // async resolve result supplier is invoked outside a read action,

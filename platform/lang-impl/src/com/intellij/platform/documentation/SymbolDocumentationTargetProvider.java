@@ -4,6 +4,8 @@ package com.intellij.platform.documentation;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -30,5 +32,7 @@ public interface SymbolDocumentationTargetProvider {
    * @return target to handle documentation actions which are invoked on the given {@code symbol},
    * or {@code null} if this provider is not aware of the given symbol
    */
+  @RequiresReadLock
+  @RequiresBackgroundThread
   @Nullable DocumentationTarget documentationTarget(@NotNull Project project, @NotNull Symbol symbol);
 }

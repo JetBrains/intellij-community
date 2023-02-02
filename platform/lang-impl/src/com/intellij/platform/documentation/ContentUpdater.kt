@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.documentation
 
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -16,5 +18,7 @@ fun interface ContentUpdater {
    * @return a series of content updates,
    * which will continuously replace browser content until the returned flow is fully collected
    */
+  @RequiresReadLockAbsence
+  @RequiresBackgroundThread
   fun contentUpdates(currentContent: @Nls String): Flow<@Nls String>
 }
