@@ -6,9 +6,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -23,16 +21,6 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
 
   private final @NotNull Map<String, Map<String, Color>> myPath2Palette;
   private final @NotNull List<FilePath> myPaths;
-
-  public VcsLogColorManagerImpl(@NotNull Set<? extends VirtualFile> roots,
-                                @NotNull List<Color> defaultPalette,
-                                AdditionalColorSpace... additionalColorSpaces) {
-    this(ContainerUtil.map(ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getName)),
-                           file -> VcsUtil.getFilePath(file)),
-         defaultPalette,
-         additionalColorSpaces
-    );
-  }
 
   public VcsLogColorManagerImpl(
     @NotNull Collection<? extends FilePath> paths,
