@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedValueC
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 @Service(Service.Level.PROJECT)
-class JvmOnlyProjectChecker(project: Project) : SynchronizedFineGrainedValueCache<Boolean>(project) {
+class JvmOnlyProjectChecker(project: Project) : SynchronizedFineGrainedValueCache<Boolean>(project, doSelfInitialization = false) {
     override fun subscribe() {
         project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener(project))
     }

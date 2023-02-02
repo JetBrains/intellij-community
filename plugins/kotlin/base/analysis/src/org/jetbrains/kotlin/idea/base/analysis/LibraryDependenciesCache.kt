@@ -190,10 +190,11 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }!!
 
     private inner class LibraryDependenciesInnerCache :
-        SynchronizedFineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, cleanOnLowMemory = true),
+        SynchronizedFineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, doSelfInitialization = false, cleanOnLowMemory = true),
         LibraryInfoListener,
         ModuleRootListener,
         ProjectJdkTable.Listener {
+
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
             connection.subscribe(LibraryInfoListener.TOPIC, this)
@@ -249,11 +250,15 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     }
 
     private inner class ModuleDependenciesCache :
-        SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project),
+        SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project, doSelfInitialization = false),
         WorkspaceModelChangeListener,
         ProjectJdkTable.Listener,
         LibraryInfoListener,
         ModuleRootListener {
+
+        init {
+            initialize()
+        }
 
         override fun subscribe() {
             val connection = project.messageBus.connect(this)

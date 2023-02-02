@@ -16,18 +16,21 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import java.util.concurrent.ConcurrentHashMap
 
-abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val project: Project, cleanOnLowMemory: Boolean) : Disposable {
+abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val project: Project, protected val cleanOnLowMemory: Boolean) : Disposable {
     private val invalidationStamp = InvalidationStamp()
     protected abstract val cache: MutableMap<Key, Value>
     protected val logger = Logger.getInstance(javaClass)
 
-    init {
+    /**
+     * This function has to be called the last statement of ctor,
+     * after all properties that could be used on subscription
+     * and invalidation are already available.
+     */
+    protected fun initialize() {
         if (cleanOnLowMemory) {
-            @Suppress("LeakingThis")
             LowMemoryWatcher.register({ runReadAction { invalidate() } }, this)
         }
 
-        @Suppress("LeakingThis")
         subscribe()
     }
 
@@ -237,12 +240,22 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
     }
 }
 
-abstract class SynchronizedFineGrainedEntityCache<Key : Any, Value : Any>(project: Project, cleanOnLowMemory: Boolean = false) :
+abstract class SynchronizedFineGrainedEntityCache<Key : Any, Value : Any>(
+    project: Project,
+    doSelfInitialization: Boolean = true,
+    cleanOnLowMemory: Boolean = false
+) :
     FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
     @Deprecated("Do not use directly", level = DeprecationLevel.ERROR)
     override val cache: MutableMap<Key, Value> = HashMap()
 
     private val lock = Any()
+
+    init {
+        if (!doSelfInitialization) {
+            initialize()
+        }
+    }
 
     final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T = synchronized(lock) {
         @Suppress("DEPRECATION_ERROR")
@@ -287,10 +300,16 @@ abstract class SynchronizedFineGrainedEntityCache<Key : Any, Value : Any>(projec
     open fun postProcessNewValue(key: Key, value: Value) {}
 }
 
-abstract class SynchronizedFineGrainedValueCache<Value : Any>(project: Project, cleanOnLowMemory: Boolean = false) :
+abstract class SynchronizedFineGrainedValueCache<Value : Any>(project: Project, doSelfInitialization: Boolean = true, cleanOnLowMemory: Boolean = false) :
     SynchronizedFineGrainedEntityCache<Unit, Value>(project, cleanOnLowMemory) {
     @Deprecated("Do not use directly", level = DeprecationLevel.ERROR)
     override val cache: MutableMap<Unit, Value> = HashMap(1)
+
+    init {
+        if (!doSelfInitialization) {
+            initialize()
+        }
+    }
 
     fun value(): Value = get(Unit)
     abstract fun calculate(): Value
@@ -298,10 +317,20 @@ abstract class SynchronizedFineGrainedValueCache<Value : Any>(project: Project, 
     override fun checkKeyValidity(key: Unit) = Unit
 }
 
-abstract class LockFreeFineGrainedEntityCache<Key : Any, Value : Any>(project: Project, cleanOnLowMemory: Boolean) :
+abstract class LockFreeFineGrainedEntityCache<Key : Any, Value : Any>(
+    project: Project,
+    doSelfInitialization: Boolean = true,
+    cleanOnLowMemory: Boolean
+) :
     FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
     @Deprecated("Do not use directly", level = DeprecationLevel.ERROR)
     override val cache: MutableMap<Key, Value> = ConcurrentHashMap()
+
+    init {
+        if (!doSelfInitialization) {
+            initialize()
+        }
+    }
 
     final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T {
         @Suppress("DEPRECATION_ERROR")
