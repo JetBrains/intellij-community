@@ -5,12 +5,11 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.details.ReviewState
-import com.intellij.collaboration.ui.util.bindContent
-import com.intellij.collaboration.ui.util.bindIcon
-import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.childScope
@@ -27,6 +26,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState.ChecksState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.ui.details.action.GHPRRemoveReviewerAction
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -207,7 +207,7 @@ internal object GHPRStatusChecksComponentFactory {
       reviewFlowVm.reviewerAndReviewState.collect { reviewerAndReview ->
         panel.removeAll()
         reviewerAndReview.forEach { (reviewer, reviewState) ->
-          panel.add(createReviewerReviewStatus(reviewer, reviewState, avatarIconsProvider))
+          panel.add(createReviewerReviewStatus(reviewFlowVm, reviewer, reviewState, avatarIconsProvider))
         }
         panel.revalidate()
         panel.repaint()
@@ -218,6 +218,7 @@ internal object GHPRStatusChecksComponentFactory {
   }
 
   private fun createReviewerReviewStatus(
+    reviewFlowVm: GHPRReviewFlowViewModel,
     reviewer: GHPullRequestRequestedReviewer,
     reviewState: ReviewState,
     avatarIconsProvider: GHAvatarIconsProvider
@@ -234,6 +235,12 @@ internal object GHPRStatusChecksComponentFactory {
 
       add(reviewStatusIconLabel)
       add(reviewerLabel)
+
+      PopupHandler.installPopupMenu(
+        this,
+        DefaultActionGroup(GHPRRemoveReviewerAction(reviewFlowVm, reviewer).toAnAction()),
+        "GHPRReviewerStatus"
+      )
     }
   }
 

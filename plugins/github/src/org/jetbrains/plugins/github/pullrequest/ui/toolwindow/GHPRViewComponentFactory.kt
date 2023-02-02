@@ -188,6 +188,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       val reviewDetailsVm = GHPRDetailsViewModelImpl(scope, detailsModel, stateModel)
       val reviewFlowVm = GHPRReviewFlowViewModelImpl(scope,
                                                      metadataModel,
+                                                     stateModel,
                                                      dataContext.securityService,
                                                      dataProvider.detailsData,
                                                      dataProvider.reviewData,

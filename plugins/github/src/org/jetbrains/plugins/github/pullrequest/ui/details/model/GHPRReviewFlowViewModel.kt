@@ -12,4 +12,6 @@ internal interface GHPRReviewFlowViewModel {
   val reviewState: StateFlow<ReviewState>
   val roleState: StateFlow<ReviewRole>
   val pendingCommentsState: StateFlow<Int>
+
+  fun removeReviewer(reviewer: GHPullRequestRequestedReviewer)
 }

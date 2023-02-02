@@ -5,7 +5,9 @@ import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.details.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.ReviewState
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,10 +21,12 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRMetadataModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
 
 internal class GHPRReviewFlowViewModelImpl(
   scope: CoroutineScope,
-  metadataModel: GHPRMetadataModel,
+  private val metadataModel: GHPRMetadataModel,
+  private val stateModel: GHPRStateModel,
   securityService: GHPRSecurityService,
   detailsDataProvider: GHPRDetailsDataProvider,
   reviewDataProvider: GHPRReviewDataProvider,
@@ -71,6 +75,14 @@ internal class GHPRReviewFlowViewModelImpl(
 
   private val _pendingCommentsState: MutableStateFlow<Int> = MutableStateFlow(0)
   override val pendingCommentsState: StateFlow<Int> = _pendingCommentsState.asStateFlow()
+
+  override fun removeReviewer(reviewer: GHPullRequestRequestedReviewer) = stateModel.submitTask {
+    val newReviewers = metadataModel.reviewers.toMutableList().apply {
+      remove(reviewer)
+    }
+    val delta = CollectionDelta(metadataModel.reviewers, newReviewers)
+    metadataModel.adjustReviewers(EmptyProgressIndicator(), delta)
+  }
 
   private fun convertPullRequestReviewState(pullRequestReviewState: GHPullRequestReviewState): ReviewState = when (pullRequestReviewState) {
     GHPullRequestReviewState.APPROVED -> ReviewState.ACCEPTED
