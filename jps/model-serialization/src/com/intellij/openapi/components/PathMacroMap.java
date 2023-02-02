@@ -3,7 +3,10 @@ package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jdom.*;
+import org.jdom.Attribute;
+import org.jdom.Content;
+import org.jdom.Element;
+import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +46,7 @@ public abstract class PathMacroMap {
           t.setText(newText);
         }
       }
-      else if (!(child instanceof Comment)) {
+      else {
         LOG.error("Wrong content: " + child.getClass());
       }
     }
