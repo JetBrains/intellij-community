@@ -2,10 +2,16 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.FileIndex
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.UsefulTestCase
+import junit.framework.TestCase
 import org.intellij.lang.annotations.MagicConstant
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.fail
 
 object ProjectFileIndexScopes {
@@ -77,4 +83,36 @@ object ProjectFileIndexScopes {
       fail("${file.presentableUrl} expected to be ${if (expected) "in" else "not in"} $description, but it is ${if (actual) "in" else "not in"} $description")
     }
   }
+}
+
+internal fun assertIteratedContent(module: Module, mustContain: List<VirtualFile>?, mustNotContain: List<VirtualFile>?) {
+  assertIteratedContent(ModuleRootManager.getInstance(module).fileIndex, mustContain, mustNotContain)
+  assertIteratedContent(ProjectFileIndex.getInstance(module.project), mustContain, mustNotContain)
+}
+
+private fun assertIteratedContent(fileIndex: FileIndex, mustContain: List<VirtualFile>?, mustNotContain: List<VirtualFile>?) {
+  val collected = HashSet<VirtualFile>()
+  fileIndex.iterateContent { fileOrDir: VirtualFile ->
+    if (!collected.add(fileOrDir)) {
+      fail("$fileOrDir visited twice")
+    }
+    true
+  }
+  if (mustContain != null) UsefulTestCase.assertContainsElements(collected, mustContain)
+  if (mustNotContain != null) UsefulTestCase.assertDoesntContain(collected, mustNotContain)
+}
+
+internal fun assertIteratedContent(fileIndex: FileIndex,
+                          root: VirtualFile,
+                          mustContain: List<VirtualFile>?,
+                          mustNotContain: List<VirtualFile>?) {
+  val collected = HashSet<VirtualFile>()
+  fileIndex.iterateContentUnderDirectory(root) { fileOrDir: VirtualFile ->
+    if (!collected.add(fileOrDir)) {
+      fail("$fileOrDir visited twice")
+    }
+    true
+  }
+  if (mustContain != null) UsefulTestCase.assertContainsElements(collected, mustContain)
+  if (mustNotContain != null) UsefulTestCase.assertDoesntContain(collected, mustNotContain)
 }

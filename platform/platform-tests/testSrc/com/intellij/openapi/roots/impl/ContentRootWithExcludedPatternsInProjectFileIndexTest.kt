@@ -82,7 +82,7 @@ class ContentRootWithExcludedPatternsInProjectFileIndexTest {
     assertNotExcluded(java2)
     fileIndex.assertInModule(java3, module, moduleDir, IN_CONTENT or IN_SOURCE)
     fileIndex.assertInModule(java4, module, moduleDir, IN_CONTENT or IN_SOURCE or IN_TEST_SOURCE)
-    DirectoryIndexTestCase.assertIteratedContent(module, listOf(java1, java2), listOf(txt1, txt2))
+    assertIteratedContent(module, listOf(java1, java2), listOf(txt1, txt2))
   }
 
   @Test
@@ -114,7 +114,7 @@ class ContentRootWithExcludedPatternsInProjectFileIndexTest {
     assertExcluded(underExcUnderDir)
     assertNotExcluded(dir)
     assertNotExcluded(underDir)
-    DirectoryIndexTestCase.assertIteratedContent(module, listOf(underDir), Arrays.asList(underExc, underDirUnderExc, underExcUnderDir))
+    assertIteratedContent(module, listOf(underDir), Arrays.asList(underExc, underDirUnderExc, underExcUnderDir))
   }
 
   @Test

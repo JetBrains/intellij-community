@@ -3,7 +3,6 @@ package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.impl.DirectoryIndexTestCase.assertIteratedContent
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
