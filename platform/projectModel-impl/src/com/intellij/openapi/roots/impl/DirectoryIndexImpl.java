@@ -127,7 +127,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     if (myWorkspaceFileIndex != null) {
       return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
     }
-    return getRootIndex().getDirectoriesByPackageName(packageName, includeLibrarySources);
+    return getRootIndex(false).getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 
   @Override
@@ -143,7 +143,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     }
 
     List<RootIndex> indices = ContainerUtil.append(ContainerUtil.map(branches, DirectoryIndexImpl::obtainBranchRootIndex),
-                                                   getRootIndex());
+                                                   getRootIndex(false));
     return new CollectionQuery<>(indices)
       .flatMapping(i -> i.getDirectoriesByPackageName(packageName, true))
       .filtering(scope::contains);
@@ -155,7 +155,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     if (branch != null) {
       return obtainBranchRootIndex(branch);
     }
-    return getRootIndex();
+    return getRootIndex(false);
   }
 
   private static final Key<Pair<Long, RootIndex>> BRANCH_ROOT_INDEX = Key.create("BRANCH_ROOT_INDEX");
@@ -170,7 +170,10 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     return pair.second;
   }
 
-  RootIndex getRootIndex() {
+  RootIndex getRootIndex(boolean forOrderEntryGraph) {
+    if (!forOrderEntryGraph && myWorkspaceFileIndex != null) {
+      LOG.error("Internal DirectoryIndex class must not be used directly to avoid long computations, use ProjectFileIndex API instead");
+    }
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
       myRootIndex = rootIndex = new RootIndex(myProject);
@@ -224,7 +227,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
       WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true);
       WorkspaceFileSetWithCustomData<?> fileSet = fileInfo.findFileSet(data -> true);
       if (fileSet == null) return Collections.emptyList();
-      return getRootIndex().getOrderEntries(fileSet.getRoot());
+      return getRootIndex(true).getOrderEntries(fileSet.getRoot());
     }
     
     if (fileOrDir instanceof VirtualFileWindow) {
@@ -233,14 +236,14 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     fileOrDir = BackedVirtualFile.getOriginFileIfBacked(fileOrDir);
     DirectoryInfo info = getInfoForFile(fileOrDir);
     if (!(info instanceof DirectoryInfoImpl)) return Collections.emptyList();
-    return getRootIndex().getOrderEntries(((DirectoryInfoImpl)info).getRoot());
+    return getRootIndex(true).getOrderEntries(((DirectoryInfoImpl)info).getRoot());
   }
 
   @Override
   @NotNull
   public Set<String> getDependentUnloadedModules(@NotNull Module module) {
     checkAvailability();
-    return getRootIndex().getDependentUnloadedModules(module);
+    return getRootIndex(true).getDependentUnloadedModules(module);
   }
 
   private void checkAvailability() {
