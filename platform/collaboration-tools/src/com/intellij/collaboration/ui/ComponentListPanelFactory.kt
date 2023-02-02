@@ -6,7 +6,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import java.util.*
+import java.util.LinkedList
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ListModel
@@ -53,7 +53,9 @@ object ComponentListPanelFactory {
     return panel
   }
 
-  // NOTE: new items are ALWAYS added to the end
+  /**
+   * [items] must not have duplicates by key [itemKeyExtractor]
+   */
   fun <T : Any> createVertical(parentCs: CoroutineScope,
                                items: Flow<List<T>>,
                                itemKeyExtractor: ((T) -> Any),
@@ -63,7 +65,8 @@ object ComponentListPanelFactory {
     val panel = VerticalListPanel(gap)
     val keyList = LinkedList<Any>()
 
-    suspend fun addComponent(idx: Int, item: T) {
+    suspend fun addComponent(idx: Int, key: Any, item: T) {
+      keyList.add(idx, key)
       withContext(Dispatchers.Main.immediate) {
         val scope = cs.childScope()
         val component = componentFactory(scope, item).also {
@@ -82,36 +85,58 @@ object ComponentListPanelFactory {
         }
         panel.remove(idx)
       }
+      keyList.removeAt(idx)
+    }
+
+    suspend fun moveComponent(oldIdx: Int, newIdx: Int) {
+      val key = keyList.removeAt(oldIdx)
+      withContext(Dispatchers.Main.immediate) {
+        val component = panel.getComponent(oldIdx)
+        panel.remove(oldIdx)
+        panel.add(component, newIdx)
+      }
+      keyList.add(newIdx, key)
     }
 
     cs.launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
       items.collect { items ->
-        val itemsByKey = items.associateBy(itemKeyExtractor)
-
         // remove missing
-        val iter = keyList.iterator()
-        var keyIdx = 0
-        while (iter.hasNext()) {
-          val key = iter.next()
+        val itemsByKey = items.associateBy(itemKeyExtractor)
+        // remove missing
+        var currentIdx = 0
+        while (currentIdx < keyList.size) {
+          val key = keyList[currentIdx]
           if (!itemsByKey.containsKey(key)) {
-            iter.remove()
-            removeComponent(keyIdx)
+            removeComponent(currentIdx)
           }
           else {
-            keyIdx++
+            currentIdx++
           }
         }
 
-        //add new
-        val keySet = keyList.toMutableSet()
-        for (item in items) {
+        // move or add new
+        for ((idx, item) in items.withIndex()) {
           val key = itemKeyExtractor(item)
-          if (keySet.contains(key)) continue
+          if (idx > keyList.size - 1) {
+            addComponent(idx, key, item)
+            continue
+          }
 
-          val idx = keyList.size
-          keyList.add(key)
-          keySet.add(key)
-          addComponent(idx, item)
+          if (keyList[idx] != key) {
+            var existingIdx = -1
+            for (i in idx until keyList.size) {
+              if (keyList[i] == key) {
+                existingIdx = i
+                break
+              }
+            }
+            if (existingIdx > 0) {
+              moveComponent(existingIdx, idx)
+            }
+            else {
+              addComponent(idx, key, item)
+            }
+          }
         }
 
         withContext(Dispatchers.Main.immediate) {
@@ -122,5 +147,4 @@ object ComponentListPanelFactory {
     }
     return panel
   }
-
 }
