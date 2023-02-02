@@ -112,5 +112,6 @@ public abstract class PersistentFS extends ManagingFS {
   public abstract boolean mayHaveChildren(int id);
 
   @ApiStatus.Internal
+  @ApiStatus.Experimental
   public abstract @NotNull VfsLog getVfsLog();
 }

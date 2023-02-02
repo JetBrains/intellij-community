@@ -8,14 +8,19 @@ import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import com.intellij.util.io.delete
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import kotlin.io.path.div
 import kotlin.io.path.forEachDirectoryEntry
 
 /**
- * @param readOnly used for diagnostic purposes
+ * VfsLog tracks every modification operation done to files of PersistentFS and persists them is a separate storage,
+ * allows to query the resulting operations log.
+ * @param readOnly if true, won't modify storages and register [interceptors] thus VfsLog won't track [PersistentFS] changes
  */
+@ApiStatus.Experimental
 class VfsLog(
   private val storagePath: Path,
   val readOnly: Boolean = false
@@ -25,9 +30,9 @@ class VfsLog(
   init {
     version.let {
       if (it != VERSION) {
-        if (readOnly) {
-          LOG.warn("VFS Log version differs from implementation version: log $it vs implementation $VERSION")
-        } else {
+        LOG.warn("VFS Log version differs from the implementation version: log $it vs implementation $VERSION")
+        if (!readOnly) {
+          LOG.warn("Upgrading storage, old data will be lost")
           if (it != null) {
             clear()
           }
@@ -36,15 +41,15 @@ class VfsLog(
       }
     }
   }
-
-  @OptIn(DelicateCoroutinesApi::class)
-  private val coroutineDispatcher = newFixedThreadPoolContext(8, "VFS logger")
+  private val coroutineDispatcher =
+    if (readOnly) { Dispatchers.IO } else { Executors.newScheduledThreadPool(WORKER_THREADS_COUNT).asCoroutineDispatcher() }
   private val exceptionsHandler = CoroutineExceptionHandler { _, throwable ->
     LOG.error("Uncaught exception", throwable)
   }
   private val coroutineScope = CoroutineScope(SupervisorJob() + coroutineDispatcher + exceptionsHandler)
 
   private val context = object : Context {
+    // todo: probably need to propagate readOnly to storages to ensure safety
     override val stringEnumerator = SimpleStringPersistentEnumerator(storagePath / "stringsEnum")
     override val descriptorStorage = DescriptorStorageImpl(storagePath / "events", stringEnumerator)
     override val payloadStorage = PayloadStorageImpl(storagePath / "data")
@@ -61,11 +66,14 @@ class VfsLog(
     }
 
     suspend fun flusher() {
+      if (readOnly) {
+        return
+      }
       while (true) {
         delay(5000)
         flush()
 
-        val jobsQueued = (coroutineDispatcher.executor as ScheduledThreadPoolExecutor).queue.size
+        val jobsQueued = ((coroutineDispatcher as ExecutorCoroutineDispatcher).executor as ScheduledThreadPoolExecutor).queue.size
         if (jobsQueued > 20) {
           LOG.warn("VFS log # queued jobs: $jobsQueued")
         }
@@ -102,6 +110,9 @@ class VfsLog(
     LOG.debug("VfsLog disposing")
     coroutineScope.cancel("dispose")
     context.dispose()
+    if (!readOnly) {
+      (coroutineDispatcher as ExecutorCoroutineDispatcher).close()
+    }
     LOG.debug("VfsLog disposed")
   }
 
@@ -123,10 +134,11 @@ class VfsLog(
   companion object {
     private val LOG = Logger.getInstance(VfsLog::class.java)
 
-    const val VERSION = -42
+    const val VERSION = -43
 
     @JvmField
-    val IDEA_ENABLED = SystemProperties.getBooleanProperty("idea.vfs.write.operation.log", false)
+    val LOG_VFS_OPERATIONS_ENABLED = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)
+    private val WORKER_THREADS_COUNT = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.workers", 4)
     // TODO: compaction & its options
   }
 }

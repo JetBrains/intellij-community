@@ -69,7 +69,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private final AtomicInteger myStructureModificationCount = new AtomicInteger();
   private BulkFileListener myPublisher;
   private volatile VfsData myVfsData = new VfsData();
-  private @NotNull VfsLog myVfsLog;
+  private VfsLog myVfsLog;
 
   public PersistentFSImpl() {
     myRoots = SystemInfoRt.isFileSystemCaseSensitive
@@ -103,7 +103,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void initVfsLog() {
-    myVfsLog = new VfsLog(Paths.get(FSRecords.getCachesDir() + "/vfslog"), VfsLog.IDEA_ENABLED);
+    var readOnly = !VfsLog.LOG_VFS_OPERATIONS_ENABLED;
+    myVfsLog = new VfsLog(Paths.get(FSRecords.getCachesDir() + "/vfslog"), readOnly);
   }
 
   @ApiStatus.Internal
@@ -1800,7 +1801,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public @NotNull VfsLog getVfsLog() {
-    return null;
+    return myVfsLog;
   }
 
   @TestOnly

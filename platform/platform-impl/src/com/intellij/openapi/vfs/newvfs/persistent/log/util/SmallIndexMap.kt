@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 /**
  * A map-like data structure with thread-safe [get], [getOrCreate] ([get] time complexity is `O(index / chunkSize)`).
- * Optimized for working with small indices.
+ * Optimized for working with small indices. Implementation is similar to https://en.wikipedia.org/wiki/Unrolled_linked_list.
  * @param create guaranteed to be called at most once for each index
  */
 @Suppress("UNCHECKED_CAST")
