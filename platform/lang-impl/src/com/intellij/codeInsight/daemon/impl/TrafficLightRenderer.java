@@ -100,10 +100,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       Set<Language> languages = viewProvider.getLanguages();
       Map<Language, FileHighlightingSetting> settingMap = new HashMap<>(languages.size());
       HighlightingSettingsPerFile settings = HighlightingSettingsPerFile.getInstance(project);
-      for (Language language : languages) {
-        PsiFile psiRoot = viewProvider.getPsi(language);
+      for (PsiFile psiRoot : viewProvider.getAllFiles()) {
         FileHighlightingSetting setting = settings.getHighlightingSettingForRoot(psiRoot);
-        settingMap.put(language, setting);
+        settingMap.put(psiRoot.getLanguage(), setting);
       }
 
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
