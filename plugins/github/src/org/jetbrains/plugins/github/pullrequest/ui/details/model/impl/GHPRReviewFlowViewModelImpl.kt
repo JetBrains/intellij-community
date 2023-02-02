@@ -9,11 +9,10 @@ import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewDecision
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataOperationsListener
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
@@ -57,11 +56,13 @@ internal class GHPRReviewFlowViewModelImpl(
       }
     }
 
-  override val reviewState: StateFlow<ReviewState> = reviewerAndReviewState.mapState(scope) { reviews ->
-    when {
-      reviews.values.all { it == ReviewState.ACCEPTED } -> ReviewState.ACCEPTED
-      reviews.values.any { it == ReviewState.WAIT_FOR_UPDATES } -> ReviewState.WAIT_FOR_UPDATES
-      else -> ReviewState.NEED_REVIEW
+  private val reviewDecision: MutableStateFlow<GHPullRequestReviewDecision?> = MutableStateFlow(null)
+  override val reviewState: Flow<ReviewState> = reviewDecision.map { reviewDecision ->
+    when (reviewDecision) {
+      GHPullRequestReviewDecision.APPROVED -> ReviewState.ACCEPTED
+      GHPullRequestReviewDecision.CHANGES_REQUESTED -> ReviewState.WAIT_FOR_UPDATES
+      GHPullRequestReviewDecision.REVIEW_REQUIRED -> ReviewState.NEED_REVIEW
+      null -> ReviewState.NEED_REVIEW
     }
   }
 
@@ -100,8 +101,10 @@ internal class GHPRReviewFlowViewModelImpl(
 
     with(detailsDataProvider) {
       addDetailsLoadedListener(disposable) {
-        _requestedReviewersState.value = loadedDetails!!.reviewRequests.mapNotNull { it.requestedReviewer }
-        pullRequestReviewState.value = loadedDetails!!.reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state }
+        val pullRequest = loadedDetails!!
+        _requestedReviewersState.value = pullRequest.reviewRequests.mapNotNull { it.requestedReviewer }
+        pullRequestReviewState.value = pullRequest.reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state }
+        reviewDecision.value = pullRequest.reviewDecision
       }
     }
 
