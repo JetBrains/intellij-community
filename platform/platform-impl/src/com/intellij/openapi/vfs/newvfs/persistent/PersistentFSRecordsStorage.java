@@ -8,6 +8,9 @@ import java.io.IOException;
 
 @ApiStatus.Internal
 public interface PersistentFSRecordsStorage {
+  int NULL_ID = FSRecords.NULL_FILE_ID;
+  int MIN_VALID_ID = NULL_ID + 1;
+
   /**
    * @return id of newly allocated record
    */

@@ -98,13 +98,9 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
   private final transient HeaderAccessor headerAccessor = new HeaderAccessor(this);
 
-
   public PersistentFSRecordsLockFreeOverMMappedFile(final @NotNull Path path,
                                                     final int mappedChunkSize) throws IOException {
     this.storage = new MMappedFileStorage(path, mappedChunkSize);
-
-    //TODO RC: read path+'.len' file, if exists, and use it to calculate recordsCount?
-    //         That way transition between records storage will be seemless
 
     this.pageSize = mappedChunkSize;
     recordsPerPage = mappedChunkSize / RECORD_SIZE_IN_BYTES;
@@ -512,7 +508,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   @Override
   public boolean processAllRecords(final @NotNull PersistentFSRecordsStorage.FsRecordProcessor processor) throws IOException {
     final int recordsCount = allocatedRecordsCount.get();
-    for (int recordId = 0; recordId < recordsCount; recordId++) {
+    for (int recordId = MIN_VALID_ID; recordId <= recordsCount; recordId++) {
       processor.process(
         recordId,
         getNameId(recordId),

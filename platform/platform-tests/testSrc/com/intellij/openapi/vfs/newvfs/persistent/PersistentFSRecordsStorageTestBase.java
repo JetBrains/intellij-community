@@ -2,6 +2,8 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.ExceptionUtil;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -11,6 +13,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -73,7 +76,11 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     final int cleanedRecordId = 10;
     try {
       storage.cleanRecord(cleanedRecordId);
-      fail(".cleanRecord(" + cleanedRecordId + ") must throw IndexOutOfBoundsException since there record " + cleanedRecordId + " is not allocated");
+      fail(".cleanRecord(" +
+           cleanedRecordId +
+           ") must throw IndexOutOfBoundsException since there record " +
+           cleanedRecordId +
+           " is not allocated");
     }
     catch (IndexOutOfBoundsException e) {
       //OK
@@ -164,6 +171,48 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
              .collect(joining("\n"))
       );
     }
+  }
+
+  @Test
+  public void processRecords_reportsAllRecordsIdWrittenBefore() throws Exception {
+    final FSRecord[] records = new FSRecord[maxRecordsToInsert];
+
+    final IntSet recordIdsWritten = new IntOpenHashSet();
+    for (int i = 0; i < records.length; i++) {
+      final int recordId = storage.allocateRecord();
+      records[i] = generateRecordFields(recordId);
+      records[i].updateInStorage(storage);
+
+      recordIdsWritten.add(recordId);
+    }
+
+    assertEquals(
+      "storage.recordsCount() should be == number of inserted records",
+      records.length,
+      storage.recordsCount()
+    );
+
+    final IntSet recordIdsReadBack = new IntOpenHashSet();
+    storage.processAllRecords((fileId, nameId, flags, parentId, corrupted) -> {
+      recordIdsReadBack.add(fileId);
+    });
+
+    if (!recordIdsReadBack.equals(recordIdsWritten)) {
+      final int[] missedIds = recordIdsWritten.intStream()
+        .filter(id -> !recordIdsReadBack.contains(id))
+        .sorted().toArray();
+      final int[] excessiveIds = recordIdsReadBack.intStream()
+        .filter(id -> !recordIdsWritten.contains(id))
+        .sorted().toArray();
+      fail("fileIds written and read back should be the same, but: \n" +
+           "\tmissed ids:    " + Arrays.toString(missedIds) + ", \n" +
+           "\texcessive ids: " + Arrays.toString(excessiveIds));
+    }
+
+    assertEquals(
+      recordIdsReadBack,
+      recordIdsWritten
+    );
   }
 
   @Test

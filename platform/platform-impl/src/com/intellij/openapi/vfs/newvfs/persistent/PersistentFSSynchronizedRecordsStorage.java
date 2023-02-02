@@ -366,21 +366,31 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   public boolean processAllRecords(@NotNull PersistentFSRecordsStorage.FsRecordProcessor operator) throws IOException {
     return read(() -> {
       myFile.force();
+      final long writtenRecordsLength = myFile.length();//could be different than actual file length
       return myFile.readChannel(ch -> {
-        ByteBuffer buffer = ByteBuffer.allocateDirect(RECORD_SIZE * 1024);
-        if (myFile.isNativeBytesOrder()) buffer.order(ByteOrder.nativeOrder());
+        final ByteBuffer buffer = ByteBuffer.allocateDirect(RECORD_SIZE * 1024);
+        if (myFile.isNativeBytesOrder()) {
+          buffer.order(ByteOrder.nativeOrder());
+        }
         try {
-          int id = 1, limit, offset;
+          long positionInFile = RECORD_SIZE;
+          int recordId = MIN_VALID_ID;
+          int limit;
           while ((limit = ch.read(buffer)) >= RECORD_SIZE) {
-            offset = id == 1 ? RECORD_SIZE : 0; // skip header
-            for (; offset < limit; offset += RECORD_SIZE) {
-              int nameId = buffer.getInt(offset + NAME_OFFSET);
-              int flags = buffer.getInt(offset + FLAGS_OFFSET);
-              int parentId = buffer.getInt(offset + PARENT_OFFSET);
-              operator.process(id, nameId, flags, parentId, false);
-              id++;
+            int offsetInBuffer = (recordId == MIN_VALID_ID) ? RECORD_SIZE : 0; // skip header
+            for (;
+                 offsetInBuffer < limit && positionInFile < writtenRecordsLength;
+                 offsetInBuffer += RECORD_SIZE) {
+              final int nameId = buffer.getInt(offsetInBuffer + NAME_OFFSET);
+              final int flags = buffer.getInt(offsetInBuffer + FLAGS_OFFSET);
+              final int parentId = buffer.getInt(offsetInBuffer + PARENT_OFFSET);
+
+              operator.process(recordId, nameId, flags, parentId, /*corrupted: */ false);
+
+              recordId++;
+              positionInFile += RECORD_SIZE;
             }
-            buffer.position(0);
+            buffer.clear();
           }
         }
         catch (IOException ignore) {

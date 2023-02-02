@@ -598,7 +598,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   @Override
   public boolean processAllRecords(final @NotNull PersistentFSRecordsStorage.FsRecordProcessor processor) throws IOException {
     final int recordsCount = allocatedRecordsCount.get();
-    for (int recordId = 0; recordId < recordsCount; recordId++) {
+    for (int recordId = MIN_VALID_ID; recordId <= recordsCount; recordId++) {
       processor.process(
         recordId,
         getNameId(recordId),

@@ -14,8 +14,6 @@ import java.io.IOException;
  */
 public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
 
-  int NULL_ID = FSRecords.NULL_FILE_ID;
-
   int recordsCount();
 
   /** Allows reader to read fields of the record[recordId], while holding appropriate locks */
