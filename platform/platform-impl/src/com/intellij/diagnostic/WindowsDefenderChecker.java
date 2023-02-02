@@ -175,7 +175,8 @@ public class WindowsDefenderChecker {
         return false;
       }
 
-      var command = new GeneralCommandLine(psh.getPath(), "-NonInteractive", "-Command", "(Get-AuthenticodeSignature '" + script + "').Status");
+      var scriptlet = "(Get-AuthenticodeSignature '" + script + "').Status";
+      var command = new GeneralCommandLine(psh.getPath(), "-NoProfile", "-NonInteractive", "-Command", scriptlet);
       var output = run(command);
       if (output.getExitCode() != 0 || !"Valid".equals(output.getStdout().trim())) {
         LOG.info("validation failed:\n[" + output.getExitCode() + "] " + command + "\noutput: " + output.getStdout().trim());
@@ -184,7 +185,7 @@ public class WindowsDefenderChecker {
 
       command = ExecUtil.sudoCommand(
         new GeneralCommandLine(Stream.concat(
-          Stream.of(psh.getPath(), "-ExecutionPolicy", "Bypass", "-NonInteractive", "-File", script.toString()),
+          Stream.of(psh.getPath(), "-ExecutionPolicy", "Bypass", "-NoProfile", "-NonInteractive", "-File", script.toString()),
           paths.stream().map(Path::toString)
         ).toList()),
         ""
