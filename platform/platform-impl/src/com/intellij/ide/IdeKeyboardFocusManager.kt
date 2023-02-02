@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import java.awt.*
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import javax.swing.DefaultFocusManager
-
-private val LOG = Logger.getInstance(IdeKeyboardFocusManager::class.java)
 
 /**
  * We extend the obsolete [DefaultFocusManager] class here instead of [KeyboardFocusManager] to prevent unwanted overwriting of
@@ -32,14 +32,16 @@ internal class IdeKeyboardFocusManager : DefaultFocusManager() /* see javadoc ab
 
   override fun setDefaultFocusTraversalPolicy(defaultPolicy: FocusTraversalPolicy) {
     if (parentConstructorExecuted) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("setDefaultFocusTraversalPolicy: $defaultPolicy", Throwable())
+      val log = logger<IdeKeyboardFocusManager>()
+      if (log.isDebugEnabled) {
+        log.debug("setDefaultFocusTraversalPolicy: $defaultPolicy", Throwable())
       }
       super.setDefaultFocusTraversalPolicy(defaultPolicy)
     }
   }
 }
 
+@Suppress("IdentifierGrammar", "UNCHECKED_CAST")
 internal fun replaceDefaultKeyboardFocusManager() {
   val manager = DefaultFocusManager.getCurrentKeyboardFocusManager()
   val newManager = IdeKeyboardFocusManager()
@@ -51,17 +53,17 @@ internal fun replaceDefaultKeyboardFocusManager() {
   }
 
   try {
-    val getDispatchersMethod = KeyboardFocusManager::class.java.getDeclaredMethod("getKeyEventDispatchers")
-    getDispatchersMethod.isAccessible = true
-    val dispatchers = getDispatchersMethod.invoke(manager) as List<KeyEventDispatcher>?
+    val lookup = MethodHandles.privateLookupIn(KeyboardFocusManager::class.java, MethodHandles.lookup())
+    val listType = MethodType.methodType(List::class.java)
+    val getDispatchersMethod = lookup.findVirtual(KeyboardFocusManager::class.java, "getKeyEventDispatchers", listType)
+    val dispatchers = getDispatchersMethod.invoke(manager) as? List<KeyEventDispatcher>
     if (dispatchers != null) {
       for (d in dispatchers) {
         newManager.addKeyEventDispatcher(d)
       }
     }
-    val getPostProcessorsMethod = KeyboardFocusManager::class.java.getDeclaredMethod("getKeyEventPostProcessors")
-    getPostProcessorsMethod.isAccessible = true
-    val postProcessors = getPostProcessorsMethod.invoke(manager) as List<KeyEventPostProcessor>?
+    val getPostProcessorsMethod = lookup.findVirtual(KeyboardFocusManager::class.java, "getKeyEventPostProcessors", listType)
+    val postProcessors = getPostProcessorsMethod.invoke(manager) as? List<KeyEventPostProcessor>
     if (postProcessors != null) {
       for (p in postProcessors) {
         newManager.addKeyEventPostProcessor(p)
@@ -69,7 +71,7 @@ internal fun replaceDefaultKeyboardFocusManager() {
     }
   }
   catch (e: Exception) {
-    LOG.error(e)
+    logger<IdeKeyboardFocusManager>().error(e)
   }
   DefaultFocusManager.setCurrentKeyboardFocusManager(newManager)
 }
