@@ -325,7 +325,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       val runnableClass = runnable?.javaClass ?: Runnable::class.java
       val processEventRunnable = Runnable {
         val app = ApplicationManager.getApplication()
-        val progressManager: ProgressManager? = if (app != null && !app.isDisposed) {
+        val progressManager = if (app != null && !app.isDisposed) {
           try {
             ProgressManager.getInstance()
           }
@@ -341,14 +341,14 @@ class IdeEventQueue private constructor() : EventQueue() {
         try {
           runCustomProcessors(finalEvent, preProcessors)
           performActivity(finalEvent) {
-            if (progressManager != null) {
-              progressManager.computePrioritized(ThrowableComputable<Any?, RuntimeException> {
+            if (progressManager == null) {
+              _dispatchEvent(finalEvent)
+            }
+            else {
+              progressManager.computePrioritized(ThrowableComputable {
                 _dispatchEvent(finalEvent)
                 null
               })
-            }
-            else {
-              _dispatchEvent(finalEvent)
             }
           }
         }
@@ -824,7 +824,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   fun flushDelayedKeyEvents() {
   }
 
-  private var myTestMode: Boolean? = null
+  private var testMode: Boolean? = null
 
   init {
     assert(isDispatchThread()) { Thread.currentThread() }
@@ -847,25 +847,25 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   private fun isTestMode(): Boolean {
-    var testMode = myTestMode
+    var testMode = testMode
     if (testMode != null) {
       return testMode
     }
     val application = ApplicationManager.getApplication() ?: return false
     testMode = application.isUnitTestMode
-    myTestMode = testMode
+    this.testMode = testMode
     return testMode
   }
 
   @TestOnly
   fun executeInProductionModeEvenThoughWeAreInTests(runnable: Runnable) {
     assert(ApplicationManager.getApplication().isUnitTestMode)
-    myTestMode = false
+    testMode = false
     try {
       runnable.run()
     }
     finally {
-      myTestMode = true
+      testMode = true
     }
   }
 
@@ -887,8 +887,10 @@ class IdeEventQueue private constructor() : EventQueue() {
 
 // IdeEventQueue is created before log configuration - cannot be initialized as a part of IdeEventQueue
 private object Logs {
+  @JvmField
   val LOG: Logger = logger<IdeEventQueue>()
 
+  @JvmField
   val FOCUS_AWARE_RUNNABLES_LOG: Logger = Logger.getInstance(IdeEventQueue::class.java.name + ".runnables")
 }
 
@@ -975,7 +977,7 @@ private fun isInputEvent(e: AWTEvent): Boolean {
   return e is InputEvent || e is InputMethodEvent || e is WindowEvent || e is ActionEvent
 }
 
-internal fun performActivity(e: AWTEvent, runnable: Runnable) {
+internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
   var transactionGuard = transactionGuard
   if (transactionGuard == null && appIsLoaded()) {
     val app = ApplicationManager.getApplication()
@@ -986,7 +988,7 @@ internal fun performActivity(e: AWTEvent, runnable: Runnable) {
   }
 
   if (transactionGuard == null) {
-    runnable.run()
+    runnable()
   }
   else {
     transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnable)

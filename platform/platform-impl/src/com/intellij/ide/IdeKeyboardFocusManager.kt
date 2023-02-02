@@ -21,9 +21,9 @@ internal class IdeKeyboardFocusManager : DefaultFocusManager() /* see javadoc ab
 
   override fun dispatchEvent(e: AWTEvent): Boolean {
     if (EventQueue.isDispatchThread()) {
-      val result = booleanArrayOf(false)
-      performActivity(e) { result[0] = super.dispatchEvent(e) }
-      return result[0]
+      var result = false
+      performActivity(e) { result = super.dispatchEvent(e) }
+      return result
     }
     else {
       return super.dispatchEvent(e)
