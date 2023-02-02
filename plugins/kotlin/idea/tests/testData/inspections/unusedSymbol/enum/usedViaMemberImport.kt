@@ -25,3 +25,23 @@ fun f() {
     print(AAA1)
     print(AAA2)
 }
+
+enum class E5 {
+    AAA4, BBB4
+}
+
+enum class E6 {
+    AAA4, BBB4
+}
+
+enum class E7 {
+    AAA4, BBB4;
+
+    enum class E8 {
+        AAA4, BBB4;
+    }
+}
+
+enum class E9 {
+    AAA4, BBB4
+}

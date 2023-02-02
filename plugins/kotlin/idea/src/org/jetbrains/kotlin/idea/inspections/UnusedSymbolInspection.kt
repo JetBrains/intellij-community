@@ -30,6 +30,8 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.AnalysisFlags
@@ -39,6 +41,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.mustHaveNonEmptyPrimaryConstructor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
@@ -50,6 +53,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.ENUM_STATIC_METHOD_NAMES
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
@@ -72,6 +76,7 @@ import org.jetbrains.kotlin.idea.util.hasActualsFor
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -530,7 +535,10 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         if ((parent as? KtQualifiedExpression)?.normalizeEnumCallableReferenceExpression(enumClass)?.canBeReferenceToBuiltInEnumFunction() == true) return true
         if ((parent as? KtCallableReferenceExpression)?.canBeReferenceToBuiltInEnumFunction() == true) return true
         if (((parent as? KtTypeElement)?.parent as? KtTypeReference)?.isReferenceToBuiltInEnumFunction() == true) return true
-        return (parent as? KtElement)?.normalizeImportDirective()?.isUsedStarImportOfEnumStaticFunctions() == true
+        if ((parent as? PsiImportStaticReferenceElement)?.isReferenceToBuiltInEnumFunction() == true) return true
+        if ((parent as? PsiReferenceExpression)?.isReferenceToBuiltInEnumFunction(enumClass) == true) return true
+        if ((parent as? KtElement)?.normalizeImportDirective()?.isUsedStarImportOfEnumStaticFunctions() == true) return true
+        return (parent as? PsiImportStaticStatement)?.isUsedStarImportOfEnumStaticFunctions() == true
     }
 
     private fun KtElement.normalizeImportDirective(): KtImportDirective? {
@@ -549,6 +557,32 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         return null
     }
 
+    private fun PsiImportStaticStatement.isUsedStarImportOfEnumStaticFunctions(): Boolean {
+        val importedEnumQualifiedName = importReference?.qualifiedName ?: return false
+        if ((resolveTargetClass() as? KtUltraLightClass)?.isEnum != true) return false
+
+        fun PsiReference.isQualifiedNameInEnumStaticMethods(): Boolean {
+            val referenceExpression = resolve() as? PsiMember ?: return false
+            return referenceExpression.containingClass?.kotlinFqName == FqName(importedEnumQualifiedName)
+                    && referenceExpression.name in ENUM_STATIC_METHOD_NAMES.map { it.asString() }
+        }
+
+        return containingFile.anyDescendantOfType(PsiReferenceExpression::isQualifiedNameInEnumStaticMethods)
+    }
+
+    /**
+     * Check static java imports according to the following pattern: 'org.test.Enum.(values/valueOf)'
+     */
+    private fun PsiImportStaticReferenceElement.isReferenceToBuiltInEnumFunction(): Boolean {
+        val importedEnumQualifiedName = classReference.qualifiedName
+        val enumStaticMethods = ENUM_STATIC_METHOD_NAMES.map { FqName("$importedEnumQualifiedName.$it") }
+        return FqName(qualifiedName) in enumStaticMethods
+    }
+
+    private fun PsiReferenceExpression.isReferenceToBuiltInEnumFunction(enumClass: KtClass): Boolean {
+        val reference = resolve() as? KtLightMethod ?: return false
+        return reference.containingClass.name == enumClass.name && reference is SyntheticElement && reference.name in ENUM_STATIC_METHOD_NAMES.map { it.asString() }
+    }
 
     private fun checkPrivateDeclaration(declaration: KtNamedDeclaration, descriptor: DeclarationDescriptor?): Boolean {
         if (descriptor == null || !declaration.isPrivateNestedClassOrObject) return false
