@@ -16,6 +16,7 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.*
+import com.intellij.util.IncorrectOperationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -163,7 +164,17 @@ class JCefImageViewer(private val myFile: VirtualFile,
         Logger.getInstance(
           JCefImageViewer::class.java).warn("Failed to read the file", e)
       }
-      stream?.let { CefStreamResourceHandler(it, mimeType, this@JCefImageViewer) }
+
+      var resourceHandler: CefStreamResourceHandler? = null
+      stream?.let {
+        try {
+          resourceHandler = CefStreamResourceHandler(it, mimeType, this@JCefImageViewer)
+        } catch (_: IncorrectOperationException) {
+          // The viewer has been disposed just return null that will reject all requests
+        }
+
+        return@addResource resourceHandler
+      }
     }
 
     myCefClient.addRequestHandler(resourceRequestHandler, myBrowser.cefBrowser)
