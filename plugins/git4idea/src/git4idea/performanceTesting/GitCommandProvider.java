@@ -10,6 +10,9 @@ import java.util.Map;
 final public class GitCommandProvider implements CommandProvider {
   @Override
   public @NotNull Map<String, CreateCommand> getCommands() {
-    return Map.of(GitCheckoutCommand.PREFIX, GitCheckoutCommand::new);
+    return Map.ofEntries(
+      Map.entry(GitCheckoutCommand.PREFIX, GitCheckoutCommand::new),
+      Map.entry(ShowFileHistoryCommand.PREFIX, ShowFileHistoryCommand::new)
+    );
   }
 }
