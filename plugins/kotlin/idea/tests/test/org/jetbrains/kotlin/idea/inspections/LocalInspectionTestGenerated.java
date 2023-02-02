@@ -8594,6 +8594,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantCompanionReference/directCompanion.kt");
         }
 
+        @TestMetadata("enumEntries.kt")
+        public void testEnumEntries() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/enumEntries.kt");
+        }
+
+        @TestMetadata("enumEntries2.kt")
+        public void testEnumEntries2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/enumEntries2.kt");
+        }
+
+        @TestMetadata("enumEntries3.kt")
+        public void testEnumEntries3() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/enumEntries3.kt");
+        }
+
         @TestMetadata("enumValueOf.kt")
         public void testEnumValueOf() throws Exception {
             runTest("testData/inspectionsLocal/redundantCompanionReference/enumValueOf.kt");
