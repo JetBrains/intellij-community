@@ -9,6 +9,7 @@ import git4idea.commands.Git
 import git4idea.test.TestDialogHandler
 import git4idea.test.git
 import org.jetbrains.plugins.github.api.GHRepositoryPath
+import org.jetbrains.plugins.github.ui.dialog.GithubExistingRemotesDialog
 
 class GithubShareProjectTest : GithubShareProjectTestBase() {
 
@@ -19,7 +20,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
 
     createProjectFiles()
 
-    GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
+    GHShareProjectUtil.shareProjectOnGithub(myProject, projectRoot)
 
     checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null)
     findGitRepo()
@@ -31,7 +32,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
 
   fun testGithubAlreadyExists() {
     val shown = Ref.create(false)
-    dialogManager.registerDialogHandler(GithubShareAction.GithubExistingRemotesDialog::class.java,
+    dialogManager.registerDialogHandler(GithubExistingRemotesDialog::class.java,
                                         TestDialogHandler {
                                           shown.set(true)
                                           DialogWrapper.CANCEL_EXIT_CODE
@@ -41,11 +42,11 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     registerDefaultUntrackedFilesDialogHandler()
 
     createProjectFiles()
-    GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
+    GHShareProjectUtil.shareProjectOnGithub(myProject, projectRoot)
     assertFalse(shown.get())
     checkRepoExists(mainAccount, GHRepositoryPath(mainAccount.username, projectName))
 
-    GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
+    GHShareProjectUtil.shareProjectOnGithub(myProject, projectRoot)
     assertTrue(shown.get())
   }
 
@@ -62,7 +63,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     git("add file.txt")
     git("commit -m init")
 
-    GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
+    GHShareProjectUtil.shareProjectOnGithub(myProject, projectRoot)
 
     checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null)
     findGitRepo()
@@ -81,7 +82,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
 
     Git.getInstance().init(myProject, projectRoot)
 
-    GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
+    GHShareProjectUtil.shareProjectOnGithub(myProject, projectRoot)
 
     checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null)
     findGitRepo()
@@ -96,7 +97,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     registerSelectNoneUntrackedFilesDialogHandler()
     registerDefaultShareDialogHandler()
 
-    GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
+    GHShareProjectUtil.shareProjectOnGithub(myProject, projectRoot)
 
     checkNotification(NotificationType.INFORMATION, "Successfully created empty repository on GitHub", null)
     findGitRepo()
