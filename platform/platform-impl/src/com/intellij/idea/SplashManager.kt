@@ -1,161 +1,148 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.idea;
+package com.intellij.idea
 
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.wm.impl.FrameBoundsConverter;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.ui.Splash;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.runActivity
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.impl.FrameBoundsConverter
+import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.ui.Splash
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Rectangle
+import java.awt.Window
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
+import java.nio.ByteBuffer
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import javax.swing.JFrame
+import javax.swing.WindowConstants
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+@Suppress("UseJBColor")
+object SplashManager {
+  @Volatile
+  private var PROJECT_FRAME: JFrame? = null
 
-public final class SplashManager {
-  private static volatile JFrame PROJECT_FRAME;
-  static Splash SPLASH_WINDOW;
+  @JvmField
+  var SPLASH_WINDOW: Splash? = null
 
-  public static @NotNull Runnable scheduleShow(@NotNull ApplicationInfoEx appInfo) {
-    Activity frameActivity = StartUpMeasurer.startActivity("splash as project frame initialization");
-    try {
-      Runnable task = createFrameIfPossible();
-      if (task != null) {
-        return task;
-      }
-    }
-    catch (Throwable e) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.out.println(e.getMessage());
-    }
-    finally {
-      frameActivity.end();
-    }
-
-    // must be out of activity measurement
-    assert SPLASH_WINDOW == null;
-    Activity activity = StartUpMeasurer.startActivity("splash initialization");
-    SPLASH_WINDOW = new Splash(appInfo);
-    Activity queueActivity = activity.startChild("splash initialization (in queue)");
-    return () -> {
-      queueActivity.end();
-      Splash splash = SPLASH_WINDOW;
-      // can be cancelled if app was started very fast
-      if (splash != null) {
-        splash.initAndShow(true);
-      }
-      activity.end();
-    };
-  }
-
-  private static @Nullable Runnable createFrameIfPossible() throws IOException {
-    Path infoFile = Path.of(PathManager.getSystemPath(), "lastProjectFrameInfo");
-    ByteBuffer buffer;
-    try (SeekableByteChannel channel = Files.newByteChannel(infoFile)) {
-      buffer = ByteBuffer.allocate((int)channel.size());
-      do {
-        channel.read(buffer);
-      }
-      while (buffer.hasRemaining());
-
-      buffer.flip();
-      if (buffer.getShort() != 0) {
-        return null;
-      }
-    }
-    catch (NoSuchFileException ignore) {
-      return null;
-    }
-
-    Rectangle savedBounds = new Rectangle(buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt());
-    //noinspection UseJBColor
-    Color backgroundColor = new Color(buffer.getInt(), /* hasAlpha = */ true);
-    @SuppressWarnings("unused")
-    boolean isFullScreen = buffer.get() == 1;
-    int extendedState = buffer.getInt();
-    return () -> {
+  fun scheduleShow(appInfo: ApplicationInfoEx): () -> Unit {
+    runActivity("splash as project frame initialization") {
       try {
-        PROJECT_FRAME = doShowFrame(savedBounds, backgroundColor, extendedState);
+        createFrameIfPossible()
       }
-      catch (Throwable e) {
-        Logger.getInstance(SplashManager.class).error(e);
+      catch (e: Throwable) {
+        logger<SplashManager>().error(e)
+        null
       }
-    };
+    }?.let {
+      return it
+    }
+
+    assert(SPLASH_WINDOW == null)
+    val activity = StartUpMeasurer.startActivity("splash initialization")
+    SPLASH_WINDOW = Splash(appInfo)
+    val queueActivity = activity.startChild("splash initialization (in queue)")
+    return {
+      queueActivity.end()
+      // can be cancelled if app was started very fast
+      SPLASH_WINDOW?.initAndShow(true)
+      activity.end()
+    }
   }
 
-  private static @NotNull IdeFrameImpl doShowFrame(Rectangle savedBounds, Color backgroundColor, int extendedState) {
-    IdeFrameImpl frame = new IdeFrameImpl();
-    frame.setAutoRequestFocus(false);
-    frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+  private fun createFrameIfPossible(): (() -> Unit)? {
+    val infoFile = Path.of(PathManager.getSystemPath(), "lastProjectFrameInfo")
+    var buffer: ByteBuffer
+    try {
+      Files.newByteChannel(infoFile).use { channel ->
+        buffer = ByteBuffer.allocate(channel.size().toInt())
+        do {
+          channel.read(buffer)
+        }
+        while (buffer.hasRemaining())
+        buffer.flip()
+        if (buffer.getShort().toInt() != 0) {
+          return null
+        }
+      }
+    }
+    catch (ignore: NoSuchFileException) {
+      return null
+    }
 
-    var devicePair = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds);
+    val savedBounds = Rectangle(buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt())
+    val backgroundColor = Color(buffer.getInt(), true)
+    @Suppress("UNUSED_VARIABLE")
+    val isFullScreen = buffer.get().toInt() == 1
+    val extendedState = buffer.getInt()
+    return {
+      try {
+        PROJECT_FRAME = doShowFrame(savedBounds = savedBounds, backgroundColor = backgroundColor, extendedState = extendedState)
+      }
+      catch (e: Throwable) {
+        logger<SplashManager>().error(e)
+      }
+    }
+  }
+
+  private fun doShowFrame(savedBounds: Rectangle, backgroundColor: Color, extendedState: Int): IdeFrameImpl {
+    val frame = IdeFrameImpl()
+    frame.isAutoRequestFocus = false
+    frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
+    val devicePair = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds)
     // this functionality under the flag - fully correct behavior is not needed here (that's default is not applied if null)
     if (devicePair != null) {
-      frame.setBounds(devicePair.getFirst());
+      frame.bounds = devicePair.first
     }
-    frame.setExtendedState(extendedState);
-
-    frame.setMinimumSize(new Dimension(340, (int)frame.getMinimumSize().getHeight()));
-    frame.setBackground(backgroundColor);
-    frame.getContentPane().setBackground(backgroundColor);
+    frame.extendedState = extendedState
+    frame.minimumSize = Dimension(340, frame.minimumSize.getHeight().toInt())
+    frame.background = backgroundColor
+    frame.contentPane.background = backgroundColor
     if (SystemInfoRt.isMac) {
-      frame.setIconImage(null);
+      frame.iconImage = null
     }
-
-    StartUpMeasurer.addInstantEvent("frame shown");
-    Activity activity = StartUpMeasurer.startActivity("frame set visible");
-    frame.setVisible(true);
-    activity.end();
-    return frame;
+    StartUpMeasurer.addInstantEvent("frame shown")
+    val activity = StartUpMeasurer.startActivity("frame set visible")
+    frame.isVisible = true
+    activity.end()
+    return frame
   }
 
-  public static @Nullable JFrame getAndUnsetProjectFrame() {
-    JFrame frame = PROJECT_FRAME;
-    PROJECT_FRAME = null;
-    return frame;
+  fun getAndUnsetProjectFrame(): JFrame? {
+    val frame = PROJECT_FRAME
+    PROJECT_FRAME = null
+    return frame
   }
 
-  public static void hideBeforeShow(@NotNull Window window) {
+  fun hideBeforeShow(window: Window) {
     if (SPLASH_WINDOW != null || PROJECT_FRAME != null) {
-      window.addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowOpened(WindowEvent e) {
-          hide();
-          window.removeWindowListener(this);
+      window.addWindowListener(object : WindowAdapter() {
+        override fun windowOpened(e: WindowEvent) {
+          hide()
+          window.removeWindowListener(this)
         }
-      });
+      })
     }
   }
 
-  public static void hide() {
-    Window window = SPLASH_WINDOW;
+  fun hide() {
+    var window: Window? = SPLASH_WINDOW
     if (window == null) {
-      window = PROJECT_FRAME;
-      if (window == null) {
-        return;
-      }
-      else {
-        PROJECT_FRAME = null;
-      }
+      window = PROJECT_FRAME ?: return
+      PROJECT_FRAME = null
     }
     else {
-      SPLASH_WINDOW = null;
+      SPLASH_WINDOW = null
     }
 
-    StartUpMeasurer.addInstantEvent("splash hidden");
-    window.setVisible(false);
-    window.dispose();
+    StartUpMeasurer.addInstantEvent("splash hidden")
+    window.isVisible = false
+    window.dispose()
   }
 }

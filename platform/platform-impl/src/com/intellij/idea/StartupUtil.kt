@@ -342,29 +342,30 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferr
   }
 
   launch {
+    if (!CommandLineArgs.isSplashNeeded(args)) {
+      return@launch
+    }
+
     // A splash instance must not be created before base LaF is created.
     // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
     // https://youtrack.jetbrains.com/issue/IDEA-286544
     initUiDeferred.join()
 
     // before showEuaIfNeededJob to prepare during showing EUA dialog
-    val runnable = prepareSplash(appInfoDeferred, args) ?: return@launch
-    withContext(RawSwingDispatcher) {
-      runnable.run()
-    }
-  }
-}
-
-private suspend fun prepareSplash(appInfoDeferred: Deferred<ApplicationInfoEx>, args: List<String>): Runnable? {
-  // products may specify `splash` VM property; `nosplash` is deprecated and should be checked first
-  if (CommandLineArgs.isSplashNeeded(args)) {
+    // products may specify `splash` VM property; `nosplash` is deprecated and should be checked first
     val appInfo = appInfoDeferred.await()
-    runActivity("splash preparation") {
-      return SplashManager.scheduleShow(appInfo)
+    val runnable = runActivity("splash preparation") {
+      try {
+        SplashManager.scheduleShow(appInfo)
+      }
+      catch (e: Exception) {
+        logger<StartupUiUtil>().error("Cannot schedule splash showing", e)
+        return@launch
+      }
     }
-  }
-  else {
-    return null
+    withContext(RawSwingDispatcher) {
+      runnable()
+    }
   }
 }
 
@@ -554,7 +555,7 @@ private fun blockATKWrapper() {
   if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
     // Replacing `AtkWrapper` with a fake `Object`. It'll be instantiated & garbage collected right away, a NOP.
     System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object")
-    Logger.getInstance(StartupUiUtil::class.java).info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219")
+    logger<StartupUiUtil>().info("${ScreenReader.ATK_WRAPPER} is blocked, see IDEA-149219")
   }
   activity.end()
 }
