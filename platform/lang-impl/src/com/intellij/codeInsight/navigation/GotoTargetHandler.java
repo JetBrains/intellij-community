@@ -140,19 +140,19 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
     builder.setRenderer(new RoundedCellRenderer<>(new GotoTargetRenderer(o -> ((ItemWithPresentation)o).presentation))).
       setItemsChosenCallback(selectedElements -> {
-        for (Object element : selectedElements) {
-          if (element instanceof AdditionalAction) {
-            ((AdditionalAction)element).execute();
+        for (ItemWithPresentation element : selectedElements) {
+          if (element.item instanceof AdditionalAction) {
+            ((AdditionalAction)element.item).execute();
           }
           else {
             Navigatable nav;
-            if (element instanceof Navigatable) {
-              nav = (Navigatable)element;
+            if (element.item instanceof Navigatable) {
+              nav = (Navigatable)element.item;
             }
             else {
               nav = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.navigation"),
                                                   () -> {
-                                                    PsiElement psiElement = ((SmartPsiElementPointer<?>)element).getElement();
+                                                    PsiElement psiElement = ((SmartPsiElementPointer<?>)element.item).getElement();
                                                     return psiElement == null ? null : EditSourceUtil.getDescriptor(psiElement);
                                                   });
             }
