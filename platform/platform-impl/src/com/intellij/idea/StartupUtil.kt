@@ -96,8 +96,9 @@ private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.ap
 private const val DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY = "idea.disable.implicit.read.on.edt"
 private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 
-private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResult>> =
-  AtomicReference { CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"))) }
+private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResult>> = AtomicReference {
+  CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")))
+}
 
 // checked - using a Deferred type doesn't lead to loading this class on StartupUtil init
 internal var shellEnvDeferred: Deferred<Boolean?>? = null
@@ -335,9 +336,7 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
   }
 }
 
-private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
-                                              appInfoDeferred: Deferred<ApplicationInfoEx>,
-                                              args: List<String>) {
+private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfoEx>, args: List<String>) {
   if (AppMode.isLightEdit()) {
     return
   }
@@ -356,25 +355,30 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
   }
 }
 
-private suspend fun prepareSplash(appInfoDeferred: Deferred<ApplicationInfoEx>, args: List<String>): Runnable? =
+private suspend fun prepareSplash(appInfoDeferred: Deferred<ApplicationInfoEx>, args: List<String>): Runnable? {
   // products may specify `splash` VM property; `nosplash` is deprecated and should be checked first
   if (CommandLineArgs.isSplashNeeded(args)) {
     val appInfo = appInfoDeferred.await()
     runActivity("splash preparation") {
-      SplashManager.scheduleShow(appInfo)
+      return SplashManager.scheduleShow(appInfo)
     }
   }
-  else null
+  else {
+    return null
+  }
+}
 
-fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<String>): Int =
-  EXTERNAL_LISTENER.apply(currentDirectory, args)
+fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<String>): Int {
+  return EXTERNAL_LISTENER.apply(currentDirectory, args)
+}
 
 internal val isImplicitReadOnEDTDisabled: Boolean
   get() = java.lang.Boolean.getBoolean(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
 
 // called by the app after startup
-fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>) =
+fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>) {
   commandProcessor.set(processor)
+}
 
 private fun runPreAppClass(log: Logger, args: List<String>) {
   val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY) ?: return
@@ -419,8 +423,8 @@ private suspend fun importConfig(args: List<String>, log: Logger,
 }
 
 // return type (LookAndFeel) is not specified to avoid class loading
-private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Thread): Job =
-  launch {
+private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Thread): Job {
+  return launch {
     launch {
       lockSystemDirsJob.join()
 
@@ -461,6 +465,7 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
       Class.forName(AWTExceptionHandler::class.java.name, true, classLoader)
     }
   }
+}
 
 private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job, preloadLafClassesJob: Job): Job = launch {
   initAwtToolkitAndEventQueueJob.join()
@@ -521,8 +526,8 @@ private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job, preloadLa
   }
 }
 
-private fun CoroutineScope.preloadLafClasses(): Job =
-  launch(CoroutineName("LaF class preloading") + Dispatchers.IO) {
+private fun CoroutineScope.preloadLafClasses(): Job {
+  return launch(CoroutineName("LaF class preloading") + Dispatchers.IO) {
     val classLoader = AppStarter::class.java.classLoader
     // preload class not in EDT
     Class.forName(DarculaLaf::class.java.name, true, classLoader)
@@ -533,6 +538,7 @@ private fun CoroutineScope.preloadLafClasses(): Job =
     Class.forName(ScaleContext::class.java.name, true, classLoader)
     Class.forName(GlobalStyleSheetHolder::class.java.name, true, classLoader)
   }
+}
 
 /*
  * The method should be called before `Toolkit#initAssistiveTechnologies`, which is called from `Toolkit#getDefaultToolkit`.
@@ -599,8 +605,8 @@ private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(in
   }
 }
 
-private fun CoroutineScope.configureJavaUtilLogging(): Job =
-  launch(CoroutineName("console logger configuration")) {
+private fun CoroutineScope.configureJavaUtilLogging(): Job {
+  return launch(CoroutineName("console logger configuration")) {
     val rootLogger = java.util.logging.Logger.getLogger("")
     if (rootLogger.handlers.isEmpty()) {
       rootLogger.level = Level.WARNING
@@ -609,6 +615,7 @@ private fun CoroutineScope.configureJavaUtilLogging(): Job =
       rootLogger.addHandler(consoleHandler)
     }
   }
+}
 
 @VisibleForTesting
 fun checkHiDPISettings() {
@@ -618,8 +625,8 @@ fun checkHiDPISettings() {
   }
 }
 
-private fun CoroutineScope.checkSystemDirs(lockSystemDirJob: Job): Job =
-  launch {
+private fun CoroutineScope.checkSystemDirs(lockSystemDirJob: Job): Job {
+  return launch {
     lockSystemDirJob.join()
 
     val (configPath, systemPath) = PathManager.getConfigDir() to PathManager.getSystemDir()
@@ -629,6 +636,7 @@ private fun CoroutineScope.checkSystemDirs(lockSystemDirJob: Job): Job =
       }
     }
   }
+}
 
 private suspend fun doCheckSystemDirs(configPath: Path, systemPath: Path): Boolean {
   if (configPath == systemPath) {
@@ -750,8 +758,8 @@ private fun checkDirectory(directory: Path,
   }
 }
 
-private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job, args: List<String>): Job =
-  launch(Dispatchers.IO) {
+private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job, args: List<String>): Job {
+  return launch(Dispatchers.IO) {
     // the "import-needed" check must be performed strictly before IDE directories are locked
     configImportNeededDeferred.join()
 
@@ -787,9 +795,10 @@ private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job, args:
       }
     }
   }
+}
 
-private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob: Job): Deferred<Logger> =
-  async {
+private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob: Job): Deferred<Logger> {
+  return async {
     consoleLoggerJob.join()
     checkSystemDirJob.join()
 
@@ -811,6 +820,7 @@ private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob:
       log
     }
   }
+}
 
 private fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<String>) {
   val buildDate = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.buildDate.time)
