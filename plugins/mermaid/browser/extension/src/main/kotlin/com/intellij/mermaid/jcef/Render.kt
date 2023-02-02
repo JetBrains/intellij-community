@@ -19,8 +19,19 @@ suspend fun renderBlock(block: HTMLElement, cacheId: String, content: String): N
   Mermaid.api.renderAsync(id, content, block) { svg ->
     block.innerHTML = svg
     node = block.childNodes.asList().firstOrNull { it.nodeName == "svg" }
+    addExplicitDimensionsAttributes(node.unsafeCast<HTMLElement>())
   }.await()
   return node
+}
+
+private fun addExplicitDimensionsAttributes(element: HTMLElement) {
+  val rect = element.getBoundingClientRect()
+  val width = rect.width
+  val height = rect.height
+  element.apply {
+    setAttribute("width", "${width}px")
+    setAttribute("height", "${height}px")
+  }
 }
 
 fun cacheBlock(cacheId: String, block: Node) {
