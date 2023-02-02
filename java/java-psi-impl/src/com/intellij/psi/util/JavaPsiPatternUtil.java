@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -483,6 +484,56 @@ public final class JavaPsiPatternUtil {
     PsiPatternVariable variable = ((PsiTypeTestPattern)Objects.requireNonNull(instanceOf.getPattern())).getPatternVariable();
     assert variable != null;
     return variable;
+  }
+
+  /**
+   * @param pattern deconstruction pattern to find a context type for
+   * @return a context type for the pattern; null, if it cannot be determined. This method can perform 
+   * the inference for outer patterns if necessary.
+   */
+  public static @Nullable PsiType getContextType(@NotNull PsiDeconstructionPattern pattern) {
+    PsiElement parent = pattern.getParent();
+    while (parent instanceof PsiParenthesizedPattern) {
+      parent = parent.getParent();
+    }
+    if (parent instanceof PsiInstanceOfExpression) {
+      return ((PsiInstanceOfExpression)parent).getOperand().getType();
+    }
+    if (parent instanceof PsiForeachPatternStatement) {
+      PsiExpression iteratedValue = ((PsiForeachPatternStatement)parent).getIteratedValue();
+      if (iteratedValue == null) {
+        return null;
+      }
+      return JavaGenericsUtil.getCollectionItemType(iteratedValue);
+    }
+    if (parent instanceof PsiCaseLabelElementList) {
+      PsiSwitchLabelStatementBase label = ObjectUtils.tryCast(parent.getParent(), PsiSwitchLabelStatementBase.class);
+      if (label != null) {
+        PsiSwitchBlock block = label.getEnclosingSwitchBlock();
+        if (block != null) {
+          PsiExpression expression = block.getExpression();
+          if (expression != null) {
+            return expression.getType();
+          }
+        }
+      }
+    }
+    if (parent instanceof PsiDeconstructionList) {
+      PsiDeconstructionPattern parentPattern = ObjectUtils.tryCast(parent.getParent(), PsiDeconstructionPattern.class);
+      if (parentPattern != null) {
+        int index = ArrayUtil.indexOf(((PsiDeconstructionList)parent).getDeconstructionComponents(), pattern);
+        if (index < 0) return null;
+        PsiType patternType = parentPattern.getTypeElement().getType();
+        if (!(patternType instanceof PsiClassType)) return null;
+        PsiSubstitutor parentSubstitutor = ((PsiClassType)patternType).resolveGenerics().getSubstitutor();
+        PsiClass parentRecord = PsiUtil.resolveClassInClassTypeOnly(parentPattern.getTypeElement().getType());
+        if (parentRecord == null) return null;
+        PsiRecordComponent[] components = parentRecord.getRecordComponents();
+        if (index >= components.length) return null;
+        return parentSubstitutor.substitute(components[index].getType());
+      }
+    }
+    return null;
   }
 
   public static class PatternVariableWrapper {

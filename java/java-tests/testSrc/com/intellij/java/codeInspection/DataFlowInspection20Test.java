@@ -38,4 +38,13 @@ public class DataFlowInspection20Test extends DataFlowInspectionTestCase {
   public void testSuspiciousLabelElementsJava19() {
     doTest();
   }
+  public void testForEachPattern() {
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         public @interface Range {
+                           long from();
+                           long to();
+                         }""");
+    doTest();
+  }
 }
