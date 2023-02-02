@@ -8,13 +8,13 @@ import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
 import com.intellij.ide.BrowserUtil
 import com.intellij.lang.documentation.CompositeDocumentationProvider
 import com.intellij.lang.documentation.ExternalDocumentationHandler
-import com.intellij.lang.documentation.impl.handleLink
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.documentation.impl.handleLink
 import com.intellij.psi.PsiManager
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.EDT

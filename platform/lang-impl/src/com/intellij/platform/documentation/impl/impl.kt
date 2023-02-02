@@ -1,44 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems") // KTIJ-19938
 
-package com.intellij.lang.documentation.impl
+package com.intellij.platform.documentation.impl
 
-import com.intellij.codeInsight.documentation.DocumentationManager
-import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.model.Pointer
-import com.intellij.model.psi.impl.mockEditor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.component1
-import com.intellij.openapi.util.component2
 import com.intellij.platform.documentation.*
-import com.intellij.psi.PsiFile
 import com.intellij.util.AsyncSupplier
-import com.intellij.util.SmartList
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-
-@Internal // for Fleet
-fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
-  val targets = SmartList<DocumentationTarget>()
-  for (ext in DocumentationTargetProvider.EP_NAME.extensionList) {
-    targets.addAll(ext.documentationTargets(file, offset))
-  }
-  if (!targets.isEmpty()) {
-    return targets
-  }
-  // fallback to PSI
-  // TODO this fallback should be implemented inside DefaultTargetSymbolDocumentationTargetProvider, but first:
-  //  - PsiSymbol has to hold information about origin element;
-  //  - documentation target by argument list should be also implemented separately.
-  val editor = mockEditor(file) ?: return emptyList()
-  val documentationManager = DocumentationManager.getInstance(file.project)
-  val (targetElement, sourceElement) = documentationManager.findTargetElementAndContext(editor, offset, file)
-                                       ?: return emptyList()
-  return listOf(psiDocumentationTarget(targetElement, sourceElement))
-}
 
 internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
   ApplicationManager.getApplication().assertReadAccessAllowed()
