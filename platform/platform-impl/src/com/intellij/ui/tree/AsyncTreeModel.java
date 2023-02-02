@@ -693,7 +693,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
   }
 
   private static final class CommandQueue<T extends Command> {
-    private final Deque<T> deque = new ArrayDeque<>();
+    private final LinkedList<T> deque = new LinkedList<>();
     private volatile boolean closed;
 
     T get() {
