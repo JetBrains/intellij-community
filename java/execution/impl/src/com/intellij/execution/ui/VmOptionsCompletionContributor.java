@@ -93,7 +93,8 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       String fullLookup = option.getVariant().prefix() + option.getOptionName();
       if (!fullLookup.startsWith(prefix)) return;
       String lookup = fullLookup.substring(prefix.length());
-      result.addElement(LookupElementBuilder.create(option, lookup).withPresentableText(fullLookup));
+      result.addElement(LookupElementBuilder.create(option.createPointer(), lookup)
+                          .withPresentableText(fullLookup));
     });
   }
 
@@ -120,12 +121,12 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       if ("bool".equals(type)) {
         String lookupString = (booleanStart ? "" : Boolean.parseBoolean(option.getDefaultValue()) ? "-" : "+") + option.getOptionName();
         tailType = TailType.SPACE;
-        e = LookupElementBuilder.create(option, lookupString);
+        e = LookupElementBuilder.create(option.createPointer(), lookupString);
       }
       else if (!booleanStart) {
         String tailText = " = " + option.getDefaultValue();
         tailType = TailType.EQUALS;
-        e = LookupElementBuilder.create(option, option.getOptionName()).withTailText(tailText, true);
+        e = LookupElementBuilder.create(option.createPointer(), option.getOptionName()).withTailText(tailText, true);
       }
       if (e != null) {
         LookupElement element = TailTypeDecorator.withTail(e.withTypeText(type).withIcon(icon), tailType);

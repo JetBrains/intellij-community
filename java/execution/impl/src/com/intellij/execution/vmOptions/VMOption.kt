@@ -23,13 +23,11 @@ data class VMOption(
   val kind: VMOptionKind,
   val doc: @NlsSafe String?,
   val variant: VMOptionVariant
-) : Symbol, Pointer<VMOption>, DocumentationTarget {
-  override fun dereference(): VMOption = this
-
-  override fun createPointer(): Pointer<out VMOption> = this
+) : Symbol, DocumentationTarget {
+  override fun createPointer(): Pointer<out VMOption> = Pointer.hardPointer(this)
 
   override fun presentation(): TargetPresentation {
-    return TargetPresentation.builder(variant.prefix() + optionName).presentation()
+    return TargetPresentation.builder(variant.prefix() + optionName).icon(kind.icon()).presentation()
   }
 
   override fun computeDocumentation(): DocumentationResult {
