@@ -31,6 +31,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiAwareObject;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.usages.UsageView;
@@ -418,7 +419,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
   }
 
- static class ItemWithPresentation {
+ static class ItemWithPresentation implements PsiAwareObject {
     private ItemWithPresentation(Object item, TargetPresentation presentation) {
       this.item = item;
       this.presentation = presentation;
@@ -426,5 +427,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     Object item;
     private TargetPresentation presentation;
-  }
+
+   @Override
+   public @Nullable PsiElement findElement(@NotNull Project project) {
+     return item instanceof Pointer<?> ? (PsiElement)((Pointer<?>)item).dereference() : null;
+   }
+ }
 }
