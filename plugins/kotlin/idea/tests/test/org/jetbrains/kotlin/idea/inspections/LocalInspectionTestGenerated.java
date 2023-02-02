@@ -16549,6 +16549,36 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/unusedClassExplicitApi.kt");
         }
 
+        @TestMetadata("unusedEnumEntries.kt")
+        public void testUnusedEnumEntries() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedEnumEntries.kt");
+        }
+
+        @TestMetadata("unusedEnumEntries2.kt")
+        public void testUnusedEnumEntries2() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedEnumEntries2.kt");
+        }
+
+        @TestMetadata("unusedEnumEntries3.kt")
+        public void testUnusedEnumEntries3() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedEnumEntries3.kt");
+        }
+
+        @TestMetadata("unusedEnumEntries4.kt")
+        public void testUnusedEnumEntries4() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedEnumEntries4.kt");
+        }
+
+        @TestMetadata("unusedEnumEntries5.kt")
+        public void testUnusedEnumEntries5() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedEnumEntries5.kt");
+        }
+
+        @TestMetadata("unusedEnumEntries6.kt")
+        public void testUnusedEnumEntries6() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedEnumEntries6.kt");
+        }
+
         @TestMetadata("unusedEnumEntry.kt")
         public void testUnusedEnumEntry() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/unusedEnumEntry.kt");
@@ -16597,6 +16627,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("usedEnumFunction11.kt")
         public void testUsedEnumFunction11() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction11.kt");
+        }
+
+        @TestMetadata("usedEnumFunction12.kt")
+        public void testUsedEnumFunction12() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction12.kt");
+        }
+
+        @TestMetadata("usedEnumFunction13.kt")
+        public void testUsedEnumFunction13() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction13.kt");
+        }
+
+        @TestMetadata("usedEnumFunction14.kt")
+        public void testUsedEnumFunction14() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction14.kt");
+        }
+
+        @TestMetadata("usedEnumFunction15.kt")
+        public void testUsedEnumFunction15() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction15.kt");
         }
 
         @TestMetadata("usedEnumFunction2.kt")
@@ -16659,9 +16709,34 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport4.kt");
         }
 
+        @TestMetadata("usedEnumFunctionWithImport5.kt")
+        public void testUsedEnumFunctionWithImport5() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport5.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport6.kt")
+        public void testUsedEnumFunctionWithImport6() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport6.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport7.kt")
+        public void testUsedEnumFunctionWithImport7() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport7.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport8.kt")
+        public void testUsedEnumFunctionWithImport8() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport8.kt");
+        }
+
         @TestMetadata("usedEnumFunctionWithNestedEnum.kt")
         public void testUsedEnumFunctionWithNestedEnum() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithNestedEnum.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithNestedEnum2.kt")
+        public void testUsedEnumFunctionWithNestedEnum2() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithNestedEnum2.kt");
         }
 
         @TestMetadata("valueClassGenericParameter.kt")

@@ -45,3 +45,23 @@ enum class E7 {
 enum class E9 {
     AAA4, BBB4
 }
+
+enum class E10 {
+    AAA4, BBB4
+}
+
+enum class E11 {
+    AAA4, BBB4
+}
+
+enum class E12 {
+    AAA4, BBB4;
+
+    enum class E13 {
+        AAA4, BBB4
+    }
+}
+
+enum class E14 {
+    AAA4, BBB4
+}

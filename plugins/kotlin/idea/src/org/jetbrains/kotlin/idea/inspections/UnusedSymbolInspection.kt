@@ -53,14 +53,13 @@ import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.ENUM_STATIC_METHOD_NAMES
-import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFunction
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
+import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.intentions.isFinalizeMethod
+import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumEntries
 import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.intentions.isUsedStarImportOfEnumStaticFunctions
 import org.jetbrains.kotlin.idea.isMainFunction
@@ -520,6 +519,12 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         }
         if (isFoundCallableReference) return true
 
+        val isFoundSimpleNameExpression = enumClass.anyDescendantOfType<KtSimpleNameExpression> {
+            it.parent !is KtCallableReferenceExpression && it.containingClass() == enumClass
+                    && it.getQualifiedExpressionForSelector() == null && it.isReferenceToBuiltInEnumEntries()
+        }
+        if (isFoundSimpleNameExpression) return true
+
         return enumClass.anyDescendantOfType<KtCallExpression> {
             it.getQualifiedExpressionForSelector() == null && it.containingClass() == enumClass && it.isReferenceToBuiltInEnumFunction()
         }
@@ -564,7 +569,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         fun PsiReference.isQualifiedNameInEnumStaticMethods(): Boolean {
             val referenceExpression = resolve() as? PsiMember ?: return false
             return referenceExpression.containingClass?.kotlinFqName == FqName(importedEnumQualifiedName)
-                    && referenceExpression.name in ENUM_STATIC_METHOD_NAMES.map { it.asString() }
+                    && referenceExpression.name in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES_IN_JAVA.map { it.asString() }
         }
 
         return containingFile.anyDescendantOfType(PsiReferenceExpression::isQualifiedNameInEnumStaticMethods)
@@ -575,13 +580,13 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
      */
     private fun PsiImportStaticReferenceElement.isReferenceToBuiltInEnumFunction(): Boolean {
         val importedEnumQualifiedName = classReference.qualifiedName
-        val enumStaticMethods = ENUM_STATIC_METHOD_NAMES.map { FqName("$importedEnumQualifiedName.$it") }
+        val enumStaticMethods = ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES_IN_JAVA.map { FqName("$importedEnumQualifiedName.$it") }
         return FqName(qualifiedName) in enumStaticMethods
     }
 
     private fun PsiReferenceExpression.isReferenceToBuiltInEnumFunction(enumClass: KtClass): Boolean {
         val reference = resolve() as? KtLightMethod ?: return false
-        return reference.containingClass.name == enumClass.name && reference is SyntheticElement && reference.name in ENUM_STATIC_METHOD_NAMES.map { it.asString() }
+        return reference.containingClass.name == enumClass.name && reference is SyntheticElement && reference.name in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES_IN_JAVA.map { it.asString() }
     }
 
     private fun checkPrivateDeclaration(declaration: KtNamedDeclaration, descriptor: DeclarationDescriptor?): Boolean {
