@@ -1,0 +1,28 @@
+MODULES
+    my-app
+    my-app.consumer
+    my-app.consumer.commonMain
+        Gradle: org.jetbrains.kotlin.mpp.tests:lib2:commonMain:1.0 (COMPILE)
+        Gradle: org.jetbrains.kotlin.mpp.tests:lib1:commonMain:1.0 (COMPILE)
+    my-app.consumer.commonTest
+        Gradle: org.jetbrains.kotlin.mpp.tests:lib2:commonMain:1.0 (TEST)
+        Gradle: org.jetbrains.kotlin.mpp.tests:lib1:commonMain:1.0 (TEST)
+    my-app.consumer.jvmMain
+        Gradle: org.jetbrains.kotlin.mpp.tests:lib2-jvm:1.0 (COMPILE)
+        Gradle: org.jetbrains.kotlin.mpp.tests:lib1-jvm:1.0 (COMPILE)
+    my-app.consumer.jvmTest
+        Gradle: org.jetbrains.kotlin.mpp.tests:lib2-jvm:1.0 (TEST)
+        Gradle: org.jetbrains.kotlin.mpp.tests:lib1-jvm:1.0 (TEST)
+    my-app.consumer.linuxX64Main
+        Gradle: org.jetbrains.kotlin.mpp.tests:lib2-linuxx64:klib:1.0 (COMPILE)
+        Gradle: org.jetbrains.kotlin.mpp.tests:lib1-linuxx64:klib:1.0 (COMPILE)
+    my-app.consumer.linuxX64Test
+        Gradle: org.jetbrains.kotlin.mpp.tests:lib2-linuxx64:klib:1.0 (TEST)
+        Gradle: org.jetbrains.kotlin.mpp.tests:lib1-linuxx64:klib:1.0 (TEST)
+
+Test configuration:
+- hiding following roots: resources, android-specific roots, generated
+- showing only following facet fields: targetPlatform
+- hiding source modules matching .*lib.*
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- hiding dependencies matching .*consumer.*
