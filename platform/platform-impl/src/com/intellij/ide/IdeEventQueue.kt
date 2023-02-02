@@ -832,7 +832,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
     systemEventQueue.push(this)
     EDT.updateEdt()
-    IdeKeyboardFocusManager.replaceDefault()
+    replaceDefaultKeyboardFocusManager()
     addDispatcher(WindowsAltSuppressor(), null)
     if (SystemInfoRt.isWindows && java.lang.Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
       // 'Windows+Up' shortcut would maximize active dialog under Win 7+

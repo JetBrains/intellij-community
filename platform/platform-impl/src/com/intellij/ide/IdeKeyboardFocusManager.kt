@@ -1,83 +1,75 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide;
+package com.intellij.ide
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.Logger
+import java.awt.*
+import javax.swing.DefaultFocusManager
 
-import javax.swing.FocusManager;
-import javax.swing.*;
-import java.awt.*;
-import java.beans.PropertyChangeListener;
-import java.beans.VetoableChangeListener;
-import java.lang.reflect.Method;
-import java.util.List;
+private val LOG = Logger.getInstance(IdeKeyboardFocusManager::class.java)
 
 /**
- * We extend the obsolete {@link DefaultFocusManager} class here instead of {@link KeyboardFocusManager} to prevent unwanted overwriting of
- * the default focus traversal policy by careless clients. In case they use the obsolete {@link FocusManager#getCurrentManager} method
- * instead of {@link KeyboardFocusManager#getCurrentKeyboardFocusManager()}, the former will override the default focus traversal policy,
- * if current focus manager doesn't extend {@link FocusManager}. We choose to extend {@link DefaultFocusManager}, not just
- * {@link FocusManager} for the reasons described in {@link DelegatingDefaultFocusManager}'s javadoc - just in case some legacy code expects
+ * We extend the obsolete [DefaultFocusManager] class here instead of [KeyboardFocusManager] to prevent unwanted overwriting of
+ * the default focus traversal policy by careless clients. In case they use the obsolete [FocusManager.getCurrentManager] method
+ * instead of [KeyboardFocusManager.getCurrentKeyboardFocusManager], the former will override the default focus traversal policy,
+ * if current focus manager doesn't extend [FocusManager]. We choose to extend [DefaultFocusManager], not just
+ * [FocusManager] for the reasons described in [DelegatingDefaultFocusManager]'s javadoc - just in case some legacy code expects
  * it.
  */
-final class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc above */ {
-  private static final Logger LOG = Logger.getInstance(IdeKeyboardFocusManager.class);
-
+internal class IdeKeyboardFocusManager : DefaultFocusManager() /* see javadoc above */ {
   // Don't inline this field, it's here to prevent policy override by parent's constructor. Don't make it final either.
-  @SuppressWarnings({"FieldCanBeLocal", "FieldMayBeFinal"}) private boolean parentConstructorExecuted = true;
+  private val parentConstructorExecuted = true
 
-  @Override
-  public boolean dispatchEvent(AWTEvent e) {
+  override fun dispatchEvent(e: AWTEvent): Boolean {
     if (EventQueue.isDispatchThread()) {
-      boolean[] result = {false};
-      IdeEventQueueKt.performActivity(e, () -> result[0] = super.dispatchEvent(e));
-      return result[0];
+      val result = booleanArrayOf(false)
+      performActivity(e) { result[0] = super.dispatchEvent(e) }
+      return result[0]
     }
     else {
-      return super.dispatchEvent(e);
+      return super.dispatchEvent(e)
     }
   }
 
-  @Override
-  public void setDefaultFocusTraversalPolicy(FocusTraversalPolicy defaultPolicy) {
+  override fun setDefaultFocusTraversalPolicy(defaultPolicy: FocusTraversalPolicy) {
     if (parentConstructorExecuted) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("setDefaultFocusTraversalPolicy: " + defaultPolicy, new Throwable());
+      if (LOG.isDebugEnabled) {
+        LOG.debug("setDefaultFocusTraversalPolicy: $defaultPolicy", Throwable())
       }
-      super.setDefaultFocusTraversalPolicy(defaultPolicy);
+      super.setDefaultFocusTraversalPolicy(defaultPolicy)
     }
+  }
+}
+
+internal fun replaceDefaultKeyboardFocusManager() {
+  val manager = DefaultFocusManager.getCurrentKeyboardFocusManager()
+  val newManager = IdeKeyboardFocusManager()
+  for (l in manager.propertyChangeListeners) {
+    newManager.addPropertyChangeListener(l)
+  }
+  for (l in manager.vetoableChangeListeners) {
+    newManager.addVetoableChangeListener(l)
   }
 
-  static void replaceDefault() {
-    KeyboardFocusManager kfm = getCurrentKeyboardFocusManager();
-    IdeKeyboardFocusManager ideKfm = new IdeKeyboardFocusManager();
-    for (PropertyChangeListener l : kfm.getPropertyChangeListeners()) {
-      ideKfm.addPropertyChangeListener(l);
-    }
-    for (VetoableChangeListener l : kfm.getVetoableChangeListeners()) {
-      ideKfm.addVetoableChangeListener(l);
-    }
-    try {
-      Method getDispatchersMethod = KeyboardFocusManager.class.getDeclaredMethod("getKeyEventDispatchers");
-      getDispatchersMethod.setAccessible(true);
-      @SuppressWarnings("unchecked") List<KeyEventDispatcher> dispatchers = (List<KeyEventDispatcher>)getDispatchersMethod.invoke(kfm);
-      if (dispatchers != null) {
-        for (KeyEventDispatcher d : dispatchers) {
-          ideKfm.addKeyEventDispatcher(d);
-        }
-      }
-      Method getPostProcessorsMethod = KeyboardFocusManager.class.getDeclaredMethod("getKeyEventPostProcessors");
-      getPostProcessorsMethod.setAccessible(true);
-      @SuppressWarnings("unchecked") List<KeyEventPostProcessor> postProcessors =
-        (List<KeyEventPostProcessor>)getPostProcessorsMethod.invoke(kfm);
-      if (postProcessors != null) {
-        for (KeyEventPostProcessor p : postProcessors) {
-          ideKfm.addKeyEventPostProcessor(p);
-        }
+  try {
+    val getDispatchersMethod = KeyboardFocusManager::class.java.getDeclaredMethod("getKeyEventDispatchers")
+    getDispatchersMethod.isAccessible = true
+    val dispatchers = getDispatchersMethod.invoke(manager) as List<KeyEventDispatcher>?
+    if (dispatchers != null) {
+      for (d in dispatchers) {
+        newManager.addKeyEventDispatcher(d)
       }
     }
-    catch (Exception e) {
-      LOG.error(e);
+    val getPostProcessorsMethod = KeyboardFocusManager::class.java.getDeclaredMethod("getKeyEventPostProcessors")
+    getPostProcessorsMethod.isAccessible = true
+    val postProcessors = getPostProcessorsMethod.invoke(manager) as List<KeyEventPostProcessor>?
+    if (postProcessors != null) {
+      for (p in postProcessors) {
+        newManager.addKeyEventPostProcessor(p)
+      }
     }
-    KeyboardFocusManager.setCurrentKeyboardFocusManager(ideKfm);
   }
+  catch (e: Exception) {
+    LOG.error(e)
+  }
+  DefaultFocusManager.setCurrentKeyboardFocusManager(newManager)
 }
