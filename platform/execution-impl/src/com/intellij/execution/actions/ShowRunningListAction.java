@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -101,7 +101,9 @@ final class ShowRunningListAction extends AnAction {
                 Project aProject = (Project)((Trinity<?, ?, ?>)value).first;
                 JFrame aFrame = WindowManager.getInstance().getFrame(aProject);
                 if (aFrame != null && !aFrame.isActive()) {
-                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(aFrame, true));
+                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+                    IdeFocusManager.getGlobalInstance().requestFocus(aFrame, true);
+                  });
                 }
                 RunContentManager.getInstance(aProject).
                   toFrontRunContent((Executor)((Trinity<?, ?, ?>)value).second, (RunContentDescriptor)((Trinity<?, ?, ?>)value).third);
@@ -146,7 +148,7 @@ final class ShowRunningListAction extends AnAction {
           Icon icon = (processHandler instanceof KillableProcess && processHandler.isProcessTerminating())
                       ? AllIcons.Debugger.KillProcess
                       : executor.getIcon();
-                    HyperlinkLabel label = new HyperlinkLabel(descriptor.getDisplayName());
+          HyperlinkLabel label = new HyperlinkLabel(descriptor.getDisplayName());
           label.setIcon(icon);
           label.setIconTextGap(JBUIScale.scale(2));
           label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
