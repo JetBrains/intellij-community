@@ -156,7 +156,7 @@ fun <T> Flow<T>.modelFlow(cs: CoroutineScope, log: Logger): SharedFlow<T> =
   catch { log.error(it) }.shareIn(cs, SharingStarted.Lazily, 1)
 
 fun <ID : Any, T, R> Flow<List<T>>.mapCaching(sourceIdentifier: (T) -> ID,
-                                              mapper: suspend (CoroutineScope, T) -> R,
+                                              mapper: (CoroutineScope, T) -> R,
                                               destroy: suspend R.() -> Unit,
                                               update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
   channelFlow {

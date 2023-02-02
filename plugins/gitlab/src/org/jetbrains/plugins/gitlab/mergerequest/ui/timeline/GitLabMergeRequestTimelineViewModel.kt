@@ -55,7 +55,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
     mergeRequestFlow.collectLatest { mr ->
       coroutineScope {
         val result = try {
-          LoadingState.Result(createItemsFlow(this, mr.getOrThrow()).mapToVms().stateIn(this))
+          LoadingState.Result(createItemsFlow(mr.getOrThrow()).mapToVms().stateIn(this))
         }
         catch (ce: CancellationException) {
           throw ce
@@ -94,8 +94,8 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   /**
    * Load all simple events and discussions and subscribe to user discussions changes
    */
-  private suspend fun createItemsFlow(cs: CoroutineScope, mr: GitLabMergeRequest): Flow<List<GitLabMergeRequestTimelineItem>> {
-    val simpleEventsRequest = cs.async(Dispatchers.IO) {
+  private fun CoroutineScope.createItemsFlow(mr: GitLabMergeRequest): Flow<List<GitLabMergeRequestTimelineItem>> {
+    val simpleEventsRequest = async(Dispatchers.IO) {
       val vms = ConcurrentLinkedQueue<GitLabMergeRequestTimelineItem>()
       launch {
         mr.systemDiscussions.first()
@@ -128,7 +128,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
     }
   }
 
-  private suspend fun Flow<List<GitLabMergeRequestTimelineItem>>.mapToVms() =
+  private fun Flow<List<GitLabMergeRequestTimelineItem>>.mapToVms() =
     mapCaching(
       GitLabMergeRequestTimelineItem::id,
       { cs, item -> createVm(cs, item) },

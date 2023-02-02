@@ -60,7 +60,7 @@ object ComponentListPanelFactory {
                                items: Flow<List<T>>,
                                itemKeyExtractor: ((T) -> Any),
                                gap: Int = 0,
-                               componentFactory: suspend (CoroutineScope, T) -> JComponent): JPanel {
+                               componentFactory: (CoroutineScope, T) -> JComponent): JPanel {
     val cs = parentCs.childScope(Dispatchers.Main)
     val panel = VerticalListPanel(gap)
     val keyList = LinkedList<Any>()
