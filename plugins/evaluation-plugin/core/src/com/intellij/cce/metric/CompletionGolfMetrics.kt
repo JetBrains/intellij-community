@@ -1,5 +1,6 @@
 package com.intellij.cce.metric
 
+import com.intellij.cce.actions.selectedWithoutPrefix
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
@@ -60,8 +61,9 @@ internal class TypingsCount : CompletionGolfMetric<Int>() {
     get() = sample.sum()
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
-    sessions.sumOf { it.lookups.count() }
-
+    sessions.sumOf { it.expectedLength() +
+                     it.lookups.count { it.selectedPosition >= 0 } -
+                     it.lookups.sumOf { it.selectedWithoutPrefix()?.length ?: 0 } }
   companion object {
     const val NAME = "Typings"
   }
@@ -112,7 +114,7 @@ internal class MovesCountNormalised : Metric {
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
     val movesCount = MovesCount().compute(sessions, comparator)
     val minPossibleMoves = sessions.count() * 2
-    val maxPossibleMoves = sessions.sumOf { it.completableLength } * 2
+    val maxPossibleMoves = sessions.sumOf { it.expectedLength() + it.completableLength }
     movesCountTotal += movesCount
     minPossibleMovesTotal += minPossibleMoves
     maxPossibleMovesTotal += maxPossibleMoves
@@ -200,3 +202,5 @@ internal class RecallAt(private val n: Int) : Metric {
     const val NAME_PREFIX = "RecallAt"
   }
 }
+
+private fun Session.expectedLength(): Int = expectedText.length - (lookups.firstOrNull()?.offset ?: 0)
