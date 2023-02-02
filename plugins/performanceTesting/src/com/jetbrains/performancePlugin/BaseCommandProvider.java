@@ -39,7 +39,6 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(SelectCommand.PREFIX, SelectCommand::new),
       Map.entry(CompareIndicesKt.PREFIX, CompareIndices::new),
       Map.entry(StoreIndices.PREFIX, StoreIndices::new),
-      Map.entry(GitCheckoutCommand.PREFIX, GitCheckoutCommand::new),
       Map.entry(OpenProjectView.PREFIX, OpenProjectView::new),
       Map.entry(MoveDirectoryCommand.PREFIX, MoveDirectoryCommand::new),
       Map.entry(RunClassInPlugin.PREFIX, RunClassInPlugin::new),
