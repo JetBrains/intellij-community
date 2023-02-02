@@ -8,7 +8,6 @@ import com.intellij.platform.documentation.DocumentationTarget;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +15,6 @@ import java.util.List;
 
 // This service exists for Rider and CWM to override.
 // TODO consider EP instead of a service override
-@Internal
 public interface IdeDocumentationTargetProvider {
 
   static @NotNull IdeDocumentationTargetProvider getInstance(@NotNull Project project) {

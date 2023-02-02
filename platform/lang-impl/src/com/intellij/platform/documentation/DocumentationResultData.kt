@@ -4,9 +4,11 @@ package com.intellij.platform.documentation
 import com.intellij.platform.documentation.DocumentationResult.Data
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Image
 
+@Internal
 @VisibleForTesting
 data class DocumentationResultData internal constructor(
   internal val content: DocumentationContentData,

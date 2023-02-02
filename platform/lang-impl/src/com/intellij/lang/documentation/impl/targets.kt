@@ -10,9 +10,7 @@ import com.intellij.platform.documentation.DocumentationTarget
 import com.intellij.platform.documentation.DocumentationTargetProvider
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
-import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal // for Fleet
 fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
   val targets = SmartList<DocumentationTarget>()
   for (ext in DocumentationTargetProvider.EP_NAME.extensionList) {

@@ -2,9 +2,7 @@
 package com.intellij.platform.documentation.impl
 
 import com.intellij.platform.documentation.ContentUpdater
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 sealed class InternalLinkResult {
 
   object InvalidTarget : InternalLinkResult()

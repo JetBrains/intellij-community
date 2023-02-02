@@ -5,12 +5,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.documentation.DocumentationTarget
 import com.intellij.platform.documentation.PsiDocumentationTargetProvider
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus.Internal
 
 @JvmField
 internal val LOG: Logger = Logger.getInstance("#com.intellij.lang.documentation.psi")
 
-@Internal
 fun psiDocumentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget {
   for (ext in PsiDocumentationTargetProvider.EP_NAME.extensionList) {
     return ext.documentationTarget(element, originalElement)
