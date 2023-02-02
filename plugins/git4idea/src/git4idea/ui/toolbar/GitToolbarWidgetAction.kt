@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.NlsSafe
@@ -36,6 +37,7 @@ private val repositoryKey = Key.create<GitRepository>("git-widget-repository")
 private val changesKey = Key.create<MyRepoChanges>("git-widget-changes")
 
 internal class GitToolbarWidgetAction : ExpandableComboAction() {
+  private val widgetIcon = IconLoader.getIcon("expui/general/vcs.svg", AllIcons::class.java)
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -104,7 +106,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
         with(e.presentation) {
           isEnabledAndVisible = true
           text = placeholder ?: GitBundle.message("git.toolbar.widget.no.repo")
-          icon = if (placeholder != null ) AllIcons.Vcs.Branch else null
+          icon = if (placeholder != null ) widgetIcon else null
           description = GitBundle.message("git.toolbar.widget.no.repo.tooltip")
         }
       }
@@ -138,7 +140,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     if (state != Repository.State.NORMAL) {
       return AllIcons.General.Warning
     }
-    return AllIcons.Vcs.Branch
+    return widgetIcon
   }
 
   @Tooltip
