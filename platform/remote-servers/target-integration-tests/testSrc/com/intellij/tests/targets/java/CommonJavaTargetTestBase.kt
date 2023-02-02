@@ -194,7 +194,7 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
           }
         }
 
-        val transformerFactory = TransformerFactory.newInstance() as SAXTransformerFactory
+        val transformerFactory = TransformerFactory.newDefaultInstance() as SAXTransformerFactory
         val handler: TransformerHandler = transformerFactory.newTransformerHandler()
         handler.transformer.setOutputProperty(OutputKeys.INDENT, "yes")
         handler.transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4")

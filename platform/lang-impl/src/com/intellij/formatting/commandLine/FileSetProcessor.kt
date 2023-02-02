@@ -108,7 +108,7 @@ private tailrec fun File.getOuterProject(): File? {
 }
 
 private val documentBuilderFactory = DocumentBuilderFactory.newInstance()
-private val xPathFactory = XPathFactory.newInstance()
+private val xPathFactory = XPathFactory.newDefaultInstance()
 private val usePerProjectSelector = "/component[@name='ProjectCodeStyleConfiguration']/state/option[@name='USE_PER_PROJECT_SETTINGS']/@value='true'"
 private val usePerProjectXPath = xPathFactory.newXPath().compile(usePerProjectSelector)
 

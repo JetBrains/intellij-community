@@ -242,7 +242,7 @@ public final class ExportTestResultsAction extends DumbAwareAction {
   private boolean writeOutputFile(ExportTestResultsConfiguration config, File outputFile) throws IOException, TransformerException, SAXException {
     switch (config.getExportFormat()) {
       case Xml -> {
-        TransformerHandler handler = ((SAXTransformerFactory)TransformerFactory.newInstance()).newTransformerHandler();
+        TransformerHandler handler = ((SAXTransformerFactory)TransformerFactory.newDefaultInstance()).newTransformerHandler();
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
         handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");  // NON-NLS
         return transform(outputFile, handler);
@@ -267,7 +267,7 @@ public final class ExportTestResultsAction extends DumbAwareAction {
 
   private boolean transformWithXslt(File outputFile, Source xslSource)
     throws TransformerConfigurationException, IOException, SAXException {
-    TransformerHandler handler = ((SAXTransformerFactory)TransformerFactory.newInstance()).newTransformerHandler(xslSource);
+    TransformerHandler handler = ((SAXTransformerFactory)TransformerFactory.newDefaultInstance()).newTransformerHandler(xslSource);
     handler.getTransformer().setParameter("TITLE", ExecutionBundle.message("export.test.results.filename", myRunConfiguration.getName(),
                                                                            myRunConfiguration.getType().getDisplayName()));
 
