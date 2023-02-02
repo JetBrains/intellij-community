@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,6 +61,14 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
     }
   }
 
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiParameter parameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
+    if (parameter == null) return IntentionPreviewInfo.EMPTY;
+    processParameter(project, parameter, false);
+    return IntentionPreviewInfo.DIFF;
+  }
+
   private void processParameter(@NotNull Project project,
                                 @NotNull PsiParameter myParameter,
                                 boolean isInteractive) {
@@ -67,8 +77,6 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
     String parameterName = myParameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
 
-    String fieldNameToCalc;
-    boolean isFinalToCalc;
     PsiClass targetClass = PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
     if (targetClass == null) return;
     PsiMethod method = (PsiMethod)myParameter.getDeclarationScope();
@@ -79,6 +87,8 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
     SuggestedNameInfo suggestedNameInfo = styleManager.suggestVariableName(kind, propertyName, null, type);
     String[] names = suggestedNameInfo.names;
 
+    String fieldNameToCalc;
+    boolean isFinalToCalc;
     if (isInteractive) {
       List<String> namesList = new ArrayList<>();
       ContainerUtil.addAll(namesList, names);
@@ -113,7 +123,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
 
     boolean isFinal = isFinalToCalc;
     String fieldName = fieldNameToCalc;
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    IntentionPreviewUtils.write(() -> {
       try {
         performRefactoring(project, targetClass, method, myParameter, type, fieldName, isMethodStatic, isFinal);
       }
