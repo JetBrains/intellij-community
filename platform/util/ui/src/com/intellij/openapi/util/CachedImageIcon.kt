@@ -11,7 +11,6 @@ import com.intellij.util.SVGLoader
 import com.intellij.util.ui.MultiResolutionImageProvider
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
@@ -106,9 +105,6 @@ open class CachedImageIcon protected constructor(
 
   @ApiStatus.Internal
   fun getRealIcon(): ImageIcon = getRealIcon(scaleContext = null)
-
-  @TestOnly
-  fun doGetRealIcon(): ImageIcon? = unwrapIcon(realIcon)
 
   internal fun getRealIcon(scaleContext: ScaleContext?): ImageIcon {
     if (resolver == null || !isActivated) {

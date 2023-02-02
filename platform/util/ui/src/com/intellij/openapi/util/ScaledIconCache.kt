@@ -18,16 +18,14 @@ import java.util.*
 import javax.swing.Icon
 import javax.swing.ImageIcon
 
+private const val SCALED_ICONS_CACHE_LIMIT = 5
+
+private fun key(context: ScaleContext): Long {
+  return java.lang.Float.floatToIntBits(context.getScale(DerivedScaleType.EFF_USR_SCALE).toFloat()).toLong() shl 32 or
+    (java.lang.Float.floatToIntBits(context.getScale(ScaleType.SYS_SCALE).toFloat()).toLong() and 0xffffffffL)
+}
+
 internal class ScaledIconCache(private val host: CachedImageIcon) {
-  companion object {
-    private const val SCALED_ICONS_CACHE_LIMIT = 5
-
-    private fun key(context: ScaleContext): Long {
-      return java.lang.Float.floatToIntBits(context.getScale(DerivedScaleType.EFF_USR_SCALE).toFloat()).toLong() shl 32 or
-        (java.lang.Float.floatToIntBits(context.getScale(ScaleType.SYS_SCALE).toFloat()).toLong() and 0xffffffffL)
-    }
-  }
-
   private val cache = Collections.synchronizedMap(FixedHashMap<Long, SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT))
 
   /**
