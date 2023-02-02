@@ -132,7 +132,7 @@
     </option>
     <option name="CSS.IMPORTANT">
       <value>
-        <option name="FOREGROUND" value="db9c6b" />
+        <option name="FOREGROUND" value="D69A6B" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -150,12 +150,12 @@
     </option>
     <option name="CUSTOM_KEYWORD1_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="db9c6b" />
+        <option name="FOREGROUND" value="D69A6B" />
       </value>
     </option>
     <option name="CUSTOM_KEYWORD2_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="d182d1" />
+        <option name="FOREGROUND" value="CF84CF" />
       </value>
     </option>
     <option name="CUSTOM_STRING_ATTRIBUTES" baseAttributes="DEFAULT_STRING" />
@@ -199,7 +199,7 @@
     </option>
     <option name="DEFAULT_CONSTANT">
       <value>
-        <option name="FOREGROUND" value="d182d1" />
+        <option name="FOREGROUND" value="CF84CF" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
@@ -249,7 +249,7 @@
     </option>
     <option name="DEFAULT_INSTANCE_FIELD">
       <value>
-        <option name="FOREGROUND" value="d182d1" />
+        <option name="FOREGROUND" value="CF84CF" />
       </value>
     </option>
     <option name="DEFAULT_INSTANCE_METHOD">
@@ -259,14 +259,14 @@
     </option>
     <option name="DEFAULT_INVALID_STRING_ESCAPE">
       <value>
-        <option name="FOREGROUND" value="db9c6b" />
+        <option name="FOREGROUND" value="D69A6B" />
         <option name="EFFECT_COLOR" value="ff5263" />
         <option name="EFFECT_TYPE" value="2" />
       </value>
     </option>
     <option name="DEFAULT_KEYWORD">
       <value>
-        <option name="FOREGROUND" value="db9c6b" />
+        <option name="FOREGROUND" value="D69A6B" />
       </value>
     </option>
     <option name="DEFAULT_LINE_COMMENT">
@@ -281,7 +281,7 @@
     </option>
     <option name="DEFAULT_NUMBER">
       <value>
-        <option name="FOREGROUND" value="4dc2d1" />
+        <option name="FOREGROUND" value="51C0CF" />
       </value>
     </option>
     <option name="DEFAULT_OPERATION_SIGN">
@@ -315,7 +315,7 @@
     </option>
     <option name="DEFAULT_STATIC_FIELD">
       <value>
-        <option name="FOREGROUND" value="d182d1" />
+        <option name="FOREGROUND" value="CF84CF" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
@@ -342,7 +342,7 @@
     </option>
     <option name="DEFAULT_VALID_STRING_ESCAPE">
       <value>
-        <option name="FOREGROUND" value="db9c6b" />
+        <option name="FOREGROUND" value="D69A6B" />
       </value>
     </option>
     <option name="DEPRECATED_ATTRIBUTES">
@@ -473,7 +473,7 @@
     <option name="JS.GLOBAL_FUNCTION" baseAttributes="DEFAULT_FUNCTION_DECLARATION" />
     <option name="JS.GLOBAL_VARIABLE">
       <value>
-        <option name="FOREGROUND" value="d182d1" />
+        <option name="FOREGROUND" value="CF84CF" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
@@ -489,7 +489,7 @@
     </option>
     <option name="JSP_DIRECTIVE_NAME">
       <value>
-        <option name="FOREGROUND" value="db9c6b" />
+        <option name="FOREGROUND" value="D69A6B" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -511,17 +511,17 @@
     </option>
     <option name="KOTLIN_SMART_CAST_RECEIVER">
       <value>
-        <option name="BACKGROUND" value="193835" />
+        <option name="BACKGROUND" value="1A3B2D" />
       </value>
     </option>
     <option name="KOTLIN_SMART_CAST_VALUE">
       <value>
-        <option name="BACKGROUND" value="193835" />
+        <option name="BACKGROUND" value="1A3B2D" />
       </value>
     </option>
     <option name="KOTLIN_SMART_CONSTANT">
       <value>
-        <option name="BACKGROUND" value="193835" />
+        <option name="BACKGROUND" value="1A3B2D" />
       </value>
     </option>
     <option name="KOTLIN_TYPE_PARAMETER" baseAttributes="TYPE_PARAMETER_NAME_ATTRIBUTES" />
@@ -621,7 +621,7 @@
     </option>
     <option name="PROPERTIES.KEY">
       <value>
-        <option name="FOREGROUND" value="db9c6b" />
+        <option name="FOREGROUND" value="D69A6B" />
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
@@ -662,13 +662,13 @@
     </option>
     <option name="Static method access">
       <value>
-        <option name="FOREGROUND" value="d182d1" />
+        <option name="FOREGROUND" value="CF84CF" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
     <option name="Static property reference ID">
       <value>
-        <option name="FOREGROUND" value="d182d1" />
+        <option name="FOREGROUND" value="CF84CF" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
