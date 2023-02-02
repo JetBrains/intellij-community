@@ -203,7 +203,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   protected abstract String getTerminalConnectionName(T process);
 
-  public abstract TtyConnector createTtyConnector(T process);
+  public abstract @NotNull TtyConnector createTtyConnector(@NotNull T process);
 
   protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
     return new CloseAction(defaultExecutor, myDescriptor, myProject);

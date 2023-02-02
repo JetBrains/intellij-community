@@ -29,7 +29,7 @@ public class TestShellSession {
     myWidget = new ShellTerminalWidget(project, settingsProvider, parentDisposable);
 
     LocalTerminalDirectRunner runner = LocalTerminalDirectRunner.createTerminalRunner(project);
-    PtyProcess process = runner.createProcess(new TerminalProcessOptions(project.getBasePath(), null, null), myWidget);
+    PtyProcess process = runner.createProcess(new TerminalProcessOptions(project.getBasePath(), null));
     TtyConnector connector = new PtyProcessTtyConnector(process, StandardCharsets.UTF_8);
     myWidget.start(connector);
     myWatcher = new TestTerminalBufferWatcher(myWidget.getTerminalTextBuffer(), myWidget.getTerminal());
