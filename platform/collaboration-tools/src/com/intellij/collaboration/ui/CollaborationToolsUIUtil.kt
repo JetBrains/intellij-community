@@ -149,7 +149,7 @@ object CollaborationToolsUIUtil {
       }
 
       override fun showNotify() {
-        val disposable = Disposer.newDisposable()
+        val disposable = Disposer.newDisposable("LAF listener disposable for $component")
         LafManagerListener.TOPIC.subscribe(disposable, LafManagerListener { listener(component) })
         listenerDisposable = disposable
       }
