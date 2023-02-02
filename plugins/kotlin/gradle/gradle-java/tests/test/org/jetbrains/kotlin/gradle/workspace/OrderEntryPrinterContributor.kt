@@ -101,7 +101,9 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
     }
 
     private fun PrinterContext.presentableNameWithoutVersion(orderEntry: OrderEntry): String =
-        orderEntry.presentableName.replace(kotlinGradlePluginVersion.toString(), "{{KGP_VERSION}}")
+        orderEntry.presentableName
+            // Be careful not to use KGP_VERSION placeholder for 3rd-party libraries (e.g. those that try to align versioning with Kotlin)
+            .let { if ("org.jetbrains.kotlin" in it || "Kotlin/Native" in it) it.replace(kotlinGradlePluginVersion.toString(), "{{KGP_VERSION}}") else it }
 
     private fun PrinterContext.getModuleInfos(orderEntry: OrderEntry): Set<IdeaModuleInfo> {
         when (orderEntry) {
