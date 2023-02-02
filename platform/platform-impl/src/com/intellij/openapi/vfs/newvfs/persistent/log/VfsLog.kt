@@ -16,7 +16,7 @@ import kotlin.io.path.div
 import kotlin.io.path.forEachDirectoryEntry
 
 /**
- * VfsLog tracks every modification operation done to files of PersistentFS and persists them is a separate storage,
+ * VfsLog tracks every modification operation done to files of PersistentFS and persists them in a separate storage,
  * allows to query the resulting operations log.
  * @param readOnly if true, won't modify storages and register [interceptors] thus VfsLog won't track [PersistentFS] changes
  */
