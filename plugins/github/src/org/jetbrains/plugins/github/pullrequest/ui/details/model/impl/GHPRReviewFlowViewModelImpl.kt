@@ -89,6 +89,22 @@ internal class GHPRReviewFlowViewModelImpl(
   override val userCanManageReview: Boolean = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) ||
                                               stateModel.viewerDidAuthor
 
+  override val userCanMergeReview: Boolean = stateModel.mergeabilityState?.canBeMerged == true &&
+                                             securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE) &&
+                                             !securityService.isMergeForbiddenForProject()
+
+  override val isMergeAllowed: Boolean = securityService.isMergeAllowed()
+
+  override val isRebaseAllowed: Boolean = stateModel.mergeabilityState?.canBeRebased == true && securityService.isRebaseMergeAllowed()
+
+  override val isSquashMergeAllowed: Boolean = securityService.isSquashMergeAllowed()
+
+  override fun mergeReview() = stateModel.submitMergeTask()
+
+  override fun rebaseReview() = stateModel.submitRebaseMergeTask()
+
+  override fun squashAndMergeReview() = stateModel.submitSquashMergeTask()
+
   override fun closeReview() = stateModel.submitCloseTask()
 
   override fun reopenReview() = stateModel.submitReopenTask()

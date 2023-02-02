@@ -17,7 +17,10 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.*
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCommitsViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTitleComponent
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -37,8 +40,6 @@ internal object GHPRDetailsComponentFactory {
     securityService: GHPRSecurityService,
     avatarIconsProvider: GHAvatarIconsProvider,
     branchesModel: GHPRBranchesModel,
-    metadataModel: GHPRMetadataModel,
-    stateModel: GHPRStateModel,
     commitFilesBrowserComponent: JComponent,
     diffBridge: GHPRDiffController
   ): JComponent {
@@ -51,12 +52,7 @@ internal object GHPRDetailsComponentFactory {
     }
     val commitInfo = GHPRDetailsCommitInfoComponentFactory.create(scope, commitsVm)
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewDetailsVm, reviewFlowVm, securityService, avatarIconsProvider)
-    val state = GHPRStatePanel(
-      scope,
-      reviewDetailsVm, reviewFlowVm,
-      dataProvider, securityService, stateModel,
-      avatarIconsProvider
-    ).also {
+    val state = GHPRStatePanel(scope, reviewDetailsVm, reviewFlowVm, dataProvider).also {
       PopupHandler.installPopupMenu(it, DefaultActionGroup(GHPRReloadStateAction()), "GHPRStatePanelPopup")
     }
 

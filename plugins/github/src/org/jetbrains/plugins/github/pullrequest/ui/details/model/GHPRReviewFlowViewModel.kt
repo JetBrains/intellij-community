@@ -17,6 +17,15 @@ internal interface GHPRReviewFlowViewModel {
   val pendingCommentsState: StateFlow<Int>
 
   val userCanManageReview: Boolean
+  val userCanMergeReview: Boolean
+
+  val isMergeAllowed: Boolean
+  val isRebaseAllowed: Boolean
+  val isSquashMergeAllowed: Boolean
+
+  fun mergeReview()
+  fun rebaseReview()
+  fun squashAndMergeReview()
 
   fun closeReview()
   fun reopenReview()

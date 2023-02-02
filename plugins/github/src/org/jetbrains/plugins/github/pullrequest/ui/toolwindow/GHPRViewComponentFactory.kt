@@ -201,7 +201,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                          reviewDetailsVm, reviewFlowVm, commitsVm,
                                          dataProvider,
                                          dataContext.repositoryDataService, dataContext.securityService, dataContext.avatarIconsProvider,
-                                         branchesModel, metadataModel, stateModel,
+                                         branchesModel,
                                          createCommitFilesBrowserComponent(scope, commitsVm),
                                          diffBridge)
     }.apply {
