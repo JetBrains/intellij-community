@@ -380,6 +380,7 @@
     },
     "ToolBar.verticalToolbarInsets": "7,4,7,4",
     "ToolBar.horizontalToolbarInsets": "4,7,4,7",
+    "ToolBar.separatorColor": "Grey4",
 
     "SearchField": {
       "errorForeground": "Red6",
