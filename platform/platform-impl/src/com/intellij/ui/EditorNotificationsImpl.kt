@@ -201,23 +201,17 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
 
           coroutineContext.ensureActive()
 
-          if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
-            continue
-          }
-
           val result = readAction {
-            // recheck for dumb mode, since it could start before read action
             if (file.isValid && !project.isDisposed &&
                 (!DumbService.isDumb(project) || DumbService.isDumbAware(provider))) {
-              Pair(provider.collectNotificationData(project, file), true)
+              Optional.ofNullable(provider.collectNotificationData(project, file))
             }
             else {
-              Pair(null, false)
+              null
             }
-          }
-          if (!result.second) continue
+          } ?: continue
 
-          val componentProvider = result.first
+          val componentProvider = result.orElse(null)
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             if (!file.isValid) {
               return@withContext
