@@ -33,7 +33,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 
 @TestApplication
 @RunInEdt
-class DirectoryIndexForExcludePatternsTest {
+class ExcludePatternsInProjectFileIndexTest {
   @JvmField
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()

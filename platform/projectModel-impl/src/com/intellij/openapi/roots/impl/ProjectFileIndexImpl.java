@@ -147,7 +147,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   @NotNull
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
-    return myDirectoryIndex.getOrderEntries(getInfoForFileOrDirectory(file));
+    return myDirectoryIndex.getOrderEntries(file);
   }
 
   @Override

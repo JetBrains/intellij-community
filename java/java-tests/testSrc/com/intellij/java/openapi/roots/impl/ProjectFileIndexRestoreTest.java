@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @HeavyPlatformTestCase.WrapInCommand
-public class DirectoryIndexRestoreTest extends JavaProjectTestCase {
+public class ProjectFileIndexRestoreTest extends JavaProjectTestCase {
   private VirtualFile myTempVFile;
   private String myTestDirPath;
 

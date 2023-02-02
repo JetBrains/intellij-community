@@ -21,7 +21,7 @@ import java.io.File
 
 @TestApplication
 @RunInEdt
-class DirectoryIndexBeneathTest {
+class IteratingContentUnderExcludedTest {
   @JvmField
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
