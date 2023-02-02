@@ -189,7 +189,7 @@ public class WSLDistribution implements AbstractWslDistribution {
                                   @Nullable List<String> additionalOptions,
                                   @Nullable Consumer<? super ProcessHandler> handlerConsumer) throws ExecutionException {
     var command = List.of(RSYNC, "--checksum", "--recursive");
-    command = ContainerUtil.concat(additionalOptions == null ? List.of() : additionalOptions);
+    command = ContainerUtil.concat(command, additionalOptions == null ? List.of() : additionalOptions);
     command = ContainerUtil.append(command, getSourceWslPath(sourceWslPath), getTargetWslPath(targetWinDirPath));
 
     var process = executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
