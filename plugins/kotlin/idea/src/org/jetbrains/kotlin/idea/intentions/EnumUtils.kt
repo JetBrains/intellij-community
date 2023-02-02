@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.utils.ENUM_STATIC_METHOD_NAMES
+import org.jetbrains.kotlin.idea.codeinsight.utils.ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
@@ -53,7 +54,7 @@ internal fun KtImportDirective.isUsedStarImportOfEnumStaticFunctions(): Boolean 
     val classDescriptor = targetDescriptors().filterIsInstance<ClassDescriptor>().firstOrNull() ?: return false
     if (classDescriptor.kind != ClassKind.ENUM_CLASS) return false
 
-    val enumStaticMethods = ENUM_STATIC_METHOD_NAMES.map { FqName("$importedEnumFqName.$it") }
+    val enumStaticMethods = ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES.map { FqName("$importedEnumFqName.$it") }
 
     fun KtExpression.isFqNameInEnumStaticMethods(): Boolean {
         if (getQualifiedExpressionForSelector() != null) return false
@@ -65,6 +66,7 @@ internal fun KtImportDirective.isUsedStarImportOfEnumStaticFunctions(): Boolean 
     return containingFile.anyDescendantOfType<KtExpression> {
         (it as? KtCallExpression)?.isFqNameInEnumStaticMethods() == true
                 || (it as? KtCallableReferenceExpression)?.callableReference?.isFqNameInEnumStaticMethods() == true
+                || (it as? KtReferenceExpression)?.isFqNameInEnumStaticMethods() == true
     }
 }
 
