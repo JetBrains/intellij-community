@@ -87,9 +87,24 @@ enum class VMOptionVariant {
 }
 
 enum class VMOptionKind {
-  Standard,                      
+  /**
+   * Specified by Java specification
+   */
+  Standard,
+
+  /**
+   * Product option but can be not specified
+   */
   Product,
+
+  /**
+   * Diagnostic option (may make JVM slower, requires unlocking)
+   */
   Diagnostic,
+
+  /**
+   * Experimental option (unstable, use with care, requires unlocking)
+   */
   Experimental;
 
   fun presentation(): @Nls String = when (this) {
