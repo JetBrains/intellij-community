@@ -374,6 +374,15 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
           provider.iterateFiles(project, collectingIterator, thisProviderDeduplicateFilter);
           perProviderSink.commit();
         }
+        catch (ProcessCanceledException pce) {
+          throw pce;
+        }
+        catch (Exception e) {
+          // CollectingIterator should skip failing files by itself. But if provider.iterateFiles cannot iterate files and throws exception,
+          // we want to ignore whole origin and let other origins to complete normally.
+          LOG.error("Error while scanning files of " + provider.getDebugName() + "\n" +
+                    "To reindex files under this origin IDEA has to be restarted", e);
+        }
         finally {
           scanningStatistics.setNumberOfSkippedFiles(thisProviderDeduplicateFilter.getNumberOfSkippedFiles());
           synchronized (allTasksFinished) {
