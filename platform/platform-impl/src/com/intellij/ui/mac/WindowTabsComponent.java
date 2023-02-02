@@ -81,7 +81,7 @@ public class WindowTabsComponent extends JBTabsImpl {
   private final Disposable myParentDisposable;
   private final Map<IdeFrameImpl, Integer> myIndexes = new HashMap<>();
 
-  public WindowTabsComponent(@NotNull IdeFrameImpl nativeWindow, @NotNull Project project, @NotNull Disposable parentDisposable) {
+  public WindowTabsComponent(@NotNull IdeFrameImpl nativeWindow, @Nullable Project project, @NotNull Disposable parentDisposable) {
     super(project, IdeFocusManager.getInstance(project), parentDisposable);
     myNativeWindow = nativeWindow;
     myParentDisposable = parentDisposable;
@@ -193,9 +193,28 @@ public class WindowTabsComponent extends JBTabsImpl {
     };
   }
 
-  public void createTabsForFrame(@NotNull IdeFrameImpl frame, IdeFrameImpl @NotNull [] tabFrames) {
+  private boolean isSameGroup(@NotNull WindowTabsComponent anotherComponent) {
+    if (this == anotherComponent) {
+      return true;
+    }
+
+    int count = getTabCount();
+    if (count != anotherComponent.getTabCount()) {
+      return false;
+    }
+
+    for (int i = 0; i < count; i++) {
+      if (getTabAt(i).getObject() != anotherComponent.getTabAt(i).getObject()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public void createTabsForFrame(IdeFrameImpl @NotNull [] tabFrames) {
     for (IdeFrameImpl tabFrame : tabFrames) {
-      createTabItem(tabFrame, -1, tabFrame == frame);
+      createTabItem(tabFrame, -1, tabFrame == myNativeWindow);
     }
 
     recalculateIndexes();
@@ -611,7 +630,7 @@ public class WindowTabsComponent extends JBTabsImpl {
     @Override
     public void add(@NotNull DockableContent<?> _content, @Nullable RelativePoint dropTarget) {
       WindowFrameDockableContent content = (WindowFrameDockableContent)_content;
-      moveTabToNewIndexOrWindow(content.myInfo, content.myTabsComponent != WindowTabsComponent.this);
+      moveTabToNewIndexOrWindow(content.myInfo, !isSameGroup(content.myTabsComponent));
     }
 
     @Override
