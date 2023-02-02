@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.DigestUtil
 import org.jetbrains.intellij.build.images.ImageExtension.*
 import org.jetbrains.intellij.build.images.ImageType.*
 import org.jetbrains.jps.model.module.JpsModule
@@ -10,8 +9,6 @@ import java.awt.Dimension
 import java.nio.file.Path
 
 abstract class ImageSanityCheckerBase(private val projectHome: Path, private val ignoreSkipTag: Boolean) {
-  private val STUB_PNG_SHA256 = "4b7871718d0eb6404dc1cf9aeaeb564f116485683ada2418528fb74344b97170" // /actions/stub.svg - 16x16
-
   fun check(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?) {
     val allImages = ImageCollector(projectHome = projectHome, iconsOnly = false, ignoreSkipTag = ignoreSkipTag,
                                    moduleConfig = moduleConfig).collect(module)
@@ -23,7 +20,6 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
     checkHaveCompleteIconSet(images, module)
     checkHaveValidSize(images, module)
     checkAreNotAmbiguous(images, module)
-    checkNoStubIcons(images, module)
     checkNoDeprecatedIcons(images, module)
     checkNoSvgFallbackVersions(images, module)
     checkNoOverridingFallbackVersions(images, module)
@@ -90,48 +86,50 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
   private fun checkAreNotAmbiguous(images: List<ImageInfo>, module: JpsModule) {
     process(images, Severity.WARNING, "image with ambiguous definition (has both '.png' and '.gif' versions)", module) { image ->
       val extensions = image.files.map { ImageExtension.fromFile(it) }
-      return@process GIF !in extensions || PNG !in extensions
-    }
-  }
-
-  private fun checkNoStubIcons(images: List<ImageInfo>, module: JpsModule) {
-    process(images, Severity.WARNING, "copies of the stub.png image must be removed", module) { image ->
-      return@process image.files.none { STUB_PNG_SHA256 == DigestUtil.sha256Hex(it) }
+      GIF !in extensions || PNG !in extensions
     }
   }
 
   private fun checkNoDeprecatedIcons(images: List<ImageInfo>, module: JpsModule) {
     process(images, Severity.WARNING, "deprecated icons must be moved to /compatibilityResources", module) { image ->
-      return@process image.deprecation == null || image.files.isEmpty()
+      image.deprecation == null || image.files.isEmpty()
     }
   }
 
   private fun checkNoSvgFallbackVersions(images: List<ImageInfo>, module: JpsModule) {
     process(images, Severity.WARNING, "SVG icons should not use PNG icons as fallback", module) { image ->
-      if (image.files.none { ImageExtension.fromFile(it) == SVG }) return@process true
+      if (image.files.none { ImageExtension.fromFile(it) == SVG }) {
+        return@process true
+      }
 
-      val legacyFiles = image.files.filter { ImageExtension.fromFile(it) != SVG }
-      return@process legacyFiles.isEmpty()
+      image.files.none { ImageExtension.fromFile(it) != SVG }
     }
   }
 
   private fun checkNoOverridingFallbackVersions(images: List<ImageInfo>, module: JpsModule) {
     process(images, Severity.WARNING, "Overridden icons should not use PNG icons as fallback", module) { image ->
-      if (image.deprecation?.replacement == null) return@process true
-
-      return@process image.files.isEmpty()
+      if (image.deprecation?.replacement == null) {
+        true
+      }
+      else {
+        image.files.isEmpty()
+      }
     }
   }
 
 
-  private fun process(images: List<ImageInfo>, severity: Severity, message: String, module: JpsModule, processor: (ImageInfo) -> Boolean) {
+  private inline fun process(images: List<ImageInfo>,
+                             severity: Severity,
+                             message: String,
+                             module: JpsModule,
+                             processor: (ImageInfo) -> Boolean) {
     val result = ArrayList<ImageInfo>()
-    images.forEach {
-      if (!processor(it)) {
-        result.add(it)
+    for (image in images) {
+      if (!processor(image)) {
+        result.add(image)
       }
     }
-    log(severity, message, module, result)
+    log(severity = severity, message = message, module = module, images = result)
   }
 
   internal abstract fun log(severity: Severity, message: String, module: JpsModule, images: Collection<ImageInfo>)
