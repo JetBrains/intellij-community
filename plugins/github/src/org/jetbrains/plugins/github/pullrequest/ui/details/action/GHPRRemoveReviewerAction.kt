@@ -14,6 +14,7 @@ internal class GHPRRemoveReviewerAction(
   private val reviewFlowVm: GHPRReviewFlowViewModel,
   private val reviewer: GHPullRequestRequestedReviewer
 ) : AbstractAction(GithubBundle.message("pull.request.remove.reviewer.action", reviewer.shortName)) {
+
   init {
     scope.launch {
       reviewFlowVm.isBusy.collect { isBusy ->

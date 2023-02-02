@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.codereview.details.ReviewState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
+import javax.swing.JComponent
 
 internal interface GHPRReviewFlowViewModel {
   val isBusy: Flow<Boolean>
@@ -17,5 +18,12 @@ internal interface GHPRReviewFlowViewModel {
 
   val userCanManageReview: Boolean
 
+  fun closeReview()
+  fun reopenReview()
+  fun postDraftedReview()
+
   fun removeReviewer(reviewer: GHPullRequestRequestedReviewer)
+  fun requestReview(parentComponent: JComponent)
+  fun reRequestReview()
+  fun setMyselfAsReviewer()
 }

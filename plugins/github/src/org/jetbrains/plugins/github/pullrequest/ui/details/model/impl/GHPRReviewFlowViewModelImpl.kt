@@ -22,12 +22,16 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRMetadataModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
+import javax.swing.JComponent
 
 internal class GHPRReviewFlowViewModelImpl(
   scope: CoroutineScope,
   private val metadataModel: GHPRMetadataModel,
   private val stateModel: GHPRStateModel,
-  securityService: GHPRSecurityService,
+  private val securityService: GHPRSecurityService,
+  private val avatarIconsProvider: GHAvatarIconsProvider,
   detailsDataProvider: GHPRDetailsDataProvider,
   reviewDataProvider: GHPRReviewDataProvider,
   disposable: Disposable
@@ -85,6 +89,12 @@ internal class GHPRReviewFlowViewModelImpl(
   override val userCanManageReview: Boolean = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) ||
                                               stateModel.viewerDidAuthor
 
+  override fun closeReview() = stateModel.submitCloseTask()
+
+  override fun reopenReview() = stateModel.submitReopenTask()
+
+  override fun postDraftedReview() = stateModel.submitMarkReadyForReviewTask()
+
   override fun removeReviewer(reviewer: GHPullRequestRequestedReviewer) = stateModel.submitTask {
     val newReviewers = metadataModel.reviewers.toMutableList().apply {
       remove(reviewer)
@@ -93,12 +103,29 @@ internal class GHPRReviewFlowViewModelImpl(
     metadataModel.adjustReviewers(EmptyProgressIndicator(), delta)
   }
 
-  private fun convertPullRequestReviewState(pullRequestReviewState: GHPullRequestReviewState): ReviewState = when (pullRequestReviewState) {
-    GHPullRequestReviewState.APPROVED -> ReviewState.ACCEPTED
-    GHPullRequestReviewState.CHANGES_REQUESTED,
-    GHPullRequestReviewState.COMMENTED,
-    GHPullRequestReviewState.DISMISSED,
-    GHPullRequestReviewState.PENDING -> ReviewState.WAIT_FOR_UPDATES
+  override fun requestReview(parentComponent: JComponent) = stateModel.submitTask {
+    GHUIUtil.showChooserPopup(
+      parentComponent,
+      GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider),
+      metadataModel.reviewers,
+      metadataModel.loadPotentialReviewers()
+    ).thenAccept { selectedReviewers ->
+      metadataModel.adjustReviewers(EmptyProgressIndicator(), selectedReviewers)
+    }
+  }
+
+  override fun reRequestReview() = stateModel.submitTask {
+    val delta = CollectionDelta(metadataModel.reviewers, reviewerAndReviewState.value.keys)
+    metadataModel.adjustReviewers(EmptyProgressIndicator(), delta)
+  }
+
+  override fun setMyselfAsReviewer() = stateModel.submitTask {
+    val newReviewer = securityService.currentUser as GHPullRequestRequestedReviewer
+    val newReviewers = metadataModel.reviewers.toMutableList().apply {
+      add(newReviewer)
+    }
+    val delta = CollectionDelta(metadataModel.reviewers, newReviewers)
+    metadataModel.adjustReviewers(EmptyProgressIndicator(), delta)
   }
 
   init {
@@ -133,5 +160,15 @@ internal class GHPRReviewFlowViewModelImpl(
           detailsDataProvider.reloadDetails()
         }
       })
+  }
+
+  companion object {
+    private fun convertPullRequestReviewState(pullRequestReviewState: GHPullRequestReviewState): ReviewState = when (pullRequestReviewState) {
+      GHPullRequestReviewState.APPROVED -> ReviewState.ACCEPTED
+      GHPullRequestReviewState.CHANGES_REQUESTED,
+      GHPullRequestReviewState.COMMENTED,
+      GHPullRequestReviewState.DISMISSED,
+      GHPullRequestReviewState.PENDING -> ReviewState.WAIT_FOR_UPDATES
+    }
   }
 }

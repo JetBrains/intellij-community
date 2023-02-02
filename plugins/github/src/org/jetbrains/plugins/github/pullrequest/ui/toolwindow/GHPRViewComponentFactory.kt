@@ -190,6 +190,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                      metadataModel,
                                                      stateModel,
                                                      dataContext.securityService,
+                                                     dataContext.avatarIconsProvider,
                                                      dataProvider.detailsData,
                                                      dataProvider.reviewData,
                                                      disposable)

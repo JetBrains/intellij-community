@@ -54,7 +54,7 @@ internal object GHPRDetailsComponentFactory {
     val state = GHPRStatePanel(
       scope,
       reviewDetailsVm, reviewFlowVm,
-      dataProvider, securityService, stateModel, metadataModel,
+      dataProvider, securityService, stateModel,
       avatarIconsProvider
     ).also {
       PopupHandler.installPopupMenu(it, DefaultActionGroup(GHPRReloadStateAction()), "GHPRStatePanelPopup")
