@@ -167,11 +167,11 @@ private class ConvertToPlaceHolderQuickfix(private val indexStringExpression: In
   override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.quickfix.name")
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val uCallExpression = descriptor.psiElement.getUastParentOfType<UCallExpression>() ?: return
-    val (parametersBeforeString: MutableList<UExpression>, parametersAfterString: MutableList<UExpression>, builderString) =
+    val (parametersBeforeString: MutableList<UExpression>, parametersAfterString: MutableList<UExpression>, textPattern) =
       createMethodContext(uCallExpression)
 
     val elementFactory = uCallExpression.getUastElementFactory(project) ?: return
-    val newText = elementFactory.createStringLiteralExpression(builderString.toString(), uCallExpression.sourcePsi) ?: return
+    val newText = elementFactory.createStringLiteralExpression(textPattern.toString(), uCallExpression.sourcePsi) ?: return
     val newParameters = mutableListOf<UExpression>().apply {
       addAll(parametersBeforeString)
       add(newText)
@@ -193,7 +193,7 @@ private class ConvertToPlaceHolderQuickfix(private val indexStringExpression: In
     if (indexStringExpression == 1) {
       parametersBeforeString.add(valueArguments[0])
     }
-    val builderString = StringBuilder()
+    val textPattern = StringBuilder()
     val stringTemplate = valueArguments[indexStringExpression]
     var indexOuterPlaceholder = indexStringExpression + 1
     if (stringTemplate is UPolyadicExpression) {
@@ -213,20 +213,20 @@ private class ConvertToPlaceHolderQuickfix(private val indexStringExpression: In
             }
           }
           indexOuterPlaceholder += countPlaceHolders
-          builderString.append(text)
+          textPattern.append(text)
         }
         else {
-          if (builderString.endsWith("\\") &&
+          if (textPattern.endsWith("\\") &&
               (loggerType == Companion.LoggerType.SLF4J_LOGGER_TYPE || loggerType == Companion.LoggerType.SLF4J_BUILDER_TYPE)) {
-            builderString.append("\\")
+            textPattern.append("\\")
           }
-          builderString.append("{}")
+          textPattern.append("{}")
           parametersAfterString.add(operand)
         }
       }
     }
     else {
-      builderString.append("{}")
+      textPattern.append("{}")
       parametersAfterString.add(stringTemplate)
     }
 
@@ -235,10 +235,10 @@ private class ConvertToPlaceHolderQuickfix(private val indexStringExpression: In
         parametersAfterString.add(valueArguments[index])
       }
     }
-    return MethodContext(parametersBeforeString, parametersAfterString, builderString)
+    return MethodContext(parametersBeforeString, parametersAfterString, textPattern)
   }
 
   data class MethodContext(val parametersBeforeString: MutableList<UExpression>,
                            val parametersAfterString: MutableList<UExpression>,
-                           val builderString: StringBuilder)
+                           val textPattern: StringBuilder)
 }
