@@ -207,6 +207,7 @@ public class WindowsDefenderChecker {
   }
 
   private static ProcessOutput run(GeneralCommandLine command) throws ExecutionException {
+    command.getEnvironment().remove("PSModulePath");
     return ExecUtil.execAndGetOutput(
       command.withRedirectErrorStream(true).withWorkDirectory(PathManager.getTempPath()),
       POWERSHELL_COMMAND_TIMEOUT_MS);
