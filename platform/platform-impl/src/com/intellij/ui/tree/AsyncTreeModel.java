@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
@@ -881,7 +881,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     }
 
     private void updatePaths(@NotNull Object oldObject, @NotNull Object newObject) {
-      if (paths.stream().anyMatch(path -> contains(path, oldObject))) {
+      if (ContainerUtil.exists(paths, path -> contains(path, oldObject))) {
         // replace instance of user's object in all internal maps to avoid memory leaks
         List<TreePath> updated = ContainerUtil.map(paths, path -> update(path, oldObject, newObject));
         paths.clear();
