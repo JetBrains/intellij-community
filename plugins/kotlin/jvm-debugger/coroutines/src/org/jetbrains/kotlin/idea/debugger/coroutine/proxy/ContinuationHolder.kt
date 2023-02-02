@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
 import com.intellij.debugger.engine.JavaValue
 import com.sun.jdi.ObjectReference
-import com.sun.jdi.VMDisconnectedException
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.isAbstractCoroutine
@@ -27,13 +26,15 @@ class ContinuationHolder private constructor(val context: DefaultExecutionContex
                     consumer.add(coroutineStackFrame)
             }
             val lastRestoredFrame = continuationStack.coroutineStack.lastOrNull()
-            return findCoroutineInformation(lastRestoredFrame?.baseContinuationImpl?.coroutineOwner, consumer)
-        } catch (e: VMDisconnectedException) {
+            return findCoroutineInformation(lastRestoredFrame?.getCoroutineOwner(), consumer)
         } catch (e: Exception) {
             log.warn("Error while looking for stack frame", e)
         }
         return null
     }
+
+    private fun MirrorOfStackFrame.getCoroutineOwner(): ObjectReference? =
+        debugMetadata?.baseContinuationImpl?.getCoroutineOwner(that, context)
 
     private fun findCoroutineInformation(
             coroutineOwner: ObjectReference?,

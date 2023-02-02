@@ -39,17 +39,17 @@ data class MirrorOfCoroutineStackFrame(
 )
 
 data class MirrorOfStackTraceElement(
-    val declaringClass: String,
+    val className: String,
     val methodName: String,
     val fileName: String?,
     val lineNumber: Int?
 ) {
     fun stackTraceElement() =
             StackTraceElement(
-                    declaringClass,
-                    methodName,
-                    fileName,
-                    lineNumber ?: -1
+                className,
+                methodName,
+                fileName,
+                lineNumber ?: -1
             )
 }
 
@@ -87,6 +87,5 @@ data class MirrorOfBaseContinuationImpl(
     val that: ObjectReference,
     val stackTraceElement: MirrorOfStackTraceElement?,
     val fieldVariables: List<FieldVariable>,
-    val nextContinuation: ObjectReference?,
-    val coroutineOwner: ObjectReference?
+    val nextContinuation: ObjectReference?
 )

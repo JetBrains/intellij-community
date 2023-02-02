@@ -11,14 +11,42 @@ import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionCon
 class DebugMetadata private constructor(context: DefaultExecutionContext) :
         BaseMirror<ObjectReference, MirrorOfDebugProbesImpl>("kotlin.coroutines.jvm.internal.DebugMetadataKt", context) {
     private val getStackTraceElementMethod by MethodMirrorDelegate("getStackTraceElement", StackTraceElement(context))
-    private val getSpilledVariableFieldMappingMethod by MethodDelegate<ArrayReference>("getSpilledVariableFieldMapping",
-                                                                                       "(Lkotlin/coroutines/jvm/internal/BaseContinuationImpl;)[Ljava/lang/String;")
+    private val getSpilledVariableFieldMappingMethod by MethodDelegate<ArrayReference>(
+        "getSpilledVariableFieldMapping",
+        "(Lkotlin/coroutines/jvm/internal/BaseContinuationImpl;)[Ljava/lang/String;"
+    )
+    private val getStackTraceInfoMethod by MethodDelegate<ArrayReference>(
+        "getStackTraceInfoAsJsonAndReferences",
+        "(Lkotlin/coroutines/jvm/internal/BaseContinuationImpl;)[Ljava/lang/Object;"
+    )
     val baseContinuationImpl = BaseContinuationImpl(context, this)
 
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfDebugProbesImpl =
             throw IllegalStateException("Not meant to be mirrored.")
 
     fun fetchContinuationStack(continuation: ObjectReference, context: DefaultExecutionContext): MirrorOfContinuationStack {
+        if (getStackTraceInfoMethod.method != null) {
+            return fetchContinuationStackInOneCall(continuation, context)
+                ?: MirrorOfContinuationStack(continuation, emptyList())
+        }
+        return fetchContinuationStackIteratively(continuation, context)
+    }
+
+    private fun fetchContinuationStackInOneCall(
+        continuation: ObjectReference,
+        context: DefaultExecutionContext
+    ): MirrorOfContinuationStack? {
+        val array = getStackTraceInfoMethod.value(continuation, context) ?: return null
+        try {
+            val coroutineStack = CoroutinesStackTraceInfoParser.parseCoroutineStackTraceInfo(array)
+            return MirrorOfContinuationStack(continuation, coroutineStack)
+        } catch (ex: IllegalStateException) {
+            log.error(ex)
+            return null
+        }
+    }
+
+    private fun fetchContinuationStackIteratively(continuation: ObjectReference, context: DefaultExecutionContext): MirrorOfContinuationStack {
         val coroutineStack = mutableListOf<MirrorOfStackFrame>()
         var loopContinuation: ObjectReference? = continuation
         while (loopContinuation != null) {
@@ -63,19 +91,15 @@ class BaseContinuationImpl(context: DefaultExecutionContext, private val debugMe
             value,
             stackTraceElementMirror,
             fieldVariables,
-            getNextContinuation(completionValue),
-            getCoroutineOwner(completionValue)
+            getNextContinuation(completionValue)
         )
     }
 
     fun getNextContinuation(value: ObjectReference, context: DefaultExecutionContext): ObjectReference? =
         getNextContinuation(getCompletion.value(value, context))
 
-    private fun getCoroutineOwner(completion: ObjectReference?) =
-        if (completion != null && DebugProbesImplCoroutineOwner.instanceOf(completion))
-            completion
-        else
-            null
+    fun getCoroutineOwner(value: ObjectReference, context: DefaultExecutionContext): ObjectReference? =
+        getCompletion.value(value, context).takeIf { DebugProbesImplCoroutineOwner.instanceOf(it) }
 
     private fun getNextContinuation(completion: ObjectReference?) =
         if (completion != null && getCompletion.isCompatible(completion))

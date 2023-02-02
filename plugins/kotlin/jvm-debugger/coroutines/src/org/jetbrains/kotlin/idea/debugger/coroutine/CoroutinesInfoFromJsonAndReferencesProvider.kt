@@ -115,8 +115,8 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
     }
 }
 
-private inline fun <reified T> ArrayReference.toTypedList(): List<T> {
-    val result = mutableListOf<T>()
+internal inline fun <reified T> ArrayReference.toTypedList(): List<T> {
+    val result = ArrayList<T>(length())
     for (value in values) {
         if (value !is T) {
             error("Value has type ${value::class.java}, but ${T::class.java} was expected")
