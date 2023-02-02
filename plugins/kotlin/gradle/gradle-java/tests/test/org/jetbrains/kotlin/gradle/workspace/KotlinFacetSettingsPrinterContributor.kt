@@ -8,8 +8,9 @@ import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.FacetSettingsFilteringConfiguration
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.FacetSettingsFilteringTestFeature
-import org.jetbrains.kotlin.idea.projectModel.KotlinLanguageSettings
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.konan.isNative
 import kotlin.reflect.KProperty1
 
 private typealias FacetField = KProperty1<KotlinFacetSettings, *>
@@ -35,20 +36,29 @@ class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
                         println(field.name + " = " + fieldValue.componentPlatforms.joinToStringWithSorting(separator = "/"))
 
                     is LanguageVersion -> {
-                        val valueSanitized = if (fieldValue == LanguageVersion.LATEST_STABLE)
-                            CURRENT_LANGUAGE_VERSION_PLACEHOLDER
-                        else
-                            fieldValue.versionString
+                        val valueSanitized = languageVersionSanitized(fieldValue, field, module)
                         println("${field.name} = $valueSanitized")
                     }
 
                     is Collection<*> ->
-                        println(field.name + " = " + fieldValue.joinToStringWithSorting() )
+                        println(field.name + " = " + fieldValue.joinToStringWithSorting())
 
                     else -> println(field.name + " = " + fieldValue)
                 }
             }
         }
+    }
+
+    private fun PrinterContext.languageVersionSanitized(
+        fieldValue: LanguageVersion,
+        field: FacetField,
+        module: Module
+    ): String {
+        // Currently, there's an issue for apiLevel or Native modules, see KT-56382, so substitution is disabled
+        if (field == KotlinFacetSettings::apiLevel && module.platform.isNative()) return fieldValue.versionString
+
+        val languageVersionOfKgp = LanguageVersion.fromFullVersionString(kotlinGradlePluginVersion.toString())
+        return if (fieldValue == languageVersionOfKgp) CURRENT_KGP_LANGUAGE_VERSION_PLACEHOLDER else fieldValue.versionString
     }
 
     private fun FacetSettingsFilteringConfiguration.computeFieldsToPrint(): Set<FacetField> {
@@ -60,7 +70,7 @@ class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
     private fun Set<FacetField>.ensureOnlyKnownFields(): Set<FacetField> {
         val diff = this - ALL_FACET_FIELDS_TO_PRINT
         require(diff.isEmpty()) {
-            "Unknown KotlinFacetSettings fields requested: ${diff.joinToString { it.name } }\n" +
+            "Unknown KotlinFacetSettings fields requested: ${diff.joinToString { it.name }}\n" +
                     "Please, add them to `KotlinFaceSettingsPrinterContributor.ALL_FACET_FIELDS_TO_PRINT"
         }
         return this
@@ -77,6 +87,6 @@ class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
             KotlinFacetSettings::targetPlatform
         )
 
-        private val CURRENT_LANGUAGE_VERSION_PLACEHOLDER = "{{LATEST_STABLE}}"
+        private val CURRENT_KGP_LANGUAGE_VERSION_PLACEHOLDER = "{{LATEST_STABLE}}"
     }
 }
