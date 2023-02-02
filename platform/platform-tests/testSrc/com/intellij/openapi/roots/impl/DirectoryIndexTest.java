@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.ExtensionTestUtil;
@@ -16,7 +15,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -25,7 +23,10 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 @HeavyPlatformTestCase.WrapInCommand
 public class DirectoryIndexTest extends DirectoryIndexTestCase {
@@ -186,115 +187,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     super.tearDown();
   }
 
-  //everything except order entry checks is covered by other tests 
-  public void testDirInfos() {
-    assertNotInProject(myRootVFile);
-
-    // beware: files in directory index
-    checkInfo(myFileLibSrc, null, false, true, "", null, null, myModule);
-    checkInfo(myFileLibCls, null, true, false, "", null, null, myModule);
-
-    checkInfo(myLibAdditionalOutsideSrcDir, null, false, true, "", null, null);
-    checkInfo(myLibAdditionalOutsideClsDir, null, true, false, "", null, null);
-    assertExcludedFromProject(myLibAdditionalOutsideExcludedDir);
-    assertIndexableContent(Arrays.asList(myLibAdditionalOutsideSrcDir, myLibAdditionalOutsideClsDir),
-                           Collections.singletonList(myLibAdditionalOutsideExcludedDir));
-
-    checkInfo(myModule1Dir, myModule, false, false, null, null, null);
-    checkInfo(mySrcDir1, myModule, false, false, "", mySrcDir1Folder, JavaSourceRootType.SOURCE, myModule);
-    checkInfo(myPack1Dir, myModule, false, false, "pack1", mySrcDir1Folder, JavaSourceRootType.SOURCE, myModule);
-    checkInfo(myTestSrc1, myModule, false, false, "", myTestSrc1Folder, JavaSourceRootType.TEST_SOURCE, myModule);
-    checkInfo(myPack2Dir, myModule, false, false, "pack2", myTestSrc1Folder, JavaSourceRootType.TEST_SOURCE, myModule);
-    checkInfo(myResDir, myModule, false, false, "", myResDirFolder, JavaResourceRootType.RESOURCE, myModule);
-    checkInfo(myTestResDir, myModule, false, false, "", myTestResDirFolder, JavaResourceRootType.TEST_RESOURCE, myModule);
-
-    checkInfo(myLibDir, myModule, false, false, null, null, null);
-    checkInfo(myLibSrcDir, myModule, false, true, "", null, null, myModule2, myModule3);
-    checkInfo(myLibClsDir, myModule, true, false, "", null, null, myModule2, myModule3);
-
-    assertEquals(myLibSrcDir, assertInProject(myLibSrcDir).getSourceRoot());
-
-    checkInfo(myModule2Dir, myModule2, false, false, null, null, null);
-    checkInfo(mySrcDir2, myModule2, false, false, "", mySrcDir2Folder, JavaSourceRootType.SOURCE, myModule2, myModule3);
-    assertExcluded(myExcludeDir, myModule2);
-    assertExcluded(myExcludedLibClsDir, myModule);
-    assertExcluded(myExcludedLibSrcDir, myModule);
-
-    assertEquals(myModule1Dir, assertInProject(myLibClsDir).getContentRoot());
-
-    checkInfo(myModule3Dir, myModule3, false, false, null, null, null);
-  }
-
   private static OrderEntry[] toArray(Collection<OrderEntry> orderEntries) {
     return orderEntries.toArray(OrderEntry.EMPTY_ARRAY);
-  }
-
-  //everything except order entry checks is covered by NestedModuleAndLibraryRootsInProjectFileIndex 
-  public void testModuleSourceAsLibrarySource() {
-    ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Collections.emptyList(), Collections.singletonList(mySrcDir1.getUrl()));
-
-    checkInfo(mySrcDir1, myModule, false, true, "", mySrcDir1Folder, JavaSourceRootType.SOURCE, myModule, myModule);
-    Collection<OrderEntry> entriesResult = myFileIndex.getOrderEntriesForFile(mySrcDir1);
-    OrderEntry[] entries = toArray(entriesResult);
-
-    assertInstanceOf(entries[0], LibraryOrderEntry.class);
-    assertInstanceOf(entries[1], ModuleSourceOrderEntry.class);
-
-    String packageName = WorkspaceFileIndexEx.IS_ENABLED ? "" : "testSrc";
-    checkInfo(myTestSrc1, myModule, false, true, packageName, myTestSrc1Folder, JavaSourceRootType.TEST_SOURCE, myModule, myModule);
-    entriesResult = myFileIndex.getOrderEntriesForFile(myTestSrc1);
-    entries = toArray(entriesResult);
-    assertInstanceOf(entries[0], LibraryOrderEntry.class);
-    assertInstanceOf(entries[1], ModuleSourceOrderEntry.class);
-  }
-
-  //everything except order entry checks is covered by NestedModuleAndLibraryRootsInProjectFileIndex 
-  public void testModuleSourceAsLibraryClasses() {
-    ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Collections.singletonList(mySrcDir1.getUrl()), Collections.emptyList());
-    checkInfo(mySrcDir1, myModule, true, false, "", mySrcDir1Folder, JavaSourceRootType.SOURCE, myModule);
-    assertInstanceOf(assertOneElement(toArray(myFileIndex.getOrderEntriesForFile(mySrcDir1))), ModuleSourceOrderEntry.class);
-  }
-
-  //everything except order entry checks is covered by NestedModuleRootsInProjectFileIndex 
-  public void testModulesWithSameSourceContentRoot() {
-    // now our API allows this (ReformatCodeActionTest), although UI doesn't. Maybe API shouldn't allow it as well?
-    PsiTestUtil.addContentRoot(myModule2, myModule1Dir);
-    PsiTestUtil.addSourceRoot(myModule2, mySrcDir1);
-
-    checkInfo(myModule1Dir, myModule, false, false, null, null, null);
-    checkInfo(mySrcDir1, myModule, false, false, "", mySrcDir1Folder, JavaSourceRootType.SOURCE, myModule3, myModule);
-    checkInfo(myTestSrc1, myModule, false, false, "", myTestSrc1Folder, JavaSourceRootType.TEST_SOURCE, myModule3, myModule);
-    checkInfo(myResDir, myModule, false, false, "", myResDirFolder, JavaResourceRootType.RESOURCE, myModule);
-
-    checkInfo(mySrcDir2, myModule2, false, false, "", mySrcDir2Folder, JavaSourceRootType.SOURCE, myModule2, myModule3);
-    assertEquals(myModule2Dir, myFileIndex.getContentRootForFile(mySrcDir2));
-  }
-
-  //everything except order entry checks is covered by NestedModuleRootsInProjectFileIndex 
-  public void testModuleWithSameSourceRoot() {
-    SourceFolder sourceFolder = PsiTestUtil.addSourceRoot(myModule2, mySrcDir1);
-    checkInfo(mySrcDir1, myModule2, false, false, "", sourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
-    String packageName = WorkspaceFileIndexEx.IS_ENABLED ? "" : "testSrc";
-    checkInfo(myTestSrc1, myModule2, false, false, packageName, sourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
-  }
-  
-  public void testProcessingNestedContentRootsOfExcludedDirsOnCreation() {
-    String rootPath = myModule1Dir.getPath();
-    final File f = new File(rootPath, "excludedDir/dir/anotherContentRoot");
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-      rootModel.getContentEntries()[0]
-        .addExcludeFolder(VfsUtilCore.pathToUrl(f.getParentFile().getParent()));
-      rootModel.commit();
-
-      ModuleRootModificationUtil.addContentRoot(myModule2, FileUtil.toSystemIndependentName(f.getPath()));
-
-      assertTrue(f.getPath(), f.exists() || f.mkdirs());
-      LocalFileSystem.getInstance().refresh(false);
-    });
-
-    assertExcluded(LocalFileSystem.getInstance().findFileByIoFile(f.getParentFile().getParentFile()), myModule);
-    assertInProject(LocalFileSystem.getInstance().findFileByIoFile(f));
   }
 
   public void testSyntheticLibraryInContent() {
@@ -305,36 +199,6 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     checkInfo(myLibAdditionalExcludedDir, myModule, false, false, null, null, null);
     assertInProject(myLibAdditionalExcludedDir);
     assertIndexableContent(Arrays.asList(myLibAdditionalSrcDir, myLibAdditionalSrcFile, myLibAdditionalExcludedDir, myLibAdditionalClsDir, myLibAdditionalClsFile), null);
-  }
-
-  public void testLibraryDirInContent() {
-    ModuleRootModificationUtil.addModuleLibrary(myModule, myModule1Dir.getUrl());
-
-    checkInfo(myModule1Dir, myModule, true, false, "", null, null, myModule);
-    checkInfo(mySrcDir1, myModule, true, false, "", mySrcDir1Folder, JavaSourceRootType.SOURCE, myModule);
-
-    String packageName = WorkspaceFileIndexEx.IS_ENABLED ? null : "module2";
-    checkInfo(myModule2Dir, myModule2, true, false, packageName, null, null, myModule);
-    checkInfo(mySrcDir2, myModule2, true, false, "", mySrcDir2Folder, JavaSourceRootType.SOURCE, myModule2, myModule3);
-    checkInfo(myExcludeDir, null, true, false, "module2.src2.excluded", null, null, myModule3);
-
-    checkInfo(myLibDir, myModule, true, false, "lib", null, null, myModule);
-    checkInfo(myLibClsDir, myModule, true, false, "", null, null, myModule2, myModule3);
-
-    //myModule is included into order entries instead of myModule2 because classes root for libraries dominates on source roots
-    checkInfo(myLibSrcDir, myModule, true, true, "", null, null, myModule, myModule3);
-
-    checkInfo(myResDir, myModule, true, false, "", myResDirFolder, JavaResourceRootType.RESOURCE, myModule);
-    assertInstanceOf(assertOneElement(toArray(myFileIndex.getOrderEntriesForFile(myResDir))), ModuleSourceOrderEntry.class);
-
-    if (WorkspaceFileIndexEx.IS_ENABLED) {
-      assertExcluded(myExcludedLibSrcDir, myModule);
-      assertExcluded(myExcludedLibClsDir, myModule);
-    }
-    else {
-      checkInfo(myExcludedLibSrcDir, null, true, false, "lib.src.exc", null, null, myModule3, myModule);
-      checkInfo(myExcludedLibClsDir, null, true, false, "lib.cls.exc", null, null, myModule3);
-    }
   }
 
   public void testFileContentRootsModifications() {
@@ -395,54 +259,6 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     checkInfo(fileSourceRoot, myModule, false, false, "", fileSourceFolder, JavaSourceRootType.SOURCE, myModule);
     assertTrue(myFileIndex.isInContent(fileSourceRoot));
     assertTrue(myFileIndex.isInSource(fileSourceRoot));
-  }
-
-  //everything except order entry checks is covered by ModuleRootsInProjectFileIndexTest 
-  public void testSourceContentRootsUnderExcludedRoot() {
-    VirtualFile contentRoot = createChildDirectory(myExcludeDir, "content");
-    PsiTestUtil.addContentRoot(myModule2, contentRoot);
-    checkInfo(contentRoot, myModule2, false, false, null, null, null, myModule2, myModule3);
-    VirtualFile excludedFile = createChildData(myExcludeDir, "excluded.txt");
-
-    VirtualFile sourceRoot = createChildDirectory(myExcludeDir, "src");
-    VirtualFile sourceFile = createChildData(sourceRoot, "source.txt");
-    SourceFolder sourceFolder = PsiTestUtil.addSourceRoot(myModule2, sourceRoot);
-    assertEquals(myModule2Dir, assertInProject(sourceRoot).getContentRoot());
-    checkInfo(sourceRoot, myModule2, false, false, "", sourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
-
-    VirtualFile contentSourceRoot = createChildDirectory(myExcludeDir, "content-src");
-    VirtualFile contentSourceFile = createChildData(sourceRoot, "content-source.txt");
-    SourceFolder contentSourceFolder = PsiTestUtil.addSourceContentToRoots(myModule2, contentSourceRoot);
-    checkInfo(contentSourceRoot, myModule2, false, false, "", contentSourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
-
-    assertIteratedContent(myModule2,
-                          Arrays.asList(sourceFile, contentSourceFile, sourceRoot, contentSourceRoot),
-                          Arrays.asList(excludedFile, myExcludeDir));
-  }
-
-  //everything except order entry checks is covered by ModuleRootsInProjectFileIndexTest 
-  public void testSourceContentRootsUnderExcludedRootUnderSourceRoot() {
-    VirtualFile excluded = createChildDirectory(myModule2Dir, "excluded");
-    PsiTestUtil.addExcludedRoot(myModule2, excluded);
-    VirtualFile excludedFile = createChildData(excluded, "excluded.txt");
-
-    VirtualFile contentRoot = createChildDirectory(excluded, "content");
-    PsiTestUtil.addContentRoot(myModule2, contentRoot);
-    checkInfo(contentRoot, myModule2, false, false, null, null, null);
-
-    VirtualFile sourceRoot = createChildDirectory(excluded, "src");
-    SourceFolder sourceFolder = PsiTestUtil.addSourceRoot(myModule2, sourceRoot);
-    VirtualFile sourceFile = createChildData(sourceRoot, "source.txt");
-    assertEquals(myModule2Dir, assertInProject(sourceRoot).getContentRoot());
-    checkInfo(sourceRoot, myModule2, false, false, "", sourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
-
-    VirtualFile contentSourceRoot = createChildDirectory(excluded, "content-src");
-    VirtualFile contentSourceFile = createChildData(contentSourceRoot, "content-source.txt");
-    SourceFolder contentSourceFolder = PsiTestUtil.addSourceContentToRoots(myModule2, contentSourceRoot);
-    checkInfo(contentSourceRoot, myModule2, false, false, "", contentSourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
-
-    assertIteratedContent(myModule2, Arrays.asList(sourceFile, contentSourceFile, sourceRoot, contentSourceRoot),
-                          Arrays.asList(excludedFile, myExcludeDir));
   }
 
   private void checkInfo(VirtualFile file,
