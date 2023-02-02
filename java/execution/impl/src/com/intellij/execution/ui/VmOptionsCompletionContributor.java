@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -47,7 +48,7 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
     opt("agentlib:", "load native agent library <libname>, e.g. -agentlib:jdwp"),
     opt("javaagent:", "load Java programming language agent"),
     opt("D", "set a system property in format <name>=<value>"),
-    opt("XX:", "specify non-standard JVM-specific option"),
+    opt("XX:", "specify non-standard JVM-specific option")
   };
   
   private static VMOption opt(@NotNull String name, @NotNull String doc) {
@@ -67,33 +68,41 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
     while (offset > 0 && Character.isAlphabetic(currentText.charAt(offset - 1))) {
       offset--;
     }
-    if (addXxCompletion(result, data, offset, currentText) || addSimpleOptions(result, data, offset, currentText)) {
+    JavaRunConfigurationBase settings = document.getUserData(VmOptionsEditor.SETTINGS_KEY);
+    if (addXxCompletion(result, data, offset, currentText) || addSimpleOptions(result, settings, data, offset, currentText)) {
       result.stopHere();
     }
   }
 
   private static boolean addSimpleOptions(@NotNull CompletionResultSet result,
+                                          @Nullable JavaRunConfigurationBase settings, 
                                           @NotNull JdkOptionsData data,
                                           int offset,
                                           @NotNull String text) {
     String[] prefixes = {"--", "-", ""};
     for (String prefix : prefixes) {
       if (hasOptionPrefix(text, offset, prefix)) {
-        addDashOptions(result, data, prefix);
+        addDashOptions(result, settings, data, prefix);
         return true;
       }
     }
     return false;
   }
 
-  private static void addDashOptions(@NotNull CompletionResultSet result, @NotNull JdkOptionsData data, String prefix) {
-    Stream.concat(
+  private static void addDashOptions(@NotNull CompletionResultSet result,
+                                     @Nullable JavaRunConfigurationBase settings,
+                                     @NotNull JdkOptionsData data, String prefix) {
+    Stream.of(
       data.getOptions().stream().filter(option1 -> option1.getVariant() != VMOptionVariant.XX),
-      Stream.of(STANDARD_OPTIONS)).forEach(option -> {
+      Stream.of(STANDARD_OPTIONS), 
+      settings == null ? null : settings.getKnownVMOptions().stream())
+      .flatMap(Function.identity())
+      .forEach(option -> {
       String fullLookup = option.getVariant().prefix() + option.getOptionName();
       if (!fullLookup.startsWith(prefix)) return;
       String lookup = fullLookup.substring(prefix.length());
-      result.addElement(LookupElementBuilder.create(option.createPointer(), lookup)
+      result.addElement(LookupElementBuilder.create(option.createPointer(), lookup + option.getVariant().suffix())
+                          .withTypeText(option.getType())
                           .withPresentableText(fullLookup));
     });
   }

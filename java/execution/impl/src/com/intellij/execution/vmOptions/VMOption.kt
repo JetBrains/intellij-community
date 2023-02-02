@@ -53,19 +53,36 @@ data class VMOption(
       })
     return DocumentationResult.Companion.documentation(table.toString())
   }
+  
+  companion object {
+    /**
+     * Create a new option specifying -D property
+     */
+    @JvmStatic
+    fun property(name: String, type: String?, doc: String?): VMOption {
+      return VMOption(name, type, null, VMOptionKind.Product, doc, VMOptionVariant.D)
+    }
+  }
 }
 
 enum class VMOptionVariant {
   DASH,
   DASH_DASH,
+  D,
   XX,
   X;
 
   fun prefix(): @NlsSafe String = when (this) {
     DASH -> "-"
     DASH_DASH -> "--"
+    D -> "-D"
     X -> "-X"
     XX -> "-XX:"
+  }
+
+  fun suffix(): @NlsSafe String = when(this) {
+    D, XX -> "="
+    else -> ""
   }
 }
 

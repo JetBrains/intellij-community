@@ -25,7 +25,8 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     configure("<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("--add-exports", "--add-opens",
-                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-dsa", "-ea", "-enableassertions", "-esa",
+                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-Djava.awt.headless=",
+                         "-dsa", "-Duser.dir=", "-Duser.home=", "-Duser.name=", "-ea", "-enableassertions", "-esa",
                          "-javaagent:", "-Xmx", "-XX:"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
     checkPresentation(myFixture.getLookupElements()[2], "-agentlib:|null/null");
@@ -36,7 +37,8 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     configure("-<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("-add-exports", "-add-opens",
-                         "agentlib:", "agentpath:", "D", "da", "disableassertions", "dsa", "ea", "enableassertions", "esa",
+                         "agentlib:", "agentpath:", "D", "da", "disableassertions", "Djava.awt.headless=",
+                         "dsa", "Duser.dir=", "Duser.home=", "Duser.name=", "ea", "enableassertions", "esa",
                          "javaagent:", "Xmx", "XX:"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
     checkPresentation(myFixture.getLookupElements()[2], "-agentlib:|null/null");
