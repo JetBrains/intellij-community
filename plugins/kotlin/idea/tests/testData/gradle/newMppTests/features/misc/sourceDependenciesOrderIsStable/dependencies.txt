@@ -1,0 +1,40 @@
+MODULES
+    my-app
+    my-app.consumer
+    my-app.consumer.commonMain
+        my-app.lib2.commonMain (COMPILE)
+        my-app.lib1.commonMain (COMPILE)
+    my-app.consumer.commonTest
+        my-app.lib2.commonMain (TEST)
+        my-app.lib1.commonMain (TEST)
+    my-app.consumer.jvmMain
+        my-app.lib2.jvmMain (COMPILE)
+        my-app.lib2.commonMain (COMPILE)
+        my-app.lib1.jvmMain (COMPILE)
+        my-app.lib2.commonMain (COMPILE)
+        my-app.lib1.commonMain (COMPILE)
+        my-app.lib1.commonMain (COMPILE)
+    my-app.consumer.jvmTest
+        my-app.lib2.jvmMain (TEST)
+        my-app.lib2.commonMain (TEST)
+        my-app.lib2.commonMain (TEST)
+        my-app.lib1.commonMain (TEST)
+        my-app.lib1.jvmMain (TEST)
+        my-app.lib1.commonMain (TEST)
+    my-app.consumer.linuxX64Main
+        my-app.lib1.linuxX64Main (COMPILE)
+        my-app.lib2.linuxX64Main (COMPILE)
+        my-app.lib2.commonMain (COMPILE)
+        my-app.lib1.commonMain (COMPILE)
+    my-app.consumer.linuxX64Test
+        my-app.lib1.linuxX64Main (TEST)
+        my-app.lib2.linuxX64Main (TEST)
+        my-app.lib2.commonMain (TEST)
+        my-app.lib1.commonMain (TEST)
+
+Test configuration:
+- hiding following roots: resources, android-specific roots, generated
+- showing only following facet fields: targetPlatform
+- hiding source modules matching .*lib.*
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- hiding dependencies matching .*consumer.*

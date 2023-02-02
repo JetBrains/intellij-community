@@ -18,6 +18,8 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
         val filteredEntries = orderEntries.filterNot { shouldRemoveOrderEntry(it) }
         if (filteredEntries.isEmpty()) return
 
+        val testConfig = testConfiguration.getConfiguration(OrderEntriesFilteringTestFeature)
+
         val dependsOnModules = module.implementedModules.toSet()
         val friendModules: Collection<ModuleInfo> = module.sourceModuleInfos.singleOrNull()
             ?.modulesWhoseInternalsAreVisible()
@@ -38,13 +40,19 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
             }
         }
 
-        val orderEntriesFoldedIfNecessary = if (testConfiguration.getConfiguration(OrderEntriesFilteringTestFeature).hideKonanDist)
+
+        val orderEntriesFoldedIfNecessary = if (testConfig.hideKonanDist)
             orderEntriesRendered
         else
             foldKonanDist(orderEntriesRendered, module)
 
+        val orderEntriesSortedIfNecessary = if (!testConfig.sortDependencies)
+            orderEntriesFoldedIfNecessary
+        else
+            orderEntriesFoldedIfNecessary.sorted()
+
         indented {
-            orderEntriesFoldedIfNecessary.forEach { println(it) }
+            orderEntriesSortedIfNecessary.forEach { println(it) }
         }
     }
 
