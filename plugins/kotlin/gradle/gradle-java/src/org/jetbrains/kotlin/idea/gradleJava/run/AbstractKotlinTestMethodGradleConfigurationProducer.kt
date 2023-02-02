@@ -153,7 +153,10 @@ abstract class AbstractKotlinTestMethodGradleConfigurationProducer
         if (GradleConstants.SYSTEM_ID != configuration.settings.externalSystemId) return false
         if (sourceElement.isNull) return false
 
-        (configuration as? GradleRunConfiguration)?.isScriptDebugEnabled = false
+        (configuration as? GradleRunConfiguration)?.apply {
+            isScriptDebugEnabled = false
+            isForceTestExecution = true
+        }
         return doSetupConfigurationFromContext(configuration, context, sourceElement)
     }
 
