@@ -671,6 +671,13 @@ private class CellBuilderImpl<T : JComponent>(
     }
     return this
   }
+
+  override fun withLeftGap(gapLeft: Int): CellBuilder<T> {
+    builder.updateComponentConstraints(viewComponent) {
+      horizontal.gapBefore = gapToBoundSize(gapLeft, true)
+    }
+    return this
+  }
 }
 
 private val JComponent.origin: JComponent

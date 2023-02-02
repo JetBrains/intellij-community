@@ -26,7 +26,7 @@ import java.util.Map;
 
 public class NotificationsConfigurablePanel {
 
-  private class NotificationsTreeTable {
+  private static class NotificationsTreeTable {
     private static final int ID_COLUMN = 0;
     private static final int DISPLAY_TYPE_COLUMN = 1;
     private static final int LOG_COLUMN = 2;
