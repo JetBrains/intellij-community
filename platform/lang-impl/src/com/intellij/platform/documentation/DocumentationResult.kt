@@ -50,7 +50,7 @@ sealed interface DocumentationResult {
 
     /**
      * Same as asynchronous overload, but blocking.
-     * The [updates] is collected in [IO context][kotlinx.coroutines.Dispatchers.IO].
+     * The [updates] are collected in [IO context][kotlinx.coroutines.Dispatchers.IO].
      */
     fun blockingUpdates(updates: BlockingDocumentationContentFlow): Documentation
   }

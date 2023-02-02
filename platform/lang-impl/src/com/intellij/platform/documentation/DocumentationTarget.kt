@@ -15,8 +15,8 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
  *
  * To provide [DocumentationTarget] implement and register:
  * - by an offset in a [file][com.intellij.psi.PsiFile] - [DocumentationTargetProvider];
- * - by a target [symbol][com.intellij.model.Symbol] - [SymbolDocumentationTargetProvider][com.intellij.lang.documentation.symbol.SymbolDocumentationTargetProvider] (or see other options in `SymbolDocumentationTargetProvider` docs);
- * - by a target [element][com.intellij.psi.PsiElement] - [PsiDocumentationTargetProvider][com.intellij.lang.documentation.psi.PsiDocumentationTargetProvider].
+ * - by a target [symbol][com.intellij.model.Symbol] - [SymbolDocumentationTargetProvider] (or see other options in its docs);
+ * - by a target [element][com.intellij.psi.PsiElement] - [PsiDocumentationTargetProvider].
  */
 @Experimental
 @OverrideOnly
@@ -39,7 +39,6 @@ interface DocumentationTarget {
   @RequiresBackgroundThread
   fun computePresentation(): TargetPresentation
 
-  @Suppress("DEPRECATION") // deprecated JvmDefault
   val navigatable: Navigatable?
     @RequiresReadLock
     @RequiresBackgroundThread
@@ -49,7 +48,7 @@ interface DocumentationTarget {
    * TODO consider extracting separate interface ShortDocumentationTarget
    * TODO consider showing full doc on ctrl+hover
    *
-   * @return a HTML string to show in the editor hint when this target is highlighted by ctrl+mouse hover,
+   * @return an HTML string to show in the editor hint when this target is highlighted by ctrl+mouse hover,
    * or `null` if this target doesn't need a hint
    */
   @RequiresReadLock
