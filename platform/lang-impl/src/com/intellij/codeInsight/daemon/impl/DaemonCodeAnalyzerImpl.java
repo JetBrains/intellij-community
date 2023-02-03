@@ -1060,7 +1060,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       return;
     }
     if (myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
-      stopProcess(true, "more documents to commit: " + Arrays.toString(myPsiDocumentManager.getUncommittedDocuments()));
+      stopProcess(true, "more documents to commit: " + ReadAction.compute(() -> Arrays.toString(myPsiDocumentManager.getUncommittedDocuments())));
       return;
     }
     try {
