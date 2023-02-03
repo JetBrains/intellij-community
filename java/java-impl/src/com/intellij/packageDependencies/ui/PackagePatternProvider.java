@@ -38,20 +38,19 @@ public class PackagePatternProvider extends PatternDialectProvider {
   @Override
   public PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively) {
     GeneralGroupNode groupParent = getGroupParent(node);
-    String scope1 = PatternPackageSet.SCOPE_ANY;
+    PatternPackageSet.Scope scope = PatternPackageSet.Scope.ANY;
     if (groupParent != null) {
       String name = groupParent.toString();
       if (TreeModelBuilder.getProductionName().equals(name)) {
-        scope1 = PatternPackageSet.SCOPE_SOURCE;
+        scope = PatternPackageSet.Scope.SOURCE;
       }
       else if (TreeModelBuilder.getTestName().equals(name)) {
-        scope1 = PatternPackageSet.SCOPE_TEST;
+        scope = PatternPackageSet.Scope.TEST;
       }
       else if (TreeModelBuilder.getLibraryName().equals(name)) {
-        scope1 = PatternPackageSet.SCOPE_LIBRARY;
+        scope = PatternPackageSet.Scope.LIBRARY;
       }
     }
-    final String scope = scope1;
     if (node instanceof ModuleGroupNode){
       if (!recursively) return null;
       return new PatternPackageSet("*..*", scope, PatternDialectProvider.getGroupModulePattern((ModuleGroupNode)node));
