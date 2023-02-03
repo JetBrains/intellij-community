@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.nj2k.symbols
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.tree.JKDeclaration
 import org.jetbrains.kotlin.nj2k.tree.JKFile
@@ -57,13 +58,13 @@ interface JKMultiverseSymbol<T : PsiNamedElement> : JKSymbol {
     override val fqName: String
         get() = target.kotlinFqName?.asString() ?: name
     override val name: String
-        get() = target.name ?: ""
+        get() = target.name ?: SpecialNames.ANONYMOUS.asString()
 }
 
 interface JKMultiverseKtSymbol<T : KtNamedDeclaration> : JKSymbol {
     override val target: T
     override val name: String
-        get() = target.name ?: ""
+        get() = target.name ?: SpecialNames.ANONYMOUS.asString()
     override val declaredIn: JKSymbol?
         get() = target.getStrictParentOfType<KtDeclaration>()?.let { symbolProvider.provideDirectSymbol(it) }
     override val fqName: String
