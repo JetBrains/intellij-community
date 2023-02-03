@@ -1,19 +1,9 @@
 /* Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. */
-.language-mermaid > img, .mermaid > svg {
+.language-mermaid > img {
     max-width: 100%;
-}
-
-.mermaid {
-    position: relative;
 }
 
 .mermaid > .error-text {
     color: red;
-    background: rgba(255, 255, 255, 0.7);
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
     white-space: pre-wrap;
 }

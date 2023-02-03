@@ -22,7 +22,7 @@ suspend fun renderBlock(block: HTMLElement, cacheId: String, content: String): N
   try {
     Mermaid.api.renderAsync(id, content, block) { svg ->
       block.innerHTML = svg
-      node = block.childNodes.asList().firstOrNull { it.nodeName == "svg" }
+      node = block.getSvgElement()
       addExplicitDimensionsAttributes(node.unsafeCast<HTMLElement>())
     }.await()
 
@@ -30,11 +30,19 @@ suspend fun renderBlock(block: HTMLElement, cacheId: String, content: String): N
   } catch (exception: Throwable) {
     console.error("Error while generating blocks:\n", exception)
 
-    block.innerHTML = nodeToLastValidHTML.getOrElse(block.getLanguageMermaidCodeBlockParent()) { "" }
-      .plus("<div class=\"error-text\">${exception.message}</div>")
+    block.innerHTML = "<div class=\"error-text\">${exception.message}</div>"
+      .plus(nodeToLastValidHTML.getOrElse(block.getLanguageMermaidCodeBlockParent()) { "" })
+
+    block.getSvgElement()?.setAttribute("opacity", "50%")
+
     node = null
   }
   return node
+}
+
+private fun HTMLElement.getSvgElement(): Element? {
+  return childNodes.asList().filterIsInstance<Element>()
+    .firstOrNull { it.nodeName == "svg" }
 }
 
 private fun HTMLElement.getLanguageMermaidCodeBlockParent(): Element {
