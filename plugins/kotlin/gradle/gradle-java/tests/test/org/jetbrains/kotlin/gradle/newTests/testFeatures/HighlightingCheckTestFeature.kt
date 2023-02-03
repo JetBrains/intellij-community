@@ -5,7 +5,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.gradle.newTests.*
 import org.jetbrains.kotlin.idea.codeInsight.gradle.HighlightingCheck
 
-object HighlightingCheckTestFeature : TestFeature<HighlightingCheckConfiguration> {
+internal object HighlightingCheckTestFeature : TestFeature<HighlightingCheckConfiguration> {
     override fun renderConfiguration(configuration: HighlightingCheckConfiguration): List<String> {
         val hiddenHighlightingEntries: List<String> = buildList {
             if (configuration.skipCodeHighlighting) add("code highlighting")
@@ -18,6 +18,19 @@ object HighlightingCheckTestFeature : TestFeature<HighlightingCheckConfiguration
     }
 
     override fun createDefaultConfiguration() = HighlightingCheckConfiguration()
+
+    override fun KotlinMppTestsContext.afterImport() {
+        val highlightingConfig = testConfiguration.getConfiguration(HighlightingCheckTestFeature)
+        if (highlightingConfig.skipCodeHighlighting) return
+        HighlightingCheck(
+            project = testProject,
+            projectPath = testProjectRoot.path,
+            testDataDirectory = testDataDirectoryProvider.testDataDirectory(),
+            testLineMarkers = !highlightingConfig.hideLineMarkers,
+            severityLevel = highlightingConfig.hideHighlightsBelow,
+            correspondingFilePostfix = ""
+        ).invokeOnAllModules()
+    }
 }
 
 class HighlightingCheckConfiguration {
@@ -39,25 +52,6 @@ interface HighlightingCheckDsl {
     var TestConfigurationDslScope.hideHighlightsBelow: HighlightSeverity
         get() = configuration.hideHighlightsBelow
         set(value) { configuration.hideHighlightsBelow = value }
-}
-
-object HighlightingCheckService {
-    fun runHighlightingCheckOnAllModules(
-        testConfiguration: TestConfiguration,
-        testInstance: AbstractKotlinMppGradleImportingTest
-    ) {
-        val highlightingConfig = testConfiguration.getConfiguration(HighlightingCheckTestFeature)
-        if (highlightingConfig.skipCodeHighlighting) return
-        HighlightingCheck(
-            project = testInstance.importedProject,
-            projectPath = testInstance.importedProjectRoot.path,
-            testDataDirectory = testInstance.testDataDirectoryService.testDataDirectory(),
-            testLineMarkers = !highlightingConfig.hideLineMarkers,
-            severityLevel = highlightingConfig.hideHighlightsBelow,
-            correspondingFilePostfix = ""
-        ).invokeOnAllModules()
-    }
-
 }
 
 private val TestConfigurationDslScope.configuration
