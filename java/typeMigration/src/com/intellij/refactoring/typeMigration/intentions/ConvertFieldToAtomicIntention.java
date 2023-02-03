@@ -69,7 +69,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     if (variable == null) return IntentionPreviewInfo.EMPTY;
     PsiType type = variable.getType();
     String toType = myFromToMap.get(type);
-    if (toType == null) return IntentionPreviewInfo.EMPTY;
+    if (toType == null) toType = AtomicReference.class.getName();
     String variableName = variable.getName();
     String presentableText = StringUtil.getShortName(toType);
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, null,
