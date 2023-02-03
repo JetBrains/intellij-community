@@ -152,8 +152,16 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
     updateFont()
   }
 
+  override fun addImpl(comp: Component, constraints: Any?, index: Int) {
+    super.addImpl(comp, constraints, index)
+    comp.font = font
+  }
+
   private fun updateFont() {
     font = JBUI.CurrentTheme.Toolbar.experimentalToolbarFont()
+    for (component in components) {
+      component.font = font
+    }
   }
 
 }
