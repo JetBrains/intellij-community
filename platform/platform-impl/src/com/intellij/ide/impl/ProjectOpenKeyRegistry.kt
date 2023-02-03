@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
-import com.intellij.ide.EnvironmentKey
-import com.intellij.ide.EnvironmentKeyRegistry
+import com.intellij.ide.environment.EnvironmentKey
+import com.intellij.ide.environment.EnvironmentKeyRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 
@@ -11,7 +11,7 @@ class ProjectOpenKeyRegistry : EnvironmentKeyRegistry {
     val PROJECT_OPEN_PROCESSOR = EnvironmentKey.createKey("project.open.type", ProjectBundle.messagePointer("project.open.processor.environment.property"))
   }
 
-  override fun getRequiredKeys(project: Project): List<EnvironmentKey> = listOf()
+  override suspend fun getRequiredKeys(project: Project): List<EnvironmentKey> = listOf()
 
   override fun getAllKeys(): List<EnvironmentKey> = listOf(
     PROJECT_OPEN_PROCESSOR,

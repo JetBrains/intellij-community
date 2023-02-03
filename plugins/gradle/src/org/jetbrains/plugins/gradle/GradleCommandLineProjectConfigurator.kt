@@ -6,7 +6,7 @@ import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
 import com.intellij.ide.warmup.WarmupStatus
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.ide.EnvironmentParametersService
+import com.intellij.ide.environment.EnvironmentParametersService
 import com.intellij.ide.impl.ProjectOpenKeyRegistry
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
@@ -18,6 +18,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -61,9 +62,9 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
   override fun configureProject(project: Project, context: ConfiguratorContext) {
     val basePath = project.basePath ?: return
     val service = service<EnvironmentParametersService>()
-    val projectSelectionKey = runCatching { service.getEnvironmentValue(project, ProjectOpenKeyRegistry.PROJECT_OPEN_PROCESSOR) }.getOrNull()
+    val projectSelectionKey = runCatching { runBlockingCancellable { service.getEnvironmentValue(ProjectOpenKeyRegistry.PROJECT_OPEN_PROCESSOR) } }.getOrNull()
     if (projectSelectionKey != null && projectSelectionKey != "Gradle") {
-      // something else was selected to open the project
+       // something else was selected to open the project
       return
     }
     val state = GradleImportHintService.getInstance(project).state
