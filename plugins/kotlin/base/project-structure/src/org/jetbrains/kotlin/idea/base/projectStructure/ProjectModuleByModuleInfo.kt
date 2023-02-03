@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -73,7 +74,12 @@ internal class KtSourceModuleByModuleInfo(
     override val directRegularDependencies: List<KtModule>
         get() = moduleInfo.dependencies(provider)
 
-    override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
+    override val contentScope: GlobalSearchScope
+        get() = if (moduleInfo is ModuleTestSourceInfo) {
+            val testOnlyScope = GlobalSearchScopes.projectTestScope(project).intersectWith(ideaModule.moduleTestSourceScope)
+            KotlinResolveScopeEnlarger.enlargeScope(testOnlyScope, ideaModule, isTestScope = true)
+        } else
+            moduleInfo.contentScope
 
     override val languageVersionSettings: LanguageVersionSettings get() = moduleInfo.module.languageVersionSettings
 
