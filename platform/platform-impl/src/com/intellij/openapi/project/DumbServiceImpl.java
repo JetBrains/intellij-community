@@ -124,7 +124,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
 
-    new DumbServiceVfsBatchListener(myProject, myGuiDumbTaskRunner.getGuiSuspender());
+    if (Registry.is("vfs.refresh.should.pause.dumb.queue", true)) {
+      new DumbServiceVfsBatchListener(myProject, myGuiDumbTaskRunner.getGuiSuspender());
+    }
     myBalloon = new DumbServiceBalloon(project, this);
     myAlternativeResolveTracker = new DumbServiceAlternativeResolveTracker();
     myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS);
