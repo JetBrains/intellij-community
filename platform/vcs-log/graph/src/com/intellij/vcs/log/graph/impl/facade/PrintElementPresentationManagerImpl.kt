@@ -2,20 +2,20 @@
 package com.intellij.vcs.log.graph.impl.facade
 
 import com.intellij.openapi.util.Comparing
-import com.intellij.vcs.log.graph.GraphColorManager
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.api.printer.GraphColorGetter
 import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 import com.intellij.vcs.log.graph.impl.print.ColorGetterByLayoutIndex
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 
 internal class PrintElementPresentationManagerImpl<CommitId>(permanentGraphInfo: PermanentGraphInfo<CommitId>,
                                                              private val linearGraph: LinearGraph,
-                                                             colorManager: GraphColorManager<CommitId>) : PrintElementPresentationManager {
-  private val colorGetter = ColorGetterByLayoutIndex(linearGraph, permanentGraphInfo, colorManager)
+                                                             colorGetter: GraphColorGetter) : PrintElementPresentationManager {
+  private val colorGetterByLayoutIndex = ColorGetterByLayoutIndex(linearGraph, permanentGraphInfo, colorGetter)
   private var selection: Selection = Selection.FromNodeIds(linearGraph, emptySet())
 
   override fun isSelected(printElement: PrintElementWithGraphElement): Boolean {
@@ -37,7 +37,7 @@ internal class PrintElementPresentationManagerImpl<CommitId>(permanentGraphInfo:
   }
 
   override fun getColorId(element: GraphElement): Int {
-    return colorGetter.getColorId(element)
+    return colorGetterByLayoutIndex.getColorId(element)
   }
 
   sealed class Selection {

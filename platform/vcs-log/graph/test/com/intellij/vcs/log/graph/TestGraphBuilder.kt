@@ -13,12 +13,8 @@ import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
-import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
-import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
-import com.intellij.vcs.log.graph.utils.TimestampGetter
-import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue

@@ -3,9 +3,9 @@ package com.intellij.vcs.log.graph
 
 import com.intellij.vcs.log.data.RefsModel
 
-class GraphColorManagerImpl(private val myRefsModel: RefsModel) : GraphColorManager<Int> {
+class GraphColorManagerImpl(private val refsModel: RefsModel) : GraphColorManager<Int> {
   override fun getColorOfBranch(headCommit: Int): Int {
-    val firstRef = myRefsModel.bestRefToHead(headCommit) ?: return DEFAULT_COLOR
+    val firstRef = refsModel.bestRefToHead(headCommit) ?: return DEFAULT_COLOR
     // TODO dark variant
     return firstRef.name.hashCode()
   }

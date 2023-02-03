@@ -11,6 +11,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.api.printer.GraphColorGetter
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAnswer
 import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex
@@ -21,7 +22,7 @@ import java.awt.Cursor
 
 class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphController,
                                        val permanentGraph: PermanentGraphInfo<CommitId>,
-                                       private val colorManager: GraphColorManager<CommitId>) : VisibleGraph<CommitId> {
+                                       private val colorGenerator: GraphColorGetter) : VisibleGraph<CommitId> {
   private lateinit var presentationManager: PrintElementPresentationManagerImpl<CommitId>
   private lateinit var printElementGenerator: PrintElementGeneratorImpl
   private var isShowLongEdges = false
@@ -46,7 +47,7 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
   override fun getActionController(): ActionController<CommitId> = ActionControllerImpl()
 
   fun updatePrintElementGenerator() {
-    presentationManager = PrintElementPresentationManagerImpl(permanentGraph, linearGraph, colorManager)
+    presentationManager = PrintElementPresentationManagerImpl(permanentGraph, linearGraph, colorGenerator)
     val comparator = GraphElementComparatorByLayoutIndex(
       NotNullFunction { nodeIndex: Int ->
         val nodeId = linearGraph.getNodeId(nodeIndex)

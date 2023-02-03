@@ -11,9 +11,11 @@ import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
+import com.intellij.vcs.log.graph.api.printer.GraphColorGetter;
 import com.intellij.vcs.log.graph.collapsing.CollapsedController;
 import com.intellij.vcs.log.graph.impl.facade.BaseController;
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
+import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByHeadFactory;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,10 +64,10 @@ public class SnapshotVisiblePackBuilder {
 
     RefsModel newRefsModel = createRefsModel(oldPack.getRefsModel(), heads, oldGraph, oldPack.getLogProviders(), visibleRow, visibleRange);
     DataPackBase newPack = new DataPackBase(oldPack.getLogProviders(), newRefsModel, false);
-    GraphColorManagerImpl colorManager = new GraphColorManagerImpl(newRefsModel);
+    GraphColorGetter colorGetter = new GraphColorGetterByHeadFactory<>(new GraphColorManagerImpl(newRefsModel)).createColorGetter(info);
 
     VisibleGraph<Integer> newGraph = new VisibleGraphImpl<>(new CollapsedController(new BaseController(info), info, null),
-                                                            info, colorManager);
+                                                            info, colorGetter);
 
     return new VisiblePack(newPack, newGraph, true, filters, data);
   }
