@@ -24,5 +24,7 @@ class GradleRunnerUtilTest {
     check("expected same:<foo> was not:<Foo >", "foo", "Foo ")
     check("the problem ==> expected same:<foo> was not:<Foo >", "foo", "Foo ")
     check("the problem ==> expected: <foo> but was: <Foo >", "foo", "Foo ")
+
+    check("\nexpected: \"foo\"\n but was: \"Foo\"", "foo", "Foo")
   }
 }
