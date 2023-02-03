@@ -201,35 +201,16 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
 
   @NotNull
   public static List<AttachToProcessItem> getRecentItems(@NotNull List<? extends AttachToProcessItem> currentItems,
-                                                          @NotNull XAttachHost host,
-                                                          @NotNull Project project,
-                                                          @NotNull UserDataHolder dataHolder) {
+                                                         @NotNull XAttachHost host,
+                                                         @NotNull Project project,
+                                                         @NotNull UserDataHolder dataHolder) {
     final List<AttachToProcessItem> result = new ArrayList<>();
     final List<RecentItem> recentItems = getRecentItems(host, project);
 
     for (int i = recentItems.size() - 1; i >= 0; i--) {
       RecentItem recentItem = recentItems.get(i);
-      for (AttachToProcessItem currentItem : currentItems) {
-        boolean isSuitableItem = recentItem.getGroup().equals(currentItem.getGroup()) &&
-                                 recentItem.getProcessInfo().getCommandLine()
-                                   .equals(currentItem.getProcessInfo().getCommandLine());
-
-        if (!isSuitableItem) continue;
-
-        List<XAttachDebugger> debuggers = currentItem.getDebuggers();
-        int selectedDebugger = -1;
-        for (int j = 0; j < debuggers.size(); j++) {
-          XAttachDebugger debugger = debuggers.get(j);
-          if (debugger.getDebuggerDisplayName().equals(recentItem.getDebuggerName())) {
-            selectedDebugger = j;
-            break;
-          }
-        }
-        if (selectedDebugger == -1) continue;
-
-        result.add(AttachToProcessItem.createRecentAttachItem(currentItem, result.isEmpty(), debuggers, selectedDebugger, project,
-                                                              dataHolder));
-      }
+      result.addAll(ApplicationManager.getApplication().getService(XAttachRecentItemsMatcher.class)
+                      .getMatchingAttachItems(recentItem, currentItems, result.isEmpty(), project, dataHolder));
     }
     return result;
   }
