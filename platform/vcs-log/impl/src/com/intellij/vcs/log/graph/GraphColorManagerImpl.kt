@@ -1,30 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.graph;
+package com.intellij.vcs.log.graph
 
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.RefsModel;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.vcs.log.data.RefsModel
 
-public final class GraphColorManagerImpl implements GraphColorManager<Integer> {
-  static final int DEFAULT_COLOR = 0;
-  private final @NotNull RefsModel myRefsModel;
-
-  public GraphColorManagerImpl(@NotNull RefsModel refsModel) {
-    myRefsModel = refsModel;
-  }
-
-  @Override
-  public int getColorOfBranch(Integer headCommit) {
-    VcsRef firstRef = myRefsModel.bestRefToHead(headCommit);
-    if (firstRef == null) {
-      return DEFAULT_COLOR;
-    }
+class GraphColorManagerImpl(private val myRefsModel: RefsModel) : GraphColorManager<Int> {
+  override fun getColorOfBranch(headCommit: Int): Int {
+    val firstRef = myRefsModel.bestRefToHead(headCommit) ?: return DEFAULT_COLOR
     // TODO dark variant
-    return firstRef.getName().hashCode();
+    return firstRef.name.hashCode()
   }
 
-  @Override
-  public int getColorOfFragment(Integer headCommit, int magicIndex) {
-    return magicIndex;
+  override fun getColorOfFragment(headCommit: Int, magicIndex: Int): Int = magicIndex
+
+  companion object {
+    const val DEFAULT_COLOR = 0
   }
 }
