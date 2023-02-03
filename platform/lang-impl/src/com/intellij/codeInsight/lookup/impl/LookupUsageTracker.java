@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.completion.BaseCompletionService;
@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCou
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
@@ -26,10 +27,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class LookupUsageTracker {
+public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 10);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 11);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<FinishType> FINISH_TYPE = EventFields.Enum("finish_type", FinishType.class);
@@ -71,6 +72,11 @@ public final class LookupUsageTracker {
 
   static void trackLookup(long createdTimestamp, @NotNull LookupImpl lookup) {
     lookup.addLookupListener(new MyLookupTracker(createdTimestamp, lookup));
+  }
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   private static class MyLookupTracker implements LookupListener {
@@ -137,29 +143,21 @@ public final class LookupUsageTracker {
 
     private void triggerLookupUsed(@NotNull FinishType finishType, @Nullable LookupElement currentItem,
                                    char completionChar) {
-      FeatureUsageData featureUsageData = new FeatureUsageData();
-      getCommonUsageInfo(finishType, currentItem, completionChar).forEach(pair -> pair.addData(featureUsageData));
+      final List<EventPair<?>> data = getCommonUsageInfo(finishType, currentItem, completionChar);
 
-      ArrayList<EventPair<?>> additionalData = new ArrayList<>();
+      final List<EventPair<?>> additionalData = new ArrayList<>();
       LookupUsageDescriptor.EP_NAME.forEachExtensionSafe(usageDescriptor -> {
         if (PluginInfoDetectorKt.getPluginInfo(usageDescriptor.getClass()).isSafeToReport()) {
-          List<EventPair<?>> data = usageDescriptor.getAdditionalUsageData(
-            new MyLookupResultDescriptor(myLookup, currentItem, finishType, myLanguage));
-          if (!data.isEmpty()) {
-            additionalData.addAll(data);
-          }
-          else {
-            // it is required to support usages in Iren plugin
-            usageDescriptor.fillUsageData(myLookup, featureUsageData);
-          }
+          additionalData.addAll(usageDescriptor.getAdditionalUsageData(
+            new MyLookupResultDescriptor(myLookup, currentItem, finishType, myLanguage)));
         }
       });
 
       if (!additionalData.isEmpty()) {
-        ADDITIONAL.addData(featureUsageData, new ObjectEventData(additionalData));
+        data.add(ADDITIONAL.with(new ObjectEventData(additionalData)));
       }
 
-      FUCounterUsageLogger.getInstance().logEvent(myLookup.getProject(), GROUP.getId(), FINISHED_EVENT_ID, featureUsageData);
+      FINISHED.log(myLookup.getProject(), data);
     }
 
     private List<EventPair<?>> getCommonUsageInfo(@NotNull FinishType finishType,
