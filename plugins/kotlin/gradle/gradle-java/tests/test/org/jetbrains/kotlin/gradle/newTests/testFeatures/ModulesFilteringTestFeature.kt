@@ -34,13 +34,13 @@ private val TestConfigurationDslScope.config: ModulesFilteringConfiguration
     get() = writeAccess.getConfiguration(FilterModulesTestFeature)
 
 interface ModulesFilteringDsl {
-    fun TestConfigurationDslScope.onlyModules(@Language("Regex") regex: String) {
+    fun TestConfigurationDslScope.onlyModules(@Language("RegExp") regex: String) {
         val config = config
         require(config.excludedModuleNames == null) { "'onlyModules' is mutually exclusive with 'excludeModules'" }
         config.includedModuleNames = regex.toRegex()
     }
 
-    fun TestConfigurationDslScope.excludeModules(@Language("Regex") regex: String) {
+    fun TestConfigurationDslScope.excludeModules(@Language("RegExp") regex: String) {
         val config = config
         require(config.includedModuleNames == null) { "'onlyModules' is mutually exclusive with 'excludeModules'" }
         config.excludedModuleNames = regex.toRegex()

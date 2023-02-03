@@ -1,58 +1,29 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.newTests.testServices
+package org.jetbrains.kotlin.gradle.newTests.infra
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.newTests.resolveFromEnvironment
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.DevModeTweaksImpl
-import org.jetbrains.kotlin.gradle.newTests.testProperties.AndroidGradlePluginVersionTestsProperty
-import org.jetbrains.kotlin.gradle.newTests.testProperties.GradleVersionTestsProperty
-import org.jetbrains.kotlin.gradle.newTests.testProperties.KotlinGradlePluginVersionTestsProperty
-import org.jetbrains.kotlin.gradle.newTests.testProperties.SimpleProperties
+import org.jetbrains.kotlin.gradle.newTests.infra.testProperties.AndroidGradlePluginVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.infra.testProperties.GradleVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.infra.testProperties.KotlinGradlePluginVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.infra.testProperties.SimpleProperties
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.File
 
-interface KotlinTestPropertiesService {
-    fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String
-
-    val agpVersion: String
-    val gradleVersion: GradleVersion
-    val kotlinGradlePluginVersion: KotlinToolingVersion
-
-    companion object {
-        fun constructFromEnvironment(): KotlinTestPropertiesService {
-            val devModeTweaks = DevModeTweaksImpl()
-
-            val agpVersion = devModeTweaks.overrideAgpVersion?.version
-                ?: AndroidGradlePluginVersionTestsProperty.resolveFromEnvironment()
-
-            val gradleVersionRaw = devModeTweaks.overrideGradleVersion?.version
-                ?: GradleVersionTestsProperty.resolveFromEnvironment()
-            val gradleVersion = GradleVersion.version(gradleVersionRaw)
-
-            val kgpVersionRaw = devModeTweaks.overrideKgpVersion?.version
-                ?: KotlinGradlePluginVersionTestsProperty.resolveFromEnvironment()
-            val kgpVersion = KotlinToolingVersion(kgpVersionRaw)
-
-            val simpleProperties = SimpleProperties(gradleVersion, kgpVersion)
-
-            return KotlinTestPropertiesServiceImpl(kgpVersion, gradleVersion, agpVersion, simpleProperties)
-        }
-    }
-}
-
-class KotlinTestPropertiesServiceImpl(
-    override val kotlinGradlePluginVersion: KotlinToolingVersion,
-    override val gradleVersion: GradleVersion,
-    override val agpVersion: String,
+class KotlinTestProperties private constructor(
+    val kotlinGradlePluginVersion: KotlinToolingVersion,
+    val gradleVersion: GradleVersion,
+    val agpVersion: String,
     propertiesValuesById: Map<String, String>,
-) : KotlinTestPropertiesService {
+) {
     private val allPropertiesValuesById = propertiesValuesById.toMutableMap().apply {
         put(KotlinGradlePluginVersionTestsProperty.id, kotlinGradlePluginVersion.toString())
         put(GradleVersionTestsProperty.id, gradleVersion.version)
         put(AndroidGradlePluginVersionTestsProperty.id, agpVersion)
     }
 
-    override fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String {
+    fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String {
         var result = text
         allPropertiesValuesById.forEach { (key, value) ->
             result = result.replace(Regex("""\{\s*\{\s*${key}\s*\}\s*\}""", RegexOption.IGNORE_CASE), value)
@@ -85,10 +56,28 @@ class KotlinTestPropertiesServiceImpl(
                 |${text}
             """.trimMargin()
         )
-
     }
 
     companion object {
         val ANY_TEMPLATE_REGEX = Regex("""\{\s*\{\s*.*\s*\}\s*\}""")
+
+        fun constructFromEnvironment(): KotlinTestProperties {
+            val devModeTweaks = DevModeTweaksImpl()
+
+            val agpVersion = devModeTweaks.overrideAgpVersion?.version
+                ?: AndroidGradlePluginVersionTestsProperty.resolveFromEnvironment()
+
+            val gradleVersionRaw = devModeTweaks.overrideGradleVersion?.version
+                ?: GradleVersionTestsProperty.resolveFromEnvironment()
+            val gradleVersion = GradleVersion.version(gradleVersionRaw)
+
+            val kgpVersionRaw = devModeTweaks.overrideKgpVersion?.version
+                ?: KotlinGradlePluginVersionTestsProperty.resolveFromEnvironment()
+            val kgpVersion = KotlinToolingVersion(kgpVersionRaw)
+
+            val simpleProperties = SimpleProperties(gradleVersion, kgpVersion)
+
+            return KotlinTestProperties(kgpVersion, gradleVersion, agpVersion, simpleProperties)
+        }
     }
 }
