@@ -13,17 +13,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ExperimentalUI
 
-internal class RunToolbarComponentService(private val project: Project): Disposable {
-  companion object {
-    private val LOG = logger<RunToolbarComponentService>()
-  }
+private val LOG = logger<RunToolbarComponentService>()
 
+private class RunToolbarComponentService(private val project: Project): Disposable {
   private val extraSlots: RunToolbarSlotManager
     get() = RunToolbarSlotManager.getInstance(project)
 
   init {
-
-    if(ExperimentalUI.isNewUI()) {
+    if (ExperimentalUI.isNewUI()) {
       val actionManager = ActionManager.getInstance()
       actionManager.unregisterAction("RunToolbarWidgetAction")
     }

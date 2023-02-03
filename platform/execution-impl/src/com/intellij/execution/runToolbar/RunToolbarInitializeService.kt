@@ -11,9 +11,10 @@ import kotlin.time.Duration.Companion.seconds
 
 private class RunToolbarInitializeService : ProjectPostStartupActivity {
   override suspend fun execute(project: Project) {
+    delay(5.seconds)
+    val toolbarSlotManager = RunToolbarSlotManager.getInstance(project)
     withContext(Dispatchers.EDT) {
-      delay(5.seconds)
-      RunToolbarSlotManager.getInstance(project).initialized = true
+      toolbarSlotManager.initialized = true
     }
   }
 }
