@@ -158,7 +158,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   @NotNull
-  public final Presentation getPresentation() {
+  public Presentation getPresentation() {
     return myPresentation;
   }
 
