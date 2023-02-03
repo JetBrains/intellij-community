@@ -35,7 +35,6 @@ import javax.swing.text.PlainDocument;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 
 // Author: dyoma
@@ -114,11 +113,11 @@ public class JUnitConfigurationModel {
     final String testObject = getTestObject();
     final String className = getJUnitTextValue(CLASS);
     data.TEST_OBJECT = testObject;
-    if (testObject != JUnitConfiguration.TEST_PACKAGE &&
-        testObject != JUnitConfiguration.TEST_PATTERN &&
-        testObject != JUnitConfiguration.TEST_DIRECTORY &&
-        testObject != JUnitConfiguration.TEST_CATEGORY  &&
-        testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
+    if (!JUnitConfiguration.TEST_PACKAGE.equals(testObject) &&
+        !JUnitConfiguration.TEST_PATTERN.equals(testObject) &&
+        !JUnitConfiguration.TEST_DIRECTORY.equals(testObject) &&
+        !JUnitConfiguration.TEST_CATEGORY.equals(testObject) &&
+        !JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
       data.METHOD_NAME = getJUnitTextValue(METHOD);
       if (!className.equals(replaceRuntimeClassName(data.getMainClassName()))) {
         try {
@@ -143,14 +142,14 @@ public class JUnitConfigurationModel {
         }
       }
     }
-    else if (testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
-      if (testObject == JUnitConfiguration.TEST_PACKAGE) {
+    else if (!JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
+      if (JUnitConfiguration.TEST_PACKAGE.equals(testObject)) {
         data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
       }
-      else if (testObject == JUnitConfiguration.TEST_DIRECTORY) {
+      else if (JUnitConfiguration.TEST_DIRECTORY.equals(testObject)) {
         data.setDirName(getJUnitTextValue(DIR));
       }
-      else if (testObject == JUnitConfiguration.TEST_CATEGORY) {
+      else if (JUnitConfiguration.TEST_CATEGORY.equals(testObject)) {
         data.setCategoryName(getJUnitTextValue(CATEGORY));
       }
       else {
