@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.options.*
 import com.intellij.ide.DataManager
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
@@ -14,6 +15,11 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComponentValidator
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.cellvalidators.TableCellValidator
+import com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
@@ -29,13 +35,16 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory
 import com.intellij.util.ui.UIUtil.setEnabledRecursively
 import java.awt.EventQueue
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Supplier
 import javax.swing.*
+import javax.swing.table.DefaultTableCellRenderer
 import kotlin.math.max
 
 
 class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
-  private data class RendererContext(val controller: OptionController, val project: Project?)
+  private data class RendererContext(val controller: OptionController, val parent: Disposable?, val project: Project?)
 
   override fun render(tool: InspectionProfileEntry,
                       pane: OptPane,
@@ -43,7 +52,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                       project: Project?): JComponent {
     return panel {
       pane.components.forEachIndexed { i, component ->
-        render(component, RendererContext(tool.optionController, project), i == 0, component.hasBottomGap)
+        render(component, RendererContext(tool.optionController, parent, project), i == 0, component.hasBottomGap)
       }
     }
       .apply { if (parent != null) registerValidators(parent) }
@@ -323,7 +332,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
               }
             }
         }
-        
+
         is OptTable -> {
           val columns = component.children.map { stringList ->
             @Suppress("UNCHECKED_CAST") val list = context.getOption(stringList.bindId) as MutableList<String>
@@ -331,6 +340,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           }
           val columnNames = component.children.map { stringList -> stringList.label.label() }
           val table = ListTable(ListWrappingTableModel(columns, *columnNames.toTypedArray()))
+            .also { addColumnValidators(it, component, context) }
           val panel = ToolbarDecorator.createDecorator(table)
             .setToolbarPosition(ActionToolbarPosition.LEFT)
             .setAddAction { _ ->
@@ -367,12 +377,57 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     }
   }
 
+  private fun addColumnValidators(table: ListTable, component: OptTable, context: RendererContext) {
+    if (context.project == null || context.parent == null) return
+    for ((index, child) in component.children.withIndex()) {
+      val validator = child.validator ?: continue
+      val cellEditor = JBTextField()
+      cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, true)
+
+      val column = table.columnModel.getColumn(index)
+      ComponentValidator(context.parent).withValidator(Supplier<ValidationInfo?> {
+        val errorMessage = validator.getErrorMessage(context.project, cellEditor.text ?: "")
+        return@Supplier if (errorMessage == null) {
+          null
+        }
+        else {
+          ValidationInfo(errorMessage, cellEditor)
+        }
+      })
+        .andRegisterOnDocumentListener(cellEditor)
+        .installOn(cellEditor)
+
+      column.cellEditor = DefaultCellEditor(cellEditor)
+      column.cellRenderer = ValidatingTableCellRendererWrapper(DefaultTableCellRenderer())
+        .bindToEditorSize {
+          cellEditor.preferredSize
+        }
+        .withCellValidator(object : TableCellValidator {
+          val cache: ConcurrentHashMap<Pair<Int, Int>, Pair<String, @NlsContexts.HintText String?>> = ConcurrentHashMap()
+          override fun validate(value: Any?, row: Int, column: Int): ValidationInfo? {
+            val stringValue = (value as? String) ?: ""
+            val previous = cache[Pair(row, column)]
+            if (previous != null && stringValue == previous.first) {
+              val previousResult = previous.second ?: return null
+              return ValidationInfo(previousResult, null)
+            }
+            val errorMessage = validator.getErrorMessage(context.project, stringValue)
+            cache[Pair(row, column)] = Pair(stringValue, errorMessage)
+            if (errorMessage == null) {
+              return null
+            }
+            return ValidationInfo(errorMessage, null)
+          }
+        })
+    }
+  }
+
   private fun addRowWithSwingSelectors(table: ListTable, component: OptTable, project: Project?) {
     val tableModel = table.model
     val row = mutableListOf<String>()
-    for (child in component.children) {
+    for ((index, child) in component.children.withIndex()) {
       val validator = child.validator
-      if (project == null || validator == null || validator !is StringValidatorWithSwingSelector) {
+      if (index != 0 || project == null || validator == null || validator !is StringValidatorWithSwingSelector) {
         row.add("")
         continue
       }

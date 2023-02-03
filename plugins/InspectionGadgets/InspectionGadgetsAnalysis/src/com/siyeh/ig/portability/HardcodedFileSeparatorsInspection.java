@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.RegexValidator;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -168,7 +169,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
       table(InspectionGadgetsBundle.message(
               "hardcoded.file.separator.ignore.methods.option"),
             stringList("myClassNames", InspectionGadgetsBundle.message("class.name"), new JavaClassValidator()),
-            stringList("myRegexMethods", InspectionGadgetsBundle.message("method.name.regex"))
+            stringList("myRegexMethods", InspectionGadgetsBundle.message("method.name.regex"), new RegexValidator())
       ));
   }
 
