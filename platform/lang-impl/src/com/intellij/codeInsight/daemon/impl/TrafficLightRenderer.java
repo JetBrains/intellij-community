@@ -452,6 +452,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         Language language = Language.findLanguageByID(level.getLangID());
         if (language != null) {
           PsiElement root = viewProvider.getPsi(language);
+          if (root == null) return;
           FileHighlightingSetting setting = FileHighlightingSetting.fromInspectionsLevel(level.getLevel());
           HighlightLevelUtil.forceRootHighlighting(root, setting);
           InjectedLanguageManager.getInstance(getProject()).dropFileCaches(psiFile);
