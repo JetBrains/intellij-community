@@ -1710,7 +1710,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
    * Other testing methods are not affected,
    * consider using {@link PsiManagerEx#setAssertOnFileLoadingFilter(VirtualFileFilter, Disposable)}.
    * <p>
-   * Files loaded with <b>configure*</b> methods (which are called, e.g. from {@link #testHighlighting(String...)}) won't be checked
+   * Files loaded with <b>configure*</b> methods (which are called, e.g., from {@link #testHighlighting(String...)}) won't be checked
    * because their AST will be loaded before setting filter. Use {@link #copyFileToProject(String)} and similar methods.
    */
   public void setVirtualFileFilter(@Nullable VirtualFileFilter filter) {
@@ -1885,13 +1885,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     List<Border> borders =
     segments.stream()
         .flatMap(region -> Stream.of(
-          new CodeInsightTestFixtureImpl.Border(true, region.getStartOffset(), attrCalculator == null ? null : attrCalculator.fun(region)),
-          new CodeInsightTestFixtureImpl.Border(false, region.getEndOffset(), "")))
+          new Border(true, region.getStartOffset(), attrCalculator == null ? null : attrCalculator.fun(region)),
+          new Border(false, region.getEndOffset(), "")))
       .sorted()
       .toList();
 
     StringBuilder result = new StringBuilder(text);
-    for (CodeInsightTestFixtureImpl.Border border : borders) {
+    for (Border border : borders) {
       StringBuilder info = new StringBuilder();
       info.append('<');
       if (border.isLeftBorder) {
@@ -1907,6 +1907,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       result.insert(border.offset, info);
     }
     return result.toString();
+  }
+  private record Border(boolean isLeftBorder, int offset, @Nullable String text) implements Comparable<Border> {
+    @Override
+    public int compareTo(@NotNull Border o) {
+      return offset < o.offset ? 1 : -1;
+    }
   }
 
   private void testFoldingRegions(@NotNull String verificationFileName,
@@ -2246,23 +2252,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     @NotNull
     private static SelectionAndCaretMarkupLoader fromText(@NotNull String text) {
       return new SelectionAndCaretMarkupLoader(text, null);
-    }
-  }
-
-  private static final class Border implements Comparable<Border> {
-    private final boolean isLeftBorder;
-    private final int offset;
-    private final String text;
-
-    private Border(boolean isLeftBorder, int offset, String text) {
-      this.isLeftBorder = isLeftBorder;
-      this.offset = offset;
-      this.text = text;
-    }
-
-    @Override
-    public int compareTo(@NotNull Border o) {
-      return offset < o.offset ? 1 : -1;
     }
   }
 
