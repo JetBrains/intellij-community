@@ -13,7 +13,6 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
-import com.intellij.ide.ui.customization.CustomizableActionGroupProvider
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -31,7 +30,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
@@ -67,19 +65,9 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.properties.Delegates
 
-private const val RUN_TOOLBAR_WIDGET_GROUP = "RunToolbarWidgetCustomizableActionGroup"
-
 private const val RUN: String = DefaultRunExecutor.EXECUTOR_ID
 private const val DEBUG: String = ToolWindowId.DEBUG
 private const val PROFILER: String = "Profiler"
-
-internal class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupProvider() {
-  override fun registerGroups(registrar: CustomizableActionGroupRegistrar?) {
-    if (ExperimentalUI.isNewUI()) {
-      registrar?.addCustomizableActionGroup(RUN_TOOLBAR_WIDGET_GROUP, ExecutionBundle.message("run.toolbar.widget.customizable.group.name"))
-    }
-  }
-}
 
 private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.configurations")
 

@@ -1637,12 +1637,15 @@
         <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage"/>
       </group>
     </group>
-    
-    <group id="RunToolbarWidgetCustomizableActionGroup">
+
+
+    <action id="NewUiRunWidget" class="com.intellij.execution.ui.RedesignedRunToolbarWrapper">
       <add-to-group group-id="MainToolbarRight" anchor="first"/>
-      <action class="com.intellij.execution.ui.RedesignedRunToolbarWrapper" id="RedesignedRunToolbarWrapper"/>
-      <action class="com.intellij.execution.ui.StopWithDropDownAction" id="StopWithDropDown"/>
-    </group>
+    </action>
+
+    <action id="StopWithDropDown" class="com.intellij.execution.ui.StopWithDropDownAction">
+      <add-to-group group-id="MainToolbarRight" relative-to-action="NewUiRunWidget" anchor="after"/>
+    </action>
 
     <group id="ContrastRunToolbarMainActionGroup">
       <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
@@ -1661,7 +1664,7 @@
 
     <group id="ExecutionTargetsToolbarGroup" searchable="false" popup="false">
       <reference id="ExecutionTargets"/>
-      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="RunToolbarWidgetCustomizableActionGroup"/>
+      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
     </group>
 
     <action id="FileChooser.LightEditGotoOpenedFile"
