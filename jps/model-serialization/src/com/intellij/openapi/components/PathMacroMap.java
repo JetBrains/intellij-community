@@ -3,6 +3,7 @@ package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.Strings;
 import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -41,7 +42,7 @@ public abstract class PathMacroMap {
         Text t = (Text)child;
         String oldText = t.getText();
         String newText = recursively ? substituteRecursively(oldText, caseSensitive).toString() : substitute(oldText, caseSensitive);
-        if (oldText != newText) {
+        if (!Strings.areSameInstance(oldText, newText)) {
           // it is faster to call 'setText' right away than perform additional 'equals' check
           t.setText(newText);
         }
@@ -58,7 +59,7 @@ public abstract class PathMacroMap {
     for (Attribute attribute : element.getAttributes()) {
       if (filter == null || !filter.skipPathMacros(attribute)) {
         String newValue = getAttributeValue(attribute, filter, caseSensitive, recursively);
-        if (attribute.getValue() != newValue) {
+        if (!Strings.areSameInstance(attribute.getValue(), newValue)) {
           // it is faster to call 'setValue' right away than perform additional 'equals' check
           attribute.setValue(newValue);
         }

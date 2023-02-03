@@ -140,6 +140,7 @@ public final class ElementFilter extends AbstractFilter<Element> {
 
     final ElementFilter filter = (ElementFilter)obj;
 
+    //noinspection StringEquality
     if (!((name == filter.name) || (name != null && ((Object)name).equals(filter.name)))) return false;
     if (!((namespace == filter.namespace) || (namespace != null && ((Object)namespace).equals(filter.namespace)))) return false;
 

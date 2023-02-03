@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
@@ -631,7 +632,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     }
     String message = validateAndCommitData();
     if (message != null) {
-      if (message != EXIT_SILENTLY) {
+      if (!Strings.areSameInstance(message, EXIT_SILENTLY)) {
         CommonRefactoringUtil.showErrorMessage(getTitle(), message, getHelpId(), myProject);
       }
       return;

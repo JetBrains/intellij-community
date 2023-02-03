@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -302,8 +303,7 @@ public class HighlightInfo implements Segment {
     if (tooltip == null || description == null || description.isEmpty()) return tooltip;
 
     String encoded = StringUtil.replace(tooltip, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
-    //noinspection StringEquality
-    if (encoded == tooltip) {
+    if (Strings.areSameInstance(encoded, tooltip)) {
       return tooltip;
     }
     if (encoded.equals(DESCRIPTION_PLACEHOLDER)) encoded = DESCRIPTION_PLACEHOLDER;

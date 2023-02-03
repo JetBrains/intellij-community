@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
@@ -312,7 +313,7 @@ public class EnterHandler extends BaseEnterHandler {
     if (newIndent == null) {
       return -1;
     }
-    if (newIndent == LineIndentProvider.DO_NOT_ADJUST) {
+    if (Strings.areSameInstance(newIndent, LineIndentProvider.DO_NOT_ADJUST)) {
       return offset;
     }
     int delta = newIndent.length() - (indentEnd - indentStart);
