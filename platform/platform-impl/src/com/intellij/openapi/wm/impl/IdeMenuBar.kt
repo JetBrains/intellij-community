@@ -36,7 +36,6 @@ import com.intellij.ui.plaf.beg.IdeaMenuUI
 import com.intellij.util.Alarm
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.childScope
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
 import java.awt.*
@@ -287,28 +286,32 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
       val app = ApplicationManager.getApplication()
       val actionManager = app.serviceAsync<ActionManager>().await()
       app.serviceAsync<CustomActionsSchema>().join()
-      withContext(Dispatchers.EDT) {
-        runActivity("ide menu bar actions init") {
-          updateActions(actionManager = actionManager, screenMenuPeer = screenMenuPeer)
-        }
-      }
+      updateActions(actionManager = actionManager, screenMenuPeer = screenMenuPeer)
     }
     activity.end()
 
     IdeEventQueue.getInstance().addDispatcher(dispatcher = this, scope = coroutineScope)
   }
 
-  @RequiresEdt
-  private fun updateActions(actionManager: ActionManager, screenMenuPeer: MenuBar?) {
-    val actions = doUpdateMenuActions(forceRebuild = false, manager = actionManager, screenMenuPeer = screenMenuPeer)
-    for (action in actions) {
-      if (action is ActionGroup) {
-        PopupMenuPreloader.install(this, ActionPlaces.MAIN_MENU, null) { action }
+  private suspend fun updateActions(actionManager: ActionManager, screenMenuPeer: MenuBar?) {
+    runActivity("ide menu bar actions init") {
+      val mainActionGroup = getMainMenuActionGroup()
+      withContext(Dispatchers.EDT) {
+        val actions = doUpdateMenuActions(mainActionGroup = mainActionGroup,
+                                          forceRebuild = false,
+                                          manager = actionManager,
+                                          screenMenuPeer = screenMenuPeer)
+        for (action in actions) {
+          if (action is ActionGroup) {
+            PopupMenuPreloader.install(this@IdeMenuBar, ActionPlaces.MAIN_MENU, null) { action }
+          }
+        }
       }
-    }
-    actionManager.addTimerListener(timerListener)
-    coroutineScope.coroutineContext.job.invokeOnCompletion {
-      actionManager.removeTimerListener(timerListener)
+
+      actionManager.addTimerListener(timerListener)
+      coroutineScope.coroutineContext.job.invokeOnCompletion {
+        actionManager.removeTimerListener(timerListener)
+      }
     }
   }
 
@@ -373,21 +376,29 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
 
   @JvmOverloads
   fun updateMenuActions(forceRebuild: Boolean = false) {
-    doUpdateMenuActions(forceRebuild, ActionManager.getInstance(), screenMenuPeer)
+    doUpdateMenuActions(mainActionGroup = getMainMenuActionGroup(),
+                        forceRebuild = forceRebuild,
+                        manager = ActionManager.getInstance(),
+                        screenMenuPeer = screenMenuPeer)
   }
 
   protected fun updateMenuActionsLazily() {
     withLazyActionManager(coroutineScope) { manager ->
-      doUpdateMenuActions(forceRebuild = true, manager = manager, screenMenuPeer = screenMenuPeer)
+      doUpdateMenuActions(mainActionGroup = getMainMenuActionGroup(), forceRebuild = true, manager = manager, screenMenuPeer = screenMenuPeer)
     }
   }
 
-  private fun doUpdateMenuActions(forceRebuild: Boolean, manager: ActionManager, screenMenuPeer: MenuBar?): List<AnAction> {
+  private fun doUpdateMenuActions(mainActionGroup: ActionGroup?, forceRebuild: Boolean, manager: ActionManager, screenMenuPeer: MenuBar?): List<AnAction> {
     val enableMnemonics = !UISettings.getInstance().disableMnemonics
     val newVisibleActions = ArrayList<AnAction>()
     val targetComponent = IJSwingUtilities.getFocusedComponentInWindowOrSelf(this)
     val dataContext = DataManager.getInstance().getDataContext(targetComponent)
-    expandActionGroup(dataContext, newVisibleActions, manager)
+    if (mainActionGroup != null) {
+      expandActionGroup(mainActionGroup = mainActionGroup,
+                        context = dataContext,
+                        newVisibleActions = newVisibleActions,
+                        actionManager = manager)
+    }
     if (!forceRebuild && !presentationFactory.isNeedRebuild && newVisibleActions == visibleActions) {
       for (child in components) {
         if (child is ActionMenu) {
@@ -472,8 +483,7 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
     }
   }
 
-  private fun expandActionGroup(context: DataContext, newVisibleActions: MutableList<in AnAction>, actionManager: ActionManager) {
-    val mainActionGroup = getMainMenuActionGroup() ?: return
+  private fun expandActionGroup(mainActionGroup: ActionGroup, context: DataContext, newVisibleActions: MutableList<in AnAction>, actionManager: ActionManager) {
     // the only code that does not reuse ActionUpdater (do not repeat that anywhere else)
     val children = mainActionGroup.getChildren(null)
     for (action in children) {
