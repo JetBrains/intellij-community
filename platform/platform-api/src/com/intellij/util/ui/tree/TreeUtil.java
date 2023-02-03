@@ -1609,7 +1609,7 @@ public final class TreeUtil {
     if (paths.length == 0) return;
     tree.setSelectionPaths(paths);
     for (TreePath path : paths) {
-      if (scrollToVisible(tree, path, true)) {
+      if (scrollToVisible(tree, path, Registry.is("ide.tree.autoscrollToVCenter", true))) {
         break;
       }
     }
