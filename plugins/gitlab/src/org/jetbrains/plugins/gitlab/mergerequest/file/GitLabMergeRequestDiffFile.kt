@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.util.cancelOnDispose
+import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
@@ -59,22 +60,24 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
       ?: error("Missing diff model for $this")
 
     val job = SupervisorJob()
-    val cs = CoroutineScope(job + Dispatchers.Main.immediate)
+    val cs = CoroutineScope(job)
 
+    val reviewVm = GitLabMergeRequestDiffReviewViewModelImpl(cs, connection.currentUser, connection.projectData, mergeRequestId)
+
+    val uiCs = cs.childScope(Dispatchers.Main.immediate)
     val processor = object : MutableDiffRequestChainProcessor(project, null) {
       override fun selectFilePath(filePath: FilePath) {
-        cs.launch(start = CoroutineStart.UNDISPATCHED) {
+        uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
           diffBridge.selectFilePath(filePath)
         }
       }
     }.apply {
       putContextUserData(GitLabProjectConnection.KEY, connection)
-      val reviewVm = GitLabMergeRequestDiffReviewViewModelImpl(connection, mergeRequestId)
       putContextUserData(GitLabMergeRequestDiffReviewViewModel.KEY, reviewVm)
     }
     job.cancelOnDispose(processor)
 
-    cs.launch(start = CoroutineStart.UNDISPATCHED) {
+    uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
       processor.chain = SimpleDiffRequestChain(LoadingDiffRequest())
       diffBridge.chain.collectLatest {
         processor.chain = it

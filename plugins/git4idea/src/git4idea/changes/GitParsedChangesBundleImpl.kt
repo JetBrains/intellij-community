@@ -9,11 +9,9 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.containers.HashingStrategy
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
-import java.util.*
 
 class GitParsedChangesBundleImpl(private val project: Project,
                                  private val vcsRoot: VirtualFile,
@@ -28,15 +26,9 @@ class GitParsedChangesBundleImpl(private val project: Project,
   override val changesByCommits = mutableMapOf<String, Collection<Change>>()
   override val linearHistory: Boolean
 
-  private val diffDataByChange = CollectionFactory.createCustomHashingStrategyMap<Change, GitChangeDiffData>(object : HashingStrategy<Change> {
-    override fun equals(o1: Change?, o2: Change?): Boolean {
-      return o1 == o2 &&
-             o1?.beforeRevision == o2?.beforeRevision &&
-             o1?.afterRevision == o2?.afterRevision
-    }
-
-    override fun hashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
-  })
+  private val diffDataByChange = CollectionFactory.createCustomHashingStrategyMap<Change, GitChangeDiffData>(
+    GitParsedChangesBundle.REVISION_COMPARISON_HASHING_STRATEGY
+  )
 
   override fun findChangeDiffData(change: Change) = diffDataByChange[change]
 
