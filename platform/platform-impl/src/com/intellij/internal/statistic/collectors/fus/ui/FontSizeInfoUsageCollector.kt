@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -58,7 +59,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     val ui = UISettings.shadowInstance
     val usages = mutableSetOf(
       UI_FONT.metric(ui.fontFace, ui.fontSize, ui.fontSize2D),
-      PRESENTATION_MODE_FONT.metric(ui.presentationModeFontSize)
+      PRESENTATION_MODE_FONT.metric(UISettingsUtils.presentationModeFontSize.toInt())
     )
     if (!scheme.isUseAppFontPreferencesInEditor) {
       usages += EDITOR_FONT.metric(

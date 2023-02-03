@@ -4,11 +4,11 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.MouseDragSelectionEventHandler;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
@@ -511,7 +511,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }, myCaretModel);
 
-    setFontSize(IdeScaleTransformer.getInstance().getCurrentEditorFontSize());
+    setFontSize(UISettingsUtils.getScaledEditorFontSize());
 
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
@@ -4569,7 +4569,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return myFontPreferences.getSize2D(myFontPreferences.getFontFamily());
       }
       if (myFontSize == FONT_SIZE_TO_IGNORE) {
-        return IdeScaleTransformer.getInstance().scaledEditorFontSize(getDelegate().getEditorFontSize2D());
+        return UISettingsUtils.scaleFontSize(getDelegate().getEditorFontSize2D());
       }
       return myFontSize;
     }
@@ -4595,8 +4595,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = false;
 
-      IdeScaleTransformer scaleTransformer = IdeScaleTransformer.getInstance();
-      if (!scaleTransformer.isEditorFontSizeForced() && fontSize == scaleTransformer.scaledEditorFontSize(super.getEditorFontSize2D())) {
+      if (fontSize == UISettingsUtils.scaleFontSize(super.getEditorFontSize2D())) {
         myFontSize = FONT_SIZE_TO_IGNORE;
       }
       else {

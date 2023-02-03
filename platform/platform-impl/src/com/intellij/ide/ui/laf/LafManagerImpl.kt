@@ -11,7 +11,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.WelcomeWizardUtil
-import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -151,7 +150,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     get() {
       val result = when {
         useInterFont() -> defaultInterFont
-        UISettings.getInstance().overrideLafFonts || IdeScaleTransformer.instance.currentScale != 1f -> storedLafFont
+        UISettings.getInstance().overrideLafFonts || UISettingsUtils.currentIdeScale != 1f -> storedLafFont
         else -> null
       }
       return result ?: JBFont.label()
@@ -648,11 +647,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   override fun applyDensity() {
-    val ideScale = IdeScaleTransformer.instance.currentScale
-    IdeScaleTransformer.instance.reset() // need to temporarily reset this to correctly apply new size values
+    val ideScale = UISettingsUtils.currentIdeScale
+    UISettingsUtils.setCurrentIdeScale(1f) // need to temporarily reset this to correctly apply new size values
+    UISettings.getInstance().fireUISettingsChanged()
     setCurrentLookAndFeel(currentLookAndFeel!!)
     updateUI()
-    IdeScaleTransformer.instance.scale(ideScale)
+    UISettingsUtils.setCurrentIdeScale(ideScale)
+    UISettings.getInstance().fireUISettingsChanged()
   }
 
   private fun applyDensity(defaults: UIDefaults) {
@@ -790,7 +791,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
   private fun patchLafFonts(uiDefaults: UIDefaults) {
     val uiSettings = UISettings.getInstance()
-    val currentScale = IdeScaleTransformer.instance.currentScale
+    val currentScale = UISettingsUtils.currentIdeScale
     if (uiSettings.overrideLafFonts || currentScale != 1f) {
       storeOriginalFontDefaults(uiDefaults)
       val fontSize = uiSettings.fontSize2D * currentScale

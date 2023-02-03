@@ -335,6 +335,7 @@
     <applicationService serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
     <applicationService serviceImplementation="com.intellij.ide.actions.IdeScaleTransformer"/>
     <projectService serviceImplementation="com.intellij.ide.actions.ui.ideScaleIndicator.IdeScaleIndicatorManager"/>
+    <postStartupActivity implementation="com.intellij.ide.actions.IdeScalePostStartupActivity"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
                         serviceImplementation="com.intellij.codeInsight.hint.HintManagerImpl"/>

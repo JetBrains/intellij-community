@@ -6,6 +6,7 @@ import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
@@ -156,14 +157,18 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         theme.enabledIf(syncCheckBox.selected.not())
         cell(lafManager.settingsToolbar)
           .visibleIf(syncCheckBox.selected)
-      }.layout(RowLayout.INDEPENDENT)
 
-      row {
         link(message("link.get.more.themes")) {
           val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
           settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
         }
-      }
+      }.layout(RowLayout.INDEPENDENT)
+
+      row(message("combobox.ide.scale.percent")) {
+        comboBox(IdeScaleTransformer.Settings.regularScaleComboboxModel, SimpleListCellRenderer.create("") { it })
+          .bindItem( { settings.ideScale.percentStringValue },
+                     { IdeScaleTransformer.Settings.scaleFromPercentStringValue(it)?.let { scale -> settings.ideScale = scale } })
+      }.layout(RowLayout.INDEPENDENT).topGap(TopGap.SMALL)
 
       row {
         val fontFace = cell(FontComboBox())
@@ -416,10 +421,16 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }
 
       group(message("group.presentation.mode")) {
-        row(message("presentation.mode.fon.size")) {
-          fontSizeComboBox({ settings.presentationModeFontSize },
-                           { settings.presentationModeFontSize = it },
-                           settings.presentationModeFontSize)
+        row(message("presentation.mode.ide.scale")) {
+          comboBox(IdeScaleTransformer.Settings.presentationModeScaleComboboxModel, SimpleListCellRenderer.create("") { it })
+            .bindItem( { settings.presentationModeIdeScale.percentStringValue },
+                       { IdeScaleTransformer.Settings.scaleFromPercentStringValue(it)?.let {
+                         scale -> settings.presentationModeIdeScale = scale
+                       } })
+            .applyToComponent {
+              isEditable = true
+            }
+            .validationOnInput(IdeScaleTransformer.Settings::validatePercentScaleInput)
             .shouldUpdateLaF()
         }
       }

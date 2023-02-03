@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.ui.ideScaleIndicator
 
-import com.intellij.ide.actions.CurrentIdeScaleAction
-import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.ide.ui.UISettingsUtils
+import com.intellij.ide.ui.percentValue
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
@@ -23,7 +23,7 @@ class IdeScaleIndicatorManager(val project: Project) {
   private var balloon: Balloon? = null
   private var indicator: IdeScaleIndicator? = null
   private val alarm = Alarm(project)
-  private val updateScaleHelper = UpdateScaleHelper { IdeScaleTransformer.instance.currentScale }
+  private val updateScaleHelper = UpdateScaleHelper { UISettingsUtils.currentIdeScale }
 
   init {
     setupLafListener()
@@ -32,7 +32,7 @@ class IdeScaleIndicatorManager(val project: Project) {
   fun showIndicator() {
     cancelCurrentPopup()
     val ideFrame = WindowManager.getInstance().getIdeFrame(project)?.component ?: return
-    val indicator = IdeScaleIndicator(CurrentIdeScaleAction.scalePercentage)
+    val indicator = IdeScaleIndicator(UISettingsUtils.currentIdeScale.percentValue)
     this.indicator = indicator
 
     val newUI = ExperimentalUI.isNewUI()
@@ -86,6 +86,7 @@ class IdeScaleIndicatorManager(val project: Project) {
 
     @JvmStatic
     fun getInstance(project: Project): IdeScaleIndicatorManager = project.getService(IdeScaleIndicatorManager::class.java)
+    @JvmStatic
     fun setup(project: Project) {
       getInstance(project)
     }

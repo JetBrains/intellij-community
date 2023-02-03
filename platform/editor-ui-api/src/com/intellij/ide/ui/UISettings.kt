@@ -298,9 +298,15 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var presentationModeFontSize: Int
-    get() = state.presentationModeFontSize
+    get() = UISettingsUtils.presentationModeFontSize.toInt()
     set(value) {
-      state.presentationModeFontSize = value
+      UISettingsUtils.presentationModeFontSize = value.toFloat()
+    }
+
+  var presentationModeIdeScale: Float
+    get() = notRoamableOptions.state.presentationModeIdeScale
+    set(value) {
+      notRoamableOptions.state.presentationModeIdeScale = value
     }
 
   var editorTabPlacement: Int
@@ -367,6 +373,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = notRoamableOptions.state.fontScale
     set(value) {
       notRoamableOptions.state.fontScale = value
+    }
+
+  var ideScale: Float
+    get() = notRoamableOptions.state.ideScale
+    set(value) {
+      notRoamableOptions.state.ideScale = value
     }
 
   var showDirectoryForNonUniqueFilenames: Boolean
@@ -668,6 +680,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   override fun getState() = state
 
+  override fun noStateLoaded() {
+    super.noStateLoaded()
+    migratePresentationFontSize()
+  }
+
   override fun loadState(state: UISettingsState) {
     this.state = state
     updateDeprecatedProperties()
@@ -676,6 +693,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (migrateOldFontSettings()) {
       notRoamableOptions.fixFontSettings()
     }
+    migratePresentationFontSize()
 
     // Check tab placement in editor
     val editorTabPlacement = state.editorTabPlacement
@@ -737,6 +755,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       migrated = true
     }
     return migrated
+  }
+
+  private fun migratePresentationFontSize() {
+    notRoamableOptions.migratePresentationModeFontSize(state.presentationModeFontSize)
   }
 
   //<editor-fold desc="Deprecated stuff.">

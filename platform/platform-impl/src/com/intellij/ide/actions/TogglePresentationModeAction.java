@@ -42,32 +42,15 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e){
-    UISettings settings = UISettings.getInstance();
-    Project project = e.getProject();
-
-    setPresentationMode(project, !settings.getPresentationMode());
+    setPresentationMode(e.getProject(), !UISettings.getInstance().getPresentationMode());
   }
 
   public static void setPresentationMode(@Nullable Project project, boolean inPresentation) {
     storeToolWindows(project);
     log(String.format("Will tweak full screen mode for presentation=%b", inPresentation));
 
-    UISettings settings = UISettings.getInstance();
-
-    if (inPresentation) {
-      float fontSize = settings.getPresentationModeFontSize();
-      IdeScaleTransformer.getInstance().scaleToEditorFontSize(fontSize, () -> {
-        settings.setPresentationMode(inPresentation);
-        return null;
-      });
-    }
-    else {
-      IdeScaleTransformer.getInstance().resetToLastPersistedScale(() -> {
-        settings.setPresentationMode(inPresentation);
-        return null;
-      });
-    }
-
+    UISettings.getInstance().setPresentationMode(inPresentation);
+    UISettings.getInstance().fireUISettingsChanged();
 
     Job callback = project == null ? CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE) : tweakFrameFullScreen(project, inPresentation);
     callback.invokeOnCompletion(__ -> {

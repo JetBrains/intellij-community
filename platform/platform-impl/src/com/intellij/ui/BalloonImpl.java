@@ -809,6 +809,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   }
 
   private void createComponentBorder() {
+    if (component == null) return;
     component.setBorder(new EmptyBorder(getShadowBorderInsets()));
   }
 
