@@ -301,7 +301,7 @@ object KotlinPluginBuilder {
       spec.withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection
       spec.withProjectLibrary("javaslang", LibraryPackMode.STANDALONE_MERGED)
-      spec.withProjectLibrary("kotlinx-collections-immutable-jvm", LibraryPackMode.STANDALONE_MERGED)
+      spec.withProjectLibrary("kotlinx-collections-immutable", LibraryPackMode.STANDALONE_MERGED)
       spec.withProjectLibrary("javax-inject", LibraryPackMode.STANDALONE_MERGED)
 
       spec.withGeneratedResources(BiConsumer { targetDir, context ->

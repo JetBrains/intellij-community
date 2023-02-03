@@ -961,7 +961,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.parcelize-compiler-plugin"),
     jetbrainsLibrary("kotlinc.sam-with-receiver-compiler-plugin"),
     jetbrainsLibrary("kotlinc.symbol-light-classes"),
-    jetbrainsLibrary("kotlinx-collections-immutable-jvm"),
+    jetbrainsLibrary("kotlinx-collections-immutable"),
     jetbrainsLibrary("ml-completion-prev-exprs-models"),
     jetbrainsLibrary("tcServiceMessages"),
     jetbrainsLibrary("tips-idea-ce"),
