@@ -5,7 +5,9 @@ package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -13,14 +15,18 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.resettableLazy
 import com.intellij.util.flow.zipWithNext
 import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
 import com.intellij.xdebugger.ui.DebuggerColors
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlin.properties.Delegates
 import kotlin.time.Duration.Companion.milliseconds
@@ -29,6 +35,8 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class XDebuggerExecutionPointManager(project: Project,
                                               parentScope: CoroutineScope) {
   private val coroutineScope: CoroutineScope = parentScope.childScope(Dispatchers.EDT + CoroutineName(javaClass.simpleName))
+
+  private val navigationRequestFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val activeSourceKindState = MutableStateFlow(XSourceKind.MAIN)
   private val executionPointState = MutableStateFlow<ExecutionPoint?>(null)
@@ -73,12 +81,22 @@ internal class XDebuggerExecutionPointManager(project: Project,
     with(highlightState.filterNotNull()) {
       combine(activeSourceKindState, ExecutionPointHighlight::activeSourceKind::set).launchIn(coroutineScope)
       combine(gutterIconRendererState, ExecutionPointHighlight::gutterIconRenderer::set).launchIn(coroutineScope)
+
+      combine(navigationRequestFlow) { highlight, _ -> highlight }
+        .debounce(10.milliseconds)
+        .onEach { highlight ->
+          highlight.navigateTo()
+        }.launchIn(coroutineScope)
     }
   }
 
   @RequiresEdt
   fun isFullLineHighlighter(): Boolean {
     return highlightState.value?.isFullLineHighlighter == true
+  }
+
+  fun showExecutionPosition() {
+    navigationRequestFlow.tryEmit(Unit).also { check(it) }
   }
 }
 
@@ -99,6 +117,9 @@ internal class ExecutionPointHighlight(project: Project, executionPoint: Executi
   private val highlights: List<PositionHighlight?> = enumValues<XSourceKind>().map { sourceKind ->
     PositionHighlight.create(project, executionPoint, sourceKind)
   }
+  private val navigators: List<PositionNavigator?> = enumValues<XSourceKind>().map { sourceKind ->
+    PositionNavigator.create(project, executionPoint, sourceKind)
+  }
 
   private val mainPositionHighlight: PositionHighlight? get() = highlights[XSourceKind.MAIN.ordinal]
 
@@ -112,8 +133,13 @@ internal class ExecutionPointHighlight(project: Project, executionPoint: Executi
     highlights.forEach { it?.gutterIconRenderer = newValue }
   }
 
+  fun navigateTo() {
+    navigators[activeSourceKind.ordinal]?.navigateTo()
+  }
+
   fun hideAndDispose() {
     highlights.forEach { it?.hideAndDispose() }
+    navigators.forEach { it?.disposeDescriptor() }
   }
 }
 
@@ -168,6 +194,52 @@ private class PositionHighlight private constructor(
         }
       }
       return markupModel.addLineHighlighter(null, line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER)
+    }
+  }
+}
+
+private class PositionNavigator(
+  private val openFileDescriptor: OpenFileDescriptor,
+) {
+  private val navigateToEditorLazy = resettableLazy {
+    XDebuggerUtilImpl.createEditor(openFileDescriptor)
+  }
+
+  fun navigateTo(): Editor? {
+    val editor = navigateToEditorLazy.value?.takeUnless { it.isDisposed }
+    if (editor != null) return editor
+    navigateToEditorLazy.reset()
+    return navigateToEditorLazy.value
+  }
+
+  fun disposeDescriptor() {
+    openFileDescriptor.dispose()
+  }
+
+  companion object {
+    fun create(project: Project, executionPoint: ExecutionPoint, sourceKind: XSourceKind): PositionNavigator? {
+      val sourcePosition = executionPoint.getSourcePosition(sourceKind) ?: return null
+      val openFileDescriptor = createOpenFileDescriptor(project, sourcePosition).apply {
+        isUseCurrentWindow = false //see IDEA-125645 and IDEA-63459
+        isUsePreviewTab = true
+        setScrollType(scrollType(executionPoint.isTopFrame))
+      }
+      return PositionNavigator(openFileDescriptor)
+    }
+
+    private fun createOpenFileDescriptor(project: Project, position: XSourcePosition): OpenFileDescriptor {
+      val navigatable = position.createNavigatable(project)
+      return if (navigatable is OpenFileDescriptor) {
+        navigatable
+      }
+      else {
+        XDebuggerUtilImpl.createOpenFileDescriptor(project, position)
+      }
+    }
+
+    private fun scrollType(isTopFrame: Boolean): ScrollType {
+      if (XDebuggerSettingManagerImpl.getInstanceImpl().generalSettings.isScrollToCenter) return ScrollType.CENTER
+      return if (isTopFrame) ScrollType.MAKE_VISIBLE else ScrollType.CENTER
     }
   }
 }

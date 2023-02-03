@@ -656,7 +656,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       myExecutionPointManager.setExecutionPoint(executionPoint);
       myExecutionPointManager.setActiveSourceKind(myCurrentSourceKind);
       updateExecutionPointGutterIconRenderer();
-      //myExecutionPointManager.showExecutionPosition();
+      myExecutionPointManager.showExecutionPosition();
     }
   }
 
@@ -673,7 +673,7 @@ public final class XDebugSessionImpl implements XDebugSession {
         XStackFrame topFrame = executionStack.getTopFrame();
         if (topFrame != null) {
           setCurrentStackFrame(executionStack, topFrame, true);
-          //myExecutionPointManager.showExecutionPosition();
+          myExecutionPointManager.showExecutionPosition();
         }
       }
     }
