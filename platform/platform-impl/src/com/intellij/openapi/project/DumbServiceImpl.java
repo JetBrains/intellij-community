@@ -124,6 +124,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
 
+    if (Registry.is("scanning.should.pause.dumb.queue", false)) {
+      myProject.getMessageBus().connect(this).subscribe(FilesScanningListener.TOPIC, new DumbServiceScanningListener(myProject));
+    }
     if (Registry.is("vfs.refresh.should.pause.dumb.queue", true)) {
       new DumbServiceVfsBatchListener(myProject, myGuiDumbTaskRunner.getGuiSuspender());
     }
@@ -218,6 +221,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
     myGuiDumbTaskRunner.suspendAndRun(activityName, activity);
+  }
+
+  // non-public dangerous API. Use suspendIndexingAndRun instead
+  MergingQueueGuiSuspender getGuiSuspender() {
+    return myGuiDumbTaskRunner.getGuiSuspender();
   }
 
   @Override
