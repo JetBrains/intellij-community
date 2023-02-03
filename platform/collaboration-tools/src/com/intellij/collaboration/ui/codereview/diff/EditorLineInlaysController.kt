@@ -13,7 +13,7 @@ import javax.swing.JComponent
 class EditorLineInlaysController<VM : Any>(
   parentCs: CoroutineScope,
   inlayVms: Flow<Map<Int, List<VM>>>,
-  vmKeyExtractor: (VM) -> Any,
+  private val vmKeyExtractor: (VM) -> Any,
   private val componentFactory: (CoroutineScope, VM) -> JComponent,
   private val inlaysManager: EditorComponentInlaysManager
 ) {
@@ -24,7 +24,13 @@ class EditorLineInlaysController<VM : Any>(
   init {
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       inlayVms.collect { vms ->
-        val vmsByKey = vms.values.flatten().associateBy(vmKeyExtractor)
+        val vmsByKey = mutableMapOf<Any, VM>()
+
+        for ((line, vmsOnLine) in vms) {
+          for (vm in vmsOnLine) {
+            vmsByKey[getKey(line, vm)] = vm
+          }
+        }
 
         // remove missing
         val iter = componentByKey.iterator()
@@ -42,7 +48,7 @@ class EditorLineInlaysController<VM : Any>(
         //add new
         for ((line, vmsOnLine) in vms) {
           for (vm in vmsOnLine) {
-            val key = vmKeyExtractor(vm)
+            val key = getKey(line, vm)
             if (componentByKey.contains(key)) continue
 
             val component = insert(line, vm) ?: continue
@@ -69,4 +75,6 @@ class EditorLineInlaysController<VM : Any>(
     }
     return component
   }
+
+  private fun getKey(line: Int, vm: VM): Any = line to vmKeyExtractor(vm)
 }
