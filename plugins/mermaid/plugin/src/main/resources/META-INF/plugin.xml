@@ -96,5 +96,11 @@
     <todoIndexer filetype="Mermaid" implementationClass="com.intellij.mermaid.lang.highlighting.MermaidTodoIndexer"/>
     <indexPatternBuilder implementation="com.intellij.mermaid.lang.highlighting.MermaidIndexPatternBuilder"/>
 
+    <applicationConfigurable groupId="language"
+                             instance="com.intellij.mermaid.settings.MermaidSettingsConfigurable"
+                             id="Settings.Mermaid"/>
+    <applicationService
+      serviceImplementation="com.intellij.mermaid.settings.MermaidSettings"/>
+
   </extensions>
 </idea-plugin>

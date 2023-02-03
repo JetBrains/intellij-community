@@ -3,9 +3,9 @@ package com.intellij.mermaid.markdown.jcef
 import com.intellij.mermaid.lang.lexer.MermaidLexer
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets
 import com.intellij.mermaid.lang.lexer.MermaidTokens
+import com.intellij.mermaid.settings.MermaidSettings
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.ui.ColorUtil
@@ -96,15 +96,16 @@ internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFen
 
   companion object {
     fun determineTheme(): String {
-      val registryValue = Registry.stringValue("markdown.mermaid.theme")
-      if (registryValue == "follow-ide") {
+      val mermaidSettings = MermaidSettings.getInstance()
+      val theme = mermaidSettings.theme.value
+      if (theme == "follow-ide") {
         val scheme = EditorColorsManager.getInstance().globalScheme
         return when {
           ColorUtil.isDark(scheme.defaultBackground) -> "dark"
           else -> "default"
         }
       }
-      return registryValue
+      return theme
     }
   }
 }
