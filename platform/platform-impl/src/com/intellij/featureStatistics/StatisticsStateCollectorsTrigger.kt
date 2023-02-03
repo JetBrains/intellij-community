@@ -2,7 +2,7 @@
 package com.intellij.featureStatistics
 
 import com.intellij.ide.AppLifecycleListener
-import com.intellij.ide.IdleFlow
+import com.intellij.ide.IdleTracker
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -20,7 +20,7 @@ private class StatisticsStateCollectorsTrigger : AppLifecycleListener {
 
     @Suppress("DEPRECATION")
     ApplicationManager.getApplication().coroutineScope.launch {
-      IdleFlow.getInstance().events
+      IdleTracker.getInstance().events
         .debounce(30.seconds)
         // need to detect only once
         .first()

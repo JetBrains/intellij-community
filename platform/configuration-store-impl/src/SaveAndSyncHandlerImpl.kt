@@ -5,7 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.codeWithMe.ClientId
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.GeneralSettings
-import com.intellij.ide.IdleFlow
+import com.intellij.ide.IdleTracker
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.SaveAndSyncHandlerListener
 import com.intellij.openapi.application.*
@@ -165,7 +165,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       }
       .distinctUntilChanged()
       .flatMapConcat { delay ->
-        IdleFlow.getInstance().events.debounce(delay)
+        IdleTracker.getInstance().events.debounce(delay)
       }
       .collect {
         executeOnIdle()

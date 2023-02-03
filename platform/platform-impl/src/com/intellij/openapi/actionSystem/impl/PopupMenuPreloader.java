@@ -2,7 +2,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdleFlow;
+import com.intellij.ide.IdleTracker;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -76,7 +76,7 @@ public final class PopupMenuPreloader implements HierarchyListener {
         return;
       }
       PopupMenuPreloader preloader = new PopupMenuPreloader(component, actionPlace, popupHandler, groupSupplier);
-      preloader.removeIdleListener = IdleFlow.getInstance().addIdleListener(2_000, preloader::onIdle);
+      preloader.removeIdleListener = IdleTracker.getInstance().addIdleListener(2_000, preloader::onIdle);
     };
     UiNotifyConnector.doWhenFirstShown(component, runnable);
     if (component instanceof JMenuBar) return;

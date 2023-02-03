@@ -47,7 +47,6 @@ import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -121,11 +120,12 @@ class IdeEventQueue private constructor() : EventQueue() {
   @JvmField
   val isDispatchingOnMainThread: Boolean = Thread.currentThread().name.contains("AppKit")
 
-  private var events: MutableSharedFlow<Unit>? = null
+  private var idleTracker: () -> Unit = {}
 
   @RequiresEdt
-  internal fun setEvents(events: MutableSharedFlow<Unit>?) {
-    this.events = events
+  internal fun setIdleTracker(value: () -> Unit) {
+    EDT.assertIsEdt()
+    idleTracker = value
   }
 
   companion object {
@@ -209,13 +209,13 @@ class IdeEventQueue private constructor() : EventQueue() {
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use IdleFlow and coroutines")
   fun addIdleListener(runnable: Runnable, timeoutMillis: Int) {
-    IdleFlow.getInstance().addIdleListener(runnable = runnable, timeoutMillis = timeoutMillis)
+    IdleTracker.getInstance().addIdleListener(runnable = runnable, timeoutMillis = timeoutMillis)
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use IdleFlow and coroutines")
   fun removeIdleListener(runnable: Runnable) {
-    IdleFlow.getInstance().removeIdleListener(runnable)
+    IdleTracker.getInstance().removeIdleListener(runnable)
   }
 
   fun addActivityListener(runnable: Runnable, parentDisposable: Disposable) {
@@ -582,7 +582,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       ActivityTracker.getInstance().inc()
     }
 
-    events?.let { check(it.tryEmit(Unit)) }
+    idleTracker()
 
     synchronized(lock) {
       if (isActivityInputEvent) {

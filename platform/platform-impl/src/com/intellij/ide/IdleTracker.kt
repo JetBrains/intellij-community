@@ -21,7 +21,7 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 @Service(Service.Level.APP)
-class IdleFlow(private val coroutineScope: CoroutineScope) {
+class IdleTracker(private val coroutineScope: CoroutineScope) {
   private val listenerToRequest = Collections.synchronizedMap(LinkedHashMap<Runnable, CoroutineScope>())
 
   // must be `replay = 1`, because on a first subscription,
@@ -30,14 +30,14 @@ class IdleFlow(private val coroutineScope: CoroutineScope) {
 
   companion object {
     @JvmStatic
-    fun getInstance(): IdleFlow = service<IdleFlow>()
+    fun getInstance(): IdleTracker = service<IdleTracker>()
   }
 
   val events: SharedFlow<Unit> = _events.asSharedFlow()
 
   init {
     coroutineScope.launch(RawSwingDispatcher) {
-      IdeEventQueue.getInstance().setEvents(_events)
+      IdeEventQueue.getInstance().setIdleTracker { check(_events.tryEmit(Unit)) }
     }
   }
 
@@ -68,8 +68,8 @@ class IdleFlow(private val coroutineScope: CoroutineScope) {
 
   private fun checkDelay(delay: Duration, listener: Any) {
     if (delay == Duration.ZERO || delay.inWholeHours >= 24) {
-      logger<IdleFlow>().error(PluginException.createByClass(IllegalArgumentException("This delay value is unsupported: $delay"),
-                                                             listener::class.java))
+      logger<IdleTracker>().error(PluginException.createByClass(IllegalArgumentException("This delay value is unsupported: $delay"),
+                                                                listener::class.java))
     }
   }
 
@@ -104,7 +104,7 @@ class IdleFlow(private val coroutineScope: CoroutineScope) {
     synchronized(listenerToRequest) {
       val coroutineScope = listenerToRequest.remove(runnable)
       if (coroutineScope == null) {
-        logger<IdleFlow>().error("unknown runnable: $runnable")
+        logger<IdleTracker>().error("unknown runnable: $runnable")
       }
       else {
         coroutineScope.cancel()
