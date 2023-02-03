@@ -15,7 +15,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +25,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class FieldFromParameterUtils {
+  private FieldFromParameterUtils() {}
+
   @Nullable
   public static PsiParameter findParameterAtCursor(@NotNull PsiFile file, @NotNull Editor editor) {
     int offset = editor.getCaretModel().getOffset();
@@ -183,14 +184,14 @@ public final class FieldFromParameterUtils {
     return i;
   }
 
-  public static void createFieldAndAddAssignment(@NotNull Project project,
-                                                 @NotNull PsiClass targetClass,
-                                                 @NotNull PsiMethod method,
-                                                 @NotNull PsiParameter parameter,
-                                                 @NotNull PsiType fieldType,
-                                                 @NotNull String fieldName,
-                                                 boolean isStatic,
-                                                 boolean isFinal) throws IncorrectOperationException {
+  public static PsiField createFieldAndAddAssignment(@NotNull Project project,
+                                                     @NotNull PsiClass targetClass,
+                                                     @NotNull PsiMethod method,
+                                                     @NotNull PsiParameter parameter,
+                                                     @NotNull PsiType fieldType,
+                                                     @NotNull String fieldName,
+                                                     boolean isStatic,
+                                                     boolean isFinal) {
     PsiManager psiManager = PsiManager.getInstance(project);
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
     PsiElementFactory factory = psiFacade.getElementFactory();
@@ -198,7 +199,7 @@ public final class FieldFromParameterUtils {
     PsiField field = factory.createField(fieldName, fieldType);
 
     PsiModifierList modifierList = field.getModifierList();
-    if (modifierList == null) return;
+    if (modifierList == null) return null;
     modifierList.setModifierProperty(PsiModifier.STATIC, isStatic);
     modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
@@ -208,7 +209,7 @@ public final class FieldFromParameterUtils {
     }
 
     PsiCodeBlock methodBody = method.getBody();
-    if (methodBody == null) return;
+    if (methodBody == null) return null;
     PsiStatement[] statements = methodBody.getStatements();
 
 
@@ -243,16 +244,17 @@ public final class FieldFromParameterUtils {
       if (!anchor.isNull()) {
         PsiField inField = anchor.get();
         if (isBefore.get()) {
-          targetClass.addBefore(field, inField);
+          return (PsiField)targetClass.addBefore(field, inField);
         }
         else {
-          targetClass.addAfter(field, inField);
+          return (PsiField)targetClass.addAfter(field, inField);
         }
       }
       else {
-        targetClass.add(field);
+        return (PsiField)targetClass.add(field);
       }
     }
+    return null;
   }
 
   public static boolean isAvailable(@NotNull PsiParameter myParameter,
@@ -275,6 +277,4 @@ public final class FieldFromParameterUtils {
            !targetClass.isInterface() &&
            getParameterAssignedToField(myParameter, findIndirectAssignments) == null;
   }
-
-  private FieldFromParameterUtils() { }
 }
