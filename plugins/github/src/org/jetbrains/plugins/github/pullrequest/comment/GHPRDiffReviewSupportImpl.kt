@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.comment
 
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.DiffMappedValue
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
@@ -43,8 +45,8 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
   private var pendingReviewLoadingModel: GHSimpleLoadingModel<GHPullRequestPendingReview?>? = null
   private val reviewProcessModel = GHPRReviewProcessModelImpl()
 
-  private var reviewThreadsLoadingModel: GHSimpleLoadingModel<List<GHPRDiffReviewThreadMapping>>? = null
-  private val reviewThreadsModel = SingleValueModel<List<GHPRDiffReviewThreadMapping>?>(null)
+  private var reviewThreadsLoadingModel: GHSimpleLoadingModel<List<DiffMappedValue<GHPullRequestReviewThread>>>? = null
+  private val reviewThreadsModel = SingleValueModel<List<DiffMappedValue<GHPullRequestReviewThread>>?>(null)
 
   override val isLoadingReviewData: Boolean
     get() = reviewThreadsLoadingModel?.loading == true || pendingReviewLoadingModel?.loading == true
@@ -127,7 +129,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
   }
 
   private fun loadReviewThreads(disposable: Disposable) {
-    val loadingModel = GHCompletableFutureLoadingModel<List<GHPRDiffReviewThreadMapping>>(disposable).apply {
+    val loadingModel = GHCompletableFutureLoadingModel<List<DiffMappedValue<GHPullRequestReviewThread>>>(disposable).apply {
       addStateChangeListener(object : GHLoadingModel.StateChangeListener {
         override fun onLoadingCompleted() = updateReviewThreads()
       })
@@ -140,31 +142,31 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     }
   }
 
-  private fun doLoadReviewThreads(model: GHCompletableFutureLoadingModel<List<GHPRDiffReviewThreadMapping>>) {
+  private fun doLoadReviewThreads(model: GHCompletableFutureLoadingModel<List<DiffMappedValue<GHPullRequestReviewThread>>>) {
     model.future = reviewDataProvider.loadReviewThreads().thenApplyAsync(Function {
       it.mapNotNull(::mapThread)
     }, ProcessIOExecutorService.INSTANCE)
   }
 
-  private fun mapThread(thread: GHPullRequestReviewThread): GHPRDiffReviewThreadMapping? {
+  private fun mapThread(thread: GHPullRequestReviewThread): DiffMappedValue<GHPullRequestReviewThread>? {
     val originalCommitSha = thread.originalCommit?.oid ?: return null
     if (!diffData.contains(originalCommitSha, thread.path)) return null
 
-    val (side, line) = when (diffData) {
+    val location = when (diffData) {
       is GitChangeDiffData.Cumulative -> {
-        thread.side to thread.line - 1
+        DiffLineLocation(thread.side, thread.line - 1)
       }
       is GitChangeDiffData.Commit -> {
         diffData.mapPosition(originalCommitSha, thread.side, thread.originalLine - 1) ?: return null
       }
     }
 
-    return GHPRDiffReviewThreadMapping(side, line, thread)
+    return DiffMappedValue(location, thread)
   }
 
   private fun updateReviewThreads() {
     val loadingModel = reviewThreadsLoadingModel ?: return
     if (loadingModel.loading) return
-    reviewThreadsModel.value = if (showReviewThreads) loadingModel.result?.filter { showResolvedReviewThreads || !it.thread.isResolved } else null
+    reviewThreadsModel.value = if (showReviewThreads) loadingModel.result?.filter { showResolvedReviewThreads || !it.value.isResolved } else null
   }
 }

@@ -3,4 +3,9 @@ package com.intellij.collaboration.ui.codereview.diff
 
 import com.intellij.diff.util.Side
 
-class DiffMappedValue<V>(val side: Side, val lineIndex: Int, val value: V)
+typealias DiffLineLocation = Pair<Side, Int>
+
+class DiffMappedValue<V>(val location: DiffLineLocation, val value: V) {
+  val side: Side = location.first
+  val lineIndex: Int = location.second
+}

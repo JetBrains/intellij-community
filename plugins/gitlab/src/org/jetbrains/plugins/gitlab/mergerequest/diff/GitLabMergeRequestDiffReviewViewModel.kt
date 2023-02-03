@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.async.mapCaching
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiffMappedValue
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
@@ -104,22 +105,22 @@ class GitLabMergeRequestDiffReviewViewModelImpl(
     val originalSide = if (position.newLine != null) Side.RIGHT else Side.LEFT
     val originalLine = (position.newLine ?: position.oldLine!!) - 1
 
-    val (side, line) = when (diffData) {
+    val location = when (diffData) {
       is GitChangeDiffData.Cumulative -> {
-        originalSide to originalLine
+        DiffLineLocation(originalSide, originalLine)
       }
       is GitChangeDiffData.Commit -> {
         diffData.mapPosition(position.diffRefs.headSha, originalSide, originalLine) ?: return null
       }
     }
-
-    return DiffMappedValue(side, line, discussion)
+    return DiffMappedValue(location, discussion)
   }
 
   private fun createMappedVm(cs: CoroutineScope, mappedDiscussion: DiffMappedValue<GitLabDiscussion>)
     : DiffMappedValue<GitLabDiscussionViewModel> {
     val vm = GitLabDiscussionViewModelImpl(cs, currentUser, mappedDiscussion.value)
-    return DiffMappedValue(mappedDiscussion.side, mappedDiscussion.lineIndex, vm)
+    val location = DiffLineLocation(mappedDiscussion.side, mappedDiscussion.lineIndex)
+    return DiffMappedValue(location, vm)
   }
 }
 
