@@ -16,7 +16,6 @@ import com.intellij.vcs.log.graph.impl.facade.BaseController;
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,7 +53,7 @@ public class SnapshotVisiblePackBuilder {
   private @NotNull VisiblePack build(@NotNull DataPackBase oldPack,
                                      @NotNull VisibleGraphImpl<Integer> oldGraph,
                                      @NotNull VcsLogFilterCollection filters,
-                                     @Nullable Map<Key, Object> data) {
+                                     @NotNull Map<Key, Object> data) {
     int visibleRow = VISIBLE_RANGE;
     int visibleRange = VISIBLE_RANGE;
     PermanentGraphInfo<Integer> info = oldGraph.buildSimpleGraphInfo(visibleRow, visibleRange);
