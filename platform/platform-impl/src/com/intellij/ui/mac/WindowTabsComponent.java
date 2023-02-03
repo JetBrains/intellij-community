@@ -55,10 +55,7 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author Alexander Lobas
@@ -203,13 +200,15 @@ public class WindowTabsComponent extends JBTabsImpl {
       return false;
     }
 
+    Set<Object> tabs = new HashSet<>();
+    Set<Object> anotherTabs = new HashSet<>();
+
     for (int i = 0; i < count; i++) {
-      if (getTabAt(i).getObject() != anotherComponent.getTabAt(i).getObject()) {
-        return false;
-      }
+      tabs.add(getTabAt(i).getObject());
+      anotherTabs.add(anotherComponent.getTabAt(i).getObject());
     }
 
-    return true;
+    return tabs.equals(anotherTabs);
   }
 
   public void createTabsForFrame(IdeFrameImpl @NotNull [] tabFrames) {
@@ -441,6 +440,7 @@ public class WindowTabsComponent extends JBTabsImpl {
   private void moveTabToNewIndexOrWindow(@NotNull TabInfo info, boolean movedFromOut) {
     IdeFrameImpl movedFrame = (IdeFrameImpl)info.getObject();
     int newIndex = getDropInfoIndex();
+    assert newIndex != -1 : "Wrong Reordering";
 
     if (movedFromOut) {
       Foundation.executeOnMainThread(true, false, () -> {
