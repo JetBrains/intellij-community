@@ -212,8 +212,6 @@ class SvgTranscoder private constructor(private var width: Float, private var he
 
   override fun hasFeature(s: String?) = supportedFeatures.contains(s)
 
-  override fun supportExtension(s: String?) = false
-
   override fun checkLoadScript(scriptType: String?, scriptURL: ParsedURL, docURL: ParsedURL?) {
     throw SecurityException("NO_EXTERNAL_RESOURCE_ALLOWED")
   }
