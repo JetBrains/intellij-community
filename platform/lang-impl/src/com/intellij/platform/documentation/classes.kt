@@ -67,10 +67,10 @@ internal fun imageResolver(map: Map<String, Image>): DocumentationImageResolver?
 }
 
 @Internal
-internal fun DocumentationContentUpdater.asFlow(): Flow<DocumentationContent> {
+internal fun BlockingDocumentationContentFlow.asFlow(): Flow<DocumentationContent> {
   val flow = channelFlow {
     blockingContext {
-      updateContent { content ->
+      collectBlocking { content ->
         check(trySend(content).isSuccess) // sanity check
       }
     }

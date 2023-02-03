@@ -46,14 +46,14 @@ internal class DocumentationPage(val request: DocumentationRequest) {
   suspend fun updatePage(contentUpdater: ContentUpdater) {
     val pageContent = checkNotNull(currentContent)
     val (html, imageResolver) = pageContent.content
-    val updates = contentUpdater.contentUpdates(html).map {
+    val updates = contentUpdater.prepareContentUpdates(html).map {
       DocumentationContentData(it, imageResolver)
     }
     update(updates, pageContent.links)
   }
 
   private suspend fun update(updates: Flow<DocumentationContentData>, links: LinkData) {
-    updates.flowOn(Dispatchers.IO).collectLatest {
+    updates.flowOn(Dispatchers.Default).collectLatest {
       myContentFlow.value = DocumentationPageContent.Content(it, links, uiState = null)
     }
   }

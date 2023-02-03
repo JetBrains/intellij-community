@@ -44,7 +44,7 @@ data class DocumentationResultData internal constructor(
     return copy(updates = updates as Flow<DocumentationContentData>)
   }
 
-  override fun updates(updater: DocumentationContentUpdater): Data {
-    return updates(updater.asFlow())
+  override fun blockingUpdates(updates: BlockingDocumentationContentFlow): Data {
+    return updates(updates.asFlow())
   }
 }

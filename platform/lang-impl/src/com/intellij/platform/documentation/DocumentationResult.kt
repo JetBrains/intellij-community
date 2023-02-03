@@ -39,7 +39,6 @@ sealed interface DocumentationResult {
     fun externalUrl(externalUrl: String?): Data
 
     /**
-     * The [updates] flow is collected in [IO context][kotlinx.coroutines.Dispatchers.IO].
      * [Updates][updates] continuously replace the browser content until the flow is fully collected.
      * Clicking another link, closing the browser, resetting the browser, going back or forward cancels the flow collection.
      * Scrolling position is preserved in the browser when the update is applied, i.e. [anchor] does not have any effect on updates.
@@ -48,8 +47,9 @@ sealed interface DocumentationResult {
 
     /**
      * Same as asynchronous overload, but blocking.
+     * The [updates] is collected in [IO context][kotlinx.coroutines.Dispatchers.IO].
      */
-    fun updates(updater: DocumentationContentUpdater): Data
+    fun blockingUpdates(updates: BlockingDocumentationContentFlow): Data
   }
 
   companion object {

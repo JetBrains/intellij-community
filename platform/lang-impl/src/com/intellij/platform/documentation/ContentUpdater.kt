@@ -20,5 +20,5 @@ fun interface ContentUpdater {
    */
   @RequiresReadLockAbsence
   @RequiresBackgroundThread
-  fun contentUpdates(currentContent: @Nls String): Flow<@Nls String>
+  fun prepareContentUpdates(currentContent: @Nls String): Flow<@Nls String>
 }
