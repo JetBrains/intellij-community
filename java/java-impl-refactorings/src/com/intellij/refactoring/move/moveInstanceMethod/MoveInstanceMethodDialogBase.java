@@ -6,12 +6,14 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
@@ -135,12 +137,12 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (value instanceof PsiVariable psiVariable) {
         final String text = PsiFormatUtil.formatVariable(psiVariable,
-                                                         PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE,
+                                                         PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE,
                                                          PsiSubstitutor.EMPTY);
         setIcon(psiVariable.getIcon(0));
         setText(text);
       }
-      else if (value instanceof String s) {
+      else if (value instanceof @NlsSafe String s) {
         setText(s);
       }
       return this;
