@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ObjectUtils;
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
@@ -58,9 +61,10 @@ class JBCefOsrHandler implements CefRenderHandler {
     component.setRenderHandler(this);
     myScreenBoundsProvider = ObjectUtils.notNull(screenBoundsProvider, JBCefOSRHandlerFactory.DEFAULT.createScreenBoundsProvider());
 
-    myComponent.addComponentListener(new ComponentAdapter() {
+    myComponent.addAncestorListener(new AncestorListenerAdapter() {
       @Override
-      public void componentShown(ComponentEvent e) {
+      public void ancestorAdded(AncestorEvent event) {
+        // track got visible event
         updateLocation();
       }
     });
