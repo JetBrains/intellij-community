@@ -12,12 +12,11 @@ Reports code that uses <code>==</code> or <code>!=</code> rather than <code>equa
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>  <b>if</b> (Object.equals(list1, list2)) {
+<pre><code>  <b>if</b> (Objects.equals(list1, list2)) {
     <b>return</b>;
   }
 </code></pre>
 <!-- tooltip end -->
-<p>
 <p>Use the inspection settings to configure exceptions for this inspection.</p>
 </body>
 </html>
