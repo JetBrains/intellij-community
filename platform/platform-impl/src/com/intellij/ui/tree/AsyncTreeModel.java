@@ -526,7 +526,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       tree.root = loaded;
       if (loaded != null) {
         tree.map.put(loaded.object, loaded);
-        TreePath path = new TreePath(loaded.object);
+        TreePath path = new CachingTreePath(loaded.object);
         loaded.insertPath(path);
         treeStructureChanged(path, null, null);
         if (LOG.isTraceEnabled()) LOG.debug("new root: ", loaded.object);
@@ -862,7 +862,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
 
     private void insertMapping(Node parent) {
       if (parent == null) {
-        insertPath(new TreePath(object));
+        insertPath(new CachingTreePath(object));
       }
       else if (parent.loading == this) {
         LOG.warn("insert loading node unexpectedly");
@@ -884,7 +884,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
 
     private void removeMapping(Node parent, @NotNull Tree tree) {
       if (parent == null) {
-        removePath(new TreePath(object));
+        removePath(new CachingTreePath(object));
         tree.removeEmpty(this);
       }
       else if (parent.loading == this) {
@@ -991,7 +991,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
   @Deprecated
   public void setRootImmediately(@NotNull Object object) {
     Node node = new Node(object, LeafState.NEVER);
-    node.insertPath(new TreePath(object));
+    node.insertPath(new CachingTreePath(object));
     tree.root = node;
     tree.map.put(object, node);
   }
