@@ -62,13 +62,10 @@ public class SnapshotVisiblePackBuilder {
 
     RefsModel newRefsModel = createRefsModel(oldPack.getRefsModel(), heads, oldGraph, oldPack.getLogProviders(), visibleRow, visibleRange);
     DataPackBase newPack = new DataPackBase(oldPack.getLogProviders(), newRefsModel, false);
+    GraphColorManagerImpl colorManager = new GraphColorManagerImpl(newRefsModel);
 
-    GraphColorManagerImpl colorManager =
-      new GraphColorManagerImpl(newRefsModel, VcsLogStorageImpl.createHashGetter(myStorage),
-                                DataPack.getRefManagerMap(oldPack.getLogProviders()));
-
-    VisibleGraph<Integer> newGraph =
-      new VisibleGraphImpl<>(new CollapsedController(new BaseController(info), info, null), info, colorManager);
+    VisibleGraph<Integer> newGraph = new VisibleGraphImpl<>(new CollapsedController(new BaseController(info), info, null),
+                                                            info, colorManager);
 
     return new VisiblePack(newPack, newGraph, true, filters, data);
   }

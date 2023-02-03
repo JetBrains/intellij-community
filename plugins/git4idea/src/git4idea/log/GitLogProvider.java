@@ -174,18 +174,15 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
         public int getColorOfFragment(@NotNull Hash headCommit, int magicIndex) {
           return 0;
         }
-
-        @Override
-        public int compareHeads(@NotNull Hash head1, @NotNull Hash head2) {
-          if (!refs.contains(head1) || !refs.contains(head2)) {
-            LOG.error("GitLogProvider returned inconsistent data", new Attachment("error-details.txt",
-                                                                                  printErrorDetails(root, allRefs, sortedCommits,
-                                                                                                    firstBlockSyncData,
-                                                                                                    manuallyReadBranches,
-                                                                                                    currentTagNames, commitsFromTags)));
-          }
-          return 0;
+      }, (head1, head2) -> {
+        if (!refs.contains(head1) || !refs.contains(head2)) {
+          LOG.error("GitLogProvider returned inconsistent data", new Attachment("error-details.txt",
+                                                                                printErrorDetails(root, allRefs, sortedCommits,
+                                                                                                  firstBlockSyncData,
+                                                                                                  manuallyReadBranches,
+                                                                                                  currentTagNames, commitsFromTags)));
         }
+        return 0;
       }, refs);
     });
   }

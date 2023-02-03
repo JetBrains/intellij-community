@@ -56,15 +56,21 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
   /**
    * Create new instance of PermanentGraph.
    *
-   * @param graphCommits      topologically sorted list of commits in the graph
-   * @param graphColorManager color manager for the graph
-   * @param branchesCommitId  commit ids of all the branch heads
-   * @param <CommitId>        commit id type
+   * @param graphCommits          topologically sorted list of commits in the graph
+   * @param graphColorManager     color manager for the graph
+   * @param headCommitsComparator compares two head commits, which represent graph branches, by expected positions of these branches in the graph,
+   *                              and thus by their "importance". If branch1 is more important than branch2,
+   *                              branch1 will be laid out more to the left from the branch2,
+   *                              and the color of branch1 will be reused by the subgraph below the point when these branches have diverged.
+   * @param branchesCommitId      commit ids of all the branch heads
+   * @param <CommitId>            commit id type
    * @return new instance of PermanentGraph
+   * @see com.intellij.vcs.log.VcsLogRefManager#getBranchLayoutComparator()
    */
   @NotNull
   public static <CommitId> PermanentGraphImpl<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits,
                                                                     @NotNull GraphColorManager<CommitId> graphColorManager,
+                                                                    @NotNull Comparator<CommitId> headCommitsComparator,
                                                                     @NotNull Set<? extends CommitId> branchesCommitId) {
     PermanentLinearGraphBuilder<CommitId> permanentLinearGraphBuilder = PermanentLinearGraphBuilder.newInstance(graphCommits);
     NotLoadedCommitsIdsGenerator<CommitId> idsGenerator = new NotLoadedCommitsIdsGenerator<>();
@@ -76,7 +82,7 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
     GraphLayoutImpl permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, (nodeIndex1, nodeIndex2) -> {
       CommitId commitId1 = commitIdPermanentCommitsInfo.getCommitId(nodeIndex1);
       CommitId commitId2 = commitIdPermanentCommitsInfo.getCommitId(nodeIndex2);
-      return graphColorManager.compareHeads(commitId1, commitId2);
+      return headCommitsComparator.compare(commitId1, commitId2);
     });
 
     return new PermanentGraphImpl<>(linearGraph, permanentGraphLayout, commitIdPermanentCommitsInfo, graphColorManager,
