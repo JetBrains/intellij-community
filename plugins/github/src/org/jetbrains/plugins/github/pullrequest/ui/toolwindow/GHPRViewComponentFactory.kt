@@ -26,6 +26,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.changes.GitParsedChangesBundle
+import git4idea.changes.findCumulativeChange
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.github.api.data.GHCommit
@@ -158,7 +159,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         tree.selectFile(VcsUtil.getFilePath(filePath, false))
       }
       else {
-        val change = changesProviderModel.value.findCumulativeChange(oid, filePath)
+        val change = changesProviderModel.value.diffDataByChange.findCumulativeChange(oid, filePath)
         if (change == null) {
           tree.selectFile(VcsUtil.getFilePath(filePath, false))
         }

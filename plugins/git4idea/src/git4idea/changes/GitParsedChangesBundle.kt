@@ -16,11 +16,8 @@ import java.util.*
 interface GitParsedChangesBundle {
   val changes: List<Change>
   val changesByCommits: Map<String, Collection<Change>>
+  val diffDataByChange: Map<Change, GitChangeDiffData>
   val linearHistory: Boolean
-
-  fun findChangeDiffData(change: Change): GitChangeDiffData?
-
-  fun findCumulativeChange(commitSha: String, filePath: String): Change?
 
   companion object {
     val REVISION_COMPARISON_HASHING_STRATEGY: HashingStrategy<Change> = object : HashingStrategy<Change> {
@@ -34,6 +31,11 @@ interface GitParsedChangesBundle {
     }
   }
 }
+
+fun Map<Change, GitChangeDiffData>.findCumulativeChange(commitSha: String, filePath: String): Change? =
+  entries.find {
+    it.value is GitChangeDiffData.Cumulative && it.value.contains(commitSha, filePath)
+  }?.key
 
 fun GitChangeDiffData.getDiffComputer(): DiffUserDataKeysEx.DiffComputer {
   val diffRanges = diffRangesWithoutContext

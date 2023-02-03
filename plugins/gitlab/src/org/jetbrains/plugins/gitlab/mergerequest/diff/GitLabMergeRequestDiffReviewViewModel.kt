@@ -66,7 +66,7 @@ class GitLabMergeRequestDiffReviewViewModelImpl(
                 val updated = !map.keys.retainAll(newChangesSet) || !map.keys.containsAll(newChangesSet)
                 if (updated) {
                   for (change in newChangesSet) {
-                    val diffData = changesBundle.findChangeDiffData(change)
+                    val diffData = changesBundle.diffDataByChange[change]
                     if (diffData == null) {
                       LOG.warn("Missing diff data for change $change")
                       continue
