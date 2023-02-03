@@ -112,7 +112,7 @@ public abstract class IndexedContainer {
    *    newArray[i] = 0;
    *  }
    * }</pre>
-   * Additionally, the method that newArray and arrayLength are not reassigned
+   * Additionally, the method checks that newArray and arrayLength are not reassigned
    *
    * @param arrayAccessExpression expression to create an IndexedContainer from
    * @param bound                 reference to arrayLength
