@@ -256,10 +256,6 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         LibraryInfoListener,
         ModuleRootListener {
 
-        init {
-            initialize()
-        }
-
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
             connection.subscribe(WorkspaceModelTopics.CHANGED, this)

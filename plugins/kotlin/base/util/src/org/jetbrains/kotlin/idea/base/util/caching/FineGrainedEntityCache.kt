@@ -15,11 +15,13 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
-abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val project: Project, protected val cleanOnLowMemory: Boolean) : Disposable {
+abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val project: Project, private val cleanOnLowMemory: Boolean) : Disposable {
     private val invalidationStamp = InvalidationStamp()
     protected abstract val cache: MutableMap<Key, Value>
     protected val logger = Logger.getInstance(javaClass)
+    protected val initialized = AtomicBoolean(false)
 
     /**
      * This function has to be called the last statement of ctor,
@@ -27,11 +29,16 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
      * and invalidation are already available.
      */
     protected fun initialize() {
+        check(!initialized.getAndSet(true)) { "${this.javaClass.name} has to be initialized once." }
         if (cleanOnLowMemory) {
             LowMemoryWatcher.register({ runReadAction { invalidate() } }, this)
         }
 
         subscribe()
+    }
+
+    protected fun checkIsInitialized() {
+        check(initialized.get()) { "${this.javaClass.name} has to be initialized." }
     }
 
     protected abstract fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T
@@ -257,9 +264,12 @@ abstract class SynchronizedFineGrainedEntityCache<Key : Any, Value : Any>(
         }
     }
 
-    final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T = synchronized(lock) {
-        @Suppress("DEPRECATION_ERROR")
-        cache.run(block)
+    final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T {
+        checkIsInitialized()
+        return synchronized(lock) {
+            @Suppress("DEPRECATION_ERROR")
+            cache.run(block)
+        }
     }
 
     override fun get(key: Key): Value {
@@ -301,7 +311,7 @@ abstract class SynchronizedFineGrainedEntityCache<Key : Any, Value : Any>(
 }
 
 abstract class SynchronizedFineGrainedValueCache<Value : Any>(project: Project, doSelfInitialization: Boolean = true, cleanOnLowMemory: Boolean = false) :
-    SynchronizedFineGrainedEntityCache<Unit, Value>(project, cleanOnLowMemory) {
+    SynchronizedFineGrainedEntityCache<Unit, Value>(project, cleanOnLowMemory = cleanOnLowMemory) {
     @Deprecated("Do not use directly", level = DeprecationLevel.ERROR)
     override val cache: MutableMap<Unit, Value> = HashMap(1)
 
@@ -333,6 +343,7 @@ abstract class LockFreeFineGrainedEntityCache<Key : Any, Value : Any>(
     }
 
     final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T {
+        checkIsInitialized()
         @Suppress("DEPRECATION_ERROR")
         return cache.run(block)
     }
