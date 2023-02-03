@@ -11,6 +11,7 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
 import com.intellij.psi.search.GlobalSearchScope
@@ -18,122 +19,64 @@ import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.containers.ContainerUtil
 import com.siyeh.ig.callMatcher.CallMatcher
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class LightServiceInspection : DevKitUastInspectionBase(UClass::class.java) {
-  private companion object {
-    private val SERVICE_FQN = Service::class.java.canonicalName
-    private val SERVICE_LEVEL_FQN = Service.Level::class.java.canonicalName
-    private val APPLICATION_FQN = Application::class.java.canonicalName
-    private val PROJECT_FQN = Project::class.java.canonicalName
-    private val COROUTINE_SCOPE_FQN = CoroutineScope::class.java.canonicalName
-    private val COMPONENT_MANAGER_FQN = ComponentManager::class.java.canonicalName
-    private val APP = Service.Level.APP.name
-    private val PROJECT = Service.Level.PROJECT.name
-    private const val GET_INSTANCE = "getInstance"
-    private val COMPONENT_MANAGER_GET_SERVICE = CallMatcher.anyOf(
-      CallMatcher.instanceCall(COMPONENT_MANAGER_FQN, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
-      CallMatcher.instanceCall(COMPONENT_MANAGER_FQN, "getServiceIfCreated").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
-      CallMatcher.instanceCall(COMPONENT_MANAGER_FQN, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS, "boolean"))
+  private val COMPONENT_MANAGER_FQN = ComponentManager::class.java.canonicalName
+  private val COMPONENT_MANAGER_GET_SERVICE = CallMatcher.anyOf(
+    CallMatcher.instanceCall(COMPONENT_MANAGER_FQN, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
+    CallMatcher.instanceCall(COMPONENT_MANAGER_FQN, "getServiceIfCreated").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
+    CallMatcher.instanceCall(COMPONENT_MANAGER_FQN, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS, "boolean"))
 
-    enum class Level { APP, PROJECT, APP_AND_PROJECT, NOT_SPECIFIED }
-
-    fun getLevel(annotation: UAnnotation): Level {
-      val levels = when (val value = annotation.findAttributeValue(DEFAULT_REFERENCED_METHOD_NAME)) {
-        is UCallExpression -> value.valueArguments.mapNotNull { it.tryResolve() }.filterIsInstance<PsiField>().filter {
-          it.containingClass?.qualifiedName == SERVICE_LEVEL_FQN && it.name in listOf(APP, PROJECT)
-        }.map { it.name }
-
-        is UReferenceExpression -> value.tryResolve()?.let { it as PsiField }?.takeIf { it.containingClass?.qualifiedName == SERVICE_LEVEL_FQN }?.name?.let {
-          setOf(it)
-        } ?: emptySet()
-
-        else -> emptySet()
-      }
-      return when {
-        levels.containsAll(setOf(APP, PROJECT)) -> Level.APP_AND_PROJECT
-        levels.contains(APP) -> Level.APP
-        levels.contains(PROJECT) -> Level.PROJECT
-        else -> Level.NOT_SPECIFIED
-      }
-    }
-
-    fun findGetProjectLevelInstance(uClass: UClass): UMethod? {
-      return uClass.methods.find {
-        val onlyParameter = ContainerUtil.getOnlyItem(it.uastParameters) ?: return@find false
-        if (it.name == GET_INSTANCE && onlyParameter.type.canonicalText == PROJECT_FQN) {
-          val qualifiedReference = getReturnExpression(it) ?: return@find false
-          return@find COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedReference.selector as? UCallExpression) &&
-                      (qualifiedReference.receiver as? USimpleNameReferenceExpression)?.resolveToUElement() == onlyParameter
-        }
-        return@find false
-      }
-    }
-
-    fun findGetApplicationLevelServiceInstance(uClass: UClass): UMethod? {
-      return uClass.methods.find {
-        if (it.name == GET_INSTANCE && it.uastParameters.isEmpty()) {
-          val qualifiedReference = getReturnExpression(it) ?: return@find false
-          if (COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedReference.selector as? UCallExpression)) {
-            return@find qualifiedReference.receiver.getExpressionType()?.isInheritorOf(APPLICATION_FQN) ?: false
-          }
-        }
-        return@find false
-      }
-    }
-
-    fun getReturnExpression(method: UMethod): UQualifiedReferenceExpression? {
-      val body = method.uastBody ?: return null
-      val onlyExpression = ContainerUtil.getOnlyItem((body as? UBlockExpression)?.expressions)
-      val returnExpression = onlyExpression as? UReturnExpression ?: return null
-      return returnExpression.returnExpression as? UQualifiedReferenceExpression
-    }
-  }
+  enum class Level { APP, PROJECT, APP_AND_PROJECT, NOT_SPECIFIED }
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = UastHintedVisitorAdapter.create(
     holder.file.language, object : AbstractUastNonRecursiveVisitor() {
     override fun visitClass(node: UClass): Boolean {
       val classToHighlight = node.getAnchorPsi() ?: return true
-      val serviceAnnotation: UAnnotation = node.findAnnotation(SERVICE_FQN) ?: return true
+      val serviceAnnotation: UAnnotation = node.findAnnotation(Service::class.java.canonicalName) ?: return true
       val annotationToHighlight = serviceAnnotation.sourcePsi ?: return true
       if (!node.isFinal) {
         val actions = createModifierActions(node, modifierRequest(JvmModifier.FINAL, true))
         val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), holder.file)
-        holder.registerProblem(classToHighlight, DevKitBundle.message("light.service.must.be.final"), *fixes)
+        holder.registerProblem(classToHighlight, DevKitBundle.message("inspection.light.service.must.be.final"), *fixes)
       }
-
       val level = getLevel(serviceAnnotation)
-
       val constructors = node.methods.filter { it.isConstructor }
-      if (!constructors.isEmpty()) {
-        if (level == Level.APP) {
-          val ctorWithProjectParam = constructors.find { it -> it.uastParameters.any { it.type.canonicalText == PROJECT_FQN } }
-          val ctorToHighlight = ctorWithProjectParam.getAnchorPsi()
-          if (ctorWithProjectParam != null && ctorToHighlight != null) {
-            val actions = createAddAnnotationActions(node, annotationRequest(SERVICE_FQN, constantAttribute(DEFAULT_REFERENCED_METHOD_NAME,
-                                                                                                            "com.intellij.openapi.components.Service.Level.PROJECT")))
-            val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), holder.file)
+      if (constructors.isEmpty()) return true
+      if (level !in listOf(Level.PROJECT, Level.APP_AND_PROJECT)) {
+        val ctorWithProjectParam = constructors.find {
+          ContainerUtil.getOnlyItem(it.uastParameters)?.type?.canonicalText == Project::class.java.canonicalName
+        }
+        val ctorToHighlight = ctorWithProjectParam.getAnchorPsi() ?: return true
+        if (ctorWithProjectParam != null) {
+          val request = annotationRequest(Service::class.java.canonicalName, constantAttribute(DEFAULT_REFERENCED_METHOD_NAME,
+                                                                                               "com.intellij.openapi.components.Service.Level.PROJECT"))
+          val actions = createAddAnnotationActions(node.javaPsi, request)
+          val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), holder.file)
 
-            holder.registerProblem(ctorToHighlight, DevKitBundle.message("project.level.required"), *fixes)
-          }
+          holder.registerProblem(ctorToHighlight, DevKitBundle.message("inspection.light.service.must.be.project.level"), *fixes)
         }
       }
 
       if (level == Level.APP || level == Level.APP_AND_PROJECT) {
         val hasNoArgOrCoroutineScopeCtor = constructors.any {
-          it.uastParameters.isEmpty() ||
-          ContainerUtil.getOnlyItem(it.uastParameters)?.type?.canonicalText == COROUTINE_SCOPE_FQN
+          it.uastParameters.isEmpty() || ContainerUtil.getOnlyItem(
+            it.uastParameters)?.type?.canonicalText == CoroutineScope::class.java.canonicalName
         }
 
         if (!hasNoArgOrCoroutineScopeCtor) {
           val elementFactory = PsiElementFactory.getInstance(holder.project)
-          val projectType = elementFactory.createTypeByFQClassName(COROUTINE_SCOPE_FQN, GlobalSearchScope.allScope(holder.project))
+          val projectType = elementFactory.createTypeByFQClassName(CoroutineScope::class.java.canonicalName,
+                                                                   GlobalSearchScope.allScope(holder.project))
           val actions = createConstructorActions(node.javaPsi, constructorRequest(holder.project, emptyList())) +
                         createConstructorActions(node.javaPsi, constructorRequest(holder.project, listOf(Pair("scope", projectType))))
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), holder.file)
-          val message = DevKitBundle.message("application.level.service.requires.no.arg.or.coroutine.scope.ctor")
+          val message = DevKitBundle.message("inspection.light.service.must.have.no.arg.constructor")
           holder.registerProblem(annotationToHighlight, message, *fixes)
         }
       }
@@ -141,32 +84,109 @@ class LightServiceInspection : DevKitUastInspectionBase(UClass::class.java) {
     }
 
     override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression): Boolean {
-      val elementToHighlight = node.sourcePsi ?: return true
+      val toHighlight = node.sourcePsi ?: return true
       if (!COMPONENT_MANAGER_GET_SERVICE.uCallMatches(node.selector as? UCallExpression)) return true
       val uClass = (node.selector.getExpressionType() as? PsiClassType)?.resolve()?.toUElement(UClass::class.java) ?: return true
-      val serviceAnnotation: UAnnotation = uClass.findAnnotation(SERVICE_FQN) ?: return true
+      if (isInsideGetInstance(node, uClass)) return true
+      val serviceAnnotation = uClass.findAnnotation(Service::class.java.canonicalName) ?: return true
       val level = getLevel(serviceAnnotation)
       val receiverType = node.receiver.getExpressionType() ?: return true
-      val containingMethod = node.getParentOfType<UMethod>()
-      if (receiverType.isInheritorOf(PROJECT_FQN)) {
-        if (level == Level.APP) {
-          holder.registerProblem(elementToHighlight, DevKitBundle.message("project.level.service.retrieved.as.application.level"))
-        }
-        val getInstanceMethod = findGetProjectLevelInstance(uClass)
-        if (getInstanceMethod != null && getInstanceMethod != containingMethod) {
-          holder.registerProblem(elementToHighlight, DevKitBundle.message("can.be.replaced.with.get.instance"))
-        }
-      }
-      else if (receiverType.isInheritorOf(APPLICATION_FQN)) {
-        if (level == Level.PROJECT) {
-          holder.registerProblem(elementToHighlight, DevKitBundle.message("application.level.service.retrieved.as.project.level"))
-        }
-        val getInstanceMethod = findGetApplicationLevelServiceInstance(uClass)
-        if (getInstanceMethod != null && getInstanceMethod != containingMethod) {
-          holder.registerProblem(elementToHighlight, DevKitBundle.message("can.be.replaced.with.get.instance"))
-        }
-      }
+      val array = listOf(
+        MismatchReceivingChecker(Project::class.java.canonicalName, Level.APP, ::findGetInstanceProjectLevel,
+                                 "inspection.light.service.project.level.retrieved.as.application.level"),
+        MismatchReceivingChecker(Application::class.java.canonicalName, Level.PROJECT, ::findGetInstanceApplicationLevel,
+                                 "inspection.light.service.application.level.retrieved.as.project.level")
+      )
+      array.forEach { it.test(uClass, level, receiverType, toHighlight, holder) }
       return true
     }
   }, arrayOf(UClass::class.java, UQualifiedReferenceExpression::class.java))
+
+  data class MismatchReceivingChecker(val actualRetrievingClassName: String,
+                                      val level: Level,
+                                      val getInstanceFinder: (uClass: UClass) -> UMethod?,
+                                      val mismatchRetrievingKey: @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String) {
+    fun test(uClass: UClass, actualLevel: Level, receiverType: PsiType, toHighlight: PsiElement, holder: ProblemsHolder) {
+      if (receiverType.isInheritorOf(actualRetrievingClassName) && actualLevel == level) {
+        val retrievingMessage = DevKitBundle.message(mismatchRetrievingKey)
+        holder.registerProblem(toHighlight, retrievingMessage)
+        getInstanceFinder(uClass)?.let { method ->
+          getCanBeReplacedMessage(method)?.let { message -> holder.registerProblem(toHighlight, message) }
+        }
+      }
+    }
+
+    private fun getCanBeReplacedMessage(method: UMethod): @Nls(capitalization = Nls.Capitalization.Sentence) String? {
+      val qualifiedName = method.getContainingUClass()?.qualifiedName ?: return null
+      val className = StringUtil.getShortName(qualifiedName)
+      return DevKitBundle.message("inspection.light.service.can.be.replaced.with", method.name, className)
+    }
+  }
+
+  private fun isInsideGetInstance(node: UExpression, uClass: UClass): Boolean {
+    val returnExpr = node.uastParent as? UReturnExpression ?: return false
+    val method = returnExpr.jumpTarget as? UMethod ?: return false
+    val returnExpression = getReturnExpression(method)
+    return method.returnTypeReference?.getQualifiedName() == uClass.qualifiedName &&
+           returnExpression?.sourcePsi === returnExpr.sourcePsi
+  }
+
+  private fun getLevel(annotation: UAnnotation): Level {
+    val levels = when (val value = annotation.findAttributeValue(DEFAULT_REFERENCED_METHOD_NAME)) {
+      is UCallExpression -> value
+        .valueArguments
+        .mapNotNull { it.tryResolve() }
+        .filterIsInstance<PsiField>()
+        .filter {
+          it.containingClass?.qualifiedName == Service.Level::class.java.canonicalName &&
+          it.name in listOf(Service.Level.APP.name, Service.Level.PROJECT.name)
+        }
+        .map { it.name }
+
+      is UReferenceExpression -> value
+                                   .tryResolve()
+                                   ?.let { it as PsiField }
+                                   ?.takeIf { it.containingClass?.qualifiedName == Service.Level::class.java.canonicalName }
+                                   ?.name
+                                   ?.let { setOf(it) } ?: emptySet()
+
+      else -> emptySet()
+    }
+    return when {
+      levels.containsAll(setOf(Service.Level.APP.name, Service.Level.PROJECT.name)) -> Level.APP_AND_PROJECT
+      levels.contains(Service.Level.APP.name) -> Level.APP
+      levels.contains(Service.Level.PROJECT.name) -> Level.PROJECT
+      else -> Level.NOT_SPECIFIED
+    }
+  }
+
+  private fun findGetInstanceProjectLevel(uClass: UClass): UMethod? {
+    return uClass.methods
+      .filter { it.isStatic }
+      .filter { it.visibility == UastVisibility.PUBLIC }
+      .filter { it.uastParameters.size == 1 }
+      .find {
+        val param = it.uastParameters[0]
+        if (param.type.canonicalText != Project::class.java.canonicalName) return@find false
+        val qualifiedRef = getReturnExpression(it)?.returnExpression as? UQualifiedReferenceExpression ?: return@find false
+        return@find COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
+                    (qualifiedRef.receiver as? USimpleNameReferenceExpression)?.resolveToUElement() == param
+      }
+  }
+
+  private fun findGetInstanceApplicationLevel(uClass: UClass): UMethod? {
+    return uClass.methods
+      .filter { it.isStatic }
+      .filter { it.visibility == UastVisibility.PUBLIC }
+      .filter { it.uastParameters.isEmpty() }
+      .find {
+        val qualifiedRef = getReturnExpression(it)?.returnExpression as? UQualifiedReferenceExpression ?: return@find false
+        return@find COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
+                    qualifiedRef.receiver.getExpressionType()?.isInheritorOf(Application::class.java.canonicalName) == true
+      }
+  }
+
+  private fun getReturnExpression(method: UMethod): UReturnExpression? {
+    return ContainerUtil.getOnlyItem((method.uastBody as? UBlockExpression)?.expressions) as? UReturnExpression
+  }
 }
