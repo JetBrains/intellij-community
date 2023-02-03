@@ -649,11 +649,11 @@ mindmapClassStatement ::= STYLE_SEPARATOR CLASS+
 
 
 directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE
-private directiveContent ::= property [COMMA directiveContent]
-property ::= directiveKey COLON directiveValue
+private directiveContent ::= EOL* property EOL* [COMMA directiveContent]
+property ::= directiveKey EOL* COLON EOL* directiveValue
 directiveKey ::= maybeEmptyString | DIRECTIVE_TEXT
 directiveValue ::= maybeEmptyString | DIRECTIVE_TEXT | object
-object ::= OPEN_CURLY directiveContent CLOSE_CURLY
+object ::= OPEN_CURLY EOL* directiveContent EOL* CLOSE_CURLY
 
 flowchartClickStatement ::= CLICK [CLICK_DATA] [HREF] string [string] [LINK_TARGET]
   | CLICK [CALL] CLICK_DATA [callbackArgs] string
